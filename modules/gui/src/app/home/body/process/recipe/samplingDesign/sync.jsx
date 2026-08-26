@@ -6,16 +6,17 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 
-import {DEPENDENCIES} from './syncDependencies'
+import {planModelUpdates} from './sampling/planDerivedUpdates'
 
 const mapRecipeToProps = recipe => ({
-    aoi: selectFrom(recipe, 'model.aoi'),
-    stratification: selectFrom(recipe, 'model.stratification'),
-    proportions: selectFrom(recipe, 'model.proportions'),
-    sampleAllocation: selectFrom(recipe, 'model.sampleAllocation'),
-    sampleArrangement: selectFrom(recipe, 'model.sampleArrangement'),
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model')
 })
 
+// Keeps the derived sections consistent with the model they belong to. A panel is mounted only while it is
+// open, so anything that has to stay correct with a panel closed has to happen here. What to write is decided
+// entirely by the pure planner; this only dispatches it, in one action, so no intermediate model exists in
+// which one section has been updated and another has not.
 class _Sync extends React.Component {
     constructor(props) {
         super(props)
@@ -27,43 +28,14 @@ class _Sync extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const changed = propName =>
-            !_.isEqual(
-                _.omit(prevProps[propName], 'requiresUpdate'),
-                _.omit(this.props[propName], 'requiresUpdate')
-            )
-
-        const changedByProp = {
-            aoi: changed('aoi'),
-            stratification: changed('stratification'),
-            proportions: changed('proportions'),
-            sampleAllocation: changed('sampleAllocation'),
-            sampleArrangement: changed('sampleArrangement'),
-        }
-        if (Object.values(changedByProp).some(changed => changed)) {
-            this.updateRequiresUpdates(changedByProp)
+        const updates = planModelUpdates(prevProps.model, this.props.model)
+        if (updates.length) {
+            updates.reduce(
+                (builder, [path, value]) => builder.set(['model', ...path], value),
+                this.actionBuilder('UPDATE_DERIVED_SECTIONS')
+            ).dispatch()
         }
     }
-
-    updateRequiresUpdates(changedByProp) {
-        Object.keys(changedByProp)
-            .filter(propName => changedByProp[propName])
-            .forEach(propName => this.requiresUpdate(propName))
-    }
-
-    // A changed section becomes valid itself, and invalidates the section that depends on it.
-    requiresUpdate(propName) {
-        const dependentPropName = DEPENDENCIES[propName]
-        this.actionBuilder('RESET_REQUIRE_UPDATE', {propName})
-            .set(['model', propName, 'requiresUpdate'], false)
-            .dispatch()
-        if (dependentPropName) {
-            this.actionBuilder('REQUIRE_UPDATE', {dependentPropName})
-                .set(['model', dependentPropName, 'requiresUpdate'], true)
-                .dispatch()
-        }
-    }
-
 }
 
 export const Sync = compose(

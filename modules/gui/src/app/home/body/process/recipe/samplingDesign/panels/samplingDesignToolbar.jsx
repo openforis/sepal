@@ -13,6 +13,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
 import {retrieveButtonState} from '../sampling/retrieveButtonState'
+import {isSectionStale} from '../sampling/validateRetrieve'
 import {RecipeActions} from '../samplingDesignRecipe'
 import {Proportions} from './proportions/proportions'
 import {Retrieve} from './retrieve/retrieve'
@@ -30,10 +31,12 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     model: recipe.model,
     initialized: selectFrom(recipe, 'ui.initialized'),
-    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
-    proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
-    sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
-    sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate')
+    // Applicability-filtered, exactly as Retrieve reads them: a skipped section computes nothing, so a flag
+    // an old recipe still carries for one must not light its button either.
+    stratificationRequiresUpdate: isSectionStale(recipe.model, 'stratification'),
+    proportionsRequiresUpdate: isSectionStale(recipe.model, 'proportions'),
+    sampleAllocationRequiresUpdate: isSectionStale(recipe.model, 'sampleAllocation'),
+    sampleArrangementRequiresUpdate: isSectionStale(recipe.model, 'sampleArrangement')
 })
 
 const retrieveTooltip = ({kind, code, args}) => {
@@ -53,7 +56,7 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, model, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
+        const {recipeId, model, areaCache, probabilityCache, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
         const buttonState = retrieveButtonState({model, googleAccount, assetRoots})
         return (
             <PanelWizard
@@ -62,8 +65,8 @@ class _SamplingDesignToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
                 <Aoi/>
-                <Stratification/>
-                <Proportions/>
+                <Stratification areaCache={areaCache}/>
+                <Proportions probabilityCache={probabilityCache}/>
                 <SampleAllocation/>
                 <SampleArrangement/>
 

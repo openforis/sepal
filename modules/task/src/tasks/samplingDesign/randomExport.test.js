@@ -1,6 +1,8 @@
 import {jest} from '@jest/globals'
 import {lastValueFrom, of, throwError, toArray} from 'rxjs'
 
+import {EASE_GRID_2_GLOBAL_WKT} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+
 // All EE effects are injected at task seams so the routing, ordering and cleanup are testable without EE.
 const toGeometry$ = () => of('region')
 const stratificationImage$ = jest.fn(() => of('eeStratificationImage'))
@@ -26,7 +28,7 @@ const featureCollection = jest.fn(id => {
 })
 const createParentFolder$ = jest.fn(() => of())
 const deleteAssetRecursive$ = jest.fn(() => of())
-const renameAsset$ = jest.fn(() => of('renamed'))
+const renameAsset$ = jest.fn(() => of(undefined))
 const deleteAsset$ = jest.fn(() => of('deleted'))
 const ee = {FeatureCollection: featureCollection, createParentFolder$, deleteAssetRecursive$, renameAsset$, deleteAsset$}
 
@@ -45,17 +47,19 @@ const {exportRandomToAssets$} = await import('./randomExport.js')
 
 // area is large by default so the initial per-stratum threshold is well below 1 (the estimate is
 // max(2*n, 10) / (area / scale^2)); a large frame lets the repair path run instead of saturating at 1.
-const recipe = ({skip, crs = 'EPSG:6933', area = 1e6} = {}) => ({
+// `crs` is the Arrangement (placement) CRS; `stratificationCrs` is the interpretation CRS. They are separate
+// inputs so a test can prove which grid each consumer reads.
+const recipe = ({skip, crs = 'EPSG:6933', stratificationCrs = 'EPSG:6933', area = 1e6} = {}) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
-        stratification: {skip, scale: 10, strata: [{stratum: 1, weight: 1, area}]},
+        stratification: {skip, scale: 10, crs: stratificationCrs, strata: [{stratum: 1, weight: 1, area}]},
         sampleAllocation: {minSamplesPerStratum: 2, allocation: [{stratum: 1, label: 'a', area, sampleSize: 10, weight: 1}]},
         sampleArrangement: {arrangementStrategy: 'RANDOM', seed: 1, crs}
     }
 })
 
-const run = ({skip, strategy = 'create', destination = 'GEE', area} = {}) => lastValueFrom(
-    exportRandomToAssets$({taskId: 't1', description: 'd', recipe: recipe({skip, area}), assetId: 'users/x/out', strategy, destination})
+const run = ({skip, strategy = 'create', destination = 'GEE', area, crs, stratificationCrs} = {}) => lastValueFrom(
+    exportRandomToAssets$({taskId: 't1', description: 'd', recipe: recipe({skip, area, crs, stratificationCrs}), assetId: 'users/x/out', strategy, destination})
         .pipe(toArray())
 ).catch(e => e)
 
@@ -110,6 +114,11 @@ describe('stratified Random export (sparse rank-based)', () => {
             await run({skip: false, strategy: 'create'})
             expect(renameAsset$).toHaveBeenCalledWith('users/x/out_tmp_1_selected', 'users/x/out')
             expect(createParentFolder$).toHaveBeenCalledWith('users/x/out', 1)
+        })
+
+        it('does not emit the internal rename result as task progress', async () => {
+            const emissions = await run({skip: false, strategy: 'create'})
+            expect(emissions).not.toContain(undefined)
         })
 
         it('does not delete the destination for a create', async () => {
@@ -207,5 +216,61 @@ describe('stratified Random export (sparse rank-based)', () => {
         // temporary candidate + repair assets are cleaned (the selected temp is consumed by the rename)
         expect(deleteAsset$).toHaveBeenCalledWith('users/x/out_tmp_1_candidates')
         expect(deleteAsset$).toHaveBeenCalledWith('users/x/out_tmp_1_additional_candidates_1')
+    })
+})
+
+// The whole point of the split: the categorical source is interpreted on the Stratification grid while samples
+// are placed on the Arrangement grid. Each consumer must read its own grid, and neither may see the other's.
+describe('two-grid wiring', () => {
+    beforeEach(() => inspectCandidates$.mockReturnValue(of({countsByStratum: {'1': 10}, size: 10})))
+
+    it('interprets the categorical source on the Stratification grid', async () => {
+        await run({skip: false, crs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'})
+        expect(stratificationImage$).toHaveBeenCalledTimes(1)
+        expect(stratificationImage$.mock.calls[0][1]).toMatchObject({crs: 'EPSG:32636', crsId: 'EPSG:32636', scale: 10})
+    })
+
+    it('resolves EPSG:6933 to WKT for the Stratification grid, since EE cannot parse the literal', async () => {
+        await run({skip: false, stratificationCrs: 'EPSG:6933'})
+        expect(stratificationImage$.mock.calls[0][1].crs).toBe(EASE_GRID_2_GLOBAL_WKT)
+        expect(stratificationImage$.mock.calls[0][1].crsId).toBe('EPSG:6933')
+    })
+
+    it('places candidates on the Arrangement CRS at the Stratification pixel size', async () => {
+        await run({skip: false, crs: 'EPSG:6933', stratificationCrs: 'EPSG:32636'})
+        expect(sparseRandomCandidates.mock.calls[0][0].grid).toEqual({crs: EASE_GRID_2_GLOBAL_WKT, scale: 10})
+    })
+
+    it('never places candidates on the Stratification CRS', async () => {
+        await run({skip: false, crs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'})
+        expect(sparseRandomCandidates.mock.calls[0][0].grid).toEqual({crs: 'EPSG:6931', scale: 10})
+    })
+
+    it('rejects a non-curated Arrangement CRS before building any graph', async () => {
+        const error = await run({skip: false, crs: 'EPSG:32636'})
+        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.grid.unsupportedArrangementCrs')
+        expect(sparseRandomCandidates).not.toHaveBeenCalled()
+        expect(stratificationImage$).not.toHaveBeenCalled()
+    })
+
+    it('rejects a blank Stratification CRS before building any graph', async () => {
+        const error = await run({skip: false, stratificationCrs: ''})
+        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.grid.invalidStratificationCrs')
+        expect(sparseRandomCandidates).not.toHaveBeenCalled()
+        expect(stratificationImage$).not.toHaveBeenCalled()
+    })
+
+    it('accepts a non-curated Stratification CRS', async () => {
+        const error = await run({skip: false, stratificationCrs: 'EPSG:4326'})
+        expect(error?.userMessage?.key).toBeUndefined()
+        expect(sparseRandomCandidates).toHaveBeenCalled()
+    })
+
+    it('builds no grid at all for unstratified Random', async () => {
+        await run({skip: [true]})
+        expect(sparseRandomCandidates).not.toHaveBeenCalled()
+        const arrangement = unstratifiedRandomSamples$.mock.calls[0][0].sampleArrangement
+        expect('stratificationGrid' in arrangement).toBe(false)
+        expect('arrangementGrid' in arrangement).toBe(false)
     })
 })

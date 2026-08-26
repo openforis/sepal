@@ -2,12 +2,12 @@ import {lastValueFrom} from 'rxjs'
 
 import {exportSystematicToAssets$} from './systematicExport.js'
 
-// Minimal recipe. A stratified design's grid CRS comes from Stratification; unstratified Systematic's from
-// Sample Arrangement. The fixture sets the same CRS on both so it drives whichever mode the test selects.
-const recipe = (crs, {minDistance = 60, scale = 10, skip = false} = {}) => ({
+// Minimal recipe. `crs` sets both grids by default so one argument drives whichever mode the test selects;
+// `stratificationCrs` overrides the interpretation grid so the two can be separated.
+const recipe = (crs, {minDistance = 60, scale = 10, skip = false, stratificationCrs = crs} = {}) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
-        stratification: {skip, scale, crs, strata: [{stratum: 1, weight: 1, area: 1}]},
+        stratification: {skip, scale, crs: stratificationCrs, strata: [{stratum: 1, weight: 1, area: 1}]},
         sampleAllocation: {allocation: [{stratum: 1, label: 'a', area: 1, sampleSize: 10, weight: 1}]},
         sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance, gridOrigin: 'FIXED', seed: 1, crs}
     }
@@ -28,7 +28,7 @@ describe('exportSystematicToAssets$ sampling-grid CRS gate', () => {
             assetId: 'users/x/out', strategy: 'create', destination: 'GEE'
         })
         const error = await lastValueFrom(result$).catch(e => e)
-        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.systematic.grid.unsupportedCrs')
+        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.grid.unsupportedArrangementCrs')
         expect(error?.userMessage?.args?.supported).toContain('EPSG:6933 - EASE-Grid 2.0 Global')
     })
 })
@@ -47,5 +47,25 @@ describe('exportSystematicToAssets$ stratified minimum-distance gate', () => {
     it('does not apply the raster floor to unstratified systematic, which is analytical', async () => {
         const error = await runExport(recipe('EPSG:6933', {minDistance: 5, scale: 10, skip: [true]}))
         expect(error?.userMessage?.key).not.toBe('tasks.samplingDesign.systematic.grid.minDistanceBelowGrid')
+    })
+})
+
+// The Arrangement CRS stays restricted to the curated equal-area catalog; the Stratification CRS does not,
+// because it names the projection the categorical source is interpreted in.
+describe('exportSystematicToAssets$ two-grid validation', () => {
+    it('accepts a non-curated Stratification CRS alongside a curated Arrangement CRS', async () => {
+        const error = await runExport(recipe('EPSG:6933', {stratificationCrs: 'EPSG:32636'}))
+        expect(error?.userMessage?.key).not.toBe('tasks.samplingDesign.grid.unsupportedArrangementCrs')
+        expect(error?.userMessage?.key).not.toBe('tasks.samplingDesign.grid.invalidStratificationCrs')
+    })
+
+    it('rejects a blank Stratification CRS', async () => {
+        const error = await runExport(recipe('EPSG:6933', {stratificationCrs: ''}))
+        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.grid.invalidStratificationCrs')
+    })
+
+    it('keeps the raster floor on the Stratification pixel size, not the Arrangement grid', async () => {
+        const error = await runExport(recipe('EPSG:6933', {minDistance: 5, scale: 30, stratificationCrs: 'EPSG:32636'}))
+        expect(error?.userMessage?.args).toEqual({value: 5, pixelSize: 30, minimum: 60})
     })
 })

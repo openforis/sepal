@@ -1,5 +1,6 @@
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {msg} from '~/translate'
+
+import {effectiveStratificationGrid} from '../../samplingGridValidation'
 
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
 // boundary computes it from the AOI geometry, so the panel is valid immediately without a hidden EE area
@@ -28,10 +29,14 @@ export const unstratifiedStrata = strata => {
 
 export const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
+    // The recipe stores a concrete grid. The visible fields are overrides and the source fields are what a
+    // cleared one resolves to, so both are consolidated here and neither shape reaches the model. Alignment to
+    // the source's own pixel grid is Earth Engine's decision, so nothing about it is persisted either.
+    const {crs, scale} = effectiveStratificationGrid(values)
     return {
         skip: isSkipped,
-        scale: parseFloat(values.scale),
-        crs: values.crs || DEFAULT_SAMPLING_GRID_CRS,
+        scale,
+        crs,
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
@@ -51,9 +56,7 @@ export const modelToValues = model => ({
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
     scale: model.scale,
-    // Default the curated grid for recipes saved before the stratification CRS existed, so the mount default is
-    // a no-op rather than a dirtying ''->id change.
-    crs: model.crs || DEFAULT_SAMPLING_GRID_CRS,
+    crs: model.crs,
     type: model.type,
     assetId: model.assetId,
     recipeId: model.recipeId,

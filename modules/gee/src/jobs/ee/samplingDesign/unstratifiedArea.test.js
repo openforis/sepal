@@ -96,7 +96,7 @@ describe('injected area flows into exported metadata', () => {
 // area-injected allocation. A no-area synthetic row collapses the max offset to 0 (density would never
 // densify); the injected area restores a real offset. This fails if the resolved allocation is bypassed.
 describe('systematic max-offset requires the injected area (unstratified)', () => {
-    const sampleArrangement = {scale: 30, minDistance: 60}
+    const sampleArrangement = {minDistance: 60, stratificationGrid: {crs: 'EPSG:6933', scale: 30}}
 
     it('collapses to 0 for a no-area synthetic row', () => {
         expect(systematicStratumMaxOffset({stratum: 1, value: 1, sampleSize: 100}, sampleArrangement)).toBe(0)

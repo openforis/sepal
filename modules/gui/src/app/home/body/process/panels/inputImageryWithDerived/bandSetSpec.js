@@ -1,6 +1,5 @@
+import {getAvailableIndexes} from '~/app/home/body/process/opticalIndexes'
 import {msg} from '~/translate'
-
-import {getAvailableIndexes} from './opticalIndexes'
 
 export const BandSetSpec = {
     filter(bandSetSpec, availableBands = []) {

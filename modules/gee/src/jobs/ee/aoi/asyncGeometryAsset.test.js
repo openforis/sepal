@@ -1,0 +1,113 @@
+import {jest} from '@jest/globals'
+import {firstValueFrom, of} from 'rxjs'
+
+// The asset factories are the shape where ASSET_BOUNDS must keep taking its geometry from the source
+// itself, while every other aoi is resolved.
+const resolvedById = {}
+const resolved = id => resolvedById[id] || (resolvedById[id] = {resolvedFrom: id, bounds: () => 'bounds'})
+
+const captured = {}
+const sourceBounds = {sourceBounds: true}
+
+const image = () => ({
+    clip: geometry => (captured.clip = geometry, image()),
+    select: () => image(),
+    addBands: () => image(),
+    copyProperties: () => image(),
+    bandNames: () => ['band'],
+    set: () => image(),
+    geometry: () => sourceBounds
+})
+
+const collection = () => ({
+    filterBounds: geometry => (captured.filterBounds = geometry, collection()),
+    filterDate: () => collection(),
+    filter: () => collection(),
+    map: () => collection(),
+    select: () => collection(),
+    merge: () => collection(),
+    first: () => image(),
+    median: () => image(),
+    mosaic: () => image(),
+    limit: () => ({size: () => 1}),
+    geometry: () => ({bounds: () => sourceBounds})
+})
+
+jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
+    default: ({id}) => ({
+        getGeometry$: () => (captured.resolutions = (captured.resolutions || 0) + 1, of(resolved(id))),
+        getImage$: () => of(image())
+    })
+}))
+jest.unstable_mockModule('#sepal/ee/ee', () => ({
+    default: {ImageCollection: () => collection(), Image: () => image(), Reducer: {median: () => ({})}}
+}))
+jest.unstable_mockModule('#sepal/ee/validate', () => ({validateEEImage: ({image}) => image}))
+jest.unstable_mockModule('#sepal/ee/asset/mask', () => ({maskImage: img => img}))
+jest.unstable_mockModule('#sepal/ee/asset/filter', () => ({createFilter: () => null}))
+
+const {default: imageAsset} = await import('#sepal/ee/asset/imageAsset')
+const {default: imageCollectionAsset} = await import('#sepal/ee/asset/imageCollectionAsset')
+
+const asset = {type: 'ASSET', id: 'some/asset'}
+const recipe = aoi => ({model: {aoi, assetDetails: {assetId: 'the/asset'}, dates: {type: 'ALL_DATES'}}})
+
+describe('image asset', () => {
+    beforeEach(() => {
+        captured.clip = undefined
+    })
+
+    it('clips with the resolved geometry of an asset aoi', async () => {
+        await firstValueFrom(imageAsset(recipe(asset)).getImage$())
+
+        expect(captured.clip).toBe(resolved(asset.id))
+    })
+
+    it('leaves an ASSET_BOUNDS aoi unclipped, keeping the source bounds', async () => {
+        await firstValueFrom(imageAsset(recipe({type: 'ASSET_BOUNDS'})).getImage$())
+
+        expect(captured.clip).toBeUndefined()
+    })
+})
+
+describe('image collection asset', () => {
+    beforeEach(() => {
+        captured.clip = captured.filterBounds = undefined
+        captured.resolutions = 0
+    })
+
+    describe.each([
+        ['ASSET', {type: 'ASSET', id: 'some/asset'}],
+        ['RECIPE', {type: 'RECIPE', id: 'some-recipe'}]
+    ])('with a %s aoi', (_type, aoi) => {
+        it('emits the resolved geometry, never the descriptor', async () => {
+            const geometry = await firstValueFrom(imageCollectionAsset(recipe(aoi)).getGeometry$())
+
+            expect(geometry).toBe(resolved(aoi.id))
+            expect(geometry).not.toBe(aoi)
+        })
+
+        it('filters and clips with that same resolved geometry', async () => {
+            await firstValueFrom(imageCollectionAsset(recipe(aoi)).getImage$())
+
+            expect(captured.filterBounds).toBe(resolved(aoi.id))
+            expect(captured.clip).toBe(resolved(aoi.id))
+        })
+    })
+
+    describe('with an ASSET_BOUNDS aoi', () => {
+        const assetBounds = recipe({type: 'ASSET_BOUNDS'})
+
+        it('takes its geometry from the source collection', async () => {
+            expect(await firstValueFrom(imageCollectionAsset(assetBounds).getGeometry$())).toBe(sourceBounds)
+        })
+
+        it('clips with the source bounds, without filtering or resolving an aoi', async () => {
+            await firstValueFrom(imageCollectionAsset(assetBounds).getImage$())
+
+            expect(captured.clip).toBe(sourceBounds)
+            expect(captured.filterBounds).toBeUndefined()
+            expect(captured.resolutions).toBe(0)
+        })
+    })
+})

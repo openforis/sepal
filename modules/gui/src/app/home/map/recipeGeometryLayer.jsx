@@ -17,7 +17,14 @@ class _RecipeGeometryLayer extends React.Component {
         this.setLayer()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const {id, map, opacity} = this.props
+        // Opacity is client-side only and deliberately excluded from watchedProps, so an opacity-only change
+        // leaves the layer equal (no recreation, no map-id refetch). Push the new opacity onto the live
+        // layer's tiles directly.
+        if (prevProps.opacity !== opacity) {
+            map.getLayer(id)?.setOpacity?.(opacity)
+        }
         this.setLayer()
     }
 
@@ -35,15 +42,18 @@ class _RecipeGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, color, fillColor, layerIndex, map, tab: {busy}} = this.props
+        const {recipe, color, fillColor, width, opacity, layerIndex, map, tab: {busy}} = this.props
         return recipe.ui.initialized
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.recipeGeometry$({
-                    recipe, color, fillColor
+                    recipe, color, fillColor, width
                 }),
+                opacity,
                 layerIndex,
-                watchedProps: recipe.model,
+                // opacity is intentionally excluded: it's applied client-side (setOpacity), so an
+                // opacity-only change stays equal and doesn't recreate the layer or refetch the map id.
+                watchedProps: {recipe: recipe.model, color, fillColor, width},
                 busy
             })
             : null
@@ -62,5 +72,7 @@ RecipeGeometryLayer.propTypes = {
     id: PropTypes.string.isRequired,
     layerIndex: PropTypes.number.isRequired,
     map: PropTypes.any.isRequired,
-    recipe: PropTypes.object.isRequired
+    opacity: PropTypes.number,
+    recipe: PropTypes.object.isRequired,
+    width: PropTypes.number
 }

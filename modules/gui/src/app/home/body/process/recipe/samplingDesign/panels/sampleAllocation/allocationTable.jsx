@@ -6,14 +6,22 @@ import {ColorElement} from '~/widget/colorElement'
 import {NestedForms} from '~/widget/form/nestedForms'
 import {Tooltip} from '~/widget/tooltip'
 
+import {byStratumKey, stratumView} from '../../sampling/designModel'
 import {AllocationForm} from './allocationForm'
 import styles from './allocationTable.module.css'
 
-export const AllocationTable = ({allocation, sampleSize, marginOfError, relativeMarginOfError, manual, noProportions, onChange}) => {
+// Presentation is passed BESIDE the row, never merged into it. A nested form writes its entity straight back
+// into the persisted array, so anything merged in here would be persisted as part of the allocation - which
+// is exactly the joined row this recipe stopped writing. The join is the shared owner-first one, keyed on
+// `stratum ?? value` from both sides: a lookup that missed would silently fall through to the row's cached
+// copy and show a label the stratification has already replaced.
+export const AllocationTable = ({allocation, strata, sampleSize, marginOfError, manual, noProportions, onChange}) => {
+    const owners = byStratumKey(strata)
+    const presentationOf = entry => stratumView(owners, entry)
     return (
         <div className={styles.allocation}>
             <NestedForms arrayInput={allocation} idPropName='stratum'>
-                <Header relativeMarginOfError={relativeMarginOfError} noProportions={noProportions}/>
+                <Header noProportions={noProportions}/>
                 {allocation.value.map((entry, index) => manual
                     ? (
                         <AllocationForm
@@ -24,7 +32,7 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
                             // the typed value back to the parent. Blank keeps Apply disabled until the user
                             // enters a count; an existing value is preserved.
                             entry={{sampleSize: '', ...entry}}
-                            relativeMarginOfError={relativeMarginOfError}
+                            presentation={presentationOf(entry)}
                             autoFocus={manual && index === 0}
                             onChange={onChange}
                         />
@@ -33,41 +41,40 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
                         <Allocation
                             key={entry.stratum}
                             entry={entry}
-                            relativeMarginOfError={relativeMarginOfError}
+                            presentation={presentationOf(entry)}
                         />
                     )
                 )}
                 <Footer
                     sampleSize={sampleSize}
                     marginOfError={parseFloat(marginOfError)}
-                    noProportions={noProportions}
-                    relativeMarginOfError={relativeMarginOfError}/>
+                    noProportions={noProportions}/>
             </NestedForms>
         </div>
     )
 }
 
-const Header = ({relativeMarginOfError, noProportions}) => (
+const Header = ({noProportions}) => (
     <div className={styles.header}>
         <div className={styles.stratum}/>
-        <div className={styles.area}>{noProportions ? '' : relativeMarginOfError ? msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.relativeMarginOfError') : msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.marginOfError')}</div>
+        <div className={styles.area}>{noProportions ? '' : msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.relativeMarginOfError')}</div>
         <Tooltip msg={msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samplesTooltip')}>
             <div className={styles.weight}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samples')}</div>
         </Tooltip>
     </div>
 )
 
-const Footer = ({sampleSize, marginOfError, relativeMarginOfError, noProportions}) => {
+const Footer = ({sampleSize, marginOfError, noProportions}) => {
     return (
         <div className={styles.footer}>
             <div className={styles.overall}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.overall')}</div>
-            <div className={styles.number}>{noProportions ? '' : renderMaginOfError({marginOfError, relativeMarginOfError})}</div>
+            <div className={styles.number}>{noProportions ? '' : renderMaginOfError(marginOfError)}</div>
             <div className={styles.number}>{renderSampleSize(sampleSize)}</div>
         </div>
     )
 }
 
-const Allocation = ({entry: {label, color, sampleSize}}) => {
+const Allocation = ({entry: {sampleSize}, presentation: {label, color}}) => {
     return (
         <div className={styles.row}>
             <div className={styles.color}>
@@ -87,10 +94,10 @@ const renderSampleSize = sampleSize =>
             ? <div className={styles.nan}>NaN</div>
             : format.integer(sampleSize)
 
-const renderMaginOfError = ({marginOfError, relativeMarginOfError}) =>
+const renderMaginOfError = marginOfError =>
     _.isNil(marginOfError) || !isFinite(marginOfError)
         ? <div className={styles.nan}>NaN</div>
-        : `${smartRound(marginOfError)}${relativeMarginOfError ? '%' : ''}`
+        : `${smartRound(marginOfError)}%`
 
 function smartRound(num) {
     if (num === 0) return 0

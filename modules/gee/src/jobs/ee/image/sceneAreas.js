@@ -1,7 +1,7 @@
-import {map} from 'rxjs'
+import {map, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {toGeometry} from '#sepal/ee/aoi'
+import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {fileName} from '#sepal/path'
 
@@ -9,7 +9,6 @@ const worker$ = ({
     requestArgs: {aoi, source}
 }) => {
 
-    const geometry = toGeometry(aoi)
     const table = {
         LANDSAT: {
             id: 'users/wiell/SepalResources/landsatSceneAreas',
@@ -20,13 +19,16 @@ const worker$ = ({
             idColumn: 'name'
         }
     }[source]
-    return ee.getInfo$(
-        ee.FeatureCollection(table.id)
-            .filterBounds(geometry)
-            .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
-            .get('list'),
-        'scene areas'
-    ).pipe(
+    return toGeometry$(aoi).pipe(
+        switchMap(geometry =>
+            ee.getInfo$(
+                ee.FeatureCollection(table.id)
+                    .filterBounds(geometry)
+                    .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
+                    .get('list'),
+                'scene areas'
+            )
+        ),
         map(sceneAreas =>
             sceneAreas.map(sceneArea => ({
                 id: sceneArea[1],

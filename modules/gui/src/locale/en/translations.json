@@ -302,6 +302,7 @@
     "next": "Next",
     "ok": "OK",
     "remove": "Remove",
+    "removeAll": "Remove all",
     "restart": "Restart",
     "retry": "Retry",
     "save": "Save",
@@ -586,12 +587,6 @@
       "copy": "Copy to clipboard",
       "coordinatesCopied": "Coordinates copied to the clipboard"
     },
-    "featureLayer": {
-      "toggle": {
-        "show": "Show layer",
-        "hide": "Hide layer"
-      }
-    },
     "featureLayerStyle": {
       "title": "Layer options",
       "tooltip": "Layer options",
@@ -661,6 +656,20 @@
       "opacity": "Layer opacity",
       "opacityControl": {
         "tooltip": "Opacity {percent}%. Drag up/down to change. Click to toggle."
+      }
+    },
+    "labelsLayerStyle": {
+      "categories": {
+        "label": "Show",
+        "administrative": "Administrative",
+        "landscape": "Landscape",
+        "poi": "Points of interest",
+        "road": "Roads",
+        "transit": "Transit",
+        "water": "Water"
+      },
+      "opacity": {
+        "fixed": "Label opacity is fixed at 100%."
       }
     },
     "legendBuilder": {
@@ -982,6 +991,7 @@
           "legend": {
             "label": "Legend"
           },
+          "noBands": "No bands selected",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",
@@ -2177,6 +2187,9 @@
           },
           "bandSetSpec": {
             "addBands": {
+              "all": {
+                "label": "[All bands]"
+              },
               "placeholder": "Select bands...",
               "tooltip": "Add bands"
             },
@@ -5149,8 +5162,10 @@
         "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Every stratum needs a whole number of at least 2 samples.",
         "invalid.minSamplesPerStratumInvalid": "Minimum samples per stratum must be a whole number of at least 2.",
         "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
-        "invalid.noTaskAllocation": "Set at least 2 samples for every stratum in Sample Allocation.",
-        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement.",
+        "invalid.belowConfiguredMinimum.samples": "A stratum is allocated fewer than the configured Min samples/stratum. In Sample Allocation, increase the total sample size, or lower Min samples/stratum.",
+        "invalid.belowConfiguredMinimum.error": "A stratum is allocated fewer than the configured Min samples/stratum. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size, or lower Min samples/stratum.",
+        "invalid.strataMismatch": "The sample allocation does not match the strata. Recompute the allocation in Sample Allocation.",
+        "invalid.seedInvalid": "The seed must be a whole number from 1 to 9007199254740991. Set it in Sample Arrangement.",
         "invalid.minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
         "capability": {
           "title": "This design cannot be retrieved yet.",
@@ -5206,14 +5221,12 @@
             },
             "scale": {
               "label": "Scale",
-              "placeholder": "Scale...",
-              "required": "You must specify the scale",
               "suffix": "meters",
-              "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
+              "tooltip": "Pixel size the stratification classes are read at. Leave it empty to use the selected band's own resolution, shown as the placeholder, or enter a value to resample."
             },
             "crs": {
               "label": "CRS",
-              "tooltip": "Equal-area coordinate system used to interpret stratification classes, calculate stratum areas and anticipated proportions, and place stratified samples."
+              "tooltip": "Coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Leave it empty to use the selected band's own CRS, shown as the placeholder. Sample placement uses the Sample Arrangement CRS."
             },
             "hexButton": {
               "label": "HEX",
@@ -5331,10 +5344,8 @@
             },
             "scale": {
               "label": "Scale",
-              "placeholder": "Scale...",
-              "required": "You must specify the scale",
               "suffix": "meters",
-              "tooltip": "Processing scale used to estimate proportions. Increase it for faster, less detailed estimates."
+              "tooltip": "Processing scale used to estimate proportions. Leave it empty to use the coarser of the stratification scale and the selected band's own resolution, shown as the placeholder; enter a larger value for a faster, less detailed estimate."
             },
             "overallProportion": {
               "label": "Anticipated overall proportion",
@@ -5419,16 +5430,6 @@
               "placeholder": "Min samples...",
               "tooltip": "Require Proportional, Balanced, Optimal, or Power allocation to assign at least this many samples to each stratum. The minimum is 2. Increasing it redistributes a fixed total or can increase a total calculated from Target margin of error."
             },
-            "relativeMarginOfError": {
-              "label": "Margin of error",
-              "tooltip": "Specify if the margin of error is relative (to area of reporting category) or an absolute area",
-              "false": {
-                "label": "Absolute"
-              },
-              "true": {
-                "label": "Relative"
-              }
-            },
             "allocationStrategy": {
               "label": "Allocation strategy",
               "tooltip": "Specify how the samples should be distributed among the strata",
@@ -5467,7 +5468,6 @@
               "label": "Allocation",
               "tooBig": "Too many samples are being allocated. Reduce Total sample size or, when using Target margin of error, increase it.",
               "table": {
-                "marginOfError": "Margin of error (ha)",
                 "relativeMarginOfError": "Relative margin of error",
                 "samples": "Sample size",
                 "samplesTooltip": "Number of samples allocated to this stratum.",
@@ -5536,7 +5536,8 @@
             "seed": {
               "label": "Seed",
               "placeholder": "Seed...",
-              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start."
+              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start.",
+              "invalid": "Enter a whole number from 1 to 9007199254740991."
             }
           },
           "title": "Sample Arrangement",
@@ -5704,6 +5705,7 @@
         "CHANGE_ALERTS": "Change Alerts",
         "BAYTS_HISTORICAL": "BAYTS Historical",
         "BAYTS_ALERTS": "BAYTS Alerts",
+        "PYEO_ALERTS": "PyEO Alerts",
         "CLASSIFICATION": "Classification",
         "UNSUPERVISED_CLASSIFICATION": "Unsupervised Classification",
         "REGRESSION": "Regression",
@@ -5743,6 +5745,12 @@
       }
     },
     "samplingDesign": {
+      "grid": {
+        "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
+        "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
+        "invalidScale": "The Stratification Scale is invalid. Provide a positive Scale in metres.",
+        "invalidStratificationTransform": "The Stratification CRS transform is invalid. Provide six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear."
+      },
       "random": {
         "progress": {
           "prepareCandidates": "Finding random sample locations",
@@ -5759,8 +5767,6 @@
           "exportFinal": "Exporting sample locations"
         },
         "grid": {
-          "unsupportedCrs": "The selected sampling grid is not supported. Choose one of: {supported}.",
-          "invalidScale": "The sampling grid scale is invalid. Provide a positive Stratification Scale in metres.",
           "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
           "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }
@@ -5768,6 +5774,8 @@
       "preflight": {
         "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
         "noStrata": "The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.",
+        "strataMismatch": "The sample allocation does not match the stratification (missing, duplicate or unexpected strata). Recompute the allocation in Sample Allocation.",
+        "seedInvalid": "The seed must be a whole number from 1 to 9007199254740991. Set it in Sample Arrangement.",
         "belowStatisticalMinimum": {
           "samples": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase Total sample size until every affected stratum reaches at least {floor}.",
           "error": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size.",

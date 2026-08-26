@@ -11,7 +11,7 @@ ENV UV_BREAK_SYSTEM_PACKAGES=1
 
 
 # Use specific Java version
-ARG JAVA_VERSION=11.0.11.hs-adpt
+ARG JAVA_VERSION=11.0.32-tem
 
 # Add support for https apt repositories
 RUN apt-get -y update && apt-get install -y \
@@ -169,7 +169,7 @@ RUN curl -s https://get.sdkman.io | bash
 # Install Java: set SDKMAN! to non-interactive
 RUN sed -ie 's/sdkman_auto_answer=false/sdkman_auto_answer=true/' ${SDKMAN_DIR}/etc/config
 
-# Install Java: use SDKMAN! to install Adoption Java 11
+# Install Java: use SDKMAN! to install Temurin Java 11
 RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_VERSION}'
 
 # Configure R Java home

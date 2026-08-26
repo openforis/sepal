@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -23,8 +22,8 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
-import {isValidGridScale} from '../../samplingGridValidation'
+import {getDefaultModel} from '../../sampling/defaultModel'
+import {effectiveStratificationGrid, isValidGridScale, stratificationGridFromBand} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
@@ -54,14 +53,17 @@ const fields = {
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
+    // Optional OVERRIDES: blank means "use what this selection provides", which the placeholders show. An
+    // entered Scale still has to be a usable one - clearing the field asks for the default, typing 0 does not.
     scale: new Form.Field()
         .skip((_value, {skip}) => skip.length)
-        .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
         .number()
         .greaterThan(0),
-    crs: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .notBlank(),
+    crs: new Form.Field(),
+    // Transient: what the current source and band provide, shown as the placeholders and consolidated into the
+    // persisted grid by valuesToModel. Never part of the model.
+    sourceCrs: new Form.Field(),
+    sourceScale: new Form.Field(),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -71,6 +73,9 @@ const fields = {
 
 class _Stratification extends React.Component {
     cancel$ = new Subject()
+    // Not React state: nothing renders from it, and the band defaults are applied from the same callback that
+    // receives it, where a queued setState would not have landed yet.
+    bandMetadata = undefined
     state = {
         bands: undefined,
         prevStrata: [],
@@ -125,6 +130,8 @@ class _Stratification extends React.Component {
 
     renderContent() {
         const {inputs: {type, skip}} = this.props
+        // Resolved once and handed to both fields, so a placeholder can never disagree with what Apply stores.
+        const grid = this.effectiveGrid()
         return !skip.value?.length
             ? (
                 <Layout>
@@ -132,9 +139,9 @@ class _Stratification extends React.Component {
                     {type.value === 'RECIPE' ? this.renderRecipe() : null}
                     <Layout type='horizontal'>
                         {this.renderBand()}
-                        {this.renderScale()}
+                        {this.renderScale(grid)}
                     </Layout>
-                    {this.state.more ? this.renderCrs() : null}
+                    {this.state.more ? this.renderCrs(grid) : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -202,6 +209,7 @@ class _Stratification extends React.Component {
                 placeholder={msg('process.samplingDesign.panel.stratification.form.stratification.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
                 labelButtons={[this.renderType()]}
+                includeNominalScale
                 onChange={this.onImageChanged}
                 onLoading={this.onImageLoading}
                 onLoaded={this.onAssetLoaded}
@@ -271,13 +279,13 @@ class _Stratification extends React.Component {
         )
     }
     
-    renderScale() {
+    renderScale({scale: effectiveScale}) {
         const {inputs: {scale}} = this.props
         return (
             <Form.Input
                 className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
+                placeholder={effectiveScale === null ? '' : String(effectiveScale)}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
                 input={scale}
                 type='number'
@@ -287,14 +295,17 @@ class _Stratification extends React.Component {
         )
     }
 
-    renderCrs() {
+    renderCrs({crs: effectiveCrs}) {
         const {inputs: {crs}} = this.props
+        // Free text, not the curated combo: Stratification names the projection the categorical source is
+        // interpreted in, which is whatever the source was authored in - not one of the equal-area placement
+        // options. onGridChanged still runs, so a grid change invalidates areas, proportions and allocation.
         return (
-            <FormCombo
+            <Form.Input
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                placeholder={effectiveCrs}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
                 input={crs}
-                options={samplingGridCrsOptions()}
                 onChange={this.onGridChanged}
             />
         )
@@ -414,16 +425,15 @@ class _Stratification extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, type, eeStrategy, strata}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, crs, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
-        scale.value || scale.set('30')
-        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
-        // Reveal the advanced options when a non-default CRS was saved, so the setting is discoverable.
-        if (crs.value && crs.value !== DEFAULT_SAMPLING_GRID_CRS) {
-            this.setState({more: true})
+        // Reveal the advanced options when the design is on something other than the default CRS, so a saved
+        // choice is never hidden behind a button.
+        if (crs.value) {
+            this.revealNonDefaultCrs(this.effectiveGrid().crs)
         }
 
         if (stratificationRequiresUpdate) {
@@ -471,6 +481,7 @@ class _Stratification extends React.Component {
         recipeId.set(null)
         assetId.set(null)
         band.set(null)
+        this.clearSelectionGrid()
         if (strata.value) {
             this.setState({prevStrata: strata.value})
         }
@@ -481,6 +492,7 @@ class _Stratification extends React.Component {
     onImageChanged() {
         const {inputs: {band, strata}} = this.props
         band.set(null)
+        this.clearSelectionGrid()
         if (strata.value) {
             this.setState({prevStrata: strata.value})
         }
@@ -488,13 +500,52 @@ class _Stratification extends React.Component {
         strata.set(null)
     }
 
+    // Loading also happens when a saved recipe opens, so this must not touch the grid: the saved CRS and Scale
+    // stay exactly as saved. Only an actual source, type or band replacement re-derives them.
     onImageLoading() {
+        this.bandMetadata = undefined
         this.setState({bands: undefined})
+    }
+
+    // The grid belongs to the band it was calculated for, so replacing the source drops both the override and
+    // the source values it resolved against. The next band selection installs the new defaults.
+    clearSelectionGrid() {
+        const {inputs: {crs, scale, sourceCrs, sourceScale}} = this.props
+        sourceCrs.setInitialValue(null)
+        sourceScale.setInitialValue(null)
+        crs.set(null)
+        scale.set(null)
+    }
+
+    effectiveGrid() {
+        const {inputs: {crs, scale, sourceCrs, sourceScale}} = this.props
+        return effectiveStratificationGrid({
+            crs: crs.value, scale: scale.value, sourceCrs: sourceCrs.value, sourceScale: sourceScale.value
+        })
+    }
+
+    // What the current source and band provide. Applied when a band is selected, and again when metadata
+    // arrives for the band already selected - it only ever writes the transient fields, so a saved or entered
+    // override is never touched.
+    //
+    // setInitialValue, not set: these are the panel's reading of the source rather than anything the user
+    // changed, so learning them must not mark a reopened recipe as edited.
+    //
+    // Returns what it installed: setInitialValue lands through setState, so the caller cannot read it back
+    // from the input in the same tick.
+    installSourceGrid() {
+        const {inputs: {band, sourceCrs, sourceScale}} = this.props
+        const grid = stratificationGridFromBand(this.bandMetadata, band.value)
+        sourceCrs.setInitialValue(grid.crs)
+        sourceScale.setInitialValue(grid.scale)
+        return grid
     }
 
     onAssetLoaded({metadata, visualizations}) {
         const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
+        // Carries each band's own CRS and nominal scale, which is what a band selection defaults the grid to.
+        this.bandMetadata = metadata.bands
 
         this.updateImageLayerSources({
             id: assetId.value,
@@ -509,6 +560,9 @@ class _Stratification extends React.Component {
     }
 
     onRecipeLoaded({bandNames: bands, recipe}) {
+        // A recipe is a computed image: it reports Earth Engine's degree-scale default rather than a grid, so
+        // there is nothing to derive and a band selection takes the plain default.
+        this.bandMetadata = undefined
         this.updateImageLayerSources({
             id: recipe.id,
             type: 'Recipe',
@@ -522,6 +576,13 @@ class _Stratification extends React.Component {
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
         this.setState({bands})
+        // Reopening a saved recipe arrives here with its band already selected: the placeholders need the
+        // source values, while the saved CRS and Scale stay exactly as saved.
+        if (band.value) {
+            const {crs} = this.props.inputs
+            const grid = this.installSourceGrid()
+            this.revealNonDefaultCrs(crs.value || grid.crs)
+        }
         const categoricalVisualizations = visualizations
             .filter(({type}) => type === 'categorical')
         const defaultBand = bands.length === 1
@@ -547,8 +608,29 @@ class _Stratification extends React.Component {
         updateBand && this.onBandChanged({value: defaultBand})
     }
 
+    // A band selection IS a grid selection: the two visible fields are set from that band's own CRS and its
+    // nominal scale in metres, and the user may then overrule either. Reopening a saved recipe does not come
+    // through here - the saved band is already selected - so a saved grid is never overwritten.
+    // A band selection IS a grid selection: any override belonged to the previous band, so it is cleared and
+    // the new band's own CRS and metre scale become what the blank fields resolve to.
+    // A band selection is a grid selection: any override belonged to the previous band, so it is cleared, and
+    // what this band provides becomes what the now-blank fields resolve to and show as placeholders.
     onBandChanged() {
+        const {inputs: {crs, scale}} = this.props
+        const grid = this.installSourceGrid()
+        crs.set(null)
+        scale.set(null)
+        // The override was just cleared, so the new source CRS is the effective one.
+        this.revealNonDefaultCrs(grid.crs)
         this.scheduleAreaPerStratum()
+    }
+
+    // A projected CRS is persisted and drives every area, so it must not sit hidden behind the More button
+    // just because the user never opened it.
+    revealNonDefaultCrs(crs) {
+        if (crs !== getDefaultModel().stratification.crs && !this.state.more) {
+            this.setState({more: true})
+        }
     }
 
     onGridChanged() {
@@ -622,19 +704,32 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, crs, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, areaCache, stream, inputs: {type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        // onChange fires while typing; block invalid intermediate scale values before calling EE.
-        if (!isValidGridScale(scale.value) || !id || !band.value) {
+        // The effective grid: the overrides where they are filled in, the source values where they are not.
+        // Built once so the cache key and the request body cannot describe different grids. onChange fires
+        // while typing, so a half-typed Scale is simply not calculated yet.
+        const grid = this.effectiveGrid()
+        if (!isValidGridScale(grid.scale) || !grid.crs || !id || !band.value) {
             return
         }
         const stratification = {
             type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
             id,
         }
+        // What the areas actually depend on. The processing strategy is absent because Online and Batch
+        // compute the same thing, and presentation is absent because the loader applies the CURRENT labels
+        // and colors to whatever raw response it is handed.
+        const key = {stratification, band: band.value, ...grid}
 
         if (stream('AREA_PER_STRATUM').active) {
             this.cancel$.next()
+        }
+
+        const cached = areaCache?.get({aoi, key})
+        if (cached) {
+            this.onAreaPerStratumLoaded(cached)
+            return
         }
 
         stream('AREA_PER_STRATUM',
@@ -642,13 +737,17 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                scale: parseInt(scale.value) || 30,
-                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
+                ...grid,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
             ),
-            this.onAreaPerStratumLoaded,
+            // Cached BEFORE the join, so a hit is the raw response and picks up current presentation. A
+            // failure never reaches here, so it can never displace an older successful entry.
+            areaPerStratum => {
+                areaCache?.set({aoi, key, result: areaPerStratum})
+                this.onAreaPerStratumLoaded(areaPerStratum)
+            },
             error => this.setState({
                 strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
             })

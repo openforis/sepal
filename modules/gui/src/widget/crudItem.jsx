@@ -239,7 +239,8 @@ class _CrudItem extends React.Component {
     }
 
     renderRemoveButton() {
-        const {onRemove, removeTooltip, removeTitle, removeMessage, removeDisabled, removeContent, tooltipPlacement, unsafeRemove} = this.props
+        const {onRemove, removeTooltip, removeTitle, removeMessage, removeConfirmationLabel, removeDisabled, removeContent,
+            tooltipPlacement, unsafeRemove} = this.props
         return onRemove
             ? (
                 <RemoveButton
@@ -247,6 +248,7 @@ class _CrudItem extends React.Component {
                     shape='circle'
                     title={removeTitle}
                     message={removeMessage}
+                    confirmationLabel={removeConfirmationLabel}
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
@@ -312,6 +314,7 @@ CrudItem.propTypes = {
     inlineComponents: PropTypes.any,
     metadata: PropTypes.any,
     removeContent: PropTypes.any,
+    removeConfirmationLabel: PropTypes.string,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTitle: PropTypes.string,

@@ -4,12 +4,20 @@ import React from 'react'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {Buttons} from '~/widget/buttons'
+import {Button} from '~/widget/button'
+import {ButtonGroup} from '~/widget/buttonGroup'
+import {ButtonPopup} from '~/widget/buttonPopup'
+import {Combo} from '~/widget/combo'
+import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
+import {ListItem} from '~/widget/listItem'
+import {NoData} from '~/widget/noData'
 
 import {withRecipe} from '../../../../recipeContext'
 import styles from './calculation.module.css'
+
+const ADD_ALL_BANDS = Symbol('addAllBands')
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || [],
@@ -90,15 +98,92 @@ class _FunctionSection extends React.Component {
             this.toUniqueBandId(imageId, id)
         )
         return (
-            <Buttons
+            <Form.FieldSet
                 label={msg('process.bandMath.panel.calculations.form.usedBands.label')}
-                tooltip={msg('process.bandMath.panel.calculations.form.usedBands.label')}
-                selected={selected}
-                multiple
-                options={bandOptions}
-                framed
-                onChange={this.updateUsedBands}
-            />
+                tooltip={msg('process.bandMath.panel.calculations.form.usedBands.tooltip')}>
+                <Layout type='vertical' spacing='tight'>
+                    {bandOptions.map(group => this.renderBandGroup(group, selected))}
+                </Layout>
+            </Form.FieldSet>
+        )
+    }
+
+    renderBandGroup(group, selected) {
+        const selectedOptions = group.options.filter(({value}) => selected.includes(value))
+        return (
+            <ListItem
+                key={group.key || group.label}
+                expanded
+                expansion={this.renderBandSelection(selectedOptions, selected)}>
+                <CrudItem
+                    title={group.label}
+                    inlineComponents={this.renderAddBandButton(group, selected)}
+                    removeConfirmationLabel={msg('button.removeAll')}
+                    removeDisabled={!selectedOptions.length}
+                    onRemove={() => this.removeGroupBands(group, selected)}
+                />
+            </ListItem>
+        )
+    }
+
+    renderBandSelection(selectedOptions, selected) {
+        return (
+            <ButtonGroup>
+                {selectedOptions.length
+                    ? selectedOptions.map(({value, label}) =>
+                        <Button
+                            key={value}
+                            label={label}
+                            size='small'
+                            air='less'
+                            icon='times'
+                            onClick={() => this.removeBand(value, selected)}
+                        />
+                    )
+                    : <NoData message={msg('process.panels.inputImagery.form.noBands')}/>
+                }
+            </ButtonGroup>
+        )
+    }
+
+    renderAddBandButton(group, selected) {
+        const options = group.options.filter(({value}) => !selected.includes(value))
+        const comboOptions = options.length > 1
+            ? [
+                {
+                    key: 'add-all-bands',
+                    value: ADD_ALL_BANDS,
+                    label: msg('process.classification.panel.inputImagery.bandSetSpec.addBands.all.label')
+                },
+                ...options
+            ]
+            : options
+        return (
+            <ButtonPopup
+                shape='circle'
+                chromeless
+                icon='plus'
+                noChevron
+                vPlacement='below'
+                hPlacement='over-left'
+                tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}
+                disabled={!options.length}>
+                {onBlur => (
+                    <Combo
+                        alignment='left'
+                        placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
+                        options={comboOptions}
+                        stayOpenOnSelect
+                        autoOpen
+                        autoFocus
+                        allowClear
+                        onCancel={onBlur}
+                        onChange={({value}) => value === ADD_ALL_BANDS
+                            ? this.addBands(options, selected)
+                            : this.addBands(options.filter(option => option.value === value), selected)}
+                    />
+                )}
+            </ButtonPopup>
         )
     }
 
@@ -164,6 +249,7 @@ class _FunctionSection extends React.Component {
             ? calculations.slice(0, calculationIndex)
             : calculations
         const imageOptions = images.map(image => ({
+            key: image.imageId,
             label: image.name,
             options: image.includedBands.map(band => ({
                 value: this.toUniqueBandId(image.imageId, band.id),
@@ -173,6 +259,7 @@ class _FunctionSection extends React.Component {
         }))
 
         const calculationOptions = availableCalculations.map(calculation => ({
+            key: calculation.imageId,
             label: calculation.name,
             options: calculation.includedBands.map(band => ({
                 value: this.toUniqueBandId(calculation.imageId, band.id),
@@ -201,6 +288,25 @@ class _FunctionSection extends React.Component {
             .filter(({value}) => bandIds.includes(value))
             .map(({band}) => band)
         usedBands.set(bands)
+    }
+
+    addBands(options, selected) {
+        this.updateUsedBands([
+            ...selected,
+            ...options
+                .map(({value}) => value)
+                .filter(value => !selected.includes(value))
+        ])
+    }
+
+    removeBand(value, selected) {
+        this.updateUsedBands(selected.filter(selectedValue => selectedValue !== value))
+    }
+
+    removeGroupBands(group, selected) {
+        const groupBandIds = group.options.map(({value}) => value)
+        const groupBandIdSet = new Set(groupBandIds)
+        this.updateUsedBands(selected.filter(value => !groupBandIdSet.has(value)))
     }
 
     toUniqueBandId(imageId, bandId) {

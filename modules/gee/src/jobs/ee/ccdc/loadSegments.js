@@ -2,7 +2,7 @@ import _ from 'lodash'
 import {map, of, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {toGeometry} from '#sepal/ee/aoi'
+import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
@@ -13,19 +13,22 @@ const worker$ = ({
 }) => {
 
     const aoi = {type: 'POINT', ...latLng}
-    const geometry = toGeometry(aoi)
 
     const segmentsForPixel$ = segments$ =>
-        segments$.pipe(
-            switchMap(segments =>
-                ee.getInfo$(
-                    segments.reduceRegion({
-                        reducer: ee.Reducer.first(),
-                        geometry,
-                        scale: 10,
-                        tileScale: 16
-                    }),
-                    `Get CCDC segments for pixel (${latLng})`
+        toGeometry$(aoi).pipe(
+            switchMap(geometry =>
+                segments$.pipe(
+                    switchMap(segments =>
+                        ee.getInfo$(
+                            segments.reduceRegion({
+                                reducer: ee.Reducer.first(),
+                                geometry,
+                                scale: 10,
+                                tileScale: 16
+                            }),
+                            `Get CCDC segments for pixel (${latLng})`
+                        )
+                    )
                 )
             ),
             map(segments => _.mapValues(segments, value => value || []))

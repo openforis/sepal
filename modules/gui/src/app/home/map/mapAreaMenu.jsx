@@ -22,23 +22,28 @@ import {assetDisplayLabel} from '../body/process/mapLayout/assetLabel'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
-import {reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
+import {resolveAoiStyle, withUpdatedAoiOpacity} from './aoiLayer'
+import {isDataFeatureLayer, isPresentationFeatureLayer, reorderDataLayersByPointer, toDisplayedFeatureLayers, toPersistedDataOrder, withFeatureLayerDisabled, withReorderedDataLayers} from './featureLayerOrder'
 import {resolveFeatureLayerStyle, withUpdatedOpacity} from './featureLayerStyle'
 import styles from './mapAreaMenu.module.css'
-import {overlayToggleTooltipKey} from './overlayToggleTooltip'
 
-// Shared placement for the feature overlay row action cluster (options, opacity, on/off), so their tooltips
-// feel consistent.
+// Shared placement for the feature overlay row action cluster, so its tooltips feel consistent.
 const OVERLAY_ACTION_TOOLTIP_PLACEMENT = 'right'
 
+const isEnabled = ({disabled}) => disabled !== true
+
+// The disabled Labels scrubber still has to satisfy ScrubControl's required onChange without weakening
+// that contract for everyone else.
+const NO_OP = () => {}
+
 class _MapAreaMenuPanel extends React.Component {
-    assetsRef = React.createRef()
-    assetRowRefs = {}
+    overlayListRef = React.createRef()
+    dataRowRefs = {}
     drag$ = new Subject()
     state = {dragging: false}
 
-    // In-list reorder for asset overlays (built-ins are not draggable). ListItem emits drag events on
-    // drag$; we capture each asset row's center at drag start and compute the new order from the pointer,
+    // In-list reorder for the data band (fixed rows are not draggable). ListItem emits drag events on
+    // drag$; we capture each data row's center at drag start and compute the new order from the pointer,
     // persisting on release. No live list preview - ListItem's own drag clone is the feedback.
     componentDidMount() {
         const {addSubscription} = this.props
@@ -55,9 +60,9 @@ class _MapAreaMenuPanel extends React.Component {
             )
         )
         addSubscription(
-            start$.subscribe(({value}) => this.onAssetDragStart(value)),
-            move$.subscribe(({sourceId, coords}) => this.onAssetDragMove(sourceId, coords)),
-            release$.subscribe(() => this.onAssetDragEnd())
+            start$.subscribe(({value}) => this.onDataDragStart(value)),
+            move$.subscribe(({sourceId, coords}) => this.onDataDragMove(sourceId, coords)),
+            release$.subscribe(() => this.onDataDragEnd())
         )
     }
 
@@ -79,7 +84,7 @@ class _MapAreaMenuPanel extends React.Component {
                     <Panel.Content>
                         <Layout>
                             {this.renderImageLayerForm()}
-                            {this.renderOverlays()}
+                            {this.renderFeatureLayers()}
                         </Layout>
                     </Panel.Content>
                     <Keybinding keymap={{'Escape': deactivate}}/>
@@ -104,78 +109,176 @@ class _MapAreaMenuPanel extends React.Component {
         return form
     }
 
-    // Overlay selector: the popup no longer mirrors the map draw order. It groups the fixed built-in overlays
-    // (enable/disable only) first, then the draggable EE table asset overlays as one list at the bottom, so a
-    // built-in like Legend never appears below user-added asset rows. Each group keeps its persisted relative
-    // order; the persisted featureLayers order and map draw order are unchanged.
-    renderOverlays() {
-        const rows = this.overlayRows()
-        if (!rows.length) {
+    renderFeatureLayers() {
+        const rows = this.stackRows()
+        const presentationRow = this.presentationRow()
+        if (!rows.length && !presentationRow) {
             return null
         }
-        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
         return (
-            <Layout type='vertical' spacing='none'>
-                {builtInRows.map(row => this.renderBuiltInOverlay(row))}
-                {this.renderAssetOverlays(assetRows)}
+            <Layout type='vertical' spacing='compact'>
+                {this.renderPresentationToggle(presentationRow)}
+                {this.renderStack(rows)}
             </Layout>
         )
+    }
+
+    // Legend, Palette and Values render over the map rather than in it, and at most one of them exists.
+    // It gets a toggle of its own, detached from the ordered rows so it cannot imply a stacking position,
+    // a handle or settings.
+    renderPresentationToggle(row) {
+        if (!row) {
+            return null
+        }
+        const {featureLayer, source} = row
+        return this.renderVisibilityToggle({
+            label: this.overlayLabel(source),
+            enabled: isEnabled(featureLayer),
+            className: styles.presentationToggle,
+            onToggle: () => this.toggleOverlay(source.id, isEnabled(featureLayer))
+        })
+    }
+
+    // Map order is persisted bottom-to-top; the menu displays top-to-bottom, so its top row is the top
+    // map layer.
+    renderStack(rows) {
+        // A lone data row has nothing to reorder against, so it drops its handle rather than offering a
+        // drag that cannot change anything. Disabled rows still count: their position is persisted and
+        // matters as soon as they are re-enabled.
+        const reorderable = rows.filter(({orderable}) => orderable).length > 1
+        return rows.length
+            ? (
+                <Layout ref={this.overlayListRef} type='vertical' spacing='tight'>
+                    {rows.map(row => row.orderable
+                        ? this.renderDataOverlay(row, reorderable)
+                        : this.renderFixedOverlay(row)
+                    )}
+                </Layout>
+            )
+            : null
+    }
+
+    stackRows() {
+        return this.overlayRows().filter(({source}) => !isPresentationFeatureLayer(source.type))
+    }
+
+    presentationRow() {
+        return this.overlayRows().find(({source}) => isPresentationFeatureLayer(source.type))
     }
 
     overlayRows() {
         const {featureLayerSources, area, layers: {areas}} = this.props
         const featureLayers = (areas[area] && areas[area].featureLayers) || []
-        return featureLayers
+        return toDisplayedFeatureLayers(featureLayers)
             .map(featureLayer => {
                 const source = featureLayerSources.find(({id}) => id === featureLayer.sourceId)
                 return source
-                    ? {featureLayer, source, orderable: source.type === 'EETableAsset'}
+                    ? {featureLayer, source, orderable: isDataFeatureLayer(source.type)}
                     : null
             })
             .filter(Boolean)
     }
 
-    // Non-draggable ListItem: no drag$, so no handle. The builtInOverlay spacer stands in for the asset rows'
-    // (narrowed) drag handle width, so built-in labels line up with draggable asset labels in this panel.
-    renderBuiltInOverlay({featureLayer, source}) {
+    // Non-draggable ListItem: no drag$, so no handle. The fixedOverlay spacer stands in for the data rows'
+    // (narrowed) drag handle width, so fixed labels line up with draggable ones. Fixed does not mean
+    // action-free: labels carries the same cluster, and the row heights depend on it.
+    renderFixedOverlay({featureLayer, source}) {
         return (
-            <ListItem key={source.id} className={styles.overlayRow}>
-                <div className={styles.builtInOverlay}>
-                    {this.renderOverlayItem(featureLayer, source)}
+            <ListItem
+                key={source.id}
+                className={this.rowClassName(featureLayer)}
+                onClick={() => this.toggleOverlay(source.id, isEnabled(featureLayer))}>
+                <div className={styles.fixedOverlay}>
+                    {this.renderOverlayItem(featureLayer, source, this.renderRowActions(featureLayer, source))}
                 </div>
             </ListItem>
         )
     }
 
-    renderAssetOverlays(assets) {
-        if (!assets.length) {
-            return null
-        }
+    // The aoi and the asset overlays form one draggable band and share the same action cluster. They drag
+    // only from the handle and toggle from anywhere else in the row. Without a handle the markup is
+    // unchanged apart from the handle itself, so a spacer keeps the label aligned.
+    renderDataOverlay({featureLayer, source}, reorderable) {
+        const dragProps = reorderable
+            ? {drag$: this.drag$, dragAxis: 'vertical', dragTarget: 'handle', dragValue: source.id}
+            : {}
         return (
-            <div ref={this.assetsRef}>
-                {assets.map(row => this.renderAssetOverlay(row))}
-            </div>
-        )
-    }
-
-    // Draggable ListItem: drag$/dragValue render the standard ListItem handle inside the row. Row actions are
-    // the Layer options button then the compact opacity scrub control (CrudItem renders the on/off checkbox
-    // after these), so the order reads options -> opacity -> on/off. Detailed style controls live in the modal.
-    renderAssetOverlay({featureLayer, source}) {
-        return (
-            <div key={source.id} ref={element => this.setAssetRowRef(source.id, element)}>
-                <ListItem drag$={this.drag$} dragValue={source.id} className={`${styles.overlayRow} ${styles.assetOverlayRow}`}>
-                    {this.renderOverlayItem(featureLayer, source, [
-                        this.renderOptionsButton(source),
-                        this.renderOpacityControl(featureLayer, source)
-                    ])}
+            <div key={source.id} ref={element => this.setDataRowRef(source.id, element)}>
+                <ListItem
+                    {...dragProps}
+                    className={this.rowClassName(
+                        featureLayer,
+                        styles.dataOverlayRow,
+                        reorderable ? styles.draggableRow : styles.staticRow
+                    )}
+                    onClick={() => this.toggleOverlay(source.id, isEnabled(featureLayer))}>
+                    {this.renderOverlayItem(featureLayer, source, this.renderRowActions(featureLayer, source))}
                 </ListItem>
             </div>
         )
     }
 
+    rowClassName(featureLayer, ...rowStyles) {
+        return [styles.overlayRow, ...rowStyles, isEnabled(featureLayer) ? null : styles.overlayDisabled]
+            .filter(Boolean)
+            .join(' ')
+    }
+
+    // Row actions are a per-type capability of this menu. Aoi and asset rows own the layer they render, so
+    // their scrubber is live. Labels renders through a Google StyledMapType, which exposes no opacity
+    // control, so its scrubber is present for row symmetry but fixed and inert. Scene areas and reference
+    // data have no actions yet.
+    renderRowActions(featureLayer, source) {
+        switch (source.type) {
+            case 'Aoi':
+            case 'EETableAsset':
+                return [this.renderOptionsButton(source), this.renderOpacityControl(featureLayer, source)]
+            case 'Labels':
+                return [this.renderOptionsButton(source), this.renderFixedOpacityControl()]
+            default:
+                return null
+        }
+    }
+
+    // Deliberately routed around resolveRowOpacity/styleWithOpacity: labels has no persisted opacity, and
+    // this control neither previews, dispatches nor writes.
+    renderFixedOpacityControl() {
+        return (
+            <ScrubControl
+                key='opacity'
+                value={1}
+                disabled
+                formatValue={value => Math.round(value * 100)}
+                tooltip={msg('map.labelsLayerStyle.opacity.fixed')}
+                tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
+                onChange={NO_OP}
+            />
+        )
+    }
+
+    resolveRowOpacity(featureLayer, source) {
+        return source.type === 'Aoi'
+            ? resolveAoiStyle(featureLayer.layerConfig).opacity
+            : resolveFeatureLayerStyle({layerConfig: featureLayer.layerConfig, source}).opacity
+    }
+
+    styleWithOpacity(featureLayer, source, opacity) {
+        return source.type === 'Aoi'
+            ? withUpdatedAoiOpacity(featureLayer.layerConfig, opacity)
+            : withUpdatedOpacity({layerConfig: featureLayer.layerConfig, source, opacity})
+    }
+
+    optionsActivatable(source) {
+        const {activator: {activatables}} = this.props
+        switch (source.type) {
+            case 'Aoi': return activatables.aoiLayerOptions
+            case 'Labels': return activatables.labelsLayerOptions
+            default: return activatables.featureLayerOptions
+        }
+    }
+
     renderOpacityControl(featureLayer, source) {
-        const {opacity} = resolveFeatureLayerStyle({layerConfig: featureLayer.layerConfig, source})
+        const opacity = this.resolveRowOpacity(featureLayer, source)
         // Generic scrub control configured for 0..1 layer opacity: bare 0-100 row text and a 0<->100 toggle
         // (the ScrubControl min/max default). Preview restyles the live tiles; change persists style.opacity.
         return (
@@ -203,17 +306,38 @@ class _MapAreaMenuPanel extends React.Component {
         const label = this.overlayLabel(source)
         return (
             <CrudItem
-                title={label}
+                title={this.renderVisibilityToggle({
+                    label,
+                    enabled: isEnabled(featureLayer),
+                    className: styles.overlayLabelButton,
+                    onToggle: () => this.toggleOverlay(source.id, isEnabled(featureLayer))
+                })}
                 titleClassName={styles.overlayTitle}
                 titleTooltip={label}
                 titleTooltipDisabled={this.state.dragging}
                 titleTooltipPlacement='top'
-                selected={featureLayer.disabled !== true}
-                selectTooltip={msg(overlayToggleTooltipKey(featureLayer))}
                 tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
-                onSelect={enabled => this.toggleOverlay(source.id, enabled)}
                 inlineComponents={inlineComponents}
             />
+        )
+    }
+
+    // The visibility control, map-local on purpose: the shared ListItem cannot become a button because
+    // these rows contain nested buttons. A real button gives keyboard operation and an announced on/off
+    // state; the rest of the row stays pointer-clickable through ListItem's own onClick, so the click has
+    // to stop here rather than toggling a second time on the way out.
+    renderVisibilityToggle({label, enabled, className, onToggle}) {
+        return (
+            <button
+                type='button'
+                className={className}
+                aria-pressed={enabled}
+                onClick={e => {
+                    e.stopPropagation()
+                    onToggle()
+                }}>
+                {label}
+            </button>
         )
     }
 
@@ -239,8 +363,8 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     openOptions(source) {
-        const {activatable: {deactivate}, activator: {activatables: {featureLayerOptions}}} = this.props
-        featureLayerOptions.activate({source})
+        const {activatable: {deactivate}} = this.props
+        this.optionsActivatable(source).activate({source})
         deactivate()
     }
 
@@ -250,86 +374,88 @@ class _MapAreaMenuPanel extends React.Component {
         actionBuilder('TOGGLE_FEATURE_LAYER', {sourceId, area})
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
-                withFeatureLayerDisabled(featureLayers, sourceId, !enabled)
+                withFeatureLayerDisabled(featureLayers, sourceId, enabled)
             )
             .dispatch()
     }
 
     // Persist a row-level opacity change (committed once on pointer release, not per move). Writes the full
     // resolved style with the new opacity so other style fields are preserved, matching how the options modal
-    // persists. EETableAsset opacity is applied client-side by the map layer, so this doesn't refetch tiles.
+    // persists. Both tile-backed data layers apply opacity client-side, so this doesn't refetch tiles.
     setOverlayOpacity(featureLayer, source, opacity) {
         const {recipeId, area} = this.props
         actionBuilder('SET_FEATURE_LAYER_OPACITY', {sourceId: source.id, area})
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId: source.id}, 'layerConfig.style'],
-                withUpdatedOpacity({layerConfig: featureLayer.layerConfig, source, opacity})
+                this.styleWithOpacity(featureLayer, source, opacity)
             )
             .dispatch()
     }
 
-    setAssetRowRef(sourceId, element) {
+    setDataRowRef(sourceId, element) {
         if (element) {
-            this.assetRowRefs[sourceId] = element
+            this.dataRowRefs[sourceId] = element
         } else {
-            delete this.assetRowRefs[sourceId]
+            delete this.dataRowRefs[sourceId]
         }
     }
 
-    onAssetDragStart(draggedId) {
+    onDataDragStart(draggedId) {
         this.draggedId = draggedId
-        this.dragStartOrder = this.assetOrder()
+        this.dragStartOrder = this.dataOrder()
         this.pendingOrder = this.dragStartOrder
-        this.assetCenters = this.measureAssetCenters()
-        this.listRect = this.assetsRef.current?.getBoundingClientRect()
+        this.dataRowCenters = this.measureDataRowCenters()
+        // Bounds deliberately span the whole overlay list, not just the data band: dragging over a fixed
+        // row still counts as inside, and reorderDataLayersByPointer clamps to the band.
+        this.listRect = this.overlayListRef.current?.getBoundingClientRect()
         // Suppress the label tooltip while dragging so it can't linger over the moving row.
         this.setState({dragging: true})
     }
 
-    onAssetDragMove(draggedId, coords) {
+    onDataDragMove(draggedId, coords) {
         if (this.draggedId !== draggedId) {
             return
         }
         const inside = this.listRect && coords.y >= this.listRect.top && coords.y <= this.listRect.bottom
-        this.pendingOrder = reorderAssetsByPointer({
-            assetIds: this.dragStartOrder,
+        this.pendingOrder = reorderDataLayersByPointer({
+            dataIds: this.dragStartOrder,
             draggedId,
             pointerY: inside ? coords.y : null,
-            centers: this.assetCenters
+            centers: this.dataRowCenters
         })
     }
 
-    onAssetDragEnd() {
+    onDataDragEnd() {
         this.setState({dragging: false})
         if (this.draggedId == null) {
             return
         }
         const {pendingOrder, dragStartOrder} = this
-        this.draggedId = this.assetCenters = this.listRect = null
+        this.draggedId = this.dataRowCenters = this.listRect = null
         if (pendingOrder.join('\0') !== dragStartOrder.join('\0')) {
-            this.persistAssetOrder(pendingOrder)
+            this.persistDataOrder(pendingOrder)
         }
     }
 
-    persistAssetOrder(orderedAssetIds) {
+    persistDataOrder(orderedDataIds) {
         const {recipeId, area, featureLayerSources, layers: {areas}} = this.props
         const featureLayers = (areas[area] && areas[area].featureLayers) || []
-        const assetSourceIds = featureLayerSources.filter(({type}) => type === 'EETableAsset').map(({id}) => id)
+        const dataSourceIds = featureLayerSources.filter(({type}) => isDataFeatureLayer(type)).map(({id}) => id)
         actionBuilder('REORDER_FEATURE_LAYERS', {area})
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
-                withReorderedAssets(featureLayers, assetSourceIds, orderedAssetIds)
+                withReorderedDataLayers(featureLayers, dataSourceIds, toPersistedDataOrder(orderedDataIds))
             )
             .dispatch()
     }
 
-    assetOrder() {
-        return this.overlayRows().filter(({orderable}) => orderable).map(({source}) => source.id)
+    dataOrder() {
+        return this.stackRows().filter(({orderable}) => orderable).map(({source}) => source.id)
     }
 
-    measureAssetCenters() {
+    measureDataRowCenters() {
         const centers = {}
-        Object.entries(this.assetRowRefs).forEach(([sourceId, element]) => {
+        Object.entries(this.dataRowRefs).forEach(([sourceId, element]) => {
             const {top, bottom} = element.getBoundingClientRect()
             centers[sourceId] = (top + bottom) / 2
         })
@@ -347,7 +473,9 @@ const MapAreaMenuPanel = compose(
     withRecipe(recipe => ({recipe})),
     withSubscriptions(),
     withActivators({
-        featureLayerOptions: ({area}) => `featureLayerOptions-${area}`
+        aoiLayerOptions: ({area}) => `aoiLayerOptions-${area}`,
+        featureLayerOptions: ({area}) => `featureLayerOptions-${area}`,
+        labelsLayerOptions: ({area}) => `labelsLayerOptions-${area}`
     }),
     withActivatable({
         id: ({area}) => `mapAreaMenu-${area}`,

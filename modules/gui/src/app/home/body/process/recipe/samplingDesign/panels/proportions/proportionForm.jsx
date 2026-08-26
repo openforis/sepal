@@ -20,7 +20,7 @@ const fields = {
 
 class _ProportionForm extends React.Component {
     render() {
-        const {entry: {label, color}, inputs: {proportion}} = this.props
+        const {presentation: {label, color}, inputs: {proportion}} = this.props
         return (
             <div className={styles.row}>
                 <ColorElement color={color}/>

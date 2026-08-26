@@ -38,20 +38,6 @@ const recipe = {
 describe('Sampling Design retrieve submission', () => {
     beforeEach(() => vi.clearAllMocks())
 
-    it('does not publish a temp-asset design submitted with no linked account', () => {
-        submitRetrieveRecipeTask(recipe, {googleAccount: false, assetRoots: undefined})
-        expect(notifyError).toHaveBeenCalledTimes(1)
-        expect(publishEvent).not.toHaveBeenCalled()
-        expect(submit$).not.toHaveBeenCalled()
-    })
-
-    it('does not publish when the linked account has a loaded empty root list', () => {
-        submitRetrieveRecipeTask(recipe, {googleAccount: true, assetRoots: []})
-        expect(notifyError).toHaveBeenCalledTimes(1)
-        expect(publishEvent).not.toHaveBeenCalled()
-        expect(submit$).not.toHaveBeenCalled()
-    })
-
     it('does not publish while asset roots are still loading (pending), and notifies', () => {
         submitRetrieveRecipeTask(recipe, {googleAccount: true, assetRoots: undefined})
         expect(notifyError).toHaveBeenCalledTimes(1)

@@ -2,7 +2,6 @@ import {calculateMarginOfError} from './marginOfError'
 import {calculateSampleSize} from './sampleSize'
 
 const common = {
-    relativeMarginOfError: true,
     strategy: 'EQUAL',
     minSamplesPerStratum: 10,
     tuningConstant: 0.5,

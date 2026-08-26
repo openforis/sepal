@@ -28,7 +28,7 @@
 
 /* Map-area overlay rows only: tighten the label's left inset. These reach into ListItem's internal row
    markup by structure (the module-scoped class names aren't visible here): the outer .overlayRow element
-   contains .horizontalWrapper > .main, and .main's first child is the drag handle (asset rows) or content.
+   contains .horizontalWrapper > .main, and .main's first child is the drag handle (data rows) or content.
    Keep in sync if ListItem's row markup changes. Nothing outside this panel is affected.
 
    1) Remove .main's left padding so the handle/label sits flush to the row's inner edge. */
@@ -36,56 +36,68 @@
     padding-left: 0;
 }
 
+.overlayDisabled {
+    opacity: .55;
+}
+
 /* 2) Narrow the drag handle (its width sets where the label starts) and its grip glyph. The glyph is kept
       narrower than the handle so a small gap remains between the grip dots and the label; the glyph is
-      absolutely positioned to .main, so it's pinned left and sized independently. */
-.assetOverlayRow > div > div:first-child > :first-child {
+      absolutely positioned to .main, so it's pinned left and sized independently. Scoped to rows that
+      actually have a handle: without one, .main's first element child is the content. */
+.draggableRow > div > div:first-child > :first-child {
     width: 1.1rem;
 }
 
-.assetOverlayRow > div > div:first-child > :first-child::before {
+.draggableRow > div > div:first-child > :first-child::before {
     width: .6rem;
     left: 0;
 }
 
-/* Let the asset label yield space to the fixed-width row actions. Every wrapper between ListItem and CrudItem
+/* A data row that is alone in its band has no handle. Stand in for its width on .main itself, so the
+   label starts where a handled row's label does and the markup is otherwise identical. */
+.staticRow > div > div:first-child::before {
+    content: '';
+    flex: 0 0 1.1rem;
+}
+
+/* Let the row label yield space to the fixed-width row actions. Every wrapper between ListItem and CrudItem
    participates in a flex layout; without an explicit zero minimum, a long asset name contributes its full
-   min-content width and pushes the options, opacity and visibility controls outside the panel. */
-.assetOverlayRow,
-.assetOverlayRow > div,
-.assetOverlayRow > div > div:first-child,
-.assetOverlayRow > div > div:first-child > :last-child,
-.assetOverlayRow > div > div:first-child > :last-child > *,
-.assetOverlayRow > div > div:first-child > :last-child > * > :first-child {
+   min-content width and pushes the options and opacity controls outside the panel. */
+.dataOverlayRow,
+.dataOverlayRow > div,
+.dataOverlayRow > div > div:first-child,
+.dataOverlayRow > div > div:first-child > :last-child,
+.dataOverlayRow > div > div:first-child > :last-child > *,
+.dataOverlayRow > div > div:first-child > :last-child > * > :first-child {
     min-width: 0;
 }
 
-.assetOverlayRow {
+.dataOverlayRow {
     width: 100%;
 }
 
 /* CrudItem's info block otherwise derives its flex basis from the full title. Give it a zero basis so it grows
-   only into the space left after the row actions, keeping the final visibility checkbox inside the panel. */
-.assetOverlayRow > div > div:first-child > :last-child > * > :first-child > :first-child {
+   only into the space left after the row actions. */
+.dataOverlayRow > div > div:first-child > :last-child > * > :first-child > :first-child {
     flex-basis: 0;
     width: 0;
 }
 
-/* Non-draggable built-in overlay rows: a leading spacer matching the asset rows' narrowed 1.1rem handle
-   width, so built-in labels line up with the labels of draggable asset rows in this panel. */
-.builtInOverlay {
+/* Non-draggable fixed overlay rows: a leading spacer matching the data rows' narrowed 1.1rem handle
+   width, so fixed labels line up with the labels of draggable data rows in this panel. */
+.fixedOverlay {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
     min-width: 0;
 }
 
-.builtInOverlay::before {
+.fixedOverlay::before {
     content: '';
     flex: 0 0 1.1rem;
 }
 
-.builtInOverlay > * {
+.fixedOverlay > * {
     flex-grow: 1;
     min-width: 0;
 }
@@ -99,4 +111,59 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     pointer-events: auto;
+}
+
+/* The row's visibility control replaced the checkbox, so it carries both the label and the keyboard
+   affordance. It fills the title slot, which is why the ellipsis has to be repeated here. */
+.overlayLabelButton {
+    appearance: none;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* Legend, Palette and Values render over the map rather than in it. One detached toggle, deliberately
+   unlike a stack row: no handle spacer, no row actions, no position in the list. */
+.presentationToggle {
+    appearance: none;
+    align-self: flex-start;
+    margin: 0;
+    padding: .1rem .6rem;
+    font: inherit;
+    font-size: .85rem;
+    color: inherit;
+    cursor: pointer;
+    border: 1px solid hsla(0, 0%, 100%, .25);
+    border-radius: 1rem;
+    background-color: transparent;
+}
+
+.presentationToggle[aria-pressed='false'] {
+    opacity: .6;
+}
+
+.presentationToggle[aria-pressed='true'] {
+    border-color: hsla(0, 0%, 100%, .5);
+    background-color: hsla(0, 0%, 100%, .18);
+}
+
+.presentationToggle:hover {
+    background-color: hsla(0, 0%, 100%, .12);
+}
+
+/* Drawn inside the box: app.css resets outline globally with !important, and both buttons sit inside
+   overflow-hidden containers that would clip anything painted outward. */
+.overlayLabelButton:focus-visible,
+.presentationToggle:focus-visible {
+    box-shadow: inset 0 0 0 1px hsla(0, 0%, 100%, .7);
 }

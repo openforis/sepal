@@ -32,34 +32,69 @@ describe('modelToValues', () => {
         expect(modelToValues({...savedModel, eeStrategy: 'BATCH'}).eeStrategy).toBe('BATCH')
     })
 
-    it('keeps scale as-is (no numeric/string coercion that would mismatch the model)', () => {
-        expect(modelToValues({...savedModel, scale: 30}).scale).toBe(30)
-    })
-
-    it('defaults an absent stratification CRS to EPSG:6933, carrying an explicit choice through', () => {
-        expect(modelToValues({...savedModel, crs: undefined}).crs).toBe('EPSG:6933')
-        expect(modelToValues({...savedModel, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
-    })
-})
-
-describe('valuesToModel', () => {
-    it('parses scale to a number for both numeric and string form values', () => {
-        expect(valuesToModel({scale: 30}).scale).toBe(30)
-        expect(valuesToModel({scale: '30'}).scale).toBe(30)
-    })
-
-    it('persists the selected stratification CRS, defaulting to EPSG:6933', () => {
-        expect(valuesToModel({scale: 30, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
-        expect(valuesToModel({scale: 30}).crs).toBe('EPSG:6933')
-    })
-
     it('does not carry the transient requiresUpdate flag into the model', () => {
         expect('requiresUpdate' in valuesToModel({...savedModel, requiresUpdate: true})).toBe(false)
     })
 })
 
-describe('round trip', () => {
-    it('valuesToModel(modelToValues(savedModel)) preserves the canonical saved model shape', () => {
+// The visible CRS and Scale fields ARE the grid. There are no hidden resolved fields and no transform: whether
+// the design ends up on the source's own pixel grid is decided inside Earth Engine, from the selected band's
+// projection, so nothing about alignment is persisted.
+describe('persists the visible CRS and metre Scale as the complete Stratification grid', () => {
+    it('takes the grid from the visible fields', () => {
+        expect(valuesToModel({...savedModel, crs: 'EPSG:32633', scale: 10}))
+            .toMatchObject({crs: 'EPSG:32633', scale: 10})
+    })
+
+    it('parses a typed Scale to a number, keeping fractions', () => {
+        expect(valuesToModel({...savedModel, scale: '30'}).scale).toBe(30)
+        expect(valuesToModel({...savedModel, scale: '9.9763'}).scale).toBe(9.9763)
+    })
+
+    it('shows a saved grid in the visible fields on reopen', () => {
+        const values = modelToValues({...savedModel, crs: 'EPSG:32633', scale: 10})
+        expect(values.crs).toBe('EPSG:32633')
+        expect(values.scale).toBe(10)
+    })
+
+    it('carries the grid in those two fields and no others', () => {
+        const model = valuesToModel({...savedModel, crs: 'EPSG:32633', scale: 10})
+        expect(Object.keys(model).filter(key => /crs|scale|grid/i.test(key)).sort()).toEqual(['crs', 'scale'])
+        const values = modelToValues(savedModel)
+        expect(Object.keys(values).filter(key => /crs|scale|grid/i.test(key)).sort()).toEqual(['crs', 'scale'])
+    })
+
+    // The visible fields are overrides, so what a blank one resolves to is what gets stored. The source values
+    // the panel resolved against are form state and must not reach the recipe.
+    it('consolidates a cleared field into the source value it resolves to', () => {
+        expect(valuesToModel({...savedModel, crs: '', scale: '', sourceCrs: 'EPSG:32633', sourceScale: 10}))
+            .toMatchObject({crs: 'EPSG:32633', scale: 10})
+    })
+
+    it('keeps an entered override over the source value', () => {
+        expect(valuesToModel({...savedModel, crs: 'EPSG:6933', scale: '30', sourceCrs: 'EPSG:32633', sourceScale: 10}))
+            .toMatchObject({crs: 'EPSG:6933', scale: 30})
+    })
+
+    it('resolves to the recipe default when neither is available', () => {
+        expect(valuesToModel({...savedModel, crs: '', scale: ''}))
+            .toMatchObject({crs: 'EPSG:4326', scale: 30})
+    })
+
+    it('never persists the transient source fields', () => {
+        const model = valuesToModel({...savedModel, crs: '', scale: '', sourceCrs: 'EPSG:32633', sourceScale: 10})
+        expect('sourceCrs' in model).toBe(false)
+        expect('sourceScale' in model).toBe(false)
+    })
+
+    // Blank means "use the default" while the panel is open; it is not a mode, so reopening shows the value
+    // that was stored rather than an empty field.
+    it('does not carry blank override intent back into the form', () => {
+        expect(modelToValues({...savedModel, crs: 'EPSG:32633', scale: 10}))
+            .toMatchObject({crs: 'EPSG:32633', scale: 10})
+    })
+
+    it('round trips the canonical saved model unchanged', () => {
         expect(valuesToModel(modelToValues(savedModel))).toEqual(savedModel)
     })
 })

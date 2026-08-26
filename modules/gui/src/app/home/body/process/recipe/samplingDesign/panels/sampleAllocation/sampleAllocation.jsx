@@ -19,14 +19,14 @@ import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {allocate} from '../../sampling/allocate'
-import {calculateBounds} from '../../sampling/confidenceInterval'
-import {boundsToMarginOfError, calculateMarginOfError} from '../../sampling/marginOfError'
-import {isValidConfidenceLevel, isValidPowerTuningConstant} from '../../sampling/numericRanges'
-import {calculateSampleSize} from '../../sampling/sampleSize'
+import {allocationOutcome, effectiveAllocationStrategy, isPositiveIntegerSampleSize, marginOfErrorFor, reconcileManualAllocation} from '../../sampling/allocationOutcome'
+import {readsProportions} from '../../sampling/allocationStrategy'
+import {getDefaultSampleAllocation} from '../../sampling/defaultModel'
+import {allocationStrata, orderedStratumKeys, stratumKey} from '../../sampling/designModel'
+import {isValidConfidenceLevel, isValidMarginOfError, isValidPowerTuningConstant} from '../../sampling/numericRanges'
 import {AllocationTable} from './allocationTable'
 import styles from './sampleAllocation.module.css'
-import {isPositiveIntegerSampleSize, shouldDeferFixedSampleSizeAllocation} from './sampleAllocationState'
+import {shouldDeferFixedSampleSizeAllocation} from './sampleAllocationState'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -53,10 +53,11 @@ const fields = {
         .int(),
     marginOfError: new Form.Field()
         .skip((_marginOfError, {manual, estimateSampleSize}) => manual.length || !estimateSampleSize)
+        // The first failing predicate supplies the message, so notBlank and number stay to name those two
+        // cases; what the field will actually accept is the same rule that decides the target is missing.
         .notBlank()
-        .greaterThan(0)
-        .number(),
-    relativeMarginOfError: new Form.Field(),
+        .number()
+        .predicate(isValidMarginOfError, 'fieldValidation.greaterThan', () => ({minValue: 0})),
     allocationStrategy: new Form.Field(),
     minSamplesPerStratum: new Form.Field()
         .skip((_minSamplesPerStratum, {manual, allocationStrategy}) => !usesConfiguredMinSamplesPerStratum({allocationStrategy, manual}))
@@ -71,6 +72,14 @@ const fields = {
             'process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.range'),
     allocation: new Form.Field()
         .notBlank()
+}
+
+// A saved 0 is a value, not a blank: `value || set(default)` would replace a valid zero power-tuning
+// constant with the default every time the panel opened.
+const defaultIfAbsent = (input, value) => {
+    if (input.value == null || input.value === '') {
+        input.set(value)
+    }
 }
 
 // Strategies without a configurable minimum still floor at the statistical minimum; the rest raise it to the
@@ -106,7 +115,7 @@ const allOutcomesFinite = ({manual, estimateSampleSize, allocation, sampleSize, 
 }
 
 const constraints = {
-    noNaN: new Form.Constraint(['manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'relativeMarginOfError', 'allocationStrategy', 'allocation'])
+    noNaN: new Form.Constraint(['manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'allocationStrategy', 'allocation'])
         .predicate(allOutcomesFinite,
             'process.samplingDesign.panel.sampleAllocation.form.allocation.tooBig'
         ),
@@ -271,39 +280,19 @@ class _SampleAllocation extends React.Component {
 
     renderAllocationStrategy() {
         const {noProportions, inputs: {allocationStrategy}} = this.props
+        // Order and wording are this panel's; whether an option can run is not. A strategy that reads
+        // anticipated proportions has nothing to read in a design without them.
+        const options = ['PROPORTIONAL', 'EQUAL', 'BALANCED', 'OPTIMAL', 'POWER'].map(value => ({
+            value,
+            label: msg(`process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.${value}.label`),
+            tooltip: msg(`process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.${value}.tooltip`),
+            disabled: noProportions && readsProportions(value)
+        }))
         return (
             <Form.Buttons
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.label')}
                 input={allocationStrategy}
-                options={[
-                    {
-                        value: 'PROPORTIONAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.PROPORTIONAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.PROPORTIONAL.tooltip'),
-                    },
-                    {
-                        value: 'EQUAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.EQUAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.EQUAL.tooltip'),
-                    },
-                    {
-                        value: 'BALANCED',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.tooltip'),
-                    },
-                    {
-                        value: 'OPTIMAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.tooltip'),
-                        disabled: noProportions
-                    },
-                    {
-                        value: 'POWER',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.tooltip'),
-                        disabled: noProportions
-                    },
-                ]}
+                options={options}
             />
         )
     }
@@ -338,7 +327,7 @@ class _SampleAllocation extends React.Component {
     }
 
     renderAllocation() {
-        const {noProportions, inputs: {allocation, marginOfError, relativeMarginOfError}} = this.props
+        const {noProportions, inputs: {allocation, marginOfError}} = this.props
         const sampleSize = allocation.value
             ? _.sum(allocation.value.map(({sampleSize}) => parseInt(sampleSize)))
             : 0
@@ -348,9 +337,9 @@ class _SampleAllocation extends React.Component {
                 {allocation.value
                     ? <AllocationTable
                         allocation={allocation}
+                        strata={this.joinedStrata()}
                         sampleSize={sampleSize}
                         marginOfError={marginOfError.value}
-                        relativeMarginOfError={relativeMarginOfError.value}
                         manual={this.isManual()}
                         noProportions={noProportions}
                         onChange={() => setImmediate(this.updateMarginOfError)}
@@ -365,7 +354,10 @@ class _SampleAllocation extends React.Component {
     }
 
     componentDidMount() {
-        const {strata, noProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, relativeMarginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
+        const {strata, noProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
+        // A recipe saved before a default existed opens on the same defaults a new one starts with, taken
+        // from their single owner rather than decided again here.
+        const defaults = getDefaultSampleAllocation()
         requiresUpdate.set(false)
         if (strata.length === 1) {
             manual.set([true])
@@ -377,37 +369,34 @@ class _SampleAllocation extends React.Component {
         if (noProportions) {
             estimateSampleSize.set(false)
         } else {
-            estimateSampleSize.value || estimateSampleSize.set(false)
+            defaultIfAbsent(estimateSampleSize, defaults.estimateSampleSize)
         }
-        confidenceLevel.value || confidenceLevel.set(95)
+        defaultIfAbsent(confidenceLevel, defaults.confidenceLevel)
         // Clear any stale margin of error up front when proportions are skipped (not only after a row
         // edit); there is no margin of error to display or validate without proportions.
         if (noProportions) {
             marginOfError.set(null)
         } else {
-            marginOfError.value || marginOfError.set(50)
+            defaultIfAbsent(marginOfError, defaults.marginOfError)
         }
-        // Default to relative only when unset; a saved explicit `false` (absolute) must be preserved.
-        if (relativeMarginOfError.value === '' || relativeMarginOfError.value == null) {
-            relativeMarginOfError.set(true)
-        }
-        // With proportions, variance-aware OPTIMAL is the sensible default; without, only the
-        // proportion-free strategies are valid.
-        if (this.hasProportions()) {
-            allocationStrategy.value || allocationStrategy.set('OPTIMAL')
-        } else {
-            ['EQUAL', 'PROPORTIONAL', 'BALANCED'].includes(allocationStrategy.value) || allocationStrategy.set('BALANCED')
-        }
-        minSamplesPerStratum.value || minSamplesPerStratum.set(String(MIN_SAMPLES_PER_STRATUM))
-        allocationStrategy.value || allocationStrategy.set('EQUAL')
-        powerTuningConstant.value || powerTuningConstant.set('0.5')
+        // One strategy decision, not a second opinion: keep what the recipe saved, fall back to the shared
+        // default, and replace a strategy this design has no proportions to run.
+        // Applicability, not whether rows exist yet: a variance strategy belongs to a design that uses
+        // proportions, and rows still being calculated must not change what the user chose.
+        const strategy = effectiveAllocationStrategy({
+            allocationStrategy: allocationStrategy.value,
+            proportionsApplicable: !noProportions,
+            defaultStrategy: defaults.allocationStrategy
+        })
+        strategy === allocationStrategy.value || allocationStrategy.set(strategy)
+        defaultIfAbsent(minSamplesPerStratum, defaults.minSamplesPerStratum)
+        defaultIfAbsent(powerTuningConstant, defaults.powerTuningConstant)
 
-        const expectedStrata = strata.map(({value}) => value)
-        const actualStrata = allocation.value
-            ? allocation.value?.map(({stratum}) => stratum)
-            : null
-        if (!_.isEqual(expectedStrata, actualStrata)) {
-            allocation.set(this.allocationStrata())
+        // Reconciled rather than rebuilt: a manual count the user already entered survives reopening the
+        // panel after the strata changed underneath it.
+        const stratumKeys = orderedStratumKeys(this.designModel())
+        if (!_.isEqual(stratumKeys, allocation.value?.map(stratumKey) || null)) {
+            allocation.set(reconcileManualAllocation({allocation: allocation.value, stratumKeys}))
         }
         setImmediate(() => this.allocate())
     }
@@ -421,7 +410,8 @@ class _SampleAllocation extends React.Component {
     onManualToggled(manual) {
         const {inputs: {allocation}} = this.props
         if (manual) {
-            const updatedAllocation = allocation.value.map(entry => ({...entry, sampleSize: entry.sampleSize || MIN_SAMPLES_PER_STRATUM}))
+            const updatedAllocation = allocation.value.map(entry =>
+                ({stratum: stratumKey(entry), sampleSize: entry.sampleSize || MIN_SAMPLES_PER_STRATUM}))
             allocation.set(updatedAllocation)
             setImmediate(() => this.updateMarginOfError())
         } else {
@@ -433,100 +423,50 @@ class _SampleAllocation extends React.Component {
         this.setState({sampleSizeBlurred: true})
     }
 
+    // Null without proportions: there is no overall proportion for the margin to be relative to, so it
+    // neither displays nor affects validity.
     updateMarginOfError() {
-        const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
-        if (!this.hasProportions()) {
-            // No proportions: there is no margin of error to derive (rows carry no `proportion`). Clear it
-            // so it neither displays nor affects validity, and never call calculateBounds here.
-            marginOfError.set(null)
-            return
-        }
-        const bounds = calculateBounds({
-            confidenceLevel: confidenceLevel.value / 100,
-            allocation: allocation.value.map(entry => ({...entry, sampleSize: parseInt(entry.sampleSize)}))
-        })
-        const calculatedMarginOfError = boundsToMarginOfError({bounds, relative: relativeMarginOfError.value})
-        const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
-        marginOfError.set(updatedMarginOfError)
+        const {inputs: {marginOfError}} = this.props
+        marginOfError.set(marginOfErrorFor(this.designModel()))
     }
         
+    // Manual counts are the user's and are never recalculated - but the uncertainty they imply reads the
+    // weights and proportions those counts were entered against, so opening a stale panel refreshes the
+    // displayed margin without touching a single answer.
     allocate() {
-        const {inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
         if (this.isManual()) {
+            this.updateMarginOfError()
             return
         }
-        const hasProportions = this.hasProportions()
-        const strata = this.allocationStrata()
-        const minSamples = effectiveMinSamplesPerStratum({
-            allocationStrategy: allocationStrategy.value,
-            minSamplesPerStratum: minSamplesPerStratum.value
-        })
-        const updateAllocation = sampleSize => {
-            const calculatedAllocation = allocate({
-                sampleSize: parseInt(sampleSize),
-                strategy: allocationStrategy.value,
-                minSamplesPerStratum: minSamples,
-                strata,
-                tuningConstant: parseFloat(powerTuningConstant.value)
-            })
-            allocation.set(calculatedAllocation)
+        const {inputs: {allocation, sampleSize, marginOfError}} = this.props
+        const outcome = allocationOutcome(this.designModel())
+        allocation.set(outcome.allocation)
+        if ('sampleSize' in outcome) {
+            sampleSize.set(outcome.sampleSize)
         }
-        if (estimateSampleSize.value && hasProportions) {
-            const calculatedSampleSize = calculateSampleSize({
-                marginOfError: relativeMarginOfError.value ? parseFloat(marginOfError.value) / 100 : parseFloat(marginOfError.value),
-                relativeMarginOfError: relativeMarginOfError.value,
-                strategy: allocationStrategy.value,
-                minSamplesPerStratum: minSamples,
-                strata,
-                tuningConstant: parseFloat(powerTuningConstant.value),
-                confidenceLevel: parseFloat(confidenceLevel.value) / 100
-            })
-            sampleSize.set(calculatedSampleSize)
-            updateAllocation(calculatedSampleSize)
-        } else {
-            if (!isPositiveIntegerSampleSize(sampleSize.value)) {
-                allocation.set(strata)
-                marginOfError.set(null)
-            } else if (sampleSize.value < minSamples * allocation.value.length) {
-                const undefinedAllocation = allocation.value.map(stratum => ({
-                    ...stratum,
-                    sampleSize: NaN
-                }))
-                allocation.set(undefinedAllocation)
-                marginOfError.set(null)
-            } else if (hasProportions) {
-                const calculatedMarginOfError = calculateMarginOfError({
-                    sampleSize: parseInt(sampleSize.value),
-                    relativeMarginOfError: relativeMarginOfError.value,
-                    confidenceLevel: parseFloat(confidenceLevel.value) / 100,
-                    strategy: allocationStrategy.value,
-                    minSamplesPerStratum: minSamples,
-                    strata,
-                    tuningConstant: parseFloat(powerTuningConstant.value)
-                })
-                const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
-                marginOfError.set(updatedMarginOfError)
-                updateAllocation(sampleSize.value)
-            } else {
-                marginOfError.set(null)
-                updateAllocation(sampleSize.value)
-            }
+        if ('marginOfError' in outcome) {
+            marginOfError.set(outcome.marginOfError)
         }
     }
 
-    // Authoritative on the proportions panel's skip flag - never infer mode from anticipatedProportions
-    // truthiness alone (it can be stale/empty across mode switches).
-    hasProportions() {
-        const {noProportions, anticipatedProportions} = this.props
-        return !noProportions && !!anticipatedProportions?.length
+    // The panel edits form values while the recipe model still holds the applied ones, so every shared pure
+    // function is given the design as it would be if these values were applied.
+    designModel() {
+        const {strata, noProportions, anticipatedProportions, inputs} = this.props
+        return {
+            stratification: {strata},
+            proportions: {skip: noProportions, anticipatedProportions},
+            sampleAllocation: _.mapValues(_.pick(inputs, [
+                'manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'confidenceLevel',
+                'allocationStrategy', 'minSamplesPerStratum', 'powerTuningConstant', 'allocation'
+            ]), input => input.value)
+        }
     }
 
-    // Rows to allocate over: the proportion view when proportions exist, otherwise the bare strata.
-    allocationStrata() {
-        const {strata, anticipatedProportions} = this.props
-        return this.hasProportions()
-            ? anticipatedProportions
-            : strata.map(stratum => ({...stratum, stratum: stratum.value}))
+    // Stratification order, stratification presentation and weights, current proportion. Joined here rather
+    // than read off the proportion rows, whose strata snapshot can predate the current stratification.
+    joinedStrata() {
+        return allocationStrata(this.designModel())
     }
 
     isManual() {
@@ -536,18 +476,23 @@ class _SampleAllocation extends React.Component {
 }
 
 const allocateDeps = props => {
-    const {inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant}} = props
-    return [estimateSampleSize?.value ? marginOfError : sampleSize, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant]
+    const {inputs: {estimateSampleSize, sampleSize, marginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant}} = props
+    return [estimateSampleSize?.value ? marginOfError : sampleSize, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant]
         .map(input => input?.value)
 }
 
-const valuesToModel = values => {
-    return values
-}
+// Drop any stale relativeMarginOfError (an unreleased absolute/relative toggle) so the panel writes the
+// canonical model; margins are always relative.
+const valuesToModel = ({relativeMarginOfError: _relativeMarginOfError, ...values}) => values
 
-const modelToValues = model => {
-    return model
-}
+// A new recipe starts with an empty allocation, but one created before that did not carry the field at all,
+// and withForm represents a declared field the model does not carry as ''. This panel reads the allocation as
+// ROWS from its first render on - it renders them, reconciles them against the current strata on open, and
+// rewrites them for manual mode - so no rows arrives here as an empty list.
+const modelToValues = model => ({
+    ...model,
+    allocation: Array.isArray(model?.allocation) ? model.allocation : []
+})
 
 export const SampleAllocation = compose(
     _SampleAllocation,

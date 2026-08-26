@@ -6,7 +6,6 @@ import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
 import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
 import renameAsset$ from '#gee/jobs/ee/asset/rename'
-import batchTable$ from '#gee/jobs/ee/batch/table'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
@@ -67,8 +66,6 @@ export default router =>
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .post('/samplingDesign/areaPerStratum', stream(ctx => areaPerStratum$(ctx)))
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
-        .post('/samplingDesign/estimateProbability', stream(ctx => batchTable$(ctx)))
-        .post('/samplingDesign/sample', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
