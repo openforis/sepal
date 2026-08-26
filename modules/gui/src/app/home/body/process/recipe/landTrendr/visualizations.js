@@ -52,6 +52,22 @@ const visualizations = ({startYear, endYear}) => [
         palette: '#EDF8B1, #7FCDBB, #2C7FB8'
     }),
     normalize({
+        type: 'continuous',
+        bands: ['rmse'],
+        min: [0],
+        max: [1000],
+        palette: '#EDF8B1, #7FCDBB, #2C7FB8'
+    }),
+    normalize({
+        type: 'continuous',
+        bands: ['sig'],
+        // Magnitude in multiples of the fit RMSE; ~1-3 is the interesting
+        // range, beyond ~10 everything is unambiguous.
+        min: [0],
+        max: [10],
+        palette: '#FFFFCC, #FEB24C, #F03B20, #BD0026'
+    }),
+    normalize({
         type: 'rgb',
         bands: ['startRed', 'startGreen', 'startBlue'],
         min: [200, 400, 600],

@@ -9,6 +9,8 @@ export const getAvailableBands = () => ({
     dur: {dataType: typeInt, label: msg('process.landTrendr.bands.dur')},
     preval: {dataType: typeFloat, label: msg('process.landTrendr.bands.preval')},
     postval: {dataType: typeFloat, label: msg('process.landTrendr.bands.postval')},
+    rmse: {dataType: typeFloat, label: msg('process.landTrendr.bands.rmse')},
+    sig: {dataType: typeFloat, label: msg('process.landTrendr.bands.sig')},
     startRed: {dataType: typeInt, label: msg('process.landTrendr.bands.startRed')},
     startGreen: {dataType: typeInt, label: msg('process.landTrendr.bands.startGreen')},
     startBlue: {dataType: typeInt, label: msg('process.landTrendr.bands.startBlue')},
@@ -20,7 +22,7 @@ export const getAvailableBands = () => ({
 export const getGroupedBandOptions = () => {
     const availableBands = getAvailableBands()
     return [
-        ['yod', 'mag', 'dur', 'preval', 'postval'],
+        ['yod', 'mag', 'dur', 'preval', 'postval', 'rmse', 'sig'],
         ['startRed', 'startGreen', 'startBlue'],
         ['endRed', 'endGreen', 'endBlue']
     ].map(bands => bands.map(band => ({value: band, ...availableBands[band]})))

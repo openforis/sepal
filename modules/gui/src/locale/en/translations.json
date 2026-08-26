@@ -5133,6 +5133,8 @@
         "dur": "Duration",
         "preval": "Pre-disturbance value",
         "postval": "Post-disturbance value",
+        "rmse": "Fit RMSE",
+        "sig": "Significance (magnitude / RMSE)",
         "startRed": "Start year - red",
         "startGreen": "Start year - green",
         "startBlue": "Start year - blue",
