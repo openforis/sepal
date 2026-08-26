@@ -15,6 +15,7 @@
 //                           costSinceCreation, apps[], terminals, verdict, usage{...} }
 
 import {launchFailureCode} from '../hostingService/instanceLaunchErrors.js'
+import {instanceName} from './instanceName.js'
 import {State} from './workerSession.js'
 
 const SANDBOX = 'sandbox'
@@ -82,13 +83,21 @@ p.small {font-size: .9rem}
 <body>${body}</body>
 </html>`
 
-// instanceText — "Instance 2 (t3a.small)", the same name the in-app notification, the expiry email
-// and the SSH menu use for this machine (query/sessionOrdinals.js). A user with two instances has
-// to be able to tell which one a page is about before pressing anything on it. The unnamed variant
-// mirrors the GUI's `instanceUnnamed`: better than a blank where an identity should be.
+// instanceText — "Instance <b>crazy-banana</b> (t3a.small, $0.02/h)", the same name the in-app
+// notification, the expiry email and the SSH menu give this machine (instanceName.js). A user with
+// two instances has to be able to tell which one a page is about before pressing anything on it,
+// and the price is what makes "keep it running" a real decision rather than a reflex.
+//
+// The unnamed variant mirrors the GUI's `instanceUnnamed`: better than a blank where an identity
+// should be. A type with no known cost simply drops the price rather than printing a zero.
+const typeAndCost = ({typeName, hourlyCost}) => {
+    const parts = [typeName, hourlyCost ? `$${hourlyCost.toFixed(2)}/h` : null].filter(Boolean)
+    return parts.length ? ` (${parts.join(', ')})` : ''
+}
+
 const instanceText = description =>
-    description?.ordinal
-        ? `Instance ${description.ordinal}${description.instanceName ? ` (${description.instanceName})` : ''}`
+    description?.name
+        ? `Instance <b>${description.name}</b>${typeAndCost(description)}`
         : 'One of your instances'
 
 // Each button is its own form so the POST carries exactly one action and nothing is inferred from
@@ -166,6 +175,10 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     const sessionAsMap = (session, instanceType, username, forCurrentUser) => {
         return {
             id: session.id,
+            // Derived, not stored (instanceName.js) — the GUI, the notification, the expiry mail
+            // and the SSH menu all name this machine the same way because they all name it from
+            // its id.
+            name: instanceName(session.id),
             path: sessionPath(session, username, forCurrentUser),
             username,
             status: sessionStatus(session),

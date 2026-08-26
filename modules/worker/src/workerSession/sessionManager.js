@@ -25,6 +25,7 @@ import {releaseUnusedInstances as _releaseUnusedInstances} from './command/relea
 import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
 import {emitSessionAppAssociated, emitSessionAppDissociated, emitSessionChanged, emitSessionExpiryClosed, emitSessionExpiryNotified, emitWorkerSessionActivated, emitWorkerSessionClosed, emitWorkerSessionRequested} from './events.js'
+import {instanceName} from './instanceName.js'
 import {allOpenSessions as _allOpenSessions} from './query/allOpenSessions.js'
 import {findPendingOrActiveSession as _findPendingOrActiveSession} from './query/findPendingOrActiveSession.js'
 import {findSessionById as _findSessionById} from './query/findSessionById.js'
@@ -127,13 +128,13 @@ const createSessionManager = ({
 
     const closeUserSessions = username => _closeUserSessions(username, closeDeps)
 
-    // instanceDescription — how every surface names this instance: the SSH-menu ordinal plus the
-    // type (query/sessionOrdinals.js). The management page the email links to needs it for the
-    // same reason the notification and the mail do — a user with two instances must be able to
-    // tell WHICH one they are about to keep or stop.
+    // instanceDescription — how every surface names this instance: the derived two-word name a
+    // user READS (instanceName.js), the SSH-menu ordinal they TYPE (query/sessionOrdinals.js), and
+    // the instance type. A user with two instances must be able to tell WHICH one a notification,
+    // an email or its management page is about before acting on it.
     //
-    // Must be read BEFORE a termination: the ordinal is a position among OPEN sessions, so closing
-    // this one renumbers the rest and the description would name a different machine.
+    // Only the ordinal must be read BEFORE a termination: it is a position among OPEN sessions, so
+    // closing this one renumbers the rest. The name is derived from the id and cannot go stale.
     const instanceDescription = async sessionId => {
         const session = await repo.getSession(sessionId).catch(() => null)
         if (!session) {
@@ -141,8 +142,10 @@ const createSessionManager = ({
         }
         const ordinals = await sessionOrdinals(session.username, {repo})
         return {
+            name: instanceName(sessionId),
             ordinal: ordinals.get(sessionId) ?? null,
-            instanceName: instanceTypeById[session.instanceType]?.name ?? null,
+            typeName: instanceTypeById[session.instanceType]?.name ?? null,
+            hourlyCost: instanceTypeById[session.instanceType]?.hourlyCost ?? null,
         }
     }
 

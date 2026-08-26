@@ -5981,7 +5981,7 @@
         "extended": "Instance will keep running.",
         "idle": "{instance} has not been used for a while and will be stopped.",
         "idleClosed": "{instance} was stopped to avoid unnecessary cost.",
-        "instance": "Instance {ordinal} ({type})",
+        "instance": "{name} ({type})",
         "instanceUnnamed": "One of your instances",
         "runningClosed": "{instance} was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"

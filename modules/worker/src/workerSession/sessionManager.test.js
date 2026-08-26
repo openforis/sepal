@@ -6,6 +6,7 @@ import {jest} from '@jest/globals'
 
 import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
 import {InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetErrors.js'
+import {instanceName} from './instanceName.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
 import {createWorkerSession, State} from './workerSession.js'
@@ -698,12 +699,24 @@ describe('extensions', () => {
     // The management page names the instance the way every other surface does — the number from
     // the SSH menu plus the type — so a user reading the mail, the notification and the page all
     // know it is the same machine.
-    test('instanceDescription gives the SSH-menu ordinal and the instance type', async () => {
+    test('instanceDescription gives the derived name, the SSH-menu ordinal and the type', async () => {
         const repo = activeRepo({
             userSessions: () => [{id: 's-0'}, {id: 's-1'}, {id: 's-2'}],
         })
         const {mgr} = build({repo})
-        expect(await mgr.instanceDescription('s-1')).toEqual({ordinal: 2, instanceName: 't3a.small'})
+        expect(await mgr.instanceDescription('s-1')).toEqual({
+            name: instanceName('s-1'), ordinal: 2, typeName: 't3a.small', hourlyCost: 0.02
+        })
+    })
+
+    // The name is what a user reads; the ordinal is what they type in the SSH menu. Losing either
+    // breaks one of the two interfaces.
+    test('instanceDescription names the session even when it is not in the open list', async () => {
+        const repo = activeRepo({userSessions: () => []})
+        const {mgr} = build({repo})
+        const {name, ordinal} = await mgr.instanceDescription('s-1')
+        expect(name).toBe(instanceName('s-1'))
+        expect(ordinal).toBeNull()
     })
 
     test('instanceDescription is null for a session that is gone', async () => {

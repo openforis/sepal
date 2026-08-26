@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {runningItems, usageMetrics, verdictOf} from './userSessionSummary'
+import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
 
 const session = ({gpuCount = 0, ...overrides} = {}) => ({
     instanceType: {name: 't3a.small', gpuCount, hourlyCost: 0.02},
@@ -80,5 +80,19 @@ describe('runningItems', () => {
         expect(runningItems(session({terminals: 2}))).toEqual([])
         expect(runningItems(session({terminals: 0}))).toEqual([])
         expect(runningItems(session({terminals: undefined}))).toEqual([])
+    })
+})
+
+describe('instanceLabel', () => {
+    const session = overrides => ({name: 'humble-robin', instanceType: {name: 't3a.small'}, ...overrides})
+
+    // The number leads: it is the position in the list AND the number the SSH menu accepts.
+    it('leads with the 1-based number, then the name, then the type', () => {
+        expect(instanceLabel(session(), 0)).toBe('1: humble-robin - t3a.small')
+        expect(instanceLabel(session(), 2)).toBe('3: humble-robin - t3a.small')
+    })
+
+    it('drops the separator when there is no name', () => {
+        expect(instanceLabel(session({name: null}), 0)).toBe('1: t3a.small')
     })
 })

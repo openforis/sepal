@@ -42,11 +42,12 @@ const warningId = sessionId => `session-expiry-${sessionId}`
 // Clicking in the notification is input in the SEPAL shell, not in an app iframe, so it extends
 // nothing by itself — which is exactly why Extend has to be an explicit call.
 
-// instanceText — "instance 2 (t3a.small)". The number is the one the SSH menu prints and the one a
-// user types there to join or stop a session, so both interfaces name the instance identically.
-const instanceText = ({ordinal, instanceName}) =>
-    ordinal
-        ? msg('user.userSession.expiry.instance', {ordinal, type: instanceName || '?'})
+// instanceText — "crazy-banana (t3a.small)". The name is derived from the session id by the
+// worker and travels on the event, so the notification, the session list, the expiry email and the
+// SSH menu all name the instance identically.
+const instanceText = ({name, typeName}) =>
+    name
+        ? msg('user.userSession.expiry.instance', {name, type: typeName || '?'})
         : msg('user.userSession.expiry.instanceUnnamed')
 
 // What is running, as a bullet list — the same items, ordering and wording as the session list and

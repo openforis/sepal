@@ -6,6 +6,7 @@
 
 import {jest} from '@jest/globals'
 
+import {instanceName} from './instanceName.js'
 import {createSessionsApi} from './sessionsApi.js'
 
 const sessionManager = {
@@ -213,7 +214,7 @@ describe('the email management link', () => {
     beforeEach(() => {
         tokens.verify.mockReset()
         sessionManager.instanceDescription.mockReset()
-        sessionManager.instanceDescription.mockResolvedValue({ordinal: 1, instanceName: 't3a.small'})
+        sessionManager.instanceDescription.mockResolvedValue({name: 'jazzy-anchor', ordinal: 1, typeName: 't3a.small', hourlyCost: 0.02})
     })
 
     // ONE link in the mail, both choices on the page it opens.
@@ -232,18 +233,29 @@ describe('the email management link', () => {
     // the page it renders is the ONLY thing a GET may do.
     // A user with two instances must be able to tell WHICH one this page is about, named the same
     // way the notification, the mail and the SSH menu name it.
-    test('the page names the instance by ordinal and type', async () => {
+    test('the page names the instance, its type and what it costs', async () => {
         tokens.verify.mockReturnValue(claim())
-        sessionManager.instanceDescription.mockResolvedValue({ordinal: 2, instanceName: 't3a.small'})
+        sessionManager.instanceDescription.mockResolvedValue({
+            name: 'crazy-banana', ordinal: 2, typeName: 't3a.small', hourlyCost: 0.0204})
         const c = ctx({params: {token: 'tok'}})
         await tokenApi.expiryPage(c)
         expect(sessionManager.instanceDescription).toHaveBeenCalledWith('s1')
-        expect(c.body).toContain('Instance 2 (t3a.small)')
+        expect(c.body).toContain('Instance <b>crazy-banana</b> (t3a.small, $0.02/h)')
+        expect(c.body).not.toContain('Instance 2')
     })
 
-    test('an instance with no known ordinal is still named, not left blank', async () => {
+    test('a type with no known cost is named without a price', async () => {
         tokens.verify.mockReturnValue(claim())
-        sessionManager.instanceDescription.mockResolvedValue({ordinal: null, instanceName: null})
+        sessionManager.instanceDescription.mockResolvedValue({
+            name: 'crazy-banana', ordinal: 1, typeName: 't3a.small', hourlyCost: null})
+        const c = ctx({params: {token: 'tok'}})
+        await tokenApi.expiryPage(c)
+        expect(c.body).toContain('Instance <b>crazy-banana</b> (t3a.small)')
+    })
+
+    test('an instance with no derivable name is still named, not left blank', async () => {
+        tokens.verify.mockReturnValue(claim())
+        sessionManager.instanceDescription.mockResolvedValue({name: null, ordinal: null, typeName: null})
         const c = ctx({params: {token: 'tok'}})
         await tokenApi.expiryPage(c)
         expect(c.body).toContain('One of your instances')
@@ -253,14 +265,15 @@ describe('the email management link', () => {
     // result page would name whichever instance inherited the number.
     test('the terminated page names the instance as it was BEFORE the close', async () => {
         tokens.verify.mockReturnValue(claim())
-        sessionManager.instanceDescription.mockResolvedValue({ordinal: 2, instanceName: 't3a.small'})
+        sessionManager.instanceDescription.mockResolvedValue({
+            name: 'crazy-banana', ordinal: 2, typeName: 't3a.small', hourlyCost: 0.02})
         sessionManager.redeemTermination.mockImplementation(async () => {
-            sessionManager.instanceDescription.mockResolvedValue({ordinal: null, instanceName: null})
+            sessionManager.instanceDescription.mockResolvedValue({name: null, ordinal: null, typeName: null})
             return true
         })
         const c = post('tok', 'terminate')
         await tokenApi.redeemExpiryToken(c)
-        expect(c.body).toContain('Instance 2 (t3a.small)')
+        expect(c.body).toContain('crazy-banana')
     })
 
     // The page is the notification, for someone who is not looking at SEPAL — so it uses the
@@ -516,6 +529,7 @@ test('generateReportSelf → full report map with session + instanceType', async
     const s = c.body.sessions[0]
     expect(s).toEqual({
         id: 's1',
+        name: instanceName('s1'),
         path: 'sessions/session/s1',
         username: 'alice',
         status: 'ACTIVE',
@@ -629,6 +643,13 @@ const notifiedReport = () => ({
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
         description: '1 CPU, 2 GiB', hourlyCost: 0.02,
     }],
+})
+
+// The GUI session list names instances the same way the notification, the mail and the SSH menu
+// do, so it needs the name on every row rather than deriving its own.
+test('every session in the report carries its derived name', () => {
+    const map = api._internal.reportAsMap(notifiedReport(), 'alice', true)
+    expect(map.sessions[0].name).toBe(instanceName(map.sessions[0].id))
 })
 
 test('serializes the expiry cycle state and the stored deadline', () => {

@@ -4,6 +4,7 @@
 
 import {jest} from '@jest/globals'
 
+import {instanceName} from '../instanceName.js'
 import {expireSessions} from './expireSessions.js'
 
 const NOW = new Date('2026-08-13T12:00:00Z')
@@ -293,7 +294,7 @@ describe('describing the instance', () => {
             apps: [{path: '/sandbox/rstudio', label: 'RStudio'}],
             terminals: 2,
             ordinal: 1,
-            instanceName: 't3a.small',
+            typeName: 't3a.small',
         }))
     })
 
@@ -307,6 +308,9 @@ describe('describing the instance', () => {
         const emitSessionExpiryNotified = jest.fn()
         await run(repo, {emitSessionExpiryNotified})
         expect(emitSessionExpiryNotified.mock.calls[0][0].ordinal).toBe(2)
+        // The name rides along with the ordinal: the browser shows the name, the SSH menu the
+        // number, and both come from the one place that decides them.
+        expect(emitSessionExpiryNotified.mock.calls[0][0].name).toBe(instanceName('s-2'))
     })
 
     test('the warning email says what is running', async () => {
@@ -318,7 +322,8 @@ describe('describing the instance', () => {
             sendEmail,
         })
         const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain('instance 1 (t3a.small)')
+        expect(content).toContain(`Instance <b>${instanceName('s-1')}</b> (t3a.small, $0.02/h)`)
+        expect(content).not.toContain('Your <b>')
         expect(content).toContain('RStudio')
     })
 
