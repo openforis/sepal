@@ -5009,6 +5009,142 @@
       },
       "tabPlaceholder": ""
     },
+    "landTrendr": {
+      "create": "",
+      "description": "",
+      "tabPlaceholder": "",
+      "chartPixel": {
+        "start.tooltip": "",
+        "cancel.tooltip": "",
+        "loadSegments.error": "",
+        "noData": ""
+      },
+      "mapToolbar": {
+        "graph": {
+          "year.label": "",
+          "observation.label": "",
+          "fitted.label": ""
+        }
+      },
+      "panel": {
+        "dates": {
+          "button": "",
+          "title": "",
+          "tooltip": "",
+          "form": {
+            "startYear": {
+              "label": "",
+              "tooltip": ""
+            },
+            "endYear": {
+              "label": "",
+              "tooltip": "",
+              "beforeStartYear": ""
+            }
+          }
+        },
+        "sources": {
+          "button": "",
+          "title": "",
+          "tooltip": "",
+          "form": {
+            "dataSets": {
+              "label": ""
+            },
+            "cloudPercentageThreshold": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "index": {
+              "label": "",
+              "tooltip": ""
+            }
+          }
+        },
+        "options": {
+          "button": "",
+          "title": "",
+          "tooltip": "",
+          "form": {
+            "changeDirection": {
+              "label": "",
+              "tooltip": "",
+              "GREATEST": {
+                "label": "",
+                "tooltip": ""
+              },
+              "LOSS": {
+                "label": "",
+                "tooltip": ""
+              },
+              "GAIN": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "minMagnitude": {
+              "label": "",
+              "tooltip": ""
+            },
+            "maxSegments": {
+              "label": "",
+              "tooltip": ""
+            },
+            "spikeThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "vertexCountOvershoot": {
+              "label": "",
+              "tooltip": ""
+            },
+            "preventOneYearRecovery": {
+              "label": "",
+              "tooltip": ""
+            },
+            "recoveryThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "pvalThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "bestModelProportion": {
+              "label": "",
+              "tooltip": ""
+            },
+            "minObservationsNeeded": {
+              "label": "",
+              "tooltip": ""
+            }
+          }
+        }
+      },
+      "layers": {
+        "imageLayer": {
+          "preSets": ""
+        }
+      },
+      "bands": {
+        "yod": "",
+        "mag": "",
+        "dur": "",
+        "preval": "",
+        "postval": "",
+        "rmse": "",
+        "sig": "",
+        "startRed": "",
+        "startGreen": "",
+        "startBlue": "",
+        "endRed": "",
+        "endGreen": "",
+        "endBlue": "",
+        "startRgb": "",
+        "endRgb": ""
+      }
+    },
     "samplingDesign": {
       "bands": {},
       "create": "",
@@ -5567,6 +5703,7 @@
         "TIME_SERIES": "",
         "CCDC": "",
         "CCDC_SLICE": "",
+        "LANDTRENDR": "",
         "CHANGE_ALERTS": "",
         "BAYTS_HISTORICAL": "",
         "BAYTS_ALERTS": "",
