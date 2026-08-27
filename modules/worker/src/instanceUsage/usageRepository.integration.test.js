@@ -5,7 +5,7 @@
 //
 // Uses createUsageRepository(pool, clock) — the injectable factory — to exercise PRODUCTION SQL
 // against a transient `worker_usage_test_<pid>` scratch schema whose DDL mirrors
-// migrations/003.do.instance-usage.sql. The live schemas are never touched. mysql2/promise is
+// migrations/001.do.schema.sql. The live schemas are never touched. mysql2/promise is
 // imported directly for the same Jest ESM symlink reason documented in
 // instanceRepository.integration.test.js.
 
@@ -33,7 +33,7 @@ describeIf(hasCredentials, 'integration — usageRepository (requires MYSQL_PASS
             database: 'mysql', multipleStatements: true
         })
         await adminConn.query(`CREATE SCHEMA IF NOT EXISTS \`${SCRATCH}\``)
-        // DDL mirrors migrations/003.do.instance-usage.sql (scratch-schema copy).
+        // DDL mirrors migrations/001.do.schema.sql (scratch-schema copy).
         await adminConn.query(`
             CREATE TABLE \`${SCRATCH}\`.\`instance_usage_sample\` (
                 \`session_id\` varchar(255) NOT NULL,

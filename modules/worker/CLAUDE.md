@@ -88,11 +88,11 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 ## Database Schemas
 - `worker` — consolidated worker-cluster schema. Holds a COPY of the worker-cluster tables:
   `worker_session`, `task`, `instance`. The budget tables belong to the budget module's own schema.
-  - `session_app` (migration 002) — `(username, app_path)` PK mapping to `session_id` + `label`;
+  - `session_app` — `(username, app_path)` PK mapping to `session_id` + `label`;
     one live session per app per user. No DB-level FK; rows are cascade-deleted at the application
     layer (`sessionAppRepository.deleteForSession`) when a session transitions to CLOSED.
-    Migration 004 adds nullable `client_id` — the gateway ws client (browser window) owning the
-    app's tab; clientDown dissociates by it, ownerless rows are never swept.
+    Nullable `client_id` is the gateway ws client (browser window) owning the app's tab;
+    clientDown dissociates by it, ownerless rows are never swept.
   - The originals remain LIVE in `sdms` / `worker_instance` (Java still uses them directly).
   - Tables copied from `sdms` (Phase 4a-revision): worker_session, task.
   - Table copied from `worker_instance` (Phase 4a-revision): instance.

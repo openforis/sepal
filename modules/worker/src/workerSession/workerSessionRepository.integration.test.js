@@ -105,7 +105,7 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
                 KEY \`idx_task_2\` (\`session_id\`, \`state\`)
             ) ENGINE=InnoDB DEFAULT CHARSET=latin1
         `)
-        // session_app — mirrors migrations/002.do.session-app.sql. Needed because
+        // session_app — mirrors migrations/001.do.schema.sql. Needed because
         // workerSessionRepository.update's CLOSED branch cascades sessionAppRepo.deleteForSession,
         // which defaults to a real createSessionAppRepository(pool, clock) querying this table.
         await adminConn.query(`
