@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
@@ -550,12 +551,9 @@ class _FeatureLayerOptionsPanel extends React.Component {
     }
 
     notifyLoadError(error) {
-        const detail = error?.response?.messageKey
-            ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-            : error
         Notifications.error({
             message: msg('map.featureLayerStyle.valueColors.loadError'),
-            error: detail,
+            error: toUserErrorMessage(error),
             group: true
         })
     }

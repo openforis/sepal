@@ -6,6 +6,7 @@ import {Subject, takeUntil} from 'rxjs'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
@@ -159,12 +160,9 @@ class _ChartPixel extends React.Component {
                 segments => this.setState({segments}),
                 error => {
                     this.close()
-                    const errorMessage = error?.response?.messageKey
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : error
                     Notifications.error({
                         message: msg('process.ccdc.chartPixel.loadFailed'),
-                        error: errorMessage
+                        error: toUserErrorMessage(error)
                     })
                 }
             )

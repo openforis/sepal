@@ -22,6 +22,12 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
+// Recipe types whose own image layer form reconciles layerConfig.visParams
+// (selecting a valid visualization when the available bands change). The
+// generic reconciliation below has to stand down for those, or the two writers
+// overwrite each other on every render and React aborts the update loop.
+export const SELF_MANAGED_VISUALIZATIONS = ['CCDC_SLICE', 'CHANGE_ALERTS', 'LANDTRENDR']
+
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
 
@@ -92,7 +98,7 @@ class _RecipeImageLayer extends React.Component {
 
     selfManagedVisualizations() {
         const {recipe} = this.props
-        return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS'].includes(recipe.type)
+        return recipe && SELF_MANAGED_VISUALIZATIONS.includes(recipe.type)
     }
 
     toAllVis() {
