@@ -13,17 +13,23 @@ import styles from './landTrendrGraph.module.css'
 export class LandTrendrGraph extends React.Component {
     state = {}
 
+    constructor(props) {
+        super(props)
+        this.highlightCallback = this.highlightCallback.bind(this)
+    }
+
     render() {
-        const {years} = this.props
-        if (!years || !years.length) {
+        const {data} = this.state
+        if (!data) {
             return null
         }
         const unhighlightCallback = () => this.setState({point: null})
         return (
             <div className={styles.wrapper}>
                 <Graph
-                    data={this.calculateData()}
+                    data={data}
                     connectSeparatedPoints
+                    showLabelsOnHighlight={false}
                     labels={['dates', 'observations', 'segments']}
                     series={{
                         segments: {
@@ -39,6 +45,8 @@ export class LandTrendrGraph extends React.Component {
                     highlightSeriesOpts={{
                         highlightCircleSize: 3
                     }}
+                    highlightSeriesBackgroundAlpha={1}
+                    highlightSeriesBackgroundColor={'hsla(0, 0%, 0%, 1)'}
                     errorBars
                     sigma={1}
                     axes={{
@@ -53,32 +61,12 @@ export class LandTrendrGraph extends React.Component {
                     rangeSelectorAlpha={0.2}
                     rangeSelectorBackgroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
                     rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
-                    highlightCallback={isMobile() ? undefined : (event, x, points, row) => this.highlightCallback(row)}
+                    highlightCallback={isMobile() ? undefined : this.highlightCallback}
                     unhighlightCallback={isMobile() ? undefined : unhighlightCallback}
                 />
                 {this.renderPoint()}
             </div>
         )
-    }
-
-    calculateData() {
-        const {years, raw, fitted, isVertex} = this.props
-        return years.map((year, i) => [
-            new Date(year, 6, 1),
-            [raw[i], 0],
-            isVertex[i] ? [fitted[i], 0] : null
-        ])
-    }
-
-    highlightCallback(row) {
-        const {years, raw, fitted, isVertex} = this.props
-        this.setState({
-            point: {
-                year: years[row],
-                raw: raw[row],
-                fitted: isVertex[row] ? fitted[row] : null
-            }
-        })
     }
 
     renderPoint() {
@@ -87,7 +75,9 @@ export class LandTrendrGraph extends React.Component {
             return null
         }
         return (
-            <div className={styles.point}>
+            <div
+                className={styles.point}
+                style={point.left ? {right: 0} : null}>
                 <Widget
                     className={styles.year}
                     label={msg('process.landTrendr.mapToolbar.graph.year.label')}>
@@ -109,6 +99,53 @@ export class LandTrendrGraph extends React.Component {
                     : null}
             </div>
         )
+    }
+
+    highlightCallback(event, x, points, row) {
+        const {years, raw, fitted, isVertex} = this.props
+        const point = points[0]
+        this.setState({
+            point: {
+                year: years[row],
+                raw: raw[row],
+                fitted: isVertex[row] ? fitted[row] : null,
+                left: point.x <= 0.5
+            }
+        })
+    }
+
+    componentDidMount() {
+        this.update()
+    }
+
+    componentDidUpdate(prevProps) {
+        this.update(prevProps)
+    }
+
+    // The Graph widget compares data by reference, so rebuilding it on every
+    // render would make dygraph redraw the whole chart on each mouse move.
+    // These arrays come straight out of the charted pixel's segments, so
+    // comparing them is enough to catch a new pixel.
+    update(prevProps = {}) {
+        const {years, raw, fitted, isVertex} = this.props
+        if (years !== prevProps.years
+            || raw !== prevProps.raw
+            || fitted !== prevProps.fitted
+            || isVertex !== prevProps.isVertex) {
+            this.setState({data: this.calculateData()})
+        }
+    }
+
+    calculateData() {
+        const {years, raw, fitted, isVertex} = this.props
+        if (!years || !years.length) {
+            return null
+        }
+        return years.map((year, i) => [
+            new Date(year, 6, 1),
+            [raw[i], 0],
+            isVertex[i] ? [fitted[i], 0] : null
+        ])
     }
 }
 
