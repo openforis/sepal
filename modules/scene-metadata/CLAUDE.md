@@ -45,6 +45,8 @@ Two-phase approach:
 ### Database
 MySQL (`scene_metadata` schema — **not** the old `sdms` schema):
 - Table: `scene_meta_data` with scene properties and indexes
+- Migrations managed via Postgrator (`migrations/`), applied by `initializeDatabase` before the
+  pool is created; nothing is copied from `sdms` since the table is rebuilt from CSV on first run
 - **Atomic database switching**: Creates `scene_metadata_new`, populates, then renames `scene_metadata` → `scene_metadata_old` and `scene_metadata_new` → `scene_metadata`
 - Schema exported as `SCHEMA` from `src/database.js`; used by both the ingester and `src/sceneRepository.js`
 

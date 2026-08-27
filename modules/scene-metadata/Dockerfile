@@ -26,6 +26,7 @@ RUN npm install
 WORKDIR ${MODULE}
 ADD modules/${MODULE_NAME}/src ./src
 ADD modules/${MODULE_NAME}/config ./config
+ADD modules/${MODULE_NAME}/migrations ./migrations
 
 # add shell scripts
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
