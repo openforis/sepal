@@ -5145,7 +5145,7 @@
           },
           "mosaics": {
             "label": "Mosaics",
-            "tooltip": "Render the annual composite the algorithm was fitted to"
+            "tooltip": "Render the annual composite for the chosen year"
           }
         },
         "year": {
