@@ -5,7 +5,6 @@ import {findRoot} from './solve'
 
 export const calculateSampleSize = ({
     marginOfError,
-    relativeMarginOfError,
     strategy,
     minSamplesPerStratum = MIN_SAMPLES_PER_STRATUM,
     strata,
@@ -14,7 +13,7 @@ export const calculateSampleSize = ({
 }) => {
     const fun = sampleSize =>
         calculateMarginOfError({
-            sampleSize, relativeMarginOfError, confidenceLevel, strategy, minSamplesPerStratum, strata, tuningConstant
+            sampleSize, confidenceLevel, strategy, minSamplesPerStratum, strata, tuningConstant
         }) - marginOfError
     const max = 1e12
     const min = Math.max(MIN_SAMPLES_PER_STRATUM, minimumTotalSampleSize({effectiveMinimum: minSamplesPerStratum, strataCount: strata.length}))

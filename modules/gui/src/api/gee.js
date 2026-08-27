@@ -40,9 +40,9 @@ export default {
             }
         }),
 
-    assetMetadata$: ({asset, allowedTypes}) =>
+    assetMetadata$: ({asset, allowedTypes, includeNominalScale}) =>
         postJson$('/api/gee/assetMetadata', {
-            body: {asset, allowedTypes},
+            body: {asset, allowedTypes, includeNominalScale},
             retry: {
                 maxRetries: 0
             }
@@ -80,9 +80,9 @@ export default {
             }
         }),
 
-    recipeGeometry$: ({recipe, color, fillColor}) =>
+    recipeGeometry$: ({recipe, color, fillColor, width}) =>
         postJson$('/api/gee/recipe/geometry', {
-            body: {recipe, color, fillColor},
+            body: {recipe, color, fillColor, width},
             retry: {
                 maxRetries: 0
             }
@@ -104,9 +104,9 @@ export default {
             }
         }),
 
-    aoiGeometry$: ({aoi, color, fillColor}) =>
+    aoiGeometry$: ({aoi, color, fillColor, width}) =>
         postJson$('/api/gee/aoi/geometry', {
-            body: {aoi, color, fillColor},
+            body: {aoi, color, fillColor, width},
             retry: {
                 maxRetries: 0
             }
@@ -174,6 +174,14 @@ export default {
     loadCCDCSegments$: ({recipe, latLng, bands}) =>
         postJson$('/api/gee/ccdc/loadSegments', {
             body: {recipe, latLng, bands},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
+    loadLandTrendrSegments$: ({recipe, latLng}) =>
+        postJson$('/api/gee/landTrendr/loadSegments', {
+            body: {recipe, latLng},
             retry: {
                 maxRetries: 0
             }

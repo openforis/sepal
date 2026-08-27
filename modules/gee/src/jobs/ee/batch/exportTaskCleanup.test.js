@@ -1,6 +1,6 @@
 import {lastValueFrom, of, throwError, toArray} from 'rxjs'
 
-import {cleanupExportTask$, isRunning} from './exportTaskCleanup.js'
+import {cleanupExportTask$, completionError, isRunning} from './exportTaskCleanup.js'
 
 const collect = obs => lastValueFrom(obs.pipe(toArray()))
 
@@ -25,6 +25,34 @@ describe('isRunning', () => {
         expect(isRunning('COMPLETED')).toBe(false)
         expect(isRunning('FAILED')).toBe(false)
         expect(isRunning('CANCELLED')).toBe(false)
+    })
+})
+
+describe('completionError', () => {
+    const error = ({state, error_message}) =>
+        completionError({status: {state, error_message}, description: 'probability-per-stratum'})
+
+    it('accepts a COMPLETED task', () => {
+        expect(error({state: 'COMPLETED'})).toBeNull()
+    })
+
+    it('surfaces the Earth Engine message of a FAILED task', () => {
+        const failure = error({state: 'FAILED', error_message: 'Reducer.setOutputs: Need 1 output names'})
+        expect(failure.message).toContain('probability-per-stratum')
+        expect(failure.message).toContain('FAILED')
+        expect(failure.message).toContain('Reducer.setOutputs: Need 1 output names')
+        expect(failure.userMessage.args.earthEngineMessage).toBe('Reducer.setOutputs: Need 1 output names')
+    })
+
+    it('reports a CANCELLED task that carries no Earth Engine message', () => {
+        const failure = error({state: 'CANCELLED'})
+        expect(failure.message).toContain('probability-per-stratum')
+        expect(failure.message).toContain('CANCELLED')
+        expect(failure.userMessage.args.earthEngineMessage).toContain('CANCELLED')
+    })
+
+    it('reports an UNKNOWN state as a failure rather than a success', () => {
+        expect(error({state: 'UNKNOWN'}).message).toContain('UNKNOWN')
     })
 })
 

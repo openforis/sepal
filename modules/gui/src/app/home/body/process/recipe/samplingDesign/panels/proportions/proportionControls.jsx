@@ -12,6 +12,7 @@ import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
 import {categoricalLegendEntries} from '../../sampling/categoricalLegend'
+import {byStratumKey, stratumView} from '../../sampling/designModel'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
@@ -68,6 +69,7 @@ export const AnticipationStrategy = ({anticipationStrategy, onChange}) =>
 
 export const ImageSelection = ({
     inputs: {type, assetId, recipeId, band, targetClass, percentage, probabilityPerStratum, anticipationStrategy, scale},
+    effectiveScale,
     bands,
     visualizations,
     distinctClassOptions,
@@ -80,6 +82,7 @@ export const ImageSelection = ({
     onAssetLoaded,
     onRecipeLoaded,
     onBandChanged,
+    onScaleChanged,
     onPercentageChanged
 }) => {
     const typeButtons = <SourceTypeButtons type={type} onChange={onTypeChanged}/>
@@ -113,7 +116,7 @@ export const ImageSelection = ({
                     onBandChanged={onBandChanged}
                     onPercentageChanged={onPercentageChanged}
                 />
-                <ScaleInput scale={scale}/>
+                <ScaleInput scale={scale} effectiveScale={effectiveScale} onChange={onScaleChanged}/>
             </Layout>
             {anticipationStrategy.value === 'CATEGORICAL'
                 ? <TargetClassInput
@@ -142,11 +145,15 @@ export const OverallProportionInput = ({anticipatedOverallProportion, onChange})
         onChange={onChange}
     />
 
-export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
+export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
+    // Weights come from the current stratification, joined by stratum key. The rows carry a weight of their
+    // own only because they were written by a join at calculation time; using that copy would report an
+    // overall proportion against strata that have since been recalculated.
+    const owners = byStratumKey(strata)
     const overallProportion = _.sum(
-        anticipatedProportions.value?.map(({weight, proportion}) => {
-            return weight * proportion
-        })
+        (anticipatedProportions.value || []).map(row =>
+            (stratumView(owners, row).weight || 0) * (row.proportion || 0)
+        )
     )
     return (
         <Widget
@@ -155,6 +162,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
             {anticipatedProportions.value
                 ? <ProportionTable
                     proportions={anticipatedProportions}
+                    strata={strata}
                     overallProportion={overallProportion}
                     manual={manual}
                 />
@@ -218,6 +226,7 @@ const AssetSource = ({assetId, typeButtons, onImageChanged, onImageLoading, onAs
         placeholder={msg('process.samplingDesign.panel.proportions.form.image.placeholder')}
         allowedTypes={['Image', 'ImageCollection']}
         labelButtons={[typeButtons]}
+        includeNominalScale
         onChange={onImageChanged}
         onLoading={onImageLoading}
         onLoaded={onAssetLoaded}
@@ -273,15 +282,17 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
     )
 }
 
-const ScaleInput = ({scale}) =>
+// Blank means "use what this selection provides", so the placeholder names the value blank resolves to.
+const ScaleInput = ({scale, effectiveScale, onChange}) =>
     <Form.Input
         className={styles.compactField}
         label={msg('process.samplingDesign.panel.proportions.form.scale.label')}
-        placeholder={msg('process.samplingDesign.panel.proportions.form.scale.placeholder')}
+        placeholder={effectiveScale === null ? '' : String(effectiveScale)}
         tooltip={msg('process.samplingDesign.panel.proportions.form.scale.tooltip')}
         input={scale}
         type='number'
         suffix={msg('process.samplingDesign.panel.proportions.form.scale.suffix')}
+        onChange={onChange}
     />
 
 const TargetClassInput = ({band, targetClass, visualizations = [], distinctClassOptions, loading, canLoad, onLoad}) => {

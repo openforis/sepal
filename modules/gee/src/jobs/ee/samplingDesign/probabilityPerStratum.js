@@ -5,10 +5,11 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
-import {resolveSamplingGridCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
+import {toAreaWeightedProportions} from './areaWeightedProportions.js'
+import {weightedAreaSums} from './weightedAreaSums.js'
 
 const worker$ = ({
     requestArgs: {aoi, stratification, stratificationBand = 'constant', probability, probabilityBand, mode = 'PROBABILITY', targetClass, scale, crs, batch},
@@ -23,7 +24,13 @@ const worker$ = ({
         eeProbability: imageFactory(probability, {selection: [probabilityBand]}).getImage$()
     }).pipe(
         switchMap(({eeGeometry, eeStratification, eeProbability}) => {
-            const eeDictionary = reduceRegion({eeGeometry, eeStratification, eeProbability})
+            const eeDictionary = weightedAreaSums({
+                eeGeometry, eeStratification, eeProbability,
+                stratificationBand, probabilityBand, mode, targetClass, scale, crs,
+                // Unstratified runs over a synthetic constant image, whose degree-scale default projection is
+                // not a grid worth preserving.
+                stratified: !!stratification
+            })
             return batch
                 ? exportToCSV$({
                     collection: ee.FeatureCollection([ee.Feature(null, eeDictionary)]),
@@ -37,34 +44,9 @@ const worker$ = ({
                 // inline Online->Batch guidance instead of retrying past the HTTP request timeout.
                 : ee.getInfo$(eeDictionary, description, 0)
         }),
-        map(o => o.groups)
+        map(o => o.groups),
+        map(toAreaWeightedProportions)
     )
-
-    function reduceRegion({eeGeometry, eeStratification, eeProbability}) {
-        const band = eeProbability.select(probabilityBand)
-        // CATEGORICAL: mean of a 0/1 mask = fraction of sampled pixels (cells at `scale`) equal to the
-        // target class. This is a PIXEL fraction, not strictly an area fraction - it approximates the
-        // area fraction for equal-area projections, but not for arbitrary geographic/non-equal-area ones.
-        // PROBABILITY: mean of the band value (probability/fraction image). Both are grouped by stratum
-        // into a per-stratum target proportion, so the downstream toProportions pipeline is unchanged.
-        const probabilityImage = mode === 'CATEGORICAL'
-            ? band.eq(targetClass)
-            : band
-        return probabilityImage
-            .addBands(eeStratification.select(stratificationBand))
-            .reduceRegion({
-                reducer: ee.Reducer.mean()
-                    .setOutputs(['probability'])
-                    .group(1, 'stratum'),
-                geometry: eeGeometry,
-                // Proportions estimates at its own scale in Stratification's CRS; the transform is
-                // deliberately not inherited. Resolving here fails closed on an unsupported id rather than
-                // silently falling back to the image projection.
-                scale,
-                crs: resolveSamplingGridCrs(crs),
-                maxPixels: 1e13,
-            })
-    }
 }
 
 export default job({

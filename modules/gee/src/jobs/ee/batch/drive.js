@@ -24,9 +24,15 @@ export const drive = ({sepalUser}) => {
     const createFolder$ = ({path}) =>
         getFolderByPath$({path, create: true})
 
+    // An empty folder is a legitimate outcome - a completed export of an empty collection writes no file - so
+    // it must read as "not found" rather than crashing on a missing id.
     const readFile$ = ({path}) =>
         getFilesByPath$({path}).pipe(
-            switchMap(({files: [{id}]}) => readFileById$(id))
+            switchMap(({files: [file]}) =>
+                file
+                    ? readFileById$(file.id)
+                    : throwError(() => new NotFoundException(`No file found in path: '${path}'`))
+            )
         )
 
     const removeFolder$ = ({path}) =>

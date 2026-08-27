@@ -11,7 +11,9 @@ import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
-import {defaultModel, normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
+import {calculationCache} from './sampling/calculationCache'
+import {getDefaultModel} from './sampling/defaultModel'
+import {normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
 import {Sync} from './sync'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -23,6 +25,14 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _SamplingDesign extends React.Component {
+    // Owned here rather than in the panels, because a panel is mounted only while it is open: caching there
+    // would throw away an expensive Earth Engine result every time the user closed the panel. An unselected
+    // recipe tab stays mounted, so these survive switching tabs, while closing the tab discards them - which
+    // is also the freshness boundary for an asset overwritten at the same id. Plain instance fields: a cache
+    // write changes nothing that renders, so it must not provoke one.
+    areaCache = calculationCache()
+    probabilityCache = calculationCache()
+
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
@@ -43,7 +53,10 @@ class _SamplingDesign extends React.Component {
         return (
             <Map>
                 <Sync/>
-                <SamplingDesignToolbar/>
+                <SamplingDesignToolbar
+                    areaCache={this.areaCache}
+                    probabilityCache={this.probabilityCache}
+                />
                 <Aoi value={aoi}/>
             </Map>
         )
@@ -52,7 +65,7 @@ class _SamplingDesign extends React.Component {
 
 const SamplingDesign = compose(
     _SamplingDesign,
-    recipe({defaultModel, mapRecipeToProps}),
+    recipe({getDefaultModel, mapRecipeToProps}),
     recipeAccess()
 )
 

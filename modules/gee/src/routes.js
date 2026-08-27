@@ -6,7 +6,6 @@ import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
 import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
 import renameAsset$ from '#gee/jobs/ee/asset/rename'
-import batchTable$ from '#gee/jobs/ee/batch/table'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
@@ -20,6 +19,7 @@ import landsatProductId$ from '#gee/jobs/ee/image/landsatProductId'
 import preview$ from '#gee/jobs/ee/image/preview'
 import sampleImage$ from '#gee/jobs/ee/image/sample'
 import sceneAreas$ from '#gee/jobs/ee/image/sceneAreas'
+import loadLandTrendrSegments$ from '#gee/jobs/ee/landTrendr/loadSegments'
 import projects$ from '#gee/jobs/ee/projects'
 import areaPerStratum$ from '#gee/jobs/ee/samplingDesign/areaPerStratum'
 import probabilityPerStratum$ from '#gee/jobs/ee/samplingDesign/probabilityPerStratum'
@@ -56,6 +56,7 @@ export default router =>
         .post('/aoi/bounds', stream(ctx => aoiBounds$(ctx)))
         .post('/aoi/geometry', stream(ctx => aoiGeometry$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
+        .post('/landTrendr/loadSegments', stream(ctx => loadLandTrendrSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))
         .post('/nextReferenceDataPoints', stream(ctx => nextReferenceDataPoints$(ctx)))
         .get('/table/rows', stream(ctx => tableRows$(ctx)))
@@ -65,8 +66,6 @@ export default router =>
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .post('/samplingDesign/areaPerStratum', stream(ctx => areaPerStratum$(ctx)))
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
-        .post('/samplingDesign/estimateProbability', stream(ctx => batchTable$(ctx)))
-        .post('/samplingDesign/sample', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

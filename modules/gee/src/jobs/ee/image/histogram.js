@@ -1,7 +1,7 @@
-import {switchMap} from 'rxjs'
+import {of, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {toGeometry} from '#sepal/ee/aoi'
+import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
@@ -14,15 +14,20 @@ const worker$ = ({
 }) => {
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
-    const histogram = image => {
+    // ASSET_BOUNDS has no aoi geometry of its own; every other aoi is resolved before the geometry
+    // selection below is composed.
+    const aoiGeometry$ = aoi && aoi.type !== 'ASSET_BOUNDS'
+        ? toGeometry$(aoi)
+        : of(null)
+    const histogram = (image, aoiGeometry) => {
         const imageGeometry = image.select(band).geometry()
         const mapGeometry = ee.Geometry.Rectangle(mapBounds)
         const geometry = ee.Algorithms.If(
             image.select(band).geometry().isUnbounded(),
-            aoi
+            aoiGeometry
                 ? ee.Algorithms.If(
-                    aoi.type === 'ASSET_BOUNDS' ? false : toGeometry(aoi).intersects(imageGeometry),
-                    toGeometry(aoi),
+                    aoiGeometry.intersects(imageGeometry),
+                    aoiGeometry,
                     mapGeometry
                 )
                 : mapGeometry,
@@ -38,9 +43,13 @@ const worker$ = ({
         }).get(band)
     }
 
-    return getImage$().pipe(
-        switchMap(image =>
-            ee.getInfo$(histogram(image), 'recipe histogram')
+    return aoiGeometry$.pipe(
+        switchMap(aoiGeometry =>
+            getImage$().pipe(
+                switchMap(image =>
+                    ee.getInfo$(histogram(image, aoiGeometry), 'recipe histogram')
+                )
+            )
         )
     )
 }

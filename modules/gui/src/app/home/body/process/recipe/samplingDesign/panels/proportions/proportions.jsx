@@ -17,8 +17,10 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
+import {reconcileManualProportions} from '../../sampling/designModel'
 import {isValidOptionalProportionPercentage} from '../../sampling/numericRanges'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
+import {effectiveProportionsScale, isValidGridScale, proportionsScaleFromBand} from '../../samplingGridValidation'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
 import {proportionsCalculationError as toProportionsCalculationError} from './proportionsError'
@@ -62,10 +64,16 @@ const fields = {
         .notBlank('process.samplingDesign.panel.proportions.form.targetClass.required')
         .predicate(value => isNumericClassValue(value), 'process.samplingDesign.panel.proportions.form.targetClass.numeric'),
     percentage: new Form.Field(),
+    // An optional OVERRIDE: blank means "use what this selection provides", which the placeholder shows. An
+    // entered Scale still has to be a usable one - clearing the field asks for the default, typing 0 does not.
     scale: new Form.Field()
         .skip((_value, {skip, manual}) =>
             skip.length || manual.length)
-        .notBlank('process.samplingDesign.panel.proportions.form.scale.required'),
+        .number()
+        .greaterThan(0),
+    // Transient: the Scale this property-band selection defaults to, consolidated into the persisted Scale by
+    // valuesToModel. Never part of the model.
+    defaultScale: new Form.Field(),
     eeStrategy: new Form.Field(),
     anticipatedOverallProportion: new Form.Field()
         // Blank is valid (no override); a supplied value is a percentage.
@@ -80,6 +88,9 @@ const fields = {
 class _Proportions extends React.Component {
     cancel$ = new Subject()
     cancelClassValues$ = new Subject()
+    // Not React state: nothing renders from it, and the Scale default is written from the same callback that
+    // receives it, where a queued setState would not have landed yet.
+    bandMetadata = undefined
     state = {
         bands: undefined,
         distinctClassOptions: undefined,
@@ -97,6 +108,7 @@ class _Proportions extends React.Component {
         this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
+        this.onScaleChanged = this.onScaleChanged.bind(this)
         this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
@@ -173,6 +185,7 @@ class _Proportions extends React.Component {
         const sourceReady = type.value === 'RECIPE' ? !!recipeId.value : !!assetId.value
         return <ImageSelection
             inputs={this.props.inputs}
+            effectiveScale={this.effectiveScale()}
             bands={bands}
             visualizations={visualizations}
             distinctClassOptions={distinctClassOptions}
@@ -185,6 +198,7 @@ class _Proportions extends React.Component {
             onAssetLoaded={this.onAssetLoaded}
             onRecipeLoaded={this.onRecipeLoaded}
             onBandChanged={this.onBandChanged}
+            onScaleChanged={this.onScaleChanged}
             onPercentageChanged={this.onPercentageChanged}
         />
     }
@@ -198,10 +212,11 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
         return <StrataProportion
             eeStrategy={eeStrategy}
             anticipatedProportions={anticipatedProportions}
+            strata={strata}
             manual={this.isManual()}
             streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
             calculationError={this.state.proportionsCalculationError}
@@ -212,18 +227,32 @@ class _Proportions extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationScale, inputs: {requiresUpdate, skip, manual, anticipationStrategy, scale, type, eeStrategy}} = this.props
+        const {inputs: {requiresUpdate, skip, manual, anticipationStrategy, type, eeStrategy}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
         manual.value || manual.set([])
         anticipationStrategy.value || anticipationStrategy.set('PROBABILITY')
-        scale.value || scale.set(stratificationScale || '30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
         
+        // Stale means "open this panel and settle it". Manual rows are settled by reconciling them against the
+        // strata that moved underneath them - an answered proportion follows its stratum, a vanished one goes,
+        // and a new stratum arrives unanswered for the user to fill in.
         if (requiresUpdate.value) {
-            this.calculateAnticipatedProportions()
+            if (this.isManual()) {
+                this.reconcileManualRows()
+            } else {
+                this.calculateAnticipatedProportions()
+            }
         }
+    }
+
+    reconcileManualRows() {
+        const {strata, inputs: {anticipatedProportions}} = this.props
+        anticipatedProportions.set(reconcileManualProportions({
+            stratification: {strata},
+            proportions: {anticipatedProportions: anticipatedProportions.value}
+        }))
     }
 
     componentDidUpdate(prevProps) {
@@ -267,6 +296,7 @@ class _Proportions extends React.Component {
         assetId.set(null)
         band.set(null)
         targetClass.set(null)
+        this.clearSelectionScale()
         this.invalidateCalculatedProportions()
         this.clearClassValues()
     }
@@ -275,6 +305,7 @@ class _Proportions extends React.Component {
         const {inputs: {band, targetClass}} = this.props
         band.set(null)
         targetClass.set(null)
+        this.clearSelectionScale()
         this.invalidateCalculatedProportions()
         this.clearClassValues()
     }
@@ -294,6 +325,12 @@ class _Proportions extends React.Component {
         }
     }
 
+    // Scale is excluded from proportionsDeps and recalculates here instead, so one edit produces exactly one
+    // calculation rather than a dependency-driven one plus this.
+    onScaleChanged() {
+        this.scheduleAnticipatedProportions()
+    }
+
     onEEStrategyChanged() {
         this.scheduleAnticipatedProportions()
     }
@@ -305,6 +342,22 @@ class _Proportions extends React.Component {
         setImmediate(() => this.calculateAnticipatedProportions())
     }
 
+    effectiveScale() {
+        const {inputs: {scale, defaultScale}} = this.props
+        return effectiveProportionsScale({scale: scale.value, defaultScale: defaultScale.value})
+    }
+
+    // What the current property band defaults to: the coarsest grid the estimate can carry. Applied when a
+    // band is selected, and again when metadata arrives for the band already selected - it only ever writes
+    // the transient field, so a saved or entered override is never touched.
+    //
+    // setInitialValue, not set: this is the panel's reading of the selection rather than anything the user
+    // changed, so learning it must not mark a reopened recipe as edited.
+    installDefaultScale() {
+        const {unstratified, stratificationScale, inputs: {band, defaultScale}} = this.props
+        defaultScale.setInitialValue(proportionsScaleFromBand(this.bandMetadata, band.value, {unstratified, stratificationScale}))
+    }
+
     useBatch() {
         const {inputs: {eeStrategy}} = this.props
         eeStrategy.set('BATCH')
@@ -313,13 +366,26 @@ class _Proportions extends React.Component {
         this.scheduleAnticipatedProportions()
     }
 
+    // Loading also happens when a saved recipe opens, so this discards the metadata the Scale default is
+    // calculated from but never the Scale itself: a saved value is configuration, not a derived one.
+    // The Scale belongs to the band it was calculated for, so replacing the source drops both the override and
+    // the default it resolved against. The next band selection installs the new one.
+    clearSelectionScale() {
+        const {inputs: {scale, defaultScale}} = this.props
+        defaultScale.setInitialValue(null)
+        scale.set(null)
+    }
+
     onImageLoading() {
+        this.bandMetadata = undefined
         this.setState({bands: undefined})
     }
 
     onAssetLoaded({metadata, visualizations}) {
         const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
+        // Carries the property band's own resolution, which the Scale default is calculated from.
+        this.bandMetadata = metadata.bands
         this.updateImageLayerSources({
             id: assetId.value,
             type: 'Asset',
@@ -346,6 +412,11 @@ class _Proportions extends React.Component {
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
         this.setState({bands, visualizations})
+        // Reopening a saved recipe arrives here with its band already selected: the placeholder needs the
+        // default, while the saved Scale stays exactly as saved.
+        if (band.value) {
+            this.installDefaultScale()
+        }
         const defaultBand = bands.length === 1
             ? bands[0]
             : null
@@ -357,11 +428,15 @@ class _Proportions extends React.Component {
     }
 
     onBandChanged() {
-        const {inputs: {anticipationStrategy, band, targetClass}} = this.props
+        const {inputs: {anticipationStrategy, band, targetClass, scale}} = this.props
         const {visualizations = []} = this.state
         // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
         targetClass.set(null)
         this.clearClassValues()
+        // A band selection is a Scale selection: any override belonged to the previous band, so it is cleared,
+        // and this band's own default becomes what the now-blank field resolves to and shows as a placeholder.
+        this.installDefaultScale()
+        scale.set(null)
         const minMax = visualizations.map(({bands, min, max}) => {
             const index = bands.indexOf(band.value)
             if (index >= 0) {
@@ -421,14 +496,9 @@ class _Proportions extends React.Component {
         // manual && this.cancel$.next()
         this.clearProportionsCalculationError()
         if (manual && !anticipatedProportions.value) {
-            const initialProportions = strata.map(stratum => ({
-                color: stratum.color,
-                label: stratum.label,
-                stratum: stratum.value,
-                area: stratum.area,
-                weight: stratum.weight,
-                proportion: 0
-            }))
+            // Rows own the stratum and its proportion, nothing else: presentation and weight are joined from
+            // the stratification when the table renders, so they cannot go stale here.
+            const initialProportions = strata.map(stratum => ({stratum: stratum.value, proportion: 0}))
             anticipatedProportions.set(initialProportions)
         } else if (!manual) {
             anticipatedProportions.set(null)
@@ -513,9 +583,9 @@ class _Proportions extends React.Component {
     }
 
     calculateAnticipatedProportions() {
-        const {aoi, stream,
+        const {aoi, probabilityCache, stream,
             unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, stratificationCrs,
-            inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
+            inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
         this.clearProportionsCalculationError()
         if (manual.value?.length) {
@@ -523,11 +593,18 @@ class _Proportions extends React.Component {
         }
 
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        if (!scale.value || !id || !band.value) {
+        if (!id || !band.value) {
             return
         }
         const categorical = anticipationStrategy.value === 'CATEGORICAL'
         if (categorical && (targetClass.value == null || targetClass.value === '')) {
+            return
+        }
+        // The override where it is filled in, this selection's default where it is not. One number for both the
+        // cache key and the request, so a hit can never describe another grid. onChange fires while typing, so
+        // a half-typed Scale is simply not calculated yet.
+        const calculationScale = this.effectiveScale()
+        if (!isValidGridScale(calculationScale)) {
             return
         }
 
@@ -543,9 +620,32 @@ class _Proportions extends React.Component {
             id,
         }
 
+        // What the raw probabilities actually depend on. The processing strategy is absent because Online and
+        // Batch compute the same thing; the percentage interpretation, the overall-proportion override and
+        // the current weights are absent because the handler applies all three to whatever raw response it is
+        // handed, so a hit reflects the form as it is now rather than as it was when this was calculated.
+        const key = {
+            stratification,
+            stratificationBand,
+            probability,
+            probabilityBand: band.value,
+            mode: anticipationStrategy.value,
+            ...(categorical ? {targetClass: Number(targetClass.value)} : {}),
+            // Proportion estimation has its own Scale but uses the Stratification CRS.
+            scale: calculationScale,
+            crs: stratificationCrs
+        }
+
         if (stream('PROBABILITY_PER_STRATUM').active) {
             this.cancel$.next()
         }
+
+        const cached = probabilityCache?.get({aoi, key})
+        if (cached) {
+            this.onProbabilitiyPerStratumCalculated(cached)
+            return
+        }
+
         stream('PROBABILITY_PER_STRATUM',
             api.gee.probabilityPerStratum$({
                 aoi,
@@ -555,14 +655,18 @@ class _Proportions extends React.Component {
                 probabilityBand: band.value,
                 mode: anticipationStrategy.value,
                 targetClass: categorical ? Number(targetClass.value) : undefined,
-                // Proportion estimation has its own Scale but uses the Stratification CRS.
-                scale: parseInt(scale.value),
+                scale: calculationScale,
                 crs: stratificationCrs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
             ),
-            this.onProbabilitiyPerStratumCalculated,
+            // Cached BEFORE the proportions are derived, so a hit is the raw probabilities. A failure never
+            // reaches here, so it can never displace an older successful entry.
+            probabilityPerStratum => {
+                probabilityCache?.set({aoi, key, result: probabilityPerStratum})
+                this.onProbabilitiyPerStratumCalculated(probabilityPerStratum)
+            },
             error => this.setState({
                 proportionsCalculationError: toProportionsCalculationError({error, strategy: eeStrategy.value})
             })
@@ -624,23 +728,28 @@ class _Proportions extends React.Component {
     }
 }
 
-// eeStrategy and band are intentionally excluded: both recompute explicitly (the Direct/Queued strategy toggle via
-// onEEStrategyChanged, band via onBandChanged). Including them would trigger a second recomputation - and
-// for band, FormCombo's deferred onChange means the dependency-triggered request would be started and then
-// cancelled by onBandChanged's invalidation, leaving the table empty.
+// eeStrategy, band and scale are intentionally excluded: each recomputes explicitly (the Direct/Queued strategy
+// toggle via onEEStrategyChanged, band via onBandChanged, Scale via onScaleChanged). Including them would
+// trigger a second recomputation - and for band, FormCombo's deferred onChange means the dependency-triggered
+// request would be started and then cancelled by onBandChanged's invalidation, leaving the table empty.
 const proportionsDeps = props => {
-    const {stratificationCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
+    const {stratificationCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass}} = props
     return [
-        ...[manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale].map(input => input?.value),
-        // The Stratification CRS changes the estimate, so it must invalidate it.
+        ...[manual, anticipationStrategy, type, assetId, recipeId, targetClass].map(input => input?.value),
+        // The Stratification CRS changes the estimate, so it must invalidate it. The Stratification Scale does
+        // not: the Proportions Scale is concrete configuration and is not derived from it after the fact.
         stratificationCrs
     ]
 }
 
 const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
+    // The recipe stores a concrete Scale. `scale` is an override and `defaultScale` is what a blank one
+    // resolves to, so both are consolidated here and the transient field never reaches the model.
+    const {defaultScale: _defaultScale, ...persisted} = values
     return {
-        ...values,
+        ...persisted,
+        scale: effectiveProportionsScale(values),
         skip: isSkipped,
         percentage: !!values.percentage?.length,
         probabilityPerStratum: isSkipped

@@ -18,7 +18,7 @@ const fields = {
 
 class _AllocationForm extends React.Component {
     render() {
-        const {entry: {label, color}, autoFocus, inputs: {sampleSize}, onChange} = this.props
+        const {presentation: {label, color}, autoFocus, inputs: {sampleSize}, onChange} = this.props
         return (
             <div className={styles.row}>
                 <div className={styles.color}>

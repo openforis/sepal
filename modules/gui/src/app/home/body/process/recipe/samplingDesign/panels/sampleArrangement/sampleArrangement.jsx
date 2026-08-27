@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {isValidSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -40,8 +41,7 @@ const fields = {
         .notBlank(),
     seed: new Form.Field()
         .skip((_seed, values) => !includeSeed(values))
-        .notBlank()
-        .int(),
+        .predicate(isValidSamplingSeed, 'process.samplingDesign.panel.sampleArrangement.form.seed.invalid'),
 }
 
 class _SampleArrangement extends React.Component {
@@ -227,7 +227,10 @@ class _SampleArrangement extends React.Component {
         sampleSizeStrategy.value || sampleSizeStrategy.set('OVER')
         gridOrigin.value || gridOrigin.set('FIXED')
         crs.value || crs.set(DEFAULT_CRS)
-        seed.value || seed.set(1)
+        // Default only an absent/blank seed; a saved invalid value is preserved so it is visibly rejected.
+        if (seed.value == null || seed.value === '') {
+            seed.set(1)
+        }
         // Reveal advanced options automatically when a non-default CRS was saved, so the setting is discoverable.
         if (crs.value && crs.value !== DEFAULT_CRS) {
             this.setState({more: true})
