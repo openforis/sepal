@@ -5134,15 +5134,24 @@
         "preval": "Pre-disturbance value",
         "postval": "Post-disturbance value",
         "rmse": "Fit RMSE",
-        "sig": "Significance (magnitude / RMSE)",
-        "startRed": "Start year - red",
-        "startGreen": "Start year - green",
-        "startBlue": "Start year - blue",
-        "endRed": "End year - red",
-        "endGreen": "End year - green",
-        "endBlue": "End year - blue",
-        "startRgb": "Start year (true color)",
-        "endRgb": "End year (true color)"
+        "sig": "Significance (magnitude / RMSE)"
+      },
+      "imageLayerForm": {
+        "visualizationType": {
+          "label": "Type",
+          "changes": {
+            "label": "Changes",
+            "tooltip": "Render the detected change segment"
+          },
+          "mosaics": {
+            "label": "Mosaics",
+            "tooltip": "Render the annual composite for the chosen year"
+          }
+        },
+        "year": {
+          "label": "Year",
+          "tooltip": "The year to render a composite for"
+        }
       }
     },
     "samplingDesign": {
