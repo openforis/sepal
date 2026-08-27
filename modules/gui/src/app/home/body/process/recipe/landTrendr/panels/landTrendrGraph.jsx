@@ -102,13 +102,13 @@ export class LandTrendrGraph extends React.Component {
     }
 
     highlightCallback(event, x, points, row) {
-        const {years, raw, fitted, isVertex} = this.props
+        const {years, raw, fitted} = this.props
         const point = points[0]
         this.setState({
             point: {
                 year: years[row],
                 raw: raw[row],
-                fitted: isVertex[row] ? fitted[row] : null,
+                fitted: fitted[row],
                 left: point.x <= 0.5
             }
         })
@@ -136,15 +136,18 @@ export class LandTrendrGraph extends React.Component {
         }
     }
 
+    // LandTrendr fits a value for every year of the series - the vertices are
+    // only where the trajectory changes slope, so plotting vertices alone drew
+    // the same line but left the hovered year with nothing to report.
     calculateData() {
-        const {years, raw, fitted, isVertex} = this.props
+        const {years, raw, fitted} = this.props
         if (!years || !years.length) {
             return null
         }
         return years.map((year, i) => [
             new Date(year, 6, 1),
-            [raw[i], 0],
-            isVertex[i] ? [fitted[i], 0] : null
+            _.isFinite(raw[i]) ? [raw[i], 0] : null,
+            _.isFinite(fitted[i]) ? [fitted[i], 0] : null
         ])
     }
 }

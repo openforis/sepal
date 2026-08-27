@@ -55,10 +55,17 @@ it('pins the floating panel to the right when hovering the left half', () => {
     expect(graph.state.point.left).toBe(false)
 })
 
-it('reports the hovered observation, and the fitted value only at a vertex', () => {
+// LandTrendr fits a value for every year in the series, not just the vertices -
+// the vertices are only where the trajectory changes slope.
+it('plots the fitted trajectory for every year', () => {
+    const graph = mount()
+    expect(graph.state.data.map(([, , fitted]) => fitted)).toEqual([[11, 0], [21, 0], [31, 0]])
+})
+
+it('reports the fitted value on a year that is not a vertex', () => {
     const graph = mount()
     graph.highlightCallback(null, null, [{x: 0.5}], 0)
     expect(graph.state.point).toMatchObject({year: 2000, raw: 10, fitted: 11})
     graph.highlightCallback(null, null, [{x: 0.5}], 1)
-    expect(graph.state.point).toMatchObject({year: 2001, raw: 20, fitted: null})
+    expect(graph.state.point).toMatchObject({year: 2001, raw: 20, fitted: 21})
 })
