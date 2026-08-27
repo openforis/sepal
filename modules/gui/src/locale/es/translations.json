@@ -5134,15 +5134,24 @@
         "preval": "",
         "postval": "",
         "rmse": "",
-        "sig": "",
-        "startRed": "",
-        "startGreen": "",
-        "startBlue": "",
-        "endRed": "",
-        "endGreen": "",
-        "endBlue": "",
-        "startRgb": "",
-        "endRgb": ""
+        "sig": ""
+      },
+      "imageLayerForm": {
+        "visualizationType": {
+          "label": "",
+          "changes": {
+            "label": "",
+            "tooltip": ""
+          },
+          "mosaics": {
+            "label": "",
+            "tooltip": ""
+          }
+        },
+        "year": {
+          "label": "Año",
+          "tooltip": ""
+        }
       }
     },
     "samplingDesign": {
