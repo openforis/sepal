@@ -12,7 +12,7 @@ This subsystem owns:
 - structured recipe dependency edges;
 - explicit-principal, authorization-aware graph traversal;
 - missing, forbidden, incomplete and cyclic dependency diagnostics;
-- semantic lineage and capability preservation;
+- capability-provider lineage and capability preservation;
 - canonical output-band descriptions;
 - coherent execution bundles for Preview and Retrieve;
 - observed Earth Engine asset revisions and drift handling;
@@ -89,9 +89,9 @@ editing a central role registry. Cross-recipe behavior must be represented by an
 than by generic code switching on recipe-specific role names.
 
 All edges affect execution fingerprinting. Recipe references participate in dependency closure and cycle detection;
-asset references contribute observations and drift checks. Only roles declared to carry semantic lineage affect
-semantic identity. Mask and fill inputs affect pixels but do not become the wrapper's semantic source. An `AOI`
-edge affects output extent and geometry but does not provide image semantics.
+asset references contribute observations and drift checks. Only roles declared to supply inherited capabilities
+participate in capability-provider lineage. Mask and fill inputs affect pixels but do not supply the wrapper's
+inherited capabilities. An `AOI` edge affects output extent and geometry but does not provide image semantics.
 
 Every inventoried recipe type declares every output-relevant recipe and asset reference, including references
 outside image-input sections. Executable references use canonical source-reference shapes. A test-only structural
@@ -126,25 +126,32 @@ not invalidate ID-based references; display metadata refreshes independently.
 Earth Engine asset deletion is asymmetric: SEPAL cannot enumerate every external dependent and cannot warn before
 the asset is removed. Observation refresh and execution-time drift handling are the detection mechanisms.
 
-## Execution and semantic identity
+## Execution identity and capability providers
 
-A resolved source reports both identities:
+A resolved source separates its execution identity from capability-specific providers:
 
 ```js
 {
     executionReference: {type: 'RECIPE_REF', id: 'masking-recipe'},
-    semanticReference: {type: 'RECIPE_REF', id: 'classification-recipe'},
-    chain: [/* role-bearing nodes from outer source to semantic source */]
+    chain: [/* role-bearing nodes from the selected source */],
+    capabilities: {
+        CCDC_SEGMENTS: [{
+            providerReference: {type: 'RECIPE_REF', id: 'ccdc-recipe'},
+            providerPath: [/* role-bearing path to this provider */]
+        }]
+    }
 }
 ```
 
-The execution reference always identifies the selected outer source. The semantic reference identifies the node
-providing a requested capability. Replacing the execution reference with the semantic reference is never valid.
+The execution reference always identifies the selected outer source. A capability records its own provider and
+evidence path; a resolved output can carry capabilities from different providers or derive one at the outer node.
+There is no single semantic reference or effective recipe type. Replacing the execution reference with any
+capability provider is never valid.
 
 Resolution and compatibility are separate:
 
 1. Resolve every dependency edge.
-2. Follow declared semantic-lineage roles.
+2. Follow roles declared to supply inherited capabilities.
 3. Derive source descriptions and capabilities bottom-up.
 4. Validate the consumer's expectations against the complete execution chain.
 
@@ -164,6 +171,7 @@ unless their operation explicitly defines a positional contract.
         crsTransform: [10, 0, 300000, 0, -10, 1100000],
         nominalScale: 10
     },
+    pyramidingPolicy: 'mode',
     valueSemantics: 'CATEGORICAL', // CATEGORICAL, CONTINUOUS or UNKNOWN
     categories: [                  // optional, provisional and evidence-qualified
         {value: 1, label: 'Forest'}
@@ -174,17 +182,59 @@ unless their operation explicitly defines a positional contract.
 Per-band grids are real and must not be replaced by the first band's projection. `valueSemantics` and `categories`
 are provisional generic fields to be tested by migrated consumers. They may support decisions such as pyramiding
 and categorical applicability, but must not absorb richer domain behavior merely to avoid a capability. Categories
-remain optional because an image can be categorical without an exhaustive legend. Palette and stretch are
-visualization state, not band schema.
+remain optional because an image can be categorical without an exhaustive legend. `pyramidingPolicy` is an export
+requirement, not a presentation preference: CCDC array bands require `sample`, while categorical and continuous
+scalar bands may require different policies. Palette and stretch are visualization state, not band schema.
 
 Start with:
 
-- `IMAGE_OUTPUT`: executable image and ordered output bands;
+- `IMAGE_OUTPUT`: executable image, ordered output bands and per-band export requirements;
 - `CCDC_SEGMENTS`: stored CCDC bands, base-band derivation, available measures and date interpretation.
 
 `CLASSIFICATION_RESULT` remains a likely later capability for classification-specific contracts. Generic
 categorical metadata must not be stretched into classifier behavior, reusable training data or other algorithmic
 capabilities.
+
+### Transformation and preservation
+
+Recipe definitions describe their output transformations in terms of guarantees relevant across capabilities.
+For example, Apply mask preserves ordered band schema and values at pixels that remain valid, changes the mask and
+may change the effective footprint. It also preserves per-band export requirements because it does not change band
+representation. A capability contract states which guarantees it requires and whether a transformation preserves,
+decorates, derives or drops it. The resolver combines the contracts bottom-up.
+
+The same mechanism applies to n-ary recipes. A Stack definition maps each input's bands into its output, carrying
+schema, export requirements and capability evidence only for unchanged bands. It can expose several instances of a
+capability from different inputs. A value-changing operation such as Band Math derives a new output and does not
+inherit domain capabilities merely because one input supplied them.
+
+Do not maintain a list of pass-through recipe types in each consumer, and do not require every pass-through recipe
+to name every capability individually when its transformation guarantees already decide preservation. A recipe or
+capability may still provide an explicit rule when generic guarantees are insufficient.
+
+### Capability discovery
+
+Compatibility is queried for a resolved source instance, not inferred from its recipe type. The same Masking type
+can preserve `CCDC_SEGMENTS` when its primary input provides that capability, and lack it for another primary input
+or operation. Capabilities are zero-or-more instances keyed by capability name; each instance has a stable provider
+path and any output-band mapping needed to interpret it. A consumer expectation includes cardinality or a persisted
+instance selection when more than one match is meaningful. It receives one of three outcomes:
+
+- `SUPPORTED`: the current resolved description satisfies the expectation;
+- `UNSUPPORTED`: current evidence proves that it does not;
+- `UNRESOLVED`: required recipe or asset evidence is pending, unavailable or forbidden.
+
+Recipe selectors use this query rather than synchronous type predicates or blanket `sourceRecipe` checks. A
+consumer such as Change Alerts declares `CCDC_SEGMENTS` and remains unaware of Masking and future pass-through
+types. If several instances match an expectation requiring exactly one, the result is unsupported with a stable
+ambiguity diagnosis until the consumer supports choosing one. Existing persisted selections are revalidated through
+the same contract and remain visibly invalid rather than being silently replaced. Backend validation repeats the
+required safety checks for legacy models, direct API submissions and stale clients.
+
+The GUI can derive descriptions for recipes already loaded in the session. Complete discovery across saved
+recipes requires the caller-authorized storage and session-catalogue boundary described below. Asset capability
+discovery uses authorization-scoped metadata evidence and bounded inspection; an arbitrary asset property is not
+proof of compatibility.
 
 ## Source description
 
@@ -196,7 +246,7 @@ Names remain open, but the contract needs these separations:
     executionReference: {type: 'ASSET', id: 'projects/project/assets/image'},
     observedAt: 1780000000000,
     fingerprint: 'canonical-whole-source-fingerprint',
-    output: {kind: 'IMAGE', bands: []},
+    output: {kind: 'IMAGE', bands: [/* ordered schema and export requirements */]},
     sourceVisualizations: [],
     capabilities: {},
     evidence: [],
@@ -342,16 +392,19 @@ loading. They never prove compatibility and are never silently rewritten.
 Tightening validation will expose recipes that only partly work today. Each activated recipe path must measure this
 before strict enforcement expands to another family.
 
-## Activation sequence
+## Implementation boundary
 
-Masking is the first production consumer of shared dependency traversal. Its initial scope is deliberately below
-the authorized live-resolution and bundle boundary:
+Activate generic `IMAGE_OUTPUT` before domain capabilities or another recipe-specific resolver:
 
-- declare primary and mask roles and reserve the future fill role;
-- detect direct and indirect cycles, missing sources and incomplete references;
-- preserve outer execution identity while following only the primary edge for semantic lineage;
-- correct direct and transitive map invalidation;
-- stabilize Apply mask and then ship constant Fill without adding a dependency.
+- define execution identity, ordered bands and per-band export requirements in the shared contract;
+- resolve intrinsic, one-input and n-ary transformations bottom-up over the existing graph;
+- observe runtime bands through existing execution boundaries without persisting descriptions;
+- migrate Retrieve behind an explicit coexistence boundary;
+- use direct CCDC and masked CCDC as export-policy witnesses, not as type checks in Masking.
+
+Domain capabilities, capability-indexed selectors and broad consumer migration follow only after this output
+contract is accepted. Masking consumes the generic description to stabilize Apply mask and ship constant Fill
+without adding a dependency.
 
 Direct asset Fill may follow because it uses the linked Earth Engine identity rather than loading another SEPAL
 recipe. Recipe Fill remains blocked on caller-authorized loading from the Node server replacement.

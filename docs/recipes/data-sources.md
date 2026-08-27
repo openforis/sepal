@@ -1,32 +1,24 @@
 # Recipe data sources - architecture and roadmap
 
 Technical index for aligning how SEPAL recipes consume other recipes and Earth Engine assets. This is a
-cross-recipe concern. Masking is the first production consumer of the dependency graph; CCDC Slice and
-Classification are later witnesses for capability derivation. User-facing documentation belongs in the separate
-`sepal-doc` repository.
+cross-recipe concern. Masking, CCDC, CCDC Slice and Classification provide acceptance cases, but none owns the
+shared model. User-facing documentation belongs in the separate `sepal-doc` repository.
 
-## Status
+## Scope and constraints
 
-SEPAL does not currently have one contract for resolving sources, describing output bands, validating dependencies
-or owning visualizations. Different recipes copy, derive and refresh the same information in incompatible ways.
-Several consumers also confuse the recipe whose pixels must execute with a terminal recipe supplying semantic
-metadata.
+The architecture provides one contract for resolving sources, describing outputs, validating dependencies and
+owning visualizations. It must replace recipe-specific copying, derivation and refresh logic incrementally rather
+than introducing another parallel synchronization mechanism.
 
-At the recorded baseline, live nested-recipe loading in GEE uses ambient SEPAL administrator credentials. That is
-a longstanding fail-open authorization defect, not a capability gap. Record it separately and do not broaden that
-backend path. Caller-aware loading depends on the replacement of `sepal-server` by the new Node modules and must
-not be implemented temporarily in the current Groovy module. Until that replacement reaches `master`, do not
-activate any new production path that loads referenced recipes through the backend. This blocks recursive live
-resolution, recipe Fill and execution bundles, but not pure contracts, broad edge inventory, dependency safety in
-existing paths, Apply-mask stabilization or constant Fill.
+Caller-aware loading depends on the replacement of `sepal-server` by the new Node modules and must not be
+implemented temporarily in the current Groovy module. Do not activate a new production path that loads referenced
+recipes through ambient administrator credentials. This blocks recursive live resolution, recipe Fill and
+execution bundles, but not pure contracts, in-memory resolution, output descriptions, direct asset work or
+constant Fill.
 
-Do not add another recipe-specific synchronization component. Declare edges broadly enough to exercise the
-contract, but activate the graph narrowly through Masking. Each milestone must correct an existing defect or ship
-a usable Mask and Fill increment without requiring the rest of the architecture to land.
-
-The revision-specific inventory in `mask.md` was recorded against commit
-`75cfcc8c1f69d7871607006ad3beef95a270ff3d`. Later audits must record a new baseline rather than silently treating
-old code identifiers or call-site counts as current.
+Activate output descriptions and capabilities one runtime boundary or consumer family at a time. Each milestone
+must correct an existing defect or deliver a usable generic contract without requiring the rest of the architecture
+to land.
 
 ## Design documents
 
@@ -62,15 +54,16 @@ and checked for drift.
 The **execution source** supplies the pixels. A Masking recipe wrapping a Classification remains the execution
 source; replacing it with the Classification ID bypasses the mask.
 
-The **semantic source** supplies a named domain contract such as CCDC segments or classification categories. A
-decorator can preserve one capability while dropping another. Terminal recipe type alone is not compatibility
-evidence.
+The **capability provider** supplies one named domain contract such as CCDC segments or classification categories.
+Providers are capability-specific: one resolved output can preserve, derive or obtain different capabilities from
+different nodes. There is no single effective or semantic recipe type. Terminal recipe type alone is not
+compatibility evidence.
 
 ### Source descriptions and expectations
 
-A source description is observed evidence: ordered output bands, provisional generic band semantics, source
-visualizations, capabilities, revision evidence and diagnostics. It belongs to runtime state, not persisted recipe
-configuration.
+A source description is observed evidence: ordered output bands, per-band export requirements, provisional generic
+band semantics, source visualizations, capabilities, revision evidence and diagnostics. It belongs to runtime state,
+not persisted recipe configuration.
 
 A consumer expectation is derived from the consuming model. Selecting band `ndvi` means that `ndvi` must still
 exist. Selecting a CCDC measure also requires the corresponding CCDC capability. Discovery updates available
@@ -80,15 +73,24 @@ choices but never silently replaces a missing saved selection.
 
 Start with two capabilities:
 
-- `IMAGE_OUTPUT`: executable image and ordered output-band schema;
+- `IMAGE_OUTPUT`: executable image, ordered output-band schema and per-band export requirements;
 - `CCDC_SEGMENTS`: CCDC stored bands, base bands, measures and date interpretation.
 
 Add a third capability only when a migrated consumer demonstrates that the first two cannot express its contract.
 A future `CLASSIFICATION_RESULT` is likely, but it should be defined from real Classification consumers rather
 than guessed in advance.
 
-Decorators explicitly preserve, decorate, derive or drop each capability. Do not copy arbitrary methods from a
-terminal recipe onto a wrapper.
+Recipe definitions declare output-transformation guarantees, such as preserving ordered band schema and values at
+valid pixels while changing the mask. Capability contracts declare which guarantees they require. The resolver
+combines those two contracts to preserve, decorate, derive or drop capabilities; it does not copy arbitrary methods
+or properties from a terminal recipe onto a wrapper. This avoids changing every consumer when a new pass-through
+recipe is added, and avoids changing every pass-through recipe when a new capability can already be decided from
+its declared guarantees.
+
+Transformations are not restricted to one-input decorators. A Stack can derive one output from several role-bearing
+inputs, preserve a capability over an unchanged subset of output bands, or expose several instances of the same
+capability. Consumer expectations state any required cardinality and selection constraints; the resolver never
+chooses one matching instance silently.
 
 ### Shared contract home
 
@@ -98,8 +100,9 @@ GUI, GEE and Task adapt the same contract at their boundaries.
 
 Recipe-specific behavior belongs to one shared recipe definition per type. A single minimal catalogue imports
 those definitions and indexes them by persisted recipe type; it contains no source, capability or presentation
-logic. A definition must explicitly declare its direct sources or explicitly declare that it has none. Adding a
-recipe must not require updating separate switches for dependencies, bands, capabilities and runtime consumers.
+logic. A definition must explicitly declare its direct sources or explicitly declare that it has none, and must
+declare the output transformation needed for generic capability preservation. Adding a recipe must not require
+updating separate switches for dependencies, bands, capabilities and runtime consumers.
 
 Generic reference and edge modules know only canonical value shapes. Legacy model normalization and role names are
 owned by the recipe definition that understands those fields. Roles are opaque to generic traversal unless a
@@ -108,6 +111,21 @@ cross-recipe contract explicitly gives one shared meaning.
 Pure behavior is tested once in the shared library. Each runtime gets a thin environment witness proving that the
 shared module resolves and executes under Vite or Node ESM, plus focused boundary tests for behavior owned by that
 runtime.
+
+### Recipe-type knowledge boundary
+
+A recipe definition knows its own persisted model, direct source roles, transformation and capabilities it
+intrinsically provides or derives. A consumer knows the capability it requires. Neither enumerates the concrete
+recipe types on the other side. Concrete type dispatch belongs in the central registry, and temporary type-specific
+migration adapters must have an explicit removal condition.
+
+The maintenance tests for this boundary are:
+
+- adding a pass-through or composing recipe does not modify existing consumers, selectors or Retrieve;
+- adding a consumer adds an expectation, not a list of compatible recipe types;
+- adding a capability does not modify existing transformations whose declared guarantees already decide whether it
+  is preserved;
+- adding a recipe type requires its definition and runtime implementation, not new cross-recipe switches.
 
 ## Normative policy map
 
@@ -124,66 +142,66 @@ Normative policy appears only in the owning design document:
 This index records implementation order and scope. When a summary here appears to conflict with an owning
 document, the owning document is authoritative and this index must be corrected.
 
-## First production slice: Masking robustness
+## Acceptance scope
 
-Masking exercises the dependency graph before capability, catalogue and bundle work:
+The shared contracts must cover:
 
-- primary and mask edges with different semantic roles;
+- differently role-bearing edges in one recipe;
 - direct and indirect cycles, missing sources and incomplete references;
-- outer execution identity versus terminal semantic identity;
+- outer execution identity versus capability-provider identity;
 - direct and transitive map invalidation;
 - stale copied band and visualization snapshots;
-- controlled Retrieve capability handling instead of a date-range crash.
+- per-band export requirements through transformations and composition;
+- controlled rejection of incompatible consumer expectations.
 
-The shared definitions still include CCDC, CCDC Slice and at least one AOI-bearing recipe so the edge contract is
-not shaped around a two-edge decorator. Those definitions remain inactive at runtime. The slice is complete when
-Masking uses one cycle-safe dependency traversal, Apply mask is stable across Preview and Retrieve, and the known
-dependency defects fail predictably without introducing new backend recipe loads.
-
-The migration must be reversible until acceptance is complete. Keep coexistence boundaries local to the migrated
-Masking paths; do not leave two generic dependency resolvers active indefinitely.
+Keep each correction independently mergeable. Do not combine runtime output descriptions, visualization ownership,
+domain capabilities and recipe-specific operation controls merely because one acceptance case exposes all of them.
 
 ## Implementation order
 
-Each numbered milestone is an independent merge candidate. Do not hold a completed robustness correction or usable
-Fill mode on this branch until later architecture is ready. The external Node-server prerequisite blocks only the
-milestones that follow it; steps 1 through 5 can land on `master` independently.
+Each numbered milestone is an independent merge candidate. Do not hold a completed generic foundation or usable
+Fill mode on a branch until later architecture is ready. The external Node-server prerequisite blocks only the
+milestones that follow it; steps 1 through 4 can land on `master` independently.
 
-### 1. Shared edge contract and broad inventory
+### 1. Establish runtime image output contracts
 
-- Define canonical references and role-bearing edges, including recipe-backed AOIs and other references outside
-  image-input sections.
-- Declare Masking, CCDC, CCDC Slice and representative AOI-bearing recipes, while activating only Masking.
-- Add sanitized persisted-model fixtures and test-only completeness checks for inventoried recipe types.
-- Add pure completeness, AOI-closure, reference and diagnostic tests without changing live recipe loading.
+Deliver this milestone as separate merges, in this order:
 
-Exit criterion: every canonical reference in the proving models is declared or explicitly classified as a
-non-edge, Masking has complete role-bearing edges, and no production resolver is activated.
+1. Define the pure `IMAGE_OUTPUT` contract: outer execution reference, ordered band descriptions, per-band export
+   requirements, evidence and stable diagnoses. Do not add domain capabilities yet.
+2. Define intrinsic, one-input and n-ary transformation contracts and a bottom-up resolver over the existing graph.
+   Use pure synthetic composition tests without activating Stack or another broad consumer family.
+3. Add a runtime adapter that observes actual bands through existing execution boundaries and keeps descriptions in
+   runtime state. Do not change persisted recipe JSON or introduce backend recipe loading.
+4. Migrate Retrieve to derive selected bands and pyramiding policy from the resolved output. Keep an explicit
+   coexistence path for unmigrated recipes and remove each legacy policy only when its recipe is accepted.
+5. Prove direct CCDC uses `sample`, Apply mask preserves it for a successful masked CCDC export, and ordinary
+   continuous and categorical outputs retain their own policies. No recipe may inspect another recipe's type.
 
-### 2. Pure graph traversal and Masking dependency safety
+Explicitly defer domain capabilities, capability-indexed recipe selection, date-range and visualization ownership,
+saved-recipe catalogue queries, coherent bundles and broad recipe-family migrations.
 
-- Add deterministic traversal with memoized diamonds, a visited set, dependency paths and stable diagnoses.
-- Make every Masking edge participate in cycle, missing-source and output-validity checks while only the primary
-  edge supplies semantic lineage.
-- Correct map invalidation so direct dependencies are retained while descendants are traversed.
-- Add backend cycle protection to the existing Masking execution path without adding a new recipe-loading path.
-- Keep the outer Masking reference as execution identity and report unsupported downstream semantics explicitly.
+Do not schedule a standalone Change Alerts date-format patch in this phase. When Change Alerts migrates to the
+capability contract, its execution boundary must still reject legacy, incomplete and directly submitted models
+with a typed error, but that defensive check is acceptance work for the migration rather than a separate feature.
 
-Exit criterion: direct and indirect cycles, missing sources and incomplete references are controlled errors; every
-direct and transitive dependency invalidates the map once; the existing happy path is unchanged.
+Exit criterion: one generic runtime output description drives a migrated Retrieve path; export requirements survive
+declared transformations; masked CCDC exports successfully without a Masking-to-CCDC type check; unmigrated recipes
+retain their existing behavior through an explicit and removable coexistence boundary.
 
-### 3. Stabilize Apply mask
+### 2. Stabilize Apply mask
 
-- Capture current Earth Engine behavior and legacy first-mask-band semantics.
-- Add explicit mask-band selection for newly edited recipes.
-- Stop treating copied bands and visualizations as authoritative source state.
-- Correct Retrieve capability handling, including the current date-range failure.
-- Verify Preview, map rendering, Retrieve and exported metadata while preserving outer execution identity.
+- Stop treating copied primary bands and visualizations as authoritative source state.
+- Extend the resolved description incrementally with preserved date range and source-visualization ownership.
+- Capture current Earth Engine behavior, add explicit mask-band selection with legacy first-band compatibility, and
+  validate required operation inputs.
+- Verify Preview, map rendering, Retrieve and exported metadata against the same resolved output while preserving
+  outer execution identity.
 
 Exit criterion: Apply mask is behaviorally stable, stale source snapshots cannot silently win, and every supported
-workflow executes the Masking recipe rather than its semantic source.
+workflow executes the Masking recipe rather than a capability provider.
 
-### 4. Ship constant Fill
+### 3. Ship constant Fill
 
 - Add the operation discriminator with legacy Apply mask as its default.
 - Implement a finite constant replacement for selected target bands.
@@ -193,7 +211,7 @@ workflow executes the Masking recipe rather than its semantic source.
 Exit criterion: constant Fill works in Preview and Retrieve and introduces no fill dependency, recipe catalogue,
 bundle, provenance or caller-aware loading requirement.
 
-### 5. Add direct asset Fill
+### 4. Add direct asset Fill
 
 - Add explicit name-based target-to-replacement band mapping.
 - Resolve the replacement through the user's linked Earth Engine identity.
@@ -215,13 +233,13 @@ After the replacement merges:
 Graph traversal, capability derivation, caching and bundle construction remain shared JavaScript concerns rather
 than server endpoint logic.
 
-### 6. Add recipe Fill
+### 5. Add recipe Fill
 
 - Activate caller-authorized resolution for the fill reference.
-- Reuse the shared graph for cycles, missing sources and execution-versus-semantic identity.
+- Reuse the shared graph for cycles, missing sources and execution-versus-capability-provider identity.
 - Apply the same explicit band mapping and output-preservation contract as asset Fill.
 
-### 7. Add coherent execution and freshness infrastructure
+### 6. Add coherent execution and freshness infrastructure
 
 - Introduce live and bundled resolution contexts only after authorized loading exists.
 - Persist a content digest with new saves and lazily derive it for legacy rows over versioned canonical persisted
@@ -230,17 +248,23 @@ than server endpoint logic.
 - Add the minimum session catalogue, conservative graph fingerprint and race-safe refresh required by the first
   catalogue-backed consumer.
 
-### 8. Migrate CCDC Slice capabilities and visualizations
+### 7. Migrate CCDC Slice capabilities and visualizations
 
 - Define and activate `IMAGE_OUTPUT` and `CCDC_SEGMENTS` from actual CCDC and CCDC Slice behavior.
 - Derive exact Slice output bands and source visualizations without authoritative copied snapshots.
 - Migrate Preview, map selection and Retrieve filtering together.
 
-### 9. Further migrations
+### 8. Migrate Change Alerts, then further consumers
 
-Migrate one consumer family at a time. Likely groups are alert recipes, Stack and Band Math, generic image inputs,
-Classification/Regression reuse, and Sampling Design. Every migration needs a stated stopping rule, coexistence
-plan and removal of the superseded local synchronization path.
+- Make Change Alerts the first `CCDC_SEGMENTS` consumer: retain the selected outer execution reference, obtain CCDC
+  semantics through the primary lineage, and reject an absent capability without entering algorithm code.
+- Replace its recipe-type and blanket `sourceRecipe` candidate filter with the generic per-source capability query;
+  Change Alerts declares only that it requires `CCDC_SEGMENTS` and has no knowledge of pass-through recipe types.
+- Remove its terminal-reference replacement and copied CCDC metadata path only when the capability-backed path is
+  complete, and retain typed backend validation as a safety boundary rather than the source of semantics.
+- Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
+  generic image inputs, Classification/Regression reuse, and Sampling Design. Every migration needs a stated
+  stopping rule, coexistence plan and removal of the superseded local synchronization path.
 
 ## Deliberately deferred
 

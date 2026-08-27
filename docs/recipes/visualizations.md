@@ -141,8 +141,8 @@ capability witness.
 ## Implementation order
 
 1. Reserve `sourceVisualizations` and ownership in the common source description.
-2. Stabilize Apply mask by preserving compatible source styles and preventing stale copied snapshots from becoming
-   authoritative.
+2. After the generic runtime image output contract is active, stabilize Apply mask by preserving compatible source
+   styles and preventing stale copied snapshots from becoming authoritative.
 3. Define constant Fill invalidation rules, especially for categorical values, without waiting for a catalogue or
    execution bundle.
 4. After caller-authorized loading and catalogue infrastructure exist, derive CCDC Slice presets from current

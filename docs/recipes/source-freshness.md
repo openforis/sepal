@@ -163,6 +163,12 @@ Refresh reconciles evidence with intent:
 The GUI directs the user to the panel owning the invalid expectation. It must not allow a later Earth Engine
 `select` or model-property read to become the first validation.
 
+Candidate discovery uses the same expectation contract. It queries resolved source instances and distinguishes
+supported, unsupported and unresolved results; it does not index a denormalized effective recipe type. A selector
+can therefore admit a pass-through recipe only when its current operation and dependency graph preserve the
+required capability, without knowing that recipe type. Catalogue refresh re-evaluates the query when any
+output-relevant dependency or asset observation changes.
+
 ## Availability state
 
 The diagnosis taxonomy, known-bad versus unknown policy, execution blocking and transient override rules are owned
