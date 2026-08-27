@@ -35,7 +35,7 @@ const main = async () => {
     await initializeDatabase()
     // Migrate first so existing users' real uid/gid + credentials are in place; bootstrap then only
     // fills genuinely-missing system admins (fresh install, where it derives uid = gid = id).
-    await migrateLdapIfConfigured()
+    // await migrateLdapIfConfigured()
     await bootstrap()
     await initMessageQueue(amqpUri, {
         publishers: [
