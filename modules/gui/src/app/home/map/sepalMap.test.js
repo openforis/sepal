@@ -10,6 +10,10 @@ class TestAdapter {
     cursor = 'unset'
     doubleClickToZoom = true
 
+    constructor(mapContainer) {
+        this.mapContainer = mapContainer
+    }
+
     getCoordinatePrecision() {
         return 9
     }
@@ -32,10 +36,22 @@ class TestAdapter {
 
     register(callbacks) {
         this.callbacks = callbacks
+        if (this.mapContainer) {
+            this.keyUpListener = event => callbacks.onKeyUp({
+                key: event.key,
+                heldKeys: [],
+                preventDefault: () => event.preventDefault()
+            })
+            this.mapContainer.addEventListener('keyup', this.keyUpListener)
+        }
     }
 
     unregister() {
         this.clear()
+        if (this.keyUpListener) {
+            this.mapContainer.removeEventListener('keyup', this.keyUpListener)
+            this.keyUpListener = null
+        }
         this.callbacks = null
     }
 
@@ -52,8 +68,8 @@ class TestAdapter {
     }
 }
 
-const createDrawing = () => {
-    const adapter = new TestAdapter()
+const createDrawing = mapContainer => {
+    const adapter = new TestAdapter(mapContainer)
     const drawing = new TerraDraw({
         adapter,
         modes: [new TerraDrawPolygonMode({editable: true, showCoordinatePoints: true})]
@@ -63,15 +79,22 @@ const createDrawing = () => {
     return {adapter, drawing}
 }
 
-const createSepalMap = (drawing, properties = {}) =>
-    Object.assign(Object.create(SepalMap.prototype), {
+const createSepalMap = (drawing, properties = {}) => {
+    const mapContainer = document.createElement('div')
+    const map = Object.assign(Object.create(SepalMap.prototype), {
         drawing,
         drawingListener: null,
         drawingChangeListener: null,
+        drawingKeydownListener: null,
         drawingChangesSuppressed: false,
+        drawingFeatureId: null,
         polygonPreview: null,
         ...properties
     })
+    map.googleMap = map.googleMap || {}
+    map.googleMap.getDiv = map.googleMap.getDiv || (() => mapContainer)
+    return map
+}
 
 class TestPolygon {
     constructor(options) {
@@ -96,6 +119,55 @@ const pointerEvent = (lng, lat) => ({
     heldKeys: [],
     isContextMenu: false
 })
+
+const createKeyboardHarness = ({initialPath = null, onChange = () => {}, onFinish = () => {}} = {}) => {
+    const mapContainer = document.createElement('div')
+    const eventTarget = document.createElement('div')
+    mapContainer.appendChild(eventTarget)
+    document.body.appendChild(mapContainer)
+
+    const {adapter, drawing} = createDrawing(mapContainer)
+    const map = createSepalMap(drawing, {
+        googleMap: {getDiv: () => mapContainer}
+    })
+    map.enablePolygonDrawing(onFinish, () => initialPath, onChange)
+
+    return {
+        adapter,
+        drawing,
+        eventTarget,
+        map,
+        dispose() {
+            map.disablePolygonDrawing()
+            mapContainer.remove()
+        }
+    }
+}
+
+const startPolygonDraft = adapter => {
+    adapter.callbacks.onClick(pointerEvent(10, 20))
+    adapter.callbacks.onMouseMove(pointerEvent(30, 20))
+}
+
+const completePolygon = (adapter, eventTarget) => {
+    adapter.callbacks.onClick(pointerEvent(10, 20))
+    adapter.callbacks.onMouseMove(pointerEvent(30, 20))
+    adapter.callbacks.onClick(pointerEvent(30, 20))
+    adapter.callbacks.onMouseMove(pointerEvent(30, 40))
+    adapter.callbacks.onClick(pointerEvent(30, 40))
+    eventTarget.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter', bubbles: true}))
+}
+
+const dispatchKey = (eventTarget, type, key) => {
+    const event = new KeyboardEvent(type, {key, bubbles: true, cancelable: true})
+    eventTarget.dispatchEvent(event)
+    return event
+}
+
+const observeDocumentKeydown = listener => {
+    document.addEventListener('keydown', listener)
+    return () => document.removeEventListener('keydown', listener)
+}
 
 describe('polygon drawing', () => {
     it('reports provisional polygon changes before drawing finishes', () => {
@@ -233,6 +305,191 @@ describe('polygon drawing', () => {
         expect(drawing.enabled).toBe(false)
         expect(adapter.cursor).toBe('unset')
         expect(adapter.doubleClickToZoom).toBe(true)
+    })
+})
+
+describe('polygon Escape propagation', () => {
+    it('lets Escape reach the document when no polygon draft exists', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            const event = dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(documentKeys).toEqual(['Escape'])
+            expect(event.defaultPrevented).toBe(false)
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('keeps draft Escape keydown local while TerraDraw cancels on keyup', () => {
+        const order = []
+        const harness = createKeyboardHarness({
+            onChange: path => !path && order.push('terra-keyup-cancelled')
+        })
+        const stopObserving = observeDocumentKeydown(() => order.push('document-keydown'))
+        try {
+            startPolygonDraft(harness.adapter)
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+            dispatchKey(harness.eventTarget, 'keyup', 'Escape')
+
+            expect(order).toEqual(['terra-keyup-cancelled'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('does not prevent the intercepted draft Escape keydown', () => {
+        const harness = createKeyboardHarness()
+        try {
+            startPolygonDraft(harness.adapter)
+
+            const event = dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(event.defaultPrevented).toBe(false)
+        } finally {
+            harness.dispose()
+        }
+    })
+
+    it('lets a second Escape reach the document after TerraDraw cancellation', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            startPolygonDraft(harness.adapter)
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+            dispatchKey(harness.eventTarget, 'keyup', 'Escape')
+            documentKeys.length = 0
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(documentKeys).toEqual(['Escape'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('does not consume Escape for an API-loaded committed polygon', () => {
+        const initialPath = [[10, 20], [30, 20], [30, 40]]
+        const harness = createKeyboardHarness({initialPath})
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(documentKeys).toEqual(['Escape'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('keeps Escape local while replacing a polygon and restores the committed polygon on keyup', () => {
+        const initialPath = [[-100, -50], [-50, -50], [-50, 0]]
+        const harness = createKeyboardHarness({initialPath})
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            startPolygonDraft(harness.adapter)
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+            dispatchKey(harness.eventTarget, 'keyup', 'Escape')
+
+            const polygonPaths = harness.drawing.getSnapshot()
+                .filter(({geometry}) => geometry.type === 'Polygon')
+                .map(toPolygonPath)
+            expect({documentKeys, polygonPaths}).toEqual({
+                documentKeys: [],
+                polygonPaths: [initialPath]
+            })
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('lets Escape reach the document after a polygon is completed', () => {
+        const completedPaths = []
+        const harness = createKeyboardHarness({
+            onFinish: path => completedPaths.push(path)
+        })
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            completePolygon(harness.adapter, harness.eventTarget)
+
+            expect(completedPaths).toEqual([[[10, 20], [30, 20], [30, 40]]])
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(documentKeys).toEqual(['Escape'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('always lets a non-Escape key bubble while a draft exists', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            startPolygonDraft(harness.adapter)
+
+            dispatchKey(harness.eventTarget, 'keydown', 'a')
+
+            expect(documentKeys).toEqual(['a'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('removes interception when polygon drawing is disabled', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            startPolygonDraft(harness.adapter)
+            harness.map.disablePolygonDrawing()
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Escape')
+
+            expect(documentKeys).toEqual(['Escape'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('registers one interception after repeated enable and disable cycles', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            harness.map.disablePolygonDrawing()
+            harness.map.enablePolygonDrawing(() => {}, () => null, () => {})
+            harness.map.disablePolygonDrawing()
+            harness.map.enablePolygonDrawing(() => {}, () => null, () => {})
+            startPolygonDraft(harness.adapter)
+            const event = new KeyboardEvent('keydown', {key: 'Escape', bubbles: true, cancelable: true})
+            const stopPropagation = vi.spyOn(event, 'stopPropagation')
+
+            harness.eventTarget.dispatchEvent(event)
+
+            expect({documentKeys, stopPropagationCalls: stopPropagation.mock.calls.length}).toEqual({
+                documentKeys: [],
+                stopPropagationCalls: 1
+            })
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
     })
 })
 

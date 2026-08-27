@@ -119,6 +119,7 @@ export class SepalMap {
     drawing = null
     drawingListener = null
     drawingChangeListener = null
+    drawingKeydownListener = null
     drawingChangesSuppressed = false
     drawingFeatureId = null
     polygonPreview = null
@@ -249,6 +250,7 @@ export class SepalMap {
         // Editing an existing shape finishes too, as an 'edit' or 'deleteCoordinate'.
         this.drawingListener = id => {
             this.clearPolygonPreview()
+            this.drawingFeatureId = null
             const feature = drawing.getSnapshotFeature(id)
             if (retain) {
                 this.retainOnly(drawing, feature)
@@ -288,8 +290,13 @@ export class SepalMap {
     }
 
     disableDrawingMode() {
-        const {drawing, drawingListener, drawingChangeListener} = this
+        const {drawing, drawingListener, drawingChangeListener, drawingKeydownListener} = this
         this.clearPolygonPreview()
+        if (drawingKeydownListener) {
+            this.googleMap.getDiv().removeEventListener('keydown', drawingKeydownListener)
+            this.drawingKeydownListener = null
+        }
+        this.drawingFeatureId = null
         if (drawing) {
             if (drawingListener) {
                 drawing.off('finish', drawingListener)
@@ -299,7 +306,6 @@ export class SepalMap {
                 drawing.off('change', drawingChangeListener)
                 this.drawingChangeListener = null
             }
-            this.drawingFeatureId = null
             if (drawing.enabled) {
                 drawing.setMode('static')
                 drawing.stop()
@@ -422,6 +428,13 @@ export class SepalMap {
             retain: true,
             onChange: onChange && (feature => onChange(feature ? toPolygonPath(feature) : null))
         })
+        this.drawingKeydownListener = event => {
+            // TerraDraw cancels provisional polygons on keyup; keep the competing Escape keydown map-local.
+            if (event.key === 'Escape' && this.drawingFeatureId !== null) {
+                event.stopPropagation()
+            }
+        }
+        this.googleMap.getDiv().addEventListener('keydown', this.drawingKeydownListener)
         const path = getPath && getPath()
         this.setPolygonDrawing(path)
     }
