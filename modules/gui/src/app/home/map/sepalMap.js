@@ -186,7 +186,10 @@ export class SepalMap {
                         editable: true,
                         showCoordinatePoints: true
                     }),
-                    new TerraDrawRectangleMode({styles: this.drawingStyles()})
+                    new TerraDrawRectangleMode({
+                        styles: this.drawingStyles(),
+                        drawInteraction: 'click-move-or-drag'
+                    })
                 ]
             })
         }
@@ -287,6 +290,13 @@ export class SepalMap {
             drawing.start()
         }
         drawing.setMode(mode)
+        this.drawingKeydownListener = event => {
+            // TerraDraw cancels provisional features on keyup; keep the competing Escape keydown map-local.
+            if (event.key === 'Escape' && drawing.getModeState() === 'drawing') {
+                event.stopPropagation()
+            }
+        }
+        this.googleMap.getDiv().addEventListener('keydown', this.drawingKeydownListener)
     }
 
     disableDrawingMode() {
@@ -428,13 +438,6 @@ export class SepalMap {
             retain: true,
             onChange: onChange && (feature => onChange(feature ? toPolygonPath(feature) : null))
         })
-        this.drawingKeydownListener = event => {
-            // TerraDraw cancels provisional polygons on keyup; keep the competing Escape keydown map-local.
-            if (event.key === 'Escape' && this.drawingFeatureId !== null) {
-                event.stopPropagation()
-            }
-        }
-        this.googleMap.getDiv().addEventListener('keydown', this.drawingKeydownListener)
         const path = getPath && getPath()
         this.setPolygonDrawing(path)
     }
