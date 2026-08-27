@@ -63,7 +63,10 @@ export const submitRetrieveRecipeTask = (recipe, config = {}) => {
     
     // Add time range if needed
     if (includeTimeRange) {
-        const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || [])
+        const recipeType = getRecipeType(recipe.type)
+        // Date range is optional metadata. Keep the type lookup strict when time metadata is requested;
+        // decorator inheritance belongs to output resolution.
+        const [timeStart, timeEnd] = (recipeType.getDateRange?.(recipe) || [])
             .map(date => date.valueOf())
         if (timeStart !== undefined && timeEnd !== undefined) {
             recipeProperties['system:time_start'] = timeStart
