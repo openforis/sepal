@@ -1,10 +1,47 @@
 import {firstValueFrom, tap} from 'rxjs'
 
-// The real seam, deliberately unmocked: ASSET_BOUNDS means "whatever the source image covers", which
-// cannot be known without the source image. Resolving it here would either hand Earth Engine the
-// descriptor or quietly substitute null, and both have already cost us a production failure.
+// Keep the AOI conversion authority real so these tests exercise the production descriptor boundary.
 const {toGeometry$} = await import('#sepal/ee/aoi')
 
+const resolvedGeometry = {
+    type() {
+        return 'Polygon'
+    }
+}
+
+describe('toGeometry$ with a runtime geometry aoi', () => {
+    it('emits the exact Earth Engine geometry carried by the wrapper', async () => {
+        expect(typeof resolvedGeometry.type).toBe('function')
+        await expect(
+            firstValueFrom(toGeometry$({type: 'GEOMETRY', geometry: resolvedGeometry}))
+        ).resolves.toBe(resolvedGeometry)
+    })
+
+    it.each([
+        ['absent', {type: 'GEOMETRY'}],
+        ['null', {type: 'GEOMETRY', geometry: null}]
+    ])('rejects a wrapper with %s geometry instead of emitting it', async (_case, aoi) => {
+        const emitted = []
+
+        await expect(
+            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value))))
+        ).rejects.toThrow(/GEOMETRY.*requires.*geometry/i)
+
+        expect(emitted).toEqual([])
+    })
+
+    it('keeps a raw Earth Engine-shaped geometry unsupported', async () => {
+        const emitted = []
+
+        await expect(
+            firstValueFrom(toGeometry$(resolvedGeometry).pipe(tap(value => emitted.push(value))))
+        ).rejects.toThrow(/Unsupported aoi type:/)
+
+        expect(emitted).toEqual([])
+    })
+})
+
+// ASSET_BOUNDS requires source-image context and must not be resolved as a standalone descriptor.
 describe('toGeometry$ with an ASSET_BOUNDS aoi', () => {
     it('fails explicitly instead of emitting anything', async () => {
         const aoi = {type: 'ASSET_BOUNDS'}
