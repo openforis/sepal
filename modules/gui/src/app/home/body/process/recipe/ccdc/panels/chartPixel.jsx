@@ -7,6 +7,7 @@ import {compose} from '~/compose'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
@@ -164,12 +165,9 @@ class _ChartPixel extends React.Component {
             segments => this.setState({segments}),
             error => {
                 this.close()
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
                 Notifications.error({
                     message: msg('process.ccdc.chartPixel.loadSegments.error'),
-                    error: errorMessage,
+                    error: toUserErrorMessage(error),
                     group: true,
                     timeout: 0
                 })
@@ -182,12 +180,9 @@ class _ChartPixel extends React.Component {
             observations => this.setState({observations}),
             error => {
                 this.close()
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
                 Notifications.error({
                     message: msg('process.ccdc.chartPixel.loadObservations.error'),
-                    error: errorMessage,
+                    error: toUserErrorMessage(error),
                     group: true,
                     timeout: 0
                 })
