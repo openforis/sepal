@@ -1,8 +1,8 @@
 import {getPool} from './db.js'
 import {withProjectId} from './recipe.js'
 
-const RECIPE = 'processing_recipe.recipe'
-const PROJECT = 'processing_recipe.project'
+const RECIPE = 'recipe'
+const PROJECT = 'project'
 
 const placeholders = items => items.map(() => '?').join(', ')
 
@@ -27,7 +27,7 @@ const saveRecipe = async ({id, projectId, name, type, username, contents, typeVe
 const getById = async id => {
     const [rows] = await getPool().query(
         `SELECT id, project_id, name, type, type_version, username, contents, creation_time, update_time
-         FROM ${RECIPE} WHERE id = ? AND NOT removed`,
+         FROM ${RECIPE} WHERE id = ? AND removed = FALSE`,
         [id]
     )
     return rows[0] || null
@@ -36,7 +36,7 @@ const getById = async id => {
 const listRecipes = async username => {
     const [rows] = await getPool().query(
         `SELECT id, project_id, name, type, type_version, username, creation_time, update_time
-         FROM ${RECIPE} WHERE username = ? AND NOT removed ORDER BY name, update_time DESC`,
+         FROM ${RECIPE} WHERE username = ? AND removed = FALSE ORDER BY name, update_time DESC`,
         [username]
     )
     return rows
@@ -98,7 +98,7 @@ const listProjects = async username => {
 const listRecipesOfTypeBeforeVersion = async (type, version) => {
     const [rows] = await getPool().query(
         `SELECT id, project_id, name, type, type_version, username, contents, creation_time, update_time
-         FROM ${RECIPE} WHERE type = ? AND type_version < ? AND NOT removed ORDER BY creation_time`,
+         FROM ${RECIPE} WHERE type = ? AND type_version < ? AND removed = FALSE ORDER BY creation_time`,
         [type, version]
     )
     return rows

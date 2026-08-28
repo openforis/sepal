@@ -6,7 +6,7 @@ import {dirName} from '#sepal/path'
 
 const log = getLogger('database')
 
-const DATABASE_NAME = 'processing_recipe'
+const DATABASE_NAME = 'recipe'
 
 const __dirname = dirName(import.meta.url)
 const migrationsPath = join(__dirname, '/../migrations')
