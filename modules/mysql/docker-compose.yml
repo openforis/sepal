@@ -42,6 +42,8 @@ services:
     container_name: mysql-admin
     environment:
       PMA_HOST: mysql
+      # config.user.inc.php: $cfg['NavigationTreeEnableGrouping'] = false;
+      PMA_USER_CONFIG_BASE64: "PD9waHAKJGNmZ1snTmF2aWdhdGlvblRyZWVFbmFibGVHcm91cGluZyddID0gZmFsc2U7Cg=="
     ports:
       - "127.0.0.1:8980:80"
     healthcheck:
