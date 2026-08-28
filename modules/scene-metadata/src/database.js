@@ -25,7 +25,7 @@ const transaction = {
 }
 
 const initializeDatabase = async () => {
-    await initDatabase(CURRENT_DATABASE_NAME, migrationsPath)
+    const {created} = await initDatabase(CURRENT_DATABASE_NAME, migrationsPath)
     const pool = await createPool(CURRENT_DATABASE_NAME)
 
     const dropDatabase = async name => {
@@ -193,7 +193,7 @@ const initializeDatabase = async () => {
     }
 
     return {
-        prepare, ingest, finalize, insert, beginTransaction, commitTransaction, rollbackTransaction
+        created, prepare, ingest, finalize, insert, beginTransaction, commitTransaction, rollbackTransaction
     }
 }
 

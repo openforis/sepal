@@ -83,6 +83,10 @@ const scheduleUpdates = ({redis, database}) => {
 const main = async () => {
     const redis = await initializeRedis()
     const database = await initializeDatabase()
+    if (database.created) {
+        log.warn('Database did not exist, resetting Redis')
+        await redis.reset()
+    }
     await startHttpServer()
     await initializeData({redis, database})
     scheduleUpdates({redis, database})
