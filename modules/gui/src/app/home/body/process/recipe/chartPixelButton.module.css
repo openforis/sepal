@@ -61,7 +61,7 @@
 }
 
 .container:hover .chevron,
-.container:focus-within .chevron,
+.container:has(:focus-visible) .chevron,
 .coordinateInputVisible .chevron {
     opacity: 1;
     pointer-events: auto;
