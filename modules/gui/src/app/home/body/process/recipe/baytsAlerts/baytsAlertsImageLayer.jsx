@@ -51,7 +51,7 @@ class _BaytsAlertsImageLayer extends React.Component {
                 {this.renderVisualizationType()}
                 {visualizationType === 'alerts' ? this.renderPreviouslyConfirmed() : null}
                 {visualizationType === 'alerts' ? this.renderMinConfidence() : null}
-                {visualizationType === 'alerts' ? this.renderVisualizationSelector() : null}
+                {this.renderVisualizationSelector()}
             </Layout>
         )
     }
