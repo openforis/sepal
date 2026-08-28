@@ -902,6 +902,9 @@
     "drawingMode": {
       "zoomarea": "",
       "polygon": ""
+    },
+    "interactionMode": {
+      "chart": ""
     }
   },
   "featureLayerSources": {
@@ -1044,6 +1047,18 @@
           "tooltip": ""
         }
       }
+    },
+    "chartPixel": {
+      "cancel.tooltip": "",
+      "coordinates": {
+        "latitude": "",
+        "longitude": "",
+        "outsideBounds": "",
+        "placeholder": "",
+        "tooltip": "",
+        "withinBounds": ""
+      },
+      "start.tooltip": ""
     },
     "ccdc": {
       "bands": {
