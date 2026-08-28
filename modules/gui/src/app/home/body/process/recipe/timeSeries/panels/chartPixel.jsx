@@ -17,6 +17,7 @@ import {Panel} from '~/widget/panel/panel'
 import {NoData} from '../../../../../../../widget/noData'
 import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
 
@@ -62,9 +63,7 @@ class _ChartPixel extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='center'>
-                <Panel.Header
-                    icon='chart-area'
-                    title={`${latLng.lat}, ${latLng.lng}`}/>
+                <ChartPixelPanelHeader latLng={latLng}/>
 
                 <Panel.Content className={loading ? styles.loading : null}
                     scrollable={false}

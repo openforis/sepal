@@ -43,6 +43,22 @@ const setStateSynchronously = map => {
     }
 }
 
+describe('interaction modes', () => {
+    it('lets only the current owner remove the indicator', () => {
+        const map = new _Map({})
+        setStateSynchronously(map)
+
+        const first = map.enterInteractionMode('first')
+        const second = map.enterInteractionMode('second')
+
+        first.remove()
+        expect(map.state.interactionMode.mode).toBe('second')
+
+        second.remove()
+        expect(map.state.interactionMode).toBeNull()
+    })
+})
+
 describe('polygon drawing', () => {
     it('keeps the editable polygon synchronized across area maps', () => {
         const initialPath = [[10, 20], [30, 20], [30, 40]]

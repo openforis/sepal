@@ -10,6 +10,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
+import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadLandTrendrSegments$, RecipeActions} from '../landTrendrRecipe'
 import styles from './chartPixel.module.css'
 import {LandTrendrGraph} from './landTrendrGraph'
@@ -47,9 +48,9 @@ class _ChartPixel extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='center'>
-                <Panel.Header
-                    icon='chart-area'
-                    title={`${latLng.lat}, ${latLng.lng}${index ? ` – ${index.toUpperCase()}` : ''}`}/>
+                <ChartPixelPanelHeader
+                    latLng={latLng}
+                    suffix={index ? index.toUpperCase() : null}/>
 
                 <Panel.Content
                     className={loading ? styles.loading : null}

@@ -5,6 +5,7 @@ import {setInitialized} from '~/app/home/body/process/recipe'
 import {Dates} from '~/app/home/body/process/recipe/ccdc/panels/dates/dates'
 import {Retrieve} from '~/app/home/body/process/recipe/ccdc/panels/retrieve/retrieve'
 import {Sources} from '~/app/home/body/process/recipe/ccdc/panels/sources/sources'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
@@ -20,7 +21,6 @@ import {RetrieveButton} from '../../retrieveButton'
 import {RecipeActions} from '../ccdcRecipe'
 import styles from './ccdcToolbar.module.css'
 import {ChartPixel} from './chartPixel'
-import {ChartPixelButton} from './chartPixelButton'
 import {Options} from './options/options'
 
 const mapRecipeToProps = recipe => ({
@@ -69,7 +69,6 @@ class _CcdcToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
-                        showGoogleSatellite
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

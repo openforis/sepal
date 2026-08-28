@@ -1,0 +1,14 @@
+.coordinates {
+    flex-shrink: 1;
+    white-space: nowrap;
+}
+
+.copyButton {
+    margin-left: .4rem;
+}
+
+.suffix {
+    flex-shrink: 1;
+    margin-left: .4rem;
+    white-space: nowrap;
+}

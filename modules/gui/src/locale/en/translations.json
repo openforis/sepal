@@ -902,6 +902,9 @@
     "drawingMode": {
       "zoomarea": "Drawing mode: rectangle",
       "polygon": "Drawing mode: polygon"
+    },
+    "interactionMode": {
+      "chart": "Click the map to chart a pixel"
     }
   },
   "featureLayerSources": {
@@ -1044,6 +1047,18 @@
           "tooltip": "Enable scroll wheel zooming"
         }
       }
+    },
+    "chartPixel": {
+      "cancel.tooltip": "Cancel time-series charting",
+      "coordinates": {
+        "latitude": "Latitude: {value}",
+        "longitude": "Longitude: {value}",
+        "outsideBounds": "Outside recipe bounds",
+        "placeholder": "Latitude, longitude",
+        "tooltip": "Enter coordinates",
+        "withinBounds": "Within recipe bounds"
+      },
+      "start.tooltip": "Chart time-series for pixel"
     },
     "ccdc": {
       "bands": {

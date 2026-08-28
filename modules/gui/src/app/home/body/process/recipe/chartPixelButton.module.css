@@ -1,0 +1,159 @@
+.container {
+    position: relative;
+    width: var(--toolbar-button-size);
+    height: var(--toolbar-button-size);
+}
+
+.container > * {
+    margin-top: 0 !important;
+}
+
+.controlBounds,
+.mainTooltipTarget {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: calc(var(--toolbar-button-size) + .8rem);
+    height: var(--toolbar-button-size);
+}
+
+.controlBounds {
+    pointer-events: none;
+}
+
+.mainTooltipTarget {
+    padding-left: .8rem;
+}
+
+.mainButton {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.chevron {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    bottom: 0;
+    right: 100%;
+    width: .8rem;
+    padding: 0;
+    border: var(--selected-panel-border-width) solid var(--look-default-border-color);
+    border-right: 1px solid var(--wireframe-color);
+    border-radius: var(--button-border-radius) 0 0 var(--button-border-radius);
+    color: var(--look-default-hover-color);
+    background-color: hsla(
+        var(--look-default-h),
+        var(--look-default-s),
+        calc(var(--look-default-l) - 5%),
+        var(--look-default-a)
+    );
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(.25rem);
+    transition: opacity 100ms ease-out, transform 100ms ease-out;
+    z-index: 1;
+}
+
+.container:hover .chevron,
+.container:focus-within .chevron,
+.coordinateInputVisible .chevron {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+.chevron:hover:not(:disabled) {
+    background-color: var(--look-default-hover-background-color);
+}
+
+.chevron:active:not(:disabled) {
+    background-color: var(--look-default-active-background-color);
+}
+
+.chevronSelected {
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
+    border-color: var(--look-highlight-border-color);
+}
+
+.chevronSelected:hover:not(:disabled) {
+    color: var(--look-highlight-hover-color);
+    background-color: var(--look-highlight-hover-background-color);
+    border-color: var(--look-highlight-hover-border-color);
+}
+
+.chevronSelected:active:not(:disabled) {
+    color: var(--look-highlight-active-color);
+    background-color: var(--look-highlight-active-background-color);
+    border-color: var(--look-highlight-active-border-color);
+}
+
+.chevron:disabled {
+    cursor: default;
+    opacity: var(--look-disabled-opacity);
+}
+
+.chevron > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.chevron svg {
+    display: block;
+    width: .45rem;
+    height: .45rem;
+}
+
+.coordinateDrawer {
+    width: min(18rem, calc(100vw - 5rem));
+    padding: .4rem;
+    border: 1px solid var(--wireframe-color);
+    border-radius: var(--button-border-radius);
+    background-color: var(--panel-default-background-color);
+    box-shadow: 0 .15rem .45rem rgb(0 0 0 / 25%);
+}
+
+.coordinateOption {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.withinBounds,
+.outsideBounds {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    margin-top: .2rem;
+    font-size: .75rem;
+}
+
+.withinBounds {
+    color: var(--success-color);
+}
+
+.outsideBounds {
+    color: var(--warning-color);
+}
+
+.withinBounds svg,
+.outsideBounds svg {
+    width: .7rem;
+    height: .7rem;
+}
+
+@media (hover: none) {
+    .chevron {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateX(0);
+    }
+}
