@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {RECIPE_REF} from '#sepal/recipe/source/reference'
 import api from '~/apiRegistry'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
@@ -27,14 +28,50 @@ export const pyramidingPolicies = {
     sample: {'.default': 'sample'}
 }
 
+// Export requirements taken from a resolved IMAGE_OUTPUT description instead of a recipe-type policy.
+//
+// The description is evidence about ONE execution, so it is accepted only for the recipe being submitted:
+// resolving a Masking over CCDC yields CCDC's bands, but under the Masking's own execution reference, and a
+// description still carrying the inner reference describes a different export. Identity is the type and id
+// together, because an asset and a recipe can share a string.
+//
+// Selected bands are matched by NAME. Order is schema, not correspondence: pairing by position would give
+// each band whichever policy sat at the same index. An empty or absent selection means all bands - what
+// `useAllBands` submits - so every described band gets its policy rather than none of them.
+//
+// Policies are carried verbatim. A whitelist would reject a policy Earth Engine gains before SEPAL learns of
+// it, and deriving one from a band name is the coupling this contract exists to remove.
+const toPyramidingPolicy = (recipe, bands, {executionReference, output}) => {
+    if (executionReference?.type !== RECIPE_REF || executionReference?.id !== recipe.id) {
+        throw new Error(`Resolved image output describes execution ${JSON.stringify(executionReference)}, not the submitted recipe ${recipe.id}`)
+    }
+    const policyByBand = new Map(output.bands.map(({name, pyramidingPolicy}) => [name, pyramidingPolicy]))
+    const selection = bands?.length ? bands : output.bands.map(({name}) => name)
+    return Object.fromEntries(
+        selection.map(name => {
+            if (!policyByBand.has(name)) {
+                throw new Error(`Selected band "${name}" is not described by the resolved image output`)
+            }
+            return [name, policyByBand.get(name)]
+        })
+    )
+}
+
 export const submitRetrieveRecipeTask = (recipe, config = {}) => {
     const {
         dataSetType,
         pyramidingPolicy,
+        imageOutputDescription,
         includeTimeRange = true,
         filterVisualizations = false,
         customizeImage
     } = config
+
+    // Two authorities for one decision, which is the defect this contract removes. Refused rather than
+    // resolved by precedence, so a half-finished migration cannot silently keep exporting the old policy.
+    if (imageOutputDescription && pyramidingPolicy) {
+        throw new Error(`Recipe ${recipe.id} configures both a resolved image output and a legacy pyramiding policy; only one may decide export requirements`)
+    }
 
     const name = recipe.title || recipe.placeholder
     const destination = recipe.ui.retrieveOptions.destination
@@ -90,7 +127,9 @@ export const submitRetrieveRecipeTask = (recipe, config = {}) => {
     }
     
     // Add pyramiding policy if specified
-    if (pyramidingPolicy) {
+    if (imageOutputDescription) {
+        image.pyramidingPolicy = toPyramidingPolicy(recipe, bands, imageOutputDescription)
+    } else if (pyramidingPolicy) {
         if (typeof pyramidingPolicy === 'function') {
             image.pyramidingPolicy = pyramidingPolicy(bands)
         } else {

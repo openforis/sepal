@@ -68,6 +68,33 @@ const submit = (recipeType, config) => {
 
 const propertiesOf = ([task]) => task.params.image.properties
 
+const imageOf = ([task]) => task.params.image
+
+const submitRecipe = (recipeInstance, config) => {
+    state.submitted = []
+    state.events = []
+    state.recipeType = {id: 'SYNTHETIC'}
+    submitRetrieveRecipeTask(recipeInstance, config)
+    return state.submitted
+}
+
+const outerRecipe = bands => ({
+    id: 'masked-1',
+    projectId: 'project-1',
+    type: 'SYNTHETIC',
+    title: 'An outer recipe',
+    model: {},
+    ui: {retrieveOptions: {destination: 'GEE', bands}}
+})
+
+const band = (name, pyramidingPolicy) => ({name, pyramidingPolicy})
+
+const resolved = ({id = 'masked-1', bands}) => ({
+    executionReference: {type: 'RECIPE_REF', id},
+    output: {kind: 'IMAGE', bands},
+    evidence: []
+})
+
 // A value the submitter is expected to reduce through valueOf(), like the moment instances real providers
 // return - so a witness can tell "the range was read" from "the range object was passed through".
 const instant = millis => ({valueOf: () => millis})
@@ -128,5 +155,169 @@ describe('submitRetrieveRecipeTask', () => {
         expect(getDateRange).not.toHaveBeenCalled()
         expect(propertiesOf(submitted)).not.toHaveProperty('system:time_start')
         expect(propertiesOf(submitted)).not.toHaveProperty('system:time_end')
+    })
+})
+
+// The resolved IMAGE_OUTPUT description as the authority for export requirements. Synthetic throughout: what
+// is under test is the conversion from a description to the task payload, not any recipe type's behavior.
+//
+// Rejections assert the category and that nothing was submitted, not the wording - the messages are
+// developer-facing and not a contract anyone may depend on.
+describe('submitRetrieveRecipeTask with a resolved image output', () => {
+    it('carries each declared policy for the selected bands', () => {
+        const submitted = submitRecipe(outerRecipe(['tStart', 'ndvi_coefs']), {
+            imageOutputDescription: resolved({
+                bands: [band('tStart', 'sample'), band('ndvi_coefs', 'sample')]
+            })
+        })
+
+        expect(submitted).toHaveLength(1)
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({tStart: 'sample', ndvi_coefs: 'sample'})
+    })
+
+    it('carries a different policy per band', () => {
+        const submitted = submitRecipe(outerRecipe(['class', 'probability', 'coefs']), {
+            imageOutputDescription: resolved({
+                bands: [band('class', 'mode'), band('probability', 'mean'), band('coefs', 'sample')]
+            })
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({
+            class: 'mode',
+            probability: 'mean',
+            coefs: 'sample'
+        })
+    })
+
+    it('describes only the selected bands, keeping the selection as submitted', () => {
+        const submitted = submitRecipe(outerRecipe(['coefs', 'class']), {
+            imageOutputDescription: resolved({
+                bands: [
+                    band('class', 'mode'),
+                    band('probability', 'mean'),
+                    band('coefs', 'sample'),
+                    band('rmse', 'mean')
+                ]
+            })
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({coefs: 'sample', class: 'mode'})
+        expect(imageOf(submitted).bands).toEqual({selection: ['coefs', 'class']})
+    })
+
+    // Order is schema, not correspondence. Matching by position would pair each selected band with whichever
+    // descriptor happened to sit at the same index, which here swaps the two policies.
+    it('matches by name when the description order differs from the selection order', () => {
+        const submitted = submitRecipe(outerRecipe(['class', 'coefs']), {
+            imageOutputDescription: resolved({
+                bands: [band('coefs', 'sample'), band('class', 'mode')]
+            })
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({class: 'mode', coefs: 'sample'})
+    })
+
+    // Policies are carried verbatim. A whitelist would reject a policy Earth Engine gains before SEPAL
+    // learns about it, and inferring one from the name is the coupling this whole contract removes.
+    it('carries an unrecognised policy string through untouched', () => {
+        const submitted = submitRecipe(outerRecipe(['class']), {
+            imageOutputDescription: resolved({bands: [band('class', 'someFuturePolicy')]})
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({class: 'someFuturePolicy'})
+    })
+
+    // An empty or absent selection means all bands, which is what `useAllBands` submits. Describing none of
+    // them would export every band under Earth Engine's default policy - the masked-CCDC failure again,
+    // reached through the all-bands path instead of the selected one.
+    it.each([
+        ['an empty selection', []],
+        ['an absent selection', undefined]
+    ])('describes every band in the description for %s', (_name, selection) => {
+        const submitted = submitRecipe(outerRecipe(selection), {
+            imageOutputDescription: resolved({
+                bands: [band('coefs', 'sample'), band('class', 'mode')]
+            })
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({coefs: 'sample', class: 'mode'})
+        expect(imageOf(submitted).bands).toEqual({selection})
+    })
+
+    // Dropping it would export a band with Earth Engine's default policy while reporting success, and
+    // inventing one would be the guess the description exists to avoid.
+    it('rejects a selected band the description does not describe', () => {
+        expect(() => submitRecipe(outerRecipe(['class', 'ghost']), {
+            imageOutputDescription: resolved({bands: [band('class', 'mode')]})
+        })).toThrow(/band/)
+        expect(state.submitted).toHaveLength(0)
+    })
+
+    // A Masking over CCDC resolves CCDC's bands, but the recipe being submitted is the Masking. A
+    // description carrying the inner reference is evidence about a different execution.
+    it('rejects a description whose execution reference is not the submitted recipe', () => {
+        expect(() => submitRecipe(outerRecipe(['tStart']), {
+            imageOutputDescription: resolved({id: 'ccdc-1', bands: [band('tStart', 'sample')]})
+        })).toThrow(/execution/)
+        expect(state.submitted).toHaveLength(0)
+    })
+
+    // Identity is the pair, not the id. An asset and a recipe can share a string, and only a recipe is
+    // being submitted here.
+    it('rejects a description whose execution reference is not a recipe', () => {
+        expect(() => submitRecipe(outerRecipe(['tStart']), {
+            imageOutputDescription: {
+                executionReference: {type: 'ASSET', id: 'masked-1'},
+                output: {kind: 'IMAGE', bands: [band('tStart', 'sample')]},
+                evidence: []
+            }
+        })).toThrow(/execution/)
+        expect(state.submitted).toHaveLength(0)
+    })
+
+    // Two authorities for one decision is the defect this milestone removes, so their coexistence is a
+    // configuration mistake rather than a precedence question to answer silently.
+    it('rejects a resolved description alongside a legacy policy', () => {
+        expect(() => submitRecipe(outerRecipe(['class']), {
+            imageOutputDescription: resolved({bands: [band('class', 'mode')]}),
+            pyramidingPolicy: {'.default': 'sample'}
+        })).toThrow(/policy/)
+        expect(state.submitted).toHaveLength(0)
+    })
+
+    it('does not modify the recipe, the description or their arrays', () => {
+        const recipeInstance = outerRecipe(['class', 'coefs'])
+        const description = resolved({bands: [band('coefs', 'sample'), band('class', 'mode')]})
+        const before = JSON.stringify({recipeInstance, description})
+        const selection = recipeInstance.ui.retrieveOptions.bands
+
+        const submitted = submitRecipe(recipeInstance, {imageOutputDescription: description})
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({class: 'mode', coefs: 'sample'})
+        expect(JSON.stringify({recipeInstance, description})).toEqual(before)
+        expect(recipeInstance.ui.retrieveOptions.bands).toBe(selection)
+    })
+})
+
+describe('submitRetrieveRecipeTask without a resolved image output', () => {
+    it('still derives a legacy function policy from the selected bands', () => {
+        const submitted = submit({id: 'SYNTHETIC'}, {
+            pyramidingPolicy: bands => Object.fromEntries(bands.map(name => [name, 'mean']))
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({'band-1': 'mean'})
+    })
+
+    it('still passes a legacy object policy through unchanged', () => {
+        const submitted = submit({id: 'SYNTHETIC'}, {pyramidingPolicy: {'.default': 'sample'}})
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({'.default': 'sample'})
+    })
+
+    it('still omits the policy entirely when neither source is configured', () => {
+        const submitted = submit({id: 'SYNTHETIC'})
+
+        expect(submitted).toHaveLength(1)
+        expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
     })
 })
