@@ -19,6 +19,7 @@ import {registerRecipeImageLayers} from './recipeImageLayers'
 import {getRecipeType} from './recipeTypeRegistry'
 import {registerRecipeTypes} from './recipeTypes'
 import {SaveRecipe} from './saveRecipe'
+import {SourceRuntimeProvider} from './sourceRuntime/sourceRuntimeContext'
 
 class _Process extends React.Component {
     constructor(props) {
@@ -131,8 +132,17 @@ const mapStateToLeaveAlert = () => {
     return unsavedRecipeCount > 0
 }
 
-export const Process = compose(
+const ProcessContent = compose(
     _Process,
     withActivators('closeRecipeDialog'),
     withLeaveAlert(mapStateToLeaveAlert)
+)
+
+// Process owns the source runtime. Wrapping here rather than in Body keeps source resolution out of what Body
+// knows about, and gives the runtime exactly the lifetime its operations need: it mounts when Process is first
+// activated, survives route navigation because Section retains Process, and closes when Process does.
+export const Process = props => (
+    <SourceRuntimeProvider>
+        <ProcessContent {...props}/>
+    </SourceRuntimeProvider>
 )
