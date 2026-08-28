@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS message.message (
   creation_time TIMESTAMP    NOT NULL,
   update_time   TIMESTAMP    NOT NULL,
   removed       BOOLEAN      NOT NULL DEFAULT FALSE,
+  priority      INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   INDEX idx_message_1 (removed, creation_time) USING BTREE
 );

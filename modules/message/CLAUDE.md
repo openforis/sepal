@@ -11,7 +11,7 @@ Owns the `message` MySQL schema (`message.message`, `message.notification`).
 ## Routes (served without the `/api/message` gateway prefix)
 - `GET /healthcheck`
 - `POST /messages/:id` (admin) / `DELETE /messages/:id` (admin) — body may carry `priority`
-  (int, migration 002 column: -1 = unpublished, 0 = normal, 1 = urgent; default 0; urgent drives
+  (int: -1 = unpublished, 0 = normal, 1 = urgent; default 0; urgent drives
   the GUI's pulsing-bell + delayed auto-open). Saving RE-NOTIFIES everyone (all notification rows
   for the message are deleted, so it is UNREAD again for every user) and then marks it READ for
   its author, before the change is pushed. Unpublished messages are admin-only drafts: excluded
