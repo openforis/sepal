@@ -6,6 +6,7 @@ import {Subject, takeUntil} from 'rxjs'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
@@ -14,6 +15,7 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import styles from './chartPixel.module.css'
 
@@ -62,9 +64,7 @@ class _ChartPixel extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='center'>
-                <Panel.Header
-                    icon='chart-area'
-                    title={`${latLng.lat}, ${latLng.lng}`}/>
+                <ChartPixelPanelHeader latLng={latLng}/>
 
                 <Panel.Content className={loading ? styles.loading : null}
                     scrollable={false}
@@ -159,12 +159,9 @@ class _ChartPixel extends React.Component {
                 segments => this.setState({segments}),
                 error => {
                     this.close()
-                    const errorMessage = error?.response?.messageKey
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : error
                     Notifications.error({
                         message: msg('process.ccdc.chartPixel.loadFailed'),
-                        error: errorMessage
+                        error: toUserErrorMessage(error)
                     })
                 }
             )

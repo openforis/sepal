@@ -10,6 +10,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
@@ -538,12 +539,9 @@ class _Proportions extends React.Component {
             ),
             values => this.setState({distinctClassOptions: toClassOptions(values)}),
             error => {
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
                 Notifications.error({
                     message: msg('process.samplingDesign.panel.proportions.form.targetClass.loadError'),
-                    error: errorMessage,
+                    error: toUserErrorMessage(error),
                     group: true,
                     timeout: 0
                 })

@@ -47,7 +47,7 @@
     height: 100%;
 }
 
-.drawingMode {
+.interactionMode {
     position: absolute;
     top: .5rem;
     left: .5rem;

@@ -1,14 +1,35 @@
+import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {normalize} from '~/app/home/map/visParams/visParams'
+import {msg} from '~/translate'
 
 import {getAvailableBands} from './bands'
+import {toMosaicRecipe} from './mosaicRecipe'
 
+// Registered on the recipe type, so it feeds the visualization properties
+// attached to exports - which only ever contain change bands.
 export const getPreSetVisualizations = recipe => {
-    const availableBands = getAvailableBands()
-    return visualizations(recipe.model.dates)
+    const availableBands = getAvailableBands(recipe, 'changes')
+    return changeVisualizations(recipe.model.dates)
         .filter(({bands}) => bands.every(band => availableBands[band]))
 }
 
-const visualizations = ({startYear, endYear}) => [
+export const visualizationOptions = (recipe, visualizationType) =>
+    visualizationType === 'mosaics'
+        ? opticalVisualizationOptions(toMosaicRecipe(recipe))
+        : changeVisualizationOptions(recipe)
+
+const changeVisualizationOptions = recipe => {
+    const availableBands = getAvailableBands(recipe, 'changes')
+    return [{
+        label: msg('process.landTrendr.layers.imageLayer.preSets'),
+        options: getPreSetVisualizations(recipe).map(visParams => {
+            const band = visParams.bands[0]
+            return {value: band, label: availableBands[band].label, visParams}
+        })
+    }]
+}
+
+const changeVisualizations = ({startYear, endYear}) => [
     normalize({
         type: 'continuous',
         bands: ['mag'],
@@ -65,20 +86,6 @@ const visualizations = ({startYear, endYear}) => [
         // range, beyond ~10 everything is unambiguous.
         min: [0],
         max: [10],
-        palette: '#FFFFCC, #FEB24C, #F03B20, #BD0026'
-    }),
-    normalize({
-        type: 'rgb',
-        bands: ['startRed', 'startGreen', 'startBlue'],
-        min: [200, 400, 600],
-        max: [2400, 2200, 2400],
-        gamma: [1.2, 1.2, 1.2]
-    }),
-    normalize({
-        type: 'rgb',
-        bands: ['endRed', 'endGreen', 'endBlue'],
-        min: [200, 400, 600],
-        max: [2400, 2200, 2400],
-        gamma: [1.2, 1.2, 1.2]
+        palette: '#000000, #480000, #710101, #BA0000, #FF0000, #FFA500, #FFFF00, #79C900, #006400'
     })
 ]

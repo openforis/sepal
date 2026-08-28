@@ -4,11 +4,13 @@ import {Subject, takeUntil} from 'rxjs'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Icon} from '~/widget/icon'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
+import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadLandTrendrSegments$, RecipeActions} from '../landTrendrRecipe'
 import styles from './chartPixel.module.css'
 import {LandTrendrGraph} from './landTrendrGraph'
@@ -46,9 +48,9 @@ class _ChartPixel extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='center'>
-                <Panel.Header
-                    icon='chart-area'
-                    title={`${latLng.lat}, ${latLng.lng}${index ? ` – ${index.toUpperCase()}` : ''}`}/>
+                <ChartPixelPanelHeader
+                    latLng={latLng}
+                    suffix={index ? index.toUpperCase() : null}/>
 
                 <Panel.Content
                     className={loading ? styles.loading : null}
@@ -117,12 +119,9 @@ class _ChartPixel extends React.Component {
             segments => this.setState({segments}),
             error => {
                 this.close()
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
                 Notifications.error({
                     message: msg('process.landTrendr.chartPixel.loadSegments.error'),
-                    error: errorMessage,
+                    error: toUserErrorMessage(error),
                     group: true,
                     timeout: 0
                 })

@@ -8,8 +8,8 @@ import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/re
 // yod/dur are whole years, not continuous values - averaging them at
 // overview zoom levels (e.g. yod 2003 and 2004 -> 2003.5) is meaningless,
 // so they need 'sample' pyramiding like changeAlerts/baytsAlerts use for
-// their own discrete bands. The rest (mag/preval/postval and the RGB
-// composites) are genuinely continuous and read better with 'mean'.
+// their own discrete bands. The rest (mag/preval/postval/rmse/sig) are
+// genuinely continuous and read better with 'mean'.
 const SAMPLE_BANDS = ['yod', 'dur']
 const pyramidingPolicy = bands => {
     const policy = {}

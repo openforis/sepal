@@ -86,7 +86,8 @@ export class _Map extends React.Component {
         nicfiPlanetApiKey: null,
         overlay: null,
         overlayActive: false,
-        drawingMode: null
+        drawingMode: null,
+        interactionMode: null
     }
 
     markers = {}
@@ -106,6 +107,7 @@ export class _Map extends React.Component {
         this.setLocationMarker = this.setLocationMarker.bind(this)
         this.setAreaMarker = this.setAreaMarker.bind(this)
         this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
+        this.enterInteractionMode = this.enterInteractionMode.bind(this)
         this.removeMap = this.removeMap.bind(this)
         this.fit = this.fit.bind(this)
         this.canFit = this.canFit.bind(this)
@@ -136,6 +138,7 @@ export class _Map extends React.Component {
             canFit: this.canFit,
             fit: this.fit,
             addOneShotClickListener: this.addOneShotClickListener,
+            enterInteractionMode: this.enterInteractionMode,
             enablePolygonDrawing: this.enablePolygonDrawing,
             disablePolygonDrawing: this.disablePolygonDrawing,
             setLocationMarker: this.setLocationMarker,
@@ -385,6 +388,18 @@ export class _Map extends React.Component {
                 remove: () => listeners.map(listener => listener.remove())
             }
             return removableListener
+        }
+    }
+
+    enterInteractionMode(mode) {
+        const interactionMode = {mode}
+        this.setState({interactionMode})
+        return {
+            remove: () => this.setState(({interactionMode: activeInteractionMode}) =>
+                activeInteractionMode === interactionMode
+                    ? {interactionMode: null}
+                    : null
+            )
         }
     }
 
@@ -706,7 +721,7 @@ export class _Map extends React.Component {
                         <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
                             <div ref={this.ref} className={styles.content}>
                                 {this.isInitialized() ? this.renderRecipe() : null}
-                                {this.renderDrawingModeIndicator()}
+                                {this.renderInteractionModeIndicator()}
                             </div>
                         </ElementResizeDetector>
                     </SplitView>
@@ -824,14 +839,15 @@ export class _Map extends React.Component {
         )
     }
 
-    renderDrawingModeIndicator() {
-        const {drawingMode} = this.state
-        return drawingMode ? (
-            <div className={styles.drawingMode}>
+    renderInteractionModeIndicator() {
+        const {drawingMode, interactionMode} = this.state
+        const mode = interactionMode?.mode || drawingMode
+        return mode ? (
+            <div className={styles.interactionMode}>
                 <Button
                     size='small'
-                    label={msg(`map.drawingMode.${drawingMode}`)}
-                    icon='pencil'
+                    label={msg(interactionMode ? `map.interactionMode.${mode}` : `map.drawingMode.${mode}`)}
+                    icon={interactionMode ? 'chart-area' : 'pencil'}
                 />
             </div>
         ) : null

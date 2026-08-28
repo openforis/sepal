@@ -3,7 +3,6 @@
 
 .form {
     height: 23rem;
-    border-top: var(--wireframe);
 }
 
 @media screen and (max-height: 500px) {

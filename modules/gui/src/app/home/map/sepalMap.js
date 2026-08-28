@@ -119,6 +119,7 @@ export class SepalMap {
     drawing = null
     drawingListener = null
     drawingChangeListener = null
+    drawingKeydownListener = null
     drawingChangesSuppressed = false
     drawingFeatureId = null
     polygonPreview = null
@@ -185,7 +186,10 @@ export class SepalMap {
                         editable: true,
                         showCoordinatePoints: true
                     }),
-                    new TerraDrawRectangleMode({styles: this.drawingStyles()})
+                    new TerraDrawRectangleMode({
+                        styles: this.drawingStyles(),
+                        drawInteraction: 'click-move-or-drag'
+                    })
                 ]
             })
         }
@@ -249,6 +253,7 @@ export class SepalMap {
         // Editing an existing shape finishes too, as an 'edit' or 'deleteCoordinate'.
         this.drawingListener = id => {
             this.clearPolygonPreview()
+            this.drawingFeatureId = null
             const feature = drawing.getSnapshotFeature(id)
             if (retain) {
                 this.retainOnly(drawing, feature)
@@ -285,11 +290,23 @@ export class SepalMap {
             drawing.start()
         }
         drawing.setMode(mode)
+        this.drawingKeydownListener = event => {
+            // TerraDraw cancels provisional features on keyup; keep the competing Escape keydown map-local.
+            if (event.key === 'Escape' && drawing.getModeState() === 'drawing') {
+                event.stopPropagation()
+            }
+        }
+        this.googleMap.getDiv().addEventListener('keydown', this.drawingKeydownListener)
     }
 
     disableDrawingMode() {
-        const {drawing, drawingListener, drawingChangeListener} = this
+        const {drawing, drawingListener, drawingChangeListener, drawingKeydownListener} = this
         this.clearPolygonPreview()
+        if (drawingKeydownListener) {
+            this.googleMap.getDiv().removeEventListener('keydown', drawingKeydownListener)
+            this.drawingKeydownListener = null
+        }
+        this.drawingFeatureId = null
         if (drawing) {
             if (drawingListener) {
                 drawing.off('finish', drawingListener)
@@ -299,7 +316,6 @@ export class SepalMap {
                 drawing.off('change', drawingChangeListener)
                 this.drawingChangeListener = null
             }
-            this.drawingFeatureId = null
             if (drawing.enabled) {
                 drawing.setMode('static')
                 drawing.stop()

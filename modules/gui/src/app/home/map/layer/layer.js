@@ -2,6 +2,7 @@ import {ReplaySubject, takeUntil} from 'rxjs'
 
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Notifications} from '~/widget/notifications'
 
 const log = getLogger('layer')
@@ -35,12 +36,9 @@ export class Layer {
             },
             error: error => {
                 log.warn('Cannot add layer', error)
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
                 Notifications.error({
                     message: msg('map.layer.error'),
-                    error: errorMessage,
+                    error: toUserErrorMessage(error),
                     group: true,
                     timeout: 0
                 })

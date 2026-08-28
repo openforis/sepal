@@ -41,6 +41,15 @@ test('coords.parse(\'${params.query}\') === ${JSON.stringify(result)}')
         {params: {query: '10 N   ,    20 E'}, result: [{lat: 10, lng: 20}]},
         {params: {query: '   10      N     20      E  '}, result: [{lat: 10, lng: 20}]},
 
+        // paired wrappers
+        {params: {query: '[10 N, 20 E]'}, result: [{lat: 10, lng: 20}]},
+        {params: {query: '({10 N, 20 E})'}, result: [{lat: 10, lng: 20}]},
+
+        // wrappers with an explicit coordinate order
+        {params: {query: 'ee.Geometry.Point([20, 10])'}, result: [{lat: 10, lng: 20}]},
+        {params: {query: 'new google.maps.LatLng(10, 20)'}, result: [{lat: 10, lng: 20}]},
+        {params: {query: 'LatLng(10, 20)'}, result: [{lat: 10, lng: 20}]},
+
         // non-ambiguous (lat, lon)
         {params: {query: '12.34 123.45'}, result: [{lat: 12.34, lng: 123.45}]},
         {params: {query: '12.34 -123.45'}, result: [{lat: 12.34, lng: -123.45}]},
@@ -62,6 +71,9 @@ test('coords.parse(\'${params.query}\') === ${JSON.stringify(result)}')
         // conflicting
         {params: {query: '12.34 N 23.45 S'}, result: []},
         {params: {query: '12.34 E 23.45 W'}, result: []},
+
+        // trailing content is not silently ignored
+        {params: {query: '12.34, 23.45 unexpected'}, result: []},
 
         // overspecified
         {params: {query: '-12.34 S 123.45 W'}, result: []},
