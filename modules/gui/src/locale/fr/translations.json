@@ -902,6 +902,9 @@
     "drawingMode": {
       "zoomarea": "Mode de dessin: rectangle",
       "polygon": "Mode de dessin : polygone"
+    },
+    "interactionMode": {
+      "chart": ""
     }
   },
   "featureLayerSources": {
@@ -1044,6 +1047,18 @@
           "tooltip": "Activer le zoom à la molette"
         }
       }
+    },
+    "chartPixel": {
+      "cancel.tooltip": "Annuler la représentation des séries temporelles",
+      "coordinates": {
+        "latitude": "",
+        "longitude": "",
+        "outsideBounds": "",
+        "placeholder": "",
+        "tooltip": "",
+        "withinBounds": ""
+      },
+      "start.tooltip": "Graphique des séries temporelles pour le pixel"
     },
     "ccdc": {
       "bands": {
