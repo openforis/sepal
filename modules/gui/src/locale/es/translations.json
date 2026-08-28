@@ -902,6 +902,9 @@
     "drawingMode": {
       "zoomarea": "",
       "polygon": ""
+    },
+    "interactionMode": {
+      "chart": ""
     }
   },
   "featureLayerSources": {
@@ -1044,6 +1047,18 @@
           "tooltip": ""
         }
       }
+    },
+    "chartPixel": {
+      "cancel.tooltip": "Anulación de los gráficos de series temporales",
+      "coordinates": {
+        "latitude": "",
+        "longitude": "",
+        "outsideBounds": "",
+        "placeholder": "",
+        "tooltip": "",
+        "withinBounds": ""
+      },
+      "start.tooltip": "Gráfico de series temporales para el pixel"
     },
     "ccdc": {
       "bands": {
