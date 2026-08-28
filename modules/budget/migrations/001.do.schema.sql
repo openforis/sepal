@@ -22,9 +22,8 @@ CREATE TABLE IF NOT EXISTS budget.`user_budget` (
     `monthly_instance` int(11)       NOT NULL,
     `monthly_storage`  int(11)       NOT NULL,
     `storage_quota`    int(11)       NOT NULL,
-    PRIMARY KEY (`username`),
-    KEY `idx_user_budget_1` (`username`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+    PRIMARY KEY (`username`)
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='user_budget')
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS budget.`default_user_budget` (
     `monthly_instance` int(11)  NOT NULL,
     `monthly_storage`  int(11)  NOT NULL,
     `storage_quota`    int(11)  NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='default_user_budget')
@@ -61,7 +60,7 @@ CREATE TABLE IF NOT EXISTS budget.`user_monthly_storage` (
     `storage_used` double        NOT NULL,
     `update_time`  timestamp     NOT NULL,
     PRIMARY KEY (`username`, `year`, `month`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='user_monthly_storage')
@@ -79,7 +78,7 @@ CREATE TABLE IF NOT EXISTS budget.`user_spending` (
     `storage_spending`  double        NOT NULL DEFAULT '0',
     `storage_usage`     double        NOT NULL DEFAULT '0',
     PRIMARY KEY (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='user_spending')
@@ -110,7 +109,7 @@ CREATE TABLE IF NOT EXISTS budget.`budget_update_request` (
     PRIMARY KEY (`id`),
     KEY `idx_budget_update_request_1` (`username`, `state`),
     KEY `idx_budget_update_request_2` (`state`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='budget_update_request')
@@ -129,13 +128,13 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 CREATE TABLE IF NOT EXISTS budget.`open_session_use` (
     `session_id`    varchar(255) NOT NULL,
     `username`      varchar(255) NOT NULL,
-    `instance_type` varchar(255) NOT NULL,
+    `instance_type` varchar(64)  NOT NULL,
     `from_time`     timestamp    NOT NULL,
     `to_time`       timestamp    NULL DEFAULT NULL,   -- NULL while the session is open
     PRIMARY KEY (`session_id`),
     KEY `idx_open_session_use_1` (`username`, `from_time`),
     KEY `idx_open_session_use_2` (`to_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_seed := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='worker_session')

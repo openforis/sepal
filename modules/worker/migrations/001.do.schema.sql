@@ -21,10 +21,10 @@ CREATE SCHEMA IF NOT EXISTS worker;
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`worker_session` (
     `id`                     varchar(255)  NOT NULL,
-    `state`                  varchar(255)  NOT NULL,
+    `state`                  varchar(16)   NOT NULL,
     `username`               varchar(255)  NOT NULL,
-    `worker_type`            varchar(255)  NOT NULL,
-    `instance_type`          varchar(255)  NOT NULL,
+    `worker_type`            varchar(32)   NOT NULL,
+    `instance_type`          varchar(64)   NOT NULL,
     `instance_id`            varchar(255)  NOT NULL,
     `host`                   varchar(255)  NOT NULL,
     `creation_time`          timestamp     NOT NULL,
@@ -38,11 +38,11 @@ CREATE TABLE IF NOT EXISTS worker.`worker_session` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_worker_session_api_key` (`api_key`),
     KEY `idx_worker_session_1` (`username`, `worker_type`, `state`, `instance_type`) USING BTREE,
-    KEY `idx_worker_session_2` (`state`) USING BTREE,
+    KEY `idx_worker_session_2` (`state`, `username`, `update_time`) USING BTREE,
     KEY `idx_worker_session_3` (`instance_id`, `state`) USING BTREE,
     KEY `idx_worker_session_4` (`username`, `creation_time`, `update_time`) USING BTREE,
     KEY `idx_worker_session_5` (`state`, `timeout_time`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='worker_session')
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS worker.`task` (
     KEY `idx_task_2` (`session_id`, `state`) USING BTREE,
     KEY `idx_task_3` (`username`, `removed`, `creation_time`) USING BTREE,
     KEY `idx_task_4` (`username`, `state`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='task')
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS worker.`instance` (
   `worker_type` varchar(63)  DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_instance_1` (`type`, `worker_type`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='worker_instance' AND TABLE_NAME='instance')
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS worker.`session_app` (
     `creation_time` timestamp    NOT NULL,
     PRIMARY KEY (`username`, `app_path`),
     KEY `idx_session_app_1` (`session_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------------------
 -- instance_usage_sample — one row per (session, sampling tick), written by the
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS worker.`session_app` (
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
     `session_id`         varchar(255) NOT NULL,
     `username`           varchar(255) NOT NULL,
-    `instance_type`      varchar(255) NOT NULL,
+    `instance_type`      varchar(64)  NOT NULL,
     `sample_time`        timestamp    NOT NULL,
     `cpu_pct`            decimal(5,2) DEFAULT NULL,
     `ram_bytes`          bigint       DEFAULT NULL,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
     PRIMARY KEY (`session_id`, `sample_time`),
     KEY `idx_instance_usage_sample_1` (`username`, `sample_time`) USING BTREE,
     KEY `idx_instance_usage_sample_2` (`sample_time`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------------------
 -- instance_usage_hourly — per-session hourly aggregates, upserted by the hourly rollup
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_hourly` (
     `session_id`          varchar(255) NOT NULL,
     `username`            varchar(255) NOT NULL,
-    `instance_type`       varchar(255) NOT NULL,
+    `instance_type`       varchar(64)  NOT NULL,
     `hour`                timestamp    NOT NULL,
     `sample_count`        int          NOT NULL,
     `cpu_avg`             decimal(5,2) DEFAULT NULL,
@@ -163,4 +163,4 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_hourly` (
     PRIMARY KEY (`session_id`, `hour`),
     KEY `idx_instance_usage_hourly_1` (`username`, `hour`) USING BTREE,
     KEY `idx_instance_usage_hourly_2` (`hour`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB;
