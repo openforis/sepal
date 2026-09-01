@@ -7,8 +7,8 @@ import api from '~/apiRegistry'
 // The GUI binding for the shared runtime image-output observer.
 //
 // Thin by construction. It adapts three things the shared observer cannot know about - the `loadedRecipes`
-// shape, where declarations live, and how this runtime asks Earth Engine for band names - and delegates
-// state, resolution, deduplication, cancellation and diagnostics to the observer itself.
+// shape, where declarations live, and how this runtime asks Earth Engine for normalized band evidence - and
+// delegates state, resolution, deduplication, cancellation and diagnostics to the observer itself.
 //
 // Not `buildMapDependencyGraph`: that is selector-cached and owned by map invalidation, which runs on every
 // dispatched action. This observes only on an explicit command, so it adapts `loadedRecipes` directly rather
@@ -27,15 +27,15 @@ export const createRecipeImageOutputObserver = () => {
     const observer = createImageOutputObserver({
         // The only place this runtime's execution boundary appears. An asset is addressed by id, while a
         // recipe is sent whole, because /bands evaluates the recipe rather than looking one up.
-        observeBandNames$: ({reference, recipe}) => reference.type === ASSET
-            ? api.gee.bands$({asset: reference.id})
-            : api.gee.bands$({recipe}),
+        observeBands$: ({reference, recipe}) => reference.type === ASSET
+            ? api.gee.bands$({asset: reference.id, includeDataTypes: true})
+            : api.gee.bands$({recipe, includeDataTypes: true}),
         declarationFor: recipe => recipeType(recipe.type)?.imageOutput
     })
 
     return {
         state$: observer.state$,
-        observe: ({recipe, loadedRecipes}) => observer.observe(buildRecipeDependencyGraph({
+        observe: ({graph, recipe, loadedRecipes}) => observer.observe(graph || buildRecipeDependencyGraph({
             rootRecipe: recipe,
             recipesById: new Map(Object.entries(loadedRecipes || {}))
         })),

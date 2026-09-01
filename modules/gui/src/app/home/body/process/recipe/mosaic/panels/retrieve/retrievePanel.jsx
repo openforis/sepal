@@ -1,7 +1,12 @@
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {of} from 'rxjs'
 
+import {
+    physicalDestinationCompatibility,
+    VALID_SELECTION
+} from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
@@ -86,16 +91,24 @@ class _MosaicRetrievePanel extends React.Component {
         super(props)
         this.state = {
             more: false,
-            destinationValidationPending: this.requiresDestinationValidation(props)
+            destinationValidationPending: this.requiresDestinationValidation(props),
+            destinationReconciliation: null,
+            imageOutputResolutionKey: props.imageOutputResolution?.key,
+            imageOutputTerminal: null
         }
+        this.imageOutputOperation = null
+        this.mounted = false
         this.onDestinationChange = this.onDestinationChange.bind(this)
         this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
 
     render() {
         const {className, form} = this.props
-        const {more, destinationValidationPending} = this.state
-        const invalid = destinationValidationPending || form.isInvalid()
+        const {more, destinationValidationPending, destinationReconciliation} = this.state
+        const invalid = destinationValidationPending
+            || Boolean(destinationReconciliation)
+            || this.resolvedOutputBlocksSubmission()
+            || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={[styles.panel, className].join(' ')}
@@ -216,6 +229,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     renderDestination() {
         const {toSepal, toEE, toDrive, inputs: {destination}} = this.props
+        const compatibility = this.getPhysicalDestinationCompatibility()
         const destinationOptions = [
             {
                 value: 'GEE',
@@ -234,12 +248,19 @@ class _MosaicRetrievePanel extends React.Component {
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
             .filter(({value}) => toDrive || value !== 'DRIVE')
+            .map(option => ({
+                ...option,
+                ...(compatibility && compatibility.destinations[option.value] === false
+                    ? {disabled: true}
+                    : {})
+            }))
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
                 input={destination}
                 multiple={false}
                 options={destinationOptions}
+                disabled={this.isDestinationControlDisabled()}
                 onChange={this.onDestinationChange}/>
         )
     }
@@ -364,6 +385,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
     
     componentDidMount() {
+        this.mounted = true
         const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
             inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix}
         } = this.props
@@ -401,23 +423,34 @@ class _MosaicRetrievePanel extends React.Component {
             const recipeName = this.getRecipeName()
             filenamePrefix.set(recipeName)
         }
+        this.startImageOutputResolution()
         this.update()
     }
 
     componentDidUpdate(prevProps) {
+        if (prevProps.imageOutputResolution?.key !== this.props.imageOutputResolution?.key) {
+            this.startImageOutputResolution()
+        }
         if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
             this.setDestinationValidationPending(this.requiresDestinationValidation())
         }
         this.update()
+        this.reconcileDestination()
+    }
+
+    componentWillUnmount() {
+        this.mounted = false
+        this.stopImageOutputResolution()
     }
 
     update() {
         const {toEE, toSepal, inputs: {destination, assetType}} = this.props
+        const compatibility = this.getPhysicalDestinationCompatibility()
         if (!destination.value) {
-            if (toEE && isGoogleAccount()) {
+            if (toEE && isGoogleAccount() && compatibility?.destinations.GEE !== false) {
                 this.setDestinationValidationPending(true)
                 destination.set('GEE')
-            } else if (toSepal) {
+            } else if (toSepal && compatibility?.destinations.SEPAL !== false) {
                 this.setDestinationValidationPending(true)
                 destination.set('SEPAL')
             }
@@ -430,6 +463,10 @@ class _MosaicRetrievePanel extends React.Component {
 
     retrieve(values) {
         const {onRetrieve} = this.props
+        const terminal = this.getImageOutputTerminal()
+        if (this.props.imageOutputResolution && (!terminal || this.resolvedOutputBlocksSubmission())) {
+            return
+        }
         const project = this.findProject()
         if (project) {
             const {assetId, workspacePath} = values
@@ -439,7 +476,148 @@ class _MosaicRetrievePanel extends React.Component {
                 defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
             })
         }
-        onRetrieve && onRetrieve(values)
+        onRetrieve && (terminal
+            ? onRetrieve(values, {resolveImageOutput$: () => of(terminal)})
+            : onRetrieve(values))
+    }
+
+    startImageOutputResolution() {
+        this.stopImageOutputResolution()
+        const contract = this.props.imageOutputResolution
+        if (!contract) {
+            if (this.state.imageOutputTerminal || this.state.imageOutputResolutionKey !== undefined) {
+                this.setState({
+                    destinationReconciliation: null,
+                    imageOutputResolutionKey: undefined,
+                    imageOutputTerminal: null
+                })
+            }
+            return
+        }
+
+        const operation = {key: contract.key, sawTerminal: false, subscription: null}
+        this.imageOutputOperation = operation
+        if (this.state.imageOutputResolutionKey !== contract.key || this.state.imageOutputTerminal) {
+            this.setState({
+                destinationReconciliation: null,
+                imageOutputResolutionKey: contract.key,
+                imageOutputTerminal: null
+            })
+        }
+
+        const publishTerminal = terminal => {
+            if (this.mounted
+                && this.imageOutputOperation === operation
+                && ['READY', 'UNAVAILABLE', 'INVALID'].includes(terminal?.status)
+            ) {
+                operation.sawTerminal = true
+                this.setState({imageOutputTerminal: terminal}, () => this.reconcileDestination())
+            }
+        }
+
+        try {
+            const subscription = contract.state$.subscribe({
+                next: publishTerminal,
+                error: () => publishTerminal({
+                    status: 'UNAVAILABLE',
+                    description: null,
+                    diagnostics: [],
+                    error: null
+                }),
+                complete: () => {
+                    if (!operation.sawTerminal) {
+                        publishTerminal({
+                            status: 'UNAVAILABLE',
+                            description: null,
+                            diagnostics: [],
+                            error: null
+                        })
+                    }
+                }
+            })
+            operation.subscription = subscription
+            if (this.imageOutputOperation !== operation) {
+                subscription.unsubscribe()
+            }
+        } catch (_error) {
+            publishTerminal({
+                status: 'UNAVAILABLE',
+                description: null,
+                diagnostics: [],
+                error: null
+            })
+        }
+    }
+
+    stopImageOutputResolution() {
+        const operation = this.imageOutputOperation
+        this.imageOutputOperation = null
+        operation?.subscription?.unsubscribe()
+    }
+
+    getImageOutputTerminal() {
+        const {imageOutputResolution} = this.props
+        const {imageOutputResolutionKey, imageOutputTerminal} = this.state
+        return imageOutputResolution && imageOutputResolution.key === imageOutputResolutionKey
+            ? imageOutputTerminal
+            : null
+    }
+
+    getPhysicalDestinationCompatibility() {
+        const terminal = this.getImageOutputTerminal()
+        if (terminal?.status !== 'READY' || !terminal.description?.output?.bands) {
+            return null
+        }
+        const {allBands, inputs: {bands, useAllBands}} = this.props
+        return physicalDestinationCompatibility({
+            bands: terminal.description.output.bands,
+            selectedBandNames: bands.value,
+            useAllBands: allBands ? true : useAllBands.value
+        })
+    }
+
+    isDestinationControlDisabled() {
+        return Boolean(this.props.imageOutputResolution)
+            && this.getImageOutputTerminal()?.status !== 'READY'
+    }
+
+    resolvedOutputBlocksSubmission() {
+        if (!this.props.imageOutputResolution) {
+            return false
+        }
+        const terminal = this.getImageOutputTerminal()
+        const compatibility = this.getPhysicalDestinationCompatibility()
+        const destination = this.props.inputs.destination.value
+        return terminal?.status !== 'READY'
+            || compatibility?.selectionStatus !== VALID_SELECTION
+            || compatibility.destinations[destination] === false
+    }
+
+    reconcileDestination() {
+        const compatibility = this.getPhysicalDestinationCompatibility()
+        const {destination} = this.props.inputs
+        const reconciliation = this.state.destinationReconciliation
+        if (!compatibility || compatibility.destinations[destination.value] !== false) {
+            if (reconciliation) {
+                this.setState({destinationReconciliation: null})
+            }
+            return
+        }
+
+        const replacement = this.props.toEE
+            && isGoogleAccount()
+            && compatibility.destinations.GEE
+            ? 'GEE'
+            : null
+        if (destination.value === replacement
+            || (reconciliation?.from === destination.value && reconciliation?.to === replacement)
+        ) {
+            return
+        }
+        this.setState({
+            destinationReconciliation: {from: destination.value, to: replacement}
+        })
+        destination.set(replacement)
     }
 
     findProject() {
@@ -501,5 +679,10 @@ MosaicRetrievePanel.propTypes = {
     scaleTicks: PropTypes.array,
     single: PropTypes.any,
     toEE: PropTypes.any,
-    toSepal: PropTypes.any
+    toSepal: PropTypes.any,
+    toDrive: PropTypes.any,
+    imageOutputResolution: PropTypes.shape({
+        key: PropTypes.any,
+        state$: PropTypes.shape({subscribe: PropTypes.func.isRequired}).isRequired
+    })
 }

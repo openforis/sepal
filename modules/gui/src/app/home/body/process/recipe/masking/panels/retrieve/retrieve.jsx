@@ -1,15 +1,17 @@
 import React from 'react'
 
 import {getGroupedBandOptions} from '~/app/home/body/process/recipe/masking/bands'
-import {RecipeActions} from '~/app/home/body/process/recipe/masking/maskingRecipe'
+import {submitMaskingRetrieve} from '~/app/home/body/process/recipe/masking/maskingRecipe'
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 
 const mapRecipeToProps = recipe => ({recipe})
 
 class _Retrieve extends React.Component {
     render() {
+        const {recipe, sourceRuntime} = this.props
         return (
             <MosaicRetrievePanel
                 bandOptions={this.bandOptions()}
@@ -17,7 +19,12 @@ class _Retrieve extends React.Component {
                 toSepal
                 toEE
                 toDrive
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+                imageOutputResolution={{
+                    key: recipe,
+                    state$: sourceRuntime.resolveImageOutput$({recipe})
+                }}
+                onRetrieve={(retrieveOptions, resolutionContext) =>
+                    this.retrieve(retrieveOptions, resolutionContext)}
             />
         )
     }
@@ -27,15 +34,20 @@ class _Retrieve extends React.Component {
         return getGroupedBandOptions(recipe)
     }
 
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
+    retrieve(retrieveOptions, {resolveImageOutput$} = {}) {
+        const {recipe, sourceRuntime} = this.props
+        return submitMaskingRetrieve({
+            recipe,
+            retrieveOptions,
+            resolveImageOutput$: resolveImageOutput$ || sourceRuntime.resolveImageOutput$
+        })
     }
 }
 
 export const Retrieve = compose(
     _Retrieve,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withSourceRuntime()
 )
 
 Retrieve.propTypes = {}

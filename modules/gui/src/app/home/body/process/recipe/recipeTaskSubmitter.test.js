@@ -32,7 +32,8 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
 }))
 
 vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({
-    getTaskInfo: () => ({outputPath: 'some/output/path'})
+    // Echoes its argument so a witness can tell which options reached task-info construction.
+    getTaskInfo: ({retrieveOptions}) => ({retrieveOptions})
 }))
 
 vi.mock('~/app/home/body/process/recipe/visualizations', () => ({
@@ -78,16 +79,20 @@ const submitRecipe = (recipeInstance, config) => {
     return state.submitted
 }
 
-const outerRecipe = bands => ({
+const outerRecipe = (bands, destination = 'GEE') => ({
     id: 'masked-1',
     projectId: 'project-1',
     type: 'SYNTHETIC',
     title: 'An outer recipe',
     model: {},
-    ui: {retrieveOptions: {destination: 'GEE', bands}}
+    ui: {retrieveOptions: {destination, bands}}
 })
 
-const band = (name, pyramidingPolicy) => ({name, pyramidingPolicy})
+const band = (name, pyramidingPolicy, dataType = {arrayDimensions: 0}) => ({
+    name,
+    ...(dataType !== undefined && {dataType}),
+    ...(pyramidingPolicy !== undefined && {pyramidingPolicy})
+})
 
 const resolved = ({id = 'masked-1', bands}) => ({
     executionReference: {type: 'RECIPE_REF', id},
@@ -299,7 +304,240 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
     })
 })
 
+describe('submitRetrieveRecipeTask destination validation over resolved physical schema', () => {
+    const mixedBands = [
+        band('array', 'sample', {arrayDimensions: 1}),
+        band('scalar', undefined, {arrayDimensions: 0})
+    ]
+    const description = resolved({bands: mixedBands})
+
+    const submitSelection = ({destination, bands, useAllBands, output = description}) =>
+        submitRecipe(outerRecipe(['stored'], 'SEPAL'), {
+            retrieveOptions: {
+                destination,
+                bands,
+                ...(useAllBands !== undefined && {useAllBands})
+            },
+            imageOutputDescription: output
+        })
+
+    it('submits selected array bands to Earth Engine under their resolved sample policy', () => {
+        const submitted = submitSelection({destination: 'GEE', bands: ['array']})
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({array: 'sample'})
+        expect(imageOf(submitted).bands).toEqual({selection: ['array']})
+    })
+
+    it.each(['DRIVE', 'SEPAL'])('rejects selected array bands for the %s scalar renderer', destination => {
+        expect(() => submitSelection({destination, bands: ['array']})).toThrow(/array|dimension|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it.each(['DRIVE', 'SEPAL'])('allows selected scalar bands for %s without requiring or sending a policy', destination => {
+        const submitted = submitSelection({destination, bands: ['scalar']})
+
+        expect(submitted).toHaveLength(1)
+        expect(imageOf(submitted).bands).toEqual({selection: ['scalar']})
+        expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('treats a scalar policy as irrelevant for a non-Earth-Engine destination', () => {
+        const submitted = submitSelection({
+            destination: 'DRIVE',
+            bands: ['scalar'],
+            output: resolved({bands: [band('scalar', 'mean', {arrayDimensions: 0})]})
+        })
+
+        expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('rejects a selected scalar band with unknown policy for Earth Engine', () => {
+        expect(() => submitSelection({destination: 'GEE', bands: ['scalar']})).toThrow(/policy|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it.each([
+        ['GEE', []],
+        ['GEE', undefined],
+        ['DRIVE', []],
+        ['SEPAL', undefined]
+    ])('validates every described band when %s receives an all-band selection', (destination, bands) => {
+        expect(() => submitSelection({destination, bands})).toThrow(/array|dimension|policy|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it.each(['DRIVE', 'SEPAL'])('does not treat unknown dimensionality as scalar for %s', destination => {
+        expect(() => submitSelection({
+            destination,
+            bands: ['unknown'],
+            output: resolved({bands: [{name: 'unknown', pyramidingPolicy: 'sample'}]})
+        })).toThrow(/dimension|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it('uses every described band when useAllBands is explicit, ignoring a stale scalar selection', () => {
+        expect(() => submitSelection({
+            destination: 'DRIVE',
+            bands: ['scalar'],
+            useAllBands: true
+        })).toThrow(/array|dimension|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it('submits every described band when useAllBands is explicit, ignoring a stale manual selection', () => {
+        const submitted = submitSelection({
+            destination: 'GEE',
+            bands: ['scalar'],
+            useAllBands: true,
+            output: resolved({bands: [
+                band('first', 'sample', {arrayDimensions: 1}),
+                band('second', 'mean', {arrayDimensions: 0})
+            ]})
+        })
+
+        expect(imageOf(submitted).bands).toEqual({selection: ['first', 'second']})
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({first: 'sample', second: 'mean'})
+    })
+
+    it('rejects an explicitly empty manual selection instead of treating it as all bands', () => {
+        expect(() => submitSelection({
+            destination: 'DRIVE',
+            bands: [],
+            useAllBands: false,
+            output: resolved({bands: [band('scalar', undefined, {arrayDimensions: 0})]})
+        })).toThrow(/selection|band/i)
+        expect(state.submitted).toEqual([])
+    })
+})
+
+// The fallback is temporary migration authority supplied separately from observed evidence. It may complete
+// missing scalar GEE policies, but it cannot replace resolved policies or relax physical-schema validation.
+describe('submitRetrieveRecipeTask with resolved output and a migration fallback', () => {
+    const mixedOutput = () => resolved({
+        bands: [
+            band('array', 'sample', {arrayDimensions: 1}),
+            band('scalar', undefined, {arrayDimensions: 0})
+        ]
+    })
+
+    it('fills a missing selected scalar policy for Earth Engine', () => {
+        const fallbackPyramidingPolicy = vi.fn(names => Object.fromEntries(names.map(name => [name, 'mean'])))
+        const submitted = submitRecipe(outerRecipe(['scalar']), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy
+        })
+
+        expect(fallbackPyramidingPolicy).toHaveBeenCalledOnce()
+        expect(fallbackPyramidingPolicy).toHaveBeenCalledWith(['scalar'])
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({scalar: 'mean'})
+    })
+
+    it('keeps resolved policies when filling missing scalar policies', () => {
+        const fallbackPyramidingPolicy = vi.fn(() => ({array: 'mean', scalar: 'mode', outside: 'mean'}))
+        const submitted = submitRecipe(outerRecipe(['array', 'scalar']), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy
+        })
+
+        expect(fallbackPyramidingPolicy).toHaveBeenCalledWith(['scalar'])
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({array: 'sample', scalar: 'mode'})
+    })
+
+    it.each([
+        ['an empty selection', []],
+        ['an absent selection', undefined]
+    ])('selects every described band before applying fallback for %s', (_name, bands) => {
+        const fallbackPyramidingPolicy = vi.fn(() => ({scalar: 'mean'}))
+        const submitted = submitRecipe(outerRecipe(bands), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy
+        })
+
+        expect(fallbackPyramidingPolicy).toHaveBeenCalledWith(['scalar'])
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({array: 'sample', scalar: 'mean'})
+        expect(imageOf(submitted).bands).toEqual({selection: bands})
+    })
+
+    it('uses a valid object fallback to fill a missing scalar policy', () => {
+        const submitted = submitRecipe(outerRecipe(['scalar']), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy: {scalar: 'mode', '.default': 'mean'}
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({scalar: 'mode'})
+    })
+
+    it('uses an object default to fill a missing scalar policy', () => {
+        const submitted = submitRecipe(outerRecipe(['scalar']), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy: {'.default': 'mean'}
+        })
+
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({scalar: 'mean'})
+    })
+
+    it.each([
+        ['an incomplete object', {first: 'mean'}],
+        ['an object with a blank band-specific override', {first: 'mean', second: ' ', '.default': 'mean'}],
+        ['an incomplete function result', () => ({first: 'mean', second: ''})]
+    ])('blocks when %s does not supply every missing scalar policy', (_name, fallbackPyramidingPolicy) => {
+        expect(() => submitRecipe(outerRecipe(['first', 'second']), {
+            imageOutputDescription: resolved({
+                bands: [
+                    band('first', undefined, {arrayDimensions: 0}),
+                    band('second', undefined, {arrayDimensions: 0})
+                ]
+            }),
+            fallbackPyramidingPolicy
+        })).toThrow(/fallback|policy|band/i)
+        expect(state.submitted).toEqual([])
+    })
+
+    it('does not consult fallback when every selected policy is resolved', () => {
+        const fallbackPyramidingPolicy = vi.fn(() => ({scalar: 'mean'}))
+        const submitted = submitRecipe(outerRecipe(['scalar']), {
+            imageOutputDescription: resolved({
+                bands: [band('scalar', 'mode', {arrayDimensions: 0})]
+            }),
+            fallbackPyramidingPolicy
+        })
+
+        expect(fallbackPyramidingPolicy).not.toHaveBeenCalled()
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({scalar: 'mode'})
+    })
+
+    it.each(['DRIVE', 'SEPAL'])('does not consult or send fallback policy for %s', destination => {
+        const fallbackPyramidingPolicy = vi.fn(() => ({scalar: 'mean'}))
+        const submitted = submitRecipe(outerRecipe(['scalar'], destination), {
+            imageOutputDescription: mixedOutput(),
+            fallbackPyramidingPolicy
+        })
+
+        expect(fallbackPyramidingPolicy).not.toHaveBeenCalled()
+        expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('does not fill a policy when scalar dimensionality is unknown', () => {
+        const fallbackPyramidingPolicy = vi.fn(() => ({unknown: 'mean'}))
+
+        expect(() => submitRecipe(outerRecipe(['unknown']), {
+            imageOutputDescription: resolved({bands: [{name: 'unknown'}]}),
+            fallbackPyramidingPolicy
+        })).toThrow(/dimension|band/i)
+        expect(fallbackPyramidingPolicy).not.toHaveBeenCalled()
+        expect(state.submitted).toEqual([])
+    })
+})
+
 describe('submitRetrieveRecipeTask without a resolved image output', () => {
+    it('rejects migration fallback authority without a resolved description', () => {
+        expect(() => submit({id: 'SYNTHETIC'}, {
+            fallbackPyramidingPolicy: {'.default': 'mean'}
+        })).toThrow(/fallback|policy|description/i)
+        expect(state.submitted).toEqual([])
+        expect(state.events).toEqual([])
+    })
+
     it('still derives a legacy function policy from the selected bands', () => {
         const submitted = submit({id: 'SYNTHETIC'}, {
             pyramidingPolicy: bands => Object.fromEntries(bands.map(name => [name, 'mean']))
@@ -319,5 +557,62 @@ describe('submitRetrieveRecipeTask without a resolved image output', () => {
 
         expect(submitted).toHaveLength(1)
         expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
+    })
+})
+
+// Explicit Retrieve options. The observed path submits the options a command was given rather than whatever the
+// recipe happens to hold, so one value must control every task field - a stale stored value must not leak into
+// any of them.
+describe('submitRetrieveRecipeTask with explicit retrieveOptions', () => {
+    const staleRecipe = () => ({
+        id: 'recipe-1',
+        projectId: 'project-1',
+        type: 'SYNTHETIC',
+        title: 'A synthetic recipe',
+        model: {},
+        ui: {retrieveOptions: {destination: 'SEPAL', bands: ['stale'], scale: 999, assetId: 'stale/id'}}
+    })
+
+    const explicit = {destination: 'GEE', bands: ['a', 'b'], scale: 30, assetId: 'users/me/out'}
+
+    const submitExplicit = (config = {}) =>
+        submitRecipe(staleRecipe(), {retrieveOptions: explicit, ...config})
+
+    it('controls the destination and operation', () => {
+        const [task] = submitExplicit()
+        expect(task.operation).toBe('image.GEE')
+        expect(imageOf([task]).destination).toBe('GEE')
+    })
+
+    it('controls the selected bands', () => {
+        const submitted = submitExplicit()
+        expect(imageOf(submitted).bands).toEqual({selection: ['a', 'b']})
+    })
+
+    it('controls the options spread into the submitted image', () => {
+        const submitted = submitExplicit()
+        expect(imageOf(submitted).scale).toBe(30)
+        expect(imageOf(submitted).assetId).toBe('users/me/out')
+        expect(JSON.stringify(imageOf(submitted))).not.toContain('stale')
+    })
+
+    it('controls the task info', () => {
+        const [task] = submitExplicit()
+        expect(task.params.taskInfo).toEqual({retrieveOptions: explicit})
+    })
+
+    it('still derives policies from the description using the explicit selection', () => {
+        const submitted = submitExplicit({
+            imageOutputDescription: {
+                executionReference: {type: 'RECIPE_REF', id: 'recipe-1'},
+                output: {kind: 'IMAGE', bands: [
+                    {name: 'a', dataType: {arrayDimensions: 0}, pyramidingPolicy: 'sample'},
+                    {name: 'b', dataType: {arrayDimensions: 0}, pyramidingPolicy: 'mode'},
+                    {name: 'stale', dataType: {arrayDimensions: 0}, pyramidingPolicy: 'mean'}
+                ]},
+                evidence: []
+            }
+        })
+        expect(imageOf(submitted).pyramidingPolicy).toEqual({a: 'sample', b: 'mode'})
     })
 })

@@ -84,8 +84,15 @@ const assetSelection = id => ({type: 'ASSET', id})
 
 const catalogue = recipes => Object.fromEntries(recipes.map(recipe => [recipe.id, recipe]))
 
-const CCDC_BANDS = ['tStart', 'ndvi_coefs']
-const sampled = names => names.map(name => ({name, pyramidingPolicy: 'sample'}))
+const CCDC_BANDS = [
+    {name: 'tStart', arrayDimensions: 1},
+    {name: 'ndvi_coefs', arrayDimensions: 2}
+]
+const sampled = observed => observed.map(({name, arrayDimensions}) => ({
+    name,
+    dataType: {arrayDimensions},
+    pyramidingPolicy: 'sample'
+}))
 
 describe('observing a CCDC recipe directly', () => {
     it('asks the bands API for the complete recipe record, not an id', () => {
@@ -93,12 +100,12 @@ describe('observing a CCDC recipe directly', () => {
         const {observer} = observerOver()
         observer.observe({recipe, loadedRecipes: catalogue([recipe])})
 
-        expect(state.calls).toEqual([{recipe}])
+        expect(state.calls).toEqual([{recipe, includeDataTypes: true}])
         expect(state.calls[0].recipe.model).toEqual({})
         expect(state.calls[0].recipe.type).toBe('CCDC')
     })
 
-    it('turns observed names into a ready description with sample on every band', () => {
+    it('turns typed recipe evidence into a ready description retaining dimensionality', () => {
         const recipe = ccdc()
         const {observer, states} = observerOver()
         observer.observe({recipe, loadedRecipes: catalogue([recipe])})
@@ -130,7 +137,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}])
+        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1'], includeDataTypes: true}])
         expect(state.subscribed).toEqual(['RECIPE_REF:ccdc-1'])
     })
 
@@ -160,32 +167,72 @@ describe('observing MASKING over an asset', () => {
         return {root, loadedRecipes: catalogue([root])}
     }
 
-    it('asks the bands API by asset id, with no recipe placeholder', () => {
+    it('asks the bands API for typed asset evidence, with no recipe placeholder', () => {
         const {root, loadedRecipes} = maskedAsset()
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{asset: 'users/x/primary'}])
+        expect(state.calls).toEqual([{asset: 'users/x/primary', includeDataTypes: true}])
         expect('recipe' in state.calls[0]).toBe(false)
     })
 
-    // Earth Engine reports band names for an asset and no export policy. Nothing here is entitled to supply
-    // one, so the policy is unknown rather than defaulted, and the state says so.
-    it('guesses no policy and reports the exact incompleteness', () => {
+    it('resolves verified array dimensions as sample while preserving type evidence and band order', () => {
         const {root, loadedRecipes} = maskedAsset()
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
-        emit('ASSET:users/x/primary', ['B1'])
+        emit('ASSET:users/x/primary', [
+            {name: 'future_matrix', arrayDimensions: 2},
+            {name: 'tStart', arrayDimensions: 1}
+        ])
 
         expect(latest(states)).toEqual(envelope({
-            status: 'UNAVAILABLE',
-            diagnostics: [{
-                code: 'INCOMPLETE_IMAGE_OUTPUT',
-                path: ['bands', 0, 'pyramidingPolicy'],
-                recipePath: ['masked-1'],
-                reference: {type: 'ASSET', id: 'users/x/primary'}
-            }]
+            status: 'READY',
+            description: {
+                executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
+                output: {kind: 'IMAGE', bands: sampled([
+                    {name: 'future_matrix', arrayDimensions: 2},
+                    {name: 'tStart', arrayDimensions: 1}
+                ])},
+                evidence: []
+            }
         }))
+    })
+
+    it('resolves scalar physical schema without inventing a pyramiding policy', () => {
+        const {root, loadedRecipes} = maskedAsset()
+        const {observer, states} = observerOver()
+        observer.observe({recipe: root, loadedRecipes})
+        emit('ASSET:users/x/primary', [{name: 'B1', arrayDimensions: 0}])
+
+        expect(latest(states)).toEqual(envelope({
+            status: 'READY',
+            description: {
+                executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
+                output: {
+                    kind: 'IMAGE',
+                    bands: [{name: 'B1', dataType: {arrayDimensions: 0}}]
+                },
+                evidence: []
+            }
+        }))
+    })
+
+    it('consults no copied recipe, provenance, or visualization metadata', () => {
+        const primary = {
+            type: 'ASSET',
+            id: 'users/x/primary',
+            recipe_type: 'CCDC',
+            recipe_id: 'copied-recipe',
+            visualizations: [{bands: ['tStart']}]
+        }
+        const root = masking('masked-1', {
+            primary,
+            mask: assetSelection('users/x/mask')
+        })
+        const {observer} = observerOver()
+        observer.observe({recipe: root, loadedRecipes: catalogue([root])})
+
+        expect(state.calls).toEqual([{asset: 'users/x/primary', includeDataTypes: true}])
     })
 })
 

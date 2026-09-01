@@ -1,5 +1,6 @@
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {submitObservedRetrieve} from '~/app/home/body/process/recipe/observedRetrieve'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 export const defaultModel = {}
 
@@ -23,7 +24,6 @@ export const RecipeActions = id => {
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
                 })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .dispatch()
         },
     }
@@ -35,7 +35,12 @@ export const hasError = recipe => {
     return imageToMask && imageToMask.errorBand && imageMask && imageMask.errorBand
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.changeBased('change')
+export const submitMaskingRetrieve = ({recipe, retrieveOptions, resolveImageOutput$}) => {
+    RecipeActions(recipe.id).retrieve(retrieveOptions)
+    return submitObservedRetrieve({
+        recipe,
+        retrieveOptions,
+        resolveImageOutput$,
+        fallbackPyramidingPolicy: pyramidingPolicies.changeBased('change')
     })
+}

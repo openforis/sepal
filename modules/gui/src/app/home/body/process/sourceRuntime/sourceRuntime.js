@@ -1,12 +1,18 @@
-import {Observable} from 'rxjs'
+import {Observable, Subscriber, Subscription} from 'rxjs'
+
+import {
+    completeRecipeClosure$,
+    DEFAULT_RECIPE_CLOSURE_LIMITS
+} from '#sepal/recipe/source/completeRecipeClosure'
 
 import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
+import {createLoadRecipesById$} from './recipeClosureLoader'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
 // The GUI source runtime.
 //
 // Consumers ask it about a source; they never learn where dependency records come from, how observations are
-// routed, or how a missing recipe will one day be loaded. Those are the things this boundary exists to hide.
+// routed, or how a missing recipe is loaded. Those are the things this boundary exists to hide.
 //
 // `resolveImageOutput$` is deliberately distinct from the shared library's pure synchronous `resolveImageOutput`:
 // this one observes runtime evidence asynchronously.
@@ -18,24 +24,34 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 
 const PENDING = 'PENDING'
 
-export const createSourceRuntime = ({environment$, createObserver = createRecipeImageOutputObserver}) => ({
+const loadingState = () => ({
+    status: 'LOADING',
+    description: null,
+    diagnostics: [],
+    error: null
+})
+
+export const createSourceRuntime = ({
+    environment$,
+    createObserver = createRecipeImageOutputObserver,
+    completeClosure$ = completeRecipeClosure$,
+    loadRecipesById$ = createLoadRecipesById$(),
+    closureLimits = DEFAULT_RECIPE_CLOSURE_LIMITS
+}) => ({
     resolveImageOutput$: ({recipe}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
         // from inside a subscriber reacting to it, both re-enter here while setup is still running; without this
         // the operation would be publishing before it owned the work it was publishing about.
         let settled = false
         let observer = null
-        let observation = null
         let captured = null
+        let loadingPublished = false
+        const work = new Subscription()
 
-        // Both halves are needed: unsubscribing from `state$` stops us listening, while `cancel()` is what
-        // releases the observer's in-flight Earth Engine requests.
         const release = () => {
-            const currentObservation = observation
             const currentObserver = observer
-            observation = null
             observer = null
-            currentObservation?.unsubscribe()
+            work.unsubscribe()
             currentObserver?.cancel()
         }
 
@@ -56,24 +72,66 @@ export const createSourceRuntime = ({environment$, createObserver = createRecipe
             error
         })
 
-        const observe = ({catalogue}) => {
-            observer = createObserver()
-            observation = observer.state$.subscribe(state => {
-                if (settled || state.status === PENDING) {
-                    return
-                }
-                if (state.status === 'LOADING') {
-                    subscriber.next(state)
-                } else {
-                    terminate(state)
-                }
-            })
-            observer.observe({recipe, loadedRecipes: catalogue})
+        const publishLoading = () => {
+            if (!settled && !loadingPublished) {
+                loadingPublished = true
+                subscriber.next(loadingState())
+            }
         }
 
-        // RxJS does not propagate a throw from a next handler out of subscribe(), so the guard has to be here
-        // rather than around the subscription: an unexpected failure must reach the consumer as evidence, not
-        // vanish into RxJS's unhandled-error reporting.
+        const observe = graph => {
+            const currentObserver = createObserver()
+            observer = currentObserver
+            const observation = new Subscriber({
+                next: state => {
+                    if (settled || state.status === PENDING) {
+                        return
+                    }
+                    if (state.status === 'LOADING') {
+                        publishLoading()
+                    } else {
+                        terminate(state)
+                    }
+                },
+                error: unavailable
+            })
+            work.add(observation)
+            currentObserver.state$.subscribe(observation)
+            currentObserver.observe({graph})
+        }
+
+        const completeClosure = ({catalogue}) => {
+            const closure = completeClosure$({
+                rootRecipe: recipe,
+                seedRecipesById: new Map(Object.entries(catalogue || {})),
+                loadRecipesById$,
+                limits: closureLimits
+            })
+            const closureSubscriber = new Subscriber({
+                next: state => {
+                    try {
+                        if (settled) {
+                            return
+                        }
+                        if (state.status === 'LOADING') {
+                            publishLoading()
+                        } else if (state.status === 'COMPLETE') {
+                            observe(state.graph)
+                        } else {
+                            unavailable(new Error(`Source runtime: unexpected closure state ${state.status}`))
+                        }
+                    } catch (error) {
+                        unavailable(error)
+                    }
+                },
+                error: unavailable
+            })
+            // The subscriber belongs to the operation before subscription. A synchronous LOADING callback can
+            // invalidate the runtime and close it before the closure attempts authenticated HTTP work.
+            work.add(closureSubscriber)
+            closure.subscribe(closureSubscriber)
+        }
+
         const onEnvironment = environment => {
             try {
                 if (settled) {
@@ -81,7 +139,7 @@ export const createSourceRuntime = ({environment$, createObserver = createRecipe
                 }
                 if (!captured) {
                     captured = environment
-                    return observe(environment)
+                    return completeClosure(environment)
                 }
                 if (environment.earthEngineGeneration !== captured.earthEngineGeneration) {
                     unavailable(sourceRuntimeError(SOURCE_IDENTITY_CHANGED))
@@ -91,18 +149,19 @@ export const createSourceRuntime = ({environment$, createObserver = createRecipe
             }
         }
 
-        const environment = environment$.subscribe({
+        const environment = new Subscriber({
             next: onEnvironment,
             error: error => unavailable(error),
             // Completion means the scope that owned this runtime ended, whether before or during the
             // operation. Reported before cleanup so detached work learns why it stopped.
             complete: () => unavailable(sourceRuntimeError(SOURCE_RUNTIME_UNAVAILABLE))
         })
+        work.add(environment)
+        environment$.subscribe(environment)
 
         return () => {
             settled = true
             release()
-            environment.unsubscribe()
         }
     })
 })
