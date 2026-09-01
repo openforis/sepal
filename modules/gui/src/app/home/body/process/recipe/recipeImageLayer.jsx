@@ -15,6 +15,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
+import {findVisualization, MATCHED, selectionState, UNSELECTED, visualizationsWithAvailableBands} from './visualizationMatching'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 
 // The graph is derived HERE rather than in the component, because an edit to a watched dependency has to
@@ -41,7 +42,7 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
 // (selecting a valid visualization when the available bands change). The
 // generic reconciliation below has to stand down for those, or the two writers
 // overwrite each other on every render and React aborts the update loop.
-export const SELF_MANAGED_VISUALIZATIONS = ['CCDC_SLICE', 'CHANGE_ALERTS', 'LANDTRENDR']
+export const SELF_MANAGED_VISUALIZATIONS = ['BAYTS_ALERTS', 'CCDC_SLICE', 'CHANGE_ALERTS', 'LANDTRENDR']
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -75,39 +76,47 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        if (this.selfManagedVisualizations()) {
-            return
-        }
-        const {layerConfig: {visParams}} = this.props
-        if (!visParams) {
-            this.selectVisualization((this.toAllVis())[0])
-        }
+        this.reconcileVisualization()
     }
 
-    componentDidUpdate(prevProps) {
-        if (this.selfManagedVisualizations()) {
+    componentDidUpdate() {
+        this.reconcileVisualization()
+    }
+
+    // Reconcile the saved selection with the current candidates. It reads current props, so mount and update ask
+    // the same question - a restored selection can already be invalid on the first render, and that is the same
+    // invalidity a later band change produces.
+    //
+    // An unavailable selection is never replaced. It is the user's saved intent; that its bands are missing is a
+    // fact about the source right now, and writing the second over the first destroys a choice the next source
+    // change would have restored. An absent selection is filled in, while a matching candidate may refresh the
+    // saved definition. What an unavailable selection would present is suppressed where it is rendered.
+    reconcileVisualization() {
+        const {recipe, layerConfig} = this.props
+        if (!recipe || this.selfManagedVisualizations()) {
             return
         }
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
-        const {recipe} = this.props
-        if (!recipe) return
-        const allVisualizations = this.toAllVis()
-        if (!allVisualizations.length) {
-            this.layer && this.layer.removeFromMap()
-            return
-        }
-        if (prevVisParams) {
-            const visParams = allVisualizations
-                .find(({id, bands}) =>
-                    id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands))
-                )
-            if (!visParams) {
-                this.selectVisualization(allVisualizations[0])
-            } else if (!_.isEqual(visParams, prevVisParams)) {
-                this.selectVisualization(visParams)
+        const visParams = layerConfig && layerConfig.visParams
+        const visualizations = this.toAllVis()
+        switch (selectionState({visualizations, visParams})) {
+            case UNSELECTED:
+                this.selectVisualization(visualizations[0])
+                break
+            case MATCHED: {
+                // Matching is by id, so an edited visualization still matches the selection naming it. Rewriting
+                // the selection is how that edit reaches the preview.
+                const matched = findVisualization(visualizations, visParams)
+                if (!_.isEqual(matched, visParams)) {
+                    this.selectVisualization(matched)
+                }
+                break
             }
-        } else {
-            this.selectVisualization(allVisualizations[0])
+            // NO_CANDIDATES and STALE. Nothing is drawn, so nothing is held: MapAreaLayout has already been given
+            // null and taken the layer off the map, which cancels it for good through its replaying cancel
+            // subject. Keeping the reference would let createLayer hand that cancelled instance back whenever
+            // watchedProps happen to match - and watchedProps do not see the styles that make a selection valid.
+            default:
+                this.layer = null
         }
     }
 
@@ -118,15 +127,28 @@ class _RecipeImageLayer extends React.Component {
 
     toAllVis() {
         const {currentRecipe, recipe, sourceId} = this.props
+        // Source-scoped user styles are held to the same band-name rule the presets are.
+        const availableBands = Object.keys(getRecipeType(recipe.type).getAvailableBands(recipe) || {})
         return [
-            ...getUserDefinedVisualizations(currentRecipe, sourceId),
+            ...visualizationsWithAvailableBands(getUserDefinedVisualizations(currentRecipe, sourceId), availableBands),
             ...getAllVisualizations(recipe),
         ]
     }
 
+    // Only a selection that matches a current candidate gets a layer. MapAreaLayout mounts whatever is returned
+    // from its OWN componentDidUpdate, and React runs a descendant's before an ancestor's, so a layer handed back
+    // here reaches the map before this component can say anything more about it - and a preview for bands that
+    // are gone is one Earth Engine rejects. Returning null takes the image off the map, and with it the Palette,
+    // Legend or Values that described it.
     maybeCreateLayer() {
         const {recipe, layerConfig, map} = this.props
-        return map && recipe.ui.initialized && layerConfig && layerConfig.visParams
+        if (!map || !recipe.ui.initialized || !layerConfig || !layerConfig.visParams) {
+            return null
+        }
+        if (this.selfManagedVisualizations()) {
+            return this.createLayer()
+        }
+        return selectionState({visualizations: this.toAllVis(), visParams: layerConfig.visParams}) === MATCHED
             ? this.createLayer()
             : null
     }
@@ -145,7 +167,6 @@ class _RecipeImageLayer extends React.Component {
         }
         const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers', 'title'])), layerConfig}
         if (!_.isEqual(watchedProps, prevWatchedProps)) {
-            this.layer && this.layer.removeFromMap()
             this.layer = new EarthEngineImageLayer({
                 previewRequest,
                 watchedProps,

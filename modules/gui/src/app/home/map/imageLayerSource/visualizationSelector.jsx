@@ -67,9 +67,12 @@ class _VisualizationSelector extends React.Component {
                         onRemove={() => this.removeVisParams(selectedOption.visParams)}
                     />
                 ]}
-                buttons={[
-                    <PresentationToggle key='presentation'/>
-                ]}
+                buttons={selectedOption
+                    // Palette, Legend and Values are projections of the visualization being shown. With no
+                    // resolved option there is nothing being shown, so the toggle has nothing to toggle - and a
+                    // stale selection is exactly that: a non-null visParams no option matches.
+                    ? [<PresentationToggle key='presentation'/>]
+                    : []}
                 placeholder={'Select bands to visualize...'}
                 options={options}
                 value={selectedOption && selectedOption.value}

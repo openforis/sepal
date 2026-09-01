@@ -10,18 +10,26 @@ import {LabelsLayer} from '~/app/home/map/labelsLayer'
 import {compose} from '~/compose'
 
 import {ReferenceDataLayer} from '../body/process/recipe/classification/referenceDataLayer'
+import {isPresentationFeatureLayer} from './featureLayerOrder'
 import {LegendLayer} from './legendLayer'
 import {PaletteLayer} from './paletteLayer'
 import {ValuesLayer} from './valuesLayer'
 
-const _FeatureLayers = ({featureLayerSources, featureLayers, map}) =>
+// Palette, Legend and Values annotate the image layer on the map - they read its visParams straight out of the
+// store - so with no image layer they would annotate one that is not there. Withholding them is done here, at
+// render: the persisted entry and the user's enabled preference are untouched, and both come back with the layer.
+// Every other feature layer stands on its own and is unaffected.
+const describesMissingImage = ({type}, imageLayer) =>
+    !imageLayer && isPresentationFeatureLayer(type)
+
+const _FeatureLayers = ({featureLayerSources, featureLayers, imageLayer, map}) =>
     map
         ? featureLayers
             .filter(({disabled}) => disabled !== true)
             .map((layer, i) => {
                 const source = featureLayerSources.find(({id}) => id === layer.sourceId)
                 return (
-                    source
+                    source && !describesMissingImage(source, imageLayer)
                         ? (
                             <FeatureLayer
                                 key={layer.sourceId}
@@ -44,6 +52,7 @@ export const FeatureLayers = compose(
 
 FeatureLayers.propTypes = {
     featureLayers: PropTypes.any,
+    imageLayer: PropTypes.any,
     map: PropTypes.any,
 }
 
