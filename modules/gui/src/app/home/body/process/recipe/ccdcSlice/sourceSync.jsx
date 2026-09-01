@@ -3,19 +3,16 @@ import React from 'react'
 import {map, of, Subject, switchMap, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {compose} from '~/compose'
 import {getAvailableBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 import {Notifications} from '~/widget/notifications'
 
 import {recipeAccess} from '../../recipeAccess'
 import {withRecipe} from '../../recipeContext'
 import {getAllVisualizations} from '../ccdc/ccdcRecipe'
-
-const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
+import {toAssetSource} from './ccdcAssetDescription'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     return {
@@ -121,45 +118,9 @@ class _SourceSync extends React.Component {
         }
     }
 
-    toAssetSource(id, metadata) {
-        const bands = metadata.bandNames
-        const bandAndType = _.chain(bands)
-            .map(sourceBand => sourceBand.match(baseBandPattern))
-            .filter(match => match)
-            .map(([_, name, bandType]) => bandType === 'coefs'
-                ? ['value', 'intercept', 'slope', 'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
-                    .map(bandType => ({name, bandType}))
-                : [{name, bandType}]
-            )
-            .flatten()
-            .value()
-        const bandByName = _.groupBy(bandAndType, ({name}) => name)
-        const baseBands = _.chain(bandAndType)
-            .map(({name}) => name)
-            .uniq()
-            .map(name => ({name, bandTypes: bandByName[name].map(({bandType}) => bandType)}))
-            .value()
-        const segmentBands = bands
-            .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
-            .map(name => ({name}))
-        const dateFormat = metadata.properties.dateFormat
-        return {
-            type: 'ASSET',
-            id,
-            bands,
-            baseBands,
-            segmentBands,
-            dateFormat,
-            startDate: metadata.properties.startDate,
-            endDate: metadata.properties.endDate,
-            visualizations: toVisualizations(metadata.properties, bands)
-                .map(visualization => ({...visualization, id: uuid()}))
-        }
-    }
-    
     updateAssetSource(id, metadata) {
         const {recipeActionBuilder} = this.props
-        const sourceDetails = this.toAssetSource(id, metadata)
+        const sourceDetails = toAssetSource(id, metadata)
         recipeActionBuilder('UPDATE_SOURCE', {sourceDetails})
             .set('model.source', sourceDetails)
             .dispatch()
@@ -180,7 +141,7 @@ class _SourceSync extends React.Component {
     assetRecipeSource(recipe) {
         const metadata = recipe.model.assetDetails.metadata
         return {
-            ...this.toAssetSource(metadata.assetId, metadata),
+            ...toAssetSource(metadata.assetId, metadata),
             ...metadata.properties,
             targetType: 'ASSET_MOSAIC',
             type: 'RECIPE_REF',
