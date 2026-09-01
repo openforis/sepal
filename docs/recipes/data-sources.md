@@ -125,7 +125,9 @@ ordering can be preserved within that packet; unrelated uses remain separate cle
 Known scientific or execution defects are corrected on `master` before the new contracts describe the affected
 behavior. Contract versions identify deliberate durable contract evolution; they do not preserve old bugs as
 supported algorithms. Existing assets produced by defective code receive no source-resolution workaround and may
-need to be recreated when correctness matters.
+need to be recreated when correctness matters. This does not prohibit backward-compatible readers for established
+asset formats: preserving CCDC metadata and Slice usability is format compatibility, not preservation of a defective
+algorithm.
 
 Generic reference and edge modules know only canonical value shapes. Legacy model normalization and role names are
 owned by the recipe definition that understands those fields. Roles are opaque to generic traversal unless a
@@ -290,8 +292,15 @@ than server endpoint logic.
 
 - Define and activate the `IMAGE_OUTPUT` product and `CCDC_SEGMENTS` capability from actual CCDC and CCDC Slice
   behavior.
-- Derive exact Slice output bands and source visualizations without authoritative copied snapshots.
-- Migrate Preview, map selection and Retrieve filtering together.
+- Define the closed `CCDC_SEGMENT_SLICE` transformation and materialize its presentation templates only after the
+  source capability, required evidence and exact Slice output bands resolve.
+- Preserve existing CCDC Segments assets through a narrow structural asset contract. Continue interpreting their
+  legacy `visualization_*` and `baseBands` properties as Slice template configuration after that contract validates;
+  do not require assets to be recreated or rewritten.
+- Prove both direct CCDC assets and CCDC assets carried through Masking. Masking preserves the capability and
+  templates only while its explicit transformation effects preserve the required structure.
+- Migrate Preview, map selection and Retrieve filtering together. New structured provenance may be dual-written for
+  stronger future consumers, but it is not a prerequisite for existing CCDC Slice assets.
 
 ### 8. Migrate Change Alerts, then further consumers
 

@@ -20,23 +20,70 @@ band remapping can silently apply a style to the wrong output.
 
 ## Representation
 
-A normalized visualization contains presentation intent only:
+A normalized visualization definition contains presentation intent only:
 
 ```js
 {
-    id: 'stable-id',
     type: 'continuous', // continuous, categorical, rgb or hsv
     bands: ['ndvi'],
     min: [0],
     max: [1],
-    palette: ['#000000', '#FFFFFF'],
-    origin: 'SOURCE_PRESET' // SOURCE_PRESET, DERIVED_PRESET or USER_DEFINED
+    palette: ['#000000', '#FFFFFF']
 }
 ```
 
 Established parameters such as values, labels, gamma and inversion remain supported. Normalization and
 applicability are separate: a syntactically valid style can still refer to a missing band or carry categories that
 no longer describe its values.
+
+Identity, ownership and target product do not belong inside the visualization definition. They are carried by the
+record that owns or binds it. This keeps asset serialization and rendering parameters from becoming another source
+of product or capability facts.
+
+### Product presets and transformation templates
+
+A direct product preset is expressed in one named product's concrete band namespace. It remains a candidate until
+that product instance and its parameters are resolved, the definition is valid, and direct-rendering applicability
+is supported:
+
+```js
+{
+    id: 'sepal.optical.true-color',
+    product: {
+        id: 'OPTICAL_MOSAIC',
+        parameters: {/* configured product parameters */}
+    },
+    visualization: {/* normalized definition */}
+}
+```
+
+A downstream transformation template is not yet a visualization. Its band references describe potential output of
+one closed, named transformation rather than bands of the source product:
+
+```js
+{
+    id: 'sepal.ccdc.ndvi-harmonics',
+    transformation: {id: 'CCDC_SEGMENT_SLICE', version: 1},
+    template: {
+        type: 'hsv',
+        bandReferences: [
+            {logicalBand: 'ndvi', measure: 'phase_1'},
+            {logicalBand: 'ndvi', measure: 'amplitude_1'},
+            {logicalBand: 'ndvi', measure: 'rmse'}
+        ],
+        min: [-3.141592653589793, 0, 0],
+        max: [3.141592653589793, 3000, 2500]
+    }
+}
+```
+
+The named transformation owns its accepted source capability, template-body validation, parameter-dependent source
+evidence requirements, and materialization into concrete target-product bands. The template does not repeat those
+requirements. After resolution, a separate binding identifies the particular capability instance and provider; the
+declaration never embeds runtime provider paths.
+
+This is a closed CCDC Slice contract, not a generic presentation-transformation language. Another transformation
+defines its own template body only when a real consumer requires one.
 
 Band existence, types and grids come from the resolved product schema defined by
 [output-products.md](output-products.md). Generic `valueSemantics` and `categories` are provisional fields until
@@ -63,7 +110,24 @@ while still applicable. Cloning a source preset creates a new locally owned styl
 
 Removing or changing a source preset never deletes or rewrites a local clone.
 
-## Applicability
+Ownership is carried outside the visualization definition. Source presets and transformation templates use
+deterministic, namespace-qualified IDs. A presentation edit can replace the definition without changing its stable
+identity. User-defined visualizations retain their locally generated stable IDs.
+
+## Validation and applicability
+
+Malformed presentation and product incompatibility are separate failures:
+
+```text
+validateVisualizationDefinition(candidate)
+    -> VALID | INVALID
+
+validateRequirement({product, operationRequirement: directRendering(candidate)})
+    -> SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE
+```
+
+A malformed RGB definition does not make its product unsupported. A structurally valid definition can still be
+unsupported for one product or need physical or semantic evidence before a decision.
 
 Every referenced band must exist in the current output schema. Direct renderers accept scalar-valued bands only.
 This is a general physical-schema rule: a known array-valued band is never directly visualizable, regardless of
@@ -93,11 +157,17 @@ output band and preserves the represented values.
 - Band Math generally cannot claim that an input range or categorical legend remains valid for an arbitrary
   expression.
 
-An asset may carry presets intended for a downstream transformation rather than for its raw array-valued image. A
-CCDC Segments preset used by CCDC Slice is retained as source evidence, but it is not offered as a direct Masking
-visualization. CCDC Slice may use that evidence when it derives scalar output and then construct an applicable
-visualization for that output. Applicability must not be implemented by deleting the asset metadata, implicitly
-rendering one array element or recognizing CCDC in Masking.
+An asset may carry templates intended for a downstream transformation rather than presets for its raw array-valued
+image. A CCDC Slice template is retained as presentation evidence associated with a `CCDC_SEGMENTS` contract, but it
+is not offered as a direct CCDC or Masking visualization. `CCDC_SEGMENT_SLICE` materializes the template only after
+resolving the capability, Slice parameters and concrete scalar output. Applicability must not be implemented by
+deleting asset metadata, implicitly rendering one array element or recognizing CCDC in Masking.
+
+Transformations declare output effects rather than enumerating every capability they might preserve. Masking, for
+example, can state that its band mapping is identity, values are preserved where pixels remain valid, and validity
+is narrowed. A capability-owned transformation function decides whether those effects preserve, reduce or drop that
+capability. A subset or rename supplies an explicit input-to-output band mapping; `SUBSET` without the actual names
+is insufficient evidence.
 
 A visualization referring to both scalar and array bands is not directly applicable. A mixed output may still
 offer visualizations whose complete referenced-band set is scalar. Positively observed array dimensionality is
@@ -107,11 +177,33 @@ No positional remapping is allowed. Reordering an upstream image must not change
 
 ## Selection behavior
 
-A selected visualization is saved presentation intent. When it becomes invalid:
+A requested visualization ID is saved presentation intent. It is distinct from the active visualization binding:
 
-- keep the selection and its configuration visible;
+```js
+{
+    status: 'ACTIVE', // ACTIVE, UNSELECTED, INAPPLICABLE or NEEDS_EVIDENCE
+    requestedId,
+    activeBinding: {
+        product: {id, parameters, fingerprint},
+        candidateId,
+        visualization
+    },
+    selectableOptions,
+    invalidUserDefinitions,
+    diagnostics
+}
+```
+
+Preview consumes the complete active binding. Palette, Legend and Values consume its concrete visualization. A raw
+saved definition or requested ID is never treated as an active product binding.
+
+When a requested visualization cannot become active:
+
+- retain the requested ID and any user-owned definition;
 - explain the missing band or incompatible semantics;
-- do not silently select the first available preset or mutate the saved bands;
+- exclude an unsupported source preset from selectable options and expose an invalid user definition separately for
+  repair or deletion;
+- do not silently select the first available preset or mutate the saved definition;
 - either stop rendering the layer or use an explicitly temporary fallback without persisting it.
 
 The final fallback UX remains a product decision. Regardless of UX, Preview, map rendering and Retrieve must agree
@@ -122,24 +214,38 @@ pixels and band names are unchanged.
 
 ## Map and Retrieve
 
-Map layers consume the current resolved output description, current source presets and locally owned styles. They
-must not derive source validity from saved visualization snapshots.
+Map layers consume an active binding to the current resolved product instance, current source presets and locally
+owned styles. They must not derive source validity from saved visualization snapshots or ambient layer parameters.
 
-Retrieve exports only visualizations valid for the bands actually selected for export. This filter belongs at the
-shared output-description boundary, not behind recipe-specific opt-in flags. Source presets are resolved from the
-submitted execution bundle. User-defined styles come from the submitted outer recipe or layer state.
+Retrieve treats selected-band projection as a product transformation. It first derives the resulting product and
+preserved or reduced capabilities, then validates direct presets and transformation templates against that result.
+Direct presets require selected concrete scalar bands. Transformation templates require the source evidence defined
+by their named transformation; logical CCDC Slice references must not be tested as if they were physical Segments
+band names. This work belongs at the shared output-description boundary, not behind recipe-specific opt-in flags.
+
+Map selection does not decide which metadata is exported. Source presets are resolved from the submitted execution
+bundle. User-defined styles come from the submitted outer recipe or layer state and are independently validated.
 
 Drive and SEPAL outputs need the same selection semantics even when their metadata representation differs from an
 Earth Engine asset.
 
 ## Provenance and trust
 
-Asset visualization properties are presentation evidence, not physical schema. Parse them only after Earth Engine
-has verified the referenced bands. Versioned SEPAL provenance can explain how a preset was produced, but mutable or
-legacy properties cannot make a missing band exist or prove categorical meaning by themselves.
+Asset visualization properties and structured presentation envelopes are presentation evidence, not physical
+schema or capability authority. Parse them only after Earth Engine has verified the referenced bands. Versioned,
+trusted SEPAL provenance can explain how a preset or template was produced, but mutable properties cannot make a
+missing band exist or prove categorical or transformation semantics by themselves.
 
-Unversioned `visualization_*` and `recipe_*` properties are legacy hints. They may provide an initial choice while
-validation runs, but do not bypass output-schema or capability checks.
+Unversioned `visualization_*` and `recipe_*` properties are a legacy presentation encoding. Their interpretation is
+owned by the bound product or transformation, not by the property prefix: an ordinary image adapter may decode a
+record as a direct preset, while the CCDC Segments asset adapter decodes its logical `baseBands` references as a
+`CCDC_SEGMENT_SLICE` template. The properties do not by themselves establish either product schema or capability;
+the owning adapter first validates the source contract and observed bands.
+
+New structured metadata uses deterministic, bounded canonical serialization and namespace-qualified stable IDs. An
+unsupported declared envelope version is invalid and does not silently fall back to legacy interpretation. Durable
+metadata never stores a runtime provider path: after export the asset is the immediate provider, while original
+lineage belongs in trusted execution provenance.
 
 ## Legacy migration
 
@@ -155,18 +261,33 @@ Each migrated consumer should record real legacy shapes before defining automati
 copied band and visualization snapshots are the first such evidence; CCDC Slice remains the broader preset and
 capability witness.
 
+Existing working CCDC Segments assets remain supported without rewriting or recreating them. The CCDC asset adapter
+validates the observed segment schema and required CCDC metadata, then interprets compatible legacy
+`visualization_*` records and their logical `baseBands` as Slice transformation templates. This is permanent format
+compatibility for a narrowly defined asset contract, not a generic rule that mutable properties grant capabilities.
+
+When Masking preserves the CCDC product structure, it also preserves the admitted `CCDC_SEGMENTS` capability and
+its templates. CCDC Slice materializes those templates only against its resolved scalar output. A physical-band
+subset that removes required segment evidence reduces or drops the capability and templates. Missing or malformed
+metadata fails validation, but the absence of a newer provenance envelope does not make an otherwise valid existing
+CCDC asset unsupported.
+
 ## Implementation order
 
-1. Reserve `sourceVisualizations` and ownership in the common source description.
-2. After the generic runtime image output contract is active, stabilize Apply mask by preserving compatible source
-   styles and preventing stale copied snapshots from becoming authoritative.
-3. Define constant Fill invalidation rules, especially for categorical values, without waiting for a catalogue or
-   execution bundle.
-4. After caller-authorized loading and catalogue infrastructure exist, derive CCDC Slice presets from current
-   source capabilities and Slice output bands, then migrate CCDC map selection and Retrieve filtering together.
-5. Apply the same ownership rules to direct asset Fill and, after the Node server replacement, recipe Fill.
-6. Migrate Stack, Band Math and generic image layers one family at a time.
-7. Remove copied source snapshots and superseded recipe-specific filtering only after each consumer is accepted.
+1. Stabilize current Preview by withholding stale or unavailable bindings without rewriting requested selection.
+2. Characterize scalar presets, current CCDC export metadata, CCDC Slice ingestion and Masking export behavior.
+3. Add definition validation, direct applicability, deterministic candidate IDs and a pure binding controller.
+4. Define `CCDC_SEGMENT_SLICE`, including its capability requirement, template validator, evidence derivation and
+   materializer.
+5. Add explicit identity and subset mappings, then prove capability and template projection after export selection.
+6. Add the backward-compatible CCDC asset reader and bounded deterministic presentation encoding.
+7. Prove direct and Masking-preserved existing CCDC assets through Preview, Slice and Retrieve; dual-write structured
+   and legacy metadata if a new envelope is introduced.
+8. Move CCDC Slice and Preview to resolved bindings without making new provenance metadata a prerequisite for
+   existing structurally valid assets.
+9. Add stronger trusted provenance only for consumers whose semantic or relational requirements need it.
+10. Apply the same ownership rules to Fill, Stack, Band Math and remaining generic image layers incrementally.
+11. Remove copied source snapshots and superseded recipe-specific filtering only after each consumer is accepted.
 
 ## Observability
 
@@ -186,8 +307,8 @@ pre-migration baseline rather than guessed globally.
 
 ## Verification
 
-Pure tests own normalization, ownership, schema applicability, categorical alignment, name-based transformations,
-local clone behavior and export filtering.
+Pure tests own definition validation, ownership, direct applicability, categorical alignment, explicit band
+mappings, template materialization, local clone behavior, active binding and export projection.
 
 Focused integration tests prove a migrated map and Retrieve path consume the same validated style set. Earth Engine
 verification checks representative asset metadata parsing against actual output bands.
@@ -197,8 +318,9 @@ of deliberate user styles.
 
 ## Open decisions
 
-- Invalid-layer UX: unrendered layer versus visible temporary fallback.
+- Invalid-layer UX: unrendered layer versus a visibly stale temporary fallback.
 - Whether referenced recipes expose all user-defined styles as live source choices by default.
-- Stable IDs for source presets that are regenerated from mutable metadata.
+- Exact namespace and derivation rules for stable IDs imported from mutable legacy metadata.
 - How legacy copied visualizations are distinguished from deliberate local edits.
 - Which generic categorical fields belong in band schema versus richer domain capabilities.
+- Bounded asset-property encoding, size limits and failure behavior when presentation metadata exceeds them.

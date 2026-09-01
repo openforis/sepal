@@ -19,7 +19,7 @@ This subsystem owns:
 - resolving product declarations into descriptions from graph and runtime evidence;
 - coherent execution bundles for Preview and Retrieve;
 - observed Earth Engine asset revisions and drift handling;
-- versioned provenance written by SEPAL exports.
+- trusted verification of versioned provenance produced by SEPAL exports.
 
 It does not own refresh timers, GUI cache storage, visualization editing or recipe-specific React synchronization.
 
@@ -258,6 +258,12 @@ may change the effective footprint. It also preserves per-band export requiremen
 representation. A capability contract states which guarantees it requires and whether a transformation preserves,
 decorates, derives or drops it. The resolver combines the contracts bottom-up.
 
+Identity needs no per-band list. A subset or rename is different: it supplies the actual ordered input-to-output
+mapping, not merely a `SUBSET` label. Generic resolution validates that every mapping refers to the stated input and
+output products and is unambiguous. Capability-owned code receives the input capability, both products and the
+transformation effects, then preserves, reduces or drops its capability description. Generic code never interprets
+CCDC timing, measures or another domain contract.
+
 The same mechanism applies to n-ary recipes. A Stack definition maps each input's bands into its output, carrying
 schema, export requirements and capability evidence only for unchanged bands. It can expose several instances of a
 capability from different inputs. A value-changing operation such as Band Math derives a new output and does not
@@ -312,7 +318,10 @@ Names remain open, but the contract needs these separations:
     observedAt: 1780000000000,
     fingerprint: 'canonical-whole-source-fingerprint',
     output: {kind: 'IMAGE', bands: [/* ordered schema and export requirements */]},
-    sourceVisualizations: [],
+    presentation: {
+        productPresets: [],
+        transformationTemplates: []
+    },
     capabilities: {},
     evidence: [],
     status: 'READY'
@@ -451,7 +460,8 @@ Use three evidence tiers:
 
 1. **Verified physical schema**: authoritative for bands, types and grids Earth Engine reports.
 2. **Versioned SEPAL provenance**: interpretation evidence for verified bands.
-3. **Legacy provenance and naming conventions**: weak presentation hints, never compatibility authority.
+3. **Legacy provenance and naming conventions**: contract-specific compatibility evidence only where an explicit
+   adapter defines and validates that legacy format; never generic compatibility authority.
 
 Record authority with the individual fact or evidence item. A resolved description can combine observed physical
 schema, producer-declared semantics and unresolved fields, so one source-wide confidence enum would hide important
@@ -468,6 +478,31 @@ deliberate supported contracts; they are not a history of implementation defects
 practice of exporting the entire recipe model. Detailed manifests belong in task audit storage unless an explicit
 sharing policy allows them on the output asset.
 
+Mutable asset properties cannot establish trusted provenance by themselves. The eventual verification record lives
+at a trusted boundary and binds at least:
+
+- the Earth Engine asset ID;
+- asset revision or replacement evidence;
+- the accepted task or execution-bundle fingerprint;
+- a digest of the observed exported physical schema;
+- a digest of the bounded, canonically serialized presentation envelope;
+- relevant capability, transformation, adapter, composer and algorithm contract versions.
+
+Verification reads current asset evidence and requires every bound value to agree. An asset replacement or metadata
+edit cannot retain authority merely because the ID is unchanged. `system:version` is useful revision evidence but
+is not scientific provenance and does not replace schema and envelope verification. The exact trusted storage,
+canonicalization, digest algorithm and post-export verification protocol remain implementation decisions.
+
+A structured presentation envelope can be parsed without trusted provenance, but its transformation templates
+remain presentation data and cannot establish or activate a capability. An unsupported declared envelope version is
+invalid; it never silently acquires authority through the legacy parser.
+
+CCDC Segments assets have an established pre-envelope format that must remain readable. The CCDC capability owner
+may recognize that format from the observed segment-band structure and required CCDC metadata, including its date
+representation. Once that structural asset contract is admitted, legacy `visualization_*` records with logical
+`baseBands` are interpreted as `CCDC_SEGMENT_SLICE` templates. They configure a known transformation; they are not
+the evidence that admitted the capability. No generic asset adapter infers CCDC semantics from visualization names.
+
 Known defects are corrected before the affected contract is declared. Resolution does not branch on asset creation
 date, invent a legacy algorithm version or reinterpret an old asset to work around a historical bug. Physical asset
 observation can verify bands, dimensions and other reported structure, but cannot recover the formula or
@@ -481,6 +516,11 @@ The operational disposition is explicit:
   `INSUFFICIENT_PROVENANCE`;
 - known-bad provenance blocks the affected semantic operation;
 - recreating the asset under the current corrected contract is the normal remediation.
+
+These provenance restrictions apply to facts the operation actually requires. CCDC Slice can operate from the
+validated structural CCDC asset contract and does not require proof of the original recipe or execution bundle.
+Relational consumers such as Change Alerts may require stronger measurement and observation-protocol provenance;
+acceptance by CCDC Slice does not automatically satisfy those requirements.
 
 Do not introduce `USER_ASSERTED` or another generic provenance override until a separate design establishes its
 trust boundary, audit record and user experience. An unverified assertion never becomes verified evidence merely
@@ -504,6 +544,16 @@ loading. They never prove compatibility and are never silently rewritten.
 Tightening validation will expose recipes that only partly work today. Each activated recipe path must measure this
 before strict enforcement expands to another family.
 
+CCDC Slice migration must preserve existing working Earth Engine assets. Legacy assets do not carry an adapter ID,
+so the CCDC capability owner provides a narrow structural recognizer rather than a generic metadata guess. It
+validates the required segment bands, dimensionality, date representation and other inputs Slice actually consumes.
+Compatible `visualization_*` and `baseBands` fields then supply transformation-template configuration.
+
+The same admitted capability and templates pass through Masking when its explicit transformation effects preserve
+the CCDC structure. This supports both a direct asset and a CCDC asset behind a Masking recipe without teaching
+Masking about CCDC. A subset or value-changing transformation can reduce or drop them. New structured provenance
+may strengthen later consumers, but it is not a prerequisite for CCDC Slice and does not replace the legacy reader.
+
 ## Implementation boundary
 
 Activate the generic `IMAGE_OUTPUT` product before domain capabilities or another recipe-specific resolver:
@@ -524,10 +574,11 @@ replacement. The temporary browser closure loader is approved only for bounded p
 root; reusing it for a new source-selection or execution feature requires a separate authorization and coherence
 review.
 
-CCDC Slice is a later capability and bundle witness. That slice supports:
+CCDC Slice is a later capability and bundle witness. The resolved path supports:
 
 - direct CCDC recipes;
-- direct CCDC assets;
+- existing and new CCDC assets satisfying the validated structural CCDC asset contract;
+- CCDC assets behind Masking and other transformations that preserve that contract;
 - the optional Classification dependency of a CCDC recipe;
 - Asset wrappers and explicitly supported decorators;
 - exact physical-to-semantic-to-Slice-output band derivation;
@@ -535,7 +586,8 @@ CCDC Slice is a later capability and bundle witness. That slice supports:
 
 The `CCDC_SEGMENTS` capability will advertise only measures supported by verified stored bands. For example, break
 confidence requires both magnitude and RMSE. CCDC Slice derives its own `IMAGE_OUTPUT` product from this capability
-and its local date mode and options.
+and its local date mode and options. `CCDC_SEGMENT_SLICE` also owns transformation-template validation, derivation of
+required physical timing and measure evidence, and materialization into concrete Slice output visualizations.
 
 ## Observability
 
@@ -562,7 +614,8 @@ globally.
 ## Verification
 
 Pure shared tests own traversal, diamonds, role handling, cycle paths, capability preservation, canonical
-fingerprints, bundle limits, coherent-digest retry decisions, legacy evidence and expectation validation.
+fingerprints, explicit band mappings, capability reduction, bundle limits, coherent-digest retry decisions, legacy
+evidence and expectation validation.
 
 GUI, GEE and Task each need one environment-level import/execution witness for the shared contract. Masking adds
 focused boundary tests for its activated traversal and execution behavior. The later bundle slice proves that
@@ -591,5 +644,6 @@ credentials bypass the requested principal.
 - Output handling when asset drift is detected after completion.
 - ImageCollection membership behavior of `system:version` and the fallback evidence required when it is
   insufficient.
-- Trust mechanism for semantics that physical asset schema cannot verify.
+- Trusted provenance storage, canonical serialization, digest algorithm, size limits and post-export verification
+  protocol for semantics that physical asset schema cannot verify.
 - User-facing distinction between a preview fingerprint and a later submitted bundle.

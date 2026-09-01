@@ -161,10 +161,24 @@ Capabilities can refer to an image product without becoming another source of it
 
 ### Presentation
 
-Source presets refer to a specific product and stable band identities. User-defined visualizations remain owned by
-the recipe or layer where the user edited them. Applicability is calculated against the resolved product: every
-referenced band must exist and direct visualization requires scalar bands. A visualization is never evidence that a
-band exists, is scalar or has categorical semantics.
+Presentation definitions remain separate from product schema. A direct product preset is expressed in one named
+product's band namespace, while a downstream transformation template refers to potential output of one closed,
+named transformation. A CCDC Slice template is therefore not a visualization of the CCDC Segments product.
+
+A direct preset becomes a candidate only after binding it to a concrete product instance and parameters. It becomes
+an active visualization only after separate definition validation and direct-rendering requirement validation.
+Every referenced band must exist and direct visualization requires scalar bands. A visualization is never evidence
+that a band exists, is scalar or has categorical semantics.
+
+User-defined visualizations remain owned by the recipe or layer where the user edited them. Requested selection is
+distinct from an active product binding, so unavailable evidence or a temporarily missing candidate never requires
+rewriting saved intent. Exact presentation ownership, template and selection contracts belong in
+[visualizations.md](visualizations.md).
+
+Preset versus template is an interpretation distinction, not necessarily a storage-format distinction. Existing
+Earth Engine assets use `visualization_*` properties for both. An ordinary image adapter can interpret one as a
+direct product preset, while the CCDC Segments asset adapter interprets logical base-band references as templates
+owned by `CCDC_SEGMENT_SLICE`. The property record never decides its own product or transformation.
 
 ### Form metadata
 
@@ -582,6 +596,57 @@ The audit must determine the smallest vocabulary that covers real recipes. Curre
 The declaration says what can be derived without Earth Engine and what evidence is still required. Unknown evidence
 stays unknown; no transformation guesses a default physical type.
 
+### Transformation effects and capability projection
+
+A transformation declares facts about its output rather than enumerating every capability it might preserve. The
+initial vocabulary stays deliberately small:
+
+```js
+{
+    bandMapping: {kind: 'IDENTITY'},
+    values: 'PRESERVED_WHERE_VALID',
+    validity: 'NARROWED'
+}
+```
+
+An identity mapping is complete without listing every band. A subset or rename carries the actual, ordered mapping:
+
+```js
+{
+    bandMapping: {
+        kind: 'SUBSET',
+        mappings: [
+            {input: 'tStart', output: 'tStart'},
+            {input: 'ndvi_coefs', output: 'ndvi_coefs'}
+        ]
+    },
+    values: 'PRESERVED_WHERE_VALID',
+    validity: 'PRESERVED'
+}
+```
+
+Generic infrastructure validates that mappings are unique and refer to the stated input and output products. It
+does not interpret CCDC completeness or infer semantic preservation. The capability definition owns that decision:
+
+```text
+transformCapability({capability, inputProduct, outputProduct, effects})
+    -> PRESERVED | REDUCED | DROPPED
+```
+
+The result carries the preserved or reduced capability description and diagnostics where relevant. This means a
+future capability can pass through Masking without adding its name to Masking, while a capability whose semantics
+depend on unchanged validity can reject the same effects.
+
+Export-band selection is another product transformation. It projects the resolved product through an explicit
+subset mapping, recalculates capabilities, and only then validates direct presets and durable transformation
+templates. A Masking export that omits required CCDC timing or measure bands must not retain `CCDC_SEGMENTS` or
+advertise a Slice template merely because the pre-selection source carried them.
+
+Named presentation transformations remain closed contracts. `CCDC_SEGMENT_SLICE@1` owns its required
+`CCDC_SEGMENTS` input, validates its template body, derives physical source-evidence requirements from logical band
+references and Slice parameters, and materializes a concrete target-product visualization. The template does not
+repeat the transformation's accepted input contract or source requirements.
+
 ### Current resolver limitation
 
 The committed `INTRINSIC` declaration always asks `observationFor(reference)` before invoking its `derive` function.
@@ -716,9 +781,10 @@ temporal-composer contract is declared:
   is heterogeneous until a selection, filter or explicit missing-band policy establishes a homogeneous product.
 - Optical common-band order follows the first selected data set and collection merge order follows input order.
   Neither order may be canonicalized away until execution consequences are understood.
-- CCDC proves that GUI `noImageOutput` and GUI `getAvailableBands()` are not output contracts: the former suppresses
-  generic export and the latter describes scalar `count`, while the custom CCDC task exports the array-valued
-  Segments product.
+- CCDC proves that GUI `noImageOutput` and GUI `getAvailableBands()` are not output contracts: the former only
+  removes CCDC from recipe-selection lists offering a generic image input, and the latter describes scalar `count`,
+  while the custom CCDC task exports the array-valued Segments product. `noImageOutput` controls no export path;
+  its name asserts an output fact it does not own.
 
 Do not encode these defects as compatibility profiles, legacy measurement contracts or accepted composer behavior.
 For each defect, reproduce the failure, define the intended behavior in a red regression test, fix it on `master`,
@@ -730,6 +796,12 @@ Persisted recipe normalization may need a focused migration decision when a typo
 is input migration, not a product guarantee. Assets already produced by defective algorithms receive no special
 formula branch, timestamp test or compatibility workaround in the new architecture; users recreate them when their
 scientific correctness matters.
+
+Backward-compatible reading of an established output format is different from preserving a defective algorithm.
+Existing CCDC Segments assets remain valid Slice inputs when the CCDC asset adapter can establish their structural
+contract from observed bands and required metadata. Their legacy `visualization_*` properties continue to carry
+Slice templates. This does not version or reproduce an old computation, and it does not make those mutable
+properties generic capability authority.
 
 These findings still prove that a product-qualified declaration must replace both helper implementations as the
 authority. Choosing either current side wholesale would preserve a different set of errors.
@@ -769,11 +841,14 @@ defineRecipeType({
     },
     capabilities: {
         /* capability derivations */
+    },
+    presentation: {
+        /* direct product presets and closed transformation templates */
     }
 })
 ```
 
-Do not add `products`, source presets or capabilities to `defineRecipeType()` until at least two migrated witnesses
+Do not add `products`, presentation or capabilities to `defineRecipeType()` until at least two migrated witnesses
 need each field and the audit has established validation rules. The existing `imageOutput` contract remains the
 canonical output seam and should evolve compatibly.
 
@@ -781,8 +856,9 @@ The shown top-level `directSources` is the current recipe-definition seam. For a
 named references belong in the discovered command skeleton and direct edges are projected from them. Do not require
 callers to maintain both a command reference and an independent matching edge declaration.
 
-Presentation derivation may ultimately be associated with a product declaration, but it must stay separately
-owned and must not introduce GUI translation dependencies into `lib/js/shared`.
+Presentation may be declared beside products and capabilities in one recipe specification, but its definitions,
+applicability and active bindings remain separately owned. It must not introduce GUI translation dependencies into
+`lib/js/shared` or become evidence for product schema.
 
 ## Research plan
 
@@ -832,6 +908,9 @@ Add the closed temporal composer and representative hard cases:
 7. CCDC, chart, Phenology and LandTrendr requirements that demonstrate operation-specific validation.
 8. Change Alerts relational comparison using structured value and observation-protocol evidence.
 9. A declared source that needs no EE observation and a custom asset whose exact description requires evidence.
+10. CCDC Slice templates whose logical references are resolved by the named transformation rather than compared
+    directly with CCDC Segments physical band names.
+11. Identity Masking and explicit export-subset mappings that preserve, reduce or drop `CCDC_SEGMENTS` correctly.
 
 ### Phase D: trusted boundary integration
 
@@ -862,7 +941,8 @@ anticipation of future adapters.
 ## Verification
 
 Pure shared tests own declaration validation, deterministic band order, physical guarantees, preservation, name-based
-selection and renaming, n-ary composition, product separation and visualization applicability.
+selection and renaming, explicit subset mapping, capability projection, product separation, presentation-definition
+validation and direct visualization applicability.
 
 Boundary tests prove:
 
@@ -870,6 +950,9 @@ Boundary tests prove:
 - EE representative outputs agree with declared names and array dimensionality;
 - map-only products never enter canonical Retrieve output;
 - copied legacy snapshots cannot override current resolved evidence;
+- malformed presentation remains distinct from an unsupported product;
+- active visualization bindings name the concrete product instance and parameters they preview;
+- export selection drops capabilities and transformation templates whose source requirements no longer hold;
 - statically known scalar or array compatibility requires no metadata request;
 - unknown and mixed outputs remain conservative until exact evidence is available.
 
