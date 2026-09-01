@@ -2,7 +2,10 @@
 
 Technical design for resolving recipe and Earth Engine asset sources into a coherent graph and freezing that
 graph for execution. This document owns authorization and task atomicity. Live refresh policy belongs in
-[source-freshness.md](source-freshness.md).
+[source-freshness.md](source-freshness.md). Product identity, output-band description fields, declaration semantics
+and the distinction between canonical output and map-only products belong in
+[output-products.md](output-products.md). This document owns the traversal and evidence machinery that resolves
+those declarations.
 
 ## Responsibilities
 
@@ -13,7 +16,7 @@ This subsystem owns:
 - explicit-principal, authorization-aware graph traversal;
 - missing, forbidden, incomplete and cyclic dependency diagnostics;
 - capability-provider lineage and capability preservation;
-- canonical output-band descriptions;
+- resolving product declarations into descriptions from graph and runtime evidence;
 - coherent execution bundles for Preview and Retrieve;
 - observed Earth Engine asset revisions and drift handling;
 - versioned provenance written by SEPAL exports.
@@ -49,12 +52,18 @@ as batch HTTP, an internal repository adapter or both is an implementation decis
 pure contract.
 
 The current GEE administrator-loading path is longstanding and remains unchanged while pure contracts, edge
-inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver. Before
-the resolver is activated for any new Preview or Retrieve path, caller-aware loading must replace it. That boundary
-is blocked on the planned Node replacement for `sepal-server`. Do not implement a temporary Groovy endpoint or
-activate a new backend recipe-loading path before that replacement reaches `master`. Pure graph contracts,
-in-memory traversal and hardening of existing Masking paths may proceed. Graph traversal, capability derivation,
-bundle construction and cache behavior remain in JavaScript.
+inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver.
+
+As a bounded migration measure, a browser operation may complete its preflight graph through the existing
+authenticated per-recipe GUI read. It starts with the exact unsaved root and the session's loaded records, requests
+deduplicated missing frontiers under the current user, and retains returned records only for that operation. This
+does not require a new Groovy endpoint, does not use administrator credentials and does not make browser evidence a
+coherent execution graph. Missing or forbidden records still fail closed.
+
+The permanent live-resolution and execution-bundle boundary remains blocked on the planned Node replacement for
+`sepal-server`. Do not implement a temporary Groovy closure endpoint or activate a new administrator-backed loading
+path before that replacement reaches `master`. Graph traversal, capability derivation, operation-local closure
+completion, bundle construction and cache behavior remain in JavaScript.
 
 Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. The existing GEE
 configuration credentials are removed when caller-aware loading replaces their only GEE use, or narrowly scoped if
@@ -77,6 +86,20 @@ role-bearing edges after normalizing the legacy shapes in that recipe's model:
 {reference: {type: 'RECIPE_REF', id: 'recipe-id'}, role: 'CLASSIFICATION_SOURCE'}
 {reference: {type: 'RECIPE_REF', id: 'recipe-id'}, role: 'AOI'}
 ```
+
+For a source adapter or temporal composer, the discovered command skeleton owns named references once and the
+recipe definition projects these role-bearing edges from that structure. Do not let a caller supply both a command
+reference and an independently maintained dependency list. Discovery and binding semantics are defined in
+[output-products.md](output-products.md); the graph remains the sole authority for loading, authorization, closure,
+cycles, diamonds and dependency paths. A planner declares direct references but never traverses or loads the graph.
+After closure, the product resolver evaluates declarations bottom-up in graph order.
+
+The definition that owns a recipe may inspect that recipe's raw model while resolving its node. A cross-recipe
+binder receives only role-scoped child product declarations, capability declarations and evidence requirements for
+its named references. It receives neither foreign recipe records nor the complete catalogue. After evidence
+resolution, those declarations become resolved products and capability instances carrying provider paths. This
+prevents adapter or composer code from reconstructing another recipe type's output or acquiring undeclared
+dependencies.
 
 The shared recipe catalogue only imports and indexes definitions by persisted type. It rejects duplicate and
 incomplete definitions and contains no recipe-specific behavior. A recipe definition must explicitly expose its
@@ -104,10 +127,11 @@ runtime enforcement applies only to inventoried recipe types. For them, an undec
 controlled resolution error. Tests cover every representative model and reject adding a canonical reference
 without declaring or classifying it.
 
-The resolver memoizes recipes by ID, so diamond dependencies are loaded and stored once. It keeps the dependency
-path for diagnostics, rejects direct and indirect cycles, and applies bounded depth, node-count and serialized-byte
-limits with controlled errors. Limits are safeguards against malformed graphs, not tuning knobs for ordinary
-recipes.
+The resolver memoizes recipes by ID, so diamond dependencies are resolved once. It keeps the dependency
+path for diagnostics and rejects direct and indirect cycles. Any adapter that loads a closure around this resolver
+also applies bounded depth, node-count, serialized-byte, loading-round and request-concurrency limits with
+controlled errors. Limits are safeguards against malformed graphs, not tuning knobs for ordinary recipes; their
+initial values require measured repository and production evidence.
 
 The GUI should reject a newly selected reference when it would close a known cycle. Backend resolution performs
 the same check because saved and programmatically submitted recipes can bypass the form.
@@ -157,15 +181,23 @@ Resolution and compatibility are separate:
 
 Terminal recipe type alone does not prove compatibility.
 
-## Band and capability contract
+Plan validity and compatibility are separate as well. A valid bound command may carry a partial declaration and
+explicit evidence requirements. A consumer then classifies its operation-specific requirement as supported,
+unsupported or unresolved. Runtime availability, such as whether the configured AOI and dates produce any
+observations, remains execution evidence rather than a capability or planning diagnosis.
 
-The generic image contract uses an ordered band array. Order is part of image schema, but consumers match by name
-unless their operation explicitly defines a positional contract.
+## Resolved descriptions and capability lineage
+
+The output-band field contract and product-declaration semantics are owned by
+[output-products.md](output-products.md). This section specifies how resolution carries that description through a
+dependency graph, associates capabilities with providers and applies execution constraints. The resolved generic
+image description uses an ordered band array. Order is part of image schema, but consumers match by name unless their
+operation explicitly defines a positional contract.
 
 ```js
 {
     name: 'class',
-    dataType: {precision: 'int'},
+    dataType: {precision: 'int', arrayDimensions: 0},
     grid: {
         crs: 'EPSG:32636',
         crsTransform: [10, 0, 300000, 0, -10, 1100000],
@@ -186,10 +218,33 @@ remain optional because an image can be categorical without an exhaustive legend
 requirement, not a presentation preference: CCDC array bands require `sample`, while categorical and continuous
 scalar bands may require different policies. Palette and stretch are visualization state, not band schema.
 
-Start with:
+Array dimensionality is verified physical schema, not inferred semantics. When SEPAL must derive an export policy
+from physical schema, every band with `arrayDimensions > 0` uses `sample`: spatial aggregation can require matching
+array shapes and can reinterpret structured values even when shapes happen to match. This rule depends on neither a
+recipe type nor a band name. A recipe may declare another policy only when it owns and guarantees the array's
+fixed-shape aggregation semantics; no current recipe does. Physical scalar type alone does not determine `mean`,
+`mode` or another policy. The scalar band's physical schema can still resolve; its pyramiding policy remains absent
+until stronger evidence or an explicit coexistence policy supplies one. Missing operation-specific authority must
+not erase otherwise verified band schema.
 
-- `IMAGE_OUTPUT`: executable image, ordered output bands and per-band export requirements;
-- `CCDC_SEGMENTS`: stored CCDC bands, base-band derivation, available measures and date interpretation.
+Export compatibility is also per selected band. Earth Engine asset export is the only supported destination for
+array-valued bands; Drive and SEPAL raster-file exports require scalar bands. If any selected band has
+`arrayDimensions > 0`, the resolved output permits only the Earth Engine asset destination. This is derived from the
+selected output schema, not from recipe type. An empty selection meaning all bands is compatible only when every
+described band is compatible. Consumers must reject an incompatible destination before submission, and execution
+boundaries must retain their own validation rather than trusting the GUI.
+
+Export validation considers only the selected bands. A scalar band with no known policy is valid for Drive or
+SEPAL, where no Earth Engine asset pyramid is created, but cannot be selected for Earth Engine asset export until a
+policy is known. Consequently, a mixed scalar/array image can resolve completely: an array-only selection can
+export to Earth Engine with `sample`, while a scalar-only selection can use Drive or SEPAL. An all-band selection
+must satisfy the requirements of every described band.
+
+Start with one canonical product and one domain capability:
+
+- the `IMAGE_OUTPUT` product: executable image, ordered output bands and per-band export requirements;
+- the `CCDC_SEGMENTS` capability: stored CCDC bands, base-band derivation, available measures and date
+  interpretation.
 
 `CLASSIFICATION_RESULT` remains a likely later capability for classification-specific contracts. Generic
 categorical metadata must not be stretched into classifier behavior, reusable training data or other algorithmic
@@ -197,7 +252,7 @@ capabilities.
 
 ### Transformation and preservation
 
-Recipe definitions describe their output transformations in terms of guarantees relevant across capabilities.
+Recipe definitions describe their product transformations in terms of guarantees relevant across capabilities.
 For example, Apply mask preserves ordered band schema and values at pixels that remain valid, changes the mask and
 may change the effective footprint. It also preserves per-band export requirements because it does not change band
 representation. A capability contract states which guarantees it requires and whether a transformation preserves,
@@ -212,17 +267,25 @@ Do not maintain a list of pass-through recipe types in each consumer, and do not
 to name every capability individually when its transformation guarantees already decide preservation. A recipe or
 capability may still provide an explicit rule when generic guarantees are insufficient.
 
-### Capability discovery
+### Requirement and capability discovery
 
-Compatibility is queried for a resolved source instance, not inferred from its recipe type. The same Masking type
-can preserve `CCDC_SEGMENTS` when its primary input provides that capability, and lack it for another primary input
-or operation. Capabilities are zero-or-more instances keyed by capability name; each instance has a stable provider
-path and any output-band mapping needed to interpret it. A consumer expectation includes cardinality or a persisted
+Compatibility is queried for a source instance's declarations or resolved description, not inferred from its recipe
+type. The same Masking type can preserve `CCDC_SEGMENTS` when its primary input provides that capability, and lack it
+for another primary input or operation. Capabilities are zero-or-more instances keyed by capability name; each
+instance has a stable provider path and any output-band mapping needed to interpret it. A consumer expectation
+includes cardinality or a persisted
 instance selection when more than one match is meaningful. It receives one of three outcomes:
 
-- `SUPPORTED`: the current resolved description satisfies the expectation;
-- `UNSUPPORTED`: current evidence proves that it does not;
-- `UNRESOLVED`: required recipe or asset evidence is pending, unavailable or forbidden.
+- `SUPPORTED`: current declarations or resolved evidence satisfy the operation requirement;
+- `UNSUPPORTED`: the operation is not admissible under the current contract, whether contradicted or lacking
+  permanently required provenance;
+- `NEEDS_EVIDENCE`: a concrete authorized acquisition path could still decide the requirement.
+
+`NEEDS_EVIDENCE` is not a runtime transport state. Before acquisition, supported requirements skip observation and
+unsupported requirements stop. After acquisition, success yields supported or unsupported, transport or
+authorization failure yields runtime `UNAVAILABLE`, and contradictory or malformed evidence yields runtime
+`INVALID`. Once all declared acquisition paths are exhausted, final validation cannot remain `NEEDS_EVIDENCE`.
+A permanently unknowable semantic requirement is unsupported with `INSUFFICIENT_PROVENANCE`.
 
 Recipe selectors use this query rather than synchronous type predicates or blanket `sourceRecipe` checks. A
 consumer such as Change Alerts declares `CCDC_SEGMENTS` and remains unaware of Masking and future pass-through
@@ -231,10 +294,12 @@ ambiguity diagnosis until the consumer supports choosing one. Existing persisted
 the same contract and remain visibly invalid rather than being silently replaced. Backend validation repeats the
 required safety checks for legacy models, direct API submissions and stale clients.
 
-The GUI can derive descriptions for recipes already loaded in the session. Complete discovery across saved
-recipes requires the caller-authorized storage and session-catalogue boundary described below. Asset capability
-discovery uses authorization-scoped metadata evidence and bounded inspection; an arbitrary asset property is not
-proof of compatibility.
+The GUI can seed descriptions from recipes already loaded in the session and may complete one operation's declared
+closure through the existing authenticated per-recipe read. This temporary loading is suitable for bounded
+preflight of a known root, not for searching all saved recipes or establishing execution coherence. Complete
+discovery across saved recipes requires the caller-authorized storage and session-catalogue boundary described
+below. Asset capability discovery uses authorization-scoped metadata evidence and bounded inspection; an arbitrary
+asset property is not proof of compatibility.
 
 ## Source description
 
@@ -268,10 +333,16 @@ stabilization, constant Fill or direct asset Fill. They require both caller-auth
 replacement and reliable recipe content-digest evidence.
 
 The current recipe `update_time` is a plain second-resolution SQL `TIMESTAMP`. Two saves in one second are therefore
-indistinguishable, so it must not be used as the coherent-build revision. The replacement storage boundary must
-return recipe content and a digest observed from that same persisted content. Prefer a digest over a monotonic
-revision: it is insensitive to clock and replication skew and can also support cheap cross-session freshness
-checks.
+indistinguishable, so it must not be used as a coherent-build revision or cache key. The replacement storage
+boundary should persist a server-owned monotonic content revision and a content digest atomically with recipe
+content. The two values are complementary rather than alternatives: revision orders websocket events and supports
+cheap invalidation and optimistic concurrency; the digest identifies the exact persisted content and remains
+insensitive to clock and replication skew.
+
+Recipe list, load, save and future batch or closure operations expose the same committed revision. Reads used for
+coherent construction return content and digest from one storage boundary. A websocket update is published only
+after commit and carries at least recipe ID and revision, allowing clients to ignore duplicate or out-of-order
+events before fetching changed content. `update_time` remains useful for display and audit only.
 
 The digest input is either the exact persisted recipe bytes or explicitly versioned canonical JSON. It must never
 be computed from a model after read-time enrichment or migration has changed it. New records store it atomically
@@ -283,13 +354,13 @@ An execution bundle is a resolved recipe graph, not a cache entry:
 
 ```js
 {
-    contractVersion: 1,
+    bundleSchemaVersion: 1,
     rootRecipe: {/* submitted outer recipe without UI state */},
     recipesById: {/* transitive referenced recipes, deduplicated */},
     assetObservationsById: {/* authorization-scoped metadata evidence */},
     fingerprint: 'canonical-resolved-graph-fingerprint',
     verification: {
-        state: 'VERIFIED', // or UNVERIFIED_TRANSIENT after explicit override
+        state: 'VERIFIED',
         observedAt: 1780000000000
     }
 }
@@ -297,6 +368,12 @@ An execution bundle is a resolved recipe graph, not a cache entry:
 
 Bundle construction happens server-side under the caller's authorization. Missing and forbidden targets are
 reported without disclosing details the caller is not allowed to learn.
+
+The trusted boundary discovers and binds source-adapter and temporal-composer commands from the authorized bundle,
+or revalidates a server-built frozen command under the exact supported contract version. A browser-built plan is
+preflight evidence only and is never accepted as task authority: a client must not be able to alter entries,
+references, adapter parameters, planner-owned encoding or named operations after validation. Direct dependencies
+come from the command skeleton consumed by both graph construction and execution.
 
 Loading the graph sequentially is not itself atomic. The builder records each recipe digest, resolves the full
 closure, then rechecks those digests. If any changed during construction, it retries the complete build a
@@ -321,9 +398,11 @@ remain live and may still fail or drift during execution.
 
 ### Bundle compatibility and limits
 
-Execution accepts only bundle contract versions the worker explicitly supports. An unsupported version fails with
-a controlled resubmission error; it is never interpreted using the current contract and does not fall back to live
-resolution. Supporting an older version is an explicit compatibility implementation, not an assumption.
+Execution accepts only `bundleSchemaVersion` values the worker explicitly supports. An unsupported schema fails with
+a controlled resubmission error; it is never interpreted using the current schema and does not fall back to live
+resolution. Supporting an older bundle schema requires an explicit parser. Adapter, composer and measurement
+contract versions are validated separately and do not preserve known algorithm defects; corrected behavior is the
+only supported behavior for those cases.
 
 Depth, node count and serialized bytes are independent safeguards:
 
@@ -342,9 +421,18 @@ if valid measured graphs cannot fit a conservative task-payload limit.
 Assets remain `ASSET` sources even when produced by SEPAL. A `recipe_id` property is provenance, not a dependency
 edge.
 
-Earth Engine exposes a last-modified `updateTime`, not a documented immutable asset revision. Bundle construction
-therefore stores observations rather than claiming to pin the asset. ImageCollection observations follow each
-consumer's explicit policy: first member, homogeneous collection, union, intersection or another bounded rule.
+Earth Engine does not report the pyramiding policy used to create an asset. Asset observation therefore obtains
+ordered band names and array dimensionality from the current image's band-type metadata. Array-valued bands receive
+the physical-schema `sample` requirement above; scalar bands do not acquire a policy from `recipe_type`, naming
+conventions or visualization properties. An asset containing any still-unresolved required band remains unavailable
+rather than returning a partial executable description.
+
+Earth Engine image assets expose `system:version`, which is useful as a change token when normalized as an opaque
+string. It is invalidation evidence, not a promise that later execution is pinned to those pixels; bundle
+construction therefore still stores observations rather than claiming to pin the asset. `updateTime` remains
+weaker display and fallback evidence. ImageCollection observations follow each consumer's explicit policy: first
+member, homogeneous collection, union, intersection or another bounded rule. Until verified against the live API,
+do not assume every membership change relevant to such a policy advances the collection's `system:version`.
 
 For execution:
 
@@ -363,17 +451,40 @@ Use three evidence tiers:
 
 1. **Verified physical schema**: authoritative for bands, types and grids Earth Engine reports.
 2. **Versioned SEPAL provenance**: interpretation evidence for verified bands.
-3. **Legacy provenance and naming conventions**: weak interpretation hints.
+3. **Legacy provenance and naming conventions**: weak presentation hints, never compatibility authority.
+
+Record authority with the individual fact or evidence item. A resolved description can combine observed physical
+schema, producer-declared semantics and unresolved fields, so one source-wide confidence enum would hide important
+differences.
 
 Provenance may interpret only a band verified to exist. This still does not make mutable properties authoritative:
 incorrect date formats or categorical meanings can change calculations even when the named bands exist. Semantics
-that cannot be verified physically require trustworthy versioned evidence, explicit user configuration or a visible
-unverified state.
+that cannot be verified physically require trustworthy declared or versioned evidence. Otherwise they remain
+insufficient for semantic and relational requirements.
 
 New exports should write a minimal provenance schema version, execution-bundle fingerprint, source-observation
-summary and relevant algorithm/capability versions. Do not generalize the current practice of exporting the entire
-recipe model. Detailed manifests belong in task audit storage unless an explicit sharing policy allows them on the
-output asset.
+summary and relevant adapter, composer, algorithm or capability contract versions. These versions describe
+deliberate supported contracts; they are not a history of implementation defects. Do not generalize the current
+practice of exporting the entire recipe model. Detailed manifests belong in task audit storage unless an explicit
+sharing policy allows them on the output asset.
+
+Known defects are corrected before the affected contract is declared. Resolution does not branch on asset creation
+date, invent a legacy algorithm version or reinterpret an old asset to work around a historical bug. Physical asset
+observation can verify bands, dimensions and other reported structure, but cannot recover the formula or
+preprocessing that produced existing pixels. Affected historical assets remain the user's data and may need to be
+recreated when correctness matters.
+
+The operational disposition is explicit:
+
+- physical-schema-only operations may use verified bands, dimensions and types;
+- semantic or relational operations without sufficient provenance are unsupported with
+  `INSUFFICIENT_PROVENANCE`;
+- known-bad provenance blocks the affected semantic operation;
+- recreating the asset under the current corrected contract is the normal remediation.
+
+Do not introduce `USER_ASSERTED` or another generic provenance override until a separate design establishes its
+trust boundary, audit record and user experience. An unverified assertion never becomes verified evidence merely
+because a user supplied it.
 
 Sampling Design's focused algorithm version and reproduction metadata are useful precedent, but its Earth
 Engine-specific module is not the common source-contract owner.
@@ -386,7 +497,8 @@ loading. They never prove compatibility and are never silently rewritten.
 - A successful refresh replaces runtime evidence, not the user's selections.
 - A removed requirement remains visible and invalid.
 - Known-bad state blocks Preview and Retrieve.
-- Transiently unverifiable state can proceed only through an explicit override and is recorded as unverified.
+- Transient runtime failure remains `UNAVAILABLE`; it does not become compatibility evidence or satisfy a semantic
+  requirement.
 - Newly edited recipes migrate to the current model schema deliberately; opening a recipe does not rewrite it.
 
 Tightening validation will expose recipes that only partly work today. Each activated recipe path must measure this
@@ -394,7 +506,7 @@ before strict enforcement expands to another family.
 
 ## Implementation boundary
 
-Activate generic `IMAGE_OUTPUT` before domain capabilities or another recipe-specific resolver:
+Activate the generic `IMAGE_OUTPUT` product before domain capabilities or another recipe-specific resolver:
 
 - define execution identity, ordered bands and per-band export requirements in the shared contract;
 - resolve intrinsic, one-input and n-ary transformations bottom-up over the existing graph;
@@ -407,7 +519,10 @@ contract is accepted. Masking consumes the generic description to stabilize Appl
 without adding a dependency.
 
 Direct asset Fill may follow because it uses the linked Earth Engine identity rather than loading another SEPAL
-recipe. Recipe Fill remains blocked on caller-authorized loading from the Node server replacement.
+recipe. Recipe Fill remains blocked on the permanent caller-authorized loading boundary from the Node server
+replacement. The temporary browser closure loader is approved only for bounded preflight of an already selected
+root; reusing it for a new source-selection or execution feature requires a separate authorization and coherence
+review.
 
 CCDC Slice is a later capability and bundle witness. That slice supports:
 
@@ -419,8 +534,8 @@ CCDC Slice is a later capability and bundle witness. That slice supports:
 - Preview and Retrieve through live and bundled resolution contexts.
 
 The `CCDC_SEGMENTS` capability will advertise only measures supported by verified stored bands. For example, break
-confidence requires both magnitude and RMSE. CCDC Slice derives its own `IMAGE_OUTPUT` from this capability and its
-local date mode and options.
+confidence requires both magnitude and RMSE. CCDC Slice derives its own `IMAGE_OUTPUT` product from this capability
+and its local date mode and options.
 
 ## Observability
 
@@ -430,7 +545,7 @@ Emit low-cardinality Prometheus metrics and access-controlled structured logs fo
 - bundle retries caused by changing recipe digests;
 - missing, forbidden, cyclic, incomplete and incompatible outcomes;
 - live versus bundled resolution;
-- verified versus explicitly unverified execution;
+- verified execution and fail-closed handling of insufficient evidence;
 - asset drift detected after task execution;
 - provenance tier used and capability version.
 
@@ -454,6 +569,12 @@ focused boundary tests for its activated traversal and execution behavior. The l
 Preview uses an ephemeral bundle, Task uses only its stored bundle, and missing bundle members cannot fall back to
 live loading.
 
+Temporary browser closure-loading tests prove frontier deduplication, diamond reuse, direct and indirect cycle
+termination through the shared graph builder, exact-root and session-record precedence, rejection of extra or
+duplicate returned records, controlled graph limits, cancellation of outstanding reads, and fail-closed handling of
+missing or forbidden dependencies. A second operation after the session catalogue changes takes a new snapshot;
+an operation already in flight never mixes catalogue versions.
+
 Live verification covers representative recipe and asset graphs, actual CCDC bands, asset replacement during
 execution and every supported export destination. A permanent two-user authorization test proves that an owner can
 resolve a fixture recipe, another user cannot resolve the same ID, and neither a cache nor administrator service
@@ -464,8 +585,11 @@ credentials bypass the requested principal.
 - Exact initial capability shapes and versioning after the provisional generic categorical fields are exercised.
 - Measured bundle depth, node and serialized-byte limits across the complete task path.
 - Digest algorithm, canonicalization version, legacy-row materialization and coherent-build retry count.
+- Monotonic recipe-revision representation, websocket event ordering and dirty-draft conflict behavior.
 - Batch recipe endpoint transport details in the Node server replacement.
 - Whether and where detailed task manifests are retained.
 - Output handling when asset drift is detected after completion.
+- ImageCollection membership behavior of `system:version` and the fallback evidence required when it is
+  insufficient.
 - Trust mechanism for semantics that physical asset schema cannot verify.
 - User-facing distinction between a preview fingerprint and a later submitted bundle.

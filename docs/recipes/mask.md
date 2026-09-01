@@ -137,14 +137,15 @@ behavior. A caller may need an already-produced Classification image, a classifi
 image, reusable training data, a CCDC result image, source configuration, or some other contract. A decorator can
 preserve one without preserving the others.
 
-Compatibility must therefore be based on explicit capabilities rather than terminal type alone. The resolver
-combines each recipe's transformation guarantees with each capability's invariants, using an explicit recipe- or
-capability-specific rule only where those generic contracts cannot decide the result.
+Compatibility must therefore be based on an explicit product requirement and any additional capabilities rather
+than terminal type alone. The resolver combines each recipe's transformation guarantees with each capability's
+invariants, using an explicit recipe- or capability-specific rule only where those generic contracts cannot decide
+the result.
 
-Recipe selectors query current recipe instances for the capability they require. They distinguish supported,
-unsupported and unresolved candidates, and never use direct recipe type, a blanket `sourceRecipe` check or a
-denormalized effective type. Change Alerts asks for `CCDC_SEGMENTS`; it does not know that Masking or any future
-pass-through type exists. Nested wrappers can change their source or operation, so catalogue refresh must
+Recipe selectors query current recipe instances for the product and capabilities they require. They distinguish
+supported, `UNSUPPORTED` and `NEEDS_EVIDENCE` candidates, and never use direct recipe type, a blanket `sourceRecipe`
+check or a denormalized effective type. Change Alerts asks for `CCDC_SEGMENTS`; it does not know that Masking or any
+future pass-through type exists. Nested wrappers can change their source or operation, so catalogue refresh must
 re-evaluate capability support rather than persist the answer in recipe summaries.
 
 ### Output metadata
@@ -207,7 +208,8 @@ boundary.
 Three different requirements, which a wrapper can satisfy independently:
 
 **The transformed output image.** Generic map, image-input and Retrieve consumers need executable pixels, ordered
-bands and export requirements. They require `IMAGE_OUTPUT`, not a nominal recipe type. Apply mask preserves this
+bands and export requirements. They require the `IMAGE_OUTPUT` product, not a nominal recipe type. Apply mask
+preserves this
 contract.
 
 **Source-specific metadata.** Change Alerts reads a CCDC recipe's `ccdcOptions.dateFormat`, `dates`, `sources`

@@ -38,9 +38,10 @@ Established parameters such as values, labels, gamma and inversion remain suppor
 applicability are separate: a syntactically valid style can still refer to a missing band or carry categories that
 no longer describe its values.
 
-Band existence, types and grids come from the resolved output schema. Generic `valueSemantics` and `categories`
-are provisional fields owned by [source-resolution.md](source-resolution.md) until migrated consumers establish
-their minimal contract. A visualization is never evidence that a band or category exists.
+Band existence, types and grids come from the resolved product schema defined by
+[output-products.md](output-products.md). Generic `valueSemantics` and `categories` are provisional fields until
+migrated consumers establish their minimal contract. Resolution and evidence ownership remain with
+[source-resolution.md](source-resolution.md). A visualization is never evidence that a band or category exists.
 
 ## Ownership
 
@@ -64,7 +65,13 @@ Removing or changing a source preset never deletes or rewrites a local clone.
 
 ## Applicability
 
-Every referenced band must exist in the current output schema. Additional rules depend on visualization type:
+Every referenced band must exist in the current output schema. Direct renderers accept scalar-valued bands only.
+This is a general physical-schema rule: a known array-valued band is never directly visualizable, regardless of
+recipe type, band name or provenance. A visualization that selects an array position, date, coefficient, reduction
+or other projection is an explicit array-to-scalar transformation; its derived scalar output is visualized, not the
+array band itself.
+
+Additional rules depend on visualization type:
 
 - RGB and HSV require the expected number of usable bands;
 - continuous ranges, palettes and gamma must be valid;
@@ -85,6 +92,16 @@ output band and preserves the represented values.
 - Stack can rewrite names only through its explicit input-to-output mapping.
 - Band Math generally cannot claim that an input range or categorical legend remains valid for an arbitrary
   expression.
+
+An asset may carry presets intended for a downstream transformation rather than for its raw array-valued image. A
+CCDC Segments preset used by CCDC Slice is retained as source evidence, but it is not offered as a direct Masking
+visualization. CCDC Slice may use that evidence when it derives scalar output and then construct an applicable
+visualization for that output. Applicability must not be implemented by deleting the asset metadata, implicitly
+rendering one array element or recognizing CCDC in Masking.
+
+A visualization referring to both scalar and array bands is not directly applicable. A mixed output may still
+offer visualizations whose complete referenced-band set is scalar. Positively observed array dimensionality is
+definitive; unknown dimensionality remains an evidence gap during migration and must not be relabelled as scalar.
 
 No positional remapping is allowed. Reordering an upstream image must not change a saved style's meaning.
 
