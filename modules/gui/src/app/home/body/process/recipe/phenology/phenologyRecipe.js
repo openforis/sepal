@@ -26,7 +26,7 @@ export const defaultModel = {
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'AGGRESSIVE',
         snowMasking: 'ON',
-        orbits: ['ASCENDING', 'DECENDING'],
+        orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE'

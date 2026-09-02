@@ -26,7 +26,7 @@ export const defaultModel = {
         ...defaultRadarModel.options,
         ...defaultPlanetModel.options,
         corrections: [],
-        orbits: ['ASCENDING', 'DECENDING'],
+        orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE',
