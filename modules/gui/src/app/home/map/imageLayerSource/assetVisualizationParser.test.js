@@ -414,3 +414,35 @@ describe('isolating a malformed visualization from its neighbours', () => {
         expect(properties).toEqual(before)
     })
 })
+
+// The second argument is a list of band NAMES, and stays that way. Class properties are found by interpolating
+// each entry into `${band}_class_names`, so anything that is not a name silently matches nothing. Callers that
+// hold band descriptors have to project them; the parser must not start guessing at object shapes to cover for
+// one that does not.
+describe('the band list toVisualizations is given', () => {
+    const properties = {
+        class_class_names: 'Forest,Water',
+        class_class_values: '1,2',
+        class_class_palette: 'green,blue'
+    }
+
+    it('finds the class properties of a band it is named', () => {
+        expect(toVisualizations(properties, ['class'])).toEqual([{
+            type: 'categorical',
+            bands: ['class'],
+            labels: ['Forest', 'Water'],
+            values: [1, 2],
+            min: [1],
+            max: [2],
+            palette: ['#008000', '#0000FF']
+        }])
+    })
+
+    it('finds nothing when handed band descriptors instead of names', () => {
+        expect(toVisualizations(properties, [{id: 'class', data_type: {precision: 'int'}}])).toEqual([])
+    })
+
+    it('finds nothing when handed no band list at all', () => {
+        expect(toVisualizations(properties, [])).toEqual([])
+    })
+})

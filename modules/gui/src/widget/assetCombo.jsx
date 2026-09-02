@@ -459,8 +459,8 @@ class _AssetCombo extends React.Component {
         onLoaded && onLoaded(metadata ? {
             asset: assetId,
             metadata,
-            visualizations: metadata.bands
-                ? toVisualizations(metadata.properties, metadata.bands)
+            visualizations: metadata.bandNames
+                ? toVisualizations(metadata.properties, metadata.bandNames)
                     .map(visualization => ({...visualization, id: uuid()}))
                 : undefined
         } : null)
