@@ -86,6 +86,7 @@ final class WorkerTypes {
                                     USER_PUBLIC_KEY: userPublicKey,
                                     SEPAL_API_KEY: apiKey ?: '',
                                     SEPAL_HOST: config.sepalHost,
+                                    CARTODB_BASEMAP_KEY: config.cartoDbBasemapKey,
                                     NVIDIA_VISIBLE_DEVICES: 'all',
                                     NVIDIA_DRIVER_CAPABILITIES: 'all',
                             ],

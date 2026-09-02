@@ -20,6 +20,7 @@ class WorkerInstanceConfig {
     final String googleRegion
     final String googleEarthEngineAccount
     final String googleEarthEnginePrivateKey
+    final String cartoDbBasemapKey
     final String rabbitMQHost
     final int rabbitMQPort
     final String deployEnvironment
@@ -40,6 +41,7 @@ class WorkerInstanceConfig {
         googleRegion = c.string('googleRegion')
         googleEarthEngineAccount = c.string('googleEarthEngineAccount')
         googleEarthEnginePrivateKey = c.string('googleEarthEnginePrivateKey')
+        cartoDbBasemapKey = c.string('cartoDbBasemapKey')
         rabbitMQHost = c.string('rabbitMQHost')
         rabbitMQPort = c.integer('rabbitMQPort')
         deployEnvironment = c.string('deployEnvironment')
