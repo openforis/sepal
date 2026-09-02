@@ -10,7 +10,6 @@ import {monitorApps} from './apps.js'
 import {managementPort, monitorEnabled, port} from './config.js'
 import {createCredentialsFile} from './gee.js'
 import managementRoutes from './managementRoutes.js'
-import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
 import * as proxyManager from './proxyManager.js'
 import {getRequestUser} from './user.js'
 
@@ -46,8 +45,8 @@ const startServer = () => {
     proxyManager.initialize(app, server)
     
     server.setMaxListeners(30)
-    proxyEndpoints$(app).subscribe({
-        next: proxies => registerUpgradeListener(server, proxies),
+
+    proxyManager.registerProxies$().subscribe({
         error: error => log.error('Failed to register proxies.', error)
     })
 }

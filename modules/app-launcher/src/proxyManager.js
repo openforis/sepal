@@ -1,74 +1,68 @@
+import express from 'express'
+import {firstValueFrom, retry, tap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 
 import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
 
 const log = getLogger('proxyManager')
 
+const REGISTER_RETRY_DELAY_MS = 30 * 1000
+
 let appInstance = null
 let serverInstance = null
 let currentProxies = []
+let activeRouter = express.Router()
 
 const initialize = (app, server) => {
     appInstance = app
     serverInstance = server
+    // Express keeps every layer it is given, and the oldest match wins. Mount one stable layer here and
+    // swap the router behind it, so a refresh replaces the app routes instead of shadowing them.
+    app.use((req, res, next) => activeRouter(req, res, next))
     log.debug('Proxy manager initialized')
 }
 
-const refreshProxyEndpoints = async () => {
+const activate = (router, proxies) => {
+    activeRouter = router
+    currentProxies = proxies
+    if (serverInstance) {
+        serverInstance.removeAllListeners('upgrade')
+        registerUpgradeListener(serverInstance, proxies)
+    }
+}
+
+const proxies$ = () => {
     if (!appInstance) {
         throw new Error('Proxy manager not initialized - Express app not available')
     }
+    const router = express.Router()
+    return proxyEndpoints$(router).pipe(
+        tap(proxies => activate(router, proxies))
+    )
+}
 
-    try {
-        
-        log.info('Refreshing proxy endpoints...')
-        const proxies = await new Promise((resolve, reject) => {
-            proxyEndpoints$(appInstance).subscribe({
-                next: resolve,
-                error: reject
-            })
-        })
-        
-        if (serverInstance) {
-            // Check if proxies actually changed to avoid unnecessary listener updates
-            const hasChanged = !areProxiesEqual(currentProxies, proxies)
-            if (hasChanged) {
-                log.debug('Proxy configuration changed, updating upgrade listeners...')
-                serverInstance.removeAllListeners('upgrade')
-                registerUpgradeListener(serverInstance, proxies)
-                log.info(`Updated upgrade listeners for ${proxies.length} proxy endpoints`)
-            } else {
-                log.debug('Proxy configuration unchanged, skipping listener update')
-            }
-        }
-        
-        currentProxies = proxies
-        
-        log.info(`Refreshed ${proxies.length} proxy endpoints`)
-        return {
-            success: true,
-            count: proxies.length,
-            proxies: proxies.map(p => ({path: p.path, target: p.target}))
-        }
-    } catch (error) {
-        log.error('Failed to refresh proxy endpoints:', error)
-        throw error
+// The catalog comes from the gateway, which may still be starting. Keep trying, or no app gets a route.
+const registerProxies$ = () => proxies$().pipe(
+    retry({delay: REGISTER_RETRY_DELAY_MS})
+)
+
+const refreshProxyEndpoints = async () => {
+    log.info('Refreshing proxy endpoints...')
+    const proxies = await firstValueFrom(proxies$())
+    log.info(`Refreshed ${proxies.length} proxy endpoints`)
+    return {
+        success: true,
+        count: proxies.length,
+        proxies: proxies.map(p => ({path: p.path, target: p.target}))
     }
 }
 
-const areProxiesEqual = (oldProxies, newProxies) => {
-    if (oldProxies.length !== newProxies.length) {
-        return false
-    }
-    
-    const oldPaths = new Set(oldProxies.map(p => `${p.path}:${p.target}`))
-    const newPaths = new Set(newProxies.map(p => `${p.path}:${p.target}`))
-    
-    return oldPaths.size === newPaths.size &&
-           [...oldPaths].every(path => newPaths.has(path))
-}
+const hasProxies = () => currentProxies.length > 0
 
 export {
+    hasProxies,
     initialize,
-    refreshProxyEndpoints
+    refreshProxyEndpoints,
+    registerProxies$
 }
