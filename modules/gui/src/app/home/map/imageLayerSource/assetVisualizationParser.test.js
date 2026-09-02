@@ -289,3 +289,128 @@ describe('decoding persisted asset properties', () => {
         expect(properties).toEqual(before)
     })
 })
+
+// Failure isolation between candidates.
+//
+// An asset's visualization metadata is a set of independent candidates: one group of `visualization_N_*`
+// properties per serialized entry, plus one per band carrying a complete set of `*_class_*` properties. They are
+// written at different times by different code and edited by hand, so one being unusable says nothing about the
+// others. Today a single unusable candidate throws out of `normalize` and aborts the whole parse, and the asset
+// loses every visualization it has.
+//
+// Parsing currently throws, so each witness captures the outcome as a value and compares it. A thrown error
+// becomes a marker no valid parse can produce, which keeps every failure below a value comparison - "these
+// should have survived" - rather than an exception surfacing from the harness. After the fix the helper simply
+// returns the array and the same assertions stand.
+describe('isolating a malformed visualization from its neighbours', () => {
+    const survivors = (properties, bands = []) => {
+        try {
+            return toVisualizations(properties, bands)
+        } catch (error) {
+            return {parseAborted: error.constructor.name}
+        }
+    }
+
+    const named = result => Array.isArray(result)
+        ? result.map(({name, bands}) => name || bands.join(','))
+        : result
+
+    // A group with no `bands` at all. normalize() drops the empty array and then reads its length.
+    const bandless = index => ({
+        [`visualization_${index}_type`]: 'continuous',
+        [`visualization_${index}_min`]: '0',
+        [`visualization_${index}_name`]: 'bandless'
+    })
+
+    // A palette entry that is neither a colour name nor six hex digits. Color() throws on it.
+    const badPalette = index => ({
+        [`visualization_${index}_type`]: 'continuous',
+        [`visualization_${index}_bands`]: 'ndvi',
+        [`visualization_${index}_palette`]: 'nope',
+        [`visualization_${index}_name`]: 'bad palette'
+    })
+
+    const valid = (index, band) => ({
+        [`visualization_${index}_type`]: 'continuous',
+        [`visualization_${index}_bands`]: band,
+        [`visualization_${index}_min`]: '0',
+        [`visualization_${index}_max`]: '1',
+        [`visualization_${index}_name`]: band
+    })
+
+    const classProperties = (band, palette) => ({
+        [`${band}_class_names`]: 'foo,bar',
+        [`${band}_class_values`]: '1,2',
+        [`${band}_class_palette`]: palette
+    })
+
+    it('keeps the valid entries on either side of a bandless one', () => {
+        expect(named(survivors({...valid(0, 'ndvi'), ...bandless(1), ...valid(2, 'evi')})))
+            .toEqual(['ndvi', 'evi'])
+    })
+
+    it('keeps a valid entry beside one with an unreadable palette', () => {
+        expect(named(survivors({...valid(0, 'ndvi'), ...badPalette(1)})))
+            .toEqual(['ndvi'])
+    })
+
+    it('returns nothing when every serialized entry is malformed', () => {
+        expect(survivors({...bandless(0), ...badPalette(1)})).toEqual([])
+    })
+
+    it('preserves the order of the survivors', () => {
+        const properties = {
+            ...valid(0, 'blue'), ...valid(1, 'green'), ...bandless(2), ...valid(3, 'red')
+        }
+
+        expect(named(survivors(properties))).toEqual(['blue', 'green', 'red'])
+    })
+
+    it('lets a valid class-property visualization through past a malformed serialized one', () => {
+        expect(named(survivors({...bandless(0), ...classProperties('cover', 'red,green')}, ['cover'])))
+            .toEqual(['cover'])
+    })
+
+    it('lets a valid serialized visualization through past a malformed class-property one', () => {
+        expect(named(survivors({...valid(0, 'ndvi'), ...classProperties('cover', 'nope,green')}, ['cover'])))
+            .toEqual(['ndvi'])
+    })
+
+    it('keeps a valid class-property visualization beside a malformed one', () => {
+        const properties = {
+            ...classProperties('broken', 'nope,green'),
+            ...classProperties('cover', 'red,green')
+        }
+
+        expect(named(survivors(properties, ['broken', 'cover']))).toEqual(['cover'])
+    })
+
+    // The decoding committed in 4a4b65969 has to keep working for the entries that survive.
+    it('still decodes baseBands and name on an entry that outlives a malformed sibling', () => {
+        const properties = {
+            visualization_0_type: 'rgb',
+            visualization_0_bands: 'red,green,blue',
+            visualization_0_baseBands: 'red,green,blue',
+            visualization_0_name: 'red\\, green\\, blue',
+            ...bandless(1)
+        }
+
+        expect(survivors(properties)).toEqual([{
+            type: 'rgb',
+            bands: ['red', 'green', 'blue'],
+            baseBands: ['red', 'green', 'blue'],
+            name: 'red, green, blue',
+            inverted: [false, false, false],
+            gamma: [1, 1, 1]
+        }])
+    })
+
+    it('does not touch the properties it was given, malformed entries included', () => {
+        const properties = {...valid(0, 'ndvi'), ...bandless(1), ...classProperties('cover', 'nope,green')}
+        const before = {...properties}
+
+        survivors(properties, ['cover'])
+
+        expect(properties).toEqual(before)
+    })
+})

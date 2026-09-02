@@ -26,6 +26,16 @@ const DECODE = {
 
 const decode = (key, value) => (DECODE[key] || _.identity)(value)
 
+// Asset visualizations are independent metadata entries. Normalize each in isolation so one malformed entry
+// cannot suppress valid siblings; parsing and grouping errors outside normalization still surface.
+const tryNormalize = visParams => {
+    try {
+        return normalize(visParams)
+    } catch (_error) {
+        return null
+    }
+}
+
 const parseVisualization = properties => _.chain(properties)
     .keys()
     .map(key => {
@@ -41,7 +51,7 @@ const parseVisualization = properties => _.chain(properties)
     .map(props => {
         const visParams = {}
         props.forEach(({key, value}) => visParams[key] = decode(key, value))
-        return normalize(visParams)
+        return tryNormalize(visParams)
     })
     .filter(visParams => visParams)
     .value()
@@ -55,7 +65,7 @@ const parseClassProperties = (properties, bands) =>
                 `${band}_class_values`,
             ]
             ).length === 3)
-        .map(band => normalize({
+        .map(band => tryNormalize({
             type: 'categorical',
             bands: [band],
             labels: properties[`${band}_class_names`],
