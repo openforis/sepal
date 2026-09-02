@@ -44,6 +44,12 @@ if [ -n "$SEPAL_API_KEY" ]; then
     unset SEPAL_API_KEY
 fi
 
+# sepal-ui and pysepal read this with os.getenv() at import time, so unlike SEPAL_API_KEY
+# above it has to stay in the environment the user's processes inherit.
+if [ -n "$CARTODB_BASEMAP_KEY" ]; then
+    printf '%s\n' "CARTODB_BASEMAP_KEY=$CARTODB_BASEMAP_KEY" >> /etc/environment
+fi
+
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
     "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \

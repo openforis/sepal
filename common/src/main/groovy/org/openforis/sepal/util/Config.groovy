@@ -30,6 +30,11 @@ final class Config {
         return value
     }
 
+    final String string(String key, String defaultValue) {
+        def value = config.getProperty(key)
+        return value == null ? defaultValue : value
+    }
+
     final File file(String key) {
         return new File(string(key))
     }
