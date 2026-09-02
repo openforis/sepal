@@ -1567,7 +1567,7 @@
           }
         },
         "options": {
-          "title": "Change rules",
+          "title": "Detection rules",
           "button": "OPT",
           "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
           "form": {
