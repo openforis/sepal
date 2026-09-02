@@ -41,7 +41,7 @@ class WorkerInstanceConfig {
         googleRegion = c.string('googleRegion')
         googleEarthEngineAccount = c.string('googleEarthEngineAccount')
         googleEarthEnginePrivateKey = c.string('googleEarthEnginePrivateKey')
-        cartoDbBasemapKey = c.string('cartoDbBasemapKey')
+        cartoDbBasemapKey = c.string('cartoDbBasemapKey', '')
         rabbitMQHost = c.string('rabbitMQHost')
         rabbitMQPort = c.integer('rabbitMQPort')
         deployEnvironment = c.string('deployEnvironment')
