@@ -111,7 +111,9 @@ function update_venv {
         echo "Creating venv: $venv_path" >> "$venv_log_file"
         
         if [[ -f "$app_path/sepal_environment.yml" ]]; then
-             micromamba create -y -p "$venv_path" -f "$app_path/sepal_environment.yml" >> "$venv_log_file"
+             # Root's repodata cache never expires, so a just-published package reads as a typo
+             # until --retry-clean-cache refetches on a failed solve.
+             micromamba create -y --retry-clean-cache -p "$venv_path" -f "$app_path/sepal_environment.yml" >> "$venv_log_file"
              "$venv_path"/bin/pip install ipykernel >> "$venv_log_file"
         else
             python3 -m venv $venv_path
