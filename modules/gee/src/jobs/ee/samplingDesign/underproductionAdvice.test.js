@@ -174,6 +174,49 @@ describe('requestedAllocation advice', () => {
         expect(decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC, sampleSizeStrategy: 'CLOSEST'}))
             .toEqual([])
     })
+
+    // Manual allocation has no Total sample size and no Target margin of error - the user types a count into
+    // each stratum row - so it is sent to the rows it can actually edit.
+    describe('manual allocation', () => {
+        // A stale estimateSampleSize or EQUAL saved behind Manual must not resurface as advice about controls
+        // the user cannot see.
+        it('sends random manual shortfalls to the per-stratum counts, ignoring stale saved flags', () => {
+            const [decision] = decisionsFor({
+                ...oneStratum(25),
+                effectiveMinimum: 10,
+                ...RANDOM,
+                manual: true,
+                estimateSampleSize: true,
+                allocationStrategy: 'EQUAL'
+            })
+
+            expect(decision.actions).toContain('reduceRequestedManual')
+            expect(decision.actions).not.toContain('reduceRequested')
+            expect(decision.actions).not.toContain('increaseMarginOfError')
+            expect(decision.actions).not.toContain('increaseMarginOfErrorOrClosest')
+            expect(decision.actions).not.toContain('avoidEqualAllocation')
+        })
+
+        it('keeps the Closest alternative for systematic OVER and EXACT', () => {
+            const over = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC, manual: true})[0]
+            const exact = decisionsFor({
+                ...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC, sampleSizeStrategy: 'EXACT', manual: true
+            })[0]
+
+            expect(over.actions).toContain('reduceRequestedManualOrClosest')
+            expect(exact.actions).toContain('reduceRequestedManualOrClosest')
+            expect(over.actions).not.toContain('reduceRequestedOrClosest')
+        })
+
+        it('leaves a manual stratum below the statistical minimum with no reduction action', () => {
+            const [decision] = decisionsFor({...oneStratum(1), ...SYSTEMATIC, manual: true})
+
+            expect(decision.kind).toBe('statisticalMinimum')
+            expect(decision.actions).not.toContain('reduceRequestedManual')
+            expect(decision.actions).not.toContain('reduceRequestedManualOrClosest')
+            expect(decision.actions.join(' ')).not.toMatch(/reduceRequested/)
+        })
+    })
 })
 
 describe('underproductionUserMessage', () => {
@@ -298,14 +341,14 @@ describe('stratum terminology and action limits', () => {
 describe('Manual allocation ignores stale saved Samples/Error and Equal flags', () => {
     // Manual is saved as a boolean or as the old form-toggle array; both `true` and `[true]` are Manual.
     for (const manual of [true, [true]]) {
-        it(`treats manual=${JSON.stringify(manual)} as an active mode: Samples-style count advice, no Equal advice`, () => {
+        it(`treats manual=${JSON.stringify(manual)} as an active mode: per-stratum count advice, no Equal advice`, () => {
             const [decision] = decisionsFor({
                 ...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC,
                 manual, estimateSampleSize: true, allocationStrategy: 'EQUAL'
             })
             expect(decision.kind).toBe('requestedAllocation')
             expect(decision.diagnosis).toBe('diagnosis.requestedAllocation')
-            expect(decision.actions).toContain('reduceRequestedOrClosest')
+            expect(decision.actions).toContain('reduceRequestedManualOrClosest')
             expect(decision.actions).not.toContain('increaseMarginOfErrorOrClosest')
             expect(decision.actions).not.toContain('avoidEqualAllocation')
         })

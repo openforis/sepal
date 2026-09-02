@@ -5831,6 +5831,8 @@
         "lowerConfiguredMinimum": "In Sample Allocation, lower Min samples/stratum to {value} or less, but not below {floor}.",
         "reduceRequested": "In Sample Allocation, reduce Total sample size.",
         "reduceRequestedOrClosest": "In Sample Allocation, reduce Total sample size, or in Sample Arrangement choose Closest.",
+        "reduceRequestedManual": "In Sample Allocation, reduce the requested sample count for each affected stratum.",
+        "reduceRequestedManualOrClosest": "In Sample Allocation, reduce the requested sample count for each affected stratum, or in Sample Arrangement choose Closest.",
         "increaseMarginOfError": "In Sample Allocation, increase Target margin of error.",
         "increaseMarginOfErrorOrClosest": "In Sample Allocation, increase Target margin of error, or in Sample Arrangement choose Closest.",
         "avoidEqualAllocation": "In Sample Allocation, replace Equal with Proportional, Balanced, or Manual to reduce counts for small strata."
