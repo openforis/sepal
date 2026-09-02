@@ -1,6 +1,6 @@
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import micromatch from 'micromatch'
-import {filter, from, map, switchMap, tap, toArray} from 'rxjs'
+import {filter, from, map, switchMap, toArray} from 'rxjs'
 import url from 'url'
 
 import {getLogger} from '#sepal/log'
@@ -12,19 +12,13 @@ import {getRequestUser, setRequestUser} from './user.js'
 
 const log = getLogger('proxy')
 
-// Every registration path goes through proxyEndpoints$, so this stays in sync with the Express router.
-let registeredProxies = []
-
-const proxyEndpoints$ = expressApp => source$().pipe(
+const proxyEndpoints$ = router => source$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
-    map(proxy(expressApp)),
-    toArray(),
-    tap(proxies => registeredProxies = proxies)
+    map(proxy(router)),
+    toArray()
 )
-
-const hasProxies = () => registeredProxies.length > 0
 
 const registerUpgradeListener = (server, proxies) => {
     // this was taken from gateway/src/main.js
@@ -56,15 +50,15 @@ const registerUpgradeListener = (server, proxies) => {
     })
 }
 
-export {hasProxies, proxyEndpoints$, registerUpgradeListener}
+export {proxyEndpoints$, registerUpgradeListener}
 
-const proxy = expressApp =>
+const proxy = router =>
     ({id, port}) => {
         const path = `/${id}`
         const target = `http://${id}:${port}`
 
         // This is to get the resourcez endpoint from solara - only for admin users (it returns the number of active users, etc.)
-        expressApp.use(
+        router.use(
             `${path}/resourcez`,
             (req, res, next) => {
                 const user = getRequestUser(req)
@@ -148,7 +142,7 @@ const proxy = expressApp =>
             }
         })
 
-        expressApp.use(path, proxyMiddleware)
+        router.use(path, proxyMiddleware)
         
         return {path, target, proxy: proxyMiddleware}
     }

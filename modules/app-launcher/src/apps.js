@@ -7,8 +7,7 @@ import {fetchAppsFromApi$, fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
 import {buildAndRestart, isContainerRunning, startContainer} from './docker.js'
 import {cloneOrPull} from './git.js'
-import {hasProxies} from './proxy.js'
-import {refreshProxyEndpoints} from './proxyManager.js'
+import {hasProxies, refreshProxyEndpoints} from './proxyManager.js'
 
 const log = getLogger('apps')
 
