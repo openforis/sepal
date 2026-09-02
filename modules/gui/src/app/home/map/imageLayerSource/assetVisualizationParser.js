@@ -2,6 +2,30 @@ import _ from 'lodash'
 
 import {normalize} from '~/app/home/map/visParams/visParams'
 
+// Reversing the encoding the Task writer applies when it puts a visualization into asset properties: array
+// fields are comma-joined, and a comma inside any string value is escaped as `\,`.
+//
+// `normalize` already undoes most of it - it splits the fields it knows are lists, and unescapes `labels`. Two
+// gaps are left, and they are closed here rather than there because only this boundary knows the values came out
+// of an asset property at all: `baseBands` is not one of normalize's list fields, so it would stay a string, and
+// a scalar `name` is never unescaped, so a generated one would keep its backslashes.
+const unescapeCommas = value =>
+    _.isString(value)
+        ? value.replace(/\\,/g, ',')
+        : value
+
+const toList = value =>
+    _.isString(value)
+        ? (value.match(/(\\.|[^,])+/g) || []).map(item => unescapeCommas(item.trim()))
+        : value
+
+const DECODE = {
+    baseBands: toList,
+    name: unescapeCommas
+}
+
+const decode = (key, value) => (DECODE[key] || _.identity)(value)
+
 const parseVisualization = properties => _.chain(properties)
     .keys()
     .map(key => {
@@ -16,7 +40,7 @@ const parseVisualization = properties => _.chain(properties)
     .values()
     .map(props => {
         const visParams = {}
-        props.forEach(({key, value}) => visParams[key] = value)
+        props.forEach(({key, value}) => visParams[key] = decode(key, value))
         return normalize(visParams)
     })
     .filter(visParams => visParams)
