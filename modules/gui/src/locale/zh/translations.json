@@ -5831,6 +5831,8 @@
         "lowerConfiguredMinimum": "",
         "reduceRequested": "",
         "reduceRequestedOrClosest": "",
+        "reduceRequestedManual": "",
+        "reduceRequestedManualOrClosest": "",
         "increaseMarginOfError": "",
         "increaseMarginOfErrorOrClosest": "",
         "avoidEqualAllocation": ""
