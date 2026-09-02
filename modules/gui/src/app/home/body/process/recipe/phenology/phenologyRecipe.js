@@ -28,7 +28,7 @@ export const defaultModel = {
         snowMasking: 'ON',
         orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
-        speckleFilter: 'NONE',
+        spatialSpeckleFilter: 'NONE',
         outlierRemoval: 'NONE'
     }
 }
