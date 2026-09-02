@@ -1,6 +1,6 @@
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import micromatch from 'micromatch'
-import {filter, from, map, switchMap, toArray} from 'rxjs'
+import {filter, from, map, switchMap, tap, toArray} from 'rxjs'
 import url from 'url'
 
 import {getLogger} from '#sepal/log'
@@ -12,13 +12,19 @@ import {getRequestUser, setRequestUser} from './user.js'
 
 const log = getLogger('proxy')
 
+// Every registration path goes through proxyEndpoints$, so this stays in sync with the Express router.
+let registeredProxies = []
+
 const proxyEndpoints$ = expressApp => source$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
     map(proxy(expressApp)),
-    toArray()
+    toArray(),
+    tap(proxies => registeredProxies = proxies)
 )
+
+const hasProxies = () => registeredProxies.length > 0
 
 const registerUpgradeListener = (server, proxies) => {
     // this was taken from gateway/src/main.js
@@ -50,7 +56,7 @@ const registerUpgradeListener = (server, proxies) => {
     })
 }
 
-export {proxyEndpoints$, registerUpgradeListener}
+export {hasProxies, proxyEndpoints$, registerUpgradeListener}
 
 const proxy = expressApp =>
     ({id, port}) => {

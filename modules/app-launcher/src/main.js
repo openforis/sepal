@@ -1,6 +1,7 @@
 import express from 'express'
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import _ from 'lodash'
+import {retry} from 'rxjs'
 
 import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
@@ -17,6 +18,8 @@ import {getRequestUser} from './user.js'
 configureServer(logConfig)
 
 const log = getLogger('main')
+
+const PROXY_RETRY_DELAY_MS = 30 * 1000
 
 const startServer = () => {
     // This is the main server for the app launcher
@@ -46,7 +49,11 @@ const startServer = () => {
     proxyManager.initialize(app, server)
     
     server.setMaxListeners(30)
-    proxyEndpoints$(app).subscribe({
+
+    // The catalog comes from the gateway, which may still be starting. Keep trying, or no app gets a route.
+    proxyEndpoints$(app).pipe(
+        retry({delay: PROXY_RETRY_DELAY_MS})
+    ).subscribe({
         next: proxies => registerUpgradeListener(server, proxies),
         error: error => log.error('Failed to register proxies.', error)
     })
