@@ -4,7 +4,7 @@ import {switchMap} from 'rxjs'
 
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import {credentialsPosted, invalidCredentials, login$} from '~/user'
+import {credentialsPosted, invalidCredentials, login$, resetInvalidCredentials} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Form} from '~/widget/form'
@@ -33,6 +33,7 @@ class _Login extends React.Component {
 
     constructor(props) {
         super(props)
+        this.clearInvalidCredentials = this.clearInvalidCredentials.bind(this)
         this.reset = this.reset.bind(this)
         this.submit = this.submit.bind(this)
     }
@@ -59,6 +60,7 @@ class _Login extends React.Component {
                     placeholder={msg('landing.login.username.placeholder')}
                     autoFocus
                     tabIndex={1}
+                    onChange={this.clearInvalidCredentials}
                 />
                 <Form.Input
                     label={msg('user.userDetails.form.password.label')}
@@ -66,6 +68,7 @@ class _Login extends React.Component {
                     type='password'
                     placeholder={msg('landing.login.password.placeholder')}
                     tabIndex={2}
+                    onChange={this.clearInvalidCredentials}
                 />
                 <Layout>
                     <ButtonGroup layout='horizontal' alignment='distribute'>
@@ -117,6 +120,16 @@ class _Login extends React.Component {
         }
     }
 
+    // The flag describes one credential pair. Once either field changes, or another attempt starts, it no longer
+    // describes what is on screen - and withForm copies it back over the field's own cleared error on every
+    // render until it is gone. Read synchronously rather than through mapStateToProps: this is an event command,
+    // and the flag can already have changed since the component received its props.
+    clearInvalidCredentials() {
+        if (invalidCredentials()) {
+            resetInvalidCredentials()
+        }
+    }
+
     submit() {
         const {form} = this.props
         this.login(form.values())
@@ -124,6 +137,7 @@ class _Login extends React.Component {
 
     login(credentials) {
         const {stream, recaptcha: {recaptcha$}} = this.props
+        this.clearInvalidCredentials()
         stream('LOGIN',
             recaptcha$('LOGIN').pipe(
                 switchMap(recaptchaToken =>
