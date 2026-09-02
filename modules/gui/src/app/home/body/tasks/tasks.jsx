@@ -3,14 +3,13 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
 import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
+import {CopyButton} from '~/widget/copyButton'
 import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
 import {InlineConfirmationButton} from '~/widget/inlineConfirmationButton'
@@ -44,7 +43,6 @@ class _Tasks extends React.Component {
         this.closeTaskDetails = this.closeTaskDetails.bind(this)
         this.removeTask = this.removeTask.bind(this)
         this.stopTask = this.stopTask.bind(this)
-        this.copyToClipboard = this.copyToClipboard.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.setStatusFilter = this.setStatusFilter.bind(this)
         this.state = {
@@ -86,15 +84,12 @@ class _Tasks extends React.Component {
 
     renderCopyButton(task) {
         return this.isStopped(task) ? (
-            <Button
+            <CopyButton
                 key={'copy'}
+                value={JSON.stringify(task, null, '  ')}
                 chromeless
                 shape='circle'
                 icon='copy'
-                onClick={e => {
-                    e.stopPropagation()
-                    this.copyToClipboard(task)
-                }}
                 tooltip={msg('tasks.copyToClipboard.tooltip')}
                 tooltipPlacement='left'
             />
@@ -384,13 +379,6 @@ class _Tasks extends React.Component {
             .find(action => stream(action).active)
         if (prevProps.tasks !== this.props.tasks && notActive)
             this.setState({tasks: this.props.tasks})
-    }
-
-    copyToClipboard(task) {
-        copyToClipboard(
-            JSON.stringify(task, null, '  '),
-            msg('tasks.copyToClipboard.success')
-        )
     }
 
     removeTask(task, e) {

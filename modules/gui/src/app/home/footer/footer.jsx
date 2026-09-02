@@ -1,10 +1,10 @@
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
 import {logout$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
+import {CopyButton} from '~/widget/copyButton'
 import {Layout} from '~/widget/layout'
 import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
@@ -64,12 +64,6 @@ const Title = () => {
     const gitCommit = window._sepal_global_.gitCommit
     const gitShortCommit = gitCommit && `${gitCommit.substring(0, 10)}...`
 
-    const copyBuildNumber = () =>
-        copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))
-
-    const copyGitCommit = () =>
-        copyToClipboard(gitCommit, msg('footer.gitCommitCopied'))
-
     const tooltip =
         <Layout type='vertical' spacing='none'>
             <Layout type='horizontal-nowrap'>
@@ -83,12 +77,12 @@ const Title = () => {
                         disabled={!buildNumber}
                         label={buildNumber || '?'}
                     />
-                    <Button
+                    <CopyButton
+                        value={buildNumber}
                         chromeless
                         shape='circle'
                         icon='copy'
                         disabled={!buildNumber}
-                        onClick={copyBuildNumber}
                     />
                 </ButtonGroup>
             </Layout>
@@ -103,12 +97,12 @@ const Title = () => {
                         disabled={!gitCommit}
                         label={gitShortCommit || '?'}
                     />
-                    <Button
+                    <CopyButton
+                        value={gitCommit}
                         chromeless
                         shape='circle'
                         icon='copy'
                         disabled={!gitCommit}
-                        onClick={copyGitCommit}
                     />
                 </ButtonGroup>
             </Layout>
