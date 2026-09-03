@@ -23,10 +23,15 @@ const blurDetectorStack = []
 
 const Context = React.createContext()
 
-const withBlurDetector = withContext(Context, 'blurDetector')
+export const withBlurDetector = withContext(Context, 'blurDetector')
 
 class _BlurDetector extends React.Component {
     enabled = true
+
+    // Elements that belong to this detector but render outside its subtree - a tooltip popup in the global
+    // portal, say. Registering returns the release, so a caller can always give back exactly what it took, to
+    // the detector that took it, whatever the context has become since.
+    excludedElements = new Set()
 
     state = {
         fadeOut: false
@@ -37,6 +42,7 @@ class _BlurDetector extends React.Component {
         this.ref = props.forwardedRef || React.createRef()
         this.setEnabled = this.setEnabled.bind(this)
         this.isEnabled = this.isEnabled.bind(this)
+        this.excludeElement = this.excludeElement.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.blurStart = this.blurStart.bind(this)
         this.blurStop = this.blurStop.bind(this)
@@ -55,7 +61,7 @@ class _BlurDetector extends React.Component {
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
                 onClick={onClick}>
-                <Context.Provider value={{setEnabled: this.setEnabled}}>
+                <Context.Provider value={{setEnabled: this.setEnabled, excludeElement: this.excludeElement}}>
                     {children}
                 </Context.Provider>
             </div>
@@ -64,6 +70,14 @@ class _BlurDetector extends React.Component {
 
     setEnabled(enabled) {
         return this.enabled = enabled
+    }
+
+    excludeElement(element) {
+        if (!element) {
+            return () => {}
+        }
+        this.excludedElements.add(element)
+        return () => this.excludedElements.delete(element)
     }
     
     blurStart() {
@@ -181,7 +195,7 @@ class _BlurDetector extends React.Component {
     isExcludedEvent(e) {
         const {exclude} = this.props
         return _.some(
-            _.castArray(exclude),
+            [..._.castArray(exclude), ...this.excludedElements],
             element => element && isOverElement(e, element)
         )
     }

@@ -124,7 +124,7 @@ export const modelToValues = model => {
     const values = {
         section: model.type || 'SELECTION',
         bands: model.bands,
-        visualiations: model.visualizations
+        visualizations: model.visualizations
     }
     switch (model.type) {
         case 'RECIPE_REF':

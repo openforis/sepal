@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types'
 
-import {copyToClipboard} from '~/clipboard'
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
+import {CopyButton} from '~/widget/copyButton'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './chartPixelPanelHeader.module.css'
@@ -19,7 +18,8 @@ export const ChartPixelPanelHeader = ({latLng, suffix}) => {
             title={(
                 <>
                     <span className={styles.coordinates}>{coordinates}</span>
-                    <Button
+                    <CopyButton
+                        value={coordinates}
                         additionalClassName={styles.copyButton}
                         air='none'
                         chromeless
@@ -28,7 +28,6 @@ export const ChartPixelPanelHeader = ({latLng, suffix}) => {
                         size='x-small'
                         tooltip={msg('button.copyToClipboard')}
                         tooltipPlacement='top'
-                        onClick={() => copyToClipboard(coordinates)}
                     />
                     {suffix ? <span className={styles.suffix}>&ndash; {suffix}</span> : null}
                 </>

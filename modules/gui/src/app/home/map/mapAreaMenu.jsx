@@ -334,7 +334,8 @@ class _MapAreaMenuPanel extends React.Component {
                 size='small'
                 icon='cog'
                 tooltip={msg('map.featureLayerStyle.tooltip')}
-                tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
+                // Open away from the adjacent opacity control.
+                tooltipPlacement='left'
                 onClick={() => this.openOptions(source)}
             />
         )

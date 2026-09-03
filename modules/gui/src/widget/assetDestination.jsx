@@ -5,7 +5,6 @@ import {catchError, map, of} from 'rxjs'
 import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -13,6 +12,7 @@ import {toSafeString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser} from '~/user'
+import {CopyButton} from '~/widget/copyButton'
 import {Form} from '~/widget/form'
 
 import {withActivators} from './activation/activator'
@@ -47,7 +47,6 @@ class _AssetDestination extends React.Component {
         this.onLoading = this.onLoading.bind(this)
         this.onError = this.onError.bind(this)
         this.onChange = this.onChange.bind(this)
-        this.copyIdToClipboard = this.copyIdToClipboard.bind(this)
         this.openAssetBrowser = this.openAssetBrowser.bind(this)
     }
 
@@ -120,8 +119,9 @@ class _AssetDestination extends React.Component {
     renderCopyIdButton() {
         const {assetInput: {value}} = this.props
         return (
-            <Button
+            <CopyButton
                 key='copyId'
+                value={value}
                 chromeless
                 shape='none'
                 air='none'
@@ -129,14 +129,8 @@ class _AssetDestination extends React.Component {
                 tooltip={msg('asset.copyId.tooltip')}
                 tabIndex={-1}
                 disabled={!value}
-                onClick={this.copyIdToClipboard}
             />
         )
-    }
-
-    copyIdToClipboard() {
-        const {assetInput: {value}} = this.props
-        copyToClipboard(value, msg('asset.copyId.success'))
     }
 
     renderStrategy() {

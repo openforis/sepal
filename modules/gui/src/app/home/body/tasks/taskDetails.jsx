@@ -3,14 +3,13 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
 import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
+import {CopyButton} from '~/widget/copyButton'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -220,7 +219,8 @@ class _TaskDetails extends React.Component {
                             <div className={styles.fieldValue}>
                                 {this.formatOutputPath(taskInfo)}
                             </div>
-                            <Button
+                            <CopyButton
+                                value={this.formatOutputPath(taskInfo)}
                                 chromeless
                                 shape='none'
                                 air='none'
@@ -228,10 +228,6 @@ class _TaskDetails extends React.Component {
                                 icon='copy'
                                 tooltip={msg('asset.copyId.tooltip')}
                                 tabIndex={-1}
-                                onClick={() => copyToClipboard(
-                                    this.formatOutputPath(taskInfo),
-                                    msg('asset.copyId.success')
-                                )}
                             />
                         </div>
                     </div>

@@ -49,8 +49,12 @@ describe('ScrubControl', () => {
                 container.remove()
             }
         }
+        // Rerendering on the same root keeps the instance, which is where a remembered value lives.
+        const rerender = nextProps => act(() => {
+            root.render(<ScrubControl value={0.5} tooltip='scrub' onChange={onChange} onPreview={onPreview} {...props} {...nextProps}/>)
+        })
         mounted.push(unmount)
-        return {button, container, onChange, onPreview, unmount}
+        return {button, container, onChange, onPreview, rerender, unmount}
     }
 
     beforeEach(() => {
@@ -145,7 +149,7 @@ describe('ScrubControl', () => {
         expect(onParentClick).not.toHaveBeenCalled()
     })
 
-    it('toggles min -> max on Enter and commits once', () => {
+    it('toggles min -> max on Enter with nothing remembered, and commits once', () => {
         const {button, onChange} = mount({value: 0})
         keydown(button, 'Enter')
         expect(onChange).toHaveBeenCalledTimes(1)
@@ -159,12 +163,55 @@ describe('ScrubControl', () => {
         expect(onChange.mock.calls[0][0]).toBe(0)
     })
 
-    it('uses a custom toggleValue when provided (opacity strict 0/1)', () => {
+    it('uses a custom toggleValue when provided (opacity strict 0/1), remembering nothing', () => {
         const toggleValue = vi.fn(value => value <= 0 ? 1 : 0)
-        const {button, onChange} = mount({value: 0.5, toggleValue})
+        const {button, onChange, rerender} = mount({value: 0.5, toggleValue})
         keydown(button, 'Enter')
         expect(toggleValue).toHaveBeenCalledWith(0.5)
-        expect(onChange).toHaveBeenCalledWith(0)
+        rerender({value: 0})
+        keydown(button, 'Enter')
+        expect(onChange.mock.calls.map(([value]) => value)).toEqual([0, 1])
+    })
+
+    // Toggling off is "hide this, I will want it back": switching a layer off and on again should return the
+    // opacity it had, not jump to fully opaque.
+    describe('restoring the value a toggle turned off', () => {
+        it('comes back to the value it was clicked away from', () => {
+            const {button, onChange, rerender} = mount({value: 0.37})
+
+            down(button, 100)
+            up(button)
+            expect(onChange).toHaveBeenNthCalledWith(1, 0)
+
+            rerender({value: 0})
+            down(button, 100)
+            up(button)
+
+            expect(onChange).toHaveBeenNthCalledWith(2, 0.37)
+        })
+
+        it('comes back through the keyboard too', () => {
+            const {button, onChange, rerender} = mount({value: 0.6})
+
+            keydown(button, 'Enter')
+            rerender({value: 0})
+            keydown(button, ' ')
+
+            expect(onChange.mock.calls.map(([value]) => value)).toEqual([0, 0.6])
+        })
+
+        it('remembers the most recent value it was turned off from', () => {
+            const {button, onChange, rerender} = mount({value: 0.37})
+
+            keydown(button, 'Enter')
+            rerender({value: 0.8})
+            keydown(button, 'Enter')
+            rerender({value: 0})
+            keydown(button, 'Enter')
+
+            expect(onChange.mock.calls.map(([value]) => value)).toEqual([0, 0, 0.8])
+        })
+
     })
 
     it('renders the formatted value, sets an accessible label, and feeds the shared tooltip the live value', () => {
