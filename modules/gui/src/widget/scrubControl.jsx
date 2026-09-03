@@ -28,6 +28,8 @@ class _ScrubControl extends React.Component {
 
     state = {dragging: false, dragValue: null}
 
+    restoreValue = null
+
     constructor(props) {
         super(props)
         this.onKeyDown = this.onKeyDown.bind(this)
@@ -175,9 +177,20 @@ class _ScrubControl extends React.Component {
         }
     }
 
+    // Toggling off is "hide this, I will want it back", so turning it on again restores the value it was turned
+    // off from rather than jumping to max. Instance-local and transient by design: no store, no recipe field, no
+    // shared cache - a remount starts with nothing remembered and falls back to the endpoint toggle.
     toggled() {
         const {value, min = 0, max = 1, toggleValue} = this.props
-        return toggleValue ? toggleValue(value) : toggleMinMax(value, min, max)
+        if (toggleValue) {
+            return toggleValue(value)
+        }
+        if (value > min) {
+            this.restoreValue = value
+        }
+        return value <= min && this.restoreValue !== null
+            ? this.restoreValue
+            : toggleMinMax(value, min, max)
     }
 
     commit(value) {

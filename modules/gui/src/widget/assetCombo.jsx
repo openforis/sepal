@@ -7,7 +7,6 @@ import {debounceTime, first, map, Subject, switchMap, takeUntil} from 'rxjs'
 import api from '~/apiRegistry'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {asFunctionalComponent} from '~/classComponent'
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {escapeRegExp, splitString} from '~/string'
@@ -16,6 +15,7 @@ import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withAssets} from '~/widget/assets'
 import {Button} from '~/widget/button'
+import {CopyButton} from '~/widget/copyButton'
 import {CrudItem} from '~/widget/crudItem'
 import {Notifications} from '~/widget/notifications'
 
@@ -44,7 +44,6 @@ class _AssetCombo extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.onFilterChange = this.onFilterChange.bind(this)
         this.reloadAssets = this.reloadAssets.bind(this)
-        this.copyIdToClipboard = this.copyIdToClipboard.bind(this)
     }
 
     assetChanged$ = new Subject()
@@ -100,8 +99,9 @@ class _AssetCombo extends React.Component {
     renderCopyIdButton() {
         const {value, mode} = this.props
         return mode === ASSET ? (
-            <Button
+            <CopyButton
                 key='copyId'
+                value={value}
                 chromeless
                 shape='none'
                 air='none'
@@ -109,7 +109,6 @@ class _AssetCombo extends React.Component {
                 tooltip={msg('asset.copyId.tooltip')}
                 tabIndex={-1}
                 disabled={!value}
-                onClick={this.copyIdToClipboard}
             />
         ) : null
     }
@@ -147,11 +146,6 @@ class _AssetCombo extends React.Component {
                 tooltipPlacement='topRight'
             />
         ) : null
-    }
-
-    copyIdToClipboard() {
-        const {value} = this.props
-        copyToClipboard(value, msg('asset.copyId.success'))
     }
 
     getItemTypeIcon(type) {
@@ -459,8 +453,8 @@ class _AssetCombo extends React.Component {
         onLoaded && onLoaded(metadata ? {
             asset: assetId,
             metadata,
-            visualizations: metadata.bands
-                ? toVisualizations(metadata.properties, metadata.bands)
+            visualizations: metadata.bandNames
+                ? toVisualizations(metadata.properties, metadata.bandNames)
                     .map(visualization => ({...visualization, id: uuid()}))
                 : undefined
         } : null)

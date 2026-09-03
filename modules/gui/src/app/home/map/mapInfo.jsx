@@ -1,7 +1,6 @@
 import React from 'react'
 import {debounceTime, throttleTime} from 'rxjs'
 
-import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {formatCoordinates} from '~/coords'
 import format from '~/format'
@@ -11,10 +10,10 @@ import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
+import {CopyButton} from '~/widget/copyButton'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
-import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
@@ -95,64 +94,36 @@ class _MapInfoPanel extends React.Component {
                     {formatCoordinates(center, 5)}
                 </div>
                 <ButtonGroup layout='vertical' alignment='fill'>
-                    <Button
+                    <CopyButton
+                        value={`[${center.lng}, ${center.lat}]`}
                         shape='pill'
                         icon='copy'
                         label='[longitude, latitude]'
                         alignment='left'
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
-                        onClick={() => this.copyPlainCenterCoordinates(center)}
                     />
-                    <Button
+                    <CopyButton
+                        value={`ee.Geometry.Point([${center.lng}, ${center.lat}])`}
                         shape='pill'
                         icon='copy'
                         label='ee.Geometry.Point()'
                         alignment='left'
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
-                        onClick={() => this.copyEECenterCoordinates(center)}
                     />
-                    <Button
+                    <CopyButton
+                        value={`Map.setCenter(${center.lng}, ${center.lat}, ${zoom})`}
                         shape='pill'
                         icon='copy'
                         label='Map.setCenter()'
                         alignment='left'
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
-                        onClick={() => this.copyEESetCenter(center, zoom)}
                     />
                 </ButtonGroup>
             </Widget>
         )
-    }
-
-    copyPlainCenterCoordinates({lat, lng}) {
-        copyToClipboard(
-            `[${lng}, ${lat}]`,
-            msg('map.info.coordinatesCopied')
-        )
-    }
-
-    copyEECenterCoordinates({lat, lng}) {
-        copyToClipboard(
-            `ee.Geometry.Point([${lng}, ${lat}])`,
-            msg('map.info.coordinatesCopied')
-        )
-    }
-    
-    copyEESetCenter({lat, lng}, zoom) {
-        copyToClipboard(
-            `Map.setCenter(${lng}, ${lat}, ${zoom})`,
-            msg('map.info.coordinatesCopied')
-        )
-    }
-
-    notify() {
-        Notifications.info({
-            message: msg('map.info.coordinatesCopied'),
-            timeout: 2
-        })
     }
 }
 

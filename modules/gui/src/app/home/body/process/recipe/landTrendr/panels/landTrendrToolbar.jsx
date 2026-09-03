@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -13,7 +14,6 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 import {RetrieveButton} from '../../retrieveButton'
 import {RecipeActions} from '../landTrendrRecipe'
 import {ChartPixel} from './chartPixel'
-import {ChartPixelButton} from './chartPixelButton'
 import {Dates} from './dates/dates'
 import styles from './landTrendrToolbar.module.css'
 import {Options} from './options/options'
@@ -57,7 +57,7 @@ class _LandTrendrToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
-                        showGoogleSatellite
+                        tooltipKey='process.landTrendr.chartPixel'
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

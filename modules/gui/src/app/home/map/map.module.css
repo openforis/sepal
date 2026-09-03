@@ -33,11 +33,15 @@
 
 .overlay {
     opacity: 0;
+    /* WebKit includes transparent overlays in wheel-event hit testing despite pointer-events: none. Hide
+       the inactive drawing map so wheel events reach the visible maps beneath it. */
+    visibility: hidden;
     pointer-events: none;
 }
 
 .overlay.active {
     opacity: .75;
+    visibility: visible;
     pointer-events: all;
 }
 
@@ -47,7 +51,7 @@
     height: 100%;
 }
 
-.drawingMode {
+.interactionMode {
     position: absolute;
     top: .5rem;
     left: .5rem;

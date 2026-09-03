@@ -104,17 +104,26 @@ class _VisualizationSelector extends React.Component {
         updateLayerConfig({visParams})
     }
 
+    // The editor opens as a modal over the Map Area menu, so the menu is dismissed once the editor is up - the
+    // order the Settings cog already uses: activate the destination first, then deactivate the menu. Selecting
+    // and removing are not editor commands and leave the menu alone.
+    openVisParams(activationProps) {
+        const {activator: {activatables: {visParams, mapAreaMenu}}} = this.props
+        visParams.activate(activationProps)
+        mapAreaMenu.deactivate()
+    }
+
     addVisParams() {
-        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
-        activate({recipe, imageLayerSourceId: source.id})
+        const {recipe, source} = this.props
+        this.openVisParams({recipe, imageLayerSourceId: source.id})
     }
 
     editVisParams(visParamsToEdit, editMode) {
-        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
+        const {recipe, source} = this.props
         const visParams = editMode === 'clone'
             ? {...visParamsToEdit, id: uuid()}
             : visParamsToEdit
-        activate({recipe, imageLayerSourceId: source.id, visParams})
+        this.openVisParams({recipe, imageLayerSourceId: source.id, visParams})
     }
 
     removeVisParams(visParams) {
@@ -135,7 +144,8 @@ export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
     withActivators({
-        visParams: ({mapArea: {area}}) => `visParams-${area}`
+        visParams: ({mapArea: {area}}) => `visParams-${area}`,
+        mapAreaMenu: ({mapArea: {area}}) => `mapAreaMenu-${area}`
     }),
     withMapArea(),
     asFunctionalComponent({

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -8,7 +9,6 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {ChartPixelButton} from '../../ccdc/panels/chartPixelButton'
 import {RetrieveButton} from '../../retrieveButton'
 import {RecipeActions} from '../ccdcSliceRecipe'
 import styles from './ccdcSliceToolbar.module.css'

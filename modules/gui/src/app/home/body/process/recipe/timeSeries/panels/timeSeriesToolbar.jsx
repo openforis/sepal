@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
@@ -16,7 +17,6 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {ChartPixelButton} from '../../ccdc/panels/chartPixelButton'
 import {RetrieveButton} from '../../retrieveButton'
 import {RecipeActions} from '../timeSeriesRecipe'
 import {ChartPixel} from './chartPixel'
@@ -68,7 +68,6 @@ class _TimeSeriesToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
-                        showGoogleSatellite
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

@@ -38,11 +38,11 @@ class _SearchBox extends React.Component {
     }
 
     render() {
-        const {placeholder, className, size, width} = this.props
+        const {placeholder, className, size, width, onEscape} = this.props
         const {value, showOptions} = this.state
         return (
             <Keybinding keymap={{
-                Escape: this.clear,
+                Escape: onEscape || this.clear,
                 ArrowDown: this.showOptions,
                 'Ctrl+f': this.focus,
                 'Meta+f': this.focus
@@ -80,7 +80,7 @@ class _SearchBox extends React.Component {
     }
 
     renderOptions() {
-        const {placement, options, optionsClassName, optionTooltipPlacement} = this.props
+        const {autoHighlight, placement, options, optionsClassName, optionTooltipPlacement, onEscape} = this.props
         return options && options.length
             ? (
                 <FloatingBox
@@ -93,9 +93,9 @@ class _SearchBox extends React.Component {
                         className={optionsClassName || styles.options}
                         options={options}
                         onSelect={this.selectOption}
-                        onCancel={this.hideOptions}
+                        onCancel={onEscape || this.hideOptions}
                         tooltipPlacement={optionTooltipPlacement}
-                        autoHighlight
+                        autoHighlight={autoHighlight}
                         keyboard
                     />
                 </FloatingBox>
@@ -169,12 +169,14 @@ export const SearchBox = compose(
     _SearchBox,
     withSubscriptions(),
     asFunctionalComponent({
+        autoHighlight: true,
         debounce: 250,
         value: ''
     })
 )
 
 SearchBox.propTypes = {
+    autoHighlight: PropTypes.any,
     className: PropTypes.string,
     debounce: PropTypes.number,
     options: PropTypes.array,
@@ -187,5 +189,6 @@ SearchBox.propTypes = {
     value: PropTypes.string,
     width: PropTypes.any,
     onSearchValue: PropTypes.func,
+    onEscape: PropTypes.func,
     onSelect: PropTypes.func
 }
