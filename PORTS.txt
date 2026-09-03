@@ -17,7 +17,6 @@ Modules
     recipe          80
     scene-metadata  80
     ssh-gateway     22
-    sys-monitor     80
     task            80
     terminal        80
     user            80

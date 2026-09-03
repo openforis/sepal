@@ -61,9 +61,6 @@ check program scene-metadata-redis with path /usr/local/bin/dockercheck-scene-me
 check program ssh-gateway with path /usr/local/bin/dockercheck-ssh-gateway
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
-check program sys-monitor with path /usr/local/bin/dockercheck-sys-monitor
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
-
 check program terminal with path /usr/local/bin/dockercheck-terminal
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 

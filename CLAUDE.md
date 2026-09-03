@@ -20,7 +20,7 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 - `worker` - Worker instances, sandbox sessions, task orchestration (replaced the sepal-server `sdms` cluster)
 - `task` - Task execution (runs inside sandbox containers, not a standalone service)
 - `app-manager` / `app-launcher` - Application management
-- `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `sys-monitor`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
+- `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
 - `caddy`, `mysql`, `rabbitmq`, `prometheus`, `logger`

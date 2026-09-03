@@ -158,12 +158,6 @@ const endpoints = [
         authenticate: true
     },
     {
-        prefix: true,
-        path: '/api/sys-monitor',
-        target: `http://${modules.sysMonitor}`,
-        authenticate: true
-    },
-    {
         prefix: false,
         path: '/api/docker/metrics',
         target: 'http://host.docker.internal:9323/metrics',

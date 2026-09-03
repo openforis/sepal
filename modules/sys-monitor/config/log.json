@@ -1,7 +1,0 @@
-{
-    "port": 5000,
-    "categories": {
-        "logMonitor": "info",
-        "main": "info"
-    }
-}

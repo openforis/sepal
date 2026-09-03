@@ -53,7 +53,6 @@ build r-proxy
 restart r-proxy
 
 build email
-build sys-monitor
 build caddy
 build rabbitmq
 build backup
@@ -84,7 +83,6 @@ build scene-metadata
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
 push logger
-push sys-monitor
 push email
 push backup
 push rabbitmq

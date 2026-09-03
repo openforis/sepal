@@ -189,15 +189,6 @@
             "rabbitmq"
         ]
     },
-    "sys-monitor": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
     "task": {
         "lib": [
             "shared",

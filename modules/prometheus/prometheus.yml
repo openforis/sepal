@@ -75,16 +75,6 @@ scrape_configs:
     static_configs:
       - targets: ['${SEPAL_HOST}']
 
-  - job_name: sys-monitor
-    scrape_interval: 5s
-    metrics_path: '/api/sys-monitor/metrics'
-    basic_auth:
-      username: '${TARGET_USERNAME}'
-      password: '${TARGET_PASSWORD}'
-    scheme: https
-    static_configs:
-      - targets: ['${SEPAL_HOST}']
-
   - job_name: user-files
     scrape_interval: 5s
     metrics_path: '/api/user-files/metrics'
