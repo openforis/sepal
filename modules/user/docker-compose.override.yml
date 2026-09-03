@@ -3,8 +3,13 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
-    volumes:
-      - "${SEPAL_PROJECT_DIR}/common/src:/usr/local/src/sepal/common/src"
-      - "${SEPAL_PROJECT_DIR}/common/build:/usr/local/src/sepal/common/build"
-      - "${SEPAL_PROJECT_DIR}/modules/user/src:/usr/local/src/sepal/modules/user/src"
-      - "${SEPAL_PROJECT_DIR}/modules/user/build:/usr/local/src/sepal/modules/user/build"
+    environment:
+      RECAPTCHA_OPTIONAL: "true"  # dev/test only: bypass reCAPTCHA (no browser tokens). Prod (base compose) leaves it unset -> config.js defaults to false -> calls Google.
+    volumes:  # To allow dynamic reloading in dev
+      # lib/shared
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/user/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/user/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # module
+      - ${SEPAL_PROJECT_DIR}/modules/user:/usr/local/src/sepal/modules/user

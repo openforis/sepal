@@ -58,11 +58,12 @@ const getUpdates$ = ({source, dataset, query, sceneMapper, minTimestamp, maxTime
                 query,
                 next: token
             },
+            responseType: 'json',
             retry: {
                 maxRetries: 0
             }
         }).pipe(
-            map(({body}) => JSON.parse(body)),
+            map(({body}) => body),
             map(response => getResponse(response, sceneMapper)),
             tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection}/${dataset} scenes: ${scenes.length}` : `No more ${collection}/${dataset} scenes`))
         )

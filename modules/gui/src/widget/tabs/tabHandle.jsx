@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {filter} from 'rxjs'
 
 import {compose} from '~/compose'
 import {select} from '~/store'
@@ -17,6 +16,7 @@ import {renameTab, selectTab} from './tabActions'
 import styles from './tabHandle.module.css'
 
 const CLOSE_ANIMATION_DURATION_MS = 250
+const ADD_ANIMATION_DURATION_MS = 200 // matches .tab.regular.add in tabHandle.module.css
 
 const getTabIndex = (id, statePath) =>
     select([statePath, 'tabs']).findIndex(tab => tab.id === id)
@@ -38,7 +38,8 @@ class _TabHandle extends React.Component {
             editing: false,
             title,
             prevTitle: title,
-            busy: false
+            busy: false,
+            animateAdd: true
         }
     }
 
@@ -55,8 +56,8 @@ class _TabHandle extends React.Component {
     }
 
     render() {
-        const {selected, closing} = this.props
-        const {busy, editing} = this.state
+        const {selected, closing, dragging} = this.props
+        const {busy, editing, animateAdd} = this.state
         return (
             <Layout
                 type='horizontal-nowrap'
@@ -67,17 +68,29 @@ class _TabHandle extends React.Component {
                     selected ? styles.selected : null,
                     busy ? styles.busy : null,
                     closing ? styles.closing : null,
-                    editing ? styles.editing : null
+                    editing ? styles.editing : null,
+                    dragging ? styles.dragging : null,
+                    animateAdd && !dragging ? styles.add : null
                 ].join(' ')}
                 style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}>
+                {this.renderPrefix()}
                 {this.renderInput()}
                 {this.renderCloseButton()}
             </Layout>
         )
     }
 
+    // Non-editable marker (e.g. the app tab's instance number, "2:") rendered outside
+    // the title input so renaming the tab cannot eat or duplicate it.
+    renderPrefix() {
+        const {prefix} = this.props
+        return prefix
+            ? <div className={styles.prefix}>{prefix}</div>
+            : null
+    }
+
     renderInput() {
-        const {placeholder} = this.props
+        const {placeholder, prefix} = this.props
         const {title, editing} = this.state
         const keymap = {
             Enter: this.saveTitle,
@@ -85,15 +98,18 @@ class _TabHandle extends React.Component {
         }
         return (
             <Keybinding keymap={keymap} disabled={!editing}>
+                {/* No autoFocus: the input is readOnly until editing (which focuses explicitly
+                    via onClick), and mount-time focus stole focus from open modals — e.g.
+                    closing an app tab remounted an untitled tab handle, whose focus grab made
+                    the UserReport panel's BlurDetector close it. */}
                 <Input
                     ref={this.titleInput}
                     className={styles.title}
                     value={title}
                     placeholder={placeholder}
-                    autoFocus={!title}
                     border={false}
                     readOnly={!editing}
-                    tooltip={title || placeholder}
+                    tooltip={[prefix, title || placeholder].filter(Boolean).join(' ')}
                     tooltipPlacement='bottom'
                     onClick={this.onClick}
                     onChange={this.onTitleChange}
@@ -188,15 +204,19 @@ class _TabHandle extends React.Component {
     }
 
     componentDidMount() {
-        const {id: tabId, busyOut$, addSubscription} = this.props
+        const {id, tabBusy$, addSubscription} = this.props
         addSubscription(
-            busyOut$.pipe(
-                filter(({tabId: currentTabId}) => currentTabId === tabId)
-            ).subscribe(
-                ({busy, _count}) => setImmediate(() => this.setState({busy}))
+            tabBusy$(id).subscribe(
+                ({busy}) => setImmediate(() => this.setState({busy}))
             )
         )
         this.scrollSelectedTabIntoView()
+        // drop the add-animation class once it has played — see tabHandle.module.css
+        this.addAnimationTimeout = setTimeout(() => this.setState({animateAdd: false}), ADD_ANIMATION_DURATION_MS)
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.addAnimationTimeout)
     }
 
     componentDidUpdate(prevProps) {
@@ -214,12 +234,14 @@ export const TabHandle = compose(
 )
 
 TabHandle.propTypes = {
-    busyOut$: PropTypes.any,
     closing: PropTypes.any,
+    dragging: PropTypes.any,
     id: PropTypes.string,
     placeholder: PropTypes.string,
+    prefix: PropTypes.string,
     selected: PropTypes.any,
     statePath: PropTypes.string,
+    tabBusy$: PropTypes.func,
     title: PropTypes.string,
     onTitleChanged: PropTypes.func
 }

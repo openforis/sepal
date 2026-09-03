@@ -1,18 +1,12 @@
 import {get$, post$, postJson$} from '~/http-client'
 
+import {moduleWebSocket$} from './ws.js'
+
 export default {
-    loadAll$: ({retry}) =>
-        get$('/api/tasks', {
-            retry
-        }),
+    ws: () => moduleWebSocket$('worker/task'),
 
     loadDetails$: taskId =>
         get$(`/api/tasks/task/${taskId}/details`),
-
-    listExisting$: ({outputPath, destination, status}) =>
-        get$('/api/tasks', {
-            query: {outputPath, destination, status}
-        }),
 
     submit$: task =>
         postJson$('/api/tasks', {

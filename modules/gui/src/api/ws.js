@@ -1,4 +1,4 @@
-import {concat, finalize, of, Subject, tap} from 'rxjs'
+import {concat, finalize, of, ReplaySubject, Subject, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {WebSocket} from '~/http-client'
@@ -12,6 +12,17 @@ const subscriptionIdsByModule = {}
 const readyModules = new Set()
 
 export const event$ = new Subject()
+
+// The gateway-assigned id of THIS browser client, pushed right after the ws connects — a
+// reconnect gets a fresh one. Sandbox start/release requests carry it: the worker stores
+// it as the app association's owner (clientDown releases the client's apps; a takeover by
+// another client closes the owner's tab).
+export const clientId$ = new ReplaySubject(1)
+
+let clientId
+
+export const getClientId = () =>
+    clientId
 
 const ENDPOINT = '/api/ws'
 
@@ -66,6 +77,12 @@ const handleEvent = event => {
     event$.next(event)
 }
 
+const handleClientId = newClientId => {
+    log.debug('Client id received:', newClientId)
+    clientId = newClientId
+    clientId$.next(newClientId)
+}
+
 const handleState = status => {
     readyModules.clear()
     status.forEach(module => {
@@ -101,11 +118,13 @@ const handleUpdate = update => {
     )
 }
 
-const handleMessage = ({modules: {state, update} = {}, module, subscriptionId, data, hb, event}) => {
+const handleMessage = ({modules: {state, update} = {}, module, subscriptionId, data, hb, event, clientId}) => {
     if (hb) {
         handleHeartbeat(hb)
     } else if (event) {
         handleEvent(event)
+    } else if (clientId) {
+        handleClientId(clientId)
     } else if (state) {
         handleState(state)
     } else if (update) {

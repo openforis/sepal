@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {EMPTY, groupBy, map, mergeMap, mergeScan, of, shareReplay, Subject} from 'rxjs'
+import {distinctUntilChanged, EMPTY, groupBy, map, mergeMap, mergeScan, of, scan, shareReplay, startWith, Subject} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -10,13 +10,14 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
+import {DraggableList} from '~/widget/draggableList'
 import {Keybinding} from '~/widget/keybinding'
 import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {isMobile} from '~/widget/userAgent'
 
 import {ButtonSelect} from '../buttonSelect'
-import {addTab, closeTab, selectTab} from './tabActions'
+import {addTab, closeTab, reorderTabs, selectTab} from './tabActions'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import styles from './tabs.module.css'
@@ -51,17 +52,29 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 class _Tabs extends React.Component {
+    state = {
+        dragging: false
+    }
+
     constructor(props) {
         super(props)
         this.renderTabHandle = this.renderTabHandle.bind(this)
+        this.onHandleDragStart = this.onHandleDragStart.bind(this)
+        this.onHandleDragEnd = this.onHandleDragEnd.bind(this)
         this.addTab = this.addTab.bind(this)
         this.closeSelectedTab = this.closeSelectedTab.bind(this)
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
         this.selectNextTab = this.selectNextTab.bind(this)
+        this.tabBusy$ = this.tabBusy$.bind(this)
         
         this.busyIn$ = new Subject()
 
-        this.busyOut$ = this.busyIn$.pipe(
+        // busyTabs$ emits the FULL busy state of all tabs ({[tabId]: {count, busy}}, idle tabs
+        // pruned) on every update, so the shareReplay(1) buffer always carries every tab's
+        // current state and a late subscriber starts from actual state — a per-tab-transition
+        // stream would only buffer whichever tab changed last. Consumers never see it:
+        // they derive their own pre-filtered per-tab stream once, through the tabBusy$ factory.
+        this.busyTabs$ = this.busyIn$.pipe(
             groupBy(({busyId}) => busyId),
             mergeMap(group$ =>
                 group$.pipe(
@@ -72,33 +85,42 @@ class _Tabs extends React.Component {
                     )
                 )
             ),
-            groupBy(({tabId}) => tabId),
-            mergeMap(group$ =>
-                group$.pipe(
-                    mergeScan(
-                        ({count}, {tabId, busy}) =>
-                            of({tabId, count: count + (busy ? 1 : -1)}),
-                        {count: 0}
-                    )
-                )
-            ),
-            map(({tabId, count}) => ({tabId, count, busy: count > 0})),
+            scan((busyTabs, {tabId, busy}) => {
+                const count = (busyTabs[tabId]?.count || 0) + (busy ? 1 : -1)
+                const {[tabId]: _removed, ...remainingBusyTabs} = busyTabs
+                return count > 0
+                    ? {...remainingBusyTabs, [tabId]: {count, busy: true}}
+                    : remainingBusyTabs
+            }, {}),
+            startWith({}),
             shareReplay({bufferSize: 1, refCount: true})
         )
 
         this.initialize()
     }
 
+    // Per-tab {busy, count} stream factory. The factory itself is the stable prop (bound once);
+    // each child derives its own stream once per mount, so no per-tabId cache is needed here.
+    tabBusy$(tabId) {
+        return this.busyTabs$.pipe(
+            map(busyTabs => busyTabs[tabId] || {busy: false, count: 0}),
+            distinctUntilChanged(({count: previousCount}, {count}) => previousCount === count)
+        )
+    }
+
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabPrefix, onTitleChanged} = this.props
+        const {dragging} = this.state
         return (
             <TabHandle
                 key={tab.id}
+                dragging={dragging}
                 id={tab.id}
                 title={tab.title}
                 placeholder={tab.placeholder}
+                prefix={tabPrefix ? tabPrefix(tab) : undefined}
                 selected={tab.id === selectedTabId}
-                busyOut$={this.busyOut$}
+                tabBusy$={this.tabBusy$}
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
@@ -116,7 +138,7 @@ class _Tabs extends React.Component {
                 type={tab.type}
                 selected={tab.id === selectedTabId}
                 busyIn$={this.busyIn$}
-                busyOut$={this.busyOut$}
+                tabBusy$={this.tabBusy$}
             >
                 {children}
             </TabContent>
@@ -124,13 +146,26 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandles() {
-        const {tabs, maxTabs} = this.props
+        const {tabs, maxTabs, statePath} = this.props
         return (
             <React.Fragment>
                 <Scrollable
                     direction='x'
+                    hideScrollbar={true}
                     className={styles.tabs}>
-                    {maxTabs > 1 ? tabs.map(this.renderTabHandle) : null}
+                    {maxTabs > 1 ? (
+                        <DraggableList
+                            axis='x'
+                            items={tabs}
+                            itemId={({id}) => id}
+                            itemClassName={styles.tabHandleItem}
+                            itemRenderer={tab => this.renderTabHandle(tab)}
+                            onChange={reorderedTabs => reorderTabs(statePath, reorderedTabs.map(({id}) => id))}
+                            onDragStart={this.onHandleDragStart}
+                            onDragEnd={this.onHandleDragEnd}
+                            onDragCancel={this.onHandleDragEnd}
+                        />
+                    ) : null}
                 </Scrollable>
                 {this.renderTabControls()}
             </React.Fragment>
@@ -140,6 +175,22 @@ class _Tabs extends React.Component {
     onClose(tab) {
         const {onClose} = this.props
         onClose ? onClose(tab, () => this.closeTab(tab.id)) : this.closeTab(tab.id)
+    }
+
+    onHandleDragStart() {
+        clearTimeout(this.dragSettleTimeout)
+        this.setState({dragging: true})
+    }
+
+    onHandleDragEnd() {
+        // keep animations suppressed until the drop's DOM reorder has settled —
+        // React re-inserts the moved nodes, which would restart their animations
+        clearTimeout(this.dragSettleTimeout)
+        this.dragSettleTimeout = setTimeout(() => this.setState({dragging: false}), 300)
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.dragSettleTimeout)
     }
     
     renderTabControls() {
@@ -286,8 +337,11 @@ class _Tabs extends React.Component {
     }
 
     closeSelectedTab() {
-        const {selectedTabId} = this.props
-        this.closeTab(selectedTabId)
+        const {selectedTabId, tabs} = this.props
+        const tab = tabs.find(({id}) => id === selectedTabId)
+        // Route through onClose so section hooks (close confirmation, app release) also
+        // apply to the keyboard shortcut, not just the tab-handle close button.
+        tab && this.onClose(tab)
     }
 
     render() {
@@ -298,7 +352,12 @@ class _Tabs extends React.Component {
                     {this.renderTabHandles()}
                 </TopBar>
                 <Content className={styles.tabContents}>
-                    {tabs.map(tab => this.renderTabContent(tab))}
+                    {/* contents are stacked panels toggled by `selected` — their sibling order is
+                        invisible, so render them in an order that is STABLE across tab reorders:
+                        moving a content's DOM node would reset it (a re-inserted iframe reloads) */}
+                    {[...tabs]
+                        .sort((a, b) => a.id.localeCompare(b.id))
+                        .map(tab => this.renderTabContent(tab))}
                 </Content>
             </SectionLayout>
         )
@@ -350,6 +409,7 @@ Tabs.propTypes = {
     maxTabs: PropTypes.number,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
+    tabPrefix: PropTypes.func,
     tabs: PropTypes.array,
     onAdd: PropTypes.func,
     onClose: PropTypes.func,

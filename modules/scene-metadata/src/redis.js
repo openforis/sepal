@@ -51,7 +51,13 @@ const initializeRedis = async () => {
         log.info('Set last update:', lastUpdateByDataset)
     }
 
-    return {getInitialized, setInitialized, getLastUpdate, setLastUpdate}
+    const reset = async () => {
+        log.debug('Resetting...')
+        await redis.flushDb()
+        log.info('Reset')
+    }
+
+    return {getInitialized, setInitialized, getLastUpdate, setLastUpdate, reset}
 }
 
 export {initializeRedis}

@@ -127,6 +127,10 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
         ws.on('error', error => onClientError(username, clientId, error))
         ws.on('close', () => onClientDisconnected(username, clientId))
 
+        // Tell the browser its own clientId, so it can tag sandbox start/release requests
+        // with it (the worker stores it as the app association's owner; a reconnect gets a
+        // fresh id and re-asserts).
+        clients.send(clientId, {clientId})
         clients.send(clientId, {modules: {state: servers.list()}})
         event$.next({type: CLIENT_UP, data: {username, clientId}})
     }

@@ -28,7 +28,7 @@ const initializeUplink = ({servers, clients, event$}) => {
             log.info(`${moduleTag(module)} connected`)
             event$.next({type: MODULE_UP, data: {module}})
         } else if (event === USER_UPDATED) {
-            // A module-originated user mutation (user-node pushes {event:'userUpdated', user}).
+            // A module-originated user mutation (the user module pushes {event:'userUpdated', user}).
             event$.next({type: event, data: other})
         } else if (data) {
             const {username, clientId, subscriptionId} = other

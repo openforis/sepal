@@ -23,11 +23,12 @@ const getMostRecentLoginByUser$ = () => {
     return get$(`http://${gatewayHost}/api/user/mostRecentLoginByUser`, {
         username: sepalUsername,
         password: sepalPassword,
+        responseType: 'json',
         retry: {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ? JSON.parse(body) : {})
+        map(({body}) => body ?? {})
     )
 }
 
@@ -39,11 +40,12 @@ const getMostRecentLogin$ = username => {
         query: {
             username
         },
+        responseType: 'json',
         retry: {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ? JSON.parse(body) : {})
+        map(({body}) => body ?? {})
     )
 }
 
@@ -52,11 +54,12 @@ const getMostRecentSessionByUser$ = () => {
     return get$(`http://${gatewayHost}/api/sessions/mostRecentlyClosedByUser`, {
         username: sepalUsername,
         password: sepalPassword,
+        responseType: 'json',
         retry: {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ? JSON.parse(body) : {})
+        map(({body}) => body ?? {})
     )
 }
 
@@ -68,11 +71,12 @@ const getMostRecentSession$ = username => {
         query: {
             username
         },
+        responseType: 'json',
         retry: {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ? JSON.parse(body) : {})
+        map(({body}) => body ?? {})
     )
 }
 
@@ -104,9 +108,10 @@ const getUser$ = username => {
         password: sepalPassword,
         query: {
             username
-        }
+        },
+        responseType: 'json'
     }).pipe(
-        map(({body}) => body ? JSON.parse(body) : {})
+        map(({body}) => body ?? {})
     )
 }
 

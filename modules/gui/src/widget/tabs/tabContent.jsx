@@ -8,8 +8,12 @@ import styles from './tabContent.module.css'
 import {TabContext} from './tabContext'
 
 export class TabContent extends React.PureComponent {
+    // derived once per mount — the tab id never changes for a keyed instance, and a stable
+    // stream identity keeps the context value consistent across re-renders
+    busyOut$ = this.props.tabBusy$(this.props.id)
+
     render() {
-        const {id, busyIn$, busyOut$, type, selected, children} = this.props
+        const {id, busyIn$, type, selected, children} = this.props
         const portalContainerId = `portal_tab_${id}`
         return (
             <div className={[
@@ -18,7 +22,7 @@ export class TabContent extends React.PureComponent {
             ].join(' ')}>
                 <Enabled enabled={selected}>
                     <PortalContainer id={portalContainerId}/>
-                    <TabContext id={id} busyIn$={busyIn$} busyOut$={busyOut$}>
+                    <TabContext id={id} busyIn$={busyIn$} busyOut$={this.busyOut$}>
                         <PortalContext id={portalContainerId}>
                             {children({id, type})}
                         </PortalContext>
@@ -31,9 +35,9 @@ export class TabContent extends React.PureComponent {
 
 TabContent.propTypes = {
     busyIn$: PropTypes.any,
-    busyOut$: PropTypes.any,
     children: PropTypes.any,
     id: PropTypes.string,
     selected: PropTypes.any,
+    tabBusy$: PropTypes.func,
     type: PropTypes.string
 }

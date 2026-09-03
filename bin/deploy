@@ -5,6 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 PROJECT_DIR=`dirname $DIR`
 IMAGE_NAME=sepal-deploy
+ARGS=("$@")
 
 
 function usage() {
@@ -25,6 +26,7 @@ function usage() {
     echo "  -p, --platform    platform to execute on (default aws). Cannot be used with --script."
     echo "  -o, --operation   operation to execute (provision|deploy|rollout). Cannot be used with --script."
     echo "  -s, --script      project/hosting-services relative path to script to execute. Cannot be used with --operation or --platform."
+    echo "  -l, --local       deploy using the local working tree instead of the sources the build was made from."
     echo "  -h, --help        print this usage."
     echo ""
     if [ ! -z "$ERROR" ]; then
@@ -35,6 +37,126 @@ function usage() {
 
 absolute() {
   echo "$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1")"
+}
+
+# Re-executes this script from a worktree checked out at the commit the build was made from,
+# so the deployment scripts cannot drift from the images they deploy.
+function execute_from_build_sources() {
+    local TAG=build-$BUILD_NUMBER
+    local WORKTREE_DIR=${TMPDIR:-/tmp}/sepal-deploy/$BUILD_NUMBER
+
+    if ! git -C $PROJECT_DIR rev-parse --git-dir >/dev/null 2>&1; then
+        usage "Not a Git repository: $PROJECT_DIR. Use --local to deploy using the local working tree."
+    fi
+
+    echo "Fetching sources for build $BUILD_NUMBER..."
+    if ! git -C $PROJECT_DIR fetch --quiet --tags origin; then
+        usage "Cannot fetch from origin. Use --local to deploy using the local working tree."
+    fi
+
+    local COMMIT
+    if ! COMMIT=$(git -C $PROJECT_DIR rev-parse --quiet --verify refs/tags/$TAG^{commit}); then
+        usage "No sources found for build $BUILD_NUMBER: tag $TAG doesn't exist. Either the build didn't complete, or it predates build tagging. Use --local to deploy using the local working tree."
+    fi
+
+    git -C $PROJECT_DIR worktree prune
+    if [ -d "$WORKTREE_DIR" ]; then
+        git -C $PROJECT_DIR worktree remove --force $WORKTREE_DIR 2>/dev/null || rm -rf $WORKTREE_DIR
+    fi
+    mkdir -p $(dirname $WORKTREE_DIR)
+    git -C $PROJECT_DIR worktree add --quiet --detach $WORKTREE_DIR $COMMIT
+
+    echo "Deploying build $BUILD_NUMBER from commit $(git -C $PROJECT_DIR rev-parse --short $COMMIT)"
+    # Both signals: whichever of the two the checked out version understands stops it re-pinning
+    exec env GIT_COMMIT=$COMMIT $WORKTREE_DIR/bin/deploy --local "${ARGS[@]}"
+}
+
+function warn_local() {
+    local BRANCH=$(git -C $PROJECT_DIR rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+    local COMMIT=$(git -C $PROJECT_DIR rev-parse --short HEAD 2>/dev/null || echo unknown)
+    local DIRTY=$(git -C $PROJECT_DIR status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    echo ""
+    echo "================================================================"
+    echo "Deploying using the local working tree (--local)."
+    echo "The deployment scripts are not guaranteed to match build $BUILD_NUMBER."
+    echo ""
+    echo "  branch: $BRANCH"
+    echo "  commit: $COMMIT"
+    echo "  uncommitted files: $DIRTY"
+    echo "================================================================"
+    echo ""
+}
+
+# Fails fast when an image the deployment will pull is missing from the registry, instead of
+# discovering it host by host, halfway through a rollout. Runs in a subshell: the config env
+# file defines a lot more than the registry credentials read here.
+function verify_images() {
+(
+    set -a
+    source $CONFIG_DIR/env
+    set +a
+
+    if [ -z "$DOCKER_REGISTRY_HOST" ]; then
+        echo "Error: DOCKER_REGISTRY_HOST is not defined in $CONFIG_DIR/env"
+        exit 1
+    fi
+
+    # The modules the playbooks run, and for each the image its own compose file references
+    local MODULES=$(grep -hoE 'module: *[a-z0-9-]+' $PROJECT_DIR/hosting-services/$PLATFORM/sepal/deploy*.yml | awk '{print $2}' | sort -u)
+    local IMAGES=""
+    local MODULE
+    for MODULE in $MODULES; do
+        local COMPOSE_FILE=$PROJECT_DIR/modules/$MODULE/docker-compose.yml
+        if [ ! -f "$COMPOSE_FILE" ]; then
+            echo "Error: module $MODULE is deployed but has no $COMPOSE_FILE"
+            exit 1
+        fi
+        IMAGES="$IMAGES $(sed -nE 's|.*image: *"[^"]*/(openforis/[a-z0-9-]+):\$\{SEPAL_VERSION.*|\1|p' $COMPOSE_FILE)"
+    done
+    IMAGES=$(echo $IMAGES | tr ' ' '\n' | sort -u)
+
+    echo "Verifying images for build $BUILD_NUMBER in $DOCKER_REGISTRY_HOST..."
+    local MISSING=""
+    local VERIFIED=0
+    local IMAGE
+    for IMAGE in $IMAGES; do
+        local STATUS=$(curl --silent --head --output /dev/null --write-out '%{http_code}' \
+            --user "$DOCKER_REGISTRY_USERNAME:$DOCKER_REGISTRY_PASSWORD" \
+            --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
+            --header 'Accept: application/vnd.oci.image.manifest.v1+json' \
+            --header 'Accept: application/vnd.oci.image.index.v1+json' \
+            https://$DOCKER_REGISTRY_HOST/v2/$IMAGE/manifests/$BUILD_NUMBER || true)
+        case $STATUS in
+            200)
+            VERIFIED=$((VERIFIED + 1))
+            ;;
+            404)
+            MISSING="$MISSING $IMAGE"
+            ;;
+            401|403)
+            echo "Error: registry rejected the credentials in $CONFIG_DIR/env (HTTP $STATUS)"
+            exit 1
+            ;;
+            *)
+            echo "Error: cannot reach registry $DOCKER_REGISTRY_HOST (HTTP $STATUS)"
+            exit 1
+            ;;
+        esac
+    done
+
+    if [ -n "$MISSING" ]; then
+        echo ""
+        echo "Error: build $BUILD_NUMBER is missing images the deployment needs:"
+        for IMAGE in $MISSING; do
+            echo "  $DOCKER_REGISTRY_HOST/$IMAGE:$BUILD_NUMBER"
+        done
+        echo ""
+        echo "Either the build didn't complete, or the module is missing from build-and-push-images.sh."
+        exit 1
+    fi
+
+    echo "Verified $VERIFIED images"
+)
 }
 
 function build_docker_image() {
@@ -94,6 +216,10 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    -l|--local)
+    LOCAL=true
+    shift # past argument
+    ;;
     -h|--help)
     usage
     ;;
@@ -121,9 +247,22 @@ fi
 if [ -z "$SCRIPT_PATH" ]; then
     SCRIPT_PATH="$PLATFORM/sepal/$OPERATION.sh"
 fi
+
+if [ -n "$GIT_COMMIT" ]; then
+    : # already running from the build sources
+elif [ -z "$LOCAL" ]; then
+    execute_from_build_sources
+else
+    warn_local
+fi
+
 ABSOLUTE_SCRIPT_PATH=$PROJECT_DIR/hosting-services/$SCRIPT_PATH
 if [ ! -f "$ABSOLUTE_SCRIPT_PATH" ]; then
     usage "Deployment script doesn't exist: $ABSOLUTE_SCRIPT_PATH"
+fi
+
+if [[ ("$OPERATION" == "deploy") || ("$OPERATION" == "rollout") ]]; then
+    verify_images
 fi
 
 build_docker_image

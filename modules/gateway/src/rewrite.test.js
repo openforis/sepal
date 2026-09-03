@@ -36,13 +36,24 @@ test('location path outside of target', () => {
     expect(rewritten).toBe('/a/b/e/f')
 })
 
-test('location at root', () => {
+test('location at root keeps the trailing slash', () => {
+    // A root Location must map to path + '/' — landing on the slash-less path breaks the
+    // browser's relative-URL resolution (RStudio's post-sign-in redirect to '/').
     const rewritten = rewriteLocation({
         path: '/a/b',
         target: 'http://domain:1234',
         location: '/'
     })
-    expect(rewritten).toBe('/a/b')
+    expect(rewritten).toBe('/a/b/')
+})
+
+test('location matching target path with trailing slash keeps it', () => {
+    const rewritten = rewriteLocation({
+        path: '/a/b',
+        target: 'http://domain:1234/c/d',
+        location: '/c/d/'
+    })
+    expect(rewritten).toBe('/a/b/')
 })
 
 test('different host', () => {

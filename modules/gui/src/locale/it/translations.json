@@ -5209,7 +5209,7 @@
       }
     }
   },
-  "userMessage": {
+  "message": {
     "form": {
       "contents": {
         "label": "",
@@ -5241,7 +5241,7 @@
       "success": ""
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "",
     "edit": "",
     "noMessages": "",

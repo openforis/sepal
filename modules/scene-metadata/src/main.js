@@ -6,6 +6,7 @@ import {configureServer, getLogger} from '#sepal/log'
 
 import {minHoursPublished, updateIntervalMinutes} from './config.js'
 import {initializeDatabase} from './database.js'
+import {startHttpServer} from './httpServer.js'
 import {downloadLandsat, loadLandsat} from './landsatCsv.js'
 import {updateLandsat} from './landsatStac.js'
 import {initializeRedis} from './redis.js'
@@ -82,6 +83,11 @@ const scheduleUpdates = ({redis, database}) => {
 const main = async () => {
     const redis = await initializeRedis()
     const database = await initializeDatabase()
+    if (database.created) {
+        log.warn('Database did not exist, resetting Redis')
+        await redis.reset()
+    }
+    await startHttpServer()
     await initializeData({redis, database})
     scheduleUpdates({redis, database})
 }

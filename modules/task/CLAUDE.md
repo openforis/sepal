@@ -31,6 +31,8 @@ npm run testWatch     # Jest watch mode
 | `image.DRIVE` | `imageDriveExport.js` | Google Drive |
 | `ccdc.GEE` | `ccdcAssetExport.js` | EE Asset |
 | `timeseries.download` | `timeSeriesSepalExport.js` | User workspace |
+| `samplingDesign.GEE` | `samplingDesign/samplesAssetExport.js` | EE Asset (table) |
+| `samplingDesign.SEPAL` | `samplingDesign/samplesSepalExport.js` | User workspace (table) |
 
 ### Export Orchestration (`src/jobs/export/`)
 - `toSepal.js`: Smart routing - Cloud Storage (service account) or Google Drive (user account). Downloads to local filesystem.

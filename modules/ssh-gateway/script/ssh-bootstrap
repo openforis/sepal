@@ -10,15 +10,28 @@ node src/main.js \
     --${interactive} \
     --username="${USER}" \
     --user-key-file="/home/${USER}/.ssh/id_rsa" \
-    --endpoint="http://sepal/api/" \
+    --endpoint="http://worker/" \
     --endpoint-password="$(cat /etc/sepalAdmin.passwd)" \
     --ssh-command-path="${sshScriptFile}"
 
 if [ -s $sshScriptFile ]; then
+  sessionId=$(sed -n 's/^[[:space:]]*# session-id: //p' $sshScriptFile)
   n=0
   until [ "$n" -ge 5 ]
   do
     eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\"" && break
+    # Retrying is only worth it while the session still exists (transient drop) — once it
+    # has been stopped the worker answers 404 and each retry just keeps the user staring
+    # at a dead terminal. A bodiless heartbeat: this is a liveness PROBE, fired while the user
+    # is disconnected, and it deliberately extends nothing. curl failure (000) keeps retrying.
+    if [ -n "$sessionId" ]; then
+      sessionStatus=$(curl -s -o /dev/null -w '%{http_code}' \
+        -H "sepal-user:{\"username\": \"sepalAdmin\", \"roles\": [\"application_admin\"]}" \
+        -X POST "http://worker/sessions/$USER/session/$sessionId")
+      if [ "$sessionStatus" = "404" ]; then
+        break
+      fi
+    fi
     n=$((n+1))
     sleep 5
   done

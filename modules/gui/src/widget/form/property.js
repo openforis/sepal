@@ -4,7 +4,10 @@ import moment from 'moment'
 import {msg} from '~/translate'
 
 class FormProperty {
+    static _USERNAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9]*$/
+    static _USERNAME_MAX_LENGTH = 30
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
+    static _EMAIL_MAX_LENGTH = 254
 
     _predicates = []
     _skip = []
@@ -49,8 +52,24 @@ class FormProperty {
         return this.predicate(value => !_.isNil(value), messageId, messageArgs)
     }
 
+    maxLength(max, messageId = 'fieldValidation.maxLength', messageArgs) {
+        return this.predicate(
+            value => isBlank(value) || String(value).length <= max,
+            messageId,
+            messageArgs || (() => ({max}))
+        )
+    }
+
     email(messageId = 'fieldValidation.email', messageArgs) {
-        return this.match(FormConstraint._EMAIL_REGEX, messageId, messageArgs)
+        return this
+            .maxLength(FormConstraint._EMAIL_MAX_LENGTH, messageId, messageArgs)
+            .match(FormConstraint._EMAIL_REGEX, messageId, messageArgs)
+    }
+
+    username(messageId = 'fieldValidation.username', messageArgs) {
+        return this
+            .maxLength(FormConstraint._USERNAME_MAX_LENGTH, messageId, messageArgs)
+            .match(FormConstraint._USERNAME_REGEX, messageId, messageArgs)
     }
 
     date(format, messageId = 'fieldValidation.date', messageArgs) {

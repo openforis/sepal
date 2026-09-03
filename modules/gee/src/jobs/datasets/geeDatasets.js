@@ -14,12 +14,12 @@ const CONCURRENCY = 10
 let datasets = []
 
 const getNode$ = (url = URL) =>
-    get$(url).pipe(
+    get$(url, {responseType: 'json'}).pipe(
         catchError(error => {
             log.error('Error while downloading GEE catalog - ', error)
             return EMPTY
         }),
-        map(({body}) => JSON.parse(body)),
+        map(({body}) => body),
         switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'
                 ? getChildNodes$(links).pipe(

@@ -140,6 +140,26 @@ const toQueryString = object =>
         })
         .join('&')
 
+// XHR response types, keyed by the names accepted by callers. The shared lib's
+// httpClient is fetch-based and spells it `arrayBuffer`, so accept that spelling
+// too rather than have XHR silently fall back to text on an unknown value.
+const RESPONSE_TYPES = {
+    json: 'json',
+    text: 'text',
+    arrayBuffer: 'arraybuffer',
+    arraybuffer: 'arraybuffer',
+    blob: 'blob',
+    document: 'document'
+}
+
+const toResponseType = responseType => {
+    const type = RESPONSE_TYPES[responseType]
+    if (!type) {
+        throw new Error(`Unsupported responseType: ${responseType}, expected one of json, text, arrayBuffer, blob, document`)
+    }
+    return type
+}
+
 const validateResponse = (response, validStatuses) =>
     !validStatuses || validStatuses.includes(response.status)
         ? response
@@ -152,6 +172,7 @@ const execute$ = (url, method, {
     headers,
     validStatuses,
     retry,
+    responseType = 'json',
     ...args
 }) => {
     const queryString = toQueryString(query)
@@ -169,7 +190,7 @@ const execute$ = (url, method, {
         }
     }
     const t0 = Date.now()
-    return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
+    return ajax({url: urlWithQuery, method, headers, responseType: toResponseType(responseType), ...args}).pipe(
         map(response => validateResponse(response, validStatuses)),
         catchError(error => {
             if (validStatuses && validStatuses.includes(error.status)) {

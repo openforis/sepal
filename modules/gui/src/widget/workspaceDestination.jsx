@@ -16,7 +16,8 @@ import {Form} from '~/widget/form'
 const DEBOUNCE_TIME_MS = 750
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects')
+    projects: selectFrom(state, 'process.projects'),
+    tasks: selectFrom(state, 'tasks')
 })
 
 const mapRecipeToProps = recipe => ({
@@ -88,11 +89,7 @@ class _WorkspaceDestination extends React.Component {
                                     throw error
                                 })
                             ),
-                            conflictingTasks: api.tasks.listExisting$({
-                                outputPath: path,
-                                destination: 'SEPAL',
-                                status: 'PENDING,ACTIVE'
-                            })
+                            conflictingTasks: of(this.findConflictingTasks(path))
                         }).pipe(
                             map(response => ({...response, validationSequence})),
                             catchError(error => of({error, validationSequence}))
@@ -135,6 +132,15 @@ class _WorkspaceDestination extends React.Component {
     findProject() {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
+    }
+
+    findConflictingTasks(path) {
+        const {tasks} = this.props
+        return (tasks || []).filter(({status, taskInfo}) =>
+            ['PENDING', 'ACTIVE'].includes(status)
+                && taskInfo?.destination === 'SEPAL'
+                && taskInfo?.outputPath === path
+        )
     }
 
     onWorkspaceChecked({files, conflictingTasks}) {

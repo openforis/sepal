@@ -1,0 +1,32 @@
+.table {
+    border-collapse: collapse;
+    font-size: .8rem;
+    width: 100%;
+}
+
+.table th,
+.table td {
+    text-align: right;
+    padding: .1rem .5rem;
+    white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+    text-align: left;
+    padding-left: 0;
+}
+
+.table th {
+    font-weight: normal;
+    opacity: .6;
+}
+
+.table tr:last-child td {
+    font-weight: bold;
+}
+
+.message {
+    font-size: .8rem;
+    opacity: .6;
+}

@@ -8,14 +8,18 @@ export const initStore = store => {
     storeInitListeners.forEach(listener => listener(store))
 }
 
-// only used by recipe.js
+// returns an unsubscribe function (no-op until the deferred subscribe runs)
 export const subscribe = (path, listener) => {
-    const subscribe = () => storeInstance.subscribe(() => listener(select(path)))
-    if (storeInstance) {
-        subscribe()
-    } else {
-        storeInitListeners.push(subscribe)
+    let unsubscribe = () => {}
+    const doSubscribe = () => {
+        unsubscribe = storeInstance.subscribe(() => listener(select(path)))
     }
+    if (storeInstance) {
+        doSubscribe()
+    } else {
+        storeInitListeners.push(doSubscribe)
+    }
+    return () => unsubscribe()
 }
 
 // only used by route.js

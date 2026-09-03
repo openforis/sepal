@@ -1,14 +1,22 @@
-import {createPool} from '#sepal/db/mysql'
+import {join} from 'path'
+
+import {createPool, initDatabase} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
+import {dirName} from '#sepal/path'
 
 import {formatInterval} from './time.js'
 
 const log = getLogger('database')
 
-const CURRENT_DATABASE_NAME = 'sdms'
-const NEW_DATABASE_NAME = 'sdms_new'
-const OLD_DATABASE_NAME = 'sdms_old'
+const __dirname = dirName(import.meta.url)
+const migrationsPath = join(__dirname, '/../migrations')
+
+const CURRENT_DATABASE_NAME = 'scene_metadata'
+const NEW_DATABASE_NAME = 'scene_metadata_new'
+const OLD_DATABASE_NAME = 'scene_metadata_old'
 const TABLE_NAME = 'scene_meta_data'
+
+export const SCHEMA = CURRENT_DATABASE_NAME
 
 const USE_TRANSACTIONS = false
 
@@ -17,6 +25,7 @@ const transaction = {
 }
 
 const initializeDatabase = async () => {
+    const {created} = await initDatabase(CURRENT_DATABASE_NAME, migrationsPath)
     const pool = await createPool(CURRENT_DATABASE_NAME)
 
     const dropDatabase = async name => {
@@ -184,7 +193,7 @@ const initializeDatabase = async () => {
     }
 
     return {
-        prepare, ingest, finalize, insert, beginTransaction, commitTransaction, rollbackTransaction
+        created, prepare, ingest, finalize, insert, beginTransaction, commitTransaction, rollbackTransaction
     }
 }
 

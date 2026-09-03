@@ -408,7 +408,7 @@
       "tasks": "Tâches de fond",
       "terminal": "Console",
       "user": {
-        "messages": "Afficher messages utilisateur",
+        "messages": "Afficher les messages",
         "profile": "Gérer le profil utilisateur",
         "report": {
           "budgetExceeded": "Dépassé",
@@ -5209,7 +5209,9 @@
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "Vu par {count, plural, one {# utilisateur} other {# utilisateurs}}",
+    "from": "de : {username}",
     "form": {
       "contents": {
         "label": "Contenu",
@@ -5221,11 +5223,12 @@
       },
       "preview": {
         "label": "Aperçu"
+      },
+      "priority": {
+        "unpublished": "Non publié",
+        "normal": "Normale",
+        "urgent": "Urgente"
       }
-    },
-    "publish": {
-      "error": "Impossible de publier le message",
-      "success": "Le message a été publié"
     },
     "remove": {
       "error": "Impossible de supprimer le message",
@@ -5234,14 +5237,15 @@
     "title": "Message",
     "update": {
       "error": "Impossible de mettre à jour le message",
-      "success": "Le message a été mis à jour"
+      "published.success": "Le message a été publié",
+      "unpublished.success": "Le message a été dépublié"
     },
     "updateState": {
       "error": "Impossible de mettre à jour le statut du message",
       "success": "Le statut du message a été mis à jour"
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "Message de {author}",
     "edit": "Editer le message",
     "noMessages": "Pas de messages",
@@ -5251,7 +5255,7 @@
       "READ": "Marquer comme lu",
       "UNREAD": "Marquer comme non-lu"
     },
-    "title": "Messages utilisateur"
+    "title": "Messages"
   },
   "users": {
     "count": "",

@@ -46,6 +46,10 @@ sepal eslint gui                           # Run GUI ESLint
 ### API Layer
 - `src/apiRegistry.js`: Central API registry
 - API calls go through the gateway proxy at `/api/*`
+- `src/http-client.js`: `rxjs/ajax`-based. Optional `responseType` option: `json` (**default**, unlike the
+  shared lib's `httpClient.js`, which defaults to `text`), `text`, `arrayBuffer`, `blob`, `document`.
+  Both `arrayBuffer` and XHR's own `arraybuffer` are accepted; an unsupported value throws rather than
+  letting XHR silently fall back to text.
 
 ## Source Structure
 
@@ -53,7 +57,7 @@ sepal eslint gui                           # Run GUI ESLint
 src/
   app/                  # App shell and route pages
     home/body/
-      apps/             # App launcher UI
+      apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
       browse/           # File/asset browsers
       process/          # Recipe processing (main feature area)
         recipe/         # Recipe types: mosaic, classification, timeSeries, ccdc, etc.

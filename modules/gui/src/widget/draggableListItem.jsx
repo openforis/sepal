@@ -2,7 +2,7 @@ import Hammer from 'hammerjs'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, share, switchMap} from 'rxjs'
+import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, merge, share, Subject, switchMap, take, takeUntil} from 'rxjs'
 
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
@@ -12,9 +12,12 @@ import {Portal} from '~/widget/portal'
 import styles from './draggableListItem.module.css'
 
 const CLICKABLE_PAN_THRESHOLD_PX = 10
+const DRAGGABLE_PAN_THRESHOLD_PX = 5
 
 class _DraggableListItem extends React.Component {
     draggable = React.createRef()
+
+    cancel$ = new Subject() // Escape-cancel, terminates the current gesture's streams
     
     state = {
         // this draggable
@@ -65,11 +68,31 @@ class _DraggableListItem extends React.Component {
         return !disabled && dragging
     }
 
-    isOver({coords: {x: otherX, y: otherY}}) {
+    // A reorder triggers only once the dragged clone overlaps this item by more than half —
+    // hit-testing the clone's geometry, not the pointer, so the trigger point doesn't depend
+    // on where within the item the drag was grabbed. The ratio is against the smaller of the
+    // two extents, so differently-sized items can still displace each other.
+    isOver({position}) {
+        const {axis} = this.props
+        const {dragOverSize} = this.state
+        if (!position || !dragOverSize) {
+            return false
+        }
         const draggable = this.draggable.current
         const {x, y, width, height} = draggable.getBoundingClientRect()
-        return (otherX > x) && (otherX < x + width)
-            && (otherY > y) && (otherY < y + height)
+        const overlapRatio = (thisStart, thisExtent, otherStart, otherExtent) => {
+            const overlap = Math.min(thisStart + thisExtent, otherStart + otherExtent) - Math.max(thisStart, otherStart)
+            return overlap / Math.min(thisExtent, otherExtent)
+        }
+        const overX = overlapRatio(x, width, position.x, dragOverSize.width) > .5
+        const overY = overlapRatio(y, height, position.y, dragOverSize.height) > .5
+        // axis-constrained drags hit-test only along the free axis, so drifting off
+        // the row/column doesn't interrupt the reorder
+        switch (axis) {
+            case 'x': return overX
+            case 'y': return overY
+            default: return overX && overY
+        }
     }
 
     isHidden() {
@@ -169,7 +192,7 @@ class _DraggableListItem extends React.Component {
         
         hammer.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
-            threshold: this.isClickable() ? CLICKABLE_PAN_THRESHOLD_PX : 0
+            threshold: this.isClickable() ? CLICKABLE_PAN_THRESHOLD_PX : DRAGGABLE_PAN_THRESHOLD_PX
         })
 
         const panStart$ = fromEvent(hammer, 'panstart')
@@ -218,12 +241,21 @@ class _DraggableListItem extends React.Component {
                             x: coords.x - offset.x,
                             y: coords.y - offset.y
                         }
-                    }))
+                    })),
+                    // no moves once the gesture is over: neither a still-debouncing trailing
+                    // move after the release, nor further moves after an Escape-cancel
+                    takeUntil(merge(panEnd$, this.cancel$))
                 )
             )
         )
 
-        const thisDragEnd$ = panEnd$
+        // pair each end with a recognized start, so a stray panend emits nothing; a
+        // state-based guard in onDragEnd would race instead — a quick few-pixel drag
+        // delivers panend before the dragging:true update has committed. An Escape-cancel
+        // aborts the pending end, so the cancelled gesture's eventual release emits nothing.
+        const thisDragEnd$ = thisDragStart$.pipe(
+            switchMap(() => panEnd$.pipe(takeUntil(this.cancel$), take(1)))
+        )
 
         const otherDrag$ = drag$.pipe(
             filter(({value}) => value !== dragValue), // ignore self events
@@ -237,8 +269,21 @@ class _DraggableListItem extends React.Component {
         )
     }
 
+    // constrainPosition — with an axis set, the clone moves along that axis only;
+    // the cross-axis coordinate stays where the drag started.
+    constrainPosition(position) {
+        const {axis} = this.props
+        const {x, y} = this.dragStartPosition ?? position
+        switch (axis) {
+            case 'x': return {x: position.x, y}
+            case 'y': return {x, y: position.y}
+            default: return position
+        }
+    }
+
     onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
+        this.dragStartPosition = position
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({value: dragValue, dragStart: {size}})
             drag$ && drag$.next({value: dragValue, dragMove: {coords, position}})
@@ -248,7 +293,7 @@ class _DraggableListItem extends React.Component {
 
     onDragMove({coords, position}) {
         const {drag$, dragValue, onDragMove} = this.props
-        this.setState({position}, () => {
+        this.setState({position: this.constrainPosition(position)}, () => {
             drag$ && drag$.next({value: dragValue, dragMove: {coords, position}})
             onDragMove && onDragMove(dragValue, coords)
         })
@@ -256,6 +301,7 @@ class _DraggableListItem extends React.Component {
 
     onDragCancel() {
         const {drag$, dragValue, onDragCancel} = this.props
+        this.cancel$.next()
         this.setState({dragging: false, position: null, size: null}, () => {
             drag$ && drag$.next({value: dragValue, dragCancel: true})
             onDragCancel && onDragCancel(dragValue)
@@ -264,13 +310,10 @@ class _DraggableListItem extends React.Component {
 
     onDragEnd() {
         const {drag$, dragValue, onDragEnd} = this.props
-        const {dragging} = this.state
-        if (dragging) {
-            this.setState({dragging: false, position: null, size: null}, () => {
-                drag$ && drag$.next({value: dragValue, dragEnd: true})
-                onDragEnd && onDragEnd(dragValue)
-            })
-        }
+        this.setState({dragging: false, position: null, size: null}, () => {
+            drag$ && drag$.next({value: dragValue, dragEnd: true})
+            onDragEnd && onDragEnd(dragValue)
+        })
     }
 
     componentDidMount() {
@@ -330,6 +373,7 @@ export const DraggableListItem = compose(
 
 DraggableListItem.propTypes = {
     drag$: PropTypes.object.isRequired,
+    axis: PropTypes.oneOf(['x', 'y']),
     className: PropTypes.string,
     disabled: PropTypes.any,
     dragCloneClassName: PropTypes.string,

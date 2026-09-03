@@ -1,0 +1,24 @@
+- name: "{{ module }} | Ensure runtime dir"
+  file: path="/var/lib/sepal/modules/{{ module }}" state=directory
+
+# Ensure the compose file is present so docker_compose_v2 can resolve the project to stop.
+# Mirrors run-module so the same project (name derived from the module dir) is targeted.
+- name: "{{ module }} | Copy compose file"
+  copy:
+      src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
+      dest: "/var/lib/sepal/modules/{{ module }}/docker-compose.yml"
+
+# state: stopped runs `docker compose stop` — stops the container(s) WITHOUT removing them
+# (state: absent would `down` and remove). Idempotent: a no-op if already stopped/not running.
+- name: "{{ module }} | Stop (without removing)"
+  community.docker.docker_compose_v2:
+    project_src: "/var/lib/sepal/modules/{{ module }}"
+    files:
+      - docker-compose.yml
+    env_files:
+      - /etc/sepal/env
+    state: stopped
+  register: stop_result
+  retries: 5
+  delay: 3
+  until: stop_result is succeeded

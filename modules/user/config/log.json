@@ -1,0 +1,10 @@
+{
+    "port": 5000,
+    "categories": {
+        "config": "info",
+        "crypto": "info",
+        "database": "info",
+        "http": "info",
+        "main": "info"
+    }
+}

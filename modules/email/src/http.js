@@ -12,12 +12,12 @@ const getEmailNotificationsEnabled = async emailAddress => {
     const response = await firstValueFrom(
         get$(`http://${gatewayHost}/api/user/email-notifications-enabled/${emailAddress}`, {
             username: sepalUsername,
-            password: sepalPassword
+            password: sepalPassword,
+            responseType: 'json'
         })
     )
 
-    const json = JSON.parse(response.body)
-    return json.emailNotificationsEnabled
+    return response.body?.emailNotificationsEnabled
 }
 
 const getUser = async username => {
@@ -28,9 +28,10 @@ const getUser = async username => {
             password: sepalPassword,
             query: {
                 username
-            }
+            },
+            responseType: 'json'
         }).pipe(
-            map(({body}) => body ? JSON.parse(body) : {})
+            map(({body}) => body ?? {})
         )
     )
 }

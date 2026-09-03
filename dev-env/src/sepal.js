@@ -4,6 +4,8 @@ import {Option, program} from 'commander'
 
 import {build} from './build.js'
 import {buildRestart} from './buildRestart.js'
+import {deps} from './config.js'
+import {describeCycle, findDependencyCycles} from './depsValidation.js'
 import {eslint} from './eslint.js'
 import {log} from './log.js'
 import {logs} from './logs.js'
@@ -18,8 +20,18 @@ import {stop} from './stop.js'
 import {tail} from './tail.js'
 import {exit, showStatus} from './utils.js'
 
+const validateDeps = () => {
+    const cycles = findDependencyCycles(deps)
+    if (cycles.length) {
+        cycles.forEach(cycle => log.error(describeCycle(cycle)))
+        exit({error: 'Invalid config/deps.json: circular dependencies detected'})
+    }
+}
+
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
+
+    validateDeps()
 
     program.exitOverride()
 

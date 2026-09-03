@@ -283,9 +283,13 @@
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: gee}
-    - { role: run-module, module: user-node }
+    - { role: run-module, module: user }
+    - { role: run-module, module: budget }
     - { role: run-module, module: app-manager }
-    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: worker }
+    - { role: run-module, module: message }
+    - { role: run-module, module: recipe }
+    - { role: run-module, module: scene-metadata }
     - { role: run-module, module: user-assets }
     - { role: run-module, module: user-files }
     - { role: run-module, module: gui }
@@ -294,5 +298,3 @@
     - { role: run-module, module: terminal }
     - { role: run-module, module: gateway }
     - { role: run-module, module: caddy }
-    - { role: run-module, module: sys-monitor }
-    - { role: run-module, module: scene-metadata }

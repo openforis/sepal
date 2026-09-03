@@ -376,6 +376,8 @@ class _Textarea extends React.Component {
     }
 
     captureEvents(e) {
+        // Enter must insert a newline, not reach the global keybindings where a
+        // later-mounted panel Apply/Close binding would win and submit the form.
         captureKeypress(e, [
             'ArrowLeft',
             'ArrowRight',
@@ -384,7 +386,9 @@ class _Textarea extends React.Component {
             'Home',
             'End',
             'PageUp',
-            'PageDown'
+            'PageDown',
+            'Enter',
+            'NumpadEnter'
         ])
     }
 

@@ -40,6 +40,7 @@ services:
       SEPAL_APPS_HOST: "${SEPAL_APPS_HOST}"
       RABBITMQ_HOST: "rabbitmq"
       REDIS_HOST: "gateway-redis"
+      SANDBOX_DEFAULT_INSTANCE_TYPE: "${SANDBOX_DEFAULT_INSTANCE_TYPE:-T3aSmall}"
     networks:
       - sepal
     extra_hosts:

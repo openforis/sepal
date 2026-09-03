@@ -1,6 +1,8 @@
 import {of, switchMap} from 'rxjs'
 
+import {println} from './console.js'
 import {createSession$, joinSession$, sandboxInfo$} from './endpoint.js'
+import {failureMessage} from './interactive.js'
 
 const getSession$ = ({sessions, instanceTypes}) => {
     const findSession = (sessions, expectedStatus) =>
@@ -19,7 +21,16 @@ const getSession$ = ({sessions, instanceTypes}) => {
 
 const nonInteractive$ = () => {
     return sandboxInfo$().pipe(
-        switchMap(info => info.exceededBudget ? of() : getSession$(info))
+        switchMap(info => info.exceededBudget ? of() : getSession$(info)),
+        switchMap(session => {
+            if (session?.unavailable) {
+                // No menu to fall back to here (scp/one-off command) — report and end the
+                // connection without writing a session script.
+                println(failureMessage(session.reason))
+                return of()
+            }
+            return of(session)
+        })
     )
 }
 
