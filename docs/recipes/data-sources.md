@@ -255,40 +255,79 @@ Exit criterion: asset Fill is validated end to end and cannot silently remap ban
 ### External prerequisite: Node server replacement
 
 The permanent caller-authorized batch/closure boundary is blocked until the current Groovy `sepal-server` has been
-replaced and split into the planned Node modules. The temporary browser preflight above reuses only the existing
-authenticated per-recipe read; it is not a coherent server resolver and must not grow a new Groovy endpoint or
-broaden the administrator-loading path. After the replacement merges:
+replaced and split into the planned Node modules. The temporary browser preflight used by steps 1 through 4 reuses
+only the existing authenticated per-recipe read; it is not a coherent server resolver and must not grow a new
+Groovy endpoint or broaden the administrator-loading path. After the replacement merges:
 
 - require a trusted SEPAL principal for every recipe read;
-- return recipe content and its content digest from one authorized storage boundary;
+- return recipe content and its server-owned monotonic `contentRevision` from one authorized storage boundary, with
+  list, load, save and executor-facing reads all exposing it consistently;
+- accept `expectedRevision` on save and return the committed revision, so a client can maintain a revision registry
+  and detect concurrent writes;
 - add permanent owner/non-owner, missing-principal and cache-isolation tests;
 - remove ambient administrator recipe access from GEE when its replacement owns every legitimate read.
+
+The full storage contract, including no-op save behavior and normalization requirements, is defined in
+[source-freshness.md](source-freshness.md). `contentRevision` is distinct from the existing `typeVersion`, which is
+the recipe schema-migration version.
 
 Graph traversal, capability derivation, caching and bundle construction remain shared JavaScript concerns rather
 than server endpoint logic.
 
-### 5. Add recipe Fill
+### 5. Add Sampling Design derived-result freshness
+
+Requires `contentRevision` from the prerequisite above. No interim unversioned-recipe path is planned or built:
+there is no temporary browser content-hash bridge and no `update_time` freshness rung.
+
+- Add the recipe snapshot provider that distinguishes an editable root draft from operation-local persisted
+  dependency snapshots, keyed by `contentRevision`. Dependency snapshots never enter the shared loaded-recipe map.
+- Add the request-scoped snapshot cache at the execution boundary: one snapshot and revision per recipe ID per
+  operation, shared in-flight loads, and an exact evidence vector returned with each result.
+- Resolve recipe AOIs through the AOI geometry product they expose, including transitive recipe and asset evidence,
+  rather than teaching Sampling Design which recipe fields affect geometry. Unmigrated recipe types fall back to
+  conservative whole persisted-source evidence.
+- Add generic persisted `calculatedFrom` sidecars, operation-input fingerprint comparison and stale-response epochs.
+- Migrate stratum areas first, then per-stratum probabilities, each declaring its own named source roles and
+  parameters. Replace both existing per-panel calculation caches with the generic derived resource and remove the
+  old module once both have migrated.
+- On open and before Retrieve, refresh the dependency revision vector, re-resolve only changed dependencies, and
+  mark results stale only when their operation-input fingerprint changed. Keep stale values as context, block their
+  use and direct the user to recalculate.
+- Treat a legacy result without `calculatedFrom` as `UNKNOWN`, blocking submission exactly as `STALE` does. Every
+  existing Sampling Design result is in that position and needs one recalculation — potentially a batch
+  calculation — before its next submission, with its existing values visible as context until then.
+- Reuse the existing shared recipe-closure limits rather than defining another policy.
+
+Exit criterion: a recipe or asset may change while its dependent Sampling Design recipe is closed. Opening that
+recipe refreshes current source evidence; unchanged complete evidence preserves results without loading unchanged
+recipe content; changed evidence re-resolves the consumed products; changed operation-input fingerprints mark the
+affected results stale while unchanged fingerprints preserve them despite conservative revision changes; a late
+calculation response cannot commit; and Retrieve revalidates afresh and blocks stale or unknown applicable results.
+No update-time or temporary content-hash bridge is involved.
+
+### 6. Add recipe Fill
 
 - Activate caller-authorized resolution for the fill reference.
 - Reuse the shared graph for cycles, missing sources and execution-versus-capability-provider identity.
 - Apply the same explicit band mapping and output-preservation contract as asset Fill.
 
-### 6. Add coherent execution and freshness infrastructure
+### 7. Complete coherent execution and live freshness infrastructure
 
 - Introduce live and bundled resolution contexts only after authorized loading exists.
-- Persist a server-owned monotonic recipe content revision for websocket ordering, invalidation and optimistic
-  concurrency; keep the existing timestamp as display metadata.
-- Persist a content digest with new saves and lazily derive it for legacy rows over versioned canonical persisted
-  recipe content.
-- Build bundles by loading the closure and coherently rechecking every digest with bounded retries.
-- Add the minimum session catalogue, conservative graph fingerprint and race-safe refresh required by the first
-  catalogue-backed consumer.
+- Build bundles by loading the closure and coherently rechecking every revision with bounded retries. A content
+  digest remains optional until a concrete integrity or provenance requirement needs exact byte identity.
+- Extend the session catalogue and product-scoped fingerprints established by Sampling Design with remote
+  invalidation and coherent execution support.
 - Add one source-version registry for recipe revision events, local draft generations and Earth Engine asset
   `system:version` evidence. Build generic versioned derived resources above it so image-output descriptions,
-  visualization applicability and future Sampling Design stratification weights share invalidation, in-flight
-  deduplication and replay rather than creating recipe-specific caches.
+  visualization applicability and Sampling Design stratum areas and per-stratum probabilities share invalidation,
+  in-flight deduplication and replay rather than creating recipe-specific caches.
+- Add websocket revision events and, if justified, patch transport. Both remain latency and transport
+  optimizations; correctness established in step 5 never depends on them.
+- Progressively migrate recipe types to explicit AOI and image product projections, reducing the conservative
+  whole-source recalculation that unmigrated providers fall back to.
 
-### 7. Migrate CCDC Slice capabilities and visualizations
+### 8. Migrate CCDC Slice capabilities and visualizations
 
 - Define and activate the `IMAGE_OUTPUT` product and `CCDC_SEGMENTS` capability from actual CCDC and CCDC Slice
   behavior.
@@ -302,7 +341,7 @@ than server endpoint logic.
 - Migrate Preview, map selection and Retrieve filtering together. New structured provenance may be dual-written for
   stronger future consumers, but it is not a prerequisite for existing CCDC Slice assets.
 
-### 8. Migrate Change Alerts, then further consumers
+### 9. Migrate Change Alerts, then further consumers
 
 - Make Change Alerts the first `CCDC_SEGMENTS` consumer: retain the selected outer execution reference, obtain CCDC
   semantics through the primary lineage, and reject an absent capability without entering algorithm code.
@@ -311,8 +350,8 @@ than server endpoint logic.
 - Remove its terminal-reference replacement and copied CCDC metadata path only when the capability-backed path is
   complete, and retain typed backend validation as a safety boundary rather than the source of semantics.
 - Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
-  generic image inputs, Classification/Regression reuse, and Sampling Design. Every migration needs a stated
-  stopping rule, coexistence plan and removal of the superseded local synchronization path.
+  generic image inputs and Classification/Regression reuse. Every migration needs a stated stopping rule,
+  coexistence plan and removal of the superseded local synchronization path.
 
 ## Deliberately deferred
 
@@ -322,5 +361,7 @@ than server endpoint logic.
 - Automatic repair of missing band selections.
 - One repository-wide migration commit.
 - Recipe Fill before the Node server replacement supplies its permanent caller-authorized source boundary.
-- Execution bundles before recipe content has reliable digest evidence.
+- Execution bundles before recipe content has reliable monotonic revision evidence.
+- Any interim unversioned-recipe freshness path: no temporary browser content hashing and no `update_time`
+  freshness rung. Persisted derived-result freshness waits for `contentRevision` rather than approximating it.
 - CCDC capability migration as a prerequisite for constant Fill.

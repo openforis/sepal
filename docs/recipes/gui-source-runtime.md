@@ -496,23 +496,27 @@ contract. Existing consumers do not change because loading remains behind the se
 Live consumers use `watchSource$`; one-shot commands continue to use a captured resolution. Cache entries publish
 description, fingerprint, freshness and availability without putting that state into React context.
 
-Shared reuse is a generic derived-resource concern. Image-output descriptions, visualization applicability and a
-future Sampling Design stratification-weight resource should use the same source-version registry and invalidation
-machinery rather than create per-feature caches. The logical resource key describes the question; its source-version
-vector decides whether an existing answer is reusable. Recipe components continue to pass source intent and consume
-results without receiving Redux records, websocket events, revisions or cache controls.
+Shared reuse is a generic derived-resource concern. Image-output descriptions, visualization applicability and
+Sampling Design stratum-area and per-stratum-probability resources should use the same source-version registry and
+invalidation machinery rather than create per-feature caches. The logical resource key describes the question; its
+source-version vector decides when to resolve evidence again, while the resulting operation-input fingerprint
+decides whether an existing answer is reusable. Recipe components continue to pass source intent and consume results
+without receiving Redux records, websocket events, revisions or cache controls.
 
 The intended version evidence is:
 
-- exact in-session recipe object identity, or an operation-local draft generation, for unsaved edits;
-- a server-owned monotonic content revision for persisted recipe update ordering and invalidation;
-- a content digest for coherent identity and execution-bundle verification;
+- exact in-session recipe object identity, or an operation-local draft generation, for the editable root's unsaved
+  edits;
+- a server-owned monotonic `contentRevision` for persisted recipe update ordering and invalidation;
 - an Earth Engine asset ID plus `system:version`, normalized as an opaque string, when that property is available;
 - principal, linked Earth Engine identity and contract version where they affect the answer.
 
-The current second-resolution recipe timestamp is display metadata, not a revision. A source without reliable
-version evidence is observed afresh rather than cached as though it were stable. The detailed version, replay,
-retention and websocket rules are owned by `source-freshness.md`.
+The current second-resolution recipe timestamp is display metadata, never a revision and never freshness evidence.
+A source without reliable persisted version evidence is observed afresh rather than cached as though it were stable.
+The snapshot-provider boundary states whether it is handing over an editable root draft or an operation-local
+persisted snapshot; a persisted derived calculation binds to the latter, and dependency snapshots are never written
+into the shared loaded-recipe map. The detailed version, replay, retention and websocket rules are owned by
+`source-freshness.md`.
 
 ### Coherent Preview and Retrieve
 

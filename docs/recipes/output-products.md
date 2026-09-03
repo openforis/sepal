@@ -82,6 +82,7 @@ collection, chart series or another established result kind. A recipe can expose
 - the canonical image output consumed by downstream image recipes and Retrieve where supported;
 - a named map product used by one layer mode;
 - an internal collection product consumed by an algorithm;
+- an AOI geometry product exposed when another recipe uses this recipe as its area of interest;
 - a non-image product, such as Sampling Design's sample FeatureCollection.
 
 CCDC Segments is an image product. `CCDC_SEGMENTS` is a capability describing how that product can be interpreted;
@@ -89,6 +90,19 @@ it is not a second product. Likewise, the absence of an image output is not repr
 recipe can simply have products of other kinds or no declared product of that kind.
 
 A union of all bands that any layer mode might display is not a product.
+
+An AOI recipe reference is resolved through that named geometry product, not by allowing the consumer to inspect the
+referenced recipe's model. The provider defines whether the geometry comes from configured AOI intent, image-output
+bounds or another declared source and which transitive evidence affects it. The current `RECIPE` AOI behavior obtains
+geometry through the referenced image product; migration must make that behavior explicit rather than silently
+redefine a recipe AOI as `model.aoi`. The rule differs per recipe type — some expose their configured AOI, others
+delegate to a source or to one of several input images — so each declaration is derived from that type's actual
+behavior and shared by GUI resolution and executor execution rather than reimplemented on either side.
+
+Recipe types are migrated to an explicit AOI-product declaration one at a time. Until a type has one, a consumer
+depending on its geometry falls back to conservative whole persisted-source evidence: correct, but it treats
+unrelated edits as potentially geometry-affecting. Narrower invalidation is a property a migrated provider earns,
+not a guarantee available before the projection exists.
 
 ### Declaration and description
 

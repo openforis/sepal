@@ -46,10 +46,10 @@ supplies it. Omitting the principal fails before any recipe is loaded.
 
 The resolver remains JavaScript so recipe-type edge extraction and traversal have one implementation. A
 caller-aware server boundary enforces access and returns authorized recipe records; it does not duplicate edge or
-capability logic in a server endpoint. Recipe contents and a reliable content digest must eventually be observed
-together, and the complete closure needs a bounded coherent digest recheck. Whether the Node server exposes this
-as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite for the
-pure contract.
+capability logic in a server endpoint. Recipe contents and their server-owned monotonic revisions must eventually
+be observed together, and the complete closure needs a bounded coherent revision recheck. Whether the Node server
+exposes this as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite
+for the pure contract.
 
 The current GEE administrator-loading path is longstanding and remains unchanged while pure contracts, edge
 inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver.
@@ -328,9 +328,11 @@ Names remain open, but the contract needs these separations:
 }
 ```
 
-Use one conservative fingerprint of the whole resolved description and recipe graph initially. A forgotten field
-must over-invalidate rather than leave stale pixels or schema silently valid. Fine-grained data, schema and
-presentation revisions require measured evidence before introduction.
+Use one conservative fingerprint of the whole resolved description and recipe graph to invalidate that description
+initially. A forgotten field must over-invalidate rather than leave stale pixels or schema silently valid. A
+consumer with an explicitly named product derives its narrower operation-input fingerprint at that product boundary;
+it does not use the whole-description fingerprint as proof that an expensive result changed. Fine-grained
+data/schema/presentation revisions require measured evidence before introduction.
 
 Stable diagnoses include a code and dependency path. At minimum distinguish pending, transiently unverifiable,
 missing, forbidden, incomplete, cyclic and incompatible.
@@ -338,26 +340,33 @@ missing, forbidden, incomplete, cyclic and incompatible.
 ## Coherent execution bundles
 
 Execution bundles are a later milestone, not a prerequisite for Masking dependency safety, Apply-mask
-stabilization, constant Fill or direct asset Fill. They require both caller-authorized loading from the Node server
-replacement and reliable recipe content-digest evidence.
+stabilization, constant Fill or direct asset Fill. They require caller-authorized loading from the Node server
+replacement and reliable recipe revisions returned atomically with content.
 
 The current recipe `update_time` is a plain second-resolution SQL `TIMESTAMP`. Two saves in one second are therefore
-indistinguishable, so it must not be used as a coherent-build revision or cache key. The replacement storage
-boundary should persist a server-owned monotonic content revision and a content digest atomically with recipe
-content. The two values are complementary rather than alternatives: revision orders websocket events and supports
-cheap invalidation and optimistic concurrency; the digest identifies the exact persisted content and remains
-insensitive to clock and replication skew.
+indistinguishable, so it must not be used as a coherent-build revision or cache key, and equal timestamps never
+establish unchanged content. The replacement storage boundary persists a server-owned monotonic `contentRevision`
+atomically with recipe content. It orders websocket events, supports cheap invalidation and optimistic concurrency,
+and is distinct from the existing `typeVersion`, which is the recipe schema-migration version.
 
-Recipe list, load, save and future batch or closure operations expose the same committed revision. Reads used for
-coherent construction return content and digest from one storage boundary. A websocket update is published only
-after commit and carries at least recipe ID and revision, allowing clients to ignore duplicate or out-of-order
-events before fetching changed content. `update_time` remains useful for display and audit only.
+Recipe list, load, save and future batch or closure operations expose the same committed revision, and the same
+revision always returns the same execution-relevant content. Reads used for coherent construction return content
+and revision from one storage boundary. A save carries an expected revision and returns the committed one. A
+websocket update is published only after commit and carries at least recipe ID and revision, allowing clients to
+ignore duplicate or out-of-order events before fetching changed content. A no-op save returns the existing revision
+and publishes no event. `update_time` remains useful for display and audit only.
 
-The digest input is either the exact persisted recipe bytes or explicitly versioned canonical JSON. It must never
-be computed from a model after read-time enrichment or migration has changed it. New records store it atomically
-with each save. Existing records require no eager database backfill if the storage boundary derives and stores or
-returns the digest lazily when it is absent. The digest algorithm and canonicalization version are part of the
-storage contract.
+Semantic no-op detection compares normalized content, which requires defined normalization — transient UI state
+excluded, key order irrelevant, meaningful array order preserved, value types preserved, migration and default
+semantics versioned. Raw gzip or JSON byte equality is not authoritative. Where no-op detection is phased in after
+the initial revision implementation, spurious increments only over-invalidate: consumers re-resolve, and an
+unchanged product fingerprint still preserves their results. The complete storage contract is owned by
+[source-freshness.md](source-freshness.md).
+
+A content digest is not required for this protocol. It may be added later for a concrete provenance, integrity,
+cross-record deduplication or immutable-content requirement. If introduced, its bytes and canonicalization belong
+to the trusted persistence or bundle boundary; browser freshness must not serialize large recipe models to
+manufacture storage identity.
 
 An execution bundle is a resolved recipe graph, not a cache entry:
 
@@ -384,10 +393,15 @@ preflight evidence only and is never accepted as task authority: a client must n
 references, adapter parameters, planner-owned encoding or named operations after validation. Direct dependencies
 come from the command skeleton consumed by both graph construction and execution.
 
-Loading the graph sequentially is not itself atomic. The builder records each recipe digest, resolves the full
-closure, then rechecks those digests. If any changed during construction, it retries the complete build a
+Loading the graph sequentially is not itself atomic. The builder records each recipe revision, resolves the full
+closure, then rechecks those revisions. If any changed during construction, it retries the complete build a
 bounded number of times or reports a changing-source error. The accepted bundle contains complete recipe models,
 not references that the task worker later reloads.
+
+Bundle construction is the coherent form of the request-scoped snapshot cache that
+[source-freshness.md](source-freshness.md) requires at every execution boundary: one snapshot and revision per
+recipe ID per operation, so a single build can never mix two revisions of the same recipe. The snapshot cache is
+useful before bundles exist and remains correct alongside them.
 
 ### Preview
 
@@ -594,7 +608,7 @@ required physical timing and measure evidence, and materialization into concrete
 Emit low-cardinality Prometheus metrics and access-controlled structured logs for:
 
 - resolution duration, graph depth, node count and serialized bundle size;
-- bundle retries caused by changing recipe digests;
+- bundle retries caused by changing recipe revisions;
 - missing, forbidden, cyclic, incomplete and incompatible outcomes;
 - live versus bundled resolution;
 - verified execution and fail-closed handling of insufficient evidence;
@@ -614,8 +628,8 @@ globally.
 ## Verification
 
 Pure shared tests own traversal, diamonds, role handling, cycle paths, capability preservation, canonical
-fingerprints, explicit band mappings, capability reduction, bundle limits, coherent-digest retry decisions, legacy
-evidence and expectation validation.
+fingerprints, explicit band mappings, capability reduction, bundle limits, coherent-revision retry decisions,
+legacy evidence and expectation validation.
 
 GUI, GEE and Task each need one environment-level import/execution witness for the shared contract. Masking adds
 focused boundary tests for its activated traversal and execution behavior. The later bundle slice proves that
@@ -637,8 +651,10 @@ credentials bypass the requested principal.
 
 - Exact initial capability shapes and versioning after the provisional generic categorical fields are exercised.
 - Measured bundle depth, node and serialized-byte limits across the complete task path.
-- Digest algorithm, canonicalization version, legacy-row materialization and coherent-build retry count.
-- Monotonic recipe-revision representation, websocket event ordering and dirty-draft conflict behavior.
+- Coherent-build retry count and the optional integrity/provenance requirements, if any, that would justify a
+  persisted content digest.
+- `contentRevision` representation, the normalization rules behind semantic no-op detection, websocket event
+  ordering and dirty-draft conflict behavior.
 - Batch recipe endpoint transport details in the Node server replacement.
 - Whether and where detailed task manifests are retained.
 - Output handling when asset drift is detected after completion.

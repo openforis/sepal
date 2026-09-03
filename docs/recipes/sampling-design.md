@@ -241,6 +241,69 @@ Each was established by measurement, and each is cheap to break by accident.
   0.002 EECU-seconds per wall-clock second while cancelled ones report five orders more. Wall clock is the
   operative gate, and EECU cannot support cost comparisons between algorithms.
 
+## Derived-result freshness
+
+Stratum areas and per-stratum probabilities are materialized Earth Engine results. Their source IDs may stay
+unchanged while a referenced recipe is edited or an Earth Engine asset is replaced, so comparing the current form
+fields with the saved fields cannot establish that those results remain current.
+
+Sampling Design is the first consumer of the generic derived-resource contract in
+[source-freshness.md](source-freshness.md). It declares two named calculations:
+
+- `SAMPLING_STRATUM_AREAS` consumes the resolved AOI geometry, stratification product and selected band, and the
+  configured Stratification CRS and Scale;
+- `SAMPLING_STRATUM_PROBABILITIES` consumes the resolved AOI geometry, optional stratification product and grid,
+  categorical or probability product and selected bands, proportions mode and target class, and Proportions Scale.
+
+Anticipated proportions are not a third calculation. They are derived locally from the per-stratum probabilities
+together with the percentage interpretation, the overall-proportion target and the current stratum weights, and
+ordinary form edits rewrite them without any Earth Engine call. Evidence therefore attaches to the two calculated
+results, and anticipated proportions inherit staleness through that local derivation.
+
+Each stored result carries `calculatedFrom` evidence containing the normalized operation question and a fingerprint
+of its resolved inputs, produced by the calculating operation itself. Recipe snapshots are exact — one snapshot and
+revision per recipe ID per operation — while Earth Engine asset evidence is a contemporaneous observation such as
+`system:version`, revalidated before the result is committed and never a claim that the evaluated pixels were
+pinned. Evidence is persisted as section-level sidecars written atomically with the results they describe:
+
+```
+model.stratification.strataCalculatedFrom
+model.proportions.probabilityPerStratumCalculatedFrom
+```
+
+The existing arrays and their owner-first joins are unchanged: `strata`, `probabilityPerStratum` and
+`anticipatedProportions` keep their current ownership locations and legacy joined-row compatibility.
+
+Opening the recipe refreshes the revision vector of its dependencies. A result stays current only when **all**
+applicable evidence matches: the normalized operation question, the resource and contract versions, the recipe
+revision vector, refreshed asset evidence, and inline inputs such as polygon geometry. When it all matches, no
+recipe content is loaded. A changed revision triggers a reload and product re-resolution, and the operation-input
+fingerprint still decides reuse — a revision that moved for an unrelated reason can leave the result current.
+Differing fingerprints keep the old values only as stale context, block their use for submission and direct the
+user to recalculate. Retrieve revalidates afresh before submission rather than trusting the state established at
+open.
+
+A legacy result without sidecar evidence is `UNKNOWN`, which blocks submission exactly as `STALE` does: a result
+whose inputs cannot be established must not be presented as current. Every result that predates this design is in
+that position, so each such recipe needs one recalculation — potentially a batch calculation — before its next
+submission, with the existing values visible as context until then.
+
+A recipe selected as the AOI is consumed through the AOI geometry product it exposes, not as an undifferentiated
+recipe model. A changed source recipe revision causes that product to be resolved again. Where the referenced
+recipe type has a migrated AOI-product declaration, an unrelated edit leaves its AOI fingerprint unchanged and no
+new areas are needed; where it does not, the conservative fallback is whole persisted-source evidence and such an
+edit may mark the areas stale. A changed polygon, a replaced AOI asset observed through `system:version`, or a
+changed transitive recipe AOI always does.
+
+This works when the dependency was changed while Sampling Design was closed, and it depends on server-owned
+`contentRevision` from the Node recipe-storage replacement. Revision events and future patch transport make
+already-open updates cheaper and faster; neither is required for correctness.
+
+Sampling Design owns these dependency descriptions, how stale areas and probabilities propagate to anticipated
+proportions and allocation, the recalculation controls and submission rules. The shared graph owns closure; the
+product resolver owns product fingerprints; and the freshness layer owns recipe and asset observation, replay,
+in-flight sharing and rejection of late results from superseded inputs.
+
 ## Verification
 
 A directory of verification scripts sits alongside the gee module's source, outside the test suites, because
