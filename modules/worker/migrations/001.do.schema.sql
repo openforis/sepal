@@ -6,6 +6,8 @@
 -- NOTE: rmb_message / rmb_message_processing belonged to the Groovy sepal-server (reliable
 -- message bus) and stay in sdms — they are NOT part of the worker schema.
 -- Vestigial access-control tables (users/groups/etc.) remain in sdms — NOT copied.
+-- Usernames are lowercased on the way in: the legacy tables stored them as typed, while
+-- `sepal_user` is uniformly lowercase and every read path lowercases anyway.
 -- The shared migration runner executes the whole file as one multi-statement query, so the
 -- session @vars + PREPARE/EXECUTE persist across statements.
 
@@ -20,9 +22,9 @@ CREATE SCHEMA IF NOT EXISTS worker;
 -- deadline (never expires) and a NULL anchor (unbounded ratchet).
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`worker_session` (
-    `id`                     varchar(255)  NOT NULL,
+    `id`                     varchar(36)   NOT NULL,
     `state`                  varchar(16)   NOT NULL,
-    `username`               varchar(255)  NOT NULL,
+    `username`               varchar(32)   NOT NULL,
     `worker_type`            varchar(32)   NOT NULL,
     `instance_type`          varchar(64)   NOT NULL,
     `instance_id`            varchar(255)  NOT NULL,
@@ -47,7 +49,7 @@ CREATE TABLE IF NOT EXISTS worker.`worker_session` (
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='worker_session')
     AND (SELECT COUNT(*) FROM worker.`worker_session`)=0,
-    'INSERT INTO worker.`worker_session` (`id`, `state`, `username`, `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, `active_time`, `timeout_time`) SELECT `id`, `state`, `username`, `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, CASE WHEN `state`=''ACTIVE'' THEN `update_time` END, CASE WHEN `state`=''ACTIVE'' THEN `update_time` + INTERVAL 30 MINUTE END FROM sdms.`worker_session`',
+    'INSERT INTO worker.`worker_session` (`id`, `state`, `username`, `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, `active_time`, `timeout_time`) SELECT `id`, `state`, LOWER(`username`), `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, CASE WHEN `state`=''ACTIVE'' THEN `update_time` END, CASE WHEN `state`=''ACTIVE'' THEN `update_time` + INTERVAL 30 MINUTE END FROM sdms.`worker_session`',
     'DO 0'));
 PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
@@ -55,17 +57,17 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- task (copy from sdms if present and target empty, else create fresh)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`task` (
-    `id`                 varchar(255)  NOT NULL,
-    `state`              varchar(255)  NOT NULL,
-    `username`           varchar(255)  NOT NULL,
-    `session_id`         varchar(255)  NOT NULL,
+    `id`                 varchar(36)   NOT NULL,
+    `state`              varchar(16)   NOT NULL,
+    `username`           varchar(32)   NOT NULL,
+    `session_id`         varchar(36)   NOT NULL,
     `operation`          varchar(255)  NOT NULL,
-    `params`             longtext      NOT NULL,
-    `status_description` longtext      NOT NULL,
+    `params`             longtext      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
+    `status_description` longtext      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
     `creation_time`      timestamp     NOT NULL,
     `update_time`        timestamp     NOT NULL,
     `removed`            tinyint(1)    NOT NULL,
-    `recipe_id`          varchar(255)  DEFAULT NULL,
+    `recipe_id`          varchar(36)   DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_task_1` (`state`, `update_time`) USING BTREE,
     KEY `idx_task_2` (`session_id`, `state`) USING BTREE,
@@ -76,7 +78,7 @@ CREATE TABLE IF NOT EXISTS worker.`task` (
 SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='task')
     AND (SELECT COUNT(*) FROM worker.`task`)=0,
-    'INSERT INTO worker.`task` SELECT * FROM sdms.`task`',
+    'INSERT INTO worker.`task` (id, state, username, session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id) SELECT id, state, LOWER(username), session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id FROM sdms.`task`',
     'DO 0'));
 PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
@@ -107,10 +109,10 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- on clientDown and never produce takeover notifications.
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`session_app` (
-    `username`      varchar(255) NOT NULL,
+    `username`      varchar(32)  NOT NULL,
     `app_path`      varchar(255) NOT NULL,
-    `session_id`    varchar(255) NOT NULL,
-    `label`         varchar(255) DEFAULT NULL,
+    `session_id`    varchar(36)  NOT NULL,
+    `label`         varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
     `client_id`     varchar(64)  DEFAULT NULL,
     `creation_time` timestamp    NOT NULL,
     PRIMARY KEY (`username`, `app_path`),
@@ -125,8 +127,8 @@ CREATE TABLE IF NOT EXISTS worker.`session_app` (
 -- Retention: pruned after USAGE_SAMPLE_RETENTION_DAYS (default 30) by the daily prune job.
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
-    `session_id`         varchar(255) NOT NULL,
-    `username`           varchar(255) NOT NULL,
+    `session_id`         varchar(36)  NOT NULL,
+    `username`           varchar(32)  NOT NULL,
     `instance_type`      varchar(64)  NOT NULL,
     `sample_time`        timestamp    NOT NULL,
     `cpu_pct`            decimal(5,2) DEFAULT NULL,
@@ -147,8 +149,8 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
 -- (default 365).
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_hourly` (
-    `session_id`          varchar(255) NOT NULL,
-    `username`            varchar(255) NOT NULL,
+    `session_id`          varchar(36)  NOT NULL,
+    `username`            varchar(32)  NOT NULL,
     `instance_type`       varchar(64)  NOT NULL,
     `hour`                timestamp    NOT NULL,
     `sample_count`        int          NOT NULL,

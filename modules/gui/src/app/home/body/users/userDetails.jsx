@@ -25,13 +25,13 @@ const fields = {
     id: new Form.Field(),
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
-        .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format')
+        .username('user.userDetails.form.username.format')
         .predicate((username, {id}) => isUniqueUser(id, user => user.username?.toLowerCase() === username?.toLowerCase()), 'user.userDetails.form.username.unique'),
     name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
-        .email('user.userDetails.form.email.required')
+        .email('user.userDetails.form.email.format')
         .predicate((email, {id}) => isUniqueUser(id, user => user.email?.toLowerCase() === email?.toLowerCase()), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),

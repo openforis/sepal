@@ -123,8 +123,16 @@ const changePassword = async ctx => {
 }
 
 // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
+const INVALID_EMAIL = Symbol('invalid-email')
+
+// Returns the reloaded user, null when the user does not exist, or INVALID_EMAIL when the body
+// carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both callers
+// funnel through here, so neither can skip the check.
 const applyDetails = async (ctx, {targetUsername, adminValue}) => {
     const body = readBody(ctx)
+    if (body.email != null && !isValidEmail(body.email)) {
+        return INVALID_EMAIL
+    }
     await repository.updateUserDetails({
         username: targetUsername,
         name: body.name,
@@ -148,6 +156,11 @@ const applyDetails = async (ctx, {targetUsername, adminValue}) => {
 const updateCurrentDetails = async ctx => {
     const current = ctx.state.currentUser
     const user = await applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
+    if (user === INVALID_EMAIL) {
+        ctx.status = 400
+        ctx.body = {message: 'Invalid email'}
+        return
+    }
     if (!user) {
         ctx.status = 404
         ctx.body = {message: 'User not found'}
@@ -163,6 +176,11 @@ const updateDetails = async ctx => {
         targetUsername: body.username,
         adminValue: body.admin === true || body.admin === 'true'
     })
+    if (user === INVALID_EMAIL) {
+        ctx.status = 400
+        ctx.body = {message: 'Invalid email'}
+        return
+    }
     if (!user) {
         ctx.status = 404
         ctx.body = {message: 'User not found'}

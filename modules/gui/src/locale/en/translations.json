@@ -359,10 +359,12 @@
     "lessThan": "Must be less than {maxValue}",
     "match": "Must match {regex}",
     "max": "Max value is {maxValue}",
+    "maxLength": "Must be at most {max} characters",
     "min": "Min value is {minValue}",
     "notBlank": "Cannot be blank",
     "notEmpty": "Cannot be empty",
-    "number": "Must be a number"
+    "number": "Must be a number",
+    "username": "Username format is invalid"
   },
   "footer": {
     "buildNumber": "Build number",
@@ -537,7 +539,7 @@
         "label": "Email",
         "placeholder": "Enter your email address",
         "required": "Email is required",
-        "format": "Please enter a valid email address",
+        "format": "Email format is invalid",
         "duplicate": "This email is not available, please choose another one",
         "cannotValidate": "Cannot validate email"
       },
@@ -6007,6 +6009,7 @@
         "email": {
           "label": "Email",
           "required": "Email is required",
+          "format": "Email format is invalid",
           "unique": "There is another user with this email"
         },
         "emailNotifications": {

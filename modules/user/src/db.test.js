@@ -1,37 +1,41 @@
-// Contract test for the fresh-install base schema (src/sql/base-schema.sql). db.js applies this
-// DDL when the base table is missing, BEFORE running the Postgrator migrations. Existing installs
-// must be untouched and migration 001 must no-op.
+// Contract test for the schema migration (migrations/001.do.schema.sql). It creates the module's
+// own `user` schema and copies from the legacy `sepal_user`, which must be left untouched.
 import {readFileSync} from 'fs'
 import {join} from 'path'
 
 import {dirName} from '#sepal/path'
 
 const __dirname = dirName(import.meta.url)
-const raw = readFileSync(join(__dirname, 'sql/base-schema.sql'), 'utf8')
+const raw = readFileSync(join(__dirname, '../migrations/001.do.schema.sql'), 'utf8')
 // Assert against the SQL itself, not the explanatory header comments.
 const ddl = raw
     .split('\n')
     .filter(line => !line.trimStart().startsWith('--'))
     .join('\n')
 
-test('is guarded so it is a no-op on existing installs', () => {
-    expect(ddl).toMatch(/CREATE TABLE IF NOT EXISTS `sepal_user`\.`sepal_user`/)
+test('creates the schema and table guarded, so a rerun is a no-op', () => {
+    expect(ddl).toMatch(/CREATE SCHEMA IF NOT EXISTS user;/)
+    expect(ddl).toMatch(/CREATE TABLE IF NOT EXISTS user\.`sepal_user`/)
 })
 
-test('contains only the guarded CREATE TABLE (no other statements)', () => {
-    // db.js runs the file as a single query; anything else here would run unguarded on every boot.
-    const statements = ddl.split(';').map(s => s.trim()).filter(s => s.length > 0)
-    expect(statements).toHaveLength(1)
-    expect(statements[0]).toMatch(/^CREATE TABLE IF NOT EXISTS/)
-})
-
-test('includes the migration-001 credential/POSIX columns so 001 no-ops on a fresh install', () => {
-    // 001's AddColumnIfNotExists procedure skips existing columns; if any of these were missing
-    // from the base DDL, 001 would still work — but the schema would depend on migration order.
-    // Keeping the base DDL at the full current shape keeps fresh installs deterministic.
+test('includes the credential/POSIX columns, so there is no follow-up column migration', () => {
     for (const column of ['`password_hash`', '`ssh_public_key`', '`uid`', '`gid`']) {
         expect(ddl).toContain(column)
     }
+})
+
+test('copies only when the source exists and the target is still empty', () => {
+    expect(ddl).toMatch(/EXISTS\(SELECT 1 FROM information_schema\.TABLES WHERE TABLE_SCHEMA='sepal_user'/)
+    expect(ddl).toMatch(/\(SELECT COUNT\(\*\) FROM user\.`sepal_user`\)=0/)
+})
+
+test('lowercases usernames on the way in', () => {
+    expect(ddl).toMatch(/SELECT id, LOWER\(username\)/)
+})
+
+test('never writes to the legacy schema', () => {
+    const writes = ddl.match(/(INSERT INTO|UPDATE|DELETE FROM|ALTER TABLE|DROP TABLE)\s+sepal_user\./g)
+    expect(writes).toBeNull()
 })
 
 test('does not pin AUTO_INCREMENT (fresh installs start from 1)', () => {

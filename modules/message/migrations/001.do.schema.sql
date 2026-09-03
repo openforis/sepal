@@ -1,10 +1,10 @@
 CREATE SCHEMA IF NOT EXISTS message;
 
 CREATE TABLE IF NOT EXISTS message.message (
-  id            VARCHAR(255) NOT NULL,
-  username      VARCHAR(255) NOT NULL,
-  subject       VARCHAR(255) NOT NULL,
-  contents      LONGTEXT     NOT NULL,
+  id            VARCHAR(36)  NOT NULL,
+  username      VARCHAR(32)  NOT NULL,
+  subject       VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
+  contents      LONGTEXT     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
   type          VARCHAR(63)  NOT NULL,
   creation_time TIMESTAMP    NOT NULL,
   update_time   TIMESTAMP    NOT NULL,
@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS message.message (
 );
 
 CREATE TABLE IF NOT EXISTS message.notification (
-  message_id VARCHAR(255) NOT NULL,
-  username   VARCHAR(255) NOT NULL,
-  state      VARCHAR(255) NOT NULL,
+  message_id VARCHAR(36)  NOT NULL,
+  username   VARCHAR(32)  NOT NULL,
+  state      VARCHAR(16)  NOT NULL,
   PRIMARY KEY (message_id, username),
   INDEX idx_notification_1 (username, message_id) USING BTREE
 );

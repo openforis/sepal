@@ -2,7 +2,8 @@
 
 Node.js user module (formerly `user-node`; it replaced the now-deleted Java `user`
 module and LDAP). Owns users and their credentials (password hashes, SSH public keys)
-in the `sepal_user` MySQL database. The one-shot LDAP→DB credential migration that ran
+in the `user` MySQL database (table `sepal_user`), copied by migration 001 from the legacy
+`sepal_user` schema, which is left untouched. The one-shot LDAP→DB credential migration that ran
 at startup during the transition has been removed along with the `ldap` module.
 
 POSIX identity is **stored**, not derived: `sepal_user` has `uid` and `gid` columns.
@@ -23,8 +24,8 @@ See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-d
 
 ## Schema ownership
 
-The module owns `sepal_user` end to end: on boot it creates the database and base
-`sepal_user` table if missing (`src/sql/base-schema.sql`, guarded `CREATE … IF NOT
-EXISTS` — a no-op on existing installs), then applies its Postgrator migrations using
-the default history table `schema_version`. The Java `user` module's previous Flyway
+The module owns the `user` schema end to end: migration 001 creates the `sepal_user`
+table at its full current shape and copies the rows from the legacy `sepal_user` schema
+if that schema is present and the target is still empty. Postgrator uses the default
+history table `schema_version`. The Java `user` module's previous Flyway
 history table was renamed to `schema_version_old` at cutover.
