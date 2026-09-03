@@ -9,7 +9,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@aws-sdk/client-ec2": "^3.1116.0",
+        "@aws-sdk/client-ec2": "^3.1125.0",
         "commander": "^15.0.0",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
@@ -23,7 +23,7 @@
     "type": "module",
     "devDependencies": {
         "aws-sdk-client-mock": "^4.1.0",
-        "jest": "^30.4.2",
-        "mysql2": "^3.24.2"
+        "jest": "^30.5.1",
+        "mysql2": "^3.24.3"
     }
 }
