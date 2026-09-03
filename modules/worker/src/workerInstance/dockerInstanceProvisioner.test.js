@@ -437,6 +437,39 @@ describe('undeploy', () => {
         expect(deletedIds).toEqual(['w-001'])
     })
 
+    test('on the shared daemon, deletes this instance\'s container and leaves another instance\'s', async () => {
+        const deletedIds = []
+
+        globalThis.fetch = jest.fn(async (url, opts) => {
+            const method = opts?.method ?? 'GET'
+            if (url.includes('/containers/json')) {
+                return {
+                    ok: true, status: 200,
+                    text: async () => JSON.stringify([
+                        {Id: 'mine', Names: ['/sandbox.alice.lofty-reef.inst-abc123']},
+                        {Id: 'theirs', Names: ['/sandbox.bob.misty-fjord.inst-other']},
+                    ]),
+                }
+            }
+            if (method === 'DELETE') {
+                const match = url.match(/\/containers\/([^?]+)/)
+                if (match) deletedIds.push(match[1])
+                return {ok: true, status: 204, text: async () => ''}
+            }
+            return {ok: true, status: 200, text: async () => '{}'}
+        })
+
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            defaultDaemonHost: 'daemon-host',
+        })
+        await provisioner.undeploy(makeInstance({daemonHost: 'daemon-host'}))
+
+        expect(deletedIds).toEqual(['mine'])
+    })
+
     test('undeploy does nothing when no .worker containers exist', async () => {
         let deleteCallCount = 0
 
@@ -763,6 +796,18 @@ describe('removeOrphanedContainers', () => {
         const {fetch, requests} = makeFetch([
             {Id: 'c-live', Names: ['/sandbox.admin.aaa'], Created: OLD},
             {Id: 'c-task-live', Names: ['/task.admin.aaa'], Created: OLD},
+        ])
+        global.fetch = fetch
+
+        const removed = await makeProvisioner().removeOrphanedContainers(['aaa'])
+
+        expect(deletedContainerIds(requests)).toEqual([])
+        expect(removed).toEqual([])
+    })
+
+    it('keeps a current-format container whose name ends with a live instance id', async () => {
+        const {fetch, requests} = makeFetch([
+            {Id: 'c-live', Names: ['/sandbox.admin.lofty-reef.aaa'], Created: OLD},
         ])
         global.fetch = fetch
 

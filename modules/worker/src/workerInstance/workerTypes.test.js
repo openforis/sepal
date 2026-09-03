@@ -77,21 +77,24 @@ describe('createWorkerType TASK_EXECUTOR dev mounts', () => {
 })
 
 describe('image containerName', () => {
-    it('is "{image}.{username}.{instance name}"', () => {
+    it('is "{image}.{username}.{instance name}.{instance id}"', () => {
         const workerType = createWorkerType(TASK_EXECUTOR, instance, config({deployEnvironment: 'PRODUCTION'}))
-        expect(workerType.images[0].containerName(instance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
+        expect(workerType.images[0].containerName(instance))
+            .toBe(`task.admin.${instanceName(SESSION_ID)}.${instance.id}`)
 
         const localInstance = {...instance, host: instance.id, daemonHost: 'host.docker.internal'}
         const localWorkerType = createWorkerType(TASK_EXECUTOR, localInstance, config({deployEnvironment: 'DEV'}))
-        expect(localWorkerType.images[0].containerName(localInstance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
+        expect(localWorkerType.images[0].containerName(localInstance))
+            .toBe(`task.admin.${instanceName(SESSION_ID)}.${instance.id}`)
     })
 
-    // The name now identifies the SESSION, so it is the same whether the instance is a local uuid
-    // or an EC2 id — and an instance reused by a later session gets a different container name.
-    it('does not depend on the instance id', () => {
+    // The two-word name identifies the session; the trailing instance id is what the shared-daemon
+    // ownership lookups match on, so an EC2 id has to survive into the name unchanged.
+    it('ends with the instance id', () => {
         const awsInstance = {...instance, id: 'i-0abc123'}
         const workerType = createWorkerType(TASK_EXECUTOR, awsInstance, config({deployEnvironment: 'PRODUCTION'}))
-        expect(workerType.images[0].containerName(awsInstance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
+        expect(workerType.images[0].containerName(awsInstance))
+            .toBe(`task.admin.${instanceName(SESSION_ID)}.i-0abc123`)
     })
 
     // A reservation rebuilt from EC2 tags without a SessionId would otherwise name the container

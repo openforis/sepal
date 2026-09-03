@@ -1,8 +1,8 @@
 // WorkerTypes — container specs for the SANDBOX and TASK_EXECUTOR worker types.
 //
 // tempDir() has an fs side effect: mkdir /data/home/{username}/tmp/{instanceId} + chmod 1777.
-// containerName(instance) comes from ../containerName.js: the last segment is the two-word name
-// the user reads for the instance, so the reservation must carry the session id it derives from.
+// containerName(instance) comes from ../containerName.js, which needs both the session id the
+// two-word name derives from (carried on the reservation) and the instance id.
 
 import fs from 'node:fs'
 
@@ -45,6 +45,7 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
         image: name,
         username: instance.reservation.username,
         sessionId: instance.reservation.sessionId,
+        instanceId: instance.id,
     }),
 })
 
