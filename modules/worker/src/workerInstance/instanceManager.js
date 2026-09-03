@@ -70,14 +70,14 @@ const createInstanceManager = ({repo, provider, provisioner, instanceTypes}) => 
     // workerSession/missingInstanceTracker.js) — an UNKNOWN must not cost a user their session.
     const sessionsWithoutInstance = async sessions => {
         // Reconstruct full WorkerInstance objects from the session fields — the session only holds
-        // the {id, host} projection, but provisioner.instanceStatus needs type and
-        // reservation.workerType.
+        // the {id, host} projection, but provisioner.instanceStatus needs type and the full
+        // reservation: the container name derives from reservation.sessionId.
         const sessionsWithInst = sessions.filter(s => s.instance && s.instance.id)
         const instances = sessionsWithInst.map(s => ({
             id: s.instance.id,
             type: s.instanceType,
             host: s.instance.host,
-            reservation: {username: s.username, workerType: s.workerType},
+            reservation: {username: s.username, workerType: s.workerType, sessionId: s.id},
         }))
 
         if (instances.length === 0) return []
