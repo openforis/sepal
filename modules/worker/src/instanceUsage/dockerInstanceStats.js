@@ -23,6 +23,7 @@
 // defaultDaemonHost — local hosting only: all instances share the dev daemon and
 // instance.host is a network alias (mirrors dockerInstanceProvisioner.normalizeInstance).
 
+import {containerName as buildContainerName} from '../containerName.js'
 import {dockerFetch} from '../workerInstance/dockerApi.js'
 import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
 
@@ -52,7 +53,7 @@ const createDockerInstanceStats = ({config, defaultDaemonHost = null, fetcher = 
         if (!image) {
             throw new Error(`Unknown worker type: ${session.workerType}`)
         }
-        return `${image}.${session.username}.${session.instance.id}`
+        return buildContainerName({image, username: session.username, sessionId: session.id})
     }
 
     const containerStats = async session =>

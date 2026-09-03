@@ -11,6 +11,7 @@
 import {ClientException, NotFoundException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
 
+import {instanceName} from '../instanceName.js'
 import {instanceTag} from '../tag.js'
 import {activatePendingSessionOnInstance as _activatePendingSessionOnInstance} from './command/activatePendingSessionOnInstance.js'
 import {closeSession as _closeSession} from './command/closeSession.js'
@@ -25,7 +26,6 @@ import {releaseUnusedInstances as _releaseUnusedInstances} from './command/relea
 import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
 import {emitSessionAppAssociated, emitSessionAppDissociated, emitSessionChanged, emitSessionExpiryClosed, emitSessionExpiryNotified, emitWorkerSessionActivated, emitWorkerSessionClosed, emitWorkerSessionRequested} from './events.js'
-import {instanceName} from './instanceName.js'
 import {allOpenSessions as _allOpenSessions} from './query/allOpenSessions.js'
 import {findPendingOrActiveSession as _findPendingOrActiveSession} from './query/findPendingOrActiveSession.js'
 import {findSessionById as _findSessionById} from './query/findSessionById.js'

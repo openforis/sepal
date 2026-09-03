@@ -153,6 +153,42 @@ describe('requestInstance', () => {
         expect(result.id).toBe('i-new')
     })
 
+    // The container is named after the session's two-word name, so the reservation is what carries
+    // the session id from the session layer down to the provisioner. Dropping it here renames
+    // nothing — it makes the container unnameable.
+    test('launch path: puts the session id on the reservation', async () => {
+        const repo = makeRepo()
+        const provider = makeProvider()
+
+        await requestInstance(
+            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice', sessionId: 's-42'},
+            {repo, provider}
+        )
+
+        expect(provider.launchReserved).toHaveBeenCalledWith(
+            'T3aSmall',
+            {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
+        )
+    })
+
+    test('idle-reserve path: puts the session id on the reservation', async () => {
+        const idle = makeInstance({id: 'i-idle'})
+        const repo = makeRepo({
+            idleInstances: jest.fn().mockResolvedValue(['i-idle']),
+            reserved: jest.fn().mockResolvedValue(true),
+        })
+        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
+
+        await requestInstance(
+            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice', sessionId: 's-42'},
+            {repo, provider}
+        )
+
+        const [reservedInstance] = provider.reserve.mock.calls[0]
+        expect(reservedInstance.reservation)
+            .toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+    })
+
     test('idle-reserve path: finds common idle → repo.reserved → provider.reserve → emits InstancePendingProvisioning', async () => {
         const pendingPayloads = []
         events.instancePendingProvisioning$.subscribe(v => pendingPayloads.push(v))
@@ -709,6 +745,25 @@ describe('instanceManager', () => {
         expect(result).not.toHaveProperty('launchTime')
         expect(result).not.toHaveProperty('running')
         expect(result).not.toHaveProperty('type')
+    })
+
+    // requestInstance is handed the whole session; the id must survive into the reservation, since
+    // that is the only route the session id has to the provisioner naming the container.
+    test('requestInstance carries the session id into the reservation', async () => {
+        const deps = makeManagerDeps()
+        const manager = createInstanceManager(deps)
+
+        await manager.requestInstance({
+            id: 's-42',
+            workerType: 'SANDBOX',
+            instanceType: 'T3aSmall',
+            username: 'alice',
+        })
+
+        expect(deps.provider.launchReserved).toHaveBeenCalledWith(
+            'T3aSmall',
+            {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
+        )
     })
 
     test('onInstanceActivated fires with {id, host} only (Java InstanceComponentAdapter parity)', async () => {

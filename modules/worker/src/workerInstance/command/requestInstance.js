@@ -18,7 +18,7 @@ import {reserve} from '../workerInstance.js'
 
 const log = getLogger('worker/requestInstance')
 
-const requestInstance = async ({workerType, instanceType, username}, {repo, provider}) => {
+const requestInstance = async ({workerType, instanceType, username, sessionId}, {repo, provider}) => {
     log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
 
     try {
@@ -34,7 +34,7 @@ const requestInstance = async ({workerType, instanceType, username}, {repo, prov
         const idleInstance = sharedIdle[0] ?? null
 
         if (idleInstance) {
-            const reservation = {username, workerType}
+            const reservation = {username, workerType, sessionId}
             // Single race-safe UPDATE — returns true only if we won
             const won = await repo.reserved(idleInstance.id, workerType)
             if (won) {
@@ -48,7 +48,7 @@ const requestInstance = async ({workerType, instanceType, username}, {repo, prov
             log.info(`Lost race on idle ${instanceTag(idleInstance)}, launching new instead`)
         }
 
-        return await launchInstance({workerType, instanceType, username}, {repo, provider})
+        return await launchInstance({workerType, instanceType, username, sessionId}, {repo, provider})
 
     } catch (err) {
         emitFailedToRequestInstance(workerType, instanceType, err)
@@ -57,8 +57,8 @@ const requestInstance = async ({workerType, instanceType, username}, {repo, prov
 }
 
 // launchInstance — called when no idle instance is available, or the race for one was lost.
-const launchInstance = async ({workerType, instanceType, username}, {repo, provider}) => {
-    const reservation = {username, workerType}
+const launchInstance = async ({workerType, instanceType, username, sessionId}, {repo, provider}) => {
+    const reservation = {username, workerType, sessionId}
     const instance = await provider.launchReserved(instanceType, reservation)
     await repo.launched(instance)
     emitInstanceLaunched(instance)

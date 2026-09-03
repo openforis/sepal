@@ -7,6 +7,7 @@
 // dockerInstanceProvisioner.waitUntilInitialized ignores exit codes, and a start that timed out
 // must not be indistinguishable from one that succeeded.
 
+import {containerName as buildContainerName} from '../containerName.js'
 import {dockerFetch} from './dockerApi.js'
 import {SANDBOX} from './workerTypes.js'
 
@@ -24,7 +25,7 @@ const createDockerSandboxServerControl = ({config, defaultDaemonHost = null, fet
         if (session.workerType !== SANDBOX) {
             throw new Error(`Not a sandbox session: ${session.id}`)
         }
-        return `sandbox.${session.username}.${session.instance.id}`
+        return buildContainerName({image: SANDBOX, username: session.username, sessionId: session.id})
     }
 
     const startServer = async (session, endpoint) => {

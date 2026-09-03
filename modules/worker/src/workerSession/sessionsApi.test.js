@@ -6,7 +6,7 @@
 
 import {jest} from '@jest/globals'
 
-import {instanceName} from './instanceName.js'
+import {instanceName} from '../instanceName.js'
 import {createSessionsApi} from './sessionsApi.js'
 
 const sessionManager = {

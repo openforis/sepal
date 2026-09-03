@@ -26,8 +26,8 @@
 
 import {getLogger} from '#sepal/log'
 
+import {instanceName} from '../../instanceName.js'
 import {sessionTag} from '../../tag.js'
-import {instanceName} from '../instanceName.js'
 import {sessionOrdinals} from '../query/sessionOrdinals.js'
 import {NotificationState, withApiKey} from '../workerSession.js'
 

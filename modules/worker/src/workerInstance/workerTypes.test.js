@@ -15,10 +15,13 @@ jest.unstable_mockModule('node:fs', () => ({
 }))
 
 const {createWorkerType, SANDBOX, TASK_EXECUTOR} = await import('./workerTypes.js')
+const {instanceName} = await import('../instanceName.js')
+
+const SESSION_ID = '25a02f1c-9e59-491e-b5ac-80b95dcc274e'
 
 const instance = {
     id: '3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
-    reservation: {username: 'admin', workerType: TASK_EXECUTOR},
+    reservation: {username: 'admin', workerType: TASK_EXECUTOR, sessionId: SESSION_ID},
 }
 
 const config = ({deployEnvironment, sepalHostProjectDir}) => ({
@@ -74,19 +77,29 @@ describe('createWorkerType TASK_EXECUTOR dev mounts', () => {
 })
 
 describe('image containerName', () => {
-    it('is "{image}.{username}.{id}"', () => {
+    it('is "{image}.{username}.{instance name}"', () => {
         const workerType = createWorkerType(TASK_EXECUTOR, instance, config({deployEnvironment: 'PRODUCTION'}))
-        expect(workerType.images[0].containerName(instance)).toBe(`task.admin.${instance.id}`)
+        expect(workerType.images[0].containerName(instance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
 
         const localInstance = {...instance, host: instance.id, daemonHost: 'host.docker.internal'}
         const localWorkerType = createWorkerType(TASK_EXECUTOR, localInstance, config({deployEnvironment: 'DEV'}))
-        expect(localWorkerType.images[0].containerName(localInstance)).toBe(`task.admin.${instance.id}`)
+        expect(localWorkerType.images[0].containerName(localInstance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
     })
 
-    it('passes AWS EC2 instance ids through unchanged', () => {
+    // The name now identifies the SESSION, so it is the same whether the instance is a local uuid
+    // or an EC2 id — and an instance reused by a later session gets a different container name.
+    it('does not depend on the instance id', () => {
         const awsInstance = {...instance, id: 'i-0abc123'}
         const workerType = createWorkerType(TASK_EXECUTOR, awsInstance, config({deployEnvironment: 'PRODUCTION'}))
-        expect(workerType.images[0].containerName(awsInstance)).toBe('task.admin.i-0abc123')
+        expect(workerType.images[0].containerName(awsInstance)).toBe(`task.admin.${instanceName(SESSION_ID)}`)
+    })
+
+    // A reservation rebuilt from EC2 tags without a SessionId would otherwise name the container
+    // "task.admin.null" and lose it for good.
+    it('throws when the reservation carries no session id', () => {
+        const orphaned = {...instance, reservation: {username: 'admin', workerType: TASK_EXECUTOR}}
+        const workerType = createWorkerType(TASK_EXECUTOR, orphaned, config({deployEnvironment: 'PRODUCTION'}))
+        expect(() => workerType.images[0].containerName(orphaned)).toThrow(/session/i)
     })
 })
 

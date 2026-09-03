@@ -85,6 +85,9 @@ const reserveTags = (environment, reservation) => [
     mkTag('State', 'reserved'),
     mkTag('Username', reservation.username),
     mkTag('WorkerType', reservation.workerType),
+    // The container is named after the session; this is the only thing that carries the session id
+    // across a worker restart, since the reservation is rebuilt from these tags.
+    mkTag('SessionId', reservation.sessionId ?? ''),
     // InStateSince is informational only (no consumer parses it); format intentionally ISO-8601.
     mkTag('InStateSince', new Date().toISOString()),
     mkTag('Name', `${environment}: ${reservation.workerType}, ${reservation.username}`),
@@ -118,6 +121,7 @@ const toWorkerInstance = (awsInstance, codec) => {
     const reservation = idle ? null : {
         username: tagValue(awsInstance, 'Username') ?? '',
         workerType: tagValue(awsInstance, 'WorkerType') ?? '',
+        sessionId: tagValue(awsInstance, 'SessionId') ?? null,
     }
     return createWorkerInstance({
         id: awsInstance.InstanceId,

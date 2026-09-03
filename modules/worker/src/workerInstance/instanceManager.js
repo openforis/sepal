@@ -33,9 +33,9 @@ const createInstanceManager = ({repo, provider, provisioner, instanceTypes}) => 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.
     const _requestInstance = async session => {
-        const {workerType, instanceType, username} = session
+        const {workerType, instanceType, username, id: sessionId} = session
         log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
-        const instance = await requestInstance({workerType, instanceType, username}, {repo, provider})
+        const instance = await requestInstance({workerType, instanceType, username, sessionId}, {repo, provider})
         return {id: instance.id, host: instance.host}
     }
 

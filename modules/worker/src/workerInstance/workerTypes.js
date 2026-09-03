@@ -1,12 +1,14 @@
 // WorkerTypes — container specs for the SANDBOX and TASK_EXECUTOR worker types.
 //
 // tempDir() has an fs side effect: mkdir /data/home/{username}/tmp/{instanceId} + chmod 1777.
-// containerName(instance) is "{image}.{username}.{instanceId}" — the instance id keeps names
-// unique on a shared daemon.
+// containerName(instance) comes from ../containerName.js: the last segment is the two-word name
+// the user reads for the instance, so the reservation must carry the session id it derives from.
 
 import fs from 'node:fs'
 
 import {getLogger} from '#sepal/log'
+
+import {containerName} from '../containerName.js'
 
 const log = getLogger('workerTypes')
 
@@ -39,10 +41,11 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
     environment,
     runCommand,
     waitCommand,
-    // "{image}.{username}.{instanceId}" — the instance id (a uuid locally, an EC2 id like
-    // "i-0abc…" on AWS) makes the name unique even on the shared local dev daemon, so one
-    // formula serves both hosting services.
-    containerName: instance => `${name}.${instance.reservation.username}.${instance.id}`,
+    containerName: instance => containerName({
+        image: name,
+        username: instance.reservation.username,
+        sessionId: instance.reservation.sessionId,
+    }),
 })
 
 // publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.

@@ -72,7 +72,7 @@ const makeInstance = (overrides = {}) => ({
     host: '10.0.0.1',
     running: true,
     launchTime: new Date(),
-    reservation: {username: 'alice', workerType: 'sandbox'},
+    reservation: {username: 'alice', workerType: 'sandbox', sessionId: 'sess-1'},
     ...overrides,
 })
 
@@ -248,7 +248,7 @@ describe('buildContainerBody — SANDBOX', () => {
 describe('buildContainerBody — TASK_EXECUTOR', () => {
     let capturedBody
 
-    const taskInstance = makeInstance({reservation: {username: 'alice', workerType: 'task-executor'}})
+    const taskInstance = makeInstance({reservation: {username: 'alice', workerType: 'task-executor', sessionId: 'sess-1'}})
 
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')

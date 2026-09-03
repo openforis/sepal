@@ -124,20 +124,38 @@ describe('idleTags', () => {
 
 describe('reserveTags', () => {
     test('contains State=reserved, Username, WorkerType, InStateSince, Name with env+type+user', () => {
-        const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX'})
+        const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
         expect(tags).toContainEqual({Key: 'State', Value: 'reserved'})
         expect(tags).toContainEqual({Key: 'Username', Value: 'alice'})
         expect(tags).toContainEqual({Key: 'WorkerType', Value: 'SANDBOX'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name).toBeDefined()
         expect(name.Value).toBe('test-env: SANDBOX, alice')
-        expect(tags).toHaveLength(5)
+        expect(tags).toHaveLength(6)
     })
 
     test('Name field exact format: "{env}: {workerType}, {username}"', () => {
         const tags = reserveTags('prod', {username: 'bob', workerType: 'TASK_EXECUTOR'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name.Value).toBe('prod: TASK_EXECUTOR, bob')
+    })
+})
+
+// The container is named after the session, and on AWS the reservation is rebuilt from EC2 tags
+// after a worker restart. Untagged, the session id would not survive that — and the provisioner
+// could no longer name (or find) the container it created.
+describe('session id survives the EC2 tag round-trip', () => {
+    // mkTag stringifies, so a missing id would tag the literal "undefined" — which reads back as a
+    // truthy session id and yields a confident, wrong container name instead of a loud failure.
+    test('never tags the literal "undefined" for a missing session id', () => {
+        const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX'})
+        const sessionId = tags.find(t => t.Key === 'SessionId')
+        expect(sessionId?.Value).not.toBe('undefined')
+    })
+
+    test('reserveTags carries the session id', () => {
+        const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+        expect(tags).toContainEqual({Key: 'SessionId', Value: 's-42'})
     })
 })
 
@@ -382,7 +400,7 @@ describe('launchReserved public-IP polling', () => {
         provider.stop()
 
         expect(inst.host).toBe('9.8.7.6')
-        expect(inst.reservation).toEqual(RESERVATION)
+        expect(inst.reservation).toEqual({...RESERVATION, sessionId: null})
     }, 10_000)
 })
 
@@ -727,7 +745,7 @@ describe('best-effort auto-cleanup — cleanup failure does not reject query', (
         const result = await provider.reservedInstances()
         const found = result.find(i => i.id === 'i-res-survives')
         expect(found).toBeDefined()
-        expect(found.reservation).toEqual({username: 'alice', workerType: 'SANDBOX'})
+        expect(found.reservation).toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: null})
     }, 15_000)
 
     test('caller-initiated terminate() DOES reject after all retries fail', async () => {
@@ -919,6 +937,27 @@ describe('reservedInstances', () => {
         expect(stateFilter.Values).toContain('reserved')
     })
 
+    test('a reserved instance is rebuilt with its session id', async () => {
+        const reservedInst = makeAwsInstance({
+            InstanceId: 'i-res-session',
+            Tags: [
+                {Key: 'State', Value: 'reserved'},
+                {Key: 'Type', Value: 'Worker'},
+                {Key: 'Environment', Value: 'test-env'},
+                {Key: 'Version', Value: '5.0.0'},
+                {Key: 'Username', Value: 'alice'},
+                {Key: 'WorkerType', Value: 'SANDBOX'},
+                {Key: 'SessionId', Value: 's-42'},
+            ],
+        })
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([reservedInst]))
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        const found = (await provider.reservedInstances()).find(i => i.id === 'i-res-session')
+
+        expect(found.reservation).toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+    })
+
     test('returns WorkerInstance objects with reservation set', async () => {
         const reservedInst = makeAwsInstance({
             InstanceId: 'i-res1',
@@ -951,6 +990,6 @@ describe('reservedInstances', () => {
         expect(found).toBeDefined()
         expect(found.id).toBe('i-res1')
         expect(found.type).toBe('T3aSmall')
-        expect(found.reservation).toEqual({username: 'charlie', workerType: 'TASK_EXECUTOR'})
+        expect(found.reservation).toEqual({username: 'charlie', workerType: 'TASK_EXECUTOR', sessionId: null})
     })
 })

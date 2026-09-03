@@ -4,9 +4,9 @@
 
 import {jest} from '@jest/globals'
 
+import {instanceName} from '../instanceName.js'
 import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
 import {InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetErrors.js'
-import {instanceName} from './instanceName.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
 import {createWorkerSession, State} from './workerSession.js'

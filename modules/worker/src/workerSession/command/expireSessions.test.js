@@ -4,7 +4,7 @@
 
 import {jest} from '@jest/globals'
 
-import {instanceName} from '../instanceName.js'
+import {instanceName} from '../../instanceName.js'
 import {expireSessions} from './expireSessions.js'
 
 const NOW = new Date('2026-08-13T12:00:00Z')

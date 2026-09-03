@@ -15,7 +15,7 @@
 //                           costSinceCreation, apps[], terminals, verdict, usage{...} }
 
 import {launchFailureCode} from '../hostingService/instanceLaunchErrors.js'
-import {instanceName} from './instanceName.js'
+import {instanceName} from '../instanceName.js'
 import {State} from './workerSession.js'
 
 const SANDBOX = 'sandbox'

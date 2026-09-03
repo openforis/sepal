@@ -1,3 +1,4 @@
+import {instanceName} from '../instanceName.js'
 import {createDockerSandboxServerControl} from './dockerSandboxServerControl.js'
 
 const config = {dockerPort: 2375, dockerEntryPoint: 'v1.44'}
@@ -23,7 +24,7 @@ describe('startServer', () => {
         const control = createDockerSandboxServerControl({config, fetcher: fetcherReturning(calls, 0)})
         await control.startServer(session, 'jupyter')
         expect(calls[0][0]).toBe('http://1.2.3.4:2375/v1.44')
-        expect(calls[0][1]).toBe('containers/sandbox.alice.i-0abc/exec')
+        expect(calls[0][1]).toBe(`containers/sandbox.alice.${instanceName('sess-1')}/exec`)
         expect(calls[0][2].body.Cmd).toEqual(['/script/sandbox-server.sh', 'start', 'jupyter'])
         expect(calls[0][2].body.Tty).toBe(false)
         expect(calls[1][1]).toBe('exec/exec-1/start')
@@ -48,7 +49,7 @@ describe('startServer', () => {
             config, defaultDaemonHost: 'host.docker.internal', fetcher: fetcherReturning(calls, 0)})
         await control.startServer({...session, instance: {id: 'abc-123', host: 'alias-42'}}, 'rstudio')
         expect(calls[0][0]).toBe('http://host.docker.internal:2375/v1.44')
-        expect(calls[0][1]).toBe('containers/sandbox.alice.abc-123/exec')
+        expect(calls[0][1]).toBe(`containers/sandbox.alice.${instanceName('sess-1')}/exec`)
     })
 
     it('rejects for a non-sandbox session', async () => {
