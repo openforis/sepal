@@ -154,15 +154,11 @@ describe('the input-image panel round trip', () => {
         expect(values.bands).toBe(PHYSICAL_BANDS)
     })
 
-    // DEFECT. A misspelled key - `visualiations` - so the templates are never restored into the form.
-    // Re-applying the panel without reloading the asset writes `visualizations: undefined` back over them and
-    // the copied templates are gone for good.
-    it('does not restore the templates, and loses them on the next apply', () => {
+    it('restores the templates, and keeps them across another apply', () => {
         const values = modelToValues(model)
 
-        expect(values.visualizations).toBeUndefined()
-        expect(values.visualiations).toBe(model.visualizations)
-        expect(valuesToModel(values).visualizations).toBeUndefined()
+        expect(values.visualizations).toBe(model.visualizations)
+        expect(valuesToModel(values).visualizations).toBe(model.visualizations)
     })
 
     it('carries the templates through when the form does hold them', () => {

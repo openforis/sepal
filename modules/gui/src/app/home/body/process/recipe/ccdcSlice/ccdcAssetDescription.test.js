@@ -160,7 +160,7 @@ describe('the presentation templates', () => {
     })
 
     it('keeps the baseBands field that says which measure the template belongs to', () => {
-        expect(describeAsset({properties: HARMONIC}).visualizations[0].baseBands).toBe('ndvi')
+        expect(describeAsset({properties: HARMONIC}).visualizations[0].baseBands).toEqual(['ndvi'])
     })
 
     // Visualization properties contribute to no structural field. CCDC-shaped ones on an asset whose band names
