@@ -11,8 +11,8 @@ jest.unstable_mockModule('../db.js', () => ({
     getPool: () => mockPool
 }))
 
-const {idleInstances, launched, released, reserved, terminated} =
-    await import('./instanceRepository.js')
+const {createInstanceRepository} = await import('./instanceRepository.js')
+const {idleInstances, launched, released, reserved, terminated} = createInstanceRepository()
 
 beforeEach(() => query.mockReset())
 

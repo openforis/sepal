@@ -5,7 +5,7 @@ import {createPricing, STORAGE_COST_PER_GB_MONTH} from './pricing.js'
 const WORKER_INSTANCE_TYPE_COUNT = 62
 
 describe('pricing', () => {
-    test('storageCostPerGbMonth is 0.33 (EFS pricing, matches worker hostingService)', () => {
+    test('storageCostPerGbMonth is 0.33 (EFS pricing)', () => {
         const pricing = createPricing()
         expect(pricing.storageCostPerGbMonth).toBe(0.33)
         expect(STORAGE_COST_PER_GB_MONTH).toBe(0.33)

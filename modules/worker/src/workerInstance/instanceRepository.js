@@ -118,7 +118,4 @@ const createInstanceRepository = (pool = null) => {
     return {forgotten, idleInstances, launched, reconciled, released, reserved, terminated}
 }
 
-// Module-level singletons, bound to the shared pool via getPool().
-const {forgotten, idleInstances, launched, reconciled, released, reserved, terminated} = createInstanceRepository()
-
-export {createInstanceRepository, forgotten, idleInstances, launched, reconciled, released, reserved, terminated}
+export {createInstanceRepository}

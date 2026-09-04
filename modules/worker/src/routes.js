@@ -19,9 +19,6 @@ const createRoutes = ({sessionsApi, tasksApi} = {}) => router => {
     return router
 }
 
-// Back-compat default: healthcheck only (used where no session component is wired yet).
-const routes = createRoutes()
-
 // createWsRoutes({taskManager, sessionsApi, sessionManager}) → the wsRoutes map for server.start.
 // The gateway's uplink dials one url per module entry in modules/gateway/config/endpoints.js
 // webSocketEndpoints (`worker/task` → /task/ws, `worker/session` → /session/ws).
@@ -35,4 +32,4 @@ const createWsRoutes = ({taskManager, sessionsApi, sessionManager}) => {
     }
 }
 
-export {createRoutes, createWsRoutes, routes}
+export {createRoutes, createWsRoutes}
