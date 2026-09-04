@@ -79,19 +79,25 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // waitUntilDockerIsAvailable — retry GET /containers/json up to _dockerRetries×_dockerRetryDelayMs.
     // Throws DockerProvisionerError if all retries exhausted.
     // _dockerRetries/_dockerRetryDelayMs are injectable for tests (defaults: 60 retries, 1s delay).
+    //
+    // A booting instance refuses the connection until Docker is up, so the individual attempts are
+    // the normal case, not events: one line before, one when it resolves either way. The last error
+    // rides on the throw — the outer provision retry logs it, and nothing else records why the
+    // daemon never answered.
     const waitUntilDockerIsAvailable = async instance => {
+        log.debug(`Connecting to Docker on ${instanceTag(instance)} (up to ${_dockerRetries} attempts)...`)
+        let lastError = null
         for (let i = 0; i < _dockerRetries; i++) {
             try {
-                log.debug(`Trying to connect to Docker on ${instanceTag(instance)} (attempt ${i + 1}/${_dockerRetries})`)
                 await deployedContainers(instance)
                 log.info(`Successfully connected to Docker on ${instanceTag(instance)}`)
                 return
             } catch (e) {
-                log.warn(`Failed to connect to Docker on ${instanceTag(instance)}: ${e.message}`)
+                lastError = e
                 await sleep(_dockerRetryDelayMs)
             }
         }
-        throw new DockerProvisionerError(instance, `Unable to connect to docker on instance: ${instance.id}`)
+        throw new DockerProvisionerError(instance, `Unable to connect to docker on instance: ${instance.id}, after ${_dockerRetries} attempts: ${lastError?.message}`)
     }
 
     const deleteContainer = async (instance, containerId) => {
