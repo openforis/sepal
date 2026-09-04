@@ -1,7 +1,8 @@
 // SizeIdlePool — for each type in (live idle grouping ∪ target-map keys), with
 // target = targetMap[type] ?? 0:
 //   currentIdle < target → launchIdle(type, deficit) + repo.launched(list)
-//   currentIdle > target → terminate the first N excess: provider.terminate + repo.terminated
+//   currentIdle > target → terminate the N most recently launched: provider.terminate +
+//                          repo.terminated
 //   currentIdle == target → no-op
 // A type with idle instances but NO target entry therefore gets target 0 and has all of them
 // terminated — that is what stops idle pools of retired types leaking cost.
@@ -11,6 +12,8 @@ import {getLogger} from '#sepal/log'
 import {instanceTag} from '../../tag.js'
 
 const log = getLogger('worker/sizeIdlePool')
+
+const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
 
 const sizeIdlePool = async (targetIdleCountByInstanceType, {repo, provider}) => {
     log.info('Sizing idle pool', targetIdleCountByInstanceType)
@@ -44,7 +47,13 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, {repo, provider}) => 
         } else if (currentCount > targetCount) {
             const surplus = currentCount - targetCount
             log.info(`Terminating ${surplus} surplus idle instance(s) of type ${instanceType}`)
-            const toTerminate = currentIdle.slice(0, surplus)
+            // Newest first. The surplus is almost always the pool replacement launched the moment
+            // the previous idle instance was reserved, racing the released instance coming back:
+            // dropping the oldest throws away the one that is fully booted and keeps the one that
+            // may still be starting, so the next session pays for a cold boot either way.
+            const toTerminate = [...currentIdle]
+                .sort((a, b) => launchedAt(b) - launchedAt(a))
+                .slice(0, surplus)
             for (const instance of toTerminate) {
                 try {
                     await provider.terminate(instance.id)
