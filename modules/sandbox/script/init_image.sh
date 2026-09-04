@@ -45,9 +45,15 @@ printf '%s\n' \
 # the session name the ssh-gateway puts on the GUI's terminal tab. PROMPT_COMMAND runs after every
 # rc file, just before the first prompt; it then removes itself, so a user who sets their own
 # prompt afterwards keeps it.
+#
+# Colors follow the skeleton's own rule, so a terminal that never had a colored prompt still
+# doesn't: green name, blue directory, on the same TERM test it used.
 printf '%s\n' \
     'sepal_prompt() {' \
-    "    PS1='\h:\w\\\$ '" \
+    '    case "$TERM" in' \
+    "        xterm-color|*-256color) PS1='\[\033[01;32m\]\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\\$ ';;" \
+    "        *) PS1='\h:\w\\\$ ';;" \
+    '    esac' \
     '    unset PROMPT_COMMAND' \
     '    unset -f sepal_prompt' \
     '}' \
