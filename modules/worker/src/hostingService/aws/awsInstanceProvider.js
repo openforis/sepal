@@ -9,6 +9,7 @@ import {
 
 import {getLogger} from '#sepal/log'
 
+import {instanceName} from '../../instanceName.js'
 import {instanceTag} from '../../tag.js'
 import {createWorkerInstance} from '../../workerInstance/workerInstance.js'
 import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
@@ -81,6 +82,16 @@ const idleTags = environment => [
     mkTag('Name', `${environment}: Idle worker`),
 ]
 
+// The Name tag is written, never read: no filter matches on it and toWorkerInstance ignores it.
+// It exists so the console's instance list — the only place an operator sees the machine — names
+// it the way the user does, since a support request quotes the two-word name and nothing else.
+// Free to reformat; keep it out of any lookup.
+const reserveName = (environment, reservation) => {
+    const name = instanceName(reservation.sessionId)
+    const suffix = name ? `, ${name}` : ''
+    return `${environment}: ${reservation.workerType}, ${reservation.username}${suffix}`
+}
+
 const reserveTags = (environment, reservation) => [
     mkTag('State', 'reserved'),
     mkTag('Username', reservation.username),
@@ -90,7 +101,7 @@ const reserveTags = (environment, reservation) => [
     mkTag('SessionId', reservation.sessionId ?? ''),
     // InStateSince is informational only (no consumer parses it); format intentionally ISO-8601.
     mkTag('InStateSince', new Date().toISOString()),
-    mkTag('Name', `${environment}: ${reservation.workerType}, ${reservation.username}`),
+    mkTag('Name', reserveName(environment, reservation)),
 ]
 
 const filterTaggedWith = (tagName, value) => mkFilter(`tag:${tagName}`, value)

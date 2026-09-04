@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-ec2'
 import {mockClient} from 'aws-sdk-client-mock'
 
+import {instanceName} from '../../instanceName.js'
 import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
 import {
     createAwsInstanceProvider,
@@ -123,18 +124,25 @@ describe('idleTags', () => {
 })
 
 describe('reserveTags', () => {
-    test('contains State=reserved, Username, WorkerType, InStateSince, Name with env+type+user', () => {
+    test('contains State=reserved, Username, WorkerType, InStateSince, Name with env+type+user+instance name', () => {
         const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
         expect(tags).toContainEqual({Key: 'State', Value: 'reserved'})
         expect(tags).toContainEqual({Key: 'Username', Value: 'alice'})
         expect(tags).toContainEqual({Key: 'WorkerType', Value: 'SANDBOX'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name).toBeDefined()
-        expect(name.Value).toBe('test-env: SANDBOX, alice')
+        expect(name.Value).toBe(`test-env: SANDBOX, alice, ${instanceName('s-42')}`)
         expect(tags).toHaveLength(6)
     })
 
-    test('Name field exact format: "{env}: {workerType}, {username}"', () => {
+    // The name an operator reads in the console has to be the one the user quotes back at them.
+    test('Name field carries the same two-word name as the container', () => {
+        const tags = reserveTags('prod', {username: 'bob', workerType: 'SANDBOX', sessionId: 's-7'})
+        const name = tags.find(t => t.Key === 'Name')
+        expect(name.Value.endsWith(`, ${instanceName('s-7')}`)).toBe(true)
+    })
+
+    test('Name field falls back to "{env}: {workerType}, {username}" without a session id', () => {
         const tags = reserveTags('prod', {username: 'bob', workerType: 'TASK_EXECUTOR'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name.Value).toBe('prod: TASK_EXECUTOR, bob')
