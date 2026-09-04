@@ -206,9 +206,9 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
 
     const tagInstance = async (instanceId, ...tagCollections) => {
         const tags = tagCollections.flat()
+        log.debug(`Tagging ${instanceTag(instanceId)} with ${JSON.stringify(tags)}`)
         try {
             await retry(4, async () => {
-                log.info(`Tagging ${instanceTag(instanceId)} with ${JSON.stringify(tags)}`)
                 await client.send(new CreateTagsCommand({
                     Resources: [instanceId],
                     Tags: tags,
@@ -221,6 +221,13 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // instanceType is a catalog ID ("T3aSmall"); EC2 needs the name ("t3a.small").
+    //
+    // RunInstances answers with a Reservation ITSELF, so the instances are at the top level of the
+    // response; only DescribeInstances wraps them in Reservations[] (see collectInstances). And an
+    // empty answer is a failed launch, not an empty fleet — left to return [], launchReserved
+    // destructures undefined and the TypeError names neither EC2 nor the instance type. A SHORT
+    // answer is not rejected: MinCount makes it EC2's error to raise, and throwing here would
+    // discard instances it did create.
     const launch = async (instanceType, count) => {
         const awsInstanceType = codec.toAwsName(instanceType)
         log.info(`Launching ${instanceType} (${awsInstanceType})`)
@@ -233,7 +240,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
             MaxCount: count,
             Placement: {AvailabilityZone: availabilityZone},
         }))
-        return response.Reservation?.Instances ?? []
+        const instances = response.Instances ?? []
+        if (instances.length === 0) {
+            throw new Error(`FailedToLaunchInstance: EC2 returned no instances for ${count} requested ${awsInstanceType} instance(s)`)
+        }
+        return instances
     }
 
     const findInstancesByFilters = async (onlyCorrectVersion, ...extraFilters) => {
@@ -294,24 +305,29 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // Polls getInstance up to PUBLIC_IP_RETRIES times (≤300×1s) until the host is set.
+    //
+    // A just-launched instance has no public IP yet, and EC2 does not always list it at all, so
+    // neither a missing IP nor a failed read is an event: one line before, one when it resolves
+    // either way. The last error rides on the throw — nothing else records why EC2 never answered.
     const waitForPublicIpToBecomeAvailable = async (instance, instanceTypeName, reservation) => {
         log.debug(`Waiting for public IP on ${instanceTag(instance)}, EC2 type: ${instanceTypeName}, reservation: ${JSON.stringify(reservation)}...`)
         let current = instance
+        let lastError = null
         let retries = 0
         while (!current.host && retries < PUBLIC_IP_RETRIES) {
             retries++
-            log.debug(`Getting ${instanceTag(current)} to see if public IP is assigned yet`)
             try {
                 current = await getInstance(current.id)
-                log.debug(`Got instance ${JSON.stringify(current)}`)
-            } catch (_err) {
-                log.warn(`Failed to get ${instanceTag(current)}. Will keep waiting.`)
+            } catch (err) {
+                lastError = err
             }
             await new Promise(resolve => setTimeout(resolve, 1000))
         }
         if (!current.host) {
-            throw new Error(`FailedToLaunchInstance: Unable to get public IP of instance ${instance.id}, type: ${instanceTypeName}, reservation: ${JSON.stringify(reservation)}`)
+            const cause = lastError ? `: ${lastError.message}` : ''
+            throw new Error(`FailedToLaunchInstance: Unable to get public IP of instance ${instance.id}, type: ${instanceTypeName}, reservation: ${JSON.stringify(reservation)}, after ${retries} attempts${cause}`)
         }
+        log.info(`Public IP ${current.host} assigned to ${instanceTag(current)}`)
         return current
     }
 
