@@ -20,6 +20,7 @@ jest.unstable_mockModule('node:fs', () => ({
 const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
 const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
 const {tempDir} = await import('./workerTypes.js')
+const {instanceName} = await import('../instanceName.js')
 
 const CONFIG = {
     sepalVersion: '5.1.0',
@@ -226,6 +227,14 @@ describe('buildContainerBody — SANDBOX', () => {
     test('NetworkingConfig.EndpointsConfig.sepal exists', async () => {
         await runProvision()
         expect(capturedBody.NetworkingConfig.EndpointsConfig.sepal).toBeDefined()
+    })
+
+    // The shell prompt inside the sandbox is "{hostname}:{dir}$", so the hostname is what a user
+    // reads to tell one open terminal from another — it has to be the same two-word name every
+    // other surface calls this instance, not the container id Docker would otherwise assign.
+    test('Hostname is the instance\'s two-word name', async () => {
+        await runProvision()
+        expect(capturedBody.Hostname).toBe(instanceName('sess-1'))
     })
 
     test('HostConfig.ExtraHosts defaults to empty array', async () => {

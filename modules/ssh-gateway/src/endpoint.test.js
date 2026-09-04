@@ -16,7 +16,7 @@ jest.unstable_mockModule('./config.js', () => ({
     username: 'admin'
 }))
 
-const {createSession$, joinSession$, sandboxInfo$} = await import('./endpoint.js')
+const {createSession$, joinSession$, sandboxInfo$, sessionLabel$} = await import('./endpoint.js')
 
 const session = {id: 's-1', path: 'sessions/admin/session/s-1', status: 'STARTING'}
 
@@ -47,6 +47,39 @@ describe('sandboxInfo$', () => {
         expect(results[0].spending.monthlyInstanceBudget).toBe(10)
         expect(results[0].instanceTypes).toEqual([{tag: 't1'}])
         expect(results[0].exceededBudget).toBe(false)
+    })
+})
+
+// The label names the GUI terminal tab. It is read from the report rather than assembled here so
+// that the number is exactly the ID the menu just showed, for a joined session and for one the user
+// has only now created — which has no place in the list until the report lists it.
+describe('sessionLabel$', () => {
+    const report = sessions => of({statusCode: 200, body: {sessions, instanceTypes: []}})
+
+    it('is the session\'s menu ID and name', () => {
+        get$.mockReturnValue(report([
+            {id: 's-0', name: 'bold-otter'},
+            {id: 's-1', name: 'lazy-paper'}
+        ]))
+        const results = []
+        sessionLabel$(session).subscribe(result => results.push(result))
+        expect(results).toEqual(['2: lazy-paper'])
+    })
+
+    // Nothing downstream can act on a missing label, and a wrong one would leave the user's tab
+    // named after somebody else's session — so both failures resolve to "no label".
+    it('has no label for a session missing from the report', () => {
+        get$.mockReturnValue(report([{id: 's-other', name: 'bold-otter'}]))
+        const results = []
+        sessionLabel$(session).subscribe(result => results.push(result))
+        expect(results).toEqual([null])
+    })
+
+    it('has no label when the report cannot be fetched', () => {
+        get$.mockReturnValue(throwError(() => new Error('worker down')))
+        const results = []
+        sessionLabel$(session).subscribe(result => results.push(result))
+        expect(results).toEqual([null])
     })
 })
 

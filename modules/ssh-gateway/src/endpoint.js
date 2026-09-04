@@ -39,11 +39,27 @@ const spending$ = () =>
         map(({body}) => body)
     )
 
-const sandboxInfo$ = () => {
-    const report$ = get$(`${endpoint}sessions/${username}/report`, {...endpointConfig, responseType: 'json'}).pipe(
+const report$ = () =>
+    get$(`${endpoint}sessions/${username}/report`, {...endpointConfig, responseType: 'json'}).pipe(
         map(({body}) => body)
     )
-    return forkJoin([report$, spending$()]).pipe(
+
+// sessionLabel$ — "{menu ID}: {name}" for a session, the two things the menu's table showed for it,
+// used as the GUI terminal tab's name. Both come from the report: the ID is a position in that
+// list, and a session the user has just created has no position until the report carries it.
+// Emits null rather than failing — a tab name is not worth withholding the user's shell over.
+const sessionLabel$ = session =>
+    report$().pipe(
+        map(({sessions}) => {
+            const index = sessions.findIndex(({id}) => id === session.id)
+            const name = sessions[index]?.name
+            return name ? `${index + 1}: ${name}` : null
+        }),
+        catchError(() => of(null))
+    )
+
+const sandboxInfo$ = () => {
+    return forkJoin([report$(), spending$()]).pipe(
         map(([report, spending]) => ({...report, spending})),
         map(info => ({...info, exceededBudget: exceededBudget(info)}))
     )
@@ -122,6 +138,7 @@ export {
     createSession$,
     joinSession$,
     sandboxInfo$,
+    sessionLabel$,
     terminalOpened$,
     terminateSession$
 }

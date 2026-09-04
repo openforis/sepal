@@ -12,6 +12,7 @@
 
 import {getLogger} from '#sepal/log'
 
+import {instanceName} from '../instanceName.js'
 import {containerTag, instanceTag} from '../tag.js'
 import {dockerFetch} from './dockerApi.js'
 import {InstanceStatus} from './instanceStatus.js'
@@ -163,8 +164,12 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
         const env = Object.entries(image.environment).map(([k, v]) => `${k}=${v}`)
 
+        // Hostname: the sandbox prompt is "{hostname}:{dir}$", so this is the name a user reads to
+        // tell one open terminal from another — the same two-word name the GUI, the SSH menu and
+        // the container itself carry, rather than the container id Docker defaults to.
         const body = {
             Image: `${dockerRegistryHost}/openforis/${image.name}:${sepalVersion}`,
+            Hostname: instanceName(instance.reservation.sessionId),
             Tty: true,
             Cmd: image.runCommand,
             HostConfig: {

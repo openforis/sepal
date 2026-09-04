@@ -1,6 +1,6 @@
 import {jest} from '@jest/globals'
 
-import {closeConsole, prompt, readLine$} from './console.js'
+import {closeConsole, prompt, readLine$, setTitle} from './console.js'
 
 // The shared readline interface reads process.stdin; emitting 'data' drives its
 // line parser synchronously, so prompts can be tested without a real terminal.
@@ -42,5 +42,30 @@ describe('prompt', () => {
         prompt('Select (1): ')
         spy.mockRestore()
         expect(writes.join('')).toContain('Select (1): ')
+    })
+})
+
+// The GUI names each terminal tab after the xterm title, which the emulator picks up from this
+// escape sequence — the only channel from inside the ssh session back out to the surrounding UI.
+describe('setTitle', () => {
+    const captureWrites = fn => {
+        const writes = []
+        const spy = jest.spyOn(process.stdout, 'write').mockImplementation(chunk => {
+            writes.push(String(chunk))
+            return true
+        })
+        fn()
+        spy.mockRestore()
+        return writes.join('')
+    }
+
+    it('writes the title as an OSC 0 sequence', () => {
+        expect(captureWrites(() => setTitle('1: lazy-paper')))
+            .toBe('\u001B]0;1: lazy-paper\u0007')
+    })
+
+    it('clears the title with an empty string', () => {
+        expect(captureWrites(() => setTitle('')))
+            .toBe('\u001B]0;\u0007')
     })
 })

@@ -1,11 +1,11 @@
 import fs from 'fs/promises'
-import {from, switchMap} from 'rxjs'
+import {from, of, switchMap, tap} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'
 
 import {interactive, sshCommandPath, userKeyFile, username} from './config.js'
-import {closeConsole} from './console.js'
-import {terminalOpened$} from './endpoint.js'
+import {closeConsole, setTitle} from './console.js'
+import {sessionLabel$, terminalOpened$} from './endpoint.js'
 import {interactive$} from './interactive.js'
 import {nonInteractive$} from './nonInteractive.js'
 import {closeSessionEvents, initSessionEvents} from './sessionEvents.js'
@@ -16,6 +16,11 @@ process.on('uncaughtException', error => {
     console.error('Something went wrong, please try again', error)
     process.exit(1)
 })
+
+// The menu belongs to no session, so drop whatever name the previous one left on the GUI's tab.
+if (interactive) {
+    setTitle('')
+}
 
 const session$ = interactive
     ? interactive$(initSessionEvents(username))
@@ -55,6 +60,10 @@ const writeSession$ = session => {
         // here on the terminal's liveness comes from pty atime sampled inside the container, and
         // nothing keeps an untouched connection alive.
         return terminalOpened$(session).pipe(
+            // Name the GUI's terminal tab after the session the user is about to enter. Skipped in
+            // non-interactive mode, where stdout is the output of the command the user ran.
+            switchMap(() => interactive ? sessionLabel$(session) : of(null)),
+            tap(label => label && setTitle(label)),
             switchMap(() => from(fs.writeFile(sshCommandPath, contents)))
         )
     } else {

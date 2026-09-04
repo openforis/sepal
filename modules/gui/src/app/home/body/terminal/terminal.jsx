@@ -15,18 +15,21 @@ import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {Notifications} from '~/widget/notifications'
 import {ContentPadding} from '~/widget/sectionLayout'
+import {setTabPlaceholder} from '~/widget/tabs/tabActions'
 import {Tabs} from '~/widget/tabs/tabs'
 
 import styles from './terminal.module.css'
 import {TerminalWebSocket} from './terminalWebsocket'
+
+const STATE_PATH = 'terminal'
 
 export class Terminal extends React.Component {
     render() {
         return (
             <Tabs
                 label={msg('home.sections.terminal')}
-                statePath='terminal'>
-                {() => <TerminalSession/>}
+                statePath={STATE_PATH}>
+                {({id}) => <TerminalSession tabId={id}/>}
             </Tabs>
         )
     }
@@ -132,6 +135,12 @@ class _TerminalSession extends React.Component {
         }
         terminal.onResize(
             dimensions => resize$.next({sessionId, dimensions})
+        )
+        // The ssh-gateway sets the terminal title to the session the user just entered
+        // ("1: lazy-paper"), and clears it on the way back to its menu — the only thing that
+        // knows, from out here, which machine this tab is attached to.
+        terminal.onTitleChange(
+            title => setTabPlaceholder(title, STATE_PATH, this.props.tabId)
         )
         this.enabled$.next(true)
         this.fit$.next()
