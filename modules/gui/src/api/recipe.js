@@ -4,9 +4,9 @@ export default {
     loadAll$: () =>
         get$('/api/processing-recipes'),
 
-    save$: ({id, projectId, type, name, gzippedContents}) =>
+    save$: ({id, projectId, type, name, gzippedContents, expectedRevision}) =>
         postBinary$(`/api/processing-recipes/${id}`, {
-            query: {projectId, type, name},
+            query: {projectId, type, name, ...(expectedRevision == null ? {} : {expectedRevision})},
             body: gzippedContents
         }),
 

@@ -44,9 +44,9 @@ test('listRecipesOfTypeBeforeVersion selects non-removed rows by type below vers
     expect(rows).toEqual([{id: 'r1'}])
 })
 
-test('saveMigratedRecipe updates type_version and contents scoped to id and username', async () => {
-    await saveMigratedRecipe({id: 'r1', username: 'bob', typeVersion: 8, contents: '{"x":1}'})
+test('saveMigratedRecipe advances the column and stores contents without server metadata', async () => {
+    await saveMigratedRecipe({id: 'r1', username: 'bob', typeVersion: 8, contents: '{"x":1,"revision":97,"projectId":"p9"}'})
     const [sql, params] = query.mock.calls[0]
-    expect(sql).toMatch(/UPDATE recipe SET type_version = \?, contents = \? WHERE id = \? AND username = \?/i)
+    expect(sql).toMatch(/UPDATE recipe SET type_version = \?, contents = \?, revision = revision \+ 1\s+WHERE id = \? AND username = \?/i)
     expect(params).toEqual([8, '{"x":1}', 'r1', 'bob'])
 })

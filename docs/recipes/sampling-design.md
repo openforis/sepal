@@ -296,7 +296,7 @@ edit may mark the areas stale. A changed polygon, a replaced AOI asset observed 
 changed transitive recipe AOI always does.
 
 This works when the dependency was changed while Sampling Design was closed, and it depends on server-owned
-`contentRevision` from the Node recipe-storage replacement. Revision events and future patch transport make
+`revision` from the Node recipe-storage replacement. Revision events and future patch transport make
 already-open updates cheaper and faster; neither is required for correctness.
 
 Sampling Design owns these dependency descriptions, how stale areas and probabilities propagate to anticipated

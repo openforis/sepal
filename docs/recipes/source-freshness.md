@@ -25,7 +25,7 @@ This catalogue is not a prerequisite for the first Masking robustness slice, App
 Fill or direct asset Fill.
 
 Persisted derived-result freshness does depend on one external prerequisite: a server-owned monotonic
-`contentRevision` returned atomically with recipe content by the Node recipe-storage replacement. That replacement
+`revision` returned atomically with recipe content by the Node recipe-storage replacement. That replacement
 lands before the Sampling Design freshness milestone, so no interim unversioned-recipe tier is designed or built.
 There is no temporary browser content-hash bridge, no `update_time` freshness rung and no dual-phase snapshot
 provider that later swaps its evidence. `update_time` remains display and audit metadata only. Websocket revision
@@ -56,7 +56,7 @@ than assume one process serves one user.
 A source version is change evidence, not a copy of the source and not a claim that Earth Engine execution is
 pinned. Keep these values separate:
 
-- **Recipe `contentRevision`**: a server-owned monotonic integer, scoped to one recipe, changed atomically with
+- **Recipe `revision`**: a server-owned monotonic integer, scoped to one recipe, changed atomically with
   persisted recipe content. It orders websocket events, supports optimistic concurrency and cheaply invalidates
   browser resources. It is distinct from the existing `typeVersion`, which is the recipe schema-migration version
   and says nothing about whether content changed.
@@ -72,16 +72,28 @@ pinned. Keep these values separate:
 The Node recipe-storage replacement provides:
 
 ```
-list / revision-vector read   ->  recipe ID + contentRevision
-load                          ->  recipe content + contentRevision, from one committed row
-save(expectedRevision)        ->  committed contentRevision
-executor-facing load          ->  recipe content + contentRevision, from one committed row
+list / revision-vector read   ->  recipe ID + revision, per entry
+load                          ->  the recipe, with the revision injected as an additive top-level field,
+                                  read from one committed row
+save(expectedRevision)        ->  committed revision
 ```
+
+There is no separate snapshot or executor-facing read. The ordinary authorized load serves editing, dependency
+resolution and execution alike, so every reader observes the same content and the same revision from the same
+committed row.
 
 Required semantics:
 
-- `contentRevision` is server-owned, monotonic and scoped to one recipe.
+- `revision` is server-owned, monotonic and scoped to one recipe.
 - Persisted content and revision change atomically.
+- The revision is stored only as a column on the recipe row. It is response metadata, not persisted recipe
+  content: a load injects the column value into the returned recipe JSON, stored contents never carry a
+  revision, and a client-submitted one is stripped before storage.
+- Content and revision are coherent because a load reads both from the same row, so no second representation
+  exists to contradict the column.
+- A recipe-model migration rewrites stored contents, and advances the column when it does.
+- Project placement is row metadata injected on load in the same way. It is not execution content, and
+  moving a recipe does not advance its revision.
 - **The same revision always returns the same execution-relevant recipe content.** This is what allows evidence
   gathered by one reader to be compared against a fingerprint computed by another; see
   [Exact calculation evidence](#exact-calculation-evidence).
@@ -100,11 +112,11 @@ Idempotent save behavior:
 ```
 normalize candidate
 if candidate equals current content:
-    succeed and return the current contentRevision
+    succeed and return the current revision
 else if expectedRevision differs from current:
     reject with a conflict
 else:
-    persist and increment contentRevision
+    persist and increment revision
 ```
 
 The no-op comparison deliberately precedes the conflict check: a client that resubmits content already committed
@@ -113,7 +125,7 @@ converges rather than conflicting. Reordering the two produces spurious conflict
 Semantic no-op detection is desirable storage behavior, but Sampling Design correctness must not depend on it. If
 it is phased in after the initial revision implementation, spurious revision increments only over-invalidate: they
 trigger re-resolution, and an unchanged product fingerprint still preserves the result. Do not describe no-op
-detection as unnecessary — it governs event noise, `contentRevision` semantics and optimistic concurrency, and
+detection as unnecessary — it governs event noise, `revision` semantics and optimistic concurrency, and
 client-side deep equality is not authoritative because direct clients and future writers can still submit no-ops.
 
 Normalization must be defined well enough that raw gzip or JSON byte equality is never authoritative: transient UI
@@ -169,7 +181,7 @@ Consumers receive recipe snapshots through one provider that states which repres
 
 - The explicitly supplied **root** may be an unsaved draft. Its `versionToken` is a local draft generation.
 - Referenced recipes consumed by persisted derived calculations use fresh, **operation-local persisted snapshots**.
-  Their `versionToken` is `contentRevision`.
+  Their `versionToken` is `revision`.
 - An open referenced recipe's unsaved draft must never be fingerprinted while the executor runs against its
   persisted version. Binding a calculation to a draft that the executor cannot see is the defect this separation
   exists to prevent.
@@ -710,7 +722,7 @@ Manual acceptance is limited to browser behavior that pure tests cannot establis
 - Collection schema policy for each migrated consumer.
 - Whether every relevant ImageCollection membership change advances `system:version`; if not, the bounded member
   evidence required by each collection policy.
-- Whether semantic no-op detection ships with the initial `contentRevision` implementation or is phased in after it.
+- Whether semantic no-op detection ships with the initial `revision` implementation or is phased in after it.
 - The exact normalization rules for persisted-content equality, and their versioning.
 - Websocket event transport and dirty-draft conflict presentation in the Node server migration.
 - Whether the shared recipe-closure limits suit this path, in particular whether the 8 MiB serialized bound holds

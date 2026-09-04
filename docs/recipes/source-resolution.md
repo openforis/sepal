@@ -345,16 +345,16 @@ replacement and reliable recipe revisions returned atomically with content.
 
 The current recipe `update_time` is a plain second-resolution SQL `TIMESTAMP`. Two saves in one second are therefore
 indistinguishable, so it must not be used as a coherent-build revision or cache key, and equal timestamps never
-establish unchanged content. The replacement storage boundary persists a server-owned monotonic `contentRevision`
+establish unchanged content. The replacement storage boundary persists a server-owned monotonic `revision`
 atomically with recipe content. It orders websocket events, supports cheap invalidation and optimistic concurrency,
 and is distinct from the existing `typeVersion`, which is the recipe schema-migration version.
 
 Recipe list, load, save and future batch or closure operations expose the same committed revision, and the same
-revision always returns the same execution-relevant content. Reads used for coherent construction return content
-and revision from one storage boundary. A save carries an expected revision and returns the committed one. A
-websocket update is published only after commit and carries at least recipe ID and revision, allowing clients to
-ignore duplicate or out-of-order events before fetching changed content. A no-op save returns the existing revision
-and publishes no event. `update_time` remains useful for display and audit only.
+revision always returns the same execution-relevant content. Coherent construction uses that same ordinary load,
+which returns content and revision from one committed row. A save carries an expected revision and returns the
+committed one. A websocket update is published only after commit and carries at least recipe ID and revision,
+allowing clients to ignore duplicate or out-of-order events before fetching changed content. A no-op save returns the
+existing revision and publishes no event. `update_time` remains useful for display and audit only.
 
 Semantic no-op detection compares normalized content, which requires defined normalization — transient UI state
 excluded, key order irrelevant, meaningful array order preserved, value types preserved, migration and default
@@ -653,7 +653,7 @@ credentials bypass the requested principal.
 - Measured bundle depth, node and serialized-byte limits across the complete task path.
 - Coherent-build retry count and the optional integrity/provenance requirements, if any, that would justify a
   persisted content digest.
-- `contentRevision` representation, the normalization rules behind semantic no-op detection, websocket event
+- `revision` representation, the normalization rules behind semantic no-op detection, websocket event
   ordering and dirty-draft conflict behavior.
 - Batch recipe endpoint transport details in the Node server replacement.
 - Whether and where detailed task manifests are retained.

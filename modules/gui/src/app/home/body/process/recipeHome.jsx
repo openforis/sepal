@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {map, of, tap} from 'rxjs'
+import {map, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -11,7 +11,7 @@ import {select} from '~/store'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {closeTab} from '~/widget/tabs/tabActions'
 
-import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, removeRecipes$, selectRecipe} from './recipe'
+import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, openRecipeRevision, removeRecipes$, selectRecipe} from './recipe'
 import styles from './recipeHome.module.css'
 // import {publishEvent} from '~/eventPublisher'
 import {RecipeList} from './recipeList/recipeList'
@@ -51,18 +51,19 @@ class _RecipeHome extends React.Component {
         }
     }
 
+    // Bypass the dependency cache so content and the first save revision come from one authoritative load.
     loadRecipe$(recipeId) {
-        const {loadedRecipes} = this.props
-        return Object.keys(loadedRecipes).includes(recipeId)
-            ? of(loadedRecipes[recipeId])
-            : api.recipe.load$(recipeId).pipe(
-                map(recipe => initializeRecipe(recipe)),
-                tap(recipe =>
-                    actionBuilder('CACHE_RECIPE', recipe)
-                        .set(['process.loadedRecipes', recipe.id], recipe)
-                        .dispatch()
-                )
+        return api.recipe.load$(recipeId).pipe(
+            map(recipe => {
+                openRecipeRevision(recipe.id, recipe.revision)
+                return initializeRecipe(recipe)
+            }),
+            tap(recipe =>
+                actionBuilder('CACHE_RECIPE', recipe)
+                    .set(['process.loadedRecipes', recipe.id], recipe)
+                    .dispatch()
             )
+        )
     }
 
     duplicateRecipe(recipeIdToDuplicate) {

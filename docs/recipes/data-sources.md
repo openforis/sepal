@@ -260,15 +260,16 @@ only the existing authenticated per-recipe read; it is not a coherent server res
 Groovy endpoint or broaden the administrator-loading path. After the replacement merges:
 
 - require a trusted SEPAL principal for every recipe read;
-- return recipe content and its server-owned monotonic `contentRevision` from one authorized storage boundary, with
-  list, load, save and executor-facing reads all exposing it consistently;
+- return the recipe from one authorized storage boundary with its server-owned monotonic `revision` injected
+  from the recipe row's column as an additive top-level field, never stored in recipe content, with list, load
+  and save all exposing the same committed revision;
 - accept `expectedRevision` on save and return the committed revision, so a client can maintain a revision registry
   and detect concurrent writes;
 - add permanent owner/non-owner, missing-principal and cache-isolation tests;
 - remove ambient administrator recipe access from GEE when its replacement owns every legitimate read.
 
 The full storage contract, including no-op save behavior and normalization requirements, is defined in
-[source-freshness.md](source-freshness.md). `contentRevision` is distinct from the existing `typeVersion`, which is
+[source-freshness.md](source-freshness.md). `revision` is distinct from the existing `typeVersion`, which is
 the recipe schema-migration version.
 
 Graph traversal, capability derivation, caching and bundle construction remain shared JavaScript concerns rather
@@ -276,11 +277,11 @@ than server endpoint logic.
 
 ### 5. Add Sampling Design derived-result freshness
 
-Requires `contentRevision` from the prerequisite above. No interim unversioned-recipe path is planned or built:
+Requires `revision` from the prerequisite above. No interim unversioned-recipe path is planned or built:
 there is no temporary browser content-hash bridge and no `update_time` freshness rung.
 
 - Add the recipe snapshot provider that distinguishes an editable root draft from operation-local persisted
-  dependency snapshots, keyed by `contentRevision`. Dependency snapshots never enter the shared loaded-recipe map.
+  dependency snapshots, keyed by `revision`. Dependency snapshots never enter the shared loaded-recipe map.
 - Add the request-scoped snapshot cache at the execution boundary: one snapshot and revision per recipe ID per
   operation, shared in-flight loads, and an exact evidence vector returned with each result.
 - Resolve recipe AOIs through the AOI geometry product they expose, including transitive recipe and asset evidence,
@@ -363,5 +364,5 @@ No update-time or temporary content-hash bridge is involved.
 - Recipe Fill before the Node server replacement supplies its permanent caller-authorized source boundary.
 - Execution bundles before recipe content has reliable monotonic revision evidence.
 - Any interim unversioned-recipe freshness path: no temporary browser content hashing and no `update_time`
-  freshness rung. Persisted derived-result freshness waits for `contentRevision` rather than approximating it.
+  freshness rung. Persisted derived-result freshness waits for `revision` rather than approximating it.
 - CCDC capability migration as a prerequisite for constant Fill.

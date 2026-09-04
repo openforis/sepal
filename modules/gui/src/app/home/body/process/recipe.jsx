@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
-import {groupBy, map, mergeMap, Subject, switchMap} from 'rxjs'
+import {firstValueFrom, map, switchMap} from 'rxjs'
 
 import {actionBuilder, scopedActionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -17,36 +17,11 @@ import {downloadObjectZip$} from '~/widget/download'
 import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
-const save$ = new Subject()
+import {createSaveCoordinator} from './saveCoordinator'
 
-save$.pipe(
-    groupBy(recipe => recipe.id),
-    mergeMap(group$ =>
-        group$.pipe(
-            map(recipe => {
-                if (recipe.ui.unsaved) {
-                    publishEvent('insert_recipe', {recipe_type: recipe.type})
-                }
-                return _.omit(recipe, ['ui'])
-            }),
-            switchMap(recipe =>
-                gzip$(recipe).pipe(
-                    switchMap(compressedRecipe =>
-                        api.recipe.save$({
-                            id: recipe.id,
-                            projectId: recipe.projectId,
-                            type: recipe.type,
-                            name: recipe.title || recipe.placeholder,
-                            gzippedContents: compressedRecipe
-                        })
-                    )
-                )
-            )
-        )
-    )
-).subscribe({
-    error: error => Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
-})
+// Transient view state and the server-owned revision are both not recipe content, so neither leaves the
+// browser as part of one.
+const NON_CONTENT = ['ui', 'revision']
 
 export const recipePath = (recipeId, path) =>
     ['process.loadedRecipes', recipeId, path]
@@ -107,13 +82,22 @@ export const saveRecipe = tab => {
     }
 }
 
+// Seed saving and freshness from the same authoritative load.
+export const openRecipeRevision = (recipeId, revision) => {
+    saveCoordinator.open(recipeId, revision)
+    setCatalogueRevision(recipeId, revision)
+}
+
+export const forgetRecipeSaveState = recipeId =>
+    saveCoordinator.forget(recipeId)
+
 export const closeRecipe = id =>
     closeTab(id, 'process')
 
 export const exportRecipe$ = recipe =>
     downloadObjectZip$({
         filename: `${recipe.title || recipe.placeholder}.json`,
-        data: serialize(_.omit(recipe, ['ui']))
+        data: serialize(_.omit(recipe, NON_CONTENT))
     })
 
 export const loadProjects$ = () =>
@@ -146,13 +130,7 @@ export const selectRecipe = recipeId =>
 
 export const duplicateRecipe = sourceRecipe => {
     publishEvent('duplicate_recipe', {recipe_type: sourceRecipe.type})
-    return addRecipe({
-        ...sourceRecipe,
-        id: uuid(),
-        placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
-        title: null,
-        ui: {...sourceRecipe.ui, unsaved: true, initialized: true}
-    })
+    return addRecipe(recipeCopy(sourceRecipe))
 }
 
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
@@ -164,6 +142,7 @@ export const removeRecipes$ = recipeIds =>
     api.recipe.remove$(recipeIds).pipe(
         map(() =>
             _.transform(recipeIds, (actionBuilder, recipeId) => {
+                forgetRecipeSaveState(recipeId)
                 actionBuilder
                     .del(['process.recipes', {id: recipeId}])
                     .del(['process.loadedRecipes', recipeId])
@@ -177,9 +156,7 @@ export const moveRecipes$ = (recipeIds, projectId) => {
         map(recipes => recipeIds
             .filter(id => loadedRecipes[id])
             .reduce(
-                (builder, id) => {
-                    return builder.set(['process.loadedRecipes', id, 'projectId'], projectId)
-                },
+                (builder, id) => builder.set(['process.loadedRecipes', id, 'projectId'], projectId),
                 actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
                     .set('process.recipes', recipes)
             ).dispatch()
@@ -201,10 +178,74 @@ export const addRecipe = recipe => {
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
+const save$ = {
+    next: recipe => {
+        if (recipe.ui.unsaved) {
+            publishEvent('insert_recipe', {recipe_type: recipe.type})
+        }
+        saveCoordinator.save(_.omit(recipe, NON_CONTENT))
+    }
+}
+
+const saveCoordinator = createSaveCoordinator({
+    save: request => postRecipe(request),
+    loadRecipe: recipeId => firstValueFrom(api.recipe.load$(recipeId)),
+    onOutcome: ({recipeId, status, revision, error}) => {
+        if (status === 'SAVED') {
+            adoptRevision(recipeId, revision)
+        } else if (status === 'CONFLICT') {
+            Notifications.error({timeout: 0, message: msg('process.saveRecipe.conflict'), error})
+        } else if (status === 'FAILED' || status === 'UNRESOLVED') {
+            Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
+        }
+    }
+})
+
+const postRecipe = ({recipe, expectedRevision}) => firstValueFrom(
+    gzip$(recipe).pipe(
+        switchMap(gzippedContents =>
+            api.recipe.save$({
+                id: recipe.id,
+                projectId: recipe.projectId,
+                type: recipe.type,
+                name: recipe.title || recipe.placeholder,
+                gzippedContents,
+                expectedRevision
+            })
+        )
+    )
+)
+
+// Catalogue revisions are freshness evidence; save preconditions come from the coordinator's draft base.
+const setCatalogueRevision = (recipeId, revision) =>
+    actionBuilder('SET_RECIPE_REVISION', {recipeId})
+        .set(['process.recipes', {id: recipeId}, 'revision'], revision)
+        .dispatch()
+
+// An acknowledged revision is what the server now holds, so both the catalogue and the open draft carry it.
+// Autosave compares only model, layers and retile, so writing it to the draft cannot provoke another save.
+const adoptRevision = (recipeId, revision) => {
+    setCatalogueRevision(recipeId, revision)
+    if (select(recipePath(recipeId))) {
+        actionBuilder('SET_DRAFT_REVISION', {recipeId})
+            .set(recipePath(recipeId, 'revision'), revision)
+            .dispatch()
+    }
+}
+
 let prevRecipes = []
 
 const findPrevRecipe = recipe =>
     prevRecipes.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+
+// A copy is a recipe the server has never seen, so it must not inherit the source's revision.
+const recipeCopy = sourceRecipe => ({
+    ..._.omit(sourceRecipe, ['revision']),
+    id: uuid(),
+    placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
+    title: null,
+    ui: {...sourceRecipe.ui, unsaved: true, initialized: true}
+})
 
 const persistentProps = recipe =>
     _.pick(recipe, ['model', 'layers', 'retile'])

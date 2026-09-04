@@ -4936,6 +4936,7 @@
       }
     },
     "saveRecipe": {
+      "conflict": "This recipe was changed somewhere else, so your latest edits could not be saved. They remain open in this tab. To keep them, use Duplicate recipe in the top-right recipe menu and save the copy. Then close and reopen the original to load the latest version.",
       "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select \"Export recipe\".",
       "form": {
         "name": {

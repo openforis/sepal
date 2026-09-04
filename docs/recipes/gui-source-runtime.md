@@ -507,7 +507,7 @@ The intended version evidence is:
 
 - exact in-session recipe object identity, or an operation-local draft generation, for the editable root's unsaved
   edits;
-- a server-owned monotonic `contentRevision` for persisted recipe update ordering and invalidation;
+- a server-owned monotonic `revision` for persisted recipe update ordering and invalidation;
 - an Earth Engine asset ID plus `system:version`, normalized as an opaque string, when that property is available;
 - principal, linked Earth Engine identity and contract version where they affect the answer.
 
