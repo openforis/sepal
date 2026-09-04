@@ -83,7 +83,7 @@ p.small {font-size: .9rem}
 <body>${body}</body>
 </html>`
 
-// instanceText — "Instance <b>crazy-banana</b> (t3a.small, $0.02/h)", the same name the in-app
+// instanceText — "Instance <b>crazy-banana</b> (t1, $0.02/h)", the same name the in-app
 // notification, the expiry email and the SSH menu give this machine (instanceName.js). A user with
 // two instances has to be able to tell which one a page is about before pressing anything on it,
 // and the price is what makes "keep it running" a real decision rather than a reflex.

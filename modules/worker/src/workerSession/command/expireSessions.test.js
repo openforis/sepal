@@ -50,7 +50,7 @@ const run = (repo, overrides = {}) => expireSessions({
     terminals: {get: () => 0},
     mode: 'enforce',
     policy,
-    instanceTypeById: {T3aSmall: {name: 't3a.small', hourlyCost: 0.02}},
+    instanceTypeById: {T3aSmall: {name: 't3a.small', tag: 't1', hourlyCost: 0.02}},
     sendEmail: jest.fn(),
     manageUrl: () => 'https://sepal.io/api/sessions/expiry/tok',
     releaseInstance: jest.fn(async () => {}),
@@ -275,7 +275,7 @@ describe('isolation', () => {
 })
 
 // ── what is running on the instance ──────────────────────────────────────────
-// The notification names the instance the way the SSH menu does — "instance 2 (t3a.small)" — and
+// The notification names the instance the way the SSH menu does — "instance 2 (t1)" — and
 // says what is on it, so a user who has three instances open knows which one is about to go.
 describe('describing the instance', () => {
     const withApps = apps => ({
@@ -294,7 +294,7 @@ describe('describing the instance', () => {
             apps: [{path: '/sandbox/rstudio', label: 'RStudio'}],
             terminals: 2,
             ordinal: 1,
-            typeName: 't3a.small',
+            typeName: 't1',
         }))
     })
 
@@ -322,7 +322,7 @@ describe('describing the instance', () => {
             sendEmail,
         })
         const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain(`Instance <b>${instanceName('s-1')}</b> (t3a.small, $0.02/h)`)
+        expect(content).toContain(`Instance <b>${instanceName('s-1')}</b> (t1, $0.02/h)`)
         expect(content).not.toContain('Your <b>')
         expect(content).toContain('RStudio')
     })

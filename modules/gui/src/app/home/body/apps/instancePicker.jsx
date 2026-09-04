@@ -75,15 +75,23 @@ class _InstancePicker extends React.Component {
         onConfirm(kind === 'session' ? {sessionId: id} : {instanceType: id})
     }
 
-    // Running instances hosting apps get a two-line option: instance info on top,
-    // the hosted apps dimmed underneath. Plain options keep the default rendering.
-    renderOption({instanceLabel, apps}) {
+    // Every option is a two-column row: what the instance IS on the left, what it provides and
+    // costs right-aligned, so the options can be compared straight down the column instead of
+    // across a separator. A running instance hosting apps lists them dimmed underneath.
+    renderOption({title, detail, apps}) {
         return (
             <div className={styles.option}>
-                <div>{instanceLabel}</div>
-                <div className={styles.apps}>
-                    {apps.map((app, i) => this.renderApp(app, i))}
+                <div className={styles.instance}>
+                    <div className={styles.title}>{title}</div>
+                    <div className={styles.detail}>{detail}</div>
                 </div>
+                {apps?.length
+                    ? (
+                        <div className={styles.apps}>
+                            {apps.map((app, i) => this.renderApp(app, i))}
+                        </div>
+                    )
+                    : null}
             </div>
         )
     }
@@ -97,11 +105,7 @@ class _InstancePicker extends React.Component {
     pickerOptions(report) {
         return buildPickerOptions(this.pickerInputs(report)).map(section => ({
             ...section,
-            options: section.options.map(option =>
-                option.apps?.length
-                    ? {...option, render: () => this.renderOption(option)}
-                    : option
-            )
+            options: section.options.map(option => ({...option, render: () => this.renderOption(option)}))
         }))
     }
 

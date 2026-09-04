@@ -58,14 +58,14 @@ const runningText = ({apps = []}) => {
         : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }
 
-// instanceText — "Instance <b>crazy-banana</b> (t3a.small, $0.02/h)". The name is derived from the
+// instanceText — "Instance <b>crazy-banana</b> (t1, $0.02/h)". The name is derived from the
 // session id (instanceName.js) and is the same one the GUI, the management page and the SSH menu
 // show, so every interface names the machine identically. The price is what makes "keep it
 // running" a real decision rather than a reflex. The ordinal is not printed here: it is what a
 // user TYPES in the SSH menu, not what they read.
 const instanceText = ({name, instanceType}) => {
     const parts = [
-        instanceType?.name,
+        instanceType?.tag ?? instanceType?.name,
         instanceType?.hourlyCost ? `$${instanceType.hourlyCost.toFixed(2)}/h` : null,
     ].filter(Boolean)
     const suffix = parts.length ? ` (${parts.join(', ')})` : ''
@@ -184,7 +184,7 @@ const expireSessions = async ({
                         username: session.username,
                         session: withApiKey(session, null),
                         ...running,
-                        typeName: instanceType?.name ?? null,
+                        typeName: instanceType?.tag ?? instanceType?.name ?? null,
                         extensionMinutes: policy.manualExtensionMinutes,
                     })
                 }
@@ -260,7 +260,7 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
         username: session.username,
         sessionId: session.id,
         ...running,
-        typeName: instanceType?.name ?? null,
+        typeName: instanceType?.tag ?? instanceType?.name ?? null,
     })
     sendEmail({
         username: session.username,

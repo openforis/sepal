@@ -37,7 +37,7 @@ globalThis.localStorage = {
 
 const session = overrides => ({
     id: 's1',
-    instanceType: {name: 't3a.small', description: '1 CPU, 2 GiB', hourlyCost: 0.0204, gpuCount: 0},
+    instanceType: {name: 't3a.small', tag: 't1', description: '1 CPU, 2 GiB', hourlyCost: 0.0204, gpuCount: 0},
     creationTime: '2026-08-17T07:17:29.000Z',
     costSinceCreation: 0.04,
     apps: [],
@@ -77,13 +77,13 @@ describe('the session list', () => {
             session({id: 's1', name: 'humble-robin'}),
             session({id: 's2', name: 'lunar-owl'}),
         ]).textContent
-        expect(text).toContain('1: humble-robin - t3a.small ($0.02/h)')
-        expect(text).toContain('2: lunar-owl - t3a.small ($0.02/h)')
+        expect(text).toContain('1: humble-robin - t1 ($0.02/h)')
+        expect(text).toContain('2: lunar-owl - t1 ($0.02/h)')
     })
 
     it('falls back to number and type for a session with no name', () => {
         const text = render([session({id: 's1', name: null})]).textContent
-        expect(text).toContain('1: t3a.small ($0.02/h)')
+        expect(text).toContain('1: t1 ($0.02/h)')
     })
 
     // Under the relative start time, not in a column of its own.
