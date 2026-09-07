@@ -1,25 +1,24 @@
-import {getLogger} from '#sepal/log'
-
 import {migrate} from './migration/engine.js'
 import {currentVersionForType, MIGRATIONS_BY_TYPE} from './migration/registry.js'
-import * as repository from './recipeRepository.js'
 
-const log = getLogger('migrateRecipes')
-
-const migrateRecipes = async () => {
+const migrateRecipes = async ({repository, log}) => {
     for (const type of Object.keys(MIGRATIONS_BY_TYPE)) {
         const version = currentVersionForType(type)
-        const rows = await repository.listRecipesOfTypeBeforeVersion(type, version)
-        for (const row of rows) {
+        const stored = await repository.findRecipesToMigrate(type, version)
+        for (const {id, owner, typeVersion: fromVersion, content} of stored) {
             try {
-                const parsed = JSON.parse(row.contents)
-                const {contents, typeVersion} = migrate(parsed, row.type_version, MIGRATIONS_BY_TYPE[type])
+                if (!content) {
+                    throw new Error('Stored recipe cannot be read')
+                }
+                const migrated = migrate(content, fromVersion, MIGRATIONS_BY_TYPE[type])
                 await repository.saveMigratedRecipe({
-                    id: row.id, username: row.username, typeVersion, contents: JSON.stringify(contents)
+                    id, owner,
+                    typeVersion: migrated.typeVersion,
+                    content: migrated.contents
                 })
-                log.info(`Migrated recipe ${row.id} (${type}) to version ${typeVersion}`)
+                log.info(`Migrated recipe ${id} (${type}) to version ${migrated.typeVersion}`)
             } catch (error) {
-                log.warn(`Failed to migrate recipe ${row.id} (${type})`, error)
+                log.warn(`Failed to migrate recipe ${id} (${type})`, error)
             }
         }
     }

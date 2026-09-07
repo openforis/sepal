@@ -366,3 +366,8 @@ No update-time or temporary content-hash bridge is involved.
 - Any interim unversioned-recipe freshness path: no temporary browser content hashing and no `update_time`
   freshness rung. Persisted derived-result freshness waits for `revision` rather than approximating it.
 - CCDC capability migration as a prerequisite for constant Fill.
+- Shared gateway-authentication middleware for Node/Koa modules. Extract the repeated `sepal-user` parsing,
+  `ctx.state.currentUser` assignment, 401 handling and role guards from Recipe, Budget, Message, Scene Metadata
+  and Worker into shared HTTP infrastructure, with loggers injected at composition roots. Preserve each module's
+  role combinations and response contract, and land this as a dedicated cross-module commit rather than as part
+  of Recipe source resolution.

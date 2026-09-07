@@ -1,48 +1,34 @@
-import {getLogger} from '#sepal/log'
-
-const log = getLogger('currentUser')
-
 const HEADER = 'sepal-user'
-const ADMIN_ROLE = 'application_admin'
 
-const parseCurrentUser = ctx => {
-    const value = ctx.headers[HEADER]
-    if (!value) {
-        return null
+const createRequireAuth = ({log}) => {
+
+    const requireAuth = async (ctx, next) => {
+        const user = currentUser(ctx)
+        if (user) {
+            ctx.state.currentUser = user
+            await next()
+        } else {
+            ctx.status = 401
+            ctx.body = {message: `No "${HEADER}" header in request`}
+        }
     }
-    try {
-        return JSON.parse(value)
-    } catch (error) {
-        log.warn(`Invalid ${HEADER} header`, error.message)
-        return null
+
+    const currentUser = ctx => {
+        const value = ctx.headers[HEADER]
+        if (!value) {
+            return null
+        }
+        try {
+            return JSON.parse(value)
+        } catch (error) {
+            // The gateway authenticates before this service is reached, so a header that will not parse
+            // is its bug rather than a client's, and the 401 alone would not say so.
+            log.warn(`Invalid ${HEADER} header`, error.message)
+            return null
+        }
     }
+
+    return requireAuth
 }
 
-const requireAuth = async (ctx, next) => {
-    const user = parseCurrentUser(ctx)
-    if (!user) {
-        ctx.status = 401
-        ctx.body = {message: `No "${HEADER}" header in request`}
-        return
-    }
-    ctx.state.currentUser = user
-    await next()
-}
-
-const requireAdmin = async (ctx, next) => {
-    const user = parseCurrentUser(ctx)
-    if (!user) {
-        ctx.status = 401
-        ctx.body = {message: `No "${HEADER}" header in request`}
-        return
-    }
-    if (!(user.roles || []).includes(ADMIN_ROLE)) {
-        ctx.status = 403
-        ctx.body = {message: 'Admin role required'}
-        return
-    }
-    ctx.state.currentUser = user
-    await next()
-}
-
-export {parseCurrentUser, requireAdmin, requireAuth}
+export {createRequireAuth}

@@ -1,55 +1,48 @@
-import {parseCurrentUser, requireAdmin, requireAuth} from './currentUser.js'
+import {createRequireAuth} from './currentUser.js'
 
-const ctx = (headers = {}) => ({headers, state: {}})
-const userHeader = roles => ({'sepal-user': JSON.stringify({username: 'u', roles})})
+let received
 
-test('parses a valid sepal-user header', () => {
-    const ctx = {headers: {'sepal-user': JSON.stringify({username: 'bob', roles: []})}}
-    expect(parseCurrentUser(ctx)).toEqual({username: 'bob', roles: []})
+beforeEach(() => {
+    received = []
+    warnings.length = 0
 })
 
-test('returns null when the header is absent', () => {
-    expect(parseCurrentUser({headers: {}})).toBeNull()
+test('an authenticated request reaches the next middleware as its user', async () => {
+    const ctx = authenticatedRequest()
+
+    await requireAuth(ctx, observeDownstream(ctx))
+
+    expect(received).toEqual([authenticatedUser])
 })
 
-test('returns null when the header is not valid JSON', () => {
-    expect(parseCurrentUser({headers: {'sepal-user': 'not-json'}})).toBeNull()
+test('a request without the header is unauthorized, and goes no further', async () => {
+    const ctx = request()
+
+    await requireAuth(ctx, observeDownstream(ctx))
+
+    expect(received).toEqual([])
+    expect(ctx.status).toBe(401)
 })
 
-test('requireAuth passes through and sets currentUser for a valid header', async () => {
-    const c = ctx(userHeader([]))
-    let called = 0
-    await requireAuth(c, async () => { called++ })
-    expect(called).toBe(1)
-    expect(c.state.currentUser).toEqual({username: 'u', roles: []})
+// The 401 body cannot tell a missing header from an unparseable one, so the warning is the only signal
+// that the gateway sent something malformed.
+test('a header that will not parse is unauthorized, and reported', async () => {
+    const ctx = request({'sepal-user': 'not-json'})
+
+    await requireAuth(ctx, observeDownstream(ctx))
+
+    expect(received).toEqual([])
+    expect(ctx.status).toBe(401)
+    expect(warnings).toHaveLength(1)
 })
 
-test('requireAuth returns 401 with no header and does not call next', async () => {
-    const c = ctx()
-    let called = 0
-    await requireAuth(c, async () => { called++ })
-    expect(c.status).toBe(401)
-    expect(called).toBe(0)
-})
+const observeDownstream = ctx => async () => received.push(ctx.state.currentUser)
 
-test('requireAdmin passes through for an application_admin user', async () => {
-    const c = ctx(userHeader(['application_admin']))
-    let called = 0
-    await requireAdmin(c, async () => { called++ })
-    expect(called).toBe(1)
-    expect(c.state.currentUser.username).toBe('u')
-})
+const authenticatedRequest = () => request({'sepal-user': JSON.stringify(authenticatedUser)})
 
-test('requireAdmin returns 403 for a non-admin user', async () => {
-    const c = ctx(userHeader([]))
-    let called = 0
-    await requireAdmin(c, async () => { called++ })
-    expect(c.status).toBe(403)
-    expect(called).toBe(0)
-})
+const request = (headers = {}) => ({headers, state: {}})
 
-test('requireAdmin returns 401 with no header', async () => {
-    const c = ctx()
-    await requireAdmin(c, async () => {})
-    expect(c.status).toBe(401)
-})
+const authenticatedUser = {username: 'bob', roles: []}
+
+const warnings = []
+const requireAuth = createRequireAuth({log: {warn: message => warnings.push(message)}})

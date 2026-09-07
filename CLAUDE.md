@@ -117,6 +117,17 @@ npm test                             # Jest
 npm run testWatch                    # Jest watch mode
 ```
 
+## Testing
+
+- Write behavioral tests against stable public seams. Every test must distinguish a meaningful regression through observable outcomes, not private calls, implementation structure, or assertions that merely verify the harness.
+- Keep each test readable as Given/When/Then with minimal mechanics. Keep the operation under test explicit in the test body; helpers may arrange incidental preconditions, but must not hide the When or scenario-defining setup.
+- Use builders for minimal valid defaults and common relationships. Override a field only when its value creates the scenario or is itself part of the expected contract. Reuse built values in actions and assertions, and capture generated values from operation results instead of repeating arbitrary literals.
+- Prefer real collaborators or small stateful fakes implementing ports we own. Arrange and verify through the port contract (for example, save then load) instead of inspecting call logs.
+- Mock only boundaries we own, and only when a real collaborator or fake would make the test less focused. Do not recreate third-party internals in mocks.
+- Test infrastructure guarantees against the real infrastructure when a fake cannot provide evidence, such as database transactions and concurrent writes.
+- Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or MySQL; tests over fakes remain `*.test.js`.
+- Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
+
 ## Code Style
 
 ESLint config at root `eslint.config.js`:
@@ -133,13 +144,29 @@ ESLint config at root `eslint.config.js`:
 
 The GUI module (`modules/gui/eslint.config.js`) extends this with React-specific rules and `simple-import-sort` plugin.
 
+## Code Organization
+
+- Organize files to read top-down. Put public entry points and exported classes/functions first at the highest abstraction level, followed by their supporting functions in call order and increasingly concrete detail.
+- Keep a function at one abstraction level: orchestration should name its steps, while lower-level mechanics belong in the functions it calls.
+- In test files, put the behavioral specifications before builders and harness helpers. Group by stable public operation and use names that state the outcome or rule, not vague activity such as "loading a recipe".
+
 ## Comments
 
 Comment code sparingly — only what the code can't say. A comment must earn its place by stating something invisible in the code itself: a non-obvious why, an invariant, a constraint, a workaround. Never write comments that narrate what the next line does, describe the edit you just made ("added X", "now handles Y"), or talk to the reviewer — the diff and git history carry that, and stale narration misleads the next reader, human or agent. Match the comment density of the surrounding file. This is not a ban: the rare high-value comment is welcome, and durable orientation notes belong in docstrings or the repo's docs, not inline.
 
 ## Commit messages
 
-Keep commit messages simple, not verbose. A short subject line (and at most a brief body when it genuinely adds context) — don't pad messages with long bullet lists, restated diffs, or boilerplate.
+Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): description`.
+
+- `type` is one of `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`.
+- `scope` is optional and names the module or shared library the change belongs to (`worker`, `recipe`,
+  `gui`, `db`, `deploy`). Omit it for changes that span the repository.
+- `description` is imperative mood, lower case, no trailing period: `fix(worker): stop leaking sessions`.
+- Mark a breaking change with `!` after the type or scope (`feat(user)!: drop LDAP support`), and explain
+  it in a `BREAKING CHANGE:` footer.
+
+Keep messages simple, not verbose. A short subject line (and at most a brief body when it genuinely adds
+context) — don't pad messages with long bullet lists, restated diffs, or boilerplate.
 
 ## Service Ports
 

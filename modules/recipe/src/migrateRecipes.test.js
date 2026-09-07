@@ -1,62 +1,53 @@
-import {jest} from '@jest/globals'
+import {FakeRecipeRepository} from '../test/fakeRecipeRepository.js'
+import {migrateRecipes} from './migrateRecipes.js'
+import {currentVersionForType} from './migration/registry.js'
 
-// Fake registry: FAKE_TYPE's current version is 2, with a migration that lifts a v1 recipe up to v2
-const FAKE_MIGRATIONS_BY_TYPE = {
-    FAKE_TYPE: {
-        2: contents => ({...contents, migrated: true})
-    }
-}
-
-jest.unstable_mockModule('./migration/registry.js', () => ({
-    MIGRATIONS_BY_TYPE: FAKE_MIGRATIONS_BY_TYPE,
-    currentVersionForType: type => FAKE_MIGRATIONS_BY_TYPE[type] ? 2 : 1
-}))
-
-const listRecipesOfTypeBeforeVersion = jest.fn()
-const saveMigratedRecipe = jest.fn()
-
-jest.unstable_mockModule('./recipeRepository.js', () => ({
-    listRecipesOfTypeBeforeVersion,
-    saveMigratedRecipe
-}))
-
-const {migrateRecipes} = await import('./migrateRecipes.js')
+let repository
 
 beforeEach(() => {
-    listRecipesOfTypeBeforeVersion.mockReset()
-    saveMigratedRecipe.mockReset()
+    repository = new FakeRecipeRepository()
 })
 
-test('migrateRecipes migrates stale recipes and saves with new type_version', async () => {
-    const row = {id: 'r1', username: 'alice', type_version: 1, contents: '{"x":1}'}
-    listRecipesOfTypeBeforeVersion.mockResolvedValueOnce([row])
-    saveMigratedRecipe.mockResolvedValueOnce()
+describe('migrateRecipes', () => {
+    test('brings recipes below the current version up to it', async () => {
+        await givenRecipe('stale', OUTDATED_TYPE_VERSION)
+        await givenRecipe('current', MOSAIC_VERSION)
 
-    await migrateRecipes()
+        await migrateRecipes({repository, log: silent})
 
-    expect(listRecipesOfTypeBeforeVersion).toHaveBeenCalledWith('FAKE_TYPE', 2)
-    expect(saveMigratedRecipe).toHaveBeenCalledWith({
-        id: 'r1',
-        username: 'alice',
-        typeVersion: 2,
-        contents: JSON.stringify({x: 1, migrated: true})
+        expect(await staleRecipeIds()).toEqual([])
+    })
+
+    test('lets the others through when one recipe cannot be migrated', async () => {
+        await givenRecipe('unreadable', OUTDATED_TYPE_VERSION)
+        await givenRecipe('readable', OUTDATED_TYPE_VERSION)
+
+        await migrateRecipes({repository: withUnreadableDocument(repository, 'unreadable'), log: silent})
+
+        expect(await staleRecipeIds()).toEqual(['unreadable'])
     })
 })
 
-test('migrateRecipes error on one recipe does not abort the rest', async () => {
-    const bad = {id: 'bad', username: 'alice', type_version: 1, contents: 'not-valid-json'}
-    const good = {id: 'good', username: 'alice', type_version: 1, contents: '{"y":2}'}
-    listRecipesOfTypeBeforeVersion.mockResolvedValueOnce([bad, good])
-    saveMigratedRecipe.mockResolvedValueOnce()
-
-    await migrateRecipes()
-
-    // good recipe must still be saved despite bad recipe failing
-    expect(saveMigratedRecipe).toHaveBeenCalledTimes(1)
-    expect(saveMigratedRecipe).toHaveBeenCalledWith({
-        id: 'good',
-        username: 'alice',
-        typeVersion: 2,
-        contents: JSON.stringify({y: 2, migrated: true})
-    })
+const givenRecipe = (id, typeVersion) => repository.saveRecipe({
+    id, owner: OWNER, projectId: null, name: id, type: 'MOSAIC', typeVersion, content: aRecipeContent()
 })
+
+const aRecipeContent = (over = {}) => ({model: {}, ...over})
+
+const staleRecipeIds = async () =>
+    (await repository.findRecipesToMigrate('MOSAIC', MOSAIC_VERSION)).map(({id}) => id)
+
+// The adapter reports a document it cannot parse rather than failing the batch; this is that recipe.
+const withUnreadableDocument = (repository, unreadableId) => ({
+    findRecipesToMigrate: async (...args) =>
+        (await repository.findRecipesToMigrate(...args))
+            .map(recipe => recipe.id === unreadableId ? {...recipe, content: null} : recipe),
+    saveMigratedRecipe: migrated => repository.saveMigratedRecipe(migrated)
+})
+
+const silent = {info: () => {}, warn: () => {}}
+
+const OWNER = 'bob'
+
+const MOSAIC_VERSION = currentVersionForType('MOSAIC')
+const OUTDATED_TYPE_VERSION = MOSAIC_VERSION - 1
