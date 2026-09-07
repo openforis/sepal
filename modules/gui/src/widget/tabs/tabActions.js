@@ -46,6 +46,15 @@ export const renameTab = (title, tabPath, onTitleChanged) => {
     setImmediate(() => onTitleChanged && onTitleChanged(select(tabPath)))
 }
 
+// setTabPlaceholder — name a tab from what it currently holds (the terminal names its tab after
+// the session it is attached to). It writes the placeholder, not the title, so a tab the user has
+// renamed by hand keeps that name; an empty placeholder restores the default label.
+export const setTabPlaceholder = (placeholder, statePath, id) => {
+    actionBuilder('SET_TAB_PLACEHOLDER')
+        .set([statePath, 'tabs', {id}, 'placeholder'], placeholder || msg('widget.tabs.newTab'))
+        .dispatch()
+}
+
 export const selectTab = (id, statePath) => {
     actionBuilder('SELECT_TAB')
         .set([statePath, 'selectedTabId'], id)

@@ -24,11 +24,12 @@ import {sessionNumber} from './instanceSuitability'
 
 const log = getLogger('app')
 
-// "instance 2 (m5.xlarge)" — the same 1-based numbering and type name the instance
+// "instance 2 (m4)" — the same 1-based numbering and instance type tag the instance
 // picker and the sessions panel show.
 const instanceLabel = (sessions, sessionId) => {
     const number = sessionNumber(sessions, sessionId)
-    const type = (sessions || []).find(({id}) => id === sessionId)?.instanceType?.name
+    const instanceType = (sessions || []).find(({id}) => id === sessionId)?.instanceType
+    const type = instanceType?.tag ?? instanceType?.name
     return number && type
         ? msg('apps.confirmReopen.instance', {number, type})
         : msg('apps.confirmReopen.unknownInstance')

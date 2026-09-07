@@ -489,7 +489,7 @@ describe('sizeIdlePool', () => {
         expect(provider.terminate).not.toHaveBeenCalled()
     })
 
-    test('current > target: terminates surplus (first N)', async () => {
+    test('current > target: terminates the surplus', async () => {
         const surplus = [
             makeInstance({id: 'i-a', type: 'T3aSmall'}),
             makeInstance({id: 'i-b', type: 'T3aSmall'}),
@@ -501,6 +501,24 @@ describe('sizeIdlePool', () => {
         expect(provider.terminate).toHaveBeenCalledTimes(2)
         expect(repo.terminated).toHaveBeenCalledTimes(2)
         expect(provider.launchIdle).not.toHaveBeenCalled()
+    })
+
+    // The surplus is almost always the replacement launched the moment the previous idle instance
+    // was reserved, racing the released instance coming back. Dropping the oldest keeps the one
+    // that may still be booting and throws away the warm one, so the next session pays for a cold
+    // boot that the pool exists to avoid.
+    test('current > target: terminates the most recently launched, keeping the warm one', async () => {
+        const minutesAgo = m => new Date(Date.now() - m * 60_000)
+        const idleInstances = [
+            makeInstance({id: 'i-warm', type: 'T3aSmall', launchTime: minutesAgo(90)}),
+            makeInstance({id: 'i-cold', type: 'T3aSmall', launchTime: minutesAgo(1)}),
+        ]
+        const {repo, provider} = makeRepoAndProvider({idleInstances})
+        await sizeIdlePool({'T3aSmall': 1}, {repo, provider})
+
+        expect(provider.terminate).toHaveBeenCalledTimes(1)
+        expect(provider.terminate).toHaveBeenCalledWith('i-cold')
+        expect(repo.terminated).toHaveBeenCalledWith('i-cold')
     })
 
     test('current == target: no-op', async () => {
@@ -547,6 +565,129 @@ describe('sizeIdlePool', () => {
         const terminatedIds = provider.terminate.mock.calls.map(c => c[0])
         expect(terminatedIds).toContain('i-extra-1')
         expect(terminatedIds).toContain('i-extra-2')
+    })
+})
+
+describe('reconcileInstances', () => {
+    let reconcileInstances, requestInstance
+
+    beforeAll(async () => {
+        ;({reconcileInstances} = await import('./command/reconcileInstances.js'))
+        ;({requestInstance} = await import('./command/requestInstance.js'))
+    })
+
+    // A stand-in for the `instance` table: id -> workerType (null = idle), with the same
+    // race-safe semantics as the real repository.
+    const makeRepo = (rows = new Map()) => ({
+        rows,
+        idleInstances: async instanceType =>
+            [...rows].filter(([, r]) => r.workerType === null && r.type === instanceType).map(([id]) => id),
+        launched: async instance => rows.set(instance.id, {type: instance.type, workerType: null}),
+        reserved: async (id, workerType) => {
+            const row = rows.get(id)
+            if (!row || row.workerType !== null) return false
+            row.workerType = workerType
+            return true
+        },
+        reconciled: async instances => {
+            let adopted = 0
+            for (const {id, type} of instances) {
+                if (!rows.has(id)) {
+                    rows.set(id, {type, workerType: null})
+                    adopted++
+                }
+            }
+            return adopted
+        },
+        forgotten: async knownIds => {
+            const known = new Set(knownIds)
+            let dropped = 0
+            for (const [id, row] of [...rows]) {
+                if (row.workerType === null && !known.has(id)) {
+                    rows.delete(id)
+                    dropped++
+                }
+            }
+            return dropped
+        },
+    })
+
+    const makeProvider = ({idle = [], reserved = []} = {}) => ({
+        idleInstances: jest.fn(async () => idle),
+        reservedInstances: jest.fn(async () => reserved),
+        launchReserved: jest.fn(async () => makeReservedInstance({id: 'i-new'})),
+        reserve: jest.fn(async () => {}),
+    })
+
+    test('adopts a provider-idle instance the repository has never seen', async () => {
+        const repo = makeRepo()
+        const provider = makeProvider({idle: [makeInstance({id: 'i-orphan', type: 'T3aSmall'})]})
+
+        const {adopted} = await reconcileInstances({repo, provider})
+
+        expect(adopted).toBe(1)
+        expect(repo.rows.get('i-orphan')).toEqual({type: 'T3aSmall', workerType: null})
+    })
+
+    // The whole point of adoption: without a row, RequestInstance's repo ∩ provider intersection
+    // is empty, so the idle instance can never be handed to a session while SizeIdlePool keeps
+    // counting it towards the target — it bills forever and every request launches a new instance.
+    test('an adopted orphan becomes reusable by requestInstance', async () => {
+        const orphan = makeInstance({id: 'i-orphan', type: 'T3aSmall'})
+        const repo = makeRepo()
+        const provider = makeProvider({idle: [orphan]})
+
+        const before = await requestInstance(
+            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
+            {repo, provider}
+        )
+        expect(before.id).toBe('i-new')
+        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
+
+        await reconcileInstances({repo, provider})
+
+        const after = await requestInstance(
+            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
+            {repo, provider}
+        )
+        expect(after.id).toBe('i-orphan')
+        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
+    })
+
+    test('does NOT re-idle a row that already exists (a reserved instance stays reserved)', async () => {
+        const repo = makeRepo(new Map([['i-live', {type: 'T3aSmall', workerType: 'SANDBOX'}]]))
+        const provider = makeProvider({idle: [makeInstance({id: 'i-live', type: 'T3aSmall'})]})
+
+        const {adopted} = await reconcileInstances({repo, provider})
+
+        expect(adopted).toBe(0)
+        expect(repo.rows.get('i-live').workerType).toBe('SANDBOX')
+    })
+
+    test('forgets idle rows for instances the provider no longer has', async () => {
+        const repo = makeRepo(new Map([
+            ['i-gone', {type: 'T3aSmall', workerType: null}],
+            ['i-here', {type: 'T3aSmall', workerType: null}],
+        ]))
+        const provider = makeProvider({idle: [makeInstance({id: 'i-here', type: 'T3aSmall'})]})
+
+        const {forgotten} = await reconcileInstances({repo, provider})
+
+        expect(forgotten).toBe(1)
+        expect(repo.rows.has('i-gone')).toBe(false)
+        expect(repo.rows.has('i-here')).toBe(true)
+    })
+
+    // A reserved instance is reported by reservedInstances(), not idleInstances(). Forgetting its
+    // row would make ReleaseInstance read its own release as a lost race and skip the undeploy.
+    test('keeps the row of an instance the provider reports as reserved', async () => {
+        const repo = makeRepo(new Map([['i-busy', {type: 'T3aSmall', workerType: null}]]))
+        const provider = makeProvider({reserved: [makeReservedInstance({id: 'i-busy'})]})
+
+        const {forgotten} = await reconcileInstances({repo, provider})
+
+        expect(forgotten).toBe(0)
+        expect(repo.rows.has('i-busy')).toBe(true)
     })
 })
 

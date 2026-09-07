@@ -1,8 +1,8 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): build targetIdleCountByInstanceType, schedule SizeIdlePool every 1 min
-//              (unconditionally — see start()), call provider.start()
+//   3. start(): build targetIdleCountByInstanceType, schedule ReconcileInstances + SizeIdlePool
+//              every 1 min (unconditionally — see start()), call provider.start()
 //   4. stop():  clear scheduler, call provider.stop()
 //
 // DO NOT auto-start on import. main.js calls start() explicitly.
@@ -11,6 +11,7 @@ import {getLogger} from '#sepal/log'
 
 import {instanceTag} from '../tag.js'
 import {provisionInstance} from './command/provisionInstance.js'
+import {reconcileInstances} from './command/reconcileInstances.js'
 import {sizeIdlePool} from './command/sizeIdlePool.js'
 import {
     emitInstancePendingProvisioning,
@@ -67,12 +68,24 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
         // `size > 0` made the whole termination path hinge on one catalog entry carrying idleCount.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
-        const runSizeIdlePool = phase => () =>
-            sizeIdlePool(targetIdleCountByInstanceType, {repo, provider}).catch(err =>
+        // Reconcile FIRST: an idle instance the repository has never seen is invisible to
+        // RequestInstance but counted by SizeIdlePool, so leaving it unadopted would have the pool
+        // hold a slot open for an instance nobody can ever be given. A reconcile failure must not
+        // stop the sizing, hence the two independent catches.
+        const runPoolCycle = phase => async () => {
+            try {
+                await reconcileInstances({repo, provider})
+            } catch (err) {
+                log.error(`ReconcileInstances (${phase}) failed:`, err.message)
+            }
+            try {
+                await sizeIdlePool(targetIdleCountByInstanceType, {repo, provider})
+            } catch (err) {
                 log.error(`SizeIdlePool (${phase}) failed:`, err.message)
-            )
-        runSizeIdlePool('initial')()
-        sizeIdlePoolTimer = setInterval(runSizeIdlePool('scheduled'), SIZE_IDLE_POOL_INTERVAL_MS)
+            }
+        }
+        runPoolCycle('initial')()
+        sizeIdlePoolTimer = setInterval(runPoolCycle('scheduled'), SIZE_IDLE_POOL_INTERVAL_MS)
 
         log.info('Started')
     }

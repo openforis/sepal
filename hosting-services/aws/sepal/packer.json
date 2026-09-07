@@ -63,7 +63,9 @@
         "--extra-vars",
         "env_file={{user `CONFIG_HOME`}}/env config_home={{user `CONFIG_HOME`}} version={{user `VERSION`}} "
       ],
-      "user": "ec2-user"
+      "user": "ec2-user",
+      "use_sftp": true,
+      "sftp_command": "/usr/libexec/openssh/sftp-server -e"
     }
   ]
 }

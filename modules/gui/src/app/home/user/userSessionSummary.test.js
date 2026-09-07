@@ -3,7 +3,7 @@ import {describe, expect, it} from 'vitest'
 import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
 
 const session = ({gpuCount = 0, ...overrides} = {}) => ({
-    instanceType: {name: 't3a.small', gpuCount, hourlyCost: 0.02},
+    instanceType: {name: 't3a.small', tag: 't1', gpuCount, hourlyCost: 0.02},
     apps: [],
     terminals: 0,
     verdict: 'unknown',
@@ -84,15 +84,20 @@ describe('runningItems', () => {
 })
 
 describe('instanceLabel', () => {
-    const session = overrides => ({name: 'humble-robin', instanceType: {name: 't3a.small'}, ...overrides})
+    const session = overrides => ({name: 'humble-robin', instanceType: {name: 't3a.small', tag: 't1'}, ...overrides})
 
     // The number leads: it is the position in the list AND the number the SSH menu accepts.
-    it('leads with the 1-based number, then the name, then the type', () => {
-        expect(instanceLabel(session(), 0)).toBe('1: humble-robin - t3a.small')
-        expect(instanceLabel(session(), 2)).toBe('3: humble-robin - t3a.small')
+    it('leads with the 1-based number, then the name, then the type tag', () => {
+        expect(instanceLabel(session(), 0)).toBe('1: humble-robin - t1')
+        expect(instanceLabel(session(), 2)).toBe('3: humble-robin - t1')
     })
 
     it('drops the separator when there is no name', () => {
-        expect(instanceLabel(session({name: null}), 0)).toBe('1: t3a.small')
+        expect(instanceLabel(session({name: null}), 0)).toBe('1: t1')
+    })
+
+    // Legacy types carry no tag; the AWS name is all there is to identify them by.
+    it('falls back to the AWS name for an untagged type', () => {
+        expect(instanceLabel(session({instanceType: {name: 'm3.medium'}}), 0)).toBe('1: humble-robin - m3.medium')
     })
 })

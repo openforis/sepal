@@ -110,4 +110,11 @@ const format = (string, ...styles) =>
 const highlight = (text, style = 'YELLOW_INTENSE') =>
     format(text, style)
 
-export {closeConsole, format, highlight, print, println, prompt, readLine$}
+// setTitle — OSC 0, the terminal's window title. The GUI's xterm turns it into the tab's name
+// (app/home/body/terminal), so this is how a session's identity gets out of the ssh session and
+// into the surrounding UI. An empty title puts the tab back to its default name.
+// Interactive sessions only: in non-interactive mode stdout carries the user's command output.
+const setTitle = title =>
+    print(`\u001B]0;${title}\u0007`)
+
+export {closeConsole, format, highlight, print, println, prompt, readLine$, setTitle}

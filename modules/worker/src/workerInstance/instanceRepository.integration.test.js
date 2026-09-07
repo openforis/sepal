@@ -183,6 +183,50 @@ describeIf(hasCredentials, 'integration — scratch schema (requires MYSQL_PASSW
         expect(second).toBe(false)    // must be false — Java parity via changedRows
     })
 
+    test('reconciled adopts unknown instances as idle, and only those', async () => {
+        await repo.launched({id: 'i-800', type: 'm4.xlarge', reservation: {workerType: 'SANDBOX'}})
+
+        const adopted = await repo.reconciled([
+            {id: 'i-800', type: 'm4.xlarge'},
+            {id: 'i-801', type: 'm4.xlarge'},
+        ])
+
+        expect(adopted).toBe(1)
+        expect((await getRow('i-801')).worker_type).toBeNull()
+        // INSERT IGNORE, never UPDATE: the existing row may have been reserved a microsecond ago.
+        expect((await getRow('i-800')).worker_type).toBe('SANDBOX')
+    })
+
+    test('reconciled with nothing to adopt returns 0', async () => {
+        expect(await repo.reconciled([])).toBe(0)
+    })
+
+    test('forgotten deletes idle rows not in knownIds, keeping reserved ones', async () => {
+        await repo.launched({id: 'i-810', type: 'm4.xlarge'})
+        await repo.launched({id: 'i-811', type: 'm4.xlarge'})
+        await repo.launched({id: 'i-812', type: 'm4.xlarge', reservation: {workerType: 'SANDBOX'}})
+
+        const dropped = await repo.forgotten(['i-810'])
+
+        expect(dropped).toBe(1)
+        expect(await getRow('i-810')).toBeTruthy()
+        expect(await getRow('i-811')).toBeNull()
+        // A reserved row survives even when the provider never reported the instance: dropping it
+        // would make ReleaseInstance read its own release as a lost race and skip the undeploy.
+        expect(await getRow('i-812')).toBeTruthy()
+    })
+
+    test('forgotten with an empty knownIds drops every idle row', async () => {
+        await repo.launched({id: 'i-820', type: 'm4.xlarge'})
+        await repo.launched({id: 'i-821', type: 'm4.xlarge', reservation: {workerType: 'SANDBOX'}})
+
+        const dropped = await repo.forgotten([])
+
+        expect(dropped).toBe(1)
+        expect(await getRow('i-820')).toBeNull()
+        expect(await getRow('i-821')).toBeTruthy()
+    })
+
     test('terminated deletes the row', async () => {
         await repo.launched({id: 'i-600', type: 'm4.xlarge'})
         await repo.terminated('i-600')

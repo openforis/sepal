@@ -17,6 +17,7 @@ node src/main.js \
 if [ -s $sshScriptFile ]; then
   sessionId=$(sed -n 's/^[[:space:]]*# session-id: //p' $sshScriptFile)
   n=0
+  terminated=
   until [ "$n" -ge 5 ]
   do
     eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\"" && break
@@ -29,6 +30,7 @@ if [ -s $sshScriptFile ]; then
         -H "sepal-user:{\"username\": \"sepalAdmin\", \"roles\": [\"application_admin\"]}" \
         -X POST "http://worker/sessions/$USER/session/$sessionId")
       if [ "$sessionStatus" = "404" ]; then
+        terminated=1
         break
       fi
     fi
@@ -36,4 +38,12 @@ if [ -s $sshScriptFile ]; then
     sleep 5
   done
   rm $sshScriptFile > /dev/null 2>&1
+  # The session is gone for good. Returning now would hand back to the caller, which clears the
+  # screen before showing the menu again — so hold here with everything the user had on screen
+  # still on screen, and let them decide when to lose it. Interactive only: a non-interactive
+  # ssh has nobody to press the key.
+  if [ -n "$terminated" ] && [ -z "$SSH_ORIGINAL_COMMAND" ]; then
+    printf '\nThe session has been terminated - press ENTER to reset the terminal'
+    read -r _
+  fi
 fi

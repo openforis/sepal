@@ -19,7 +19,7 @@
 // made to share an exec. Tty: false multiplexes stdout in 8-byte frame headers, so the output is
 // framed rather than raw — parsePtyStat extracts records rather than parsing lines.
 //
-// Container name convention: "{image}.{username}.{instanceId}" (workerTypes.js).
+// Container name convention: see ../containerName.js.
 // defaultDaemonHost — local hosting only: all instances share the dev daemon and
 // instance.host is a network alias (mirrors dockerInstanceProvisioner.normalizeInstance).
 
@@ -53,7 +53,9 @@ const createDockerInstanceStats = ({config, defaultDaemonHost = null, fetcher = 
         if (!image) {
             throw new Error(`Unknown worker type: ${session.workerType}`)
         }
-        return buildContainerName({image, username: session.username, sessionId: session.id})
+        return buildContainerName({
+            image, username: session.username, sessionId: session.id, instanceId: session.instance.id,
+        })
     }
 
     const containerStats = async session =>

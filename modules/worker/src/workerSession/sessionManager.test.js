@@ -189,7 +189,7 @@ const build = ({repo, appRepo, instanceManager, lockedUsers, budgetClient, event
         clock: fixedClock,
         apiKeyGenerator: {generate: () => 'generated-key'},
         expiryPolicy,
-        instanceTypeById: {T3aSmall: {name: 't3a.small', hourlyCost: 0.02}},
+        instanceTypeById: {T3aSmall: {name: 't3a.small', tag: 't1', hourlyCost: 0.02}},
         events: _events,
     })
     return {
@@ -705,7 +705,7 @@ describe('extensions', () => {
         })
         const {mgr} = build({repo})
         expect(await mgr.instanceDescription('s-1')).toEqual({
-            name: instanceName('s-1'), ordinal: 2, typeName: 't3a.small', hourlyCost: 0.02
+            name: instanceName('s-1'), ordinal: 2, typeName: 't1', hourlyCost: 0.02
         })
     })
 

@@ -12,6 +12,7 @@
 
 import {getLogger} from '#sepal/log'
 
+import {instanceName} from '../instanceName.js'
 import {containerTag, instanceTag} from '../tag.js'
 import {dockerFetch} from './dockerApi.js'
 import {InstanceStatus} from './instanceStatus.js'
@@ -59,6 +60,13 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         WORKER_IMAGE_NAMES.some(image => name.startsWith(`/${image}.`))
         || name.endsWith('.worker')
 
+    // ownedByInstance — does this container belong to the given instance? The instance id is the
+    // name's last segment (../containerName.js); the includes() check covers legacy names that
+    // carried it elsewhere ("{instanceId}.{image}.worker").
+    const ownedByInstance = (container, instanceId) =>
+        (container.Names ?? []).some(name =>
+            name.endsWith(`.${instanceId}`) || name.includes(instanceId))
+
     // deployedContainers — GET /containers/json?all=true, filtered to worker containers (5s timeout).
     const deployedContainers = async instance => {
         const data = await dockerFetch(baseUrl(instance), 'containers/json', {
@@ -71,19 +79,25 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // waitUntilDockerIsAvailable — retry GET /containers/json up to _dockerRetries×_dockerRetryDelayMs.
     // Throws DockerProvisionerError if all retries exhausted.
     // _dockerRetries/_dockerRetryDelayMs are injectable for tests (defaults: 60 retries, 1s delay).
+    //
+    // A booting instance refuses the connection until Docker is up, so the individual attempts are
+    // the normal case, not events: one line before, one when it resolves either way. The last error
+    // rides on the throw — the outer provision retry logs it, and nothing else records why the
+    // daemon never answered.
     const waitUntilDockerIsAvailable = async instance => {
+        log.debug(`Connecting to Docker on ${instanceTag(instance)} (up to ${_dockerRetries} attempts)...`)
+        let lastError = null
         for (let i = 0; i < _dockerRetries; i++) {
             try {
-                log.debug(`Trying to connect to Docker on ${instanceTag(instance)} (attempt ${i + 1}/${_dockerRetries})`)
                 await deployedContainers(instance)
                 log.info(`Successfully connected to Docker on ${instanceTag(instance)}`)
                 return
             } catch (e) {
-                log.warn(`Failed to connect to Docker on ${instanceTag(instance)}: ${e.message}`)
+                lastError = e
                 await sleep(_dockerRetryDelayMs)
             }
         }
-        throw new DockerProvisionerError(instance, `Unable to connect to docker on instance: ${instance.id}`)
+        throw new DockerProvisionerError(instance, `Unable to connect to docker on instance: ${instance.id}, after ${_dockerRetries} attempts: ${lastError?.message}`)
     }
 
     const deleteContainer = async (instance, containerId) => {
@@ -98,15 +112,11 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // deleteExistingContainers — delete the worker containers on the instance.
     // On a dedicated host (AWS) every worker container belongs to this instance.
     // On the shared local daemon, scope to THIS instance's containers — deleting them
-    // all would tear down every other session's sandbox on the dev machine. Names carry
-    // the container instance id as their last segment ("{image}.{username}.{id}");
-    // the includes() check covers pre-rename leftovers, whose names carried the full
-    // instance id in other positions ("{instanceId}.{image}.worker", "….{instanceId}").
+    // all would tear down every other session's sandbox on the dev machine.
     const deleteExistingContainers = async instance => {
         const containers = await deployedContainers(instance)
         const instanceContainers = instance.daemonHost
-            ? containers.filter(c => (c.Names ?? []).some(name =>
-                name.endsWith(`.${instance.id}`) || name.includes(instance.id)))
+            ? containers.filter(c => ownedByInstance(c, instance.id))
             : containers
         for (const c of instanceContainers) {
             await deleteContainer(instance, c.Id)
@@ -160,8 +170,12 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
         const env = Object.entries(image.environment).map(([k, v]) => `${k}=${v}`)
 
+        // Hostname: the sandbox prompt is "{hostname}:{dir}$", so this is the name a user reads to
+        // tell one open terminal from another — the same two-word name the GUI, the SSH menu and
+        // the container itself carry, rather than the container id Docker defaults to.
         const body = {
             Image: `${dockerRegistryHost}/openforis/${image.name}:${sepalVersion}`,
+            Hostname: instanceName(instance.reservation.sessionId),
             Tty: true,
             Cmd: image.runCommand,
             HostConfig: {
@@ -291,8 +305,8 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // Only meaningful with defaultDaemonHost (shared daemon); on dedicated hosts (AWS) the
     // containers die with the instance, so this is a no-op there.
     // liveInstanceIds: instance ids that may legitimately own containers (open sessions +
-    // every instance the provider still tracks). Matching mirrors deleteExistingContainers:
-    // "{image}.{username}.{instanceId}" suffix, plus includes(id) for pre-rename names.
+    // every instance the provider still tracks). Ownership is decided by ownedByInstance, the
+    // same test deleteExistingContainers uses.
     // Containers younger than ORPHAN_GRACE_MS are kept — they may belong to an instance
     // launched after the caller computed liveInstanceIds.
     const removeOrphanedContainers = async liveInstanceIds => {
@@ -302,10 +316,8 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         const daemon = {id: 'shared-daemon', daemonHost: defaultDaemonHost}
         const containers = await deployedContainers(daemon)
         const minCreated = Date.now() / 1000 - ORPHAN_GRACE_MS / 1000
-        const isLive = name => liveInstanceIds.some(id =>
-            name.endsWith(`.${id}`) || name.includes(id))
-        const orphans = containers.filter(c =>
-            c.Created < minCreated && !(c.Names ?? []).some(isLive))
+        const isLive = container => liveInstanceIds.some(id => ownedByInstance(container, id))
+        const orphans = containers.filter(c => c.Created < minCreated && !isLive(c))
         const removed = []
         for (const c of orphans) {
             const name = (c.Names ?? [])[0] ?? c.Id

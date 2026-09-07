@@ -25,7 +25,9 @@ const createDockerSandboxServerControl = ({config, defaultDaemonHost = null, fet
         if (session.workerType !== SANDBOX) {
             throw new Error(`Not a sandbox session: ${session.id}`)
         }
-        return buildContainerName({image: SANDBOX, username: session.username, sessionId: session.id})
+        return buildContainerName({
+            image: SANDBOX, username: session.username, sessionId: session.id, instanceId: session.instance.id,
+        })
     }
 
     const startServer = async (session, endpoint) => {

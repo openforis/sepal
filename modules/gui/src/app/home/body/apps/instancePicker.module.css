@@ -1,11 +1,35 @@
 .panel {
-    width: 30rem;
+    width: 22rem;
 }
 
 .option {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.instance {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The Button 'smallcaps' label style, which the combo's own section headings above these options
+   already use — the specs column reads as secondary in the same voice. */
+.detail {
+    white-space: nowrap;
+    font-size: calc(var(--font-size) * .9);
+    line-height: calc(var(--font-size) * .9);
+    font-weight: 800;
+    opacity: .6;
+    text-transform: uppercase;
 }
 
 .apps {

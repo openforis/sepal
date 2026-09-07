@@ -64,7 +64,7 @@ describe('sessionsWithoutInstance', () => {
             id: 'i-1',
             type: 'T3aSmall',
             host: 'host-1',
-            reservation: {username: 'admin', workerType: 'SANDBOX'},
+            reservation: {username: 'admin', workerType: 'SANDBOX', sessionId: 's-1'},
         })
     })
 

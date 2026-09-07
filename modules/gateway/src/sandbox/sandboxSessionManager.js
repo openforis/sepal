@@ -35,17 +35,25 @@ const createSandboxSessionManager = ({
 
     const baseUrl = workerBaseUrl.replace(/\/+$/, '')
 
-    // username → Map<appKey, {sessionId, host, status, endpoint, appPath, lastSeen}>
-    // appKey = appPath ('/sandbox/shiny/foo') or 'endpoint:<endpoint>' for legacy callers.
+    // username → Map<appPath, {sessionId, host, status, endpoint, appPath, lastSeen}>
     const sessionsByUsername = new Map()
-    const appKey = ({appPath, endpoint}) => appPath ?? `endpoint:${endpoint}`
+
+    // A legacy caller — /api/sandbox/start with no appPath — is bound to its endpoint through this
+    // synthetic app path, so the binding is a worker session_app row like every other: durable
+    // across a gateway restart, deleted when the session closes, and attributable BY ENDPOINT.
+    // Holding it in gateway memory instead is what let a closed session's leftover browser traffic
+    // be re-targeted at whatever else the user happened to have open.
+    //
+    // It loses to a real app path on the longest-prefix rule, so '/sandbox/jupyter/lab' still wins
+    // over '/sandbox/jupyter' for a request under it.
+    const LEGACY_APP_LABEL = {rstudio: 'RStudio', shiny: 'Shiny', jupyter: 'Jupyter'}
+    const legacyAppPath = endpoint => `/sandbox/${endpoint}`
 
     // username → Map<kernelId, {sessionId, host}> — jupyter kernel attribution (resolveTarget).
     const kernelsByUsername = new Map()
 
     // Per-(username:instanceType) create lock: parallel starts for the same user+type share the
-    // in-flight create promise so only ONE worker session is requested. Legacy startEndpoint locks
-    // per username.
+    // in-flight create promise so only ONE worker session is requested.
     const createLockByKey = new Map()
 
     // Servers this gateway has already had started, keyed 'sessionId:endpoint'. Sandbox servers
@@ -254,41 +262,12 @@ const createSandboxSessionManager = ({
         }
     }
 
-    // Prefer an ACTIVE session, else the first PENDING one.
-    const pickBest = sessions => {
-        if (!sessions || sessions.length === 0) {
-            return null
-        }
-        return sessions.find(s => s.status === 'ACTIVE') || sessions[0]
-    }
-
-    // Find (cache → worker /sessions/active) a session for the user. Only an ACTIVE entry is trusted
-    // from the cache: a STARTING one is re-checked against the worker on every call, so the GUI's 2s
-    // status poll flips to STARTED as soon as the session goes ACTIVE instead of waiting for the
-    // 30s heartbeat.
-    const findSession = async (username, endpoint) => {
-        const key = appKey({endpoint})
-        const cached = getCached(username, key)
-        if (cached && cached.status === 'ACTIVE') {
-            return cached
-        }
-        const session = pickBest(await findActiveSessions(username))
-        if (!session) {
-            if (cached) {
-                // The worker no longer knows the cached STARTING session — it's gone.
-                dropEntry(username, key)
-            }
-            return null
-        }
-        return cache(username, key, {
-            sessionId: session.id, host: session.host, status: session.status,
-            endpoint, appPath: null
-        })
-    }
-
     // Live association for an app: trusted cache when ACTIVE, else re-checked against the worker.
+    // Only an ACTIVE entry is trusted from the cache: a STARTING one is re-checked on every call,
+    // so the GUI's 2s status poll flips to STARTED as soon as the session goes ACTIVE instead of
+    // waiting for the 30s heartbeat.
     const findAppSession = async (username, appPath, endpoint) => {
-        const key = appKey({appPath, endpoint})
+        const key = appPath
         const cached = getCached(username, key)
         if (cached && cached.status === 'ACTIVE') {
             return cached
@@ -308,47 +287,6 @@ const createSandboxSessionManager = ({
             endpoint,
             appPath
         })
-    }
-
-    // startEndpoint — legacy (no app): reuse a cached/existing session or create one of the default
-    // type. Returns {id, status} with the CLIENT status string ('STARTED' | 'STARTING').
-    const startEndpoint = async (username, endpoint = DEFAULT_ENDPOINT) => {
-        const key = appKey({endpoint})
-        const existing = await findSession(username, endpoint)
-        if (existing) {
-            return {id: existing.sessionId, status: toClientStatus(existing.status)}
-        }
-
-        // Serialise creation per user so parallel /start calls don't spawn duplicate sessions.
-        let inFlight = createLockByKey.get(username)
-        if (!inFlight) {
-            inFlight = (async () => {
-                // Re-check the cache inside the lock: an awaiter that arrived while we were creating
-                // may have already populated it. (Only the cache — a worker /sessions/active lookup
-                // already ran above before we took the lock.)
-                const found = getCached(username, key)
-                if (found) {
-                    return found
-                }
-                log.debug(() => `Requesting sandbox session for ${username} (${endpoint})`)
-                const session = await requestSession(username, defaultInstanceType)
-                return cache(username, key, {
-                    sessionId: session.id, host: session.host, status: session.status,
-                    endpoint, appPath: null
-                })
-            })().finally(() => createLockByKey.delete(username))
-            createLockByKey.set(username, inFlight)
-        }
-        const entry = await inFlight
-        // The lock cached the session under whichever endpoint the winning caller passed; ensure this
-        // endpoint is cached too (parallel callers may use different endpoints of the same session).
-        if (!getCached(username, key)) {
-            cache(username, key, {
-                sessionId: entry.sessionId, host: entry.host, status: entry.status,
-                endpoint, appPath: null
-            })
-        }
-        return {id: entry.sessionId, status: toClientStatus(entry.status)}
     }
 
     // startApp — per app: a live association wins; else join a chosen session or create a new one.
@@ -375,10 +313,9 @@ const createSandboxSessionManager = ({
         return await starting
     }
 
-    const startAppInternal = async ({username, endpoint = DEFAULT_ENDPOINT, appPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
-        if (!appPath) {
-            return startEndpoint(username, endpoint) // legacy
-        }
+    const startAppInternal = async ({username, endpoint = DEFAULT_ENDPOINT, appPath: requestedAppPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
+        const appPath = requestedAppPath ?? legacyAppPath(endpoint)
+        const label = appLabel ?? (requestedAppPath ? null : LEGACY_APP_LABEL[endpoint])
         // 1. A live association is permanent — it wins over any requested pick. `reused` flags that an
         // EXPLICIT pick (sessionId or instanceType) was overridden by the association (with an
         // instanceType-only pick, sessionId is undefined, so the inequality always holds — correct: the
@@ -391,7 +328,7 @@ const createSandboxSessionManager = ({
                 // ownership off the old clientId before its pending clientDown sweeps it.
                 // Best-effort — a failure must not break what was previously a local hit.
                 try {
-                    await associateApp(username, existing.sessionId, appPath, appLabel, clientId, reassert)
+                    await associateApp(username, existing.sessionId, appPath, label, clientId, reassert)
                 } catch (error) {
                     log.warn(`Failed to refresh app ownership for ${username} (${appPath})`, error)
                 }
@@ -408,11 +345,11 @@ const createSandboxSessionManager = ({
         // host/status from /sessions/active when it differs from the requested pick.
         const adoptAssociation = async (associated, requestedSessionId, fallback) => {
             if (associated.sessionId === requestedSessionId) {
-                return {entry: cache(username, appKey({appPath}), fallback), reused: false}
+                return {entry: cache(username, appPath, fallback), reused: false}
             }
             const active = await findActiveSessions(username)
             const winner = (active ?? []).find(({id}) => id === associated.sessionId)
-            const entry = cache(username, appKey({appPath}), {
+            const entry = cache(username, appPath, {
                 sessionId: associated.sessionId,
                 host: winner?.host ?? null,
                 status: winner?.status === 'STARTING' ? 'STARTING' : 'ACTIVE',
@@ -429,7 +366,7 @@ const createSandboxSessionManager = ({
                 error.statusCode = 404
                 throw error
             }
-            const associated = await associateApp(username, sessionId, appPath, appLabel, clientId, reassert)
+            const associated = await associateApp(username, sessionId, appPath, label, clientId, reassert)
             const {entry, reused} = await adoptAssociation(associated, sessionId, {
                 sessionId, host: session.host,
                 status: session.status === 'STARTING' ? 'STARTING' : 'ACTIVE',
@@ -447,7 +384,7 @@ const createSandboxSessionManager = ({
             createLockByKey.set(lockKey, inFlight)
         }
         const session = await inFlight
-        const associated = await associateApp(username, session.id, appPath, appLabel, clientId)
+        const associated = await associateApp(username, session.id, appPath, label, clientId)
         const {entry, reused} = await adoptAssociation(associated, session.id, {
             sessionId: session.id, host: session.host, status: session.status,
             endpoint, appPath
@@ -491,7 +428,7 @@ const createSandboxSessionManager = ({
                 throw error
             }
         }
-        dropEntry(username, appKey({appPath}))
+        dropEntry(username, appPath)
     }
 
     // onAppDissociated — workerSession.SessionAppDissociated teardown: a dissociation NOT
@@ -500,14 +437,12 @@ const createSandboxSessionManager = ({
     // resurrect the old binding.
     const onAppDissociated = ({username, appPath} = {}) => {
         if (username && appPath) {
-            dropEntry(username, appKey({appPath}))
+            dropEntry(username, appPath)
         }
     }
 
     const status = async (username, endpoint = DEFAULT_ENDPOINT, appPath = null) => {
-        const session = appPath
-            ? await findAppSession(username, appPath, endpoint)
-            : await findSession(username, endpoint)
+        const session = await findAppSession(username, appPath ?? legacyAppPath(endpoint), endpoint)
         return session ? {id: session.sessionId, status: toClientStatus(session.status)} : null
     }
 
@@ -519,6 +454,24 @@ const createSandboxSessionManager = ({
     const isPrefixOnSegment = (prefix, path) =>
         path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`)
 
+    // Load the user's app associations from the worker into the cache — the durable record of
+    // which session serves which app, and so the whole of what a restarted gateway knows.
+    const refreshAppSessions = async (username, fallbackEndpoint) => {
+        const appSessions = await findAppSessions(username).catch(() => null)
+        for (const appSession of appSessions ?? []) {
+            // Derive each entry's endpoint from its OWN path (/sandbox/<endpoint>/...), NOT the
+            // requesting endpoint — otherwise a cross-endpoint app is mislabeled and poisons the
+            // single-candidate fallback (d), whose `entry.endpoint === endpoint` filter would then
+            // count it as a candidate for the wrong endpoint.
+            const pathEndpoint = (appSession.path?.match(/^\/sandbox\/([^/]+)/) || [])[1] ?? fallbackEndpoint
+            cache(username, appSession.path, {
+                sessionId: appSession.sessionId, host: appSession.host,
+                status: appSession.status === 'STARTING' ? 'STARTING' : 'ACTIVE',
+                endpoint: pathEndpoint, appPath: appSession.path
+            })
+        }
+    }
+
     const attributeByPath = async (username, endpoint, path) => {
         // longest appPath prefix wins; refresh from worker on a cache miss.
         const match = list => list
@@ -528,19 +481,7 @@ const createSandboxSessionManager = ({
         if (cachedMatch) {
             return cachedMatch
         }
-        const appSessions = await findAppSessions(username).catch(() => null)
-        for (const appSession of appSessions ?? []) {
-            // Derive each entry's endpoint from its OWN path (/sandbox/<endpoint>/...), NOT the
-            // requesting endpoint — otherwise a cross-endpoint app is mislabeled and poisons the
-            // single-candidate fallback (d), whose `entry.endpoint === endpoint` filter would then
-            // count it as a candidate for the wrong endpoint.
-            const pathEndpoint = (appSession.path?.match(/^\/sandbox\/([^/]+)/) || [])[1] ?? endpoint
-            cache(username, appSession.path, {
-                sessionId: appSession.sessionId, host: appSession.host,
-                status: appSession.status === 'STARTING' ? 'STARTING' : 'ACTIVE',
-                endpoint: pathEndpoint, appPath: appSession.path
-            })
-        }
+        await refreshAppSessions(username, endpoint)
         return match(entriesFor(username)) ?? null
     }
 
@@ -548,6 +489,12 @@ const createSandboxSessionManager = ({
         const known = kernelsByUsername.get(username)?.get(kernelId)
         if (known) {
             return known
+        }
+        // A cold cache (gateway restart) leaves nothing to probe, and a kernel WEBSOCKET has no
+        // second chance: browsers send Origin rather than Referer on an upgrade, so the Referer
+        // attribution that saves the HTTP kernel calls never fires for it.
+        if (!entriesFor(username).some(({host}) => host)) {
+            await refreshAppSessions(username, endpoint)
         }
         const candidates = [...new Map(entriesFor(username)
             .filter(({host}) => host)
@@ -612,17 +559,10 @@ const createSandboxSessionManager = ({
             candidates.forEach(({sessionId}) => recordProxiedRequest(username, sessionId))
             return {host: hosts[0], port, sessionId: candidates[0].sessionId}
         }
-        // (e) legacy per-endpoint entry (best-effort; a failing fallback yields no target).
-        try {
-            const legacy = await findSession(username, endpoint)
-            if (legacy?.host) {
-                recordProxiedRequest(username, legacy.sessionId)
-                return {host: legacy.host, port, sessionId: legacy.sessionId}
-            }
-            return null
-        } catch (_error) {
-            return null
-        }
+        // Nothing else may answer. Every branch above attributes the request to a session the
+        // worker says serves this endpoint; asking it instead for the user's open sessions and
+        // picking one hands the request whatever machine they happen to have running.
+        return null
     }
 
     let heartbeatTimer = null
@@ -708,7 +648,6 @@ const createSandboxSessionManager = ({
     return {
         startApp,
         releaseApp,
-        startEndpoint,
         status,
         resolveTarget,
         ensureServerStarted,

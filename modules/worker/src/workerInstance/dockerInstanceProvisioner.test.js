@@ -20,6 +20,7 @@ jest.unstable_mockModule('node:fs', () => ({
 const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
 const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
 const {tempDir} = await import('./workerTypes.js')
+const {instanceName} = await import('../instanceName.js')
 
 const CONFIG = {
     sepalVersion: '5.1.0',
@@ -226,6 +227,14 @@ describe('buildContainerBody — SANDBOX', () => {
     test('NetworkingConfig.EndpointsConfig.sepal exists', async () => {
         await runProvision()
         expect(capturedBody.NetworkingConfig.EndpointsConfig.sepal).toBeDefined()
+    })
+
+    // The shell prompt inside the sandbox is "{hostname}:{dir}$", so the hostname is what a user
+    // reads to tell one open terminal from another — it has to be the same two-word name every
+    // other surface calls this instance, not the container id Docker would otherwise assign.
+    test('Hostname is the instance\'s two-word name', async () => {
+        await runProvision()
+        expect(capturedBody.Hostname).toBe(instanceName('sess-1'))
     })
 
     test('HostConfig.ExtraHosts defaults to empty array', async () => {
@@ -435,6 +444,39 @@ describe('undeploy', () => {
 
         expect(listCalled).toBe(true)
         expect(deletedIds).toEqual(['w-001'])
+    })
+
+    test('on the shared daemon, deletes this instance\'s container and leaves another instance\'s', async () => {
+        const deletedIds = []
+
+        globalThis.fetch = jest.fn(async (url, opts) => {
+            const method = opts?.method ?? 'GET'
+            if (url.includes('/containers/json')) {
+                return {
+                    ok: true, status: 200,
+                    text: async () => JSON.stringify([
+                        {Id: 'mine', Names: ['/sandbox.alice.lofty-reef.inst-abc123']},
+                        {Id: 'theirs', Names: ['/sandbox.bob.misty-fjord.inst-other']},
+                    ]),
+                }
+            }
+            if (method === 'DELETE') {
+                const match = url.match(/\/containers\/([^?]+)/)
+                if (match) deletedIds.push(match[1])
+                return {ok: true, status: 204, text: async () => ''}
+            }
+            return {ok: true, status: 200, text: async () => '{}'}
+        })
+
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            defaultDaemonHost: 'daemon-host',
+        })
+        await provisioner.undeploy(makeInstance({daemonHost: 'daemon-host'}))
+
+        expect(deletedIds).toEqual(['mine'])
     })
 
     test('undeploy does nothing when no .worker containers exist', async () => {
@@ -763,6 +805,18 @@ describe('removeOrphanedContainers', () => {
         const {fetch, requests} = makeFetch([
             {Id: 'c-live', Names: ['/sandbox.admin.aaa'], Created: OLD},
             {Id: 'c-task-live', Names: ['/task.admin.aaa'], Created: OLD},
+        ])
+        global.fetch = fetch
+
+        const removed = await makeProvisioner().removeOrphanedContainers(['aaa'])
+
+        expect(deletedContainerIds(requests)).toEqual([])
+        expect(removed).toEqual([])
+    })
+
+    it('keeps a current-format container whose name ends with a live instance id', async () => {
+        const {fetch, requests} = makeFetch([
+            {Id: 'c-live', Names: ['/sandbox.admin.lofty-reef.aaa'], Created: OLD},
         ])
         global.fetch = fetch
 

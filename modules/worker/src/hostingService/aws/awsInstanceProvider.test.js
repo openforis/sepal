@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-ec2'
 import {mockClient} from 'aws-sdk-client-mock'
 
+import {instanceName} from '../../instanceName.js'
 import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
 import {
     createAwsInstanceProvider,
@@ -123,18 +124,25 @@ describe('idleTags', () => {
 })
 
 describe('reserveTags', () => {
-    test('contains State=reserved, Username, WorkerType, InStateSince, Name with env+type+user', () => {
+    test('contains State=reserved, Username, WorkerType, InStateSince, Name with env+type+user+instance name', () => {
         const tags = reserveTags('test-env', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
         expect(tags).toContainEqual({Key: 'State', Value: 'reserved'})
         expect(tags).toContainEqual({Key: 'Username', Value: 'alice'})
         expect(tags).toContainEqual({Key: 'WorkerType', Value: 'SANDBOX'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name).toBeDefined()
-        expect(name.Value).toBe('test-env: SANDBOX, alice')
+        expect(name.Value).toBe(`test-env: SANDBOX, alice, ${instanceName('s-42')}`)
         expect(tags).toHaveLength(6)
     })
 
-    test('Name field exact format: "{env}: {workerType}, {username}"', () => {
+    // The name an operator reads in the console has to be the one the user quotes back at them.
+    test('Name field carries the same two-word name as the container', () => {
+        const tags = reserveTags('prod', {username: 'bob', workerType: 'SANDBOX', sessionId: 's-7'})
+        const name = tags.find(t => t.Key === 'Name')
+        expect(name.Value.endsWith(`, ${instanceName('s-7')}`)).toBe(true)
+    })
+
+    test('Name field falls back to "{env}: {workerType}, {username}" without a session id', () => {
         const tags = reserveTags('prod', {username: 'bob', workerType: 'TASK_EXECUTOR'})
         const name = tags.find(t => t.Key === 'Name')
         expect(name.Value).toBe('prod: TASK_EXECUTOR, bob')
@@ -188,11 +196,41 @@ describe('launch params (RunInstancesCommand)', () => {
         ec2Mock.restore()
     })
 
+    // RunInstances answers with a Reservation ITSELF, so the instances are top-level. Read from a
+    // `Reservation` key instead, every launch resolved to [] and launchReserved threw a TypeError
+    // on undefined.InstanceId three frames away, naming neither EC2 nor the instance type.
+    test('reads the launched instances from the top level of the response', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves({Instances: [makeAwsInstance()]})
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        const launched = await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        expect(launched.map(i => i.id)).toEqual(['i-0123456789abcdef0'])
+    })
+
+    test('throws FailedToLaunchInstance when EC2 returns no instances', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves({})
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        await expect(provider.launchReserved('T3aSmall', RESERVATION))
+            .rejects.toThrow(/FailedToLaunchInstance.*t3a\.small/)
+        provider.stop()
+    })
+
     test('RunInstancesCommand uses correct params for launchIdle', async () => {
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance({PublicIpAddress: undefined})],
-            },
+            Instances: [makeAwsInstance({PublicIpAddress: undefined})],
         })
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
@@ -205,9 +243,7 @@ describe('launch params (RunInstancesCommand)', () => {
 
         ec2Mock.reset()
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance()],
-            },
+            Instances: [makeAwsInstance()],
         })
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
@@ -234,9 +270,7 @@ describe('launch params (RunInstancesCommand)', () => {
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
-            },
+            Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
         })
 
         const provider = createAwsInstanceProvider(CONFIG)
@@ -244,9 +278,7 @@ describe('launch params (RunInstancesCommand)', () => {
 
         ec2Mock.reset()
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
-            },
+            Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
         })
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
@@ -290,16 +322,14 @@ describe('launchReserved public-IP polling', () => {
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [{
-                    InstanceId: 'i-immediate',
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '5.6.7.8',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [],
-                }],
-            },
+            Instances: [{
+                InstanceId: 'i-immediate',
+                InstanceType: 't3a.small',
+                PublicIpAddress: '5.6.7.8',
+                State: {Name: 'running'},
+                LaunchTime: new Date().toISOString(),
+                Tags: [],
+            }],
         })
 
         const provider = createAwsInstanceProvider(CONFIG)
@@ -309,16 +339,14 @@ describe('launchReserved public-IP polling', () => {
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [{
-                    InstanceId: 'i-immediate',
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '5.6.7.8',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [],
-                }],
-            },
+            Instances: [{
+                InstanceId: 'i-immediate',
+                InstanceType: 't3a.small',
+                PublicIpAddress: '5.6.7.8',
+                State: {Name: 'running'},
+                LaunchTime: new Date().toISOString(),
+                Tags: [],
+            }],
         })
 
         const inst = await provider.launchReserved('T3aSmall', RESERVATION)
@@ -352,16 +380,14 @@ describe('launchReserved public-IP polling', () => {
         })
 
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [{
-                    InstanceId: 'i-poll2',
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: null,  // no IP yet
-                    State: {Name: 'pending'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [],
-                }],
-            },
+            Instances: [{
+                InstanceId: 'i-poll2',
+                InstanceType: 't3a.small',
+                PublicIpAddress: null,  // no IP yet
+                State: {Name: 'pending'},
+                LaunchTime: new Date().toISOString(),
+                Tags: [],
+            }],
         })
 
         const provider = createAwsInstanceProvider(CONFIG)
@@ -384,16 +410,14 @@ describe('launchReserved public-IP polling', () => {
             return emptyDescribeResponse()
         })
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [{
-                    InstanceId: 'i-poll2',
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: null,
-                    State: {Name: 'pending'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [],
-                }],
-            },
+            Instances: [{
+                InstanceId: 'i-poll2',
+                InstanceType: 't3a.small',
+                PublicIpAddress: null,
+                State: {Name: 'pending'},
+                LaunchTime: new Date().toISOString(),
+                Tags: [],
+            }],
         })
 
         const inst = await provider.launchReserved('T3aSmall', RESERVATION)
@@ -823,9 +847,7 @@ describe('tagInstance retry(4)', () => {
         })
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
-            },
+            Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
         })
 
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-x'}]})
@@ -844,9 +866,7 @@ describe('tagInstance retry(4)', () => {
         })
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
-            Reservation: {
-                Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
-            },
+            Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
         })
 
         tagCallCount = 0

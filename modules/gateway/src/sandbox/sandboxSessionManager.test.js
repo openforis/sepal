@@ -51,6 +51,19 @@ const fetchStub = routes => {
     return fn
 }
 
+// A legacy (no appPath) start is associated under '/sandbox/<endpoint>' like any other app, so
+// what the worker holds for it — and hands back to a restarted gateway — is an ordinary
+// GET /sessions/app-sessions row.
+const legacyAppSession = ({endpoint, sessionId, host, status = 'ACTIVE'}) =>
+    ({path: `/sandbox/${endpoint}`, label: null, sessionId, host, status})
+
+// Any request under the endpoint; resolveTarget attributes by path, so tests must pass a real one.
+const pathUnder = endpoint => `/api/sandbox/${endpoint}/some/path`
+
+const associateBody = fetch => fetch.mock.calls
+    .filter(([url, options]) => url.endsWith('/app') && options?.method === 'POST')
+    .map(([, options]) => JSON.parse(options.body))
+
 const createManager = ({fetch, defaultInstanceType = 'T3aSmall'} = {}) =>
     createSandboxSessionManager({
         workerBaseUrl: 'http://worker',
@@ -67,53 +80,57 @@ describe('toClientStatus', () => {
     })
 })
 
-describe('startEndpoint', () => {
-    test('creates a session via worker when none cached, caching {sessionId,host,status}', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([])) // GET /sessions/active → none
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'STARTING'})) // POST create
-        const mgr = create(fetch)
+describe('legacy endpoint start (no appPath)', () => {
+    test('creates a session and associates it under the legacy app path', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'POST /sessions/instance-type/T3aSmall': {id: 's1', host: 'h1', status: 'STARTING'},
+            'POST /sessions/session/s1/app': {sessionId: 's1', path: '/sandbox/rstudio'}
+        })
+        const mgr = createManager({fetch})
 
-        const result = await mgr.startEndpoint('alice', 'rstudio')
+        const result = await mgr.startApp({username: 'alice', endpoint: 'rstudio'})
 
         expect(result).toEqual({id: 's1', status: 'STARTING'})
-        expect(fetch.mock.calls[0][0]).toBe('http://worker/sessions/active')
-        expect(fetch.mock.calls[1][0]).toBe('http://worker/sessions/instance-type/sepal-default')
-        expect(fetch.mock.calls[1][1].method).toBe('POST')
-        expect(JSON.parse(fetch.mock.calls[1][1].headers['sepal-user'])).toEqual({username: 'alice', roles: []})
-        const cached = mgr._cache.get('alice').get('endpoint:rstudio')
-        expect(cached).toMatchObject({sessionId: 's1', host: 'h1', status: 'STARTING'})
+        // The association is what survives a gateway restart — without it the binding would live
+        // only here, and closed-session traffic would have nothing to attribute itself to.
+        expect(associateBody(fetch)).toEqual([{path: '/sandbox/rstudio', label: 'RStudio'}])
+        expect(mgr._cache.get('alice').get('/sandbox/rstudio'))
+            .toMatchObject({sessionId: 's1', host: 'h1', status: 'STARTING', endpoint: 'rstudio'})
     })
 
-    test('reuses cached active session without creating', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
-        const mgr = create(fetch)
+    test('reuses the cached association without creating', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'POST /sessions/instance-type/T3aSmall': {id: 's1', host: 'h1', status: 'ACTIVE'},
+            'POST /sessions/session/s1/app': {sessionId: 's1', path: '/sandbox/shiny'},
+            'POST /sessions/session/s1/server/shiny': null
+        })
+        const mgr = createManager({fetch})
 
-        await mgr.startEndpoint('bob', 'shiny')
+        await mgr.startApp({username: 'bob', endpoint: 'shiny'})
         fetch.mockClear()
 
-        const result = await mgr.startEndpoint('bob', 'shiny')
-        expect(result).toEqual({id: 's1', status: 'STARTED'})
+        expect(await mgr.startApp({username: 'bob', endpoint: 'shiny'})).toEqual({id: 's1', status: 'STARTED'})
         expect(fetch).not.toHaveBeenCalled()
     })
 
-    test('reuses an existing worker session found via /sessions/active', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([{id: 's9', host: 'h9', status: 'ACTIVE', instanceType: 't'}]))
-        const mgr = create(fetch)
+    test('a cold gateway reuses the association the worker still holds', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'jupyter', sessionId: 's9', host: 'h9'})],
+            'POST /sessions/session/s9/server/jupyter': null
+        })
+        const mgr = createManager({fetch})
 
-        const result = await mgr.startEndpoint('carol', 'jupyter')
-        expect(result).toEqual({id: 's9', status: 'STARTED'})
-        expect(fetch).toHaveBeenCalledTimes(1)
-        expect(mgr._cache.get('carol').get('endpoint:jupyter')).toMatchObject({sessionId: 's9', host: 'h9'})
+        expect(await mgr.startApp({username: 'carol', endpoint: 'jupyter'})).toEqual({id: 's9', status: 'STARTED'})
+        expect(fetch.requested('POST /sessions/instance-type/T3aSmall')).toBe(false)
+        expect(mgr._cache.get('carol').get('/sandbox/jupyter')).toMatchObject({sessionId: 's9', host: 'h9'})
     })
 
-    test('per-username lock: concurrent starts create only ONE session', async () => {
+    test('per-instance-type lock: concurrent starts of different endpoints create only ONE session', async () => {
         let createCalls = 0
         const fetch = jest.fn(async (url, opts) => {
-            if (url.endsWith('/sessions/active')) {
+            if (url.endsWith('/sessions/app-sessions')) {
                 return jsonResponse([])
             }
             if (opts.method === 'POST' && url.includes('/instance-type/')) {
@@ -121,19 +138,20 @@ describe('startEndpoint', () => {
                 await new Promise(r => setTimeout(r, 10))
                 return jsonResponse({id: 'once', host: 'h', status: 'STARTING'})
             }
+            if (opts.method === 'POST' && url.endsWith('/app')) {
+                return jsonResponse({sessionId: 'once', path: '/sandbox/x'})
+            }
             throw new Error(`unexpected ${url}`)
         })
         const mgr = create(fetch)
 
         const [a, b, c] = await Promise.all([
-            mgr.startEndpoint('dan', 'rstudio'),
-            mgr.startEndpoint('dan', 'shiny'),
-            mgr.startEndpoint('dan', 'jupyter')
+            mgr.startApp({username: 'dan', endpoint: 'rstudio'}),
+            mgr.startApp({username: 'dan', endpoint: 'shiny'}),
+            mgr.startApp({username: 'dan', endpoint: 'jupyter'})
         ])
         expect(createCalls).toBe(1)
-        expect(a.id).toBe('once')
-        expect(b.id).toBe('once')
-        expect(c.id).toBe('once')
+        expect([a.id, b.id, c.id]).toEqual(['once', 'once', 'once'])
     })
 })
 
@@ -141,51 +159,60 @@ describe('status', () => {
     test('a cached STARTING session is re-checked against the worker on every poll (no 30s heartbeat lag)', async () => {
         // A cached STARTING entry must not be trusted until the heartbeat loop happens to refresh it:
         // the GUI's 2s poll has to flip to STARTED as soon as the session goes ACTIVE.
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([])) // startEndpoint: GET active → none
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'STARTING'})) // POST create
-        const mgr = create(fetch)
-        await mgr.startEndpoint('gia', 'rstudio')
+        const routes = {
+            'GET /sessions/app-sessions': [],
+            'POST /sessions/instance-type/T3aSmall': {id: 's1', host: 'h1', status: 'STARTING'},
+            'POST /sessions/session/s1/app': {sessionId: 's1', path: '/sandbox/rstudio'}
+        }
+        const mgr = createManager({fetch: fetchStub(routes)})
+        await mgr.startApp({username: 'gia', endpoint: 'rstudio'})
 
-        fetch.mockResolvedValueOnce(jsonResponse([{id: 's1', host: 'h1', status: 'ACTIVE', instanceType: 't'}]))
+        routes['GET /sessions/app-sessions'] = [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})]
         expect(await mgr.status('gia', 'rstudio')).toEqual({id: 's1', status: 'STARTED'})
-        expect(mgr._cache.get('gia').get('endpoint:rstudio')).toMatchObject({status: 'ACTIVE'})
+        expect(mgr._cache.get('gia').get('/sandbox/rstudio')).toMatchObject({status: 'ACTIVE'})
     })
 
     test('a cached STARTING session the worker no longer knows is dropped (null status)', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'STARTING'}))
-        const mgr = create(fetch)
-        await mgr.startEndpoint('hal', 'rstudio')
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'POST /sessions/instance-type/T3aSmall': {id: 's1', host: 'h1', status: 'STARTING'},
+            'POST /sessions/session/s1/app': {sessionId: 's1', path: '/sandbox/rstudio'}
+        })
+        const mgr = createManager({fetch})
+        await mgr.startApp({username: 'hal', endpoint: 'rstudio'})
 
-        fetch.mockResolvedValueOnce(jsonResponse([])) // worker: session gone
         expect(await mgr.status('hal', 'rstudio')).toBeNull()
         expect(mgr._cache.get('hal')).toBeUndefined()
     })
 
     test('cached hit returns {id, status}', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
-        const mgr = create(fetch)
-        await mgr.startEndpoint('eve', 'shiny')
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'POST /sessions/instance-type/T3aSmall': {id: 's1', host: 'h1', status: 'ACTIVE'},
+            'POST /sessions/session/s1/app': {sessionId: 's1', path: '/sandbox/shiny'},
+            'POST /sessions/session/s1/server/shiny': null
+        })
+        const mgr = createManager({fetch})
+        await mgr.startApp({username: 'eve', endpoint: 'shiny'})
         fetch.mockClear()
 
         expect(await mgr.status('eve', 'shiny')).toEqual({id: 's1', status: 'STARTED'})
         expect(fetch).not.toHaveBeenCalled()
     })
 
-    test('cache-miss → worker /sessions/active fallback', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([{id: 's2', host: 'h2', status: 'STARTING', instanceType: 't'}]))
-        const mgr = create(fetch)
+    test('cache-miss → worker association lookup', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 's2', host: 'h2', status: 'STARTING'})
+            ]
+        })
+        const mgr = createManager({fetch})
         expect(await mgr.status('frank', 'rstudio')).toEqual({id: 's2', status: 'STARTING'})
     })
 
     test('none → null', async () => {
-        const fetch = jest.fn().mockResolvedValueOnce(jsonResponse([]))
-        const mgr = create(fetch)
+        const fetch = fetchStub({'GET /sessions/app-sessions': []})
+        const mgr = createManager({fetch})
         expect(await mgr.status('grace', 'rstudio')).toBeNull()
     })
 })
@@ -196,30 +223,60 @@ describe('resolveTarget', () => {
         ['shiny', 3838],
         ['jupyter', 8888]
     ])('cached hit for %s → correct port', async (endpoint, port) => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'the-host', status: 'ACTIVE'}))
-        const mgr = create(fetch)
-        await mgr.startEndpoint('h', endpoint)
-        expect(await mgr.resolveTarget('h', endpoint)).toEqual({host: 'the-host', port, sessionId: 's1'})
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint, sessionId: 's1', host: 'the-host'})]
+        })
+        const mgr = createManager({fetch})
+        expect(await mgr.resolveTarget('h', endpoint, pathUnder(endpoint)))
+            .toEqual({host: 'the-host', port, sessionId: 's1'})
         expect(PORT_BY_ENDPOINT[endpoint]).toBe(port)
     })
 
-    test('cache-miss → worker fallback resolves host+port', async () => {
-        // Two responses, in the order resolveTarget asks for them: the app-path attribution runs
-        // first and must come up empty, or the legacy fallback this test is named for is never
-        // reached and the single-candidate branch answers instead.
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([])) // GET /sessions/app-sessions → none
-            .mockResolvedValueOnce(jsonResponse([{id: 's3', host: 'remote', status: 'ACTIVE', instanceType: 't'}]))
-        const mgr = create(fetch)
-        expect(await mgr.resolveTarget('ivan', 'shiny')).toEqual({host: 'remote', port: 3838, sessionId: 's3'})
+    test('a restarted gateway resolves a legacy binding from the worker', async () => {
+        // The whole point of associating the legacy start: an empty cache is not an empty answer.
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'shiny', sessionId: 's3', host: 'remote'})]
+        })
+        const mgr = createManager({fetch})
+        expect(await mgr.resolveTarget('ivan', 'shiny', pathUnder('shiny')))
+            .toEqual({host: 'remote', port: 3838, sessionId: 's3'})
     })
 
     test('none → null', async () => {
         const fetch = jest.fn().mockResolvedValueOnce(jsonResponse([]))
         const mgr = create(fetch)
         expect(await mgr.resolveTarget('judy', 'shiny')).toBeNull()
+    })
+
+    test('endpoint never bound → null, not an unrelated open session of the same user', async () => {
+        // The user's jupyter session has closed (its associations went with it) but another sandbox
+        // session — opened for a terminal, never for jupyter — is still up. The orphaned tab's
+        // remaining jupyter traffic must NOT be re-targeted at it, and must not start jupyter there.
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'GET /sessions/active': [{id: 's-terminal', host: 'terminal-host', status: 'ACTIVE', instanceType: 'T3aSmall'}]
+        })
+        const mgr = createManager({fetch})
+
+        expect(await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/lab/api/status')).toBeNull()
+    })
+
+    test('a kernel websocket on a cold gateway probes the hosts the worker knows', async () => {
+        // Kernel traffic carries no app path, and a ws upgrade carries no Referer either (browsers
+        // send Origin), so the probe is the only branch that can attribute it — and with two jupyter
+        // sessions open, the single-candidate fallback cannot break the tie. On a cold cache the
+        // probe has no hosts until the associations are loaded.
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                {path: '/sandbox/jupyter/lab', label: 'Lab', sessionId: 's-a', host: 'host-a', status: 'ACTIVE'},
+                {path: '/sandbox/jupyter/tree', label: 'Notebook', sessionId: 's-b', host: 'host-b', status: 'ACTIVE'}
+            ],
+            'GET http://host-b:8888/api/sandbox/jupyter/api/kernels/k1': {id: 'k1'}
+        })
+        const mgr = createManager({fetch})
+
+        expect(await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1/channels'))
+            .toEqual({host: 'host-b', port: 8888, sessionId: 's-b'})
     })
 
     test('unknown endpoint → null (no worker call)', async () => {
@@ -232,32 +289,32 @@ describe('resolveTarget', () => {
 
 describe('heartbeat', () => {
     test('POSTs /sessions/session/{id} for each cached session', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'STARTING'}))
-        const mgr = create(fetch)
-        await mgr.startEndpoint('leo', 'rstudio')
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1', status: 'STARTING'})
+            ],
+            'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'}
+        })
+        const mgr = createManager({fetch})
+        await mgr.status('leo', 'rstudio')
         fetch.mockClear()
-        fetch.mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
 
         await mgr.heartbeatOnce()
         expect(fetch).toHaveBeenCalledTimes(1)
         expect(fetch.mock.calls[0][0]).toBe('http://worker/sessions/session/s1')
         expect(fetch.mock.calls[0][1].method).toBe('POST')
-        expect(mgr._cache.get('leo').get('endpoint:rstudio').status).toBe('ACTIVE')
+        expect(mgr._cache.get('leo').get('/sandbox/rstudio').status).toBe('ACTIVE')
     })
 
     test('dedupes multiple endpoints sharing one session into a single heartbeat', async () => {
-        const fetch = jest.fn(async (url, opts) => {
-            if (url.endsWith('/sessions/active')) {
-                return jsonResponse([{id: 'shared', host: 'h', status: 'ACTIVE', instanceType: 't'}])
-            }
-            if (opts.method === 'POST' && url.includes('/session/')) {
-                return jsonResponse({id: 'shared', host: 'h', status: 'ACTIVE'})
-            }
-            throw new Error(`unexpected ${url}`)
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 'shared', host: 'h'}),
+                legacyAppSession({endpoint: 'shiny', sessionId: 'shared', host: 'h'})
+            ],
+            'POST /sessions/session/shared': {id: 'shared', host: 'h', status: 'ACTIVE'}
         })
-        const mgr = create(fetch)
+        const mgr = createManager({fetch})
         await mgr.status('mia', 'rstudio')
         await mgr.status('mia', 'shiny')
         fetch.mockClear()
@@ -272,14 +329,13 @@ describe('heartbeat', () => {
     // made an open tab immortal, and deleting this test should look alarming.
     test('A PROXIED REQUEST ALONE IS NOT AN INTERACTION', async () => {
         const fetch = fetchStub({
-            'GET /sessions/active': [{id: 's1', host: 'h1', status: 'ACTIVE', instanceType: 't'}],
-            'GET /sessions/app-sessions': [],
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
             'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
         })
         const mgr = createManager({fetch})
         await mgr.status('leo', 'rstudio')
 
-        const target = await mgr.resolveTarget('leo', 'rstudio', '/some/path')
+        const target = await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
         expect(target).toEqual({host: 'h1', port: PORT_BY_ENDPOINT.rstudio, sessionId: 's1'})
         await mgr.heartbeatOnce()
         expect(heartbeatBodies(fetch)).toEqual([undefined])
@@ -287,8 +343,7 @@ describe('heartbeat', () => {
 
     test('carries interaction only after the GUI reports one, then resets', async () => {
         const fetch = fetchStub({
-            'GET /sessions/active': [{id: 's1', host: 'h1', status: 'ACTIVE', instanceType: 't'}],
-            'GET /sessions/app-sessions': [],
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
             'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
         })
         const mgr = createManager({fetch})
@@ -311,8 +366,7 @@ describe('heartbeat', () => {
     describe('the observable declaration (§4c rule 1)', () => {
         const setup = async () => {
             const fetch = fetchStub({
-                'GET /sessions/active': [{id: 's1', host: 'h1', status: 'ACTIVE', instanceType: 't'}],
-                'GET /sessions/app-sessions': [],
+                'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
                 'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
             })
             const mgr = createManager({fetch})
@@ -326,7 +380,7 @@ describe('heartbeat', () => {
         test('an unobservable session falls back to counting proxied requests', async () => {
             const {fetch, mgr} = await setup()
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
-            await mgr.resolveTarget('leo', 'rstudio', '/some/path')
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
             expect(heartbeatBodies(fetch)).toEqual([JSON.stringify({interaction: true})])
         })
@@ -336,15 +390,14 @@ describe('heartbeat', () => {
         // silently reverts every session to the old behaviour, with no symptom at all.
         test('the default with no report is observable', async () => {
             const {fetch, mgr} = await setup()
-            await mgr.resolveTarget('leo', 'rstudio', '/some/path')
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
             expect(heartbeatBodies(fetch)).toEqual([undefined])
         })
 
         test('the declaration expires unless refreshed', async () => {
             const fetch = fetchStub({
-                'GET /sessions/active': [{id: 's1', host: 'h1', status: 'ACTIVE', instanceType: 't'}],
-                'GET /sessions/app-sessions': [],
+                'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
                 'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
             })
             const mgr = createSandboxSessionManager({
@@ -356,7 +409,7 @@ describe('heartbeat', () => {
             })
             await mgr.status('leo', 'rstudio')
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
-            await mgr.resolveTarget('leo', 'rstudio', '/some/path')
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
             expect(heartbeatBodies(fetch)).toEqual([undefined])
         })
@@ -366,7 +419,7 @@ describe('heartbeat', () => {
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: true})
             await mgr.heartbeatOnce() // consumes the interaction the observable report recorded
-            await mgr.resolveTarget('leo', 'rstudio', '/some/path')
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
             expect(heartbeatBodies(fetch)).toEqual([JSON.stringify({interaction: true}), undefined])
         })
@@ -383,10 +436,9 @@ describe('heartbeat', () => {
     // is down must not look like a worker that closed the session.
     test('keeps the cache entry when the worker is unreachable', async () => {
         const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
+            .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))
         const mgr = create(fetch)
-        await mgr.startEndpoint('nina', 'shiny')
+        await mgr.status('nina', 'shiny')
         fetch.mockClear()
 
         // A whole outage's worth of failed beats: connection refused, then 503.
@@ -406,10 +458,9 @@ describe('heartbeat', () => {
 
     test('drops cache entry when worker reports 404 (closed)', async () => {
         const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([]))
-            .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
+            .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))
         const mgr = create(fetch)
-        await mgr.startEndpoint('nina', 'shiny')
+        await mgr.status('nina', 'shiny')
         fetch.mockClear()
         fetch.mockResolvedValueOnce(errorResponse(404))
 
@@ -420,13 +471,13 @@ describe('heartbeat', () => {
 
 describe('onSessionClosed', () => {
     test('removes cached endpoints for {username, sessionId}', async () => {
-        const fetch = jest.fn(async url => {
-            if (url.endsWith('/sessions/active')) {
-                return jsonResponse([{id: 'sX', host: 'h', status: 'ACTIVE', instanceType: 't'}])
-            }
-            return jsonResponse(null)
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 'sX', host: 'h'}),
+                legacyAppSession({endpoint: 'shiny', sessionId: 'sX', host: 'h'})
+            ]
         })
-        const mgr = create(fetch)
+        const mgr = createManager({fetch})
         await mgr.status('oscar', 'rstudio')
         await mgr.status('oscar', 'shiny')
         expect(mgr._cache.get('oscar').size).toBe(2)
@@ -436,26 +487,20 @@ describe('onSessionClosed', () => {
     })
 
     test('host fallback removes matching entries when username absent', async () => {
-        const fetch = jest.fn(async url => {
-            if (url.endsWith('/sessions/active')) {
-                return jsonResponse([{id: 'sY', host: 'hostY', status: 'ACTIVE', instanceType: 't'}])
-            }
-            return jsonResponse(null)
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'jupyter', sessionId: 'sY', host: 'hostY'})]
         })
-        const mgr = create(fetch)
+        const mgr = createManager({fetch})
         await mgr.status('paul', 'jupyter')
         mgr.onSessionClosed({host: 'hostY'})
         expect(mgr._cache.has('paul')).toBe(false)
     })
 
     test('does not touch a different session', async () => {
-        const fetch = jest.fn(async url => {
-            if (url.endsWith('/sessions/active')) {
-                return jsonResponse([{id: 'sZ', host: 'h', status: 'ACTIVE', instanceType: 't'}])
-            }
-            return jsonResponse(null)
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'shiny', sessionId: 'sZ', host: 'h'})]
         })
-        const mgr = create(fetch)
+        const mgr = createManager({fetch})
         await mgr.status('quinn', 'shiny')
         mgr.onSessionClosed({username: 'quinn', sessionId: 'other'})
         expect(mgr._cache.get('quinn').size).toBe(1)

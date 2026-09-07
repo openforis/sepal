@@ -75,7 +75,7 @@ class _UserSession extends React.Component {
                 onApply={session => this.updateSession(session)}
                 onClose={() => this.unselectSession()}>
                 <Panel.Header
-                    title={`${session.instanceType.name} (${session.instanceType.description})`}
+                    title={`${session.instanceType.tag ?? session.instanceType.name} (${session.instanceType.description})`}
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
                 <Panel.Content>

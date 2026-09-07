@@ -144,7 +144,7 @@ const createSessionManager = ({
         return {
             name: instanceName(sessionId),
             ordinal: ordinals.get(sessionId) ?? null,
-            typeName: instanceTypeById[session.instanceType]?.name ?? null,
+            typeName: instanceTypeById[session.instanceType]?.tag ?? instanceTypeById[session.instanceType]?.name ?? null,
             hourlyCost: instanceTypeById[session.instanceType]?.hourlyCost ?? null,
         }
     }

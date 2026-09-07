@@ -13,16 +13,22 @@ const flush = async () => {
     }
 }
 
-const build = ({instanceTypes, idle = []}) => {
+const build = ({instanceTypes, idle = [], reserved = []}) => {
     const provider = {
         start: jest.fn(async () => {}),
         stop: jest.fn(async () => {}),
         onInstanceLaunched: jest.fn(),
         idleInstances: jest.fn(async () => idle),
+        reservedInstances: jest.fn(async () => reserved),
         launchIdle: jest.fn(async () => []),
         terminate: jest.fn(async () => {}),
     }
-    const repo = {launched: jest.fn(async () => {}), terminated: jest.fn(async () => {})}
+    const repo = {
+        launched: jest.fn(async () => {}),
+        terminated: jest.fn(async () => {}),
+        reconciled: jest.fn(async () => 0),
+        forgotten: jest.fn(async () => 0),
+    }
     const component = createWorkerInstanceComponent({
         repo, provider, provisioner: {}, instanceTypes,
     })
@@ -51,6 +57,37 @@ test('still tops the pool up to target when a type declares one', async () => {
         instanceTypes: [{id: 'T3aSmall', idleCount: 1}],
         idle: [],
     })
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
+})
+
+// An idle instance with no row is invisible to RequestInstance but counted by SizeIdlePool, so
+// the pool holds a slot open for an instance nobody can ever be given. Reconciling on the same
+// tick is what stops that state from being permanent.
+test('reconciles the repository against the provider on every sweep', async () => {
+    const orphan = {id: 'i-orphan', type: 'T3aSmall'}
+    const {component, repo} = build({
+        instanceTypes: [{id: 'T3aSmall', idleCount: 1}],
+        idle: [orphan],
+    })
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    expect(repo.reconciled).toHaveBeenCalledWith([orphan])
+    expect(repo.forgotten).toHaveBeenCalledWith(['i-orphan'])
+})
+
+// The sizing is what stops released instances billing forever; a reconcile failure (a DB blip)
+// must not take it down with it.
+test('sizes the pool even when reconciliation fails', async () => {
+    const {component, provider, repo} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
+    repo.reconciled.mockRejectedValue(new Error('db down'))
 
     await component.start()
     await flush()

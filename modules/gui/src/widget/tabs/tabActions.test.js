@@ -1,11 +1,25 @@
-import {describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+
+const {dispatched} = vi.hoisted(() => ({dispatched: []}))
 
 vi.mock('~/store', () => ({select: vi.fn()}))
-vi.mock('~/action-builder', () => ({actionBuilder: vi.fn()}))
+vi.mock('~/action-builder', () => ({
+    actionBuilder: type => {
+        const action = {type, sets: []}
+        const chain = {
+            set: (path, value) => {
+                action.sets.push({path, value})
+                return chain
+            },
+            dispatch: () => dispatched.push(action)
+        }
+        return chain
+    }
+}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/uuid', () => ({uuid: () => 'uuid'}))
 
-import {reorderedTabs} from './tabActions'
+import {reorderedTabs, setTabPlaceholder} from './tabActions'
 
 const tab = id => ({id, title: `title-${id}`})
 
@@ -37,5 +51,31 @@ describe('reorderedTabs', () => {
     it('handles empty inputs', () => {
         expect(reorderedTabs([], ['a'])).toEqual([])
         expect(reorderedTabs([tab('a')], [])).toEqual([tab('a')])
+    })
+})
+
+describe('setTabPlaceholder', () => {
+    beforeEach(() => {
+        dispatched.length = 0
+    })
+
+    it('sets the placeholder of the identified tab', () => {
+        setTabPlaceholder('1: lazy-paper', 'terminal', 'tab-1')
+        expect(dispatched).toEqual([{
+            type: 'SET_TAB_PLACEHOLDER',
+            sets: [{path: ['terminal', 'tabs', {id: 'tab-1'}, 'placeholder'], value: '1: lazy-paper'}]
+        }])
+    })
+
+    // Tabs are reordered by dragging, so addressing by position would place the name on
+    // whichever tab currently sits at that index.
+    it('addresses the tab by id, not by position', () => {
+        setTabPlaceholder('1: lazy-paper', 'terminal', 'tab-1')
+        expect(dispatched[0].sets[0].path).toContainEqual({id: 'tab-1'})
+    })
+
+    it('restores the default label when there is no placeholder', () => {
+        setTabPlaceholder('', 'terminal', 'tab-1')
+        expect(dispatched[0].sets[0].value).toBe('widget.tabs.newTab')
     })
 })
