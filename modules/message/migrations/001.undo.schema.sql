@@ -1,2 +1,2 @@
-DROP TABLE IF EXISTS message.notification;
-DROP TABLE IF EXISTS message.message;
+DROP TABLE IF EXISTS notification;
+DROP TABLE IF EXISTS message;

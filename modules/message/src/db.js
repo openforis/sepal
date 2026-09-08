@@ -1,29 +1,11 @@
-import {join} from 'path'
-
-import {createPool, initDatabase} from '#sepal/db/mysql'
+import {createDb, createPool} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
-import {dirName} from '#sepal/path'
 
-const log = getLogger('database')
+import {migrateMessageDb} from './databaseMigrations.js'
 
 const DATABASE_NAME = 'message'
 
-const __dirname = dirName(import.meta.url)
-const migrationsPath = join(__dirname, '/../migrations')
-
-const state = {}
-
-const initializeDatabase = async () => {
-    await initDatabase(DATABASE_NAME, migrationsPath)
-    state.pool = await createPool(DATABASE_NAME)
-    log.info('Database initialized')
+export const initializeDb = async () => {
+    await migrateMessageDb(DATABASE_NAME, getLogger('database'))
+    return createDb(await createPool(DATABASE_NAME))
 }
-
-const getPool = () => {
-    if (state.pool) {
-        return state.pool
-    }
-    throw new Error('Connection to database unavailable')
-}
-
-export {DATABASE_NAME, getPool, initializeDatabase}

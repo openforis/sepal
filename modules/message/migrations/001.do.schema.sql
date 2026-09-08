@@ -1,6 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS message;
-
-CREATE TABLE IF NOT EXISTS message.message (
+CREATE TABLE IF NOT EXISTS message (
   id            VARCHAR(36)  NOT NULL,
   username      VARCHAR(32)  NOT NULL,
   subject       VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -14,7 +12,7 @@ CREATE TABLE IF NOT EXISTS message.message (
   INDEX idx_message_1 (removed, creation_time) USING BTREE
 );
 
-CREATE TABLE IF NOT EXISTS message.notification (
+CREATE TABLE IF NOT EXISTS notification (
   message_id VARCHAR(36)  NOT NULL,
   username   VARCHAR(32)  NOT NULL,
   state      VARCHAR(16)  NOT NULL,

@@ -4,7 +4,7 @@
     "description": "SEPAL message service",
     "main": "main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+        "test": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "author": "",
     "license": "ISC",

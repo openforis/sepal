@@ -54,4 +54,18 @@ const baseConfig = {
     }
 }
 
-export default [baseConfig]
+// Test support is for tests and other test support only; production code must never reach it.
+const testSupportBoundary = {
+    files: ['lib/js/shared/src/**/*.js', 'modules/*/src/**/*.js'],
+    ignores: ['**/*.test.js', '**/testSupport/**'],
+    rules: {
+        'no-restricted-imports': ['error', {
+            patterns: [{
+                group: ['#sepal/testSupport/**', '**/testSupport/**'],
+                message: 'Test support must not be imported by production code.'
+            }]
+        }]
+    }
+}
+
+export default [baseConfig, testSupportBoundary]
