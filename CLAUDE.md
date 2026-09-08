@@ -133,6 +133,15 @@ ESLint config at root `eslint.config.js`:
 
 The GUI module (`modules/gui/eslint.config.js`) extends this with React-specific rules and `simple-import-sort` plugin.
 
+Export public functions, classes and constants at their declarations (`export const`, `export function`,
+`export class`). Avoid separate export lists for locally declared public members; reserve them for
+aliases and re-exports.
+
+Name database values `db` for our callback API object (`withTransaction`, `withConnection`), `dbName`
+for a database-name string, and `pool` or `connection` for driver resources. New initialization and
+migration APIs take the `Db` suffix (`migrateDb`, `initializeDb`, `migrate<Module>Db`); existing public
+names such as `initDatabase` stay unchanged unless renaming is explicitly in scope.
+
 ## Comments
 
 Comment code sparingly — only what the code can't say. A comment must earn its place by stating something invisible in the code itself: a non-obvious why, an invariant, a constraint, a workaround. Never write comments that narrate what the next line does, describe the edit you just made ("added X", "now handles Y"), or talk to the reviewer — the diff and git history carry that, and stale narration misleads the next reader, human or agent. Match the comment density of the surrounding file. This is not a ban: the rare high-value comment is welcome, and durable orientation notes belong in docstrings or the repo's docs, not inline.
