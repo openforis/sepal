@@ -4,6 +4,12 @@ SEPAL message service (Node.js; formerly `notification`). Replaces the Java `sep
 `notification` component. System messages (admin) + per-user read/unread state ("notifications").
 Owns the `message` MySQL schema (`message.message`, `message.notification`).
 
+## Database migrations
+
+`migrations/` holds the portable schema stream; there is no legacy import. Startup wiring, the temporary
+checksum reconciliation and the cleanup steps are in
+[docs/database-migrations.md](../../docs/database-migrations.md).
+
 ## Commands
 - `npm test` — Jest (ESM)
 - `sepal build message` / `sepal start message` / `sepal logs message -r`

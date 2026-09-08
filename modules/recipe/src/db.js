@@ -1,15 +1,11 @@
-import {join} from 'path'
+import {createDb, createPool} from '#sepal/db/mysql'
+import {getLogger} from '#sepal/log'
 
-import {createPool, initDatabase} from '#sepal/db/mysql'
-import {dirName} from '#sepal/path'
+import {migrateRecipeDb} from './databaseMigrations.js'
 
 const DATABASE_NAME = 'recipe'
 
-const migrationsPath = join(dirName(import.meta.url), '/../migrations')
-
-const initializeDatabase = async () => {
-    await initDatabase(DATABASE_NAME, migrationsPath)
-    return await createPool(DATABASE_NAME)
+export const initializeDb = async () => {
+    await migrateRecipeDb(DATABASE_NAME, getLogger('database'))
+    return createDb(await createPool(DATABASE_NAME))
 }
-
-export {initializeDatabase}

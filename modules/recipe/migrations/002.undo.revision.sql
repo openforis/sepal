@@ -1,1 +1,1 @@
-ALTER TABLE recipe.recipe DROP COLUMN revision;
+ALTER TABLE recipe DROP COLUMN revision;

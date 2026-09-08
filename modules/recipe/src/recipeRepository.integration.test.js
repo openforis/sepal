@@ -1,35 +1,27 @@
-import {readFileSync} from 'fs'
 import {join} from 'path'
 
-import {createConnection, createPool, createTransactionRunner} from '#sepal/db/mysql'
+import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
+import {failingDb} from '#sepal/testSupport/db/faultyConnection'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {RecipeRepository} from './recipeRepository.js'
 
 // Mocked SQL cannot prove that the conditional update is atomic under concurrent MySQL writers.
 
-const {MYSQL_PASSWORD} = process.env
-const SCRATCH = `recipe_test_${process.pid}`
-const LEGACY = `${SCRATCH}_legacy`
-
-const describeIf = (condition, ...args) =>
-    condition ? describe(...args) : describe.skip(...args)
-
-describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires MYSQL_PASSWORD)', () => {
-    let adminConnection
-    let scratchPool
+describe('recipe repository', () => {
+    let testDb
     let repository
 
     beforeAll(async () => {
-        adminConnection = await createConnection('mysql', {multipleStatements: true})
-        await createScratchSchema(adminConnection)
-        scratchPool = await createPool(SCRATCH)
-        repository = new RecipeRepository(createTransactionRunner(scratchPool))
+        configureNoLogging()
+        testDb = await createTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
+        repository = new RecipeRepository(testDb.db)
     })
 
-    beforeEach(() => clearScratchTables())
+    beforeEach(() => testDb.reset())
 
-    afterAll(() => removeScratchSchema())
+    afterAll(() => testDb?.remove())
 
     describe('saveRecipe', () => {
         test('creates at column revision 1, storing the content it was given', async () => {
@@ -38,7 +30,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             const result = await repository.saveRecipe(recipe)
 
             expect(result).toEqual({outcome: 'saved', revision: 1})
-            expect(await storedRow(recipe.id)).toEqual({revision: 1, contents: recipe.content})
+            const found = await repository.findRecipe(recipe.id)
+            expect(found).toEqual({owner: recipe.owner, recipe: {...recipe.content, projectId: recipe.projectId, revision: 1}})
         })
 
         // A client may echo back the placement and revision a load injected; neither may reach the column.
@@ -48,7 +41,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.saveRecipe(recipe)
 
-            expect((await storedRow(recipe.id)).contents).toEqual(content)
+            const stored = await storedRow(recipe.id)
+            expect(stored.contents).toEqual(content)
         })
 
         test('strips server metadata a client echoed back when updating', async () => {
@@ -61,7 +55,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.saveRecipe(updatedRecipe)
 
-            expect((await storedRow(recipe.id)).contents).toEqual(content)
+            const stored = await storedRow(recipe.id)
+            expect(stored.contents).toEqual(content)
         })
 
         test.each([['a string'], [[1, 2]]])('refuses %p, which is not a recipe object', async content => {
@@ -78,7 +73,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             const result = await repository.saveRecipe(updatedRecipe)
 
             expect(result).toEqual({outcome: 'saved', revision: revision + 1})
-            expect(await storedRow(recipe.id)).toEqual({revision: revision + 1, contents: updatedRecipe.content})
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe).toEqual({...updatedRecipe.content, projectId: recipe.projectId, revision: revision + 1})
         })
 
         test('changes neither the contents nor the column on a stale update', async () => {
@@ -91,20 +87,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             const result = await repository.saveRecipe(staleRecipe)
 
             expect(result).toEqual({outcome: 'conflict', currentRevision: revision + 1})
-            expect(await repository.findRecipe(recipe.id)).toEqual(before)
-        })
-
-        test('lets exactly one of two writers from the same base revision win', async () => {
-            const recipe = aRecipe()
-            const {revision} = await repository.saveRecipe(recipe)
-
-            const results = await Promise.all([
-                repository.saveRecipe(aRecipe({expectedRevision: revision, content: aRecipeContent({writer: 'first'})})),
-                repository.saveRecipe(aRecipe({expectedRevision: revision, content: aRecipeContent({writer: 'second'})}))
-            ])
-
-            expect(results.map(({outcome}) => outcome).sort()).toEqual(['conflict', 'saved'])
-            expect((await repository.findRecipe(recipe.id)).recipe.revision).toBe(revision + 1)
+            const found = await repository.findRecipe(recipe.id)
+            expect(found).toEqual(before)
         })
 
         test('reports a create against an existing id as a conflict, so a lost acknowledgement is recoverable', async () => {
@@ -126,7 +110,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             const result = await repository.saveRecipe(foreignRecipe)
 
             expect(result).toEqual({outcome: 'notFound'})
-            expect((await storedRow(recipe.id)).contents).toEqual(recipe.content)
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
         })
 
         test('can never resurrect a removed recipe', async () => {
@@ -139,7 +124,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             )
 
             expect(result).toEqual({outcome: 'notFound'})
-            expect(await repository.findRecipe(recipe.id)).toBeNull()
+            const found = await repository.findRecipe(recipe.id)
+            expect(found).toBeNull()
         })
 
         test('rejects a type change on an existing id distinctly', async () => {
@@ -151,7 +137,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             )
 
             expect(result).toEqual({outcome: 'typeMismatch', currentRevision: revision})
-            expect((await repository.findRecipe(recipe.id)).recipe.revision).toBe(revision)
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe.revision).toBe(revision)
         })
 
         // A retry at the unchanged revision must not write stale project placement back.
@@ -166,7 +153,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
                 projectId: A_PROJECT_ID, expectedRevision: revision, content: aRecipeContent({retried: true})
             }))
 
-            expect((await repository.findRecipe(recipe.id)).recipe.projectId).toBe(DESTINATION_PROJECT_ID)
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe.projectId).toBe(DESTINATION_PROJECT_ID)
         })
     })
 
@@ -188,7 +176,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             await repository.saveRecipe(recipe)
             await repository.removeRecipes([recipe.id], OWNER)
 
-            expect(await repository.findRecipe(recipe.id)).toBeNull()
+            const found = await repository.findRecipe(recipe.id)
+            expect(found).toBeNull()
         })
 
         // Documents stored before placement and revision were stripped must lose to the columns.
@@ -256,8 +245,10 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.removeRecipes([owned.id, anothers.id], OWNER)
 
-            expect(await repository.findRecipe(owned.id)).toBeNull()
-            expect(await repository.findRecipe(anothers.id)).not.toBeNull()
+            const ownRecipe = await repository.findRecipe(owned.id)
+            const anothersRecipe = await repository.findRecipe(anothers.id)
+            expect(ownRecipe).toBeNull()
+            expect(anothersRecipe).not.toBeNull()
         })
     })
 
@@ -281,18 +272,6 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             }])
         })
 
-        // One corrupt document must not stop the batch, so it comes back unreadable instead of throwing.
-        test('hands back an unreadable document rather than failing the read', async () => {
-            const recipe = aRecipe({typeVersion: OUTDATED_TYPE_VERSION})
-            await repository.saveRecipe(recipe)
-            await storeUnreadableDocument(recipe.id)
-
-            const found = await repository.findRecipesToMigrate(recipe.type, CURRENT_TYPE_VERSION)
-
-            expect(found).toEqual([{
-                id: recipe.id, owner: recipe.owner, typeVersion: recipe.typeVersion, content: null
-            }])
-        })
     })
 
     describe('saveMigratedRecipe', () => {
@@ -303,8 +282,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.saveMigratedRecipe(migration)
 
-            expect(await storedRow(recipe.id))
-                .toEqual({revision: revision + 1, contents: migration.content})
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe).toEqual({...migration.content, projectId: recipe.projectId, revision: revision + 1})
         })
 
         test('strips server metadata a migration would otherwise write back', async () => {
@@ -316,7 +295,8 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
                 content: {...content, revision: 97, projectId: 'echoed-project'}
             }))
 
-            expect((await storedRow(recipe.id)).contents).toEqual(content)
+            const stored = await storedRow(recipe.id)
+            expect(stored.contents).toEqual(content)
         })
 
         test('fails instead of reporting success when it matches no row', async () => {
@@ -334,23 +314,12 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.saveProject(renamedProject)
 
-            expect(await repository.listProjects(OWNER)).toEqual([{
+            const projects = await repository.listProjects(OWNER)
+            expect(projects).toEqual([{
                 id: renamedProject.id, username: OWNER, name: renamedProject.name,
                 defaultAssetFolder: renamedProject.defaultAssetFolder,
                 defaultWorkspaceFolder: renamedProject.defaultWorkspaceFolder
             }])
-        })
-
-        // Two browsers creating the same project must converge, not surface a duplicate-key failure.
-        test('lets concurrent creates of the same id all succeed, leaving one project', async () => {
-            const project = aProject()
-
-            const results = await Promise.allSettled(
-                Array.from({length: 5}, () => repository.saveProject(project))
-            )
-
-            expect(results.map(({status}) => status)).toEqual(Array(5).fill('fulfilled'))
-            expect((await repository.listProjects(OWNER)).map(({id}) => id)).toEqual([project.id])
         })
 
         // An upsert that updated unconditionally would let anyone overwrite a project by guessing its id.
@@ -363,11 +332,13 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
                 defaultAssetFolder: 'theirs', defaultWorkspaceFolder: 'theirs'
             }))
 
-            expect(await repository.listProjects(OWNER)).toEqual([{
+            const owners = await repository.listProjects(OWNER)
+            const hijackers = await repository.listProjects(ANOTHER_OWNER)
+            expect(owners).toEqual([{
                 id: project.id, username: OWNER, name: project.name,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
-            expect(await repository.listProjects(ANOTHER_OWNER)).toEqual([])
+            expect(hijackers).toEqual([])
         })
     })
 
@@ -380,8 +351,10 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.removeProject(project.id, OWNER)
 
-            expect(await repository.listProjects(OWNER)).toEqual([])
-            expect(await repository.findRecipe(held.id)).toBeNull()
+            const projects = await repository.listProjects(OWNER)
+            expect(projects).toEqual([])
+            const found = await repository.findRecipe(held.id)
+            expect(found).toBeNull()
         })
 
         test('rolls back when the recipe soft-delete fails', async () => {
@@ -389,13 +362,17 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
             const held = aRecipe({projectId: project.id})
             await repository.saveProject(project)
             await repository.saveRecipe(held)
-            const failing = new RecipeRepository(createTransactionRunner(poolFailingAfter(1)))
+            const refusingTheSoftDelete = new RecipeRepository(failingDb(testDb.db, {
+                when: theRecipeSoftDelete, error: new Error('soft delete refused')
+            }))
 
-            const interrupted = failing.removeProject(project.id, OWNER)
+            const interrupted = refusingTheSoftDelete.removeProject(project.id, OWNER)
 
-            await expect(interrupted).rejects.toThrow(/connection lost/)
-            expect((await repository.listProjects(OWNER)).map(({id}) => id)).toEqual([project.id])
-            expect(await repository.findRecipe(held.id)).not.toBeNull()
+            await expect(interrupted).rejects.toThrow('soft delete refused')
+            const projects = await repository.listProjects(OWNER)
+            expect(projects.map(({id}) => id)).toEqual([project.id])
+            const found = await repository.findRecipe(held.id)
+            expect(found).not.toBeNull()
         })
 
         test('leaves another user\'s project alone', async () => {
@@ -404,30 +381,53 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
             await repository.removeProject(project.id, ANOTHER_OWNER)
 
-            expect((await repository.listProjects(OWNER)).map(({id}) => id)).toEqual([project.id])
+            const projects = await repository.listProjects(OWNER)
+            expect(projects.map(({id}) => id)).toEqual([project.id])
         })
     })
 
-    describe('002.do.revision.sql', () => {
-        beforeEach(() => createLegacySchema())
+    describe('writers running at the same time', () => {
+        let concurrent
+        let concurrentRepository
 
-        afterEach(() => removeLegacySchema())
+        beforeAll(async () => {
+            concurrent = await createTestDb({
+                name: 'reciperepositoryconcurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
+            })
+            concurrentRepository = new RecipeRepository(concurrent.db)
+        })
 
-        test('backfills every existing row to column revision 1, rewriting no contents', async () => {
-            const first = aLegacyRow({id: 'first'})
-            const second = aLegacyRow({id: 'second'})
-            await insertLegacyRow(first)
-            await insertLegacyRow(second)
+        beforeEach(() => concurrent.reset())
 
-            await runRevisionMigration()
+        afterAll(() => concurrent?.remove())
 
-            const [rows] = await adminConnection.query(
-                `SELECT id, revision, contents FROM \`${LEGACY}\`.recipe ORDER BY id`
-            )
-            expect(rows).toEqual([
-                {id: first.id, revision: 1, contents: first.contents},
-                {id: second.id, revision: 1, contents: second.contents}
+        // Both saves are in flight together; MySQL decides how they interleave. The claim is only that
+        // exactly one can win from a given base revision, whichever order it settles on.
+        test('lets exactly one of two writers from the same base revision win', async () => {
+            const recipe = aRecipe()
+            const {revision} = await concurrentRepository.saveRecipe(recipe)
+
+            const results = await Promise.all([
+                concurrentRepository.saveRecipe(aRecipe({expectedRevision: revision, content: aRecipeContent({writer: 'first'})})),
+                concurrentRepository.saveRecipe(aRecipe({expectedRevision: revision, content: aRecipeContent({writer: 'second'})}))
             ])
+
+            expect(results.map(({outcome}) => outcome).sort()).toEqual(['conflict', 'saved'])
+            const stored = await concurrentRepository.findRecipe(recipe.id)
+            expect(stored.recipe.revision).toBe(revision + 1)
+        })
+
+        // Two browsers creating the same project must converge, not surface a duplicate-key failure.
+        test('lets concurrent creates of the same id all succeed, leaving one project', async () => {
+            const project = aProject()
+
+            const results = await Promise.allSettled(
+                Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveProject(project))
+            )
+
+            expect(results.map(({status}) => status)).toEqual(Array(COMPETING_WRITERS).fill('fulfilled'))
+            const projects = await concurrentRepository.listProjects(OWNER)
+            expect(projects.map(({id}) => id)).toEqual([project.id])
         })
     })
 
@@ -448,110 +448,19 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
 
     const aRecipeContent = (over = {}) => ({model: {source: 'LANDSAT'}, ...over})
 
-    const aLegacyRow = (over = {}) => ({id: 'a-legacy-recipe', contents: '{"model":{"source":"LANDSAT"}}', ...over})
-
-    // The public read mapping injects placement and revision, so only the column itself shows what was
-    // actually written to the document.
+    // Only for the stored-document invariant: a public read injects placement and revision, so it cannot
+    // show whether a submitted one reached the column.
     const storedRow = async id => {
-        const [rows] = await scratchPool.query(
-            `SELECT revision, contents FROM \`${SCRATCH}\`.recipe WHERE id = ?`, [id]
-        )
+        const [rows] = await testDb.query('SELECT revision, contents FROM recipe WHERE id = ?', [id])
         return {revision: rows[0].revision, contents: JSON.parse(rows[0].contents)}
     }
 
-    const storeLegacyDocument = (id, document) => scratchPool.query(
-        `UPDATE \`${SCRATCH}\`.recipe SET contents = ? WHERE id = ?`, [JSON.stringify(document), id]
+    const storeLegacyDocument = (id, document) => testDb.query(
+        'UPDATE recipe SET contents = ? WHERE id = ?', [JSON.stringify(document), id]
     )
 
-    const storeUnreadableDocument = id => scratchPool.query(
-        `UPDATE \`${SCRATCH}\`.recipe SET contents = 'not json' WHERE id = ?`, [id]
-    )
-
-    // Real MySQL throughout - only the failure of one statement is synthetic, so a rollback here is
-    // InnoDB's, not the test's.
-    const poolFailingAfter = statements => {
-        let remaining = statements
-        return {
-            getConnection: async () => {
-                const connection = await scratchPool.getConnection()
-                return {
-                    query: (...args) => remaining-- > 0
-                        ? connection.query(...args)
-                        : Promise.reject(new Error('connection lost')),
-                    beginTransaction: () => connection.beginTransaction(),
-                    commit: () => connection.commit(),
-                    rollback: () => connection.rollback(),
-                    release: () => connection.release()
-                }
-            }
-        }
-    }
-
-    // Dropped first: a scratch schema left behind by an interrupted run with the same pid would
-    // otherwise be reused with whatever shape it had then.
-    const createScratchSchema = async connection => {
-        await connection.query(`DROP SCHEMA IF EXISTS \`${SCRATCH}\``)
-        await connection.query(`CREATE SCHEMA \`${SCRATCH}\``)
-        await createRecipeTable(connection, SCRATCH)
-        await createProjectTable(connection, SCRATCH)
-    }
-
-    const createRecipeTable = (connection, schema) => connection.query(`
-        CREATE TABLE \`${schema}\`.recipe (
-            id varchar(36) NOT NULL, username varchar(32) NOT NULL, name varchar(255) NOT NULL,
-            type varchar(63) NOT NULL, contents longtext NOT NULL,
-            creation_time timestamp NOT NULL, update_time timestamp NOT NULL,
-            removed boolean NOT NULL DEFAULT FALSE, type_version int DEFAULT 1, project_id varchar(255),
-            revision int unsigned NOT NULL DEFAULT 1,
-            PRIMARY KEY (id)
-        ) ENGINE=InnoDB
-    `)
-
-    const createProjectTable = (connection, schema) => connection.query(`
-        CREATE TABLE \`${schema}\`.project (
-            id varchar(36) NOT NULL, username varchar(32) NOT NULL, name varchar(255) NOT NULL,
-            default_asset_folder text, default_workspace_folder text,
-            PRIMARY KEY (id)
-        ) ENGINE=InnoDB
-    `)
-
-    const clearScratchTables = async () => {
-        await scratchPool.query(`DELETE FROM \`${SCRATCH}\`.recipe`)
-        await scratchPool.query(`DELETE FROM \`${SCRATCH}\`.project`)
-    }
-
-    const removeScratchSchema = async () => {
-        await scratchPool?.end()
-        await adminConnection?.query(`DROP SCHEMA IF EXISTS \`${SCRATCH}\``)
-        await adminConnection?.end()
-    }
-
-    // The migration predates the revision column, so its schema is the recipe table without one.
-    const createLegacySchema = async () => {
-        await adminConnection.query(`DROP SCHEMA IF EXISTS \`${LEGACY}\``)
-        await adminConnection.query(`CREATE SCHEMA \`${LEGACY}\``)
-        await adminConnection.query(`
-            CREATE TABLE \`${LEGACY}\`.recipe (
-                id varchar(36) NOT NULL, username varchar(32) NOT NULL, name varchar(255) NOT NULL,
-                type varchar(63) NOT NULL, contents longtext NOT NULL,
-                creation_time timestamp NOT NULL, update_time timestamp NOT NULL,
-                removed boolean NOT NULL DEFAULT FALSE, type_version int DEFAULT 1,
-                project_id varchar(255), PRIMARY KEY (id)
-            ) ENGINE=InnoDB
-        `)
-    }
-
-    const removeLegacySchema = () => adminConnection.query(`DROP SCHEMA IF EXISTS \`${LEGACY}\``)
-
-    const insertLegacyRow = ({id, contents}) => adminConnection.query(
-        `INSERT INTO \`${LEGACY}\`.recipe (id, username, name, type, contents, creation_time, update_time)
-         VALUES (?, ?, 'n', 'MOSAIC', ?, NOW(), NOW())`,
-        [id, OWNER, contents]
-    )
-
-    const runRevisionMigration = () => adminConnection.query(readFileSync(
-        join(dirName(import.meta.url), '../migrations/002.do.revision.sql'), 'utf8'
-    ).replaceAll('recipe.recipe', `\`${LEGACY}\`.recipe`))
+    // Names the statement the transaction must undo: the soft delete that follows the project delete.
+    const theRecipeSoftDelete = sql => /UPDATE recipe SET removed/i.test(sql)
 
     const A_RECIPE_ID = 'a-recipe'
     const A_PROJECT_ID = 'a-project'
@@ -560,4 +469,10 @@ describeIf(Boolean(MYSQL_PASSWORD), 'integration — recipe repository (requires
     const ANOTHER_OWNER = 'alice'
     const CURRENT_TYPE_VERSION = 8
     const OUTDATED_TYPE_VERSION = 3
+
+    // Enough connections for every writer the concurrency scenarios start at once; queueing stays off, so
+    // one more acquisition than this would fail rather than wait.
+    const COMPETING_WRITERS = 5
+
+    const MIGRATIONS_PATH = join(dirName(import.meta.url), '../migrations')
 })

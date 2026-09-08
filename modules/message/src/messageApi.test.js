@@ -1,15 +1,15 @@
 import {jest} from '@jest/globals'
 
+import {messageChanged$} from './changed.js'
+import {MessageApi} from './messageApi.js'
+
 const repo = {
     saveMessage: jest.fn(),
     removeMessage: jest.fn(),
     listNotifications: jest.fn(),
     updateNotification: jest.fn()
 }
-jest.unstable_mockModule('./messageRepository.js', () => repo)
-
-const api = await import('./messageApi.js')
-const {messageChanged$} = await import('./changed.js')
+const api = new MessageApi(repo)
 
 const ctx = (overrides = {}) => ({
     params: {}, query: {}, request: {body: {}},

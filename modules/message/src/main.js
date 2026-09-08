@@ -4,9 +4,10 @@ import {configureServer, getLogger} from '#sepal/log'
 
 import {messageChanged$} from './changed.js'
 import {port} from './config.js'
-import {initializeDatabase} from './db.js'
-import {userNotifications} from './messageApi.js'
-import {routes} from './routes.js'
+import {initializeDb} from './db.js'
+import {MessageApi} from './messageApi.js'
+import {MessageRepository} from './messageRepository.js'
+import {createRoutes} from './routes.js'
 import {createMessageWs} from './ws.js'
 
 configureServer(logConfig)
@@ -14,11 +15,16 @@ configureServer(logConfig)
 const log = getLogger('main')
 
 const main = async () => {
-    await initializeDatabase()
-    const notificationWs$ = createMessageWs({userNotifications, messageChanged$})
+    const db = await initializeDb()
+    const repository = new MessageRepository(db, () => new Date())
+    const api = new MessageApi(repository)
+    const notificationWs$ = createMessageWs({
+        userNotifications: (username, admin) => api.userNotifications(username, admin),
+        messageChanged$
+    })
     await server.start({
         port,
-        routes,
+        routes: createRoutes(api),
         wsRoutes: {
             '/ws': server.wsStream(ctx => notificationWs$(ctx.arg$)),
         },

@@ -144,6 +144,15 @@ ESLint config at root `eslint.config.js`:
 
 The GUI module (`modules/gui/eslint.config.js`) extends this with React-specific rules and `simple-import-sort` plugin.
 
+Export public functions, classes and constants at their declarations (`export const`, `export function`,
+`export class`). Avoid separate export lists for locally declared public members; reserve them for
+aliases and re-exports.
+
+Name database values `db` for our callback API object (`withTransaction`, `withConnection`), `dbName`
+for a database-name string, and `pool` or `connection` for driver resources. New initialization and
+migration APIs take the `Db` suffix (`migrateDb`, `initializeDb`, `migrate<Module>Db`); existing public
+names such as `initDatabase` stay unchanged unless renaming is explicitly in scope.
+
 ## Code Organization
 
 - Organize files to read top-down. Put public entry points and exported classes/functions first at the highest abstraction level, followed by their supporting functions in call order and increasingly concrete detail.

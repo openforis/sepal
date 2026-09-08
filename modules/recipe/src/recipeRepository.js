@@ -3,20 +3,20 @@ const PROJECT = 'project'
 const INITIAL_REVISION = 1
 
 class RecipeRepository {
-    #transaction
+    #db
 
-    constructor(transaction) {
-        if (!transaction) {
-            throw new Error('A recipe repository requires a transaction runner')
+    constructor(db) {
+        if (!db) {
+            throw new Error('A recipe repository requires a db')
         }
-        this.#transaction = transaction
+        this.#db = db
     }
 
     // The conditional update atomically enforces ownership, type, revision and deletion, so a writer whose
     // base revision has moved changes nothing. Project placement belongs to moveRecipes and must not be
     // overwritten by a retried save.
     async saveRecipe({id, owner, projectId, name, type, typeVersion, content, expectedRevision}) {
-        return await this.#transaction(async connection => {
+        return await this.#db.withTransaction(async connection => {
             const now = new Date()
             if (expectedRevision == null) {
                 try {
@@ -54,7 +54,7 @@ class RecipeRepository {
     }
 
     async findRecipe(id) {
-        return await this.#transaction(async connection => {
+        return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT username, project_id, contents, revision
                  FROM ${RECIPE} WHERE id = ? AND removed = FALSE`,
@@ -66,7 +66,7 @@ class RecipeRepository {
 
     // Summaries never select contents: a listing would otherwise load every stored document.
     async listRecipes(owner) {
-        return await this.#transaction(async connection => {
+        return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, project_id, name, type, creation_time, update_time, revision
                  FROM ${RECIPE} WHERE username = ? AND removed = FALSE ORDER BY name, update_time DESC`,
@@ -78,7 +78,7 @@ class RecipeRepository {
 
     // A removed recipe is authoritatively absent, so advancing its unreadable revision would add no evidence.
     async removeRecipes(recipeIds, owner) {
-        await this.#transaction(async connection => {
+        await this.#db.withTransaction(async connection => {
             if (recipeIds.length) {
                 await connection.query(
                     `UPDATE ${RECIPE} SET removed = TRUE
@@ -90,7 +90,7 @@ class RecipeRepository {
     }
 
     async moveRecipes({projectId, recipeIds, owner}) {
-        await this.#transaction(async connection => {
+        await this.#db.withTransaction(async connection => {
             if (recipeIds.length) {
                 await connection.query(
                     `UPDATE ${RECIPE} SET project_id = ?
@@ -101,10 +101,8 @@ class RecipeRepository {
         })
     }
 
-    // A document that will not parse comes back unreadable rather than failing the whole batch, so one
-    // corrupt recipe cannot stop every other recipe from migrating.
     async findRecipesToMigrate(type, version) {
-        return await this.#transaction(async connection => {
+        return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, username, type_version, contents
                  FROM ${RECIPE} WHERE type = ? AND type_version < ? AND removed = FALSE ORDER BY creation_time`,
@@ -122,7 +120,7 @@ class RecipeRepository {
     // A model migration has no expected revision to carry, so it advances the column in place. An unmatched
     // row is a failure, not a migration silently reported as done.
     async saveMigratedRecipe({id, owner, typeVersion, content}) {
-        await this.#transaction(async connection => {
+        await this.#db.withTransaction(async connection => {
             const [result] = await connection.query(
                 `UPDATE ${RECIPE} SET type_version = ?, contents = ?, revision = revision + 1
                  WHERE id = ? AND username = ?`,
@@ -135,7 +133,7 @@ class RecipeRepository {
     }
 
     async listProjects(owner) {
-        return await this.#transaction(async connection => {
+        return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, name, username, default_asset_folder, default_workspace_folder
                  FROM ${PROJECT} WHERE username = ? ORDER BY name`,
@@ -149,7 +147,7 @@ class RecipeRepository {
     // updates only when the stored row already belongs to the writer, and username is never assigned, so
     // an id someone else owns can be neither taken over nor altered.
     async saveProject({id, owner, name, defaultAssetFolder, defaultWorkspaceFolder}) {
-        await this.#transaction(async connection => {
+        await this.#db.withTransaction(async connection => {
             await connection.query(
                 `INSERT INTO ${PROJECT} (id, name, username, default_asset_folder, default_workspace_folder)
                  VALUES (?, ?, ?, ?, ?)
@@ -167,7 +165,7 @@ class RecipeRepository {
     // Removing the project and hiding the recipes it held is one fact in two statements. Half-applied,
     // it leaves recipes pointing at a project id that no longer resolves.
     async removeProject(id, owner) {
-        await this.#transaction(async connection => {
+        await this.#db.withTransaction(async connection => {
             await connection.query(`DELETE FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner])
             await connection.query(
                 `UPDATE ${RECIPE} SET removed = TRUE WHERE project_id = ? AND username = ?`,
@@ -231,6 +229,8 @@ const contentsColumn = content => {
     return JSON.stringify(stored)
 }
 
+// Only the migration read tolerates a document it cannot parse: it reports the recipe with no content so
+// the runner can skip that one and migrate the rest. A query that fails still throws.
 const parsedOrNull = contents => {
     try {
         return JSON.parse(contents)
