@@ -4,10 +4,12 @@
 //   instance gone      → the hosting service no longer reports it at all
 //   session never came → the worker died between claiming and the session row being inserted
 //
-// graceMs must exceed the worst case between claiming an instance and its session row existing:
-// RequestSession inserts the row only after RequestInstance returns, and awaitHost can spend
-// minutes waiting for an address. Reclaiming inside that window would take an instance away from a
-// request still in flight.
+// graceMs guards BOTH: it must exceed the worst case between claiming an instance and its session
+// row existing (RequestSession inserts the row only after RequestInstance returns, and awaitHost
+// can spend minutes waiting for an address), and it absorbs the eventual consistency of the tag
+// reads below — an instance being re-tagged from idle to reserved matches neither filter and reads
+// as gone. Either way, reclaiming inside that window takes an instance away from a request still
+// in flight; waiting out the grace on a genuinely nonexistent instance costs nothing.
 //
 // A gone instance has nothing to tear down, so its claim is simply deleted. An abandoned claim on
 // an instance that still exists goes through ReleaseInstance instead: the claim delete is what
@@ -34,8 +36,10 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
     for (const claim of await claims.all()) {
         const gone = !liveIds.has(claim.instanceId)
         const abandoned = !openIds.has(claim.sessionId)
-            && now - claim.claimedAt.getTime() > graceMs
         if (!gone && !abandoned) {
+            continue
+        }
+        if (now - claim.claimedAt.getTime() <= graceMs) {
             continue
         }
         // Each claim is independent: one failure must not abort the others.

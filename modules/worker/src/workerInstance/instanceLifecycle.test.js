@@ -631,7 +631,7 @@ describe('reclaimStaleClaims', () => {
 
     test('deletes a claim whose instance the hosting service no longer reports', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-gone', 's-1', 0)]),
+            all: jest.fn().mockResolvedValue([claimOn('i-gone', 's-1', GRACE_MS + 1000)]),
             release: jest.fn().mockResolvedValue(true),
         }
         const reclaimed = await reclaimStaleClaims(['s-1'], GRACE_MS, {claims, provider: makeProvider()})
@@ -660,7 +660,20 @@ describe('reclaimStaleClaims', () => {
         expect(provider.release).toHaveBeenCalledWith('i-1')
     })
 
-    // The grace must outlast awaitHost's 300s worst case, or an allocation in flight is reclaimed.
+    // Tag reads are eventually consistent: between claiming an idle candidate and its State tag
+    // flipping to reserved, an instance matches neither filter. Deleting on that alone takes the
+    // claim away from a request still in flight.
+    test('keeps a fresh claim whose instance neither filter reports yet', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([claimOn('i-retagging', 's-pending', 1000)]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+
+        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})).toBe(0)
+        expect(claims.release).not.toHaveBeenCalled()
+    })
+
+    // The grace must outlast the address wait, or an allocation in flight is reclaimed.
     test('keeps a claim within grace whose session has not appeared yet', async () => {
         const claims = {
             all: jest.fn().mockResolvedValue([claimOn('i-1', 's-pending', 1000)]),
