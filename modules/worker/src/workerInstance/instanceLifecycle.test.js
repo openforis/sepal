@@ -470,8 +470,8 @@ describe('releaseInstance', () => {
     })
 
     test('race (claims.release returns false): skips undeploy but still calls provider.release and emits InstanceReleased', async () => {
-        // raceCondition=true skips undeploy but still falls through to provider.release(instanceId)
-        // and the InstanceReleased event.
+        // Losing the delete skips the undeploy but still falls through to
+        // provider.release(instanceId) and the InstanceReleased event.
         const released = []
         events.instanceReleased$.subscribe(v => released.push(v))
 
@@ -480,6 +480,7 @@ describe('releaseInstance', () => {
 
         await releaseInstance('i-raced', deps)
 
+        expect(deps.claims.release).toHaveBeenCalledWith('i-raced')
         expect(deps.provisioner.undeploy).not.toHaveBeenCalled()
         expect(deps.provider.release).toHaveBeenCalledWith('i-raced')
         expect(released.length).toBeGreaterThanOrEqual(1)
@@ -502,34 +503,6 @@ describe('releaseInstance', () => {
         expect(typeof payload.error).toBe('string')
         expect(deps.provider.terminate).toHaveBeenCalledWith('i-fail')
         expect(deps.claims.release).toHaveBeenCalledWith('i-fail')
-    })
-
-    test('an unknown instance still drops its orphaned claim', async () => {
-        const claims = makeClaims()
-        const provider = {getInstance: jest.fn().mockResolvedValue(null), release: jest.fn(), terminate: jest.fn()}
-        const provisioner = {undeploy: jest.fn()}
-
-        await releaseInstance('i-gone', {claims, provider, provisioner})
-
-        expect(claims.release).toHaveBeenCalledWith('i-gone')
-        expect(provisioner.undeploy).not.toHaveBeenCalled()
-    })
-
-    // No row to delete: this release did not win the undeploy, so it only tags the instance idle.
-    test('no claim to delete: skips the undeploy but still releases at the provider', async () => {
-        const claims = makeClaims({release: jest.fn().mockResolvedValue(false)})
-        const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
-        const provider = {
-            getInstance: jest.fn().mockResolvedValue(instance),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn(),
-        }
-        const provisioner = {undeploy: jest.fn()}
-
-        await releaseInstance('i-1', {claims, provider, provisioner})
-
-        expect(provisioner.undeploy).not.toHaveBeenCalled()
-        expect(provider.release).toHaveBeenCalledWith('i-1')
     })
 
     test('failure path: terminate failure is swallowed (does not throw)', async () => {

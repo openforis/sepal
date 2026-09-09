@@ -66,7 +66,7 @@ const build = clock => {
         homeDir: '/nonexistent-scratch-home', // listDirs() yields [] — no filesystem side effects
         clock,
     })
-    return {component, repo, events}
+    return {component, repo, events, instanceManager}
 }
 
 // The jobs run in a microtask (scheduleFixedDelay's Promise.resolve().then(fn)), so the queue must
@@ -97,4 +97,26 @@ test('the timed-out sweep runs once the grace period has elapsed', async () => {
 
     expect(repo.timedOutSessions).toHaveBeenCalled()
     expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
+})
+
+// Both sweeps are pure scheduling: nothing else calls them, and ReclaimStaleClaims is the only
+// thing bounding instance_claim's growth.
+test('the claim sweep runs with the claim grace', async () => {
+    const {component, instanceManager} = build(() => STARTED_AT)
+
+    component.start()
+    await flush()
+    component.stop()
+
+    expect(instanceManager.reclaimStaleClaims).toHaveBeenCalledWith([], 10 * 60_000)
+})
+
+test('the unused-instance sweep runs with the release min age', async () => {
+    const {component, instanceManager} = build(() => STARTED_AT)
+
+    component.start()
+    await flush()
+    component.stop()
+
+    expect(instanceManager.releaseUnusedInstances).toHaveBeenCalledWith([], 5, 'MINUTES')
 })

@@ -37,8 +37,10 @@ const log = getLogger('worker/workerSession')
 
 const RELEASE_UNUSED_MIN_AGE_MINUTES = 5
 
-// Must outlast awaitHost's 300s worst case: RequestSession inserts the session row only after
-// RequestInstance returns, so a claim legitimately has no session behind it for several minutes.
+// RequestSession inserts the session row only after RequestInstance returns, so a claim
+// legitimately has no session behind it for as long as awaitHost runs: 300 iterations of a 1s
+// sleep PLUS a DescribeInstances round trip each, typically 5-6 minutes and able to exceed this
+// grace outright when the SDK is backing off. The margin is slim, not generous.
 const CLAIM_GRACE_MS = 10 * MINUTE_MS
 
 // STARTUP_GRACE_MS — how long after startup the closing sweeps stay inert. A stored deadline is

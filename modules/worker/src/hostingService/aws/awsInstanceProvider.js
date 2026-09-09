@@ -323,7 +323,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         await terminateUntagged()
     }
 
-    // Polls getInstance up to PUBLIC_IP_RETRIES times (≤300×1s) until the host is set.
+    // Polls getInstance up to PUBLIC_IP_RETRIES times until the host is set. Each iteration is a
+    // 1s sleep plus a DescribeInstances round trip, so the wall clock runs well past 300s.
     //
     // A just-launched instance has no public IP yet, and EC2 does not always list it at all, so
     // neither a missing IP nor a failed read is an event: one line before, one when it resolves
