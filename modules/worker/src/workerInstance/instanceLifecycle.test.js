@@ -734,6 +734,27 @@ describe('reclaimStaleClaims', () => {
 
         expect(await reclaimStaleClaims(['s-open'], GRACE_MS, {claims, provider})).toBe(0)
     })
+
+    // One claim's release rejecting must not abort the batch: the per-claim try/catch is what
+    // lets the sweep move on to the remaining claims instead of dying on the first bad row.
+    test('a claim that fails to release does not stop the rest of the sweep', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([
+                claimOn('i-1', 's-1', GRACE_MS + 1000),
+                claimOn('i-2', 's-2', GRACE_MS + 1000),
+                claimOn('i-3', 's-3', GRACE_MS + 1000),
+            ]),
+            release: jest.fn(async instanceId =>
+                instanceId === 'i-2' ? Promise.reject(new Error('db down')) : true),
+        }
+
+        const reclaimed = await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})
+
+        expect(claims.release).toHaveBeenCalledWith('i-1')
+        expect(claims.release).toHaveBeenCalledWith('i-2')
+        expect(claims.release).toHaveBeenCalledWith('i-3')
+        expect(reclaimed).toBe(2)
+    })
 })
 
 describe('releaseUnusedInstances', () => {
