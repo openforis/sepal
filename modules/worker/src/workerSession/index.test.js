@@ -31,6 +31,7 @@ const makeRepo = () => ({
 const makeInstanceManager = () => ({
     releaseInstance: jest.fn(async () => undefined),
     releaseUnusedInstances: jest.fn(async () => undefined),
+    reclaimStaleClaims: jest.fn(async () => undefined),
     sessionsWithoutInstance: jest.fn(async () => []),
     removeOrphanedContainers: jest.fn(async () => []),
     getInstanceTypes: jest.fn(() => []),

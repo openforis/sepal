@@ -105,6 +105,7 @@ const makeInstanceManager = (overrides = {}) => {
         requestInstance: jest.fn(async () => ({id: 'i-1', host: 'host-1'})),
         releaseInstance: jest.fn(async () => undefined),
         releaseUnusedInstances: jest.fn(async () => undefined),
+        reclaimStaleClaims: jest.fn(async () => undefined),
         sessionsWithoutInstance: jest.fn(async () => []),
         removeOrphanedContainers: jest.fn(async () => []),
         getInstanceTypes: jest.fn(() => [{id: 'T3aSmall'}]),
@@ -549,6 +550,17 @@ describe('releaseUnusedInstances', () => {
         await mgr.releaseUnusedInstances(5, 'MINUTES')
         expect(repo.sessions).toHaveBeenCalledWith([State.PENDING, State.ACTIVE])
         expect(instanceManager.releaseUnusedInstances).toHaveBeenCalledWith(sessions, 5, 'MINUTES')
+    })
+})
+
+describe('reclaimStaleClaims', () => {
+    test('loads PENDING+ACTIVE and delegates to instanceManager', async () => {
+        const sessions = [session({id: 's-a'})]
+        const repo = makeRepo({sessions: () => sessions})
+        const {mgr, instanceManager} = build({repo})
+        await mgr.reclaimStaleClaims(10 * 60 * 1000)
+        expect(repo.sessions).toHaveBeenCalledWith([State.PENDING, State.ACTIVE])
+        expect(instanceManager.reclaimStaleClaims).toHaveBeenCalledWith(sessions, 10 * 60 * 1000)
     })
 })
 
