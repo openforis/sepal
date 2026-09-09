@@ -1,6 +1,6 @@
-// Tests for the workerInstance component's scheduling. Only the immediate (initial-delay-0) run
-// of SizeIdlePool is exercised — the 1-minute interval never fires within a test, and stop()
-// clears it.
+// Tests for the workerInstance component's scheduling and startup backfill. Only the immediate
+// (initial-delay-0) run of SizeIdlePool is exercised — the 1-minute interval never fires within a
+// test, and stop() clears it.
 
 import {jest} from '@jest/globals'
 
@@ -13,7 +13,11 @@ const flush = async () => {
     }
 }
 
-const build = ({instanceTypes, idle = [], reserved = []}) => {
+const build = ({instanceTypes, idle = [], reserved = [], claims = {
+    claim: jest.fn(async () => true),
+    release: jest.fn(async () => true),
+    all: jest.fn(async () => []),
+}}) => {
     const provider = {
         start: jest.fn(async () => {}),
         stop: jest.fn(async () => {}),
@@ -29,9 +33,9 @@ const build = ({instanceTypes, idle = [], reserved = []}) => {
         terminated: jest.fn(async () => {}),
     }
     const component = createWorkerInstanceComponent({
-        repo, provider, provisioner: {}, instanceTypes,
+        claims, repo, provider, provisioner: {}, instanceTypes,
     })
-    return {component, provider, repo}
+    return {claims, component, provider, repo}
 }
 
 // SizeIdlePool is the ONLY step that terminates a released instance: releaseInstance merely
@@ -97,4 +101,38 @@ test('stop() halts the provider and the sweep', async () => {
     await component.stop()
 
     expect(provider.stop).toHaveBeenCalled()
+})
+
+describe('start — upgrade backfill', () => {
+    test('claims each reserved instance that carries a session id', async () => {
+        const {claims, component} = build({
+            instanceTypes: [],
+            reserved: [
+                {id: 'i-1', reservation: {sessionId: 's-1'}},
+                {id: 'i-2', reservation: {sessionId: null}},
+            ],
+        })
+
+        await component.start()
+        await flush()
+        component.stop()
+
+        expect(claims.claim.mock.calls).toEqual([['i-1', 's-1']])
+    })
+
+    test('a backfill failure does not stop startup', async () => {
+        const {component} = build({
+            instanceTypes: [],
+            reserved: [{id: 'i-1', reservation: {sessionId: 's-1'}}],
+            claims: {
+                claim: jest.fn(async () => { throw new Error('db down') }),
+                release: jest.fn(async () => true),
+                all: jest.fn(async () => []),
+            },
+        })
+
+        await expect(component.start()).resolves.toBeUndefined()
+        await flush()
+        component.stop()
+    })
 })

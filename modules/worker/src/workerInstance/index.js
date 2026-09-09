@@ -1,8 +1,8 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): build targetIdleCountByInstanceType, schedule SizeIdlePool + provider.sweep
-//              every 1 min (unconditionally — see start()), call provider.start()
+//   3. start(): call provider.start(), backfill claims for pre-existing reserved instances,
+//              schedule SizeIdlePool + provider.sweep every 1 min (unconditionally — see start())
 //   4. stop():  clear scheduler, call provider.stop()
 //
 // DO NOT auto-start on import. main.js calls start() explicitly.
@@ -25,6 +25,29 @@ import {isReserved} from './workerInstance.js'
 const log = getLogger('worker/workerInstance')
 
 const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
+
+// UPGRADE SHIM — DELETE ONE RELEASE AFTER THIS SHIPS.
+//
+// Sessions already running when the claim table arrived hold reserved instances with no claim row.
+// They cannot be mis-allocated (the hosting service reports them reserved), but on close
+// releaseInstance reads the missing row as a lost race and skips the undeploy, stranding a live
+// container on an instance about to be marked idle.
+//
+// A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
+// it once the grace period passes.
+const backfillClaims = async ({claims, provider}) => {
+    const reserved = await provider.reservedInstances()
+    let backfilled = 0
+    for (const instance of reserved) {
+        const sessionId = instance.reservation?.sessionId
+        if (sessionId && await claims.claim(instance.id, sessionId)) {
+            backfilled++
+        }
+    }
+    if (backfilled > 0) {
+        log.info(`Backfilled ${backfilled} claim(s) for sessions predating the claim table`)
+    }
+}
 
 const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, instanceTypes}) => {
 
@@ -60,6 +83,12 @@ const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, ins
     const start = async () => {
         log.debug('Starting...')
         await provider.start()
+
+        try {
+            await backfillClaims({claims, provider})
+        } catch (err) {
+            log.error('Claim backfill failed:', err.message)
+        }
 
         // Scheduled UNCONDITIONALLY, even with no idle pool configured. SizeIdlePool is the only
         // step that terminates a released instance — releaseInstance merely un-reserves it (on AWS,
