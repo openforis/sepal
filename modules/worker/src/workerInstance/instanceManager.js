@@ -30,7 +30,7 @@ import {findMissingInstances} from './query/findMissingInstances.js'
 
 const log = getLogger('worker/instanceManager')
 
-const createInstanceManager = ({claims, repo: _repo, provider, provisioner, instanceTypes}) => {
+const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) => {
 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.

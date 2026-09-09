@@ -500,24 +500,17 @@ describe('sizeIdlePool', () => {
         ;({sizeIdlePool} = await import('./command/sizeIdlePool.js'))
     })
 
-    const makeRepoAndProvider = ({idleInstances = [], launchResult = [makeInstance({id: 'i-new'})]} = {}) => ({
-        repo: {
-            launched: jest.fn().mockResolvedValue(undefined),
-            terminated: jest.fn().mockResolvedValue(undefined),
-        },
-        provider: {
-            idleInstances: jest.fn().mockResolvedValue(idleInstances),
-            launchIdle: jest.fn().mockResolvedValue(launchResult),
-            terminate: jest.fn().mockResolvedValue(undefined),
-        },
+    const makeProvider = ({idleInstances = [], launchResult = [makeInstance({id: 'i-new'})]} = {}) => ({
+        idleInstances: jest.fn().mockResolvedValue(idleInstances),
+        launchIdle: jest.fn().mockResolvedValue(launchResult),
+        terminate: jest.fn().mockResolvedValue(undefined),
     })
 
-    test('current < target: calls launchIdle with deficit count + repo.launched', async () => {
-        const {repo, provider} = makeRepoAndProvider({idleInstances: []})
-        await sizeIdlePool({'T3aSmall': 2}, {repo, provider})
+    test('current < target: calls launchIdle with deficit count', async () => {
+        const provider = makeProvider({idleInstances: []})
+        await sizeIdlePool({'T3aSmall': 2}, {provider})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 2)
-        expect(repo.launched).toHaveBeenCalledTimes(1)
         expect(provider.terminate).not.toHaveBeenCalled()
     })
 
@@ -527,11 +520,10 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-b', type: 'T3aSmall'}),
             makeInstance({id: 'i-c', type: 'T3aSmall'}),
         ]
-        const {repo, provider} = makeRepoAndProvider({idleInstances: surplus})
-        await sizeIdlePool({'T3aSmall': 1}, {repo, provider})
+        const provider = makeProvider({idleInstances: surplus})
+        await sizeIdlePool({'T3aSmall': 1}, {provider})
 
         expect(provider.terminate).toHaveBeenCalledTimes(2)
-        expect(repo.terminated).toHaveBeenCalledTimes(2)
         expect(provider.launchIdle).not.toHaveBeenCalled()
     })
 
@@ -545,18 +537,17 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-warm', type: 'T3aSmall', launchTime: minutesAgo(90)}),
             makeInstance({id: 'i-cold', type: 'T3aSmall', launchTime: minutesAgo(1)}),
         ]
-        const {repo, provider} = makeRepoAndProvider({idleInstances})
-        await sizeIdlePool({'T3aSmall': 1}, {repo, provider})
+        const provider = makeProvider({idleInstances})
+        await sizeIdlePool({'T3aSmall': 1}, {provider})
 
         expect(provider.terminate).toHaveBeenCalledTimes(1)
         expect(provider.terminate).toHaveBeenCalledWith('i-cold')
-        expect(repo.terminated).toHaveBeenCalledWith('i-cold')
     })
 
     test('current == target: no-op', async () => {
         const idle = [makeInstance({id: 'i-x', type: 'T3aSmall'})]
-        const {repo, provider} = makeRepoAndProvider({idleInstances: idle})
-        await sizeIdlePool({'T3aSmall': 1}, {repo, provider})
+        const provider = makeProvider({idleInstances: idle})
+        await sizeIdlePool({'T3aSmall': 1}, {provider})
 
         expect(provider.launchIdle).not.toHaveBeenCalled()
         expect(provider.terminate).not.toHaveBeenCalled()
@@ -568,16 +559,16 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-big-2', type: 'C5aXlarge'}),
             makeInstance({id: 'i-big-3', type: 'C5aXlarge'}),
         ]
-        const {repo, provider} = makeRepoAndProvider({idleInstances})
-        await sizeIdlePool({'T3aSmall': 1, 'C5aXlarge': 1}, {repo, provider})
+        const provider = makeProvider({idleInstances})
+        await sizeIdlePool({'T3aSmall': 1, 'C5aXlarge': 1}, {provider})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
         expect(provider.terminate).toHaveBeenCalledTimes(2)
     })
 
     test('accepts Map instead of plain object', async () => {
-        const {repo, provider} = makeRepoAndProvider({idleInstances: []})
-        await sizeIdlePool(new Map([['T3aSmall', 1]]), {repo, provider})
+        const provider = makeProvider({idleInstances: []})
+        await sizeIdlePool(new Map([['T3aSmall', 1]]), {provider})
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
     })
 
@@ -588,12 +579,11 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-extra-1', type: 'C5aXlarge'}),
             makeInstance({id: 'i-extra-2', type: 'C5aXlarge'}),
         ]
-        const {repo, provider} = makeRepoAndProvider({idleInstances: nonTargetInstances})
-        await sizeIdlePool({'T3aSmall': 1}, {repo, provider})
+        const provider = makeProvider({idleInstances: nonTargetInstances})
+        await sizeIdlePool({'T3aSmall': 1}, {provider})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
         expect(provider.terminate).toHaveBeenCalledTimes(2)
-        expect(repo.terminated).toHaveBeenCalledTimes(2)
         const terminatedIds = provider.terminate.mock.calls.map(c => c[0])
         expect(terminatedIds).toContain('i-extra-1')
         expect(terminatedIds).toContain('i-extra-2')
@@ -859,13 +849,6 @@ describe('instanceManager', () => {
             all: jest.fn().mockResolvedValue([]),
             claim: jest.fn().mockResolvedValue(true),
             release: jest.fn().mockResolvedValue(true),
-        },
-        repo: {
-            idleInstances: jest.fn().mockResolvedValue([]),
-            reserved: jest.fn().mockResolvedValue(true),
-            launched: jest.fn().mockResolvedValue(undefined),
-            released: jest.fn().mockResolvedValue(true),
-            terminated: jest.fn().mockResolvedValue(undefined),
         },
         provider: {
             idleInstances: jest.fn().mockResolvedValue([]),

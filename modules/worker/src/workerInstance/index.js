@@ -49,7 +49,7 @@ const backfillClaims = async ({claims, provider}) => {
     }
 }
 
-const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, instanceTypes}) => {
+const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes}) => {
 
     // ── Wire: provider.onInstanceLaunched ─────────────────────────────────────
     // If the launched instance is reserved → emit InstancePendingProvisioning
@@ -104,7 +104,7 @@ const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, ins
         // sweep failure must not stop the sizing, hence the two independent catches.
         const runPoolCycle = async () => {
             try {
-                await sizeIdlePool(targetIdleCountByInstanceType, {repo, provider})
+                await sizeIdlePool(targetIdleCountByInstanceType, {provider})
             } catch (err) {
                 log.error('SizeIdlePool failed:', err.message)
             }
@@ -126,7 +126,7 @@ const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, ins
         log.info('Stopped')
     }
 
-    const instanceManager = createInstanceManager({claims, repo, provider, provisioner, instanceTypes})
+    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes})
 
     return {
         instanceManager,

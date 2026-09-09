@@ -28,21 +28,17 @@ const build = ({instanceTypes, idle = [], reserved = [], claims = {
         terminate: jest.fn(async () => {}),
         sweep: jest.fn(async () => {}),
     }
-    const repo = {
-        launched: jest.fn(async () => {}),
-        terminated: jest.fn(async () => {}),
-    }
     const component = createWorkerInstanceComponent({
-        claims, repo, provider, provisioner: {}, instanceTypes,
+        claims, provider, provisioner: {}, instanceTypes,
     })
-    return {claims, component, provider, repo}
+    return {claims, component, provider}
 }
 
 // SizeIdlePool is the ONLY step that terminates a released instance: releaseInstance merely
 // un-reserves it (on AWS, re-tags it State=idle), and the provider's own cleanup only sweeps idle
 // instances of an OLDER version. If the sweep is not scheduled, released instances bill forever.
 test('terminates surplus idle instances even when no type declares an idle pool', async () => {
-    const {component, provider, repo} = build({
+    const {component, provider} = build({
         instanceTypes: [{id: 'M5aLarge', idleCount: 0}],
         idle: [{id: 'i-orphan', type: 'M5aLarge'}],
     })
@@ -52,7 +48,6 @@ test('terminates surplus idle instances even when no type declares an idle pool'
     component.stop()
 
     expect(provider.terminate).toHaveBeenCalledWith('i-orphan')
-    expect(repo.terminated).toHaveBeenCalledWith('i-orphan')
 })
 
 test('still tops the pool up to target when a type declares one', async () => {
