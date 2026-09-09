@@ -5,7 +5,7 @@
 // ExpireSessions, which stay inert for STARTUP_GRACE_MS so a worker outage does not close every
 // open session on restart):
 //   @1min:  CloseTimedOutSessions, ExpireSessions, CloseSessionsWithoutInstance,
-//           ReleaseUnusedInstances(5, MINUTES)
+//           ReleaseUnusedInstances(5, MINUTES), ReclaimStaleClaims
 //   @12min: RemoveOrphanedTmpDirs, RemoveOrphanedContainers (local-daemon container sweep;
 //           the first run is immediate, so a worker restart cleans up at startup)
 //   @5min:  RefreshGoogleTokens
@@ -36,6 +36,10 @@ import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 const log = getLogger('worker/workerSession')
 
 const RELEASE_UNUSED_MIN_AGE_MINUTES = 5
+
+// Must outlast awaitHost's 300s worst case: RequestSession inserts the session row only after
+// RequestInstance returns, so a claim legitimately has no session behind it for several minutes.
+const CLAIM_GRACE_MS = 10 * MINUTE_MS
 
 // STARTUP_GRACE_MS — how long after startup the closing sweeps stay inert. A stored deadline is
 // not destroyed by a worker outage, but the SENDERS of extension events cannot reach a down
@@ -87,6 +91,10 @@ const createSessionComponent = ({
         scheduler.schedule(
             'ReleaseUnusedInstances',
             () => sessionManager.releaseUnusedInstances(RELEASE_UNUSED_MIN_AGE_MINUTES, 'MINUTES'),
+            MINUTE_MS)
+        scheduler.schedule(
+            'ReclaimStaleClaims',
+            () => sessionManager.reclaimStaleClaims(CLAIM_GRACE_MS),
             MINUTE_MS)
 
         // @1min: the expiry sweep — notify → email → close over stored deadlines. It is a no-op

@@ -1,7 +1,7 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): build targetIdleCountByInstanceType, schedule ReconcileInstances + SizeIdlePool
+//   3. start(): build targetIdleCountByInstanceType, schedule SizeIdlePool + provider.sweep
 //              every 1 min (unconditionally — see start()), call provider.start()
 //   4. stop():  clear scheduler, call provider.stop()
 //
@@ -13,7 +13,6 @@ import {createScheduler} from '../scheduler.js'
 import {instanceTag} from '../tag.js'
 import {MINUTE_MS} from '../time.js'
 import {provisionInstance} from './command/provisionInstance.js'
-import {reconcileInstances} from './command/reconcileInstances.js'
 import {sizeIdlePool} from './command/sizeIdlePool.js'
 import {
     emitInstancePendingProvisioning,
@@ -70,20 +69,20 @@ const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, ins
         // `size > 0` made the whole termination path hinge on one catalog entry carrying idleCount.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
-        // Reconcile FIRST: an idle instance the repository has never seen is invisible to
-        // RequestInstance but counted by SizeIdlePool, so leaving it unadopted would have the pool
-        // hold a slot open for an instance nobody can ever be given. A reconcile failure must not
-        // stop the sizing, hence the two independent catches.
+        // SizeIdlePool is the only step that terminates a released instance — releaseInstance
+        // merely un-reserves it. The provider sweep then collects what no allocation path can see:
+        // instances of an older version, and untagged instances whose CreateTags never ran. A
+        // sweep failure must not stop the sizing, hence the two independent catches.
         const runPoolCycle = async () => {
-            try {
-                await reconcileInstances({repo, provider})
-            } catch (err) {
-                log.error('ReconcileInstances failed:', err.message)
-            }
             try {
                 await sizeIdlePool(targetIdleCountByInstanceType, {repo, provider})
             } catch (err) {
                 log.error('SizeIdlePool failed:', err.message)
+            }
+            try {
+                await provider.sweep()
+            } catch (err) {
+                log.error('Provider sweep failed:', err.message)
             }
         }
         scheduler.schedule('SizeIdlePool', runPoolCycle, SIZE_IDLE_POOL_INTERVAL_MS)

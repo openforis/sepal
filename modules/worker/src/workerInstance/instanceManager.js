@@ -4,6 +4,7 @@
 //   requestInstance(session)                          → Promise<{id, host}>
 //   releaseInstance(instanceId)                       → Promise<void>
 //   releaseUnusedInstances(sessions, minAge, timeUnit) → Promise<void>
+//   reclaimStaleClaims(sessions, graceMs)             → Promise<number>
 //   removeOrphanedContainers(sessions)                → Promise<string[]>
 //   getInstanceTypes()                                → InstanceType[]
 //   sessionsWithoutInstance(sessions)                 → Promise<{session, status}[]>
@@ -19,6 +20,7 @@
 import {getLogger} from '#sepal/log'
 
 import {instanceTag, userTag} from '../tag.js'
+import {reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {releaseInstance} from './command/releaseInstance.js'
 import {releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {removeOrphanedContainers} from './command/removeOrphanedContainers.js'
@@ -53,6 +55,10 @@ const createInstanceManager = ({claims, repo: _repo, provider, provisioner, inst
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
         return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner})
     }
+
+    // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
+    const _reclaimStaleClaims = async (sessions, graceMs) =>
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider})
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
     // the open sessions nor the provider claim (the in-memory local provider forgets instances on
@@ -112,6 +118,7 @@ const createInstanceManager = ({claims, repo: _repo, provider, provisioner, inst
         requestInstance: _requestInstance,
         releaseInstance: _releaseInstance,
         releaseUnusedInstances: _releaseUnusedInstances,
+        reclaimStaleClaims: _reclaimStaleClaims,
         removeOrphanedContainers: _removeOrphanedContainers,
         getInstanceTypes,
         sessionsWithoutInstance,

@@ -600,100 +600,64 @@ describe('sizeIdlePool', () => {
     })
 })
 
-describe('reconcileInstances', () => {
-    let reconcileInstances
+describe('reclaimStaleClaims', () => {
+    let reclaimStaleClaims
 
     beforeAll(async () => {
-        ;({reconcileInstances} = await import('./command/reconcileInstances.js'))
+        ;({reclaimStaleClaims} = await import('./command/reclaimStaleClaims.js'))
     })
 
-    // A stand-in for the `instance` table: id -> workerType (null = idle), with the same
-    // race-safe semantics as the real repository.
-    const makeRepo = (rows = new Map()) => ({
-        rows,
-        idleInstances: async instanceType =>
-            [...rows].filter(([, r]) => r.workerType === null && r.type === instanceType).map(([id]) => id),
-        launched: async instance => rows.set(instance.id, {type: instance.type, workerType: null}),
-        reserved: async (id, workerType) => {
-            const row = rows.get(id)
-            if (!row || row.workerType !== null) return false
-            row.workerType = workerType
-            return true
-        },
-        reconciled: async instances => {
-            let adopted = 0
-            for (const {id, type} of instances) {
-                if (!rows.has(id)) {
-                    rows.set(id, {type, workerType: null})
-                    adopted++
-                }
-            }
-            return adopted
-        },
-        forgotten: async knownIds => {
-            const known = new Set(knownIds)
-            let dropped = 0
-            for (const [id, row] of [...rows]) {
-                if (row.workerType === null && !known.has(id)) {
-                    rows.delete(id)
-                    dropped++
-                }
-            }
-            return dropped
-        },
+    const GRACE_MS = 10 * 60 * 1000
+    const claimOn = (instanceId, sessionId, ageMs) => ({
+        instanceId, sessionId, claimedAt: new Date(Date.now() - ageMs),
     })
 
-    const makeProvider = ({idle = [], reserved = []} = {}) => ({
-        idleInstances: jest.fn(async () => idle),
-        reservedInstances: jest.fn(async () => reserved),
-        launchReserved: jest.fn(async () => makeReservedInstance({id: 'i-new'})),
-        reserve: jest.fn(async () => {}),
+    const makeProvider = (idle = [], reserved = []) => ({
+        idleInstances: jest.fn().mockResolvedValue(idle),
+        reservedInstances: jest.fn().mockResolvedValue(reserved),
     })
 
-    test('adopts a provider-idle instance the repository has never seen', async () => {
-        const repo = makeRepo()
-        const provider = makeProvider({idle: [makeInstance({id: 'i-orphan', type: 'T3aSmall'})]})
+    test('deletes a claim whose instance the hosting service no longer reports', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([claimOn('i-gone', 's-1', 0)]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const reclaimed = await reclaimStaleClaims(['s-1'], GRACE_MS, {claims, provider: makeProvider()})
 
-        const {adopted} = await reconcileInstances({repo, provider})
-
-        expect(adopted).toBe(1)
-        expect(repo.rows.get('i-orphan')).toEqual({type: 'T3aSmall', workerType: null})
+        expect(claims.release).toHaveBeenCalledWith('i-gone')
+        expect(reclaimed).toBe(1)
     })
 
-    test('does NOT re-idle a row that already exists (a reserved instance stays reserved)', async () => {
-        const repo = makeRepo(new Map([['i-live', {type: 'T3aSmall', workerType: 'SANDBOX'}]]))
-        const provider = makeProvider({idle: [makeInstance({id: 'i-live', type: 'T3aSmall'})]})
+    test('deletes a claim past grace whose session never appeared', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-missing', GRACE_MS + 1000)]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const provider = makeProvider([{id: 'i-1'}])
 
-        const {adopted} = await reconcileInstances({repo, provider})
-
-        expect(adopted).toBe(0)
-        expect(repo.rows.get('i-live').workerType).toBe('SANDBOX')
+        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(1)
     })
 
-    test('forgets idle rows for instances the provider no longer has', async () => {
-        const repo = makeRepo(new Map([
-            ['i-gone', {type: 'T3aSmall', workerType: null}],
-            ['i-here', {type: 'T3aSmall', workerType: null}],
-        ]))
-        const provider = makeProvider({idle: [makeInstance({id: 'i-here', type: 'T3aSmall'})]})
+    // The grace must outlast awaitHost's 300s worst case, or an allocation in flight is reclaimed.
+    test('keeps a claim within grace whose session has not appeared yet', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-pending', 1000)]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const provider = makeProvider([{id: 'i-1'}])
 
-        const {forgotten} = await reconcileInstances({repo, provider})
-
-        expect(forgotten).toBe(1)
-        expect(repo.rows.has('i-gone')).toBe(false)
-        expect(repo.rows.has('i-here')).toBe(true)
+        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(0)
+        expect(claims.release).not.toHaveBeenCalled()
     })
 
-    // A reserved instance is reported by reservedInstances(), not idleInstances(). Forgetting its
-    // row would make ReleaseInstance read its own release as a lost race and skip the undeploy.
-    test('keeps the row of an instance the provider reports as reserved', async () => {
-        const repo = makeRepo(new Map([['i-busy', {type: 'T3aSmall', workerType: null}]]))
-        const provider = makeProvider({reserved: [makeReservedInstance({id: 'i-busy'})]})
+    test('keeps a claim backed by an open session however old', async () => {
+        const claims = {
+            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-open', 99 * GRACE_MS)]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const provider = makeProvider([], [{id: 'i-1'}])
 
-        const {forgotten} = await reconcileInstances({repo, provider})
-
-        expect(forgotten).toBe(0)
-        expect(repo.rows.has('i-busy')).toBe(true)
+        expect(await reclaimStaleClaims(['s-open'], GRACE_MS, {claims, provider})).toBe(0)
     })
 })
 

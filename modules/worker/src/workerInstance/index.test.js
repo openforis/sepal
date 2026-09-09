@@ -22,12 +22,11 @@ const build = ({instanceTypes, idle = [], reserved = []}) => {
         reservedInstances: jest.fn(async () => reserved),
         launchIdle: jest.fn(async () => []),
         terminate: jest.fn(async () => {}),
+        sweep: jest.fn(async () => {}),
     }
     const repo = {
         launched: jest.fn(async () => {}),
         terminated: jest.fn(async () => {}),
-        reconciled: jest.fn(async () => 0),
-        forgotten: jest.fn(async () => 0),
     }
     const component = createWorkerInstanceComponent({
         repo, provider, provisioner: {}, instanceTypes,
@@ -65,29 +64,23 @@ test('still tops the pool up to target when a type declares one', async () => {
     expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
 })
 
-// An idle instance with no row is invisible to RequestInstance but counted by SizeIdlePool, so
-// the pool holds a slot open for an instance nobody can ever be given. Reconciling on the same
-// tick is what stops that state from being permanent.
-test('reconciles the repository against the provider on every sweep', async () => {
-    const orphan = {id: 'i-orphan', type: 'T3aSmall'}
-    const {component, repo} = build({
-        instanceTypes: [{id: 'T3aSmall', idleCount: 1}],
-        idle: [orphan],
-    })
+// The provider sweep collects what no allocation path can see (older-version and untagged
+// instances); it must run on the same tick as the sizing, not on its own separate schedule.
+test('runs the provider sweep on every pool cycle', async () => {
+    const {component, provider} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
 
     await component.start()
     await flush()
     component.stop()
 
-    expect(repo.reconciled).toHaveBeenCalledWith([orphan])
-    expect(repo.forgotten).toHaveBeenCalledWith(['i-orphan'])
+    expect(provider.sweep).toHaveBeenCalled()
 })
 
-// The sizing is what stops released instances billing forever; a reconcile failure (a DB blip)
+// The sizing is what stops released instances billing forever; a sweep failure (an AWS API blip)
 // must not take it down with it.
-test('sizes the pool even when reconciliation fails', async () => {
-    const {component, provider, repo} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
-    repo.reconciled.mockRejectedValue(new Error('db down'))
+test('sizes the pool even when the provider sweep fails', async () => {
+    const {component, provider} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
+    provider.sweep.mockRejectedValue(new Error('ec2 down'))
 
     await component.start()
     await flush()
