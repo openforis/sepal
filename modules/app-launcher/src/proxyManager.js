@@ -1,5 +1,5 @@
 import express from 'express'
-import {firstValueFrom, retry, tap} from 'rxjs'
+import {defer, firstValueFrom, retry, tap} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 
@@ -43,7 +43,7 @@ const proxies$ = () => {
 }
 
 // The catalog comes from the gateway, which may still be starting. Keep trying, or no app gets a route.
-const registerProxies$ = () => proxies$().pipe(
+const registerProxies$ = () => defer(proxies$).pipe(
     retry({delay: REGISTER_RETRY_DELAY_MS})
 )
 
