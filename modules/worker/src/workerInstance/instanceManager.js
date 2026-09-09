@@ -58,7 +58,7 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
 
     // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
     const _reclaimStaleClaims = async (sessions, graceMs) =>
-        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider})
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner})
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
     // the open sessions nor the provider claim (the in-memory local provider forgets instances on

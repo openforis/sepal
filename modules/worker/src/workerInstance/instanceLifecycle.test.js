@@ -453,7 +453,7 @@ describe('releaseInstance', () => {
         expect(provisioner.undeploy).not.toHaveBeenCalled()
     })
 
-    // The claim is the race sentinel: no row means another release already owns this instance.
+    // No row to delete: this release did not win the undeploy, so it only tags the instance idle.
     test('no claim to delete: skips the undeploy but still releases at the provider', async () => {
         const claims = makeClaims({release: jest.fn().mockResolvedValue(false)})
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
@@ -591,10 +591,11 @@ describe('sizeIdlePool', () => {
 })
 
 describe('reclaimStaleClaims', () => {
-    let reclaimStaleClaims
+    let reclaimStaleClaims, releaseUnusedInstances
 
     beforeAll(async () => {
         ;({reclaimStaleClaims} = await import('./command/reclaimStaleClaims.js'))
+        ;({releaseUnusedInstances} = await import('./command/releaseUnusedInstances.js'))
     })
 
     const GRACE_MS = 10 * 60 * 1000
@@ -623,9 +624,19 @@ describe('reclaimStaleClaims', () => {
             all: jest.fn().mockResolvedValue([claimOn('i-1', 's-missing', GRACE_MS + 1000)]),
             release: jest.fn().mockResolvedValue(true),
         }
-        const provider = makeProvider([{id: 'i-1'}])
+        const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
+        const provider = {
+            ...makeProvider([instance]),
+            getInstance: jest.fn().mockResolvedValue(instance),
+            release: jest.fn().mockResolvedValue(undefined),
+            terminate: jest.fn().mockResolvedValue(undefined),
+        }
+        const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
 
-        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(1)
+        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner})).toBe(1)
+        expect(claims.release).toHaveBeenCalledWith('i-1')
+        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
+        expect(provider.release).toHaveBeenCalledWith('i-1')
     })
 
     // The grace must outlast awaitHost's 300s worst case, or an allocation in flight is reclaimed.
@@ -638,6 +649,32 @@ describe('reclaimStaleClaims', () => {
 
         expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(0)
         expect(claims.release).not.toHaveBeenCalled()
+    })
+
+    // Dropping the row on an instance that still exists hands the undeploy to nobody: the
+    // ReleaseUnusedInstances that follows finds no claim, reads that as a lost race, skips the
+    // undeploy, and tags the instance idle with the previous user's container still running.
+    test('an abandoned claim on a live instance is torn down, not just dropped', async () => {
+        const rows = new Map([['i-1', 's-dead']])
+        const claims = {
+            all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
+                ({instanceId, sessionId, claimedAt: new Date(Date.now() - GRACE_MS - 1000)}))),
+            release: jest.fn(async instanceId => rows.delete(instanceId)),
+        }
+        const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
+        const provider = {
+            ...makeProvider([], [instance]),
+            getInstance: jest.fn(async () => instance),
+            release: jest.fn(async () => undefined),
+            terminate: jest.fn(async () => undefined),
+        }
+        const provisioner = {undeploy: jest.fn(async () => undefined)}
+
+        await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner})
+        await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
+
+        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
+        expect(rows.has('i-1')).toBe(false)
     })
 
     test('keeps a claim backed by an open session however old', async () => {
@@ -935,6 +972,21 @@ describe('instanceManager', () => {
         expect(failures).toHaveLength(1)
         expect(failures[0]).toEqual({id: 'i-fail-mgr', host: 'host-fail'})
         expect(failures[0]).not.toHaveProperty('reservation')
+    })
+
+    test('reclaimStaleClaims can undeploy — the manager passes the provisioner down', async () => {
+        const instance = makeReservedInstance({id: 'i-abandoned', host: '1.2.3.4'})
+        const deps = makeManagerDeps()
+        deps.claims.all = jest.fn().mockResolvedValue([
+            {instanceId: 'i-abandoned', sessionId: 's-dead', claimedAt: new Date(0)},
+        ])
+        deps.provider.idleInstances = jest.fn().mockResolvedValue([instance])
+        deps.provider.getInstance = jest.fn().mockResolvedValue(instance)
+        const mgr = createInstanceManager(deps)
+
+        await mgr.reclaimStaleClaims([], 10 * 60 * 1000)
+
+        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
     })
 
     test('getInstanceTypes returns instanceTypes array', () => {
