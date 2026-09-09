@@ -85,22 +85,17 @@ SET @do_copy := (SELECT IF(
 PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
 -- -------------------------------------------------------------------------
--- instance (copy from worker_instance if present and target empty, else create fresh)
+-- instance_claim — the allocation arbiter, and the ONLY instance state MySQL holds.
+-- The hosting service is authoritative for what exists, its type and its address; nothing
+-- derived from a hosting-service response belongs in this table.
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`instance` (
-  `id`          varchar(255) NOT NULL,
-  `type`        varchar(63)  NOT NULL,
-  `worker_type` varchar(63)  DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_instance_1` (`type`, `worker_type`) USING BTREE
+CREATE TABLE IF NOT EXISTS worker.`instance_claim` (
+    `instance_id` varchar(255) NOT NULL,
+    `session_id`  varchar(36)  NOT NULL,
+    `claimed_at`  timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`instance_id`),
+    KEY `idx_instance_claim_1` (`claimed_at`)
 ) ENGINE=InnoDB;
-
-SET @do_copy := (SELECT IF(
-    EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='worker_instance' AND TABLE_NAME='instance')
-    AND (SELECT COUNT(*) FROM worker.`instance`)=0,
-    'INSERT INTO worker.`instance` SELECT * FROM worker_instance.`instance`',
-    'DO 0'));
-PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
 -- -------------------------------------------------------------------------
 -- session_app — pins a user's app (by catalog path) to the worker session it was started on.

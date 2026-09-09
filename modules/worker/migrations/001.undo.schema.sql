@@ -7,4 +7,4 @@ DROP TABLE IF EXISTS worker.`instance_usage_sample`;
 DROP TABLE IF EXISTS worker.`session_app`;
 DROP TABLE IF EXISTS worker.`task`;
 DROP TABLE IF EXISTS worker.`worker_session`;
-DROP TABLE IF EXISTS worker.`instance`;
+DROP TABLE IF EXISTS worker.`instance_claim`;
