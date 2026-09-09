@@ -5,6 +5,8 @@
 //
 // mysql2 returns DECIMAL columns as strings — toNumber() normalizes on the way out.
 
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from '../db.js'
 import {placeholders} from '../sql.js'
 import {DAY_MS, HOUR_MS} from '../time.js'
@@ -18,7 +20,7 @@ const createUsageRepository = (pool = getPool(), clock = () => new Date()) => {
                 cpu_pct, ram_bytes, ram_pct, gpu_pct, gpu_ram_bytes, net_rx_bytes_per_s, net_tx_bytes_per_s)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                sample.sessionId, sample.username, sample.instanceType, sample.sampleTime,
+                sample.sessionId, storedUsername(sample.username), sample.instanceType, sample.sampleTime,
                 sample.cpuPct, sample.ramBytes, sample.ramPct, sample.gpuPct, sample.gpuRamBytes,
                 sample.netRxBytesPerS, sample.netTxBytesPerS,
             ]

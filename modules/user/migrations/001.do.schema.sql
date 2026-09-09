@@ -6,11 +6,12 @@
 -- and no fresh-install base DDL: this file is the whole schema.
 -- The legacy `rmb_message` / `rmb_message_processing` relics belonged to the Groovy sepal-server
 -- and stay in `sepal_user` — they are NOT copied.
--- Usernames are lowercased on the way in: the legacy table is already uniformly lowercase, and
--- every read path lowercases anyway, so this keeps the invariant explicit.
--- `email` opts out of the schema's ascii_bin default with ascii_general_ci: it is human-entered and
--- looked up by exact value (password reset, the email module, the signup uniqueness check), so it
--- must keep comparing — and its UNIQUE index must keep rejecting — case-insensitively.
+-- `username` and `email` both opt out of the schema's ascii_bin default with ascii_general_ci:
+-- each names a person rather than a machine and is looked up by exact value (password reset, the
+-- email module, the signup uniqueness check, every per-user query in every module), so each must
+-- compare — and its UNIQUE index must reject duplicates — case-insensitively. Usernames are still
+-- written lowercase, the legacy table already being uniformly so, but correctness no longer rests
+-- on it.
 -- `id` is copied verbatim because uid/gid are derived from it for users created by this module.
 -- The shared migration runner executes the whole file as one multi-statement query, so the
 -- session @vars + PREPARE/EXECUTE persist across statements.
@@ -19,7 +20,7 @@ CREATE SCHEMA IF NOT EXISTS user;
 
 CREATE TABLE IF NOT EXISTS user.`sepal_user` (
   `id`                             int(11)       NOT NULL AUTO_INCREMENT,
-  `username`                       varchar(32)   NOT NULL,
+  `username`                       varchar(32)   COLLATE ascii_general_ci NOT NULL,
   `name`                           varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `email`                          varchar(255)  COLLATE ascii_general_ci DEFAULT NULL,
   `organization`                   varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,

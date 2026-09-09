@@ -805,11 +805,13 @@ describe('queries', () => {
         expect(repo.userSessions).toHaveBeenCalledWith('alice', [State.ACTIVE], SANDBOX)
     })
 
-    test('mostRecentlyClosedSession lowercases username', async () => {
+    // The username reaches the repository as given: worker_session.username is ascii_general_ci,
+    // so the lookup matches any case and a LOWER() here would only suppress the index.
+    test('mostRecentlyClosedSession passes the username through unchanged', async () => {
         const repo = makeRepo({mostRecentlyClosedSession: u => ({user: u})})
         const {mgr} = build({repo})
         const result = await mgr.mostRecentlyClosedSession('Alice')
-        expect(result).toEqual({user: 'alice'})
+        expect(result).toEqual({user: 'Alice'})
     })
 
     test('mostRecentlyClosedSessionByUser passes through', async () => {

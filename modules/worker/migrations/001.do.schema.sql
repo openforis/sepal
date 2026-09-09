@@ -6,8 +6,10 @@
 -- NOTE: rmb_message / rmb_message_processing belonged to the Groovy sepal-server (reliable
 -- message bus) and stay in sdms — they are NOT part of the worker schema.
 -- Vestigial access-control tables (users/groups/etc.) remain in sdms — NOT copied.
--- Usernames are lowercased on the way in: the legacy tables stored them as typed, while
--- `sepal_user` is uniformly lowercase and every read path lowercases anyway.
+-- `username` opts out of the schema's ascii_bin default with ascii_general_ci, exactly as
+-- `sepal_user`.`email` does: it names a person, not a machine, so it must compare — and its
+-- indexes must match — without regard to case. Rows are still written lowercase (the copy below
+-- lowercases the legacy values, which were stored as typed), but nothing now depends on that.
 -- The shared migration runner executes the whole file as one multi-statement query, so the
 -- session @vars + PREPARE/EXECUTE persist across statements.
 
@@ -24,7 +26,7 @@ CREATE SCHEMA IF NOT EXISTS worker;
 CREATE TABLE IF NOT EXISTS worker.`worker_session` (
     `id`                     varchar(36)   NOT NULL,
     `state`                  varchar(16)   NOT NULL,
-    `username`               varchar(32)   NOT NULL,
+    `username`               varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `worker_type`            varchar(32)   NOT NULL,
     `instance_type`          varchar(64)   NOT NULL,
     `instance_id`            varchar(255)  NOT NULL,
@@ -59,7 +61,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 CREATE TABLE IF NOT EXISTS worker.`task` (
     `id`                 varchar(36)   NOT NULL,
     `state`              varchar(16)   NOT NULL,
-    `username`           varchar(32)   NOT NULL,
+    `username`           varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `session_id`         varchar(36)   NOT NULL,
     `operation`          varchar(255)  NOT NULL,
     `params`             longtext      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -109,7 +111,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- on clientDown and never produce takeover notifications.
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`session_app` (
-    `username`      varchar(32)  NOT NULL,
+    `username`      varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `app_path`      varchar(255) NOT NULL,
     `session_id`    varchar(36)  NOT NULL,
     `label`         varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -128,7 +130,7 @@ CREATE TABLE IF NOT EXISTS worker.`session_app` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
     `session_id`         varchar(36)  NOT NULL,
-    `username`           varchar(32)  NOT NULL,
+    `username`           varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type`      varchar(64)  NOT NULL,
     `sample_time`        timestamp    NOT NULL,
     `cpu_pct`            decimal(5,2) DEFAULT NULL,
@@ -150,7 +152,7 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS worker.`instance_usage_hourly` (
     `session_id`          varchar(36)  NOT NULL,
-    `username`            varchar(32)  NOT NULL,
+    `username`            varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type`       varchar(64)  NOT NULL,
     `hour`                timestamp    NOT NULL,
     `sample_count`        int          NOT NULL,

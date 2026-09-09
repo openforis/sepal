@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from './db.js'
 import {rowToMessage} from './message.js'
 
@@ -17,7 +19,7 @@ const saveMessage = async ({id, username, subject, contents, type, priority}) =>
          ON DUPLICATE KEY UPDATE
             username = VALUES(username), subject = VALUES(subject), contents = VALUES(contents),
             type = VALUES(type), priority = VALUES(priority), update_time = VALUES(update_time)`,
-        [id, username, subject, contents, type, priority ?? 0, now, now]
+        [id, storedUsername(username), subject, contents, type, priority ?? 0, now, now]
     )
     // Re-notify: drop every user's read state, so a saved message is UNREAD again for everyone.
     // The author's READ state is re-established by the API layer right after.
@@ -66,7 +68,7 @@ const updateNotification = async ({username, messageId, state}) => {
         `INSERT INTO ${NOTIFICATION} (message_id, username, state)
          VALUES (?, ?, ?)
          ON DUPLICATE KEY UPDATE state = VALUES(state)`,
-        [messageId, username, state]
+        [messageId, storedUsername(username), state]
     )
 }
 

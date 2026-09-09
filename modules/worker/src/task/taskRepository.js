@@ -7,6 +7,8 @@
 // Rows are reconstructed into Task domain objects. params / status_description are LONGTEXT read
 // as strings (params stored as a JSON string; status_description as the raw i18n JSON string).
 
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from '../db.js'
 import {createTask, State, StateDescription, Timeout} from './task.js'
 
@@ -38,7 +40,8 @@ const createTaskRepository = (pool = getPool(), clock = () => new Date()) => {
             `INSERT INTO task(id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time, removed)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)`,
             [
-                task.id, task.state, task.recipeId, task.username, task.sessionId, task.operation, taskParams,
+                task.id, task.state, task.recipeId, storedUsername(task.username), task.sessionId,
+                task.operation, taskParams,
                 task.statusDescription ?? StateDescription[task.state], task.creationTime, task.updateTime,
             ]
         )

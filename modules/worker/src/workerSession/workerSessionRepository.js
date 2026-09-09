@@ -53,6 +53,7 @@
 // Normalizing here would only ever have re-normalized data that is already normal.
 
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {getPool} from '../db.js'
 import {placeholders} from '../sql.js'
@@ -110,7 +111,8 @@ const createWorkerSessionRepository = (
             `INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, host, creation_time, update_time, id, api_key, timeout_time)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                session.state, session.username, session.workerType, session.instanceType, session.instance.id,
+                session.state, storedUsername(session.username), session.workerType, session.instanceType,
+                session.instance.id,
                 session.instance.host, session.creationTime, session.updateTime, session.id,
                 session.apiKey, session.timeoutTime,
             ]

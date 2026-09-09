@@ -9,8 +9,10 @@
 -- modifies `sdms` (read-only), so rollback to the pre-migration state stays clean: dropping the
 -- `budget` schema fully reverts this module. Runs inside the Postgrator migration (before the
 -- module's schedulers/subscribers start), so spending is complete before the first rebuild.
--- Usernames are lowercased on the way in: the legacy tables stored them as typed, while
--- `sepal_user` is uniformly lowercase and every read path lowercases anyway.
+-- `username` opts out of the schema's ascii_bin default with ascii_general_ci, exactly as
+-- `sepal_user`.`email` does: it names a person, not a machine, so it must compare — and its
+-- indexes must match — without regard to case. Rows are still written lowercase (the copy below
+-- lowercases the legacy values, which were stored as typed), but nothing now depends on that.
 -- The shared migration runner executes the whole file as one multi-statement query, so the
 -- session @vars + PREPARE/EXECUTE persist across statements.
 
@@ -20,7 +22,7 @@ CREATE SCHEMA IF NOT EXISTS budget;
 -- user_budget (copy from sdms if present and target empty, else create fresh)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS budget.`user_budget` (
-    `username`         varchar(32)   NOT NULL,
+    `username`         varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `monthly_instance` int(11)       NOT NULL,
     `monthly_storage`  int(11)       NOT NULL,
     `storage_quota`    int(11)       NOT NULL,
@@ -55,7 +57,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- user_monthly_storage (copy from sdms if present and target empty, else create fresh)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS budget.`user_monthly_storage` (
-    `username`     varchar(32)   NOT NULL,
+    `username`     varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `year`         int(11)       NOT NULL,
     `month`        int(11)       NOT NULL,
     `gb_hours`     double        NOT NULL,
@@ -75,7 +77,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- user_spending (copy from sdms if present and target empty, else create fresh)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS budget.`user_spending` (
-    `username`          varchar(32)   NOT NULL,
+    `username`          varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `instance_spending` double        NOT NULL DEFAULT '0',
     `storage_spending`  double        NOT NULL DEFAULT '0',
     `storage_usage`     double        NOT NULL DEFAULT '0',
@@ -94,7 +96,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS budget.`budget_update_request` (
     `id`                         varchar(36)   NOT NULL,
-    `username`                   varchar(32)   NOT NULL,
+    `username`                   varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `state`                      varchar(16)   NOT NULL,
     `message`                    text          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
     `initial_monthly_instance`   int(11)       NOT NULL,
@@ -129,7 +131,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS budget.`open_session_use` (
     `session_id`    varchar(36)  NOT NULL,
-    `username`      varchar(32)  NOT NULL,
+    `username`      varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type` varchar(64)  NOT NULL,
     `from_time`     timestamp    NOT NULL,
     `to_time`       timestamp    NULL DEFAULT NULL,   -- NULL while the session is open

@@ -1,6 +1,6 @@
 CREATE TABLE user_storage.history (
   id                    INT(11)     NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  username              VARCHAR(32) NOT NULL,
+  username              VARCHAR(32) COLLATE ascii_general_ci NOT NULL,
   event                 VARCHAR(64) NOT NULL,
   timestamp             TIMESTAMP   NOT NULL
 );

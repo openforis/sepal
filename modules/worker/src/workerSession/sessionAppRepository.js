@@ -6,6 +6,8 @@
 // createSessionAppRepository(pool?, clock?) — injectable factory (mirrors
 // workerSessionRepository.js: pool defaults to the shared worker pool).
 
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from '../db.js'
 import {placeholders} from '../sql.js'
 
@@ -23,7 +25,7 @@ const createSessionAppRepository = (pool = getPool(), clock = () => new Date()) 
                     label = VALUES(label),
                     client_id = VALUES(client_id),
                     creation_time = VALUES(creation_time)`,
-            [username, appPath, sessionId, label ?? null, clientId ?? null, clock()]
+            [storedUsername(username), appPath, sessionId, label ?? null, clientId ?? null, clock()]
         )
     }
 

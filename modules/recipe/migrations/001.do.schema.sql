@@ -8,8 +8,10 @@
 -- Soft-deleted recipes are NOT copied: `removed` rows are invisible to every read path, so they
 -- would only ever be dead weight in the new schema. The column itself stays, because removal
 -- after the migration is still a soft delete.
--- Usernames are lowercased on the way in: the legacy tables stored them as typed, while
--- `sepal_user` is uniformly lowercase and every read path lowercases anyway.
+-- `username` opts out of the schema's ascii_bin default with ascii_general_ci, exactly as
+-- `sepal_user`.`email` does: it names a person, not a machine, so it must compare — and its
+-- indexes must match — without regard to case. Rows are still written lowercase (the copy below
+-- lowercases the legacy values, which were stored as typed), but nothing now depends on that.
 -- The shared migration runner executes the whole file as one multi-statement query, so the
 -- session @vars + PREPARE/EXECUTE persist across statements.
 
@@ -17,7 +19,7 @@ CREATE SCHEMA IF NOT EXISTS recipe;
 
 CREATE TABLE IF NOT EXISTS recipe.recipe (
   id            VARCHAR(36)  NOT NULL,
-  username      VARCHAR(32)  NOT NULL,
+  username      VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
   name          VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
   type          VARCHAR(63)  NOT NULL,
   contents      LONGTEXT     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -41,7 +43,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
 CREATE TABLE IF NOT EXISTS recipe.project (
   id                       VARCHAR(36)  NOT NULL,
-  username                 VARCHAR(32)  NOT NULL,
+  username                 VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
   name                     VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
   default_asset_folder     TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci,
   default_workspace_folder TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci,

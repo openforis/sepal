@@ -1,4 +1,5 @@
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
@@ -199,7 +200,7 @@ const acceptPrivacyPolicy = async ctx => {
 
 // POST /lock (admin) {username} -> userToMap. Publishes UserLocked. Idempotent on already-locked.
 const lock = async ctx => {
-    const username = (readBody(ctx).username || ctx.query.username || '').toLowerCase()
+    const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
     const user = await repository.findByUsername(username)
     if (!user) {
         ctx.status = 404
@@ -221,7 +222,7 @@ const lock = async ctx => {
 // and emails a password reset. Idempotent: an already-unlocked user is returned unchanged.
 // Mirrors the Java UnlockUser flow (no UserUpdated event; sets sepal-user-updated on actual change).
 const unlock = async ctx => {
-    const username = (readBody(ctx).username || ctx.query.username || '').toLowerCase()
+    const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
     const user = await repository.findByUsername(username)
     if (!user) {
         ctx.status = 404

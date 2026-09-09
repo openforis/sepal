@@ -3,6 +3,7 @@ import {join} from 'path'
 import {createPool, initDatabase} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
 import {dirName} from '#sepal/path'
+import {storedUsername} from '#sepal/username'
 
 const log = getLogger('database')
 
@@ -45,7 +46,7 @@ const addEvent = async ({username, event}) => {
                 ORDER BY timestamp DESC
                 LIMIT 1
             ), '') <> ?;    
-        `, [username, event, username, event])
+        `, [storedUsername(username), event, username, event])
         await connection.query('SELECT RELEASE_LOCK(?)', [lockName])
         return results
     } finally {

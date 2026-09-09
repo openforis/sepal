@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 // Event-sourced instance-use rows. Upserts are keyed by session_id, so at-least-once delivery
 // and out-of-order events converge.
 export const createOpenSessionUse = pool => {
@@ -7,7 +9,7 @@ export const createOpenSessionUse = pool => {
              VALUES (?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE username=VALUES(username), instance_type=VALUES(instance_type),
                                      from_time=VALUES(from_time)`,
-            [sessionId, username, instanceType, from]
+            [sessionId, storedUsername(username), instanceType, from]
         )
     // closeSession — stamp to_time on the row opened by openSession() (the common case). If no row
     // exists yet (Closed-before-Activated race), fall back to inserting a placeholder row
