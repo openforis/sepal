@@ -1,11 +1,11 @@
 import {join} from 'path'
 
 import {reconcileMigrationHistory} from '#sepal/db/migrationTransition'
-import {initDatabase, migrateDb} from '#sepal/db/mysql'
+import {initDb, migrateDb} from '#sepal/db/mysql'
 import {dirName} from '#sepal/path'
 
 export const migrateRecipeDb = async (dbName, log) => {
-    await initDatabase(dbName, SCHEMA_PATH, {
+    await initDb(dbName, SCHEMA_PATH, {
         label: 'schema migrations',
         beforeMigrate: async connection => {
             await reconcileMigrationHistory(connection, COMBINED_MIGRATION_TRANSITION, log)

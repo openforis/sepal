@@ -27,7 +27,7 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 | `metrics.js` | prom-client wrapper: `createCounter`, `createGauge`, `createHistogram`, `createSummary` |
 | `rxjs.js` | Operators: `autoRetry`, `finalizeObservable`, `promise$`, `lastInWindow`, `repeating`, `swallow` |
 | `exception.js` | `Exception` base with `ServerException` (500), `ClientException` (400), `NotFoundException` (404) |
-| `db/mysql.js` | mysql2/promise wrapper: `createConnection`, `createPool`, `createDb`, `initDatabase`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
+| `db/mysql.js` | mysql2/promise wrapper: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
 | `db/migrationTransition.js` | `reconcileMigrationHistory` corrects a recognized historical checksum before validation. Temporary; see `docs/database-migrations.md` |
 | `event/definitions.js` | System event constants used by gateway WebSocket routing |
 | `service/registry.js` | `addServices([...])` registers handlers, `getServiceHandler$(name)` retrieves them |

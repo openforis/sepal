@@ -6,7 +6,7 @@ import {firstValueFrom} from 'rxjs'
 import {getLogger} from '#sepal/log'
 
 import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
-import {addEvent} from './database.js'
+import {addEvent} from './db.js'
 import {sendEmail} from './email.js'
 import {eraseUserStorage} from './filesystem.js'
 import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'

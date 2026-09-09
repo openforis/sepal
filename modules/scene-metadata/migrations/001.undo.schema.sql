@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS scene_metadata.`scene_meta_data`;
+DROP TABLE IF EXISTS `scene_meta_data`;

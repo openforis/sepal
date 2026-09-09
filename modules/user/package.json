@@ -29,6 +29,8 @@
         ]
     },
     "devDependencies": {
-        "amqplib": "^2.0.1"
+        "amqplib": "^2.0.1",
+        "jest": "^30.5.1",
+        "jest-expect-message": "^1.1.3"
     }
 }

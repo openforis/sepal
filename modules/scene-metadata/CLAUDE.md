@@ -2,6 +2,11 @@
 
 Maintains scene metadata database for Landsat and Sentinel-2 satellite imagery. Runs a background ingester **and** an HTTP server serving `/api/data` endpoints (gateway routes `/api/data` here).
 
+## Database migrations
+
+`migrations/` holds the portable schema stream. There is no legacy import. Startup wiring, the temporary checksum
+reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+
 ## Commands
 
 ```bash
@@ -48,7 +53,7 @@ MySQL (`scene_metadata` schema — **not** the old `sdms` schema):
 - Migrations managed via Postgrator (`migrations/`), applied by `initializeDatabase` before the
   pool is created; nothing is copied from `sdms` since the table is rebuilt from CSV on first run
 - **Atomic database switching**: Creates `scene_metadata_new`, populates, then renames `scene_metadata` → `scene_metadata_old` and `scene_metadata_new` → `scene_metadata`
-- Schema exported as `SCHEMA` from `src/database.js`; used by both the ingester and `src/sceneRepository.js`
+- Schema exported as `SCHEMA` from `src/db.js`; used by both the ingester and `src/sceneRepository.js`
 
 ### Scene Query Side (`src/sceneRepository.js`, `src/sceneSearch.js`, `src/dataApi.js`)
 - `sceneRepository.js` — reads `scene_metadata.scene_meta_data` with the Java-equivalent scoring SQL (`sort_weight = (1-w)*cloud_cover/100 + w*LEAST(ABS(doy-target), 365-ABS(doy-target))/182`) and greedy best-scene accumulation

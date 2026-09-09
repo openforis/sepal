@@ -5,7 +5,7 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import {configureServer, getLogger} from '#sepal/log'
 
 import {minHoursPublished, updateIntervalMinutes} from './config.js'
-import {initializeDatabase} from './database.js'
+import {initializeDatabase} from './db.js'
 import {startHttpServer} from './httpServer.js'
 import {downloadLandsat, loadLandsat} from './landsatCsv.js'
 import {updateLandsat} from './landsatStac.js'

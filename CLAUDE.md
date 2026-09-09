@@ -149,9 +149,8 @@ Export public functions, classes and constants at their declarations (`export co
 aliases and re-exports.
 
 Name database values `db` for our callback API object (`withTransaction`, `withConnection`), `dbName`
-for a database-name string, and `pool` or `connection` for driver resources. New initialization and
-migration APIs take the `Db` suffix (`migrateDb`, `initializeDb`, `migrate<Module>Db`); existing public
-names such as `initDatabase` stay unchanged unless renaming is explicitly in scope.
+for a database-name string, and `pool` or `connection` for driver resources. Initialization and migration
+APIs take the `Db` suffix (`initDb`, `migrateDb`, `initializeDb`, `migrate<Module>Db`).
 
 ## Code Organization
 

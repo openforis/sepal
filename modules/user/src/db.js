@@ -1,8 +1,7 @@
-import {join} from 'path'
-
-import {createConnection, createPool, initDatabase} from '#sepal/db/mysql'
+import {createConnection, createPool} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
-import {dirName} from '#sepal/path'
+
+import {migrateUserDb} from './databaseMigrations.js'
 
 const log = getLogger('database')
 
@@ -10,9 +9,6 @@ const DATABASE_NAME = 'user'
 
 const WAIT_INTERVAL_MS = 2000
 const WAIT_TIMEOUT_MS = 5 * 60 * 1000
-
-const __dirname = dirName(import.meta.url)
-const migrationsPath = join(__dirname, '/../migrations')
 
 const state = {}
 
@@ -39,7 +35,7 @@ const waitForDatabase = async () => {
 
 const initializeDatabase = async () => {
     await waitForDatabase()
-    await initDatabase(DATABASE_NAME, migrationsPath)
+    await migrateUserDb(DATABASE_NAME, log)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

@@ -1,20 +1,16 @@
-import {join} from 'path'
-
-import {createPool, initDatabase} from '#sepal/db/mysql'
+import {createPool} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
-import {dirName} from '#sepal/path'
+
+import {migrateBudgetDb} from './databaseMigrations.js'
 
 const log = getLogger('database')
 
 const DATABASE_NAME = 'budget'
 
-const __dirname = dirName(import.meta.url)
-const migrationsPath = join(__dirname, '/../migrations')
-
 const state = {}
 
 const initializeDatabase = async () => {
-    await initDatabase(DATABASE_NAME, migrationsPath)
+    await migrateBudgetDb(DATABASE_NAME, log)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

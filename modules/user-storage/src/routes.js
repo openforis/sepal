@@ -1,4 +1,4 @@
-import {getMostRecentEvents, getUserEvents} from './database.js'
+import {getMostRecentEvents, getUserEvents} from './db.js'
 
 const mostRecentEvents = async ctx =>
     ctx.body = await getMostRecentEvents()
