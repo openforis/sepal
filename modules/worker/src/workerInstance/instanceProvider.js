@@ -12,6 +12,10 @@
 //   idleInstances(instanceType?)              → Promise<WorkerInstance[]>
 //   reservedInstances()                       → Promise<WorkerInstance[]>
 //   getInstance(instanceId)                   → Promise<WorkerInstance | null>
+//   awaitHost(instance)                       → Promise<WorkerInstance>
+//     Resolves once the instance has an address; returns it unchanged if it already has one.
+//   sweep()                                   → Promise<void>
+//     Terminates old idle and untagged instances. Called once per pool cycle, never from a read.
 //   onInstanceLaunched(listener)              → void   (called asynchronously)
 //   start() / stop()                          → background polling; no-ops for local.
 //

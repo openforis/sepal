@@ -110,6 +110,12 @@ const createLocalInstanceProvider = _instanceType => {
 
     const stop = () => { /* no-op */ }
 
+    // Local instances are reachable the moment they exist, and the in-memory map has no garbage
+    // to collect — both are no-ops here so the two providers satisfy one port.
+    const awaitHost = instance => instance
+
+    const sweep = () => { /* no-op */ }
+
     return {
         launchReserved,
         launchIdle,
@@ -119,6 +125,8 @@ const createLocalInstanceProvider = _instanceType => {
         idleInstances,
         reservedInstances,
         getInstance,
+        awaitHost,
+        sweep,
         onInstanceLaunched,
         start,
         stop,

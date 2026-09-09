@@ -269,9 +269,6 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         const instancesWithValidVersion = onlyCorrectVersion
             ? awsInstances.filter(i => !isOlderVersion(instanceVersion(i), sepalVersion))
             : awsInstances
-        // Auto-cleanup — always baked in on every find
-        await terminateOldIdle(awsInstances)
-        await terminateUntagged()
         return instancesWithValidVersion.map(i => toWorkerInstance(i, codec))
     }
 
@@ -315,6 +312,17 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         ))
     }
 
+    // sweep — the garbage collection that used to ride along on every read. It stays a scan
+    // rather than becoming queued work: an untagged instance is precisely one whose CreateTags
+    // never ran, so the event that would have enqueued the job is the thing that went missing.
+    const sweep = async () => {
+        const response = await client.send(new DescribeInstancesCommand({
+            Filters: filterTypeWorker(environment),
+        }))
+        await terminateOldIdle(collectInstances(response))
+        await terminateUntagged()
+    }
+
     // Polls getInstance up to PUBLIC_IP_RETRIES times (≤300×1s) until the host is set.
     //
     // A just-launched instance has no public IP yet, and EC2 does not always list it at all, so
@@ -341,6 +349,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         log.info(`Public IP ${current.host} assigned to ${instanceTag(current)}`)
         return current
     }
+
+    const awaitHost = async instance =>
+        instance.host
+            ? instance
+            : waitForPublicIpToBecomeAvailable(instance, instance.type, instance.reservation)
 
     // Finds running Starting=true instances, strips the Starting tag, and fires the launch listeners.
     const notifyAboutStartedInstances = async () => {
@@ -454,6 +467,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         idleInstances,
         reservedInstances,
         getInstance,
+        awaitHost,
+        sweep,
         onInstanceLaunched,
         start,
         stop,
