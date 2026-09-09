@@ -4,12 +4,14 @@ import {Redis} from 'ioredis'
 import {firstValueFrom} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
 import {addEvent} from './database.js'
 import {sendEmail} from './email.js'
 import {eraseUserStorage} from './filesystem.js'
 import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
+import {planJobNormalization} from './jobCase.js'
 import {DB, getInitialized, getUserStorage, setInitialized} from './kvstore.js'
 
 const log = getLogger('inactivityCheck')
@@ -59,7 +61,7 @@ const queueEvents = new QueueEvents(QUEUE, {
 })
 
 const jobId = (username, action) =>
-    `job-${username}-${action}`
+    `job-${storedUsername(username)}-${action}`
 
 const STORAGE = {
     INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
@@ -215,7 +217,7 @@ const scheduleErase = async ({username, delay = inactivityGracePeriod}) => {
 }
 
 const schedule = async ({username, delay, action}) =>
-    await queue.add('rescan', {username, action}, {
+    await queue.add('rescan', {username: storedUsername(username), action}, {
         jobId: jobId(username, action),
         priority: 1,
         delay,
@@ -272,13 +274,50 @@ const processJob = async job => {
     const {username, action} = job.data
     switch (action) {
         case 'mark':
-            return await markInactiveUser({username: username.toLowerCase()})
+            return await markInactiveUser({username})
         case 'notify':
-            return await notifyInactiveUser({username: username.toLowerCase()})
+            return await notifyInactiveUser({username})
         case 'erase':
             return await eraseInactiveUserStorage({username})
         default:
             throw new Error(`Unknown action: ${action}`)
+    }
+}
+
+// Jobs scheduled before usernames were normalized still carry the old spelling in their id and their
+// data, and BullMQ has no rename: a job is re-added under the stored name and the original removed.
+// Only pending states are read — an active job is being processed right now, and history (completed,
+// failed) is capped by removeOnComplete/removeOnFail and ages out on its own.
+//
+// Adding cannot overwrite: BullMQ treats an id it already holds as a duplicate and silently returns
+// that job instead of scheduling this one, so a leftover completed job under the stored name would
+// swallow the schedule we are preserving. Any such record is removed first, and the original is
+// dropped only once its replacement is in the queue — a failure here leaves the original to be
+// normalized on the next start rather than losing it.
+const normalizeCase = async () => {
+    const jobs = await queue.getJobs(['delayed', 'waiting', 'prioritized', 'waiting-children'])
+    const {remove, readd} = planJobNormalization(jobs)
+
+    for (const {job, name, data, opts} of readd) {
+        const displaced = await queue.getJob(opts.jobId)
+        if (displaced) {
+            log.debug(`Removing ${displaced.id} to reschedule ${job.id}`)
+            await displaced.remove()
+        }
+        await queue.add(name, data, opts)
+        await job.remove()
+    }
+
+    for (const job of remove) {
+        await job.remove()
+    }
+
+    log.info(`Normalized inactivity jobs: ${remove.length} duplicate(s) removed, ${readd.length} rescheduled`)
+
+    const active = await queue.getJobs(['active'])
+    const skipped = active.filter(({id}) => id !== id.toLowerCase())
+    if (skipped.length) {
+        log.warn(`Left ${skipped.length} active inactivity job(s) named in another case, to be normalized on the next start`)
     }
 }
 
@@ -296,4 +335,4 @@ const startInactivityCheck = async () => {
     })
 }
 
-export {cancelInactivityCheck, scheduleInactivityCheck, startInactivityCheck}
+export {cancelInactivityCheck, normalizeCase, scheduleInactivityCheck, startInactivityCheck}

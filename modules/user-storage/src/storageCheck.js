@@ -4,6 +4,7 @@ import {Redis} from 'ioredis'
 import {Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {redisHost, scanConcurrency, scanDelayIncreaseFactor, scanInitialRetryDelay, scanMaxDelay, scanMaxRetries, scanMinDelay} from './config.js'
 import {calculateUserStorage, scanUserHomes} from './filesystem.js'
@@ -40,7 +41,7 @@ const queueEvents = new QueueEvents(QUEUE, {
 const scanComplete$ = new Subject()
 
 const jobId = username =>
-    `job-${username}`
+    `job-${storedUsername(username)}`
 
 const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * MAX_RELATIVE_DELAY_SPREAD))
@@ -105,7 +106,7 @@ const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDela
     log.debug(`Scheduling check for user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
     // await queue.removeJobs(rescanJobId(username, '*'))
     await queue.remove(jobId(username))
-    return await queue.add('rescan', {username}, {
+    return await queue.add('rescan', {username: storedUsername(username)}, {
         jobId: jobId(username),
         priority,
         delay,

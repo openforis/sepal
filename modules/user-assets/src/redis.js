@@ -30,4 +30,12 @@ const deserialize = value => {
     }
 }
 
-export {deserialize, redis, serialize}
+const scanKeys = async pattern => {
+    const keys = []
+    for await (const batch of redis.scanStream({match: pattern, count: 1000})) {
+        keys.push(...batch)
+    }
+    return keys
+}
+
+export {deserialize, redis, scanKeys, serialize}
