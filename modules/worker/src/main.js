@@ -19,6 +19,7 @@ import {createTaskManager} from './task/taskManager.js'
 import {createTaskRepository} from './task/taskRepository.js'
 import {createTasksApi} from './task/tasksApi.js'
 import {createWorkerGateway} from './task/workerGateway.js'
+import {createClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
 import {createInstanceRepository} from './workerInstance/instanceRepository.js'
@@ -68,7 +69,9 @@ const main = async () => {
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
     const instanceRepo = createInstanceRepository(getPool())
+    const instanceClaims = createClaimRepository(getPool())
     instanceComponent = createWorkerInstanceComponent({
+        claims: instanceClaims,
         repo: instanceRepo,
         provider: instanceProvider,
         provisioner: instanceProvisioner,

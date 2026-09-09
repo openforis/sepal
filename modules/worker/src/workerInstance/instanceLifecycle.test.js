@@ -119,10 +119,9 @@ describe('requestInstance', () => {
         events = await import('./events.js')
     })
 
-    const makeRepo = (overrides = {}) => ({
-        idleInstances: jest.fn().mockResolvedValue([]),
-        reserved: jest.fn().mockResolvedValue(true),
-        launched: jest.fn().mockResolvedValue(undefined),
+    const makeClaims = (overrides = {}) => ({
+        claim: jest.fn().mockResolvedValue(true),
+        release: jest.fn().mockResolvedValue(true),
         ...overrides,
     })
 
@@ -130,136 +129,139 @@ describe('requestInstance', () => {
         idleInstances: jest.fn().mockResolvedValue([]),
         launchReserved: jest.fn().mockResolvedValue(makeReservedInstance({id: 'i-new'})),
         reserve: jest.fn().mockResolvedValue(undefined),
+        awaitHost: jest.fn(async instance => instance),
         ...overrides,
     })
 
-    test('no-idle path: calls launchReserved → repo.launched → emits InstanceLaunched', async () => {
+    const REQUEST = {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice', sessionId: 's-42'}
+
+    test('no idle instance: launches, records the claim, emits InstanceLaunched', async () => {
         const launched = []
         events.instanceLaunched$.subscribe(v => launched.push(v))
+        const claims = makeClaims()
+        const provider = makeProvider()
 
-        const repo = makeRepo({idleInstances: jest.fn().mockResolvedValue([])})
-        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([])})
+        const result = await requestInstance(REQUEST, {claims, provider})
 
-        const result = await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
-            {repo, provider}
-        )
+        expect(provider.launchReserved).toHaveBeenCalledWith(
+            'T3aSmall', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+        expect(claims.claim).toHaveBeenCalledWith('i-new', 's-42')
+        expect(result.id).toBe('i-new')
+        expect(launched.length).toBeGreaterThanOrEqual(1)
+    })
+
+    test('idle instance: claims it, tags the reservation, emits InstancePendingProvisioning', async () => {
+        const pending = []
+        events.instancePendingProvisioning$.subscribe(v => pending.push(v))
+        const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
+        const claims = makeClaims()
+        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(claims.claim).toHaveBeenCalledWith('i-idle', 's-42')
+        expect(provider.launchReserved).not.toHaveBeenCalled()
+        expect(provider.reserve.mock.calls[0][0].reservation)
+            .toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+        expect(result.id).toBe('i-idle')
+        expect(pending.length).toBeGreaterThanOrEqual(1)
+    })
+
+    // The behaviour this redesign exists for: a lost race must not launch while idle instances remain.
+    test('lost claim on the first candidate: claims the second instead of launching', async () => {
+        const idle1 = makeInstance({id: 'i-1', host: '1.1.1.1', running: true})
+        const idle2 = makeInstance({id: 'i-2', host: '2.2.2.2', running: true})
+        const claims = makeClaims({
+            claim: jest.fn()
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(true),
+        })
+        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle1, idle2])})
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(claims.claim.mock.calls.map(([id]) => id)).toEqual(['i-1', 'i-2'])
+        expect(provider.launchReserved).not.toHaveBeenCalled()
+        expect(result.id).toBe('i-2')
+    })
+
+    test('every candidate taken: falls back to launching', async () => {
+        const idle = makeInstance({id: 'i-1', host: '1.1.1.1', running: true})
+        const claims = makeClaims({claim: jest.fn()
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(true)})
+        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
+
+        const result = await requestInstance(REQUEST, {claims, provider})
 
         expect(provider.launchReserved).toHaveBeenCalledTimes(1)
-        expect(repo.launched).toHaveBeenCalledTimes(1)
-        expect(launched.length).toBeGreaterThanOrEqual(1)
-        const payload = launched[launched.length - 1]
-        expect(payload).toHaveProperty('instance')
         expect(result.id).toBe('i-new')
     })
 
-    // The container is named after the session's two-word name, so the reservation is what carries
-    // the session id from the session layer down to the provisioner. Dropping it here renames
-    // nothing — it makes the container unnameable.
-    test('launch path: puts the session id on the reservation', async () => {
-        const repo = makeRepo()
-        const provider = makeProvider()
+    // Booted before booting; oldest first within each group.
+    test('prefers a booted instance over a booting one, oldest first', async () => {
+        const booting = makeInstance({id: 'i-booting', host: null, running: false, launchTime: new Date(1000)})
+        const newBooted = makeInstance({id: 'i-new-booted', host: '2.2.2.2', running: true, launchTime: new Date(3000)})
+        const oldBooted = makeInstance({id: 'i-old-booted', host: '1.1.1.1', running: true, launchTime: new Date(2000)})
+        const claims = makeClaims()
+        const provider = makeProvider({
+            idleInstances: jest.fn().mockResolvedValue([booting, newBooted, oldBooted]),
+        })
 
-        await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice', sessionId: 's-42'},
-            {repo, provider}
-        )
+        await requestInstance(REQUEST, {claims, provider})
 
-        expect(provider.launchReserved).toHaveBeenCalledWith(
-            'T3aSmall',
-            {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
-        )
+        expect(claims.claim.mock.calls[0][0]).toBe('i-old-booted')
     })
 
-    test('idle-reserve path: puts the session id on the reservation', async () => {
-        const idle = makeInstance({id: 'i-idle'})
-        const repo = makeRepo({
-            idleInstances: jest.fn().mockResolvedValue(['i-idle']),
-            reserved: jest.fn().mockResolvedValue(true),
+    test('claims a booting instance and waits for its address', async () => {
+        const booting = makeInstance({id: 'i-booting', host: null, running: false})
+        const claims = makeClaims()
+        const provider = makeProvider({
+            idleInstances: jest.fn().mockResolvedValue([booting]),
+            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9'})),
         })
-        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
 
-        await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice', sessionId: 's-42'},
-            {repo, provider}
-        )
+        const result = await requestInstance(REQUEST, {claims, provider})
 
-        const [reservedInstance] = provider.reserve.mock.calls[0]
-        expect(reservedInstance.reservation)
-            .toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
+        expect(provider.awaitHost).toHaveBeenCalledTimes(1)
+        expect(result.host).toBe('9.9.9.9')
     })
 
-    test('idle-reserve path: finds common idle → repo.reserved → provider.reserve → emits InstancePendingProvisioning', async () => {
-        const pendingPayloads = []
-        events.instancePendingProvisioning$.subscribe(v => pendingPayloads.push(v))
-
-        const idle = makeInstance({id: 'i-idle'})
-        const repo = makeRepo({
-            idleInstances: jest.fn().mockResolvedValue(['i-idle']),
-            reserved: jest.fn().mockResolvedValue(true),
-        })
+    // Without this the instance is claimed forever with no session behind it — the exact
+    // failure mode this redesign removes.
+    test('a failure after claiming releases the claim', async () => {
+        const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
+        const claims = makeClaims()
         const provider = makeProvider({
             idleInstances: jest.fn().mockResolvedValue([idle]),
+            reserve: jest.fn().mockRejectedValue(new Error('tagging failed')),
         })
 
-        const result = await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
-            {repo, provider}
-        )
-
-        expect(repo.reserved).toHaveBeenCalledWith('i-idle', 'SANDBOX')
-        expect(provider.reserve).toHaveBeenCalledTimes(1)
-        expect(provider.launchReserved).not.toHaveBeenCalled()
-        expect(result.id).toBe('i-idle')
-        expect(pendingPayloads.length).toBeGreaterThanOrEqual(1)
+        await expect(requestInstance(REQUEST, {claims, provider})).rejects.toThrow('tagging failed')
+        expect(claims.release).toHaveBeenCalledWith('i-idle')
     })
 
-    test('race-loss on first idle: goes straight to launchReserved (Java: no retry of remaining idle)', async () => {
-        // Only ONE idle candidate is tried: on race loss (reserved()=false) it goes straight to
-        // launchInstance without examining any remaining idle instances.
-        const launched = []
-        events.instanceLaunched$.subscribe(v => launched.push(v))
+    // The launch-path claim is bookkeeping: the instance is untagged between RunInstances and
+    // CreateTags, so no other request can see it. Failing here would strand a running machine.
+    test('a failed claim on the launch path does not fail the request', async () => {
+        const claims = makeClaims({claim: jest.fn().mockRejectedValue(new Error('db down'))})
+        const provider = makeProvider()
 
-        const idle1 = makeInstance({id: 'i-raced-1'})
-        const idle2 = makeInstance({id: 'i-raced-2'}) // present but must NOT be tried
-        const newInst = makeReservedInstance({id: 'i-fresh'})
-        const repo = makeRepo({
-            idleInstances: jest.fn().mockResolvedValue(['i-raced-1', 'i-raced-2']),
-            reserved: jest.fn().mockResolvedValue(false), // race lost on first attempt
-            launched: jest.fn().mockResolvedValue(undefined),
-        })
-        const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([idle1, idle2]),
-            launchReserved: jest.fn().mockResolvedValue(newInst),
-        })
+        const result = await requestInstance(REQUEST, {claims, provider})
 
-        const result = await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
-            {repo, provider}
-        )
-
-        expect(repo.reserved).toHaveBeenCalledTimes(1)
-        expect(repo.reserved).toHaveBeenCalledWith('i-raced-1', 'SANDBOX')
-        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
-        expect(repo.launched).toHaveBeenCalledTimes(1)
-        expect(result.id).toBe('i-fresh')
-        expect(launched.length).toBeGreaterThanOrEqual(1)
+        expect(result.id).toBe('i-new')
     })
 
     test('on exception: emits FailedToRequestInstance and rethrows', async () => {
         const failed = []
         events.failedToRequestInstance$.subscribe(v => failed.push(v))
-
-        const repo = makeRepo({
-            idleInstances: jest.fn().mockRejectedValue(new Error('db down')),
+        const claims = makeClaims()
+        const provider = makeProvider({
+            idleInstances: jest.fn().mockRejectedValue(new Error('ec2 down')),
         })
-        const provider = makeProvider()
 
-        await expect(
-            requestInstance({workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'}, {repo, provider})
-        ).rejects.toThrow('db down')
+        await expect(requestInstance(REQUEST, {claims, provider})).rejects.toThrow('ec2 down')
 
-        expect(failed.length).toBeGreaterThanOrEqual(1)
         const payload = failed[failed.length - 1]
         expect(payload.workerType).toBe('SANDBOX')
         expect(payload.instanceType).toBe('T3aSmall')
@@ -569,11 +571,10 @@ describe('sizeIdlePool', () => {
 })
 
 describe('reconcileInstances', () => {
-    let reconcileInstances, requestInstance
+    let reconcileInstances
 
     beforeAll(async () => {
         ;({reconcileInstances} = await import('./command/reconcileInstances.js'))
-        ;({requestInstance} = await import('./command/requestInstance.js'))
     })
 
     // A stand-in for the `instance` table: id -> workerType (null = idle), with the same
@@ -627,31 +628,6 @@ describe('reconcileInstances', () => {
 
         expect(adopted).toBe(1)
         expect(repo.rows.get('i-orphan')).toEqual({type: 'T3aSmall', workerType: null})
-    })
-
-    // The whole point of adoption: without a row, RequestInstance's repo ∩ provider intersection
-    // is empty, so the idle instance can never be handed to a session while SizeIdlePool keeps
-    // counting it towards the target — it bills forever and every request launches a new instance.
-    test('an adopted orphan becomes reusable by requestInstance', async () => {
-        const orphan = makeInstance({id: 'i-orphan', type: 'T3aSmall'})
-        const repo = makeRepo()
-        const provider = makeProvider({idle: [orphan]})
-
-        const before = await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
-            {repo, provider}
-        )
-        expect(before.id).toBe('i-new')
-        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
-
-        await reconcileInstances({repo, provider})
-
-        const after = await requestInstance(
-            {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'alice'},
-            {repo, provider}
-        )
-        expect(after.id).toBe('i-orphan')
-        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
     })
 
     test('does NOT re-idle a row that already exists (a reserved instance stays reserved)', async () => {
@@ -846,6 +822,10 @@ describe('instanceManager', () => {
     })
 
     const makeManagerDeps = (overrides = {}) => ({
+        claims: {
+            claim: jest.fn().mockResolvedValue(true),
+            release: jest.fn().mockResolvedValue(true),
+        },
         repo: {
             idleInstances: jest.fn().mockResolvedValue([]),
             reserved: jest.fn().mockResolvedValue(true),

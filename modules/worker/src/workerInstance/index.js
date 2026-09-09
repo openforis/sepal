@@ -27,7 +27,7 @@ const log = getLogger('worker/workerInstance')
 
 const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 
-const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTypes}) => {
+const createWorkerInstanceComponent = ({claims, repo, provider, provisioner, instanceTypes}) => {
 
     // ── Wire: provider.onInstanceLaunched ─────────────────────────────────────
     // If the launched instance is reserved → emit InstancePendingProvisioning
@@ -98,7 +98,7 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
         log.info('Stopped')
     }
 
-    const instanceManager = createInstanceManager({repo, provider, provisioner, instanceTypes})
+    const instanceManager = createInstanceManager({claims, repo, provider, provisioner, instanceTypes})
 
     return {
         instanceManager,
