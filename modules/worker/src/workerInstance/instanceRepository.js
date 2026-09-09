@@ -9,23 +9,21 @@
 //   reconciled(instances)            INSERT IGNORE the ones with no row yet → count adopted
 //   forgotten(knownIds)              DELETE idle rows for ids not in knownIds → count dropped
 //
-// createInstanceRepository(pool?) — pool falls back to the module-level getPool(), so
-// integration tests can inject a scratch pool and exercise PRODUCTION code directly.
+// createInstanceRepository(pool?) — pool defaults to the shared worker pool, so integration
+// tests can inject a scratch pool and exercise PRODUCTION code directly.
 
 import {getPool} from '../db.js'
+import {placeholders} from '../sql.js'
 
-const createInstanceRepository = (pool = null) => {
-    const resolvePool = () => pool ?? getPool()
-
+const createInstanceRepository = (pool = getPool()) => {
     // launched — insert one or many instances (SizeIdlePool passes a collection).
     const launched = async instanceOrInstances => {
         const instances = Array.isArray(instanceOrInstances)
             ? instanceOrInstances
             : [instanceOrInstances]
-        const p = resolvePool()
         for (const instance of instances) {
             const workerType = instance.reservation?.workerType ?? null
-            await p.query(
+            await pool.query(
                 'INSERT INTO instance(id, type, worker_type) VALUES(?, ?, ?)',
                 [instance.id, instance.type, workerType]
             )
@@ -36,8 +34,7 @@ const createInstanceRepository = (pool = null) => {
     // Returns true iff exactly 1 row was updated, i.e. the instance was idle and this call won the
     // race. affectedRows is correct here: the WHERE guarantees matched == changed.
     const reserved = async (id, workerType) => {
-        const p = resolvePool()
-        const [result] = await p.query(
+        const [result] = await pool.query(
             'UPDATE instance SET worker_type = ? WHERE id = ? AND worker_type IS NULL',
             [workerType, id]
         )
@@ -49,8 +46,7 @@ const createInstanceRepository = (pool = null) => {
     // wrongly return true on a double-release. changedRows parses "Changed: N" from the OK packet:
     // 0 on a double-release, 1 on a real one — the sentinel ReleaseInstance uses to gate undeploy.
     const released = async id => {
-        const p = resolvePool()
-        const [result] = await p.query(
+        const [result] = await pool.query(
             'UPDATE instance SET worker_type = NULL WHERE id = ?',
             [id]
         )
@@ -58,16 +54,14 @@ const createInstanceRepository = (pool = null) => {
     }
 
     const terminated = async id => {
-        const p = resolvePool()
-        await p.query(
+        await pool.query(
             'DELETE FROM instance WHERE id = ?',
             [id]
         )
     }
 
     const idleInstances = async instanceType => {
-        const p = resolvePool()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             'SELECT id FROM instance WHERE type = ? AND worker_type IS NULL',
             [instanceType]
         )
@@ -85,10 +79,9 @@ const createInstanceRepository = (pool = null) => {
     // INSERT IGNORE, never UPDATE: a row that already exists may have been reserved by
     // RequestInstance a microsecond ago, and adopting must not un-reserve a live session.
     const reconciled = async instances => {
-        const p = resolvePool()
         let adopted = 0
         for (const instance of instances) {
-            const [result] = await p.query(
+            const [result] = await pool.query(
                 'INSERT IGNORE INTO instance(id, type, worker_type) VALUES(?, ?, NULL)',
                 [instance.id, instance.type]
             )
@@ -104,12 +97,11 @@ const createInstanceRepository = (pool = null) => {
     // An empty knownIds is not a no-op — it means the provider has nothing left, so neither should
     // this table.
     const forgotten = async knownIds => {
-        const p = resolvePool()
         const ids = [...knownIds]
         const [result] = ids.length === 0
-            ? await p.query('DELETE FROM instance WHERE worker_type IS NULL')
-            : await p.query(
-                `DELETE FROM instance WHERE worker_type IS NULL AND id NOT IN (${ids.map(() => '?').join(', ')})`,
+            ? await pool.query('DELETE FROM instance WHERE worker_type IS NULL')
+            : await pool.query(
+                `DELETE FROM instance WHERE worker_type IS NULL AND id NOT IN (${placeholders(ids.length)})`,
                 ids
             )
         return result.affectedRows

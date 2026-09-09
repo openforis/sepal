@@ -18,6 +18,7 @@
 import {getLogger} from '#sepal/log'
 
 import {sessionTag} from '../tag.js'
+import {MINUTE_MS} from '../time.js'
 import {SANDBOX} from '../workerInstance/workerTypes.js'
 import {State} from '../workerSession/workerSession.js'
 import {Verdict} from './busyRegistry.js'
@@ -31,8 +32,6 @@ const log = getLogger('worker/sampleInstances')
 // Sampling failures stay on the sampler's own category above — a broken exec is an operational
 // problem, not part of the expiry story.
 const expiryLog = getLogger('worker/expiry')
-
-const MINUTE_MS = 60_000
 
 const sampleGpu = async (stats, session) => {
     try {

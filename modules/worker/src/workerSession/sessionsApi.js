@@ -16,6 +16,7 @@
 
 import {launchFailureCode} from '../hostingService/instanceLaunchErrors.js'
 import {instanceName} from '../instanceName.js'
+import {round2} from '../round.js'
 import {State} from './workerSession.js'
 
 const SANDBOX = 'sandbox'
@@ -42,9 +43,6 @@ const hoursBetween = (startTime, endTime) => {
     const secs = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000
     return secs / 3600
 }
-
-// round2 — round half-up to 2 decimals.
-const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100
 
 const instanceTypeAsMap = (instanceType, username, forCurrentUser) => ({
     id: instanceType.id,

@@ -1,8 +1,8 @@
 // Task repository — persists task lifecycle to the `worker`.`task` table.
 //
-// createTaskRepository(pool?, clock?) — pool falls back to the module-level getPool() (shared
-// worker pool); clock (default () => new Date()) drives update_time and the timedOutTasks "now",
-// and is injectable so tests can pin time.
+// createTaskRepository(pool?, clock?) — pool defaults to the shared worker pool; clock
+// (default () => new Date()) drives update_time and the timedOutTasks "now", and is injectable
+// so tests can pin time.
 //
 // Rows are reconstructed into Task domain objects. params / status_description are LONGTEXT read
 // as strings (params stored as a JSON string; status_description as the raw i18n JSON string).
@@ -31,13 +31,10 @@ const toTask = row => createTask({
     updateTime: row.update_time ? new Date(row.update_time) : null,
 })
 
-const createTaskRepository = (pool = null, clock = () => new Date()) => {
-    const resolvePool = () => pool ?? getPool()
-
+const createTaskRepository = (pool = getPool(), clock = () => new Date()) => {
     const insert = async task => {
-        const p = resolvePool()
         const taskParams = JSON.stringify(task.params)
-        await p.query(
+        await pool.query(
             `INSERT INTO task(id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time, removed)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)`,
             [
@@ -48,8 +45,7 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const update = async task => {
-        const p = resolvePool()
-        await p.query(
+        await pool.query(
             `UPDATE task
                 SET state = ?, status_description = ?, update_time = ?
                 WHERE id = ?`,
@@ -58,13 +54,11 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const remove = async task => {
-        const p = resolvePool()
-        await p.query('UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
+        await pool.query('UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
     }
 
     const removeNonPendingOrActiveUserTasks = async username => {
-        const p = resolvePool()
-        await p.query(
+        await pool.query(
             `UPDATE task
                 SET removed = TRUE
                 WHERE username = ?
@@ -75,8 +69,7 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
 
     // Throws if the row does not exist.
     const getTask = async taskId => {
-        const p = resolvePool()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             `SELECT ${SELECT_COLUMNS}
                 FROM task
                 WHERE id = ?`,
@@ -94,9 +87,8 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     //   ACTIVE    and update_time < now − 5min,  OR
     //   CANCELING and update_time < now − 2min.
     const timedOutTasks = async () => {
-        const p = resolvePool()
         const now = clock()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             `SELECT ${SELECT_COLUMNS}
                 FROM task
                 WHERE (state = ? AND update_time < ?)
@@ -112,8 +104,7 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const pendingOrActiveTasksInSession = async sessionId => {
-        const p = resolvePool()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             `SELECT ${SELECT_COLUMNS}
                 FROM task
                 WHERE session_id = ?
@@ -124,8 +115,7 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const userTasks = async username => {
-        const p = resolvePool()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             `SELECT ${SELECT_COLUMNS}
                 FROM task
                 WHERE username = ?
@@ -137,8 +127,7 @@ const createTaskRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const pendingOrActiveUserTasks = async username => {
-        const p = resolvePool()
-        const [rows] = await p.query(
+        const [rows] = await pool.query(
             `SELECT ${SELECT_COLUMNS}
                 FROM task
                 WHERE username = ?

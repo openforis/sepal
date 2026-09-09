@@ -6,9 +6,8 @@
 // row. A metric with zero weight (never measured — realistically only GPU) is null;
 // no rows at all → overall: null.
 
-const DAY_MS = 24 * 3600_000
-
-const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100
+import {round2} from '../../round.js'
+import {DAY_MS} from '../../time.js'
 
 const avgMax = (sum, weight, max) =>
     weight ? {avg: round2(sum / weight), max} : null

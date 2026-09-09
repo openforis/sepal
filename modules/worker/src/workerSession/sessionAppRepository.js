@@ -4,21 +4,18 @@
 // or the user closes the app tab (explicit dissociate).
 //
 // createSessionAppRepository(pool?, clock?) — injectable factory (mirrors
-// workerSessionRepository.js: pool defaults to the module-level getPool()).
+// workerSessionRepository.js: pool defaults to the shared worker pool).
 
 import {getPool} from '../db.js'
+import {placeholders} from '../sql.js'
 
-const placeholders = count => Array(count).fill('?').join(', ')
-
-const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
-    const resolvePool = () => pool ?? getPool()
-
+const createSessionAppRepository = (pool = getPool(), clock = () => new Date()) => {
     // associate — upsert: replaces a STALE row (one whose session has closed).
     // Permanence is enforced one level up: sessionManager.associateApp returns the
     // EXISTING association instead of calling this when a live one exists.
     // client_id — the gateway ws client (browser window) owning the app's tab.
     const associate = async ({username, appPath, sessionId, label, clientId}) => {
-        await resolvePool().query(
+        await pool.query(
             `INSERT INTO session_app(username, app_path, session_id, label, client_id, creation_time)
                 VALUES(?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
@@ -33,7 +30,7 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
     // setClient — refresh ONLY the owner of an existing association (association-wins
     // path: the session must not move, but the requester owns the visible tab now).
     const setClient = async ({username, appPath, clientId}) => {
-        await resolvePool().query(
+        await pool.query(
             'UPDATE session_app SET client_id = ? WHERE username = ? AND app_path = ?',
             [clientId ?? null, username, appPath]
         )
@@ -42,7 +39,7 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
     // userAppSessions — the user's associations joined with their OPEN sessions.
     // status is the raw worker_session.state ('PENDING' | 'ACTIVE').
     const userAppSessions = async username => {
-        const [rows] = await resolvePool().query(
+        const [rows] = await pool.query(
             `SELECT sa.app_path, sa.label, sa.session_id, ws.host, ws.state, ws.instance_type
                 FROM session_app sa
                 JOIN worker_session ws ON ws.id = sa.session_id
@@ -65,7 +62,7 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
         if (!sessionIds || sessionIds.length === 0) {
             return map
         }
-        const [rows] = await resolvePool().query(
+        const [rows] = await pool.query(
             `SELECT session_id, app_path, label
                 FROM session_app
                 WHERE session_id IN (${placeholders(sessionIds.length)})
@@ -81,7 +78,7 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
     }
 
     const deleteForSession = async sessionId => {
-        await resolvePool().query(
+        await pool.query(
             'DELETE FROM session_app WHERE session_id = ?',
             [sessionId]
         )
@@ -91,14 +88,14 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
     // to. Returns the deleted row's {sessionId, clientId} (clientId = the OWNER, for the
     // dissociation event), or null when none existed (idempotent no-op).
     const dissociate = async ({username, appPath}) => {
-        const [rows] = await resolvePool().query(
+        const [rows] = await pool.query(
             'SELECT session_id, client_id FROM session_app WHERE username = ? AND app_path = ?',
             [username, appPath]
         )
         if (rows.length === 0) {
             return null
         }
-        await resolvePool().query(
+        await pool.query(
             'DELETE FROM session_app WHERE username = ? AND app_path = ?',
             [username, appPath]
         )
@@ -108,14 +105,14 @@ const createSessionAppRepository = (pool = null, clock = () => new Date()) => {
     // dissociateForClient — remove every association owned by the client (clientDown: its
     // tabs died with it). Returns the deleted rows for per-app dissociation events.
     const dissociateForClient = async ({username, clientId}) => {
-        const [rows] = await resolvePool().query(
+        const [rows] = await pool.query(
             'SELECT app_path, session_id FROM session_app WHERE username = ? AND client_id = ?',
             [username, clientId]
         )
         if (rows.length === 0) {
             return []
         }
-        await resolvePool().query(
+        await pool.query(
             'DELETE FROM session_app WHERE username = ? AND client_id = ?',
             [username, clientId]
         )

@@ -17,8 +17,8 @@ const {State, createWorkerSession} = await import('./workerSession.js')
 const FIXED_NOW = new Date('2026-01-01T12:00:00Z')
 const clock = () => FIXED_NOW
 
-// repo bound to the mocked getPool (pool=null) so we also cover the default-pool path
-const repo = createWorkerSessionRepository(null, clock)
+// pool omitted, so the default (the mocked getPool) is what the SQL below runs against
+const repo = createWorkerSessionRepository(undefined, clock)
 
 const session = overrides => createWorkerSession({
     id: 's-1',
@@ -86,7 +86,7 @@ describe('update', () => {
 
     test('update to CLOSED cascades session_app delete', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, () => FIXED_NOW, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, () => FIXED_NOW, {deleteForSession})
         const closed = session({state: 'CLOSED'})
         await repo.update(closed)
         expect(deleteForSession).toHaveBeenCalledWith(closed.id)
@@ -94,7 +94,7 @@ describe('update', () => {
 
     test('update to ACTIVE does not touch session_app', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, () => FIXED_NOW, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, () => FIXED_NOW, {deleteForSession})
         await repo.update(session({state: 'ACTIVE'}))
         expect(deleteForSession).not.toHaveBeenCalled()
     })
@@ -457,7 +457,7 @@ describe('closeExpiredSession', () => {
 
     test('an interaction landing between selection and close leaves the session open', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, clock, {deleteForSession})
         query.mockResolvedValue([{affectedRows: 0}, []])
         expect(await repo.closeExpiredSession(args)).toBe(false)
         expect(deleteForSession).not.toHaveBeenCalled()
@@ -465,7 +465,7 @@ describe('closeExpiredSession', () => {
 
     test('a real close cascades the app associations', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, clock, {deleteForSession})
         query.mockResolvedValue([{affectedRows: 1}, []])
         expect(await repo.closeExpiredSession(args)).toBe(true)
         expect(deleteForSession).toHaveBeenCalledWith('s-1')
@@ -494,7 +494,7 @@ describe('redeemTermination', () => {
 
     test('a rescued session is left open and keeps its app associations', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, clock, {deleteForSession})
         query.mockResolvedValue([{affectedRows: 0}, []])
         expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(false)
         expect(deleteForSession).not.toHaveBeenCalled()
@@ -502,7 +502,7 @@ describe('redeemTermination', () => {
 
     test('a real termination cascades the app associations', async () => {
         const deleteForSession = jest.fn(async () => {})
-        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        const repo = createWorkerSessionRepository(undefined, clock, {deleteForSession})
         query.mockResolvedValue([{affectedRows: 1}, []])
         expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(true)
         expect(deleteForSession).toHaveBeenCalledWith('s-1')

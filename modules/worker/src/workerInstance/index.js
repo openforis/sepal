@@ -9,7 +9,9 @@
 
 import {getLogger} from '#sepal/log'
 
+import {createScheduler} from '../scheduler.js'
 import {instanceTag} from '../tag.js'
+import {MINUTE_MS} from '../time.js'
 import {provisionInstance} from './command/provisionInstance.js'
 import {reconcileInstances} from './command/reconcileInstances.js'
 import {sizeIdlePool} from './command/sizeIdlePool.js'
@@ -23,7 +25,7 @@ import {isReserved} from './workerInstance.js'
 
 const log = getLogger('worker/workerInstance')
 
-const SIZE_IDLE_POOL_INTERVAL_MS = 60_000  // 1 minute
+const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 
 const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTypes}) => {
 
@@ -54,7 +56,7 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
             .map(t => [t.id, t.idleCount])
     )
 
-    let sizeIdlePoolTimer = null
+    const scheduler = createScheduler(log)
 
     const start = async () => {
         log.debug('Starting...')
@@ -72,30 +74,26 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
         // RequestInstance but counted by SizeIdlePool, so leaving it unadopted would have the pool
         // hold a slot open for an instance nobody can ever be given. A reconcile failure must not
         // stop the sizing, hence the two independent catches.
-        const runPoolCycle = phase => async () => {
+        const runPoolCycle = async () => {
             try {
                 await reconcileInstances({repo, provider})
             } catch (err) {
-                log.error(`ReconcileInstances (${phase}) failed:`, err.message)
+                log.error('ReconcileInstances failed:', err.message)
             }
             try {
                 await sizeIdlePool(targetIdleCountByInstanceType, {repo, provider})
             } catch (err) {
-                log.error(`SizeIdlePool (${phase}) failed:`, err.message)
+                log.error('SizeIdlePool failed:', err.message)
             }
         }
-        runPoolCycle('initial')()
-        sizeIdlePoolTimer = setInterval(runPoolCycle('scheduled'), SIZE_IDLE_POOL_INTERVAL_MS)
+        scheduler.schedule('SizeIdlePool', runPoolCycle, SIZE_IDLE_POOL_INTERVAL_MS)
 
         log.info('Started')
     }
 
     const stop = async () => {
         log.debug('Stopping...')
-        if (sizeIdlePoolTimer !== null) {
-            clearInterval(sizeIdlePoolTimer)
-            sizeIdlePoolTimer = null
-        }
+        scheduler.stopAll()
         await provider.stop()
         log.info('Stopped')
     }

@@ -28,12 +28,11 @@ import {getLogger} from '#sepal/log'
 
 import {instanceName} from '../../instanceName.js'
 import {sessionTag} from '../../tag.js'
+import {MINUTE_MS} from '../../time.js'
 import {sessionOrdinals} from '../query/sessionOrdinals.js'
 import {NotificationState, withApiKey} from '../workerSession.js'
 
 const log = getLogger('worker/expireSessions')
-
-const MINUTE_MS = 60_000
 
 const MODE = Object.freeze({
     OFF: 'off',
