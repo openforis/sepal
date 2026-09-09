@@ -7,9 +7,7 @@
 -- MyISAM, which is what LOAD DATA is fastest into. `browse_url` is gone (dropped in the legacy
 -- schema by V14_0 and never written by this module).
 
-CREATE SCHEMA IF NOT EXISTS scene_metadata;
-
-CREATE TABLE IF NOT EXISTS scene_metadata.`scene_meta_data` (
+CREATE TABLE IF NOT EXISTS `scene_meta_data` (
     `id`               varchar(255) NOT NULL,
     `meta_data_source` varchar(255) NOT NULL,
     `sensor_id`        varchar(255) NOT NULL,

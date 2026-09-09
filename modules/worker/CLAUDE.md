@@ -6,6 +6,11 @@ Postgrator (Phase 4a-revision). Phase 4a scaffolds the module with healthcheck o
 Sub-phases 4b–4f will add worker instance provisioning, session management, task execution,
 budget tracking, and gateway route migration.
 
+## Database migrations
+
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms and worker_instance`. Startup wiring, the temporary checksum
+reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+
 ## Commands
 - `npm test` — Jest (ESM)
 - `sepal build worker` / `sepal start worker` / `sepal logs worker -r`

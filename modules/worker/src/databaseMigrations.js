@@ -4,7 +4,7 @@ import {reconcileMigrationHistory} from '#sepal/db/migrationTransition'
 import {initDb, migrateDb} from '#sepal/db/mysql'
 import {dirName} from '#sepal/path'
 
-export const migrateRecipeDb = async (dbName, log) => {
+export const migrateWorkerDb = async (dbName, log) => {
     await initDb(dbName, SCHEMA_PATH, {
         label: 'schema migrations',
         beforeMigrate: connection => reconcileMigrationHistory(connection, COMBINED_MIGRATION_TRANSITION, log)
@@ -18,11 +18,11 @@ export const migrateRecipeDb = async (dbName, log) => {
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
 const IMPORT_PATH = join(SCHEMA_PATH, 'legacy-import')
 
-// The deployed 001 both created the schema and copied the legacy data. A database that recorded its
-// checksum is moved onto the schema-only file's, with the import recorded as already completed.
-const COMBINED_SCHEMA_MD5 = '37b325f8ea33d8a4bd40052089a0abf9'
-const SCHEMA_MD5 = '92f2b41a360311b6c6531c742cace8c2'
-const LEGACY_IMPORT_MD5 = 'fc7dfdde3bd2c629a02016d64351c8fa'
+// The deployed 001 created the database, qualified its targets and copied the legacy data. A database
+// that recorded its checksum is moved onto the schema-only file's, with the import recorded as done.
+const COMBINED_SCHEMA_MD5 = '065cff2e0d25cc60314dc6ad518accb6'
+const SCHEMA_MD5 = '66621aca2bb2c1d7b7b99c2f35f76203'
+const LEGACY_IMPORT_MD5 = '60d0bb4b4011062f05a681306f9257a1'
 const COMBINED_MIGRATION_TRANSITION = {
     version: 1,
     from: COMBINED_SCHEMA_MD5,

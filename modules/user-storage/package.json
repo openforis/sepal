@@ -27,5 +27,8 @@
         "#sepal/*.json": "sepal/src/*.json",
         "#config/*.json": "./config/*.json"
     },
-    "type": "module"
+    "type": "module",
+    "devDependencies": {
+        "jest": "^30.5.1"
+    }
 }

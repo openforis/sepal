@@ -2,7 +2,7 @@ import {createHash, randomBytes} from 'crypto'
 import {readFile} from 'fs/promises'
 import {join} from 'path'
 
-import {createConnection, initDatabase, migrateDb} from '#sepal/db/mysql'
+import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
@@ -26,7 +26,7 @@ describe('recipe database migrations', () => {
         test('create a missing database with the recipe and project tables', async () => {
             const dbName = aDatabaseName()
 
-            const {created} = await initDatabase(dbName, SCHEMA_PATH)
+            const {created} = await initDb(dbName, SCHEMA_PATH)
 
             ownIfCreated(dbName, created)
             expect(created).toBe(true)
@@ -56,7 +56,7 @@ describe('recipe database migrations', () => {
         test('create empty recipe and project tables', async () => {
             const dbName = await reserveDatabase()
 
-            await initDatabase(dbName, SCHEMA_PATH)
+            await initDb(dbName, SCHEMA_PATH)
 
             const counts = await rowCounts(dbName)
             expect(counts).toEqual({recipes: 0, projects: 0})
@@ -95,7 +95,7 @@ describe('recipe database migrations', () => {
 
         test('rejects an unrecognized checksum without changing the history', async () => {
             const dbName = await reserveDatabase()
-            await initDatabase(dbName, SCHEMA_PATH)
+            await initDb(dbName, SCHEMA_PATH)
             await recordSchemaChecksum(dbName, 'unrecognized')
             const before = await recordedSchema(dbName)
 
@@ -112,7 +112,7 @@ describe('recipe database migrations', () => {
     // The combined file built the same tables the schema file builds now; only its checksum differs.
     const aDatabaseMigratedByTheCombinedFile = async () => {
         const dbName = await reserveDatabase()
-        await initDatabase(dbName, SCHEMA_PATH)
+        await initDb(dbName, SCHEMA_PATH)
         await recordSchemaChecksum(dbName, DEPLOYED_COMBINED_MD5)
         return dbName
     }

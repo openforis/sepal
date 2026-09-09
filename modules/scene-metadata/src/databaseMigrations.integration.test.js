@@ -6,9 +6,9 @@ import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
-import {migrateMessageDb} from './databaseMigrations.js'
+import {migrateSceneMetadataDb} from './databaseMigrations.js'
 
-describe('message database migrations', () => {
+describe('scene metadata database migrations', () => {
     let admin
     const reserved = []
     const log = {info: () => {}}
@@ -23,55 +23,55 @@ describe('message database migrations', () => {
     afterAll(() => admin?.end())
 
     describe('schema migrations', () => {
-        test('create the message and notification tables in the selected database', async () => {
+        test('create the scene_meta_data table in the selected database', async () => {
             const dbName = await reserveDatabase()
 
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['message', 'notification']))
+            expect(tables).toEqual(expect.arrayContaining(['scene_meta_data']))
         })
 
-        test('create empty message and notification tables', async () => {
+        test('create an empty scene_meta_data table', async () => {
             const dbName = await reserveDatabase()
 
             await initDb(dbName, SCHEMA_PATH)
 
-            const counts = await rowCounts(dbName)
-            expect(counts).toEqual({messages: 0, notifications: 0})
+            const ids = await storedIds(dbName)
+            expect(ids).toEqual([])
         })
     })
 
     describe('startup on a database migrated by the deployed qualified file', () => {
-        test('corrects the schema checksum, keeping the messages', async () => {
+        test('corrects the schema checksum, keeping the scene_meta_data rows', async () => {
             const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            const message = await insertMessage(dbName, aMessage())
+            const stored = await insertRow(dbName, aRow())
             const qualified = await recordedSchema(dbName)
 
-            await migrateMessageDb(dbName, log)
+            await migrateSceneMetadataDb(dbName, log)
 
             const schema = await recordedSchema(dbName)
-            const ids = await messageIds(dbName)
-            expect(ids).toEqual([message.id])
+            const ids = await storedIds(dbName)
+            expect(ids).toEqual([stored.id])
             expect(schema).toEqual({...qualified, md5: await checksum(SCHEMA_FILE)})
         })
 
         test('creates no import history', async () => {
             const dbName = await aDatabaseMigratedByTheQualifiedFile()
 
-            await migrateMessageDb(dbName, log)
+            await migrateSceneMetadataDb(dbName, log)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(['message', 'notification', 'schema_version'])
+            expect(tables).toEqual(['scene_meta_data', 'schema_version'])
         })
 
         test('changes nothing on the next startup', async () => {
             const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            await insertMessage(dbName, aMessage())
-            await migrateMessageDb(dbName, log)
+            await insertRow(dbName, aRow())
+            await migrateSceneMetadataDb(dbName, log)
             const before = await databaseState(dbName)
 
-            await migrateMessageDb(dbName, log)
+            await migrateSceneMetadataDb(dbName, log)
 
             const state = await databaseState(dbName)
             expect(state).toEqual(before)
@@ -83,7 +83,7 @@ describe('message database migrations', () => {
             await recordSchemaChecksum(dbName, 'unrecognized')
             const before = await recordedSchema(dbName)
 
-            const startup = migrateMessageDb(dbName, log)
+            const startup = migrateSceneMetadataDb(dbName, log)
 
             await expect(startup).rejects.toThrow(/MD5 checksum failed/)
             const schema = await recordedSchema(dbName)
@@ -102,7 +102,7 @@ describe('message database migrations', () => {
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
-        const dbName = `message_migrations_test_${randomBytes(6).toString('hex')}`
+        const dbName = `scenemetadatamigrations_${randomBytes(6).toString('hex')}`
         await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
         reserved.push(dbName)
         return dbName
@@ -114,16 +114,16 @@ describe('message database migrations', () => {
         }
     }
 
-    const insertMessage = async (dbName, message) => {
-        await admin.query('INSERT INTO ??.message SET ?', [dbName, message])
-        return message
+    const insertRow = async (dbName, row) => {
+        await admin.query('INSERT INTO ??.scene_meta_data SET ?', [dbName, row])
+        return row
     }
 
     const recordSchemaChecksum = (dbName, md5) =>
         admin.query('UPDATE ??.schema_version SET md5 = ? WHERE version = 1', [dbName, md5])
 
     const databaseState = async dbName => ({
-        messages: await messageIds(dbName),
+        rows: await storedIds(dbName),
         schema: await recordedSchema(dbName),
         tables: await tableNames(dbName)
     })
@@ -135,15 +135,9 @@ describe('message database migrations', () => {
         return rows[0]
     }
 
-    const messageIds = async dbName => {
-        const [rows] = await admin.query('SELECT id FROM ??.message ORDER BY id', [dbName])
+    const storedIds = async dbName => {
+        const [rows] = await admin.query('SELECT id FROM ??.scene_meta_data ORDER BY id', [dbName])
         return rows.map(({id}) => id)
-    }
-
-    const rowCounts = async dbName => {
-        const [[{messages}]] = await admin.query('SELECT COUNT(*) AS messages FROM ??.message', [dbName])
-        const [[{notifications}]] = await admin.query('SELECT COUNT(*) AS notifications FROM ??.notification', [dbName])
-        return {messages, notifications}
     }
 
     const tableNames = async dbName => {
@@ -154,18 +148,14 @@ describe('message database migrations', () => {
     }
 })
 
-const aMessage = () => ({
-    id: 'a-message',
-    username: 'admin',
-    subject: 'A subject',
-    contents: 'Some contents',
-    type: 'SYSTEM',
-    creation_time: new Date('2026-01-01T00:00:00Z'),
-    update_time: new Date('2026-01-01T00:00:00Z')
+const aRow = () => ({
+    id: 'a-scene', meta_data_source: 'LANDSAT', sensor_id: 'LC08', scene_area_id: '123',
+    acquisition_date: new Date('2026-01-01T00:00:00Z'), day_of_year: 1,
+    cloud_cover: 0, sun_azimuth: 0, sun_elevation: 0, update_time: new Date('2026-01-01T00:00:00Z')
 })
 
 const checksum = async file => createHash('md5').update(await readFile(file, 'utf8')).digest('hex')
 
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
 const SCHEMA_FILE = join(SCHEMA_PATH, '001.do.schema.sql')
-const DEPLOYED_QUALIFIED_MD5 = 'b58338efdcd4ee31e1aa2991055fd8fa'
+const DEPLOYED_QUALIFIED_MD5 = '38a9a7d2a27224f23407230282b8c010'

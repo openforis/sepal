@@ -6,7 +6,7 @@ import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
 import {amqpUri, port} from './config.js'
-import {initializeDatabase} from './database.js'
+import {initializeDatabase} from './db.js'
 import {email$} from './email.js'
 import {startInactivityCheck} from './inactivityCheck.js'
 import {messageHandler} from './messageHandler.js'

@@ -1,15 +1,10 @@
-import {join} from 'path'
-
-import {createPool, initDatabase} from '#sepal/db/mysql'
+import {createPool} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
-import {dirName} from '#sepal/path'
 
+import {migrateSceneMetadataDb} from './databaseMigrations.js'
 import {formatInterval} from './time.js'
 
 const log = getLogger('database')
-
-const __dirname = dirName(import.meta.url)
-const migrationsPath = join(__dirname, '/../migrations')
 
 const CURRENT_DATABASE_NAME = 'scene_metadata'
 const NEW_DATABASE_NAME = 'scene_metadata_new'
@@ -25,7 +20,7 @@ const transaction = {
 }
 
 const initializeDatabase = async () => {
-    const {created} = await initDatabase(CURRENT_DATABASE_NAME, migrationsPath)
+    const {created} = await migrateSceneMetadataDb(CURRENT_DATABASE_NAME, log)
     const pool = await createPool(CURRENT_DATABASE_NAME)
 
     const dropDatabase = async name => {

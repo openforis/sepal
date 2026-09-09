@@ -1,6 +1,6 @@
 import {createPool} from '#sepal/db/mysql'
 
-import {SCHEMA} from './database.js'
+import {SCHEMA} from './db.js'
 import {dayOfYearIgnoringLeapDay, seasonDayOfYearConstraint} from './sceneSearch.js'
 
 let _pool

@@ -3,6 +3,11 @@
 Standalone event-driven budget service (Node.js). Extracted from `modules/worker` (2026-07). Tracks
 instance + storage spending and enforces monthly budgets; owns the `budget` MySQL schema (Postgrator).
 
+## Database migrations
+
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup wiring, the temporary checksum
+reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+
 ## Commands
 - `npm test` — Jest (ESM, TZ=UTC)
 - `sepal build budget` / `sepal start budget` / `sepal logs budget -r`

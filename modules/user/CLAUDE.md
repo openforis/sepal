@@ -29,3 +29,8 @@ table at its full current shape and copies the rows from the legacy `sepal_user`
 if that schema is present and the target is still empty. Postgrator uses the default
 history table `schema_version`. The Java `user` module's previous Flyway
 history table was renamed to `schema_version_old` at cutover.
+
+## Database migrations
+
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sepal_user`. Startup wiring, the temporary checksum
+reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).

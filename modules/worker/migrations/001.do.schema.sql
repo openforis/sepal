@@ -1,27 +1,11 @@
--- Consolidated worker schema.
--- COPIES the worker-cluster tables from the legacy `sdms` / `worker_instance` schemas into a
--- single `worker` schema. The originals are LEFT INTACT as a rollback safety net: the copy is
--- read-only and guarded (copy only if the source exists AND the target is still empty), so it is
--- idempotent and dropping the `worker` schema fully reverts this module.
--- NOTE: rmb_message / rmb_message_processing belonged to the Groovy sepal-server (reliable
--- message bus) and stay in sdms — they are NOT part of the worker schema.
--- Vestigial access-control tables (users/groups/etc.) remain in sdms — NOT copied.
--- Usernames are lowercased on the way in: the legacy tables stored them as typed, while
--- `sepal_user` is uniformly lowercase and every read path lowercases anyway.
--- The shared migration runner executes the whole file as one multi-statement query, so the
--- session @vars + PREPARE/EXECUTE persist across statements.
-
-CREATE SCHEMA IF NOT EXISTS worker;
-
--- -------------------------------------------------------------------------
--- worker_session (copy from sdms if present and target empty, else create fresh)
+-- Worker schema: the worker-cluster tables. Targets are unqualified so any database can be built from
+-- this file. The one-off copy from the legacy `sdms` and `worker_instance` schemas lives in
+-- migrations/legacy-import.
 --
--- Lifetime is a STORED deadline that events ratchet forward (docs/session-expiration-model.md),
--- so the legacy `earliest_timeout_time` is not carried over: copied ACTIVE sessions get their
--- deadline and cap anchor seeded from update_time, otherwise the first sweep would see a NULL
--- deadline (never expires) and a NULL anchor (unbounded ratchet).
--- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`worker_session` (
+-- NOTE: rmb_message / rmb_message_processing belonged to the Groovy sepal-server (reliable message bus)
+-- and stay in sdms. Vestigial access-control tables (users/groups/etc.) remain there too.
+
+CREATE TABLE IF NOT EXISTS `worker_session` (
     `id`                     varchar(36)   NOT NULL,
     `state`                  varchar(16)   NOT NULL,
     `username`               varchar(32)   NOT NULL,
@@ -46,17 +30,10 @@ CREATE TABLE IF NOT EXISTS worker.`worker_session` (
     KEY `idx_worker_session_5` (`state`, `timeout_time`) USING BTREE
 ) ENGINE=InnoDB;
 
-SET @do_copy := (SELECT IF(
-    EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='worker_session')
-    AND (SELECT COUNT(*) FROM worker.`worker_session`)=0,
-    'INSERT INTO worker.`worker_session` (`id`, `state`, `username`, `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, `active_time`, `timeout_time`) SELECT `id`, `state`, LOWER(`username`), `worker_type`, `instance_type`, `instance_id`, `host`, `creation_time`, `update_time`, `api_key`, CASE WHEN `state`=''ACTIVE'' THEN `update_time` END, CASE WHEN `state`=''ACTIVE'' THEN `update_time` + INTERVAL 30 MINUTE END FROM sdms.`worker_session`',
-    'DO 0'));
-PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
-
 -- -------------------------------------------------------------------------
--- task (copy from sdms if present and target empty, else create fresh)
+-- task
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`task` (
+CREATE TABLE IF NOT EXISTS `task` (
     `id`                 varchar(36)   NOT NULL,
     `state`              varchar(16)   NOT NULL,
     `username`           varchar(32)   NOT NULL,
@@ -75,30 +52,16 @@ CREATE TABLE IF NOT EXISTS worker.`task` (
     KEY `idx_task_4` (`username`, `state`) USING BTREE
 ) ENGINE=InnoDB;
 
-SET @do_copy := (SELECT IF(
-    EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='task')
-    AND (SELECT COUNT(*) FROM worker.`task`)=0,
-    'INSERT INTO worker.`task` (id, state, username, session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id) SELECT id, state, LOWER(username), session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id FROM sdms.`task`',
-    'DO 0'));
-PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
-
 -- -------------------------------------------------------------------------
--- instance (copy from worker_instance if present and target empty, else create fresh)
+-- instance
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`instance` (
+CREATE TABLE IF NOT EXISTS `instance` (
   `id`          varchar(255) NOT NULL,
   `type`        varchar(63)  NOT NULL,
   `worker_type` varchar(63)  DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_instance_1` (`type`, `worker_type`) USING BTREE
 ) ENGINE=InnoDB;
-
-SET @do_copy := (SELECT IF(
-    EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='worker_instance' AND TABLE_NAME='instance')
-    AND (SELECT COUNT(*) FROM worker.`instance`)=0,
-    'INSERT INTO worker.`instance` SELECT * FROM worker_instance.`instance`',
-    'DO 0'));
-PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 
 -- -------------------------------------------------------------------------
 -- session_app — pins a user's app (by catalog path) to the worker session it was started on.
@@ -108,7 +71,7 @@ PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
 -- starts made before the ws delivered a clientId have no owner; ownerless rows are never swept
 -- on clientDown and never produce takeover notifications.
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`session_app` (
+CREATE TABLE IF NOT EXISTS `session_app` (
     `username`      varchar(32)  NOT NULL,
     `app_path`      varchar(255) NOT NULL,
     `session_id`    varchar(36)  NOT NULL,
@@ -126,7 +89,7 @@ CREATE TABLE IF NOT EXISTS worker.`session_app` (
 -- (first tick after a sampler restart has no counter baseline; GPU only on GPU types).
 -- Retention: pruned after USAGE_SAMPLE_RETENTION_DAYS (default 30) by the daily prune job.
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
+CREATE TABLE IF NOT EXISTS `instance_usage_sample` (
     `session_id`         varchar(36)  NOT NULL,
     `username`           varchar(32)  NOT NULL,
     `instance_type`      varchar(64)  NOT NULL,
@@ -148,7 +111,7 @@ CREATE TABLE IF NOT EXISTS worker.`instance_usage_sample` (
 -- job; feeds the phase-4 admin usage reports. Retention: USAGE_HOURLY_RETENTION_DAYS
 -- (default 365).
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS worker.`instance_usage_hourly` (
+CREATE TABLE IF NOT EXISTS `instance_usage_hourly` (
     `session_id`          varchar(36)  NOT NULL,
     `username`            varchar(32)  NOT NULL,
     `instance_type`       varchar(64)  NOT NULL,

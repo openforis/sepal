@@ -8,7 +8,7 @@ rollout.
 
 **It must not create its database.** The shared runner does that before Postgrator connects, so delete
 statements like `CREATE SCHEMA IF NOT EXISTS recipe;` rather than moving them. Production creates `recipe`
-through `initDatabase()`; a test creates its own database through the same call.
+through `initDb()`; a test creates its own database through the same call.
 
 **It must not qualify its targets.** The connection has already selected the database, in both the do and
 undo files and in any procedure or `information_schema` query:
@@ -41,11 +41,11 @@ import.
 Schema stream first, then the import where one exists. From `modules/recipe/src/databaseMigrations.js`:
 
 ```text
-initDatabase(dbName, migrations)                    -> schema_version
+initDb(dbName, migrations)                    -> schema_version
 migrateDb(dbName, migrations/legacy-import, ...)     -> legacy_import_version
 ```
 
-`migrateDb` requires an existing database; `initDatabase` creates it and then delegates. Both take a `label`
+`migrateDb` requires an existing database; `initDb` creates it and then delegates. Both take a `label`
 used only in log messages. Ordering beyond this is not solved here: reconciliation moves a database onto
 the current files, it does not place an import between arbitrary schema versions.
 
@@ -82,26 +82,32 @@ reviewed transition first.
 
 Per module, once test and production have both started from the new files:
 
-- remove `src/databaseMigrations.js`, restoring the direct `initDatabase` call in `db.js`
+- remove `src/databaseMigrations.js`, restoring the direct `initDb` call in `db.js`
 - remove the tests that exercise it, which is the `startup on a database migrated by the deployed …` block
   of `databaseMigrations.integration.test.js`, along with its import of the coordinator
 - where an import was extracted, also remove `migrations/legacy-import` and drop the
-  `legacy_import_version` history table (recipe only)
+  `legacy_import_version` history table. That applies to `recipe`, `budget`, `worker` and `user`;
+  `message`, `user-storage` and `scene-metadata` have no import stream
 
 Once the last module has done that, remove `lib/js/shared/src/db/migrationTransition.js` and its test.
 
-What stays: the schema stream and its undo, the `schema migrations` tests that use only `initDatabase` and
+What stays: the schema stream and its undo, the `schema migrations` tests that use only `initDb` and
 `migrateDb`, the repository suites, and `schema_version` with its corrected checksum.
 
 ## Status
 
-| Module | State |
-|---|---|
-| `recipe` | done: portable schema, extracted import, automatic reconciliation |
-| `message` | done: portable schema, no import, automatic reconciliation |
-| `budget`, `worker`, `user` | still create their database, qualify their targets, and import inline |
-| `scene-metadata` | still creates its database and qualifies its targets; no import. Its runtime data rebuild stays outside migrations |
-| `user-storage` | already leaves creation to bootstrap; its table, procedure and index references are still qualified. No import |
+Every module is normalized: portable schema stream, automatic reconciliation of its recognized deployed
+checksum, and where it copied legacy data, an extracted import stream with its own history.
+
+| Module | Legacy import | Notes |
+|---|---|---|
+| `recipe` | from `processing_recipe` | |
+| `budget` | from `sdms` | six tables, including the seeded `open_session_use` |
+| `worker` | from `sdms` and `worker_instance` | |
+| `user` | from `sepal_user` | |
+| `message` | none | |
+| `user-storage` | none | `DropIndexIfExists` keeps its database parameter; the callers now pass `DATABASE()` |
+| `scene-metadata` | none | the table holds derived data; the ingester's rebuild and swap are unchanged |
 
 ## From a test
 

@@ -7,7 +7,7 @@ jest.unstable_mockModule('#sepal/db/mysql', () => ({
     createPool: jest.fn().mockResolvedValue(mockPool)
 }))
 
-jest.unstable_mockModule('./database.js', () => ({
+jest.unstable_mockModule('./db.js', () => ({
     SCHEMA: 'scene_metadata'
 }))
 
