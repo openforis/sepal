@@ -55,7 +55,10 @@ const updateApp$ = ({path, repository, branch, commit, name}) =>
             log.info(`Git operation completed: ${action}`)
             if (action === 'cloned' || action === 'updated') {
                 log.info(`Repository ${action}. Building and restarting Docker containers.`)
-                return from(buildAndRestart(name, repository))
+                // A newly cloned app has no route yet, and an updated one can have a changed port.
+                return from(buildAndRestart(name, repository)).pipe(
+                    switchMap(() => refreshProxies(`repository ${action}`))
+                )
             }
             return from(isContainerRunning(name)).pipe(
                 switchMap(running => {
