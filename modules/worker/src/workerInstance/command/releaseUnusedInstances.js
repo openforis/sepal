@@ -1,5 +1,5 @@
 // Non-transactional: each release is independent, so one failure does NOT abort the others.
-// Releases reserved instances that are not in usedInstanceIds and are older than minAge.
+// Releases reserved instances that are not in usedInstanceIds, not claimed, and older than minAge.
 // timeUnit is a Java-style TimeUnit name ('MINUTES', 'SECONDS', …) or a raw ms multiplier.
 
 import {getLogger} from '#sepal/log'
@@ -32,9 +32,15 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
     const now = Date.now()
     const reservedInstances = await provider.reservedInstances()
 
-    // Not in use AND STRICTLY older than minAge — an instance exactly at minAge is NOT released.
+    // A claim means an allocation is in flight. RequestSession inserts the session row only after
+    // RequestInstance returns, so a freshly claimed pool instance is already older than minAge with
+    // no session behind it — without this guard the sweep takes it away mid-request.
+    const claimedIds = new Set((await claims.all()).map(({instanceId}) => instanceId))
+
+    // Not in use, not claimed, AND STRICTLY older than minAge — an instance exactly at minAge is NOT released.
     const toRelease = reservedInstances.filter(instance => {
         if (usedSet.has(instance.id)) return false
+        if (claimedIds.has(instance.id)) return false
         const ageMs = now - new Date(instance.launchTime).getTime()
         return ageMs > minAgeMs
     })

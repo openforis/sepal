@@ -670,9 +670,11 @@ describe('releaseUnusedInstances', () => {
 
     const OLD_TIME = new Date(Date.now() - 20 * 60 * 1000) // 20 min ago
     const NEW_TIME = new Date(Date.now() - 30 * 1000)      // 30 sec ago
+    const HOUR_MS = 60 * 60 * 1000
 
     const makeFullDeps = reservedInstances => ({
         claims: {
+            all: jest.fn().mockResolvedValue([]),
             release: jest.fn().mockResolvedValue(true),
         },
         provider: {
@@ -758,6 +760,44 @@ describe('releaseUnusedInstances', () => {
             nowSpy.mockRestore()
         }
     })
+
+    test('skips an instance holding a claim even when it is old and unused', async () => {
+        const old = makeReservedInstance({id: 'i-claimed', launchTime: new Date(Date.now() - HOUR_MS)})
+        const claims = {
+            all: jest.fn().mockResolvedValue([{instanceId: 'i-claimed', sessionId: 's-1', claimedAt: new Date()}]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const provider = {
+            reservedInstances: jest.fn().mockResolvedValue([old]),
+            getInstance: jest.fn().mockResolvedValue(old),
+            release: jest.fn(),
+            terminate: jest.fn(),
+        }
+        const provisioner = {undeploy: jest.fn()}
+
+        await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
+
+        expect(provider.release).not.toHaveBeenCalled()
+    })
+
+    test('still releases an old unused instance with no claim', async () => {
+        const old = makeReservedInstance({id: 'i-orphan', host: '1.2.3.4', launchTime: new Date(Date.now() - HOUR_MS)})
+        const claims = {
+            all: jest.fn().mockResolvedValue([]),
+            release: jest.fn().mockResolvedValue(true),
+        }
+        const provider = {
+            reservedInstances: jest.fn().mockResolvedValue([old]),
+            getInstance: jest.fn().mockResolvedValue(old),
+            release: jest.fn().mockResolvedValue(undefined),
+            terminate: jest.fn(),
+        }
+        const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
+
+        await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
+
+        expect(provider.release).toHaveBeenCalledWith('i-orphan')
+    })
 })
 
 describe('findMissingInstances', () => {
@@ -816,6 +856,7 @@ describe('instanceManager', () => {
 
     const makeManagerDeps = (overrides = {}) => ({
         claims: {
+            all: jest.fn().mockResolvedValue([]),
             claim: jest.fn().mockResolvedValue(true),
             release: jest.fn().mockResolvedValue(true),
         },
