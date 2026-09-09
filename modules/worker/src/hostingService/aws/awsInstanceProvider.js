@@ -274,9 +274,9 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
 
     // Terminates instances whose Version tag is older than sepalVersion AND State=idle.
     //
-    // Auto-cleanup terminates are best-effort: a single transient failure must not abort the whole
-    // findInstances result. Caller-initiated terminate() still throws on final failure so callers
-    // can react; only here we catch and log.
+    // Auto-cleanup terminates are best-effort: a single transient failure must not abort the rest
+    // of sweep(). Caller-initiated terminate() still throws on final failure so callers can
+    // react; only here we catch and log.
     const terminateOldIdle = async awsInstances => {
         const old = awsInstances.filter(i =>
             isOlderVersion(instanceVersion(i), sepalVersion) &&
@@ -291,7 +291,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
 
     // Finds running, untagged instances up >1 minute and terminates them. Same best-effort
     // semantics as terminateOldIdle: a cleanup-terminate failure is swallowed and logged so the
-    // caller's query still resolves normally.
+    // rest of sweep() still runs.
     const terminateUntagged = async () => {
         const response = await client.send(new DescribeInstancesCommand({
             Filters: [filterRunning()],
