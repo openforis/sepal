@@ -124,14 +124,13 @@ const proxy = router =>
                 },
                 error: (err, req, res) => {
                     log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
-                    log.error(Object.keys(res))
-
-                    if (Object.keys(res).includes('writeHead')) {
-                        res.writeHead(500, {
+                    // On a websocket upgrade failure res is a plain socket, which has no writeHead.
+                    if (res.writeHead && !res.headersSent) {
+                        res.writeHead(500, 'Something went wrong', {
                             'Content-Type': 'text/plain'
                         })
-                        res.end('Something went wrong.')
                     }
+                    res.end()
                 },
                 open: () => {
                     log.trace('WebSocket opened')
