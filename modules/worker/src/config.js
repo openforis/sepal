@@ -249,6 +249,13 @@ program
             .env('DEPLOY_ENVIRONMENT')
     )
 
+    // ─── Sandbox basemap key ────────────────────────────────────────────────
+    .addOption(
+        new Option('--carto-db-basemap-key <string>', 'CARTO basemap key forwarded into sandbox containers')
+            .env('CARTODB_BASEMAP_KEY')
+            .default('')
+    )
+
     // ─── Google OAuth ───────────────────────────────────────────────────────
     .addOption(
         new Option('--google-oauth-endpoint <url>', 'user-module Google OAuth endpoint base (trailing slash)')
@@ -343,6 +350,7 @@ const {
     googleEarthEngineAccount,
     googleEarthEnginePrivateKey,
     googleOAuthEndpoint,
+    cartoDbBasemapKey,
     budgetUrl,
     deployEnvironment,
     rabbitmqHost,
@@ -366,6 +374,7 @@ export {
     busyGpuThresholdPct,
     busyNetworkThresholdKbps,
     busyWindowMinutes,
+    cartoDbBasemapKey,
     deployEnvironment,
     dockerEntryPoint,
     dockerPort,

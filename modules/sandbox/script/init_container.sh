@@ -44,6 +44,11 @@ if [ -n "$SEPAL_API_KEY" ]; then
     unset SEPAL_API_KEY
 fi
 
+# Must stay in the environment: pysepal reads it with os.getenv() at import time.
+if [ -n "$CARTODB_BASEMAP_KEY" ]; then
+    printf '%s\n' "CARTODB_BASEMAP_KEY=$CARTODB_BASEMAP_KEY" >> /etc/environment
+fi
+
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
     "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \

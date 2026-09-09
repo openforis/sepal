@@ -149,6 +149,16 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.Env).toContain('NVIDIA_VISIBLE_DEVICES=all')
     })
 
+    test('Env contains CARTODB_BASEMAP_KEY when configured', async () => {
+        await runProvision({...CONFIG, cartoDbBasemapKey: 'carto-key'})
+        expect(capturedBody.Env).toContain('CARTODB_BASEMAP_KEY=carto-key')
+    })
+
+    test('Env contains CARTODB_BASEMAP_KEY empty when unconfigured', async () => {
+        await runProvision()
+        expect(capturedBody.Env).toContain('CARTODB_BASEMAP_KEY=')
+    })
+
     test('HostConfig.Binds includes userHome mount', async () => {
         await runProvision()
         expect(capturedBody.HostConfig.Binds).toContain('/data/sepal/home/alice:/home/sepal-user')
