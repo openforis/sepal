@@ -21,7 +21,7 @@
 //   sessions(states)                                SELECT WHERE state IN (...)
 //   timedOutSessions()                              PENDING rows older than Timeout.PENDING
 //   sessionOnInstance(instanceId, states)           SELECT one or null
-//   findUsernameByApiKey(apiKey)                    username (lowercased) or null; PENDING/ACTIVE only
+//   findUsernameByApiKey(apiKey)                    username or null; PENDING/ACTIVE only
 //   mostRecentlyClosedSessionByUser()               Map<username, Date>
 //   mostRecentlyClosedSession(username)             { timestamp: Date } or {}
 //   allOpenSessions()                               every PENDING+ACTIVE session, ALL users, as
@@ -45,7 +45,12 @@
 //   closeExpiredSession({...})                      the guarded close (re-asserts every decision)
 //
 // Rows are reconstructed into WorkerSession domain objects, mapping instance_id/host →
-// instance{id,host} (username lowercased).
+// instance{id,host}.
+//
+// Usernames are NOT normalized on the way out. The column collation is ascii_bin, so every
+// lookup is case-sensitive and the schema is lowercase by construction (migration 001 copied the
+// legacy rows as LOWER(username); requestSession and the REST boundary lowercase every write).
+// Normalizing here would only ever have re-normalized data that is already normal.
 
 import {getLogger} from '#sepal/log'
 
@@ -77,11 +82,11 @@ const SESSION_COLUMNS = `id, state, username, worker_type, instance_type, instan
 // backstop.
 const UNATTENDED_ANCHOR = 'COALESCE(last_interaction_time, active_time, creation_time)'
 
-// toSession — maps instance_id/host → instance{id,host}; username lowercased.
+// toSession — maps instance_id/host → instance{id,host}.
 const toSession = row => createWorkerSession({
     id: row.id,
     state: row.state,
-    username: row.username ? row.username.toLowerCase() : row.username,
+    username: row.username,
     workerType: row.worker_type,
     instanceType: row.instance_type,
     instance: {id: row.instance_id, host: row.host},
@@ -221,7 +226,7 @@ const createWorkerSessionRepository = (
             WHERE state IN ('PENDING', 'ACTIVE')
         `)
         return rows.map(row => ({
-            username: row.username ? row.username.toLowerCase() : row.username,
+            username: row.username,
             sessionId: row.sessionId,
             instanceType: row.instance_type,
             creationTime: toDate(row.creation_time),
@@ -267,8 +272,7 @@ const createWorkerSessionRepository = (
         return row ? toSession(row) : null
     }
 
-    // findUsernameByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match, and the
-    // username is lowercased.
+    // findUsernameByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match.
     const findUsernameByApiKey = async apiKey => {
         if (!apiKey) {
             return null
@@ -279,10 +283,10 @@ const createWorkerSessionRepository = (
             [apiKey, PENDING, ACTIVE]
         )
         const row = rows[0]
-        return row?.username ? row.username.toLowerCase() : null
+        return row?.username ?? null
     }
 
-    // mostRecentlyClosedSessionByUser — a plain object { <username-lowercased>: Date }.
+    // mostRecentlyClosedSessionByUser — a plain object { <username>: Date }.
     const mostRecentlyClosedSessionByUser = async () => {
         const [rows] = await pool.query(`
             SELECT username, MAX(update_time) AS update_time
@@ -292,7 +296,7 @@ const createWorkerSessionRepository = (
         `)
         const result = {}
         for (const row of rows) {
-            result[row.username.toLowerCase()] = toDate(row.update_time)
+            result[row.username] = toDate(row.update_time)
         }
         return result
     }

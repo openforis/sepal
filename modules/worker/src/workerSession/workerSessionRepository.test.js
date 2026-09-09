@@ -103,7 +103,7 @@ describe('update', () => {
 describe('getSession', () => {
     test('returns a reconstructed session', async () => {
         query.mockResolvedValue([[{
-            id: 's-9', state: 'ACTIVE', username: 'BOB', worker_type: 'SANDBOX', instance_type: 'T3aSmall',
+            id: 's-9', state: 'ACTIVE', username: 'bob', worker_type: 'SANDBOX', instance_type: 'T3aSmall',
             instance_id: 'i-9', host: 'host-9',
             creation_time: '2026-01-01 00:00:00', update_time: '2026-01-01 00:05:00', api_key: 'k',
             timeout_time: '2026-01-01 00:35:00', last_interaction_time: null,
@@ -111,7 +111,7 @@ describe('getSession', () => {
         }], []])
         const s = await repo.getSession('s-9')
         expect(s.id).toBe('s-9')
-        expect(s.username).toBe('bob') // lowercased
+        expect(s.username).toBe('bob')
         expect(s.instance).toEqual({id: 'i-9', host: 'host-9'})
         expect(s.host).toBe('host-9')
     })
@@ -175,9 +175,9 @@ describe('allOpenSessions', () => {
         expect(params).toBeUndefined()
     })
 
-    test('maps rows to [{username (lowercased), sessionId, instanceType, creationTime}]', async () => {
+    test('maps rows to [{username, sessionId, instanceType, creationTime}]', async () => {
         query.mockResolvedValue([[
-            {username: 'ALICE', sessionId: 's-1', instance_type: 'T3aSmall', creation_time: '2026-01-01 00:00:00'},
+            {username: 'alice', sessionId: 's-1', instance_type: 'T3aSmall', creation_time: '2026-01-01 00:00:00'},
             {username: 'bob', sessionId: 's-2', instance_type: 'M6aLarge', creation_time: '2026-01-02 00:00:00'},
         ], []])
         const result = await repo.allOpenSessions()
@@ -575,8 +575,8 @@ describe('findUsernameByApiKey', () => {
         expect(query).not.toHaveBeenCalled()
     })
 
-    test('WHERE api_key = ? AND state IN (PENDING, ACTIVE); lowercases username', async () => {
-        query.mockResolvedValue([[{username: 'ALICE'}], []])
+    test('WHERE api_key = ? AND state IN (PENDING, ACTIVE)', async () => {
+        query.mockResolvedValue([[{username: 'alice'}], []])
         const r = await repo.findUsernameByApiKey('key-1')
         const [sql, params] = query.mock.calls[0]
         expect(sql).toMatch(/WHERE api_key = \? AND state IN \(\?, \?\)/i)
@@ -591,8 +591,8 @@ describe('findUsernameByApiKey', () => {
 })
 
 describe('mostRecentlyClosedSessionByUser', () => {
-    test('returns { <username-lowercased>: Date } and targets unqualified worker_session', async () => {
-        query.mockResolvedValue([[{username: 'ALICE', update_time: '2026-01-01 00:00:00'}], []])
+    test('returns { <username>: Date } and targets unqualified worker_session', async () => {
+        query.mockResolvedValue([[{username: 'alice', update_time: '2026-01-01 00:00:00'}], []])
         const r = await repo.mostRecentlyClosedSessionByUser()
         const [sql] = query.mock.calls[0]
         expect(sql).toMatch(/FROM `worker_session`/i)
