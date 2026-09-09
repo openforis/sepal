@@ -35,11 +35,18 @@ const updateVisualizations = (recipe, image) => {
     }
 }
 
+// A band the user has not renamed is called by its default name, which is what getAvailableBands reports
+// and what the output actually carries. Reading only `outputName` dropped every visualization over a band
+// nobody had renamed - which is most of them.
+//
+// A band the output does not have is still absent: an input style over `ratio_VV_VH` names nothing this
+// image produces, and the calculated `ratio` is a different band, never a substitute for it.
 const updateVisualization = (visualization, bands) => {
     const outputBands = visualization.bands
-        .map(band => bands
-            .find(({name}) => name === band)?.outputName
-        )
+        .map(band => {
+            const outputBand = bands.find(({name}) => name === band)
+            return outputBand && (outputBand.outputName || outputBand.defaultOutputName)
+        })
     const containsAllBands = outputBands.every(band => band)
     if (containsAllBands) {
         return {...visualization, bands: outputBands}

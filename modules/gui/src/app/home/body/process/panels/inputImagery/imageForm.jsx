@@ -18,6 +18,7 @@ const ADD_ALL_BANDS = Symbol('addAllBands')
 export class ImageForm extends Component {
     state = {
         loadedRecipe: null,
+        loadedId: undefined,
         selected: undefined,
     }
 
@@ -194,24 +195,47 @@ export class ImageForm extends Component {
         ])
     }
 
+    // What the selected source turned out to have, and what that means for the bands already configured.
+    //
+    // The answer must be about the source selected NOW. Two loads can be in flight when a user changes their
+    // mind, and Earth Engine has no obligation to answer in the order it was asked; the late one describes
+    // an image nobody is looking at.
+    //
+    // A band configured against the previous source is not a band of this one. It is dropped rather than
+    // left in the list looking like a valid selection, while everything the new source still has is kept -
+    // switching source is not a reason to discard work that remains meaningful.
     onLoaded(id, loadedBands, loadedVisualizations, loadedRecipe) {
-        const {form, inputs: {bands, visualizations, recipe, includedBands}} = this.props
-        if (!id || !form.isDirty()) {
+        const {form, input, inputs: {bands, visualizations, recipe, includedBands}} = this.props
+        if (!id || id !== input.value || !form.isDirty()) {
             return
         }
+        const changedSource = this.state.loadedId !== id
         bands.set(loadedBands)
         visualizations.set(loadedVisualizations)
-        recipe.set(loadedRecipe.id)
-        this.setState({loadedRecipe})
-        if (!includedBands.value?.length) {
+        recipe.set(loadedRecipe?.id)
+        this.setState({loadedRecipe, loadedId: id})
+        // A source that reports no bands is not a source whose configuration can be reconciled against
+        // anything. The band list is not shown at all in that state, so what is configured is left as it is.
+        if (!Object.keys(loadedBands || {}).length) {
+            return
+        }
+        const configured = includedBands.value || []
+        const retained = configured.filter(({band}) => loadedBands[band])
+        if (retained.length !== configured.length) {
+            includedBands.set(retained)
+        }
+        // Only when the source itself changed. Reloading the same one must not undo a deliberate clearing.
+        if (!retained.length && changedSource) {
             this.addFirstBand(loadedBands)
         }
-        
     }
 
     addFirstBand(loadedBands) {
         const {inputs: {includedBands}} = this.props
-        const availableBands = bandsAvailableToAdd(loadedBands, includedBands.value)
+        const availableBands = bandsAvailableToAdd(loadedBands, [])
+        if (!availableBands.length) {
+            return includedBands.set([])
+        }
         const bandSpec = defaultBand(availableBands[0], loadedBands)
         includedBands.set([bandSpec])
         this.setState({selected: bandSpec.id})

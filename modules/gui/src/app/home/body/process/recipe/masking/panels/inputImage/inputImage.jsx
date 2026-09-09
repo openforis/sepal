@@ -112,7 +112,9 @@ export class InputImage extends React.Component {
         }
 
         const source = imageMaskLayerSource()
-        if (source) {
+        // A layer entry is keyed by the id of what it shows. Applying a section with nothing selected once
+        // wrote an entry with no id and no recipe, which every later open tried to load.
+        if (source?.id) {
             recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
                 .set(['layers.additionalImageLayerSources', {id: source.id}], source)
                 .dispatch()

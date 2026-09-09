@@ -10,12 +10,13 @@ The architecture provides one contract for resolving sources, describing outputs
 owning visualizations. It must replace recipe-specific copying, derivation and refresh logic incrementally rather
 than introducing another parallel synchronization mechanism.
 
-Permanent caller-aware live resolution and coherent execution bundles depend on replacing `sepal-server` with the
-new Node modules. Do not implement a temporary Groovy closure endpoint or load referenced recipes through ambient
-administrator credentials. A bounded browser preflight may temporarily complete one selected root's closure by
-calling the existing authenticated per-recipe GUI read behind an operation-local, batch-shaped adapter. That
-measure neither persists a catalogue nor makes browser evidence the execution graph; recipe Fill, saved-recipe
-discovery and execution bundles remain blocked on their permanent boundaries.
+Recipe storage is now the Node `recipe` module: reads and writes carry a trusted principal, and `revision` is
+owned by the row. What remains blocked is caller-aware LIVE resolution and coherent execution bundles, which need
+an authorized batch or closure read the module does not yet expose, and which cannot use the ambient administrator
+credentials Earth Engine still reads recipes with. A bounded browser preflight completes one selected root's
+closure by calling the existing authenticated per-recipe GUI read behind an operation-local, batch-shaped adapter.
+That measure neither persists a catalogue nor makes browser evidence the execution graph; recipe Fill,
+saved-recipe discovery and execution bundles remain blocked on their permanent boundaries.
 
 Activate output descriptions and capabilities one runtime boundary or consumer family at a time. Each milestone
 must correct an existing defect or deliver a usable generic contract without requiring the rest of the architecture
@@ -224,7 +225,9 @@ unmigrated recipes retain their existing behavior through an explicit and remova
 
 ### 2. Stabilize Apply mask
 
-- Stop treating copied primary bands and visualizations as authoritative source state.
+- ~~Stop treating copied primary bands and visualizations as authoritative source state.~~ Done, generically:
+  the transformation declaration states that band mapping is identity and values are preserved, and consumers
+  read the inherited source's current bands and presets rather than the copied snapshot.
 - Extend the resolved description incrementally with preserved date range and source-visualization ownership.
 - Capture current Earth Engine behavior, add explicit mask-band selection with legacy first-band compatibility, and
   validate required operation inputs.
@@ -254,19 +257,23 @@ Exit criterion: asset Fill is validated end to end and cannot silently remap ban
 
 ### External prerequisite: Node server replacement
 
-The permanent caller-authorized batch/closure boundary is blocked until the current Groovy `sepal-server` has been
-replaced and split into the planned Node modules. The temporary browser preflight used by steps 1 through 4 reuses
-only the existing authenticated per-recipe read; it is not a coherent server resolver and must not grow a new
-Groovy endpoint or broaden the administrator-loading path. After the replacement merges:
+The Groovy `sepal-server` has been replaced. `/api/processing-recipes` is served by the Node `recipe` module
+behind the authenticating gateway, and the storage contract this architecture depends on is in place:
 
-- require a trusted SEPAL principal for every recipe read;
-- return the recipe from one authorized storage boundary with its server-owned monotonic `revision` injected
-  from the recipe row's column as an additive top-level field, never stored in recipe content, with list, load
-  and save all exposing the same committed revision;
-- accept `expectedRevision` on save and return the committed revision, so a client can maintain a revision registry
-  and detect concurrent writes;
-- add permanent owner/non-owner, missing-principal and cache-isolation tests;
-- remove ambient administrator recipe access from GEE when its replacement owns every legitimate read.
+- every recipe read and write requires a trusted SEPAL principal, and reads are scoped to the owner;
+- `revision` is a column on the recipe row, injected as an additive top-level field and never stored in recipe
+  content, with list, load and save all exposing the same committed revision;
+- save accepts `expectedRevision` and returns the committed revision, so a client maintains a revision registry
+  and detects concurrent writes;
+- owner, non-owner and missing-principal behavior is covered by the module's own tests.
+
+Two things remain, and they are what still blocks the milestones below rather than the replacement itself:
+
+- there is no authorized batch or closure read. The temporary browser preflight used by steps 1 through 4 reuses
+  only the per-recipe read; it is not a coherent server resolver and must not grow into one;
+- Earth Engine still reads referenced recipes with ambient administrator credentials
+  (`lib/js/ee/src/recipe.js`), which the recipe service still honours. That access is removed once caller-aware
+  loading owns every legitimate read.
 
 The full storage contract, including no-op save behavior and normalization requirements, is defined in
 [source-freshness.md](source-freshness.md). `revision` is distinct from the existing `typeVersion`, which is
@@ -360,6 +367,12 @@ No update-time or temporary content-hash bridge is involved.
 - A distributed GEE metadata cache.
 - Fine-grained data/schema/presentation fingerprints.
 - Automatic repair of missing band selections.
+- Live input-imagery panel refresh when the selected source recipe changes without changing its ID. Start with
+  Band Math and the shared Stack/Remapping form: refresh available bands and visualizations while the panel stays
+  open, preserve user configuration and identify unavailable selections rather than silently rewriting them.
+  Reject superseded responses; verify upstream band removal and restoration without reopening the panel. This is
+  separate from correcting explicit asset/recipe switching and must preserve the existing live visualization
+  propagation into Masking.
 - One repository-wide migration commit.
 - Recipe Fill before the Node server replacement supplies its permanent caller-authorized source boundary.
 - Execution bundles before recipe content has reliable monotonic revision evidence.

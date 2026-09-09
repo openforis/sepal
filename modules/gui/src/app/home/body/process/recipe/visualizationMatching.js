@@ -19,6 +19,61 @@ import _ from 'lodash'
 export const visualizationsWithAvailableBands = (visualizations, availableBands) =>
     (visualizations || []).filter(({bands}) => bands.every(band => availableBands.includes(band)))
 
+// What a direct renderer may be offered: the name rule above, plus the physical one. An array-valued band has
+// no single value per pixel to colour, so a style over one cannot be drawn whatever its name says - and that
+// is true of a style the user saved exactly as it is of one inherited from the source, which is why this
+// takes ALL candidates rather than presets alone.
+//
+// A filter, never a deletion. The style stays in the recipe and the band stays exportable; only the offer to
+// draw it is withheld. Dimensionality has to be positively observed: a band whose type nothing reported is
+// left a candidate rather than being relabelled scalar or array.
+export const renderableVisualizations = (visualizations, availableBands = {}) => {
+    const names = Object.keys(availableBands)
+    const isArrayValued = band => availableBands[band]?.dataType?.arrayDimensions > 0
+    return visualizationsWithAvailableBands(visualizations, names)
+        .filter(({bands}) => !bands.some(isArrayValued))
+}
+
+// Keeping the identity a set of visualizations is already known by.
+//
+// A source read again yields the same styles as different objects, and where those objects are identified
+// per read - an asset's presets are parsed out of its properties and given a fresh id every time - a saved
+// selection naming one by id would be orphaned on every refresh. Matching is therefore by what a style IS,
+// in three passes over the whole set so no candidate can claim an identity another candidate matches better:
+//
+//   1. an id already recorded is a genuine identity, kept as it is;
+//   2. then an identical definition, which is an unchanged style whose id was regenerated;
+//   3. then the band list, which is a restyled version of a style over those bands.
+//
+// Each recorded identity is claimed once. That is what stops a deleted style from handing its id to its
+// surviving sibling over the same bands: the sibling matches itself exactly in pass 2, and the deleted one's
+// id is simply left unclaimed. Two styles over one band changing together in the same read remain ambiguous,
+// and pass 3 resolves them in order.
+export const withKnownIdentities = (visualizations, known) => {
+    const candidates = visualizations || []
+    const remaining = (known || []).filter(({id, bands}) => id && bands)
+    const claimed = new Array(candidates.length).fill(undefined)
+
+    const claim = matches => candidates.forEach((visParams, index) => {
+        if (claimed[index] !== undefined) {
+            return
+        }
+        const found = remaining.findIndex(entry => matches(visParams, entry))
+        if (found >= 0) {
+            claimed[index] = remaining.splice(found, 1)[0].id
+        }
+    })
+
+    claim((visParams, entry) => Boolean(visParams.id) && visParams.id === entry.id)
+    claim((visParams, entry) => _.isEqual(_.omit(visParams, 'id'), _.omit(entry, 'id')))
+    claim((visParams, entry) => _.isEqual(visParams.bands, entry.bands))
+
+    return candidates.map((visParams, index) => {
+        const id = claimed[index] || visParams.id
+        return id ? {...visParams, id} : visParams
+    })
+}
+
 export const MATCHED = 'MATCHED'
 export const STALE = 'STALE'
 export const UNSELECTED = 'UNSELECTED'

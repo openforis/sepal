@@ -23,8 +23,9 @@ local lineage resolver or another copied-source snapshot model. It also must not
 capabilities, caller-authorized recursive loading or execution bundles.
 
 Constant Fill adds no dependency edge and can ship after Apply mask is stable. Asset Fill can follow through the
-existing linked Earth Engine identity. Recipe Fill is blocked until the Node replacement for `sepal-server`
-provides caller-authorized recipe reads; no temporary Groovy endpoint should be built for it.
+existing linked Earth Engine identity. Recipe Fill is blocked until the Node `recipe` module exposes a
+caller-authorized closure or batch read; its per-recipe read is not that boundary, and ambient administrator
+access is not a substitute for it.
 
 ## Current behavior
 
@@ -250,10 +251,14 @@ capability checks without introducing another resolver.
   uses `sample`; the migrated output description must preserve that per-band requirement through Apply mask.
 - Recipe and asset wrappers must keep the selected outer execution reference. Asset-backed capabilities require
   verified metadata evidence; a terminal asset ID or arbitrary property is not sufficient.
-- Masking's `model.imageToMask.bands` and `visualizations` are a snapshot taken when the input panel loads a
-  dirty form. Opening the recipe does not refresh them, so they go stale when the source recipe's bands
-  change. This is the "stale snapshots must not silently override the actual output" problem in the Output
-  metadata section.
+- Masking's `model.imageToMask.bands` and `visualizations` were a snapshot taken when the input panel loaded a
+  dirty form, and opening the recipe did not refresh them. They are no longer authoritative: an open recipe
+  observes its primary source and holds the result in runtime state, which every band and preset consumer reads
+  in preference to the snapshot. It observes again whenever the selection, the loaded source record or the Earth
+  Engine identity changes. A source that cannot be reached is recorded as unavailable and offers nothing, rather
+  than authorizing the bands the recipe remembers. The snapshot remains in saved recipes, and remains what
+  consumers fall back to only while nothing has been observed - which is still the case wherever a Masking layer
+  is opened outside its own recipe. Removing it needs evidence available without an open recipe.
 - Consumers requiring CCDC, Classification, BAYTS or another domain contract query the named capability and reject
   absent or ambiguous matches before reading source-specific state.
 
@@ -331,7 +336,9 @@ safety boundary rather than capability discovery or Masking support.
 
 ### Phase 2 - stabilize Apply mask
 
-- Stop treating copied primary bands and visualizations as authoritative source state.
+- ~~Stop treating copied primary bands and visualizations as authoritative source state.~~ Done: a recipe
+  declaring that it preserves an input's band mapping and values inherits that input's current bands and
+  presets, observed while the recipe is open. Masking is the first consumer of that declaration.
 - Add explicitly preserved date range and source-visualization ownership through the generic description.
 - Capture current Earth Engine behavior, add explicit mask-band selection with legacy first-band compatibility, and
   validate missing primary and mask inputs without relying on map-layer traversal.
@@ -357,9 +364,8 @@ source catalogue, provenance or CCDC capability derivation.
 
 ### Blocked milestone - add recipe Fill
 
-Recipe Fill waits for the Node replacement for `sepal-server` to expose caller-authorized recipe reads. Do not add
-an interim Groovy implementation and do not route it through ambient administrator credentials. Once that boundary
-exists:
+Recipe Fill waits for the Node `recipe` module to expose a caller-authorized closure or batch read. Do not route
+it through ambient administrator credentials in the meantime. Once that boundary exists:
 
 - add a recipe replacement through the shared dependency graph;
 - apply the same explicit name-based band mapping as asset Fill;

@@ -107,7 +107,8 @@ Required semantics:
   an absent referenced ID is a missing-source result, reported without disclosing foreign ownership. Failure to
   refresh is `UNAVAILABLE` and is never read as proof of deletion.
 
-Idempotent save behavior:
+Idempotent save behavior, which the storage boundary does NOT yet implement - its save is the conditional
+update alone, so a resubmission of already-committed content is answered as a conflict:
 
 ```
 normalize candidate
@@ -144,13 +145,17 @@ revision only when the final content differs. A patch may accompany an authorize
 a client applies it only from the expected base revision and otherwise reloads. Freshness must remain correct when
 only the recipe ID and new revision are announced.
 
-The GUI's autosave currently cancels an in-flight save when the next one arrives for the same recipe, so a
-cancelled request may still have committed. A client that sends `expectedRevision` therefore serializes saves per
-recipe: the next save uses the revision acknowledged by the previous one, so an editing session advances through
-known revisions instead of guessing.
+The GUI serializes saves per recipe rather than cancelling an in-flight one, because a cancelled request may
+still have committed. A save coordinator holds at most one request in flight per recipe and coalesces whatever
+arrives while it is out, so an editing session advances through revisions it has been acknowledged rather than
+guessing. A draft's base revision changes only on an acknowledgement or a coherent load, which is what keeps a
+committed write, a safe retry and a conflicting remote write distinguishable.
 
-If an acknowledgement is lost, replaying the *exact same payload* is safe: the server's no-op check precedes its
-conflict check, so identical content returns the already committed revision. That is the only safe retry.
+If an acknowledgement is lost, recovery is currently the client's: the coordinator loads the recipe and compares
+the committed content with what it sent, adopting the returned revision when they agree and entering the conflict
+flow when they do not. Blind replay is not safe until the storage boundary detects a no-op, because the retry
+carries a base revision the lost acknowledgement may already have advanced. Once that detection exists, replaying
+the *exact same payload* becomes the one safe retry.
 
 A conflict against content written by another session must never be retried blindly. Refreshing the registry to
 the newer revision and resubmitting would overwrite that session's work with this one's. Preserve the local draft

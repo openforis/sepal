@@ -19,10 +19,6 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
-const mapRecipeToProps = (recipe, {source: {id}}) => ({
-    currentUserDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', id]) || []
-})
-
 class _RecipeImageLayerSource extends React.Component {
     state = {
         recipeFailedToLoad: false
@@ -47,35 +43,35 @@ class _RecipeImageLayerSource extends React.Component {
         }
     }
 
+    // A layer entry that names no recipe cannot be loaded, and asking for one is a request for
+    // `/api/processing-recipes/undefined`. Saved recipes contain such entries, so this stands rather than
+    // relying on none being written again - and it reports nothing, because there is no missing dependency
+    // here to report: the entry never referred to anything.
     loadRecipe() {
         const {stream, source: {sourceConfig: {recipeId}}, loadRecipe$} = this.props
         const {recipeFailedToLoad} = this.state
-        if (!recipeFailedToLoad) {
-            stream('LOAD_RECIPE',
-                loadRecipe$(recipeId),
-                recipe => this.updateSourceConfig(recipe),
-                error => {
-                    this.setState({recipeFailedToLoad: true})
-                    Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
-                }
-            )
+        if (!recipeId || recipeFailedToLoad) {
+            return
         }
+        stream('LOAD_RECIPE',
+            loadRecipe$(recipeId),
+            recipe => this.updateSourceConfig(recipe),
+            error => {
+                this.setState({recipeFailedToLoad: true})
+                Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
+            }
+        )
     }
 
+    // The description only. The source's styles are not copied here: they are read from the source wherever
+    // they are offered, so an edit or a deletion there reaches this recipe rather than leaving a copy behind
+    // that nothing can correct. Styles already saved under this layer stay untouched - a copy made by the
+    // previous behavior cannot be told apart from a style the user deliberately made here.
     updateSourceConfig(recipe) {
-        const {currentUserDefinedVisualizations, recipeId, source, recipeActionBuilder} = this.props
+        const {recipeId, source, recipeActionBuilder} = this.props
         const description = toDescription(recipe)
         if (recipeId !== source.sourceConfig.recipeId) {
-            const userDefinedVisualizations = selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe') || []
-            const currentVisualizationIds = currentUserDefinedVisualizations.map(({id}) => id)
-            userDefinedVisualizations
-                .reduce(
-                    (builder, visualization) =>
-                        currentVisualizationIds.includes(visualization.id)
-                            ? builder
-                            : builder.push(['layers.userDefinedVisualizations', source.id], visualization),
-                    recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
-                )
+            recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
                 .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
                 .dispatch()
         }
@@ -85,7 +81,7 @@ class _RecipeImageLayerSource extends React.Component {
 export const RecipeImageLayerSource = compose(
     _RecipeImageLayerSource,
     connect(mapStateToProps),
-    withRecipe(mapRecipeToProps),
+    withRecipe(),
     recipeAccess()
 )
 

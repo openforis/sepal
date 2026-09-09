@@ -15,7 +15,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {findVisualization, MATCHED, selectionState, UNSELECTED, visualizationsWithAvailableBands} from './visualizationMatching'
+import {findVisualization, MATCHED, renderableVisualizations, selectionState, UNSELECTED} from './visualizationMatching'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 
 // The graph is derived HERE rather than in the component, because an edit to a watched dependency has to
@@ -127,10 +127,11 @@ class _RecipeImageLayer extends React.Component {
 
     toAllVis() {
         const {currentRecipe, recipe, sourceId} = this.props
-        // Source-scoped user styles are held to the same band-name rule the presets are.
-        const availableBands = Object.keys(getRecipeType(recipe.type).getAvailableBands(recipe) || {})
+        // Source-scoped user styles are held to the same rule the presets are: the bands they name must
+        // exist, and must be ones a renderer can draw.
+        const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe) || {}
         return [
-            ...visualizationsWithAvailableBands(getUserDefinedVisualizations(currentRecipe, sourceId), availableBands),
+            ...renderableVisualizations(getUserDefinedVisualizations(currentRecipe, sourceId), availableBands),
             ...getAllVisualizations(recipe),
         ]
     }

@@ -130,3 +130,96 @@ describe('ImageForm band collection', () => {
         expect(addButton.props.disabled).toBe(true)
     })
 })
+
+// Selecting a different image is not a refresh of the same one. The bands already configured were chosen
+// against the previous source; those the new source does not have describe nothing, and leaving them in the
+// list presents them as valid selections.
+describe('ImageForm on a source change', () => {
+    const spec = (id, band) => ({id, band, type: 'continuous', legendEntries: []})
+
+    const form = ({configured, selected = 'asset-2', loadedId} = {}) => {
+        const includedBands = {value: configured, set: vi.fn()}
+        const bands = {value: {}, set: vi.fn()}
+        const visualizations = {set: vi.fn()}
+        const recipe = {set: vi.fn()}
+        const imageForm = new ImageForm({
+            form: {isDirty: () => true},
+            input: {value: selected},
+            inputs: {bands, includedBands, visualizations, recipe}
+        })
+        imageForm.setState = state => Object.assign(imageForm.state, state)
+        if (loadedId) {
+            imageForm.state.loadedId = loadedId
+        }
+        return {imageForm, includedBands, bands}
+    }
+
+    it('drops a configured band the new source does not have', () => {
+        const {imageForm, includedBands} = form({
+            configured: [spec('a', 'VV'), spec('b', 'gone')],
+            loadedId: 'asset-1'
+        })
+
+        imageForm.onLoaded('asset-2', {VV: {}, VH: {}}, [], {id: 'asset-2'})
+
+        expect(includedBands.set).toHaveBeenCalledWith([expect.objectContaining({id: 'a'})])
+    })
+
+    it('keeps one the new source still has', () => {
+        const {imageForm, includedBands} = form({configured: [spec('a', 'VV')], loadedId: 'asset-1'})
+
+        imageForm.onLoaded('asset-2', {VV: {}, VH: {}}, [], {id: 'asset-2'})
+
+        expect(includedBands.set).not.toHaveBeenCalled()
+    })
+
+    it('configures a first band when nothing configured survives the change', () => {
+        const {imageForm, includedBands} = form({configured: [spec('a', 'gone')], loadedId: 'asset-1'})
+
+        imageForm.onLoaded('asset-2', {VV: {}, VH: {}}, [], {id: 'asset-2'})
+
+        expect(includedBands.set).toHaveBeenLastCalledWith([expect.objectContaining({band: 'VV'})])
+    })
+
+    // Reloading the same source is not a change, and must not undo a deliberate clearing.
+    it('adds nothing back when the same source is loaded again', () => {
+        const {imageForm, includedBands} = form({configured: [], loadedId: 'asset-2'})
+
+        imageForm.onLoaded('asset-2', {VV: {}, VH: {}}, [], {id: 'asset-2'})
+
+        expect(includedBands.set).not.toHaveBeenCalled()
+    })
+
+    it('configures a first band on the first load, as before', () => {
+        const {imageForm, includedBands} = form({configured: []})
+
+        imageForm.onLoaded('asset-2', {VV: {}, VH: {}}, [], {id: 'asset-2'})
+
+        expect(includedBands.set).toHaveBeenCalledWith([expect.objectContaining({band: 'VV'})])
+    })
+
+    // Two loads can be in flight when the user changes their mind, and they need not answer in order.
+    it('ignores an answer about a source that is no longer selected', () => {
+        const {imageForm, includedBands, bands} = form({
+            configured: [spec('a', 'VV')],
+            selected: 'asset-2',
+            loadedId: 'asset-1'
+        })
+
+        imageForm.onLoaded('asset-1', {other: {}}, [], {id: 'asset-1'})
+
+        expect(bands.set).not.toHaveBeenCalled()
+        expect(includedBands.set).not.toHaveBeenCalled()
+    })
+
+    // A source that reports no bands shows no band list at all, so there is nothing to reconcile against
+    // and nothing to add.
+    it('leaves what is configured alone when the source reports no bands', () => {
+        const {imageForm, includedBands, bands} = form({configured: [spec('a', 'VV')], loadedId: 'asset-1'})
+
+        imageForm.onLoaded('asset-2', {}, [], {id: 'asset-2'})
+
+        expect(bands.set).toHaveBeenCalledWith({})
+        expect(includedBands.set).not.toHaveBeenCalled()
+    })
+})

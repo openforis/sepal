@@ -6,7 +6,7 @@ import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 
-import {visualizationsWithAvailableBands} from '../visualizationMatching'
+import {renderableVisualizations} from '../visualizationMatching'
 import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -29,10 +29,13 @@ class _MaskingImageLayer extends React.Component {
     // the palette that would have described it. The saved selection itself is left alone by all three.
     renderImageLayerForm() {
         const {recipe, source, layerConfig = {}} = this.props
-        const availableBands = Object.keys(getAvailableBands(recipe))
-        const preSetOptions = visualizationsWithAvailableBands(getPreSetVisualizations(recipe), availableBands)
+        const availableBands = getAvailableBands(recipe)
+        // Identified by id where the style has one. Two inherited styles can describe the same bands, and
+        // keying the option by its band list would collapse them into one choice the selection cannot tell
+        // apart. An unidentified preset still has only its bands to be known by.
+        const preSetOptions = renderableVisualizations(getPreSetVisualizations(recipe), availableBands)
             .map(visParams => ({
-                value: visParams.bands.join(', '),
+                value: visParams.id || visParams.bands.join(', '),
                 label: visParams.bands.join(', '),
                 visParams
             }))

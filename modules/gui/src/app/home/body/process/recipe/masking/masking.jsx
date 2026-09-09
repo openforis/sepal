@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {SourceEvidenceSync} from '~/app/home/body/process/recipe/sourceEvidenceSync'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -32,6 +33,7 @@ class _Masking extends React.Component {
             <Map>
                 <MaskingToolbar/>
                 <Aoi value={imageToMask}/>
+                <SourceEvidenceSync/>
             </Map>
         )
     }

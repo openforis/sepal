@@ -90,8 +90,10 @@ describe('MaskingImageLayer preset options', () => {
         expect(presetBands(selector)).toEqual([])
     })
 
-    it('passes the source band names to the selector, so user-defined styles follow the same rule', () => {
-        expect(selector.props.availableBands).toEqual(SEGMENT_BANDS)
+    // The band descriptions rather than the names alone: a user-defined style is held to the same rule as a
+    // preset, and that rule needs to know which bands are array-valued.
+    it('passes the source bands to the selector, so user-defined styles follow the same rule', () => {
+        expect(Object.keys(selector.props.availableBands)).toEqual(SEGMENT_BANDS)
     })
 })
 
@@ -115,6 +117,47 @@ describe('MaskingImageLayer stale selection', () => {
         })
         expect(layerConfig.visParams).toEqual(NDVI)
         expect(selector.props.selectedVisParams).toBe(layerConfig.visParams)
+    })
+})
+
+// An inherited style is the source's, offered here to be chosen or cloned. Two of them can describe the
+// same bands, and a selection names one of them in particular.
+describe('MaskingImageLayer inherited styles', () => {
+    const RED = {id: 'v-red', bands: ['red'], type: 'continuous', palette: ['#100', '#200']}
+    const ALSO_RED = {id: 'v-red-2', bands: ['red'], type: 'continuous', palette: ['#300', '#400']}
+
+    const twoOverOneBand = visParams => selectorOf({
+        bands: ['red'],
+        visualizations: [RED, ALSO_RED],
+        visParams
+    })
+
+    it('offers each of two styles over the same bands', () => {
+        const {selector} = twoOverOneBand()
+
+        expect(selector.props.presetOptions[0].options.map(({value}) => value))
+            .toEqual(['v-red', 'v-red-2'])
+    })
+
+    it('keeps the selected one selected, rather than the first over those bands', () => {
+        const {selector} = twoOverOneBand(ALSO_RED)
+
+        expect(selectedOptionOf(selector)).toBe('v-red-2')
+    })
+
+    // `userDefined` is what the selector reads to offer editing and removal. An inherited style is neither
+    // this recipe's to edit nor its to delete.
+    it('offers them as styles to clone, not to edit', () => {
+        const {selector} = twoOverOneBand()
+
+        expect(selector.props.presetOptions[0].options
+            .every(({visParams}) => visParams.userDefined === undefined)).toBe(true)
+    })
+
+    it('still knows an unidentified preset by its bands', () => {
+        const {selector} = selectorOf({bands: ['red'], visualizations: [{bands: ['red'], type: 'continuous'}]})
+
+        expect(selector.props.presetOptions[0].options.map(({value}) => value)).toEqual(['red'])
     })
 })
 

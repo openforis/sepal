@@ -7,9 +7,10 @@ import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
+import {select} from '~/store'
 import {uuid} from '~/uuid'
 
-import {initializeRecipe} from './recipe'
+import {initializeRecipe, isRecipeOpen, recipePath} from './recipe'
 import {getRecipeType} from './recipeTypeRegistry'
 
 let componentIdsByRecipeId = {}
@@ -36,6 +37,7 @@ export const recipeAccess = () =>
                     ...this.props,
                     usingRecipe: recipeId => this.usingRecipe(recipeId),
                     loadRecipe$: recipeId => this.loadRecipe$(recipeId),
+                    reloadRecipe$: recipeId => this.reloadRecipe$(recipeId),
                     loadSourceRecipe$: recipeId => this.loadSourceRecipe$(recipeId),
                     loadedRecipes
                 })
@@ -77,6 +79,29 @@ export const recipeAccess = () =>
                         map(recipe => initializeRecipe(recipe)),
                         tap(recipe => this.cacheRecipe(recipe))
                     )
+            }
+
+            // Reads the persisted recipe even when this cache holds one, and replaces what it holds. For a
+            // caller that has learned the cached record is behind - a newer revision in the catalogue - and
+            // must not go on answering from it. The caller decides that; this only knows how to refresh.
+            reloadRecipe$(recipeId) {
+                this.usingRecipe(recipeId)
+                return api.recipe.load$(recipeId).pipe(
+                    map(recipe => initializeRecipe(recipe)),
+                    map(recipe => this.acceptReload(recipe))
+                )
+            }
+
+            // Whether the response may be written is decided when it ARRIVES, not when it was asked for. The
+            // recipe can be opened for editing while the read is in flight, and the draft the user is now
+            // working on is not something a dependency read may overwrite. The caller is handed that draft
+            // instead, so it goes on reading what the session is actually editing.
+            acceptReload(recipe) {
+                if (isRecipeOpen(recipe.id)) {
+                    return select(recipePath(recipe.id)) || recipe
+                }
+                this.cacheRecipe(recipe)
+                return recipe
             }
 
             loadSourceRecipe$(recipeId) {

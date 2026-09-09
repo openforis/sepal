@@ -463,6 +463,18 @@ range and source visualizations can be added to a source description without add
 methods or another source traversal. Inherited source visualizations are evidence; locally edited visualization
 state, applicability and final export filtering remain owned by their consumers.
 
+Current bands and visualizations are inherited while the consuming recipe is open, but not yet through this
+runtime. `SourceEvidenceSync` uses the shared closure-completion boundary with the session's reference-counted
+recipe loader. It observes the immediate source's bands and follows declared inheritance over the resolved
+records for visualizations, including styles owned by the source and intermediate wrappers rather than their
+copied presets. Its operation basis tracks dependency records, catalogue revisions, asset listing `updateTime`
+and Earth Engine identity; changes trigger re-observation and superseded answers cannot publish.
+
+Evidence stays in runtime state for synchronous map, layer-form, Retrieve and export consumers. Open drafts are
+not overwritten by persisted dependency reloads. Failed observations offer no bands or visualizations; saved
+snapshots remain the fallback only where nothing has been observed. A shared live `watchSource$` would make this
+evidence available without an open consuming recipe and allow that fallback to retire.
+
 ### Fill operations
 
 Constant Fill requires no new source lookup. Direct asset Fill can reuse asset observation through the source

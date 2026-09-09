@@ -60,10 +60,10 @@ deduplicated missing frontiers under the current user, and retains returned reco
 does not require a new Groovy endpoint, does not use administrator credentials and does not make browser evidence a
 coherent execution graph. Missing or forbidden records still fail closed.
 
-The permanent live-resolution and execution-bundle boundary remains blocked on the planned Node replacement for
-`sepal-server`. Do not implement a temporary Groovy closure endpoint or activate a new administrator-backed loading
-path before that replacement reaches `master`. Graph traversal, capability derivation, operation-local closure
-completion, bundle construction and cache behavior remain in JavaScript.
+The permanent live-resolution and execution-bundle boundary remains blocked, no longer on the Node replacement
+for `sepal-server` - which has merged - but on the authorized batch or closure read that replacement does not yet
+expose. Do not activate an administrator-backed loading path in its place. Graph traversal, capability derivation,
+operation-local closure completion, bundle construction and cache behavior remain in JavaScript.
 
 Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. The existing GEE
 configuration credentials are removed when caller-aware loading replaces their only GEE use, or narrowly scoped if
