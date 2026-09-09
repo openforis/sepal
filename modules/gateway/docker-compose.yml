@@ -5,8 +5,10 @@ services:
       service: logger
     image: "redis:6"
     container_name: gateway-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - "${SEPAL_DATA_DIR}/gateway-redis:/data"
+      - "${SEPAL_PROJECT_DIR}/modules/gateway/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

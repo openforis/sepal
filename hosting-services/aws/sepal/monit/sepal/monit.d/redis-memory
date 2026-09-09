@@ -1,0 +1,16 @@
+check program email-redis-memory with path /usr/local/bin/redismemcheck-email-redis
+    if status >= 2 then exec "/usr/local/bin/pushover-notify 2"
+    if status == 1 then exec "/usr/local/bin/pushover-notify -1"
+
+check program gateway-redis-memory with path /usr/local/bin/redismemcheck-gateway-redis
+    if status >= 2 then exec "/usr/local/bin/pushover-notify 2"
+    if status == 1 then exec "/usr/local/bin/pushover-notify -1"
+
+check program scene-metadata-redis-memory with path /usr/local/bin/redismemcheck-scene-metadata-redis
+    if status >= 2 then exec "/usr/local/bin/pushover-notify 2"
+    if status == 1 then exec "/usr/local/bin/pushover-notify -1"
+
+check program user-assets-redis-memory with path /usr/local/bin/redismemcheck-user-assets-redis
+    if status >= 2 then exec "/usr/local/bin/pushover-notify 2"
+    if status == 1 then exec "/usr/local/bin/pushover-notify -1"
+
