@@ -1,5 +1,5 @@
 // ReleaseInstance:
-//   1. provider.getInstance(instanceId) — if null, nothing to do.
+//   1. provider.getInstance(instanceId) — if null, drop any orphaned claim and return.
 //   2. claims.release(instanceId) race-check — false means we lost the race: skip undeploy, but
 //      STILL call provider.release(instanceId) and emit InstanceReleased.
 //   3. Won race AND instance.host set → provisioner.undeploy(instance).
@@ -55,7 +55,7 @@ const releaseInstance = async (instanceId, {claims, provider, provisioner}) => {
         try {
             await claims.release(instanceId)
         } catch (termErr) {
-            log.error(`Failed to mark ${instanceTag(instanceId)} terminated in repo: ${termErr.message}`)
+            log.error(`Failed to release claim for ${instanceTag(instanceId)} during error recovery: ${termErr.message}`)
         }
     }
 }
