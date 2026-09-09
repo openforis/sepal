@@ -12,7 +12,7 @@ jest.unstable_mockModule('../db.js', () => ({
 }))
 
 const {createInstanceRepository} = await import('./instanceRepository.js')
-const {idleInstances, launched, released, reserved, terminated} = createInstanceRepository()
+const {idleInstances, launched, reconciled, released, reserved, terminated} = createInstanceRepository()
 
 beforeEach(() => query.mockReset())
 
@@ -127,5 +127,27 @@ describe('idleInstances', () => {
         query.mockResolvedValue([[], []])
         const ids = await idleInstances('m4.xlarge')
         expect(ids).toEqual([])
+    })
+})
+
+describe('reconciled', () => {
+    test('adopts unseen instances with INSERT IGNORE and returns the count', async () => {
+        query.mockResolvedValue([{affectedRows: 1}, []])
+        const adopted = await reconciled([{id: 'i-010', type: 'm4.xlarge'}])
+        const insert = query.mock.calls.find(([sql]) => /INSERT IGNORE INTO instance/i.test(sql))
+        expect(insert[1]).toEqual(['i-010', 'm4.xlarge'])
+        expect(adopted).toBe(1)
+    })
+
+    // A worker type is never the empty string ('sandbox' / 'task-executor'), so a row carrying one
+    // is corruption, not a live reservation: it matches neither `worker_type IS NULL` (invisible to
+    // RequestInstance) nor the INSERT IGNORE above (never re-adopted), so without this repair the
+    // instance sits idle and unusable for the rest of its life.
+    test('repairs rows whose worker_type is the empty string', async () => {
+        query.mockResolvedValue([{affectedRows: 0, changedRows: 0}, []])
+        await reconciled([{id: 'i-010', type: 'm4.xlarge'}])
+        const repair = query.mock.calls.find(([sql]) => /UPDATE instance SET worker_type = NULL/i.test(sql))
+        expect(repair).toBeDefined()
+        expect(repair[0]).toMatch(/worker_type = ''/)
     })
 })

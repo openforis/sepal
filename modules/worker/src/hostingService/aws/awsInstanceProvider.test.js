@@ -301,6 +301,28 @@ describe('launch params (RunInstancesCommand)', () => {
         const stateTag = firstTagInput.Tags.find(t => t.Key === 'State')
         expect(stateTag.Value).toBe('idle')
     })
+
+    // RunInstances answers BEFORE the tags exist — this provider tags in a separate CreateTags
+    // call — so the instances launchIdle builds from that answer carry no State tag. They must
+    // still come back idle: SizeIdlePool feeds them straight to repo.launched, which reads
+    // reservation.workerType, and a non-null reservation writes worker_type = '' instead of NULL,
+    // hiding the pooled instance from RequestInstance's `worker_type IS NULL` lookup forever.
+    test('launchIdle returns idle instances even though RunInstances answers untagged', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(RunInstancesCommand).resolves({
+            Instances: [makeAwsInstance({InstanceId: 'i-pool1', Tags: undefined})],
+        })
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        const [instance] = await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        expect(instance.reservation).toBeNull()
+    })
 })
 
 describe('launchReserved public-IP polling', () => {

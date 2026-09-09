@@ -359,12 +359,20 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // instanceType is a catalog ID — see createInstanceTypeCodec.
+    //
+    // The reservation is pinned to null rather than left to toWorkerInstance, exactly as
+    // launchReserved pins its own: RunInstances answers before CreateTags runs, so the response
+    // carries no State tag and toWorkerInstance would read the instance as reserved-by-nobody
+    // ({username: '', workerType: ''}). SizeIdlePool hands the result straight to repo.launched,
+    // where a non-null reservation writes worker_type = '' instead of NULL — a row that
+    // `worker_type IS NULL` never matches again, so the instance stays idle on EC2, counts
+    // towards the pool target, and can never be handed to a session.
     const launchIdle = async (instanceType, count) => {
         const awsInstances = await launch(instanceType, count)
         const results = []
         for (const awsInst of awsInstances) {
             await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), idleTags(environment))
-            results.push(toWorkerInstance(awsInst, codec))
+            results.push({...toWorkerInstance(awsInst, codec), reservation: null})
         }
         return results
     }

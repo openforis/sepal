@@ -79,6 +79,12 @@ const createInstanceRepository = (pool = getPool()) => {
     // INSERT IGNORE, never UPDATE: a row that already exists may have been reserved by
     // RequestInstance a microsecond ago, and adopting must not un-reserve a live session.
     const reconciled = async instances => {
+        // Repair before adopting. A worker type is never the empty string, so such a row is
+        // corruption rather than a live reservation — and it is invisible to every other statement
+        // here: `idleInstances` wants NULL, the INSERT IGNORE below leaves an existing row alone,
+        // and `forgotten` only deletes NULL rows. Left alone the instance stays idle at the
+        // hosting service, keeps counting towards the pool target, and can never be reserved.
+        await pool.query('UPDATE instance SET worker_type = NULL WHERE worker_type = \'\'')
         let adopted = 0
         for (const instance of instances) {
             const [result] = await pool.query(
