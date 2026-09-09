@@ -7,7 +7,7 @@ import {fetchAppsFromApi$, fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
 import {buildAndRestart, isContainerRunning, startContainer} from './docker.js'
 import {cloneOrPull} from './git.js'
-import {refreshProxyEndpoints} from './proxyManager.js'
+import {hasProxies, refreshProxyEndpoints} from './proxyManager.js'
 
 const log = getLogger('apps')
 
@@ -62,11 +62,14 @@ const updateApp$ = ({path, repository, branch, commit, name}) =>
                     if (!running) {
                         log.info('Containers are not running. Starting them without rebuilding.')
                         return from(startContainer(name)).pipe(
-                            switchMap(() => refreshProxies())
+                            switchMap(() => refreshProxies('container started'))
                         )
                     }
                     log.info('No updates available and containers are running.')
-                    return of(null)
+                    // Startup registration can have failed while the gateway was down. Recover without a restart.
+                    return hasProxies()
+                        ? of(null)
+                        : refreshProxies('no proxy endpoints registered')
                 })
             )
         }),
@@ -76,8 +79,8 @@ const updateApp$ = ({path, repository, branch, commit, name}) =>
         })
     )
 
-const refreshProxies = () => {
-    log.info('Refreshing proxy endpoints after container started...')
+const refreshProxies = reason => {
+    log.info(`Refreshing proxy endpoints: ${reason}`)
     return from(refreshProxyEndpoints()).pipe(
         catchError(error => {
             log.error('Failed to refresh proxy endpoints:', error)

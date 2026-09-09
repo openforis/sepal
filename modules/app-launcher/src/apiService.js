@@ -1,4 +1,4 @@
-import {catchError, EMPTY, map} from 'rxjs'
+import {catchError, map, throwError} from 'rxjs'
 
 import {get$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
@@ -16,7 +16,7 @@ const fetchAppsFromApi$ = () => {
         map(response => JSON.parse(response.body)),
         catchError(error => {
             log.error('Failed to fetch apps from API:', error)
-            return EMPTY
+            return throwError(() => error)
         })
     )
 }
@@ -26,7 +26,7 @@ const fetchCatalog$ = url =>
         map(response => JSON.parse(response.body)),
         catchError(error => {
             log.error(`Failed to fetch apps catalog from ${url}:`, error)
-            return EMPTY
+            return throwError(() => error)
         })
     )
 
