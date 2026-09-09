@@ -360,11 +360,13 @@ describe('releaseInstance', () => {
         events = await import('./events.js')
     })
 
+    const makeClaims = (overrides = {}) => ({
+        release: jest.fn().mockResolvedValue(true),
+        ...overrides,
+    })
+
     const makeDeps = (overrides = {}) => ({
-        repo: {
-            released: jest.fn().mockResolvedValue(true),
-            terminated: jest.fn().mockResolvedValue(undefined),
-        },
+        claims: makeClaims(),
         provider: {
             getInstance: jest.fn().mockResolvedValue(makeReservedInstance()),
             release: jest.fn().mockResolvedValue(undefined),
@@ -400,19 +402,19 @@ describe('releaseInstance', () => {
 
         await releaseInstance('i-missing', deps)
 
-        expect(deps.repo.released).not.toHaveBeenCalled()
+        expect(deps.claims.release).toHaveBeenCalledWith('i-missing')
         expect(deps.provisioner.undeploy).not.toHaveBeenCalled()
         expect(released).toHaveLength(0)
     })
 
-    test('race (repo.released returns false): skips undeploy but still calls provider.release and emits InstanceReleased', async () => {
+    test('race (claims.release returns false): skips undeploy but still calls provider.release and emits InstanceReleased', async () => {
         // raceCondition=true skips undeploy but still falls through to provider.release(instanceId)
         // and the InstanceReleased event.
         const released = []
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        deps.repo.released = jest.fn().mockResolvedValue(false)
+        deps.claims.release = jest.fn().mockResolvedValue(false)
 
         await releaseInstance('i-raced', deps)
 
@@ -423,7 +425,7 @@ describe('releaseInstance', () => {
         expect(payload.instance).toBeDefined()
     })
 
-    test('failure path: emits FailedToReleaseInstance, calls terminate + repo.terminated', async () => {
+    test('failure path: emits FailedToReleaseInstance, calls terminate + claims.release', async () => {
         const failed = []
         events.failedToReleaseInstance$.subscribe(v => failed.push(v))
 
@@ -437,7 +439,35 @@ describe('releaseInstance', () => {
         expect(payload.instanceId).toBe('i-fail')
         expect(typeof payload.error).toBe('string')
         expect(deps.provider.terminate).toHaveBeenCalledWith('i-fail')
-        expect(deps.repo.terminated).toHaveBeenCalledWith('i-fail')
+        expect(deps.claims.release).toHaveBeenCalledWith('i-fail')
+    })
+
+    test('an unknown instance still drops its orphaned claim', async () => {
+        const claims = makeClaims()
+        const provider = {getInstance: jest.fn().mockResolvedValue(null), release: jest.fn(), terminate: jest.fn()}
+        const provisioner = {undeploy: jest.fn()}
+
+        await releaseInstance('i-gone', {claims, provider, provisioner})
+
+        expect(claims.release).toHaveBeenCalledWith('i-gone')
+        expect(provisioner.undeploy).not.toHaveBeenCalled()
+    })
+
+    // The claim is the race sentinel: no row means another release already owns this instance.
+    test('no claim to delete: skips the undeploy but still releases at the provider', async () => {
+        const claims = makeClaims({release: jest.fn().mockResolvedValue(false)})
+        const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
+        const provider = {
+            getInstance: jest.fn().mockResolvedValue(instance),
+            release: jest.fn().mockResolvedValue(undefined),
+            terminate: jest.fn(),
+        }
+        const provisioner = {undeploy: jest.fn()}
+
+        await releaseInstance('i-1', {claims, provider, provisioner})
+
+        expect(provisioner.undeploy).not.toHaveBeenCalled()
+        expect(provider.release).toHaveBeenCalledWith('i-1')
     })
 
     test('failure path: terminate failure is swallowed (does not throw)', async () => {
@@ -678,9 +708,8 @@ describe('releaseUnusedInstances', () => {
     const NEW_TIME = new Date(Date.now() - 30 * 1000)      // 30 sec ago
 
     const makeFullDeps = reservedInstances => ({
-        repo: {
-            released: jest.fn().mockResolvedValue(true),
-            terminated: jest.fn().mockResolvedValue(undefined),
+        claims: {
+            release: jest.fn().mockResolvedValue(true),
         },
         provider: {
             reservedInstances: jest.fn().mockResolvedValue(reservedInstances),

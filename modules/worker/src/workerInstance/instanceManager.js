@@ -28,7 +28,7 @@ import {findMissingInstances} from './query/findMissingInstances.js'
 
 const log = getLogger('worker/instanceManager')
 
-const createInstanceManager = ({claims, repo, provider, provisioner, instanceTypes}) => {
+const createInstanceManager = ({claims, repo: _repo, provider, provisioner, instanceTypes}) => {
 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.
@@ -41,7 +41,7 @@ const createInstanceManager = ({claims, repo, provider, provisioner, instanceTyp
 
     const _releaseInstance = async instanceId => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, {repo, provider, provisioner})
+        return releaseInstance(instanceId, {claims, provider, provisioner})
     }
 
     // releaseUnusedInstances — reclaim instances not bound to any active session.
@@ -51,7 +51,7 @@ const createInstanceManager = ({claims, repo, provider, provisioner, instanceTyp
             .filter(s => s.instance && s.instance.id)
             .map(s => s.instance.id)
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
-        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {repo, provider, provisioner})
+        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner})
     }
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither

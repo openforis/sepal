@@ -1,11 +1,11 @@
 // ReleaseInstance:
 //   1. provider.getInstance(instanceId) — if null, nothing to do.
-//   2. repo.released(instanceId) race-check — false means we lost the race: skip undeploy, but
+//   2. claims.release(instanceId) race-check — false means we lost the race: skip undeploy, but
 //      STILL call provider.release(instanceId) and emit InstanceReleased.
 //   3. Won race AND instance.host set → provisioner.undeploy(instance).
 //   4. provider.release(instanceId) → emit InstanceReleased(instance.release()).
 //   5. On ANY exception → emit FailedToReleaseInstance, terminate the instance (swallowing its
-//      own errors), then repo.terminated(instanceId).
+//      own errors), then claims.release(instanceId).
 
 import {getLogger} from '#sepal/log'
 
@@ -18,7 +18,7 @@ import {release} from '../workerInstance.js'
 
 const log = getLogger('worker/releaseInstance')
 
-const releaseInstance = async (instanceId, {repo, provider, provisioner}) => {
+const releaseInstance = async (instanceId, {claims, provider, provisioner}) => {
     log.debug(`Releasing ${instanceTag(instanceId)}...`)
 
     let instance
@@ -26,10 +26,11 @@ const releaseInstance = async (instanceId, {repo, provider, provisioner}) => {
         instance = await provider.getInstance(instanceId)
         if (!instance) {
             log.warn(`${instanceTag(instanceId)} not found in provider - nothing to release`)
+            await claims.release(instanceId)
             return
         }
 
-        const raceCondition = !(await repo.released(instanceId))
+        const raceCondition = !(await claims.release(instanceId))
         if (raceCondition) {
             log.info(`Race condition releasing ${instanceTag(instanceId)} - skipping undeploy`)
         } else if (instance.host) {
@@ -52,7 +53,7 @@ const releaseInstance = async (instanceId, {repo, provider, provisioner}) => {
             log.error(`Failed to terminate ${instanceTag(instanceId)} during error recovery: ${termErr.message}`)
         }
         try {
-            await repo.terminated(instanceId)
+            await claims.release(instanceId)
         } catch (termErr) {
             log.error(`Failed to mark ${instanceTag(instanceId)} terminated in repo: ${termErr.message}`)
         }
