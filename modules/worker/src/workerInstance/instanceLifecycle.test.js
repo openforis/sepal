@@ -241,8 +241,8 @@ describe('requestInstance', () => {
         expect(claims.release).toHaveBeenCalledWith('i-idle')
     })
 
-    // The launch-path claim is bookkeeping: the instance is untagged between RunInstances and
-    // CreateTags, so no other request can see it. Failing here would strand a running machine.
+    // A failed launch-path claim costs the instance its protection from ReleaseUnusedInstances,
+    // but failing the request would strand a running machine — the worse of the two.
     test('a failed claim on the launch path does not fail the request', async () => {
         const claims = makeClaims({claim: jest.fn().mockRejectedValue(new Error('db down'))})
         const provider = makeProvider()
@@ -250,6 +250,27 @@ describe('requestInstance', () => {
         const result = await requestInstance(REQUEST, {claims, provider})
 
         expect(result.id).toBe('i-new')
+    })
+
+    // launchReserved returns as soon as the instance is tagged State=reserved; waiting for its
+    // address after that can take minutes. Claiming only afterwards leaves an instance reserved
+    // with no claim and no session — ReleaseUnusedInstances hands it to somebody else mid-request.
+    test('the launch path records the claim before waiting for the address', async () => {
+        const claims = makeClaims()
+        let claimedBeforeWait = null
+        const provider = makeProvider({
+            launchReserved: jest.fn().mockResolvedValue(
+                makeReservedInstance({id: 'i-new', host: null, running: false})),
+            awaitHost: jest.fn(async instance => {
+                claimedBeforeWait = claims.claim.mock.calls.length > 0
+                return {...instance, host: '9.9.9.9'}
+            }),
+        })
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(claimedBeforeWait).toBe(true)
+        expect(result.host).toBe('9.9.9.9')
     })
 
     test('on exception: emits FailedToRequestInstance and rethrows', async () => {
@@ -895,6 +916,7 @@ describe('instanceManager', () => {
             release: jest.fn().mockResolvedValue(undefined),
             terminate: jest.fn().mockResolvedValue(undefined),
             reservedInstances: jest.fn().mockResolvedValue([]),
+            awaitHost: jest.fn(async instance => instance),
         },
         provisioner: {
             undeploy: jest.fn().mockResolvedValue(undefined),

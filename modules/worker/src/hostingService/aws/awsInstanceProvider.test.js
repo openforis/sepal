@@ -321,7 +321,7 @@ describe('launch params (RunInstancesCommand)', () => {
     })
 })
 
-describe('launchReserved public-IP polling', () => {
+describe('launchReserved', () => {
     let ec2Mock
 
     beforeEach(() => {
@@ -378,25 +378,13 @@ describe('launchReserved public-IP polling', () => {
         expect(describeCalls.length).toBeLessThanOrEqual(1)
     })
 
-    test('polls getInstance until public IP is available (no IP then IP)', async () => {
+    // launchReserved must NOT wait for the address: the caller records the claim that protects the
+    // instance from ReleaseUnusedInstances, and only then calls awaitHost. Waiting here kept the
+    // instance reserved, unclaimed and sessionless for the whole boot.
+    test('returns as soon as the instance is tagged, leaving the address to awaitHost', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-poll'}]})
         ec2Mock.on(CreateTagsCommand).resolves({})
-
-        ec2Mock.on(DescribeInstancesCommand).callsFake(input => {
-            const ids = input.InstanceIds ?? []
-            if (ids.length > 0) {
-                return describeResponse([{
-                    InstanceId: ids[0],
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '9.8.7.6',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
-                }])
-            }
-            return emptyDescribeResponse()
-        })
-
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
             Instances: [{
                 InstanceId: 'i-poll2',
@@ -410,23 +398,16 @@ describe('launchReserved public-IP polling', () => {
 
         const provider = createAwsInstanceProvider(CONFIG)
         await provider.start()
-
         ec2Mock.reset()
         ec2Mock.on(CreateTagsCommand).resolves({})
-        ec2Mock.on(DescribeInstancesCommand).callsFake(input => {
-            const ids = input.InstanceIds ?? []
-            if (ids.length > 0) {
-                return describeResponse([{
-                    InstanceId: ids[0],
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '9.8.7.6',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
-                }])
-            }
-            return emptyDescribeResponse()
-        })
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([{
+            InstanceId: 'i-poll2',
+            InstanceType: 't3a.small',
+            PublicIpAddress: '9.8.7.6',
+            State: {Name: 'running'},
+            LaunchTime: new Date().toISOString(),
+            Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
+        }]))
         ec2Mock.on(RunInstancesCommand).resolves({
             Instances: [{
                 InstanceId: 'i-poll2',
@@ -439,10 +420,16 @@ describe('launchReserved public-IP polling', () => {
         })
 
         const inst = await provider.launchReserved('T3aSmall', RESERVATION)
+        const describeCallsBeforeAwait = ec2Mock.commandCalls(DescribeInstancesCommand).length
+        // The re-read awaitHost does derives the reservation from tags, which carry no SessionId —
+        // the caller re-pins its own reservation afterwards.
+        const ready = await provider.awaitHost(inst)
         provider.stop()
 
-        expect(inst.host).toBe('9.8.7.6')
-        expect(inst.reservation).toEqual({...RESERVATION, sessionId: null})
+        expect(inst.host).toBeNull()
+        expect(inst.reservation).toEqual(RESERVATION)
+        expect(describeCallsBeforeAwait).toBe(0)
+        expect(ready.host).toBe('9.8.7.6')
     }, 10_000)
 })
 

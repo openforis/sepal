@@ -389,11 +389,13 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // instanceType is a catalog ID — see createInstanceTypeCodec.
+    //
+    // Returns as soon as the instance is tagged, address or not: the caller records the claim that
+    // keeps ReleaseUnusedInstances off the instance and only then waits, through awaitHost.
     const launchReserved = async (instanceType, reservation) => {
         const [awsInst] = await launch(instanceType, 1)
         await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), reserveTags(environment, reservation))
-        const instance = {...toWorkerInstance(awsInst, codec), reservation}
-        return waitForPublicIpToBecomeAvailable(instance, instanceType, reservation)
+        return {...toWorkerInstance(awsInst, codec), reservation}
     }
 
     const reserveInstance = async instance => {
