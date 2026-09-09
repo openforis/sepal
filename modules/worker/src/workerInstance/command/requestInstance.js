@@ -41,7 +41,10 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
             try {
                 const reserved = reserve(candidate, reservation)
                 await provider.reserve(reserved)
-                const ready = await provider.awaitHost(reserved)
+                // Re-pin the reservation: awaitHost hands back what the hosting service reports,
+                // and tags that have not propagated read as an empty reservation or none at all.
+                // The locally built one is the authority.
+                const ready = reserve(await provider.awaitHost(reserved), reservation)
                 emitInstancePendingProvisioning(ready)
                 log.info(`Reserved idle ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
                 return ready
@@ -73,7 +76,7 @@ const launchInstance = async ({instanceType, reservation}, {claims, provider}) =
     } catch (err) {
         log.error(`Failed to record claim on ${instanceTag(instance)}: ${err.message}`)
     }
-    const ready = await provider.awaitHost(instance)
+    const ready = reserve(await provider.awaitHost(instance), reservation)
     emitInstanceLaunched(ready)
     log.info(`Launched new ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
     return ready

@@ -227,6 +227,47 @@ describe('requestInstance', () => {
         expect(result.host).toBe('9.9.9.9')
     })
 
+    // awaitHost re-reads the instance from the hosting service, which derives the reservation from
+    // tags that may not have propagated yet. The provisioner dereferences reservation.workerType
+    // and names the container from reservation.sessionId, so a blank one costs the user a session.
+    const RESERVATION = {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
+
+    test('a reservation lost in the address read-back does not reach the provisioner', async () => {
+        const pending = []
+        events.instancePendingProvisioning$.subscribe(v => pending.push(v))
+        const idle = makeInstance({id: 'i-booting', host: null, running: false})
+        const claims = makeClaims()
+        const provider = makeProvider({
+            idleInstances: jest.fn().mockResolvedValue([idle]),
+            awaitHost: jest.fn(async instance => ({
+                ...instance,
+                host: '9.9.9.9',
+                reservation: {username: '', workerType: '', sessionId: null},
+            })),
+        })
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(result.reservation).toEqual(RESERVATION)
+        expect(pending[pending.length - 1].instance.reservation).toEqual(RESERVATION)
+    })
+
+    test('the launch path re-pins the reservation the read-back dropped', async () => {
+        const launched = []
+        events.instanceLaunched$.subscribe(v => launched.push(v))
+        const claims = makeClaims()
+        const provider = makeProvider({
+            launchReserved: jest.fn().mockResolvedValue(
+                makeReservedInstance({id: 'i-new', host: null, running: false})),
+            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9', reservation: null})),
+        })
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(result.reservation).toEqual(RESERVATION)
+        expect(launched[launched.length - 1].instance.reservation).toEqual(RESERVATION)
+    })
+
     // Without this the instance is claimed forever with no session behind it — the exact
     // failure mode this redesign removes.
     test('a failure after claiming releases the claim', async () => {
