@@ -127,6 +127,8 @@ npm run testWatch                    # Jest watch mode
 - Test infrastructure guarantees against the real infrastructure when a fake cannot provide evidence, such as database transactions and concurrent writes.
 - Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or MySQL; tests over fakes remain `*.test.js`.
 - Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
+- Run the targeted test file while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed. A module's full suite belongs before a commit or after a broad change, not after every edit.
+- Validate through `sepal npm-test <module>`. Raw `npx jest` in dev-env fails every `#sepal/ee/ee`-importing suite with a post-teardown import error — stable, and indistinguishable from a real failure.
 
 ## Code Style
 
@@ -157,6 +159,7 @@ APIs take the `Db` suffix (`initDb`, `migrateDb`, `initializeDb`, `migrate<Modul
 - Organize files to read top-down. Put public entry points and exported classes/functions first at the highest abstraction level, followed by their supporting functions in call order and increasingly concrete detail.
 - Keep a function at one abstraction level: orchestration should name its steps, while lower-level mechanics belong in the functions it calls.
 - In test files, put the behavioral specifications before builders and harness helpers. Group by stable public operation and use names that state the outcome or rule, not vague activity such as "loading a recipe".
+- Refactor what you touched once tests are green — size, cyclomatic complexity, cohesion — scoped to the area you changed, tests and comments included.
 
 ## Comments
 

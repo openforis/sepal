@@ -4,13 +4,9 @@ Shared Node.js library used by most SEPAL microservices. Imported via `#sepal/*`
 
 ## Tests
 
-This package declares no jest of its own. Run its suite from inside a module's dev container, invoking that
-module's installed jest so nothing is downloaded:
-
-```bash
-cd /usr/local/src/sepal/lib/js/shared
-NODE_OPTIONS=--experimental-vm-modules ../../../modules/message/node_modules/.bin/jest
-```
+`cd lib/js/shared && npm test`, from the dev-env container — the package declares no jest of its own and
+borrows the repo root's. Never run it inside a module's service container: those carry a copy of the repo
+baked into the image, so the suite silently runs stale sources.
 
 The `*.integration.test.js` files under `src/db` and `src/testSupport/db` need a reachable MySQL and
 credentials that can create databases and accounts. `src/gdal` shells out to Python 3 with GDAL.
