@@ -33,6 +33,8 @@ const makeInstanceManager = () => ({
     releaseUnusedInstances: jest.fn(async () => undefined),
     reclaimStaleClaims: jest.fn(async () => undefined),
     sessionsWithoutInstance: jest.fn(async () => []),
+    isProvisioning: jest.fn(() => false),
+    reprovisionInstance: jest.fn(async () => true),
     removeOrphanedContainers: jest.fn(async () => []),
     getInstanceTypes: jest.fn(() => []),
     onInstanceActivated: jest.fn(),

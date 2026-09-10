@@ -5,7 +5,7 @@
 // ExpireSessions, which stay inert for STARTUP_GRACE_MS so a worker outage does not close every
 // open session on restart):
 //   @1min:  CloseTimedOutSessions, ExpireSessions, CloseSessionsWithoutInstance,
-//           ReleaseUnusedInstances(5, MINUTES), ReclaimStaleClaims
+//           ReleaseUnusedInstances(5, MINUTES), ReclaimStaleClaims, ReconcilePendingSessions
 //   @12min: RemoveOrphanedTmpDirs, RemoveOrphanedContainers (local-daemon container sweep;
 //           the first run is immediate, so a worker restart cleans up at startup)
 //   @5min:  RefreshGoogleTokens
@@ -97,6 +97,14 @@ const createSessionComponent = ({
         scheduler.schedule(
             'ReclaimStaleClaims',
             () => sessionManager.reclaimStaleClaims(CLAIM_GRACE_MS),
+            MINUTE_MS)
+        // @1min: finish the PENDING sessions whose provisioning nobody is driving any more —
+        // the worker that started them restarted. Deliberately NOT gated on the startup grace:
+        // it only ever activates or re-provisions, never closes, and a restart is exactly when
+        // it is needed.
+        scheduler.schedule(
+            'ReconcilePendingSessions',
+            () => sessionManager.reconcilePendingSessions(),
             MINUTE_MS)
 
         // @1min: the expiry sweep — notify → email → close over stored deadlines. It is a no-op
