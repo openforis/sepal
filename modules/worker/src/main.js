@@ -22,6 +22,7 @@ import {createWorkerGateway} from './task/workerGateway.js'
 import {createClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
+import {instanceFromSession} from './workerInstance/instanceFromSession.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
@@ -34,6 +35,7 @@ import {createSandboxServerManager} from './workerSession/sandboxServerManager.j
 import {createSessionAppRepository} from './workerSession/sessionAppRepository.js'
 import {createSessionManager} from './workerSession/sessionManager.js'
 import {createSessionsApi} from './workerSession/sessionsApi.js'
+import {State} from './workerSession/workerSession.js'
 import {createWorkerSessionApiKey} from './workerSession/workerSessionApiKey.js'
 import {createWorkerSessionRepository} from './workerSession/workerSessionRepository.js'
 
@@ -68,11 +70,21 @@ const main = async () => {
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
     const instanceClaims = createClaimRepository(getPool())
+
+    // The open sessions are the durable record of what is allocated. A provider that keeps its
+    // world in memory (local dev) rebuilds from this at start; AWS ignores it. It lives here
+    // rather than inside workerInstance so that component never has to import workerSession.
+    const openSessionInstances = async () => {
+        const sessions = await sessionRepo.sessions([State.PENDING, State.ACTIVE])
+        return sessions.filter(s => s.instance?.id).map(instanceFromSession)
+    }
+
     instanceComponent = createWorkerInstanceComponent({
         claims: instanceClaims,
         provider: instanceProvider,
         provisioner: instanceProvisioner,
         instanceTypes,
+        openSessionInstances,
     })
 
     // The locked-users set starts EMPTY on every worker restart and only catches up on the budget
@@ -276,4 +288,13 @@ const stop = async () => {
 process.once('SIGTERM', stop)
 process.once('SIGINT', stop)
 
-main().catch(log.fatal)
+// A rejected main() leaves the process alive on the MySQL pool's open handles with no HTTP
+// server listening: restart:always never fires, and Compose does not act on a failing
+// healthcheck either, so the module stays dead until an operator notices. Exiting hands the
+// retry to Docker, which is the only thing that can re-attempt a boot that lost AWS, MySQL or
+// RabbitMQ. In dev, nodemon deliberately does NOT restart on a crash — a broken source file
+// should wait for the fix rather than spin the container.
+main().catch(error => {
+    log.fatal('Failed to start worker', error)
+    process.exit(1)
+})

@@ -12,9 +12,9 @@
 // in flight; waiting out the grace on a genuinely nonexistent instance costs nothing.
 //
 // A gone instance has nothing to tear down, so its claim is simply deleted. An abandoned claim on
-// an instance that still exists goes through ReleaseInstance instead: the claim delete is what
-// elects the undeployer, so deleting the row here would leave the instance to be tagged idle by
-// ReleaseUnusedInstances with the previous session's container still running on it.
+// an instance that still exists goes through ReleaseInstance instead, which undeploys before
+// dropping the row: deleting it here would leave the container running on an instance
+// ReleaseUnusedInstances then tags idle, with nothing left to record that it was ever there.
 
 import {getLogger} from '#sepal/log'
 
@@ -23,7 +23,7 @@ import {releaseInstance} from './releaseInstance.js'
 
 const log = getLogger('worker/reclaimStaleClaims')
 
-const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner}) => {
+const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner, provisioning}) => {
     const [idle, reserved] = await Promise.all([
         provider.idleInstances(),
         provider.reservedInstances(),
@@ -47,7 +47,7 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
             if (gone) {
                 await claims.release(claim.instanceId)
             } else {
-                await releaseInstance(claim.instanceId, {claims, provider, provisioner})
+                await releaseInstance(claim.instanceId, {claims, provider, provisioner, provisioning})
             }
             reclaimed++
             log.debug(`Reclaimed ${gone ? 'gone' : 'abandoned'} claim on ${instanceTag(claim.instanceId)}`)

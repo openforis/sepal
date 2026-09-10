@@ -437,6 +437,10 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         launchListeners.push(listener)
     }
 
+    // restore — no-op. EC2 is authoritative and answers correctly the moment the worker comes
+    // back, so there is no in-memory world here to rebuild.
+    const restore = () => { /* no-op */ }
+
     const start = async () => {
         imageId = await fetchImageId()
         const poll = async () => {
@@ -468,6 +472,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         idleInstances,
         reservedInstances,
         getInstance,
+        restore,
         awaitHost,
         sweep,
         onInstanceLaunched,

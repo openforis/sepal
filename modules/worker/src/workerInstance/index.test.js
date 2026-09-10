@@ -131,3 +131,53 @@ describe('start — upgrade backfill', () => {
         component.stop()
     })
 })
+
+// A restoring provider (local dev) and backfillClaims read the same world, and backfill reads it
+// through provider.reservedInstances() — so a restore that ran second would rebuild the claim
+// table from an empty provider.
+test('restores the open sessions instances before backfilling claims', async () => {
+    const order = []
+    const {provider} = build({instanceTypes: []})
+    provider.restore = jest.fn(async () => {
+        order.push('restore')
+    })
+    provider.reservedInstances = jest.fn(async () => {
+        order.push('backfill')
+        return []
+    })
+
+    const component = createWorkerInstanceComponent({
+        claims: {claim: jest.fn(async () => true), release: jest.fn(async () => true), all: jest.fn(async () => [])},
+        provider,
+        provisioner: {},
+        instanceTypes: [],
+        openSessionInstances: async () => [{id: 'i-1'}],
+    })
+    await component.start()
+    await flush()
+    component.stop()
+
+    expect(provider.restore).toHaveBeenCalledWith([{id: 'i-1'}])
+    expect(order.slice(0, 2)).toEqual(['restore', 'backfill'])
+})
+
+// A restore that throws must not take the module down with it: everything downstream degrades to
+// the behaviour that shipped before restore existed.
+test('a failing restore does not stop the component from starting', async () => {
+    const {provider} = build({instanceTypes: []})
+    provider.restore = jest.fn(async () => {
+        throw new Error('boom')
+    })
+
+    const component = createWorkerInstanceComponent({
+        claims: {claim: jest.fn(async () => true), release: jest.fn(async () => true), all: jest.fn(async () => [])},
+        provider,
+        provisioner: {},
+        instanceTypes: [],
+        openSessionInstances: async () => [{id: 'i-1'}],
+    })
+
+    await expect(component.start()).resolves.toBeUndefined()
+    await flush()
+    component.stop()
+})

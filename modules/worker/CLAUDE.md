@@ -81,6 +81,31 @@ a race. There is no other way to move a deadline.
   act on a fact it read earlier.**
 - `CloseTimedOutSessions` is now PENDING-only.
 
+## Surviving a worker restart
+
+The `worker` container restarts routinely — a deploy, an OOM kill, and in dev a nodemon reload
+on every file save. Four mechanisms carry instance management across it:
+
+- **The boot fails loudly.** A rejected `main()` exits non-zero so `restart: always` retries it.
+  Left to log and hang, the process stayed alive on the MySQL pool's handles with no HTTP server,
+  and Compose does not act on a failing healthcheck.
+- **`provider.restore(instances)`** (`workerInstance/index.js`, before `backfillClaims`) hands the
+  open sessions' instances back to a provider that keeps its world in memory. The LOCAL provider
+  needs it; AWS implements it as a no-op because EC2 answers from tags.
+- **`ReconcilePendingSessions`** @1min activates or re-provisions PENDING sessions whose
+  provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
+  in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
+  opens by deleting the instance's containers — re-entering it destroys the work in flight.
+  `releaseInstance` forgets the entry, so an instance back in the pool cannot drop the next
+  session's provisioning as a duplicate. Re-provisioning re-reads the instance's PENDING session
+  first: the probe verdict it acts on is a batch snapshot, and the invariant above holds here too.
+- **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
+  container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
+  runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.
+
+Still open: `STARTUP_GRACE_MS` is measured from process start, so a worker crash-looping faster
+than two minutes reaches no closing sweep — see `docs/session-expiration-model.md` §8.
+
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
 (`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed

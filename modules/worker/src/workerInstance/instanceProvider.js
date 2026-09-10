@@ -14,6 +14,10 @@
 //   reservedInstances()                       → Promise<WorkerInstance[]>
 //   getInstance(instanceId)                   → Promise<WorkerInstance | null>
 //     NOTE: the AWS provider never resolves null — it throws when it can't find exactly one match.
+//   restore(instances)                        → Promise<void> | void
+//     Adopt these instances as already existing. Called once at start(), before backfillClaims,
+//     with the instances rebuilt from the open sessions. The LOCAL provider needs this to survive
+//     a worker restart; AWS implements it as a no-op because EC2 is authoritative.
 //   awaitHost(instance)                       → Promise<WorkerInstance>
 //     Resolves once the instance has an address; returns it unchanged if it already has one.
 //     Required after launchReserved before the instance's address can be used.

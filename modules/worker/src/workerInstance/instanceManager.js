@@ -10,6 +10,8 @@
 //   sessionsWithoutInstance(sessions)                 → Promise<{session, status}[]>
 //   onInstanceActivated(callback)                     → void  (fires on InstanceProvisioned)
 //   onFailedToProvisionInstance(callback)             → void
+//   reprovisionInstance(session)                      → Promise<boolean>
+//   isProvisioning(instanceId)                        → boolean
 //
 // requestInstance, onInstanceActivated and onFailedToProvisionInstance all hand the session
 // layer a projected {id, host} object; the full domain object stays inside this layer.
@@ -20,17 +22,20 @@
 import {getLogger} from '#sepal/log'
 
 import {instanceTag, userTag} from '../tag.js'
+import {provisionInstance} from './command/provisionInstance.js'
 import {reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {releaseInstance} from './command/releaseInstance.js'
 import {releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {removeOrphanedContainers} from './command/removeOrphanedContainers.js'
 import {requestInstance} from './command/requestInstance.js'
 import {instanceEvents} from './events.js'
+import {instanceFromSession} from './instanceFromSession.js'
+import {createProvisioningRegistry} from './provisioningRegistry.js'
 import {findMissingInstances} from './query/findMissingInstances.js'
 
 const log = getLogger('worker/instanceManager')
 
-const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) => {
+const createInstanceManager = ({claims, provider, provisioner, instanceTypes, provisioning = createProvisioningRegistry()}) => {
 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.
@@ -43,7 +48,7 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
 
     const _releaseInstance = async instanceId => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, {claims, provider, provisioner})
+        return releaseInstance(instanceId, {claims, provider, provisioner, provisioning})
     }
 
     // releaseUnusedInstances — reclaim instances not bound to any active session.
@@ -53,12 +58,12 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
             .filter(s => s.instance && s.instance.id)
             .map(s => s.instance.id)
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
-        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner})
+        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning})
     }
 
     // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
     const _reclaimStaleClaims = async (sessions, graceMs) =>
-        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner})
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner, provisioning})
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
     // the open sessions nor the provider claim (the in-memory local provider forgets instances on
@@ -75,16 +80,8 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
     // status is MISSING or UNKNOWN; the caller decides what each is worth (see
     // workerSession/missingInstanceTracker.js) — an UNKNOWN must not cost a user their session.
     const sessionsWithoutInstance = async sessions => {
-        // Reconstruct full WorkerInstance objects from the session fields — the session only holds
-        // the {id, host} projection, but provisioner.instanceStatus needs type and the full
-        // reservation: the container name derives from reservation.sessionId.
         const sessionsWithInst = sessions.filter(s => s.instance && s.instance.id)
-        const instances = sessionsWithInst.map(s => ({
-            id: s.instance.id,
-            type: s.instanceType,
-            host: s.instance.host,
-            reservation: {username: s.username, workerType: s.workerType, sessionId: s.id},
-        }))
+        const instances = sessionsWithInst.map(instanceFromSession)
 
         if (instances.length === 0) return []
 
@@ -114,6 +111,18 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
         })
     }
 
+    // isProvisioning — the guard ReconcilePendingSessions skips on. Re-entering provisionInstance
+    // for an instance already in flight would delete the containers it is busy creating.
+    const isProvisioning = instanceId => provisioning.isProvisioning(instanceId)
+
+    // reprovisionInstance — rebuild the instance from the session and run it through the SAME
+    // registry-guarded provisioning path the InstancePendingProvisioning handler uses. Success
+    // emits InstanceProvisioned, so the session is activated through the one existing hook.
+    // Resolves false when a provision for that instance was already in flight.
+    const _reprovisionInstance = session =>
+        provisioning.run(session.instance.id, session.id, () =>
+            provisionInstance(instanceFromSession(session), {provisioner}))
+
     return {
         requestInstance: _requestInstance,
         releaseInstance: _releaseInstance,
@@ -124,6 +133,8 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) =
         sessionsWithoutInstance,
         onInstanceActivated,
         onFailedToProvisionInstance: _onFailedToProvisionInstance,
+        isProvisioning,
+        reprovisionInstance: _reprovisionInstance,
     }
 }
 

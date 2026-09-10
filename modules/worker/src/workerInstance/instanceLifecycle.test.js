@@ -469,9 +469,29 @@ describe('releaseInstance', () => {
         expect(released).toHaveLength(0)
     })
 
-    test('race (claims.release returns false): skips undeploy but still calls provider.release and emits InstanceReleased', async () => {
-        // Losing the delete skips the undeploy but still falls through to
-        // provider.release(instanceId) and the InstanceReleased event.
+    // The claim is the only durable record that this instance may still be carrying a container.
+    // Dropping it first and dying before the undeploy stranded the previous user's container on
+    // an instance ReleaseUnusedInstances went on to tag idle, ports published and home mounted.
+    test('undeploys before dropping the claim, so an interrupted release can be retried', async () => {
+        const order = []
+        const deps = makeDeps()
+        deps.provisioner.undeploy = jest.fn(async () => {
+            order.push('undeploy')
+        })
+        deps.claims.release = jest.fn(async () => {
+            order.push('claim')
+            return true
+        })
+
+        await releaseInstance('i-001', deps)
+
+        expect(order).toEqual(['undeploy', 'claim'])
+    })
+
+    test('a claim already gone still undeploys, and still releases and emits', async () => {
+        // The claim delete no longer elects the undeployer. Undeploy is a force-delete by
+        // container name, so a concurrent releaser doing the same thing finds nothing to do —
+        // while skipping it is what left a live container behind.
         const released = []
         events.instanceReleased$.subscribe(v => released.push(v))
 
@@ -480,8 +500,8 @@ describe('releaseInstance', () => {
 
         await releaseInstance('i-raced', deps)
 
+        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
         expect(deps.claims.release).toHaveBeenCalledWith('i-raced')
-        expect(deps.provisioner.undeploy).not.toHaveBeenCalled()
         expect(deps.provider.release).toHaveBeenCalledWith('i-raced')
         expect(released.length).toBeGreaterThanOrEqual(1)
         const payload = released[released.length - 1]
@@ -699,9 +719,9 @@ describe('reclaimStaleClaims', () => {
         expect(claims.release).not.toHaveBeenCalled()
     })
 
-    // Dropping the row on an instance that still exists hands the undeploy to nobody: the
-    // ReleaseUnusedInstances that follows finds no claim, reads that as a lost race, skips the
-    // undeploy, and tags the instance idle with the previous user's container still running.
+    // Dropping the row on an instance that still exists hands the undeploy to nobody: nothing
+    // downstream knows the instance was ever carrying a container, so ReleaseUnusedInstances
+    // tags it idle with the previous user's container still running.
     test('an abandoned claim on a live instance is torn down, not just dropped', async () => {
         const rows = new Map([['i-1', 's-dead']])
         const claims = {
@@ -711,9 +731,15 @@ describe('reclaimStaleClaims', () => {
         }
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
-            ...makeProvider([], [instance]),
+            ...makeProvider(),
+            // Both real providers drop the reservation on release — AWS re-tags State=idle, the
+            // local provider clears instance.reservation — so a released instance is no longer
+            // reserved to the next sweep.
+            reservedInstances: jest.fn(async () => instance.reservation ? [instance] : []),
             getInstance: jest.fn(async () => instance),
-            release: jest.fn(async () => undefined),
+            release: jest.fn(async () => {
+                instance.reservation = null
+            }),
             terminate: jest.fn(async () => undefined),
         }
         const provisioner = {undeploy: jest.fn(async () => undefined)}
@@ -1091,5 +1117,61 @@ describe('instanceManager', () => {
             'MINUTES'
         )
         expect(deps.provider.reservedInstances).toHaveBeenCalledTimes(1)
+    })
+})
+
+// The end-to-end shape of a worker restart on local hosting: the provider's Map is gone, but the
+// session row and the claim row are not. Restoring the instance is what lets the eventual close
+// tear the container down instead of leaking it.
+describe('surviving a worker restart', () => {
+    let createWorkerInstanceComponent, createLocalInstanceProvider, instanceFromSession
+
+    beforeAll(async () => {
+        ;({createWorkerInstanceComponent} = await import('./index.js'))
+        ;({createLocalInstanceProvider} = await import('../hostingService/local/localInstanceProvider.js'))
+        ;({instanceFromSession} = await import('./instanceFromSession.js'))
+    })
+
+    const openSession = {
+        id: 's-1',
+        username: 'alice',
+        workerType: 'sandbox',
+        instanceType: 'Local',
+        instance: {id: 'i-1', host: 'i-1'},
+        creationTime: new Date('2026-01-01T00:00:00Z'),
+    }
+
+    const claimTable = rows => ({
+        all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
+            ({instanceId, sessionId, claimedAt: new Date('2026-01-01T00:00:00Z')}))),
+        claim: jest.fn(async (instanceId, sessionId) => {
+            if (rows.has(instanceId)) return false
+            rows.set(instanceId, sessionId)
+            return true
+        }),
+        release: jest.fn(async instanceId => rows.delete(instanceId)),
+    })
+
+    test('a restored instance is undeployed when its session finally closes', async () => {
+        // A fresh provider and a fresh component, exactly as a restarted process would build
+        // them — with the claim table and the session row carried over.
+        const provider = createLocalInstanceProvider({tag: 'local'})
+        const claims = claimTable(new Map([['i-1', 's-1']]))
+        const provisioner = {undeploy: jest.fn(async () => {})}
+
+        const component = createWorkerInstanceComponent({
+            claims,
+            provider,
+            provisioner,
+            instanceTypes: [],
+            openSessionInstances: async () => [instanceFromSession(openSession)],
+        })
+        await component.start()
+
+        await component.instanceManager.releaseInstance('i-1')
+        component.stop()
+
+        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
+        expect(provisioner.undeploy.mock.calls[0][0].id).toBe('i-1')
     })
 })

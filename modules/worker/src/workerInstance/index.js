@@ -1,8 +1,9 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): call provider.start(), backfill claims for pre-existing reserved instances,
-//              schedule SizeIdlePool + provider.sweep every 1 min (unconditionally — see start())
+//   3. start(): call provider.start(), restore the open sessions' instances into the provider,
+//              backfill claims for pre-existing reserved instances, schedule SizeIdlePool +
+//              provider.sweep every 1 min (unconditionally — see start())
 //   4. stop():  clear scheduler, call provider.stop()
 //
 // DO NOT auto-start on import. main.js calls start() explicitly.
@@ -20,18 +21,39 @@ import {
     WORKER_INSTANCE_PUBLISHERS,
 } from './events.js'
 import {createInstanceManager} from './instanceManager.js'
+import {createProvisioningRegistry} from './provisioningRegistry.js'
 import {isReserved} from './workerInstance.js'
 
 const log = getLogger('worker/workerInstance')
 
 const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 
-// UPGRADE SHIM — DELETE ONE RELEASE AFTER THIS SHIPS.
+// A provider that keeps its world in memory (local dev) forgets every live instance when the
+// worker restarts. The open sessions are the durable record of what was allocated, so hand them
+// back before anything reads the provider — backfillClaims included, since it rebuilds the claim
+// table from provider.reservedInstances(). Providers whose hosting service is authoritative
+// (AWS) implement restore as a no-op.
 //
-// Sessions already running when the claim table arrived hold reserved instances with no claim row.
-// They cannot be mis-allocated (the hosting service reports them reserved), but on close
-// releaseInstance reads the missing row as a lost race and skips the undeploy, stranding a live
-// container on an instance about to be marked idle.
+// A failure here degrades to the behaviour that shipped before restore existed, so it is logged
+// rather than fatal.
+const restoreOpenSessionInstances = async ({provider, openSessionInstances}) => {
+    if (!provider.restore || !openSessionInstances) {
+        return
+    }
+    try {
+        await provider.restore(await openSessionInstances())
+    } catch (err) {
+        log.error('Failed to restore instances from the open sessions:', err.message)
+    }
+}
+
+// A reserved instance with no claim row has nobody to tear it down: ReleaseUnusedInstances tags
+// it idle and its container keeps running. Re-claiming it here puts it back under
+// ReclaimStaleClaims, which routes an abandoned claim through the full release.
+//
+// Claims go missing two ways, and both are permanent rather than migration-era: a session that
+// predates the claim table, and launchInstance's claim INSERT failing (it logs rather than
+// throwing, so as not to strand a running machine). This is reconciliation, not a shim.
 //
 // A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
 // it once the grace period passes.
@@ -49,7 +71,12 @@ const backfillClaims = async ({claims, provider}) => {
     }
 }
 
-const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes}) => {
+const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes, openSessionInstances = null}) => {
+
+    // ONE registry shared by both provisioning paths — the event handler below and the
+    // reconcile sweep reaching in through instanceManager.reprovisionInstance. Two registries
+    // would let them re-enter each other, which is the whole thing being prevented.
+    const provisioning = createProvisioningRegistry()
 
     // ── Wire: provider.onInstanceLaunched ─────────────────────────────────────
     // If the launched instance is reserved → emit InstancePendingProvisioning
@@ -66,10 +93,12 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     // ── Wire: in-proc InstancePendingProvisioning → provisionInstance ─────────
     instanceEvents.on('InstancePendingProvisioning', instance => {
         log.debug(`Starting provisioning for ${instanceTag(instance)}`)
-        provisionInstance(instance, {provisioner}).catch(err => {
-            // provisionInstance already emits FailedToProvisionInstance; just log here
-            log.error(`Failed to provision ${instanceTag(instance)}: ${err.message}`)
-        })
+        provisioning.run(instance.id, instance.reservation?.sessionId, () => provisionInstance(instance, {provisioner}))
+            .then(ran => ran || log.debug(`Already provisioning ${instanceTag(instance)} - ignored`))
+            .catch(err => {
+                // provisionInstance already emits FailedToProvisionInstance; just log here
+                log.error(`Failed to provision ${instanceTag(instance)}: ${err.message}`)
+            })
     })
 
     const targetIdleCountByInstanceType = new Map(
@@ -83,6 +112,8 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     const start = async () => {
         log.debug('Starting...')
         await provider.start()
+
+        await restoreOpenSessionInstances({provider, openSessionInstances})
 
         try {
             await backfillClaims({claims, provider})
@@ -126,7 +157,7 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
         log.info('Stopped')
     }
 
-    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes})
+    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes, provisioning})
 
     return {
         instanceManager,

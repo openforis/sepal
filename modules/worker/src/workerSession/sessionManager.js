@@ -23,6 +23,7 @@ import {expireSessions as _expireSessions} from './command/expireSessions.js'
 import {extendSession as _extendSession} from './command/extendSession.js'
 import {heartbeat as _heartbeat} from './command/heartbeat.js'
 import {reclaimStaleClaims as _reclaimStaleClaims} from './command/reclaimStaleClaims.js'
+import {reconcilePendingSessions as _reconcilePendingSessions} from './command/reconcilePendingSessions.js'
 import {releaseUnusedInstances as _releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
@@ -180,6 +181,12 @@ const createSessionManager = ({
 
     const reclaimStaleClaims = graceMs =>
         _reclaimStaleClaims(graceMs, {repo, instanceManager})
+
+    // The recovery sweep for PENDING sessions whose provisioning nobody is finishing — see the
+    // command's header. It reaches activation through the SAME binding registerInstanceManagerHooks
+    // uses, so the event path and the sweep share one set of collaborators.
+    const reconcilePendingSessions = () =>
+        _reconcilePendingSessions({repo, instanceManager, activatePendingSessionOnInstance})
 
     // Sweep the shared local daemon for worker containers no open session (and no
     // provider-tracked instance) claims — see instanceManager.removeOrphanedContainers.
@@ -413,6 +420,7 @@ const createSessionManager = ({
         closeSessionsWithoutInstance,
         releaseUnusedInstances,
         reclaimStaleClaims,
+        reconcilePendingSessions,
         removeOrphanedContainers,
         heartbeat,
         extendSession,
