@@ -11,6 +11,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {getAvailableBands} from './bands'
 import {defaultModel} from './maskingRecipe'
+import {maskingObservation} from './maskingSourceEvidence'
 import {MaskingToolbar} from './panels/maskingToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -33,7 +34,7 @@ class _Masking extends React.Component {
             <Map>
                 <MaskingToolbar/>
                 <Aoi value={imageToMask}/>
-                <SourceEvidenceSync/>
+                <SourceEvidenceSync observation={maskingObservation}/>
             </Map>
         )
     }

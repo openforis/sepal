@@ -13,6 +13,7 @@ import {Notifications} from '~/widget/notifications'
 import {getAvailableBands} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
+import {describeSegments$} from './segmentDescription'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -86,6 +87,7 @@ export default () => ({
         recipe: CCDC
     },
     noImageOutput: true,
+    describeSegments$,
     getDateRange: recipe => dateRange(recipe.model.dates),
     getAvailableBands,
     getPreSetVisualizations

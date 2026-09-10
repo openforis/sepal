@@ -22,13 +22,7 @@ const fields = {
         .notBlank('process.ccdcSlice.panel.source.form.recipe.required'),
     dateFormat: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
-    bands: new Form.Field(),
-    baseBands: new Form.Field(),
-    segmentBands: new Form.Field(),
-    startDate: new Form.Field(),
-    endDate: new Form.Field(),
-    visualizations: new Form.Field(),
+        .notBlank()
 }
 
 class _Source extends React.Component {
@@ -72,16 +66,14 @@ class _Source extends React.Component {
         )
     }
 }
-const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+// Only the selection and, for an asset, the date representation the user configured. The description of
+// the source - its bands, base bands, dates, templates - is evidence read from the source while the recipe
+// is open, never written here; a copy an older GUI saved beside the reference is left as it is until the
+// selection is applied again, and dropped then, because it described a source that may no longer be this.
+const modelToValues = ({id, type, dateFormat}) => {
     const values = {
         section: type || 'SELECTION',
-        dateFormat,
-        bands,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        dateFormat
     }
     switch (type) {
         case 'RECIPE_REF':
@@ -93,16 +85,10 @@ const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, st
     }
 }
 
-const valuesToModel = ({type, section, asset, recipe, bands, dateFormat, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+const valuesToModel = ({section, asset, recipe, dateFormat}) => {
     const model = {
         type: section,
-        bands,
-        dateFormat: type === 'RECIPE_REF' ? null : dateFormat,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        dateFormat: section === 'ASSET' ? dateFormat : null
     }
     switch (section) {
         case 'RECIPE_REF':

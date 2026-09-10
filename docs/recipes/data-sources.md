@@ -28,7 +28,8 @@ to land.
   dependency edges, authorization, capability-provider lineage, graph traversal, evidence acquisition, execution
   bundles, provenance and task atomicity.
 - [Source freshness, caching and invalidation](source-freshness.md) owns live source descriptions, fingerprints,
-  refresh scheduling, race handling, availability and map invalidation.
+  refresh scheduling, race handling, availability, consumer dependency evaluation, derived-result freshness and
+  map invalidation.
 - [GUI source runtime](gui-source-runtime.md) defines the stable browser boundary through which components request
   source resolution without owning Redux catalogue state, loading or cache policy.
 - [Recipe output products and band schemas](output-products.md) owns product identity, output-band description and
@@ -161,7 +162,8 @@ Normative policy appears only in the owning design document:
   deletion, diagnostics, execution eligibility, bundle lifetime and compatibility, asset observations, provenance
   and legacy evidence.
 - [Source freshness](source-freshness.md) owns the session catalogue, conservative fingerprinting, refresh
-  scheduling, race handling and map invalidation. It consumes resolution diagnoses without redefining them.
+  scheduling, race handling, map invalidation, consumer dependency evaluation and derived-result freshness.
+  It consumes resolution diagnoses without redefining them.
 - [Output products](output-products.md) owns product identity, output-band declarations, source-adapter commands,
   temporal collection composition, operation requirements and the boundary between canonical output, map products
   and GUI projections.
@@ -337,8 +339,54 @@ No update-time or temporary content-hash bridge is involved.
 
 ### 8. Migrate CCDC Slice capabilities and visualizations
 
+Done ahead of steps 5 to 7, because Slice's hand-written synchronization was the first copied-source model to
+replace once Masking had proven the shared evidence lifecycle. What landed:
+
+- Each producer of segments describes its own, through a provider its recipe type registers: CCDC from its model
+  (`recipe/ccdc/segmentDescription.js`), finding the Classification it fits through the edge it declares; an
+  asset mosaic and a bare asset from asset metadata read at observation time (`recipe/ccdc/segmentsAsset.js`,
+  which owns the band-name parsing), not from the copy taken when the asset was selected. Slice dispatches
+  through the registry and recognises no producer type.
+- Slice derives its output from that description together with its date mode and options
+  (`recipe/ccdcSlice/sliceEvidence.js`). One mode-aware derivation (`#sepal/recipe/type/ccdcSlice`) is used by
+  the declaration, the GUI and Earth Engine's own band reporting, so an operation asked for no harmonics
+  advertises none. The shared definition declares a transformation - segment arrays into scalar slice bands -
+  rather than preservation, so a wrapper-inheritance rule cannot mistake it for a pass-through.
+- One shared evidence lifecycle (`recipe/sourceEvidenceSync.jsx`) serves Masking and Slice through a per-recipe
+  observation; `ccdcSlice/sourceSync.jsx` is gone. Preview, band selection, presets, date and options controls,
+  Retrieve and the pixel chart read the same resolved description. Each published answer is numbered, so the
+  chart and Preview reload when the source was READ again rather than only when what it describes differs. A
+  failed read withholds what the source describes but retains which source was last read successfully, so a
+  recovery can tell whether the templates a saved selection names are its own. Restored styles are bound to
+  their original source when Slice opens, before the first read, so changing source during that read cannot
+  transfer their identities. Slice
+  no longer reconciles or gates its own visualization selection: it offers one preset list and the generic layer
+  owns the rest, so a selection whose bands are gone is neither redirected nor drawn.
+- A consuming recipe resolves a source's description as part of its own dependency resolution, so a saved Slice
+  that has never been opened still offers what it describes to a Masking recipe over it.
+- Execution no longer depends on the copied `dateFormat` and `targetType`. The producer's definition declares
+  how its segment dates are represented and whether its base band names are selectable on it; a producer whose
+  segments ARE an asset names the asset instead of a value, and execution reads the representation off that
+  asset rather than off the metadata copied beside the reference - which is what makes the GUI and the running
+  image agree about an asset re-exported since it was selected. A collection's properties are read the way the
+  GUI's metadata endpoint reads them, its members' included, for the same reason. `recipeRef` derives the facts and the image from
+  one load, so the two cannot describe different records. The copies remain in saved recipes as a fallback and
+  are not rewritten; the source panel stops writing them, and the configured date format of a bare asset source
+  is preserved as user configuration, zero included, taking precedence over the asset property that prefills it.
+- Retrieve submits the band names its selection resolves to, and offers only the base bands, measures and
+  segment bands the selected operation produces. A saved template selection survives reopening: the styles a
+  recipe's own layers were saved with are the identities a fresh asset read is reconciled against, since `ui`
+  is not persisted. A selection whose bands are gone is left as the user left it, by the same rule the generic
+  layer applies.
+
+Still to do here:
+
 - Define and activate the `IMAGE_OUTPUT` product and `CCDC_SEGMENTS` capability from actual CCDC and CCDC Slice
-  behavior.
+  behavior. The description above is Slice's evidence, not yet a capability other consumers can request.
+- Complete export acceptance as recorded below. Automated tests cover source, observer, chart and layer
+  boundaries. Execution-side source resolution and band discovery have runtime witnesses with substituted
+  external boundaries (`modules/gee/src/jobs/ee/ccdc/sliceSourceFacts.runtime.mjs` and `ccdcBands.runtime.mjs`);
+  these do not establish successful Earth Engine pixel execution.
 - Define the closed `CCDC_SEGMENT_SLICE` transformation and materialize its presentation templates only after the
   source capability, required evidence and exact Slice output bands resolve.
 - Preserve existing CCDC Segments assets through a narrow structural asset contract. Continue interpreting their
@@ -348,6 +396,59 @@ No update-time or temporary content-hash bridge is involved.
   templates only while its explicit transformation effects preserve the required structure.
 - Migrate Preview, map selection and Retrieve filtering together. New structured provenance may be dual-written for
   stronger future consumers, but it is not a prerequisite for existing CCDC Slice assets.
+
+Manual acceptance, confirmed by the user for the sources and modes exercised (not every source variant):
+
+- Successful tile and chart rendering; panel interactions without unintended Slice reloads; genuine computation
+  changes refreshing Slice while the available bands stay the same.
+- Optical-to-radar visualization updates and corrected chart-band selection.
+- Opening Slice's visualization panel and using a saved Slice as a Masking dependency without opening Slice first.
+- Saved-preset restoration after reopening, and date-mode and harmonics behavior.
+
+Export acceptance: the user confirmed the longer-history Image export completed with valid pixels. The earlier
+Image completed fully masked; insufficient Landsat 9 history remains the user's explanation rather than a verified
+cause. ImageCollection completion remains unconfirmed. No additional exports were launched for this review.
+
+Map Layers acceptance remains pending: an asset already in an open recipe was overwritten under the same ID, but
+its layer continued offering the saved bands and presets. The bounded fix re-reads metadata on activation, on a
+changed catalogue `updateTime`, and through the asset layer's **Refresh asset** control. A successful read renews
+the preview even with identical metadata, keeps unchanged preset identities, and withholds missing-band or array
+styles without deleting saved selections. Refresh errors are reported and superseded responses are rejected.
+Retest in the same open layer after replacement, both with catalogue invalidation and with explicit refresh before
+the catalogue changes; no removal, re-addition or recipe reopening is needed. Broader shared metadata ownership and
+task-reported destination invalidation remain [asset freshness follow-ups](source-freshness.md#asset-freshness).
+
+The final review's break-confidence band mapping, unconfigured asset date fallback and SR chart correction are
+covered by regression tests and accepted by inspection; they have no separate browser confirmation yet.
+
+### Next follow-up: Band Math dependencies
+
+After the current CCDC Slice synchronization packet is reviewed, implement one chain: **input band -> calculation
+-> output**. This does not expand that packet or wait for the remaining capability work in step 8. Follow the
+[declarative evaluation direction](source-freshness.md#declarative-dependency-evaluation), reusing the shared
+source-observation lifecycle rather than adding another watcher, cache or source traversal.
+
+1. Identify user configuration versus derived fields in Band Math's current sync path, including expression and
+   output references. Preserve saved-model compatibility and intentional rename behavior.
+2. Express the chain's consumed inputs, requirements and derived output through recipe-owned pure functions,
+   using the existing expression parser. Use the same declaration and evaluation contract for local configuration,
+   calculation outputs and current evidence from selected recipes or assets; only their providers differ.
+3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
+   superseded bookkeeping for this chain; leave unrelated sync behavior alone. Recheck the same requirements at
+   execution, so a closed panel or directly submitted model cannot bypass them.
+
+Acceptance scenarios, without closing or reopening the recipe:
+
+- Removing a required band identifies the affected calculation and output and prevents their execution, while
+  preserving the expression and output configuration. Restoring the band restores validity automatically.
+  Exercise the same rule for a local input-selection change and for a change to the external source's bands.
+- Removing an unused band or changing only a visualization does not invalidate the calculation.
+- An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
+  the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
+
+Reuse the resulting evaluation approach for Change Alerts when its consumer migrates. Sampling Design's
+persisted-result freshness remains step 5; neither its planner nor all input forms are rewritten in this packet.
+The declaration API is determined by this workflow, not by a speculative framework or synthetic consumer.
 
 ### 9. Migrate Change Alerts, then further consumers
 
@@ -368,11 +469,9 @@ No update-time or temporary content-hash bridge is involved.
 - Fine-grained data/schema/presentation fingerprints.
 - Automatic repair of missing band selections.
 - Live input-imagery panel refresh when the selected source recipe changes without changing its ID. Start with
-  Band Math and the shared Stack/Remapping form: refresh available bands and visualizations while the panel stays
-  open, preserve user configuration and identify unavailable selections rather than silently rewriting them.
-  Reject superseded responses; verify upstream band removal and restoration without reopening the panel. This is
-  separate from correcting explicit asset/recipe switching and must preserve the existing live visualization
-  propagation into Masking.
+  the shared Stack/Remapping form after the bounded Band Math follow-up above. Refresh available bands and
+  visualizations while the panel stays open, applying the same dependency-evaluation rules. This remains separate
+  from correcting explicit asset/recipe switching and must preserve live visualization propagation into Masking.
 - One repository-wide migration commit.
 - Recipe Fill before the Node server replacement supplies its permanent caller-authorized source boundary.
 - Execution bundles before recipe content has reliable monotonic revision evidence.
@@ -384,3 +483,34 @@ No update-time or temporary content-hash bridge is involved.
   and Worker into shared HTTP infrastructure, with loggers injected at composition roots. Preserve each module's
   role combinations and response contract, and land this as a dedicated cross-module commit rather than as part
   of Recipe source resolution.
+
+### Task-driven asset invalidation
+
+Defer this wiring until after the current CCDC Slice and Map Layers refresh commit.
+
+- Exporters report actual affected asset IDs to shared asset invalidation, without knowing which recipes or
+  layers consume them. Invalidate when a destination may have changed and recheck after success, failure or
+  cancellation; an unsuccessful replacement can still have deleted or partly rebuilt the destination.
+- Handle present -> missing -> changed transitions, including partially populated collections. Preserve saved
+  references and selections during temporary absence, withhold unavailable imagery, and refresh active consumers
+  when the asset returns. Notifications trigger reads of actual state, not blind catalogue additions or removals.
+- Keep catalogue scanning and explicit refresh for external changes and missed notifications.
+
+### Band encoding and physical-value presentation
+
+Defer general scale/offset propagation and physical-unit legends, charts and pixel inspection. This is not a
+prerequisite for decoupling Slice: producers supply correct descriptions and ready-to-use visualizations;
+consumers need no optical, radar or Planet-specific encoding knowledge.
+
+Follow the representation/measurement distinction in [output products](output-products.md):
+
+- Producers declare per-band encoding as `physical = stored * scale + offset`. Share that declaration between
+  execution and preset conversion where it removes duplicated assumptions, preserving pixel values and casts.
+- Convert pixels or visualization ranges at one boundary, never both. Derived quantities need their own rules;
+  phase and timing do not inherit a base band's multiplier.
+- Preserve existing assets and saved styles. Do not infer their encoding from today's producer configuration or
+  reinterpret already-encoded ranges; settle compatibility before expanding the contract.
+
+The narrow radar RGB preset correction need not wait: its ratio range must match the existing x1000 encoding,
+not the x100 used for VV/VH. Verify matching ranges and unchanged pixel encoding without broadening this into
+an all-product migration.

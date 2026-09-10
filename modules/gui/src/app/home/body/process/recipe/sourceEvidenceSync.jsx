@@ -1,15 +1,13 @@
 import _ from 'lodash'
+import PropTypes from 'prop-types'
 import React from 'react'
-import {filter, forkJoin, map, of, Subject, switchMap, take, takeUntil} from 'rxjs'
+import {filter, Subject, switchMap, take, takeUntil} from 'rxjs'
 
-import {INHERITED, inheritedSchemaSource} from '#sepal/recipe/output/inheritedSchemaSource'
 import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
 import {ASSET} from '#sepal/recipe/source/reference'
-import api from '~/apiRegistry'
-import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {getLogger} from '~/log'
@@ -18,31 +16,30 @@ import {selectFrom} from '~/stateUtils'
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
 import {createLoadRecipesById$} from '../sourceRuntime/recipeClosureLoader'
-import {declaredSelections, inheritedSourceKey, inheritedSourceReference, OBSERVED, UNAVAILABLE} from './sourceEvidence'
-import {outputOwnedVisualizations, sourceVisualizations} from './visualizations'
+import {declaredSelections, OBSERVED, sourceKeyOf, UNAVAILABLE} from './sourceEvidence'
 
 const log = getLogger('sourceEvidence')
 
-// Keeps a recipe's inherited source evidence current while its recipe is open.
+let observations = 0
+
+// Keeps a recipe's evidence about its source current while the recipe is open.
 //
-// Mounted by any recipe whose shared definition declares that it preserves an input's band mapping and
-// values; it reads that declaration rather than the recipe type, so a second such recipe mounts the same
-// component and no consumer changes. A recipe that declares nothing renders nothing and observes nothing.
+// The lifecycle is shared; what is observed is not. A recipe mounts this with an `observation` that names
+// the source it depends on and says how to read evidence about it - Masking reads the bands and presets it
+// inherits, CCDC Slice reads the segment description it transforms - and this component owns everything
+// around that call: when to read, what the reading was based on, whether an answer may still be published,
+// and what happens when it cannot be had. Nothing here knows what a source is for.
 //
 // The closure comes from the shared completion boundary, which owns traversal, cycle detection, missing
 // sources, deduplicated loading and its own limits - so there is no second walk of the graph here and no
-// depth number of this component's choosing. What remains is reading one declared edge at a time over
-// records that boundary already resolved, which is the question this component exists to answer.
+// depth number of this component's choosing. An observation reads one declared edge at a time over records
+// that boundary already resolved.
 //
-// Bands come from the IMMEDIATE source, whose running image is what this recipe outputs however deep the
-// wrapping goes. Presets do not: a wrapper has none of its own, and the ones it copied are the stale
-// snapshot this mechanism replaces, so they come from wherever the declared chain stops inheriting.
-//
-// WHEN it observes again is the rest of the lifecycle, and it turns on one idea: an answer is about the
-// sources it was ACTUALLY read from, so one basis records those and every decision is made against it. The
-// basis is captured from the resolved closure - the records that went into the answer, not whatever the
-// session happened to hold when the answer arrived - and it is captured even when the closure resolves to a
-// broken graph, because repairing one of those records is what would make it answerable again.
+// WHEN it observes again turns on one idea: an answer is about the sources it was ACTUALLY read from, so one
+// basis records those and every decision is made against it. The basis is captured from the resolved closure
+// - the records that went into the answer, not whatever the session happened to hold when the answer
+// arrived - and it is captured even when the closure resolves to a broken graph, because repairing one of
+// those records is what would make it answerable again.
 //
 // The same basis decides both questions: whether to look again, and whether an answer may still be
 // published. A source the answer was read from that has since become something else fails both.
@@ -81,8 +78,7 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     update() {
-        const {recipe} = this.props
-        if (!inheritedSourceKey(recipe)) {
+        if (!this.sourceKey()) {
             this.basis = null
             return this.cancel$.next()
         }
@@ -92,8 +88,17 @@ class _SourceEvidenceSync extends React.Component {
         this.observe()
     }
 
+    sourceReference() {
+        const {recipe, observation} = this.props
+        return observation.sourceReference(recipe)
+    }
+
+    sourceKey() {
+        return sourceKeyOf(this.sourceReference())
+    }
+
     observe() {
-        const {recipe, stream} = this.props
+        const {stream} = this.props
         this.cancel$.next()
         // One snapshot of the session, taken before anything is read and used for the whole operation. Every
         // later question - what to seed the closure with, what was in effect when it started, whether the
@@ -107,14 +112,14 @@ class _SourceEvidenceSync extends React.Component {
             this.observe$(session).pipe(takeUntil(this.cancel$)),
             evidence => this.publish({status: OBSERVED, ...evidence}),
             error => {
-                log.debug(() => `Could not observe source ${inheritedSourceKey(recipe)}: ${error.message}`)
-                this.publish({status: UNAVAILABLE, bands: [], visualizations: []})
+                log.debug(() => `Could not observe source ${this.sourceKey()}: ${error.message}`)
+                this.publish({status: UNAVAILABLE})
             }
         )
     }
 
     observe$(session) {
-        const {recipe} = this.props
+        const {recipe, observation} = this.props
         return this.closure$(session).pipe(
             switchMap(({graph, recipesById}) => {
                 // Recorded before anything is decided about the graph. A graph that cannot run was still
@@ -125,13 +130,7 @@ class _SourceEvidenceSync extends React.Component {
                 if (graph.diagnostics.length) {
                     throw new Error(`Unresolved dependencies: ${graph.diagnostics[0].code}`)
                 }
-                const {immediate, terminal, wrappers} = inheritanceChain(graph, recipe)
-                return forkJoin({
-                    bands: this.bands$(immediate),
-                    visualizations: this.presets$(terminal).pipe(
-                        map(inherited => [...wrappers.flatMap(outputOwnedVisualizations), ...inherited])
-                    )
-                })
+                return observation.observe$({recipe, graph, recipesById})
             })
         )
     }
@@ -148,8 +147,7 @@ class _SourceEvidenceSync extends React.Component {
 
     // Before anything has been resolved, all that is known is the source this recipe names.
     startingBasis(session) {
-        const {recipe} = this.props
-        const reference = inheritedSourceReference(recipe)
+        const reference = this.sourceReference()
         return {
             ...this.operationState(),
             dependencies: [
@@ -183,7 +181,7 @@ class _SourceEvidenceSync extends React.Component {
     operationState() {
         const {recipe, earthEngineGeneration} = this.props
         return {
-            key: inheritedSourceKey(recipe),
+            key: this.sourceKey(),
             selections: declaredSelections(recipe),
             earthEngineGeneration
         }
@@ -199,7 +197,7 @@ class _SourceEvidenceSync extends React.Component {
     // answer was read says nothing about it now, and a record the session has released says only that.
     outdated(basis) {
         const {recipe, earthEngineGeneration} = this.props
-        return basis.key !== inheritedSourceKey(recipe)
+        return basis.key !== this.sourceKey()
             || !sameSelections(declaredSelections(recipe), basis.selections)
             || basis.earthEngineGeneration !== earthEngineGeneration
             || basis.dependencies.some(dependency => this.dependencyChanged(dependency))
@@ -212,7 +210,7 @@ class _SourceEvidenceSync extends React.Component {
         }
         const record = now.loadedRecipes[id]
         const observed = used !== undefined || seeded !== undefined
-        return (observed && record !== undefined && record !== used && record !== seeded)
+        return (observed && record !== undefined && !sameSourceRecord(record, used) && !sameSourceRecord(record, seeded))
             || moved(version, publishedRevision(now, id))
     }
 
@@ -242,72 +240,45 @@ class _SourceEvidenceSync extends React.Component {
             .filter(([id]) => !isBehind(session, id)))
     }
 
-    bands$({kind, id, record}) {
-        return kind === ASSET
-            ? api.gee.bands$({asset: id, includeDataTypes: true}).pipe(map(observedBands))
-            : api.gee.bands$({recipe: record, includeDataTypes: true}).pipe(map(observedBands))
-    }
-
-    presets$({kind, id, record}) {
-        if (kind === ASSET) {
-            // Presentation only. The physical schema is observed through `/bands` like any other image, so an
-            // asset's properties are never asked what bands exist.
-            return api.gee.assetMetadata$({asset: id}).pipe(
-                map(metadata => toVisualizations(metadata.properties, metadata.bandNames || []))
-            )
-        }
-        return of(record ? sourceVisualizations(record) : [])
-    }
-
     publish(evidence) {
-        const {recipeActionBuilder} = this.props
+        const {recipe, recipeActionBuilder} = this.props
         const basis = this.basis
         if (!basis || this.outdated(basis)) {
             return
         }
         recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
-            .set('ui.sourceEvidence', {sourceKey: basis.key, ...evidence})
+            .set('ui.sourceEvidence', {
+                sourceKey: basis.key,
+                observation: ++observations,
+                ...evidence,
+                ...retainedObservation(recipe, evidence)
+            })
             .dispatch()
     }
 }
 
-// The declared chain, read over records the shared closure already resolved. One edge per recipe, so it
-// terminates with the graph rather than with a limit of its own; the visited set only declines to loop on a
-// graph that reported no cycle. `immediate` is what this recipe outputs, `terminal` is what owns the
-// presets, and `wrappers` are the recipes passed through on the way - each of which can carry styles the
-// user made for ITS output, while the presets it copied when its own source was selected are the stale
-// snapshot this mechanism exists to replace. What the answer was read from is the operation basis, not
-// this walk.
-const inheritanceChain = (graph, root) => {
-    const recipesById = new Map(graph.recipes.map(recipe => [recipe.id, recipe]))
-    const wrappers = []
-    const visited = new Set([root.id])
-    let immediate = null
-    let record = root
-    for (;;) {
-        const {status, reference} = inheritedSchemaSource(record)
-        if (status !== INHERITED) {
-            return {immediate, wrappers, terminal: {kind: 'RECIPE', record}}
-        }
-        // Every recipe that inherits and is not the root is passed THROUGH. The root's own styles are the
-        // consumer's locals, and the terminal's arrive with its presets.
-        if (record !== root) {
-            wrappers.push(record)
-        }
-        const next = reference.type === ASSET ? null : recipesById.get(reference.id)
-        const step = reference.type === ASSET
-            ? {kind: ASSET, id: reference.id}
-            : {kind: 'RECIPE', id: reference.id, record: next}
-        immediate = immediate || step
-        if (reference.type === ASSET) {
-            return {immediate, wrappers, terminal: step}
-        }
-        if (!next || visited.has(reference.id)) {
-            return {immediate, wrappers, terminal: {kind: 'RECIPE'}}
-        }
-        visited.add(reference.id)
-        record = next
+const sameSourceRecord = (current, previous) =>
+    current === previous || (previous !== undefined && _.isEqual(sourceInputs(current), sourceInputs(previous)))
+
+// Keep persisted inputs conservative: equal bands do not imply equal pixels. Runtime evidence and restored
+// style provenance also affect descriptions; panel values, dirtiness and chart state do not.
+const sourceInputs = recipe => ({
+    ..._.omit(recipe, 'ui'),
+    sourceEvidence: recipe.ui?.sourceEvidence,
+    savedLayerSource: recipe.ui?.savedLayerSource
+})
+
+// A read that failed says the source could not be reached. It does not unsay what the last successful read
+// found, or which source that was - and which source an answer was about is what a consumer needs to know
+// whether an answer coming back now is about the one it last had an answer for. Availability is the status;
+// this is provenance, and the two must not be read off each other.
+const retainedObservation = (recipe, evidence) => {
+    if (evidence.status === OBSERVED) {
+        return {}
     }
+    const previous = recipe?.ui?.sourceEvidence
+    const observed = previous?.status === OBSERVED ? previous : previous?.lastObserved
+    return observed ? {lastObserved: observed} : {}
 }
 
 const assetVersion = ({assetVersions}, assetId) =>
@@ -337,7 +308,8 @@ const sameSelections = (current, basis) =>
 const moved = (before, after) =>
     before !== undefined && after !== undefined && before !== after
 
-const observedBands = bands => (bands || []).map(band => _.isString(band)
+// Observed band descriptions as evidence carries them: a name, and dimensionality where it was reported.
+export const observedBands = bands => (bands || []).map(band => _.isString(band)
     ? {name: band}
     : {
         name: band.name,
@@ -350,3 +322,8 @@ export const SourceEvidenceSync = compose(
     connect(mapStateToProps),
     recipeAccess()
 )
+
+SourceEvidenceSync.propTypes = {
+    // {sourceReference: recipe => reference | null, observe$: ({recipe, graph, recipesById}) => Observable}
+    observation: PropTypes.object.isRequired
+}

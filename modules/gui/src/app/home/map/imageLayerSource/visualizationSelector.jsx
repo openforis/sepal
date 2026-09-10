@@ -40,14 +40,15 @@ class _VisualizationSelector extends React.Component {
     state = {}
 
     render() {
-        const {selectedVisParams, presetOptions} = this.props
+        const {selectedVisParams, labelButtons = []} = this.props
         const options = this.getOptions()
         const idMatch = selectedVisParams && selectedVisParams.id &&
             this.flattenOptions(options).find(option => option.value === selectedVisParams.id)
-        const selectedOption = idMatch || (selectedVisParams &&
-            this.flattenOptions(presetOptions).find(({visParams: {bands}}) =>
+        const selectedOption = idMatch || (selectedVisParams && !selectedVisParams.id
+            ? this.flattenOptions(this.presetOptions()).find(({visParams: {bands}}) =>
                 bands.join(',') === selectedVisParams.bands.join(',')
             )
+            : undefined
         )
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
@@ -81,7 +82,8 @@ class _VisualizationSelector extends React.Component {
                         tooltip={msg('map.visualizationSelector.remove.tooltip')}
                         disabled={!selectedOption || editMode === 'clone'}
                         onRemove={() => this.removeVisParams(selectedOption.visParams)}
-                    />
+                    />,
+                    ...labelButtons
                 ]}
                 buttons={selectedOption
                     // Palette, Legend and Values are projections of the visualization being shown. With no
@@ -98,7 +100,7 @@ class _VisualizationSelector extends React.Component {
     }
 
     getOptions() {
-        const {userDefinedVisualizations, presetOptions} = this.props
+        const {userDefinedVisualizations} = this.props
         const inheritedOptions = this.toOptions(this.inheritedVisualizations())
         return [
             {
@@ -108,8 +110,18 @@ class _VisualizationSelector extends React.Component {
             ...(inheritedOptions.length
                 ? [{label: msg('map.visualizationSelector.inherited.label'), options: inheritedOptions}]
                 : []),
-            ...presetOptions
+            ...this.presetOptions()
         ]
+    }
+
+    presetOptions() {
+        const availableBands = this.availableBands()
+        const filter = options => options.flatMap(option => option.options
+            ? [{...option, options: filter(option.options)}]
+            : !availableBands || renderableVisualizations([option.visParams], availableBands).length
+                ? [option]
+                : [])
+        return filter(this.props.presetOptions)
     }
 
     // The styles the recipe being shown owns for its output. They are offered here and edited there: this
@@ -229,5 +241,6 @@ VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,
     availableBands: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     presetOptions: PropTypes.array,
+    labelButtons: PropTypes.array,
     recipe: PropTypes.object
 }

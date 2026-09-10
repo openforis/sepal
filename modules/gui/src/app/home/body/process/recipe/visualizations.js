@@ -20,9 +20,9 @@ export const OUTPUT_LAYER_ID = 'this-recipe'
 // Unfiltered on purpose. Which of these can actually be drawn depends on the consumer's own output, and an
 // asset's CCDC templates are evidence for a transformation rather than styles for the image carrying them;
 // deciding that here would delete them from every consumer instead of withholding them from one offer.
-export const sourceVisualizations = recipe => [
+export const sourceVisualizations = (recipe, evidence) => [
     ...outputOwnedVisualizations(recipe),
-    ...(getRecipeType(recipe.type)?.getPreSetVisualizations(recipe) || [])
+    ...(getRecipeType(recipe.type)?.getPreSetVisualizations(recipe, evidence) || [])
 ]
 
 // Owned by the recipe that made them, offered by whoever consumes its output. `userDefined` is what the

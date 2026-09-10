@@ -354,6 +354,25 @@ as a reliably versioned cache entry. ImageCollection refresh follows the consume
 asset's metadata alone is insufficient until live verification proves that relevant membership changes always
 advance the collection's version.
 
+The bounded Map Layers fix revalidates an active asset layer through the existing metadata endpoint when its
+catalogue `updateTime` changes, and offers a per-asset explicit refresh independent of catalogue progress. It also
+revalidates when the layer becomes active. Each accepted read renews the preview even if metadata is identical;
+metadata equality does not prove pixel equality. Last-read preset identities are reconciled without replacing saved
+user intent. Pending or failed refreshes withhold rendering, and cancellation plus a current-request check prevent
+superseded answers from being installed. This is shared asset-layer behavior, not a recipe-specific observer or a
+new polling loop.
+
+Follow-up: move metadata ownership into the shared source runtime/catalogue so active consumers share observations
+and in-flight reads. Revalidation on active use, catalogue invalidation and explicit refresh must enter that same
+owner; persistent layer snapshots are identity seeds, never proof of freshness. Preserve account scoping, pending
+and failure state, cancellation and unchanged preset identities when consolidating. Do not build parallel caches in
+asset selectors, recipes or map layers.
+
+Tasks should report the **actual affected asset IDs** after destination changes, including collection destinations
+and written members where relevant. The shared owner invalidates those assets and revalidates active consumers;
+tasks do not identify recipes, layers or panels to refresh. Task wiring, background refresh policy and preview-failure
+retries are separate from the bounded Map Layers fix.
+
 Background validation while a recipe is open should detect:
 
 - source deletion or lost permission;
@@ -428,6 +447,45 @@ Candidate discovery uses the same expectation contract. It queries resolved sour
 can therefore admit a pass-through recipe only when its current operation and dependency graph preserve the
 required capability, without knowing that recipe type. Catalogue refresh re-evaluates the query when any
 output-relevant dependency or asset observation changes.
+
+### Declarative dependency evaluation
+
+Agreed direction for subsequent implementation, not an implemented declaration API: evaluate the current model
+against current source descriptions and local dependencies instead of maintaining chains of imperative
+"when X changes, invalidate Y" rules. The CCDC Slice synchronization packet supplies shared observation and
+source descriptions; it does not introduce this section-evaluation mechanism.
+
+Recipe definitions own ordinary pure functions declaring:
+
+- the inputs a calculation or section consumes, including dependencies conditional on its mode;
+- the semantic projection of those inputs and the requirements they must satisfy;
+- its derived output and whether a change permits automatic derivation, requires recalculation or needs review.
+
+Use the same declaration and evaluation contract for local model values, locally derived outputs and resolved
+recipe or asset outputs. Requirements operate on the supplied inputs, not on whether their origin is internal or
+external. Providers own obtaining those inputs and their availability and freshness evidence; the evaluator does
+not load sources or branch on their location. Uniform evaluation does not imply identical acquisition or versioning.
+
+A section-to-section dependency list alone is insufficient. Band Math consumes the bands actually referenced by
+an expression; Sampling Design's manual proportions depend on stratum identities, not their colors or ordering,
+while automatic proportions consume different inputs. Reuse the existing expression parser and domain functions
+rather than inventing a rule language. Keep external source traversal and observation in their existing shared
+boundaries; local calculation dependencies are not additional recipe-reference edges.
+
+Derive diagnostics and propagate affected state from the current inputs, independently of which panel is open.
+Diagnostics identify a stable reason and the affected model location; the GUI maps that location to the owning
+section and corrective action. Apply the expectation-validation rules above without deleting user configuration.
+A Change Alerts analysis band disappearing and a Band Math expression losing an input share that mechanism,
+but their recipe definitions own the different semantic requirements.
+
+Keep three questions separate: is the configuration compatible, is a calculated result still current, and does a
+user decision need review? Compatible inputs can contain changed pixel values. Cheap derived output can update
+automatically; stored calculations use the [result evidence](#persisted-derived-result-evidence) captured by the
+actual operation, not flags inferred from edit events. User-authored choices are not calculated results.
+
+The declaration shape and reusable evaluator remain open until the bounded Band Math workflow establishes what
+is needed. Extract only demonstrated common mechanics; do not build a general rules engine or rewrite Sampling
+Design's invalidation planner in the CCDC Slice or Band Math packet.
 
 ## Availability state
 

@@ -467,8 +467,16 @@ Current bands and visualizations are inherited while the consuming recipe is ope
 runtime. `SourceEvidenceSync` uses the shared closure-completion boundary with the session's reference-counted
 recipe loader. It observes the immediate source's bands and follows declared inheritance over the resolved
 records for visualizations, including styles owned by the source and intermediate wrappers rather than their
-copied presets. Its operation basis tracks dependency records, catalogue revisions, asset listing `updateTime`
-and Earth Engine identity; changes trigger re-observation and superseded answers cannot publish.
+copied presets. Its operation basis compares persisted dependency inputs by value, retaining runtime
+`ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
+asset listing `updateTime` and Earth Engine identity. Panel drafts and dirty state do not renew observations
+or invalidate pending answers. The full model remains part of the comparison: computation changes must
+invalidate even when the resulting band description is identical. The same comparison controls re-observation
+and whether a pending answer may publish.
+
+The lifecycle is not Masking's: `SourceEvidenceSync` takes a per-recipe `observation` - the source it depends
+on, and how to read evidence about it - and CCDC Slice mounts the same component to read the segment description
+it transforms (`recipe/ccdcSlice/sliceObservation.js`). What a source is for stays in the recipe definitions.
 
 Evidence stays in runtime state for synchronous map, layer-form, Retrieve and export consumers. Open drafts are
 not overwritten by persisted dependency reloads. Failed observations offer no bands or visualizations; saved

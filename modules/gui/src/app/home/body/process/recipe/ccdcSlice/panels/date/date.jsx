@@ -3,13 +3,13 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {maxDate, minDate, momentDate} from '~/widget/form/datePicker'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {segmentDatesOf} from '../../sliceEvidence'
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -32,8 +32,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    segmentsStartDate: selectFrom(recipe, 'model.source.startDate'),
-    segmentsEndDate: selectFrom(recipe, 'model.source.endDate')
+    segmentsStartDate: segmentDatesOf(recipe).startDate,
+    segmentsEndDate: segmentDatesOf(recipe).endDate
 })
 
 class _Date extends React.Component {

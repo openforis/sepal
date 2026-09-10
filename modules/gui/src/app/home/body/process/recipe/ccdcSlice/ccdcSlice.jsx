@@ -9,21 +9,29 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {defaultModel, RecipeActions} from './ccdcSliceRecipe'
+import {sourceKeyOf} from '../sourceEvidence'
+import {SourceEvidenceSync} from '../sourceEvidenceSync'
+import {defaultModel, preSetVisualizations, RecipeActions} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {SourceSync} from './sourceSync'
+import {availableBandsOf, selectedSource} from './sliceEvidence'
+import {resolveEvidence$, sliceObservation} from './sliceObservation'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),
-    savedLayers: selectFrom(recipe, 'layers')
+    sourceKey: sourceKeyOf(selectedSource(recipe)),
+    savedLayers: selectFrom(recipe, 'layers'),
+    savedLayerSource: selectFrom(recipe, 'ui.savedLayerSource')
 })
 
 class _CcdcSlice extends React.Component {
     constructor(props) {
         super(props)
-        const {savedLayers, recipeId} = props
-        initializeLayers({recipeId, savedLayers})
+        const {savedLayers, savedLayerSource, sourceKey, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
+        if (savedLayerSource === undefined) {
+            this.recipeActions.recordSavedLayerSource(sourceKey)
+        }
+        initializeLayers({recipeId, savedLayers})
     }
 
     render() {
@@ -32,7 +40,7 @@ class _CcdcSlice extends React.Component {
             <Map>
                 <CcdcSliceToolbar/>
                 <Aoi value={source.type && source}/>
-                <SourceSync/>
+                <SourceEvidenceSync observation={sliceObservation}/>
             </Map>
         )
     }
@@ -59,6 +67,7 @@ export default () => ({
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
-    getAvailableBands: recipe => selectFrom(recipe, 'model.source.bands') || [],
-    getPreSetVisualizations: recipe => selectFrom(recipe, 'model.source.visualizations') || []
+    resolveEvidence$,
+    getAvailableBands: (recipe, evidence) => availableBandsOf(recipe, evidence?.segments),
+    getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments)
 })

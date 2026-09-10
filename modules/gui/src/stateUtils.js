@@ -1,7 +1,7 @@
 import {flatten} from 'flat'
 import _ from 'lodash'
 
-import {addHash, cloneDeep, createHash, isEqual} from '~/hash'
+import {addHash, cloneDeep, createHash} from '~/hash'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
@@ -171,11 +171,9 @@ export class Mutator {
 
     setIfChanged(value) {
         this.assertValueType(value)
-        return this.mutate((pathState, pathKey) => {
-            if (!isEqual(pathState[pathKey], value)) {
-                pathState[pathKey] = cloneDeep(value)
-            }
-        })
+        return _.isEqual(resolve(this.state, this.path), value)
+            ? this.state.root
+            : this.set(value)
     }
 
     sort(key) {

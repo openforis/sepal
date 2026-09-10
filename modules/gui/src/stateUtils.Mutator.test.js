@@ -24,6 +24,41 @@ it('set prop ensuring correct equality', () => {
     expect(state.c === nextState.c).toEqual(true)
 })
 
+describe('setIfChanged', () => {
+    it('keeps the entire state and its hashes when an equal value is applied', () => {
+        const state = new Mutator({}, 'recipe.model').set({dates: {endDate: '2021-01-01'}})
+        const hash = getHash(state.recipe.model)
+        Object.freeze(state.recipe.model)
+        Object.freeze(state.recipe)
+        Object.freeze(state)
+
+        const nextState = new Mutator(state, 'recipe.model').setIfChanged({dates: {endDate: '2021-01-01'}})
+
+        expect(nextState).toBe(state)
+        expect(getHash(state.recipe.model)).toBe(hash)
+    })
+
+    it('replaces only the changed branch without modifying the previous state', () => {
+        const state = {recipe: {model: {endDate: '2021-01-01'}, ui: {dirty: true}}}
+
+        const nextState = new Mutator(state, 'recipe.model.endDate').setIfChanged('2022-01-01')
+
+        expect(nextState.recipe.model.endDate).toBe('2022-01-01')
+        expect(state.recipe.model.endDate).toBe('2021-01-01')
+        expect(nextState.recipe.ui).toBe(state.recipe.ui)
+        expect(getHash(nextState)).toBe(getHash(nextState.recipe.model))
+    })
+
+    it('does not create a missing path for an unchanged undefined value', () => {
+        const state = {}
+
+        const nextState = new Mutator(state, 'recipe.ui.dirty').setIfChanged(undefined)
+
+        expect(nextState).toBe(state)
+        expect(state).toEqual({})
+    })
+})
+
 it('set array item by index (sparse)', () => {
     const state = {a: ['b', 'c']}
     const nextState = new Mutator(state, 'a.3').set('d')

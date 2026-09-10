@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import Path from 'path'
 import React from 'react'
 
@@ -14,11 +13,13 @@ import {AssetDestination} from '~/widget/assetDestination'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
+import {Notifications} from '~/widget/notifications'
 import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
 import {WorkspaceDestination} from '~/widget/workspaceDestination'
 
 import {RecipeActions} from '../../ccdcSliceRecipe'
+import {retrievableBands, segmentDescription, selectedOutputBands} from '../../sliceEvidence'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -77,11 +78,17 @@ const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects')
 })
 
-const mapRecipeToProps = recipe => ({
-    baseBands: selectFrom(recipe, 'model.source.baseBands'),
-    segmentBands: selectFrom(recipe, 'model.source.segmentBands'),
-    projectId: recipe.projectId
-})
+export const mapRecipeToProps = recipe => {
+    const {baseBands, measures, segmentBands} = retrievableBands(recipe)
+    return {
+        recipe,
+        baseBands,
+        measures,
+        segmentBands,
+        outputUnavailable: segmentDescription(recipe).status === 'UNAVAILABLE',
+        projectId: recipe.projectId
+    }
+}
 
 class _Retrieve extends React.Component {
     constructor(props) {
@@ -100,8 +107,10 @@ class _Retrieve extends React.Component {
 
     render() {
         const {form} = this.props
+        const {outputUnavailable} = this.props
         const {more, destinationValidationPending} = this.state
-        const invalid = destinationValidationPending || form.isInvalid()
+        // A panel left open while the source became unreachable has nothing to export from.
+        const invalid = destinationValidationPending || outputUnavailable || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -337,8 +346,7 @@ class _Retrieve extends React.Component {
     }
 
     renderBandTypes() {
-        const {baseBands, inputs} = this.props
-        const bandTypes = _.uniq(baseBands.map(({bandTypes}) => bandTypes).flat())
+        const {measures, inputs} = this.props
         const bandTypeOptions = [
             {
                 value: 'value',
@@ -400,10 +408,7 @@ class _Retrieve extends React.Component {
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.tooltip')
             }
-        ].filter(({value}) =>
-            bandTypes.includes(value) ||
-            (value === 'breakConfidence' && bandTypes.includes('rmse') && bandTypes.includes('magnitude'))
-        )
+        ].filter(({value}) => measures.includes(value))
         return (
             <Form.Buttons
                 label={msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label')}
@@ -547,7 +552,13 @@ class _Retrieve extends React.Component {
         }
     }
 
+    // Checked here as well as through the disabled button: a panel can be open while the source changes
+    // under it, and what it submits must be bands this recipe still produces.
     retrieve(values) {
+        const {recipe, outputUnavailable} = this.props
+        if (outputUnavailable || !selectedOutputBands(recipe, values).length) {
+            return Notifications.error({message: msg('process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne')})
+        }
         const {assetId, workspacePath} = values
         const project = this.findProject()
         if (project) {

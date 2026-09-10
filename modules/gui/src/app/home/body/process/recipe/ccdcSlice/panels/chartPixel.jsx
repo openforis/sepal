@@ -15,8 +15,10 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
+import {baseBandsOf, dateFormatOf} from '../sliceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -26,8 +28,11 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
-    baseBands: selectFrom(recipe, 'model.source.baseBands'),
+    dateFormat: dateFormatOf(recipe),
+    baseBands: baseBandsOf(recipe),
+    // Which observation of the source the chart's segments belong to. A later one means the pixels may
+    // have moved, which no comparison of what the source DESCRIBES would show.
+    observation: selectFrom(recipe, 'ui.sourceEvidence.observation'),
     dateType: selectFrom(recipe, 'model.date.dateType'),
     date: selectFrom(recipe, 'model.date.date'),
     startDate: selectFrom(recipe, 'model.date.startDate'),
@@ -49,8 +54,8 @@ class _ChartPixel extends React.Component {
     }
 
     render() {
-        const {latLng} = this.props
-        if (!latLng)
+        const {latLng, baseBands} = this.props
+        if (!latLng || !baseBands.length)
             return null
         else
             return this.renderPanel()
@@ -96,7 +101,7 @@ class _ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {source: {baseBands}}}, inputs: {selectedBand}} = this.props
+        const {baseBands, inputs: {selectedBand}} = this.props
         const options = baseBands.map(({name}) => ({value: name, label: name}))
         return (
             <Form.Combo
@@ -140,20 +145,41 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    componentDidMount() {
+        this.updateChart()
+    }
+
     componentDidUpdate(prevProps) {
-        const {baseBands, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        this.updateChart(prevProps)
+    }
 
-        if (!selectedBand.value)
-            selectedBand.set(baseBands[0].name)
+    componentWillUnmount() {
+        this.cancel$.next(true)
+        this.cancel$.complete()
+    }
 
-        if (latLng && selectedBand.value && !_.isEqual(
-            [recipe.model, latLng, selectedBand.value],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
+    updateChart(prevProps) {
+        const {baseBands, observation, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const band = resolveChartBand(selectedBand.value, baseBands.map(({name}) => name))
+
+        if (!latLng || !band || band !== selectedBand.value) {
+            this.clearData()
+            if (band !== selectedBand.value)
+                selectedBand.set(band)
+            // Form props still contain the old selection until the next update.
+            return
+        }
+
+        // Reloaded when what is asked changes AND when the source has been read again: runtime evidence can
+        // move without the model moving, and a chart drawn before that goes on plotting the pixels and the
+        // date representation the source no longer has.
+        if (!prevProps || !_.isEqual(
+            [recipe.model, observation, latLng, band],
+            [prevProps.recipe.model, prevProps.observation, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
-            this.cancel$.next(true)
-            this.setState({segments: undefined})
+            this.clearData()
             stream('LOAD_CCDC_SEGMENTS',
-                loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+                loadCCDCSegments$({recipe, latLng, bands: [band]}).pipe(
                     takeUntil(this.cancel$)
                 ),
                 segments => this.setState({segments}),
@@ -168,9 +194,14 @@ class _ChartPixel extends React.Component {
         }
     }
 
-    close() {
+    clearData() {
         this.cancel$.next(true)
-        this.setState({segments: undefined})
+        if (this.state.segments !== undefined)
+            this.setState({segments: undefined})
+    }
+
+    close() {
+        this.clearData()
         this.recipeActions.setChartPixel(null)
     }
 }

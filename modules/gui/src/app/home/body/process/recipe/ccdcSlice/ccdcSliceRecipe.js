@@ -8,6 +8,9 @@ import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/re
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
+import {renderableVisualizations} from '../visualizationMatching'
+import {availableBandsOf, chartSourceReference, dateFormatOf, materializedTemplates, segmentDatesOf, selectedOutputBands} from './sliceEvidence'
+
 export const defaultModel = {
     date: {
     },
@@ -31,6 +34,12 @@ export const RecipeActions = id => {
                 .set('ui.bands.baseBands', baseBands)
                 .dispatch()
         },
+        // Runtime provenance for restored styles, captured before the source can be changed or observed.
+        recordSavedLayerSource(sourceKey) {
+            return actionBuilder('RECORD_SAVED_LAYER_SOURCE', {sourceKey})
+                .set('ui.savedLayerSource', sourceKey)
+                .dispatch()
+        },
         setChartPixel(latLng) {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
@@ -48,26 +57,27 @@ export const RecipeActions = id => {
     }
 }
 
+// The endpoint takes the source reference and resolves the rest from the source itself. What it is handed
+// is what the recipe selected, not a description of it.
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
+    api.gee.loadCCDCSegments$({recipe: chartSourceReference(recipe), latLng, bands})
 
-export const getAllVisualizations = recipe => {
-    return recipe.ui.initialized
-        ? [
-            ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-            ...selectFrom(recipe, 'model.source.visualizations') || [],
-            ...additionalVisualizations(recipe)
-        ]
-        : []
-}
+// Everything this recipe offers over its own output: the source's templates that survive the operation, plus
+// the break-date preset it derives itself. One list, so what the layer form offers is exactly what the
+// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale.
+export const preSetVisualizations = (recipe, resolved) =>
+    renderableVisualizations(
+        [...materializedTemplates(recipe, resolved), ...additionalVisualizations(recipe, resolved)],
+        availableBandsOf(recipe, resolved)
+    )
 
-export const additionalVisualizations = recipe => {
+const additionalVisualizations = (recipe, resolved) => {
     const dateType = selectFrom(recipe, 'model.date.dateType')
     const date = selectFrom(recipe, 'model.date.date')
     const startDate = selectFrom(recipe, 'model.date.startDate')
     const endDate = selectFrom(recipe, 'model.date.endDate')
-    const segmentsEndDate = selectFrom(recipe, 'model.source.endDate')
-    const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
+    const {endDate: segmentsEndDate} = segmentDatesOf(recipe, resolved)
+    const dateFormat = dateFormatOf(recipe, resolved)
     const dataTypesByDateFormat = ['number', 'fractionalYears', 'number']
 
     const DATE_FORMAT = 'YYYY-MM-DD'
@@ -102,45 +112,19 @@ export const additionalVisualizations = recipe => {
     ]
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
-    const bandTypeSuffixes = {
-        value: '',
-        rmse: '_rmse',
-        magnitude: '_magnitude',
-        breakConfidence: '_breakConfidence',
-        intercept: '_intercept',
-        slope: '_slope',
-        phase_1: '_phase_1',
-        phase_2: '_phase_2',
-        phase_3: '_phase_3',
-        amplitude_1: '_amplitude_1',
-        amplitude_2: '_amplitude_2',
-        amplitude_3: '_amplitude_3',
-    }
-    const allBands = [
-        ...recipe.model.source.bands,
-        ...recipe.model.source.baseBands
-            .map(({name}) => Object.values(bandTypeSuffixes)
-                .map(suffix => `${name}${suffix}`)
-            )
-            .flat()
-    ]
-    const bands = [
-        ...baseBands
-            .map(name => bandTypes
-                .map(bandType => `${name}${bandTypeSuffixes[bandType]}`)
-            )
-            .flat(),
-        ...baseBands.map(({name}) => name),
-        ...segmentBands
-    ].filter(band => allBands.includes(band))
+// The selection is base bands and measures; the export is the band names those resolve to. The shared
+// submitter is handed them as its band selection - it filters the exported visualizations by them - while
+// the image also carries the base bands the slice operation needs.
+export const submitRetrieveRecipeTask = recipe => {
+    const retrieveOptions = recipe.ui.retrieveOptions
+    const bands = selectedOutputBands(recipe, retrieveOptions)
 
     return submitTask(recipe, {
+        retrieveOptions: {...retrieveOptions, bands},
         filterVisualizations: true,
         customizeImage: image => ({
             ...image,
-            bands: {selection: bands, baseBands}
+            bands: {selection: bands, baseBands: retrieveOptions.baseBands}
         })
     })
 }

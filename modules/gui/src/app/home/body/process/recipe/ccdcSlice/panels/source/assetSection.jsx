@@ -18,6 +18,8 @@ class _AssetSection extends React.Component {
         super(props)
         this.assetChanged$ = new Subject()
         this.onLoaded = this.onLoaded.bind(this)
+        // What the panel opens on has already been selected; only a move away from it is a new selection.
+        this.state = {loadedAsset: props.inputs.asset.value}
     }
 
     render() {
@@ -56,8 +58,17 @@ class _AssetSection extends React.Component {
         )
     }
 
-    onLoaded({metadata}) {
+    // The date representation is configuration, with the asset's own property as its starting point. It is
+    // taken from the property when THIS asset is first selected - zero is a value, not an absence - and left
+    // alone afterwards: the user may have corrected it, and a later read of the same asset is not a reason
+    // to undo that. A different asset starts over.
+    onLoaded({asset, metadata}) {
         const {inputs} = this.props
+        const {loadedAsset} = this.state
+        // An answer about an asset the panel no longer names describes something nobody selected.
+        if (asset !== inputs.asset.value) {
+            return
+        }
         const {bands, properties: {dateFormat}} = metadata
         const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
             .map(postfix => bands
@@ -69,7 +80,12 @@ class _AssetSection extends React.Component {
             )
         )
         if (assetBands.length) {
-            dateFormat && inputs.dateFormat.set(dateFormat)
+            const newlySelected = loadedAsset !== asset
+            const unconfigured = inputs.dateFormat.value === undefined || inputs.dateFormat.value === null
+            if (dateFormat !== undefined && dateFormat !== null && (newlySelected || unconfigured)) {
+                inputs.dateFormat.set(dateFormat)
+            }
+            this.setState({loadedAsset: asset})
         } else {
             inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.asset.notCcdc'))
         }

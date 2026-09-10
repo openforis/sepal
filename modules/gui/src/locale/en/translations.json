@@ -971,6 +971,10 @@
   },
   "imageLayerSources": {
     "Asset": {
+      "refresh": {
+        "tooltip": "Refresh asset",
+        "failed": "Unable to refresh asset"
+      },
       "label": "EE Asset",
       "description": "Earth Engine Asset"
     },

@@ -29,10 +29,11 @@ export const inheritedSourceReference = recipe => {
     return status === INHERITED ? reference : null
 }
 
-export const inheritedSourceKey = recipe => {
-    const reference = inheritedSourceReference(recipe)
-    return reference ? referenceKey(reference) : null
-}
+export const sourceKeyOf = reference =>
+    reference ? referenceKey(reference) : null
+
+export const inheritedSourceKey = recipe =>
+    sourceKeyOf(inheritedSourceReference(recipe))
 
 // The model field behind every source this recipe declares, without naming a field of a recipe it does not
 // own. An observer watches all of them rather than only the inherited one: what can be answered about the

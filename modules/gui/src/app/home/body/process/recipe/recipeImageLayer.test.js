@@ -79,8 +79,14 @@ const build = ({recipe, visParams, previousLayer}) => {
     // React hands componentDidUpdate the previous props; the reconciler reads the current ones. Passing the same
     // props back is the realistic case - available bands changed while the layer config did not.
     const didUpdate = () => instance.componentDidUpdate(instance.props)
-    // React replaces props before it calls the lifecycle; without a renderer this is the equivalent.
-    const setRecipe = recipe => instance.props = {...instance.props, recipe, currentRecipe: recipe}
+    // React replaces props before it calls the lifecycle; without a renderer this is the equivalent. The
+    // dependency graph is derived from the same records, so it moves with them as the selector's does.
+    const setRecipe = recipe => instance.props = {
+        ...instance.props,
+        recipe,
+        currentRecipe: recipe,
+        dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
+    }
     return {instance, updates, didUpdate, setRecipe}
 }
 
@@ -150,6 +156,88 @@ describe('the render-time guard', () => {
         })
 
         expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    // CCDC Slice renders its own layer form but no longer reconciles or gates its own selection, so the
+    // guard has to hold for it like any other type. Exempting it drew a preview for bands its source had
+    // stopped producing.
+    it('holds for a slice whose selected bands are gone', () => {
+        availableBandsByType.CCDC_SLICE = {nbr: {}}
+        const {instance} = build({
+            recipe: recipeOf({type: 'CCDC_SLICE', userDefined: [{id: 'v-nbr', bands: ['nbr']}]}),
+            visParams: {id: 'v-ndvi', bands: ['ndvi']}
+        })
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(state.constructed).toEqual([])
+    })
+
+    // A recipe whose source could not be resolved reports no bands. Nothing it could draw exists, and a
+    // preview of bands that do not exist is one Earth Engine rejects - so the guard applies whether or not
+    // the type manages its own selection.
+    describe('a recipe with no bands at all', () => {
+        beforeEach(() => {
+            availableBandsByType.SYNTHETIC = {}
+            availableBandsByType.LANDTRENDR = {}
+        })
+
+        it('gets no layer', () => {
+            const {instance} = build({
+                recipe: styles([VALID]),
+                visParams: VALID,
+                previousLayer: {existing: true, removeFromMap: () => {}}
+            })
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(state.constructed).toEqual([])
+        })
+
+        it('gets no layer even when it manages its own visualizations', () => {
+            const {instance} = build({
+                recipe: recipeOf({type: 'LANDTRENDR', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
+                visParams: {id: 'v1', bands: ['ndvi']}
+            })
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
+
+        it('keeps the saved selection, which the source may make valid again', () => {
+            const {instance, updates} = build({recipe: styles([VALID]), visParams: VALID})
+
+            instance.componentDidMount()
+
+            expect(updates).toEqual([])
+        })
+    })
+})
+
+// A layer is built from what the recipe describes AND from the runtime evidence behind it. Reading a source
+// again can produce the same schema over different pixels, so the layer must be replaced rather than kept.
+describe('runtime evidence behind a layer', () => {
+    const observed = observation => ({
+        ...recipeOf({userDefined: [VALID]}),
+        ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', observation}}
+    })
+
+    it('replaces the layer when the source has been read again', () => {
+        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
+        const first = instance.maybeCreateLayer()
+
+        setRecipe(observed(2))
+        const second = instance.maybeCreateLayer()
+
+        expect(second).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
+    })
+
+    it('keeps the layer while nothing has been read again', () => {
+        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
+        const first = instance.maybeCreateLayer()
+
+        setRecipe(observed(1))
+
+        expect(instance.maybeCreateLayer()).toBe(first)
         expect(state.constructed).toHaveLength(1)
     })
 })

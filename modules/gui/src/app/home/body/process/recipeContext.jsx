@@ -5,7 +5,7 @@ import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withContext} from '~/context'
-import {toPathList} from '~/stateUtils'
+import {selectFrom, toPathList} from '~/stateUtils'
 import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
@@ -34,9 +34,9 @@ export const Recipe = ({id, children}) =>
 
 export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
-        const mapStateToProps = (_state, ownProps) => {
+        const mapStateToProps = (state, ownProps) => {
             const {recipeStatePath} = ownProps
-            const recipe = {...select(recipeStatePath)}
+            const recipe = selectFrom(state, recipeStatePath)
             if (!_.isEmpty(recipe)) {
                 return {
                     recipeActionBuilder: recipeActionBuilder(recipe.id),

@@ -48,10 +48,10 @@ export const recipeFormPanel = (
         getModel: props => props.model,
         getValues: props => props.values,
         modelToValues,
-        onInitialized: ({model, values, props}) => {
+        onInitialized: ({values, props}) => {
             const {recipeStatePath: statePath} = props
             const evaluatedPath = path(props)
-            setModelAndValues({evaluatedPath, statePath, model, values})
+            setValues({evaluatedPath, statePath, values})
         }
     }
 
@@ -148,8 +148,8 @@ const setModelAndValues = ({evaluatedPath, statePath, model, values}) => {
     if (!evaluatedPath)
         return
     return actionBuilder('SET_MODEL_AND_VALUES', {evaluatedPath, model, values})
-        .set([statePath, 'ui', evaluatedPath], values)
-        .set([statePath, 'model', evaluatedPath], model)
+        .setIfChanged([statePath, 'ui', evaluatedPath], values)
+        .setIfChanged([statePath, 'model', evaluatedPath], model)
         .dispatch()
 }
 
@@ -157,7 +157,7 @@ const setValues = ({evaluatedPath, statePath, values}) => {
     if (!evaluatedPath)
         return
     actionBuilder('SET_VALUES', {evaluatedPath, values})
-        .set([statePath, 'ui', evaluatedPath], values)
+        .setIfChanged([statePath, 'ui', evaluatedPath], values)
         .dispatch()
 }
 
@@ -165,6 +165,6 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
     if (!evaluatedPath)
         return
     actionBuilder('SET_DIRTY', {evaluatedPath, dirty})
-        .set([statePath, 'ui', evaluatedPath, 'dirty'], dirty)
+        .setIfChanged([statePath, 'ui', evaluatedPath, 'dirty'], dirty)
         .dispatch()
 }

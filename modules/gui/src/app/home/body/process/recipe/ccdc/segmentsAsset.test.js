@@ -1,21 +1,18 @@
 import {describe, expect, it} from 'vitest'
 
-import {toAssetSource} from './ccdcAssetDescription'
+import {segmentsAssetDescription} from './segmentsAsset'
 
-// What CCDC Slice makes of an existing Earth Engine asset. The fixtures are taken from real ones -
-// users/wiell/amazonas_ccdc and users/wiell/ayeyarwadi_ccdc_optical, written October and December 2021 - so what
-// passes here describes every asset already in users' hands.
+// What a reader of CCDC segments makes of an existing Earth Engine asset. The fixtures are taken from real
+// ones - users/wiell/amazonas_ccdc and users/wiell/ayeyarwadi_ccdc_optical, written October and December 2021 -
+// so what passes here describes every asset already in users' hands.
 //
-// `toAssetSource` reconstructs candidate source fields. It does not admit, verify or classify anything, and
-// these tests must not be read as saying an asset IS a CCDC Segments image. Three separate things come out of
-// one metadata document, and the tests keep them apart on purpose:
+// The description reconstructs candidates. It does not admit, verify or classify anything, and these tests
+// must not be read as saying an asset IS a CCDC Segments image. Three separate things come out of one metadata
+// document, and the tests keep them apart on purpose:
 //
 //   reconstructed structure  base bands and segment bands, derived from band names alone
-//   required Slice metadata  dateFormat, startDate, endDate - the only properties Slice reads
+//   date metadata            dateFormat, startDate, endDate - the only properties a reader takes
 //   presentation templates   the visualization_* properties, which contribute to neither
-//
-// Several behaviours below are DEFECTS, marked as such. They are recorded so a fix can be measured against them,
-// not because anything depends on them.
 
 // The real asset's bands, trimmed to three measures. `<measure>_coefs` is one physical array band standing for
 // nine logical coefficient bands.
@@ -33,29 +30,29 @@ const COEFFICIENT_TYPES = [
 
 const metadataOf = ({bandNames = REAL_BANDS, properties = {}} = {}) => ({bandNames, properties})
 
-const describeAsset = args => toAssetSource('users/wiell/amazonas_ccdc', metadataOf(args))
+const describeAsset = args => segmentsAssetDescription(metadataOf(args))
 
 describe('the structure reconstructed from band names', () => {
     it('reads one base band per measure, whatever order the bands arrive in', () => {
         expect(describeAsset().baseBands.map(({name}) => name)).toEqual(['blue', 'ndvi', 'nbr'])
     })
 
-    it('expands the physical coefficient array band into the nine bands Slice derives from it', () => {
-        const {bandTypes} = describeAsset({bandNames: ['ndvi_coefs']}).baseBands[0]
+    it('expands the physical coefficient array band into the nine measures a slice derives from it', () => {
+        const {measures} = describeAsset({bandNames: ['ndvi_coefs']}).baseBands[0]
 
-        expect(bandTypes).toEqual(COEFFICIENT_TYPES)
+        expect(measures).toEqual(COEFFICIENT_TYPES)
     })
 
-    it('adds rmse and magnitude as band types of the same measure', () => {
-        const {bandTypes} = describeAsset({bandNames: ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']}).baseBands[0]
+    it('adds rmse and magnitude as further measures of the same base band', () => {
+        const {measures} = describeAsset({bandNames: ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']}).baseBands[0]
 
-        expect(bandTypes).toEqual([...COEFFICIENT_TYPES, 'rmse', 'magnitude'])
+        expect(measures).toEqual([...COEFFICIENT_TYPES, 'rmse', 'magnitude'])
     })
 
-    it('orders band types by the physical band order, not by any fixed list', () => {
-        const {bandTypes} = describeAsset({bandNames: ['ndvi_magnitude', 'ndvi_rmse', 'ndvi_coefs']}).baseBands[0]
+    it('orders measures by the physical band order, not by any fixed list', () => {
+        const {measures} = describeAsset({bandNames: ['ndvi_magnitude', 'ndvi_rmse', 'ndvi_coefs']}).baseBands[0]
 
-        expect(bandTypes).toEqual(['magnitude', 'rmse', ...COEFFICIENT_TYPES])
+        expect(measures).toEqual(['magnitude', 'rmse', ...COEFFICIENT_TYPES])
     })
 
     it('reads the segment bands, keeping the asset order', () => {
@@ -71,7 +68,7 @@ describe('the structure reconstructed from band names', () => {
     // Nothing here checks that the result is coherent: one stray suffixed band yields a base band with a single
     // type, which no CCDC image would ever have. Reconstruction, not admission.
     it('reconstructs a base band from a lone suffixed band, coherent or not', () => {
-        expect(describeAsset({bandNames: ['x_rmse']}).baseBands).toEqual([{name: 'x', bandTypes: ['rmse']}])
+        expect(describeAsset({bandNames: ['x_rmse']}).baseBands).toEqual([{name: 'x', measures: ['rmse']}])
     })
 
     it('ignores a band that is neither a measure nor a segment band', () => {
@@ -81,18 +78,18 @@ describe('the structure reconstructed from band names', () => {
         expect(source.segmentBands).toEqual([])
     })
 
-    // Recorded, not corrected: nothing deduplicates band types, so a repeated physical band repeats its type.
-    it('repeats a band type when the same physical band appears twice', () => {
-        const {bandTypes} = describeAsset({bandNames: ['ndvi_rmse', 'ndvi_rmse']}).baseBands[0]
+    // Recorded, not corrected: nothing deduplicates measures, so a repeated physical band repeats its measure.
+    it('repeats a measure when the same physical band appears twice', () => {
+        const {measures} = describeAsset({bandNames: ['ndvi_rmse', 'ndvi_rmse']}).baseBands[0]
 
-        expect(bandTypes).toEqual(['rmse', 'rmse'])
+        expect(measures).toEqual(['rmse', 'rmse'])
     })
 
-    // The measure name is matched greedily, so a suffix that looks like two stacked band types is read as a
-    // measure whose name ends in one of them.
-    it('takes the longest possible measure name from a doubly suffixed band', () => {
+    // The base band name is matched greedily, so a suffix that looks like two stacked measures is read as a
+    // base band whose name ends in one of them.
+    it('takes the longest possible base band name from a doubly suffixed band', () => {
         expect(describeAsset({bandNames: ['ndvi_rmse_magnitude']}).baseBands).toEqual([
-            {name: 'ndvi_rmse', bandTypes: ['magnitude']}
+            {name: 'ndvi_rmse', measures: ['magnitude']}
         ])
     })
 
@@ -110,7 +107,7 @@ describe('the structure reconstructed from band names', () => {
     })
 })
 
-describe('the metadata CCDC Slice requires', () => {
+describe('the date metadata a reader takes', () => {
     const PROPERTIES = {dateFormat: 1, startDate: '2015-01-01', endDate: '2021-10-27', surfaceReflectance: 1}
 
     it('takes the date format and segment date range straight from the asset properties', () => {
@@ -121,24 +118,19 @@ describe('the metadata CCDC Slice requires', () => {
         expect(source.endDate).toBe('2021-10-27')
     })
 
-    // surfaceReflectance is written by the CCDC export and carried by real assets, but nothing in Slice reads
-    // it - it never reaches `model.source`.
-    it('drops surfaceReflectance, which Slice does not read', () => {
+    // surfaceReflectance is written by the CCDC export and carried by real assets, but nothing reads it.
+    it('drops surfaceReflectance, which no reader takes', () => {
         expect(describeAsset({properties: PROPERTIES}).surfaceReflectance).toBeUndefined()
     })
 
-    // Absent date metadata is not refused. The source is still built; the date panel and the break-date
+    // Absent date metadata is not refused. The description is still built; the date panel and the break-date
     // visualizations are what go without.
     it('describes the asset even when the date properties are missing', () => {
         const source = describeAsset({properties: {}})
 
         expect(source.dateFormat).toBeUndefined()
         expect(source.startDate).toBeUndefined()
-        expect(source.type).toBe('ASSET')
-    })
-
-    it('reports the source as an ASSET under the id it was asked about', () => {
-        expect(describeAsset()).toMatchObject({type: 'ASSET', id: 'users/wiell/amazonas_ccdc'})
+        expect(source.baseBands.map(({name}) => name)).toEqual(['blue', 'ndvi', 'nbr'])
     })
 })
 
@@ -166,7 +158,7 @@ describe('the presentation templates', () => {
     // Visualization properties contribute to no structural field. CCDC-shaped ones on an asset whose band names
     // say otherwise produce templates and nothing else.
     it('contributes nothing to the reconstructed structure', () => {
-        const source = toAssetSource('users/me/plain', metadataOf({
+        const source = segmentsAssetDescription(metadataOf({
             bandNames: ['red', 'green', 'blue'],
             properties: {
                 visualization_0_type: 'rgb',
@@ -180,9 +172,8 @@ describe('the presentation templates', () => {
         expect(source.segmentBands).toEqual([])
     })
 
-    // DEFECT. The id is minted fresh on every read, so the same asset read twice yields templates that compare
-    // unequal and cannot be matched to a saved selection by id. A fix derives the id from the asset id and the
-    // property index instead.
+    // Identified per read: the same asset read twice yields templates that differ only by id. Which template a
+    // saved selection means is settled where a read is compared with the one before it - see sliceObservation.
     it('mints a new id for every template on every read', () => {
         const first = describeAsset({properties: HARMONIC}).visualizations[0]
         const second = describeAsset({properties: HARMONIC}).visualizations[0]
@@ -240,23 +231,21 @@ describe('a real legacy CCDC asset, unmodified', () => {
         }
     }
 
-    const source = () => toAssetSource('users/wiell/amazonas_ccdc', AMAZONAS)
+    const source = () => segmentsAssetDescription(AMAZONAS)
 
-    const withoutTemplateIds = assetSource => ({
-        ...assetSource,
-        visualizations: assetSource.visualizations.map(({id: _id, ...rest}) => rest)
+    const withoutTemplateIds = description => ({
+        ...description,
+        visualizations: description.visualizations.map(({id: _id, ...rest}) => rest)
     })
 
     it('has 38 bands: five segment bands and three per measure', () => {
         expect(AMAZONAS.bandNames).toHaveLength(38)
     })
 
-    // Every field CCDC Slice reads off `model.source`, in one place.
-    it('produces the complete source shape Slice consumes', () => {
-        const {type, id, bands, baseBands, segmentBands, dateFormat, startDate, endDate, visualizations} = source()
+    // Every field a reader of segments takes, in one place.
+    it('produces the complete description a reader consumes', () => {
+        const {bands, baseBands, segmentBands, dateFormat, startDate, endDate, visualizations} = source()
 
-        expect(type).toBe('ASSET')
-        expect(id).toBe('users/wiell/amazonas_ccdc')
         expect(bands).toHaveLength(38)
         expect(baseBands.map(({name}) => name)).toEqual(MEASURES)
         expect(segmentBands.map(({name}) => name))
@@ -267,9 +256,9 @@ describe('a real legacy CCDC asset, unmodified', () => {
         expect(visualizations).toHaveLength(3)
     })
 
-    it('gives every measure the eleven band types Slice can slice', () => {
-        source().baseBands.forEach(({bandTypes}) =>
-            expect(bandTypes).toEqual([...COEFFICIENT_TYPES, 'rmse', 'magnitude'])
+    it('gives every base band the eleven measures a slice can produce', () => {
+        source().baseBands.forEach(({measures}) =>
+            expect(measures).toEqual([...COEFFICIENT_TYPES, 'rmse', 'magnitude'])
         )
     })
 
@@ -281,7 +270,7 @@ describe('a real legacy CCDC asset, unmodified', () => {
 
         expect(properties['system:version']).toBe(1635340957222000)
         expect(Object.keys(source())).toEqual([
-            'type', 'id', 'bands', 'baseBands', 'segmentBands',
+            'bands', 'baseBands', 'segmentBands',
             'dateFormat', 'startDate', 'endDate', 'visualizations'
         ])
     })
@@ -290,7 +279,7 @@ describe('a real legacy CCDC asset, unmodified', () => {
     // that difference reaches nothing.
     it('produces the same shape for the second real asset, revision aside', () => {
         const measures = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2', 'ndvi', 'ndmi', 'ndwi']
-        const ayeyarwadi = toAssetSource('users/wiell/ayeyarwadi_ccdc_optical', {
+        const ayeyarwadi = segmentsAssetDescription({
             bandNames: [
                 'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
                 ...measures.map(measure => [`${measure}_coefs`, `${measure}_rmse`, `${measure}_magnitude`]).flat()
@@ -314,7 +303,7 @@ describe('a real legacy CCDC asset, unmodified', () => {
     // treat it as always available.
     it('does not require surfaceReflectance, which one of the two real assets omits', () => {
         const {surfaceReflectance: _sr, ...withoutSr} = AMAZONAS.properties
-        const stripped = toAssetSource('users/wiell/amazonas_ccdc', {...AMAZONAS, properties: withoutSr})
+        const stripped = segmentsAssetDescription({...AMAZONAS, properties: withoutSr})
 
         // Template ids cannot take part in the comparison: they are minted afresh on every read.
         expect(withoutTemplateIds(stripped)).toEqual(withoutTemplateIds(source()))
@@ -322,7 +311,7 @@ describe('a real legacy CCDC asset, unmodified', () => {
 
     it('needs no property beyond the three date fields to be recognized', () => {
         const {properties: _properties, ...withoutProperties} = AMAZONAS
-        const stripped = toAssetSource('users/wiell/amazonas_ccdc', {...withoutProperties, properties: {}})
+        const stripped = segmentsAssetDescription({...withoutProperties, properties: {}})
 
         expect(stripped.baseBands).toEqual(source().baseBands)
         expect(stripped.segmentBands).toEqual(source().segmentBands)

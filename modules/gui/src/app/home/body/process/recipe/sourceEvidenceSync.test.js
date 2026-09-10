@@ -28,6 +28,7 @@ vi.mock('../recipeTypeRegistry', () => ({
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
 const {SourceEvidenceSync} = await import('./sourceEvidenceSync')
+const {maskingObservation} = await import('./masking/maskingSourceEvidence')
 
 const CCDC_PRESETS = [{id: 'v-red', bands: ['red']}]
 
@@ -63,6 +64,7 @@ const sync = ({
         }
     })
     const component = new SourceEvidenceSync({
+        observation: maskingObservation,
         recipe,
         loadedRecipes,
         catalogue,
@@ -98,7 +100,7 @@ describe('observing a recipe source', () => {
         component.componentDidMount()
 
         expect(bands$).toHaveBeenCalledWith({recipe: source, includeDataTypes: true})
-        expect(evidence()).toEqual([{
+        expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:source-1',
             status: 'OBSERVED',
             bands: [
@@ -106,7 +108,7 @@ describe('observing a recipe source', () => {
                 {name: 'coefs', dataType: {arrayDimensions: 2}}
             ],
             visualizations: CCDC_PRESETS
-        }])
+        })])
     })
 
     it('takes the presets from the source recipe, which Earth Engine knows nothing about', () => {
@@ -432,12 +434,10 @@ describe('an observation that fails', () => {
 
         component.componentDidMount()
 
-        expect(evidence()).toEqual([{
+        expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:source-1',
-            status: 'UNAVAILABLE',
-            bands: [],
-            visualizations: []
-        }])
+            status: 'UNAVAILABLE'
+        })])
     })
 })
 
@@ -455,6 +455,26 @@ describe('an answer for a source that is no longer selected', () => {
         answer.next([{name: 'stale', arrayDimensions: 0}])
 
         expect(dispatched.filter(({value}) => value.sourceKey === 'RECIPE_REF:source-1')).toEqual([])
+    })
+})
+
+describe('each answer published', () => {
+    it('distinguishes a renewed read even when the source describes the same bands', () => {
+        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        const source = ccdcRecipe('source-1')
+        const {component, rerender, evidence} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('source-1')}),
+            loadedRecipes: {'source-1': source},
+            loadRecipe$: () => of(source)
+        })
+        component.componentDidMount()
+
+        rerender({loadedRecipes: {'source-1': {...source, revision: 2}}})
+
+        expect(evidence()).toHaveLength(2)
+        const [first, second] = evidence()
+        expect(second.bands).toEqual(first.bands)
+        expect(second).not.toEqual(first)
     })
 })
 
@@ -534,6 +554,30 @@ describe('a change while an observation is in flight', () => {
     const records = {inner, 'source-1': ccdcRecipe('source-1', [{id: 'v-old', bands: ['red']}])}
     const edited = {...records, 'source-1': ccdcRecipe('source-1', [{id: 'v-new', bands: ['nir']}])}
 
+    it('keeps the pending read and publishes its answer after a UI-only edit', () => {
+        const held = new Subject()
+        bands$.mockReturnValueOnce(held).mockReturnValue(of([{name: 'unexpected-restart'}]))
+        const {component, rerender, evidence} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('inner')}),
+            loadedRecipes: records
+        })
+        component.componentDidMount()
+
+        rerender({loadedRecipes: {
+            ...records,
+            'source-1': {...records['source-1'], ui: {dates: {endDate: '2022-01-01', dirty: true}}}
+        }})
+        held.next([{name: 'red', arrayDimensions: 0}])
+        held.complete()
+
+        expect(bands$).toHaveBeenCalledTimes(1)
+        expect(evidence()).toEqual([expect.objectContaining({
+            status: 'OBSERVED',
+            bands: [{name: 'red', dataType: {arrayDimensions: 0}}],
+            visualizations: records['source-1'].model.presets
+        })])
+    })
+
     // The first response is held open, the terminal source is edited, and only then does it arrive. Both
     // responses complete, so what is asserted is what actually reached the recipe.
     const raced = () => {
@@ -576,6 +620,30 @@ describe('a change while a dependency is still loading', () => {
     }
     const atStart = {inner, 'source-1': ccdcRecipe('source-1', [{id: 'v-old', bands: ['red']}])}
     const edited = {...atStart, 'source-1': ccdcRecipe('source-1', [{id: 'v-new', bands: ['nir']}])}
+
+    it('accepts the completed closure after a source panel changes only its draft', () => {
+        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        const mask = new Subject()
+        const {component, rerender, evidence} = sync({
+            recipe: withMask,
+            loadedRecipes: atStart,
+            loadRecipe$: () => mask
+        })
+        component.componentDidMount()
+
+        rerender({loadedRecipes: {
+            ...atStart,
+            inner: {...inner, ui: {dirty: true}},
+            'source-1': {...atStart['source-1'], ui: {dates: {dirty: true}}}
+        }})
+        mask.next(ccdcRecipe('mask-1'))
+        mask.complete()
+
+        expect(evidence()).toEqual([expect.objectContaining({
+            status: 'OBSERVED',
+            visualizations: atStart['source-1'].model.presets
+        })])
+    })
 
     // The mask's load is held open. While it is pending the terminal recipe is edited, and only then does
     // the mask arrive and let the closure complete.

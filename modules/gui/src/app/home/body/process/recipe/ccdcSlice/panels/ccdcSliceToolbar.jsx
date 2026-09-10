@@ -11,6 +11,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
 import {RecipeActions} from '../ccdcSliceRecipe'
+import {baseBandsOf} from '../sliceEvidence'
 import styles from './ccdcSliceToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {Date} from './date/date'
@@ -20,7 +21,7 @@ import {Source} from './source/source'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    hasBaseBands: selectFrom(recipe, 'model.source.baseBands')?.length > 0
+    hasBaseBands: baseBandsOf(recipe).length > 0
 })
 
 class _CcdcSliceToolbar extends React.Component {

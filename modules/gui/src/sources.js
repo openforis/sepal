@@ -125,7 +125,7 @@ const toOpticalRecipe = ({dataSetIds, corrections}) =>
     ({model: {
         type: 'MOSAIC',
         sources: {dataSets: toSources(dataSetIds)},
-        classificationOptions: {
+        compositeOptions: {
             corrections,
             compose: 'MEDIAN'
         }

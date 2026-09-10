@@ -51,8 +51,9 @@ mock.module('#sepal/httpClient', {
                     return throwError(() => new Error(TEST_RECURSION_LIMIT))
                 }
                 const recipe = catalogue[id]
+                // loadRecipe$ asks for `json`, and the real client hands back a parsed body.
                 const response = recipe
-                    ? of({body: JSON.stringify(recipe)})
+                    ? of({body: recipe})
                     : throwError(() => new Error(`No such recipe: ${id}`))
                 if (!loadDelayMs) {
                     return response

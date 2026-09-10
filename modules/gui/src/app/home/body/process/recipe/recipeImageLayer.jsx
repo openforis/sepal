@@ -42,7 +42,7 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
 // (selecting a valid visualization when the available bands change). The
 // generic reconciliation below has to stand down for those, or the two writers
 // overwrite each other on every render and React aborts the update loop.
-export const SELF_MANAGED_VISUALIZATIONS = ['BAYTS_ALERTS', 'CCDC_SLICE', 'CHANGE_ALERTS', 'LANDTRENDR']
+export const SELF_MANAGED_VISUALIZATIONS = ['BAYTS_ALERTS', 'CHANGE_ALERTS', 'LANDTRENDR']
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -146,12 +146,23 @@ class _RecipeImageLayer extends React.Component {
         if (!map || !recipe.ui.initialized || !layerConfig || !layerConfig.visParams) {
             return null
         }
+        // Nothing to draw is nothing to draw, whoever manages the selection: a recipe whose source could not
+        // be resolved reports no bands, and a preview of bands that do not exist is one Earth Engine rejects.
+        // The saved selection is left alone - only what it would present is withheld.
+        if (!this.hasAvailableBands()) {
+            return null
+        }
         if (this.selfManagedVisualizations()) {
             return this.createLayer()
         }
         return selectionState({visualizations: this.toAllVis(), visParams: layerConfig.visParams}) === MATCHED
             ? this.createLayer()
             : null
+    }
+
+    hasAvailableBands() {
+        const {recipe} = this.props
+        return Object.keys(getRecipeType(recipe.type).getAvailableBands(recipe) || {}).length > 0
     }
 
     createLayer() {
@@ -166,7 +177,15 @@ class _RecipeImageLayer extends React.Component {
             recipe: _.omit(recipe, ['ui', 'layers']),
             ...layerConfig
         }
-        const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers', 'title'])), layerConfig}
+        // Runtime evidence is part of what the layer was built from: a source read again can produce the
+        // same schema over different pixels, and the layer must be replaced rather than kept.
+        const watchedProps = {
+            recipes: recipes.map(r => ({
+                ..._.omit(r, ['ui', 'layers', 'title']),
+                sourceEvidence: r.ui?.sourceEvidence
+            })),
+            layerConfig
+        }
         if (!_.isEqual(watchedProps, prevWatchedProps)) {
             this.layer = new EarthEngineImageLayer({
                 previewRequest,
