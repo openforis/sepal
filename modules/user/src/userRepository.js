@@ -51,7 +51,7 @@ const emailNotificationsEnabled = async email => {
 }
 
 // {timestamp: ISO string} for a user with a login, or {} when never logged in / unknown.
-// Matches Java's fixed key shape (consumer user-storage does .map(({timestamp}) => timestamp)).
+// Matches Java's fixed key shape (consumer storage does .map(({timestamp}) => timestamp)).
 const mostRecentLogin = async username => {
     const [rows] = await getPool().query(
         `SELECT last_login_time FROM ${TABLE}

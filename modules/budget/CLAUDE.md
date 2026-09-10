@@ -25,7 +25,7 @@ instance + storage spending and enforces monthly budgets; owns the `budget` MySQ
 
 ## Events
 - Subscribes: workerSession.WorkerSessionRequested, workerSession.WorkerSessionActivated,
-  workerSession.WorkerSessionClosed, userStorage.size
+  workerSession.WorkerSessionClosed, storage.size
 - Publishes: budget.UserBudgetExceeded, budget.UserBudgetCleared (level-triggered)
 
 ## Schema `budget`

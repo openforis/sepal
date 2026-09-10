@@ -1,19 +1,18 @@
-import {join} from 'path'
-
-import {createPool, initDb} from '#sepal/db/mysql'
+import {createPool} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
-import {dirName} from '#sepal/path'
 import {storedUsername} from '#sepal/username'
+
+import {migrateStorageDb} from './databaseMigrations.js'
 
 const log = getLogger('database')
 
-const DATABASE_NAME = 'user_storage'
+const DATABASE_NAME = 'storage'
 const TABLE_NAME = 'history'
 
 const state = {}
 
 const initializeDatabase = async () => {
-    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
+    await migrateStorageDb(DATABASE_NAME)
     state.pool = await createPool(DATABASE_NAME)
 }
 

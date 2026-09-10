@@ -2,10 +2,10 @@ import {get$} from '~/http-client'
 
 export default {
     getMostRecentEvents$: () =>
-        get$('/api/user-storage/mostRecentEvents'),
+        get$('/api/storage/mostRecentEvents'),
 
     getUserEvents$: username =>
-        get$('/api/user-storage/userEvents', {
+        get$('/api/storage/userEvents', {
             query: {
                 username
             }

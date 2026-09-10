@@ -19,7 +19,8 @@ including reference data and backfills, belong in the schema stream instead.
 | `budget` | `sdms` |
 | `worker` | `sdms` sessions and tasks |
 | `user` | `sepal_user` |
-| `message`, `user-storage`, `scene-metadata` | none |
+| `storage` | `user_storage` |
+| `message`, `scene-metadata` | none |
 
 Before a fresh import, check the legacy source for full keys that collide after username normalization:
 `username` in User's `sepal_user` and Budget's `user_budget` and `user_spending`, and
@@ -86,7 +87,7 @@ directly. Neither needs a handwritten copy of the application schema.
 
 ## Follow-up: User Storage event lock
 
-Not part of this rollout and not implemented. `addEvent` in `modules/user-storage/src/db.js` serializes
+Not part of this rollout and not implemented. `addEvent` in `modules/storage/src/db.js` serializes
 writes with `GET_LOCK`. Three things need correcting together, with integration tests against real MySQL
 covering both the concurrent and the failure paths:
 

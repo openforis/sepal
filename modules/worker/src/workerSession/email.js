@@ -1,4 +1,4 @@
-// email — worker's outbound-email shim (mirrors modules/user-storage/src/email.js):
+// email — worker's outbound-email shim (mirrors modules/storage/src/email.js):
 // a Subject wired as the `email.sendToUser` publisher in main.js. The email module
 // resolves the address and skips LOCKED users.
 

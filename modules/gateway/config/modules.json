@@ -10,9 +10,9 @@
   "gui": "gui",
   "worker": "worker",
   "sceneMetadata": "scene-metadata",
+  "storage": "storage",
   "terminal": "terminal",
   "user": "user",
   "userAssets": "user-assets",
-  "userFiles": "user-files",
-  "userStorage": "user-storage"
+  "userFiles": "user-files"
 }

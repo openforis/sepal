@@ -66,7 +66,7 @@ build sandbox
 build task
 build gee
 build user
-build user-storage
+build storage
 build user-storage-backup
 build user-assets
 build user-files
@@ -87,7 +87,7 @@ push email
 push backup
 push rabbitmq
 push user
-push user-storage
+push storage
 push user-storage-backup
 push app-launcher
 push app-manager

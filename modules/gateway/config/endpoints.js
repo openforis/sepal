@@ -92,8 +92,8 @@ const endpoints = [
     },
     {
         prefix: true,
-        path: '/api/user-storage',
-        target: `http://${modules.userStorage}`,
+        path: '/api/storage',
+        target: `http://${modules.storage}`,
         ws: false,
         authenticate: true
     },

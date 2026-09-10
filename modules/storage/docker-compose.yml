@@ -1,14 +1,15 @@
 services:
-  user-storage-redis:
+  storage-redis:
     extends:
       file: ../docker-compose.logger.yml
       service: logger
     image: "redis:6"
-    container_name: user-storage-redis
+    container_name: storage-redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
+      # Keeps the pre-rename directory name so existing deployments carry their data over.
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
-      - "${SEPAL_PROJECT_DIR}/modules/user-storage/redis.conf:/usr/local/etc/redis/redis.conf:ro"
+      - "${SEPAL_PROJECT_DIR}/modules/storage/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s
@@ -20,19 +21,19 @@ services:
       - sepal
     restart: always
 
-  user-storage:
+  storage:
     extends:
       file: ../docker-compose.logger.yml
       service: logger
     build:
       context: ../..
-      dockerfile: ./modules/user-storage/Dockerfile
+      dockerfile: ./modules/storage/Dockerfile
       ulimits:
         nofile:
           soft: 65536
           hard: 65536
-    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-storage:${SEPAL_VERSION:-latest}"
-    container_name: user-storage
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/storage:${SEPAL_VERSION:-latest}"
+    container_name: storage
     init: true
     volumes:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
@@ -45,7 +46,7 @@ services:
       MYSQL_HOST: "mysql"
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      REDIS_HOST: "user-storage-redis"
+      REDIS_HOST: "storage-redis"
       HOME_DIR: "/sepalUsers"
       SCAN_MIN_DELAY_SECONDS: "300"
       SCAN_MAX_DELAY_SECONDS: "86400"

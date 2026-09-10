@@ -27,7 +27,7 @@ const getUserList$ = () => forkJoin([
     api.user.getBudgetReport$().pipe(
         catchError(() => of({}))
     ),
-    api.userStorage.getMostRecentEvents$().pipe(
+    api.storage.getMostRecentEvents$().pipe(
         catchError(() => of({}))
     ),
     timer(SPINNER_COMFORT_DELAY_MS)

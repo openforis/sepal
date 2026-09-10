@@ -189,6 +189,18 @@
             "rabbitmq"
         ]
     },
+    "storage": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "email",
+            "mysql",
+            "rabbitmq"
+        ]
+    },
     "task": {
         "lib": [
             "shared",
@@ -236,18 +248,6 @@
         "build": {},
         "run": [
             "logger"
-        ]
-    },
-    "user-storage": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger",
-            "email",
-            "mysql",
-            "rabbitmq"
         ]
     },
     "user-storage-backup": {
