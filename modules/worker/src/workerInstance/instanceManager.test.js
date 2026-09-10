@@ -116,6 +116,50 @@ describe('reprovisionInstance', () => {
         expect(provisioned.reservation.sessionId).toBe('s-1')
     })
 
+    // Releasing hands the instance back to the pool, so its provisioning entry must go with it:
+    // the next session allocated the same instance would otherwise have its provision dropped as
+    // a duplicate of a provision nobody is waiting for any more, and the reconcile sweep would
+    // skip it too, until the session times out unprovisioned.
+    test('a released instance is provisioned again for the session that gets it next', async () => {
+        const started = []
+        const provisioner = {
+            provisionInstance: jest.fn(() => new Promise(resolve => started.push(resolve))),
+            undeploy: jest.fn(async () => {}),
+        }
+        const instance = {
+            id: 'i-1',
+            type: 'T3aSmall',
+            host: '10.0.0.1',
+            reservation: {username: 'alice', workerType: 'sandbox', sessionId: 's-1'},
+        }
+        const claims = {release: jest.fn(async () => true)}
+        const provider = {
+            getInstance: jest.fn(async () => instance),
+            release: jest.fn(async () => {}),
+            terminate: jest.fn(async () => {}),
+        }
+        const manager = createInstanceManager({claims, provider, provisioner, instanceTypes: []})
+
+        const first = manager.reprovisionInstance(pendingSession)
+        expect(manager.isProvisioning('i-1')).toBe(true)
+
+        await manager.releaseInstance('i-1')
+        expect(manager.isProvisioning('i-1')).toBe(false)
+
+        const successor = {...pendingSession, id: 's-2', username: 'bob'}
+        const second = manager.reprovisionInstance(successor)
+        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(2)
+        expect(provisioner.provisionInstance.mock.calls[1][0].reservation.sessionId).toBe('s-2')
+
+        // The abandoned provision settling must not take the successor's entry with it.
+        started[0]()
+        expect(await first).toBe(true)
+        expect(manager.isProvisioning('i-1')).toBe(true)
+
+        started[1]()
+        expect(await second).toBe(true)
+    })
+
     // The sweep re-entering an in-flight provision would delete the containers it is creating.
     test('is dropped while the same instance is already being provisioned', async () => {
         let release

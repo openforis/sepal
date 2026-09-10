@@ -93,7 +93,7 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     // ── Wire: in-proc InstancePendingProvisioning → provisionInstance ─────────
     instanceEvents.on('InstancePendingProvisioning', instance => {
         log.debug(`Starting provisioning for ${instanceTag(instance)}`)
-        provisioning.run(instance.id, () => provisionInstance(instance, {provisioner}))
+        provisioning.run(instance.id, instance.reservation?.sessionId, () => provisionInstance(instance, {provisioner}))
             .then(ran => ran || log.debug(`Already provisioning ${instanceTag(instance)} - ignored`))
             .catch(err => {
                 // provisionInstance already emits FailedToProvisionInstance; just log here

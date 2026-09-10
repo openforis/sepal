@@ -20,7 +20,7 @@ const TIME_UNIT_MS = {
     DAYS: 86_400_000,
 }
 
-const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner}) => {
+const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning}) => {
     log.debug(`Releasing unused instances: [${[...usedInstanceIds].map(instanceTag).join(', ')}] in use, minAge: ${minAge} ${timeUnit}`)
 
     const usedSet = new Set(usedInstanceIds)
@@ -52,7 +52,7 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
     // Release each independently — one failure must not abort the others.
     for (const instance of toRelease) {
         try {
-            await releaseInstance(instance.id, {claims, provider, provisioner})
+            await releaseInstance(instance.id, {claims, provider, provisioner, provisioning})
         } catch (err) {
             // releaseInstance already emits FailedToReleaseInstance; swallow here to continue
             log.error(`Failed to release ${instanceTag(instance)} (continuing): ${err.message}`)

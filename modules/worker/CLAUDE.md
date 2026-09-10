@@ -92,6 +92,9 @@ on every file save. Four mechanisms carry instance management across it:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
+  `releaseInstance` forgets the entry, so an instance back in the pool cannot drop the next
+  session's provisioning as a duplicate. Re-provisioning re-reads the instance's PENDING session
+  first: the probe verdict it acts on is a batch snapshot, and the invariant above holds here too.
 - **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
   container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
   runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.

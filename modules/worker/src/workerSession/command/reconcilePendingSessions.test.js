@@ -23,6 +23,8 @@ const session = (id, overrides = {}) => createWorkerSession({
 const build = ({sessions, statuses = {}, provisioning = []}) => ({
     repo: {
         sessions: jest.fn(async () => sessions),
+        sessionOnInstance: jest.fn(async instanceId =>
+            sessions.find(s => s.instance && s.instance.id === instanceId) ?? null),
     },
     instanceManager: {
         sessionsWithoutInstance: jest.fn(async probed => probed
@@ -76,6 +78,29 @@ test('a session whose instance is already being provisioned is left alone', asyn
 
     expect(deps.instanceManager.reprovisionInstance).not.toHaveBeenCalled()
     expect(deps.activatePendingSessionOnInstance).not.toHaveBeenCalled()
+})
+
+// The batch probe is bounded by PROBE_TIMEOUT_MS per container, so a MISSING verdict can be
+// tens of seconds old by the time the loop reaches it, and provisionInstance opens by deleting
+// every worker container on the host. Re-provisioning on a stale verdict destroys whatever
+// session owns the instance now.
+test('a session that is no longer PENDING on its instance is not re-provisioned', async () => {
+    const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
+    deps.repo.sessionOnInstance = jest.fn(async () => null)
+
+    await reconcilePendingSessions(deps)
+
+    expect(deps.repo.sessionOnInstance).toHaveBeenCalledWith('i-s-1', [State.PENDING])
+    expect(deps.instanceManager.reprovisionInstance).not.toHaveBeenCalled()
+})
+
+test('an instance whose PENDING session is now a different one is not re-provisioned', async () => {
+    const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
+    deps.repo.sessionOnInstance = jest.fn(async () => session('s-2'))
+
+    await reconcilePendingSessions(deps)
+
+    expect(deps.instanceManager.reprovisionInstance).not.toHaveBeenCalled()
 })
 
 test('loads PENDING sessions only', async () => {

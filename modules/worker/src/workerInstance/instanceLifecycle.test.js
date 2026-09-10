@@ -731,20 +731,23 @@ describe('reclaimStaleClaims', () => {
         }
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
-            ...makeProvider([], [instance]),
+            ...makeProvider(),
+            // Both real providers drop the reservation on release — AWS re-tags State=idle, the
+            // local provider clears instance.reservation — so a released instance is no longer
+            // reserved to the next sweep.
+            reservedInstances: jest.fn(async () => instance.reservation ? [instance] : []),
             getInstance: jest.fn(async () => instance),
-            release: jest.fn(async () => undefined),
+            release: jest.fn(async () => {
+                instance.reservation = null
+            }),
             terminate: jest.fn(async () => undefined),
         }
         const provisioner = {undeploy: jest.fn(async () => undefined)}
 
         await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner})
-        // The stub provider does not remove i-1 from reservedInstances() after the first release,
-        // so this sweep finds it again with no claim left to skip it on and undeploys it too —
-        // the redundant call this invariant makes harmless rather than something to prevent.
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
-        expect(provisioner.undeploy).toHaveBeenCalledTimes(2)
+        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
         expect(rows.has('i-1')).toBe(false)
     })
 

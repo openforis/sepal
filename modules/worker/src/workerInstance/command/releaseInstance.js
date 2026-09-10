@@ -3,7 +3,8 @@
 //   2. instance.host set → provisioner.undeploy(instance).
 //   3. claims.release(instanceId) — cleanup, not an election: the claim outlives the container,
 //      never the other way round.
-//   4. provider.release(instanceId) → emit InstanceReleased(release(instance)).
+//   4. provider.release(instanceId) → forget any in-flight provisioning → emit
+//      InstanceReleased(release(instance)).
 //   5. On ANY exception → emit FailedToReleaseInstance, terminate the instance (swallowing its
 //      own errors), then claims.release(instanceId).
 
@@ -18,7 +19,8 @@ import {release} from '../workerInstance.js'
 
 const log = getLogger('worker/releaseInstance')
 
-const releaseInstance = async (instanceId, {claims, provider, provisioner}) => {
+// provisioning is optional: callers that never provision have nothing to forget.
+const releaseInstance = async (instanceId, {claims, provider, provisioner, provisioning}) => {
     log.debug(`Releasing ${instanceTag(instanceId)}...`)
 
     let instance
@@ -44,6 +46,12 @@ const releaseInstance = async (instanceId, {claims, provider, provisioner}) => {
         await claims.release(instanceId)
 
         await provider.release(instanceId)
+
+        // The instance is back in the pool, so a provision still retrying against it is working
+        // for a session that no longer owns it. Leaving the entry standing would drop the next
+        // session's provisioning as a duplicate of it.
+        provisioning?.forget(instanceId)
+
         const releasedInstance = release(instance)
         emitInstanceReleased(releasedInstance)
         log.info(`Released ${instanceTag(instanceId)}`)

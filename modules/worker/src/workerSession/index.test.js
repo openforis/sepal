@@ -122,3 +122,35 @@ test('the unused-instance sweep runs with the release min age', async () => {
 
     expect(instanceManager.releaseUnusedInstances).toHaveBeenCalledWith([], 5, 'MINUTES')
 })
+
+// The recovery sweep is the only thing that finishes a PENDING session whose provisioning nobody
+// is driving any more, and repo.sessions([PENDING]) is its alone — every other sweep asks for
+// [PENDING, ACTIVE].
+test('the reconcile sweep runs over the PENDING sessions', async () => {
+    const {component, repo, instanceManager} = build(() => STARTED_AT)
+    const pendingSession = createWorkerSession({
+        ...timedOutSession, id: 's-pending', state: State.PENDING,
+    })
+    repo.sessions.mockImplementation(async states =>
+        states.length === 1 && states[0] === State.PENDING ? [pendingSession] : [])
+
+    component.start()
+    await flush()
+    component.stop()
+
+    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
+    expect(instanceManager.sessionsWithoutInstance).toHaveBeenCalledWith([pendingSession])
+})
+
+// It never closes a session — it only activates or re-provisions — so unlike the closing sweeps it
+// must run inside the startup grace, which is exactly when a restart leaves sessions stranded.
+test('the reconcile sweep is not gated on the startup grace', async () => {
+    const {component, repo} = build(() => STARTED_AT)
+
+    component.start()
+    await flush()
+    component.stop()
+
+    expect(repo.timedOutSessions).not.toHaveBeenCalled()
+    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
+})
