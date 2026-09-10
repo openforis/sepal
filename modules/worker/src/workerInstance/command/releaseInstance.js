@@ -1,10 +1,9 @@
 // ReleaseInstance:
 //   1. provider.getInstance(instanceId) — if null, drop any orphaned claim and return.
-//   2. claims.release(instanceId) — the DELETE's row count elects the undeployer. False means the
-//      row was already gone, so this call did not win it: skip undeploy, but STILL call
-//      provider.release(instanceId) and emit InstanceReleased.
-//   3. Won the delete AND instance.host set → provisioner.undeploy(instance).
-//   4. provider.release(instanceId) → emit InstanceReleased(instance.release()).
+//   2. instance.host set → provisioner.undeploy(instance).
+//   3. claims.release(instanceId) — cleanup, not an election: the claim outlives the container,
+//      never the other way round.
+//   4. provider.release(instanceId) → emit InstanceReleased(release(instance)).
 //   5. On ANY exception → emit FailedToReleaseInstance, terminate the instance (swallowing its
 //      own errors), then claims.release(instanceId).
 
@@ -31,17 +30,19 @@ const releaseInstance = async (instanceId, {claims, provider, provisioner}) => {
             return
         }
 
-        // Losing the delete normally means a concurrent releaseInstance is doing the undeploy;
-        // ReclaimStaleClaims routes an abandoned claim through here rather than deleting the row
-        // itself, so it does not manufacture the other case — a row that never existed.
-        const lostDelete = !(await claims.release(instanceId))
-        if (lostDelete) {
-            log.info(`No claim deleted for ${instanceTag(instanceId)} - skipping undeploy`)
-        } else if (instance.host) {
+        // Undeploy BEFORE dropping the claim. The claim is the only durable record that this
+        // instance may still be carrying a container, so a worker that dies mid-release has to
+        // leave it standing: ReclaimStaleClaims then finds the abandoned claim and runs the whole
+        // release again. Dropping the row first and dying here stranded the previous user's
+        // container on an instance ReleaseUnusedInstances went on to tag idle.
+        //
+        // No election is needed to keep that safe — undeploy is a force-delete by container name,
+        // so the retry, and a concurrent releaser doing the same thing, find nothing to do.
+        if (instance.host) {
             await provisioner.undeploy(instance)
         }
+        await claims.release(instanceId)
 
-        // Always reached, whoever won the delete.
         await provider.release(instanceId)
         const releasedInstance = release(instance)
         emitInstanceReleased(releasedInstance)

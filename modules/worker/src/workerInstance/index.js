@@ -28,15 +28,6 @@ const log = getLogger('worker/workerInstance')
 
 const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 
-// UPGRADE SHIM — DELETE ONE RELEASE AFTER THIS SHIPS.
-//
-// Sessions already running when the claim table arrived hold reserved instances with no claim row.
-// They cannot be mis-allocated (the hosting service reports them reserved), but on close
-// releaseInstance reads the missing row as a lost race and skips the undeploy, stranding a live
-// container on an instance about to be marked idle.
-//
-// A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
-// it once the grace period passes.
 // A provider that keeps its world in memory (local dev) forgets every live instance when the
 // worker restarts. The open sessions are the durable record of what was allocated, so hand them
 // back before anything reads the provider — backfillClaims included, since it rebuilds the claim
@@ -56,6 +47,16 @@ const restoreOpenSessionInstances = async ({provider, openSessionInstances}) => 
     }
 }
 
+// A reserved instance with no claim row has nobody to tear it down: ReleaseUnusedInstances tags
+// it idle and its container keeps running. Re-claiming it here puts it back under
+// ReclaimStaleClaims, which routes an abandoned claim through the full release.
+//
+// Claims go missing two ways, and both are permanent rather than migration-era: a session that
+// predates the claim table, and launchInstance's claim INSERT failing (it logs rather than
+// throwing, so as not to strand a running machine). This is reconciliation, not a shim.
+//
+// A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
+// it once the grace period passes.
 const backfillClaims = async ({claims, provider}) => {
     const reserved = await provider.reservedInstances()
     let backfilled = 0

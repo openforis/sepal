@@ -12,9 +12,9 @@
 // in flight; waiting out the grace on a genuinely nonexistent instance costs nothing.
 //
 // A gone instance has nothing to tear down, so its claim is simply deleted. An abandoned claim on
-// an instance that still exists goes through ReleaseInstance instead: the claim delete is what
-// elects the undeployer, so deleting the row here would leave the instance to be tagged idle by
-// ReleaseUnusedInstances with the previous session's container still running on it.
+// an instance that still exists goes through ReleaseInstance instead, which undeploys before
+// dropping the row: deleting it here would leave the container running on an instance
+// ReleaseUnusedInstances then tags idle, with nothing left to record that it was ever there.
 
 import {getLogger} from '#sepal/log'
 
