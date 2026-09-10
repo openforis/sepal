@@ -7,7 +7,7 @@ const DEFAULT_USER_URL = 'http://user/'
 
 const createUserClient = config => {
     const baseUrl = config.userUrl || DEFAULT_USER_URL
-    const adminUsername = config.sepalUser || 'sepalAdmin'
+    const adminUsername = config.sepalUser || 'sepaladmin'
 
     // Impersonate an admin — matches the 4c GoogleOAuthGateway's sepal-user header.
     const sepalUser = JSON.stringify({username: adminUsername, roles: [ADMIN_ROLE]})

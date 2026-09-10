@@ -10,7 +10,7 @@ import {println} from './console.js'
 const WAIT_TIME = 1000
 
 const endpointConfig = {
-    username: 'sepalAdmin',
+    username: 'sepaladmin',
     password: endpointPassword,
     headers: {'sepal-user': JSON.stringify({username, roles: ['application_admin']})}
 }

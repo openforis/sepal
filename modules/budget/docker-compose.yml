@@ -19,7 +19,7 @@ services:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       USER_URL: "${USER_URL:-http://user/}"
-      SEPAL_USER: "sepalAdmin"
+      SEPAL_USER: "sepaladmin"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       start_period: 3600s

@@ -182,7 +182,7 @@ const main = async () => {
     // calls the executor; that only happens on execute/cancel.
     const taskRepo = withTaskChangedEvents(createTaskRepository(getPool()))
     const workerGateway = createWorkerGateway({
-        sepalUsername: config.sepalUser || 'sepalAdmin',
+        sepalUsername: config.sepalUser || 'sepaladmin',
         sepalPassword: config.sepalPassword,
         workerPort: config.workerPort,
     })

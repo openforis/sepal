@@ -29,7 +29,7 @@ services:
       HOSTING_SERVICE: "${HOSTING_SERVICE:-local}"
       # ─── SEPAL creds / host ────────────────────────────────────────────────
       SEPAL_VERSION: "${SEPAL_VERSION:-latest}"
-      SEPAL_USER: "sepalAdmin"
+      SEPAL_USER: "sepaladmin"
       SEPAL_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_HTTPS_PORT: "${SEPAL_HTTPS_PORT}"

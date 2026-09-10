@@ -11,7 +11,7 @@ node src/main.js \
     --username="${USER}" \
     --user-key-file="/home/${USER}/.ssh/id_rsa" \
     --endpoint="http://worker/" \
-    --endpoint-password="$(cat /etc/sepalAdmin.passwd)" \
+    --endpoint-password="$(cat /etc/sepaladmin.passwd)" \
     --ssh-command-path="${sshScriptFile}"
 
 if [ -s $sshScriptFile ]; then
@@ -27,7 +27,7 @@ if [ -s $sshScriptFile ]; then
     # is disconnected, and it deliberately extends nothing. curl failure (000) keeps retrying.
     if [ -n "$sessionId" ]; then
       sessionStatus=$(curl -s -o /dev/null -w '%{http_code}' \
-        -H "sepal-user:{\"username\": \"sepalAdmin\", \"roles\": [\"application_admin\"]}" \
+        -H "sepal-user:{\"username\": \"sepaladmin\", \"roles\": [\"application_admin\"]}" \
         -X POST "http://worker/sessions/$USER/session/$sessionId")
       if [ "$sessionStatus" = "404" ]; then
         terminated=1
