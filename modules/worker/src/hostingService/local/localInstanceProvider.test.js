@@ -283,6 +283,68 @@ describe('start/stop', () => {
     })
 })
 
+// The Map is this provider's entire world, so a worker restart makes every live instance read
+// as gone: releaseInstance finds nothing to undeploy and reclaimStaleClaims drops live sessions'
+// claims. On AWS the same question is answered from EC2 tags for free.
+describe('restore', () => {
+    const restored = (overrides = {}) => ({
+        id: 'i-restored',
+        type: 'Local',
+        host: 'i-restored',
+        running: true,
+        launchTime: new Date('2026-01-01T00:00:00Z'),
+        reservation: {username: 'alice', workerType: 'sandbox', sessionId: 's-1'},
+        ...overrides,
+    })
+
+    test('a restored instance is visible to getInstance and reservedInstances', () => {
+        const provider = createLocalInstanceProvider({tag: 'local'})
+
+        provider.restore([restored()])
+
+        expect(provider.getInstance('i-restored').reservation.sessionId).toBe('s-1')
+        expect(provider.reservedInstances().map(i => i.id)).toEqual(['i-restored'])
+    })
+
+    test('a restored instance keeps its launch time, so it can age out', () => {
+        const provider = createLocalInstanceProvider({tag: 'local'})
+
+        provider.restore([restored()])
+
+        expect(provider.getInstance('i-restored').launchTime)
+            .toEqual(new Date('2026-01-01T00:00:00Z'))
+    })
+
+    // Every local instance lives on the one dev daemon; without this the provisioner cannot
+    // address a restored instance at all.
+    test('a restored instance is pinned to the shared dev daemon', () => {
+        const provider = createLocalInstanceProvider({tag: 'local'})
+
+        provider.restore([restored({daemonHost: null})])
+
+        expect(provider.getInstance('i-restored').daemonHost).toBe(LOCAL_HOST)
+    })
+
+    // Anything already in the Map was launched by THIS process and is more current than a row
+    // rebuilt from the database.
+    test('does not overwrite an instance this process already launched', () => {
+        const provider = createLocalInstanceProvider({tag: 'local'})
+        const launched = provider.launchReserved('Local', {username: 'bob', workerType: 'sandbox', sessionId: 's-2'})
+
+        provider.restore([restored({id: launched.id, reservation: {username: 'stale', workerType: 'sandbox', sessionId: 's-old'}})])
+
+        expect(provider.getInstance(launched.id).reservation.username).toBe('bob')
+    })
+
+    test('an idle instance is never conjured out of a restore', () => {
+        const provider = createLocalInstanceProvider({tag: 'local'})
+
+        provider.restore([restored()])
+
+        expect(provider.idleInstances()).toEqual([])
+    })
+})
+
 describe('createHostingService integration', () => {
     test('createHostingService(local) returns an instanceProvider with expected methods', async () => {
         const {createHostingService} = await import('../index.js')

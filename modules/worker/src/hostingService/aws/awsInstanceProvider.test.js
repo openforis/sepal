@@ -1039,6 +1039,30 @@ describe('fetchImageId', () => {
     })
 })
 
+describe('restore', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    // Restoring is a local-provider concern. EC2 already answers correctly the moment the worker
+    // comes back, and a restore that issued calls here would spend a DescribeInstances round trip
+    // per open session on every boot.
+    test('restore is a no-op that issues no EC2 calls', async () => {
+        const provider = createAwsInstanceProvider(CONFIG, {instanceTypes: AWS_INSTANCE_TYPES})
+
+        await provider.restore([{id: 'i-1'}])
+
+        expect(ec2Mock.calls()).toHaveLength(0)
+    })
+})
+
 describe('reservedInstances', () => {
     let ec2Mock
 

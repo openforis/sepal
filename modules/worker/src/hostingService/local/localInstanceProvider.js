@@ -102,6 +102,30 @@ const createLocalInstanceProvider = _instanceType => {
     const getInstance = instanceId =>
         workerInstanceById.get(instanceId) ?? null
 
+    // restore — adopt instances the worker already knows about, rebuilt from the open sessions,
+    // after a restart. This Map is the provider's whole world, so without it every live instance
+    // reads as gone: releaseInstance finds nothing to undeploy and reclaimStaleClaims drops live
+    // sessions' claims. The AWS provider needs no equivalent — EC2 answers from tags.
+    //
+    // Existing entries win: anything already in the Map was launched by THIS process and is more
+    // current than a row rebuilt from the database. daemonHost is re-pinned because a session row
+    // persists only the host alias, and every local instance lives on the one dev daemon.
+    const restore = instances => {
+        let restored = 0
+        for (const instance of instances ?? []) {
+            if (instance?.id && !workerInstanceById.has(instance.id)) {
+                workerInstanceById.set(instance.id, createWorkerInstance({
+                    ...instance,
+                    daemonHost: LOCAL_HOST,
+                }))
+                restored++
+            }
+        }
+        if (restored > 0) {
+            log.info(`Restored ${restored} instance(s) from the open sessions`)
+        }
+    }
+
     const onInstanceLaunched = listener => {
         launchListeners.push(listener)
     }
@@ -125,6 +149,7 @@ const createLocalInstanceProvider = _instanceType => {
         idleInstances,
         reservedInstances,
         getInstance,
+        restore,
         awaitHost,
         sweep,
         onInstanceLaunched,

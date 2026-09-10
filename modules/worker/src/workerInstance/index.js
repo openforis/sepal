@@ -1,8 +1,9 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): call provider.start(), backfill claims for pre-existing reserved instances,
-//              schedule SizeIdlePool + provider.sweep every 1 min (unconditionally — see start())
+//   3. start(): call provider.start(), restore the open sessions' instances into the provider,
+//              backfill claims for pre-existing reserved instances, schedule SizeIdlePool +
+//              provider.sweep every 1 min (unconditionally — see start())
 //   4. stop():  clear scheduler, call provider.stop()
 //
 // DO NOT auto-start on import. main.js calls start() explicitly.
@@ -36,6 +37,25 @@ const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 //
 // A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
 // it once the grace period passes.
+// A provider that keeps its world in memory (local dev) forgets every live instance when the
+// worker restarts. The open sessions are the durable record of what was allocated, so hand them
+// back before anything reads the provider — backfillClaims included, since it rebuilds the claim
+// table from provider.reservedInstances(). Providers whose hosting service is authoritative
+// (AWS) implement restore as a no-op.
+//
+// A failure here degrades to the behaviour that shipped before restore existed, so it is logged
+// rather than fatal.
+const restoreOpenSessionInstances = async ({provider, openSessionInstances}) => {
+    if (!provider.restore || !openSessionInstances) {
+        return
+    }
+    try {
+        await provider.restore(await openSessionInstances())
+    } catch (err) {
+        log.error('Failed to restore instances from the open sessions:', err.message)
+    }
+}
+
 const backfillClaims = async ({claims, provider}) => {
     const reserved = await provider.reservedInstances()
     let backfilled = 0
@@ -50,7 +70,7 @@ const backfillClaims = async ({claims, provider}) => {
     }
 }
 
-const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes}) => {
+const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes, openSessionInstances = null}) => {
 
     // ONE registry shared by both provisioning paths — the event handler below and the
     // reconcile sweep reaching in through instanceManager.reprovisionInstance. Two registries
@@ -91,6 +111,8 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     const start = async () => {
         log.debug('Starting...')
         await provider.start()
+
+        await restoreOpenSessionInstances({provider, openSessionInstances})
 
         try {
             await backfillClaims({claims, provider})
