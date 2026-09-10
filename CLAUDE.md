@@ -10,6 +10,8 @@ SEPAL (System for Earth Observation Data Access, Processing and Analysis for Lan
 
 SEPAL is a distributed microservices system where each module runs as an independent Docker container, orchestrated via Docker Compose over a shared `sepal` Docker network.
 
+When introducing or restructuring workflows, follow [Ports and adapters](docs/ports-and-adapters.md).
+
 ### Module Types
 
 **Node.js microservices** (most modules use Koa web framework + RxJS; the former Java/Groovy services — `sepal-server` and the old `user` module — were rewritten as Node.js modules and deleted, along with the Gradle build):
@@ -156,6 +158,7 @@ APIs take the `Db` suffix (`initDb`, `migrateDb`, `initializeDb`, `migrate<Modul
 
 ## Code Organization
 
+- Use classes for objects exposing several related operations over shared dependencies or state, rather than factories returning an object of locally defined functions. Declare public operations as methods and use private fields for implementation-only dependencies and state. Preserve the receiver when passing methods as callbacks. Keep pure functions and single-callback factories as functions, and plain data as plain objects. Apply this when introducing or restructuring an object, not as a reason for unrelated conversions.
 - Organize files to read top-down. Put public entry points and exported classes/functions first at the highest abstraction level, followed by their supporting functions in call order and increasingly concrete detail.
 - Keep a function at one abstraction level: orchestration should name its steps, while lower-level mechanics belong in the functions it calls.
 - In test files, put the behavioral specifications before builders and harness helpers. Group by stable public operation and use names that state the outcome or rule, not vague activity such as "loading a recipe".
