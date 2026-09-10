@@ -126,8 +126,18 @@ class _UserSessions extends React.Component {
             : null
     }
 
-    renderSession(session, index) {
+    // The confirmation names the instance being lost, by the same two-word name the list, the SSH
+    // menu and the expiry notification use. An instance predating names has none, and falls back to
+    // the list label, which is never empty.
+    renderRemoveMessage(session, index) {
         const running = runningItems(session).length
+        return msg(
+            running ? 'user.userSession.stop.messageWithRunning' : 'user.userSession.stop.message',
+            {name: session.name || instanceLabel(session, index)}
+        )
+    }
+
+    renderSession(session, index) {
         return (
             <ListItem key={session.id}>
                 <CrudItem
@@ -137,7 +147,7 @@ class _UserSessions extends React.Component {
                     timestamp={session.creationTime}
                     timestampFootnote={format.dollars(session.costSinceCreation)}
                     editTooltip={msg('user.userSession.update.tooltip')}
-                    removeMessage={msg(running ? 'user.userSession.stop.messageWithRunning' : 'user.userSession.stop.message')}
+                    removeMessage={this.renderRemoveMessage(session, index)}
                     removeContent={this.renderRunning(session)}
                     removeTooltip={msg('user.userSession.stop.tooltip')}
                     onEdit={() => this.selectSession(session)}

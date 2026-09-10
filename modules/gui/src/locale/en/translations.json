@@ -6139,8 +6139,8 @@
       "stop": {
         "error": "Could not stop session.",
         "label": "Stop",
-        "message": "Stop session?",
-        "messageWithRunning": "The following are running on this instance and will be closed. Are you sure you want to stop it?",
+        "message": "You are stopping session {name}.",
+        "messageWithRunning": "You are stopping session {name}.|The following are running on it and will be closed.",
         "success": "Session stopped.",
         "tooltip": "Stop session (cannot be resumed)."
       },
