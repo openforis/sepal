@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS worker.`worker_session` (
     `worker_type`            varchar(32)   NOT NULL,
     `instance_type`          varchar(64)   NOT NULL,
     `instance_id`            varchar(255)  NOT NULL,
+    -- The two-word name the user knows the instance by. WRITE-ONLY: a pure function of `id`
+    -- (see src/instanceName.js), stored so the table can be read at the SQL prompt while
+    -- debugging. Every consumer still derives it; nothing reads this column back.
+    `instance_name`          varchar(64)   DEFAULT NULL,
     `host`                   varchar(255)  NOT NULL,
     `creation_time`          timestamp     NOT NULL,
     `update_time`            timestamp     NOT NULL,

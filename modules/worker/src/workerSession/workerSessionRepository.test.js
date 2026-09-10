@@ -41,9 +41,10 @@ describe('insert', () => {
         query.mockResolvedValue([{}, []])
         await repo.insert(session())
         const [sql, params] = query.mock.calls[0]
-        expect(sql).toMatch(/INSERT INTO worker_session\(state, username, worker_type, instance_type, instance_id, host, creation_time, update_time, id, api_key, timeout_time\)/i)
+        expect(sql).toMatch(/INSERT INTO worker_session\(state, username, worker_type, instance_type, instance_id, instance_name, host, creation_time, update_time, id, api_key, timeout_time\)/i)
         expect(params).toEqual([
             'PENDING', 'alice', 'SANDBOX', 'T3aSmall', 'i-1',
+            'cosmic-clover',
             'host-1', new Date('2026-01-01T00:00:00Z'), new Date('2026-01-01T00:00:00Z'), 's-1',
             'key-1', new Date('2026-01-01T00:30:00Z'),
         ])

@@ -56,6 +56,7 @@ import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
 import {getPool} from '../db.js'
+import {instanceName} from '../instanceName.js'
 import {placeholders} from '../sql.js'
 import {sessionTag} from '../tag.js'
 import {createSessionAppRepository} from './sessionAppRepository.js'
@@ -108,11 +109,14 @@ const createWorkerSessionRepository = (
 ) => {
     const insert = async session => {
         await pool.query(
-            `INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, host, creation_time, update_time, id, api_key, timeout_time)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, instance_name, host, creation_time, update_time, id, api_key, timeout_time)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 session.state, storedUsername(session.username), session.workerType, session.instanceType,
                 session.instance.id,
+                // Derived here rather than taken from the caller, so the stored name cannot
+                // disagree with the id it comes from in its own row. Write-only — see the column.
+                instanceName(session.id),
                 session.instance.host, session.creationTime, session.updateTime, session.id,
                 session.apiKey, session.timeoutTime,
             ]

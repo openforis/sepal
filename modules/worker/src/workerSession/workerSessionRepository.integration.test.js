@@ -79,6 +79,7 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
                 \`worker_type\`            varchar(255)  NOT NULL,
                 \`instance_type\`          varchar(255)  NOT NULL,
                 \`instance_id\`            varchar(255)  NOT NULL,
+                \`instance_name\`          varchar(64)   DEFAULT NULL,
                 \`host\`                   varchar(255)  NOT NULL,
                 \`creation_time\`          timestamp     NOT NULL,
                 \`update_time\`            timestamp     NOT NULL,
