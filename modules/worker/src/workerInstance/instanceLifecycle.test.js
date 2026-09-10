@@ -1116,3 +1116,59 @@ describe('instanceManager', () => {
         expect(deps.provider.reservedInstances).toHaveBeenCalledTimes(1)
     })
 })
+
+// The end-to-end shape of a worker restart on local hosting: the provider's Map is gone, but the
+// session row and the claim row are not. Restoring the instance is what lets the eventual close
+// tear the container down instead of leaking it.
+describe('surviving a worker restart', () => {
+    let createWorkerInstanceComponent, createLocalInstanceProvider, instanceFromSession
+
+    beforeAll(async () => {
+        ;({createWorkerInstanceComponent} = await import('./index.js'))
+        ;({createLocalInstanceProvider} = await import('../hostingService/local/localInstanceProvider.js'))
+        ;({instanceFromSession} = await import('./instanceFromSession.js'))
+    })
+
+    const openSession = {
+        id: 's-1',
+        username: 'alice',
+        workerType: 'sandbox',
+        instanceType: 'Local',
+        instance: {id: 'i-1', host: 'i-1'},
+        creationTime: new Date('2026-01-01T00:00:00Z'),
+    }
+
+    const claimTable = rows => ({
+        all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
+            ({instanceId, sessionId, claimedAt: new Date('2026-01-01T00:00:00Z')}))),
+        claim: jest.fn(async (instanceId, sessionId) => {
+            if (rows.has(instanceId)) return false
+            rows.set(instanceId, sessionId)
+            return true
+        }),
+        release: jest.fn(async instanceId => rows.delete(instanceId)),
+    })
+
+    test('a restored instance is undeployed when its session finally closes', async () => {
+        // A fresh provider and a fresh component, exactly as a restarted process would build
+        // them — with the claim table and the session row carried over.
+        const provider = createLocalInstanceProvider({tag: 'local'})
+        const claims = claimTable(new Map([['i-1', 's-1']]))
+        const provisioner = {undeploy: jest.fn(async () => {})}
+
+        const component = createWorkerInstanceComponent({
+            claims,
+            provider,
+            provisioner,
+            instanceTypes: [],
+            openSessionInstances: async () => [instanceFromSession(openSession)],
+        })
+        await component.start()
+
+        await component.instanceManager.releaseInstance('i-1')
+        component.stop()
+
+        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
+        expect(provisioner.undeploy.mock.calls[0][0].id).toBe('i-1')
+    })
+})
