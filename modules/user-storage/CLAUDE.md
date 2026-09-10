@@ -9,14 +9,16 @@ Monitors user storage quota and usage. Tracks inactivity, sends notifications, m
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
+npm test              # Jest; the *.integration.test.js suites need a reachable MySQL
 npm run testWatch     # Jest watch mode
 ```
 
 ## Key Architecture
 
 ### Entry Point
-`src/main.js` - Initializes RabbitMQ (publishers + subscribers), HTTP server, scheduled storage/inactivity checks.
+`src/main.js` - Composes the database, repository, inactivity check and message handler, then starts RabbitMQ
+(publishers + subscribers), the HTTP server and the scheduled storage/inactivity checks. The database is
+initialized before the queue, so no subscriber can be handed work that records events before it can.
 
 ### RabbitMQ Integration
 Publishers:
@@ -44,7 +46,11 @@ Subscribers:
 ### Database
 MySQL (`user_storage` schema):
 - Table: `history` - Records `(username, event, timestamp)` with deduplication
-- Uses `GET_LOCK()`/`RELEASE_LOCK()` for concurrent access safety
+- `src/db.js` initializes the schema and returns the shared callback db; `src/historyRepository.js` holds it
+  and owns every statement against `history`. Nothing else reaches the pool.
+- `addEvent` uses `GET_LOCK()`/`RELEASE_LOCK()` on one connection for concurrent access safety. Known defects
+  in that locking are recorded in [docs/database-migrations.md](../../docs/database-migrations.md) and are
+  not addressed here.
 - Migration: `migrations/001.do.sql`
 
 ### Session Tracking

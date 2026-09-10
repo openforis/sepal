@@ -1,17 +1,16 @@
-import _ from 'lodash'
-
 import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
 import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
 import {amqpUri, port} from './config.js'
-import {initializeDatabase} from './db.js'
+import {initializeDb} from './db.js'
 import {email$} from './email.js'
-import {normalizeCase as normalizeInactivityCase, startInactivityCheck} from './inactivityCheck.js'
+import {HistoryRepository} from './historyRepository.js'
+import {InactivityCheck} from './inactivityCheck.js'
 import {normalizeCase} from './kvstore.js'
-import {messageHandler} from './messageHandler.js'
-import {routes} from './routes.js'
+import {createMessageHandler} from './messageHandler.js'
+import {createRoutes} from './routes.js'
 import {scanComplete$, startStorageCheck} from './storageCheck.js'
 
 configureServer(logConfig)
@@ -19,6 +18,10 @@ configureServer(logConfig)
 const log = getLogger('main')
 
 const main = async () => {
+    const db = await initializeDb()
+    const repository = new HistoryRepository(db)
+    const inactivityCheck = new InactivityCheck({repository})
+
     await initMessageQueue(amqpUri, {
         publishers: [
             {key: 'userStorage.size', publish$: scanComplete$},
@@ -29,21 +32,22 @@ const main = async () => {
             {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
             {queue: 'userStorage.files', topic: 'files.#'},
         ],
-        handler: messageHandler
+        handler: createMessageHandler({
+            cancelInactivityCheck: event => inactivityCheck.cancelInactivityCheck(event),
+            scheduleInactivityCheck: event => inactivityCheck.scheduleInactivityCheck(event)
+        })
     })
-
-    await initializeDatabase()
 
     try {
         await normalizeCase()
-        await normalizeInactivityCase()
+        await inactivityCheck.normalizeCase()
     } catch (error) {
         log.error('Cannot normalize username case in Redis, continuing', error)
     }
 
-    await server.start({port, routes})
+    await server.start({port, routes: createRoutes(repository)})
     await startStorageCheck()
-    await startInactivityCheck()
+    await inactivityCheck.startInactivityCheck()
 
     log.info('Initialized')
 }

@@ -1,101 +1,11 @@
 import {join} from 'path'
 
-import {createPool, initDb} from '#sepal/db/mysql'
-import {getLogger} from '#sepal/log'
+import {createDb, createPool, initDb} from '#sepal/db/mysql'
 import {dirName} from '#sepal/path'
-import {storedUsername} from '#sepal/username'
-
-const log = getLogger('database')
 
 const DATABASE_NAME = 'user_storage'
-const TABLE_NAME = 'history'
 
-const state = {}
-
-const initializeDatabase = async () => {
+export const initializeDb = async () => {
     await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
-    state.pool = await createPool(DATABASE_NAME)
+    return createDb(await createPool(DATABASE_NAME))
 }
-
-const getPool = () => {
-    if (state.pool) {
-        return state.pool
-    } else {
-        throw new Error('Connection to database unavailable')
-    }
-}
-
-const addEvent = async ({username, event}) => {
-    log.debug(`Adding event to ${username}: ${event}`)
-    const connection = await getPool().getConnection()
-    const lockName = `user_history_${username}`
-    try {
-        await connection.query('SELECT GET_LOCK(?, 5) AS got_lock', [lockName])
-        const [results, _fields] = await connection.query(`
-            INSERT INTO ${DATABASE_NAME}.${TABLE_NAME}
-            (username, event, timestamp)
-            SELECT ?, ?, NOW()
-            WHERE COALESCE((
-                SELECT event
-                FROM ${DATABASE_NAME}.${TABLE_NAME}
-                WHERE username = ?
-                ORDER BY timestamp DESC
-                LIMIT 1
-            ), '') <> ?;    
-        `, [storedUsername(username), event, username, event])
-        await connection.query('SELECT RELEASE_LOCK(?)', [lockName])
-        return results
-    } finally {
-        connection.release()
-    }
-}
-
-const getMostRecentEvents = async () => {
-    log.debug('Getting most recent event for any user')
-    const [results, _fields] = await getPool().query(`
-        SELECT t.id, t.username, t.event, t.timestamp
-        FROM ${DATABASE_NAME}.${TABLE_NAME} t
-        INNER JOIN (
-            SELECT username, MAX(id) AS max_id
-            FROM ${DATABASE_NAME}.${TABLE_NAME}
-            GROUP BY username
-        ) AS sub
-        ON t.username = sub.username AND t.id = sub.max_id        
-    `)
-    return results.reduce((acc, {username, event, timestamp}) => {
-        acc[username] = {event, timestamp}
-        return acc
-    }, {})
-}
-
-const getUserEvents = async username => {
-    log.debug(`Getting events for user: ${username}`)
-    const [results, _fields] = await getPool().query(`
-        SELECT event, timestamp
-        FROM (
-            SELECT 
-                username,
-                event,
-                timestamp,
-                @prev_event := @current_event AS prev_event,
-                @current_event := event AS current_event,
-                @row_num := IF(@prev_event = event, @row_num + 1, 1) AS row_num
-            FROM (
-                SELECT username, event, timestamp
-                FROM ${DATABASE_NAME}.${TABLE_NAME}
-                WHERE username = ? 
-                AND event != 'INACTIVE_UNKNOWN'
-                ORDER BY timestamp DESC
-            ) AS filtered_events
-            CROSS JOIN (SELECT @current_event := '', @prev_event := '', @row_num := 0) AS vars
-        ) AS numbered_events
-        WHERE row_num = 1
-        ORDER BY timestamp DESC
-        LIMIT 10
-    `, [username])
-    return results
-}
-
-export {
-    addEvent, getMostRecentEvents, getUserEvents,
-    initializeDatabase}

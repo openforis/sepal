@@ -7,7 +7,6 @@ import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
 import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
-import {addEvent} from './db.js'
 import {sendEmail} from './email.js'
 import {eraseUserStorage} from './filesystem.js'
 import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
@@ -17,6 +16,312 @@ import {DB, getInitialized, getUserStorage, setInitialized} from './kvstore.js'
 const log = getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'
+
+// Constructing this opens the Redis connection and starts reporting queue events; the processor itself
+// starts only on startInactivityCheck.
+export class InactivityCheck {
+    #repository
+    #connection
+    #queue
+    #queueEvents
+
+    constructor({repository}) {
+        if (!repository) {
+            throw new Error('An inactivity check requires a repository')
+        }
+        this.#repository = repository
+        this.#connection = new Redis({
+            host: redisHost,
+            db: DB.INACTIVITY_QUEUE,
+            maxRetriesPerRequest: null
+        })
+        this.#queue = new Queue(QUEUE, {
+            connection: this.#connection
+        })
+        this.#queueEvents = new QueueEvents(QUEUE, {
+            connection: this.#connection
+        })
+        this.#reportQueueEvents()
+    }
+
+    async startInactivityCheck() {
+        log.info('Starting inactivity check processor')
+
+        if (!await getInitialized()) {
+            await this.#scheduleFullCheck()
+            await setInitialized()
+        }
+
+        new Worker(QUEUE, job => this.#processJob(job), {
+            connection: this.#connection,
+            concurrency: inactivityConcurrency
+        })
+    }
+
+    // Jobs scheduled before usernames were normalized still carry the old spelling in their id and their
+    // data, and BullMQ has no rename: a job is re-added under the stored name and the original removed.
+    // Only pending states are read — an active job is being processed right now, and history (completed,
+    // failed) is capped by removeOnComplete/removeOnFail and ages out on its own.
+    //
+    // Adding cannot overwrite: BullMQ treats an id it already holds as a duplicate and silently returns
+    // that job instead of scheduling this one, so a leftover completed job under the stored name would
+    // swallow the schedule we are preserving. Any such record is removed first, and the original is
+    // dropped only once its replacement is in the queue — a failure here leaves the original to be
+    // normalized on the next start rather than losing it.
+    async normalizeCase() {
+        const jobs = await this.#queue.getJobs(['delayed', 'waiting', 'prioritized', 'waiting-children'])
+        const {remove, readd} = planJobNormalization(jobs)
+
+        for (const {job, name, data, opts} of readd) {
+            const displaced = await this.#queue.getJob(opts.jobId)
+            if (displaced) {
+                log.debug(`Removing ${displaced.id} to reschedule ${job.id}`)
+                await displaced.remove()
+            }
+            await this.#queue.add(name, data, opts)
+            await job.remove()
+        }
+
+        for (const job of remove) {
+            await job.remove()
+        }
+
+        log.info(`Normalized inactivity jobs: ${remove.length} duplicate(s) removed, ${readd.length} rescheduled`)
+
+        const active = await this.#queue.getJobs(['active'])
+        const skipped = active.filter(({id}) => id !== id.toLowerCase())
+        if (skipped.length) {
+            log.warn(`Left ${skipped.length} active inactivity job(s) named in another case, to be normalized on the next start`)
+        }
+    }
+
+    async scheduleInactivityCheck({username}) {
+        await this.#removeUserJobs(username)
+        await this.#scheduleMark({username, delay: getDelay()})
+    }
+
+    async cancelInactivityCheck({username}) {
+        log.info(`Clearing inactivity jobs for user ${username}`)
+        await this.#removeUserJobs(username)
+        await this.#repository.addEvent({username, event: 'ACTIVE'})
+    }
+
+    #reportQueueEvents() {
+        this.#queueEvents.on('error', error => {
+            log.error(error)
+        })
+
+        this.#queueEvents.on('completed', async ({jobId}) => {
+            if (log.isDebug()) {
+                const job = await Job.fromId(this.#queue, jobId)
+                const {username, action} = job.data
+                log.debug(`Completed job for user ${username}, action: ${action}`)
+            }
+        })
+
+        this.#queueEvents.on('failed', async ({jobId, failedReason}) =>
+            log.error(`Job ${jobId} failed:`, failedReason)
+        )
+
+        this.#queueEvents.on('stalled', ({jobId}) => {
+            log.warn(`Job ${jobId} stalled`)
+        })
+    }
+
+    async #scheduleFullCheck() {
+        log.debug('Scheduling check for all users')
+        const userActivity = await firstValueFrom(getMostRecentAccessByUser$())
+        await this.#queue.obliterate()
+
+        await Promise.all(
+            Object.entries(userActivity).map(async ([username, mostRecentTimestamp]) => {
+                if (!await this.#queue.getJob(jobId(username, 'mark')) && !await this.#queue.getJob(jobId(username, 'notify')) && !await this.#queue.getJob(jobId(username, 'erase'))) {
+                    const delay = getDelay(mostRecentTimestamp)
+                    await this.#scheduleMark({username, delay: delay + Math.floor(Math.random() * inactivityMaxSpread)})
+                    // await this.#scheduleMark({username, delay})
+                    if (delay > 0) {
+                        await this.#repository.addEvent({username, event: 'ACTIVE'})
+                    } else {
+                        await this.#repository.addEvent({username, event: 'INACTIVE_UNKNOWN'})
+                    }
+                }
+            })
+        )
+        log.info('Scheduled check for all users')
+    }
+
+    async #processJob(job) {
+        const {username, action} = job.data
+        switch (action) {
+            case 'mark':
+                return await this.#markInactiveUser({username})
+            case 'notify':
+                return await this.#notifyInactiveUser({username})
+            case 'erase':
+                return await this.#eraseInactiveUserStorage({username})
+            default:
+                throw new Error(`Unknown action: ${action}`)
+        }
+    }
+
+    async #markInactiveUser({username}) {
+        switch (await getStorageStatus(username)) {
+            case STORAGE.INACTIVE_HIGH:
+                log.info(`User ${username} inactive with significant storage, noted`)
+                await this.#scheduleNotify({username})
+                await this.#repository.addEvent({username, event: 'INACTIVE_HIGH'})
+                break
+            case STORAGE.INACTIVE_LOW:
+                log.info(`User ${username} inactive with negligible storage, no action`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_LOW'})
+                break
+            case STORAGE.INACTIVE_UNKNOWN:
+                log.info(`User ${username} inactive with unknown storage, will retry`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_UNKNOWN'})
+                throw new Error(`Unknown storage size for user ${username}`)
+            case STORAGE.ACTIVE:
+                log.info(`User ${username} now active, no action`)
+                await this.#repository.addEvent({username, event: 'ACTIVE'})
+                break
+        }
+    }
+
+    async #notifyInactiveUser({username}) {
+        switch (await getStorageStatus(username)) {
+            case STORAGE.INACTIVE_HIGH:
+                log.info(`User ${username} still inactive with significant storage, sending notification email`)
+                await notify(username)
+                await this.#scheduleErase({username})
+                await this.#repository.addEvent({username, event: 'NOTIFIED'})
+                break
+            case STORAGE.INACTIVE_LOW:
+                log.info(`User ${username} still inactive but with negligible storage, not sending notification email`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_LOW'})
+                break
+            case STORAGE.INACTIVE_UNKNOWN:
+                log.info(`User ${username} still inactive but with unknown storage, will retry`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_UNKNOWN'})
+                throw new Error(`Unknown storage size for user ${username}`)
+            case STORAGE.ACTIVE:
+                log.info(`User ${username} now active, not sending notification email`)
+                await this.#repository.addEvent({username, event: 'ACTIVE'})
+                break
+        }
+    }
+
+    async #eraseInactiveUserStorage({username}) {
+        switch (await getStorageStatus(username)) {
+            case STORAGE.INACTIVE_HIGH:
+                log.info(`User ${username} inactive with significant storage, erasing storage`)
+                await erase(username)
+                await this.#repository.addEvent({username, event: 'PURGED'})
+                break
+            case STORAGE.INACTIVE_LOW:
+                log.info(`User ${username} still inactive but with negligible storage, not erasing storage`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_LOW'})
+                break
+            case STORAGE.INACTIVE_UNKNOWN:
+                log.info(`User ${username} still inactive but with unknown storage, will retry`)
+                await this.#repository.addEvent({username, event: 'INACTIVE_UNKNOWN'})
+                throw new Error(`Unknown storage size for user ${username}`)
+            case STORAGE.ACTIVE:
+                log.info(`User ${username} now active, not erasing storage`)
+                await this.#repository.addEvent({username, event: 'ACTIVE'})
+                break
+        }
+    }
+
+    async #scheduleMark({username, delay = inactivityTimeout}) {
+        log.info(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+        return this.#schedule({username, delay, action: 'mark'})
+    }
+
+    async #scheduleNotify({username, delay = inactivityNotificationDelay}) {
+        log.info(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+        return this.#schedule({username, delay, action: 'notify'})
+    }
+
+    async #scheduleErase({username, delay = inactivityGracePeriod}) {
+        log.info(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+        await this.#removeUserJobs(username)
+        return this.#schedule({username, delay, action: 'erase'})
+    }
+
+    async #schedule({username, delay, action}) {
+        return await this.#queue.add('rescan', {username: storedUsername(username), action}, {
+            jobId: jobId(username, action),
+            priority: 1,
+            delay,
+            attempts: inactivityMaxRetries,
+            backoff: {
+                type: 'exponential',
+                delay: inactivityInitialRetryDelay
+            },
+            removeOnComplete: 10,
+            removeOnFail: 100
+        })
+    }
+
+    async #removeUserJobs(username) {
+        await this.#queue.remove(jobId(username, 'mark'))
+        await this.#queue.remove(jobId(username, 'notify'))
+        await this.#queue.remove(jobId(username, 'erase'))
+    }
+}
+
+const STORAGE = {
+    INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
+    INACTIVE_LOW: Symbol('INACTIVE_LOW'),
+    INACTIVE_UNKNOWN: Symbol('INACTIVE_UNKNOWN'),
+    ACTIVE: Symbol('ACTIVE')
+}
+
+const getStorageStatus = async username => {
+    if (await isActive(username)) {
+        return STORAGE.ACTIVE
+    } else {
+        const userStorageSize = await getUserStorage(username)
+        if (userStorageSize) {
+            if (parseInt(userStorageSize) > inactivityUserStorageThreshold) {
+                return STORAGE.INACTIVE_HIGH
+            } else {
+                return STORAGE.INACTIVE_LOW
+            }
+        } else {
+            return STORAGE.INACTIVE_UNKNOWN
+        }
+    }
+}
+
+const isActive = async username => {
+    const mostRecentTimestamp = await firstValueFrom(getMostRecentAccess$(username))
+    return mostRecentTimestamp && relativeExpirationTime(mostRecentTimestamp) > 0
+}
+
+const notify = async username => {
+    log.info(`User ${username} still inactive with significant storage, sending notification email`)
+    const {name} = await firstValueFrom(getUser$(username))
+    await sendEmail({
+        username,
+        subject: getEmailSubject(),
+        content: getEmailMessage(name)
+    })
+}
+
+const erase = async username => {
+    log.info(`User ${username} still inactive with significant storage, erasing storage`)
+    await eraseUserStorage(username)
+}
+
+const jobId = (username, action) =>
+    `job-${storedUsername(username)}-${action}`
+
+const getDelay = (mostRecentTimestamp = new Date()) =>
+    Math.max(0, relativeExpirationTime(mostRecentTimestamp))
+
+// positive: future, negative: past
+const relativeExpirationTime = mostRecentTimestamp =>
+    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
 
 const getEmailSubject = () => {
     const environment = process.env.DEPLOY_ENVIRONMENT
@@ -45,294 +350,3 @@ const getEmailMessage = name => {
         The SEPAL Team
     `
 }
-
-const connection = new Redis({
-    host: redisHost,
-    db: DB.INACTIVITY_QUEUE,
-    maxRetriesPerRequest: null
-})
-
-const queue = new Queue(QUEUE, {
-    connection
-})
-
-const queueEvents = new QueueEvents(QUEUE, {
-    connection
-})
-
-const jobId = (username, action) =>
-    `job-${storedUsername(username)}-${action}`
-
-const STORAGE = {
-    INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
-    INACTIVE_LOW: Symbol('INACTIVE_LOW'),
-    INACTIVE_UNKNOWN: Symbol('INACTIVE_UNKNOWN'),
-    ACTIVE: Symbol('ACTIVE')
-}
-
-const notify = async username => {
-    log.info(`User ${username} still inactive with significant storage, sending notification email`)
-    const {name} = await firstValueFrom(getUser$(username))
-    await sendEmail({
-        username,
-        subject: getEmailSubject(),
-        content: getEmailMessage(name)
-    })
-}
-
-const erase = async username => {
-    log.info(`User ${username} still inactive with significant storage, erasing storage`)
-    await eraseUserStorage(username)
-}
-
-const isActive = async username => {
-    const mostRecentTimestamp = await firstValueFrom(getMostRecentAccess$(username))
-    return mostRecentTimestamp && relativeExpirationTime(mostRecentTimestamp) > 0
-}
-
-const getStorageStatus = async username => {
-    if (await isActive(username)) {
-        return STORAGE.ACTIVE
-    } else {
-        const userStorageSize = await getUserStorage(username)
-        if (userStorageSize) {
-            if (parseInt(userStorageSize) > inactivityUserStorageThreshold) {
-                return STORAGE.INACTIVE_HIGH
-            } else {
-                return STORAGE.INACTIVE_LOW
-            }
-        } else {
-            return STORAGE.INACTIVE_UNKNOWN
-        }
-    }
-}
-
-const markInactiveUser = async ({username}) => {
-    switch (await getStorageStatus(username)) {
-        case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} inactive with significant storage, noted`)
-            await scheduleNotify({username})
-            await addEvent({username, event: 'INACTIVE_HIGH'})
-            break
-        case STORAGE.INACTIVE_LOW:
-            log.info(`User ${username} inactive with negligible storage, no action`)
-            await addEvent({username, event: 'INACTIVE_LOW'})
-            break
-        case STORAGE.INACTIVE_UNKNOWN:
-            log.info(`User ${username} inactive with unknown storage, will retry`)
-            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
-            throw new Error(`Unknown storage size for user ${username}`)
-        case STORAGE.ACTIVE:
-            log.info(`User ${username} now active, no action`)
-            await addEvent({username, event: 'ACTIVE'})
-            break
-    }
-}
-
-const notifyInactiveUser = async ({username}) => {
-    switch (await getStorageStatus(username)) {
-        case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} still inactive with significant storage, sending notification email`)
-            await notify(username)
-            await scheduleErase({username})
-            await addEvent({username, event: 'NOTIFIED'})
-            break
-        case STORAGE.INACTIVE_LOW:
-            log.info(`User ${username} still inactive but with negligible storage, not sending notification email`)
-            await addEvent({username, event: 'INACTIVE_LOW'})
-            break
-        case STORAGE.INACTIVE_UNKNOWN:
-            log.info(`User ${username} still inactive but with unknown storage, will retry`)
-            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
-            throw new Error(`Unknown storage size for user ${username}`)
-        case STORAGE.ACTIVE:
-            log.info(`User ${username} now active, not sending notification email`)
-            await addEvent({username, event: 'ACTIVE'})
-            break
-    }
-}
-
-const eraseInactiveUserStorage = async ({username}) => {
-    switch (await getStorageStatus(username)) {
-        case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} inactive with significant storage, erasing storage`)
-            await erase(username)
-            await addEvent({username, event: 'PURGED'})
-            break
-        case STORAGE.INACTIVE_LOW:
-            log.info(`User ${username} still inactive but with negligible storage, not erasing storage`)
-            await addEvent({username, event: 'INACTIVE_LOW'})
-            break
-        case STORAGE.INACTIVE_UNKNOWN:
-            log.info(`User ${username} still inactive but with unknown storage, will retry`)
-            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
-            throw new Error(`Unknown storage size for user ${username}`)
-        case STORAGE.ACTIVE:
-            log.info(`User ${username} now active, not erasing storage`)
-            await addEvent({username, event: 'ACTIVE'})
-            break
-    }
-}
-
-queueEvents.on('error', error => {
-    log.error(error)
-})
-
-queueEvents.on('completed', async ({jobId}) => {
-    if (log.isDebug()) {
-        const job = await Job.fromId(queue, jobId)
-        const {username, action} = job.data
-        log.debug(`Completed job for user ${username}, action: ${action}`)
-    }
-})
-
-queueEvents.on('failed', async ({jobId, failedReason}) =>
-    log.error(`Job ${jobId} failed:`, failedReason)
-)
-
-queueEvents.on('stalled', ({jobId}) => {
-    log.warn(`Job ${jobId} stalled`)
-})
-
-const removeUserJobs = async username => {
-    await queue.remove(jobId(username, 'mark'))
-    await queue.remove(jobId(username, 'notify'))
-    await queue.remove(jobId(username, 'erase'))
-}
-
-const scheduleMark = async ({username, delay = inactivityTimeout}) => {
-    log.info(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
-    return schedule({username, delay, action: 'mark'})
-}
-
-const scheduleNotify = async ({username, delay = inactivityNotificationDelay}) => {
-    log.info(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
-    return schedule({username, delay, action: 'notify'})
-}
-
-const scheduleErase = async ({username, delay = inactivityGracePeriod}) => {
-    log.info(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
-    await removeUserJobs(username)
-    return schedule({username, delay, action: 'erase'})
-}
-
-const schedule = async ({username, delay, action}) =>
-    await queue.add('rescan', {username: storedUsername(username), action}, {
-        jobId: jobId(username, action),
-        priority: 1,
-        delay,
-        attempts: inactivityMaxRetries,
-        backoff: {
-            type: 'exponential',
-            delay: inactivityInitialRetryDelay
-        },
-        removeOnComplete: 10,
-        removeOnFail: 100
-    })
-
-// positive: future, negative: past
-const relativeExpirationTime = mostRecentTimestamp =>
-    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
-
-const getDelay = (mostRecentTimestamp = new Date()) =>
-    Math.max(0, relativeExpirationTime(mostRecentTimestamp))
-
-const scheduleInactivityCheck = async ({username}) => {
-    await removeUserJobs(username)
-    await scheduleMark({username, delay: getDelay()})
-}
-
-const cancelInactivityCheck = async ({username}) => {
-    log.info(`Clearing inactivity jobs for user ${username}`)
-    await removeUserJobs(username)
-    await addEvent({username, event: 'ACTIVE'})
-}
-
-const scheduleFullCheck = async () => {
-    log.debug('Scheduling check for all users')
-    const userActivity = await firstValueFrom(getMostRecentAccessByUser$())
-    await queue.obliterate()
-
-    await Promise.all(
-        Object.entries(userActivity).map(async ([username, mostRecentTimestamp]) => {
-            if (!await queue.getJob(jobId(username, 'mark')) && !await queue.getJob(jobId(username, 'notify')) && !await queue.getJob(jobId(username, 'erase'))) {
-                const delay = getDelay(mostRecentTimestamp)
-                await scheduleMark({username, delay: delay + Math.floor(Math.random() * inactivityMaxSpread)})
-                // await scheduleMark({username, delay})
-                if (delay > 0) {
-                    await addEvent({username, event: 'ACTIVE'})
-                } else {
-                    await addEvent({username, event: 'INACTIVE_UNKNOWN'})
-                }
-            }
-        })
-    )
-    log.info('Scheduled check for all users')
-}
-
-const processJob = async job => {
-    const {username, action} = job.data
-    switch (action) {
-        case 'mark':
-            return await markInactiveUser({username})
-        case 'notify':
-            return await notifyInactiveUser({username})
-        case 'erase':
-            return await eraseInactiveUserStorage({username})
-        default:
-            throw new Error(`Unknown action: ${action}`)
-    }
-}
-
-// Jobs scheduled before usernames were normalized still carry the old spelling in their id and their
-// data, and BullMQ has no rename: a job is re-added under the stored name and the original removed.
-// Only pending states are read — an active job is being processed right now, and history (completed,
-// failed) is capped by removeOnComplete/removeOnFail and ages out on its own.
-//
-// Adding cannot overwrite: BullMQ treats an id it already holds as a duplicate and silently returns
-// that job instead of scheduling this one, so a leftover completed job under the stored name would
-// swallow the schedule we are preserving. Any such record is removed first, and the original is
-// dropped only once its replacement is in the queue — a failure here leaves the original to be
-// normalized on the next start rather than losing it.
-const normalizeCase = async () => {
-    const jobs = await queue.getJobs(['delayed', 'waiting', 'prioritized', 'waiting-children'])
-    const {remove, readd} = planJobNormalization(jobs)
-
-    for (const {job, name, data, opts} of readd) {
-        const displaced = await queue.getJob(opts.jobId)
-        if (displaced) {
-            log.debug(`Removing ${displaced.id} to reschedule ${job.id}`)
-            await displaced.remove()
-        }
-        await queue.add(name, data, opts)
-        await job.remove()
-    }
-
-    for (const job of remove) {
-        await job.remove()
-    }
-
-    log.info(`Normalized inactivity jobs: ${remove.length} duplicate(s) removed, ${readd.length} rescheduled`)
-
-    const active = await queue.getJobs(['active'])
-    const skipped = active.filter(({id}) => id !== id.toLowerCase())
-    if (skipped.length) {
-        log.warn(`Left ${skipped.length} active inactivity job(s) named in another case, to be normalized on the next start`)
-    }
-}
-
-const startInactivityCheck = async () => {
-    log.info('Starting inactivity check processor')
-
-    if (!await getInitialized()) {
-        await scheduleFullCheck()
-        await setInitialized()
-    }
-    
-    new Worker(QUEUE, processJob, {
-        connection,
-        concurrency: inactivityConcurrency
-    })
-}
-
-export {cancelInactivityCheck, normalizeCase, scheduleInactivityCheck, startInactivityCheck}

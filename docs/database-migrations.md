@@ -86,9 +86,9 @@ directly. Neither needs a handwritten copy of the application schema.
 
 ## Follow-up: User Storage event lock
 
-Not part of this rollout and not implemented. `addEvent` in `modules/user-storage/src/db.js` serializes
-writes with `GET_LOCK`. Three things need correcting together, with integration tests against real MySQL
-covering both the concurrent and the failure paths:
+Not part of this rollout and not implemented. `addEvent` in `modules/user-storage/src/historyRepository.js`
+serializes writes with `GET_LOCK`. Three things need correcting together, with integration tests against real
+MySQL covering both the concurrent and the failure paths:
 
 - The lock name is built from the username as given, while the row is stored and compared
   case-insensitively. Case variants of one username must take the same lock; today `Bob` and `bob` take
@@ -97,4 +97,10 @@ covering both the concurrent and the failure paths:
   fall through to an unserialized insert.
 - `RELEASE_LOCK` runs only on the success path. The lock is session-scoped, so a connection returned to
   the pool while still holding it carries it to the next borrower; the lock must be released on failure
-  as well as on success.
+  as well as on success. The shared `withConnection` returns its connection to the pool unconditionally,
+  so quarantining one would need a way for a callback to refuse that return.
+
+A fourth, independent defect belongs with that work. `timestamp` is a TIMESTAMP filled by `NOW()`, so events
+recorded in the same second tie, and both the duplicate guard in `addEvent` and the ordering in
+`getUserEvents` break those ties by nothing. Which event counts as the latest is therefore undecided exactly
+when two arrive together, which is when it matters.
