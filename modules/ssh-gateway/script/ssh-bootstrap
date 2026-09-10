@@ -43,7 +43,7 @@ if [ -s $sshScriptFile ]; then
   # still on screen, and let them decide when to lose it. Interactive only: a non-interactive
   # ssh has nobody to press the key.
   if [ -n "$terminated" ] && [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-    printf '\nThe session has been terminated - press ENTER to reset the terminal'
+    printf '\n\n\033[96mThe session has been terminated. Press ENTER to reset the terminal.\033[0m'
     read -r _
   fi
 fi

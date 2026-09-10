@@ -19,9 +19,9 @@ import {createTaskManager} from './task/taskManager.js'
 import {createTaskRepository} from './task/taskRepository.js'
 import {createTasksApi} from './task/tasksApi.js'
 import {createWorkerGateway} from './task/workerGateway.js'
+import {createClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
-import {createInstanceRepository} from './workerInstance/instanceRepository.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
@@ -67,9 +67,9 @@ const main = async () => {
     const hostingService = createHostingService(config, {sandboxSessionApiKey})
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
-    const instanceRepo = createInstanceRepository(getPool())
+    const instanceClaims = createClaimRepository(getPool())
     instanceComponent = createWorkerInstanceComponent({
-        repo: instanceRepo,
+        claims: instanceClaims,
         provider: instanceProvider,
         provisioner: instanceProvisioner,
         instanceTypes,

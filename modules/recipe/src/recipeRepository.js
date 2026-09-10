@@ -1,8 +1,10 @@
+import {storedUsername} from '#sepal/username'
+
 const RECIPE = 'recipe'
 const PROJECT = 'project'
 const INITIAL_REVISION = 1
 
-class RecipeRepository {
+export class RecipeRepository {
     #db
 
     constructor(db) {
@@ -24,7 +26,7 @@ class RecipeRepository {
                         `INSERT INTO ${RECIPE}
                             (id, project_id, name, type, type_version, username, contents, creation_time, update_time, revision)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [id, projectId, name, type, typeVersion, owner,
+                        [id, projectId, name, type, typeVersion, storedUsername(owner),
                             contentsColumn(content), now, now, INITIAL_REVISION]
                     )
                     return {outcome: 'saved', revision: INITIAL_REVISION}
@@ -157,7 +159,7 @@ class RecipeRepository {
                          IF(username = VALUES(username), VALUES(default_asset_folder), default_asset_folder),
                      default_workspace_folder =
                          IF(username = VALUES(username), VALUES(default_workspace_folder), default_workspace_folder)`,
-                [id, name, owner, defaultAssetFolder, defaultWorkspaceFolder]
+                [id, name, storedUsername(owner), defaultAssetFolder, defaultWorkspaceFolder]
             )
         })
     }
@@ -179,10 +181,10 @@ class RecipeRepository {
 // ownership is never disclosed across the port.
 const explainRejection = async (connection, id, owner, type) => {
     const [rows] = await connection.query(
-        `SELECT username, type, revision, removed FROM ${RECIPE} WHERE id = ?`, [id]
+        `SELECT type, revision, removed FROM ${RECIPE} WHERE id = ? AND username = ?`, [id, owner]
     )
     const row = rows[0]
-    if (!row || row.removed || row.username !== owner) {
+    if (!row || row.removed) {
         return {outcome: 'notFound'}
     } else if (row.type !== type) {
         return {outcome: 'typeMismatch', currentRevision: row.revision}
@@ -240,5 +242,3 @@ const parsedOrNull = contents => {
 }
 
 const placeholders = items => items.map(() => '?').join(', ')
-
-export {RecipeRepository}

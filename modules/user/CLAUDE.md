@@ -32,5 +32,4 @@ history table was renamed to `schema_version_old` at cutover.
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sepal_user`. Startup wiring, the temporary checksum
-reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sepal_user`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).

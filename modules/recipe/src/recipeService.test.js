@@ -11,6 +11,15 @@ beforeEach(() => {
 })
 
 describe('loadRecipe', () => {
+    test('returns a recipe to its owner regardless of username case', async () => {
+        const stored = recipeToStore()
+        const {revision} = await repository.saveRecipe(stored)
+
+        const recipe = await service.loadRecipe({principal: {...owner, username: 'BOB'}, recipeId: stored.id})
+
+        expect(recipe).toEqual({...stored.content, projectId: stored.projectId, revision})
+    })
+
     test('returns a recipe to its owner, with placement and revision', async () => {
         const stored = recipeToStore({projectId: 'sampling-project'})
         const {revision} = await repository.saveRecipe(stored)

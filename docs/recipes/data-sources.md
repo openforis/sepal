@@ -4,6 +4,30 @@ Technical index for aligning how SEPAL recipes consume other recipes and Earth E
 cross-recipe concern. Masking, CCDC, CCDC Slice and Classification provide acceptance cases, but none owns the
 shared model. User-facing documentation belongs in the separate `sepal-doc` repository.
 
+## Current delivery order
+
+1. Close the independent review follow-ups for both database merges, validate the affected areas, and commit the
+   resolved merge into `feature/recipe-source-resolution`.
+2. Merge the accepted source-resolution branch into `sepal-server` and release the completed scope after the
+   [existing dev/test database preparation](../database-migrations.md#existing-devtest-databases). Further repository
+   conversions and recipe capabilities are not prerequisites for this release.
+3. Start a new repository-consistency branch from that updated `sepal-server`. Recipe and Message are already
+   converted in this baseline; preserve their implementations rather than transplanting Recipe separately or
+   maintaining a second version on `feature/reusable-db-migrations`.
+4. Convert the remaining repositories one module at a time. Use the shared callback database API and isolated
+   integration tests built from real schema migrations. Preserve each module's transaction guarantees, batch
+   performance, named-lock requirements and case-insensitive username semantics. Consistency means common
+   ownership and test guarantees, not identical repository structure. Merge the reviewed work into `sepal-server`.
+5. Return to recipe dependencies with Change Alerts: introduce the smallest `CCDC_SEGMENTS` capability contract
+   that replaces its copied source configuration and synchronization. Consolidate Slice's existing segment
+   description into that contract rather than adding a parallel mechanism. Extend other output declarations where
+   they replace existing logic; do not broaden declarations solely to populate every recipe definition.
+
+This is the delivery priority, not a requirement to finish the architecture before releasing. Shared dependency
+definitions already cover all registered recipe types; output declarations currently cover CCDC, Masking and CCDC
+Slice. Generic section validation, capability discovery, coherent execution bundles and broad recipe conversions
+remain separate work driven by concrete consumers.
+
 ## Scope and constraints
 
 The architecture provides one contract for resolving sources, describing outputs, validating dependencies and
@@ -188,11 +212,12 @@ The shared contracts must cover:
 Keep each correction independently mergeable. Do not combine runtime output descriptions, visualization ownership,
 domain capabilities and recipe-specific operation controls merely because one acceptance case exposes all of them.
 
-## Implementation order
+## Architecture milestones
 
-Each numbered milestone is an independent merge candidate. Do not hold a completed generic foundation or usable
-Fill mode on a branch until later architecture is ready. The external Node-server prerequisite blocks only the
-milestones that follow it; steps 1 through 4 can land on `master` independently.
+The numbered milestones retain their identifiers for cross-references and describe architectural dependencies,
+not the current work queue; follow the delivery order above. Each is an independent merge candidate. Do not hold
+completed foundations or usable behavior until later architecture is ready. The Node replacement has landed;
+caller-authorized closure loading remains a prerequisite only for the work that depends on it.
 
 ### 1. Establish runtime image output contracts
 
@@ -381,8 +406,9 @@ replace once Masking had proven the shared evidence lifecycle. What landed:
 
 Still to do here:
 
-- Define and activate the `IMAGE_OUTPUT` product and `CCDC_SEGMENTS` capability from actual CCDC and CCDC Slice
-  behavior. The description above is Slice's evidence, not yet a capability other consumers can request.
+- Promote the existing segments description into a requestable `CCDC_SEGMENTS` capability alongside the implemented
+  `IMAGE_OUTPUT` contract, driven by the Change Alerts migration in step 9. The description above is currently
+  Slice's evidence, not yet a capability other consumers can request.
 - Complete export acceptance as recorded below. Automated tests cover source, observer, chart and layer
   boundaries. Execution-side source resolution and band discovery have runtime witnesses with substituted
   external boundaries (`modules/gee/src/jobs/ee/ccdc/sliceSourceFacts.runtime.mjs` and `ccdcBands.runtime.mjs`);
@@ -409,24 +435,23 @@ Export acceptance: the user confirmed the longer-history Image export completed 
 Image completed fully masked; insufficient Landsat 9 history remains the user's explanation rather than a verified
 cause. ImageCollection completion remains unconfirmed. No additional exports were launched for this review.
 
-Map Layers acceptance remains pending: an asset already in an open recipe was overwritten under the same ID, but
-its layer continued offering the saved bands and presets. The bounded fix re-reads metadata on activation, on a
-changed catalogue `updateTime`, and through the asset layer's **Refresh asset** control. A successful read renews
-the preview even with identical metadata, keeps unchanged preset identities, and withholds missing-band or array
-styles without deleting saved selections. Refresh errors are reported and superseded responses are rejected.
-Retest in the same open layer after replacement, both with catalogue invalidation and with explicit refresh before
-the catalogue changes; no removal, re-addition or recipe reopening is needed. Broader shared metadata ownership and
-task-reported destination invalidation remain [asset freshness follow-ups](source-freshness.md#asset-freshness).
+Map Layers acceptance: the user confirmed the existing-layer refresh fix works after replacing an asset under the
+same ID while its recipe stays open. This does not establish every invalidation or source variant. The bounded fix
+re-reads metadata on activation, on a changed catalogue `updateTime`, and through the asset layer's **Refresh asset**
+control. A successful read renews the preview even with identical metadata, keeps unchanged preset identities, and
+withholds missing-band or array styles without deleting saved selections. Refresh errors are reported and superseded
+responses are rejected. Broader shared metadata ownership and task-reported destination invalidation remain
+[asset freshness follow-ups](source-freshness.md#asset-freshness).
 
 The final review's break-confidence band mapping, unconfigured asset date fallback and SR chart correction are
 covered by regression tests and accepted by inspection; they have no separate browser confirmation yet.
 
-### Next follow-up: Band Math dependencies
+### Later follow-up: Band Math dependencies
 
-After the current CCDC Slice synchronization packet is reviewed, implement one chain: **input band -> calculation
--> output**. This does not expand that packet or wait for the remaining capability work in step 8. Follow the
-[declarative evaluation direction](source-freshness.md#declarative-dependency-evaluation), reusing the shared
-source-observation lifecycle rather than adding another watcher, cache or source traversal.
+After the repository work and the bounded Change Alerts capability migration, implement one chain: **input band ->
+calculation -> output**. This is a separate consumer-validation packet, not a prerequisite for either release.
+Follow the [declarative evaluation direction](source-freshness.md#declarative-dependency-evaluation), reusing the
+shared source-observation lifecycle rather than adding another watcher, cache or source traversal.
 
 1. Identify user configuration versus derived fields in Band Math's current sync path, including expression and
    output references. Preserve saved-model compatibility and intentional rename behavior.
@@ -446,11 +471,16 @@ Acceptance scenarios, without closing or reopening the recipe:
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
 
-Reuse the resulting evaluation approach for Change Alerts when its consumer migrates. Sampling Design's
-persisted-result freshness remains step 5; neither its planner nor all input forms are rewritten in this packet.
-The declaration API is determined by this workflow, not by a speculative framework or synthetic consumer.
+Use requirements exposed by Change Alerts as another real consumer when shaping the evaluation contract, without
+making its earlier capability migration depend on this packet. Sampling Design's persisted-result freshness remains
+step 5; neither its planner nor all input forms are rewritten here. The declaration API is determined by these
+workflows, not by a speculative framework or synthetic consumer.
 
 ### 9. Migrate Change Alerts, then further consumers
+
+This is the next recipe-model extension after the repository-consistency work. Scope the capability contract to
+the information Change Alerts consumes and consolidate the existing Slice providers into it. Do not add generic
+section validation, discovery infrastructure or execution bundles to this packet.
 
 - Make Change Alerts the first `CCDC_SEGMENTS` consumer: retain the selected outer execution reference, obtain CCDC
   semantics through the primary lineage, and reject an absent capability without entering algorithm code.

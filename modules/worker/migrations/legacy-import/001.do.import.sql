@@ -1,4 +1,4 @@
--- One-off copy from the legacy `sdms` and `worker_instance` schemas, kept out of the schema stream so a
+-- One-off copy from the legacy `sdms` schema, kept out of the schema stream so a
 -- fresh database can be built without it. Each table copies only if the source exists and the target is
 -- still empty, so this is idempotent and never modifies the sources. Usernames are lowercased on the way
 -- in: the legacy tables stored them as typed, while `sepal_user` is uniformly lowercase and every read
@@ -23,12 +23,5 @@ SET @do_copy := (SELECT IF(
     EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='sdms' AND TABLE_NAME='task')
     AND (SELECT COUNT(*) FROM `task`)=0,
     'INSERT INTO `task` (id, state, username, session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id) SELECT id, state, LOWER(username), session_id, operation, params, status_description, creation_time, update_time, removed, recipe_id FROM sdms.`task`',
-    'DO 0'));
-PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;
-
-SET @do_copy := (SELECT IF(
-    EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='worker_instance' AND TABLE_NAME='instance')
-    AND (SELECT COUNT(*) FROM `instance`)=0,
-    'INSERT INTO `instance` SELECT * FROM worker_instance.`instance`',
     'DO 0'));
 PREPARE _s FROM @do_copy; EXECUTE _s; DEALLOCATE PREPARE _s;

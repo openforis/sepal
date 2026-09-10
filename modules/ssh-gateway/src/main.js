@@ -45,6 +45,12 @@ session$.pipe(
 
 const writeSession$ = session => {
     if (session) {
+        // A session going away makes the ssh client print "Connection to <host> closed by remote
+        // host." — a fatal error, so -q does not cover it, and it now contradicts the terminated
+        // notice ssh-bootstrap prints. Filter that one line rather than dropping stderr: a sandbox
+        // that cannot be reached still has to say so. Interactive only — there the remote's own
+        // stderr rides the pty channel, while a non-interactive command has no pty and needs its
+        // stderr untouched.
         const contents = `#!/usr/bin/env bash
         # session-id: ${session.id}
         ssh \
@@ -55,7 +61,7 @@ const writeSession$ = session => {
         -oUserKnownHostsFile=/dev/null \
         -oBatchMode=yes \
         -p 222 \
-        ${session.host} $1`
+        ${session.host} $1${interactive ? ' 2> >(grep -v "closed by remote host" >&2)' : ''}`
         // The one-shot "terminal opened" extension, before handing the user their shell: from
         // here on the terminal's liveness comes from pty atime sampled inside the container, and
         // nothing keeps an untouched connection alive.

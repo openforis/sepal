@@ -14,8 +14,11 @@
 //                           instanceType{...}, creationTime (ISO 8601 UTC instant),
 //                           costSinceCreation, apps[], terminals, verdict, usage{...} }
 
+import {storedUsername} from '#sepal/username'
+
 import {launchFailureCode} from '../hostingService/instanceLaunchErrors.js'
 import {instanceName} from '../instanceName.js'
+import {round2} from '../round.js'
 import {State} from './workerSession.js'
 
 const SANDBOX = 'sandbox'
@@ -42,9 +45,6 @@ const hoursBetween = (startTime, endTime) => {
     const secs = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000
     return secs / 3600
 }
-
-// round2 — round half-up to 2 decimals.
-const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100
 
 const instanceTypeAsMap = (instanceType, username, forCurrentUser) => ({
     id: instanceType.id,
@@ -227,14 +227,18 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     })
 
     // ── request-context resolution ────────────────────────────────────────────
+    // Both normalize, and not for SQL's sake — the columns are ascii_general_ci, so a lookup
+    // would match either way. It is the JS that needs it: this username is compared against a
+    // session's owner (`session.username !== username` → 403) and keyed into the ws subscription
+    // maps, and string equality there is case-sensitive no matter what the database does.
     // self routes → currentUser.username, forCurrentUser=true
     const selfUser = ctx => ({
-        username: ctx.state.currentUser.username?.toLowerCase(),
+        username: storedUsername(ctx.state.currentUser.username),
         forCurrentUser: true,
     })
     // admin {username} routes → path param, forCurrentUser=false
     const pathUser = ctx => ({
-        username: ctx.params.username?.toLowerCase(),
+        username: storedUsername(ctx.params.username),
         forCurrentUser: false,
     })
 

@@ -24,6 +24,37 @@ describe('recipe repository', () => {
     afterAll(() => testDb?.remove())
 
     describe('saveRecipe', () => {
+        test('stores a lowercase owner and accepts an update using another spelling of its case', async () => {
+            const recipe = aRecipe({owner: 'Alice'})
+            const {revision} = await repository.saveRecipe(recipe)
+            const created = await repository.findRecipe(recipe.id)
+            const updated = {...recipe, owner: 'ALICE', expectedRevision: revision, content: aRecipeContent({updated: true})}
+
+            const result = await repository.saveRecipe(updated)
+
+            const found = await repository.findRecipe(recipe.id)
+            expect(created.owner).toBe('alice')
+            expect(result).toEqual({outcome: 'saved', revision: revision + 1})
+            expect(found).toEqual({
+                owner: 'alice', recipe: {...updated.content, projectId: recipe.projectId, revision: revision + 1}
+            })
+        })
+
+        test.each([
+            {expectedRevision: null, outcome: 'conflict'},
+            {expectedRevision: 0, outcome: 'conflict'},
+            {expectedRevision: 1, type: 'CLASSIFICATION', outcome: 'typeMismatch'}
+        ])('reports $outcome instead of hiding a recipe from its mixed-case owner', async ({outcome, ...change}) => {
+            const recipe = aRecipe({owner: 'Alice'})
+            const {revision} = await repository.saveRecipe(recipe)
+
+            const result = await repository.saveRecipe({...recipe, ...change, owner: 'ALICE'})
+
+            expect(result).toEqual({outcome, currentRevision: revision})
+            const found = await repository.findRecipe(recipe.id)
+            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+        })
+
         test('creates at column revision 1, storing the content it was given', async () => {
             const recipe = aRecipe()
 
@@ -307,6 +338,21 @@ describe('recipe repository', () => {
     })
 
     describe('saveProject', () => {
+        test('stores a lowercase owner and updates the project using another spelling of its case', async () => {
+            const project = aProject({owner: 'Alice'})
+            await repository.saveProject(project)
+            const renamed = {...project, owner: 'ALICE', name: 'Renamed'}
+
+            await repository.saveProject(renamed)
+
+            const projects = await repository.listProjects('Alice')
+            expect(projects).toEqual([{
+                id: project.id, username: 'alice', name: renamed.name,
+                defaultAssetFolder: project.defaultAssetFolder,
+                defaultWorkspaceFolder: project.defaultWorkspaceFolder
+            }])
+        })
+
         test('creates, then updates in place', async () => {
             const project = aProject()
             await repository.saveProject(project)

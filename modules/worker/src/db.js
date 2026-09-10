@@ -10,7 +10,7 @@ const DATABASE_NAME = 'worker'
 const state = {}
 
 const initializeDatabase = async () => {
-    await migrateWorkerDb(DATABASE_NAME, log)
+    await migrateWorkerDb(DATABASE_NAME)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

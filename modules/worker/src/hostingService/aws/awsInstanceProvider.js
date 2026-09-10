@@ -269,17 +269,14 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         const instancesWithValidVersion = onlyCorrectVersion
             ? awsInstances.filter(i => !isOlderVersion(instanceVersion(i), sepalVersion))
             : awsInstances
-        // Auto-cleanup — always baked in on every find
-        await terminateOldIdle(awsInstances)
-        await terminateUntagged()
         return instancesWithValidVersion.map(i => toWorkerInstance(i, codec))
     }
 
     // Terminates instances whose Version tag is older than sepalVersion AND State=idle.
     //
-    // Auto-cleanup terminates are best-effort: a single transient failure must not abort the whole
-    // findInstances result. Caller-initiated terminate() still throws on final failure so callers
-    // can react; only here we catch and log.
+    // Auto-cleanup terminates are best-effort: a single transient failure must not abort the rest
+    // of sweep(). Caller-initiated terminate() still throws on final failure so callers can
+    // react; only here we catch and log.
     const terminateOldIdle = async awsInstances => {
         const old = awsInstances.filter(i =>
             isOlderVersion(instanceVersion(i), sepalVersion) &&
@@ -294,7 +291,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
 
     // Finds running, untagged instances up >1 minute and terminates them. Same best-effort
     // semantics as terminateOldIdle: a cleanup-terminate failure is swallowed and logged so the
-    // caller's query still resolves normally.
+    // rest of sweep() still runs.
     const terminateUntagged = async () => {
         const response = await client.send(new DescribeInstancesCommand({
             Filters: [filterRunning()],
@@ -315,7 +312,19 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         ))
     }
 
-    // Polls getInstance up to PUBLIC_IP_RETRIES times (≤300×1s) until the host is set.
+    // sweep — the garbage collection that used to ride along on every read. It stays a scan
+    // rather than becoming queued work: an untagged instance is precisely one whose CreateTags
+    // never ran, so the event that would have enqueued the job is the thing that went missing.
+    const sweep = async () => {
+        const response = await client.send(new DescribeInstancesCommand({
+            Filters: filterTypeWorker(environment),
+        }))
+        await terminateOldIdle(collectInstances(response))
+        await terminateUntagged()
+    }
+
+    // Polls getInstance up to PUBLIC_IP_RETRIES times until the host is set. Each iteration is a
+    // 1s sleep plus a DescribeInstances round trip, so the wall clock runs well past 300s.
     //
     // A just-launched instance has no public IP yet, and EC2 does not always list it at all, so
     // neither a missing IP nor a failed read is an event: one line before, one when it resolves
@@ -342,6 +351,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         return current
     }
 
+    const awaitHost = async instance =>
+        instance.host
+            ? instance
+            : waitForPublicIpToBecomeAvailable(instance, instance.type, instance.reservation)
+
     // Finds running Starting=true instances, strips the Starting tag, and fires the launch listeners.
     const notifyAboutStartedInstances = async () => {
         const instances = await findInstancesByFilters(false, filterRunning(), filterTaggedWith('Starting', 'true'))
@@ -359,22 +373,30 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // instanceType is a catalog ID — see createInstanceTypeCodec.
+    //
+    // The reservation is pinned to null rather than left to toWorkerInstance, exactly as
+    // launchReserved pins its own: RunInstances answers before CreateTags runs, so the response
+    // carries no State tag, and toWorkerInstance would read the instance as reserved-by-nobody
+    // ({username: '', workerType: ''}) — an untrue claim about an instance the provider itself
+    // just launched idle.
     const launchIdle = async (instanceType, count) => {
         const awsInstances = await launch(instanceType, count)
         const results = []
         for (const awsInst of awsInstances) {
             await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), idleTags(environment))
-            results.push(toWorkerInstance(awsInst, codec))
+            results.push({...toWorkerInstance(awsInst, codec), reservation: null})
         }
         return results
     }
 
     // instanceType is a catalog ID — see createInstanceTypeCodec.
+    //
+    // Returns as soon as the instance is tagged, address or not: the caller records the claim that
+    // keeps ReleaseUnusedInstances off the instance and only then waits, through awaitHost.
     const launchReserved = async (instanceType, reservation) => {
         const [awsInst] = await launch(instanceType, 1)
         await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), reserveTags(environment, reservation))
-        const instance = {...toWorkerInstance(awsInst, codec), reservation}
-        return waitForPublicIpToBecomeAvailable(instance, instanceType, reservation)
+        return {...toWorkerInstance(awsInst, codec), reservation}
     }
 
     const reserveInstance = async instance => {
@@ -446,6 +468,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         idleInstances,
         reservedInstances,
         getInstance,
+        awaitHost,
+        sweep,
         onInstanceLaunched,
         start,
         stop,

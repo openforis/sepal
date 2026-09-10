@@ -5,7 +5,7 @@
 // ExpireSessions, which stay inert for STARTUP_GRACE_MS so a worker outage does not close every
 // open session on restart):
 //   @1min:  CloseTimedOutSessions, ExpireSessions, CloseSessionsWithoutInstance,
-//           ReleaseUnusedInstances(5, MINUTES)
+//           ReleaseUnusedInstances(5, MINUTES), ReclaimStaleClaims
 //   @12min: RemoveOrphanedTmpDirs, RemoveOrphanedContainers (local-daemon container sweep;
 //           the first run is immediate, so a worker restart cleans up at startup)
 //   @5min:  RefreshGoogleTokens
@@ -25,7 +25,9 @@
 
 import {getLogger} from '#sepal/log'
 
+import {createScheduler} from '../scheduler.js'
 import {userTag} from '../tag.js'
+import {MINUTE_MS} from '../time.js'
 import {refreshGoogleTokens as _refreshGoogleTokens} from './command/refreshGoogleTokens.js'
 import {removeOrphanedTmpDirs as _removeOrphanedTmpDirs} from './command/removeOrphanedTmpDirs.js'
 import {WORKER_SESSION_PUBLISHERS} from './events.js'
@@ -33,20 +35,13 @@ import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 
 const log = getLogger('worker/workerSession')
 
-const MINUTE_MS = 60_000
-
-// scheduleFixedDelay(name, fn, intervalMs) — run fn once immediately, then every intervalMs.
-// Errors are logged, never thrown (a failed run must not stop the schedule). Returns the timer.
-const scheduleFixedDelay = (name, fn, intervalMs) => {
-    const run = () =>
-        Promise.resolve()
-            .then(fn)
-            .catch(error => log.error(`Scheduled job ${name} failed`, error))
-    run() // initial delay 0
-    return setInterval(run, intervalMs)
-}
-
 const RELEASE_UNUSED_MIN_AGE_MINUTES = 5
+
+// RequestSession inserts the session row only after RequestInstance returns, so a claim
+// legitimately has no session behind it for as long as awaitHost runs: 300 iterations of a 1s
+// sleep PLUS a DescribeInstances round trip each, typically 5-6 minutes and able to exceed this
+// grace outright when the SDK is backing off. The margin is slim, not generous.
+const CLAIM_GRACE_MS = 10 * MINUTE_MS
 
 // STARTUP_GRACE_MS — how long after startup the closing sweeps stay inert. A stored deadline is
 // not destroyed by a worker outage, but the SENDERS of extension events cannot reach a down
@@ -58,7 +53,7 @@ const RELEASE_UNUSED_MIN_AGE_MINUTES = 5
 // restarting more often than this reaches no sweep and closes nothing (see
 // docs/session-expiration-model.md §8 — the durable deadline does NOT fix that, and closing a
 // crash-loop gap needs a grace satisfiable across restarts).
-const STARTUP_GRACE_MS = 2 * 60_000
+const STARTUP_GRACE_MS = 2 * MINUTE_MS
 
 const createSessionComponent = ({
     sessionManager,
@@ -72,7 +67,7 @@ const createSessionComponent = ({
     const removeOrphanedTmpDirs = () => _removeOrphanedTmpDirs({repo, ...(homeDir ? {homeDir} : {})})
     const refreshGoogleTokens = () => _refreshGoogleTokens({repo, googleOAuthGateway})
 
-    let timers = []
+    const scheduler = createScheduler(log)
 
     const start = () => {
         log.debug('Starting...')
@@ -83,48 +78,49 @@ const createSessionComponent = ({
         const startTime = clock()
 
         // @1min: close timed-out + without-instance sessions; release unused instances.
-        timers.push(scheduleFixedDelay(
+        scheduler.schedule(
             'CloseTimedOutSessions',
             () => sessionManager.closeTimedOutSessions({startTime, startupGraceMs: STARTUP_GRACE_MS}),
-            MINUTE_MS))
+            MINUTE_MS)
         // The tracker lives for the component's lifetime: it is what turns a per-sweep probe
         // verdict into a decision, so it must survive across sweeps (and only across them — a
         // restart starting from a clean slate is the safe direction).
         const missingInstanceTracker = createMissingInstanceTracker({clock})
-        timers.push(scheduleFixedDelay(
+        scheduler.schedule(
             'CloseSessionsWithoutInstance',
             () => sessionManager.closeSessionsWithoutInstance(missingInstanceTracker),
-            MINUTE_MS))
-        timers.push(scheduleFixedDelay(
+            MINUTE_MS)
+        scheduler.schedule(
             'ReleaseUnusedInstances',
             () => sessionManager.releaseUnusedInstances(RELEASE_UNUSED_MIN_AGE_MINUTES, 'MINUTES'),
-            MINUTE_MS))
+            MINUTE_MS)
+        scheduler.schedule(
+            'ReclaimStaleClaims',
+            () => sessionManager.reclaimStaleClaims(CLAIM_GRACE_MS),
+            MINUTE_MS)
 
         // @1min: the expiry sweep — notify → email → close over stored deadlines. It is a no-op
         // under SESSION_EXPIRY_MODE=off, but the ratchets that feed it run regardless, so mode=off
         // still records what would have been decided.
-        timers.push(scheduleFixedDelay(
+        scheduler.schedule(
             'ExpireSessions',
             () => sessionManager.expireSessions({startTime, startupGraceMs: STARTUP_GRACE_MS}),
-            MINUTE_MS))
+            MINUTE_MS)
 
         // @12min: remove orphaned tmp dirs + orphaned containers on the shared local daemon.
-        timers.push(scheduleFixedDelay(
-            'RemoveOrphanedTmpDirs', removeOrphanedTmpDirs, 12 * MINUTE_MS))
-        timers.push(scheduleFixedDelay(
-            'RemoveOrphanedContainers', () => sessionManager.removeOrphanedContainers(), 12 * MINUTE_MS))
+        scheduler.schedule('RemoveOrphanedTmpDirs', removeOrphanedTmpDirs, 12 * MINUTE_MS)
+        scheduler.schedule(
+            'RemoveOrphanedContainers', () => sessionManager.removeOrphanedContainers(), 12 * MINUTE_MS)
 
         // @5min: refresh Google tokens.
-        timers.push(scheduleFixedDelay(
-            'RefreshGoogleTokens', refreshGoogleTokens, 5 * MINUTE_MS))
+        scheduler.schedule('RefreshGoogleTokens', refreshGoogleTokens, 5 * MINUTE_MS)
 
         log.info('Started')
     }
 
     const stop = () => {
         log.debug('Stopping...')
-        timers.forEach(clearInterval)
-        timers = []
+        scheduler.stopAll()
         log.info('Stopped')
     }
 

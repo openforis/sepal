@@ -16,6 +16,8 @@
 //   removed           — soft-delete flag
 //   recipeId          — recipe id (nullable)
 
+import {MINUTE_MS} from '../time.js'
+
 // Each state carries a `description`: a JSON string of its i18n map.
 
 const stateDescription = map => JSON.stringify(map)
@@ -106,8 +108,6 @@ const getTitle = task => {
 //   get(now)              = now − timeout
 //   lastValidUpdate(date) = date − timeout (the oldest update_time still "fresh")
 //   willTimeout(date)     = date + timeout + 1ms
-
-const MINUTE_MS = 60 * 1000
 
 const makeTimeout = timeoutInMillis => Object.freeze({
     timeoutInMillis,

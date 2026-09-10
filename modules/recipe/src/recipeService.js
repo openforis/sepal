@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 import {currentVersionForType} from './migration/registry.js'
 
 const ADMIN_ROLE = 'application_admin'
@@ -54,6 +56,6 @@ class RecipeService {
 
 // A recipe someone else owns is reported missing rather than forbidden, so ownership stays undisclosed.
 const isVisibleTo = (principal, owner) =>
-    owner === principal.username || (principal.roles || []).includes(ADMIN_ROLE)
+    storedUsername(owner) === storedUsername(principal.username) || (principal.roles || []).includes(ADMIN_ROLE)
 
 export {RecipeService}

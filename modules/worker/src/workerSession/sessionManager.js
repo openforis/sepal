@@ -22,6 +22,7 @@ import {closeUserSessions as _closeUserSessions} from './command/closeUserSessio
 import {expireSessions as _expireSessions} from './command/expireSessions.js'
 import {extendSession as _extendSession} from './command/extendSession.js'
 import {heartbeat as _heartbeat} from './command/heartbeat.js'
+import {reclaimStaleClaims as _reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {releaseUnusedInstances as _releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
@@ -176,6 +177,9 @@ const createSessionManager = ({
 
     const releaseUnusedInstances = (minAge, timeUnit) =>
         _releaseUnusedInstances(minAge, timeUnit, {repo, instanceManager})
+
+    const reclaimStaleClaims = graceMs =>
+        _reclaimStaleClaims(graceMs, {repo, instanceManager})
 
     // Sweep the shared local daemon for worker containers no open session (and no
     // provider-tracked instance) claims — see instanceManager.removeOrphanedContainers.
@@ -408,6 +412,7 @@ const createSessionManager = ({
         closeTimedOutSessions,
         closeSessionsWithoutInstance,
         releaseUnusedInstances,
+        reclaimStaleClaims,
         removeOrphanedContainers,
         heartbeat,
         extendSession,

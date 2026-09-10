@@ -1,4 +1,5 @@
 import {getLogger} from '#sepal/log'
+import {isStoredUsername, storedUsername} from '#sepal/username'
 import {toPromise} from '#sepal/util'
 
 import {usernameTag} from './tag.js'
@@ -6,7 +7,7 @@ import {getSessionUsername} from './user.js'
 
 const log = getLogger('session')
 
-const SessionManager = sessionStore => {
+const SessionManager = (sessionStore, redis) => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
             callback => sessionStore.all(callback)
@@ -22,7 +23,7 @@ const SessionManager = sessionStore => {
     const getSessionIdsByUsername = async username => {
         const sessions = await getAllSessions()
         return sessions
-            .filter(({username: sessionUsername}) => username === sessionUsername)
+            .filter(({username: sessionUsername}) => storedUsername(username) === storedUsername(sessionUsername))
             .map(({id}) => id)
     }
 
@@ -37,6 +38,29 @@ const SessionManager = sessionStore => {
         ).then(async () => {
             return true
         })
+    }
+
+    // A session names its user in whatever spelling authenticated, and every lookup here compares
+    // that name exactly, so a session spelled differently from the stored username survives the lock
+    // it was supposed to end. Sessions are rewritten in place rather than through sessionStore.set(),
+    // which derives a fresh TTL from a cookie that carries no expiry of its own — correcting a name
+    // must not hand a nearly expired session another day of life.
+    const normalizeCase = async () => {
+        const sessions = await getAllSessions()
+        const corrected = sessions.filter(({username}) => username && !isStoredUsername(username))
+
+        for (const {id, ...session} of corrected) {
+            await redis.set(
+                `${sessionStore.prefix}${id}`,
+                JSON.stringify({...session, username: storedUsername(session.username)}),
+                {KEEPTTL: true}
+            )
+        }
+
+        if (corrected.length) {
+            log.info(`Normalized sessions: ${corrected.length} username(s) corrected of ${sessions.length}`)
+        }
+        return {corrected: corrected.length}
     }
 
     const messageHandler = async (key, msg) => {
@@ -93,7 +117,7 @@ const SessionManager = sessionStore => {
     }
     
     return {
-        messageHandler, logout, invalidateOtherSessions
+        messageHandler, logout, invalidateOtherSessions, normalizeCase
     }
 }
 

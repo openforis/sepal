@@ -105,6 +105,7 @@ const makeInstanceManager = (overrides = {}) => {
         requestInstance: jest.fn(async () => ({id: 'i-1', host: 'host-1'})),
         releaseInstance: jest.fn(async () => undefined),
         releaseUnusedInstances: jest.fn(async () => undefined),
+        reclaimStaleClaims: jest.fn(async () => undefined),
         sessionsWithoutInstance: jest.fn(async () => []),
         removeOrphanedContainers: jest.fn(async () => []),
         getInstanceTypes: jest.fn(() => [{id: 'T3aSmall'}]),
@@ -552,6 +553,17 @@ describe('releaseUnusedInstances', () => {
     })
 })
 
+describe('reclaimStaleClaims', () => {
+    test('loads PENDING+ACTIVE and delegates to instanceManager', async () => {
+        const sessions = [session({id: 's-a'})]
+        const repo = makeRepo({sessions: () => sessions})
+        const {mgr, instanceManager} = build({repo})
+        await mgr.reclaimStaleClaims(10 * 60 * 1000)
+        expect(repo.sessions).toHaveBeenCalledWith([State.PENDING, State.ACTIVE])
+        expect(instanceManager.reclaimStaleClaims).toHaveBeenCalledWith(sessions, 10 * 60 * 1000)
+    })
+})
+
 describe('heartbeat', () => {
     // A bare beat extends NOTHING: the gateway beats for every cached session whether or not
     // anyone is using it, and reading that as liveness is what kept forgotten tabs alive.
@@ -805,11 +817,13 @@ describe('queries', () => {
         expect(repo.userSessions).toHaveBeenCalledWith('alice', [State.ACTIVE], SANDBOX)
     })
 
-    test('mostRecentlyClosedSession lowercases username', async () => {
+    // The username reaches the repository as given: worker_session.username is ascii_general_ci,
+    // so the lookup matches any case and a LOWER() here would only suppress the index.
+    test('mostRecentlyClosedSession passes the username through unchanged', async () => {
         const repo = makeRepo({mostRecentlyClosedSession: u => ({user: u})})
         const {mgr} = build({repo})
         const result = await mgr.mostRecentlyClosedSession('Alice')
-        expect(result).toEqual({user: 'alice'})
+        expect(result).toEqual({user: 'Alice'})
     })
 
     test('mostRecentlyClosedSessionByUser passes through', async () => {

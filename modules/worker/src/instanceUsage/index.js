@@ -9,26 +9,14 @@
 
 import {getLogger} from '#sepal/log'
 
+import {createScheduler} from '../scheduler.js'
+import {DAY_MS, HOUR_MS} from '../time.js'
 import {sampleInstances} from './sampleInstances.js'
 import {createUsageMetrics} from './usageMetrics.js'
 
 const log = getLogger('worker/instanceUsage')
 
-const MINUTE_MS = 60_000
-const HOUR_MS = 60 * MINUTE_MS
-const DAY_MS = 24 * HOUR_MS
 const ROLLUP_HEAL_HOURS = 2
-
-// scheduleFixedDelay — run fn once immediately, then every intervalMs; errors logged,
-// never thrown (same local helper as workerSession/index.js).
-const scheduleFixedDelay = (name, fn, intervalMs) => {
-    const run = () =>
-        Promise.resolve()
-            .then(fn)
-            .catch(error => log.error(`Scheduled job ${name} failed`, error))
-    run() // initial delay 0
-    return setInterval(run, intervalMs)
-}
 
 const createInstanceUsageComponent = ({
     sessionRepo,
@@ -49,7 +37,7 @@ const createInstanceUsageComponent = ({
     // per-session cross-tick memory the interaction and coverage-grace rules need.
     const samplerState = new Map()
 
-    let timers = []
+    const scheduler = createScheduler(log)
 
     const sample = () =>
         sampleInstances({
@@ -67,16 +55,15 @@ const createInstanceUsageComponent = ({
 
     const start = () => {
         log.debug('Starting...')
-        timers.push(scheduleFixedDelay('SampleInstances', sample, samplingIntervalSeconds * 1000))
-        timers.push(scheduleFixedDelay('RollupUsage', rollup, HOUR_MS))
-        timers.push(scheduleFixedDelay('PruneUsage', prune, DAY_MS))
+        scheduler.schedule('SampleInstances', sample, samplingIntervalSeconds * 1000)
+        scheduler.schedule('RollupUsage', rollup, HOUR_MS)
+        scheduler.schedule('PruneUsage', prune, DAY_MS)
         log.info(`Started (sampling every ${samplingIntervalSeconds}s)`)
     }
 
     const stop = () => {
         log.debug('Stopping...')
-        timers.forEach(clearInterval)
-        timers = []
+        scheduler.stopAll()
         log.info('Stopped')
     }
 

@@ -9,7 +9,7 @@
 // does not survive Jest's ESM VM linker with the symlinked sepal package).
 //
 // What is proven:
-//   • insert → getSession round-trips all fields (instance{id,host}, username lowercased)
+//   • insert → getSession round-trips all fields (instance{id,host})
 //   • update PENDING→ACTIVE keeps api_key; sets update_time from clock
 //   • update →CLOSED sets api_key = NULL
 //   • update →CLOSED cascades a delete of the session's session_app rows
@@ -18,7 +18,7 @@
 //     pool cannot prove
 //   • the guarded close and the guarded notification transitions
 //   • timedOutSessions is PENDING-only
-//   • findUsernameByApiKey: PENDING/ACTIVE only, username lowercased
+//   • findUsernameByApiKey: PENDING/ACTIVE only
 //   • sessionOnInstance filters by instance_id + state
 //   • userSessions dynamic filters
 //   • mostRecentlyClosedSession(ByUser)
@@ -79,6 +79,7 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
                 \`worker_type\`            varchar(255)  NOT NULL,
                 \`instance_type\`          varchar(255)  NOT NULL,
                 \`instance_id\`            varchar(255)  NOT NULL,
+                \`instance_name\`          varchar(64)   DEFAULT NULL,
                 \`host\`                   varchar(255)  NOT NULL,
                 \`creation_time\`          timestamp     NOT NULL,
                 \`update_time\`            timestamp     NOT NULL,
@@ -470,9 +471,9 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
         })
     })
 
-    test('insert → getSession round-trips fields; username lowercased; instance mapped', async () => {
+    test('insert → getSession round-trips fields; instance mapped', async () => {
         const repo = makeRepo()
-        await repo.insert(newSession({username: 'Alice', apiKey: 'the-key'}))
+        await repo.insert(newSession({username: 'alice', apiKey: 'the-key'}))
         const s = await repo.getSession('s-1')
         expect(s.id).toBe('s-1')
         expect(s.state).toBe('PENDING')
@@ -575,9 +576,9 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
     })
 
     describe('findUsernameByApiKey', () => {
-        test('returns username lowercased for a PENDING/ACTIVE session', async () => {
+        test('returns the username for a PENDING/ACTIVE session', async () => {
             const repo = makeRepo()
-            await repo.insert(newSession({id: 'a', username: 'Bob', state: workerSession.State.ACTIVE, apiKey: 'live-key'}))
+            await repo.insert(newSession({id: 'a', username: 'bob', state: workerSession.State.ACTIVE, apiKey: 'live-key'}))
             expect(await repo.findUsernameByApiKey('live-key')).toBe('bob')
         })
 
@@ -627,19 +628,19 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
         const repo = makeRepo()
         // two closed sessions for dave; expect the later update_time
         clockNow = new Date('2026-06-01T10:00:00Z')
-        await repo.insert(newSession({id: 'd1', username: 'Dave', state: workerSession.State.PENDING}))
+        await repo.insert(newSession({id: 'd1', username: 'dave', state: workerSession.State.PENDING}))
         await repo.update(workerSession.close(await repo.getSession('d1')))
         clockNow = new Date('2026-06-01T11:00:00Z')
-        await repo.insert(newSession({id: 'd2', username: 'Dave', state: workerSession.State.PENDING, apiKey: null}))
+        await repo.insert(newSession({id: 'd2', username: 'dave', state: workerSession.State.PENDING, apiKey: null}))
         await repo.update(workerSession.close(await repo.getSession('d2')))
         // a non-closed session must be ignored
-        await repo.insert(newSession({id: 'd3', username: 'Dave', state: workerSession.State.ACTIVE}))
+        await repo.insert(newSession({id: 'd3', username: 'dave', state: workerSession.State.ACTIVE}))
 
         const byUser = await repo.mostRecentlyClosedSessionByUser()
         expect(Object.keys(byUser)).toEqual(['dave'])
         expect(byUser.dave.getTime()).toBe(new Date('2026-06-01T11:00:00Z').getTime())
 
-        const single = await repo.mostRecentlyClosedSession('Dave')
+        const single = await repo.mostRecentlyClosedSession('dave')
         expect(single.timestamp.getTime()).toBe(new Date('2026-06-01T11:00:00Z').getTime())
     })
 

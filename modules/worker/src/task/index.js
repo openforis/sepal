@@ -9,31 +9,20 @@
 
 import {getLogger} from '#sepal/log'
 
+import {createScheduler} from '../scheduler.js'
+import {MINUTE_MS} from '../time.js'
+
 const log = getLogger('worker/task')
 
-const MINUTE_MS = 60_000
-
-// scheduleFixedDelay(name, fn, intervalMs) — run fn once immediately, then every intervalMs.
-// Errors are logged, never thrown (a failed run must not stop the schedule). Returns the timer.
-const scheduleFixedDelay = (name, fn, intervalMs) => {
-    const run = () =>
-        Promise.resolve()
-            .then(fn)
-            .catch(error => log.error(`Scheduled job ${name} failed`, error))
-    run() // initial delay 0
-    return setInterval(run, intervalMs)
-}
-
 const createTaskComponent = ({taskManager}) => {
-    let timers = []
+    const scheduler = createScheduler(log)
 
     const start = () => {
         log.debug('Starting...')
 
         taskManager.registerSessionEventConsumers()
 
-        timers.push(scheduleFixedDelay(
-            'CancelTimedOutTasks', () => taskManager.cancelTimedOutTasks(), MINUTE_MS))
+        scheduler.schedule('CancelTimedOutTasks', () => taskManager.cancelTimedOutTasks(), MINUTE_MS)
 
         log.info('Started')
     }
@@ -41,8 +30,7 @@ const createTaskComponent = ({taskManager}) => {
     const stop = () => {
         log.debug('Stopping...')
         taskManager.unregisterSessionEventConsumers()
-        timers.forEach(clearInterval)
-        timers = []
+        scheduler.stopAll()
         log.info('Stopped')
     }
 

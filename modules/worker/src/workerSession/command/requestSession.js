@@ -3,7 +3,7 @@
 //      authoritative answer comes from the budget module LIVE (budgetClient.check), so a restart
 //      or a lost event cannot let an over-budget user through; the event-fed lockedUsers set
 //      (../../lockedUsers.js) is only the fallback for when budget is unreachable.
-//   2. sanitize username → lowercase
+//   2. normalize username → the stored spelling (#sepal/username)
 //   3. apiKey = workerType === SANDBOX ? apiKeyGenerator.generate() : null
 //   4. build PENDING session (id=UUID, creationTime=updateTime=now)
 //   5. instance = instanceManager.requestInstance(session) → set instance {id, host}
@@ -17,6 +17,7 @@
 import crypto from 'crypto'
 
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {instanceTag, sessionTag, userTag} from '../../tag.js'
 import {SANDBOX} from '../../workerInstance/workerTypes.js'
@@ -51,13 +52,12 @@ const requestSession = async (
 ) => {
     const {exceeded, reason} = await budgetVerdict(username, {budgetClient, lockedUsers})
     if (exceeded) throw budgetErrorFor(reason, username)
-    const sanitizedUsername = username ? username.toLowerCase() : username
     const now = clock()
     const apiKey = workerType === SANDBOX ? apiKeyGenerator.generate() : null
     const session = createWorkerSession({
         id: crypto.randomUUID(),
         state: State.PENDING,
-        username: sanitizedUsername,
+        username: storedUsername(username),
         workerType,
         instanceType,
         creationTime: now,

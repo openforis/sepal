@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS message (
   id            VARCHAR(36)  NOT NULL,
-  username      VARCHAR(32)  NOT NULL,
+  username      VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
   subject       VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
   contents      LONGTEXT     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
   type          VARCHAR(63)  NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS message (
 
 CREATE TABLE IF NOT EXISTS notification (
   message_id VARCHAR(36)  NOT NULL,
-  username   VARCHAR(32)  NOT NULL,
+  username   VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
   state      VARCHAR(16)  NOT NULL,
   PRIMARY KEY (message_id, username),
   INDEX idx_notification_1 (username, message_id) USING BTREE

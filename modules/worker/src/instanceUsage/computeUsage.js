@@ -9,7 +9,7 @@
 // reclaimable and must not read as load). The /ram tmpfs and ShmSize count toward usage —
 // deliberate, tmpfs is real RAM.
 
-const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100
+import {round2} from '../round.js'
 
 const clampPct = value => round2(Math.min(100, Math.max(0, value)))
 

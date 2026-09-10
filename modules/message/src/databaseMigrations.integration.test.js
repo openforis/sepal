@@ -1,17 +1,13 @@
-import {createHash, randomBytes} from 'crypto'
-import {readFile} from 'fs/promises'
+import {randomBytes} from 'crypto'
 import {join} from 'path'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
-import {migrateMessageDb} from './databaseMigrations.js'
-
 describe('message database migrations', () => {
     let admin
     const reserved = []
-    const log = {info: () => {}}
 
     beforeAll(async () => {
         configureNoLogging()
@@ -21,6 +17,21 @@ describe('message database migrations', () => {
     afterEach(() => dropReservedDatabases())
 
     afterAll(() => admin?.end())
+
+    test('compares usernames without regard to case', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+        const stored = await insertMessage(dbName, aMessage())
+
+        const [found] = await admin.query('SELECT username FROM ??.message WHERE username = ?', [dbName, stored.username.toUpperCase()])
+
+        const collations = await usernameCollations(dbName)
+        expect(found).toEqual([{username: stored.username}])
+        expect(collations).toEqual({
+            message: 'ascii_general_ci',
+            notification: 'ascii_general_ci'
+        })
+    })
 
     describe('schema migrations', () => {
         test('create the message and notification tables in the selected database', async () => {
@@ -42,63 +53,6 @@ describe('message database migrations', () => {
         })
     })
 
-    describe('startup on a database migrated by the deployed qualified file', () => {
-        test('corrects the schema checksum, keeping the messages', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            const message = await insertMessage(dbName, aMessage())
-            const qualified = await recordedSchema(dbName)
-
-            await migrateMessageDb(dbName, log)
-
-            const schema = await recordedSchema(dbName)
-            const ids = await messageIds(dbName)
-            expect(ids).toEqual([message.id])
-            expect(schema).toEqual({...qualified, md5: await checksum(SCHEMA_FILE)})
-        })
-
-        test('creates no import history', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-
-            await migrateMessageDb(dbName, log)
-
-            const tables = await tableNames(dbName)
-            expect(tables).toEqual(['message', 'notification', 'schema_version'])
-        })
-
-        test('changes nothing on the next startup', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            await insertMessage(dbName, aMessage())
-            await migrateMessageDb(dbName, log)
-            const before = await databaseState(dbName)
-
-            await migrateMessageDb(dbName, log)
-
-            const state = await databaseState(dbName)
-            expect(state).toEqual(before)
-        })
-
-        test('rejects an unrecognized checksum without changing the history', async () => {
-            const dbName = await reserveDatabase()
-            await initDb(dbName, SCHEMA_PATH)
-            await recordSchemaChecksum(dbName, 'unrecognized')
-            const before = await recordedSchema(dbName)
-
-            const startup = migrateMessageDb(dbName, log)
-
-            await expect(startup).rejects.toThrow(/MD5 checksum failed/)
-            const schema = await recordedSchema(dbName)
-            expect(schema).toEqual(before)
-        })
-    })
-
-    // The qualified file built the same tables the portable file builds now; only its checksum differs.
-    const aDatabaseMigratedByTheQualifiedFile = async () => {
-        const dbName = await reserveDatabase()
-        await initDb(dbName, SCHEMA_PATH)
-        await recordSchemaChecksum(dbName, DEPLOYED_QUALIFIED_MD5)
-        return dbName
-    }
-
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
@@ -119,31 +73,18 @@ describe('message database migrations', () => {
         return message
     }
 
-    const recordSchemaChecksum = (dbName, md5) =>
-        admin.query('UPDATE ??.schema_version SET md5 = ? WHERE version = 1', [dbName, md5])
-
-    const databaseState = async dbName => ({
-        messages: await messageIds(dbName),
-        schema: await recordedSchema(dbName),
-        tables: await tableNames(dbName)
-    })
-
-    const recordedSchema = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT version, name, md5, run_at FROM ??.schema_version WHERE version = 1', [dbName]
-        )
-        return rows[0]
-    }
-
-    const messageIds = async dbName => {
-        const [rows] = await admin.query('SELECT id FROM ??.message ORDER BY id', [dbName])
-        return rows.map(({id}) => id)
-    }
-
     const rowCounts = async dbName => {
         const [[{messages}]] = await admin.query('SELECT COUNT(*) AS messages FROM ??.message', [dbName])
         const [[{notifications}]] = await admin.query('SELECT COUNT(*) AS notifications FROM ??.notification', [dbName])
         return {messages, notifications}
+    }
+
+    const usernameCollations = async dbName => {
+        const [rows] = await admin.query(
+            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
+            [dbName, 'username']
+        )
+        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
     }
 
     const tableNames = async dbName => {
@@ -164,8 +105,4 @@ const aMessage = () => ({
     update_time: new Date('2026-01-01T00:00:00Z')
 })
 
-const checksum = async file => createHash('md5').update(await readFile(file, 'utf8')).digest('hex')
-
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
-const SCHEMA_FILE = join(SCHEMA_PATH, '001.do.schema.sql')
-const DEPLOYED_QUALIFIED_MD5 = 'b58338efdcd4ee31e1aa2991055fd8fa'

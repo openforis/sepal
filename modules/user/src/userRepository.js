@@ -1,17 +1,18 @@
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from './db.js'
 import {rowToUser, toISOString} from './user.js'
 
 const TABLE = 'sepal_user'
 
-// `username` is stored lowercased and its column is ascii_bin, so it compares exactly. Every query
-// below therefore normalizes its argument here instead of wrapping the column in LOWER(), which
-// would suppress the unique index on `username`. Callers may still pass any case; the insert path
-// normalizes too, so nothing can write a row this lookup would then miss.
-const normalize = username => username?.toLowerCase()
+// insertUser is the only statement that writes `username`, so it is the only one that normalizes
+// (see #sepal/username). Every query below passes the caller's value through untouched: the column
+// is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
+// which a LOWER() wrapper would have suppressed.
 
 const findByUsername = async username => {
     const [rows] = await getPool().query(
-        `SELECT * FROM ${TABLE} WHERE username = ?`, [normalize(username)]
+        `SELECT * FROM ${TABLE} WHERE username = ?`, [username]
     )
     return rowToUser(rows[0])
 }
@@ -54,7 +55,7 @@ const emailNotificationsEnabled = async email => {
 const mostRecentLogin = async username => {
     const [rows] = await getPool().query(
         `SELECT last_login_time FROM ${TABLE}
-         WHERE username = ? AND last_login_time IS NOT NULL`, [normalize(username)]
+         WHERE username = ? AND last_login_time IS NOT NULL`, [username]
     )
     return rows.length ? {timestamp: toISOString(rows[0].last_login_time)} : {}
 }
@@ -71,7 +72,7 @@ const mostRecentLoginByUser = async () => {
 
 const setLastLoginTime = async username => {
     await getPool().query(
-        `UPDATE ${TABLE} SET last_login_time = NOW() WHERE username = ?`, [normalize(username)]
+        `UPDATE ${TABLE} SET last_login_time = NOW() WHERE username = ?`, [username]
     )
 }
 
@@ -88,7 +89,7 @@ const updateGoogleTokens = async (username, tokens) => {
             tokens ? new Date(tokens.accessTokenExpiryDate) : null,
             tokens?.projectId ?? null,
             tokens?.legacyProject ? 1 : 0,
-            normalize(username)
+            username
         ]
     )
 }
@@ -96,7 +97,7 @@ const updateGoogleTokens = async (username, tokens) => {
 const updatePassword = async (username, passwordHash) => {
     await getPool().query(
         `UPDATE ${TABLE} SET password_hash = ? WHERE username = ?`,
-        [passwordHash, normalize(username)]
+        [passwordHash, username]
     )
 }
 
@@ -109,21 +110,21 @@ const updateUserDetails = async ({username, name, email, organization, intendedU
              email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, update_time = NOW()
          WHERE username = ?`,
         [name, email, organization, intendedUse,
-            emailNotificationsEnabled, manualMapRenderingEnabled, admin, normalize(username)]
+            emailNotificationsEnabled, manualMapRenderingEnabled, admin, username]
     )
 }
 
 const acceptPrivacyPolicy = async username => {
     await getPool().query(
         `UPDATE ${TABLE} SET privacy_policy_accepted = TRUE WHERE username = ?`,
-        [normalize(username)]
+        [username]
     )
 }
 
 const updateStatus = async (username, status) => {
     await getPool().query(
         `UPDATE ${TABLE} SET status = ? WHERE username = ?`,
-        [status, normalize(username)]
+        [status, username]
     )
 }
 
@@ -132,7 +133,7 @@ const updateStatus = async (username, status) => {
 const updateToken = async (username, token) => {
     await getPool().query(
         `UPDATE ${TABLE} SET token = ?, token_generation_time = NOW() WHERE username = ?`,
-        [token, normalize(username)]
+        [token, username]
     )
 }
 
@@ -158,7 +159,7 @@ const insertUser = async ({username, name, email, organization, intendedUse, tok
           manual_map_rendering_enabled, token, token_generation_time, admin, system_user, status,
           creation_time, update_time)
          VALUES (?, ?, ?, ?, ?, 1, 0, ?, NOW(), 0, 0, 'PENDING', NOW(), NOW())`,
-        [normalize(username), name, email, organization, intendedUse ?? null, token]
+        [storedUsername(username), name, email, organization, intendedUse ?? null, token]
     )
     await assignDerivedPosixIds(result.insertId)
     return result.insertId
@@ -176,7 +177,7 @@ const assignDerivedPosixIds = async id => {
 const updateSshPublicKey = async (username, sshPublicKey) => {
     await getPool().query(
         `UPDATE ${TABLE} SET ssh_public_key = ? WHERE username = ?`,
-        [sshPublicKey, normalize(username)]
+        [sshPublicKey, username]
     )
 }
 

@@ -1,6 +1,6 @@
-// Tests for the workerInstance component's scheduling. Only the immediate (initial-delay-0) run
-// of SizeIdlePool is exercised — the 1-minute interval never fires within a test, and stop()
-// clears it.
+// Tests for the workerInstance component's scheduling and startup backfill. Only the immediate
+// (initial-delay-0) run of SizeIdlePool is exercised — the 1-minute interval never fires within a
+// test, and stop() clears it.
 
 import {jest} from '@jest/globals'
 
@@ -13,7 +13,11 @@ const flush = async () => {
     }
 }
 
-const build = ({instanceTypes, idle = [], reserved = []}) => {
+const build = ({instanceTypes, idle = [], reserved = [], claims = {
+    claim: jest.fn(async () => true),
+    release: jest.fn(async () => true),
+    all: jest.fn(async () => []),
+}}) => {
     const provider = {
         start: jest.fn(async () => {}),
         stop: jest.fn(async () => {}),
@@ -22,24 +26,19 @@ const build = ({instanceTypes, idle = [], reserved = []}) => {
         reservedInstances: jest.fn(async () => reserved),
         launchIdle: jest.fn(async () => []),
         terminate: jest.fn(async () => {}),
-    }
-    const repo = {
-        launched: jest.fn(async () => {}),
-        terminated: jest.fn(async () => {}),
-        reconciled: jest.fn(async () => 0),
-        forgotten: jest.fn(async () => 0),
+        sweep: jest.fn(async () => {}),
     }
     const component = createWorkerInstanceComponent({
-        repo, provider, provisioner: {}, instanceTypes,
+        claims, provider, provisioner: {}, instanceTypes,
     })
-    return {component, provider, repo}
+    return {claims, component, provider}
 }
 
 // SizeIdlePool is the ONLY step that terminates a released instance: releaseInstance merely
 // un-reserves it (on AWS, re-tags it State=idle), and the provider's own cleanup only sweeps idle
 // instances of an OLDER version. If the sweep is not scheduled, released instances bill forever.
 test('terminates surplus idle instances even when no type declares an idle pool', async () => {
-    const {component, provider, repo} = build({
+    const {component, provider} = build({
         instanceTypes: [{id: 'M5aLarge', idleCount: 0}],
         idle: [{id: 'i-orphan', type: 'M5aLarge'}],
     })
@@ -49,7 +48,6 @@ test('terminates surplus idle instances even when no type declares an idle pool'
     component.stop()
 
     expect(provider.terminate).toHaveBeenCalledWith('i-orphan')
-    expect(repo.terminated).toHaveBeenCalledWith('i-orphan')
 })
 
 test('still tops the pool up to target when a type declares one', async () => {
@@ -65,29 +63,23 @@ test('still tops the pool up to target when a type declares one', async () => {
     expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
 })
 
-// An idle instance with no row is invisible to RequestInstance but counted by SizeIdlePool, so
-// the pool holds a slot open for an instance nobody can ever be given. Reconciling on the same
-// tick is what stops that state from being permanent.
-test('reconciles the repository against the provider on every sweep', async () => {
-    const orphan = {id: 'i-orphan', type: 'T3aSmall'}
-    const {component, repo} = build({
-        instanceTypes: [{id: 'T3aSmall', idleCount: 1}],
-        idle: [orphan],
-    })
+// The provider sweep collects what no allocation path can see (older-version and untagged
+// instances); it must run on the same tick as the sizing, not on its own separate schedule.
+test('runs the provider sweep on every pool cycle', async () => {
+    const {component, provider} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
 
     await component.start()
     await flush()
     component.stop()
 
-    expect(repo.reconciled).toHaveBeenCalledWith([orphan])
-    expect(repo.forgotten).toHaveBeenCalledWith(['i-orphan'])
+    expect(provider.sweep).toHaveBeenCalled()
 })
 
-// The sizing is what stops released instances billing forever; a reconcile failure (a DB blip)
+// The sizing is what stops released instances billing forever; a sweep failure (an AWS API blip)
 // must not take it down with it.
-test('sizes the pool even when reconciliation fails', async () => {
-    const {component, provider, repo} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
-    repo.reconciled.mockRejectedValue(new Error('db down'))
+test('sizes the pool even when the provider sweep fails', async () => {
+    const {component, provider} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
+    provider.sweep.mockRejectedValue(new Error('ec2 down'))
 
     await component.start()
     await flush()
@@ -104,4 +96,38 @@ test('stop() halts the provider and the sweep', async () => {
     await component.stop()
 
     expect(provider.stop).toHaveBeenCalled()
+})
+
+describe('start — upgrade backfill', () => {
+    test('claims each reserved instance that carries a session id', async () => {
+        const {claims, component} = build({
+            instanceTypes: [],
+            reserved: [
+                {id: 'i-1', reservation: {sessionId: 's-1'}},
+                {id: 'i-2', reservation: {sessionId: null}},
+            ],
+        })
+
+        await component.start()
+        await flush()
+        component.stop()
+
+        expect(claims.claim.mock.calls).toEqual([['i-1', 's-1']])
+    })
+
+    test('a backfill failure does not stop startup', async () => {
+        const {component} = build({
+            instanceTypes: [],
+            reserved: [{id: 'i-1', reservation: {sessionId: 's-1'}}],
+            claims: {
+                claim: jest.fn(async () => { throw new Error('db down') }),
+                release: jest.fn(async () => true),
+                all: jest.fn(async () => []),
+            },
+        })
+
+        await expect(component.start()).resolves.toBeUndefined()
+        await flush()
+        component.stop()
+    })
 })

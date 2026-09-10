@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 // An in-memory stand-in for the MySQL adapter. It models ordinary persistence for application tests, but
 // not revision preconditions or concurrency; that evidence lives only in the real-MySQL suite.
 class FakeRecipeRepository {
@@ -8,13 +10,13 @@ class FakeRecipeRepository {
         const stored = this.#recipes.get(id)
         if (!stored) {
             this.#recipes.set(id, {
-                id, owner, projectId, name, type, typeVersion,
+                id, owner: storedUsername(owner), projectId, name, type, typeVersion,
                 content: persisted(content),
                 revision: 1, removed: false,
                 creationTime: new Date(0), updateTime: new Date(0)
             })
             return {outcome: 'saved', revision: 1}
-        } else if (stored.removed || stored.owner !== owner) {
+        } else if (stored.removed || stored.owner !== storedUsername(owner)) {
             return {outcome: 'notFound'}
         } else {
             // Placement belongs to moveRecipes, so a save leaves projectId exactly as it found it.
@@ -57,7 +59,7 @@ class FakeRecipeRepository {
 
     async saveMigratedRecipe({id, owner, typeVersion, content}) {
         const stored = this.#recipes.get(id)
-        if (!stored || stored.owner !== owner) {
+        if (!stored || stored.owner !== storedUsername(owner)) {
             throw new Error(`Migrating recipe ${id} updated 0 rows`)
         }
         this.#recipes.set(id, {
@@ -69,22 +71,22 @@ class FakeRecipeRepository {
 
     async listProjects(owner) {
         return [...this.#projects.values()]
-            .filter(project => project.username === owner)
+            .filter(project => project.username === storedUsername(owner))
             .map(project => ({...project}))
     }
 
     async saveProject({id, owner, name, defaultAssetFolder = null, defaultWorkspaceFolder = null}) {
         const stored = this.#projects.get(id)
         if (!stored) {
-            this.#projects.set(id, {id, username: owner, name, defaultAssetFolder, defaultWorkspaceFolder})
-        } else if (stored.username === owner) {
+            this.#projects.set(id, {id, username: storedUsername(owner), name, defaultAssetFolder, defaultWorkspaceFolder})
+        } else if (stored.username === storedUsername(owner)) {
             this.#projects.set(id, {...stored, name, defaultAssetFolder, defaultWorkspaceFolder})
         }
     }
 
     async removeProject(id, owner) {
         const stored = this.#projects.get(id)
-        if (stored && stored.username === owner) {
+        if (stored && stored.username === storedUsername(owner)) {
             this.#projects.delete(id)
             this.#ownedBy(owner)
                 .filter(recipe => recipe.projectId === id)
@@ -98,12 +100,12 @@ class FakeRecipeRepository {
     }
 
     #ownedBy(owner) {
-        return [...this.#recipes.values()].filter(stored => stored.owner === owner && !stored.removed)
+        return [...this.#recipes.values()].filter(stored => stored.owner === storedUsername(owner) && !stored.removed)
     }
 
     #updateOwned(id, owner, update) {
         const stored = this.#visible(id)
-        if (stored && stored.owner === owner) {
+        if (stored && stored.owner === storedUsername(owner)) {
             this.#recipes.set(id, update(stored))
         }
     }

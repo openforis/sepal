@@ -1,11 +1,11 @@
-import {createDb, createPool} from '#sepal/db/mysql'
-import {getLogger} from '#sepal/log'
+import {join} from 'path'
 
-import {migrateMessageDb} from './databaseMigrations.js'
+import {createDb, createPool, initDb} from '#sepal/db/mysql'
+import {dirName} from '#sepal/path'
 
 const DATABASE_NAME = 'message'
 
 export const initializeDb = async () => {
-    await migrateMessageDb(DATABASE_NAME, getLogger('database'))
+    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
     return createDb(await createPool(DATABASE_NAME))
 }

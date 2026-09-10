@@ -3,13 +3,11 @@
 -- unqualified so any database can be built from it; the one-off copy from the legacy `sepal_user` schema
 -- lives in migrations/legacy-import.
 --
--- `email` opts out of the schema's ascii_bin default with ascii_general_ci: it is human-entered and
--- looked up by exact value (password reset, the email module, the signup uniqueness check), so it must
--- keep comparing — and its UNIQUE index must keep rejecting — case-insensitively.
+-- Usernames and emails identify people, so their comparisons and UNIQUE indexes ignore case.
 
 CREATE TABLE IF NOT EXISTS `sepal_user` (
   `id`                             int(11)       NOT NULL AUTO_INCREMENT,
-  `username`                       varchar(32)   NOT NULL,
+  `username`                       varchar(32)   COLLATE ascii_general_ci NOT NULL,
   `name`                           varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `email`                          varchar(255)  COLLATE ascii_general_ci DEFAULT NULL,
   `organization`                   varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,

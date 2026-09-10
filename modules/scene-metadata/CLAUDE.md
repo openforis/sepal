@@ -4,8 +4,7 @@ Maintains scene metadata database for Landsat and Sentinel-2 satellite imagery. 
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. There is no legacy import. Startup wiring, the temporary checksum
-reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the portable schema stream. There is no legacy import. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 

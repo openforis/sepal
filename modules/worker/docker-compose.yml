@@ -70,6 +70,7 @@ services:
       GOOGLE_REGION: "${GOOGLE_REGION}"
       GOOGLE_EARTH_ENGINE_ACCOUNT: "${EE_ACCOUNT}"
       GOOGLE_EARTH_ENGINE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      CARTODB_BASEMAP_KEY: "${CARTODB_BASEMAP_KEY:-}"
       # ─── Google OAuth (workersession RefreshGoogleTokens → user module) ────
       GOOGLE_OAUTH_ENDPOINT: "${GOOGLE_OAUTH_ENDPOINT:-http://user/google/}"
       # ─── Budget (live over-budget check on session request) ────────────────
