@@ -12,11 +12,11 @@ import {getRequestUser, setRequestUser} from './user.js'
 
 const log = getLogger('proxy')
 
-const proxyEndpoints$ = expressApp => source$().pipe(
+const proxyEndpoints$ = router => source$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
-    map(proxy(expressApp)),
+    map(proxy(router)),
     toArray()
 )
 
@@ -52,13 +52,13 @@ const registerUpgradeListener = (server, proxies) => {
 
 export {proxyEndpoints$, registerUpgradeListener}
 
-const proxy = expressApp =>
+const proxy = router =>
     ({id, port}) => {
         const path = `/${id}`
         const target = `http://${id}:${port}`
 
         // This is to get the resourcez endpoint from solara - only for admin users (it returns the number of active users, etc.)
-        expressApp.use(
+        router.use(
             `${path}/resourcez`,
             (req, res, next) => {
                 const user = getRequestUser(req)
@@ -124,14 +124,13 @@ const proxy = expressApp =>
                 },
                 error: (err, req, res) => {
                     log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
-                    log.error(Object.keys(res))
-
-                    if (Object.keys(res).includes('writeHead')) {
-                        res.writeHead(500, {
+                    // On a websocket upgrade failure res is a plain socket, which has no writeHead.
+                    if (res.writeHead && !res.headersSent) {
+                        res.writeHead(500, 'Something went wrong', {
                             'Content-Type': 'text/plain'
                         })
-                        res.end('Something went wrong.')
                     }
+                    res.end()
                 },
                 open: () => {
                     log.trace('WebSocket opened')
@@ -142,7 +141,7 @@ const proxy = expressApp =>
             }
         })
 
-        expressApp.use(path, proxyMiddleware)
+        router.use(path, proxyMiddleware)
         
         return {path, target, proxy: proxyMiddleware}
     }

@@ -25,7 +25,7 @@ npm run testWatch     # Jest watch mode
 
 ### Proxy System
 - `src/proxy.js` - HTTP proxy with `changeOrigin: true`, path rewriting, security headers (CSP, HSTS), `sepal-user` header injection
-- `src/proxyManager.js` - Dynamic proxy endpoint registration with change detection
+- `src/proxyManager.js` - Dynamic proxy endpoint registration. Mounts one stable Express layer and swaps the router behind it, so a refresh replaces the app routes rather than shadowing them.
 - WebSocket upgrade handling via manual server listeners
 
 ### Git Operations
