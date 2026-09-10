@@ -48,6 +48,12 @@ const makeAwsInstance = (overrides = {}) => ({
     ...overrides,
 })
 
+// RunInstances answers BEFORE CreateTags runs, so its instances carry no tags. Never stub a
+// RunInstances response with makeAwsInstance() — that is what hid the launchIdle reservation bug.
+const makeRunInstancesResponse = (overrides = {}) => ({
+    Instances: [makeAwsInstance({Tags: undefined, State: {Name: 'pending'}, PublicIpAddress: undefined, ...overrides})],
+})
+
 const describeResponse = instances => ({
     Reservations: [{Instances: instances}],
 })
@@ -201,7 +207,7 @@ describe('launch params (RunInstancesCommand)', () => {
     // on undefined.InstanceId three frames away, naming neither EC2 nor the instance type.
     test('reads the launched instances from the top level of the response', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
-        ec2Mock.on(RunInstancesCommand).resolves({Instances: [makeAwsInstance()]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
 
@@ -229,9 +235,7 @@ describe('launch params (RunInstancesCommand)', () => {
     })
 
     test('RunInstancesCommand uses correct params for launchIdle', async () => {
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance({PublicIpAddress: undefined})],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
 
@@ -242,9 +246,7 @@ describe('launch params (RunInstancesCommand)', () => {
         await provider.start()
 
         ec2Mock.reset()
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance()],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
 
@@ -269,17 +271,13 @@ describe('launch params (RunInstancesCommand)', () => {
         })
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-launch1'}))
 
         const provider = createAwsInstanceProvider(CONFIG)
         await provider.start()
 
         ec2Mock.reset()
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance({InstanceId: 'i-launch1'})],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-launch1'}))
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
 
@@ -301,9 +299,29 @@ describe('launch params (RunInstancesCommand)', () => {
         const stateTag = firstTagInput.Tags.find(t => t.Key === 'State')
         expect(stateTag.Value).toBe('idle')
     })
+
+    // RunInstances answers BEFORE the tags exist — this provider tags in a separate CreateTags
+    // call — so the instances launchIdle builds from that answer carry no State tag. A stub that
+    // hands back tags here would be unfaithful to EC2 and would hide the real bug this regression
+    // test once caught: toWorkerInstance reading the missing tag as reserved-by-nobody instead of
+    // idle.
+    test('launchIdle returns idle instances even though RunInstances answers untagged', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-pool1'}))
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        const [instance] = await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        expect(instance.reservation).toBeNull()
+    })
 })
 
-describe('launchReserved public-IP polling', () => {
+describe('launchReserved', () => {
     let ec2Mock
 
     beforeEach(() => {
@@ -360,25 +378,13 @@ describe('launchReserved public-IP polling', () => {
         expect(describeCalls.length).toBeLessThanOrEqual(1)
     })
 
-    test('polls getInstance until public IP is available (no IP then IP)', async () => {
+    // launchReserved must NOT wait for the address: the caller records the claim that protects the
+    // instance from ReleaseUnusedInstances, and only then calls awaitHost. Waiting here kept the
+    // instance reserved, unclaimed and sessionless for the whole boot.
+    test('returns as soon as the instance is tagged, leaving the address to awaitHost', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-poll'}]})
         ec2Mock.on(CreateTagsCommand).resolves({})
-
-        ec2Mock.on(DescribeInstancesCommand).callsFake(input => {
-            const ids = input.InstanceIds ?? []
-            if (ids.length > 0) {
-                return describeResponse([{
-                    InstanceId: ids[0],
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '9.8.7.6',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
-                }])
-            }
-            return emptyDescribeResponse()
-        })
-
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
         ec2Mock.on(RunInstancesCommand).resolves({
             Instances: [{
                 InstanceId: 'i-poll2',
@@ -392,23 +398,16 @@ describe('launchReserved public-IP polling', () => {
 
         const provider = createAwsInstanceProvider(CONFIG)
         await provider.start()
-
         ec2Mock.reset()
         ec2Mock.on(CreateTagsCommand).resolves({})
-        ec2Mock.on(DescribeInstancesCommand).callsFake(input => {
-            const ids = input.InstanceIds ?? []
-            if (ids.length > 0) {
-                return describeResponse([{
-                    InstanceId: ids[0],
-                    InstanceType: 't3a.small',
-                    PublicIpAddress: '9.8.7.6',
-                    State: {Name: 'running'},
-                    LaunchTime: new Date().toISOString(),
-                    Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
-                }])
-            }
-            return emptyDescribeResponse()
-        })
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([{
+            InstanceId: 'i-poll2',
+            InstanceType: 't3a.small',
+            PublicIpAddress: '9.8.7.6',
+            State: {Name: 'running'},
+            LaunchTime: new Date().toISOString(),
+            Tags: [{Key: 'State', Value: 'reserved'}, {Key: 'Username', Value: 'alice'}, {Key: 'WorkerType', Value: 'SANDBOX'}],
+        }]))
         ec2Mock.on(RunInstancesCommand).resolves({
             Instances: [{
                 InstanceId: 'i-poll2',
@@ -421,10 +420,16 @@ describe('launchReserved public-IP polling', () => {
         })
 
         const inst = await provider.launchReserved('T3aSmall', RESERVATION)
+        const describeCallsBeforeAwait = ec2Mock.commandCalls(DescribeInstancesCommand).length
+        // The re-read awaitHost does derives the reservation from tags, which carry no SessionId —
+        // the caller re-pins its own reservation afterwards.
+        const ready = await provider.awaitHost(inst)
         provider.stop()
 
-        expect(inst.host).toBe('9.8.7.6')
-        expect(inst.reservation).toEqual({...RESERVATION, sessionId: null})
+        expect(inst.host).toBeNull()
+        expect(inst.reservation).toEqual(RESERVATION)
+        expect(describeCallsBeforeAwait).toBe(0)
+        expect(ready.host).toBe('9.8.7.6')
     }, 10_000)
 })
 
@@ -496,6 +501,112 @@ describe('idleInstances — type filter', () => {
     })
 })
 
+describe('reads are free of side effects', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    test('idleInstances issues one DescribeInstances and terminates nothing', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        ec2Mock.reset()
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        ec2Mock.on(TerminateInstancesCommand).resolves({})
+
+        await provider.idleInstances('T3aSmall')
+        provider.stop()
+
+        expect(ec2Mock.commandCalls(DescribeInstancesCommand)).toHaveLength(1)
+        expect(ec2Mock.commandCalls(TerminateInstancesCommand)).toHaveLength(0)
+    })
+
+    // The sweep is level-triggered by necessity: an untagged instance is one whose CreateTags
+    // never ran, so there is no event to hang the work on.
+    test('sweep terminates an idle instance of an older version', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        ec2Mock.reset()
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            makeAwsInstance({
+                InstanceId: 'i-old',
+                Tags: [
+                    {Key: 'State', Value: 'idle'},
+                    {Key: 'Type', Value: 'Worker'},
+                    {Key: 'Environment', Value: 'test-env'},
+                    {Key: 'Version', Value: '4.0.0'},
+                ],
+            }),
+        ]))
+        ec2Mock.on(TerminateInstancesCommand).resolves({})
+
+        await provider.sweep()
+        provider.stop()
+
+        const terminated = ec2Mock.commandCalls(TerminateInstancesCommand)
+        expect(terminated.length).toBeGreaterThanOrEqual(1)
+        expect(terminated[0].args[0].input.InstanceIds).toEqual(['i-old'])
+    })
+})
+
+describe('awaitHost', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    test('returns an instance that already has an address without calling EC2', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        ec2Mock.reset()
+
+        const instance = {id: 'i-ready', type: 'T3aSmall', host: '1.2.3.4', reservation: null}
+        expect(await provider.awaitHost(instance)).toBe(instance)
+        expect(ec2Mock.commandCalls(DescribeInstancesCommand)).toHaveLength(0)
+        provider.stop()
+    })
+
+    test('polls until the address appears', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        ec2Mock.reset()
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            makeAwsInstance({InstanceId: 'i-booting', PublicIpAddress: '5.6.7.8'}),
+        ]))
+
+        const ready = await provider.awaitHost({
+            id: 'i-booting', type: 'T3aSmall', host: null, reservation: null,
+        })
+        provider.stop()
+
+        expect(ready.host).toBe('5.6.7.8')
+    })
+})
+
 describe('terminateOldIdle', () => {
     let ec2Mock
 
@@ -534,7 +645,7 @@ describe('terminateOldIdle', () => {
         })
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances('T3aSmall')
+        await provider.sweep()
 
         expect(terminateCallCount).toBeGreaterThanOrEqual(1)
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
@@ -557,7 +668,7 @@ describe('terminateOldIdle', () => {
         ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances('T3aSmall')
+        await provider.sweep()
 
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
@@ -581,7 +692,7 @@ describe('terminateOldIdle', () => {
         ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances('T3aSmall')
+        await provider.sweep()
 
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
@@ -623,7 +734,7 @@ describe('terminateUntagged', () => {
         ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances()
+        await provider.sweep()
 
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
@@ -652,7 +763,7 @@ describe('terminateUntagged', () => {
         ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances()
+        await provider.sweep()
 
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
@@ -670,7 +781,7 @@ describe('terminateUntagged', () => {
         ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
 
         const provider = createAwsInstanceProvider(CONFIG)
-        await provider.idleInstances()
+        await provider.sweep()
 
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
@@ -678,11 +789,11 @@ describe('terminateUntagged', () => {
     })
 })
 
-// terminateOldIdle / terminateUntagged are best-effort: a terminate failure during auto-cleanup
-// must NOT reject idleInstances() / reservedInstances() — the surviving list is still returned
-// and the error is swallowed and logged. A caller-initiated terminate() MUST still reject after
-// all retries fail.
-describe('best-effort auto-cleanup — cleanup failure does not reject query', () => {
+// terminateOldIdle / terminateUntagged are best-effort: a terminate failure during sweep must
+// NOT reject sweep() itself, and a plain read taken afterwards still returns the survivors — the
+// error is swallowed and logged. A caller-initiated terminate() MUST still reject after all
+// retries fail.
+describe('best-effort auto-cleanup — cleanup failure does not reject sweep', () => {
     let ec2Mock
 
     beforeEach(() => {
@@ -694,7 +805,7 @@ describe('best-effort auto-cleanup — cleanup failure does not reject query', (
         ec2Mock.restore()
     })
 
-    test('idleInstances() resolves even when terminateOldIdle terminate always fails', async () => {
+    test('sweep() resolves, and idleInstances() still returns the survivor, when terminateOldIdle always fails', async () => {
         const oldIdle = makeAwsInstance({
             InstanceId: 'i-old-cleanup',
             Tags: [
@@ -726,13 +837,13 @@ describe('best-effort auto-cleanup — cleanup failure does not reject query', (
 
         const provider = createAwsInstanceProvider(CONFIG)
 
-        await expect(provider.idleInstances()).resolves.toBeDefined()
+        await expect(provider.sweep()).resolves.toBeUndefined()
         const result = await provider.idleInstances()
         const found = result.find(i => i.id === 'i-current-idle')
         expect(found).toBeDefined()
     }, 15_000)
 
-    test('reservedInstances() resolves even when terminateUntagged terminate always fails', async () => {
+    test('sweep() resolves, and reservedInstances() still returns the survivor, when terminateUntagged always fails', async () => {
         const twoMinutesAgo = new Date(Date.now() - 2 * 60_000).toISOString()
         const untaggedOld = {
             InstanceId: 'i-untagged-cleanup',
@@ -766,6 +877,7 @@ describe('best-effort auto-cleanup — cleanup failure does not reject query', (
 
         const provider = createAwsInstanceProvider(CONFIG)
 
+        await expect(provider.sweep()).resolves.toBeUndefined()
         const result = await provider.reservedInstances()
         const found = result.find(i => i.id === 'i-res-survives')
         expect(found).toBeDefined()
@@ -846,9 +958,7 @@ describe('tagInstance retry(4)', () => {
             return {TerminatingInstances: []}
         })
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-tag-fail'}))
 
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-x'}]})
 
@@ -865,9 +975,7 @@ describe('tagInstance retry(4)', () => {
             return {TerminatingInstances: []}
         })
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
-        ec2Mock.on(RunInstancesCommand).resolves({
-            Instances: [makeAwsInstance({InstanceId: 'i-tag-fail', PublicIpAddress: undefined})],
-        })
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-tag-fail'}))
 
         tagCallCount = 0
         terminateCallCount = 0

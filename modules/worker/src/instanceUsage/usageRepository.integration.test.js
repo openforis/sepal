@@ -7,7 +7,7 @@
 // against a transient `worker_usage_test_<pid>` scratch schema whose DDL mirrors
 // migrations/001.do.schema.sql. The live schemas are never touched. mysql2/promise is
 // imported directly for the same Jest ESM symlink reason documented in
-// instanceRepository.integration.test.js.
+// claimRepository.integration.test.js.
 
 import mysql from 'mysql2/promise'
 

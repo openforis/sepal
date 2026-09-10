@@ -1,5 +1,5 @@
 -- Worker schema: the worker-cluster tables. Targets are unqualified so any database can be built from
--- this file. The one-off copy from the legacy `sdms` and `worker_instance` schemas lives in
+-- this file. The one-off copy from the legacy `sdms` schema lives in
 -- migrations/legacy-import.
 --
 -- NOTE: rmb_message / rmb_message_processing belonged to the Groovy sepal-server (reliable message bus)
@@ -8,10 +8,12 @@
 CREATE TABLE IF NOT EXISTS `worker_session` (
     `id`                     varchar(36)   NOT NULL,
     `state`                  varchar(16)   NOT NULL,
-    `username`               varchar(32)   NOT NULL,
+    `username`               varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `worker_type`            varchar(32)   NOT NULL,
     `instance_type`          varchar(64)   NOT NULL,
     `instance_id`            varchar(255)  NOT NULL,
+    -- Debugging aid only; consumers derive the name from the instance id.
+    `instance_name`          varchar(64)   DEFAULT NULL,
     `host`                   varchar(255)  NOT NULL,
     `creation_time`          timestamp     NOT NULL,
     `update_time`            timestamp     NOT NULL,
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `worker_session` (
 CREATE TABLE IF NOT EXISTS `task` (
     `id`                 varchar(36)   NOT NULL,
     `state`              varchar(16)   NOT NULL,
-    `username`           varchar(32)   NOT NULL,
+    `username`           varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `session_id`         varchar(36)   NOT NULL,
     `operation`          varchar(255)  NOT NULL,
     `params`             longtext      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -53,14 +55,14 @@ CREATE TABLE IF NOT EXISTS `task` (
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------------------
--- instance
+-- instance_claim: allocation arbitration; the hosting service owns instance inventory.
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `instance` (
-  `id`          varchar(255) NOT NULL,
-  `type`        varchar(63)  NOT NULL,
-  `worker_type` varchar(63)  DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_instance_1` (`type`, `worker_type`) USING BTREE
+CREATE TABLE IF NOT EXISTS `instance_claim` (
+    `instance_id` varchar(255) NOT NULL,
+    `session_id`  varchar(36) NOT NULL,
+    `claimed_at`  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`instance_id`),
+    KEY `idx_instance_claim_1` (`claimed_at`)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------------------
@@ -72,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `instance` (
 -- on clientDown and never produce takeover notifications.
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `session_app` (
-    `username`      varchar(32)  NOT NULL,
+    `username`      varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `app_path`      varchar(255) NOT NULL,
     `session_id`    varchar(36)  NOT NULL,
     `label`         varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -91,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `session_app` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `instance_usage_sample` (
     `session_id`         varchar(36)  NOT NULL,
-    `username`           varchar(32)  NOT NULL,
+    `username`           varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type`      varchar(64)  NOT NULL,
     `sample_time`        timestamp    NOT NULL,
     `cpu_pct`            decimal(5,2) DEFAULT NULL,
@@ -113,7 +115,7 @@ CREATE TABLE IF NOT EXISTS `instance_usage_sample` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `instance_usage_hourly` (
     `session_id`          varchar(36)  NOT NULL,
-    `username`            varchar(32)  NOT NULL,
+    `username`            varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type`       varchar(64)  NOT NULL,
     `hour`                timestamp    NOT NULL,
     `sample_count`        int          NOT NULL,

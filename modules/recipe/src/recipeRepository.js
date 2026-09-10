@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 import {getPool} from './db.js'
 import {withProjectId} from './recipe.js'
 
@@ -19,7 +21,8 @@ const saveRecipe = async ({id, projectId, name, type, username, contents, typeVe
         await getPool().query(
             `INSERT INTO ${RECIPE} (id, project_id, name, type, type_version, username, contents, creation_time, update_time)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, projectId, name, type, typeVersion, username, storedContents, creationTime || now, now]
+            [id, projectId, name, type, typeVersion, storedUsername(username), storedContents,
+                creationTime || now, now]
         )
     }
 }
@@ -63,7 +66,7 @@ const saveProject = async ({id, name, username, defaultAssetFolder, defaultWorks
         await getPool().query(
             `INSERT INTO ${PROJECT} (id, name, username, default_asset_folder, default_workspace_folder)
              VALUES (?, ?, ?, ?, ?)`,
-            [id, name, username, defaultAssetFolder, defaultWorkspaceFolder]
+            [id, name, storedUsername(username), defaultAssetFolder, defaultWorkspaceFolder]
         )
     }
 }

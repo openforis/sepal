@@ -4,11 +4,6 @@ import {createAwsInstanceProvider} from './aws/awsInstanceProvider.js'
 import {AWS_INSTANCE_TYPES, LOCAL_INSTANCE_TYPES} from './instanceTypes.js'
 import {createLocalInstanceProvider, LOCAL_HOST} from './local/localInstanceProvider.js'
 
-const STORAGE_COST_PER_GB_MONTH = 0.33 // EFS pricing — matches Java AbstractHostingService
-
-const hourlyCostByInstanceType = instanceTypes =>
-    Object.fromEntries(instanceTypes.map(({id, hourlyCost}) => [id, hourlyCost]))
-
 const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
     const {hostingService} = config
 
@@ -50,12 +45,10 @@ const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
 
     return {
         instanceTypes,
-        hourlyCostByInstanceType: () => hourlyCostByInstanceType(instanceTypes),
-        storageCostPerGbMonth: STORAGE_COST_PER_GB_MONTH,
         defaultDaemonHost,
         instanceProvider,
         instanceProvisioner,
     }
 }
 
-export {createHostingService, STORAGE_COST_PER_GB_MONTH}
+export {createHostingService}

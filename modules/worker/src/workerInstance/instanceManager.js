@@ -4,6 +4,7 @@
 //   requestInstance(session)                          → Promise<{id, host}>
 //   releaseInstance(instanceId)                       → Promise<void>
 //   releaseUnusedInstances(sessions, minAge, timeUnit) → Promise<void>
+//   reclaimStaleClaims(sessions, graceMs)             → Promise<number>
 //   removeOrphanedContainers(sessions)                → Promise<string[]>
 //   getInstanceTypes()                                → InstanceType[]
 //   sessionsWithoutInstance(sessions)                 → Promise<{session, status}[]>
@@ -19,6 +20,7 @@
 import {getLogger} from '#sepal/log'
 
 import {instanceTag, userTag} from '../tag.js'
+import {reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {releaseInstance} from './command/releaseInstance.js'
 import {releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {removeOrphanedContainers} from './command/removeOrphanedContainers.js'
@@ -28,20 +30,20 @@ import {findMissingInstances} from './query/findMissingInstances.js'
 
 const log = getLogger('worker/instanceManager')
 
-const createInstanceManager = ({repo, provider, provisioner, instanceTypes}) => {
+const createInstanceManager = ({claims, provider, provisioner, instanceTypes}) => {
 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.
     const _requestInstance = async session => {
         const {workerType, instanceType, username, id: sessionId} = session
         log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
-        const instance = await requestInstance({workerType, instanceType, username, sessionId}, {repo, provider})
+        const instance = await requestInstance({workerType, instanceType, username, sessionId}, {claims, provider})
         return {id: instance.id, host: instance.host}
     }
 
     const _releaseInstance = async instanceId => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, {repo, provider, provisioner})
+        return releaseInstance(instanceId, {claims, provider, provisioner})
     }
 
     // releaseUnusedInstances — reclaim instances not bound to any active session.
@@ -51,8 +53,12 @@ const createInstanceManager = ({repo, provider, provisioner, instanceTypes}) => 
             .filter(s => s.instance && s.instance.id)
             .map(s => s.instance.id)
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
-        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {repo, provider, provisioner})
+        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner})
     }
+
+    // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
+    const _reclaimStaleClaims = async (sessions, graceMs) =>
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner})
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
     // the open sessions nor the provider claim (the in-memory local provider forgets instances on
@@ -112,6 +118,7 @@ const createInstanceManager = ({repo, provider, provisioner, instanceTypes}) => 
         requestInstance: _requestInstance,
         releaseInstance: _releaseInstance,
         releaseUnusedInstances: _releaseUnusedInstances,
+        reclaimStaleClaims: _reclaimStaleClaims,
         removeOrphanedContainers: _removeOrphanedContainers,
         getInstanceTypes,
         sessionsWithoutInstance,

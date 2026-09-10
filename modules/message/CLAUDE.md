@@ -6,8 +6,7 @@ Owns the `message` MySQL schema (`message.message`, `message.notification`).
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream; there is no legacy import. Startup wiring, the temporary
-checksum reconciliation and the cleanup steps are in
+`migrations/` holds the portable schema stream; there is no legacy import. Startup is described in
 [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands

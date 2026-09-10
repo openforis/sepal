@@ -8,7 +8,8 @@ import {initMessageQueue} from '#sepal/messageQueue'
 import {amqpUri, port} from './config.js'
 import {initializeDatabase} from './db.js'
 import {email$} from './email.js'
-import {startInactivityCheck} from './inactivityCheck.js'
+import {normalizeCase as normalizeInactivityCase, startInactivityCheck} from './inactivityCheck.js'
+import {normalizeCase} from './kvstore.js'
 import {messageHandler} from './messageHandler.js'
 import {routes} from './routes.js'
 import {scanComplete$, startStorageCheck} from './storageCheck.js'
@@ -32,6 +33,14 @@ const main = async () => {
     })
 
     await initializeDatabase()
+
+    try {
+        await normalizeCase()
+        await normalizeInactivityCase()
+    } catch (error) {
+        log.error('Cannot normalize username case in Redis, continuing', error)
+    }
+
     await server.start({port, routes})
     await startStorageCheck()
     await startInactivityCheck()

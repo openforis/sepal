@@ -195,6 +195,51 @@ describe('interactive$', () => {
         subscription.unsubscribe()
     })
 
+    it('clears the screen when a session is selected, before anything else is printed', async () => {
+        joinSession$.mockReturnValue(NEVER)
+        readLineQueue.push('1')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        const texts = print.mock.calls.map(([text]) => text)
+        expect(texts[0]).toBe('\u001B[2J\u001B[3J\u001B[H')
+        expect(texts[1]).toContain('Joining running session')
+        subscription.unsubscribe()
+    })
+
+    it('clears the screen when an instance type is selected', async () => {
+        createSession$.mockReturnValue(NEVER)
+        readLineQueue.push('t1')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(print.mock.calls[0][0]).toBe('\u001B[2J\u001B[3J\u001B[H')
+        subscription.unsubscribe()
+    })
+
+    it('keeps the menu on screen for an invalid option', async () => {
+        readLineQueue.push('nope')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(print.mock.calls.map(([text]) => text)).not.toContain('\u001B[2J\u001B[3J\u001B[H')
+        expect(println.mock.calls.some(([text]) => `${text}`.includes('Invalid option'))).toBe(true)
+        expect(sandboxInfo$).toHaveBeenCalledTimes(1) // re-prompt only — the menu is still there
+        subscription.unsubscribe()
+    })
+
+    it('redraws the menu with a notice when the budget is too low for the selected type', async () => {
+        sandboxInfo$.mockImplementation(() => of({
+            ...info,
+            spending: {...info.spending, monthlyInstanceSpending: info.spending.monthlyInstanceBudget}
+        }))
+        readLineQueue.push('t1')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        await flushPromises()
+        expect(createSession$).not.toHaveBeenCalled()
+        expect(println.mock.calls.some(([text]) => `${text}`.includes('enough resources'))).toBe(true)
+        expect(sandboxInfo$).toHaveBeenCalledTimes(2) // the cleared menu is drawn again, not just re-prompted
+        subscription.unsubscribe()
+    })
+
     it('stops after y confirmation and prints the app list', async () => {
         info.sessions[0].apps = [{path: '/sandbox/shiny/foo', label: 'Foo'}]
         readLineQueue.push('1s', 'y')

@@ -1,17 +1,18 @@
 // workerInstance/index.js — module-internal wiring:
 //   1. provider.onInstanceLaunched → if reserved → emit InstancePendingProvisioning
 //   2. in-proc InstancePendingProvisioning → run provisionInstance
-//   3. start(): build targetIdleCountByInstanceType, schedule ReconcileInstances + SizeIdlePool
-//              every 1 min (unconditionally — see start()), call provider.start()
+//   3. start(): call provider.start(), backfill claims for pre-existing reserved instances,
+//              schedule SizeIdlePool + provider.sweep every 1 min (unconditionally — see start())
 //   4. stop():  clear scheduler, call provider.stop()
 //
 // DO NOT auto-start on import. main.js calls start() explicitly.
 
 import {getLogger} from '#sepal/log'
 
+import {createScheduler} from '../scheduler.js'
 import {instanceTag} from '../tag.js'
+import {MINUTE_MS} from '../time.js'
 import {provisionInstance} from './command/provisionInstance.js'
-import {reconcileInstances} from './command/reconcileInstances.js'
 import {sizeIdlePool} from './command/sizeIdlePool.js'
 import {
     emitInstancePendingProvisioning,
@@ -23,9 +24,32 @@ import {isReserved} from './workerInstance.js'
 
 const log = getLogger('worker/workerInstance')
 
-const SIZE_IDLE_POOL_INTERVAL_MS = 60_000  // 1 minute
+const SIZE_IDLE_POOL_INTERVAL_MS = MINUTE_MS
 
-const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTypes}) => {
+// UPGRADE SHIM — DELETE ONE RELEASE AFTER THIS SHIPS.
+//
+// Sessions already running when the claim table arrived hold reserved instances with no claim row.
+// They cannot be mis-allocated (the hosting service reports them reserved), but on close
+// releaseInstance reads the missing row as a lost race and skips the undeploy, stranding a live
+// container on an instance about to be marked idle.
+//
+// A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
+// it once the grace period passes.
+const backfillClaims = async ({claims, provider}) => {
+    const reserved = await provider.reservedInstances()
+    let backfilled = 0
+    for (const instance of reserved) {
+        const sessionId = instance.reservation?.sessionId
+        if (sessionId && await claims.claim(instance.id, sessionId)) {
+            backfilled++
+        }
+    }
+    if (backfilled > 0) {
+        log.info(`Backfilled ${backfilled} claim(s) for sessions predating the claim table`)
+    }
+}
+
+const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes}) => {
 
     // ── Wire: provider.onInstanceLaunched ─────────────────────────────────────
     // If the launched instance is reserved → emit InstancePendingProvisioning
@@ -54,11 +78,17 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
             .map(t => [t.id, t.idleCount])
     )
 
-    let sizeIdlePoolTimer = null
+    const scheduler = createScheduler(log)
 
     const start = async () => {
         log.debug('Starting...')
         await provider.start()
+
+        try {
+            await backfillClaims({claims, provider})
+        } catch (err) {
+            log.error('Claim backfill failed:', err.message)
+        }
 
         // Scheduled UNCONDITIONALLY, even with no idle pool configured. SizeIdlePool is the only
         // step that terminates a released instance — releaseInstance merely un-reserves it (on AWS,
@@ -68,39 +98,35 @@ const createWorkerInstanceComponent = ({repo, provider, provisioner, instanceTyp
         // `size > 0` made the whole termination path hinge on one catalog entry carrying idleCount.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
-        // Reconcile FIRST: an idle instance the repository has never seen is invisible to
-        // RequestInstance but counted by SizeIdlePool, so leaving it unadopted would have the pool
-        // hold a slot open for an instance nobody can ever be given. A reconcile failure must not
-        // stop the sizing, hence the two independent catches.
-        const runPoolCycle = phase => async () => {
+        // SizeIdlePool is the only step that terminates a released instance — releaseInstance
+        // merely un-reserves it. The provider sweep then collects what no allocation path can see:
+        // instances of an older version, and untagged instances whose CreateTags never ran. A
+        // sweep failure must not stop the sizing, hence the two independent catches.
+        const runPoolCycle = async () => {
             try {
-                await reconcileInstances({repo, provider})
+                await sizeIdlePool(targetIdleCountByInstanceType, {provider})
             } catch (err) {
-                log.error(`ReconcileInstances (${phase}) failed:`, err.message)
+                log.error('SizeIdlePool failed:', err.message)
             }
             try {
-                await sizeIdlePool(targetIdleCountByInstanceType, {repo, provider})
+                await provider.sweep()
             } catch (err) {
-                log.error(`SizeIdlePool (${phase}) failed:`, err.message)
+                log.error('Provider sweep failed:', err.message)
             }
         }
-        runPoolCycle('initial')()
-        sizeIdlePoolTimer = setInterval(runPoolCycle('scheduled'), SIZE_IDLE_POOL_INTERVAL_MS)
+        scheduler.schedule('SizeIdlePool', runPoolCycle, SIZE_IDLE_POOL_INTERVAL_MS)
 
         log.info('Started')
     }
 
     const stop = async () => {
         log.debug('Stopping...')
-        if (sizeIdlePoolTimer !== null) {
-            clearInterval(sizeIdlePoolTimer)
-            sizeIdlePoolTimer = null
-        }
+        scheduler.stopAll()
         await provider.stop()
         log.info('Stopped')
     }
 
-    const instanceManager = createInstanceManager({repo, provider, provisioner, instanceTypes})
+    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes})
 
     return {
         instanceManager,

@@ -1,7 +1,9 @@
-import {createPool} from '#sepal/db/mysql'
-import {getLogger} from '#sepal/log'
+import {join} from 'path'
 
-import {migrateUserStorageDb} from './databaseMigrations.js'
+import {createPool, initDb} from '#sepal/db/mysql'
+import {getLogger} from '#sepal/log'
+import {dirName} from '#sepal/path'
+import {storedUsername} from '#sepal/username'
 
 const log = getLogger('database')
 
@@ -11,7 +13,7 @@ const TABLE_NAME = 'history'
 const state = {}
 
 const initializeDatabase = async () => {
-    await migrateUserStorageDb(DATABASE_NAME, log)
+    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
     state.pool = await createPool(DATABASE_NAME)
 }
 
@@ -40,7 +42,7 @@ const addEvent = async ({username, event}) => {
                 ORDER BY timestamp DESC
                 LIMIT 1
             ), '') <> ?;    
-        `, [username, event, username, event])
+        `, [storedUsername(username), event, username, event])
         await connection.query('SELECT RELEASE_LOCK(?)', [lockName])
         return results
     } finally {

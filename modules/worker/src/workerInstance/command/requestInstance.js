@@ -1,10 +1,10 @@
 // RequestInstance:
-//   1. Intersect repo.idleInstances(type) ∩ provider.idleInstances(type) by id, take the FIRST.
-//   2. Race-safe reserve via repo.reserved(id, workerType) — a single UPDATE.
-//      won  → provider.reserve(instance) + emit InstancePendingProvisioning
-//      lost → launch a new instance; the remaining idle candidates are NOT retried.
-//   3. No idle found (or race lost): launchReserved → repo.launched → emit InstanceLaunched.
-//   4. On any exception → emit FailedToRequestInstance, rethrow.
+//   1. Candidates come from the hosting service ALONE — it is the only authority on what exists.
+//   2. Claim them in order until one INSERT wins; a lost race moves to the next candidate rather
+//      than launching, so an available idle instance is always used.
+//   3. Won → tag the reservation, wait for the address, emit InstancePendingProvisioning.
+//   4. Every candidate taken → launchReserved, record the claim, then wait for the address.
+//   5. On any exception → emit FailedToRequestInstance, rethrow.
 
 import {getLogger} from '#sepal/log'
 
@@ -18,37 +18,44 @@ import {reserve} from '../workerInstance.js'
 
 const log = getLogger('worker/requestInstance')
 
-const requestInstance = async ({workerType, instanceType, username, sessionId}, {repo, provider}) => {
+const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
+const isBooted = instance => Boolean(instance.running && instance.host)
+
+// Booted instances first, then those still coming up; oldest launch first within each group.
+// Same instinct as SizeIdlePool terminating newest-first for surplus: keep and use the warm machine.
+const ordered = instances =>
+    [...instances].sort((a, b) =>
+        Number(isBooted(b)) - Number(isBooted(a)) || launchedAt(a) - launchedAt(b)
+    )
+
+const requestInstance = async ({workerType, instanceType, username, sessionId}, {claims, provider}) => {
     log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
+    const reservation = {username, workerType, sessionId}
 
     try {
-        const [repoIdleIds, providerIdleInstances] = await Promise.all([
-            repo.idleInstances(instanceType),
-            provider.idleInstances(instanceType),
-        ])
-
-        const repoIdleSet = new Set(repoIdleIds)
-        // Instances idle in BOTH repo (worker_type IS NULL) and provider (in-memory idle);
-        // take the first candidate only.
-        const sharedIdle = providerIdleInstances.filter(inst => repoIdleSet.has(inst.id))
-        const idleInstance = sharedIdle[0] ?? null
-
-        if (idleInstance) {
-            const reservation = {username, workerType, sessionId}
-            // Single race-safe UPDATE — returns true only if we won
-            const won = await repo.reserved(idleInstance.id, workerType)
-            if (won) {
-                const reservedInstance = reserve(idleInstance, reservation)
-                await provider.reserve(reservedInstance)
-                emitInstancePendingProvisioning(reservedInstance)
-                log.info(`Reserved idle ${instanceTag(idleInstance)} for ${userTag(username)} (${workerType})`)
-                return reservedInstance
+        for (const candidate of ordered(await provider.idleInstances(instanceType))) {
+            if (!await claims.claim(candidate.id, sessionId)) {
+                log.debug(`Lost claim on ${instanceTag(candidate)}, trying the next candidate`)
+                continue
             }
-            // Lost race → go straight to launch; the remaining idle candidates are not retried.
-            log.info(`Lost race on idle ${instanceTag(idleInstance)}, launching new instead`)
+            try {
+                const reserved = reserve(candidate, reservation)
+                await provider.reserve(reserved)
+                // Re-pin the reservation: awaitHost hands back what the hosting service reports,
+                // and tags that have not propagated read as an empty reservation or none at all.
+                // The locally built one is the authority.
+                const ready = reserve(await provider.awaitHost(reserved), reservation)
+                emitInstancePendingProvisioning(ready)
+                log.info(`Reserved idle ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
+                return ready
+            } catch (err) {
+                // Release, or the instance stays claimed with no session behind it — forever.
+                await claims.release(candidate.id)
+                throw err
+            }
         }
 
-        return await launchInstance({workerType, instanceType, username, sessionId}, {repo, provider})
+        return await launchInstance({instanceType, reservation}, {claims, provider})
 
     } catch (err) {
         emitFailedToRequestInstance(workerType, instanceType, err)
@@ -56,14 +63,23 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
     }
 }
 
-// launchInstance — called when no idle instance is available, or the race for one was lost.
-const launchInstance = async ({workerType, instanceType, username, sessionId}, {repo, provider}) => {
-    const reservation = {username, workerType, sessionId}
+// launchInstance — every idle candidate was already taken, or there were none.
+const launchInstance = async ({instanceType, reservation}, {claims, provider}) => {
+    const {username, workerType, sessionId} = reservation
     const instance = await provider.launchReserved(instanceType, reservation)
-    await repo.launched(instance)
-    emitInstanceLaunched(instance)
-    log.info(`Launched new ${instanceTag(instance)} for ${userTag(username)} (${workerType})`)
-    return instance
+    // Claim BEFORE the address wait: the instance is already tagged reserved with no session row
+    // behind it, and the claim is the only thing keeping ReleaseUnusedInstances off it while it
+    // boots. A failed INSERT is logged rather than fatal — failing here would strand a running
+    // machine, and ReleaseUnusedInstances reclaims it if the session never materialises.
+    try {
+        await claims.claim(instance.id, sessionId)
+    } catch (err) {
+        log.error(`Failed to record claim on ${instanceTag(instance)}: ${err.message}`)
+    }
+    const ready = reserve(await provider.awaitHost(instance), reservation)
+    emitInstanceLaunched(ready)
+    log.info(`Launched new ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
+    return ready
 }
 
 export {requestInstance}

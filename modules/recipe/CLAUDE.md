@@ -7,7 +7,7 @@ Serves the existing `/api/processing-recipes` routes. The recipe-content migrati
 ## Database migrations
 
 `migrations/` holds the portable schema stream, `migrations/legacy-import/` the one-off copy from
-`processing_recipe`. Startup wiring, the temporary checksum reconciliation and the cleanup steps are in
+`processing_recipe`. Startup and import cleanup are described in
 [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands

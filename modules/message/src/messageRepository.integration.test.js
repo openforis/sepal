@@ -44,6 +44,26 @@ describe('MessageRepository', () => {
         expect(loaded).toEqual(saved)
     })
 
+    test('stores the author in lowercase', async () => {
+        const saved = await repository.saveMessage(aMessage({username: 'Admin'}))
+
+        expect(saved.username).toBe('admin')
+    })
+
+    test('treats differently cased reader names as the same notification', async () => {
+        const message = aMessage()
+        await repository.saveMessage(message)
+        await repository.updateNotification({username: 'Reader', messageId: message.id, state: 'READ'})
+
+        const [notification] = await repository.listNotifications('READER')
+        expect(notification).toMatchObject({state: 'READ', acknowledged: 1})
+
+        await repository.updateNotification({username: 'reader', messageId: message.id, state: 'UNREAD'})
+
+        const [updated] = await repository.listNotifications('Reader')
+        expect(updated).toMatchObject({state: 'UNREAD', acknowledged: 0})
+    })
+
     test('keeps the priority a message was saved with, in the message and in its notification', async () => {
         const urgent = aMessage({priority: URGENT})
 

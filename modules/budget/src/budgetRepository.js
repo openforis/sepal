@@ -1,5 +1,7 @@
 import crypto from 'crypto'
 
+import {storedUsername} from '#sepal/username'
+
 import {firstOfYearMonth, monthOfYear as monthOf, plusOneMonth, year as yearOf} from './dateTime.js'
 import {getPool} from './db.js'
 import {
@@ -90,7 +92,7 @@ const createBudgetRepository = (pool = null, clock = () => new Date()) => {
         const updateTime = storageUse.updateTime
         const year = yearOf(updateTime)
         const month = monthOf(updateTime)
-        const params = [storageUse.gbHours, storageUse.gb, updateTime, username, year, month]
+        const params = [storageUse.gbHours, storageUse.gb, updateTime, storedUsername(username), year, month]
         const [result] = await p.query(
             `UPDATE user_monthly_storage
                 SET gb_hours = ?, storage_used = ?, update_time = ?
@@ -144,7 +146,7 @@ const createBudgetRepository = (pool = null, clock = () => new Date()) => {
 
     const updateBudget = async (username, budget) => {
         const p = resolvePool()
-        const params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota, username]
+        const params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota, storedUsername(username)]
         const [result] = await p.query(
             `UPDATE user_budget
                 SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?
@@ -204,7 +206,7 @@ const createBudgetRepository = (pool = null, clock = () => new Date()) => {
                 [
                     crypto.randomUUID(), initialBudget.instanceSpending, initialBudget.storageSpending,
                     initialBudget.storageQuota, requestedBudget.instanceSpending, requestedBudget.storageSpending,
-                    requestedBudget.storageQuota, message, clock(), clock(), 'PENDING', username,
+                    requestedBudget.storageQuota, message, clock(), clock(), 'PENDING', storedUsername(username),
                 ]
             )
         }

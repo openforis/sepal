@@ -4,7 +4,7 @@
 -- lives in migrations/legacy-import.
 
 CREATE TABLE IF NOT EXISTS `user_budget` (
-    `username`         varchar(32)   NOT NULL,
+    `username`         varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `monthly_instance` int(11)       NOT NULL,
     `monthly_storage`  int(11)       NOT NULL,
     `storage_quota`    int(11)       NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `default_user_budget` (
 -- user_monthly_storage
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `user_monthly_storage` (
-    `username`     varchar(32)   NOT NULL,
+    `username`     varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `year`         int(11)       NOT NULL,
     `month`        int(11)       NOT NULL,
     `gb_hours`     double        NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `user_monthly_storage` (
 -- user_spending
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `user_spending` (
-    `username`          varchar(32)   NOT NULL,
+    `username`          varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `instance_spending` double        NOT NULL DEFAULT '0',
     `storage_spending`  double        NOT NULL DEFAULT '0',
     `storage_usage`     double        NOT NULL DEFAULT '0',
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `user_spending` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `budget_update_request` (
     `id`                         varchar(36)   NOT NULL,
-    `username`                   varchar(32)   NOT NULL,
+    `username`                   varchar(32)   COLLATE ascii_general_ci NOT NULL,
     `state`                      varchar(16)   NOT NULL,
     `message`                    text          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
     `initial_monthly_instance`   int(11)       NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `budget_update_request` (
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `open_session_use` (
     `session_id`    varchar(36)  NOT NULL,
-    `username`      varchar(32)  NOT NULL,
+    `username`      varchar(32)  COLLATE ascii_general_ci NOT NULL,
     `instance_type` varchar(64)  NOT NULL,
     `from_time`     timestamp    NOT NULL,
     `to_time`       timestamp    NULL DEFAULT NULL,   -- NULL while the session is open

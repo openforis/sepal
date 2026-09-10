@@ -35,7 +35,7 @@ const waitForDatabase = async () => {
 
 const initializeDatabase = async () => {
     await waitForDatabase()
-    await migrateUserDb(DATABASE_NAME, log)
+    await migrateUserDb(DATABASE_NAME)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

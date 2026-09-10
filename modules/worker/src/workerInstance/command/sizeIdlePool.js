@@ -1,8 +1,7 @@
 // SizeIdlePool — for each type in (live idle grouping ∪ target-map keys), with
 // target = targetMap[type] ?? 0:
-//   currentIdle < target → launchIdle(type, deficit) + repo.launched(list)
-//   currentIdle > target → terminate the N most recently launched: provider.terminate +
-//                          repo.terminated
+//   currentIdle < target → launchIdle(type, deficit)
+//   currentIdle > target → terminate the N most recently launched: provider.terminate
 //   currentIdle == target → no-op
 // A type with idle instances but NO target entry therefore gets target 0 and has all of them
 // terminated — that is what stops idle pools of retired types leaking cost.
@@ -15,7 +14,7 @@ const log = getLogger('worker/sizeIdlePool')
 
 const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
 
-const sizeIdlePool = async (targetIdleCountByInstanceType, {repo, provider}) => {
+const sizeIdlePool = async (targetIdleCountByInstanceType, {provider}) => {
     log.info('Sizing idle pool', targetIdleCountByInstanceType)
 
     const targetMap = targetIdleCountByInstanceType instanceof Map
@@ -40,10 +39,7 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, {repo, provider}) => 
         if (currentCount < targetCount) {
             const deficit = targetCount - currentCount
             log.info(`Launching ${deficit} idle instance(s) of type ${instanceType}`)
-            const launched = await provider.launchIdle(instanceType, deficit)
-            if (launched && launched.length > 0) {
-                await repo.launched(launched)
-            }
+            await provider.launchIdle(instanceType, deficit)
         } else if (currentCount > targetCount) {
             const surplus = currentCount - targetCount
             log.info(`Terminating ${surplus} surplus idle instance(s) of type ${instanceType}`)
@@ -57,7 +53,6 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, {repo, provider}) => 
             for (const instance of toTerminate) {
                 try {
                     await provider.terminate(instance.id)
-                    await repo.terminated(instance.id)
                 } catch (err) {
                     log.error(`Failed to terminate ${instanceTag(instance)}: ${err.message}`)
                 }

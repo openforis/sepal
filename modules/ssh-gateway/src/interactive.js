@@ -160,7 +160,6 @@ const stopSelected$ = (info, selection, sessionEvent$) => {
 // plain readLine$, deliberately NOT raced against sessionEvent$ (in-flight actions
 // are never interrupted — see promptSelect$).
 const confirmStop$ = (session, apps, sessionEvent$) => {
-    println('')
     println(highlight('The following apps are running on this instance and will be closed:'))
     apps.forEach(({label, path}) => println(`    - ${label || path}`))
     print('\nAre you sure you want to stop it (y/N): ')
@@ -198,17 +197,22 @@ const failureMessage = (reason, tag) =>
         ? `This instance type${tag ? ` (${tag})` : ''} is currently unavailable from the cloud provider.`
         : 'The cloud provider is having trouble starting a new instance. Please try again.'
 
+// notice$ — back to a freshly drawn menu carrying a one-off message. A selection clears the
+// screen, so anything that hands the user back to the menu has to redraw it.
+const notice$ = (sessionEvent$, message, defaultSelection) =>
+    defer(() => {
+        print(CLEAR_SCREEN)
+        return interactive$(sessionEvent$, {
+            notice: format(message, 'RED_INTENSE'),
+            defaultSelection
+        })
+    })
+
 // unavailable$ — the launch/join could not complete: tell the user why (as far as the worker
 // could classify it) and return to the menu, defaulting the prompt to the failed type so
 // Enter retries and any tag picks another.
 const unavailable$ = (sessionEvent$, reason, {tag, defaultSelection} = {}) =>
-    defer(() => {
-        print(CLEAR_SCREEN)
-        return interactive$(sessionEvent$, {
-            notice: format(failureMessage(reason, tag), 'RED_INTENSE'),
-            defaultSelection
-        })
-    })
+    notice$(sessionEvent$, failureMessage(reason, tag), defaultSelection)
 
 const orUnavailable$ = (session$, sessionEvent$, retry) =>
     session$.pipe(
@@ -220,9 +224,9 @@ const orUnavailable$ = (session$, sessionEvent$, retry) =>
 const joinSelected$ = (info, selection, sessionEvent$) => {
     const session = info.sessions[_.toNumber(selection) - 1]
     if (session.status === 'STARTING') {
-        print('\nSession is still starting up. This might start a new server, which could take several minutes.\nPlease wait...')
+        print('Session is still starting up. This might start a new server, which could take several minutes.\nPlease wait...')
     } else {
-        print('\nJoining running session. Please wait...')
+        print('Joining running session. Please wait...')
     }
     const join$ = merge(
         interval(PROGRESS_TIME).pipe(
@@ -276,12 +280,11 @@ const startSelected$ = (info, selection, sessionEvent$) =>
         const spendingLeft = info.spending.monthlyInstanceBudget - info.spending.monthlyInstanceSpending
         const hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost)
         if (hoursLeft <= 0) {
-            println('\nYou don\'t have enough resources to run this session. Please consider\n' +
+            return notice$(sessionEvent$, 'You don\'t have enough resources to run this session. Please consider\n' +
                 'reducing the size of your selected instance, or contact a SEPAL administrator to increase\n' +
-                'your resource limits.\n\n')
-            return promptSelect$(info, sessionEvent$)
+                'your resource limits.')
         }
-        println(`\nYou can run this session for ${hoursLeft} hours. If you require more processing time, please consider\n` +
+        println(`You can run this session for ${hoursLeft} hours. If you require more processing time, please consider\n` +
             'reducing the size of your selected instance, or contact a SEPAL administrator to increase\n' +
             'your resource limits.')
         if (hoursLeft <= CONFIRM_WHEN_LESS_THAN_HOURS)
@@ -300,8 +303,17 @@ const isJoin = (info, selection) =>
 const isStop = (info, selection) =>
     selection.length > 1 && selection.endsWith('s') && info.sessions.find((session, i) => i + 1 === parseInt(selection.substring(0, selection.length - 1)))
 
+const isSelectable = (info, selection) =>
+    isStart(info, selection) || isJoin(info, selection) || isStop(info, selection)
+
 const select$ = (info, selection, sessionEvent$) =>
     defer(() => {
+        // The menu has done its job: whatever the selection leads to — progress, a confirmation,
+        // the session itself — starts on a clean screen. An invalid option is not a selection:
+        // it keeps the menu on screen so the user can read it and try again.
+        if (isSelectable(info, selection)) {
+            print(CLEAR_SCREEN)
+        }
         if (isStart(info, selection)) {
             return startSelected$(info, selection, sessionEvent$)
         } else if (isJoin(info, selection)) {

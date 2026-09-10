@@ -17,7 +17,7 @@ const session = ({id, instanceId, host = 'host-1'}) => ({
 })
 
 const makeManager = provisioner =>
-    createInstanceManager({repo: {}, provider: {}, provisioner, instanceTypes: []})
+    createInstanceManager({provider: {}, provisioner, instanceTypes: []})
 
 describe('removeOrphanedContainers', () => {
     const instance = id => ({id, type: 'T3aSmall', host: id, reservation: null})
@@ -28,7 +28,7 @@ describe('removeOrphanedContainers', () => {
             idleInstances: async () => [instance('i-idle')],
             reservedInstances: async () => [instance('i-reserved')],
         }
-        const manager = createInstanceManager({repo: {}, provider, provisioner, instanceTypes: []})
+        const manager = createInstanceManager({provider, provisioner, instanceTypes: []})
 
         await manager.removeOrphanedContainers([session({id: 's-1', instanceId: 'i-1'})])
 
@@ -41,7 +41,7 @@ describe('removeOrphanedContainers', () => {
             idleInstances: async () => [],
             reservedInstances: async () => [],
         }
-        const manager = createInstanceManager({repo: {}, provider, provisioner, instanceTypes: []})
+        const manager = createInstanceManager({provider, provisioner, instanceTypes: []})
 
         const removed = await manager.removeOrphanedContainers([
             session({id: 's-1', instanceId: 'i-1'}),

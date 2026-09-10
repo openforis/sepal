@@ -8,8 +8,7 @@ budget tracking, and gateway route migration.
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms and worker_instance`. Startup wiring, the temporary checksum
-reconciliation and the cleanup steps are in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 - `npm test` — Jest (ESM)
@@ -92,15 +91,17 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 
 ## Database Schemas
 - `worker` — consolidated worker-cluster schema. Holds a COPY of the worker-cluster tables:
-  `worker_session`, `task`, `instance`. The budget tables belong to the budget module's own schema.
+  `worker_session`, `task`. The budget tables belong to the budget module's own schema.
   - `session_app` — `(username, app_path)` PK mapping to `session_id` + `label`;
     one live session per app per user. No DB-level FK; rows are cascade-deleted at the application
     layer (`sessionAppRepository.deleteForSession`) when a session transitions to CLOSED.
     Nullable `client_id` is the gateway ws client (browser window) owning the app's tab;
     clientDown dissociates by it, ownerless rows are never swept.
-  - The originals remain LIVE in `sdms` / `worker_instance` (Java still uses them directly).
+  - `instance_claim` — not a copy of anything: `(instance_id, session_id, claimed_at)`, one row
+    per instance currently claimed by a session. EC2 (the hosting service) is authoritative for
+    everything else about an instance; this table records only the one fact MySQL needs to know.
+  - The originals remain LIVE in `sdms` (Java still uses them directly).
   - Tables copied from `sdms` (Phase 4a-revision): worker_session, task.
-  - Table copied from `worker_instance` (Phase 4a-revision): instance.
   - `scene_meta_data` lives in the `scene_metadata` schema (moved in Phase 3).
   - `rmb_message` / `rmb_message_processing` (reliable message bus) belong to the Groovy
     sepal-server and stay in `sdms` — NOT part of the worker schema.

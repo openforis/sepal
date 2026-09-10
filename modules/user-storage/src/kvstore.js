@@ -1,6 +1,8 @@
 import {Redis} from 'ioredis'
 
 import {getLogger} from '#sepal/log'
+import {applyKeyNormalization} from '#sepal/redisKeyCase'
+import {storedUsername} from '#sepal/username'
 
 import {redisHost} from './config.js'
 
@@ -17,10 +19,15 @@ const redis = new Redis({
     db: DB.MAIN
 })
 
-const sessionKey = key => `session:${key}`
-const lastActiveKey = key => `lastActive:${key}`
-const lastInactiveKey = key => `lastInactive:${key}`
-const storageKey = key => `storage:${key}`
+const SESSION_PREFIX = 'session'
+const LAST_ACTIVE_PREFIX = 'lastActive'
+const LAST_INACTIVE_PREFIX = 'lastInactive'
+const STORAGE_PREFIX = 'storage'
+
+const sessionKey = username => `${SESSION_PREFIX}:${storedUsername(username)}`
+const lastActiveKey = username => `${LAST_ACTIVE_PREFIX}:${storedUsername(username)}`
+const lastInactiveKey = username => `${LAST_INACTIVE_PREFIX}:${storedUsername(username)}`
+const storageKey = username => `${STORAGE_PREFIX}:${storedUsername(username)}`
 
 const getInitialized = async () => {
     log.debug('Getting initialization timestamp...')
@@ -66,4 +73,28 @@ const getUserStorage = async username => {
     return await redis.get(storageKey(username))
 }
 
-export {DB, getInitialized, getSessionStatus, getSetUserStorage, getUserStorage, setInitialized, setSessionActive, setSessionInactive}
+const scanKeys = async prefix => {
+    const keys = []
+    for await (const batch of redis.scanStream({match: `${prefix}:*`, count: 1000})) {
+        keys.push(...batch)
+    }
+    return keys
+}
+
+// These keys were written from the username an event happened to carry, so one user can own a set
+// per spelling: a storage size that contradicts the live one, a session flag that never cleared.
+// Only the stored spelling is read now, and the values here are plain sizes, timestamps and flags
+// with no username inside, so a key with no stored counterpart is renamed rather than dropped —
+// renaming keeps what it recorded, and there is nothing in the value to correct.
+const normalizeCase = async () => {
+    for (const prefix of [SESSION_PREFIX, LAST_ACTIVE_PREFIX, LAST_INACTIVE_PREFIX, STORAGE_PREFIX]) {
+        const {removed, renamed} = await applyKeyNormalization(await scanKeys(prefix), {
+            prefix,
+            renameKey: async (from, to) => await redis.renamenx(from, to) === 1,
+            removeKeys: keys => redis.del(keys)
+        })
+        log.info(`Normalized ${prefix} keys: ${removed} duplicate(s) removed, ${renamed} renamed`)
+    }
+}
+
+export {DB, getInitialized, getSessionStatus, getSetUserStorage, getUserStorage, normalizeCase, setInitialized, setSessionActive, setSessionInactive}

@@ -10,7 +10,7 @@ const DATABASE_NAME = 'budget'
 const state = {}
 
 const initializeDatabase = async () => {
-    await migrateBudgetDb(DATABASE_NAME, log)
+    await migrateBudgetDb(DATABASE_NAME)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

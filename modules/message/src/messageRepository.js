@@ -1,3 +1,5 @@
+import {storedUsername} from '#sepal/username'
+
 import {rowToMessage} from './message.js'
 
 const MESSAGE = 'message'
@@ -31,7 +33,7 @@ export class MessageRepository {
                  ON DUPLICATE KEY UPDATE
                     username = VALUES(username), subject = VALUES(subject), contents = VALUES(contents),
                     type = VALUES(type), priority = VALUES(priority), update_time = VALUES(update_time)`,
-                [id, username, subject, contents, type, priority ?? 0, now, now]
+                [id, storedUsername(username), subject, contents, type, priority ?? 0, now, now]
             )
             // Re-notify: drop every user's read state, so a saved message is UNREAD again for everyone.
             // The author's READ state is re-established by the API layer right after.
@@ -88,7 +90,7 @@ export class MessageRepository {
                 `INSERT INTO ${NOTIFICATION} (message_id, username, state)
                  VALUES (?, ?, ?)
                  ON DUPLICATE KEY UPDATE state = VALUES(state)`,
-                [messageId, username, state]
+                [messageId, storedUsername(username), state]
             )
         })
     }

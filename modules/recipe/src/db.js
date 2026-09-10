@@ -10,7 +10,7 @@ export const DATABASE_NAME = 'recipe'
 const state = {}
 
 export const initializeDb = async () => {
-    await migrateRecipeDb(DATABASE_NAME, log)
+    await migrateRecipeDb(DATABASE_NAME)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

@@ -15,11 +15,12 @@ vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{childre
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({title, description, timestampFootnote}) =>
+    CrudItem: ({title, description, timestampFootnote, removeMessage}) =>
         <div>
             <div>{title}</div>
             <div>{description}</div>
             <div className='footnote'>{timestampFootnote}</div>
+            <div className='remove-message'>{removeMessage}</div>
         </div>
 }))
 
@@ -130,6 +131,27 @@ describe('the session list', () => {
         const container = render([session()])
         expect(container.querySelectorAll('li')).toHaveLength(0)
         expect(container.textContent).not.toContain('Terminal sessions')
+    })
+
+    // The confirmation is the last thing between a user and an instance they cannot get back, so it
+    // says which one — by the name the list, the SSH menu and the expiry notification all use.
+    it('names the session in the stop confirmation', () => {
+        const container = render([session({name: 'humble-robin'})])
+        expect(container.querySelector('.remove-message').textContent)
+            .toBe('You are stopping session humble-robin.')
+    })
+
+    it('still names it when warning about what is running on it', () => {
+        const running = session({name: 'humble-robin', apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}]})
+        const message = render([running]).querySelector('.remove-message').textContent
+        expect(message).toContain('You are stopping session humble-robin.')
+        expect(message).toContain('will be closed')
+    })
+
+    it('falls back to the list label when confirming a session with no name', () => {
+        const container = render([session({name: null})])
+        expect(container.querySelector('.remove-message').textContent)
+            .toBe('You are stopping session 1: t1.')
     })
 
     it('shows the deadline as a time and a distance', () => {

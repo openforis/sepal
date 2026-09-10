@@ -1,17 +1,13 @@
-import {createHash, randomBytes} from 'crypto'
-import {readFile} from 'fs/promises'
+import {randomBytes} from 'crypto'
 import {join} from 'path'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
-import {migrateUserDb} from './databaseMigrations.js'
-
 describe('user database migrations', () => {
     let admin
     const reserved = []
-    const log = {info: () => {}}
 
     beforeAll(async () => {
         configureNoLogging()
@@ -21,6 +17,20 @@ describe('user database migrations', () => {
     afterEach(() => dropReservedDatabases())
 
     afterAll(() => admin?.end())
+
+    test('compares usernames without regard to case', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+        const stored = await insertUser(dbName, aUser())
+
+        const [found] = await admin.query('SELECT username FROM ??.sepal_user WHERE username = ?', [dbName, stored.username.toUpperCase()])
+
+        const collations = await usernameCollations(dbName)
+        expect(found).toEqual([{username: stored.username}])
+        expect(collations).toEqual({
+            sepal_user: 'ascii_general_ci'
+        })
+    })
 
     describe('schema migrations', () => {
         test('create the sepal_user table in the selected database', async () => {
@@ -65,61 +75,6 @@ describe('user database migrations', () => {
         expect(tables).toEqual(['schema_version', 'sepal_user'])
     })
 
-    describe('startup on a database migrated by the deployed file', () => {
-        test('corrects the checksum and records the import as completed, keeping the users', async () => {
-            const dbName = await aDatabaseMigratedByTheDeployedFile()
-            const user = await insertUser(dbName, aUser())
-            const deployed = await recordedSchema(dbName)
-
-            await migrateUserDb(dbName, log)
-
-            const schema = await recordedSchema(dbName)
-            const imports = await recordedImports(dbName)
-            const usernames = await storedUsernames(dbName)
-            expect(usernames).toEqual([user.username])
-            expect(schema).toEqual({...deployed, md5: await checksum(SCHEMA_FILE)})
-            expect(imports).toEqual([
-                {version: 1, name: 'import', md5: await checksum(IMPORT_FILE), run_at: deployed.run_at}
-            ])
-        })
-
-        test('changes nothing on the next startup', async () => {
-            const dbName = await aDatabaseMigratedByTheDeployedFile()
-            await insertUser(dbName, aUser())
-            await migrateUserDb(dbName, log)
-            const before = await databaseState(dbName)
-
-            await migrateUserDb(dbName, log)
-
-            const state = await databaseState(dbName)
-            expect(state).toEqual(before)
-        })
-
-        test('rejects an unrecognized checksum without changing the history', async () => {
-            const dbName = await reserveDatabase()
-            await initDb(dbName, SCHEMA_PATH)
-            await recordSchemaChecksum(dbName, 'unrecognized')
-            const before = await recordedSchema(dbName)
-
-            const startup = migrateUserDb(dbName, log)
-
-            await expect(startup).rejects.toThrow(/MD5 checksum failed/)
-            const schema = await recordedSchema(dbName)
-            const tables = await tableNames(dbName)
-            expect(schema).toEqual(before)
-            expect(tables).not.toContain('legacy_import_version')
-        })
-    })
-
-    // The deployed file built the same tables this one builds; only its checksum differs. Recording it
-    // is also what keeps the extracted import from running against the legacy source.
-    const aDatabaseMigratedByTheDeployedFile = async () => {
-        const dbName = await reserveDatabase()
-        await initDb(dbName, SCHEMA_PATH)
-        await recordSchemaChecksum(dbName, DEPLOYED_SCHEMA_MD5)
-        return dbName
-    }
-
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
@@ -140,29 +95,6 @@ describe('user database migrations', () => {
         return user
     }
 
-    const recordSchemaChecksum = (dbName, md5) =>
-        admin.query('UPDATE ??.schema_version SET md5 = ? WHERE version = 1', [dbName, md5])
-
-    const databaseState = async dbName => ({
-        users: await storedUsernames(dbName),
-        schema: await recordedSchema(dbName),
-        imports: await recordedImports(dbName)
-    })
-
-    const recordedSchema = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT version, name, md5, run_at FROM ??.schema_version WHERE version = 1', [dbName]
-        )
-        return rows[0]
-    }
-
-    const recordedImports = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT version, name, md5, run_at FROM ??.legacy_import_version ORDER BY version', [dbName]
-        )
-        return rows
-    }
-
     const storedUsernames = async dbName => {
         const [rows] = await admin.query('SELECT username FROM ??.sepal_user ORDER BY username', [dbName])
         return rows.map(({username}) => username)
@@ -174,6 +106,14 @@ describe('user database migrations', () => {
             [dbName, table]
         )
         return rows.map(({COLUMN_NAME}) => COLUMN_NAME)
+    }
+
+    const usernameCollations = async dbName => {
+        const [rows] = await admin.query(
+            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
+            [dbName, 'username']
+        )
+        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
     }
 
     const tableNames = async dbName => {
@@ -188,9 +128,4 @@ const aUser = () => ({
     username: 'bob', name: 'Bob', email: 'bob@example.org', admin: 0, system_user: 0, status: 'ACTIVE'
 })
 
-const checksum = async file => createHash('md5').update(await readFile(file, 'utf8')).digest('hex')
-
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
-const SCHEMA_FILE = join(SCHEMA_PATH, '001.do.schema.sql')
-const IMPORT_FILE = join(SCHEMA_PATH, 'legacy-import/001.do.import.sql')
-const DEPLOYED_SCHEMA_MD5 = '96f5a95e8f787253d9df39eb650ca897'

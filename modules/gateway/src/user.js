@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {usernameTag} from './tag.js'
 
@@ -36,13 +37,16 @@ const getSessionUsername = req =>
     req.session.username
 
 const setSessionUsername = (req, username) =>
-    req.session.username = username
+    req.session.username = storedUsername(username)
 
 const getRequestUser = req =>
     deserialize(req.headers[SEPAL_USER_HEADER])
 
 const setRequestUser = (req, user) => {
-    const userInfo = _.pick(user, ['id', 'username', 'googleTokens', 'status', 'roles', 'systemUser', 'admin'])
+    const userInfo = {
+        ..._.pick(user, ['id', 'username', 'googleTokens', 'status', 'roles', 'systemUser', 'admin']),
+        username: storedUsername(user.username)
+    }
     log.isTrace()
         ? log.trace(`${usernameTag(user.username)} Injecting user into request headers:`, userInfo)
         : log.isDebug() && log.debug(`${usernameTag(user.username)} Injecting user into request headers`)

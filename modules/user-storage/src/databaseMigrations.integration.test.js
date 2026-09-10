@@ -1,17 +1,13 @@
-import {createHash, randomBytes} from 'crypto'
-import {readFile} from 'fs/promises'
+import {randomBytes} from 'crypto'
 import {join} from 'path'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
-import {migrateUserStorageDb} from './databaseMigrations.js'
-
 describe('user storage database migrations', () => {
     let admin
     const reserved = []
-    const log = {info: () => {}}
 
     beforeAll(async () => {
         configureNoLogging()
@@ -21,6 +17,20 @@ describe('user storage database migrations', () => {
     afterEach(() => dropReservedDatabases())
 
     afterAll(() => admin?.end())
+
+    test('compares usernames without regard to case', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+        const stored = await insertRow(dbName, aRow())
+
+        const [found] = await admin.query('SELECT username FROM ??.history WHERE username = ?', [dbName, stored.username.toUpperCase()])
+
+        const collations = await usernameCollations(dbName)
+        expect(found).toEqual([{username: stored.username}])
+        expect(collations).toEqual({
+            history: 'ascii_general_ci'
+        })
+    })
 
     describe('schema migrations', () => {
         test('create the history table in the selected database', async () => {
@@ -42,10 +52,7 @@ describe('user storage database migrations', () => {
         })
     })
 
-    // Reconciliation corrects a recorded checksum; it never recreates a routine. A database migrated by
-    // the deployed file keeps the procedure it already has, so this interface has to stay as deployed or
-    // the two would silently diverge.
-    test('creates DropIndexIfExists with the interface deployed databases already have', async () => {
+    test('creates DropIndexIfExists with its database, table and index parameters', async () => {
         const dbName = await reserveDatabase()
 
         await initDb(dbName, SCHEMA_PATH)
@@ -53,63 +60,6 @@ describe('user storage database migrations', () => {
         const parameters = await procedureParameters(dbName, 'DropIndexIfExists')
         expect(parameters).toEqual(['dbName', 'tableName', 'indexName'])
     })
-
-    describe('startup on a database migrated by the deployed qualified file', () => {
-        test('corrects the schema checksum, keeping the history rows', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            const stored = await insertRow(dbName, aRow())
-            const qualified = await recordedSchema(dbName)
-
-            await migrateUserStorageDb(dbName, log)
-
-            const schema = await recordedSchema(dbName)
-            const ids = await storedIds(dbName)
-            expect(ids).toEqual([stored.id])
-            expect(schema).toEqual({...qualified, md5: await checksum(SCHEMA_FILE)})
-        })
-
-        test('creates no import history', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-
-            await migrateUserStorageDb(dbName, log)
-
-            const tables = await tableNames(dbName)
-            expect(tables).toEqual(['history', 'schema_version'])
-        })
-
-        test('changes nothing on the next startup', async () => {
-            const dbName = await aDatabaseMigratedByTheQualifiedFile()
-            await insertRow(dbName, aRow())
-            await migrateUserStorageDb(dbName, log)
-            const before = await databaseState(dbName)
-
-            await migrateUserStorageDb(dbName, log)
-
-            const state = await databaseState(dbName)
-            expect(state).toEqual(before)
-        })
-
-        test('rejects an unrecognized checksum without changing the history', async () => {
-            const dbName = await reserveDatabase()
-            await initDb(dbName, SCHEMA_PATH)
-            await recordSchemaChecksum(dbName, 'unrecognized')
-            const before = await recordedSchema(dbName)
-
-            const startup = migrateUserStorageDb(dbName, log)
-
-            await expect(startup).rejects.toThrow(/MD5 checksum failed/)
-            const schema = await recordedSchema(dbName)
-            expect(schema).toEqual(before)
-        })
-    })
-
-    // The qualified file built the same tables the portable file builds now; only its checksum differs.
-    const aDatabaseMigratedByTheQualifiedFile = async () => {
-        const dbName = await reserveDatabase()
-        await initDb(dbName, SCHEMA_PATH)
-        await recordSchemaChecksum(dbName, DEPLOYED_QUALIFIED_MD5)
-        return dbName
-    }
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
@@ -131,22 +81,6 @@ describe('user storage database migrations', () => {
         return row
     }
 
-    const recordSchemaChecksum = (dbName, md5) =>
-        admin.query('UPDATE ??.schema_version SET md5 = ? WHERE version = 1', [dbName, md5])
-
-    const databaseState = async dbName => ({
-        rows: await storedIds(dbName),
-        schema: await recordedSchema(dbName),
-        tables: await tableNames(dbName)
-    })
-
-    const recordedSchema = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT version, name, md5, run_at FROM ??.schema_version WHERE version = 1', [dbName]
-        )
-        return rows[0]
-    }
-
     const storedIds = async dbName => {
         const [rows] = await admin.query('SELECT id FROM ??.history ORDER BY id', [dbName])
         return rows.map(({id}) => id)
@@ -158,6 +92,14 @@ describe('user storage database migrations', () => {
             WHERE SPECIFIC_SCHEMA = ? AND SPECIFIC_NAME = ? ORDER BY ORDINAL_POSITION
         `, [dbName, routine])
         return rows.map(({PARAMETER_NAME}) => PARAMETER_NAME)
+    }
+
+    const usernameCollations = async dbName => {
+        const [rows] = await admin.query(
+            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
+            [dbName, 'username']
+        )
+        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
     }
 
     const tableNames = async dbName => {
@@ -172,8 +114,4 @@ const aRow = () => ({
     id: 1, username: 'bob', event: 'USER_UP', timestamp: new Date('2026-01-01T00:00:00Z')
 })
 
-const checksum = async file => createHash('md5').update(await readFile(file, 'utf8')).digest('hex')
-
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
-const SCHEMA_FILE = join(SCHEMA_PATH, '001.do.sql')
-const DEPLOYED_QUALIFIED_MD5 = 'f6f94238851600e662877ceebb830a60'
