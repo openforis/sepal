@@ -20,6 +20,7 @@ import {
     WORKER_INSTANCE_PUBLISHERS,
 } from './events.js'
 import {createInstanceManager} from './instanceManager.js'
+import {createProvisioningRegistry} from './provisioningRegistry.js'
 import {isReserved} from './workerInstance.js'
 
 const log = getLogger('worker/workerInstance')
@@ -51,6 +52,11 @@ const backfillClaims = async ({claims, provider}) => {
 
 const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes}) => {
 
+    // ONE registry shared by both provisioning paths — the event handler below and the
+    // reconcile sweep reaching in through instanceManager.reprovisionInstance. Two registries
+    // would let them re-enter each other, which is the whole thing being prevented.
+    const provisioning = createProvisioningRegistry()
+
     // ── Wire: provider.onInstanceLaunched ─────────────────────────────────────
     // If the launched instance is reserved → emit InstancePendingProvisioning
     // (which triggers provisionInstance below)
@@ -66,10 +72,12 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     // ── Wire: in-proc InstancePendingProvisioning → provisionInstance ─────────
     instanceEvents.on('InstancePendingProvisioning', instance => {
         log.debug(`Starting provisioning for ${instanceTag(instance)}`)
-        provisionInstance(instance, {provisioner}).catch(err => {
-            // provisionInstance already emits FailedToProvisionInstance; just log here
-            log.error(`Failed to provision ${instanceTag(instance)}: ${err.message}`)
-        })
+        provisioning.run(instance.id, () => provisionInstance(instance, {provisioner}))
+            .then(ran => ran || log.debug(`Already provisioning ${instanceTag(instance)} - ignored`))
+            .catch(err => {
+                // provisionInstance already emits FailedToProvisionInstance; just log here
+                log.error(`Failed to provision ${instanceTag(instance)}: ${err.message}`)
+            })
     })
 
     const targetIdleCountByInstanceType = new Map(
@@ -126,7 +134,7 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
         log.info('Stopped')
     }
 
-    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes})
+    const instanceManager = createInstanceManager({claims, provider, provisioner, instanceTypes, provisioning})
 
     return {
         instanceManager,

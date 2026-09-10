@@ -8,12 +8,13 @@ import {jest} from '@jest/globals'
 
 import {createInstanceManager} from './instanceManager.js'
 
-const session = ({id, instanceId, host = 'host-1'}) => ({
+const session = ({id, instanceId, host = 'host-1', creationTime = new Date('2024-01-01T00:00:00Z')}) => ({
     id,
     username: 'admin',
     workerType: 'SANDBOX',
     instanceType: 'T3aSmall',
     instance: {id: instanceId, host},
+    creationTime,
 })
 
 const makeManager = provisioner =>
@@ -64,7 +65,10 @@ describe('sessionsWithoutInstance', () => {
             id: 'i-1',
             type: 'T3aSmall',
             host: 'host-1',
+            running: true,
+            launchTime: new Date('2024-01-01T00:00:00Z'),
             reservation: {username: 'admin', workerType: 'SANDBOX', sessionId: 's-1'},
+            daemonHost: null,
         })
     })
 
@@ -88,5 +92,47 @@ describe('sessionsWithoutInstance', () => {
         const result = await manager.sessionsWithoutInstance([s1, s2])
 
         expect(result).toEqual([{session: s2, status: 'MISSING'}])
+    })
+})
+
+describe('reprovisionInstance', () => {
+    const pendingSession = {
+        id: 's-1',
+        username: 'alice',
+        workerType: 'sandbox',
+        instanceType: 'T3aSmall',
+        instance: {id: 'i-1', host: '10.0.0.1'},
+        creationTime: new Date('2026-01-01T00:00:00Z'),
+    }
+
+    test('provisions the instance rebuilt from the session', async () => {
+        const provisioner = {provisionInstance: jest.fn(async () => {})}
+        const manager = makeManager(provisioner)
+
+        expect(await manager.reprovisionInstance(pendingSession)).toBe(true)
+        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
+        const provisioned = provisioner.provisionInstance.mock.calls[0][0]
+        expect(provisioned.id).toBe('i-1')
+        expect(provisioned.reservation.sessionId).toBe('s-1')
+    })
+
+    // The sweep re-entering an in-flight provision would delete the containers it is creating.
+    test('is dropped while the same instance is already being provisioned', async () => {
+        let release
+        const provisioner = {
+            provisionInstance: jest.fn(() => new Promise(resolve => {
+                release = resolve
+            })),
+        }
+        const manager = makeManager(provisioner)
+
+        const running = manager.reprovisionInstance(pendingSession)
+        expect(manager.isProvisioning('i-1')).toBe(true)
+        expect(await manager.reprovisionInstance(pendingSession)).toBe(false)
+        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
+
+        release()
+        await running
+        expect(manager.isProvisioning('i-1')).toBe(false)
     })
 })
