@@ -1,4 +1,4 @@
-export const createReconciler = ({workerClient, openSessionUse, pool, clock = () => new Date()}) => {
+export const createReconciler = ({workerClient, openSessionUse, clock = () => new Date()}) => {
     const reconcile = async () => {
         const open = await workerClient.openSessions()
         const openIds = new Set(open.map(s => s.sessionId))
@@ -14,11 +14,11 @@ export const createReconciler = ({workerClient, openSessionUse, pool, clock = ()
         }
 
         // Missed Closed: close rows still open here that the worker no longer reports.
-        const [rows] = await pool().query('SELECT session_id FROM open_session_use WHERE to_time IS NULL')
+        const sessionIds = await openSessionUse.openSessionIds()
         const now = clock()
-        for (const row of rows) {
-            if (!openIds.has(row.session_id))
-                await openSessionUse.closeSession({sessionId: row.session_id, to: now})
+        for (const sessionId of sessionIds) {
+            if (!openIds.has(sessionId))
+                await openSessionUse.closeSession({sessionId, to: now})
         }
     }
     return {reconcile}

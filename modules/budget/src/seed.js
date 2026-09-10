@@ -2,8 +2,8 @@ import {getLogger} from '#sepal/log'
 
 const log = getLogger('sepal.budget.seed')
 
-export const createSeed = ({workerClient, openSessionUse, pool}) => async () => {
-    const [[{c}]] = await pool().query('SELECT COUNT(*) AS c FROM open_session_use')
+export const createSeed = ({workerClient, openSessionUse}) => async () => {
+    const c = await openSessionUse.count()
     if (c > 0) {
         log.info('Seed: open_session_use already populated, skipping')
         return

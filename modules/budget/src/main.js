@@ -7,13 +7,13 @@ import {initMessageQueue} from '#sepal/messageQueue'
 
 import {createBudgetApi} from './budgetApi.js'
 import {createBudgetManager} from './budgetManager.js'
-import {createBudgetRepository} from './budgetRepository.js'
+import {BudgetRepository} from './budgetRepository.js'
 import {amqpUri, config} from './config.js'
-import {getPool, initializeDatabase} from './db.js'
+import {initializeDb} from './db.js'
 import {createEnforcement} from './enforcement.js'
 import * as budgetEvents from './events.js'
 import {createBudgetComponent} from './index.js'
-import {createOpenSessionUse} from './openSessionUse.js'
+import {OpenSessionUseRepository} from './openSessionUse.js'
 import {createPricing} from './pricing.js'
 import {createReconciler} from './reconciler.js'
 import {registerBudgetRoutes} from './routes.js'
@@ -30,16 +30,16 @@ const log = getLogger('main')
 let component = null
 
 const main = async () => {
-    await initializeDatabase()
+    const db = await initializeDb()
 
     const pricing = createPricing()
     const userClient = createUserClient(config)
     const workerClient = createWorkerClient()
 
-    const repo = createBudgetRepository()
+    const repo = new BudgetRepository(db, () => new Date())
     const budgetManager = createBudgetManager({repo, pricing, userClient, events: budgetEvents})
 
-    const openSessionUse = createOpenSessionUse(getPool)
+    const openSessionUse = new OpenSessionUseRepository(db)
     const handlers = createSessionEventHandlers({
         openSessionUse,
         budgetCommands: budgetManager.commands,
@@ -47,11 +47,11 @@ const main = async () => {
     })
 
     const enforcement = createEnforcement({budgetManager, userClient, events: budgetEvents})
-    const reconciler = createReconciler({workerClient, openSessionUse, pool: getPool})
+    const reconciler = createReconciler({workerClient, openSessionUse})
 
     // A seed failure must not crash boot: the hourly reconciler heals open_session_use once the
     // worker is reachable.
-    const seed = createSeed({workerClient, openSessionUse, pool: getPool})
+    const seed = createSeed({workerClient, openSessionUse})
     try {
         await seed()
     } catch (error) {

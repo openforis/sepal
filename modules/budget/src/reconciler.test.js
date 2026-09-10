@@ -2,13 +2,10 @@ import {jest} from '@jest/globals'
 
 import {createReconciler} from './reconciler.js'
 
-const createMockOpenSessionUse = () => ({
+const createMockOpenSessionUse = (openSessionIds = []) => ({
     openSession: jest.fn(),
     closeSession: jest.fn(),
-})
-
-const poolReturning = rows => () => ({
-    query: jest.fn(async () => [rows]),
+    openSessionIds: jest.fn(async () => openSessionIds),
 })
 
 test('worker-open session missing from the table gets opened (missed Activated)', async () => {
@@ -17,10 +14,9 @@ test('worker-open session missing from the table gets opened (missed Activated)'
             {username: 'bob', sessionId: 's3', instanceType: 'm5.large', creationTime: '2026-07-02T00:00:00Z'},
         ],
     }
-    const openSessionUse = createMockOpenSessionUse()
-    const pool = poolReturning([]) // table has nothing open yet
+    const openSessionUse = createMockOpenSessionUse() // nothing open here yet
 
-    const reconciler = createReconciler({workerClient, openSessionUse, pool, clock: () => new Date('2026-07-03T00:00:00Z')})
+    const reconciler = createReconciler({workerClient, openSessionUse, clock: () => new Date('2026-07-03T00:00:00Z')})
     await reconciler.reconcile()
 
     expect(openSessionUse.openSession).toHaveBeenCalledTimes(1)
@@ -36,11 +32,10 @@ test('table row not reported open by the worker gets closed (missed Closed); sti
             {username: 'alice', sessionId: 's1', instanceType: 'm5.large', creationTime: '2026-07-01T00:00:00Z'},
         ],
     }
-    const openSessionUse = createMockOpenSessionUse()
-    const pool = poolReturning([{session_id: 's1'}, {session_id: 's2'}]) // s1 open (matches worker), s2 stale
+    const openSessionUse = createMockOpenSessionUse(['s1', 's2']) // s1 open (matches worker), s2 stale
     const now = new Date('2026-07-03T00:00:00Z')
 
-    const reconciler = createReconciler({workerClient, openSessionUse, pool, clock: () => now})
+    const reconciler = createReconciler({workerClient, openSessionUse, clock: () => now})
     await reconciler.reconcile()
 
     expect(openSessionUse.openSession).toHaveBeenCalledWith({
@@ -56,11 +51,10 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
             {username: 'alice', sessionId: 's1', instanceType: 'm5.large', creationTime: '2026-07-01T00:00:00Z'},
         ],
     }
-    const openSessionUse = createMockOpenSessionUse()
-    const pool = poolReturning([{session_id: 's1'}, {session_id: 's2'}])
+    const openSessionUse = createMockOpenSessionUse(['s1', 's2'])
     const now = new Date('2026-07-03T00:00:00Z')
 
-    const reconciler = createReconciler({workerClient, openSessionUse, pool, clock: () => now})
+    const reconciler = createReconciler({workerClient, openSessionUse, clock: () => now})
     await reconciler.reconcile()
 
     expect(openSessionUse.openSession).toHaveBeenCalledTimes(1)
@@ -68,25 +62,11 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
     expect(openSessionUse.closeSession).toHaveBeenCalledWith({sessionId: 's2', to: now})
 })
 
-test('queries open_session_use for to_time IS NULL rows via pool()', async () => {
-    const workerClient = {openSessions: async () => []}
-    const openSessionUse = createMockOpenSessionUse()
-    const query = jest.fn(async () => [[]])
-    const pool = () => ({query})
-
-    const reconciler = createReconciler({workerClient, openSessionUse, pool, clock: () => new Date()})
-    await reconciler.reconcile()
-
-    expect(query).toHaveBeenCalledTimes(1)
-    expect(query.mock.calls[0][0]).toMatch(/to_time IS NULL/)
-})
-
 test('defaults clock to ≈Date.now() when not injected', async () => {
     const workerClient = {openSessions: async () => []}
-    const openSessionUse = createMockOpenSessionUse()
-    const pool = poolReturning([{session_id: 'stale'}])
+    const openSessionUse = createMockOpenSessionUse(['stale'])
 
-    const reconciler = createReconciler({workerClient, openSessionUse, pool})
+    const reconciler = createReconciler({workerClient, openSessionUse})
     const before = Date.now()
     await reconciler.reconcile()
     const after = Date.now()
