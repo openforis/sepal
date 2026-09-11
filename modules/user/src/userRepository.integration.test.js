@@ -321,6 +321,64 @@ describe('UserRepository', () => {
         })
     })
 
+    // `[0]` reaches SQL as `WHERE token = 0`, which MySQL matches by coercing the varchar column (see
+    // isText in validation.js). The seeded name, address and token all begin with a letter, so each of
+    // them is one MySQL would have coerced into a match.
+    describe('a selector that is not a string', () => {
+        test('finds no user by name, address or token', async () => {
+            await repository.insertUser(aUser())
+
+            const byUsername = await repository.findByUsername(NOT_A_STRING)
+            const byEmail = await repository.findByEmail(NOT_A_STRING)
+            const byToken = await repository.findByToken(NOT_A_STRING)
+
+            expect(byUsername).toBeNull()
+            expect(byEmail).toBeNull()
+            expect(byToken).toBeNull()
+        })
+
+        test('reads as an address and a name that are not stored', async () => {
+            await repository.insertUser(aUser())
+            await repository.setLastLoginTime(USERNAME)
+
+            const enabled = await repository.emailNotificationsEnabled(NOT_A_STRING)
+            const login = await repository.mostRecentLogin(NOT_A_STRING)
+
+            expect(enabled).toBe(false)
+            expect(login).toEqual({})
+        })
+
+        // The failure has to be the repository's own. MySQL refuses the coerced comparison in an UPDATE
+        // by itself, but only once the statement has run — too late for a handler that has already
+        // committed the writes before it.
+        test('refuses every credential write, leaving the account as it was', async () => {
+            await repository.insertUser(aUser())
+            const before = await repository.findByUsername(USERNAME)
+
+            await expect(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash')).rejects.toThrow(REFUSED)
+            await expect(repository.updateStatus(NOT_A_STRING, 'ACTIVE')).rejects.toThrow(REFUSED)
+            await expect(repository.updateToken(NOT_A_STRING, 'new-token')).rejects.toThrow(REFUSED)
+            await expect(repository.invalidateToken(NOT_A_STRING)).rejects.toThrow(REFUSED)
+
+            const after = await repository.findByUsername(USERNAME)
+            expect(after).toEqual(before)
+        })
+
+        test('refuses every other write that selects a user, leaving the account as it was', async () => {
+            await repository.insertUser(aUser())
+            const before = await repository.findByUsername(USERNAME)
+
+            await expect(repository.setLastLoginTime(NOT_A_STRING)).rejects.toThrow(REFUSED)
+            await expect(repository.updateUserDetails(details({username: NOT_A_STRING}))).rejects.toThrow(REFUSED)
+            await expect(repository.acceptPrivacyPolicy(NOT_A_STRING)).rejects.toThrow(REFUSED)
+            await expect(repository.updateGoogleTokens(NOT_A_STRING, GOOGLE_TOKENS)).rejects.toThrow(REFUSED)
+            await expect(repository.updateSshPublicKey(NOT_A_STRING, 'ssh-ed25519 AAAA')).rejects.toThrow(REFUSED)
+
+            const after = await repository.findByUsername(USERNAME)
+            expect(after).toEqual(before)
+        })
+    })
+
     const aUser = (over = {}) => ({
         username: USERNAME, name: 'Bob', email: EMAIL, organization: null, intendedUse: null,
         token: 'a-token', ...over
@@ -344,6 +402,10 @@ describe('UserRepository', () => {
 
     const USERNAME = 'bob'
     const EMAIL = 'bob@example.org'
+
+    // How the coercion arrives over HTTP: a one-element JSON array, which the driver formats as `0`.
+    const NOT_A_STRING = [0]
+    const REFUSED = 'Invalid selector'
     const LONG_AGO = new Date('2020-01-01T00:00:00Z')
     const RECENTLY = new Date('2026-01-01T00:00:00Z')
     const GOOGLE_TOKENS = {

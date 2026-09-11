@@ -8,17 +8,13 @@ import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
 import {userToMap} from './user.js'
-import {isValidEmail, isValidUsername} from './validation.js'
+import {isText, isValidEmail, isValidPassword, isValidUsername} from './validation.js'
 
 const log = getLogger('userApi')
 
 // What #applyDetails answers with when the body carries an email the database would reject, so its
 // callers can tell that apart from an unknown user.
 const INVALID_EMAIL = Symbol('invalid-email')
-
-const PASSWORD_MIN_LENGTH = 12
-
-const PASSWORD_MAX_LENGTH = 100
 
 export class UserApi {
     #repository
@@ -35,8 +31,8 @@ export class UserApi {
 
     async authenticate(ctx) {
         const {username, password} = readBody(ctx)
-        const user = username ? await this.#repository.findByUsername(username) : null
-        if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
+        const user = isText(username) ? await this.#repository.findByUsername(username) : null
+        if (authenticates(user, password)) {
             await this.#repository.setLastLoginTime(user.username)
             await this.#maybeRehashPassword(user, password)
             try {
@@ -66,7 +62,7 @@ export class UserApi {
 
     async info(ctx) {
         const username = ctx.query.username
-        const user = username ? await this.#repository.findByUsername(username) : null
+        const user = isText(username) ? await this.#repository.findByUsername(username) : null
         if (!user) {
             ctx.status = 404
             ctx.body = {message: 'User not found'}
@@ -96,7 +92,7 @@ export class UserApi {
 
     async validateToken(ctx) {
         const token = readBody(ctx).token || ctx.query.token
-        const user = token ? await this.#repository.findByToken(token) : null
+        const user = isText(token) ? await this.#repository.findByToken(token) : null
         if (!user) {
             ctx.body = {status: 'failure', token: null, reason: 'invalid', message: 'Token is invalid'}
             return
@@ -113,7 +109,7 @@ export class UserApi {
     async changePassword(ctx) {
         const {oldPassword, newPassword} = readBody(ctx)
         const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
-        if (user && user.passwordHash && verifyPassword(oldPassword, user.passwordHash)) {
+        if (isText(newPassword) && verifies(user, oldPassword)) {
             await this.#repository.updatePassword(user.username, hashPassword(newPassword))
             ctx.body = {status: 'success', message: 'Password changed'}
         } else {
@@ -168,8 +164,8 @@ export class UserApi {
 
     // Idempotent: an already-locked user is returned unchanged.
     async lock(ctx) {
-        const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
-        const user = await this.#repository.findByUsername(username)
+        const username = suppliedUsername(ctx)
+        const user = username ? await this.#repository.findByUsername(username) : null
         if (!user) {
             ctx.status = 404
             ctx.body = {message: 'User not found'}
@@ -189,8 +185,8 @@ export class UserApi {
     // Idempotent: an already-unlocked user is returned unchanged. No UserUpdated event; the refresh
     // header is set only when the unlock actually changed something.
     async unlock(ctx) {
-        const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
-        const user = await this.#repository.findByUsername(username)
+        const username = suppliedUsername(ctx)
+        const user = username ? await this.#repository.findByUsername(username) : null
         if (!user) {
             ctx.status = 404
             ctx.body = {message: 'User not found'}
@@ -213,12 +209,12 @@ export class UserApi {
     // is single-use anyway. A password reset token does expire — see resetPassword.
     async activate(ctx) {
         const {token, password} = readBody(ctx)
-        if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+        if (!isValidPassword(password)) {
             ctx.status = 400
             ctx.body = {message: 'Invalid request'}
             return
         }
-        const user = token ? await this.#repository.findByToken(token) : null
+        const user = isText(token) ? await this.#repository.findByToken(token) : null
         if (!user) {
             ctx.status = 400
             ctx.body = {message: 'Invalid token'}
@@ -242,12 +238,12 @@ export class UserApi {
             ctx.body = {message: 'Invalid request'}
             return
         }
-        if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+        if (!isValidPassword(password)) {
             ctx.status = 400
             ctx.body = {message: 'Invalid request'}
             return
         }
-        const user = token ? await this.#repository.findByToken(token) : null
+        const user = isText(token) ? await this.#repository.findByToken(token) : null
         if (!user || isExpired(user.tokenGenerationTime)) {
             ctx.status = 400
             ctx.body = {message: 'Invalid token'}
@@ -275,7 +271,7 @@ export class UserApi {
 
     async validateUsername(ctx) {
         const {username, recaptchaToken} = readBody(ctx)
-        const lowered = (username || '').toLowerCase()
+        const lowered = isText(username) ? username.toLowerCase() : ''
         const valid = await recaptcha.isValid(recaptchaToken, 'VALIDATE_USERNAME')
             && isValidUsername(lowered)
             && !(await this.#repository.findByUsername(lowered))
@@ -317,7 +313,7 @@ export class UserApi {
             log.info(`Ignoring password reset request with invalid reCAPTCHA for email: ${email}`)
             return
         }
-        const user = await this.#repository.findByEmail(email)
+        const user = isText(email) ? await this.#repository.findByEmail(email) : null
         if (!user) {
             log.info(`Cannot reset password for non-existing email: ${email}`)
             return
@@ -398,8 +394,8 @@ export class UserApi {
     // ACTIVE users only.
     async authPassword(ctx) {
         const {username, password} = readBody(ctx)
-        const user = username ? await this.#repository.findByUsername(username) : null
-        if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
+        const user = isText(username) ? await this.#repository.findByUsername(username) : null
+        if (authenticates(user, password)) {
             await this.#maybeRehashPassword(user, password)
             ctx.body = {status: 'success'}
         } else {
@@ -412,7 +408,7 @@ export class UserApi {
     // sss_ssh_authorizedkeys. An inactive user gets an empty body, never an error.
     async authorizedKeys(ctx) {
         const username = ctx.query.username
-        const user = username ? await this.#repository.findByUsername(username) : null
+        const user = isText(username) ? await this.#repository.findByUsername(username) : null
         ctx.type = 'text/plain'
         ctx.body = user && user.status === 'ACTIVE' && user.sshPublicKey ? user.sshPublicKey : ''
     }
@@ -446,10 +442,13 @@ export class UserApi {
     }
 
     // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
-    // Returns the reloaded user, null when the user does not exist, or INVALID_EMAIL when the body
-    // carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both callers
-    // funnel through here, so neither can skip the check.
+    // Returns the reloaded user, null when the request names no existing user, or INVALID_EMAIL when
+    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both
+    // callers funnel through here, so neither can skip the check.
     async #applyDetails(ctx, {targetUsername, adminValue}) {
+        if (!isText(targetUsername)) {
+            return null
+        }
         const body = readBody(ctx)
         if (body.email != null && !isValidEmail(body.email)) {
             return INVALID_EMAIL
@@ -490,6 +489,22 @@ export class UserApi {
 
 const readBody = ctx => ctx.request.body || {}
 
+// Both admin endpoints take the name from the body or the query, in that order, and normalize it to
+// the spelling the database stores. Null when nothing usable was supplied, so no lookup is attempted.
+const suppliedUsername = ctx => {
+    const supplied = readBody(ctx).username || ctx.query.username
+    return isText(supplied) ? storedUsername(supplied) : null
+}
+
+// Only a string can be verified: a hash is compared over the password's bytes, and Buffer.from turns
+// a value of any other type into bytes of its own rather than refusing it.
+const verifies = (user, password) =>
+    Boolean(user?.passwordHash) && isText(password) && verifyPassword(password, user.passwordHash)
+
+// What both password endpoints mean by a successful login.
+const authenticates = (user, password) =>
+    user?.status === 'ACTIVE' && verifies(user, password)
+
 // The username is validated lowercased, because that is the spelling insertUser will store.
 const isValidNewUser = ({username, name, email}) =>
-    isValidUsername((username || '').toLowerCase()) && Boolean(name) && isValidEmail(email)
+    isText(username) && isValidUsername(username.toLowerCase()) && Boolean(name) && isValidEmail(email)

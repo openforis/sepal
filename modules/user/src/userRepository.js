@@ -1,11 +1,18 @@
 import {storedUsername} from '#sepal/username'
 
 import {rowToUser, toISOString} from './user.js'
+import {isText} from './validation.js'
 
 // insertUser is the only statement that writes `username`, so it is the only one that normalizes
 // (see #sepal/username). Every query below passes the caller's value through untouched: the column
 // is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
 // which a LOWER() wrapper would have suppressed.
+//
+// What every statement does check is that the username, token or email it selects on is a string, so
+// that no caller — HTTP or not — can reach SQL with a value MySQL would coerce the column to match
+// (see isText). A lookup answers as it does for a value it does not know; a write refuses outright,
+// because reporting success for a selector that matched nothing is how a caller comes to believe a
+// credential was changed when it was not.
 export class UserRepository {
     #db
 
@@ -13,7 +20,10 @@ export class UserRepository {
         this.#db = db
     }
 
-    findByUsername(username) {
+    async findByUsername(username) {
+        if (!isText(username)) {
+            return null
+        }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 'SELECT * FROM sepal_user WHERE username = ?', [username]
@@ -22,7 +32,10 @@ export class UserRepository {
         })
     }
 
-    findByToken(token) {
+    async findByToken(token) {
+        if (!isText(token)) {
+            return null
+        }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = ?', [token])
             return rowToUser(rows[0])
@@ -52,7 +65,10 @@ export class UserRepository {
         })
     }
 
-    emailNotificationsEnabled(email) {
+    async emailNotificationsEnabled(email) {
+        if (!isText(email)) {
+            return false
+        }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 'SELECT email_notifications_enabled AS enabled FROM sepal_user WHERE email = ?',
@@ -63,7 +79,10 @@ export class UserRepository {
     }
 
     // The fixed {timestamp} key is a contract with user-storage, which maps straight onto it.
-    mostRecentLogin(username) {
+    async mostRecentLogin(username) {
+        if (!isText(username)) {
+            return {}
+        }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `SELECT last_login_time FROM sepal_user
@@ -84,7 +103,8 @@ export class UserRepository {
         })
     }
 
-    setLastLoginTime(username) {
+    async setLastLoginTime(username) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET last_login_time = NOW() WHERE username = ?', [username]
@@ -93,7 +113,8 @@ export class UserRepository {
     }
 
     // A null `tokens` clears the stored credentials — that is how a revoke is written.
-    updateGoogleTokens(username, tokens) {
+    async updateGoogleTokens(username, tokens) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 `UPDATE sepal_user
@@ -112,7 +133,8 @@ export class UserRepository {
         })
     }
 
-    updatePassword(username, passwordHash) {
+    async updatePassword(username, passwordHash) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET password_hash = ? WHERE username = ?',
@@ -121,8 +143,9 @@ export class UserRepository {
         })
     }
 
-    updateUserDetails({username, name, email, organization, intendedUse,
+    async updateUserDetails({username, name, email, organization, intendedUse,
         emailNotificationsEnabled, manualMapRenderingEnabled, admin}) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 `UPDATE sepal_user
@@ -135,7 +158,8 @@ export class UserRepository {
         })
     }
 
-    acceptPrivacyPolicy(username) {
+    async acceptPrivacyPolicy(username) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET privacy_policy_accepted = TRUE WHERE username = ?',
@@ -144,7 +168,8 @@ export class UserRepository {
         })
     }
 
-    updateStatus(username, status) {
+    async updateStatus(username, status) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET status = ? WHERE username = ?',
@@ -153,7 +178,8 @@ export class UserRepository {
         })
     }
 
-    updateToken(username, token) {
+    async updateToken(username, token) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET token = ?, token_generation_time = NOW() WHERE username = ?',
@@ -163,13 +189,17 @@ export class UserRepository {
     }
 
     // token_generation_time is NOT NULL, so only the token itself can be cleared.
-    invalidateToken(token) {
+    async invalidateToken(token) {
+        requireSelector(token)
         return this.#db.withConnection(async connection => {
             await connection.query('UPDATE sepal_user SET token = NULL WHERE token = ?', [token])
         })
     }
 
-    findByEmail(email) {
+    async findByEmail(email) {
+        if (!isText(email)) {
+            return null
+        }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query('SELECT * FROM sepal_user WHERE email = ?', [email])
             return rowToUser(rows[0])
@@ -198,7 +228,8 @@ export class UserRepository {
         return this.#db.withConnection(connection => this.#assignDerivedPosixIds(connection, id))
     }
 
-    updateSshPublicKey(username, sshPublicKey) {
+    async updateSshPublicKey(username, sshPublicKey) {
+        requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
                 'UPDATE sepal_user SET ssh_public_key = ? WHERE username = ?',
@@ -211,5 +242,11 @@ export class UserRepository {
         await connection.query(
             'UPDATE sepal_user SET uid = id, gid = id WHERE id = ? AND (uid IS NULL OR gid IS NULL)', [id]
         )
+    }
+}
+
+const requireSelector = selector => {
+    if (!isText(selector)) {
+        throw new Error('Invalid selector')
     }
 }
