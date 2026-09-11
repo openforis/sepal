@@ -6,9 +6,6 @@ export class OpenSessionUseRepository {
     #db
 
     constructor(db) {
-        if (!db) {
-            throw new Error('An open session use repository requires a db')
-        }
         this.#db = db
     }
 
@@ -22,10 +19,9 @@ export class OpenSessionUseRepository {
         ))
     }
 
-    // closeSession — stamp to_time on the row opened by openSession() (the common case). If no row
-    // exists yet (Closed-before-Activated race), fall back to inserting a placeholder row
-    // (from_time = to) that a later openSession() will correct via its own ON DUPLICATE KEY UPDATE.
-    // Both statements are keyed on session_id, so redelivery of either query is a no-op re-write.
+    // Closed can arrive before Activated, so a close with no row yet inserts a placeholder
+    // (from_time = to) that a later open corrects through its own ON DUPLICATE KEY UPDATE. Both
+    // statements are keyed on session_id, so redelivering either is a no-op re-write.
     closeSession({sessionId, to}) {
         return this.#db.withConnection(async connection => {
             const [result] = await connection.query(

@@ -6,9 +6,8 @@ import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {OpenSessionUseRepository} from './openSessionUse.js'
 
-// Session use against the real schema, where the upserts these operations rely on are MySQL's rather than
-// an interpretation of them. Restricted SQL appears only for the columns no public read returns: the
-// username, instance type and times a placeholder row must end up carrying.
+// The upserts these operations rely on are MySQL's own. Direct SQL appears only for the columns no read
+// returns: the username, instance type and times a placeholder row must end up carrying.
 
 describe('OpenSessionUseRepository', () => {
     let testDb

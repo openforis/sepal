@@ -10,7 +10,7 @@ import {
     updateStorageUseForThisMonth,
 } from './storageUseService.js'
 
-const createBudgetCommands = ({repo, hostingService, userClient, events, clock = () => new Date()}) => {
+const createBudgetCommands = ({repo, hostingService, userClient, events, clock}) => {
     const checkUserInstanceSpending = async username => {
         const spending = await computeInstanceSpending(
             repo, username, hostingService.hourlyCostByInstanceType(), clock)

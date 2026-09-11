@@ -1,7 +1,7 @@
 // The storage handler goes through budgetCommands.updateUserStorageUsage rather than
 // budgetRepository.updateUserStorageUse: the command runs the gb-hours accumulation that a raw
 // repository write would skip.
-export const createSessionEventHandlers = ({openSessionUse, budgetCommands, onStorageUpdated}) => {
+export const createSessionEventHandlers = ({openSessionUse, budgetCommands}) => {
     // Requested and Activated carry the same payload and open the same row. Both are handled
     // because either can be the first to arrive: Requested bills a session that is closed before
     // it ever activates, Activated heals a lost Requested. The upsert is keyed on session_id and
@@ -25,7 +25,7 @@ export const createSessionEventHandlers = ({openSessionUse, budgetCommands, onSt
             return
         }
         await budgetCommands.updateUserStorageUsage(username, size / 1e9) // bytes → GB
-        await onStorageUpdated(username) // per-user spending-report refresh (Task 5/6)
+        await budgetCommands.updateUserSpendingReport(username)
     }
 
     return {onWorkerSessionRequested, onWorkerSessionActivated, onWorkerSessionClosed, onUserStorageSize}

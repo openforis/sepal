@@ -16,12 +16,6 @@ export class BudgetRepository {
     #clock
 
     constructor(db, clock) {
-        if (!db) {
-            throw new Error('A budget repository requires a db')
-        }
-        if (!clock) {
-            throw new Error('A budget repository requires a clock')
-        }
         this.#db = db
         this.#clock = clock
     }
@@ -244,6 +238,14 @@ export class BudgetRepository {
         })
     }
 
+    #toStorageUse(row) {
+        return storageUseDto({
+            gbHours: row?.gb_hours ?? 0,
+            gb: row?.storage_used ?? 0,
+            updateTime: row?.update_time ? new Date(row.update_time) : this.#clock(),
+        })
+    }
+
     async #userBudget(connection, username) {
         const [userRows] = await connection.query(
             `SELECT monthly_instance, monthly_storage, storage_quota
@@ -283,23 +285,7 @@ export class BudgetRepository {
         }
         return requests
     }
-
-    #toStorageUse(row) {
-        return storageUseDto({
-            gbHours: row?.gb_hours ?? 0,
-            gb: row?.storage_used ?? 0,
-            updateTime: row?.update_time ? new Date(row.update_time) : this.#clock(),
-        })
-    }
 }
-
-const toDate = value => value ? new Date(value) : null
-
-const toBudget = row => budgetDto({
-    instanceSpending: row.monthly_instance,
-    storageSpending: row.monthly_storage,
-    storageQuota: row.storage_quota,
-})
 
 const toBudgetUpdateRequest = row => budgetUpdateRequestDto({
     message: row.message,
@@ -308,4 +294,12 @@ const toBudgetUpdateRequest = row => budgetUpdateRequestDto({
     storageQuota: row.requested_storage_quota,
     creationTime: toDate(row.creation_time),
     updateTime: toDate(row.update_time),
+})
+
+const toDate = value => value ? new Date(value) : null
+
+const toBudget = row => budgetDto({
+    instanceSpending: row.monthly_instance,
+    storageSpending: row.monthly_storage,
+    storageQuota: row.storage_quota,
 })

@@ -2,12 +2,6 @@ import {jest} from '@jest/globals'
 
 import {createReconciler} from './reconciler.js'
 
-const createMockOpenSessionUse = (openSessionIds = []) => ({
-    openSession: jest.fn(),
-    closeSession: jest.fn(),
-    openSessionIds: jest.fn(async () => openSessionIds),
-})
-
 test('worker-open session missing from the table gets opened (missed Activated)', async () => {
     const workerClient = {
         openSessions: async () => [
@@ -62,16 +56,8 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
     expect(openSessionUse.closeSession).toHaveBeenCalledWith({sessionId: 's2', to: now})
 })
 
-test('defaults clock to ≈Date.now() when not injected', async () => {
-    const workerClient = {openSessions: async () => []}
-    const openSessionUse = createMockOpenSessionUse(['stale'])
-
-    const reconciler = createReconciler({workerClient, openSessionUse})
-    const before = Date.now()
-    await reconciler.reconcile()
-    const after = Date.now()
-
-    const {to} = openSessionUse.closeSession.mock.calls[0][0]
-    expect(to.getTime()).toBeGreaterThanOrEqual(before)
-    expect(to.getTime()).toBeLessThanOrEqual(after)
+const createMockOpenSessionUse = (openSessionIds = []) => ({
+    openSession: jest.fn(),
+    closeSession: jest.fn(),
+    openSessionIds: jest.fn(async () => openSessionIds),
 })

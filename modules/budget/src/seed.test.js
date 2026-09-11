@@ -6,11 +6,6 @@ import {createSeed} from './seed.js'
 
 configureNoLogging()
 
-const createMockOpenSessionUse = (count = 0) => ({
-    count: jest.fn(async () => count),
-    openSession: jest.fn(),
-})
-
 test('opens every session the worker reports when nothing has been recorded', async () => {
     const workerClient = {
         openSessions: async () => [
@@ -40,4 +35,9 @@ test('asks the worker for nothing once session use has been recorded', async () 
 
     expect(openSessions).not.toHaveBeenCalled()
     expect(openSessionUse.openSession).not.toHaveBeenCalled()
+})
+
+const createMockOpenSessionUse = (count = 0) => ({
+    count: jest.fn(async () => count),
+    openSession: jest.fn(),
 })

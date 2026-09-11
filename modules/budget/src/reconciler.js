@@ -1,4 +1,4 @@
-export const createReconciler = ({workerClient, openSessionUse, clock = () => new Date()}) => {
+export const createReconciler = ({workerClient, openSessionUse, clock}) => {
     const reconcile = async () => {
         const open = await workerClient.openSessions()
         const openIds = new Set(open.map(s => s.sessionId))

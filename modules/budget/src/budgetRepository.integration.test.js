@@ -8,10 +8,8 @@ import {BudgetRepository} from './budgetRepository.js'
 import {budget, storageUse, userSpendingReport} from './dto.js'
 import {OpenSessionUseRepository} from './openSessionUse.js'
 
-// The budget tables against the real schema. Instance uses are arranged through the repository that owns
-// `open_session_use`; everything else through the operation under test or its siblings. Restricted SQL
-// appears only where a public read cannot show what was stored: the initial and final figures of a budget
-// request, and whether a write replaced a row or added one.
+// Direct SQL appears only where a public read cannot show what was stored: the initial and final figures
+// of a budget request, and whether a write replaced a row or added one.
 
 describe('BudgetRepository', () => {
     let testDb

@@ -2,23 +2,11 @@ import {jest} from '@jest/globals'
 
 import {createSessionEventHandlers} from './sessionEventHandlers.js'
 
-const createMockOpenSessionUse = () => ({
-    openSession: jest.fn(),
-    closeSession: jest.fn(),
-    removeUser: jest.fn(),
-})
-
-const createMockBudgetCommands = () => ({
-    updateUserStorageUsage: jest.fn(),
-    updateUserSpendingReport: jest.fn(),
-})
-
 describe('onWorkerSessionActivated', () => {
     test('maps {username, session} onto openSessionUse.openSession', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         const session = {id: 'sess-1', instanceType: 'T3aSmall', creationTime: '2026-07-01T00:00:00Z'}
         await handlers.onWorkerSessionActivated({username: 'alice', session})
@@ -37,8 +25,7 @@ describe('onWorkerSessionRequested', () => {
     test('opens the use row at creationTime, so a session that never activates is still billed', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         const session = {id: 'sess-1', instanceType: 'T3aSmall', creationTime: '2026-07-01T00:00:00Z'}
         await handlers.onWorkerSessionRequested({username: 'alice', session})
@@ -54,8 +41,7 @@ describe('onWorkerSessionRequested', () => {
     test('the later Activated delivery re-opens the same row with identical values (idempotent upsert)', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         const session = {id: 'sess-1', instanceType: 'T3aSmall', creationTime: '2026-07-01T00:00:00Z'}
         await handlers.onWorkerSessionRequested({username: 'alice', session})
@@ -69,8 +55,7 @@ describe('onWorkerSessionClosed', () => {
     test('maps {sessionId} + an injected now onto openSessionUse.closeSession', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         const now = new Date('2026-07-02T12:00:00Z')
         await handlers.onWorkerSessionClosed({sessionId: 'sess-1'}, now)
@@ -81,8 +66,7 @@ describe('onWorkerSessionClosed', () => {
     test('defaults to≈Date.now() when now is not injected', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         const before = Date.now()
         await handlers.onWorkerSessionClosed({sessionId: 'sess-1'})
@@ -95,67 +79,74 @@ describe('onWorkerSessionClosed', () => {
 })
 
 describe('onUserStorageSize', () => {
-    test('converts bytes→GB and calls budgetCommands.updateUserStorageUsage, then onStorageUpdated', async () => {
+    test('converts bytes to GB, then refreshes the user\'s spending report', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         await handlers.onUserStorageSize({username: 'bob', size: 5_000_000_000}) // 5e9 bytes = 5 GB
 
         expect(budgetCommands.updateUserStorageUsage).toHaveBeenCalledWith('bob', 5)
-        expect(onStorageUpdated).toHaveBeenCalledWith('bob')
+        expect(budgetCommands.updateUserSpendingReport).toHaveBeenCalledWith('bob')
     })
 
-    test('calls updateUserStorageUsage before onStorageUpdated (ordering)', async () => {
+    // The report is built from the storage usage, so it has to be refreshed after the usage lands.
+    test('records the usage before refreshing the report', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const calls = []
         const budgetCommands = {
             updateUserStorageUsage: jest.fn(async () => { calls.push('updateUserStorageUsage') }),
-            updateUserSpendingReport: jest.fn(),
+            updateUserSpendingReport: jest.fn(async () => { calls.push('updateUserSpendingReport') }),
         }
-        const onStorageUpdated = jest.fn(async () => { calls.push('onStorageUpdated') })
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         await handlers.onUserStorageSize({username: 'bob', size: 1e9})
 
-        expect(calls).toEqual(['updateUserStorageUsage', 'onStorageUpdated'])
+        expect(calls).toEqual(['updateUserStorageUsage', 'updateUserSpendingReport'])
     })
 
-    test('does not call onStorageUpdated when updateUserStorageUsage rejects', async () => {
+    test('leaves the report alone when the usage could not be recorded', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = {
             updateUserStorageUsage: jest.fn(async () => { throw new Error('boom') }),
             updateUserSpendingReport: jest.fn(),
         }
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         await expect(handlers.onUserStorageSize({username: 'bob', size: 1e9})).rejects.toThrow('boom')
-        expect(onStorageUpdated).not.toHaveBeenCalled()
+        expect(budgetCommands.updateUserSpendingReport).not.toHaveBeenCalled()
     })
 
     test('skips a malformed event with a null size (does not update, does not throw)', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         await expect(handlers.onUserStorageSize({username: 'bob', size: null})).resolves.toBeUndefined()
 
         expect(budgetCommands.updateUserStorageUsage).not.toHaveBeenCalled()
-        expect(onStorageUpdated).not.toHaveBeenCalled()
+        expect(budgetCommands.updateUserSpendingReport).not.toHaveBeenCalled()
     })
 
     test('skips a malformed event with an undefined username (does not update, does not throw)', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
-        const onStorageUpdated = jest.fn()
-        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands, onStorageUpdated})
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
 
         await expect(handlers.onUserStorageSize({username: undefined, size: 100})).resolves.toBeUndefined()
 
         expect(budgetCommands.updateUserStorageUsage).not.toHaveBeenCalled()
-        expect(onStorageUpdated).not.toHaveBeenCalled()
+        expect(budgetCommands.updateUserSpendingReport).not.toHaveBeenCalled()
     })
+})
+
+const createMockOpenSessionUse = () => ({
+    openSession: jest.fn(),
+    closeSession: jest.fn(),
+    removeUser: jest.fn(),
+})
+
+const createMockBudgetCommands = () => ({
+    updateUserStorageUsage: jest.fn(),
+    updateUserSpendingReport: jest.fn(),
 })
