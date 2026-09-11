@@ -26,7 +26,7 @@ const asReportRow = ({hours, cpuWeight, cpuSum, cpuMax, ramWeight, ramSum, ramMa
 })
 
 const generateUserUsageReport = async (
-    {username, days}, {usageRepo, instanceManager, clock = () => new Date()}
+    {username, days}, {usageRepo, instanceManager, clock}
 ) => {
     const fromTime = new Date(clock().getTime() - days * DAY_MS)
     const rows = await usageRepo.userUsageRollup(username, fromTime)

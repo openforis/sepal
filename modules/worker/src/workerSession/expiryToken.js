@@ -38,7 +38,7 @@ const createExpiryTokens = ({secret = crypto.randomBytes(32).toString('hex'), gr
     // verify — returns {sessionId, notifiedTime} or null. Null covers every failure mode
     // (malformed, tampered, expired) on purpose: the caller renders one "this link is no longer
     // valid" page either way, and distinguishing them would only help someone probing tokens.
-    const verify = (token, now = new Date()) => {
+    const verify = (token, now) => {
         if (typeof token !== 'string') {
             return null
         }

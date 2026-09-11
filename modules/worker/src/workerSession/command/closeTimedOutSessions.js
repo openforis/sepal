@@ -15,7 +15,7 @@ import {closeSession} from './closeSession.js'
 
 const log = getLogger('worker/closeTimedOutSessions')
 
-const closeTimedOutSessions = async ({repo, instanceManager, emitWorkerSessionClosed, startTime = null, startupGraceMs = 0, clock = () => new Date()}) => {
+const closeTimedOutSessions = async ({repo, instanceManager, emitWorkerSessionClosed, startTime = null, startupGraceMs = 0, clock}) => {
     if (startTime && clock().getTime() - startTime.getTime() < startupGraceMs) {
         log.info('Within the startup grace period - skipping the timed-out session sweep')
         return null

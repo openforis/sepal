@@ -18,7 +18,7 @@ import {InstanceStatus} from '../workerInstance/instanceStatus.js'
 const createMissingInstanceTracker = ({
     missesBeforeClose = 2,
     unknownBackstopMs = 30 * 60_000,
-    clock = () => new Date(),
+    clock,
 } = {}) => {
     // sessionId → {misses, unknownSince}
     const bySession = new Map()

@@ -153,7 +153,7 @@ const expireSessions = async ({
     metrics = null,
     startTime = null,
     startupGraceMs = 0,
-    clock = () => new Date(),
+    clock,
 }) => {
     if (mode === MODE.OFF) {
         return null

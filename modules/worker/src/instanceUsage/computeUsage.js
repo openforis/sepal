@@ -111,7 +111,7 @@ const parseGpuCsv = text => {
 // "terminal opened" extension.
 const PTY_STAT_RECORD = /(\d+)\s+(\d+)\s+(\/dev\/pts\/\d+)/g
 
-const parsePtyStat = (text, {now = new Date(), tickSeconds = 60} = {}) => {
+const parsePtyStat = (text, {now, tickSeconds = 60}) => {
     if (!text || typeof text !== 'string') {
         return null
     }

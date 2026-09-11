@@ -3,7 +3,7 @@
 // taskChanged$ fires {username} whenever a task row is inserted, updated, or removed for that
 // user. The ws push channel (task/ws.js) re-queries the user's task listing on each event.
 //
-// withTaskChangedEvents(repo) decorates the task repository so EVERY mutation emits AFTER its
+// EventEmittingTaskRepository decorates the task repository so EVERY mutation emits AFTER its
 // persist resolves — commands never emit directly, so any new command that persists through the
 // repository is covered automatically. A rejected mutation does not emit.
 //
@@ -18,35 +18,63 @@ import {userTag} from '../tag.js'
 
 const log = getLogger('worker/taskEvents')
 
-const taskChanged$ = new Subject()
+export const taskChanged$ = new Subject()
 
-const emitTaskChanged = username => {
+// Every read is forwarded explicitly: spreading the repository would copy none of its operations,
+// which live on the prototype.
+export class EventEmittingTaskRepository {
+    #taskRepository
+
+    constructor(taskRepository) {
+        this.#taskRepository = taskRepository
+    }
+
+    getTask(taskId) {
+        return this.#taskRepository.getTask(taskId)
+    }
+
+    pendingOrActiveTasksInSession(sessionId) {
+        return this.#taskRepository.pendingOrActiveTasksInSession(sessionId)
+    }
+
+    pendingOrActiveUserTasks(username) {
+        return this.#taskRepository.pendingOrActiveUserTasks(username)
+    }
+
+    timedOutTasks() {
+        return this.#taskRepository.timedOutTasks()
+    }
+
+    userTasks(username) {
+        return this.#taskRepository.userTasks(username)
+    }
+
+    async insert(task) {
+        const result = await this.#taskRepository.insert(task)
+        emitTaskChanged(task.username)
+        return result
+    }
+
+    async update(task) {
+        const result = await this.#taskRepository.update(task)
+        emitTaskChanged(task.username)
+        return result
+    }
+
+    async remove(task) {
+        const result = await this.#taskRepository.remove(task)
+        emitTaskChanged(task.username)
+        return result
+    }
+
+    async removeNonPendingOrActiveUserTasks(username) {
+        const result = await this.#taskRepository.removeNonPendingOrActiveUserTasks(username)
+        emitTaskChanged(username)
+        return result
+    }
+}
+
+export const emitTaskChanged = username => {
     log.debug(() => `Emitting TaskChanged for ${userTag(username)}`)
     taskChanged$.next({username})
 }
-
-const withTaskChangedEvents = repo => ({
-    ...repo,
-    insert: async task => {
-        const result = await repo.insert(task)
-        emitTaskChanged(task.username)
-        return result
-    },
-    update: async task => {
-        const result = await repo.update(task)
-        emitTaskChanged(task.username)
-        return result
-    },
-    remove: async task => {
-        const result = await repo.remove(task)
-        emitTaskChanged(task.username)
-        return result
-    },
-    removeNonPendingOrActiveUserTasks: async username => {
-        const result = await repo.removeNonPendingOrActiveUserTasks(username)
-        emitTaskChanged(username)
-        return result
-    },
-})
-
-export {emitTaskChanged, taskChanged$, withTaskChangedEvents}

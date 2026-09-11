@@ -1,51 +1,8 @@
 // WorkerSession repository — persists worker session lifecycle to the `worker`.`worker_session`
 // table.
 //
-// createWorkerSessionRepository(pool?, clock?, sessionAppRepo?) — injectable factory.
-//   pool           — defaults to the shared worker pool (getPool()), which means the factory
-//                    must not run before initializeDatabase().
-//   clock          — () => Date; used for update_time (update) and now (timedOutSessions).
-//                    Defaults to () => new Date(), injectable so tests can pin time.
-//   sessionAppRepo — the session_app cascade repo. Defaults to one built on the same pool and
-//                    clock. Pass `undefined`, never `null`, to take a default.
-//
-// Methods:
-//   insert(session)                                 INSERT (12 columns incl api_key + timeout_time)
-//   update(session)                                 UPDATE state/update_time — TWO variants
-//                                                    (CLOSED nulls api_key); CLOSED also cascades
-//                                                    sessionAppRepo.deleteForSession
-//   activateSession(sessionId, leaseMinutes)        guarded PENDING → ACTIVE; stamps active_time
-//                                                    and re-ratchets the startup lease
-//   getSession(id)                                  SELECT one; THROWS if missing
-//   userSessions(username, states?, workerType?, instanceType?)  dynamic WHERE
-//   sessions(states)                                SELECT WHERE state IN (...)
-//   timedOutSessions()                              PENDING rows older than Timeout.PENDING
-//   sessionOnInstance(instanceId, states)           SELECT one or null
-//   findUsernameByApiKey(apiKey)                    username or null; PENDING/ACTIVE only
-//   mostRecentlyClosedSessionByUser()               Map<username, Date>
-//   mostRecentlyClosedSession(username)             { timestamp: Date } or {}
-//   allOpenSessions()                               every PENDING+ACTIVE session, ALL users, as
-//                                                    [{username, sessionId, instanceType, creationTime}]
-//
-// Expiration (docs/session-expiration-model.md) — every one of these is a compare-and-set, and the
-// sweep never acts on a fact it read earlier:
-//   extendSession({sessionId, minutes, interaction, capHours})   THE ratchet — how a deadline
-//                                                    moves for every AUTOMATIC signal. Monotonic
-//                                                    (GREATEST), single clock (NOW()), and atomic
-//                                                    with the notification reset.
-//   setSessionTimeout({sessionId, minutes})         the keep-alive slider — REPLACES the deadline,
-//                                                    the one write that may also shorten it
-//   expiredSessions()                               ACTIVE, past deadline, no PENDING/ACTIVE task
-//   notifyExpiry(sessionId)                         NONE → NOTIFIED (guarded)
-//   markEmailed(sessionId, notifiedTime)            NOTIFIED → EMAILED (guarded)
-//   dismissNotification(sessionId, username)        NOTIFIED → DISMISSED (guarded)
-//   redeemExtension({sessionId, notifiedTime, minutes})  the email link's single-use extension
-//   redeemTermination({sessionId, notifiedTime})    the email link's single-use termination
-//   restartExpiryCycle(sessionId, notifiedTime, minutes)  notify-mode reset → NONE
-//   closeExpiredSession({...})                      the guarded close (re-asserts every decision)
-//
-// Rows are reconstructed into WorkerSession domain objects, mapping instance_id/host →
-// instance{id,host}.
+// Expiration (docs/session-expiration-model.md): every transition below is a compare-and-set guarded
+// on what the sweep observed, so the sweep never acts on a fact it read earlier.
 //
 // Usernames are NOT normalized on the way out. The column collation is ascii_bin, so every
 // lookup is case-sensitive and the schema is lowercase by construction (migration 001 copied the
@@ -55,17 +12,14 @@
 import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
-import {getPool} from '../db.js'
 import {instanceName} from '../instanceName.js'
 import {placeholders} from '../sql.js'
 import {sessionTag} from '../tag.js'
-import {createSessionAppRepository} from './sessionAppRepository.js'
 import {createWorkerSession, NotificationState, State, Timeout} from './workerSession.js'
 
-// `worker/expiry` is the lifecycle NARRATIVE, deliberately its own category rather than this
-// file's: the same switch turns on the signal (pty advance, busy verdict), the ratchet it produced,
-// and the deadline that resulted — across the repository and the sampler. Turning it to debug is
-// how rollout step 2 is observed, so keep the two ends on one logger name.
+// `worker/expiry` spans this file and the sampler on purpose: one switch turns on the signal (pty
+// advance, busy verdict), the ratchet it produced, and the resulting deadline. Keep both ends on
+// the one logger name.
 const log = getLogger('worker/expiry')
 
 const {PENDING, ACTIVE, CLOSED} = State
@@ -102,25 +56,33 @@ const toSession = row => createWorkerSession({
     notifiedTime: toDate(row.notified_time),
 })
 
-const createWorkerSessionRepository = (
-    pool = getPool(),
-    clock = () => new Date(),
-    sessionAppRepo = createSessionAppRepository(pool, clock),
-) => {
-    const insert = async session => {
-        await pool.query(
-            `INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, instance_name, host, creation_time, update_time, id, api_key, timeout_time)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                session.state, storedUsername(session.username), session.workerType, session.instanceType,
-                session.instance.id,
-                // Derived here rather than taken from the caller, so the stored name cannot
-                // disagree with the id it comes from in its own row. Write-only — see the column.
-                instanceName(session.id),
-                session.instance.host, session.creationTime, session.updateTime, session.id,
-                session.apiKey, session.timeoutTime,
-            ]
-        )
+export class WorkerSessionRepository {
+    #db
+    #clock
+    #sessionAppRepository
+
+    constructor(db, clock, sessionAppRepository) {
+        this.#db = db
+        this.#clock = clock
+        this.#sessionAppRepository = sessionAppRepository
+    }
+
+    insert(session) {
+        return this.#db.withConnection(async connection => {
+            await connection.query(
+                `INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, instance_name, host, creation_time, update_time, id, api_key, timeout_time)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    session.state, storedUsername(session.username), session.workerType, session.instanceType,
+                    session.instance.id,
+                    // Derived here rather than taken from the caller, so the stored name cannot
+                    // disagree with the id it comes from in its own row. Write-only — see the column.
+                    instanceName(session.id),
+                    session.instance.host, session.creationTime, session.updateTime, session.id,
+                    session.apiKey, session.timeoutTime,
+                ]
+            )
+        })
     }
 
     // update — state + update_time only. It deliberately does NOT write timeout_time: the deadline
@@ -128,26 +90,28 @@ const createWorkerSessionRepository = (
     // ratchet that landed while it was held.
     //   PENDING/ACTIVE → SET state, update_time WHERE id
     //   otherwise (CLOSED) → ALSO SET api_key = NULL
-    const update = async session => {
-        const now = clock()
-        if (session.state === PENDING || session.state === ACTIVE) {
-            await pool.query(
-                `UPDATE worker_session
-                    SET state = ?, update_time = ?
-                    WHERE id = ?`,
-                [session.state, now, session.id]
-            )
-        } else {
-            await pool.query(
-                `UPDATE worker_session
-                    SET state = ?, update_time = ?, api_key = NULL
-                    WHERE id = ?`,
-                [session.state, now, session.id]
-            )
-        }
+    async update(session) {
+        const now = this.#clock()
+        await this.#db.withConnection(async connection => {
+            if (session.state === PENDING || session.state === ACTIVE) {
+                await connection.query(
+                    `UPDATE worker_session
+                        SET state = ?, update_time = ?
+                        WHERE id = ?`,
+                    [session.state, now, session.id]
+                )
+            } else {
+                await connection.query(
+                    `UPDATE worker_session
+                        SET state = ?, update_time = ?, api_key = NULL
+                        WHERE id = ?`,
+                    [session.state, now, session.id]
+                )
+            }
+        })
         if (session.state === CLOSED) {
             // Cascade: a closed session's app associations are gone.
-            await sessionAppRepo.deleteForSession(session.id)
+            await this.#sessionAppRepository.deleteForSession(session.id)
         }
     }
 
@@ -156,167 +120,188 @@ const createWorkerSessionRepository = (
     // provisioning can take many minutes, so a session that took eight minutes to come up would
     // otherwise reach ACTIVE with 22 minutes left. Monotonic, so this can only ever help.
     // Returns the activated session, or null when no PENDING row changed.
-    const activateSession = async (sessionId, leaseMinutes) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET state = 'ACTIVE',
-                    update_time = NOW(),
-                    active_time = NOW(),
-                    timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE)
-                WHERE id = ? AND state = 'PENDING'`,
-            [leaseMinutes, sessionId]
-        )
-        if (result.affectedRows === 0) {
+    async activateSession(sessionId, leaseMinutes) {
+        const activatedRows = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET state = 'ACTIVE',
+                        update_time = NOW(),
+                        active_time = NOW(),
+                        timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE)
+                    WHERE id = ? AND state = 'PENDING'`,
+                [leaseMinutes, sessionId]
+            )
+            return result.affectedRows
+        })
+        if (activatedRows === 0) {
             return null
         }
-        const activated = await getSession(sessionId)
+        const activated = await this.getSession(sessionId)
         log.debug(() => `${sessionTag(sessionId)} [startup-lease] activated, +${leaseMinutes}m from activation`
             + ` -> ${activated.timeoutTime?.toISOString()}`)
         return activated
     }
 
     // getSession — throws if the row does not exist.
-    const getSession = async sessionId => {
-        const [rows] = await pool.query(
-            `SELECT ${SESSION_COLUMNS}
-                FROM worker_session
-                WHERE id = ?`,
-            [sessionId]
-        )
-        const row = rows[0]
-        if (!row) {
-            throw new Error(`Non-existing worker session: ${sessionId}`)
-        }
-        return toSession(row)
+    getSession(sessionId) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT ${SESSION_COLUMNS}
+                    FROM worker_session
+                    WHERE id = ?`,
+                [sessionId]
+            )
+            const row = rows[0]
+            if (!row) {
+                throw new Error(`Non-existing worker session: ${sessionId}`)
+            }
+            return toSession(row)
+        })
     }
 
     // userSessions — dynamic WHERE: username always; optional worker_type, state IN(...),
     // instance_type.
-    const userSessions = async (username, states = [], workerType = null, instanceType = null) => {
-        let query = `
-                SELECT ${SESSION_COLUMNS}
-                FROM worker_session
-                WHERE username = ?`
-        const params = [username]
-        if (workerType) {
+    userSessions(username, states = [], workerType = null, instanceType = null) {
+        return this.#db.withConnection(async connection => {
+            let query = `
+                    SELECT ${SESSION_COLUMNS}
+                    FROM worker_session
+                    WHERE username = ?`
+            const params = [username]
+            if (workerType) {
+                query += `
+                    AND worker_type = ?`
+                params.push(workerType)
+            }
+            if (states && states.length) {
+                query += `
+                    AND state IN (${placeholders(states.length)})`
+            }
+            params.push(...(states || []))
+            if (instanceType) {
+                query += `
+                    AND instance_type = ?`
+                params.push(instanceType)
+            }
+            // Starting order — without this, the UUID-keyed table returns index-scan order,
+            // which shuffles the session lists (report, /sessions/active, picker, ssh menu).
             query += `
-                AND worker_type = ?`
-            params.push(workerType)
-        }
-        if (states && states.length) {
-            query += `
-                AND state IN (${placeholders(states.length)})`
-        }
-        params.push(...(states || []))
-        if (instanceType) {
-            query += `
-                AND instance_type = ?`
-            params.push(instanceType)
-        }
-        // Starting order — without this, the UUID-keyed table returns index-scan order,
-        // which shuffles the session lists (report, /sessions/active, picker, ssh menu).
-        query += `
-                ORDER BY creation_time`
-        const [rows] = await pool.query(query, params)
-        return rows.map(toSession)
+                    ORDER BY creation_time`
+            const [rows] = await connection.query(query, params)
+            return rows.map(toSession)
+        })
     }
 
     // allOpenSessions — EVERY currently-open (PENDING+ACTIVE) session, across ALL
     // users/workerTypes: the worker's authoritative open-session list, consumed by the budget
     // module's boot seed + hourly reconciler (workerClient.openSessions()). Deliberately a lean
     // projection rather than the full toSession() shape — just the 4 fields budget needs.
-    const allOpenSessions = async () => {
-        const [rows] = await pool.query(`
-            SELECT username, id AS sessionId, instance_type, creation_time
-            FROM worker_session
-            WHERE state IN ('PENDING', 'ACTIVE')
-        `)
-        return rows.map(row => ({
-            username: row.username,
-            sessionId: row.sessionId,
-            instanceType: row.instance_type,
-            creationTime: toDate(row.creation_time),
-        }))
+    allOpenSessions() {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(`
+                SELECT username, id AS sessionId, instance_type, creation_time
+                FROM worker_session
+                WHERE state IN ('PENDING', 'ACTIVE')
+            `)
+            return rows.map(row => ({
+                username: row.username,
+                sessionId: row.sessionId,
+                instanceType: row.instance_type,
+                creationTime: toDate(row.creation_time),
+            }))
+        })
     }
 
-    const sessions = async states => {
-        const [rows] = await pool.query(
-            `
-                SELECT ${SESSION_COLUMNS}
-                FROM worker_session
-                WHERE state in (${placeholders(states.length)})`,
-            states
-        )
-        return rows.map(toSession)
+    sessions(states) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `
+                    SELECT ${SESSION_COLUMNS}
+                    FROM worker_session
+                    WHERE state in (${placeholders(states.length)})`,
+                states
+            )
+            return rows.map(toSession)
+        })
     }
 
     // timedOutSessions — PENDING only. A PENDING session's update_time is never refreshed
     // (heartbeat is a no-op until ACTIVE), so it is effectively the creation time: a provision
     // that hangs for ten minutes is dead. An ACTIVE session's lifetime is the stored
     // timeout_time and is swept by ExpireSessions instead.
-    const timedOutSessions = async () => {
-        const now = clock()
-        const [rows] = await pool.query(
-            `
-                SELECT ${SESSION_COLUMNS}
-                FROM worker_session
-                WHERE state = ? AND update_time < ?`,
-            [PENDING, Timeout.PENDING.lastValidUpdate(now)]
-        )
-        return rows.map(toSession)
+    timedOutSessions() {
+        return this.#db.withConnection(async connection => {
+            const now = this.#clock()
+            const [rows] = await connection.query(
+                `
+                    SELECT ${SESSION_COLUMNS}
+                    FROM worker_session
+                    WHERE state = ? AND update_time < ?`,
+                [PENDING, Timeout.PENDING.lastValidUpdate(now)]
+            )
+            return rows.map(toSession)
+        })
     }
 
-    const sessionOnInstance = async (instanceId, states) => {
-        const [rows] = await pool.query(
-            `
-                SELECT ${SESSION_COLUMNS}
-                FROM worker_session
-                WHERE instance_id = ? AND state in (${placeholders(states.length)})`,
-            [instanceId, ...states]
-        )
-        const row = rows[0]
-        return row ? toSession(row) : null
+    sessionOnInstance(instanceId, states) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `
+                    SELECT ${SESSION_COLUMNS}
+                    FROM worker_session
+                    WHERE instance_id = ? AND state in (${placeholders(states.length)})`,
+                [instanceId, ...states]
+            )
+            const row = rows[0]
+            return row ? toSession(row) : null
+        })
     }
 
     // findUsernameByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match.
-    const findUsernameByApiKey = async apiKey => {
+    findUsernameByApiKey(apiKey) {
         if (!apiKey) {
-            return null
+            return Promise.resolve(null)
         }
-        const [rows] = await pool.query(
-            `SELECT username FROM worker_session
-                WHERE api_key = ? AND state IN (?, ?)`,
-            [apiKey, PENDING, ACTIVE]
-        )
-        const row = rows[0]
-        return row?.username ?? null
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT username FROM worker_session
+                    WHERE api_key = ? AND state IN (?, ?)`,
+                [apiKey, PENDING, ACTIVE]
+            )
+            const row = rows[0]
+            return row?.username ?? null
+        })
     }
 
     // mostRecentlyClosedSessionByUser — a plain object { <username>: Date }.
-    const mostRecentlyClosedSessionByUser = async () => {
-        const [rows] = await pool.query(`
-            SELECT username, MAX(update_time) AS update_time
-            FROM \`worker_session\`
-            WHERE state = 'CLOSED'
-            GROUP BY username
-        `)
-        const result = {}
-        for (const row of rows) {
-            result[row.username] = toDate(row.update_time)
-        }
-        return result
+    mostRecentlyClosedSessionByUser() {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(`
+                SELECT username, MAX(update_time) AS update_time
+                FROM \`worker_session\`
+                WHERE state = 'CLOSED'
+                GROUP BY username
+            `)
+            const result = {}
+            for (const row of rows) {
+                result[row.username] = toDate(row.update_time)
+            }
+            return result
+        })
     }
 
     // mostRecentlyClosedSession — { timestamp: Date } or {}.
-    const mostRecentlyClosedSession = async username => {
-        const [rows] = await pool.query(`
-            SELECT username, MAX(update_time) AS update_time
-            FROM \`worker_session\`
-            WHERE state = 'CLOSED' and username = ?
-            GROUP BY username
-        `, [username])
-        const row = rows[0]
-        return row ? {timestamp: toDate(row.update_time)} : {}
+    mostRecentlyClosedSession(username) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(`
+                SELECT username, MAX(update_time) AS update_time
+                FROM \`worker_session\`
+                WHERE state = 'CLOSED' and username = ?
+                GROUP BY username
+            `, [username])
+            const row = rows[0]
+            return row ? {timestamp: toDate(row.update_time)} : {}
+        })
     }
 
     // ── the ratchet ───────────────────────────────────────────────────────────
@@ -365,7 +350,7 @@ const createWorkerSessionRepository = (
     // button, the email link) have no successor to re-assert them, so they must be able to see
     // that the extension landed. They all pass interaction=true, which stamps NOW() and therefore
     // always changes the row.
-    const extendSession = async ({sessionId, minutes, interaction = false, capHours = null, reason = null}) => {
+    async extendSession({sessionId, minutes, interaction = false, capHours = null, reason = null}) {
         const candidate = capHours == null
             ? 'NOW() + INTERVAL ? MINUTE'
             : `LEAST(NOW() + INTERVAL ? MINUTE, ${UNATTENDED_ANCHOR} + INTERVAL ? MINUTE)`
@@ -373,22 +358,24 @@ const createWorkerSessionRepository = (
             ? [minutes]
             : [minutes, Math.round(capHours * 60)]
         const extendsDeadline = `${candidate} > COALESCE(timeout_time, NOW())`
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = IF(${extendsDeadline}, 'NONE', notification_state),
-                    notified_time = IF(${extendsDeadline}, NULL, notified_time),
-                    last_interaction_time = IF(?, NOW(), last_interaction_time),
-                    timeout_time = GREATEST(COALESCE(timeout_time, NOW()), ${candidate})
-                WHERE id = ? AND state = 'ACTIVE'`,
-            [
-                ...candidateParams,
-                ...candidateParams,
-                interaction ? 1 : 0,
-                ...candidateParams,
-                sessionId,
-            ]
-        )
-        const applied = result.affectedRows > 0
+        const applied = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = IF(${extendsDeadline}, 'NONE', notification_state),
+                        notified_time = IF(${extendsDeadline}, NULL, notified_time),
+                        last_interaction_time = IF(?, NOW(), last_interaction_time),
+                        timeout_time = GREATEST(COALESCE(timeout_time, NOW()), ${candidate})
+                    WHERE id = ? AND state = 'ACTIVE'`,
+                [
+                    ...candidateParams,
+                    ...candidateParams,
+                    interaction ? 1 : 0,
+                    ...candidateParams,
+                    sessionId,
+                ]
+            )
+            return result.affectedRows > 0
+        })
         if (log.isDebug()) {
             // An UPDATE cannot return the value it wrote, so the resulting deadline costs a read.
             // Taken only under isDebug(), which is what keeps it affordable on the sampler's
@@ -396,7 +383,7 @@ const createWorkerSessionRepository = (
             // a ratchet that was clamped by the cap logs the same as one that was not, except
             // that the deadline does not move.
             const deadline = applied
-                ? (await getSession(sessionId).catch(() => null))?.timeoutTime
+                ? (await this.getSession(sessionId).catch(() => null))?.timeoutTime
                 : null
             log.debug(() => [
                 `${sessionTag(sessionId)} [${reason ?? 'unspecified'}]`,
@@ -423,39 +410,43 @@ const createWorkerSessionRepository = (
     // one-off act earns it in either direction. Setting a deadline in the past therefore restarts
     // the cycle rather than closing at once — the session is warned again and gets its full grace,
     // and Stop remains the way to hand an instance back immediately.
-    const setSessionTimeout = async ({sessionId, minutes}) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = 'NONE',
-                    notified_time = NULL,
-                    last_interaction_time = NOW(),
-                    timeout_time = NOW() + INTERVAL ? MINUTE
-                WHERE id = ? AND state = 'ACTIVE'`,
-            [minutes, sessionId]
-        )
-        const applied = result.affectedRows > 0
-        log.debug(() => `${sessionTag(sessionId)} [keep-alive] `
-            + (applied ? `deadline SET to now +${minutes}m` : `not set (+${minutes}m, no ACTIVE row)`))
-        return applied
+    setSessionTimeout({sessionId, minutes}) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = 'NONE',
+                        notified_time = NULL,
+                        last_interaction_time = NOW(),
+                        timeout_time = NOW() + INTERVAL ? MINUTE
+                    WHERE id = ? AND state = 'ACTIVE'`,
+                [minutes, sessionId]
+            )
+            const applied = result.affectedRows > 0
+            log.debug(() => `${sessionTag(sessionId)} [keep-alive] `
+                + (applied ? `deadline SET to now +${minutes}m` : `not set (+${minutes}m, no ACTIVE row)`))
+            return applied
+        })
     }
 
     // redeemExtension — the email link's extension, guarded on the notified_time the token was
     // signed against. The HMAC only proves the token is well-formed; two concurrent clicks both
     // verify, so single-use has to come from the write. Any extension (including this one) clears
     // notified_time, which is what spends the token.
-    const redeemExtension = async ({sessionId, notifiedTime, minutes}) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE),
-                    last_interaction_time = NOW(),
-                    notification_state = 'NONE',
-                    notified_time = NULL
-                WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
-            [minutes, sessionId, notifiedTime]
-        )
-        const redeemed = result.affectedRows > 0
-        log.debug(() => `${sessionTag(sessionId)} [email-link] ${redeemed ? `+${minutes}m` : 'token already spent or session gone'}`)
-        return redeemed
+    redeemExtension({sessionId, notifiedTime, minutes}) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE),
+                        last_interaction_time = NOW(),
+                        notification_state = 'NONE',
+                        notified_time = NULL
+                    WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
+                [minutes, sessionId, notifiedTime]
+            )
+            const redeemed = result.affectedRows > 0
+            log.debug(() => `${sessionTag(sessionId)} [email-link] ${redeemed ? `+${minutes}m` : 'token already spent or session gone'}`)
+            return redeemed
+        })
     }
 
     // redeemTermination — the email's terminate link. Guarded on the notified_time the token was
@@ -463,19 +454,21 @@ const createWorkerSessionRepository = (
     // wins and a link left sitting in an inbox cannot kill an instance whose owner went back to
     // work. Deliberately WITHOUT the sweep's grace and task predicates — this is someone asking
     // explicitly, which is what the in-app [Terminate now] button does too.
-    const redeemTermination = async ({sessionId, notifiedTime}) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET state = 'CLOSED', update_time = NOW(), api_key = NULL
-                WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
-            [sessionId, notifiedTime]
-        )
-        const terminated = result.affectedRows > 0
+    async redeemTermination({sessionId, notifiedTime}) {
+        const terminated = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET state = 'CLOSED', update_time = NOW(), api_key = NULL
+                    WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
+                [sessionId, notifiedTime]
+            )
+            return result.affectedRows > 0
+        })
         log.debug(() => `${sessionTag(sessionId)} [email-link] ${terminated ? 'terminated' : 'token already spent or session gone'}`)
         if (!terminated) {
             return false
         }
-        await sessionAppRepo.deleteForSession(sessionId)
+        await this.#sessionAppRepository.deleteForSession(sessionId)
         return true
     }
 
@@ -483,56 +476,64 @@ const createWorkerSessionRepository = (
     // expiredSessions — ACTIVE sessions past their deadline with no PENDING or ACTIVE task. The
     // task exclusion is a filter here AND a predicate on the close (§5b rule 3), because a task
     // can start during the grace period.
-    const expiredSessions = async () => {
-        const [rows] = await pool.query(
-            `SELECT ${SESSION_COLUMNS}
-                FROM worker_session s
-                WHERE s.state = 'ACTIVE'
-                  AND s.timeout_time IS NOT NULL
-                  AND s.timeout_time < NOW()
-                  AND NOT EXISTS (
-                      SELECT 1 FROM task t
-                       WHERE t.session_id = s.id AND t.state IN ('PENDING', 'ACTIVE'))`
-        )
-        return rows.map(toSession)
+    expiredSessions() {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT ${SESSION_COLUMNS}
+                    FROM worker_session s
+                    WHERE s.state = 'ACTIVE'
+                      AND s.timeout_time IS NOT NULL
+                      AND s.timeout_time < NOW()
+                      AND NOT EXISTS (
+                          SELECT 1 FROM task t
+                           WHERE t.session_id = s.id AND t.state IN ('PENDING', 'ACTIVE'))`
+            )
+            return rows.map(toSession)
+        })
     }
 
     // Each transition is guarded on the state the sweep observed, so exactly one sweep sees it and
     // the event/email fire once even if a sweep overruns its minute.
-    const notifyExpiry = async sessionId => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = 'NOTIFIED', notified_time = NOW()
-                WHERE id = ? AND state = 'ACTIVE' AND notification_state = 'NONE'
-                  AND timeout_time IS NOT NULL AND timeout_time < NOW()`,
-            [sessionId]
-        )
-        return result.affectedRows > 0
+    notifyExpiry(sessionId) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = 'NOTIFIED', notified_time = NOW()
+                    WHERE id = ? AND state = 'ACTIVE' AND notification_state = 'NONE'
+                      AND timeout_time IS NOT NULL AND timeout_time < NOW()`,
+                [sessionId]
+            )
+            return result.affectedRows > 0
+        })
     }
 
-    const markEmailed = async (sessionId, notifiedTime) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = 'EMAILED'
-                WHERE id = ? AND notification_state = 'NOTIFIED' AND notified_time = ?`,
-            [sessionId, notifiedTime]
-        )
-        return result.affectedRows > 0
+    markEmailed(sessionId, notifiedTime) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = 'EMAILED'
+                    WHERE id = ? AND notification_state = 'NOTIFIED' AND notified_time = ?`,
+                [sessionId, notifiedTime]
+            )
+            return result.affectedRows > 0
+        })
     }
 
     // dismissNotification — "I saw it, don't email me". It does NOT move the deadline: an easy
     // misclick must not be read as consent to close early, and the session still closes at
     // T+grace. DISMISSED is reachable from EMAILED too, so a user who dismisses after the mail
     // went out still silences a re-send.
-    const dismissNotification = async (sessionId, username = null) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = 'DISMISSED'
-                WHERE id = ? AND notification_state IN ('NOTIFIED', 'EMAILED')
-                  ${username ? 'AND username = ?' : ''}`,
-            username ? [sessionId, username] : [sessionId]
-        )
-        return result.affectedRows > 0
+    dismissNotification(sessionId, username = null) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = 'DISMISSED'
+                    WHERE id = ? AND notification_state IN ('NOTIFIED', 'EMAILED')
+                      ${username ? 'AND username = ?' : ''}`,
+                username ? [sessionId, username] : [sessionId]
+            )
+            return result.affectedRows > 0
+        })
     }
 
     // restartExpiryCycle — notify mode's answer to "what would have happened". Sessions must not
@@ -541,16 +542,18 @@ const createWorkerSessionRepository = (
     // re-notify on the very next minute (the deadline is still in the past), so the reset also
     // ratchets the deadline by one grace period — the cycle restarts at the same cadence
     // enforcement would have used, and flipping to enforce starts everyone from a fresh warning.
-    const restartExpiryCycle = async (sessionId, notifiedTime, minutes) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET notification_state = 'NONE',
-                    notified_time = NULL,
-                    timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE)
-                WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
-            [minutes, sessionId, notifiedTime]
-        )
-        return result.affectedRows > 0
+    restartExpiryCycle(sessionId, notifiedTime, minutes) {
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET notification_state = 'NONE',
+                        notified_time = NULL,
+                        timeout_time = GREATEST(COALESCE(timeout_time, NOW()), NOW() + INTERVAL ? MINUTE)
+                    WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
+                [minutes, sessionId, notifiedTime]
+            )
+            return result.affectedRows > 0
+        })
     }
 
     // closeExpiredSession — the first transaction of the two-transaction close, with every
@@ -558,52 +561,28 @@ const createWorkerSessionRepository = (
     // them is a lost update waiting to happen: an interaction landing in between would lose to a
     // decision made before it arrived. Zero rows changed means something rescued the session, and
     // the caller must NOT tear down the instance.
-    const closeExpiredSession = async ({sessionId, notificationState, notifiedTime, graceMinutes}) => {
-        const [result] = await pool.query(
-            `UPDATE worker_session
-                SET state = 'CLOSED', update_time = NOW(), api_key = NULL
-                WHERE id = ?
-                  AND state = 'ACTIVE'
-                  AND timeout_time IS NOT NULL AND timeout_time < NOW()
-                  AND notification_state = ?
-                  AND notified_time = ?
-                  AND notified_time < NOW() - INTERVAL ? MINUTE
-                  AND NOT EXISTS (
-                      SELECT 1 FROM task t
-                       WHERE t.session_id = worker_session.id AND t.state IN ('PENDING', 'ACTIVE'))`,
-            [sessionId, notificationState, notifiedTime, graceMinutes]
-        )
-        if (result.affectedRows === 0) {
+    async closeExpiredSession({sessionId, notificationState, notifiedTime, graceMinutes}) {
+        const closedRows = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET state = 'CLOSED', update_time = NOW(), api_key = NULL
+                    WHERE id = ?
+                      AND state = 'ACTIVE'
+                      AND timeout_time IS NOT NULL AND timeout_time < NOW()
+                      AND notification_state = ?
+                      AND notified_time = ?
+                      AND notified_time < NOW() - INTERVAL ? MINUTE
+                      AND NOT EXISTS (
+                          SELECT 1 FROM task t
+                           WHERE t.session_id = worker_session.id AND t.state IN ('PENDING', 'ACTIVE'))`,
+                [sessionId, notificationState, notifiedTime, graceMinutes]
+            )
+            return result.affectedRows
+        })
+        if (closedRows === 0) {
             return false
         }
-        await sessionAppRepo.deleteForSession(sessionId)
+        await this.#sessionAppRepository.deleteForSession(sessionId)
         return true
     }
-
-    return {
-        activateSession,
-        allOpenSessions,
-        closeExpiredSession,
-        dismissNotification,
-        expiredSessions,
-        extendSession,
-        findUsernameByApiKey,
-        getSession,
-        insert,
-        markEmailed,
-        mostRecentlyClosedSession,
-        mostRecentlyClosedSessionByUser,
-        notifyExpiry,
-        redeemExtension,
-        redeemTermination,
-        setSessionTimeout,
-        restartExpiryCycle,
-        sessionOnInstance,
-        sessions,
-        timedOutSessions,
-        update,
-        userSessions,
-    }
 }
-
-export {createWorkerSessionRepository}

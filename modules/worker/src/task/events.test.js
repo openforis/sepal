@@ -1,6 +1,6 @@
 // Unit tests for the task-changed event decorator. No database — hand-rolled fake repo.
 
-import {taskChanged$, withTaskChangedEvents} from './events.js'
+import {EventEmittingTaskRepository, taskChanged$} from './events.js'
 
 const task = {id: 't-1', username: 'alice', state: 'PENDING'}
 
@@ -10,10 +10,10 @@ const collectEvents = () => {
     return {events, stop: () => subscription.unsubscribe()}
 }
 
-describe('withTaskChangedEvents', () => {
+describe('EventEmittingTaskRepository', () => {
     it('emits {username} after insert resolves', async () => {
         const {events, stop} = collectEvents()
-        const repo = withTaskChangedEvents({insert: async () => 'inserted'})
+        const repo = new EventEmittingTaskRepository({insert: async () => 'inserted'})
         const result = await repo.insert(task)
         stop()
         expect(result).toBe('inserted')
@@ -22,7 +22,7 @@ describe('withTaskChangedEvents', () => {
 
     it('emits {username} after update and remove resolve', async () => {
         const {events, stop} = collectEvents()
-        const repo = withTaskChangedEvents({
+        const repo = new EventEmittingTaskRepository({
             update: async () => null,
             remove: async () => null,
         })
@@ -34,7 +34,7 @@ describe('withTaskChangedEvents', () => {
 
     it('emits {username} after removeNonPendingOrActiveUserTasks resolves', async () => {
         const {events, stop} = collectEvents()
-        const repo = withTaskChangedEvents({removeNonPendingOrActiveUserTasks: async () => null})
+        const repo = new EventEmittingTaskRepository({removeNonPendingOrActiveUserTasks: async () => null})
         await repo.removeNonPendingOrActiveUserTasks('bob')
         stop()
         expect(events).toEqual([{username: 'bob'}])
@@ -42,7 +42,7 @@ describe('withTaskChangedEvents', () => {
 
     it('does not emit when the underlying mutation rejects', async () => {
         const {events, stop} = collectEvents()
-        const repo = withTaskChangedEvents({
+        const repo = new EventEmittingTaskRepository({
             update: async () => {
                 throw new Error('boom')
             },
@@ -52,9 +52,11 @@ describe('withTaskChangedEvents', () => {
         expect(events).toEqual([])
     })
 
-    it('passes query methods through untouched', async () => {
-        const getTask = async () => task
-        const repo = withTaskChangedEvents({getTask, insert: async () => null})
-        expect(repo.getTask).toBe(getTask)
+    it('forwards query methods to the repo', async () => {
+        const repo = new EventEmittingTaskRepository({getTask: async taskId => ({...task, id: taskId})})
+
+        const found = await repo.getTask('t-2')
+
+        expect(found).toEqual({...task, id: 't-2'})
     })
 })

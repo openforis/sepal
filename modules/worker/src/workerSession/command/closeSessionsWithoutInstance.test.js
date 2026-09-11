@@ -1,6 +1,7 @@
 // The sweep must never close a session on an inconclusive probe: a transient Docker blip used to
 // close the row, after which ReleaseUnusedInstances terminated the still-live machine 5 minutes
-// later. Only a confirmed MISSING closes, and only after the tracker agrees.
+// later. Nothing closes until the tracker agrees — on a confirmed MISSING, or on an UNKNOWN that has
+// outlasted its backstop.
 
 import {jest} from '@jest/globals'
 
@@ -19,6 +20,8 @@ const session = id => createWorkerSession({
     updateTime: new Date('2026-01-01T00:00:00Z'),
 })
 
+const NOW = new Date('2026-01-01T12:00:00Z')
+
 const build = ({sessions, statuses}) => {
     const deps = {
         repo: {
@@ -31,7 +34,11 @@ const build = ({sessions, statuses}) => {
                 .map(s => ({session: s, status: statuses[s.id]}))),
         },
         emitWorkerSessionClosed: jest.fn(),
-        tracker: createMissingInstanceTracker({missesBeforeClose: 2, unknownBackstopMs: 30 * 60_000}),
+        // Time stands still across a sweep here, so the tracker's backstop never elapses: these tests
+        // are about what one probe result is worth, not about how long an instance may stay unreachable.
+        tracker: createMissingInstanceTracker({
+            missesBeforeClose: 2, unknownBackstopMs: 30 * 60_000, clock: () => NOW
+        }),
     }
     return deps
 }
@@ -50,7 +57,8 @@ test('MISSING confirmed on a second sweep closes the session', async () => {
     expect(deps.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
 })
 
-test('an UNKNOWN probe never closes the session, however long it repeats', async () => {
+// Sustained unreachability does eventually close, on the tracker's backstop — missingInstanceTracker.test.js.
+test('an UNKNOWN probe is never on its own enough to close the session', async () => {
     const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'UNKNOWN'}})
     for (let i = 0; i < 10; i++) {
         await closeSessionsWithoutInstance(deps)

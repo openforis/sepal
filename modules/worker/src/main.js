@@ -4,22 +4,22 @@ import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
 import * as config from './config.js'
-import {getPool, initializeDatabase} from './db.js'
+import {initializeDb} from './db.js'
 import {createHostingService} from './hostingService/index.js'
 import {createBusyRegistry} from './instanceUsage/busyRegistry.js'
 import {createDockerInstanceStats} from './instanceUsage/dockerInstanceStats.js'
 import {createInstanceUsageComponent} from './instanceUsage/index.js'
 import {createTerminalRegistry} from './instanceUsage/terminalRegistry.js'
-import {createUsageRepository} from './instanceUsage/usageRepository.js'
+import {UsageRepository} from './instanceUsage/usageRepository.js'
 import {createLockedUsers} from './lockedUsers.js'
 import {createRoutes, createWsRoutes} from './routes.js'
-import {withTaskChangedEvents} from './task/events.js'
+import {EventEmittingTaskRepository} from './task/events.js'
 import {createTaskComponent} from './task/index.js'
 import {createTaskManager} from './task/taskManager.js'
-import {createTaskRepository} from './task/taskRepository.js'
+import {TaskRepository} from './task/taskRepository.js'
 import {createTasksApi} from './task/tasksApi.js'
 import {createWorkerGateway} from './task/workerGateway.js'
-import {createClaimRepository} from './workerInstance/claimRepository.js'
+import {ClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
 import {instanceFromSession} from './workerInstance/instanceFromSession.js'
@@ -32,12 +32,12 @@ import {createExpiryTokens} from './workerSession/expiryToken.js'
 import {createGoogleOAuthGateway} from './workerSession/googleOAuthGateway.js'
 import {createSessionComponent} from './workerSession/index.js'
 import {createSandboxServerManager} from './workerSession/sandboxServerManager.js'
-import {createSessionAppRepository} from './workerSession/sessionAppRepository.js'
+import {SessionAppRepository} from './workerSession/sessionAppRepository.js'
 import {createSessionManager} from './workerSession/sessionManager.js'
 import {createSessionsApi} from './workerSession/sessionsApi.js'
 import {State} from './workerSession/workerSession.js'
 import {createWorkerSessionApiKey} from './workerSession/workerSessionApiKey.js'
-import {createWorkerSessionRepository} from './workerSession/workerSessionRepository.js'
+import {WorkerSessionRepository} from './workerSession/workerSessionRepository.js'
 
 configureServer(logConfig)
 
@@ -53,34 +53,35 @@ let taskComponent = null
 let usageComponent = null
 
 const main = async () => {
-    await initializeDatabase()
+    const db = await initializeDb()
+    const clock = () => new Date()
 
     // The session_app repository is shared between the worker_session repository (cascade delete
     // on session close) and the session manager, so both talk to ONE instance.
-    const sessionAppRepo = createSessionAppRepository(getPool())
+    const sessionAppRepository = new SessionAppRepository(db, clock)
 
-    const sessionRepo = createWorkerSessionRepository(getPool(), undefined, sessionAppRepo)
-    const sandboxSessionApiKey = createWorkerSessionApiKey(sessionRepo)
+    const workerSessionRepository = new WorkerSessionRepository(db, clock, sessionAppRepository)
+    const sandboxSessionApiKey = createWorkerSessionApiKey(workerSessionRepository)
 
-    const usageRepo = createUsageRepository(getPool())
+    const usageRepository = new UsageRepository(db, clock)
 
     // Constructing the hosting service NEVER calls live AWS; that only happens on
     // provider.start()/launch.
     const hostingService = createHostingService(config, {sandboxSessionApiKey})
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
-    const instanceClaims = createClaimRepository(getPool())
+    const claimRepository = new ClaimRepository(db)
 
     // The open sessions are the durable record of what is allocated. A provider that keeps its
     // world in memory (local dev) rebuilds from this at start; AWS ignores it. It lives here
     // rather than inside workerInstance so that component never has to import workerSession.
     const openSessionInstances = async () => {
-        const sessions = await sessionRepo.sessions([State.PENDING, State.ACTIVE])
+        const sessions = await workerSessionRepository.sessions([State.PENDING, State.ACTIVE])
         return sessions.filter(s => s.instance?.id).map(instanceFromSession)
     }
 
     instanceComponent = createWorkerInstanceComponent({
-        claims: instanceClaims,
+        claims: claimRepository,
         provider: instanceProvider,
         provisioner: instanceProvisioner,
         instanceTypes,
@@ -96,7 +97,7 @@ const main = async () => {
     // be a construction cycle (sessionManager depends on lockedUsers).
     const lockedUsers = createLockedUsers({
         closeUserSessions: username => _closeUserSessions(username, {
-            repo: sessionRepo,
+            repo: workerSessionRepository,
             instanceManager: instanceComponent.instanceManager,
             emitWorkerSessionClosed,
         }),
@@ -151,12 +152,12 @@ const main = async () => {
     }
 
     const sessionManager = createSessionManager({
-        repo: sessionRepo,
-        appRepo: sessionAppRepo,
+        repo: workerSessionRepository,
+        appRepo: sessionAppRepository,
         instanceManager: instanceComponent.instanceManager,
         budgetClient,
         lockedUsers,
-        usageRepo,
+        usageRepo: usageRepository,
         expiryPolicy,
         instanceTypeById,
         sendEmail,
@@ -173,29 +174,29 @@ const main = async () => {
     const googleOAuthGateway = createGoogleOAuthGateway(config)
     sessionComponent = createSessionComponent({
         sessionManager,
-        repo: sessionRepo,
+        repo: workerSessionRepository,
         googleOAuthGateway,
         instanceManager: instanceComponent.instanceManager,
     })
 
     // workerGateway is the outbound HTTP client to the sandbox task-executor. Constructing it never
     // calls the executor; that only happens on execute/cancel.
-    const taskRepo = withTaskChangedEvents(createTaskRepository(getPool()))
+    const taskRepository = new EventEmittingTaskRepository(new TaskRepository(db, clock))
     const workerGateway = createWorkerGateway({
         sepalUsername: config.sepalUser || 'sepalAdmin',
         sepalPassword: config.sepalPassword,
         workerPort: config.workerPort,
     })
     const taskManager = createTaskManager({
-        repo: taskRepo,
+        repo: taskRepository,
         sessionManager,
         workerGateway,
     })
     taskComponent = createTaskComponent({taskManager})
 
     usageComponent = createInstanceUsageComponent({
-        sessionRepo,
-        usageRepo,
+        sessionRepo: workerSessionRepository,
+        usageRepo: usageRepository,
         stats: createDockerInstanceStats({config, defaultDaemonHost: hostingService.defaultDaemonHost}),
         instanceTypes,
         samplingIntervalSeconds: config.usageSamplingIntervalSeconds,
@@ -207,7 +208,7 @@ const main = async () => {
     })
 
     const sandboxServers = createSandboxServerManager({
-        repo: sessionRepo,
+        repo: workerSessionRepository,
         control: createDockerSandboxServerControl({
             config, defaultDaemonHost: hostingService.defaultDaemonHost}),
     })

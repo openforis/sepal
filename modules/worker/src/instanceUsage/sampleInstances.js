@@ -148,7 +148,7 @@ const extendBusySessions = async ({sessions, sessionRepo, usageRepo, instanceTyp
     }
 }
 
-const sampleInstances = async ({sessionRepo, usageRepo, stats, instanceTypeById, usageMetrics, samplerState, terminals = null, verdicts = null, policy = null, clock = () => new Date()}) => {
+const sampleInstances = async ({sessionRepo, usageRepo, stats, instanceTypeById, usageMetrics, samplerState, terminals = null, verdicts = null, policy = null, clock}) => {
     const sessions = await sessionRepo.sessions([State.ACTIVE])
     const samples = []
     // Every session of a known instance type is evaluated for busyness, INCLUDING one whose

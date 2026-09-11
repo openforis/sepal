@@ -517,7 +517,7 @@ describe('closeSessionsWithoutInstance', () => {
             sessionsWithoutInstance: jest.fn(async () => [{session: a, status: 'MISSING'}]),
         })
         const {mgr, events} = build({repo, instanceManager})
-        const tracker = createMissingInstanceTracker({missesBeforeClose: 2})
+        const tracker = createMissingInstanceTracker({missesBeforeClose: 2, clock: fixedClock})
         await mgr.closeSessionsWithoutInstance(tracker)
         await mgr.closeSessionsWithoutInstance(tracker)
         expect(repo.sessions).toHaveBeenCalledWith([State.ACTIVE])
