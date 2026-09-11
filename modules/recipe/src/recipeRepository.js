@@ -8,9 +8,6 @@ export class RecipeRepository {
     #db
 
     constructor(db) {
-        if (!db) {
-            throw new Error('A recipe repository requires a db')
-        }
         this.#db = db
     }
 
@@ -177,6 +174,18 @@ export class RecipeRepository {
     }
 }
 
+// Placement and revision are column-owned, and a load injects them. Every write strips them from the
+// document so no caller can leave a second copy behind, stale from the next move or save onward.
+const contentsColumn = content => {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+        throw new Error('A recipe must be a JSON object')
+    }
+    const stored = {...content}
+    delete stored.revision
+    delete stored.projectId
+    return JSON.stringify(stored)
+}
+
 // Which precondition failed is only knowable from the row. A foreign recipe is reported absent, so
 // ownership is never disclosed across the port.
 const explainRejection = async (connection, id, owner, type) => {
@@ -211,25 +220,7 @@ const toSummary = row => ({
     revision: row.revision
 })
 
-const toProject = row => ({
-    id: row.id,
-    name: row.name,
-    username: row.username,
-    defaultAssetFolder: row.default_asset_folder ?? null,
-    defaultWorkspaceFolder: row.default_workspace_folder ?? null
-})
-
-// Placement and revision are column-owned, and a load injects them. Every write strips them from the
-// document so no caller can leave a second copy behind, stale from the next move or save onward.
-const contentsColumn = content => {
-    if (!content || typeof content !== 'object' || Array.isArray(content)) {
-        throw new Error('A recipe must be a JSON object')
-    }
-    const stored = {...content}
-    delete stored.revision
-    delete stored.projectId
-    return JSON.stringify(stored)
-}
+const placeholders = items => items.map(() => '?').join(', ')
 
 // Only the migration read tolerates a document it cannot parse: it reports the recipe with no content so
 // the runner can skip that one and migrate the rest. A query that fails still throws.
@@ -241,4 +232,10 @@ const parsedOrNull = contents => {
     }
 }
 
-const placeholders = items => items.map(() => '?').join(', ')
+const toProject = row => ({
+    id: row.id,
+    name: row.name,
+    username: row.username,
+    defaultAssetFolder: row.default_asset_folder ?? null,
+    defaultWorkspaceFolder: row.default_workspace_folder ?? null
+})

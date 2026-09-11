@@ -12,6 +12,14 @@ import {isValidEmail, isValidUsername} from './validation.js'
 
 const log = getLogger('userApi')
 
+// What #applyDetails answers with when the body carries an email the database would reject, so its
+// callers can tell that apart from an unknown user.
+const INVALID_EMAIL = Symbol('invalid-email')
+
+const PASSWORD_MIN_LENGTH = 12
+
+const PASSWORD_MAX_LENGTH = 100
+
 export class UserApi {
     #repository
     #googleService
@@ -485,11 +493,3 @@ const readBody = ctx => ctx.request.body || {}
 // The username is validated lowercased, because that is the spelling insertUser will store.
 const isValidNewUser = ({username, name, email}) =>
     isValidUsername((username || '').toLowerCase()) && Boolean(name) && isValidEmail(email)
-
-// What #applyDetails answers with when the body carries an email the database would reject, so its
-// callers can tell that apart from an unknown user.
-const INVALID_EMAIL = Symbol('invalid-email')
-
-const PASSWORD_MIN_LENGTH = 12
-
-const PASSWORD_MAX_LENGTH = 100

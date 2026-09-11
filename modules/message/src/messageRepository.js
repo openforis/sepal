@@ -10,12 +10,6 @@ export class MessageRepository {
     #clock
 
     constructor(db, clock) {
-        if (!db) {
-            throw new Error('A message repository requires a db')
-        }
-        if (!clock) {
-            throw new Error('A message repository requires a clock')
-        }
         this.#db = db
         this.#clock = clock
     }
@@ -58,7 +52,6 @@ export class MessageRepository {
     }
 
     // LEFT JOIN so every non-removed message appears; notifications without a row default to UNREAD.
-    // Select the message author as `author` (m.username) AND the requesting user as `username`.
     // Unpublished messages (priority < 0) are admin-only and carry no notification: they never
     // reach non-admins and are forced READ so they cannot trigger any unread/auto-open behavior.
     listNotifications(username, isAdmin) {
