@@ -9,10 +9,7 @@ import {scheduleStorageCheck} from './storageCheck.js'
 
 const log = getLogger('messageQueue')
 
-const logError = (key, msg) =>
-    log.error('Incoming message doesn\'t match expected shape', {key, msg})
-
-export const createMessageHandler = ({cancelInactivityCheck, scheduleInactivityCheck}) => {
+export const createMessageHandler = ({inactivityCheck}) => {
     const event$ = new Subject()
 
     const scheduleStorageCheck$ = event$.pipe(
@@ -29,7 +26,7 @@ export const createMessageHandler = ({cancelInactivityCheck, scheduleInactivityC
     const scheduleInactivityCheck$ = event$.pipe(
         filter(({type}) => ['userDown', 'sessionDeactivated'].includes(type)),
         mergeMap(({username}) =>
-            from(scheduleInactivityCheck(({username}))).pipe(
+            from(inactivityCheck.scheduleInactivityCheck({username})).pipe(
                 catchError(error => {
                     log.error('Error scheduling inactivity check:', error)
                     return EMPTY
@@ -41,7 +38,7 @@ export const createMessageHandler = ({cancelInactivityCheck, scheduleInactivityC
     const cancelInactivityCheck$ = event$.pipe(
         filter(({type}) => ['clientUp', 'sessionActivated'].includes(type)),
         mergeMap(({username}) =>
-            from(cancelInactivityCheck(({username}))).pipe(
+            from(inactivityCheck.cancelInactivityCheck({username})).pipe(
                 catchError(error => {
                     log.error('Error cancelling inactivity check:', error)
                     return EMPTY
@@ -122,3 +119,6 @@ export const createMessageHandler = ({cancelInactivityCheck, scheduleInactivityC
 
     return messageHandler
 }
+
+const logError = (key, msg) =>
+    log.error('Incoming message doesn\'t match expected shape', {key, msg})

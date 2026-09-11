@@ -32,10 +32,7 @@ const main = async () => {
             {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
             {queue: 'userStorage.files', topic: 'files.#'},
         ],
-        handler: createMessageHandler({
-            cancelInactivityCheck: event => inactivityCheck.cancelInactivityCheck(event),
-            scheduleInactivityCheck: event => inactivityCheck.scheduleInactivityCheck(event)
-        })
+        handler: createMessageHandler({inactivityCheck})
     })
 
     try {

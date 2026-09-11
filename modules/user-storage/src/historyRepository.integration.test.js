@@ -6,10 +6,9 @@ import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {HistoryRepository} from './historyRepository.js'
 
-// The event history against the real schema. Fixtures whose outcome turns on the order of several events
-// are written directly: the repository fills `timestamp` with NOW() at one-second resolution and nothing
-// breaks ties, so a suite that recorded them through addEvent could not state what the order should be.
-// Everything else is arranged through the repository.
+// Fixtures whose outcome turns on the order of several events are written directly: `timestamp` is
+// NOW() at one-second resolution and nothing breaks ties, so events recorded through addEvent could not
+// state what their order should be.
 
 describe('HistoryRepository', () => {
     let testDb

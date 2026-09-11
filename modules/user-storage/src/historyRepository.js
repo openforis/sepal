@@ -10,9 +10,6 @@ export class HistoryRepository {
     #db
 
     constructor(db) {
-        if (!db) {
-            throw new Error('A history repository requires a db')
-        }
         this.#db = db
     }
 

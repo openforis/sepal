@@ -17,6 +17,13 @@ const log = getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'
 
+const STORAGE = {
+    INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
+    INACTIVE_LOW: Symbol('INACTIVE_LOW'),
+    INACTIVE_UNKNOWN: Symbol('INACTIVE_UNKNOWN'),
+    ACTIVE: Symbol('ACTIVE')
+}
+
 // Constructing this opens the Redis connection and starts reporting queue events; the processor itself
 // starts only on startInactivityCheck.
 export class InactivityCheck {
@@ -26,9 +33,6 @@ export class InactivityCheck {
     #queueEvents
 
     constructor({repository}) {
-        if (!repository) {
-            throw new Error('An inactivity check requires a repository')
-        }
         this.#repository = repository
         this.#connection = new Redis({
             host: redisHost,
@@ -164,6 +168,17 @@ export class InactivityCheck {
         }
     }
 
+    async #removeUserJobs(username) {
+        await this.#queue.remove(jobId(username, 'mark'))
+        await this.#queue.remove(jobId(username, 'notify'))
+        await this.#queue.remove(jobId(username, 'erase'))
+    }
+
+    async #scheduleMark({username, delay = inactivityTimeout}) {
+        log.info(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+        return this.#schedule({username, delay, action: 'mark'})
+    }
+
     async #markInactiveUser({username}) {
         switch (await getStorageStatus(username)) {
             case STORAGE.INACTIVE_HIGH:
@@ -231,11 +246,6 @@ export class InactivityCheck {
         }
     }
 
-    async #scheduleMark({username, delay = inactivityTimeout}) {
-        log.info(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
-        return this.#schedule({username, delay, action: 'mark'})
-    }
-
     async #scheduleNotify({username, delay = inactivityNotificationDelay}) {
         log.info(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
         return this.#schedule({username, delay, action: 'notify'})
@@ -261,20 +271,17 @@ export class InactivityCheck {
             removeOnFail: 100
         })
     }
-
-    async #removeUserJobs(username) {
-        await this.#queue.remove(jobId(username, 'mark'))
-        await this.#queue.remove(jobId(username, 'notify'))
-        await this.#queue.remove(jobId(username, 'erase'))
-    }
 }
 
-const STORAGE = {
-    INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
-    INACTIVE_LOW: Symbol('INACTIVE_LOW'),
-    INACTIVE_UNKNOWN: Symbol('INACTIVE_UNKNOWN'),
-    ACTIVE: Symbol('ACTIVE')
-}
+const getDelay = (mostRecentTimestamp = new Date()) =>
+    Math.max(0, relativeExpirationTime(mostRecentTimestamp))
+
+// positive: future, negative: past
+const relativeExpirationTime = mostRecentTimestamp =>
+    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
+
+const jobId = (username, action) =>
+    `job-${storedUsername(username)}-${action}`
 
 const getStorageStatus = async username => {
     if (await isActive(username)) {
@@ -308,21 +315,6 @@ const notify = async username => {
     })
 }
 
-const erase = async username => {
-    log.info(`User ${username} still inactive with significant storage, erasing storage`)
-    await eraseUserStorage(username)
-}
-
-const jobId = (username, action) =>
-    `job-${storedUsername(username)}-${action}`
-
-const getDelay = (mostRecentTimestamp = new Date()) =>
-    Math.max(0, relativeExpirationTime(mostRecentTimestamp))
-
-// positive: future, negative: past
-const relativeExpirationTime = mostRecentTimestamp =>
-    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
-
 const getEmailSubject = () => {
     const environment = process.env.DEPLOY_ENVIRONMENT
     return `Action required to retain your SEPAL data ${environment !== 'PROD' ? `in ${environment} environment` : ''}`
@@ -349,4 +341,9 @@ const getEmailMessage = name => {
         <br>
         The SEPAL Team
     `
+}
+
+const erase = async username => {
+    log.info(`User ${username} still inactive with significant storage, erasing storage`)
+    await eraseUserStorage(username)
 }
