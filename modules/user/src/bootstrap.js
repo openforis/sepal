@@ -1,24 +1,19 @@
 import {getLogger} from '#sepal/log'
 
-import {hashPassword as defaultHashPassword} from './crypto.js'
-import {provision as defaultProvision} from './provisioning.js'
-import * as repository from './userRepository.js'
-
 const log = getLogger('bootstrap')
 
 // The admin users seeded by Flyway V1_0 (stored lowercased), each mapped to the plaintext-secret
 // env var the sibling modules template into /etc/*.passwd.
-const SYSTEM_USERS = [
+export const SYSTEM_USERS = [
     {username: 'sepaladmin', secretEnv: 'SEPAL_ADMIN_PASSWORD'},
     {username: 'admin', secretEnv: 'SEPAL_ADMIN_WEB_PASSWORD'}
 ]
 
-// Establish credentials (password_hash) + filesystem (home/keys -> ssh_public_key) for one seeded
-// admin user, ONLY when password_hash is missing. Idempotent: a fully-credentialed user is a no-op,
-// as is a missing secret or an unseeded row.
-const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, provision, assignDerivedPosixIds, hashPassword, readSecret}) => {
+// Idempotent, and runs on every start: a fully-credentialed user is a no-op, as is a missing secret
+// or an unseeded row.
+export const createBootstrap = ({repository, provision, hashPassword, readSecret}) => {
     const ensureCredentials = async ({username, secretEnv}) => {
-        const user = await findByUsername(username)
+        const user = await repository.findByUsername(username)
         if (!user) {
             log.warn(`Bootstrap: '${username}' is not seeded; skipping`)
             return
@@ -36,15 +31,15 @@ const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, pr
         // existing install the migration has already set real uid/gid + password, so bootstrap skips
         // these users above.) assignDerivedPosixIds only fills NULLs, so it never clobbers a migrated
         // identity.
-        await assignDerivedPosixIds(user.id)
+        await repository.assignDerivedPosixIds(user.id)
         const uid = user.uid ?? user.id
         const gid = user.gid ?? user.id
         // Write password_hash LAST: it is the idempotency sentinel, so any failure in provision or
         // the key write leaves it NULL and the whole step self-heals on the next start (provision is
         // idempotent and re-writing the same key is harmless).
         const sshPublicKey = await provision(username, uid, gid)
-        await updateSshPublicKey(username, sshPublicKey)
-        await updatePassword(username, hashPassword(secret))
+        await repository.updateSshPublicKey(username, sshPublicKey)
+        await repository.updatePassword(username, hashPassword(secret))
         log.info(`Bootstrap: established credentials and home for '${username}'`)
     }
     return async () => {
@@ -57,15 +52,3 @@ const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, pr
         }
     }
 }
-
-const bootstrap = createBootstrap({
-    findByUsername: repository.findByUsername,
-    updatePassword: repository.updatePassword,
-    updateSshPublicKey: repository.updateSshPublicKey,
-    provision: defaultProvision,
-    assignDerivedPosixIds: repository.assignDerivedPosixIds,
-    hashPassword: defaultHashPassword,
-    readSecret: name => process.env[name]
-})
-
-export {bootstrap, createBootstrap, SYSTEM_USERS}

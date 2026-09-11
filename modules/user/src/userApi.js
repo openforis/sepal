@@ -4,527 +4,492 @@ import {storedUsername} from '#sepal/username'
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
 import {publishUserLocked, publishUserUpdated} from './events.js'
-import {googleOAuth} from './googleOAuth.js'
-import {googleService} from './googleService.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
 import {userToMap} from './user.js'
-import {ensureProvisioned} from './userProvisioning.js'
-import * as repository from './userRepository.js'
 import {isValidEmail, isValidUsername} from './validation.js'
 
 const log = getLogger('userApi')
 
+export class UserApi {
+    #repository
+    #googleService
+    #googleOAuth
+    #ensureProvisioned
+
+    constructor({repository, googleService, googleOAuth, ensureProvisioned}) {
+        this.#repository = repository
+        this.#googleService = googleService
+        this.#googleOAuth = googleOAuth
+        this.#ensureProvisioned = ensureProvisioned
+    }
+
+    async authenticate(ctx) {
+        const {username, password} = readBody(ctx)
+        const user = username ? await this.#repository.findByUsername(username) : null
+        if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
+            await this.#repository.setLastLoginTime(user.username)
+            await this.#maybeRehashPassword(user, password)
+            try {
+                await this.#googleService.refreshGoogleTokens(user.username, user.googleTokens)
+            } catch (error) {
+                log.warn(`Google token refresh failed for '${user.username}': ${error.message}`)
+            }
+            const refreshedUser = await this.#repository.findByUsername(user.username)
+            log.info(`Authenticated '${user.username}'`)
+            ctx.body = userToMap(refreshedUser)
+        } else {
+            ctx.status = 401
+            ctx.body = {message: 'Invalid username or password'}
+        }
+    }
+
+    // Answered from the database, never from the caller's copy of the user in the header.
+    async current(ctx) {
+        const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        ctx.body = userToMap(user)
+    }
+
+    async info(ctx) {
+        const username = ctx.query.username
+        const user = username ? await this.#repository.findByUsername(username) : null
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        ctx.body = userToMap(user)
+    }
+
+    // Google tokens are left out of a listing.
+    async list(ctx) {
+        const users = await this.#repository.listUsers()
+        ctx.body = users.map(user => userToMap(user, false))
+    }
+
+    async mostRecentLogin(ctx) {
+        ctx.body = await this.#repository.mostRecentLogin(ctx.query.username)
+    }
+
+    async mostRecentLoginByUser(ctx) {
+        ctx.body = await this.#repository.mostRecentLoginByUser()
+    }
+
+    async emailNotificationsEnabled(ctx) {
+        const enabled = await this.#repository.emailNotificationsEnabled(ctx.params.email)
+        ctx.body = {emailNotificationsEnabled: enabled}
+    }
+
+    async validateToken(ctx) {
+        const token = readBody(ctx).token || ctx.query.token
+        const user = token ? await this.#repository.findByToken(token) : null
+        if (!user) {
+            ctx.body = {status: 'failure', token: null, reason: 'invalid', message: 'Token is invalid'}
+            return
+        }
+        const ageMs = Date.now() - (user.tokenGenerationTime || 0)
+        if (ageMs > 24 * 60 * 60 * 1000) {
+            ctx.body = {status: 'failure', token, reason: 'expired', message: 'Token is expired'}
+            return
+        }
+        ctx.body = {status: 'success', token, user: userToMap(user), message: 'Token is valid'}
+    }
+
+    // Deliberately publishes no event and sets no refresh header.
+    async changePassword(ctx) {
+        const {oldPassword, newPassword} = readBody(ctx)
+        const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
+        if (user && user.passwordHash && verifyPassword(oldPassword, user.passwordHash)) {
+            await this.#repository.updatePassword(user.username, hashPassword(newPassword))
+            ctx.body = {status: 'success', message: 'Password changed'}
+        } else {
+            ctx.body = {status: 'failure', message: 'Invalid old password'}
+        }
+    }
+
+    // The admin flag comes from the caller's current status, so a self-update cannot self-elevate.
+    async updateCurrentDetails(ctx) {
+        const current = ctx.state.currentUser
+        const user = await this.#applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
+        if (user === INVALID_EMAIL) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid email'}
+            return
+        }
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        ctx.body = userToMap(user)
+    }
+
+    // An administrator's update takes the admin flag from the body; the answer omits google tokens.
+    async updateDetails(ctx) {
+        const body = readBody(ctx)
+        const user = await this.#applyDetails(ctx, {
+            targetUsername: body.username,
+            adminValue: body.admin === true || body.admin === 'true'
+        })
+        if (user === INVALID_EMAIL) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid email'}
+            return
+        }
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        ctx.body = userToMap(user, false)
+    }
+
+    // Sets the refresh header; deliberately publishes no event.
+    async acceptPrivacyPolicy(ctx) {
+        const username = ctx.state.currentUser.username
+        await this.#repository.acceptPrivacyPolicy(username)
+        ctx.set('sepal-user-updated', username)
+        ctx.status = 204
+    }
+
+    // Idempotent: an already-locked user is returned unchanged.
+    async lock(ctx) {
+        const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
+        const user = await this.#repository.findByUsername(username)
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        if (user.status !== 'LOCKED') {
+            await this.#repository.updateStatus(username, 'LOCKED')
+            const lockedUser = await this.#repository.findByUsername(username)
+            publishUserLocked(lockedUser)
+            ctx.set('sepal-user-updated', username)
+            ctx.body = userToMap(lockedUser)
+        } else {
+            ctx.body = userToMap(user)
+        }
+    }
+
+    // Idempotent: an already-unlocked user is returned unchanged. No UserUpdated event; the refresh
+    // header is set only when the unlock actually changed something.
+    async unlock(ctx) {
+        const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
+        const user = await this.#repository.findByUsername(username)
+        if (!user) {
+            ctx.status = 404
+            ctx.body = {message: 'User not found'}
+            return
+        }
+        if (user.status !== 'LOCKED') {
+            ctx.body = userToMap(user)
+            return
+        }
+        const token = generateToken()
+        await this.#repository.updateStatus(username, 'PENDING')
+        await this.#repository.updateToken(username, token)
+        const unlockedUser = await this.#repository.findByUsername(username)
+        sendPasswordReset(unlockedUser, token)
+        ctx.set('sepal-user-updated', username)
+        ctx.body = userToMap(unlockedUser)
+    }
+
+    // An activation token never expires: the invitation may sit in an inbox for weeks, and the token
+    // is single-use anyway. A password reset token does expire — see resetPassword.
+    async activate(ctx) {
+        const {token, password} = readBody(ctx)
+        if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
+        const user = token ? await this.#repository.findByToken(token) : null
+        if (!user) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid token'}
+            return
+        }
+        await this.#repository.updatePassword(user.username, hashPassword(password))
+        await this.#repository.updateStatus(user.username, 'ACTIVE')
+        await this.#repository.invalidateToken(token)
+        // Leaving PENDING: guarantee complete provisioning (home dir, data home, keypair) — it is
+        // skipped at invite/signup so never-activated users cost no filesystem resources.
+        const activated = await this.#ensureProvisioned(await this.#repository.findByUsername(user.username))
+        publishUserUpdated(activated)
+        ctx.body = userToMap(activated)
+    }
+
+    // Unlike activation, a reset token expires, and a LOCKED user cannot reset their way back in.
+    async resetPassword(ctx) {
+        const {token, password, recaptchaToken} = readBody(ctx)
+        if (!(await recaptcha.isValid(recaptchaToken, 'RESET_PASSWORD'))) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
+        if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
+        const user = token ? await this.#repository.findByToken(token) : null
+        if (!user || isExpired(user.tokenGenerationTime)) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid token'}
+            return
+        }
+        if (user.status === 'LOCKED') {
+            ctx.status = 400
+            ctx.body = {message: 'Account locked'}
+            return
+        }
+        const wasPending = user.status === 'PENDING'
+        await this.#repository.updatePassword(user.username, hashPassword(password))
+        await this.#repository.updateStatus(user.username, 'ACTIVE')
+        await this.#repository.invalidateToken(token)
+        // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
+        // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
+        // provision recursively chowns the data home, too expensive for a request that needs neither.
+        const reloaded = await this.#repository.findByUsername(user.username)
+        const updated = wasPending || !reloaded.sshPublicKey
+            ? await this.#ensureProvisioned(reloaded)
+            : reloaded
+        publishUserUpdated(updated)
+        ctx.body = userToMap(updated)
+    }
+
+    async validateUsername(ctx) {
+        const {username, recaptchaToken} = readBody(ctx)
+        const lowered = (username || '').toLowerCase()
+        const valid = await recaptcha.isValid(recaptchaToken, 'VALIDATE_USERNAME')
+            && isValidUsername(lowered)
+            && !(await this.#repository.findByUsername(lowered))
+        ctx.body = {valid: Boolean(valid)}
+    }
+
+    async validateEmail(ctx) {
+        const {email, recaptchaToken} = readBody(ctx)
+        const valid = await recaptcha.isValid(recaptchaToken, 'VALIDATE_EMAIL')
+            && isValidEmail(email)
+            && !(await this.#repository.findByEmail(email))
+        ctx.body = {valid: Boolean(valid)}
+    }
+
+    async signup(ctx) {
+        const {username, name, email, organization, recaptchaToken} = readBody(ctx)
+        if (!(await recaptcha.isValid(recaptchaToken, 'SIGN_UP'))) {
+            ctx.body = {status: 'failure', message: 'Signup failed'}
+            return
+        }
+        if (!isValidNewUser({username, name, email})) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
+        await this.#createInvitedUser({username, name, email, organization, intendedUse: null})
+        ctx.body = {status: 'success', message: 'Signup succeeded'}
+    }
+
+    // Always answers the same way, whether or not the address is one we know: the response must not
+    // tell an anonymous caller which addresses have accounts.
+    async requestPasswordReset(ctx) {
+        const {email, recaptchaToken} = readBody(ctx)
+        ctx.body = {
+            status: 'success',
+            message: 'If there is an account with this email, an email with a password reset link will be sent there'
+        }
+        if (!(await recaptcha.isValid(recaptchaToken, 'REQUEST_PASSWORD_RESET'))) {
+            log.info(`Ignoring password reset request with invalid reCAPTCHA for email: ${email}`)
+            return
+        }
+        const user = await this.#repository.findByEmail(email)
+        if (!user) {
+            log.info(`Cannot reset password for non-existing email: ${email}`)
+            return
+        }
+        if (user.status === 'LOCKED') {
+            log.info(`Ignoring password reset request for locked user: ${user.username}`)
+            return
+        }
+        const token = getOrGenerateToken(user)
+        await this.#repository.updateToken(user.username, token)
+        log.info(`Sending password reset email to '${user.username}'`)
+        sendPasswordReset(user, token)
+    }
+
+    async googleAccessRequestUrl(ctx) {
+        ctx.body = {url: this.#googleOAuth.redirectUrl(ctx.query.destinationUrl)}
+    }
+
+    // A meta-refresh rather than a redirect, so Google's querystring survives the hop intact.
+    async googleAccessRequestCallback(ctx) {
+        const url = `/api/user/google/associate-account?${ctx.querystring}`
+        ctx.type = 'text/html'
+        ctx.body = `<html><head><meta http-equiv="refresh" content="0;URL='${url}'"/></head></html>`
+    }
+
+    async associateGoogleAccount(ctx) {
+        const {username} = ctx.state.currentUser
+        const tokens = await this.#googleOAuth.requestTokens(ctx.query.code)
+        await this.#googleService.saveTokens(username, tokens)
+        ctx.set('sepal-user-updated', username)
+        ctx.redirect(ctx.query.state)
+    }
+
+    // No tokens are passed: refreshGoogleTokens loads the user's stored ones itself.
+    async refreshGoogleAccessToken(ctx) {
+        const {username} = ctx.state.currentUser
+        const tokens = await this.#googleService.refreshGoogleTokens(username)
+        ctx.set('sepal-user-updated', username)
+        if (tokens) {
+            ctx.body = tokens
+        } else {
+            ctx.status = 204
+        }
+    }
+
+    async revokeGoogleAccess(ctx) {
+        const {username} = ctx.state.currentUser
+        const user = await this.#repository.findByUsername(username)
+        if (user.googleTokens) {
+            try {
+                await this.#googleOAuth.revokeTokens(user.googleTokens)
+            } catch (error) {
+                log.info(`Failed to revoke Google tokens for '${username}': ${error.message}`)
+            }
+        }
+        const updated = await this.#googleService.saveTokens(username, null)
+        ctx.set('sepal-user-updated', username)
+        ctx.body = userToMap(updated)
+    }
+
+    async updateGoogleProject(ctx) {
+        const {username} = ctx.state.currentUser
+        const user = await this.#repository.findByUsername(username)
+        if (user.googleTokens) {
+            const legacyProject = ctx.query.legacyProject === 'true'
+            const tokens = {
+                ...user.googleTokens,
+                projectId: legacyProject ? null : (ctx.query.projectId ?? null),
+                legacyProject
+            }
+            await this.#googleService.saveTokens(username, tokens)
+            ctx.set('sepal-user-updated', username)
+        }
+        ctx.status = 204
+    }
+
+    // Backs the ssh-gateway's PAM module, which verifies against this database rather than LDAP.
+    // ACTIVE users only.
+    async authPassword(ctx) {
+        const {username, password} = readBody(ctx)
+        const user = username ? await this.#repository.findByUsername(username) : null
+        if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
+            await this.#maybeRehashPassword(user, password)
+            ctx.body = {status: 'success'}
+        } else {
+            ctx.status = 401
+            ctx.body = {status: 'failure'}
+        }
+    }
+
+    // Backs the ssh-gateway's AuthorizedKeysCommand, which reads this database rather than
+    // sss_ssh_authorizedkeys. An inactive user gets an empty body, never an error.
+    async authorizedKeys(ctx) {
+        const username = ctx.query.username
+        const user = username ? await this.#repository.findByUsername(username) : null
+        ctx.type = 'text/plain'
+        ctx.body = user && user.status === 'ACTIVE' && user.sshPublicKey ? user.sshPublicKey : ''
+    }
+
+    // ETag-aware: the sync agent skips the rewrite when the snapshot has not changed.
+    async nssSnapshot(ctx) {
+        const identities = await this.#repository.listIdentities()
+        const passwd = renderPasswd(identities)
+        const group = renderGroup(identities)
+        const version = snapshotVersion(passwd, group)
+        ctx.set('ETag', version)
+        if (ctx.headers['if-none-match'] === version) {
+            ctx.status = 304
+            return
+        }
+        ctx.body = {passwd, group, version}
+    }
+
+    // After a successful password verification, transparently upgrade a legacy/weaker
+    // hash (e.g. migrated {SSHA}) to the current {SCRYPT} scheme. Never break login on
+    // failure, so errors are logged and swallowed.
+    async #maybeRehashPassword(user, password) {
+        if (needsRehash(user.passwordHash)) {
+            try {
+                await this.#repository.updatePassword(user.username, hashPassword(password))
+                log.info(`Upgraded password hash for '${user.username}'`)
+            } catch (error) {
+                log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
+            }
+        }
+    }
+
+    // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
+    // Returns the reloaded user, null when the user does not exist, or INVALID_EMAIL when the body
+    // carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both callers
+    // funnel through here, so neither can skip the check.
+    async #applyDetails(ctx, {targetUsername, adminValue}) {
+        const body = readBody(ctx)
+        if (body.email != null && !isValidEmail(body.email)) {
+            return INVALID_EMAIL
+        }
+        await this.#repository.updateUserDetails({
+            username: targetUsername,
+            name: body.name,
+            email: body.email,
+            organization: body.organization,
+            intendedUse: body.intendedUse,
+            emailNotificationsEnabled: body.emailNotificationsEnabled === true || body.emailNotificationsEnabled === 'true',
+            manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
+            admin: adminValue
+        })
+        const user = await this.#repository.findByUsername(targetUsername)
+        if (!user) {
+            return null
+        }
+        publishUserUpdated(user)
+        ctx.set('sepal-user-updated', targetUsername)
+        return user
+    }
+
+    // Create a PENDING user, send the invitation email, and publish UserUpdated. Returns the reloaded
+    // user. No filesystem/SSH provisioning here: that happens lazily when the user leaves PENDING
+    // (activate / password reset), so users who never activate cost no filesystem resources. New users
+    // get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
+    async #createInvitedUser({username, name, email, organization, intendedUse}) {
+        const lowered = (username || '').toLowerCase()
+        const token = generateToken()
+        await this.#repository.insertUser({username: lowered, name, email, organization, intendedUse, token})
+        const user = await this.#repository.findByUsername(lowered)
+        sendInvite(user, token)
+        publishUserUpdated(user)
+        return user
+    }
+}
+
 const readBody = ctx => ctx.request.body || {}
 
-// After a successful password verification, transparently upgrade a legacy/weaker
-// hash (e.g. migrated {SSHA}) to the current {SCRYPT} scheme. Never break login on
-// failure, so errors are logged and swallowed.
-const maybeRehashPassword = async (user, password) => {
-    if (needsRehash(user.passwordHash)) {
-        try {
-            await repository.updatePassword(user.username, hashPassword(password))
-            log.info(`Upgraded password hash for '${user.username}'`)
-        } catch (error) {
-            log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
-        }
-    }
-}
-
-// POST /authenticate {username, password} -> 200 user JSON | 401
-const authenticate = async ctx => {
-    const {username, password} = readBody(ctx)
-    const user = username ? await repository.findByUsername(username) : null
-    if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
-        await repository.setLastLoginTime(user.username)
-        await maybeRehashPassword(user, password)
-        try {
-            await googleService.refreshGoogleTokens(user.username, user.googleTokens)
-        } catch (error) {
-            log.warn(`Google token refresh failed for '${user.username}': ${error.message}`)
-        }
-        const refreshedUser = await repository.findByUsername(user.username)
-        log.info(`Authenticated '${user.username}'`)
-        ctx.body = userToMap(refreshedUser)
-    } else {
-        ctx.status = 401
-        ctx.body = {message: 'Invalid username or password'}
-    }
-}
-
-// /current and /login both return the current user, reloaded from the DB.
-const current = async ctx => {
-    const user = await repository.findByUsername(ctx.state.currentUser.username)
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    ctx.body = userToMap(user)
-}
-
-// GET /info?username= (admin) -> user JSON
-const info = async ctx => {
-    const username = ctx.query.username
-    const user = username ? await repository.findByUsername(username) : null
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    ctx.body = userToMap(user)
-}
-
-// GET /list (admin) -> array of users without google tokens
-const list = async ctx => {
-    const users = await repository.listUsers()
-    ctx.body = users.map(user => userToMap(user, false))
-}
-
-const mostRecentLogin = async ctx => {
-    ctx.body = await repository.mostRecentLogin(ctx.query.username)
-}
-
-const mostRecentLoginByUser = async ctx => {
-    ctx.body = await repository.mostRecentLoginByUser()
-}
-
-const emailNotificationsEnabled = async ctx => {
-    const enabled = await repository.emailNotificationsEnabled(ctx.params.email)
-    ctx.body = {emailNotificationsEnabled: enabled}
-}
-
-// POST /validate/token {token} -> {status, token, user|reason, message}
-const validateToken = async ctx => {
-    const token = readBody(ctx).token || ctx.query.token
-    const user = token ? await repository.findByToken(token) : null
-    if (!user) {
-        ctx.body = {status: 'failure', token: null, reason: 'invalid', message: 'Token is invalid'}
-        return
-    }
-    const ageMs = Date.now() - (user.tokenGenerationTime || 0)
-    if (ageMs > 24 * 60 * 60 * 1000) {
-        ctx.body = {status: 'failure', token, reason: 'expired', message: 'Token is expired'}
-        return
-    }
-    ctx.body = {status: 'success', token, user: userToMap(user), message: 'Token is valid'}
-}
-
-// POST /current/password {oldPassword, newPassword} -> {status, message}. No event, no header.
-const changePassword = async ctx => {
-    const {oldPassword, newPassword} = readBody(ctx)
-    const user = await repository.findByUsername(ctx.state.currentUser.username)
-    if (user && user.passwordHash && verifyPassword(oldPassword, user.passwordHash)) {
-        await repository.updatePassword(user.username, hashPassword(newPassword))
-        ctx.body = {status: 'success', message: 'Password changed'}
-    } else {
-        ctx.body = {status: 'failure', message: 'Invalid old password'}
-    }
-}
-
-// Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
-const INVALID_EMAIL = Symbol('invalid-email')
-
-// Returns the reloaded user, null when the user does not exist, or INVALID_EMAIL when the body
-// carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both callers
-// funnel through here, so neither can skip the check.
-const applyDetails = async (ctx, {targetUsername, adminValue}) => {
-    const body = readBody(ctx)
-    if (body.email != null && !isValidEmail(body.email)) {
-        return INVALID_EMAIL
-    }
-    await repository.updateUserDetails({
-        username: targetUsername,
-        name: body.name,
-        email: body.email,
-        organization: body.organization,
-        intendedUse: body.intendedUse,
-        emailNotificationsEnabled: body.emailNotificationsEnabled === true || body.emailNotificationsEnabled === 'true',
-        manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
-        admin: adminValue
-    })
-    const user = await repository.findByUsername(targetUsername)
-    if (!user) {
-        return null
-    }
-    publishUserUpdated(user)
-    ctx.set('sepal-user-updated', targetUsername)
-    return user
-}
-
-// POST /current/details -> own details; admin flag forced to the caller's current admin status.
-const updateCurrentDetails = async ctx => {
-    const current = ctx.state.currentUser
-    const user = await applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
-    if (user === INVALID_EMAIL) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid email'}
-        return
-    }
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    ctx.body = userToMap(user)
-}
-
-// POST /details (admin) -> any user's details; admin flag taken from the body; tokens omitted.
-const updateDetails = async ctx => {
-    const body = readBody(ctx)
-    const user = await applyDetails(ctx, {
-        targetUsername: body.username,
-        adminValue: body.admin === true || body.admin === 'true'
-    })
-    if (user === INVALID_EMAIL) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid email'}
-        return
-    }
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    ctx.body = userToMap(user, false)
-}
-
-// POST /current/acceptPrivacyPolicy -> 204. Sets the refresh header; no event.
-const acceptPrivacyPolicy = async ctx => {
-    const username = ctx.state.currentUser.username
-    await repository.acceptPrivacyPolicy(username)
-    ctx.set('sepal-user-updated', username)
-    ctx.status = 204
-}
-
-// POST /lock (admin) {username} -> userToMap. Publishes UserLocked. Idempotent on already-locked.
-const lock = async ctx => {
-    const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
-    const user = await repository.findByUsername(username)
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    if (user.status !== 'LOCKED') {
-        await repository.updateStatus(username, 'LOCKED')
-        const lockedUser = await repository.findByUsername(username)
-        publishUserLocked(lockedUser)
-        ctx.set('sepal-user-updated', username)
-        ctx.body = userToMap(lockedUser)
-    } else {
-        ctx.body = userToMap(user)
-    }
-}
-
-// POST /unlock (ADMIN) {username} -> userToMap. Flips a LOCKED user to PENDING, issues a fresh token,
-// and emails a password reset. Idempotent: an already-unlocked user is returned unchanged.
-// Mirrors the Java UnlockUser flow (no UserUpdated event; sets sepal-user-updated on actual change).
-const unlock = async ctx => {
-    const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
-    const user = await repository.findByUsername(username)
-    if (!user) {
-        ctx.status = 404
-        ctx.body = {message: 'User not found'}
-        return
-    }
-    if (user.status !== 'LOCKED') {
-        ctx.body = userToMap(user)
-        return
-    }
-    const token = generateToken()
-    await repository.updateStatus(username, 'PENDING')
-    await repository.updateToken(username, token)
-    const unlockedUser = await repository.findByUsername(username)
-    sendPasswordReset(unlockedUser, token)
-    ctx.set('sepal-user-updated', username)
-    ctx.body = userToMap(unlockedUser)
-}
-
-const PASSWORD_MIN_LENGTH = 12
-const PASSWORD_MAX_LENGTH = 100
-
-// POST /activate {token, password} (NO_AUTH) -> userToMap. Sets the password, flips PENDING->ACTIVE,
-// clears the token, publishes UserUpdated. Accepts expired tokens (Java canExpire=false). 400 on a
-// blank/invalid password or an unknown token.
-const activate = async ctx => {
-    const {token, password} = readBody(ctx)
-    if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid request'}
-        return
-    }
-    const user = token ? await repository.findByToken(token) : null
-    if (!user) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid token'}
-        return
-    }
-    await repository.updatePassword(user.username, hashPassword(password))
-    await repository.updateStatus(user.username, 'ACTIVE')
-    await repository.invalidateToken(token)
-    // Leaving PENDING: guarantee complete provisioning (home dir, data home, keypair) — it is
-    // skipped at invite/signup so never-activated users cost no filesystem resources.
-    const activated = await ensureProvisioned(await repository.findByUsername(user.username))
-    publishUserUpdated(activated)
-    ctx.body = userToMap(activated)
-}
-
-// POST /password/reset {token, password, recaptchaToken} -> userToMap. reCAPTCHA + non-expired token
-// (canExpire=true) + not-LOCKED; sets password, status ACTIVE, clears token, publishes UserUpdated.
-const resetPassword = async ctx => {
-    const {token, password, recaptchaToken} = readBody(ctx)
-    if (!(await recaptcha.isValid(recaptchaToken, 'RESET_PASSWORD'))) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid request'}
-        return
-    }
-    if (!password || password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid request'}
-        return
-    }
-    const user = token ? await repository.findByToken(token) : null
-    if (!user || isExpired(user.tokenGenerationTime)) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid token'}
-        return
-    }
-    if (user.status === 'LOCKED') {
-        ctx.status = 400
-        ctx.body = {message: 'Account locked'}
-        return
-    }
-    const wasPending = user.status === 'PENDING'
-    await repository.updatePassword(user.username, hashPassword(password))
-    await repository.updateStatus(user.username, 'ACTIVE')
-    await repository.invalidateToken(token)
-    // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
-    // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
-    // provision recursively chowns the data home, too expensive for a request that needs neither.
-    const reloaded = await repository.findByUsername(user.username)
-    const updated = wasPending || !reloaded.sshPublicKey
-        ? await ensureProvisioned(reloaded)
-        : reloaded
-    publishUserUpdated(updated)
-    ctx.body = userToMap(updated)
-}
-
-// POST /validate/username {username, recaptchaToken} -> {valid}. reCAPTCHA + format/blacklist + uniqueness.
-const validateUsername = async ctx => {
-    const {username, recaptchaToken} = readBody(ctx)
-    const lowered = (username || '').toLowerCase()
-    const valid = await recaptcha.isValid(recaptchaToken, 'VALIDATE_USERNAME')
-        && isValidUsername(lowered)
-        && !(await repository.findByUsername(lowered))
-    ctx.body = {valid: Boolean(valid)}
-}
-
-// POST /validate/email {email, recaptchaToken} -> {valid}. reCAPTCHA + format + uniqueness.
-const validateEmail = async ctx => {
-    const {email, recaptchaToken} = readBody(ctx)
-    const valid = await recaptcha.isValid(recaptchaToken, 'VALIDATE_EMAIL')
-        && isValidEmail(email)
-        && !(await repository.findByEmail(email))
-    ctx.body = {valid: Boolean(valid)}
-}
-
-// Validate signup input the way the Java endpoint did: username format,
-// non-blank name, email format. Returns true if the (lowercased) username is valid.
+// The username is validated lowercased, because that is the spelling insertUser will store.
 const isValidNewUser = ({username, name, email}) =>
     isValidUsername((username || '').toLowerCase()) && Boolean(name) && isValidEmail(email)
 
-// Create a PENDING user, send the invitation email, and publish UserUpdated. Returns the reloaded
-// user. No filesystem/SSH provisioning here: that happens lazily when the user leaves PENDING
-// (activate / password reset), so users who never activate cost no filesystem resources. New users
-// get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
-const createInvitedUser = async ({username, name, email, organization, intendedUse}) => {
-    const lowered = (username || '').toLowerCase()
-    const token = generateToken()
-    await repository.insertUser({username: lowered, name, email, organization, intendedUse, token})
-    const user = await repository.findByUsername(lowered)
-    sendInvite(user, token)
-    publishUserUpdated(user)
-    return user
-}
+// What #applyDetails answers with when the body carries an email the database would reject, so its
+// callers can tell that apart from an unknown user.
+const INVALID_EMAIL = Symbol('invalid-email')
 
-// POST /signup (NO_AUTH) {username, name, email, organization, recaptchaToken} -> {status, message}.
-const signup = async ctx => {
-    const {username, name, email, organization, recaptchaToken} = readBody(ctx)
-    if (!(await recaptcha.isValid(recaptchaToken, 'SIGN_UP'))) {
-        ctx.body = {status: 'failure', message: 'Signup failed'}
-        return
-    }
-    if (!isValidNewUser({username, name, email})) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid request'}
-        return
-    }
-    await createInvitedUser({username, name, email, organization, intendedUse: null})
-    ctx.body = {status: 'success', message: 'Signup succeeded'}
-}
+const PASSWORD_MIN_LENGTH = 12
 
-// POST /password/reset-request (NO_AUTH) {email, recaptchaToken}. Always returns the same
-// generic success message (anti-enumeration); only acts when reCAPTCHA passes and the email maps to
-// a non-LOCKED user.
-const requestPasswordReset = async ctx => {
-    const {email, recaptchaToken} = readBody(ctx)
-    ctx.body = {
-        status: 'success',
-        message: 'If there is an account with this email, an email with a password reset link will be sent there'
-    }
-    if (!(await recaptcha.isValid(recaptchaToken, 'REQUEST_PASSWORD_RESET'))) {
-        log.info(`Ignoring password reset request with invalid reCAPTCHA for email: ${email}`)
-        return
-    }
-    const user = await repository.findByEmail(email)
-    if (!user) {
-        log.info(`Cannot reset password for non-existing email: ${email}`)
-        return
-    }
-    if (user.status === 'LOCKED') {
-        log.info(`Ignoring password reset request for locked user: ${user.username}`)
-        return
-    }
-    const token = getOrGenerateToken(user)
-    await repository.updateToken(user.username, token)
-    log.info(`Sending password reset email to '${user.username}'`)
-    sendPasswordReset(user, token)
-}
-
-// GET /google/access-request-url (AUTH) ?destinationUrl -> {url}
-const googleAccessRequestUrl = async ctx => {
-    ctx.body = {url: googleOAuth.redirectUrl(ctx.query.destinationUrl)}
-}
-
-// GET /google/access-request-callback (NO_AUTH) -> HTML meta-refresh to associate-account, querystring preserved.
-const googleAccessRequestCallback = async ctx => {
-    const url = `/api/user/google/associate-account?${ctx.querystring}`
-    ctx.type = 'text/html'
-    ctx.body = `<html><head><meta http-equiv="refresh" content="0;URL='${url}'"/></head></html>`
-}
-
-// GET /google/associate-account (AUTH) ?code&state -> 302 redirect to state; sets sepal-user-updated.
-const associateGoogleAccount = async ctx => {
-    const {username} = ctx.state.currentUser
-    const tokens = await googleOAuth.requestTokens(ctx.query.code)
-    await googleService.saveTokens(username, tokens)
-    ctx.set('sepal-user-updated', username)
-    ctx.redirect(ctx.query.state)
-}
-
-// POST /google/refresh-access-token (AUTH) -> refreshed googleTokens JSON | 204; sets sepal-user-updated.
-// refreshGoogleTokens(username) loads the user's stored tokens itself.
-const refreshGoogleAccessToken = async ctx => {
-    const {username} = ctx.state.currentUser
-    const tokens = await googleService.refreshGoogleTokens(username)
-    ctx.set('sepal-user-updated', username)
-    if (tokens) {
-        ctx.body = tokens
-    } else {
-        ctx.status = 204
-    }
-}
-
-// POST /google/revoke-access (AUTH) -> userToMap (googleTokens now null); sets sepal-user-updated.
-const revokeGoogleAccess = async ctx => {
-    const {username} = ctx.state.currentUser
-    const user = await repository.findByUsername(username)
-    if (user.googleTokens) {
-        try {
-            await googleOAuth.revokeTokens(user.googleTokens)
-        } catch (error) {
-            log.info(`Failed to revoke Google tokens for '${username}': ${error.message}`)
-        }
-    }
-    const updated = await googleService.saveTokens(username, null)
-    ctx.set('sepal-user-updated', username)
-    ctx.body = userToMap(updated)
-}
-
-// POST /google/project (AUTH) ?projectId&legacyProject -> 204; sets sepal-user-updated.
-const updateGoogleProject = async ctx => {
-    const {username} = ctx.state.currentUser
-    const user = await repository.findByUsername(username)
-    if (user.googleTokens) {
-        const legacyProject = ctx.query.legacyProject === 'true'
-        const tokens = {
-            ...user.googleTokens,
-            projectId: legacyProject ? null : (ctx.query.projectId ?? null),
-            legacyProject
-        }
-        await googleService.saveTokens(username, tokens)
-        ctx.set('sepal-user-updated', username)
-    }
-    ctx.status = 204
-}
-
-// POST /auth/password {username, password} -> 200 | 401. Backs the ssh-gateway PAM module
-// (DB password verify, not LDAP). ACTIVE only.
-const authPassword = async ctx => {
-    const {username, password} = readBody(ctx)
-    const user = username ? await repository.findByUsername(username) : null
-    if (user && user.status === 'ACTIVE' && user.passwordHash && verifyPassword(password, user.passwordHash)) {
-        await maybeRehashPassword(user, password)
-        ctx.body = {status: 'success'}
-    } else {
-        ctx.status = 401
-        ctx.body = {status: 'failure'}
-    }
-}
-
-// GET /auth/authorized-keys?username= -> text/plain ssh_public_key. Backs the ssh-gateway
-// AuthorizedKeysCommand (DB lookup, not sss_ssh_authorizedkeys). ACTIVE only; empty otherwise.
-const authorizedKeys = async ctx => {
-    const username = ctx.query.username
-    const user = username ? await repository.findByUsername(username) : null
-    ctx.type = 'text/plain'
-    ctx.body = user && user.status === 'ACTIVE' && user.sshPublicKey ? user.sshPublicKey : ''
-}
-
-// GET /nss/snapshot -> {passwd, group, version}. Identity (ACTIVE + LOCKED), ids >= 10000. ETag-aware.
-const nssSnapshot = async ctx => {
-    const identities = await repository.listIdentities()
-    const passwd = renderPasswd(identities)
-    const group = renderGroup(identities)
-    const version = snapshotVersion(passwd, group)
-    ctx.set('ETag', version)
-    if (ctx.headers['if-none-match'] === version) {
-        ctx.status = 304
-        return
-    }
-    ctx.body = {passwd, group, version}
-}
-
-export {
-    acceptPrivacyPolicy,
-    activate,
-    associateGoogleAccount,
-    authenticate,
-    authorizedKeys,
-    authPassword,
-    changePassword,
-    current,
-    emailNotificationsEnabled,
-    googleAccessRequestCallback,
-    googleAccessRequestUrl,
-    info,
-    list,
-    lock,
-    mostRecentLogin,
-    mostRecentLoginByUser,
-    nssSnapshot,
-    refreshGoogleAccessToken,
-    requestPasswordReset,
-    resetPassword,
-    revokeGoogleAccess,
-    signup,
-    unlock,
-    updateCurrentDetails,
-    updateDetails,
-    updateGoogleProject,
-    validateEmail,
-    validateToken,
-    validateUsername
-}
+const PASSWORD_MAX_LENGTH = 100
