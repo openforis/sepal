@@ -18,10 +18,6 @@ import crypto from 'crypto'
 
 const SEPARATOR = '.'
 
-const base64url = buffer => buffer.toString('base64url')
-
-const toEpochSeconds = time => Math.floor(new Date(time).getTime() / 1000)
-
 const createExpiryTokens = ({secret = crypto.randomBytes(32).toString('hex'), graceMinutes = 60} = {}) => {
     const sign = payload =>
         base64url(crypto.createHmac('sha256', secret).update(payload).digest())
@@ -72,5 +68,9 @@ const createExpiryTokens = ({secret = crypto.randomBytes(32).toString('hex'), gr
 
     return {create, verify}
 }
+
+const base64url = buffer => buffer.toString('base64url')
+
+const toEpochSeconds = time => Math.floor(new Date(time).getTime() / 1000)
 
 export {createExpiryTokens}

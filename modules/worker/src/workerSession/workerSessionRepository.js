@@ -24,8 +24,6 @@ const log = getLogger('worker/expiry')
 
 const {PENDING, ACTIVE, CLOSED} = State
 
-const toDate = value => value ? new Date(value) : null
-
 const SESSION_COLUMNS = `id, state, username, worker_type, instance_type, instance_id, host,
     creation_time, update_time, api_key, timeout_time, last_interaction_time, active_time,
     notification_state, notified_time`
@@ -37,24 +35,6 @@ const SESSION_COLUMNS = `id, state, username, worker_type, instance_type, instan
 // of the intent, in precisely the cases the cap exists for. creation_time is the never-NULL
 // backstop.
 const UNATTENDED_ANCHOR = 'COALESCE(last_interaction_time, active_time, creation_time)'
-
-// toSession — maps instance_id/host → instance{id,host}.
-const toSession = row => createWorkerSession({
-    id: row.id,
-    state: row.state,
-    username: row.username,
-    workerType: row.worker_type,
-    instanceType: row.instance_type,
-    instance: {id: row.instance_id, host: row.host},
-    creationTime: toDate(row.creation_time),
-    updateTime: toDate(row.update_time),
-    apiKey: row.api_key,
-    timeoutTime: toDate(row.timeout_time),
-    lastInteractionTime: toDate(row.last_interaction_time),
-    activeTime: toDate(row.active_time),
-    notificationState: row.notification_state ?? NotificationState.NONE,
-    notifiedTime: toDate(row.notified_time),
-})
 
 export class WorkerSessionRepository {
     #db
@@ -586,3 +566,23 @@ export class WorkerSessionRepository {
         return true
     }
 }
+
+// toSession — maps instance_id/host → instance{id,host}.
+const toSession = row => createWorkerSession({
+    id: row.id,
+    state: row.state,
+    username: row.username,
+    workerType: row.worker_type,
+    instanceType: row.instance_type,
+    instance: {id: row.instance_id, host: row.host},
+    creationTime: toDate(row.creation_time),
+    updateTime: toDate(row.update_time),
+    apiKey: row.api_key,
+    timeoutTime: toDate(row.timeout_time),
+    lastInteractionTime: toDate(row.last_interaction_time),
+    activeTime: toDate(row.active_time),
+    notificationState: row.notification_state ?? NotificationState.NONE,
+    notifiedTime: toDate(row.notified_time),
+})
+
+const toDate = value => value ? new Date(value) : null

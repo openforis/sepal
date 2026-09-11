@@ -11,16 +11,6 @@
 
 import {round2} from '../round.js'
 
-const clampPct = value => round2(Math.min(100, Math.max(0, value)))
-
-const getNetworkTraffic = networks =>
-    networks && Object.keys(networks).length
-        ? Object.values(networks).reduce((acc, iface) => ({
-            rxBytes: acc.rxBytes + (iface?.rx_bytes ?? 0),
-            txBytes: acc.txBytes + (iface?.tx_bytes ?? 0)
-        }), {rxBytes: 0, txBytes: 0})
-        : {rxBytes: null, txBytes: null}
-
 const extractCounters = stats => {
     const networks = stats?.networks
     const {rxBytes, txBytes} = getNetworkTraffic(networks)
@@ -152,5 +142,15 @@ const countUserTerminals = text => {
     }
     return count
 }
+
+const getNetworkTraffic = networks =>
+    networks && Object.keys(networks).length
+        ? Object.values(networks).reduce((acc, iface) => ({
+            rxBytes: acc.rxBytes + (iface?.rx_bytes ?? 0),
+            txBytes: acc.txBytes + (iface?.tx_bytes ?? 0)
+        }), {rxBytes: 0, txBytes: 0})
+        : {rxBytes: null, txBytes: null}
+
+const clampPct = value => round2(Math.min(100, Math.max(0, value)))
 
 export {computeCpuPct, computeNetRates, computeRamUsage, countUserTerminals, extractCounters, parseGpuCsv, parsePtyStat}

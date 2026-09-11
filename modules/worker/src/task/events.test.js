@@ -4,12 +4,6 @@ import {EventEmittingTaskRepository, taskChanged$} from './events.js'
 
 const task = {id: 't-1', username: 'alice', state: 'PENDING'}
 
-const collectEvents = () => {
-    const events = []
-    const subscription = taskChanged$.subscribe(event => events.push(event))
-    return {events, stop: () => subscription.unsubscribe()}
-}
-
 describe('EventEmittingTaskRepository', () => {
     it('emits {username} after insert resolves', async () => {
         const {events, stop} = collectEvents()
@@ -60,3 +54,9 @@ describe('EventEmittingTaskRepository', () => {
         expect(found).toEqual({...task, id: 't-2'})
     })
 })
+
+const collectEvents = () => {
+    const events = []
+    const subscription = taskChanged$.subscribe(event => events.push(event))
+    return {events, stop: () => subscription.unsubscribe()}
+}

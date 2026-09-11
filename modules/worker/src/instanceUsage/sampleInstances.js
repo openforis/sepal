@@ -33,121 +33,6 @@ const log = getLogger('worker/sampleInstances')
 // problem, not part of the expiry story.
 const expiryLog = getLogger('worker/expiry')
 
-const sampleGpu = async (stats, session) => {
-    try {
-        return parseGpuCsv(await stats.gpuStats(session))
-    } catch (error) {
-        log.warn(`GPU sampling failed for ${sessionTag(session)}: ${error.message}`)
-        return null
-    }
-}
-
-// samplePtys — the terminal signals, both read from ONE `stat` of the container's ptys:
-//   atime     — the most recent input, which drives the interaction ratchet;
-//   terminals — how many ptys have ever had input, i.e. live terminal sessions, which is what the
-//               expiry notification tells the user is running.
-//
-// A failure means terminals have NO interaction signal for this session this tick (there is no
-// browser-side backstop for the web terminal, by design: a broken exec fails SSH users too, and a
-// browser path would have patched a third of the problem while making the design look complete).
-// The CPU/network busy verdict still applies.
-const samplePtys = async (stats, session, {now, tickSeconds}) => {
-    if (!stats.ptyStats) {
-        return null
-    }
-    try {
-        const text = await stats.ptyStats(session)
-        return {atime: parsePtyStat(text, {now, tickSeconds}), terminals: countUserTerminals(text)}
-    } catch (error) {
-        log.warn(`PTY sampling failed for ${sessionTag(session)}: ${error.message}`)
-        return null
-    }
-}
-
-// extendBusySessions — one window query for every session evaluated this tick, then a clamped busy
-// ratchet per verdict.
-//
-// Coverage below the floor means only "no verdict from this window". WHY there is no verdict
-// decides what to do, and the two reasons are not alike:
-//
-//   the sampler could not reach the instance — we are BLIND. Under the old idle FSM missing data
-//     spared a session; under a deadline it would kill one, and a Docker-API blip must not close a
-//     computing instance. So the session is treated as busy for up to unknownBusyGraceTicks
-//     consecutive ticks, then stops being extended, so a genuinely dead instance still expires
-//     (and CloseSessionsWithoutInstance reaches it first in most cases).
-//
-//   the window simply has no history yet — a young session. Nothing is blind here: sampling is
-//     working and the instance is plainly idle, there is just not ten minutes of it. Extending on
-//     that is claiming evidence we never had, and it overrode an explicitly set keep-alive within
-//     seconds of the user setting it. Not busy, no extension; the lease or the user's keep-alive
-//     governs, which is what they are for.
-const extendBusySessions = async ({sessions, sessionRepo, usageRepo, instanceTypeById, policy, samplerState, verdicts, now}) => {
-    const sessionIds = sessions.map(({id}) => id)
-    if (!sessionIds.length) {
-        return
-    }
-    const windowStart = new Date(now.getTime() - policy.busyWindowMinutes * MINUTE_MS)
-    const requiredSamples = requiredSamplesFor(policy.busyWindowMinutes, policy.samplingIntervalSeconds)
-    const stats = await usageRepo.busyWindowStats(sessionIds, windowStart)
-    for (const session of sessions) {
-        try {
-            const state = samplerState.get(session.id)
-            const {busy, coverage} = isBusy({
-                stats: stats.get(session.id),
-                instanceType: instanceTypeById[session.instanceType],
-                policy,
-                requiredSamples,
-            })
-            let extend = busy
-            // Reported as the session's verdict. Without coverage it is 'unknown' rather than the
-            // previous verdict: the fail-safe below still extends, but nothing was observed.
-            verdicts?.set(session.id, coverage
-                ? busy ? Verdict.BUSY : Verdict.UNUSED
-                : Verdict.UNKNOWN)
-            if (coverage || !state?.samplingFailed) {
-                // Either the window answered, or it did not but the instance is perfectly visible —
-                // a young session with no history yet. Neither of those is blindness, so neither
-                // earns the fail-safe.
-                if (state) {
-                    state.unknownBusyTicks = 0
-                }
-            } else {
-                const ticks = (state?.unknownBusyTicks ?? 0) + 1
-                if (state) {
-                    state.unknownBusyTicks = ticks
-                }
-                extend = ticks <= policy.unknownBusyGraceTicks
-                if (extend) {
-                    expiryLog.debug(() => `${sessionTag(session)} unreachable and below the coverage`
-                        + ` floor (tick ${ticks} of ${policy.unknownBusyGraceTicks}) - treated as busy`)
-                } else {
-                    expiryLog.debug(() => `${sessionTag(session)} unreachable and below the coverage`
-                        + ` floor past ${policy.unknownBusyGraceTicks} ticks - no longer extended`)
-                }
-            }
-            if (extend) {
-                if (busy) {
-                    const windowStats = stats.get(session.id)
-                    expiryLog.debug(() => `${sessionTag(session)} BUSY over ${policy.busyWindowMinutes}m`
-                        + ` (${windowStats?.samples} samples,`
-                        + ` cpu ${windowStats?.cpuAvg}% of ${instanceTypeById[session.instanceType]?.cpuCount} cores,`
-                        + ` gpu ${windowStats?.gpuAvg ?? '-'}%,`
-                        + ` net ${windowStats?.netAvg == null ? '-' : Math.round(windowStats.netAvg / 1024)} KB/s)`)
-                }
-                await sessionRepo.extendSession({
-                    sessionId: session.id,
-                    minutes: policy.busyExtensionMinutes,
-                    interaction: false,
-                    capHours: policy.maxUnattendedHours,
-                    reason: busy ? 'busy' : 'coverage-grace',
-                })
-            }
-        } catch (error) {
-            log.warn(`Busy evaluation failed for ${sessionTag(session)}: ${error.message}`)
-        }
-    }
-}
-
 const sampleInstances = async ({sessionRepo, usageRepo, stats, instanceTypeById, usageMetrics, samplerState, terminals = null, verdicts = null, policy = null, clock}) => {
     const sessions = await sessionRepo.sessions([State.ACTIVE])
     const samples = []
@@ -261,6 +146,121 @@ const sampleInstances = async ({sessionRepo, usageRepo, stats, instanceTypeById,
     }
     usageMetrics.update(samples)
     return null
+}
+
+// samplePtys — the terminal signals, both read from ONE `stat` of the container's ptys:
+//   atime     — the most recent input, which drives the interaction ratchet;
+//   terminals — how many ptys have ever had input, i.e. live terminal sessions, which is what the
+//               expiry notification tells the user is running.
+//
+// A failure means terminals have NO interaction signal for this session this tick (there is no
+// browser-side backstop for the web terminal, by design: a broken exec fails SSH users too, and a
+// browser path would have patched a third of the problem while making the design look complete).
+// The CPU/network busy verdict still applies.
+const samplePtys = async (stats, session, {now, tickSeconds}) => {
+    if (!stats.ptyStats) {
+        return null
+    }
+    try {
+        const text = await stats.ptyStats(session)
+        return {atime: parsePtyStat(text, {now, tickSeconds}), terminals: countUserTerminals(text)}
+    } catch (error) {
+        log.warn(`PTY sampling failed for ${sessionTag(session)}: ${error.message}`)
+        return null
+    }
+}
+
+const sampleGpu = async (stats, session) => {
+    try {
+        return parseGpuCsv(await stats.gpuStats(session))
+    } catch (error) {
+        log.warn(`GPU sampling failed for ${sessionTag(session)}: ${error.message}`)
+        return null
+    }
+}
+
+// extendBusySessions — one window query for every session evaluated this tick, then a clamped busy
+// ratchet per verdict.
+//
+// Coverage below the floor means only "no verdict from this window". WHY there is no verdict
+// decides what to do, and the two reasons are not alike:
+//
+//   the sampler could not reach the instance — we are BLIND. Under the old idle FSM missing data
+//     spared a session; under a deadline it would kill one, and a Docker-API blip must not close a
+//     computing instance. So the session is treated as busy for up to unknownBusyGraceTicks
+//     consecutive ticks, then stops being extended, so a genuinely dead instance still expires
+//     (and CloseSessionsWithoutInstance reaches it first in most cases).
+//
+//   the window simply has no history yet — a young session. Nothing is blind here: sampling is
+//     working and the instance is plainly idle, there is just not ten minutes of it. Extending on
+//     that is claiming evidence we never had, and it overrode an explicitly set keep-alive within
+//     seconds of the user setting it. Not busy, no extension; the lease or the user's keep-alive
+//     governs, which is what they are for.
+const extendBusySessions = async ({sessions, sessionRepo, usageRepo, instanceTypeById, policy, samplerState, verdicts, now}) => {
+    const sessionIds = sessions.map(({id}) => id)
+    if (!sessionIds.length) {
+        return
+    }
+    const windowStart = new Date(now.getTime() - policy.busyWindowMinutes * MINUTE_MS)
+    const requiredSamples = requiredSamplesFor(policy.busyWindowMinutes, policy.samplingIntervalSeconds)
+    const stats = await usageRepo.busyWindowStats(sessionIds, windowStart)
+    for (const session of sessions) {
+        try {
+            const state = samplerState.get(session.id)
+            const {busy, coverage} = isBusy({
+                stats: stats.get(session.id),
+                instanceType: instanceTypeById[session.instanceType],
+                policy,
+                requiredSamples,
+            })
+            let extend = busy
+            // Reported as the session's verdict. Without coverage it is 'unknown' rather than the
+            // previous verdict: the fail-safe below still extends, but nothing was observed.
+            verdicts?.set(session.id, coverage
+                ? busy ? Verdict.BUSY : Verdict.UNUSED
+                : Verdict.UNKNOWN)
+            if (coverage || !state?.samplingFailed) {
+                // Either the window answered, or it did not but the instance is perfectly visible —
+                // a young session with no history yet. Neither of those is blindness, so neither
+                // earns the fail-safe.
+                if (state) {
+                    state.unknownBusyTicks = 0
+                }
+            } else {
+                const ticks = (state?.unknownBusyTicks ?? 0) + 1
+                if (state) {
+                    state.unknownBusyTicks = ticks
+                }
+                extend = ticks <= policy.unknownBusyGraceTicks
+                if (extend) {
+                    expiryLog.debug(() => `${sessionTag(session)} unreachable and below the coverage`
+                        + ` floor (tick ${ticks} of ${policy.unknownBusyGraceTicks}) - treated as busy`)
+                } else {
+                    expiryLog.debug(() => `${sessionTag(session)} unreachable and below the coverage`
+                        + ` floor past ${policy.unknownBusyGraceTicks} ticks - no longer extended`)
+                }
+            }
+            if (extend) {
+                if (busy) {
+                    const windowStats = stats.get(session.id)
+                    expiryLog.debug(() => `${sessionTag(session)} BUSY over ${policy.busyWindowMinutes}m`
+                        + ` (${windowStats?.samples} samples,`
+                        + ` cpu ${windowStats?.cpuAvg}% of ${instanceTypeById[session.instanceType]?.cpuCount} cores,`
+                        + ` gpu ${windowStats?.gpuAvg ?? '-'}%,`
+                        + ` net ${windowStats?.netAvg == null ? '-' : Math.round(windowStats.netAvg / 1024)} KB/s)`)
+                }
+                await sessionRepo.extendSession({
+                    sessionId: session.id,
+                    minutes: policy.busyExtensionMinutes,
+                    interaction: false,
+                    capHours: policy.maxUnattendedHours,
+                    reason: busy ? 'busy' : 'coverage-grace',
+                })
+            }
+        } catch (error) {
+            log.warn(`Busy evaluation failed for ${sessionTag(session)}: ${error.message}`)
+        }
+    }
 }
 
 export {sampleInstances}

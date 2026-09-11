@@ -9,22 +9,6 @@
 import {round2} from '../../round.js'
 import {DAY_MS} from '../../time.js'
 
-const avgMax = (sum, weight, max) =>
-    weight ? {avg: round2(sum / weight), max} : null
-
-const maxOrNull = (a, b) => {
-    const max = Math.max(a ?? -1, b ?? -1)
-    return max < 0 ? null : max
-}
-
-const asReportRow = ({hours, cpuWeight, cpuSum, cpuMax, ramWeight, ramSum, ramMax, gpuWeight, gpuSum, gpuMax, netWeight, netSum}) => ({
-    hours,
-    cpu: avgMax(cpuSum, cpuWeight, cpuMax),
-    ram: avgMax(ramSum, ramWeight, ramMax),
-    gpu: avgMax(gpuSum, gpuWeight, gpuMax),
-    netBytesPerS: netWeight ? Math.round(netSum / netWeight) : null,
-})
-
 const generateUserUsageReport = async (
     {username, days}, {usageRepo, instanceManager, clock}
 ) => {
@@ -54,6 +38,22 @@ const generateUserUsageReport = async (
             ...asReportRow(row),
         })),
     }
+}
+
+const asReportRow = ({hours, cpuWeight, cpuSum, cpuMax, ramWeight, ramSum, ramMax, gpuWeight, gpuSum, gpuMax, netWeight, netSum}) => ({
+    hours,
+    cpu: avgMax(cpuSum, cpuWeight, cpuMax),
+    ram: avgMax(ramSum, ramWeight, ramMax),
+    gpu: avgMax(gpuSum, gpuWeight, gpuMax),
+    netBytesPerS: netWeight ? Math.round(netSum / netWeight) : null,
+})
+
+const avgMax = (sum, weight, max) =>
+    weight ? {avg: round2(sum / weight), max} : null
+
+const maxOrNull = (a, b) => {
+    const max = Math.max(a ?? -1, b ?? -1)
+    return max < 0 ? null : max
 }
 
 export {generateUserUsageReport}

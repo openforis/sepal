@@ -11,194 +11,6 @@ import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
 import {createWorkerSession, State} from './workerSession.js'
 
-const session = overrides => createWorkerSession({
-    id: 's-1',
-    state: State.PENDING,
-    username: 'alice',
-    workerType: SANDBOX,
-    instanceType: 'T3aSmall',
-    instance: {id: 'i-1', host: 'host-1'},
-    creationTime: new Date('2026-01-01T00:00:00Z'),
-    updateTime: new Date('2026-01-01T00:00:00Z'),
-    apiKey: 'secret-key',
-    ...overrides,
-})
-
-// In-memory repo mock: records calls + serves canned reads.
-const makeRepo = (canned = {}) => {
-    const calls = []
-    const record = (name, ...args) => calls.push({name, args})
-    return {
-        calls,
-        insert: jest.fn(async s => record('insert', s)),
-        update: jest.fn(async s => record('update', s)),
-        getSession: jest.fn(async id => {
-            record('getSession', id)
-            if (canned.getSession) return canned.getSession(id)
-            throw new Error(`Non-existing worker session: ${id}`)
-        }),
-        userSessions: jest.fn(async (...args) => {
-            record('userSessions', ...args)
-            return canned.userSessions ? canned.userSessions(...args) : []
-        }),
-        sessions: jest.fn(async states => {
-            record('sessions', states)
-            return canned.sessions ? canned.sessions(states) : []
-        }),
-        timedOutSessions: jest.fn(async () => {
-            record('timedOutSessions')
-            return canned.timedOutSessions ? canned.timedOutSessions() : []
-        }),
-        sessionOnInstance: jest.fn(async (instanceId, states) => {
-            record('sessionOnInstance', instanceId, states)
-            return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
-        }),
-        findUsernameByApiKey: jest.fn(async apiKey => canned.findUsernameByApiKey?.(apiKey) ?? null),
-        mostRecentlyClosedSessionByUser: jest.fn(async () => canned.mostRecentlyClosedSessionByUser?.() ?? {}),
-        mostRecentlyClosedSession: jest.fn(async u => canned.mostRecentlyClosedSession?.(u) ?? {}),
-        allOpenSessions: jest.fn(async () => canned.allOpenSessions ? canned.allOpenSessions() : []),
-        activateSession: jest.fn(async (id, leaseMinutes) => {
-            record('activateSession', id, leaseMinutes)
-            return canned.activateSession
-                ? canned.activateSession(id, leaseMinutes)
-                : (canned.sessionOnInstance ? {...canned.sessionOnInstance('i-1', ['PENDING']), state: 'ACTIVE'} : null)
-        }),
-        extendSession: jest.fn(async args => {
-            record('extendSession', args)
-            return canned.extendSession ? canned.extendSession(args) : true
-        }),
-        setSessionTimeout: jest.fn(async args => {
-            record('setSessionTimeout', args)
-            return canned.setSessionTimeout ? canned.setSessionTimeout(args) : true
-        }),
-        expiredSessions: jest.fn(async () => canned.expiredSessions ? canned.expiredSessions() : []),
-        notifyExpiry: jest.fn(async id => canned.notifyExpiry ? canned.notifyExpiry(id) : true),
-        markEmailed: jest.fn(async (...args) => canned.markEmailed ? canned.markEmailed(...args) : true),
-        dismissNotification: jest.fn(async (...args) => canned.dismissNotification ? canned.dismissNotification(...args) : true),
-        restartExpiryCycle: jest.fn(async (...args) => canned.restartExpiryCycle ? canned.restartExpiryCycle(...args) : true),
-        closeExpiredSession: jest.fn(async (...args) => canned.closeExpiredSession ? canned.closeExpiredSession(...args) : true),
-        redeemExtension: jest.fn(async (...args) => canned.redeemExtension ? canned.redeemExtension(...args) : true),
-        redeemTermination: jest.fn(async (...args) => canned.redeemTermination ? canned.redeemTermination(...args) : true),
-    }
-}
-
-// The expiry policy the manager applies. Distinct magnitudes per event, so a test can tell WHICH
-// ratchet fired from the minutes alone.
-const expiryPolicy = {
-    mode: 'enforce',
-    startupLeaseMinutes: 30,
-    openExtensionMinutes: 15,
-    interactionExtensionMinutes: 16,
-    busyExtensionMinutes: 17,
-    taskExtensionMinutes: 18,
-    manualExtensionMinutes: 19,
-    emailExtensionMinutes: 20,
-    maxUnattendedHours: 12,
-    notificationVisibleMinutes: 5,
-    graceMinutes: 60,
-}
-
-const makeInstanceManager = (overrides = {}) => {
-    let activatedCb = null
-    let failedCb = null
-    return {
-        requestInstance: jest.fn(async () => ({id: 'i-1', host: 'host-1'})),
-        releaseInstance: jest.fn(async () => undefined),
-        releaseUnusedInstances: jest.fn(async () => undefined),
-        reclaimStaleClaims: jest.fn(async () => undefined),
-        sessionsWithoutInstance: jest.fn(async () => []),
-        removeOrphanedContainers: jest.fn(async () => []),
-        getInstanceTypes: jest.fn(() => [{id: 'T3aSmall'}]),
-        onInstanceActivated: jest.fn(cb => {activatedCb = cb}),
-        onFailedToProvisionInstance: jest.fn(cb => {failedCb = cb}),
-        _fireActivated: instance => activatedCb(instance),
-        _fireFailed: instance => failedCb(instance),
-        ...overrides,
-    }
-}
-
-const makeEvents = () => ({
-    emitWorkerSessionRequested: jest.fn(),
-    emitWorkerSessionActivated: jest.fn(),
-    emitWorkerSessionClosed: jest.fn(),
-    emitSessionAppAssociated: jest.fn(),
-    emitSessionAppDissociated: jest.fn(),
-    emitSessionChanged: jest.fn(),
-    emitSessionExpiryNotified: jest.fn(),
-    emitSessionExpiryClosed: jest.fn(),
-})
-
-// makeLockedUsers — a fake of the event-fed gate (../lockedUsers.js). `locked` seeds the
-// initially-locked usernames; isLocked is a jest.fn so tests can assert the call.
-const makeLockedUsers = (locked = []) => {
-    const set = new Set(locked)
-    return {
-        isLocked: jest.fn(username => set.has(username)),
-        onExceeded: jest.fn(({username}) => set.add(username)),
-        onCleared: jest.fn(({username}) => set.delete(username)),
-    }
-}
-
-// A zeroed Spending DTO, which some report tests still assert against.
-const zeroedSpending = () => ({
-    monthlyInstanceBudget: 0,
-    monthlyInstanceSpending: 0,
-    monthlyStorageBudget: 0,
-    monthlyStorageSpending: 0,
-    storageQuota: 0,
-    storageUsed: 0,
-    costPerGbMonth: 0,
-    budgetUpdateRequest: null,
-})
-// makeBudgetClient — a fake of ../budgetClient.js. `check` is the authoritative pre-session
-// verdict; the default answers "under budget".
-const makeBudgetClient = (overrides = {}) => ({
-    spending: jest.fn(async () => zeroedSpending()),
-    check: jest.fn(async () => ({exceeded: false, reason: null})),
-    ...overrides,
-})
-
-const fixedClock = () => new Date('2026-01-01T12:00:00Z')
-
-// makeAppRepo — a fake of ../sessionAppRepository.js. Defaults to no associations / no live apps,
-// so tests that don't care about app associations (most of them) are unaffected.
-const makeAppRepo = (overrides = {}) => ({
-    associate: jest.fn(async () => {}),
-    setClient: jest.fn(async () => {}),
-    userAppSessions: jest.fn(async () => []),
-    appsForSessions: jest.fn(async () => new Map()),
-    deleteForSession: jest.fn(async () => {}),
-    dissociate: jest.fn(async () => null),
-    dissociateForClient: jest.fn(async () => []),
-    ...overrides,
-})
-
-const build = ({repo, appRepo, instanceManager, lockedUsers, budgetClient, events} = {}) => {
-    const _repo = repo ?? makeRepo()
-    const _appRepo = appRepo ?? makeAppRepo()
-    const _im = instanceManager ?? makeInstanceManager()
-    const _lockedUsers = lockedUsers ?? makeLockedUsers()
-    // `null` is meaningful here (the "not wired" case) — only `undefined` gets the default.
-    const _budgetClient = budgetClient === undefined ? makeBudgetClient() : budgetClient
-    const _events = events ?? makeEvents()
-    const mgr = createSessionManager({
-        repo: _repo,
-        appRepo: _appRepo,
-        instanceManager: _im,
-        lockedUsers: _lockedUsers,
-        budgetClient: _budgetClient,
-        clock: fixedClock,
-        apiKeyGenerator: {generate: () => 'generated-key'},
-        expiryPolicy,
-        instanceTypeById: {T3aSmall: {name: 't3a.small', tag: 't1', hourlyCost: 0.02}},
-        events: _events,
-    })
-    return {
-        mgr, repo: _repo, appRepo: _appRepo, instanceManager: _im,
-        lockedUsers: _lockedUsers, budgetClient: _budgetClient, events: _events,
-    }
-}
-
 describe('requestSession', () => {
     test('SANDBOX: budget checked, api_key generated, instance requested, row inserted PENDING with instance', async () => {
         const {mgr, repo, instanceManager, budgetClient} = build()
@@ -281,7 +93,6 @@ describe('requestSession', () => {
     })
 
     describe('budget module unreachable → fall back to the event-fed locked-users set', () => {
-        const unreachable = () => makeBudgetClient({check: jest.fn(async () => {throw new Error('ECONNREFUSED')})})
 
         test('locked in the fallback set → InstanceBudgetExceeded, no instance/insert happens', async () => {
             const lockedUsers = makeLockedUsers(['a'])
@@ -301,6 +112,7 @@ describe('requestSession', () => {
             expect(lockedUsers.isLocked).toHaveBeenCalledWith('a')
             expect(repo.insert).toHaveBeenCalledTimes(1)
         })
+        const unreachable = () => makeBudgetClient({check: jest.fn(async () => {throw new Error('ECONNREFUSED')})})
     })
 
     test('no budgetClient wired at all → the locked-users set is still enforced', async () => {
@@ -608,7 +420,6 @@ describe('heartbeat', () => {
 })
 
 describe('extensions', () => {
-    const activeRepo = (canned = {}) => makeRepo({getSession: () => session({state: State.ACTIVE}), ...canned})
 
     // The keepAlive slider REPLACES the deadline — the one write that is not a ratchet, because
     // the cursor shows the current keep-alive and dragging it means "make it this much".
@@ -745,6 +556,7 @@ describe('extensions', () => {
         expect(repo.redeemExtension).toHaveBeenCalledWith(
             {sessionId: 's-1', notifiedTime, minutes: 20})
     })
+    const activeRepo = (canned = {}) => makeRepo({getSession: () => session({state: State.ACTIVE}), ...canned})
 })
 
 describe('queries', () => {
@@ -861,10 +673,6 @@ describe('queries', () => {
 
 describe('associateApp', () => {
     const openSession = {id: 's-1', username: 'bob', state: 'ACTIVE'}
-    const emptyAppRepo = () => makeAppRepo()
-    // Opening an app is an interaction, so association reaches the ratchet — these tests use a
-    // bare repo literal rather than makeRepo().
-    const appSessionRepo = () => makeRepo({getSession: () => openSession})
 
     it('associates an app with an owned open session and emits SessionAppAssociated', async () => {
         const appRepo = emptyAppRepo()
@@ -969,6 +777,10 @@ describe('associateApp', () => {
         const {mgr} = build({repo: makeRepo({getSession: () => ({...openSession, state: 'CLOSED'})}), appRepo: emptyAppRepo()})
         await expect(mgr.associateApp({username: 'bob', sessionId: 's-1', appPath: '/x'})).rejects.toMatchObject({statusCode: 404})
     })
+    const emptyAppRepo = () => makeAppRepo()
+    // Opening an app is an interaction, so association reaches the ratchet — these tests use a
+    // bare repo literal rather than makeRepo().
+    const appSessionRepo = () => makeRepo({getSession: () => openSession})
 })
 
 describe('dissociateApp', () => {
@@ -1047,3 +859,191 @@ describe('registerInstanceManagerHooks', () => {
         expect(events.emitWorkerSessionClosed).toHaveBeenCalledTimes(1)
     })
 })
+
+const session = overrides => createWorkerSession({
+    id: 's-1',
+    state: State.PENDING,
+    username: 'alice',
+    workerType: SANDBOX,
+    instanceType: 'T3aSmall',
+    instance: {id: 'i-1', host: 'host-1'},
+    creationTime: new Date('2026-01-01T00:00:00Z'),
+    updateTime: new Date('2026-01-01T00:00:00Z'),
+    apiKey: 'secret-key',
+    ...overrides,
+})
+
+// In-memory repo mock: records calls + serves canned reads.
+const makeRepo = (canned = {}) => {
+    const calls = []
+    const record = (name, ...args) => calls.push({name, args})
+    return {
+        calls,
+        insert: jest.fn(async s => record('insert', s)),
+        update: jest.fn(async s => record('update', s)),
+        getSession: jest.fn(async id => {
+            record('getSession', id)
+            if (canned.getSession) return canned.getSession(id)
+            throw new Error(`Non-existing worker session: ${id}`)
+        }),
+        userSessions: jest.fn(async (...args) => {
+            record('userSessions', ...args)
+            return canned.userSessions ? canned.userSessions(...args) : []
+        }),
+        sessions: jest.fn(async states => {
+            record('sessions', states)
+            return canned.sessions ? canned.sessions(states) : []
+        }),
+        timedOutSessions: jest.fn(async () => {
+            record('timedOutSessions')
+            return canned.timedOutSessions ? canned.timedOutSessions() : []
+        }),
+        sessionOnInstance: jest.fn(async (instanceId, states) => {
+            record('sessionOnInstance', instanceId, states)
+            return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
+        }),
+        findUsernameByApiKey: jest.fn(async apiKey => canned.findUsernameByApiKey?.(apiKey) ?? null),
+        mostRecentlyClosedSessionByUser: jest.fn(async () => canned.mostRecentlyClosedSessionByUser?.() ?? {}),
+        mostRecentlyClosedSession: jest.fn(async u => canned.mostRecentlyClosedSession?.(u) ?? {}),
+        allOpenSessions: jest.fn(async () => canned.allOpenSessions ? canned.allOpenSessions() : []),
+        activateSession: jest.fn(async (id, leaseMinutes) => {
+            record('activateSession', id, leaseMinutes)
+            return canned.activateSession
+                ? canned.activateSession(id, leaseMinutes)
+                : (canned.sessionOnInstance ? {...canned.sessionOnInstance('i-1', ['PENDING']), state: 'ACTIVE'} : null)
+        }),
+        extendSession: jest.fn(async args => {
+            record('extendSession', args)
+            return canned.extendSession ? canned.extendSession(args) : true
+        }),
+        setSessionTimeout: jest.fn(async args => {
+            record('setSessionTimeout', args)
+            return canned.setSessionTimeout ? canned.setSessionTimeout(args) : true
+        }),
+        expiredSessions: jest.fn(async () => canned.expiredSessions ? canned.expiredSessions() : []),
+        notifyExpiry: jest.fn(async id => canned.notifyExpiry ? canned.notifyExpiry(id) : true),
+        markEmailed: jest.fn(async (...args) => canned.markEmailed ? canned.markEmailed(...args) : true),
+        dismissNotification: jest.fn(async (...args) => canned.dismissNotification ? canned.dismissNotification(...args) : true),
+        restartExpiryCycle: jest.fn(async (...args) => canned.restartExpiryCycle ? canned.restartExpiryCycle(...args) : true),
+        closeExpiredSession: jest.fn(async (...args) => canned.closeExpiredSession ? canned.closeExpiredSession(...args) : true),
+        redeemExtension: jest.fn(async (...args) => canned.redeemExtension ? canned.redeemExtension(...args) : true),
+        redeemTermination: jest.fn(async (...args) => canned.redeemTermination ? canned.redeemTermination(...args) : true),
+    }
+}
+
+const makeInstanceManager = (overrides = {}) => {
+    let activatedCb = null
+    let failedCb = null
+    return {
+        requestInstance: jest.fn(async () => ({id: 'i-1', host: 'host-1'})),
+        releaseInstance: jest.fn(async () => undefined),
+        releaseUnusedInstances: jest.fn(async () => undefined),
+        reclaimStaleClaims: jest.fn(async () => undefined),
+        sessionsWithoutInstance: jest.fn(async () => []),
+        removeOrphanedContainers: jest.fn(async () => []),
+        getInstanceTypes: jest.fn(() => [{id: 'T3aSmall'}]),
+        onInstanceActivated: jest.fn(cb => {activatedCb = cb}),
+        onFailedToProvisionInstance: jest.fn(cb => {failedCb = cb}),
+        _fireActivated: instance => activatedCb(instance),
+        _fireFailed: instance => failedCb(instance),
+        ...overrides,
+    }
+}
+
+const makeEvents = () => ({
+    emitWorkerSessionRequested: jest.fn(),
+    emitWorkerSessionActivated: jest.fn(),
+    emitWorkerSessionClosed: jest.fn(),
+    emitSessionAppAssociated: jest.fn(),
+    emitSessionAppDissociated: jest.fn(),
+    emitSessionChanged: jest.fn(),
+    emitSessionExpiryNotified: jest.fn(),
+    emitSessionExpiryClosed: jest.fn(),
+})
+
+// makeLockedUsers — a fake of the event-fed gate (../lockedUsers.js). `locked` seeds the
+// initially-locked usernames; isLocked is a jest.fn so tests can assert the call.
+const makeLockedUsers = (locked = []) => {
+    const set = new Set(locked)
+    return {
+        isLocked: jest.fn(username => set.has(username)),
+        onExceeded: jest.fn(({username}) => set.add(username)),
+        onCleared: jest.fn(({username}) => set.delete(username)),
+    }
+}
+
+// A zeroed Spending DTO, which some report tests still assert against.
+const zeroedSpending = () => ({
+    monthlyInstanceBudget: 0,
+    monthlyInstanceSpending: 0,
+    monthlyStorageBudget: 0,
+    monthlyStorageSpending: 0,
+    storageQuota: 0,
+    storageUsed: 0,
+    costPerGbMonth: 0,
+    budgetUpdateRequest: null,
+})
+// makeBudgetClient — a fake of ../budgetClient.js. `check` is the authoritative pre-session
+// verdict; the default answers "under budget".
+const makeBudgetClient = (overrides = {}) => ({
+    spending: jest.fn(async () => zeroedSpending()),
+    check: jest.fn(async () => ({exceeded: false, reason: null})),
+    ...overrides,
+})
+
+const fixedClock = () => new Date('2026-01-01T12:00:00Z')
+
+// makeAppRepo — a fake of ../sessionAppRepository.js. Defaults to no associations / no live apps,
+// so tests that don't care about app associations (most of them) are unaffected.
+const makeAppRepo = (overrides = {}) => ({
+    associate: jest.fn(async () => {}),
+    setClient: jest.fn(async () => {}),
+    userAppSessions: jest.fn(async () => []),
+    appsForSessions: jest.fn(async () => new Map()),
+    deleteForSession: jest.fn(async () => {}),
+    dissociate: jest.fn(async () => null),
+    dissociateForClient: jest.fn(async () => []),
+    ...overrides,
+})
+
+const build = ({repo, appRepo, instanceManager, lockedUsers, budgetClient, events} = {}) => {
+    const _repo = repo ?? makeRepo()
+    const _appRepo = appRepo ?? makeAppRepo()
+    const _im = instanceManager ?? makeInstanceManager()
+    const _lockedUsers = lockedUsers ?? makeLockedUsers()
+    // `null` is meaningful here (the "not wired" case) — only `undefined` gets the default.
+    const _budgetClient = budgetClient === undefined ? makeBudgetClient() : budgetClient
+    const _events = events ?? makeEvents()
+    const mgr = createSessionManager({
+        repo: _repo,
+        appRepo: _appRepo,
+        instanceManager: _im,
+        lockedUsers: _lockedUsers,
+        budgetClient: _budgetClient,
+        clock: fixedClock,
+        apiKeyGenerator: {generate: () => 'generated-key'},
+        expiryPolicy,
+        instanceTypeById: {T3aSmall: {name: 't3a.small', tag: 't1', hourlyCost: 0.02}},
+        events: _events,
+    })
+    return {
+        mgr, repo: _repo, appRepo: _appRepo, instanceManager: _im,
+        lockedUsers: _lockedUsers, budgetClient: _budgetClient, events: _events,
+    }
+}
+
+// The expiry policy the manager applies. Distinct magnitudes per event, so a test can tell WHICH
+// ratchet fired from the minutes alone.
+const expiryPolicy = {
+    mode: 'enforce',
+    startupLeaseMinutes: 30,
+    openExtensionMinutes: 15,
+    interactionExtensionMinutes: 16,
+    busyExtensionMinutes: 17,
+    taskExtensionMinutes: 18,
+    manualExtensionMinutes: 19,
+    emailExtensionMinutes: 20,
+    maxUnattendedHours: 12,
+    notificationVisibleMinutes: 5,
+    graceMinutes: 60,
+}

@@ -9,39 +9,7 @@ import {createMissingInstanceTracker} from '../missingInstanceTracker.js'
 import {createWorkerSession, State} from '../workerSession.js'
 import {closeSessionsWithoutInstance} from './closeSessionsWithoutInstance.js'
 
-const session = id => createWorkerSession({
-    id,
-    state: State.ACTIVE,
-    username: 'alice',
-    workerType: 'sandbox',
-    instanceType: 'T3aSmall',
-    instance: {id: `i-${id}`, host: 'h'},
-    creationTime: new Date('2026-01-01T00:00:00Z'),
-    updateTime: new Date('2026-01-01T00:00:00Z'),
-})
-
 const NOW = new Date('2026-01-01T12:00:00Z')
-
-const build = ({sessions, statuses}) => {
-    const deps = {
-        repo: {
-            sessions: jest.fn(async () => sessions),
-            update: jest.fn(async () => {}),
-        },
-        instanceManager: {
-            sessionsWithoutInstance: jest.fn(async probed => probed
-                .filter(s => statuses[s.id] && statuses[s.id] !== 'PROVISIONED')
-                .map(s => ({session: s, status: statuses[s.id]}))),
-        },
-        emitWorkerSessionClosed: jest.fn(),
-        // Time stands still across a sweep here, so the tracker's backstop never elapses: these tests
-        // are about what one probe result is worth, not about how long an instance may stay unreachable.
-        tracker: createMissingInstanceTracker({
-            missesBeforeClose: 2, unknownBackstopMs: 30 * 60_000, clock: () => NOW
-        }),
-    }
-    return deps
-}
 
 test('a single MISSING sweep does not close the session', async () => {
     const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
@@ -97,3 +65,35 @@ test('one close failing does not abort the rest', async () => {
     await closeSessionsWithoutInstance(deps)
     expect(deps.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-2'})
 })
+
+const session = id => createWorkerSession({
+    id,
+    state: State.ACTIVE,
+    username: 'alice',
+    workerType: 'sandbox',
+    instanceType: 'T3aSmall',
+    instance: {id: `i-${id}`, host: 'h'},
+    creationTime: new Date('2026-01-01T00:00:00Z'),
+    updateTime: new Date('2026-01-01T00:00:00Z'),
+})
+
+const build = ({sessions, statuses}) => {
+    const deps = {
+        repo: {
+            sessions: jest.fn(async () => sessions),
+            update: jest.fn(async () => {}),
+        },
+        instanceManager: {
+            sessionsWithoutInstance: jest.fn(async probed => probed
+                .filter(s => statuses[s.id] && statuses[s.id] !== 'PROVISIONED')
+                .map(s => ({session: s, status: statuses[s.id]}))),
+        },
+        emitWorkerSessionClosed: jest.fn(),
+        // Time stands still across a sweep here, so the tracker's backstop never elapses: these tests
+        // are about what one probe result is worth, not about how long an instance may stay unreachable.
+        tracker: createMissingInstanceTracker({
+            missesBeforeClose: 2, unknownBackstopMs: 30 * 60_000, clock: () => NOW
+        }),
+    }
+    return deps
+}
