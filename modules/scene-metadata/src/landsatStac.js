@@ -1,9 +1,23 @@
+import {concatMap, from} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 
 import {getDataset, isSceneIncluded, scene} from './landsat.js'
-import {updateFromStac} from './stac.js'
+import {updateFromStac$} from './stac.js'
 
 const log = getLogger('landsat')
+
+export const updateLandsat$ = ({redis, database, timestamp}) => from([8, 9]).pipe(
+    concatMap(number => updateFromStac$({
+        source: 'landsat-ot',
+        dataset: `LANDSAT_${number}`,
+        query: {platform: {eq: `landsat-${number}`}},
+        sceneMapper,
+        redis,
+        database,
+        timestamp
+    }))
+)
 
 const sceneMapper = ({
     id,
@@ -26,30 +40,3 @@ const sceneMapper = ({
         log.debug(`Ignoring unexpected id: ${id}`)
     }
 }
-
-const updateLandsat = async ({redis, database, timestamp}) => {
-    await updateFromStac({
-        source: 'landsat-ot',
-        dataset: 'LANDSAT_8',
-        query: {
-            'platform': {'eq': 'landsat-8'}
-        },
-        sceneMapper,
-        redis,
-        database,
-        timestamp
-    })
-    await updateFromStac({
-        source: 'landsat-ot',
-        dataset: 'LANDSAT_9',
-        query: {
-            'platform': {'eq': 'landsat-9'}
-        },
-        sceneMapper,
-        redis,
-        database,
-        timestamp
-    })
-}
-
-export {updateLandsat}

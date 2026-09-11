@@ -1,3 +1,5 @@
+import {defer, map, tap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 
 import {processCSV} from './csv.js'
@@ -8,6 +10,27 @@ import {formatInterval} from './time.js'
 const log = getLogger('sentinel2')
 
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
+
+export const loadSentinel2$ = ({database, maxTimestamp, timestamp}) => defer(() => {
+    log.debug('Loading Sentinel-2 data from CSV...')
+    const t0 = Date.now()
+    return defer(() => processCSV({
+        collection: 'sentinel-2',
+        sceneMapper,
+        database,
+        maxTimestamp,
+        timestamp
+    })).pipe(
+        tap(() => log.info(`Loaded Sentinel-2 data from CSV (${formatInterval(t0)})`))
+    )
+})
+
+export const downloadSentinel2$ = () => defer(() =>
+    download({
+        url: CSV_URL,
+        collection: 'sentinel-2',
+    })
+).pipe(map(() => undefined))
 
 const sceneMapper = ({
     'GRANULE_ID': granuleId,
@@ -22,25 +45,3 @@ const sceneMapper = ({
     }
     return null
 }
-
-const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp}) => {
-    log.debug('Loading Sentinel-2 data from CSV...')
-    const t0 = Date.now()
-    await processCSV({
-        collection: 'sentinel-2',
-        sceneMapper,
-        redis,
-        database,
-        maxTimestamp,
-        timestamp
-    }).catch(err => log.error('Error:', err))
-    log.info(`Loaded Sentinel-2 data from CSV (${formatInterval(t0)})`)
-}
-
-const downloadSentinel2 = async () =>
-    await download({
-        url: CSV_URL,
-        collection: 'sentinel-2',
-    })
-
-export {downloadSentinel2, loadSentinel2}

@@ -1,26 +1,47 @@
-import {createPool} from '#sepal/db/mysql'
-
-import {SCHEMA} from './db.js'
 import {dayOfYearIgnoringLeapDay, seasonDayOfYearConstraint} from './sceneSearch.js'
 
-let _pool
+export class SceneRepository {
+    #db
+    #clock
 
-const getPool = async () => {
-    if (!_pool) {
-        _pool = await createPool(SCHEMA)
+    constructor(db, clock) {
+        this.#db = db
+        this.#clock = clock
     }
-    return _pool
+
+    findScenesInSceneArea(query) {
+        return this.#db.withConnection(async connection => {
+            const {sql, params} = buildScoredQuery(query, this.#clock())
+            const [rows] = await connection.query(sql, params)
+            return rows.map(toSceneMetaData)
+        })
+    }
+
+    async findBestScenes(query) {
+        const {sceneAreaIds, cloudCoverTarget, minScenes, maxScenes} = query
+        const result = {}
+        for (const sceneAreaId of sceneAreaIds) {
+            const areaQuery = {...query, sceneAreaId}
+            const rows = await this.findScenesInSceneArea(areaQuery)
+            result[sceneAreaId] = selectBest(rows, {minScenes, maxScenes, cloudCoverTarget})
+        }
+        return result
+    }
 }
 
-const latestAcquisitionDate = () => {
-    const d = new Date()
-    d.setDate(d.getDate() - 10)
-    return d
+export const selectBest = (scoredRows, {minScenes, maxScenes, cloudCoverTarget}) => {
+    const scenes = []
+    let cumulative = 1
+    for (const row of scoredRows) {
+        scenes.push(row)
+        cumulative *= row.cloud_cover / 100
+        if (maxScenes <= scenes.length) break
+        if (!(cumulative > cloudCoverTarget || scenes.length < minScenes)) break
+    }
+    return scenes
 }
 
-const placeholders = items => items.map(() => '?').join(', ')
-
-const buildScoredQuery = query => {
+const buildScoredQuery = (query, now) => {
     const {
         sceneAreaId,
         dataSets,
@@ -55,13 +76,21 @@ const buildScoredQuery = query => {
         sceneAreaId,
         fromDate,
         toDate,
-        latestAcquisitionDate(),
+        latestAcquisitionDate(now),
         seasonStartDoy,
         seasonEndDoy,
         ...dataSets,
     ]
 
     return {sql, params}
+}
+
+const placeholders = items => items.map(() => '?').join(', ')
+
+const latestAcquisitionDate = now => {
+    const d = new Date(now)
+    d.setDate(d.getDate() - 10)
+    return d
 }
 
 // Keeps the raw cloud_cover on the object so selectBest can use it.
@@ -78,35 +107,3 @@ const toSceneMetaData = row => ({
     updateTime: row.update_time,
     cloud_cover: row.cloud_cover,
 })
-
-const selectBest = (scoredRows, {minScenes, maxScenes, cloudCoverTarget}) => {
-    const scenes = []
-    let cumulative = 1
-    for (const row of scoredRows) {
-        scenes.push(row)
-        cumulative *= row.cloud_cover / 100
-        if (maxScenes <= scenes.length) break
-        if (!(cumulative > cloudCoverTarget || scenes.length < minScenes)) break
-    }
-    return scenes
-}
-
-const findScenesInSceneArea = async query => {
-    const pool = await getPool()
-    const {sql, params} = buildScoredQuery(query)
-    const [rows] = await pool.query(sql, params)
-    return rows.map(toSceneMetaData)
-}
-
-const findBestScenes = async query => {
-    const {sceneAreaIds, cloudCoverTarget, minScenes, maxScenes} = query
-    const result = {}
-    for (const sceneAreaId of sceneAreaIds) {
-        const areaQuery = {...query, sceneAreaId}
-        const rows = await findScenesInSceneArea(areaQuery)
-        result[sceneAreaId] = selectBest(rows, {minScenes, maxScenes, cloudCoverTarget})
-    }
-    return result
-}
-
-export {findBestScenes, findScenesInSceneArea, selectBest}

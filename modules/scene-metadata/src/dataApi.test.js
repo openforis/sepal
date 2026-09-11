@@ -3,70 +3,19 @@ import {jest} from '@jest/globals'
 const mockFindBestScenes = jest.fn()
 const mockFindScenesInSceneArea = jest.fn()
 
-jest.unstable_mockModule('./sceneRepository.js', () => ({
-    findBestScenes: mockFindBestScenes,
-    findScenesInSceneArea: mockFindScenesInSceneArea,
-}))
-
 jest.unstable_mockModule('./config.js', () => ({
     googleMapsApiKey: 'test-google-key',
     nicfiPlanetApiKey: 'test-planet-key',
 }))
 
-const {mapApiKeys, bestScenes, scenesForArea} = await import('./dataApi.js')
+const {DataApi} = await import('./dataApi.js')
+
+const api = new DataApi({
+    findBestScenes: query => mockFindBestScenes(query),
+    findScenesInSceneArea: query => mockFindScenesInSceneArea(query),
+})
 
 const USER = {username: 'alice', roles: ['user']}
-
-const makeCtx = ({body = {}, query = {}, params = {}, user = USER} = {}) => ({
-    request: {body},
-    query,
-    params,
-    state: {currentUser: user},
-    throw: jest.fn((status, msg) => {
-        const err = new Error(msg || String(status))
-        err.status = status
-        throw err
-    }),
-})
-
-const makeSceneRow = ({
-    id = 'SC001',
-    source = 'LANDSAT',
-    sceneAreaId = 'SA_042',
-    dataSet = 'LANDSAT_8',
-    acquisitionDate = new Date('2020-07-15T00:00:00Z'), // doy 197 raw; 196 leap-ignoring (2020 is leap)
-    cloudCover = 15,
-} = {}) => ({
-    id,
-    source,
-    sceneAreaId,
-    dataSet,
-    acquisitionDate,
-    cloudCover,
-    cloud_cover: cloudCover,
-    sunAzimuth: 120,
-    sunElevation: 45,
-    updateTime: new Date('2020-07-16T00:00:00Z'),
-})
-
-const CLIENT_BEST_SCENES_QUERY = {
-    sceneAreaIds: ['SA_042'],
-    sources: {
-        dataSets: {
-            LANDSAT: ['LANDSAT_8', 'LANDSAT_9']
-        }
-    },
-    dates: {
-        seasonStart: '2018-06-01',
-        seasonEnd: '2021-09-30',
-        yearsBefore: 0,
-        yearsAfter: 0,
-        targetDate: '2020-07-15',
-    },
-    sceneSelectionOptions: {targetDateWeight: 0.5},
-    cloudCoverTarget: 0.1,
-    sceneCount: {min: 1, max: 5},
-}
 
 // targetDayOfYear for 2020-07-15:
 // 2020 is a leap year. Jul 15 raw doy = 31+29+31+30+31+30+15 = 197.
@@ -211,3 +160,57 @@ describe('scenesForArea', () => {
         expect(q.dataSets).toEqual(['LANDSAT_8'])  // from SCENE_AREA_CLIENT_QUERY, not body
     })
 })
+const mapApiKeys = ctx => api.mapApiKeys(ctx)
+const bestScenes = ctx => api.bestScenes(ctx)
+const scenesForArea = ctx => api.scenesForArea(ctx)
+
+const makeCtx = ({body = {}, query = {}, params = {}, user = USER} = {}) => ({
+    request: {body},
+    query,
+    params,
+    state: {currentUser: user},
+    throw: jest.fn((status, msg) => {
+        const err = new Error(msg || String(status))
+        err.status = status
+        throw err
+    }),
+})
+
+const makeSceneRow = ({
+    id = 'SC001',
+    source = 'LANDSAT',
+    sceneAreaId = 'SA_042',
+    dataSet = 'LANDSAT_8',
+    acquisitionDate = new Date('2020-07-15T00:00:00Z'), // doy 197 raw; 196 leap-ignoring (2020 is leap)
+    cloudCover = 15,
+} = {}) => ({
+    id,
+    source,
+    sceneAreaId,
+    dataSet,
+    acquisitionDate,
+    cloudCover,
+    cloud_cover: cloudCover,
+    sunAzimuth: 120,
+    sunElevation: 45,
+    updateTime: new Date('2020-07-16T00:00:00Z'),
+})
+
+const CLIENT_BEST_SCENES_QUERY = {
+    sceneAreaIds: ['SA_042'],
+    sources: {
+        dataSets: {
+            LANDSAT: ['LANDSAT_8', 'LANDSAT_9']
+        }
+    },
+    dates: {
+        seasonStart: '2018-06-01',
+        seasonEnd: '2021-09-30',
+        yearsBefore: 0,
+        yearsAfter: 0,
+        targetDate: '2020-07-15',
+    },
+    sceneSelectionOptions: {targetDateWeight: 0.5},
+    cloudCoverTarget: 0.1,
+    sceneCount: {min: 1, max: 5},
+}

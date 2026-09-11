@@ -1,154 +1,70 @@
 import {parse} from 'csv-parse'
 import {stringify} from 'csv-stringify'
 import {createReadStream, createWriteStream} from 'fs'
-import {concatMap, firstValueFrom, from, map, of, ReplaySubject, Subject, takeWhile} from 'rxjs'
-import {Transform, Writable} from 'stream'
+import {Readable} from 'stream'
 import {pipeline} from 'stream/promises'
 import {createGunzip} from 'zlib'
 
 import {getLogger} from '#sepal/log'
 
 import {remove} from './filesystem.js'
-import {formatInterval} from './time.js'
 
 const log = getLogger('csv')
 
-const getPath = filename =>
-    `${process.env.MYSQL_FILES_DIR}/${filename}`
-
-const isInTimeRange = (timestamp, maxTimestamp) =>
-    !maxTimestamp || timestamp <= maxTimestamp
-
-const processCollection = async ({collection, sceneMapper, maxTimestamp, chunkSize, chunkHandler}) => {
+export const processCSV = async ({collection, sceneMapper, database, maxTimestamp, timestamp, chunkSize = 100000}) => {
     const csvPath = getPath(`${collection}.csv.gz`)
-    const inStream = createReadStream(csvPath)
-    let readCount = 0
-    let writeCount = 0
-    let chunk = 1
-    let outStream
-    const updatedTimestampByDataset = {}
-
-    const updateTimestamp = ({dataset, acquiredTimestamp}) => {
-        if (!updatedTimestampByDataset[dataset] || acquiredTimestamp > updatedTimestampByDataset[dataset]) {
-            updatedTimestampByDataset[dataset] = acquiredTimestamp
-        }
-    }
-
-    const getChunkFile = () =>
-        getPath(`${collection}.${chunk}.csv`)
-
-    const showStats = () =>
-        log.info(`Processing collection ${collection}, in ${readCount}, out ${writeCount}`)
-
-    const handleChunk = () => {
-        if (outStream) {
-            outStream.end()
-        }
-        chunkHandler(getChunkFile())
-        chunk++
-    }
-
-    const mapRows = new Transform({
-        objectMode: true,
-        transform: (row, encoding, callback) => {
-            readCount++
-            if (readCount % 10000 === 0) {
-                showStats()
-            }
-
-            const scene = sceneMapper(row)
-            if (scene && isInTimeRange(scene.acquiredTimestamp, maxTimestamp)) {
-                updateTimestamp(scene)
-                callback(null, scene)
-            } else {
-                callback()
+    const checkpoints = {}
+    await pipeline(
+        createReadStream(csvPath),
+        createGunzip(),
+        parse({columns: true}),
+        rows => selectScenes(rows, sceneMapper, maxTimestamp, checkpoints),
+        scenes => chunkScenes(scenes, chunkSize),
+        async chunks => {
+            let chunk = 0
+            for await (const scenes of chunks) {
+                await ingestChunk(scenes, getPath(`${collection}.${++chunk}.csv`), database, timestamp)
             }
         }
-    })
-
-    const processRows = new Writable({
-        objectMode: true,
-        write: (row, encoding, callback) => {
-            writeCount++
-            if (writeCount % chunkSize === 1) {
-                outStream = createWriteStream(getChunkFile())
-            }
-            outStream.write(row)
-            if (writeCount % chunkSize === 0) {
-                handleChunk()
-            }
-            callback()
-        }
-    })
-
-    showStats()
-
-    const t0 = Date.now()
-
-    try {
-        await pipeline(
-            inStream,
-            createGunzip(),
-            parse({columns: true}),
-            mapRows,
-            stringify({header: false}),
-            processRows
-        )
-        showStats()
-        if (writeCount % chunkSize !== 0) {
-            handleChunk()
-        }
-        await remove(csvPath)
-    } catch (error) {
-        log.warn(`Error while processing collection ${collection}`, error)
-    }
-
-    log.info(`Processed collection ${collection}, in ${readCount}, out ${writeCount} (${formatInterval(t0)})`)
-
-    return updatedTimestampByDataset
+    )
+    await remove(csvPath)
+    log.info(`Finished processing collection: ${collection}`)
+    return checkpoints
 }
 
-const ingest = async (database, path, timestamp) => {
+const getPath = filename => `${process.env.MYSQL_FILES_DIR}/${filename}`
+
+async function* selectScenes(rows, sceneMapper, maxTimestamp, checkpoints) {
+    for await (const row of rows) {
+        const scene = sceneMapper(row)
+        if (scene && (!maxTimestamp || scene.acquiredTimestamp <= maxTimestamp)) {
+            recordCheckpoint(checkpoints, scene)
+            yield scene
+        }
+    }
+}
+
+const recordCheckpoint = (checkpoints, {dataset, acquiredTimestamp}) => {
+    if (!checkpoints[dataset] || acquiredTimestamp > checkpoints[dataset]) {
+        checkpoints[dataset] = acquiredTimestamp
+    }
+}
+
+async function* chunkScenes(scenes, chunkSize) {
+    let chunk = []
+    for await (const scene of scenes) {
+        chunk.push(scene)
+        if (chunk.length === chunkSize) {
+            yield chunk
+            chunk = []
+        }
+    }
+    if (chunk.length) yield chunk
+}
+const COLUMNS = ['id', 'source', 'dataset', 'sceneAreaId', 'acquiredTimestamp', 'dayOfYear', 'cloudCover', 'sunAzimuth', 'sunElevation']
+
+const ingestChunk = async (scenes, path, database, timestamp) => {
+    await pipeline(Readable.from(scenes), stringify({header: false, columns: COLUMNS}), createWriteStream(path))
     await database.ingest(path, timestamp)
+    await remove(path)
 }
-
-const processCSV = async ({collection, sceneMapper, redis: {setLastUpdate}, database, maxTimestamp, timestamp}) => {
-    const queue$ = new Subject()
-    const done$ = new ReplaySubject(1)
-
-    queue$.pipe(
-        concatMap(file => processFile$(file)),
-        takeWhile(processed => processed),
-    ).subscribe({
-        error: error => {
-            log.error(`Error while processing collection ${collection} - `, error)
-            done$.error(error)
-        },
-        complete: () => {
-            log.info('Finished processing collection:', collection)
-            done$.next(true)
-        }
-    })
-
-    const processFile$ = file => file
-        ? from(processFile(file)).pipe(
-            map(() => true)
-        )
-        : of(false)
-
-    const processFile = async file => {
-        await ingest(database, file, timestamp)
-        await remove(file)
-    }
-
-    const chunkSize = 100000
-    const chunkHandler = file => queue$.next(file)
-    const updatedTimestampByDataset = await processCollection({collection, sceneMapper, maxTimestamp, chunkSize, chunkHandler})
-
-    setImmediate(() => queue$.next(null))
-
-    await firstValueFrom(done$)
-    await setLastUpdate(updatedTimestampByDataset)
-}
-
-export {processCSV}
