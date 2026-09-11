@@ -179,9 +179,15 @@ class _RecipeImageLayer extends React.Component {
         }
         // Runtime evidence is part of what the layer was built from: a source read again can produce the
         // same schema over different pixels, and the layer must be replaced rather than kept.
+        //
+        // The revision is not. It is the server acknowledging a save, and the map's own layout is saved
+        // inside the recipe - so restyling an area that shows something else advances it while the
+        // computation and the visualization stay exactly where they were. Whether a recipe has moved on is
+        // read from its content and its evidence; the revision answers a different question, for
+        // sourceEvidenceSync, about which record is behind what is published.
         const watchedProps = {
             recipes: recipes.map(r => ({
-                ..._.omit(r, ['ui', 'layers', 'title']),
+                ..._.omit(r, ['ui', 'layers', 'title', 'revision']),
                 sourceEvidence: r.ui?.sourceEvidence
             })),
             layerConfig

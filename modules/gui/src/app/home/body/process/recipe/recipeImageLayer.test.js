@@ -87,7 +87,8 @@ const build = ({recipe, visParams, previousLayer}) => {
         currentRecipe: recipe,
         dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
     }
-    return {instance, updates, didUpdate, setRecipe}
+    const setLayerConfig = layerConfig => instance.props = {...instance.props, layerConfig}
+    return {instance, updates, didUpdate, setRecipe, setLayerConfig}
 }
 
 const selections = updates => updates.map(({visParams}) => visParams)
@@ -95,6 +96,7 @@ const selections = updates => updates.map(({visParams}) => visParams)
 const styles = userDefined => recipeOf({userDefined})
 
 const VALID = {id: 'valid', bands: ['ndvi']}
+const ALTERNATIVE = {id: 'alternative', bands: ['evi']}
 const STALE_SELECTION = {id: 'stale', bands: ['gone']}
 
 describe('the render-time guard', () => {
@@ -239,6 +241,68 @@ describe('runtime evidence behind a layer', () => {
 
         expect(instance.maybeCreateLayer()).toBe(first)
         expect(state.constructed).toHaveLength(1)
+    })
+})
+
+// A preview is rebuilt for what it was computed from, and for nothing else. The map's own layout lives
+// inside the recipe, so configuring an area that shows something else saves the recipe - and the server
+// answers with a revision, which is a fact about the save rather than about the image.
+describe('what the preview is rebuilt for', () => {
+    const withOtherArea = ({visParams, revision}) => {
+        const recipe = styles([VALID, ALTERNATIVE])
+        return {
+            ...recipe,
+            revision,
+            layers: {...recipe.layers, areas: {'center-right': {imageLayer: {layerConfig: {visParams}}}}}
+        }
+    }
+
+    it('keeps it when another area is restyled and the save is acknowledged', () => {
+        const {instance, setRecipe} = build({
+            recipe: withOtherArea({visParams: {id: 'asset-grey'}, revision: 7}),
+            visParams: VALID
+        })
+        const first = instance.maybeCreateLayer()
+
+        setRecipe(withOtherArea({visParams: {id: 'asset-colour'}, revision: 7}))
+        const afterRestyle = instance.maybeCreateLayer()
+        setRecipe(withOtherArea({visParams: {id: 'asset-colour'}, revision: 8}))
+        const afterAcknowledgement = instance.maybeCreateLayer()
+
+        expect(afterRestyle).toBe(first)
+        expect(afterAcknowledgement).toBe(first)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    // Same bands, different pixels: what the preview shows changed even though nothing about its shape did.
+    it('rebuilds it after a computation change that produces the same bands', () => {
+        const {instance, setRecipe} = build({recipe: styles([VALID]), visParams: VALID})
+        const first = instance.maybeCreateLayer()
+
+        setRecipe({...styles([VALID]), model: {threshold: 0.5}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
+    })
+
+    it('rebuilds it when the displayed visualization changes', () => {
+        const {instance, setLayerConfig} = build({recipe: styles([VALID, ALTERNATIVE]), visParams: VALID})
+        const first = instance.maybeCreateLayer()
+
+        setLayerConfig({visParams: ALTERNATIVE})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
+    })
+
+    it('rebuilds it when the recipe is retiled', () => {
+        const {instance, setRecipe} = build({recipe: styles([VALID]), visParams: VALID})
+        const first = instance.maybeCreateLayer()
+
+        setRecipe({...styles([VALID]), retile: 64})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
     })
 })
 
