@@ -10,7 +10,7 @@ SEPAL (System for Earth Observation Data Access, Processing and Analysis for Lan
 
 SEPAL is a distributed microservices system where each module runs as an independent Docker container, orchestrated via Docker Compose over a shared `sepal` Docker network.
 
-When introducing or restructuring workflows, follow [Ports and adapters](docs/ports-and-adapters.md).
+When introducing or restructuring workflows, follow [Code design](docs/code-design.md).
 
 ### Module Types
 
@@ -121,12 +121,13 @@ npm run testWatch                    # Jest watch mode
 
 ## Testing
 
+Test boundaries and collaborator choices: [Code design](docs/code-design.md#test-boundaries).
+
 - Write behavioral tests against stable public seams. Every test must distinguish a meaningful regression through observable outcomes, not private calls, implementation structure, or assertions that merely verify the harness.
+- Test responsibilities and contracts, not files. Move tests with an extracted responsibility and remove redundant coverage.
 - Keep each test readable as Given/When/Then with minimal mechanics. Keep the operation under test explicit in the test body; helpers may arrange incidental preconditions, but must not hide the When or scenario-defining setup.
 - Use builders for minimal valid defaults and common relationships. Override a field only when its value creates the scenario or is itself part of the expected contract. Reuse built values in actions and assertions, and capture generated values from operation results instead of repeating arbitrary literals.
-- Prefer real collaborators or small stateful fakes implementing ports we own. Arrange and verify through the port contract (for example, save then load) instead of inspecting call logs.
-- Mock only boundaries we own, and only when a real collaborator or fake would make the test less focused. Do not recreate third-party internals in mocks.
-- Test infrastructure guarantees against the real infrastructure when a fake cannot provide evidence, such as database transactions and concurrent writes.
+- Assert ordering required by the contract, not a transcript of implementation steps. Meaningful commands to injected adapters are valid observations; incidental internal calls are not.
 - Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or MySQL; tests over fakes remain `*.test.js`.
 - Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
 - Run the targeted test file while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed. A module's full suite belongs before a commit or after a broad change, not after every edit.
@@ -159,10 +160,19 @@ APIs take the `Db` suffix (`initDb`, `migrateDb`, `initializeDb`, `migrate<Modul
 ## Code Organization
 
 - Use classes for objects exposing several related operations over shared dependencies or state, rather than factories returning an object of locally defined functions. Declare public operations as methods and use private fields for implementation-only dependencies and state. Preserve the receiver when passing methods as callbacks. Keep pure functions and single-callback factories as functions, and plain data as plain objects. Apply this when introducing or restructuring an object, not as a reason for unrelated conversions.
-- Organize files to read top-down. Put public entry points and exported classes/functions first at the highest abstraction level, followed by their supporting functions in call order and increasingly concrete detail.
+- When writing or substantially reworking a file, put module setup (such as loggers) and small shared constants after imports, then public entry points before private helpers in call order. Keep helper-specific constants near their consumers; large lookup tables may follow the code. Preserve initialization dependencies; do not reorder otherwise clear code just to match this convention.
 - Keep a function at one abstraction level: orchestration should name its steps, while lower-level mechanics belong in the functions it calls.
 - In test files, put the behavioral specifications before builders and harness helpers. Group by stable public operation and use names that state the outcome or rule, not vague activity such as "loading a recipe".
-- Refactor what you touched once tests are green — size, cyclomatic complexity, cohesion — scoped to the area you changed, tests and comments included.
+- Once tests are green, review changed code, tests and comments. Fix introduced or materially worsened problems; leave unrelated structure alone.
+
+Advisory review signals: cyclomatic complexity above 10; functions above 60 code lines; production files
+above 300 code lines; more than four positional parameters or six independent injected collaborators.
+Exclude blank and comment-only lines from length measurements. An options object does not reduce the
+underlying dependency count. Review newly introduced or worsened hotspots; prefer cohesive
+responsibilities and clear ownership over lower numbers. Do not extract arbitrary helpers, split
+cohesive components or introduce parameter bags just to satisfy metrics. Justified exceptions are
+acceptable: explain them in the review, not accumulating narrative comments. Metrics supplement direct
+inspection of async lifetimes, cancellation and coupling.
 
 ## Comments
 

@@ -1,6 +1,7 @@
-# Ports and adapters
+# Code design
 
-Architecture and its testing boundaries. Coding conventions and test commands: [CLAUDE.md](../CLAUDE.md).
+Component responsibilities, boundary contracts and how to test them.
+Coding conventions and test-writing practices: [CLAUDE.md](../CLAUDE.md).
 
 ## Proportionality
 
@@ -11,7 +12,7 @@ separate class or file; do not restructure a whole module before testing its beh
 Share behavior when it represents the same policy, not because unrelated policies look similar.
 Reuse adapters that fit; add no speculative operations or wrappers solely to name a port.
 
-## Boundaries
+## Ports and adapters
 
 Ports are the application's boundary contracts. Inbound adapters call its public operations. Outbound
 adapters implement the contracts it uses for storage, communication, time and randomness.
@@ -19,8 +20,10 @@ Use duck-typed objects or functions; no mandatory interface files, inheritance, 
 structure or dependency-injection framework.
 
 - Application code owns business rules, state transitions and workflow ordering. It depends on contracts,
-  not concrete adapters. Inject required dependencies, including clocks and randomness used in decisions;
-  do not hide them behind production defaults, mutable globals or service locators.
+  not concrete adapters. Inject collaborators, including clocks and randomness used in decisions,
+  rather than using mutable globals or service locators. Do not add fallback implementations or
+  boilerplate presence/type checks for required collaborators. Keep defaults where production callers
+  intentionally use them.
 - Inbound adapters translate requests, messages and jobs into application calls and translate results
   back. They authenticate callers and pass trusted identities; application code decides what they may do.
 - Outbound adapters keep SQL, serialization, protocol handling and resource management out of application
@@ -61,20 +64,21 @@ const routes = createRoutes({recipeService, requireAuth})
 `RecipeService` is application code; `RecipeRepository` is its persistence adapter. The routes are an
 inbound adapter: they extract `principal` and `recipeId` from HTTP and call `recipeService.loadRecipe`.
 
-Shared `db.withTransaction` and `db.withConnection` belong inside repositories. Keep connection and
-session-lock cleanup explicit: transaction commit or rollback does not release a MySQL named lock.
+Shared `db.withTransaction` and `db.withConnection` belong inside persistence adapters. Keep connection
+and session-lock cleanup explicit: transaction commit or rollback does not release a MySQL named lock.
 
 ## Test boundaries
 
 | Test | What it proves |
 |---|---|
-| Application operation | Invoke the real workflow with real collaborators or small port fakes; assert decisions, effects and failures. |
+| Application operation | Business decisions, effects and failures through the real workflow. |
 | Outbound adapter | Exercise the real protocol or infrastructure to verify persistence, constraints, locking and translation. |
 | Inbound adapter | Verify input mapping, authentication, wire format and error handling. |
-| Composed workflow | Exercise representative paths through real wiring to verify the adapters reach the intended behavior. |
+| Composed workflow | Representative paths through real wiring, not constructor arguments or prototype structure. |
 
-Fakes implement application contracts, not third-party internals. Invoke the application and observe its
-results or meaningful commands to write-only dependencies. Calling a fake directly does not test the application.
+Prefer real collaborators or small stateful fakes of application contracts. Arrange and observe through
+those contracts, for example save then load. Mock only owned boundaries when real collaborators or fakes
+would make the test less focused; do not recreate third-party internals.
 A simulated failure proves the application's response, not that the real infrastructure produces it.
 Do not repeat every application scenario through HTTP. Test a pure rule directly when it has meaningful
 inputs and outputs independent of the workflow.
