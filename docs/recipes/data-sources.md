@@ -35,11 +35,12 @@ owning visualizations. It must replace recipe-specific copying, derivation and r
 than introducing another parallel synchronization mechanism.
 
 Recipe storage is now the Node `recipe` module: reads and writes carry a trusted principal, and `revision` is
-owned by the row. GEE reads referenced recipes as the user whose request it is serving rather than as an
-administrator. What remains blocked is coherent execution bundles and the batch or closure read they need, and
-what remains open is the task executor: it is still started with administrator credentials, which also authorize
-its state and progress callbacks, so replacing them is a separate delivery that has to cover callback
-authorization rather than swap a password. A bounded browser preflight completes one selected root's
+owned by the row. GEE reads referenced recipes as the user whose request it is serving, and a task executor as
+its own worker session's owning user; neither holds administrator credentials, and the executor's state and
+progress callbacks are authorized by that session against the task it was assigned. Each execution operation
+reads a given recipe once and keeps that record for its own lifetime, so one operation cannot mix two
+revisions of the same recipe. What remains blocked is coherent execution bundles and the batch or closure read
+they need. A bounded browser preflight completes one selected root's
 closure by calling the existing authenticated per-recipe GUI read behind an operation-local, batch-shaped adapter.
 That measure neither persists a catalogue nor makes browser evidence the execution graph; recipe Fill,
 saved-recipe discovery and execution bundles remain blocked on their permanent boundaries.

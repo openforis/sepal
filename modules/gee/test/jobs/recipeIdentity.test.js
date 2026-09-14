@@ -51,6 +51,7 @@ jest.unstable_mockModule('#sepal/worker/scheduler', () => ({
 
 const {WORKER} = await import('#sepal/worker/factory')
 const {loadRecipe$} = await import('#sepal/ee/recipe')
+const {withRecipeScope} = await import('#sepal/ee/recipeScope')
 const {default: configureJob} = await import('#gee/jobs/configure')
 
 const ALICE = {username: 'alice', roles: []}
@@ -63,18 +64,18 @@ beforeEach(() => {
 
 describe('the user a recipe is read as', () => {
     it('is the authenticated user of the request the job was built from', async () => {
-        await runJobFor(requestOf(ALICE))
+        const operation = await runJobFor(requestOf(ALICE))
 
-        const recipe = await firstValueFrom(loadRecipe$('some-recipe'))
+        const recipe = await operation.read$('some-recipe')
 
         expect(recipe).toEqual({id: 'loaded'})
         expect(actingUsers()).toEqual([ALICE])
     })
 
     it('is read from the Recipe module itself, not through the gateway', async () => {
-        await runJobFor(requestOf(ALICE))
+        const operation = await runJobFor(requestOf(ALICE))
 
-        await firstValueFrom(loadRecipe$('some-recipe'))
+        await operation.read$('some-recipe')
 
         expect(requests.map(({url}) => url)).toEqual([`${RECIPE_ENDPOINT}/some-recipe`])
     })
@@ -82,9 +83,9 @@ describe('the user a recipe is read as', () => {
     // The roles the gateway established travel with the user, so an administrator keeps the access
     // they already had and nobody else inherits it.
     it('carries the roles that user was authenticated with', async () => {
-        await runJobFor(requestOf(BOB))
+        const operation = await runJobFor(requestOf(BOB))
 
-        await firstValueFrom(loadRecipe$('some-recipe'))
+        await operation.read$('some-recipe')
 
         expect(actingUsers()).toEqual([BOB])
     })
@@ -92,37 +93,37 @@ describe('the user a recipe is read as', () => {
     // The trusted header is the only source. Request parameters are the caller's to choose, and a caller
     // choosing who it acts as is what this exists to prevent.
     it('is the one the request header names, not one its body asks for', async () => {
-        await runJobFor(requestOf(ALICE, {credentials: {sepalUser: BOB}, sepalUser: BOB}))
+        const operation = await runJobFor(requestOf(ALICE, {credentials: {sepalUser: BOB}, sepalUser: BOB}))
 
-        await firstValueFrom(loadRecipe$('some-recipe'))
+        await operation.read$('some-recipe')
 
         expect(actingUsers()).toEqual([ALICE])
     })
 
     it('does not survive into the next user\'s job', async () => {
-        await runJobFor(requestOf(ALICE))
-        await firstValueFrom(loadRecipe$('some-recipe'))
+        const alices = await runJobFor(requestOf(ALICE))
+        await alices.read$('some-recipe')
 
-        await runJobFor(requestOf(BOB))
-        await firstValueFrom(loadRecipe$('some-recipe'))
+        const bobs = await runJobFor(requestOf(BOB))
+        await bobs.read$('some-recipe')
 
         expect(actingUsers()).toEqual([ALICE, BOB])
     })
 
     describe('when the request carried no authenticated user', () => {
         it('issues no recipe request at all', async () => {
-            await runJobFor(requestOf(undefined))
+            const operation = await runJobFor(requestOf(undefined))
 
-            await expect(firstValueFrom(loadRecipe$('some-recipe'))).rejects.toThrow(/authenticated user/)
+            await expect(operation.read$('some-recipe')).rejects.toThrow(/authenticated user/)
             expect(requests).toEqual([])
         })
 
         // The previous user's authority must not be what an unauthenticated job falls back to.
         it('does not keep reading as the previous user', async () => {
             await runJobFor(requestOf(ALICE))
-            await runJobFor(requestOf(undefined))
+            const operation = await runJobFor(requestOf(undefined))
 
-            await expect(firstValueFrom(loadRecipe$('some-recipe'))).rejects.toThrow(/authenticated user/)
+            await expect(operation.read$('some-recipe')).rejects.toThrow(/authenticated user/)
             expect(requests).toEqual([])
         })
     })
@@ -142,10 +143,15 @@ const requestOf = (sepalUser, body = {}) => ({
     }
 })
 
-// The job's own task list, run with the arguments its own boundary maps the request to.
+// The configure task, run with the arguments the job boundary maps the request to and the request's
+// own state - which is where it leaves the operation every later task of that request reads through.
 const runJobFor = async request => {
+    const state = {}
     const [{worker$}] = configureJob(WORKER)
-    await firstValueFrom(worker$(workerArgsOf(request)).pipe(defaultIfEmpty(null)))
+    await firstValueFrom(worker$({...workerArgsOf(request), state}).pipe(defaultIfEmpty(null)))
+    return {
+        read$: id => withRecipeScope(state.recipeScope, () => firstValueFrom(loadRecipe$(id)))
+    }
 }
 
 const workerArgsOf = request => {

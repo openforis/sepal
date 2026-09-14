@@ -51,12 +51,28 @@ be observed together, and the complete closure needs a bounded coherent revision
 exposes this as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite
 for the pure contract.
 
-GEE no longer reads recipes with administrator credentials. Each of its jobs installs a reader for the user the
-gateway authenticated on the request that job was built from, and reads the Recipe module directly; a job that
-carries no user reads nothing, and there is no service-credential fallback. Recipe applies its existing ownership
-policy, so a recipe another user owns is answered exactly as a missing one. The task executor still reads with the
-administrator credentials its sandbox is started with - that exposure is unresolved and is tracked in
-[data-sources.md](data-sources.md).
+Neither executor reads recipes with administrator credentials. A GEE job reads as the user the gateway
+authenticated on the request that job was built from; a task executor reads as its own worker session, which
+the gateway resolves to that session's owning user. A job carrying no user reads nothing, and there is no
+service-credential fallback. Recipe applies its existing ownership policy, so a recipe another user owns is
+answered exactly as a missing one.
+
+### Operation-scoped recipe loading
+
+One execution operation - one submitted GEE worker job, one task execution - owns both the reader it is
+authorized with and the records it has read. Its `configure` task opens that operation on the request's own
+worker state, every later task of the request runs inside it, and the finalize pass ends it however the
+request ended. Within it, a recipe ID is read at most once: concurrent references share the read in flight,
+and every later reference gets the record already read, so the several factories one operation constructs
+from one reference cannot derive geometry, metadata and imagery from different revisions. A read that fails
+is not retained, so a later attempt reads again rather than replaying the failure. Reads still resolve at
+subscribe, and ancestry remains path-local: a shared record carries no ancestry from whichever branch read
+it first. Ending the operation unsubscribes reads still in flight and releases the records; a later
+operation starts fresh and may observe newer revisions.
+
+This guarantees one version per recipe per operation. It does not establish a coherent snapshot across the
+dependency graph - nothing rechecks revisions once the closure is resolved - it does not freeze Earth Engine
+assets, and it is not an accepted Retrieve execution bundle.
 
 As a bounded migration measure, a browser operation may complete its preflight graph through the existing
 authenticated per-recipe GUI read. It starts with the exact unsaved root and the session's loaded records, requests

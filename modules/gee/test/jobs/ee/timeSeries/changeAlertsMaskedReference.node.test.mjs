@@ -74,13 +74,23 @@ mock.module('#sepal/ee/timeSeries/collection', {
 // is given, so the wrapper hands it back instead.
 mock.module('#gee/jobs/job', {exports: {job: ({worker$}) => worker$}})
 
-const {configureRecipeReader} = await import('#sepal/ee/recipe')
-
-configureRecipeReader(id => {
+const readRecipe$ = id => {
     loaded.push(id)
     return catalogue[id]
         ? of(catalogue[id])
         : throwError(() => new Error(`No such recipe: ${id}`))
+}
+
+const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
+
+// Each case is its own execution operation: one reader, one record per recipe, released at the end.
+const inOperation = (name, fn) => it(name, async () => {
+    const scope = new RecipeScope(readRecipe$)
+    try {
+        await withRecipeScope(scope, fn)
+    } finally {
+        scope.close()
+    }
 })
 
 const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts')
@@ -133,9 +143,9 @@ const alertsOver = reference => ({
     }
 })
 
-// Which recipes execution had to read. Change Alerts resolves its reference more than once per operation,
-// so the identities are what this says something about, never how many times each was asked for.
-const recipesLoaded = () => [...new Set(loaded)]
+// Which recipes execution had to read, in order and with repeats: Change Alerts builds several factories
+// from one reference, and within an operation they are all built from one record of it.
+const recipesLoaded = () => loaded
 
 // The bands the segments producer was asked to fit, as opposed to those of the collection Change Alerts
 // builds to monitor against.
@@ -164,13 +174,13 @@ beforeEach(() => {
 })
 
 describe('the image Change Alerts monitors', () => {
-    it('is masked when the reference is a Masking recipe', async () => {
+    inOperation('is masked when the reference is a Masking recipe', async () => {
         await alertImageUpToTheAlgebra(MASKED_REFERENCE)
 
         assert.deepEqual(maskApplications, [{source: 'segments', masks: [MASK_ASSET]}])
     })
 
-    it('still has the monitored band selected on the CCDC underneath it', async () => {
+    inOperation('still has the monitored band selected on the CCDC underneath it', async () => {
         await alertImageUpToTheAlgebra(MASKED_REFERENCE)
 
         assert.deepEqual(segmentBandsRequested(), [['ndvi', 'red']])
@@ -178,14 +188,26 @@ describe('the image Change Alerts monitors', () => {
 
     // What the alerts are clipped to is reached by running the wrapper, not by loading the producer in its
     // place: the masking recipe is what Change Alerts resolves, and the CCDC only what it leads to.
-    it('is clipped to what the selected recipe resolves to', async () => {
+    inOperation('is clipped to what the selected recipe resolves to', async () => {
         const geometry = await firstValueFrom(changeAlerts(alertsOver(MASKED_REFERENCE)).getGeometry$())
 
         assert.deepEqual(recipesLoaded(), ['masking-1', 'ccdc-1'])
         assert.deepEqual(geometry, {source: 'users/x/bounds'})
     })
 
-    it('is unmasked when the reference is a CCDC recipe', async () => {
+    // Geometry, the segments image and the chart are three separate factory constructions over the same
+    // reference. One operation reads each recipe once, and the mask still survives into every one of them.
+    inOperation('is built from one record of each recipe, however many factories the operation constructs', async () => {
+        await firstValueFrom(changeAlerts(alertsOver(MASKED_REFERENCE)).getGeometry$())
+        await alertImageUpToTheAlgebra(MASKED_REFERENCE)
+        const sampled = await chartSample$(MASKED_REFERENCE)
+
+        assert.deepEqual(recipesLoaded(), ['masking-1', 'ccdc-1'])
+        assert.deepEqual(sampled, {source: 'segments', masks: [MASK_ASSET]})
+        assert.deepEqual(maskApplications.map(({masks}) => masks), [[MASK_ASSET], [MASK_ASSET]])
+    })
+
+    inOperation('is unmasked when the reference is a CCDC recipe', async () => {
         await alertImageUpToTheAlgebra(DIRECT_REFERENCE)
 
         assert.deepEqual(recipesLoaded(), ['ccdc-1'])
@@ -194,19 +216,19 @@ describe('the image Change Alerts monitors', () => {
 })
 
 describe('the image the pixel chart samples', () => {
-    it('is masked when the reference is a Masking recipe', async () => {
+    inOperation('is masked when the reference is a Masking recipe', async () => {
         const sampled = await chartSample$(MASKED_REFERENCE)
 
         assert.deepEqual(sampled, {source: 'segments', masks: [MASK_ASSET]})
     })
 
-    it('still has the charted band selected on the CCDC underneath it', async () => {
+    inOperation('still has the charted band selected on the CCDC underneath it', async () => {
         await chartSample$(MASKED_REFERENCE)
 
         assert.deepEqual(segmentBandsRequested(), [['ndvi', 'red']])
     })
 
-    it('is unmasked when the reference is a CCDC recipe', async () => {
+    inOperation('is unmasked when the reference is a CCDC recipe', async () => {
         const sampled = await chartSample$(DIRECT_REFERENCE)
 
         assert.deepEqual(sampled, {source: 'segments', masks: []})

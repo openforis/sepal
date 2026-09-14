@@ -2,6 +2,7 @@ import {createRequire} from 'module'
 
 import * as config from '#gee/config'
 import ee from '#sepal/ee/ee'
+import {inRecipeScope} from '#sepal/ee/recipeScope'
 import Job from '#sepal/worker/job'
 
 // authenticate <-> job form a cycle; load it lazily (at job() call time) to break it.
@@ -41,13 +42,15 @@ const job = ({
     worker$,
     finalize$
 }) => {
+    // Every task of a request runs inside the request's own recipe operation, which the configure
+    // task ahead of them put on the shared state.
     const workerWithWorkloadTag$ = (...args) => {
         const tag = `sepal-work-${jobName
             .toLowerCase()
             .replace(/[^a-z0-9_-]/g, '_')
             .substring(0, 63)}`
         ee.data.setDefaultWorkloadTag(tag)
-        return worker$(...args)
+        return inRecipeScope(args[0]?.state?.recipeScope, worker$(...args))
     }
     return Job({
         jobName,

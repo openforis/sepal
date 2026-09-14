@@ -39,13 +39,23 @@ mock.module('#sepal/ee/ee', {
     }
 })
 
-const {configureRecipeReader} = await import('#sepal/ee/recipe')
-
-configureRecipeReader(id => {
+const readRecipe$ = id => {
     recipesRead.push(id)
     return catalogue[id]
         ? of(catalogue[id])
         : throwError(() => new RecipeReadRefused(id))
+}
+
+const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
+
+// Each case is its own execution operation: one reader, one record per recipe, released at the end.
+const inOperation = (name, fn) => it(name, async () => {
+    const scope = new RecipeScope(readRecipe$)
+    try {
+        await withRecipeScope(scope, fn)
+    } finally {
+        scope.close()
+    }
 })
 
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
@@ -71,7 +81,7 @@ beforeEach(() => {
 })
 
 describe('a reference reached through another reference', () => {
-    it('is resolved by reading the outer one and then it', async () => {
+    inOperation('is resolved by reading the outer one and then it', async () => {
         catalogue = {outer: masking('outer', 'inner'), inner: overAnAsset('inner')}
 
         await image$('outer')
@@ -81,14 +91,14 @@ describe('a reference reached through another reference', () => {
 })
 
 describe('a recipe read the reader refuses', () => {
-    it('stops the operation with the refusal the reader gave, naming the recipe it refused', async () => {
+    inOperation('stops the operation with the refusal the reader gave, naming the recipe it refused', async () => {
         catalogue = {outer: masking('outer', 'inner')}
 
         await assert.rejects(image$('outer'), refusalOf('inner'))
         assert.deepEqual(recipesRead, ['outer', 'inner'])
     })
 
-    it('resolves nothing further when it is the outer reference', async () => {
+    inOperation('resolves nothing further when it is the outer reference', async () => {
         catalogue = {inner: overAnAsset('inner')}
 
         await assert.rejects(image$('outer'), refusalOf('outer'))

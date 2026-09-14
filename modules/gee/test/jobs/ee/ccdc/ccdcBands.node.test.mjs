@@ -8,20 +8,29 @@ const catalogue = new Map()
 // Optical and radar band discovery is local; no Earth Engine operations are needed.
 mock.module('#sepal/ee/ee', {exports: {default: {Image: {}}}})
 
-const {configureRecipeReader} = await import('#sepal/ee/recipe')
-
-configureRecipeReader(id =>
+const readRecipe$ = id =>
     catalogue.has(id)
         ? of(catalogue.get(id))
         : throwError(() => new Error(`No such recipe: ${id}`))
-)
+
+const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
+
+// Each case is its own execution operation: one reader, one record per recipe, released at the end.
+const inOperation = (name, fn) => it(name, async () => {
+    const scope = new RecipeScope(readRecipe$)
+    try {
+        await withRecipeScope(scope, fn)
+    } finally {
+        scope.close()
+    }
+})
 
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 
 beforeEach(() => catalogue.clear())
 
 describe('CCDC band discovery', () => {
-    it('uses TOA bands for omitted corrections, just as for an explicit empty list', async () => {
+    inOperation('uses TOA bands for omitted corrections, just as for an explicit empty list', async () => {
         const recipe = ccdc()
         const uncorrected = ccdc({options: {corrections: []}})
 
@@ -33,7 +42,7 @@ describe('CCDC band discovery', () => {
         assert.ok(bands.includes('ndvi_coefs'))
     })
 
-    it('honors explicit surface-reflectance corrections', async () => {
+    inOperation('honors explicit surface-reflectance corrections', async () => {
         const recipe = ccdc({options: {corrections: ['SR', 'BRDF']}})
 
         const bands = await firstValueFrom(imageFactory(recipe).getBands$())
@@ -44,7 +53,7 @@ describe('CCDC band discovery', () => {
         assert.ok(!bands.includes('pan_coefs'))
     })
 
-    it('describes the selected optical sensor', async () => {
+    inOperation('describes the selected optical sensor', async () => {
         const recipe = ccdc({dataSets: {SENTINEL_2: ['SENTINEL_2']}})
 
         const bands = await firstValueFrom(imageFactory(recipe).getBands$())
@@ -53,7 +62,7 @@ describe('CCDC band discovery', () => {
         assert.ok(!bands.includes('thermal_coefs'))
     })
 
-    it('keeps radar bands separate from optical bands', async () => {
+    inOperation('keeps radar bands separate from optical bands', async () => {
         const recipe = ccdc({dataSets: {SENTINEL_1: ['SENTINEL_1']}})
 
         const bands = await firstValueFrom(imageFactory(recipe).getBands$())
@@ -65,7 +74,7 @@ describe('CCDC band discovery', () => {
 })
 
 describe('Slice band discovery over a CCDC reference', () => {
-    it('resolves optical slice bands when the source omits corrections', async () => {
+    inOperation('resolves optical slice bands when the source omits corrections', async () => {
         const source = ccdc()
         catalogue.set(source.id, source)
         const recipe = sliceOver(source)
@@ -80,7 +89,7 @@ describe('Slice band discovery over a CCDC reference', () => {
 })
 
 describe('Masking band discovery over saved recipes', () => {
-    it('loads an unopened Slice and its optical CCDC source without corrections', async () => {
+    inOperation('loads an unopened Slice and its optical CCDC source without corrections', async () => {
         const source = ccdc()
         const slice = sliceOver(source)
         catalogue.set(source.id, source)

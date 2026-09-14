@@ -122,9 +122,20 @@ mock.module('#sepal/ee/ee', {
     }
 })
 
-const {configureRecipeReader} = await import('#sepal/ee/recipe')
+const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
 
-configureRecipeReader(readRecipe$)
+// Each case is its own execution operation: one reader, one record per recipe, released at the end.
+// The cases that need two operations open them explicitly.
+const newOperation = () => new RecipeScope(readRecipe$)
+
+const inOperation = (name, fn) => it(name, async () => {
+    const scope = newOperation()
+    try {
+        await withRecipeScope(scope, fn)
+    } finally {
+        scope.close()
+    }
+})
 
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 const {toException} = await import('#sepal/exception')
@@ -181,7 +192,7 @@ describe('a recipe that references itself', () => {
         return masking('A', recipeRef('A'))
     }
 
-    it('is rejected with a controlled cycle diagnosis', async () => {
+    inOperation('is rejected with a controlled cycle diagnosis', async () => {
         const {rejected, error} = await rejectionOf(selfReferencing())
         assert.equal(rejected, true, 'expected a rejection')
         assert.ok(
@@ -194,7 +205,7 @@ describe('a recipe that references itself', () => {
 
     // Detection has to happen BEFORE the request that closes the cycle: a guard that noticed afterwards would
     // still cost one round trip per lap, which is what this exists to prevent.
-    it('never requests the recipe that closes the cycle', async () => {
+    inOperation('never requests the recipe that closes the cycle', async () => {
         await rejectionOf(selfReferencing())
         assert.deepEqual(recipesRequested, [])
     })
@@ -210,7 +221,7 @@ describe('a cycle through a second recipe', () => {
         return masking('A', recipeRef('B'))
     }
 
-    it('is rejected with the complete closing path', async () => {
+    inOperation('is rejected with the complete closing path', async () => {
         const {rejected, error} = await rejectionOf(indirect())
         assert.equal(rejected, true, 'expected a rejection')
         assert.ok(
@@ -221,7 +232,7 @@ describe('a cycle through a second recipe', () => {
         assert.deepEqual(error?.recipePath, ['A', 'B', 'A'])
     })
 
-    it('requests only the recipes on the path before the closing edge', async () => {
+    inOperation('requests only the recipes on the path before the closing edge', async () => {
         await rejectionOf(indirect())
         assert.deepEqual(recipesRequested, ['B'])
     })
@@ -243,7 +254,7 @@ describe('a cycle closed across a read that was still pending', () => {
         return masking('A', recipeRef('B'))
     }
 
-    it('is rejected with the path from the original root', async () => {
+    inOperation('is rejected with the path from the original root', async () => {
         const rejection = rejectionOf(indirectAsync())
 
         await deliverReadOf('B')
@@ -254,7 +265,7 @@ describe('a cycle closed across a read that was still pending', () => {
         assert.deepEqual(error?.recipePath, ['A', 'B', 'A'])
     })
 
-    it('reads only the recipes on the path before the closing edge', async () => {
+    inOperation('reads only the recipes on the path before the closing edge', async () => {
         const rejection = rejectionOf(indirectAsync())
 
         await deliverReadOf('B')
@@ -278,14 +289,14 @@ describe('a cycle through the mask input', () => {
         return maskedBy('A', asset('projects/p/assets/base'), recipeRef('B'))
     }
 
-    it('is rejected with the complete closing path', async () => {
+    inOperation('is rejected with the complete closing path', async () => {
         const {rejected, error} = await imageRejectionOf(throughMask())
         assert.equal(rejected, true, 'expected a rejection')
         assert.equal(error?.code, 'CYCLIC_DEPENDENCY')
         assert.deepEqual(error?.recipePath, ['A', 'B', 'A'])
     })
 
-    it('requests only the recipes on the path before the closing edge', async () => {
+    inOperation('requests only the recipes on the path before the closing edge', async () => {
         await imageRejectionOf(throughMask())
         assert.deepEqual(recipesRequested, ['B'])
     })
@@ -303,14 +314,14 @@ describe('a cycle spanning two recipe types', () => {
         return masking('A', recipeRef('S'))
     }
 
-    it('is rejected with the complete closing path', async () => {
+    inOperation('is rejected with the complete closing path', async () => {
         const {rejected, error} = await rejectionOf(mixedType())
         assert.equal(rejected, true, 'expected a rejection')
         assert.equal(error?.code, 'CYCLIC_DEPENDENCY')
         assert.deepEqual(error?.recipePath, ['A', 'S', 'A'])
     })
 
-    it('requests only the recipes on the path before the closing edge', async () => {
+    inOperation('requests only the recipes on the path before the closing edge', async () => {
         await rejectionOf(mixedType())
         assert.deepEqual(recipesRequested, ['S'])
     })
@@ -326,11 +337,11 @@ describe('an acyclic chain', () => {
         return masking('A', recipeRef('B'))
     }
 
-    it('produces its result', async () => {
+    inOperation('produces its result', async () => {
         assert.deepEqual(await resultOf(chain()), ['projects/p/assets/base:band'])
     })
 
-    it('requests each recipe on the chain once, in order', async () => {
+    inOperation('requests each recipe on the chain once, in order', async () => {
         await resultOf(chain())
         assert.deepEqual(recipesRequested, ['B', 'C'])
     })
@@ -354,20 +365,40 @@ describe('a diamond', () => {
         return maskedBy('A', recipeRef('L'), recipeRef('R'))
     }
 
-    it('executes both branches without a cycle diagnosis', async () => {
+    inOperation('executes both branches without a cycle diagnosis', async () => {
         const {rejected, error} = await imageRejectionOf(diamond())
         assert.equal(rejected, false, `unexpected rejection: ${error?.message}`)
     })
 
-    // Once through each branch. A cross-branch visited set would request S once and leave the second branch
-    // unresolved; a path that never shrinks would see S again and call the second branch a cycle.
-    it('requests the shared recipe exactly once per branch', async () => {
-        await imageRejectionOf(diamond())
-        assert.deepEqual(recipesRequested, ['L', 'S', 'R', 'S'])
+    // One record for S, shared by both branches, and each branch still resolves it on its own path: a
+    // path that never shrinks would see S again on the second branch and call it a cycle.
+    inOperation('reads the shared recipe once for the operation', async () => {
+        const {rejected} = await imageRejectionOf(diamond())
+        assert.equal(rejected, false, 'expected both branches to resolve')
+        assert.deepEqual(recipesRequested, ['L', 'S', 'R'])
     })
 })
 
-describe('two concurrent evaluations over the same recipes', () => {
+describe('a record two branches of one operation wait on', () => {
+    // One read of S, shared while it is still in flight. The record is the same for both; the ancestry
+    // each of them resolves it under is its own, and a cycle closing inside S is reported from the
+    // branch that reached it.
+    inOperation('is resolved under the ancestry of the branch receiving it', async () => {
+        holdReads = true
+        catalogue = {S: masking('S', recipeRef('S'))}
+
+        const first = rejectionOf(masking('P', recipeRef('S')))
+        const second = rejectionOf(masking('Q', recipeRef('S')))
+        await deliverReadOf('S')
+
+        const [fromP, fromQ] = await Promise.all([first, second])
+        assert.deepEqual(fromP.error?.recipePath, ['P', 'S', 'S'])
+        assert.deepEqual(fromQ.error?.recipePath, ['Q', 'S', 'S'])
+        assert.deepEqual(recipesRequested, ['S'])
+    })
+})
+
+describe('two concurrent operations over the same recipes', () => {
     // One catalogue, both evaluations reading X and then S, and opposite outcomes:
     //
     //   X --imageToMask--> S --imageToMask--> asset
@@ -387,13 +418,19 @@ describe('two concurrent evaluations over the same recipes', () => {
         }
     }
 
+    // Each evaluation is a separate operation, so neither shares records with the other.
+    const started = (scope, evaluate) => withRecipeScope(scope, evaluate)
+
     it('keeps their ancestries independent', async () => {
         shared()
-        const clean = resultOf(masking('clean', recipeRef('X')))
-        const cyclic = imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover')))
+        const cleanScope = newOperation()
+        const cyclicScope = newOperation()
+        const clean = started(cleanScope, () => resultOf(masking('clean', recipeRef('X'))))
+        const cyclic = started(cyclicScope, () =>
+            imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover'))))
 
         await Promise.all([readOf('X'), readOf('X')])
-        assert.equal(heldReads.length, 2, 'both evaluations should be waiting on a read')
+        assert.equal(heldReads.length, 2, 'both operations should be waiting on a read of their own')
         await deliverReadOf('X')
         await deliverReadOf('X')
         await deliverReadOf('S')
@@ -403,12 +440,17 @@ describe('two concurrent evaluations over the same recipes', () => {
         assert.deepEqual(cleanResult, ['projects/p/assets/base:band'])
         assert.equal(cyclicResult.error?.code, 'CYCLIC_DEPENDENCY')
         assert.deepEqual(cyclicResult.error?.recipePath, ['cyclic', 'X', 'S', 'X'])
+        cleanScope.close()
+        cyclicScope.close()
     })
 
-    it('reads each recipe once per evaluation', async () => {
+    it('read the same recipes separately, one read each', async () => {
         shared()
-        const clean = resultOf(masking('clean', recipeRef('X')))
-        const cyclic = imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover')))
+        const cleanScope = newOperation()
+        const cyclicScope = newOperation()
+        const clean = started(cleanScope, () => resultOf(masking('clean', recipeRef('X'))))
+        const cyclic = started(cyclicScope, () =>
+            imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover'))))
 
         await deliverReadOf('X')
         await deliverReadOf('X')
@@ -417,30 +459,49 @@ describe('two concurrent evaluations over the same recipes', () => {
         await Promise.all([clean, cyclic])
 
         assert.deepEqual(recipesRequested, ['X', 'X', 'S', 'S'])
+        cleanScope.close()
+        cyclicScope.close()
     })
 })
 
 describe('cancellation while a recipe is being read', () => {
-    // Teardown has to reach the pending read, and an answer that arrives afterwards must reach nobody. An
-    // implementation that subscribed internally to establish context would keep the read alive and let the
-    // traversal continue into the next recipe.
-    it('tears the pending read down, and a late answer starts no further read', async () => {
+    const chain = () => {
         holdReads = true
         catalogue = {
             B: masking('B', recipeRef('C')),
             C: masking('C', asset('projects/p/assets/base'))
         }
-        const subscription = imageFactory(masking('A', recipeRef('B'))).getBands$().subscribe({
-            error: () => {}
-        })
+        return masking('A', recipeRef('B'))
+    }
+
+    // A read belongs to the operation, not to whoever happened to ask for it first, so one consumer
+    // leaving does not cancel it for the rest. What must stop is that consumer's traversal.
+    inOperation('leaves the read in flight when one consumer unsubscribes, and follows it no further', async () => {
+        const subscription = imageFactory(chain()).getBands$().subscribe({error: () => {}})
         const pending = await readOf('B')
 
         subscription.unsubscribe()
 
+        assert.deepEqual(readsTornDown, [], 'the read is the operation\'s, not the consumer\'s')
+        deliver(pending)
+        await settled()
+        assert.deepEqual(recipesRequested, ['B'], 'no further recipe may be read for a torn-down consumer')
+    })
+
+    // Ending the operation is what cancels its reads; an answer that arrives afterwards reaches nobody.
+    it('tears the pending read down when the operation ends, and a late answer reaches nobody', async () => {
+        const scope = newOperation()
+        const pending = await withRecipeScope(scope, async () => {
+            imageFactory(chain()).getBands$().subscribe({error: () => {}})
+            return readOf('B')
+        })
+
+        scope.close()
+
         assert.deepEqual(readsTornDown, ['B'])
         deliver(pending)
         await settled()
-        assert.deepEqual(recipesRequested, ['B'], 'no further recipe may be read after teardown')
+        assert.deepEqual(recipesRequested, ['B'], 'no further recipe may be read after the operation ended')
     })
 })
 
@@ -464,7 +525,7 @@ describe('a parent that evaluates the same input twice', () => {
             )
         )
 
-    it('is not diagnosed as cyclic', async () => {
+    inOperation('is not diagnosed as cyclic', async () => {
         try {
             assert.deepEqual(await evaluateTwice(reevaluating()), ['projects/p/assets/base:band'])
         } catch (error) {
@@ -472,9 +533,10 @@ describe('a parent that evaluates the same input twice', () => {
         }
     })
 
-    it('requests the input once per evaluation', async () => {
+    // The record is the operation's: the second evaluation gets the one the first read.
+    inOperation('reads the input once for the operation, however often the parent evaluates it', async () => {
         await evaluateTwice(reevaluating()).catch(() => {})
-        assert.deepEqual(recipesRequested, ['B', 'B'])
+        assert.deepEqual(recipesRequested, ['B'])
     })
 })
 
@@ -488,7 +550,7 @@ describe('a parent that already has ancestry of its own', () => {
     // P is doing this work" without needing a recipe type that evaluates its input twice.
     const asRecipe = (id, work) => withPath([id], work)
 
-    it('still reaches a real cycle after a child notification', async () => {
+    inOperation('still reaches a real cycle after a child notification', async () => {
         catalogue = {
             B: masking('B', asset('projects/p/assets/base')),
             P: masking('P', asset('projects/p/assets/base'))
@@ -515,7 +577,7 @@ describe('a parent that already has ancestry of its own', () => {
     // it sees the caller's ancestry either way - proven by mutating complete and watching it still pass. An
     // operator that EMITS on complete does. toArray produces its value from the completion notification, so
     // whatever context that notification carries is the one a downstream factory is built in.
-    it('builds a factory from a completion notification in the caller ancestry', async () => {
+    inOperation('builds a factory from a completion notification in the caller ancestry', async () => {
         catalogue = {B: masking('B', asset('projects/p/assets/base'))}
         const result = await asRecipe('P', () =>
             lastValueFrom(
@@ -526,7 +588,7 @@ describe('a parent that already has ancestry of its own', () => {
             ).catch(error => error)
         )
         assert.equal(result?.code, undefined, `unexpected rejection: ${result?.code} ${JSON.stringify(result?.recipePath)}`)
-        assert.deepEqual(recipesRequested, ['B', 'B'])
+        assert.deepEqual(recipesRequested, ['B'])
     })
 })
 
@@ -534,7 +596,7 @@ describe('the service boundary', () => {
     // A plain Error is re-wrapped by toException into a generic ServerException: status 500, no error code,
     // and the diagnosis buried in `cause`. The GUI would be told "Internal error" about a recipe the user can
     // actually fix. The classification has to survive the boundary the worker and HTTP server both use.
-    it('carries the cycle through toException as a client error', async () => {
+    inOperation('carries the cycle through toException as a client error', async () => {
         catalogue = {A: masking('A', recipeRef('A'))}
         const {error} = await rejectionOf(masking('A', recipeRef('A')))
         const exception = toException(error)
@@ -554,7 +616,7 @@ describe('a root with no id', () => {
     // An inline root cannot name itself, so it contributes nothing to the path and can never be reported as a
     // cycle node. Everything it REFERENCES is still protected, which is the achievable guarantee: the id a
     // recipe is known by enters the path when a reference to it is followed.
-    it('still protects the recipes it references', async () => {
+    inOperation('still protects the recipes it references', async () => {
         catalogue = {A: masking('A', recipeRef('A'))}
         const {rejected, error} = await rejectionOf({type: 'MASKING', model: {imageToMask: recipeRef('A')}})
         assert.equal(rejected, true, 'expected a rejection')
@@ -562,7 +624,7 @@ describe('a root with no id', () => {
         assert.deepEqual(error?.recipePath, ['A', 'A'])
     })
 
-    it('requests the referenced recipe once and stops', async () => {
+    inOperation('requests the referenced recipe once and stops', async () => {
         catalogue = {A: masking('A', recipeRef('A'))}
         await rejectionOf({type: 'MASKING', model: {imageToMask: recipeRef('A')}})
         assert.deepEqual(recipesRequested, ['A'])

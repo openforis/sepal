@@ -13,6 +13,7 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 // file is launched from a Jest bridge so the witness still runs in the ordinary gee gate.
 
 let catalogue = {}
+let recipesRead = []
 let assets = {}
 let imageProperties = {}
 let interpretations = []
@@ -68,13 +69,24 @@ mock.module('#sepal/ee/timeSeries/temporalSegmentation', {
     }
 })
 
-const {configureRecipeReader} = await import('#sepal/ee/recipe')
-
-configureRecipeReader(id =>
-    catalogue[id]
+const readRecipe$ = id => {
+    recipesRead.push(id)
+    return catalogue[id]
         ? of(catalogue[id])
         : throwError(() => new Error(`No such recipe: ${id}`))
-)
+}
+
+const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
+
+// Each case is its own execution operation: one reader, one record per recipe, released at the end.
+const inOperation = (name, fn) => it(name, async () => {
+    const scope = new RecipeScope(readRecipe$)
+    try {
+        await withRecipeScope(scope, fn)
+    } finally {
+        scope.close()
+    }
+})
 
 const {default: ccdcSlice} = await import('#sepal/ee/timeSeries/ccdcSlice')
 const {assetProperties$} = await import('#sepal/ee/asset')
@@ -109,8 +121,12 @@ const slice$ = recipe =>
 
 const dateFormatUsed = () => interpretations.at(-1).dateFormat
 
+// What a use ends up selecting, as opposed to the segment bands every slice reads to build its image.
+const bandsSelected = () => selections.filter(bands => !bands.includes('tStart'))
+
 beforeEach(() => {
     catalogue = {}
+    recipesRead = []
     assets = {}
     imageProperties = {}
     interpretations = []
@@ -119,7 +135,7 @@ beforeEach(() => {
 })
 
 describe('slicing a CCDC recipe', () => {
-    it('requests the base band for a break-confidence preview and uses the source date representation', async () => {
+    inOperation('requests the base band for a break-confidence preview and uses the source date representation', async () => {
         const source = {
             id: 'ccdc-1',
             type: 'CCDC',
@@ -139,10 +155,33 @@ describe('slicing a CCDC recipe', () => {
         assert.deepEqual(collectionBands, [['ndvi', 'red']])
         assert.equal(dateFormatUsed(), source.model.ccdcOptions.dateFormat)
     })
+
+    // One record of the source, two factories built from it with different selections: sharing the
+    // record must not make two uses of one source share their arguments.
+    inOperation('gives each use of one source its own selection, from one record of it', async () => {
+        catalogue['ccdc-1'] = {
+            id: 'ccdc-1',
+            type: 'CCDC',
+            model: {
+                aoi: {type: 'ASSET', id: 'users/x/bounds'},
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['red']},
+                dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
+                options: {},
+                ccdcOptions: {dateFormat: 0}
+            }
+        }
+        const recipe = sliceOver({type: 'RECIPE_REF', id: 'ccdc-1'})
+
+        await firstValueFrom(ccdcSlice(recipe, {selection: ['ndvi_breakConfidence']}).getImage$())
+        await firstValueFrom(ccdcSlice(recipe, {selection: ['ndvi'], baseBands: ['ndvi']}).getImage$())
+
+        assert.deepEqual(bandsSelected(), [['ndvi_breakConfidence'], ['ndvi']])
+        assert.deepEqual(recipesRead, ['ccdc-1'])
+    })
 })
 
 describe('slicing an asset mosaic over a segments asset', () => {
-    it('reads the date representation from the asset itself', async () => {
+    inOperation('reads the date representation from the asset itself', async () => {
         catalogue['asset-mosaic-1'] = assetMosaic({savedDateFormat: 9})
         assets[SEGMENTS_ASSET] = {properties: {dateFormat: 1}}
 
@@ -151,7 +190,7 @@ describe('slicing an asset mosaic over a segments asset', () => {
         assert.equal(dateFormatUsed(), 1)
     })
 
-    it('falls back to what was saved beside the reference when the asset declares none', async () => {
+    inOperation('falls back to what was saved beside the reference when the asset declares none', async () => {
         catalogue['asset-mosaic-1'] = assetMosaic()
         assets[SEGMENTS_ASSET] = {properties: {}}
 
@@ -162,7 +201,7 @@ describe('slicing an asset mosaic over a segments asset', () => {
 
     // The base band names a reader derives from a segments asset are not band names on it, which is what
     // the asset mosaic's own definition declares.
-    it('does not select derived base band names on it', async () => {
+    inOperation('does not select derived base band names on it', async () => {
         catalogue['asset-mosaic-1'] = assetMosaic()
         assets[SEGMENTS_ASSET] = {properties: {dateFormat: 0}}
 
@@ -173,7 +212,7 @@ describe('slicing an asset mosaic over a segments asset', () => {
 })
 
 describe('slicing a segments asset directly', () => {
-    it('uses asset metadata when no date representation was configured', async () => {
+    inOperation('uses asset metadata when no date representation was configured', async () => {
         assets[SEGMENTS_ASSET] = {properties: {dateFormat: 2}}
         const recipe = sliceOver({type: 'ASSET', id: SEGMENTS_ASSET})
 
@@ -182,7 +221,7 @@ describe('slicing a segments asset directly', () => {
         assert.equal(dateFormatUsed(), 2)
     })
 
-    it('keeps an explicitly configured zero over the asset metadata', async () => {
+    inOperation('keeps an explicitly configured zero over the asset metadata', async () => {
         assets[SEGMENTS_ASSET] = {properties: {dateFormat: 1}}
 
         await slice$(sliceOver({type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 0}))
@@ -194,13 +233,13 @@ describe('slicing a segments asset directly', () => {
 // The GUI describes a collection from its members' properties, overridden by the collection's own. Reading
 // only the collection's here would let Preview and the running image disagree about the same asset.
 describe('the properties read off a segments asset', () => {
-    it('are its own, for an image', async () => {
+    inOperation('are its own, for an image', async () => {
         assets[SEGMENTS_ASSET] = {type: 'Image', properties: {dateFormat: 1}}
 
         assert.deepEqual(await firstValueFrom(assetProperties$(SEGMENTS_ASSET)), {dateFormat: 1})
     })
 
-    it('include those of a collection\'s members', async () => {
+    inOperation('include those of a collection\'s members', async () => {
         assets[SEGMENTS_ASSET] = {type: 'ImageCollection', properties: {}}
         imageProperties[SEGMENTS_ASSET] = {dateFormat: 1, startDate: '2015-01-01'}
 
@@ -208,7 +247,7 @@ describe('the properties read off a segments asset', () => {
             {dateFormat: 1, startDate: '2015-01-01'})
     })
 
-    it('let a collection\'s own override its members\'', async () => {
+    inOperation('let a collection\'s own override its members\'', async () => {
         assets[SEGMENTS_ASSET] = {type: 'ImageCollection', properties: {dateFormat: 0}}
         imageProperties[SEGMENTS_ASSET] = {dateFormat: 1}
 
