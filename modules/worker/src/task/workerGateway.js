@@ -8,7 +8,7 @@
 // task.params is sent AS-IS: the orchestrator serializes it to a JSON string before calling
 // execute, and this gateway does NOT re-serialize it.
 //
-// Auth is HTTP Basic with the sepalAdmin credentials.
+// Auth is HTTP Basic with the sepaladmin credentials.
 
 import {getLogger} from '#sepal/log'
 
@@ -16,7 +16,7 @@ import {taskTag} from '../tag.js'
 
 const log = getLogger('worker/workerGateway')
 
-const DEFAULT_SEPAL_USERNAME = 'sepalAdmin'
+const DEFAULT_SEPAL_USERNAME = 'sepaladmin'
 const DEFAULT_WORKER_PORT = 8080
 
 const createWorkerGateway = ({sepalUsername = DEFAULT_SEPAL_USERNAME, sepalPassword, workerPort = DEFAULT_WORKER_PORT}) => {

@@ -9,7 +9,7 @@ const email$ = new Subject()
 const sendEmail = async ({username, subject, content}) => {
     log.debug(`Enqueuing email to user ${username}`)
     email$.next({
-        from: 'user-storage',
+        from: 'storage',
         username,
         subject,
         content

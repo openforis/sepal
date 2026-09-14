@@ -6,7 +6,7 @@ program
     .option('--rabbitmq-host <string>', 'RabbitMQ host', 'rabbitmq')
     .option('--rabbitmq-port <number>', 'RabbitMQ port', v => parseInt(v, 10), 5672)
     .option('--user-url <string>', 'user-module base URL', 'http://user/')
-    .option('--sepal-user <string>', 'admin username for internal calls', 'sepalAdmin')
+    .option('--sepal-user <string>', 'admin username for internal calls', 'sepaladmin')
     .option('--worker-url <string>', 'worker base URL (reconciliation/seed)', 'http://worker')
     .allowUnknownOption()
     .parse()

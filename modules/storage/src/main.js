@@ -24,13 +24,13 @@ const main = async () => {
 
     await initMessageQueue(amqpUri, {
         publishers: [
-            {key: 'userStorage.size', publish$: scanComplete$},
+            {key: 'storage.size', publish$: scanComplete$},
             {key: 'email.sendToUser', publish$: email$}
         ],
         subscribers: [
-            {queue: 'userStorage.systemEvent', topic: 'systemEvent'},
-            {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
-            {queue: 'userStorage.files', topic: 'files.#'},
+            {queue: 'storage.systemEvent', topic: 'systemEvent'},
+            {queue: 'storage.workerSession', topic: 'workerSession.#'},
+            {queue: 'storage.files', topic: 'files.#'},
         ],
         handler: createMessageHandler({inactivityCheck})
     })

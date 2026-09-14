@@ -5,7 +5,7 @@ import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
-describe('user storage database migrations', () => {
+describe('storage database migrations', () => {
     let admin
     const reserved = []
 
@@ -64,7 +64,7 @@ describe('user storage database migrations', () => {
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
-        const dbName = `userstoragemigrations_${randomBytes(6).toString('hex')}`
+        const dbName = `storagemigrations_${randomBytes(6).toString('hex')}`
         await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
         reserved.push(dbName)
         return dbName

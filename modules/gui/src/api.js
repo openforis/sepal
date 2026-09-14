@@ -12,11 +12,11 @@ import planet from './api/planet'
 import project from './api/project'
 import recipe from './api/recipe'
 import sessions from './api/sessions'
+import storage from './api/storage'
 import tasks from './api/tasks'
 import user from './api/user'
 import userAssets from './api/userAssets'
 import userFiles from './api/userFiles'
-import userStorage from './api/userStorage'
 import wmts from './api/wmts'
 
 export const initApi = () =>
@@ -31,11 +31,11 @@ export const initApi = () =>
         project,
         recipe,
         sessions,
+        storage,
         tasks,
         user,
         userAssets,
         userFiles,
-        userStorage,
         wmts,
         ceoGateway,
         appLauncher,

@@ -7,8 +7,8 @@ import {createWorkerGateway} from './workerGateway.js'
 
 const session = {host: 'worker-host'}
 
-// base64('sepalAdmin:pw') — precomputed independently of the implementation.
-const EXPECTED_AUTH = 'Basic ' + Buffer.from('sepalAdmin:pw').toString('base64')
+// base64('sepaladmin:pw') — precomputed independently of the implementation.
+const EXPECTED_AUTH = 'Basic ' + Buffer.from('sepaladmin:pw').toString('base64')
 
 describe('createWorkerGateway.execute', () => {
     afterEach(() => {
@@ -18,7 +18,7 @@ describe('createWorkerGateway.execute', () => {
     test('POSTs a form-encoded task to http://<host>:8080/api/tasks with Basic auth', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
 
         const params = JSON.stringify({sceneIds: ['a', 'b']})
         await gateway.execute(
@@ -46,7 +46,7 @@ describe('createWorkerGateway.execute', () => {
     test('honors a custom workerPort', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw', workerPort: 9090})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw', workerPort: 9090})
 
         await gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
 
@@ -56,7 +56,7 @@ describe('createWorkerGateway.execute', () => {
     test('omits null recipeId from the form body', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
 
         await gateway.execute({id: 't', recipeId: null, operation: 'op', params: '{}'}, session)
 
@@ -64,7 +64,7 @@ describe('createWorkerGateway.execute', () => {
         expect(form.has('recipeId')).toBe(false)
     })
 
-    test('defaults username to sepalAdmin', async () => {
+    test('defaults username to sepaladmin', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
         const gateway = createWorkerGateway({sepalPassword: 'pw'})
@@ -76,7 +76,7 @@ describe('createWorkerGateway.execute', () => {
 
     test('throws on a non-2xx response', async () => {
         global.fetch = jest.fn().mockResolvedValue({ok: false, status: 503, text: async () => 'down'})
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
         await expect(
             gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
         ).rejects.toThrow(/t.*503/)
@@ -91,7 +91,7 @@ describe('createWorkerGateway.cancel', () => {
     test('DELETEs http://<host>:8080/api/tasks/<taskId> with Basic auth', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
 
         await gateway.cancel('task-1', session)
 
@@ -104,13 +104,13 @@ describe('createWorkerGateway.cancel', () => {
 
     test('throws on a non-2xx response', async () => {
         global.fetch = jest.fn().mockResolvedValue({ok: false, status: 404, text: async () => 'gone'})
-        const gateway = createWorkerGateway({sepalUsername: 'sepalAdmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
         await expect(gateway.cancel('task-1', session)).rejects.toThrow(/task-1.*404/)
     })
 })
 
 describe('base64 Basic auth', () => {
-    test('encodes sepalAdmin:pw correctly', () => {
-        expect(Buffer.from('sepalAdmin:pw').toString('base64')).toBe('c2VwYWxBZG1pbjpwdw==')
+    test('encodes sepaladmin:pw correctly', () => {
+        expect(Buffer.from('sepaladmin:pw').toString('base64')).toBe('c2VwYWxhZG1pbjpwdw==')
     })
 })

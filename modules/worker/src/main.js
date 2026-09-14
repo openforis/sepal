@@ -183,7 +183,7 @@ const main = async () => {
     // calls the executor; that only happens on execute/cancel.
     const taskRepository = new EventEmittingTaskRepository(new TaskRepository(db, clock))
     const workerGateway = createWorkerGateway({
-        sepalUsername: config.sepalUser || 'sepalAdmin',
+        sepalUsername: config.sepalUser || 'sepaladmin',
         sepalPassword: config.sepalPassword,
         workerPort: config.workerPort,
     })

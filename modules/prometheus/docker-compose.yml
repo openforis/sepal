@@ -15,7 +15,7 @@ services:
     ports:
     - "${SEPAL_IP}:9090:9090"
     environment:
-      - TARGET_USERNAME=sepalAdmin
+      - TARGET_USERNAME=sepaladmin
       - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
       - SEPAL_HOST=${SEPAL_HOST}
     volumes:

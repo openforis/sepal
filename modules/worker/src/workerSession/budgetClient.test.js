@@ -14,7 +14,7 @@ describe('createBudgetClient.check', () => {
     test('GETs <budgetUrl>/budget/check/<username> with an admin sepal-user header', async () => {
         const fetchMock = jest.fn().mockResolvedValue(okResponse({username: 'alice', exceeded: false, reason: null}))
         global.fetch = fetchMock
-        const client = createBudgetClient({budgetUrl: 'http://budget', sepalUser: 'sepalAdmin'})
+        const client = createBudgetClient({budgetUrl: 'http://budget', sepalUser: 'sepaladmin'})
 
         await client.check('alice')
 
@@ -22,7 +22,7 @@ describe('createBudgetClient.check', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('http://budget/budget/check/alice')
         expect(JSON.parse(init.headers['sepal-user'])).toMatchObject({
-            username: 'sepalAdmin',
+            username: 'sepaladmin',
             roles: ['application_admin'],
         })
     })
@@ -31,7 +31,7 @@ describe('createBudgetClient.check', () => {
         global.fetch = jest.fn().mockResolvedValue(okResponse({exceeded: false, reason: null}))
         await createBudgetClient({}).check('bob')
         expect(global.fetch.mock.calls[0][0]).toBe('http://budget/budget/check/bob')
-        expect(JSON.parse(global.fetch.mock.calls[0][1].headers['sepal-user']).username).toBe('sepalAdmin')
+        expect(JSON.parse(global.fetch.mock.calls[0][1].headers['sepal-user']).username).toBe('sepaladmin')
     })
 
     test('strips a trailing slash from the configured URL so the path never doubles up', async () => {

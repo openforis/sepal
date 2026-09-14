@@ -1,3 +1,3 @@
-check program user-storage-redis-memory with path /usr/local/bin/redismemcheck-user-storage-redis
+check program storage-redis-memory with path /usr/local/bin/redismemcheck-storage-redis
     if status >= 2 then exec "/usr/local/bin/pushover-notify 2"
     if status == 1 then exec "/usr/local/bin/pushover-notify -1"

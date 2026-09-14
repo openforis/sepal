@@ -16,11 +16,11 @@
         "recipe",
         "scene-metadata",
         "ssh-gateway",
+        "storage",
         "terminal",
         "user",
         "user-assets",
         "user-files",
-        "user-storage",
         "worker"
     ],
     "process": [
@@ -62,12 +62,12 @@
         "r-proxy",
         "scene-metadata",
         "ssh-gateway",
+        "storage",
         "task",
         "terminal",
         "user",
         "user-assets",
         "user-files",
-        "user-storage",
         "worker"
     ]
 }

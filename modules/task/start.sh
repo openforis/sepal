@@ -30,7 +30,7 @@ then
     --google-region "$GOOGLE_REGION" \
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-username "sepalAdmin" \
+    --sepal-username "sepaladmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \
     --username $USERNAME
@@ -44,7 +44,7 @@ else
     --google-region "$GOOGLE_REGION" \
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-username "sepalAdmin" \
+    --sepal-username "sepaladmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \
     --username $USERNAME

@@ -225,4 +225,4 @@
   roles:
     - { role: docker-login }
     # - { role: run-module, module: logger }
-    - { role: run-module, module: user-storage }
+    - { role: run-module, module: storage }

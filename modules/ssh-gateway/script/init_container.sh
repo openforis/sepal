@@ -12,7 +12,7 @@ function template {
 
 mkdir -p /var/run/sshd
 
-template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0644
+template /config/sepaladmin.passwd /etc/sepaladmin.passwd root: 0644
 
 # Keep /etc/ssh in a mounted volume, so host keys are reused between upgrades
 if [ ! -d /data/ssh ]; then

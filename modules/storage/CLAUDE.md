@@ -1,10 +1,10 @@
-# CLAUDE.md - modules/user-storage
+# CLAUDE.md - modules/storage
 
 Monitors user storage quota and usage. Tracks inactivity, sends notifications, manages cleanup jobs via BullMQ.
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. There is no legacy import. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the portable schema stream and `migrations/legacy-import/` the one-off copy from the `user_storage` database this module used before the rename. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 
@@ -22,12 +22,12 @@ initialized before the queue, so no subscriber can be handed work that records e
 
 ### RabbitMQ Integration
 Publishers:
-- `userStorage.size` - Publishes `{username, size}` after storage scan
+- `storage.size` - Publishes `{username, size}` after storage scan
 - `email.sendToUser` - Sends notification emails
 
 Subscribers:
-- `userStorage.systemEvent` - System lifecycle events (`CLIENT_UP`, `USER_DOWN`)
-- `userStorage.workerSession.#` - Worker session activated/closed
+- `storage.systemEvent` - System lifecycle events (`CLIENT_UP`, `USER_DOWN`)
+- `storage.workerSession` - Worker session activated/closed (bound to `workerSession.#`)
 - `files.#` - File deletion events trigger storage recheck
 
 ### Message Handler
@@ -44,14 +44,14 @@ Subscribers:
 - `GET /userEvents?username=X` - Event history for user
 
 ### Database
-MySQL (`user_storage` schema):
+MySQL (`storage` schema):
 - Table: `history` - Records `(username, event, timestamp)` with deduplication
-- `src/db.js` initializes the schema and returns the shared callback db; `src/historyRepository.js` holds it
+- `src/db.js` runs the schema and legacy-import migrations and returns the shared callback db; `src/historyRepository.js` holds it
   and owns every statement against `history`. Nothing else reaches the pool.
 - `addEvent` uses `GET_LOCK()`/`RELEASE_LOCK()` on one connection for concurrent access safety. Known defects
   in that locking are recorded in [docs/database-migrations.md](../../docs/database-migrations.md) and are
   not addressed here.
-- Migration: `migrations/001.do.sql`
+- Migration: `migrations/001.do.schema.sql`
 
 ### Session Tracking
 `src/kvstore.js` - Redis for session active/inactive state per user.

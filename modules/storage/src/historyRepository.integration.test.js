@@ -16,7 +16,7 @@ describe('HistoryRepository', () => {
 
     beforeAll(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'user_storage_history', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'storage_history', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {

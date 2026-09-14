@@ -17,9 +17,9 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `user.UserUpdated` | user | ssh-gateway |
 | `user.UserLocked` | user | gateway, worker |
 | `user.emailNotificationsEnabled` | *(none — legacy)* | email |
-| `workerSession.WorkerSessionRequested` | worker | budget, user-storage, ssh-gateway |
-| `workerSession.WorkerSessionActivated` | worker | budget, user-storage, ssh-gateway |
-| `workerSession.WorkerSessionClosed` | worker | budget, user-storage, gateway, ssh-gateway |
+| `workerSession.WorkerSessionRequested` | worker | budget, storage, ssh-gateway |
+| `workerSession.WorkerSessionActivated` | worker | budget, storage, ssh-gateway |
+| `workerSession.WorkerSessionClosed` | worker | budget, storage, gateway, ssh-gateway |
 | `workerSession.SessionAppAssociated` | worker | ssh-gateway |
 | `workerSession.SessionAppDissociated` | worker | ssh-gateway, gateway |
 | `workerSession.SessionExpiryNotified` | worker | gateway |
@@ -27,11 +27,11 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `workerInstance.*` (7 events) | worker | *(none — telemetry/parity)* |
 | `budget.UserBudgetExceeded` | budget | worker |
 | `budget.UserBudgetCleared` | budget | worker |
-| `userStorage.size` | user-storage | budget |
+| `storage.size` | storage | budget |
 | `email.sendToAddress` | user | email |
-| `email.sendToUser` | user-storage, worker | email |
-| `files.FilesDeleted` | *(none — legacy)* | user-storage |
-| `systemEvent` | gateway | user-storage |
+| `email.sendToUser` | storage, worker | email |
+| `files.FilesDeleted` | *(none — legacy)* | storage |
+| `systemEvent` | gateway | storage |
 
 ---
 
@@ -81,7 +81,7 @@ Same `session` DTO as `WorkerSessionActivated` below, in state `PENDING`.
 - **sub:** budget (queue `budget.workerSessionRequested`) — opens the `open_session_use` row at
   `creationTime`, so a session closed before it ever activates is still billed. The row is an
   upsert keyed on `session_id`, so the later `WorkerSessionActivated` rewrites it identically
-- **sub:** user-storage, ssh-gateway — via their wildcard bindings (see below); user-storage has no
+- **sub:** storage, ssh-gateway — via their wildcard bindings (see below); storage has no
   handler for this key and ignores it, ssh-gateway refreshes the terminal menu
 
 ### `workerSession.WorkerSessionActivated` — `{username, session}`
@@ -92,9 +92,9 @@ apiKey: null}`.
 - **pub:** worker — when a pending session becomes ACTIVE on a provisioned instance
 - **sub:** budget (queue `budget.workerSessionActivated`) — records the open session in
   `open_session_use` for instance-spending tracking ([index.js](modules/budget/src/index.js))
-- **sub:** user-storage (queue `userStorage.workerSession`, bound to `workerSession.#`) — marks the
+- **sub:** storage (queue `storage.workerSession`, bound to `workerSession.#`) — marks the
   user's session active, cancels any pending inactivity check, schedules a debounced storage re-scan
-  ([messageHandler.js](modules/user-storage/src/messageHandler.js))
+  ([messageHandler.js](modules/storage/src/messageHandler.js))
 - **sub:** ssh-gateway (anonymous exclusive queue per interactive SSH connection, bound to
   `workerSession.*`, auto-deleted when the connection drops) — refreshes the terminal menu when
   one of the logged-in user's sessions changes
@@ -103,7 +103,7 @@ apiKey: null}`.
 ### `workerSession.WorkerSessionClosed` — `{username, sessionId}`
 - **pub:** worker — when a session is closed (user request, timeout, budget lock, instance failure)
 - **sub:** budget (queue `budget.workerSessionClosed`) — closes the session's `open_session_use` row
-- **sub:** user-storage (queue `userStorage.workerSession`) — marks the session inactive, schedules
+- **sub:** storage (queue `storage.workerSession`) — marks the session inactive, schedules
   an inactivity check and a storage re-scan
 - **sub:** gateway (queue `gateway.workerSession`) — tears down the session's cached sandbox proxy
   endpoints, and additionally forwards the event to the user's browser websocket clients as
@@ -181,12 +181,12 @@ a lost delivery or a consumer restart self-corrects within the hour.
   in-process locked-users set that gates new session requests; a *new* lock also closes the user's
   running sessions ([main.js](modules/worker/src/main.js))
 
-## `userStorage.size` — storage scan result
+## `storage.size` — storage scan result
 
-### `userStorage.size` — `{username, size}` (bytes)
-- **pub:** user-storage — after every completed scan of a user's home directory
-  ([storageCheck.js](modules/user-storage/src/storageCheck.js))
-- **sub:** budget (queue `budget.userStorage`) — accumulates the month's storage use and refreshes
+### `storage.size` — `{username, size}` (bytes)
+- **pub:** storage — after every completed scan of a user's home directory
+  ([storageCheck.js](modules/storage/src/storageCheck.js))
+- **sub:** budget (queue `budget.storage`) — accumulates the month's storage use and refreshes
   the user's cached spending report
 
 ## `email.*` — outgoing email
@@ -204,8 +204,8 @@ Send to explicit address(es); at least one of `to`/`cc`/`bcc` required.
 ### `email.sendToUser` — `{from, username, subject, content, contentType}`
 Send to a username; the email module resolves the address via the user module, skips LOCKED users, and
 always forces delivery.
-- **pub:** user-storage — storage-quota and inactivity notifications
-  ([email.js](modules/user-storage/src/email.js))
+- **pub:** storage — storage-quota and inactivity notifications
+  ([email.js](modules/storage/src/email.js))
 - **pub:** worker — session-expiry warnings and close notices, config-gated by
   `SESSION_EXPIRY_MODE` ([email.js](modules/worker/src/workerSession/email.js))
 - **sub:** email (queue `email.sendToUser`)
@@ -215,7 +215,7 @@ always forces delivery.
 ### `files.FilesDeleted` — `{username}`
 - **pub:** none in the current codebase — the publisher was the decomposed Groovy sepal-server's
   `files` component, and user-files (which absorbed it) does not publish it
-- **sub:** user-storage (queue `userStorage.files`, bound to `files.#`) — schedules a debounced
+- **sub:** storage (queue `storage.files`, bound to `files.#`) — schedules a debounced
   storage re-scan for the user
 
 ## `systemEvent` — gateway client/user activity
@@ -225,7 +225,7 @@ always forces delivery.
   ([websocket-downlink.js](modules/gateway/src/websocket-downlink.js),
   [websocket-uplink.js](modules/gateway/src/websocket-uplink.js),
   [userStore.js](modules/gateway/src/userStore.js))
-- **sub:** user-storage (queue `userStorage.systemEvent`) — acts on `clientUp` (cancels the user's
+- **sub:** storage (queue `storage.systemEvent`) — acts on `clientUp` (cancels the user's
   inactivity check) and `userDown` (schedules one); other types are ignored
 - Any module can tap this stream with `systemEvents$(namespace)` from
   [lib/js/shared/src/event/systemEvents.js](lib/js/shared/src/event/systemEvents.js) (currently unused)

@@ -108,9 +108,9 @@ const createBudgetComponent = ({budgetManager, handlers, enforcement, reconciler
         },
     }
 
-    const userStorageSubscriber = {
-        queue: 'budget.userStorage',
-        topic: 'userStorage.size',
+    const storageSubscriber = {
+        queue: 'budget.storage',
+        topic: 'storage.size',
         handler: async (key, message) => {
             await serialize(() => handlers.onUserStorageSize(message))
             await publishSpending(message.username)
@@ -124,7 +124,7 @@ const createBudgetComponent = ({budgetManager, handlers, enforcement, reconciler
             workerSessionRequestedSubscriber,
             workerSessionActivatedSubscriber,
             workerSessionClosedSubscriber,
-            userStorageSubscriber,
+            storageSubscriber,
         ],
         publishSpending,
         BUDGET_PUBLISHERS,

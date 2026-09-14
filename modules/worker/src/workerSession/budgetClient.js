@@ -20,7 +20,7 @@ const log = getLogger('worker/budgetClient')
 
 const ADMIN_ROLE = 'application_admin'
 const DEFAULT_BUDGET_URL = 'http://budget'
-const DEFAULT_ADMIN_USERNAME = 'sepalAdmin'
+const DEFAULT_ADMIN_USERNAME = 'sepaladmin'
 
 const createBudgetClient = config => {
     const baseUrl = (config.budgetUrl || DEFAULT_BUDGET_URL).replace(/\/+$/, '')

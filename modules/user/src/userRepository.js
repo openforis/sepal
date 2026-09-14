@@ -78,7 +78,7 @@ export class UserRepository {
         })
     }
 
-    // The fixed {timestamp} key is a contract with user-storage, which maps straight onto it.
+    // The fixed {timestamp} key is a contract with storage, which maps straight onto it.
     async mostRecentLogin(username) {
         if (!isText(username)) {
             return {}

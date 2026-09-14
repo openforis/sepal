@@ -1,6 +1,6 @@
 FROM node:26-alpine
 
-ENV MODULE_NAME user-storage
+ENV MODULE_NAME storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
