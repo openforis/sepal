@@ -136,6 +136,11 @@ class _SampleImageSection extends React.Component {
             <RecipeInput
                 input={recipeIdToSample}
                 filter={type => !type.noImageOutput}
+                // Sampling reads the selected recipe once and persists the points in the data set; only a
+                // RECIPE data set is a source execution resolves. Sampling this recipe's own current output
+                // is therefore a snapshot with a base case, not a cycle - see its recipe definition's
+                // directSources, which leaves recipeIdToSample out.
+                allowOwnRecipe
                 autoFocus
                 onLoading={() => {
                     this.cancel$.next()

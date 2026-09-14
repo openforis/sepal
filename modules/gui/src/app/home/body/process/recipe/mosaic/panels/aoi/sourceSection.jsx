@@ -107,13 +107,15 @@ class _SourceSection extends React.Component {
     }
 
     setOverlay() {
-        const {stream, overlay: prevOverlay, featureLayerSources, recipeActionBuilder, inputs: {sourceType, assetId, recipeId}} = this.props
+        const {stream, overlay: prevOverlay, featureLayerSources, recipeActionBuilder, recipeId: ownRecipeId, inputs: {sourceType, assetId, recipeId}} = this.props
         const isRecipe = sourceType.value === 'RECIPE'
         const id = isRecipe ? recipeId.value : assetId.value
         this.boundsChanged$.next()
-        if (!id) {
-            // No source selected (e.g. after switching Asset|Recipe or clearing it): drop any stale overlay
-            // and bounds instead of leaving the previous AOI on the map.
+        // The overlay reads the source itself, so the selector refusing to load one it will not offer is not
+        // enough: a recipe saved with itself as its own area of interest would still be resolved from here.
+        if (!id || (isRecipe && id === ownRecipeId)) {
+            // Nothing usable selected (e.g. after switching Asset|Recipe or clearing it): drop any stale
+            // overlay and bounds instead of leaving the previous AOI on the map.
             if (prevOverlay) {
                 recipeActionBuilder('CLEAR_MAP_OVERLAY')
                     .del('layers.overlay')

@@ -88,11 +88,21 @@ class _RecipeInput extends React.Component {
         }
     }
 
+    // A recipe cannot be an input to itself: the reference closes a cycle the moment it is made, and the
+    // resolver rejects one. Identity is the recipe's id - a title is neither stable nor unique, and the
+    // catalogue summary is a different object from the recipe being edited. What opts out is any selection
+    // that does not become a dependency edge - see allowOwnRecipe.
+    isOwnRecipe(recipeId) {
+        const {recipeId: ownRecipeId, allowOwnRecipe} = this.props
+        return !allowOwnRecipe && !!ownRecipeId && recipeId === ownRecipeId
+    }
+
     getOptions() {
         const {projectId, projects, recipes, filter} = this.props
         const {all} = this.state
         const filteredRecipes = recipes
             .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
+            .filter(recipe => !this.isOwnRecipe(recipe.id))
             .filter(recipe => {
                 const {projectId: p, type} = recipe
                 const recipeType = getRecipeType(type)
@@ -119,11 +129,21 @@ class _RecipeInput extends React.Component {
         return _.sortBy(options, 'label')
     }
 
+    // A recipe saved before this rule can still name itself. The value is left exactly as it was saved -
+    // rewriting a model the user has not touched is not this component's to do - so the form is told the
+    // field is invalid instead. Refusing to load is not enough on its own: a field validated only for being
+    // non-blank, as several of these are, would go on satisfying Apply with a reference nothing can
+    // resolve. Choosing another recipe clears it, because setting a value clears that field's errors.
     loadRecipe(recipeId) {
-        const {stream, onError, onLoading, onLoaded, loadRecipe$} = this.props
+        const {input, stream, onError, onLoading, onLoaded, loadRecipe$} = this.props
         this.cancel$.next()
         if (recipeId) {
             onLoading && onLoading(recipeId)
+            if (this.isOwnRecipe(recipeId)) {
+                input.setInvalid(msg('widget.recipeInput.ownRecipe.invalid'))
+                onError && onError(new Error(`Recipe ${recipeId} cannot be an input to itself`))
+                return
+            }
             stream('LOAD_RECIPE',
                 loadRecipe$(recipeId).pipe(
                     switchMap(recipe => {
@@ -158,6 +178,12 @@ export const RecipeInput = compose(
 
 RecipeInput.propTypes = {
     input: PropTypes.object.isRequired,
+    // For the selections that do NOT become a dependency edge, where naming this recipe closes no cycle:
+    // a Map Layers layer, which displays a recipe rather than consuming one, and the training-data
+    // samplers, which read the selected recipe once and persist the points (the recipe definitions leave
+    // their `recipeIdToSample` out of directSources for exactly that reason). Never set it on an input
+    // execution resolves.
+    allowOwnRecipe: PropTypes.bool,
     filter: PropTypes.func,
     label: PropTypes.any,
     labelButtons: PropTypes.any,

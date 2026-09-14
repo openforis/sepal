@@ -61,6 +61,7 @@ class _SelectRecipe extends React.Component {
             <RecipeInput
                 input={recipe}
                 filter={type => !type.noImageOutput}
+                allowOwnRecipe
                 autoFocus
                 onLoading={() => this.setState({recipe: null})}
                 onLoaded={({recipe}) => this.setState({recipe})}

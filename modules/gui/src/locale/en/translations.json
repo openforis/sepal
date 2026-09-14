@@ -6471,6 +6471,9 @@
       "placeholder": "Select a recipe...",
       "all": {
         "tooltip": "Show all recipes or only recipes in current project"
+      },
+      "ownRecipe": {
+        "invalid": "A recipe cannot be used as its own input"
       }
     },
     "safetyButton": {

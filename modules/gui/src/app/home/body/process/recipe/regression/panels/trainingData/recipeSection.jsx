@@ -5,11 +5,11 @@ import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {recipeId, inputs: {name, recipe}, onLoading} = this.props
+        const {inputs: {name, recipe}, onLoading} = this.props
         return (
             <RecipeInput
                 input={recipe}
-                filter={(type, recipe) => type.id === 'REGRESSION' && recipe.id !== recipeId}
+                filter={type => type.id === 'REGRESSION'}
                 autoFocus
                 onLoading={onLoading}
                 onLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
