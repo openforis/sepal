@@ -484,6 +484,12 @@ section validation, discovery infrastructure or execution bundles to this packet
 
 - Make Change Alerts the first `CCDC_SEGMENTS` consumer: retain the selected outer execution reference, obtain CCDC
   semantics through the primary lineage, and reject an absent capability without entering algorithm code.
+- Landed ahead of that migration, as a bug fix rather than a step towards it: selecting a wrapper recipe no longer
+  replaces the reference with the producer found underneath it, so a Masking over CCDC executes its mask. The
+  producer is still resolved through `loadSourceRecipe$` and still supplies the copied description beside the
+  reference; what changed is that the description is merged into the selection instead of replacing it. The copies,
+  the terminal-reference discovery and the recipe-type candidate filter are all still there for the migration to
+  remove.
 - Replace its recipe-type and blanket `sourceRecipe` candidate filter with the generic per-source capability query;
   Change Alerts declares only that it requires `CCDC_SEGMENTS` and has no knowledge of pass-through recipe types.
 - Remove its terminal-reference replacement and copied CCDC metadata path only when the capability-backed path is

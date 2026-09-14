@@ -128,19 +128,23 @@ class _ReferenceSync extends React.Component {
         assignSources(assignOptions(builder)).dispatch()
     }
 
+    // The producer describes the segments; it does not become the reference. What was selected is what
+    // Change Alerts executes - a Masking recipe over CCDC has to run its mask - so only the description is
+    // written here, merged into the selection rather than replacing it. `assign` names every derived field,
+    // so nothing a previous source left behind survives.
     updateRecipeReference({ccdcRecipe}) {
         const {reference, recipeActionBuilder} = this.props
-        const nextReference = this.recipeReference({ccdcRecipe})
+        const nextReference = this.recipeDescription({ccdcRecipe})
         if (!_.isEqual(reference, nextReference)) {
             recipeActionBuilder('UPDATE_REFERENCE', {reference})
                 .assign('model.sources', ccdcRecipe.model.sources)
                 .assign('model.options', ccdcRecipe.model.options)
-                .set('model.reference', nextReference)
+                .assign('model.reference', nextReference)
                 .dispatch()
         }
     }
 
-    recipeReference({ccdcRecipe}) {
+    recipeDescription({ccdcRecipe}) {
         const corrections = ccdcRecipe.model.options.corrections
         const baseBands = getAvailableBands({
             dataSets: Object.values(ccdcRecipe.model.sources.dataSets).flat(),
@@ -156,8 +160,6 @@ class _ReferenceSync extends React.Component {
             segmentBands.map(({name}) => name)
         ].flat()
         return {
-            type: 'RECIPE_REF',
-            id: ccdcRecipe.id,
             bands,
             baseBands,
             segmentBands,
