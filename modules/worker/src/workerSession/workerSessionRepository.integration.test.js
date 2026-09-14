@@ -610,29 +610,53 @@ describe('WorkerSessionRepository', () => {
         })
     })
 
-    describe('findUsernameByApiKey', () => {
-        test('names the owner of an open session', async () => {
-            await repository.insert(activeSession({apiKey: 'live-key'}))
+    describe('findSessionByApiKey', () => {
+        test('names the session, its owner and its worker type for an open session', async () => {
+            await repository.insert(activeSession({
+                id: 'executor-1', workerType: 'TASK_EXECUTOR', apiKey: 'live-key'
+            }))
 
-            const username = await repository.findUsernameByApiKey('live-key')
+            const found = await repository.findSessionByApiKey('live-key')
 
-            expect(username).toBe(USERNAME)
+            expect(found).toEqual({
+                sessionId: 'executor-1', username: USERNAME, workerType: 'TASK_EXECUTOR'
+            })
         })
 
-        test('names nobody for a session that has closed', async () => {
+        test('tells two open sessions of the same user apart by their keys', async () => {
+            await repository.insert(activeSession({id: 'executor-1', apiKey: 'key-1'}))
+            await repository.insert(activeSession({
+                id: 'executor-2', apiKey: 'key-2', instance: {id: 'i-2', host: HOST}
+            }))
+
+            const first = await repository.findSessionByApiKey('key-1')
+            const second = await repository.findSessionByApiKey('key-2')
+
+            expect(first.sessionId).toBe('executor-1')
+            expect(second.sessionId).toBe('executor-2')
+        })
+
+        test('finds nothing for a session that has closed', async () => {
             await repository.insert(aSession({state: State.CLOSED, apiKey: 'dead-key'}))
 
-            const username = await repository.findUsernameByApiKey('dead-key')
+            expect(await repository.findSessionByApiKey('dead-key')).toBeNull()
+        })
 
-            expect(username).toBeNull()
+        test('finds nothing once an open session is closed', async () => {
+            const session = activeSession({id: 'executor-1', apiKey: 'live-key'})
+            await repository.insert(session)
+
+            await repository.update({...session, state: State.CLOSED})
+
+            expect(await repository.findSessionByApiKey('live-key')).toBeNull()
         })
 
         // Answered while the suite's only connection is held: with no key there is nothing to look up,
         // so nothing is looked up.
-        test('names nobody when there is no key, without reaching the database', async () => {
-            const username = await testDb.db.withConnection(() => repository.findUsernameByApiKey(null))
+        test('finds nothing when there is no key, without reaching the database', async () => {
+            const found = await testDb.db.withConnection(() => repository.findSessionByApiKey(null))
 
-            expect(username).toBeNull()
+            expect(found).toBeNull()
         })
     })
 

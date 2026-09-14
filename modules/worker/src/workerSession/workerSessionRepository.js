@@ -237,19 +237,22 @@ export class WorkerSessionRepository {
         })
     }
 
-    // findUsernameByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match.
-    findUsernameByApiKey(apiKey) {
+    // findSessionByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match, so
+    // closing a session revokes its key.
+    findSessionByApiKey(apiKey) {
         if (!apiKey) {
             return Promise.resolve(null)
         }
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
-                `SELECT username FROM worker_session
+                `SELECT id, username, worker_type FROM worker_session
                     WHERE api_key = ? AND state IN (?, ?)`,
                 [apiKey, PENDING, ACTIVE]
             )
             const row = rows[0]
-            return row?.username ?? null
+            return row
+                ? {sessionId: row.id, username: row.username, workerType: row.worker_type}
+                : null
         })
     }
 

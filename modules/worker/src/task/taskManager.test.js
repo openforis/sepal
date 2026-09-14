@@ -182,6 +182,9 @@ describe('executeTasksInSession', () => {
 })
 
 describe('updateTaskProgress', () => {
+    // The executor the task fixture is assigned to.
+    const assignedExecutor = {username: 'alice', sessionId: 's-1'}
+
     test('persist happens BEFORE the side effect (the session extension) — non-terminal', async () => {
         const order = []
         const repo = makeRepo({getTask: () => task({state: State.ACTIVE})})
@@ -189,7 +192,7 @@ describe('updateTaskProgress', () => {
         const sessionManager = makeSessionManager()
         sessionManager.taskExtension = jest.fn(async () => { order.push('extend') })
         const {manager} = make({repo, sessionManager})
-        await manager.updateTaskProgress({taskId: 't-1', state: State.ACTIVE, statusDescription: 'x'})
+        await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.ACTIVE, statusDescription: 'x'})
         expect(order).toEqual(['update', 'extend'])
         expect(sessionManager.closeSession).not.toHaveBeenCalled()
     })
@@ -201,7 +204,7 @@ describe('updateTaskProgress', () => {
         const sessionManager = makeSessionManager()
         sessionManager.closeSession = jest.fn(async () => { order.push('closeSession') })
         const {manager} = make({repo, sessionManager})
-        await manager.updateTaskProgress({taskId: 't-1', state: State.COMPLETED})
+        await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.COMPLETED})
         expect(order).toEqual(['update', 'closeSession'])
         expect(sessionManager.closeSession).toHaveBeenCalledWith({sessionId: 's-1'})
         expect(sessionManager.taskExtension).not.toHaveBeenCalled()
@@ -213,7 +216,7 @@ describe('updateTaskProgress', () => {
             pendingOrActiveTasksInSession: () => [task({id: 't-2'})],
         })
         const {manager, sessionManager} = make({repo})
-        await manager.updateTaskProgress({taskId: 't-1', state: State.FAILED})
+        await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.FAILED})
         expect(sessionManager.closeSession).not.toHaveBeenCalled()
         expect(sessionManager.taskExtension).toHaveBeenCalledWith('s-1')
     })
@@ -221,7 +224,7 @@ describe('updateTaskProgress', () => {
     test('guard (a): CANCELED while task not in [PENDING,ACTIVE,CANCELING] → no-op', async () => {
         const repo = makeRepo({getTask: () => task({state: State.COMPLETED})})
         const {manager, sessionManager} = make({repo})
-        const result = await manager.updateTaskProgress({taskId: 't-1', state: State.CANCELED})
+        const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.CANCELED})
         expect(result).toBeNull()
         expect(repo.update).not.toHaveBeenCalled()
         expect(sessionManager.taskExtension).not.toHaveBeenCalled()
@@ -232,7 +235,7 @@ describe('updateTaskProgress', () => {
         const repo = makeRepo({getTask: () => task({state: State.CANCELING})})
         const workerGateway = makeGateway()
         const {manager} = make({repo, workerGateway})
-        const result = await manager.updateTaskProgress({taskId: 't-1', state: State.ACTIVE})
+        const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.ACTIVE})
         expect(result).toBeNull()
         // CancelTask ran: it updated the task to CANCELING again (never ACTIVE)
         const states = repo.update.mock.calls.map(c => c[0].state)
@@ -245,7 +248,7 @@ describe('updateTaskProgress', () => {
     test('guard (c): non-CANCELED state while task not in [PENDING,ACTIVE] → no-op', async () => {
         const repo = makeRepo({getTask: () => task({state: State.CANCELING})})
         const {manager, sessionManager} = make({repo})
-        const result = await manager.updateTaskProgress({taskId: 't-1', state: State.COMPLETED})
+        const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.COMPLETED})
         expect(result).toBeNull()
         expect(repo.update).not.toHaveBeenCalled()
         expect(sessionManager.taskExtension).not.toHaveBeenCalled()
@@ -254,9 +257,40 @@ describe('updateTaskProgress', () => {
     test('CANCELED while CANCELING → persist CANCELED (allowed)', async () => {
         const repo = makeRepo({getTask: () => task({state: State.CANCELING}), pendingOrActiveTasksInSession: () => []})
         const {manager, sessionManager} = make({repo})
-        const result = await manager.updateTaskProgress({taskId: 't-1', state: State.CANCELED})
+        const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.CANCELED})
         expect(result.state).toBe(State.CANCELED)
         expect(sessionManager.closeSession).toHaveBeenCalled()
+    })
+
+    describe('refuses a caller the task was not assigned to', () => {
+        test.each([
+            ['another user', {username: 'bob', sessionId: 's-1'}],
+            ['another session of the same user', {username: 'alice', sessionId: 's-2'}],
+        ])('%s', async (_description, caller) => {
+            const repo = makeRepo({getTask: () => task({state: State.ACTIVE})})
+            const {manager, sessionManager} = make({repo})
+
+            await expect(manager.updateTaskProgress({...caller, taskId: 't-1', state: State.COMPLETED}))
+                .rejects.toMatchObject({name: 'Unauthorized'})
+
+            expect(repo.update).not.toHaveBeenCalled()
+            expect(sessionManager.closeSession).not.toHaveBeenCalled()
+            expect(sessionManager.taskExtension).not.toHaveBeenCalled()
+        })
+
+        // The CANCELING branch cancels rather than persists, so the check has to precede it too.
+        test('even on the branch that cancels rather than persists', async () => {
+            const repo = makeRepo({getTask: () => task({state: State.CANCELING})})
+            const workerGateway = makeGateway()
+            const {manager} = make({repo, workerGateway})
+
+            await expect(manager.updateTaskProgress({
+                username: 'alice', sessionId: 's-2', taskId: 't-1', state: State.ACTIVE
+            })).rejects.toMatchObject({name: 'Unauthorized'})
+
+            expect(repo.update).not.toHaveBeenCalled()
+            expect(workerGateway.cancel).not.toHaveBeenCalled()
+        })
     })
 })
 

@@ -7,6 +7,7 @@ import {lastInWindow, repeating} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 
 import {getConfig, switchedToServiceAccount$} from './context.js'
+import {sessionAuth} from './sessionAuth.js'
 import {taskFailureStatus} from './taskFailureStatus.js'
 import executeTask$ from './taskRunner.js'
 
@@ -17,7 +18,7 @@ const taskTag = id => tag('Task', id)
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
 
-const {sepalEndpoint, sepalUsername, sepalPassword} = getConfig()
+const {sepalEndpoint, sepalApiKey} = getConfig()
 
 const task$ = new Subject()
 const cancel$ = new Subject()
@@ -34,6 +35,18 @@ const cancelTask = id => {
     cancel$.next(id)
 }
 
+// A 401 means the session is closed, and a terminal callback is what closes it - so a lost response
+// to one looks the same here as one that never arrived. Neither outcome is knowable from this side,
+// so the delivery is reported as unconfirmed and the persisted task state is left to be the record.
+const reportDeliveryFailure = (id, description, error) => {
+    if (error?.statusCode === 401) {
+        log.warn(msg(id, `delivery of ${description} unconfirmed: the session is no longer authenticated`))
+    } else {
+        log.error(msg(id, `could not notify ${description}`), error)
+    }
+    return EMPTY
+}
+
 const taskStateChanged$ = (id, state, message) => {
     log.debug(() => msg(id, `notifying state change: ${state}`))
     return post$(`${sepalEndpoint}/api/tasks/task/${id}/state-updated`, {
@@ -41,13 +54,9 @@ const taskStateChanged$ = (id, state, message) => {
             state,
             statusDescription: message
         },
-        username: sepalUsername,
-        password: sepalPassword
+        ...sessionAuth(sepalApiKey)
     }).pipe(
-        catchError(error => {
-            log.error(msg(id, `could not notify state change: ${state}`), error)
-            return EMPTY
-        }),
+        catchError(error => reportDeliveryFailure(id, `state change: ${state}`, error)),
         tap(() =>
             log.trace(() => msg(id, `notified state change: ${state}`))
         ),
@@ -59,13 +68,9 @@ const taskProgressed$ = (id, progress) => {
     log.debug(() => msg(id, `notifying progress update: ${progress.defaultMessage}`))
     return post$(`${sepalEndpoint}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
-        username: sepalUsername,
-        password: sepalPassword
+        ...sessionAuth(sepalApiKey)
     }).pipe(
-        catchError(error => {
-            log.error(msg(id, `could not notify progress update: ${progress.defaultMessage}`), error)
-            return EMPTY
-        }),
+        catchError(error => reportDeliveryFailure(id, `progress update: ${progress.defaultMessage}`, error)),
         tap(() =>
             log.trace(() => msg(id, `notified progress update: ${progress.defaultMessage}`))
         ),

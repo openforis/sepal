@@ -84,6 +84,12 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 
 ### Authentication
 - `src/authMiddleware.js`: Checks `sepal-user` header, falls back to HTTP Basic Auth via POST to `http://user/authenticate`
+- **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
+  api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
+  `{username, sessionId, workerType}`; the user is injected as `sepal-user` and the session as
+  `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
+  request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
+  authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
 
 ### RabbitMQ

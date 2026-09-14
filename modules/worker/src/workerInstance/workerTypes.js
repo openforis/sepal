@@ -94,7 +94,7 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
     }
 }
 
-const createTaskExecutorWorkerType = (instance, config) => {
+const createTaskExecutorWorkerType = (instance, config, apiKey) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
     const userTmp = tempDir(instance, config)
@@ -135,7 +135,7 @@ const createTaskExecutorWorkerType = (instance, config) => {
                     EE_ACCOUNT: config.googleEarthEngineAccount,
                     EE_PRIVATE_KEY: eePrivateKey,
                     SEPAL_ENDPOINT: sepalEndpoint,
-                    SEPAL_ADMIN_PASSWORD: config.sepalPassword,
+                    SEPAL_API_KEY: apiKey ?? '',
                     USERNAME: USER_HOME_NAME,
                     NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment === 'DEV' ? 0 : 1,
                     DEPLOY_ENVIRONMENT: config.deployEnvironment,
@@ -154,7 +154,7 @@ const createWorkerType = (workerTypeId, instance, config, apiKey = null) => {
         return createSandboxWorkerType(instance, config, apiKey)
     }
     if (workerTypeId === TASK_EXECUTOR) {
-        return createTaskExecutorWorkerType(instance, config)
+        return createTaskExecutorWorkerType(instance, config, apiKey)
     }
     throw new Error(`No worker type with id: ${workerTypeId}`)
 }

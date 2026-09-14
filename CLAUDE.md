@@ -198,6 +198,10 @@ See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, 
 
 ## Deployment
 
+Worker sessions authenticate with per-session API keys; see
+[modules/worker/CLAUDE.md](modules/worker/CLAUDE.md#session-api-keys), including the one-time
+task-executor transition (drain task executors before deploying that change).
+
 When adding a new deployable module (or renaming an existing one), you MUST update
 `modules/ops/script/build-and-push-images.sh` to include `build <module>` and `push <module>`
 entries for it. This script builds and pushes all production Docker images; a module missing

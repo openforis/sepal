@@ -4,7 +4,7 @@
 //      or a lost event cannot let an over-budget user through; the event-fed lockedUsers set
 //      (../../lockedUsers.js) is only the fallback for when budget is unreachable.
 //   2. normalize username → the stored spelling (#sepal/username)
-//   3. apiKey = workerType === SANDBOX ? apiKeyGenerator.generate() : null
+//   3. apiKey = apiKeyGenerator.generate()
 //   4. build PENDING session (id=UUID, creationTime=updateTime=now)
 //   5. instance = instanceManager.requestInstance(session) → set instance {id, host}
 //   6. repo.insert(requestedSession)
@@ -20,7 +20,6 @@ import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
 import {instanceTag, sessionTag, userTag} from '../../tag.js'
-import {SANDBOX} from '../../workerInstance/workerTypes.js'
 import {budgetErrorFor} from '../budgetErrors.js'
 import {createWorkerSession, State, withInstance} from '../workerSession.js'
 
@@ -53,7 +52,7 @@ const requestSession = async (
     const {exceeded, reason} = await budgetVerdict(username, {budgetClient, lockedUsers})
     if (exceeded) throw budgetErrorFor(reason, username)
     const now = clock()
-    const apiKey = workerType === SANDBOX ? apiKeyGenerator.generate() : null
+    const apiKey = apiKeyGenerator.generate()
     const session = createWorkerSession({
         id: crypto.randomUUID(),
         state: State.PENDING,

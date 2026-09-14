@@ -40,10 +40,6 @@ program
             .env('SEPAL_USER')
     )
     .addOption(
-        new Option('--sepal-password <string>', 'SEPAL service password for inter-service calls')
-            .env('SEPAL_PASSWORD')
-    )
-    .addOption(
         new Option('--sepal-host <string>', 'SEPAL hostname (internal, e.g. sepal)')
             .env('SEPAL_HOST')
     )
@@ -315,7 +311,6 @@ const {
     hostingService,
     sepalVersion,
     sepalUser,
-    sepalPassword,
     sepalHost,
     sepalHttpsPort,
     sepalHostDataDir,
@@ -402,7 +397,6 @@ export {
     sepalHostDataDir,
     sepalHostProjectDir,
     sepalHttpsPort,
-    sepalPassword,
     sepalUser,
     sepalVersion,
     sessionExpiryMode,

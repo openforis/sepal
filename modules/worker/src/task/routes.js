@@ -8,17 +8,18 @@
 //
 // Auth:
 //   requireAuth                — any authenticated user.
-//   requireAdminOrTaskExecutor — application_admin OR task_executor, for the executor callbacks
-//     state-updated + active.
+//   requireTaskExecutorSession — a request authenticated with a TASK_EXECUTOR session's api key,
+//     for the executor callbacks state-updated + active. UpdateTaskProgress checks the session
+//     against the task.
 
-import {requireAdminOrTaskExecutor, requireAuth} from '../workerSession/currentUser.js'
+import {requireAuth, requireTaskExecutorSession} from '../workerSession/currentUser.js'
 
 const registerTaskRoutes = (router, api) => router
     // ── submit ───────────────────────────────────────────────────────────────────
     .post('/tasks', requireAuth, api.submitTask)
 
-    // ── executor callbacks (admin / task_executor) — literal, before /tasks/task/:id ──
-    .post('/tasks/active', requireAdminOrTaskExecutor, api.active)
+    // ── executor callbacks (task-executor session) — literal, before /tasks/task/:id ──
+    .post('/tasks/active', requireTaskExecutorSession, api.active)
     .post('/tasks/remove', requireAuth, api.removeUserTasks)
 
     // ── single-task ownership routes ──────────────────────────────────────────────
@@ -27,6 +28,6 @@ const registerTaskRoutes = (router, api) => router
     .post('/tasks/task/:id/cancel', requireAuth, api.cancelTask)
     .post('/tasks/task/:id/remove', requireAuth, api.removeTask)
     .post('/tasks/task/:id/execute', requireAuth, api.executeTask)
-    .post('/tasks/task/:id/state-updated', requireAdminOrTaskExecutor, api.stateUpdated)
+    .post('/tasks/task/:id/state-updated', requireTaskExecutorSession, api.stateUpdated)
 
 export {registerTaskRoutes}

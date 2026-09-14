@@ -182,11 +182,7 @@ const main = async () => {
     // workerGateway is the outbound HTTP client to the sandbox task-executor. Constructing it never
     // calls the executor; that only happens on execute/cancel.
     const taskRepository = new EventEmittingTaskRepository(new TaskRepository(db, clock))
-    const workerGateway = createWorkerGateway({
-        sepalUsername: config.sepalUser || 'sepaladmin',
-        sepalPassword: config.sepalPassword,
-        workerPort: config.workerPort,
-    })
+    const workerGateway = createWorkerGateway({workerPort: config.workerPort})
     const taskManager = createTaskManager({
         repo: taskRepository,
         sessionManager,

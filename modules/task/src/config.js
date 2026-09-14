@@ -16,8 +16,7 @@ program
     .option('--google-region <value>')
     .option('--sepal-host <value>')
     .option('--sepal-endpoint <value>')
-    .option('--sepal-username <value>')
-    .option('--sepal-password <value>')
+    .option('--sepal-api-key <value>')
     .option('--home-dir <value>')
     .option('--username <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
@@ -31,8 +30,7 @@ const {
     googleRegion,
     sepalHost,
     sepalEndpoint,
-    sepalUsername,
-    sepalPassword,
+    sepalApiKey,
     homeDir,
     username,
     port,
@@ -61,9 +59,8 @@ export {
     googleRegion,
     homeDir,
     port,
+    sepalApiKey,
     sepalEndpoint,
     sepalHost,
-    sepalPassword,
-    sepalUsername,
     serviceAccountCredentials,
     username}

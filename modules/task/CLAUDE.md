@@ -49,6 +49,11 @@ npm run testWatch     # Jest watch mode
 - **Runs as user**: Dockerfile creates a user matching the sandbox user's uid/gid. Task process runs as that user.
 - **Base image**: `openforis/sandbox-base` (Ubuntu-based), not Alpine like other Node modules.
 - **Credential monitoring**: `src/context.js` polls credentials file every 60s, detects token expiration, switches between user/service account auth.
+- **SEPAL authentication**: every request back to SEPAL (recipe reads, state and progress callbacks) is made
+  as this executor's own worker session, using `SEPAL_API_KEY` (`--sepal-api-key`) as Basic auth with an
+  empty username (`src/sessionAuth.js`). The key is valid only while the session is PENDING or ACTIVE, so a
+  callback after the session closes gets a 401; that is reported as unconfirmed delivery, never as success.
+  Earth Engine credentials are separate and unaffected.
 - **Workload tags**: `src/tasks/workloadTag.js` sets GEE workload tag as `sepal-task-{recipeType}` for quota tracking.
 - **Post-processing**: After download, creates VRT files and sets band names via GDAL (uses Python `stack_time_series.py` from `lib/python/shared`).
 - **CRC32 validation**: Cloud Storage downloads validated with `fast-crc32c`.

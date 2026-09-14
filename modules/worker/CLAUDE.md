@@ -61,6 +61,29 @@ budget tracking, and gateway route migration.
     an absent or unknown action does nothing and re-renders. The gateway routes
     `/api/sessions/expiry` before its authenticated `/api/sessions` entry.
 
+## Session API keys
+Every session — SANDBOX and TASK_EXECUTOR alike — is minted an `api_key` by `RequestSession` and
+provisioned with it as `SEPAL_API_KEY`. `dockerInstanceProvisioner` REFUSES to create a container
+without one (the caller's retry covers a lookup made before the row committed), so a worker never
+starts unable to authenticate.
+
+A worker authenticates back to SEPAL with Basic auth, empty username, key as password. The gateway
+resolves it through `POST /sessions/api-key-authenticate` → `{username, sessionId, workerType}` and
+injects the session as `sepal-session`; the two task-executor callbacks (`POST /tasks/active`,
+`POST /tasks/task/:id/state-updated`) require a TASK_EXECUTOR `sepal-session`, and
+`UpdateTaskProgress` additionally requires the task's owner and assigned `sessionId` to match. A
+role is never sufficient: every session of a user would share it.
+
+Keys resolve only while the session is PENDING or ACTIVE; closing a session clears `api_key`, so the
+last terminal callback of a session revokes its own credential.
+
+**One-time transition (task executors).** Task executors previously authenticated with
+`SEPAL_ADMIN_PASSWORD`. Executors already running when this change deploys hold no key and their
+callbacks are refused, and TASK_EXECUTOR rows predating it have `api_key = NULL`, so reprovisioning
+one fails through the full provision retry. Deploy with no PENDING/ACTIVE TASK_EXECUTOR session: let
+running tasks finish or cancel them, then close any leftover executor session so the next task
+requests a fresh one. Interactive sandboxes always had keys and are unaffected.
+
 ## Session expiration
 See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by
 `workerSessionRepository.extendSession` — one monotonic UPDATE that is also atomic with the

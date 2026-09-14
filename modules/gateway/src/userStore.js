@@ -7,7 +7,7 @@ import {applyKeyNormalization} from '#sepal/redisKeyCase'
 import {isStoredUsername, storedUsername} from '#sepal/username'
 
 import {usernameTag, userTag} from './tag.js'
-import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
+import {getSessionUsername, removeRequestSession, removeRequestUser, setRequestUser} from './user.js'
 import {loadUser$} from './userApi.js'
 
 const log = getLogger('userStore')
@@ -95,6 +95,8 @@ const UserStore = (redis, event$) => {
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         removeRequestUser(req)
+        // Only api-key authentication puts this back.
+        removeRequestSession(req)
         if (username) {
             firstValueFrom(getUser$(username))
                 .then(user => {

@@ -1,14 +1,15 @@
 // WorkerGateway — outbound HTTP client the task orchestrator uses to send tasks to (and cancel
 // tasks on) the task-executor running in the sandbox container.
 //
-// createWorkerGateway({sepalUsername, sepalPassword, workerPort = 8080}) → {execute, cancel}:
+// createWorkerGateway({workerPort = 8080}) → {execute, cancel}:
 //   execute → POST   http://{session.host}:{workerPort}/api/tasks   (form-encoded body)
 //   cancel  → DELETE http://{session.host}:{workerPort}/api/tasks/{taskId}
 //
 // task.params is sent AS-IS: the orchestrator serializes it to a JSON string before calling
 // execute, and this gateway does NOT re-serialize it.
 //
-// Auth is HTTP Basic with the sepaladmin credentials.
+// No credentials are sent: this reaches the executor's own container port directly, and the
+// executor does not authenticate it.
 
 import {getLogger} from '#sepal/log'
 
@@ -16,12 +17,9 @@ import {taskTag} from '../tag.js'
 
 const log = getLogger('worker/workerGateway')
 
-const DEFAULT_SEPAL_USERNAME = 'sepaladmin'
 const DEFAULT_WORKER_PORT = 8080
 
-const createWorkerGateway = ({sepalUsername = DEFAULT_SEPAL_USERNAME, sepalPassword, workerPort = DEFAULT_WORKER_PORT}) => {
-    const authorization = 'Basic ' + Buffer.from(`${sepalUsername}:${sepalPassword}`).toString('base64')
-
+const createWorkerGateway = ({workerPort = DEFAULT_WORKER_PORT} = {}) => {
     const baseUrl = session => `http://${session.host}:${workerPort}/api`
 
     const execute = async (task, session) => {
@@ -42,7 +40,6 @@ const createWorkerGateway = ({sepalUsername = DEFAULT_SEPAL_USERNAME, sepalPassw
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': authorization,
                 'Accept': 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
@@ -60,7 +57,6 @@ const createWorkerGateway = ({sepalUsername = DEFAULT_SEPAL_USERNAME, sepalPassw
         const response = await fetch(url, {
             method: 'DELETE',
             headers: {
-                'Authorization': authorization,
                 'Accept': 'application/json',
             },
         })

@@ -22,11 +22,14 @@ const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSes
 const {tempDir} = await import('./workerTypes.js')
 const {instanceName} = await import('../instanceName.js')
 
+// Provisioning refuses without a key, so this stands in for the session lookup wherever the key
+// itself is not the subject.
+const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
+
 const CONFIG = {
     sepalVersion: '5.1.0',
     sepalHost: 'sepal.example.com',
     sepalHttpsPort: 443,
-    sepalPassword: 'secret',
     sepalHostDataDir: '/data',
     sepalHostProjectDir: '/project',
     dockerPort: 2375,
@@ -109,7 +112,7 @@ describe('buildContainerBody — SANDBOX', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: cfg,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         return provisioner.provisionInstance(makeInstance())
     }
@@ -134,9 +137,9 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.Env.some(e => e.startsWith('USER_PUBLIC_KEY='))).toBe(true)
     })
 
-    test('Env contains SEPAL_API_KEY empty when apiKey is null', async () => {
+    test('Env contains the session api key', async () => {
         await runProvision()
-        expect(capturedBody.Env).toContain('SEPAL_API_KEY=')
+        expect(capturedBody.Env).toContain('SEPAL_API_KEY=session-key')
     })
 
     test('Env contains SEPAL_HOST', async () => {
@@ -190,7 +193,7 @@ describe('buildContainerBody — SANDBOX', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
         expect(capturedBody.HostConfig.Devices).toEqual([
@@ -256,7 +259,7 @@ describe('buildContainerBody — SANDBOX', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
             extraHosts: ['sepal.example.com:host-gateway'],
         })
         await provisioner.provisionInstance(makeInstance())
@@ -280,7 +283,7 @@ describe('buildContainerBody — TASK_EXECUTOR', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: cfg,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         return provisioner.provisionInstance(taskInstance)
     }
@@ -304,6 +307,12 @@ describe('buildContainerBody — TASK_EXECUTOR', () => {
     test('Env contains SEPAL_ENDPOINT', async () => {
         await runProvision()
         expect(capturedBody.Env).toContain('SEPAL_ENDPOINT=https://sepal.example.com:443')
+    })
+
+    test('Env carries the session api key and no administrator password', async () => {
+        await runProvision()
+        expect(capturedBody.Env).toContain('SEPAL_API_KEY=session-key')
+        expect(capturedBody.Env.some(e => e.startsWith('SEPAL_ADMIN_PASSWORD='))).toBe(false)
     })
 
     test('Env contains NODE_TLS_REJECT_UNAUTHORIZED=1 in PRODUCTION', async () => {
@@ -358,7 +367,7 @@ describe('provisionInstance sequence', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await provisioner.provisionInstance(makeInstance())
         const paths = calls.map(c => `${c.method} ${new URL(c.url).pathname}`)
@@ -406,7 +415,7 @@ describe('provisionInstance deletes .worker containers only', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await provisioner.provisionInstance(makeInstance())
 
@@ -448,7 +457,7 @@ describe('undeploy', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await provisioner.undeploy(makeInstance())
 
@@ -481,7 +490,7 @@ describe('undeploy', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
             defaultDaemonHost: 'daemon-host',
         })
         await provisioner.undeploy(makeInstance({daemonHost: 'daemon-host'}))
@@ -507,7 +516,7 @@ describe('undeploy', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await provisioner.undeploy(makeInstance())
 
@@ -615,18 +624,18 @@ describe('apiKey retry', () => {
         expect(mockApiKeyImpl.apiKeyForInstance).toHaveBeenCalledTimes(5)
     })
 
-    test('SEPAL_API_KEY is empty string when all retries return null', async () => {
-        let capturedEnv = null
-        setupFetchMock({captureCreate: body => { capturedEnv = body.Env }})
+    test('no container is created when the key is never found', async () => {
+        let created = false
+        setupFetchMock({captureCreate: () => { created = true }})
 
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: NULL_API_KEY_IMPL,
         })
-        await provisioner.provisionInstance(makeInstance())
 
-        expect(capturedEnv).toContain('SEPAL_API_KEY=')
+        await expect(provisioner.provisionInstance(makeInstance())).rejects.toThrow(/api key/)
+        expect(created).toBe(false)
     })
 })
 
@@ -750,7 +759,7 @@ describe('waitUntilDockerIsAvailable', () => {
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            sandboxSessionApiKey: SESSION_API_KEY,
         })
         await expect(provisioner.provisionInstance(makeInstance())).resolves.toBeUndefined()
     })

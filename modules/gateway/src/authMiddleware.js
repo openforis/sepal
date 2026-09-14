@@ -5,7 +5,7 @@ import {getLogger} from '#sepal/log'
 
 import modules from '../config/modules.json' with {type: 'json'}
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
+import {getRequestUser, setRequestSession, setRequestUser, setSessionUsername} from './user.js'
 
 const log = getLogger('authMiddleware')
 
@@ -126,15 +126,15 @@ const AuthMiddleware = userStore => {
                     const {statusCode} = response
                     switch (statusCode) {
                         case OK: {
-                            const {username} = response.body
-                            return loadUser$(username)
+                            const {username, sessionId, workerType} = response.body
+                            return loadUser$(username, {sessionId, workerType})
                         }
                         case UNAUTHORIZED: return unauthorized$('')
                         default: return failure$('', response)
                     }
                 }))
 
-            const loadUser$ = username =>
+            const loadUser$ = (username, workerSession = null) =>
                 get$(USER_LOOKUP_URL, {
                     query: {username},
                     headers: INTERNAL_ADMIN_HEADER,
@@ -145,6 +145,7 @@ const AuthMiddleware = userStore => {
                     switch (statusCode) {
                         case OK: {
                             const user = response.body
+                            workerSession && setRequestSession(req, workerSession)
                             return authenticatedNonGuiRequest$(username, user)
                         }
                         case UNAUTHORIZED: return unauthorized$(username)

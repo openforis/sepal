@@ -7,7 +7,7 @@ import {endpoints} from '../config/endpoints.js'
 import {sepalHost} from './config.js'
 import {rewriteLocation} from './rewrite.js'
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
+import {getRequestSession, getRequestUser, SEPAL_SESSION_HEADER, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
 
 const log = getLogger('proxy')
 
@@ -75,6 +75,14 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             proxyReq.setHeader(SEPAL_USER_HEADER, JSON.stringify(user))
                         } else {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} No sepal-user header set`)
+                        }
+                        // Set here rather than left to ride along on req.headers, so an
+                        // unauthenticated endpoint forwards no worker session.
+                        const workerSession = authenticate ? getRequestSession(req) : null
+                        if (workerSession) {
+                            proxyReq.setHeader(SEPAL_SESSION_HEADER, JSON.stringify(workerSession))
+                        } else {
+                            proxyReq.removeHeader(SEPAL_SESSION_HEADER)
                         }
                         if (cache) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Enabling caching`)

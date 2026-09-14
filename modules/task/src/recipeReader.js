@@ -2,11 +2,13 @@ import {map} from 'rxjs'
 
 import * as http from '#sepal/httpClient'
 
-// A task reads recipes through the gateway, as the account its sandbox was started with.
-export const createRecipeReader = ({sepalEndpoint, sepalUsername, sepalPassword}) => id =>
+import {sessionAuth} from './sessionAuth.js'
+
+// A task reads recipes through the gateway as the worker session it runs as, which the gateway
+// resolves to the session's owning user. Recipe applies its ownership policy to that user.
+export const createRecipeReader = ({sepalEndpoint, sepalApiKey}) => id =>
     http.get$(`${sepalEndpoint}/api/processing-recipes/${id}`, {
-        username: sepalUsername,
-        password: sepalPassword,
+        ...sessionAuth(sepalApiKey),
         responseType: 'json'
     }).pipe(
         map(({body}) => body)

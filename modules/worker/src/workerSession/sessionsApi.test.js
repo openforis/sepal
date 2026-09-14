@@ -25,7 +25,7 @@ const sessionManager = {
     instanceDescription: jest.fn(),
     closeSession: jest.fn(),
     closeUserSessions: jest.fn(),
-    findUsernameByApiKey: jest.fn(),
+    findSessionByApiKey: jest.fn(),
     userWorkerSessions: jest.fn(),
     allOpenSessions: jest.fn(),
     associateApp: jest.fn(),
@@ -476,16 +476,18 @@ test('mostRecentlyClosed → 400 when username missing', async () => {
 
 // ── api-key authenticate ────────────────────────────────────────────────────
 
-test('apiKeyAuthenticate → 200 {username} when found', async () => {
-    sessionManager.findUsernameByApiKey.mockResolvedValue('bob')
+test('apiKeyAuthenticate → 200 with the user and the session the key belongs to', async () => {
+    sessionManager.findSessionByApiKey.mockResolvedValue({
+        sessionId: 's-1', username: 'bob', workerType: 'task-executor'
+    })
     const c = ctx({request: {body: {apiKey: 'k'}}})
     await api.apiKeyAuthenticate(c)
-    expect(sessionManager.findUsernameByApiKey).toHaveBeenCalledWith('k')
-    expect(c.body).toEqual({username: 'bob'})
+    expect(sessionManager.findSessionByApiKey).toHaveBeenCalledWith('k')
+    expect(c.body).toEqual({username: 'bob', sessionId: 's-1', workerType: 'task-executor'})
 })
 
 test('apiKeyAuthenticate → 401 {} when not found', async () => {
-    sessionManager.findUsernameByApiKey.mockResolvedValue(null)
+    sessionManager.findSessionByApiKey.mockResolvedValue(null)
     const c = ctx({request: {body: {apiKey: 'k'}}})
     await api.apiKeyAuthenticate(c)
     expect(c.status).toBe(401)
@@ -496,14 +498,16 @@ test('apiKeyAuthenticate → 400 when apiKey missing', async () => {
     const c = ctx({request: {body: {}}})
     await api.apiKeyAuthenticate(c)
     expect(c.status).toBe(400)
-    expect(sessionManager.findUsernameByApiKey).not.toHaveBeenCalled()
+    expect(sessionManager.findSessionByApiKey).not.toHaveBeenCalled()
 })
 
 test('apiKeyAuthenticate → reads apiKey from query too', async () => {
-    sessionManager.findUsernameByApiKey.mockResolvedValue('bob')
+    sessionManager.findSessionByApiKey.mockResolvedValue({
+        sessionId: 's-1', username: 'bob', workerType: 'sandbox'
+    })
     const c = ctx({request: {body: {}}, query: {apiKey: 'qk'}})
     await api.apiKeyAuthenticate(c)
-    expect(sessionManager.findUsernameByApiKey).toHaveBeenCalledWith('qk')
+    expect(sessionManager.findSessionByApiKey).toHaveBeenCalledWith('qk')
 })
 
 // ── report serialization ──────────────────────────────────────────────────────

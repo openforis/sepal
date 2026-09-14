@@ -1,7 +1,7 @@
 // routes tests — verify the 9 /tasks routes are registered with the correct HTTP method, path,
-// auth guard (requireAuth vs requireAdminOrTaskExecutor), and handler, and that the middleware chain
-// enforces auth (missing header → 401; the executor routes → 403 for a plain user, pass for
-// task_executor / admin).
+// auth guard (requireAuth vs requireTaskExecutorSession), and handler, and that the middleware chain
+// enforces auth (missing header → 401; the executor callbacks → 403 for anything but a request
+// authenticated as a task-executor worker session).
 //
 // As in the /sessions routes test, we drive a fake @koa/router-shaped recorder that captures each
 // registration, then execute the captured middleware chain against a synthetic ctx. This exercises
@@ -9,7 +9,8 @@
 
 import {jest} from '@jest/globals'
 
-import {requireAdminOrTaskExecutor, requireAuth} from '../workerSession/currentUser.js'
+import {TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
+import {requireAuth, requireTaskExecutorSession} from '../workerSession/currentUser.js'
 import {registerTaskRoutes} from './routes.js'
 
 const makeRouter = () => {
@@ -53,14 +54,14 @@ beforeEach(() => {
 
 const expected = [
     ['post', '/tasks', requireAuth, 'submitTask'],
-    ['post', '/tasks/active', requireAdminOrTaskExecutor, 'active'],
+    ['post', '/tasks/active', requireTaskExecutorSession, 'active'],
     ['post', '/tasks/remove', requireAuth, 'removeUserTasks'],
     ['get', '/tasks/task/:id/details', requireAuth, 'getTaskDetails'],
     ['get', '/tasks/task/:id', requireAuth, 'getTask'],
     ['post', '/tasks/task/:id/cancel', requireAuth, 'cancelTask'],
     ['post', '/tasks/task/:id/remove', requireAuth, 'removeTask'],
     ['post', '/tasks/task/:id/execute', requireAuth, 'executeTask'],
-    ['post', '/tasks/task/:id/state-updated', requireAdminOrTaskExecutor, 'stateUpdated'],
+    ['post', '/tasks/task/:id/state-updated', requireTaskExecutorSession, 'stateUpdated'],
 ]
 
 test('registers exactly 9 routes', () => {
@@ -104,6 +105,8 @@ const ctx = (headers = {}) => ({
     headers, state: {}, params: {}, query: {}, request: {body: {}},
 })
 const userHeader = roles => ({'sepal-user': JSON.stringify({username: 'u', roles})})
+const executorSession = (sessionId = 's-1') =>
+    ({'sepal-session': JSON.stringify({sessionId, workerType: TASK_EXECUTOR})})
 
 test('authed route with no sepal-user header → 401, handler not called', async () => {
     const route = find(router.routes, 'post', '/tasks')
@@ -129,18 +132,20 @@ test('executor route hit by a plain user → 403, handler not called', async () 
     expect(api.active).not.toHaveBeenCalled()
 })
 
-test('executor route hit by a task_executor → handler called', async () => {
-    const route = find(router.routes, 'post', '/tasks/active')
-    const c = ctx(userHeader(['task_executor']))
-    await runChain(route, c)
-    expect(api.active).toHaveBeenCalledTimes(1)
-})
-
-test('executor route hit by an application_admin → handler called', async () => {
+test('executor route hit by an administrator without a session → 403, handler not called', async () => {
     const route = find(router.routes, 'post', '/tasks/task/:id/state-updated')
     const c = ctx(userHeader(['application_admin']))
     await runChain(route, c)
-    expect(api.stateUpdated).toHaveBeenCalledTimes(1)
+    expect(c.status).toBe(403)
+    expect(api.stateUpdated).not.toHaveBeenCalled()
+})
+
+test('executor route hit by a task-executor session → handler called with that session', async () => {
+    const route = find(router.routes, 'post', '/tasks/active')
+    const c = ctx({...userHeader([]), ...executorSession()})
+    await runChain(route, c)
+    expect(api.active).toHaveBeenCalledTimes(1)
+    expect(c.state.workerSession.sessionId).toBe('s-1')
 })
 
 test('executor route with no header → 401', async () => {

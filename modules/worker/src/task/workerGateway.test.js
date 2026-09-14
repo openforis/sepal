@@ -7,18 +7,15 @@ import {createWorkerGateway} from './workerGateway.js'
 
 const session = {host: 'worker-host'}
 
-// base64('sepaladmin:pw') — precomputed independently of the implementation.
-const EXPECTED_AUTH = 'Basic ' + Buffer.from('sepaladmin:pw').toString('base64')
-
 describe('createWorkerGateway.execute', () => {
     afterEach(() => {
         jest.restoreAllMocks()
     })
 
-    test('POSTs a form-encoded task to http://<host>:8080/api/tasks with Basic auth', async () => {
+    test('POSTs a form-encoded task to http://<host>:8080/api/tasks', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway()
 
         const params = JSON.stringify({sceneIds: ['a', 'b']})
         await gateway.execute(
@@ -30,7 +27,6 @@ describe('createWorkerGateway.execute', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('http://worker-host:8080/api/tasks')
         expect(init.method).toBe('POST')
-        expect(init.headers['Authorization']).toBe(EXPECTED_AUTH)
         expect(init.headers['Accept']).toMatch(/application\/json/)
         expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded')
 
@@ -46,7 +42,7 @@ describe('createWorkerGateway.execute', () => {
     test('honors a custom workerPort', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw', workerPort: 9090})
+        const gateway = createWorkerGateway({workerPort: 9090})
 
         await gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
 
@@ -56,7 +52,7 @@ describe('createWorkerGateway.execute', () => {
     test('omits null recipeId from the form body', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway()
 
         await gateway.execute({id: 't', recipeId: null, operation: 'op', params: '{}'}, session)
 
@@ -64,19 +60,9 @@ describe('createWorkerGateway.execute', () => {
         expect(form.has('recipeId')).toBe(false)
     })
 
-    test('defaults username to sepaladmin', async () => {
-        const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
-        global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalPassword: 'pw'})
-
-        await gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
-
-        expect(fetchMock.mock.calls[0][1].headers['Authorization']).toBe(EXPECTED_AUTH)
-    })
-
     test('throws on a non-2xx response', async () => {
         global.fetch = jest.fn().mockResolvedValue({ok: false, status: 503, text: async () => 'down'})
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway()
         await expect(
             gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
         ).rejects.toThrow(/t.*503/)
@@ -88,10 +74,10 @@ describe('createWorkerGateway.cancel', () => {
         jest.restoreAllMocks()
     })
 
-    test('DELETEs http://<host>:8080/api/tasks/<taskId> with Basic auth', async () => {
+    test('DELETEs http://<host>:8080/api/tasks/<taskId>', async () => {
         const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
         global.fetch = fetchMock
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway()
 
         await gateway.cancel('task-1', session)
 
@@ -99,18 +85,32 @@ describe('createWorkerGateway.cancel', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('http://worker-host:8080/api/tasks/task-1')
         expect(init.method).toBe('DELETE')
-        expect(init.headers['Authorization']).toBe(EXPECTED_AUTH)
     })
 
     test('throws on a non-2xx response', async () => {
         global.fetch = jest.fn().mockResolvedValue({ok: false, status: 404, text: async () => 'gone'})
-        const gateway = createWorkerGateway({sepalUsername: 'sepaladmin', sepalPassword: 'pw'})
+        const gateway = createWorkerGateway()
         await expect(gateway.cancel('task-1', session)).rejects.toThrow(/task-1.*404/)
     })
 })
 
-describe('base64 Basic auth', () => {
-    test('encodes sepaladmin:pw correctly', () => {
-        expect(Buffer.from('sepaladmin:pw').toString('base64')).toBe('c2VwYWxhZG1pbjpwdw==')
+describe('credentials', () => {
+    afterEach(() => {
+        jest.restoreAllMocks()
+    })
+
+    test('neither request carries any authorization', async () => {
+        const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
+        global.fetch = fetchMock
+        const gateway = createWorkerGateway()
+
+        await gateway.execute({id: 't', operation: 'op', params: '{}'}, session)
+        await gateway.cancel('t', session)
+
+        expect(fetchMock).toHaveBeenCalledTimes(2)
+        for (const [, init] of fetchMock.mock.calls) {
+            expect(Object.keys(init.headers).map(name => name.toLowerCase()))
+                .not.toContain('authorization')
+        }
     })
 })

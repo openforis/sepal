@@ -53,10 +53,15 @@ describe('requestSession', () => {
         expect(events.emitWorkerSessionRequested).not.toHaveBeenCalled()
     })
 
-    test('TASK_EXECUTOR: api_key is null', async () => {
+    test('every worker type gets its own api key', async () => {
         const {mgr, repo} = build()
+
         await mgr.requestSession({username: 'bob', workerType: TASK_EXECUTOR, instanceType: 'T3aSmall'})
-        expect(repo.insert.mock.calls[0][0].apiKey).toBeNull()
+        await mgr.requestSession({username: 'bob', workerType: SANDBOX, instanceType: 'T3aSmall'})
+
+        const [taskExecutor, sandbox] = repo.insert.mock.calls.map(([session]) => session)
+        expect(taskExecutor.apiKey).toBeTruthy()
+        expect(sandbox.apiKey).toBeTruthy()
     })
 
     test('requestInstance runs BEFORE insert (api-key ordering, parity risk #3)', async () => {
@@ -607,11 +612,12 @@ describe('queries', () => {
         expect(report.sessions[0].apps).toEqual(apps)
     })
 
-    test('findUsernameByApiKey passes through repo', async () => {
-        const repo = makeRepo({findUsernameByApiKey: k => (k === 'key' ? 'alice' : null)})
+    test('findSessionByApiKey passes through repo', async () => {
+        const found = {sessionId: 's-1', username: 'alice', workerType: SANDBOX}
+        const repo = makeRepo({findSessionByApiKey: k => (k === 'key' ? found : null)})
         const {mgr} = build({repo})
-        expect(await mgr.findUsernameByApiKey('key')).toBe('alice')
-        expect(await mgr.findUsernameByApiKey('nope')).toBeNull()
+        expect(await mgr.findSessionByApiKey('key')).toEqual(found)
+        expect(await mgr.findSessionByApiKey('nope')).toBeNull()
     })
 
     test('findSessionById passes through repo (throws on missing)', async () => {
@@ -902,7 +908,7 @@ const makeRepo = (canned = {}) => {
             record('sessionOnInstance', instanceId, states)
             return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
         }),
-        findUsernameByApiKey: jest.fn(async apiKey => canned.findUsernameByApiKey?.(apiKey) ?? null),
+        findSessionByApiKey: jest.fn(async apiKey => canned.findSessionByApiKey?.(apiKey) ?? null),
         mostRecentlyClosedSessionByUser: jest.fn(async () => canned.mostRecentlyClosedSessionByUser?.() ?? {}),
         mostRecentlyClosedSession: jest.fn(async u => canned.mostRecentlyClosedSession?.(u) ?? {}),
         allOpenSessions: jest.fn(async () => canned.allOpenSessions ? canned.allOpenSessions() : []),

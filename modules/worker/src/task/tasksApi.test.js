@@ -19,8 +19,8 @@ const makeManager = () => ({
     updateTaskProgress: jest.fn(),
 })
 
-const ctx = ({username = 'u', params = {}, query = {}, body = {}} = {}) => ({
-    state: {currentUser: {username}},
+const ctx = ({username = 'u', sessionId = 's-1', params = {}, query = {}, body = {}} = {}) => ({
+    state: {currentUser: {username}, workerSession: {sessionId, workerType: 'task-executor'}},
     params,
     query,
     request: {body},
@@ -168,6 +168,7 @@ test('stateUpdated calls updateTaskProgress with QS state + statusDescription, 2
         state: 'ACTIVE',
         statusDescription: '{"x":1}',
         username: 'u',
+        sessionId: 's-1',
     })
     expect(c.status).toBe(204)
 })
@@ -190,6 +191,7 @@ test('stateUpdated accepts form-body state + statusDescription (task-module pari
         state: 'COMPLETED',
         statusDescription: '{"defaultMessage":"Completed!"}',
         username: 'u',
+        sessionId: 's-1',
     })
     expect(c.status).toBe(204)
 })
@@ -210,12 +212,14 @@ test('active parses the progress QS JSON-string and calls updateTaskProgress per
         state: State.ACTIVE,
         statusDescription: JSON.stringify({defaultMessage: 'A'}),
         username: 'u',
+        sessionId: 's-1',
     })
     expect(manager.updateTaskProgress).toHaveBeenNthCalledWith(2, {
         taskId: 'taskB',
         state: State.ACTIVE,
         statusDescription: JSON.stringify({defaultMessage: 'B'}),
         username: 'u',
+        sessionId: 's-1',
     })
     expect(c.status).toBe(204)
 })

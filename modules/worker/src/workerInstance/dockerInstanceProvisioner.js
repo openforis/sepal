@@ -272,6 +272,12 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         const apiKey = await sandboxSessionApiKey.apiKeyForInstance(instance.id)
         log.debug(`ApiKey for ${instanceTag(instance)}: ${apiKey ? '[obtained]' : '[null]'}`)
 
+        // A worker authenticates everything it sends back to SEPAL with this key, so it is never
+        // started without one. The caller's retry covers a lookup that was merely too early.
+        if (!apiKey) {
+            throw new DockerProvisionerError(instance, `No session api key for instance: ${instance.id}`)
+        }
+
         // Validate the instance type BEFORE createWorkerType (which has a tempDir fs side effect),
         // so an unknown type fails without leaving an orphaned tmp dir on the host.
         const instanceType = instanceTypeById[instance.type]

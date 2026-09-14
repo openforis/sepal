@@ -30,11 +30,10 @@ services:
       # ─── SEPAL creds / host ────────────────────────────────────────────────
       SEPAL_VERSION: "${SEPAL_VERSION:-latest}"
       SEPAL_USER: "sepaladmin"
-      SEPAL_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_HTTPS_PORT: "${SEPAL_HTTPS_PORT}"
       SEPAL_HOST_DATA_DIR: "${SEPAL_DATA_DIR}"
-      # ─── Task executor gateway (HttpWorkerGateway: Basic SEPAL_USER:SEPAL_PASSWORD @ WORKER_PORT) ──
+      # ─── Task executor gateway (WorkerGateway: the executor's own container port) ──
       WORKER_PORT: "${WORKER_PORT:-8080}"
       # ─── Instance usage monitoring (phase 1; defaults in config.js) ────────
       USAGE_SAMPLING_INTERVAL_SECONDS: "${USAGE_SAMPLING_INTERVAL_SECONDS:-60}"

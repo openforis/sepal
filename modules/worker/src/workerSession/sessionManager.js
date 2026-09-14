@@ -30,8 +30,8 @@ import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeo
 import {emitSessionAppAssociated, emitSessionAppDissociated, emitSessionChanged, emitSessionExpiryClosed, emitSessionExpiryNotified, emitWorkerSessionActivated, emitWorkerSessionClosed, emitWorkerSessionRequested} from './events.js'
 import {allOpenSessions as _allOpenSessions} from './query/allOpenSessions.js'
 import {findPendingOrActiveSession as _findPendingOrActiveSession} from './query/findPendingOrActiveSession.js'
+import {findSessionByApiKey as _findSessionByApiKey} from './query/findSessionByApiKey.js'
 import {findSessionById as _findSessionById} from './query/findSessionById.js'
-import {findUsernameByApiKey as _findUsernameByApiKey} from './query/findUsernameByApiKey.js'
 import {generateUserSessionReport as _generateUserSessionReport} from './query/generateUserSessionReport.js'
 import {generateUserUsageReport as _generateUserUsageReport} from './query/generateUserUsageReport.js'
 import {mostRecentlyClosedSession as _mostRecentlyClosedSession} from './query/mostRecentlyClosedSession.js'
@@ -300,7 +300,7 @@ const createSessionManager = ({
         _generateUserSessionReport(query, {repo, appRepo, instanceManager, usageRepo, terminals, verdicts})
     const generateUserUsageReport = query =>
         _generateUserUsageReport(query, {usageRepo, instanceManager, clock})
-    const findUsernameByApiKey = apiKey => _findUsernameByApiKey(apiKey, {repo})
+    const findSessionByApiKey = apiKey => _findSessionByApiKey(apiKey, {repo})
     const allOpenSessions = () => _allOpenSessions(null, {repo})
 
     // ── app ↔ session association ─────────────────────────────────────────────
@@ -439,7 +439,7 @@ const createSessionManager = ({
         findPendingOrActiveSession,
         generateUserSessionReport,
         generateUserUsageReport,
-        findUsernameByApiKey,
+        findSessionByApiKey,
         allOpenSessions,
         getDefaultInstanceType,
         mostRecentlyClosedSessionByUser,

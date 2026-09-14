@@ -77,6 +77,7 @@ const taskAsDetails = task => ({
 const createTasksApi = ({taskManager}) => {
     const username = ctx => ctx.state.currentUser.username
     const taskId = ctx => ctx.params.id
+    const executorSessionId = ctx => ctx.state.workerSession.sessionId
 
     // POST /tasks — submit a task. Session-request rejection (budget etc.) → 4xx via mapError.
     const submitTask = ctx => run(ctx, async () => {
@@ -125,7 +126,7 @@ const createTasksApi = ({taskManager}) => {
         ctx.status = 204
     })
 
-    // POST /tasks/task/{id}/state-updated (admin/task_executor) — state + statusDescription, 204.
+    // POST /tasks/task/{id}/state-updated (task-executor session) — state + statusDescription, 204.
     // The task module sends them as a form-urlencoded BODY (task/src/taskManager.js), so accept
     // them from either the query string or the body.
     const stateUpdated = ctx => run(ctx, async () => {
@@ -146,11 +147,12 @@ const createTasksApi = ({taskManager}) => {
             state,
             statusDescription,
             username: username(ctx),
+            sessionId: executorSessionId(ctx),
         })
         ctx.status = 204
     })
 
-    // POST /tasks/active (admin/task_executor) — QS `progress` is a JSON STRING {taskId: {...}},
+    // POST /tasks/active (task-executor session) — QS `progress` is a JSON STRING {taskId: {...}},
     // NOT a JSON body. One UpdateTaskProgress per entry, with state ACTIVE and statusDescription
     // the JSON of the entry's description.
     const active = ctx => run(ctx, async () => {
@@ -174,6 +176,7 @@ const createTasksApi = ({taskManager}) => {
                 state: State.ACTIVE,
                 statusDescription: JSON.stringify(description),
                 username: username(ctx),
+                sessionId: executorSessionId(ctx),
             })
         }
         ctx.status = 204

@@ -535,13 +535,13 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
             ctx.body = {error: 'apiKey required'}
             return
         }
-        const username = await sessionManager.findUsernameByApiKey(apiKey)
-        if (!username) {
+        const session = await sessionManager.findSessionByApiKey(apiKey)
+        if (!session) {
             ctx.status = 401
             ctx.body = {}
             return
         }
-        ctx.body = {username}
+        ctx.body = {username: session.username, sessionId: session.sessionId, workerType: session.workerType}
     }
 
     return {

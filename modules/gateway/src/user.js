@@ -8,6 +8,9 @@ import {usernameTag} from './tag.js'
 const log = getLogger('user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
+// The WORKER session a request was authenticated as, when it authenticated with a session api key -
+// not the browser login session. Request-local, derived from the key, and never carrying it.
+export const SEPAL_SESSION_HEADER = 'sepal-session'
 const SEPAL_USER_UPDATED_HEADER = 'sepal-user-updated'
 const SEPAL_BUDGET_UPDATED_HEADER = 'sepal-budget-updated'
 
@@ -55,6 +58,17 @@ const setRequestUser = (req, user) => {
 
 const removeRequestUser = req =>
     delete req.headers[SEPAL_USER_HEADER]
+
+export const getRequestSession = req =>
+    deserialize(req.headers[SEPAL_SESSION_HEADER])
+
+export const setRequestSession = (req, {sessionId, workerType}) => {
+    log.debug(() => `Injecting worker session into request headers: ${workerType} ${sessionId}`)
+    req.headers[SEPAL_SESSION_HEADER] = serialize({sessionId, workerType})
+}
+
+export const removeRequestSession = req =>
+    delete req.headers[SEPAL_SESSION_HEADER]
 
 export {
     deserialize,
