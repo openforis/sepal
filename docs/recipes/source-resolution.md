@@ -51,8 +51,12 @@ be observed together, and the complete closure needs a bounded coherent revision
 exposes this as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite
 for the pure contract.
 
-The current GEE administrator-loading path is longstanding and remains unchanged while pure contracts, edge
-inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver.
+GEE no longer reads recipes with administrator credentials. Each of its jobs installs a reader for the user the
+gateway authenticated on the request that job was built from, and reads the Recipe module directly; a job that
+carries no user reads nothing, and there is no service-credential fallback. Recipe applies its existing ownership
+policy, so a recipe another user owns is answered exactly as a missing one. The task executor still reads with the
+administrator credentials its sandbox is started with - that exposure is unresolved and is tracked in
+[data-sources.md](data-sources.md).
 
 As a bounded migration measure, a browser operation may complete its preflight graph through the existing
 authenticated per-recipe GUI read. It starts with the exact unsaved root and the session's loaded records, requests

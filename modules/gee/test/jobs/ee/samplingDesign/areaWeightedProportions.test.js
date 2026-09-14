@@ -1,4 +1,4 @@
-import {toAreaWeightedProportions} from './areaWeightedProportions.js'
+import {toAreaWeightedProportions} from '#gee/jobs/ee/samplingDesign/areaWeightedProportions'
 
 describe('toAreaWeightedProportions', () => {
     it('weights by area, not by pixel count', () => {

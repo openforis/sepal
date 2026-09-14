@@ -4,9 +4,9 @@ import {beforeEach, describe, it, mock} from 'node:test'
 import {firstValueFrom, of, throwError} from 'rxjs'
 
 // How a CCDC Slice learns to read the segment dates of the source it slices, exercised through the REAL
-// imageFactory, recipeRef, recipe definitions and asset implementations. HTTP, collection construction,
-// Earth Engine and segment algebra are substituted so input bands and date representation can be observed
-// without running Earth Engine.
+// imageFactory, recipeRef, recipe definitions and asset implementations. Recipe reads, collection
+// construction, Earth Engine and segment algebra are substituted so input bands and date representation
+// can be observed without running Earth Engine.
 //
 // Run by Node's own test runner rather than Jest, because imageFactory loads every implementation through
 // createRequire. Real Node supports require(esm); Jest's CJS resolver refuses it with ERR_REQUIRE_ESM. This
@@ -18,25 +18,6 @@ let imageProperties = {}
 let interpretations = []
 let selections = []
 let collectionBands = []
-
-mock.module('#sepal/context', {
-    exports: {
-        context: () => ({sepalEndpoint: 'http://test', sepalUsername: 'test', sepalPassword: 'test'}),
-        configure: () => {}
-    }
-})
-
-mock.module('#sepal/httpClient', {
-    exports: {
-        get$: url => {
-            const id = url.split('/').pop()
-            const recipe = catalogue[id]
-            return recipe
-                ? of({body: recipe})
-                : throwError(() => new Error(`No such recipe: ${id}`))
-        }
-    }
-})
 
 const eeImage = id => ({
     id,
@@ -86,6 +67,14 @@ mock.module('#sepal/ee/timeSeries/temporalSegmentation', {
         }
     }
 })
+
+const {configureRecipeReader} = await import('#sepal/ee/recipe')
+
+configureRecipeReader(id =>
+    catalogue[id]
+        ? of(catalogue[id])
+        : throwError(() => new Error(`No such recipe: ${id}`))
+)
 
 const {default: ccdcSlice} = await import('#sepal/ee/timeSeries/ccdcSlice')
 const {assetProperties$} = await import('#sepal/ee/asset')

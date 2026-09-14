@@ -9,6 +9,24 @@ npm test              # Jest
 npm run testWatch     # Jest watch mode
 ```
 
+Target one suite while working:
+
+```bash
+sepal npm-test gee -- --testPathPatterns recipeIdentity
+```
+
+## Tests
+
+Automated tests live in `test/`, mirroring the `src/` tree they exercise (`test/jobs/ee/image/...`). Jest
+discovers `test/**/*.test.js` only.
+
+Suites named `*.node.test.mjs` run under Node's own test runner, launched by a sibling `*.test.js` bridge
+that raises the child's report on failure. They exist because `imageFactory` loads every recipe
+implementation through `createRequire`, which Jest's CJS resolver answers with `ERR_REQUIRE_ESM`. Jest does
+not discover them directly; `sepal npm-test gee` reaches them through their bridges.
+
+`verify/` is separate: hand-run gates against live Earth Engine, outside any suite.
+
 ## Key Architecture
 
 ### Entry Point
@@ -45,4 +63,5 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 
 - **Authentication per-request**: Each GEE call authenticates using the user's Google OAuth tokens from the `sepal-user` header. Falls back to service account.
 - **Scheduler**: Named "GoogleEarthEngine", configurable instances via `--instances` CLI flag.
-- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--port`, `--instances`.
+- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--port`, `--instances`.
+- **Recipe reads**: referenced recipes are read from the `recipe` module as the user the gateway authenticated on the request, installed per job by `src/jobs/configure.js`. There is no service-credential fallback.

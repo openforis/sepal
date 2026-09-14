@@ -1,6 +1,6 @@
 import {lastValueFrom, of, throwError, toArray} from 'rxjs'
 
-import {cleanupExportTask$, completionError, isRunning} from './exportTaskCleanup.js'
+import {cleanupExportTask$, completionError, isRunning} from '#gee/jobs/ee/batch/exportTaskCleanup'
 
 const collect = obs => lastValueFrom(obs.pipe(toArray()))
 

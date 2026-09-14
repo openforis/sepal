@@ -1,4 +1,4 @@
-import {parseGroups} from './parse.js'
+import {parseGroups} from '#gee/jobs/ee/batch/parse'
 
 it('parses empty groups', () => {
     expect(

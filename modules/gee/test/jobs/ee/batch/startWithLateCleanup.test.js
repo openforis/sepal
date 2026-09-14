@@ -1,6 +1,6 @@
 import {Subject, throwError} from 'rxjs'
 
-import {startWithLateCleanup$} from './startWithLateCleanup.js'
+import {startWithLateCleanup$} from '#gee/jobs/ee/batch/startWithLateCleanup'
 
 const observe = () => {
     const values = []

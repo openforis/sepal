@@ -5,8 +5,8 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 
 // What Change Alerts actually runs when its reference is a Masking recipe over CCDC, exercised through its
 // own image operation and the real pixel-chart job, over the REAL imageFactory, recipeRef, masking and ccdc.
-// HTTP, collection construction and Earth Engine are substituted so the mask and the band selection can be
-// observed without running Earth Engine.
+// Recipe reads, collection construction and Earth Engine are substituted so the mask and the band selection
+// can be observed without running Earth Engine.
 //
 // The alert algebra itself is Earth Engine's and stays outside this witness; the image operation is run only
 // as far as handing that algebra its segments image, which is the wiring under test.
@@ -24,26 +24,6 @@ let catalogue = {}
 let loaded = []
 let maskApplications = []
 let collectionRequests = []
-
-mock.module('#sepal/context', {
-    exports: {
-        context: () => ({sepalEndpoint: 'http://test', sepalUsername: 'test', sepalPassword: 'test'}),
-        configure: () => {}
-    }
-})
-
-mock.module('#sepal/httpClient', {
-    exports: {
-        get$: url => {
-            const id = url.split('/').pop()
-            loaded.push(id)
-            const recipe = catalogue[id]
-            return recipe
-                ? of({body: recipe})
-                : throwError(() => new Error(`No such recipe: ${id}`))
-        }
-    }
-})
 
 // An image is identified by what it came from and what has been applied to it. Selecting and clipping are
 // how every source is read and are not what these tests are about, so they leave the identity alone; a mask
@@ -93,6 +73,15 @@ mock.module('#sepal/ee/timeSeries/collection', {
 // The job wrapper schedules work onto a worker thread. What the chart's behavior lives in is the worker it
 // is given, so the wrapper hands it back instead.
 mock.module('#gee/jobs/job', {exports: {job: ({worker$}) => worker$}})
+
+const {configureRecipeReader} = await import('#sepal/ee/recipe')
+
+configureRecipeReader(id => {
+    loaded.push(id)
+    return catalogue[id]
+        ? of(catalogue[id])
+        : throwError(() => new Error(`No such recipe: ${id}`))
+})
 
 const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts')
 const {default: loadSegments$} = await import('#gee/jobs/ee/ccdc/loadSegments')

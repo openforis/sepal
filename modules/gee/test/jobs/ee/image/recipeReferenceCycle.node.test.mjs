@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {defer, lastValueFrom, Observable, of, switchMap, throwError, toArray} from 'rxjs'
+import {lastValueFrom, Observable, of, switchMap, toArray} from 'rxjs'
 
 // The backend execution contract for recursive recipe references, exercised through the REAL imageFactory,
-// recipeRef, loadRecipe$ and recipe implementations. Only the two external boundaries are replaced - the HTTP
-// client that fetches a recipe, and Earth Engine - so the recursion under test is the one production
+// recipeRef, loadRecipe$ and recipe implementations. Only the two external boundaries are replaced - the
+// reader a recipe is read with, and Earth Engine - so the recursion under test is the one production
 // performs.
 //
 // Run by Node's own test runner rather than Jest, because imageFactory loads every implementation through
@@ -20,59 +20,91 @@ import {defer, lastValueFrom, Observable, of, switchMap, throwError, toArray} fr
 
 const TEST_RECURSION_LIMIT = 'TEST_RECURSION_LIMIT'
 const MAX_REQUESTS = 6
+const NEVER_READ_MS = 5000
 
 let catalogue = {}
-// loadRecipe$ calls http.get$ while CONSTRUCTING its Observable; the real client defers the network request
-// until someone subscribes. Both are recorded and both are asserted, because "was the reference built" and
-// "was the recipe fetched" are different questions and the guard answers both: it rejects before
-// loadRecipe$ is constructed, so a recipe closing a cycle is neither fetched nor prepared to be.
-let referencesBuilt = []
 let recipesRequested = []
-let loadsCancelled = []
-// 0 keeps every load synchronous, which makes request sequences deterministic. Cancellation needs a load that
-// is still in flight, so that test raises it.
-let loadDelayMs = 0
+let readsTornDown = []
+// Held reads stay pending until the test answers them by id, which is how two traversals are made to
+// overlap and how a read is left in flight for teardown - by decision rather than by timing. Unheld, every
+// read answers synchronously, which keeps the sequences below deterministic.
+let holdReads = false
+let heldReads = []
+let waitingForRead = []
 
-mock.module('#sepal/context', {
-    exports: {
-        context: () => ({sepalEndpoint: 'http://test', sepalUsername: 'test', sepalPassword: 'test'}),
-        configure: () => {}
+// A recipe is not read until someone subscribes, which is what makes "the guard rejected before anything
+// was read" observable at all.
+const readRecipe$ = id => new Observable(subscriber => {
+    const read = {id, subscriber, settled: false}
+    recipesRequested.push(id)
+    if (recipesRequested.length > MAX_REQUESTS) {
+        subscriber.error(new Error(TEST_RECURSION_LIMIT))
+    } else if (holdReads) {
+        // The continuation is registered here, while subscribing, exactly where a real transport registers
+        // its response handling. The test decides WHEN a held read answers; it must not decide what
+        // execution context it answers in, which is the whole subject of the ancestry cases below.
+        new Promise(arrive => hold(Object.assign(read, {arrive}))).then(() => answer(read))
+    } else {
+        answer(read)
     }
-})
-
-mock.module('#sepal/httpClient', {
-    exports: {
-        get$: url => {
-            const id = url.split('/').pop()
-            referencesBuilt.push(id)
-            return defer(() => {
-                recipesRequested.push(id)
-                if (recipesRequested.length > MAX_REQUESTS) {
-                    return throwError(() => new Error(TEST_RECURSION_LIMIT))
-                }
-                const recipe = catalogue[id]
-                // loadRecipe$ asks for `json`, and the real client hands back a parsed body.
-                const response = recipe
-                    ? of({body: recipe})
-                    : throwError(() => new Error(`No such recipe: ${id}`))
-                if (!loadDelayMs) {
-                    return response
-                }
-                // An in-flight load, so a subscriber can be torn down while one is pending. The teardown is
-                // recorded, which is how cancellation is observed without reaching into production.
-                return new Observable(subscriber => {
-                    const timer = setTimeout(() => response.subscribe(subscriber), loadDelayMs)
-                    return () => {
-                        loadsCancelled.push(id)
-                        clearTimeout(timer)
-                    }
-                })
-            })
+    return () => {
+        heldReads = heldReads.filter(heldRead => heldRead !== read)
+        if (!read.settled) {
+            readsTornDown.push(id)
         }
     }
 })
 
-// Earth Engine is an external boundary like the HTTP client. Mocked to the minimum the operations under test
+const hold = read => {
+    heldReads.push(read)
+    const index = waitingForRead.findIndex(({id}) => id === read.id)
+    index !== -1 && waitingForRead.splice(index, 1)[0].started(read)
+}
+
+const answer = ({id, subscriber}) => {
+    const recipe = catalogue[id]
+    if (recipe) {
+        subscriber.next(recipe)
+        subscriber.complete()
+    } else {
+        subscriber.error(new Error(`No such recipe: ${id}`))
+    }
+}
+
+// The oldest read of `id` that is waiting to be answered, resolving as soon as the traversal reaches it
+// rather than after a chosen interval. The fail-safe is not a wait: a traversal that reads something else
+// would otherwise hang the runner, and a timeout says nothing about what it read instead.
+const readOf = id => Promise.race([
+    new Promise(started => {
+        const alreadyStarted = heldReads.find(read => read.id === id)
+        alreadyStarted
+            ? started(alreadyStarted)
+            : waitingForRead.push({id, started})
+    }),
+    new Promise((_started, neverRead) => setTimeout(
+        () => neverRead(new Error(
+            `No read of ${id} started; read ${JSON.stringify(recipesRequested)}, pending ${JSON.stringify(heldReads.map(({id: pendingId}) => pendingId))}`
+        )),
+        NEVER_READ_MS
+    ).unref())
+])
+
+const deliver = read => {
+    read.settled = true
+    heldReads = heldReads.filter(heldRead => heldRead !== read)
+    read.arrive()
+}
+
+const deliverReadOf = async id => {
+    deliver(await readOf(id))
+    await settled()
+}
+
+// Let whatever a delivery set off run out, so that "nothing further was read" describes the traversal
+// rather than how soon it was looked at.
+const settled = () => new Promise(resolve => setImmediate(resolve))
+
+// Earth Engine is an external boundary like the recipe reader. Mocked to the minimum the operations under test
 // need: bands for getBands$, and select/updateMask so masking's getImage$ can combine two branches instead of
 // failing before both have been executed.
 const eeImage = id => ({
@@ -89,6 +121,10 @@ mock.module('#sepal/ee/ee', {
         Image: eeImage
     }
 })
+
+const {configureRecipeReader} = await import('#sepal/ee/recipe')
+
+configureRecipeReader(readRecipe$)
 
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 const {toException} = await import('#sepal/exception')
@@ -131,10 +167,11 @@ const imageRejectionOf = async recipe => {
 
 beforeEach(() => {
     catalogue = {}
-    referencesBuilt = []
     recipesRequested = []
-    loadsCancelled = []
-    loadDelayMs = 0
+    readsTornDown = []
+    heldReads = []
+    waitingForRead = []
+    holdReads = false
 })
 
 describe('a recipe that references itself', () => {
@@ -160,13 +197,6 @@ describe('a recipe that references itself', () => {
     it('never requests the recipe that closes the cycle', async () => {
         await rejectionOf(selfReferencing())
         assert.deepEqual(recipesRequested, [])
-    })
-
-    // Stronger than not requesting it: the load is never even built. The guard runs before loadRecipe$ is
-    // constructed, so no reference to the closing recipe exists to be subscribed by anything.
-    it('never builds a load for the recipe that closes the cycle', async () => {
-        await rejectionOf(selfReferencing())
-        assert.deepEqual(referencesBuilt, [])
     })
 })
 
@@ -195,22 +225,17 @@ describe('a cycle through a second recipe', () => {
         await rejectionOf(indirect())
         assert.deepEqual(recipesRequested, ['B'])
     })
-
-    it('builds a load only for the recipes on the path before the closing edge', async () => {
-        await rejectionOf(indirect())
-        assert.deepEqual(referencesBuilt, ['B'])
-    })
 })
 
-describe('a cycle closed across an asynchronous load', () => {
-    // The same A -> B -> A cycle, but with the load in flight rather than resolving synchronously.
+describe('a cycle closed across a read that was still pending', () => {
+    // The same A -> B -> A cycle, but with the read held rather than answered synchronously.
     //
     // This is the case that separates branch-local ancestry from a single shared one. A shared path can only
     // be saved and restored around a synchronous call; once the recipe arrives on a later tick the restore has
     // already run, and every loaded recipe looks like a fresh root. The cycle is then either missed or
-    // reported from the wrong place, and an extra recipe is fetched on the way.
+    // reported from the wrong place, and an extra recipe is read on the way.
     const indirectAsync = () => {
-        loadDelayMs = 20
+        holdReads = true
         catalogue = {
             A: masking('A', recipeRef('B')),
             B: masking('B', recipeRef('A'))
@@ -219,14 +244,22 @@ describe('a cycle closed across an asynchronous load', () => {
     }
 
     it('is rejected with the path from the original root', async () => {
-        const {rejected, error} = await rejectionOf(indirectAsync())
+        const rejection = rejectionOf(indirectAsync())
+
+        await deliverReadOf('B')
+
+        const {rejected, error} = await rejection
         assert.equal(rejected, true, 'expected a rejection')
         assert.equal(error?.code, 'CYCLIC_DEPENDENCY')
         assert.deepEqual(error?.recipePath, ['A', 'B', 'A'])
     })
 
-    it('requests only the recipes on the path before the closing edge', async () => {
-        await rejectionOf(indirectAsync())
+    it('reads only the recipes on the path before the closing edge', async () => {
+        const rejection = rejectionOf(indirectAsync())
+
+        await deliverReadOf('B')
+        await rejection
+
         assert.deepEqual(recipesRequested, ['B'])
     })
 })
@@ -334,34 +367,65 @@ describe('a diamond', () => {
     })
 })
 
-describe('two concurrent evaluations', () => {
-    // Overlapping ids, opposite outcomes. A global active set would let the cyclic one poison the clean one,
-    // or the clean one mask the cyclic one, depending on interleaving.
-    it('keeps their ancestries independent', async () => {
-        // Loads are made asynchronous so the two evaluations genuinely interleave. With synchronous loads
-        // they would run to completion one after the other, and even a single shared path would survive -
-        // the interleaving is the whole point of the case.
-        loadDelayMs = 20
+describe('two concurrent evaluations over the same recipes', () => {
+    // One catalogue, both evaluations reading X and then S, and opposite outcomes:
+    //
+    //   X --imageToMask--> S --imageToMask--> asset
+    //                      S --imageMask----> X
+    //
+    // getBands$ follows the primary input alone, so the clean evaluation never reaches S's mask. getImage$
+    // zips both, so the cyclic one does - and closes on X, which it reached through S. Both traversals are
+    // held at a read before either is answered, and every answer is given deliberately, so this is genuine
+    // interleaving rather than one running to completion while the other waits. A global active set would
+    // let the cyclic one poison the clean one, or the clean one mask the cyclic one, depending on the order
+    // they are let through.
+    const shared = () => {
+        holdReads = true
         catalogue = {
-            S: masking('S', asset('projects/p/assets/base')),
-            X: masking('X', recipeRef('S')),
-            Y: masking('Y', recipeRef('X'))
+            X: maskedBy('X', recipeRef('S'), asset('projects/p/assets/cover')),
+            S: maskedBy('S', asset('projects/p/assets/base'), recipeRef('X'))
         }
-        const clean = resultOf(masking('clean', recipeRef('Y')))
-        const cyclic = rejectionOf(masking('X', recipeRef('X')))
-        const [cleanResult, cyclicResult] = await Promise.all([clean, cyclic])
+    }
 
+    it('keeps their ancestries independent', async () => {
+        shared()
+        const clean = resultOf(masking('clean', recipeRef('X')))
+        const cyclic = imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover')))
+
+        await Promise.all([readOf('X'), readOf('X')])
+        assert.equal(heldReads.length, 2, 'both evaluations should be waiting on a read')
+        await deliverReadOf('X')
+        await deliverReadOf('X')
+        await deliverReadOf('S')
+        await deliverReadOf('S')
+
+        const [cleanResult, cyclicResult] = await Promise.all([clean, cyclic])
         assert.deepEqual(cleanResult, ['projects/p/assets/base:band'])
         assert.equal(cyclicResult.error?.code, 'CYCLIC_DEPENDENCY')
-        assert.deepEqual(cyclicResult.error?.recipePath, ['X', 'X'])
+        assert.deepEqual(cyclicResult.error?.recipePath, ['cyclic', 'X', 'S', 'X'])
+    })
+
+    it('reads each recipe once per evaluation', async () => {
+        shared()
+        const clean = resultOf(masking('clean', recipeRef('X')))
+        const cyclic = imageRejectionOf(maskedBy('cyclic', recipeRef('X'), asset('projects/p/assets/cover')))
+
+        await deliverReadOf('X')
+        await deliverReadOf('X')
+        await deliverReadOf('S')
+        await deliverReadOf('S')
+        await Promise.all([clean, cyclic])
+
+        assert.deepEqual(recipesRequested, ['X', 'X', 'S', 'S'])
     })
 })
 
-describe('cancellation while a recipe is loading', () => {
-    // Teardown has to reach the pending load, and nothing further may be requested afterwards. An
-    // implementation that subscribed internally to establish context would keep the load alive.
-    it('tears the load down and starts no further load', async () => {
-        loadDelayMs = 50
+describe('cancellation while a recipe is being read', () => {
+    // Teardown has to reach the pending read, and an answer that arrives afterwards must reach nobody. An
+    // implementation that subscribed internally to establish context would keep the read alive and let the
+    // traversal continue into the next recipe.
+    it('tears the pending read down, and a late answer starts no further read', async () => {
+        holdReads = true
         catalogue = {
             B: masking('B', recipeRef('C')),
             C: masking('C', asset('projects/p/assets/base'))
@@ -369,12 +433,14 @@ describe('cancellation while a recipe is loading', () => {
         const subscription = imageFactory(masking('A', recipeRef('B'))).getBands$().subscribe({
             error: () => {}
         })
-        await new Promise(resolve => setTimeout(resolve, 10))
-        assert.deepEqual(recipesRequested, ['B'], 'the first load should be in flight')
+        const pending = await readOf('B')
+
         subscription.unsubscribe()
-        await new Promise(resolve => setTimeout(resolve, 100))
-        assert.deepEqual(loadsCancelled, ['B'])
-        assert.deepEqual(recipesRequested, ['B'], 'no further recipe may be requested after teardown')
+
+        assert.deepEqual(readsTornDown, ['B'])
+        deliver(pending)
+        await settled()
+        assert.deepEqual(recipesRequested, ['B'], 'no further recipe may be read after teardown')
     })
 })
 

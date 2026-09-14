@@ -15,8 +15,6 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_ADMIN_USERNAME: "sepaladmin"
-      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"

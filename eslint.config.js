@@ -5,7 +5,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 
 const baseConfig = {
-    files: ['**/*.js'],
+    files: ['**/*.js', 'modules/gee/test/**/*.mjs'],
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {

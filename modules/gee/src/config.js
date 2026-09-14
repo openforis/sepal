@@ -7,6 +7,7 @@ const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_INSTANCES = 3
+const DEFAULT_RECIPE_ENDPOINT = 'http://recipe'
 
 const fatalError = error => {
     log.fatal(error)
@@ -19,19 +20,16 @@ try {
     program
         .exitOverride()
         .addOption(
-            new Option('--sepal-username <value>')
-                .env('SEPAL_ADMIN_USERNAME')
-                .makeOptionMandatory()
-        )
-        .addOption(
-            new Option('--sepal-password <value>')
-                .env('SEPAL_ADMIN_PASSWORD')
-                .makeOptionMandatory()
-        )
-        .addOption(
             new Option('--sepal-endpoint <value>')
                 .env('SEPAL_ENDPOINT')
                 .makeOptionMandatory()
+        )
+        // The Recipe module itself rather than the gateway: the gateway strips inbound identity
+        // headers, so a read through it could not act as the user whose request this is.
+        .addOption(
+            new Option('--recipe-endpoint <value>')
+                .env('RECIPE_ENDPOINT')
+                .default(DEFAULT_RECIPE_ENDPOINT)
         )
         .addOption(
             new Option('--google-project-id <value>')
@@ -66,9 +64,8 @@ try {
 }
 
 const {geeEmail,
-    sepalUsername,
-    sepalPassword,
     sepalEndpoint,
+    recipeEndpoint,
     geeKey,
     googleProjectId,
     port,
@@ -86,7 +83,6 @@ export {
     googleProjectId,
     instances,
     port,
+    recipeEndpoint,
     sepalEndpoint,
-    sepalPassword,
-    sepalUsername,
     serviceAccountCredentials}

@@ -5,27 +5,16 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 
 const catalogue = new Map()
 
-mock.module('#sepal/context', {
-    exports: {
-        context: () => ({sepalEndpoint: 'http://test', sepalUsername: 'test', sepalPassword: 'test'}),
-        configure: () => {}
-    }
-})
-
-mock.module('#sepal/httpClient', {
-    exports: {
-        get$: url => {
-            const id = url.split('/').pop()
-            const recipe = catalogue.get(id)
-            return recipe
-                ? of({body: recipe})
-                : throwError(() => new Error(`No such recipe: ${id}`))
-        }
-    }
-})
-
 // Optical and radar band discovery is local; no Earth Engine operations are needed.
 mock.module('#sepal/ee/ee', {exports: {default: {Image: {}}}})
+
+const {configureRecipeReader} = await import('#sepal/ee/recipe')
+
+configureRecipeReader(id =>
+    catalogue.has(id)
+        ? of(catalogue.get(id))
+        : throwError(() => new Error(`No such recipe: ${id}`))
+)
 
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 
