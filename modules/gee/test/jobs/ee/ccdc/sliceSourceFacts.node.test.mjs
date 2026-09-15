@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {firstValueFrom, of, throwError} from 'rxjs'
+import {delay, firstValueFrom, of, throwError} from 'rxjs'
 
 // How a CCDC Slice learns to read the segment dates of the source it slices, exercised through the REAL
 // imageFactory, recipeRef, recipe definitions and asset implementations. Recipe reads, collection
@@ -15,20 +15,28 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 let catalogue = {}
 let recipesRead = []
 let assets = {}
+// How many reads of an asset fail before it becomes readable. One makes the metadata acquisition fail
+// while the image read behind it still works, which is what tells a propagated failure apart from a
+// swallowed one that ran on the saved copy instead.
+let failingAssetReads = {}
 let imageProperties = {}
 let interpretations = []
 let selections = []
 let collectionBands = []
 
-const eeImage = id => ({
+// An image is identified by what it came from and the masks applied to it, so a wrapper's mask is
+// visible on the image the slice is built from.
+const eeImage = (id, masks = []) => ({
     id,
+    masks,
     geometry: () => ({id: `${id}:geometry`}),
     toDictionary: () => imageProperties[id] || {},
     select: bands => {
         selections.push(bands)
-        return eeImage(`${id}.selected`)
+        return eeImage(`${id}.selected`, masks)
     },
-    clip: () => eeImage(`${id}.clipped`)
+    clip: () => eeImage(`${id}.clipped`, masks),
+    updateMask: mask => eeImage(id, [...masks, mask.id])
 })
 
 const eeCollection = id => ({
@@ -40,7 +48,13 @@ const eeCollection = id => ({
 mock.module('#sepal/ee/ee', {
     exports: {
         default: {
-            getAsset$: id => of({type: 'Image', properties: {}, ...assets[id]}),
+            getAsset$: id => {
+                if (failingAssetReads[id] > 0) {
+                    failingAssetReads[id]--
+                    return throwError(() => new Error(`Cannot read asset: ${id}`))
+                }
+                return of({type: 'Image', properties: {}, ...assets[id]})
+            },
             getInfo$: value => of(value),
             Image: image => (image && typeof image === 'object' ? image : eeImage(image)),
             ImageCollection: id => eeCollection(id),
@@ -69,11 +83,16 @@ mock.module('#sepal/ee/timeSeries/temporalSegmentation', {
     }
 })
 
+// Reads answer synchronously unless a case asks otherwise; an asynchronous answer is what separates
+// ancestry that is carried from ancestry that merely happens to still be on the stack.
+let readsAsync = false
+
 const readRecipe$ = id => {
     recipesRead.push(id)
-    return catalogue[id]
+    const answer$ = catalogue[id]
         ? of(catalogue[id])
         : throwError(() => new Error(`No such recipe: ${id}`))
+    return readsAsync ? answer$.pipe(delay(0)) : answer$
 }
 
 const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
@@ -89,6 +108,7 @@ const inOperation = (name, fn) => it(name, async () => {
 })
 
 const {default: ccdcSlice} = await import('#sepal/ee/timeSeries/ccdcSlice')
+const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 const {assetProperties$} = await import('#sepal/ee/asset')
 
 const SEGMENTS_ASSET = 'users/x/segments'
@@ -100,6 +120,26 @@ const sliceOver = source => ({
         source,
         date: {dateType: 'SINGLE', date: '2020-06-01'},
         options: {gapStrategy: 'INTERPOLATE', harmonics: 3}
+    }
+})
+
+// A wrapper that declares it preserves its primary image's schema and values. Its mask is an edge too,
+// and must never be mistaken for the source of the segments.
+const masking = (id, imageToMask) => ({
+    id,
+    type: 'MASKING',
+    model: {imageToMask, imageMask: {type: 'ASSET', id: 'users/x/mask'}}
+})
+
+const ccdc = ({id = 'ccdc-1', dateFormat = 0} = {}) => ({
+    id,
+    type: 'CCDC',
+    model: {
+        aoi: {type: 'ASSET', id: 'users/x/bounds'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['red']},
+        dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
+        options: {},
+        ccdcOptions: {dateFormat}
     }
 })
 
@@ -121,13 +161,30 @@ const slice$ = recipe =>
 
 const dateFormatUsed = () => interpretations.at(-1).dateFormat
 
+// Which masks the image handed to the segment algebra carries. Masking applies a mask's first band, so
+// the selection it made on the way is dropped here - which mask it was is the question.
+const masksOnSegments = () =>
+    interpretations.at(-1).segmentsImage.masks.map(id => id.replace(/\.selected$/, ''))
+
 // What a use ends up selecting, as opposed to the segment bands every slice reads to build its image.
-const bandsSelected = () => selections.filter(bands => !bands.includes('tStart'))
+const bandsSelected = () =>
+    selections.filter(bands => Array.isArray(bands) && !bands.includes('tStart'))
+
+const failureOf = async promise => {
+    try {
+        await promise
+        return null
+    } catch (error) {
+        return error
+    }
+}
 
 beforeEach(() => {
     catalogue = {}
     recipesRead = []
     assets = {}
+    failingAssetReads = {}
+    readsAsync = false
     imageProperties = {}
     interpretations = []
     selections = []
@@ -180,6 +237,161 @@ describe('slicing a CCDC recipe', () => {
     })
 })
 
+describe('slicing a wrapper over a producer', () => {
+    // The wrapper supplies the pixels, the producer under it supplies the dates.
+    inOperation('reads the producer\'s date representation while running the wrapper\'s image', async () => {
+        catalogue['ccdc-1'] = ccdc({dateFormat: 2})
+        catalogue['masking-1'] = masking('masking-1', {type: 'RECIPE_REF', id: 'ccdc-1'})
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'}))
+
+        assert.equal(dateFormatUsed(), 2)
+        assert.deepEqual(masksOnSegments(), ['users/x/mask'])
+    })
+
+    // Reaching the producer must not leave the outer image being built under the producer's path: the
+    // wrapper's own reference to it would then close a cycle that is not there.
+    inOperation('builds the wrapper\'s image under its own ancestry when reads answer later', async () => {
+        readsAsync = true
+        catalogue['ccdc-1'] = ccdc({dateFormat: 2})
+        catalogue['masking-1'] = masking('masking-1', {type: 'RECIPE_REF', id: 'ccdc-1'})
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'}))
+
+        assert.equal(dateFormatUsed(), 2)
+        assert.deepEqual(masksOnSegments(), ['users/x/mask'])
+    })
+
+    inOperation('follows the declared preserving input through several wrappers', async () => {
+        catalogue['ccdc-1'] = ccdc({dateFormat: 1})
+        catalogue['inner'] = masking('inner', {type: 'RECIPE_REF', id: 'ccdc-1'})
+        catalogue['outer'] = masking('outer', {type: 'RECIPE_REF', id: 'inner'})
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'outer'}))
+
+        assert.equal(dateFormatUsed(), 1)
+    })
+
+    // The producer's current declaration beats the copy an older GUI saved beside the reference.
+    inOperation('prefers the producer\'s date representation over the copy saved beside the reference', async () => {
+        catalogue['ccdc-1'] = ccdc({dateFormat: 2})
+        catalogue['masking-1'] = masking('masking-1', {type: 'RECIPE_REF', id: 'ccdc-1'})
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1', dateFormat: 1}))
+
+        assert.equal(dateFormatUsed(), 2)
+    })
+
+    // The mask is an edge of the wrapper, but it fills no preserving role.
+    inOperation('never takes the wrapper\'s mask for the producer', async () => {
+        catalogue['ccdc-1'] = ccdc({dateFormat: 2})
+        catalogue['mask-producer'] = ccdc({id: 'mask-producer', dateFormat: 1})
+        catalogue['masking-1'] = {
+            id: 'masking-1',
+            type: 'MASKING',
+            model: {
+                imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'},
+                imageMask: {type: 'RECIPE_REF', id: 'mask-producer'}
+            }
+        }
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'}))
+
+        assert.equal(dateFormatUsed(), 2)
+    })
+
+    // The asset the wrapped mosaic stands for cannot answer to derived base band names.
+    inOperation('does not select derived base band names through a wrapper over an asset mosaic', async () => {
+        catalogue['asset-mosaic-1'] = assetMosaic()
+        catalogue['masking-1'] = masking('masking-1', {type: 'RECIPE_REF', id: 'asset-mosaic-1'})
+        assets[SEGMENTS_ASSET] = {properties: {dateFormat: 1}}
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'}))
+
+        assert.equal(dateFormatUsed(), 1)
+        assert.deepEqual(bandsSelected(), [['ndvi']])
+    })
+
+    // One operation, one record of each: discovering the producer and running the image are the same reads.
+    inOperation('discovers the producer and runs the image from the same records', async () => {
+        catalogue['ccdc-1'] = ccdc({dateFormat: 2})
+        catalogue['masking-1'] = masking('masking-1', {type: 'RECIPE_REF', id: 'ccdc-1'})
+
+        await slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'}))
+
+        assert.deepEqual(recipesRead, ['masking-1', 'ccdc-1'])
+    })
+})
+
+describe('slicing a source that cannot supply segments', () => {
+    // A declared preserving role its model does not fill exactly once.
+    inOperation('reports a malformed source when the preserving role is unresolved', async () => {
+        catalogue['masking-1'] = {id: 'masking-1', type: 'MASKING', model: {}}
+
+        const error = await failureOf(slice$(sliceOver({type: 'RECIPE_REF', id: 'masking-1'})))
+
+        assert.equal(error?.code, 'MALFORMED_SEGMENT_SOURCE')
+    })
+
+    // A terminal recipe that declares no segments at all: unsupported, not missing legacy metadata.
+    inOperation('reports an unsupported source for a terminal recipe that produces no segments', async () => {
+        catalogue['mosaic-1'] = {
+            id: 'mosaic-1',
+            type: 'MOSAIC',
+            model: {
+                aoi: {type: 'ASSET', id: 'users/x/bounds'},
+                dates: {},
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+                compositeOptions: {}
+            }
+        }
+
+        const error = await failureOf(slice$(sliceOver({type: 'RECIPE_REF', id: 'mosaic-1', dateFormat: 1})))
+
+        assert.equal(error?.code, 'UNSUPPORTED_SEGMENT_SOURCE')
+    })
+
+    // A preservation chain that closes on itself is a cycle, reported as one.
+    inOperation('reports a cycle in the preservation chain', async () => {
+        catalogue['A'] = masking('A', {type: 'RECIPE_REF', id: 'B'})
+        catalogue['B'] = masking('B', {type: 'RECIPE_REF', id: 'A'})
+
+        const error = await failureOf(slice$(sliceOver({type: 'RECIPE_REF', id: 'A'})))
+
+        assert.equal(error?.code, 'CYCLIC_DEPENDENCY')
+        assert.deepEqual(error?.recipePath, ['A', 'B', 'A'])
+    })
+
+    // Run from the root factory, so the slice itself is on the path and the recipe it selected has to
+    // stay on it: the cycle closes through the wrapper the slice chose, and is named where it is.
+    inOperation('names the selected wrapper on the path a cycle closes on', async () => {
+        catalogue['slice-1'] = sliceOver({type: 'RECIPE_REF', id: 'M'})
+        catalogue['M'] = {
+            id: 'M',
+            type: 'MASKING',
+            model: {
+                imageToMask: {type: 'RECIPE_REF', id: 'C'},
+                imageMask: {type: 'RECIPE_REF', id: 'inner'}
+            }
+        }
+        catalogue['inner'] = masking('inner', {type: 'RECIPE_REF', id: 'M'})
+        catalogue['C'] = ccdc({id: 'C'})
+
+        const error = await failureOf(
+            firstValueFrom(imageFactory({type: 'RECIPE_REF', id: 'slice-1'}).getImage$())
+        )
+
+        assert.equal(error?.code, 'CYCLIC_DEPENDENCY')
+        assert.deepEqual(error?.recipePath, ['slice-1', 'M', 'inner', 'M'])
+    })
+
+    inOperation('reports a malformed source for a selection that is neither a recipe nor an asset', async () => {
+        const error = await failureOf(slice$(sliceOver({id: 'users/x/segments'})))
+
+        assert.equal(error?.code, 'MALFORMED_SEGMENT_SOURCE')
+    })
+})
+
 describe('slicing an asset mosaic over a segments asset', () => {
     inOperation('reads the date representation from the asset itself', async () => {
         catalogue['asset-mosaic-1'] = assetMosaic({savedDateFormat: 9})
@@ -208,6 +420,20 @@ describe('slicing an asset mosaic over a segments asset', () => {
         await slice$(sliceOver({type: 'RECIPE_REF', id: 'asset-mosaic-1'}))
 
         assert.deepEqual(selections, [['ndvi']])
+    })
+
+    // A read that failed is a failure. Answering from the copy saved beside the reference would report a
+    // date representation nobody confirmed - and the image behind it is readable here, so a slice that
+    // fell back would run the algebra rather than fail.
+    inOperation('fails rather than falling back to the saved copy when its metadata cannot be read', async () => {
+        catalogue['asset-mosaic-1'] = assetMosaic({savedDateFormat: 2})
+        assets[SEGMENTS_ASSET] = {properties: {dateFormat: 1}}
+        failingAssetReads = {[SEGMENTS_ASSET]: 1}
+
+        const error = await failureOf(slice$(sliceOver({type: 'RECIPE_REF', id: 'asset-mosaic-1', dateFormat: 2})))
+
+        assert.match(error?.message ?? '', /Cannot read asset/)
+        assert.deepEqual(interpretations, [], 'the segment algebra must not be reached')
     })
 })
 

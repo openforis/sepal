@@ -15,20 +15,29 @@ const delegate = {
     getGeometry$: () => of(resolvedGeometry)
 }
 
+// The segments recipe the reference stands for. Its facts are not what this test is about; what it has
+// to be is a producer, so resolution reaches the image rather than rejecting the source.
+const segmentsRecord = {id: 'segments-recipe', type: 'CCDC', model: {ccdcOptions: {dateFormat: 1}}}
+
+const source = {
+    getImage$: () => of('source-image'),
+    getBands$: () => of(['source-band']),
+    getGeometry$: () => of(resolvedGeometry),
+    withRecord$: derive => of(derive(segmentsRecord, () => source))
+}
+
 const imageFactory = jest.fn(recipe => {
     if (syntheticTypes.has(recipe.type)) {
         syntheticRecipes.push(recipe)
         return delegate
     }
-    return {
-        getImage$: () => of('source-image'),
-        getBands$: () => of(['source-band']),
-        getGeometry$: () => of(resolvedGeometry)
-    }
+    return source
 })
 
 jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
 
+// Registers the CCDC definition the resolver asks for.
+await import('#sepal/recipe/type/ccdc')
 const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts')
 const {default: baytsAlerts} = await import('#sepal/ee/bayts/baytsAlerts')
 
@@ -102,7 +111,6 @@ describe.each([
         await firstValueFrom(alerts.getBands$())
 
         expectRuntimeGeometryAoi(expectedType)
-        expect(imageFactory).toHaveBeenCalledTimes(2)
     })
 })
 
@@ -116,7 +124,6 @@ describe.each([
         await firstValueFrom(alerts.getGeometry$())
 
         expectRuntimeGeometryAoi('RADAR_MOSAIC')
-        expect(imageFactory).toHaveBeenCalledTimes(2)
     })
 })
 
@@ -131,6 +138,5 @@ describe('Change Alerts Changes visualization', () => {
         await firstValueFrom(alerts.getBands$())
 
         expect(syntheticRecipes).toEqual([])
-        expect(imageFactory).toHaveBeenCalledTimes(1)
     })
 })

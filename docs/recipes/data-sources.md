@@ -406,12 +406,30 @@ replace once Masking had proven the shared evidence lifecycle. What landed:
   recipe's own layers were saved with are the identities a fresh asset read is reconciled against, since `ui`
   is not persisted. A selection whose bands are gone is left as the user left it, by the same rule the generic
   layer applies.
+- Execution resolves segment-producer facts THROUGH preserving wrappers. The producer of a source's segments is
+  not necessarily the recipe selected: a Slice, Change Alerts or segment chart over a Masking runs the Masking's
+  image and reads the underlying producer's `{dateFormat, selectableBaseBands}`. The chain is followed only where
+  a recipe type declares that it preserves its input's schema and values, and only through the input filling that
+  declared role, so a mask, a fill or an AOI can never become the producer. Both terminations are handled: a
+  producer declaring a date representation answers from its own model, and one whose segments ARE an asset names
+  the asset, whose properties are read now. All reads use the operation's authorized records, so producer
+  discovery and image construction are the same records within one operation.
+- Controlled failures are distinguished rather than absorbed: a declared preserving role a model does not fill
+  exactly once is `MALFORMED_SEGMENT_SOURCE`, a terminal recipe declaring no segments at all is
+  `UNSUPPORTED_SEGMENT_SOURCE`, a preservation chain closing on itself is the existing `CYCLIC_DEPENDENCY`, and a
+  failed recipe or asset read propagates as itself - never answered from the copy saved beside the reference.
+  Sources that used to fall through to that copy are now rejected before the segment algorithm runs.
 
 Still to do here:
 
 - Promote the existing segments description into a requestable `CCDC_SEGMENTS` capability alongside the implemented
   `IMAGE_OUTPUT` contract, driven by the Change Alerts migration in step 9. The description above is currently
-  Slice's evidence, not yet a capability other consumers can request.
+  Slice's evidence, not yet a capability other consumers can request. Execution-side resolution is in place and
+  is deliberately narrower: it answers `{dateFormat, selectableBaseBands}` and nothing about band descriptions or
+  GUI discovery.
+- Remove the copied source metadata and the GUI's selection filters and synchronization. They are unchanged: the
+  copies remain in saved models, are still written where they were, and are still the compatibility fallback when
+  a supported producer declares no date representation.
 - Complete export acceptance as recorded below. Automated tests cover source, observer, chart and layer
   boundaries. Execution-side source resolution and band discovery have runtime witnesses with substituted
   external boundaries (`modules/gee/src/jobs/ee/ccdc/sliceSourceFacts.runtime.mjs` and `ccdcBands.runtime.mjs`);

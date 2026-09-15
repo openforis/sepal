@@ -15,15 +15,13 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 // createRequire. Real Node supports require(esm); Jest's CJS resolver refuses it with ERR_REQUIRE_ESM. This
 // file is launched from a Jest bridge so the witness still runs in the ordinary gee gate.
 
-// Thrown by the substituted monitoring collection, which is the last thing Change Alerts asks for before it
-// enters the alert algebra. That algebra is Earth Engine's and is not substituted here, so the image
-// operation is stopped at exactly that point rather than being allowed to fail wherever it happens to.
-class StopBeforeAlertAlgebra extends Error {}
-
+let alertAlgebra = []
 let catalogue = {}
 let loaded = []
 let maskApplications = []
 let collectionRequests = []
+let selections = []
+let assets = {}
 
 // An image is identified by what it came from and what has been applied to it. Selecting and clipping are
 // how every source is read and are not what these tests are about, so they leave the identity alone; a mask
@@ -32,9 +30,13 @@ const eeImage = (source, masks = []) => ({
     source,
     masks,
     geometry: () => ({source}),
-    select: () => eeImage(source, masks),
+    select: bands => {
+        selections.push(bands)
+        return eeImage(source, masks)
+    },
     clip: () => eeImage(source, masks),
     reduceRegion: () => ({source, masks}),
+    bandNames: () => [`${source}:band`],
     updateMask: mask => {
         const maskedImage = eeImage(source, [...masks, mask.source])
         maskApplications.push({source: maskedImage.source, masks: maskedImage.masks})
@@ -45,7 +47,7 @@ const eeImage = (source, masks = []) => ({
 mock.module('#sepal/ee/ee', {
     exports: {
         default: {
-            getAsset$: () => of({type: 'Image', properties: {}}),
+            getAsset$: id => of({type: 'Image', properties: {}, ...assets[id]}),
             getInfo$: value => of(value),
             Image: image => (image && typeof image === 'object' ? image : eeImage(image)),
             ImageCollection: id => eeImage(id),
@@ -56,16 +58,12 @@ mock.module('#sepal/ee/ee', {
     }
 })
 
-// Observe which bands each collection is asked for, without constructing EE imagery. Change Alerts builds
-// one of its own to monitor against, after the segments image has resolved; that request is where the image
-// operation stops.
+// Observe which bands each collection is asked for, without constructing EE imagery.
 mock.module('#sepal/ee/timeSeries/collection', {
     exports: {
         getCollection$: ({recipe, bands}) => {
             collectionRequests.push({type: recipe.type, bands})
-            return recipe.type
-                ? of(eeImage('collection'))
-                : throwError(() => new StopBeforeAlertAlgebra())
+            return of(eeImage('collection'))
         }
     }
 })
@@ -73,6 +71,17 @@ mock.module('#sepal/ee/timeSeries/collection', {
 // The job wrapper schedules work onto a worker thread. What the chart's behavior lives in is the worker it
 // is given, so the wrapper hands it back instead.
 mock.module('#gee/jobs/job', {exports: {job: ({worker$}) => worker$}})
+
+// The algebra is Earth Engine's and stays outside this witness. What is under test is the call Change
+// Alerts makes into it: which image, and which representation it says the dates are in.
+mock.module('#sepal/ee/timeSeries/changeAlertsAlgorithm', {
+    exports: {
+        analyzeChanges: ({segmentsImage, dateFormat}) => {
+            alertAlgebra.push({segmentsImage, dateFormat})
+            return eeImage('alerts')
+        }
+    }
+})
 
 const readRecipe$ = id => {
     loaded.push(id)
@@ -97,6 +106,7 @@ const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts'
 const {default: loadSegments$} = await import('#gee/jobs/ee/ccdc/loadSegments')
 
 const MASK_ASSET = 'users/x/mask'
+const SEGMENTS_ASSET = 'users/x/segments'
 
 // The reference Change Alerts holds after a selection: what it executes, with the producer's description
 // beside it.
@@ -112,6 +122,26 @@ const ccdcRecipe = {
         dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
         options: {},
         ccdcOptions: {dateFormat: 1}
+    }
+}
+
+// An asset mosaic standing for a segments asset: it carries physical segment bands, so the band a
+// consumer names is not one that can be selected on it.
+const assetMosaicRecipe = {
+    id: 'asset-mosaic-1',
+    type: 'ASSET_MOSAIC',
+    model: {
+        aoi: {type: 'ASSET_BOUNDS'},
+        assetDetails: {type: 'Image', assetId: SEGMENTS_ASSET, metadata: {properties: {dateFormat: 2}}}
+    }
+}
+
+const maskedAssetMosaicRecipe = {
+    id: 'masked-asset-mosaic',
+    type: 'MASKING',
+    model: {
+        imageToMask: {type: 'RECIPE_REF', id: 'asset-mosaic-1'},
+        imageMask: {type: 'ASSET', id: MASK_ASSET}
     }
 }
 
@@ -147,18 +177,24 @@ const alertsOver = reference => ({
 // from one reference, and within an operation they are all built from one record of it.
 const recipesLoaded = () => loaded
 
+// What execution selected on an image, as opposed to the single band Masking picks off its mask.
+const bandsSelected = () => selections.filter(bands => Array.isArray(bands))
+
 // The bands the segments producer was asked to fit, as opposed to those of the collection Change Alerts
 // builds to monitor against.
 const segmentBandsRequested = () =>
     collectionRequests.filter(({type}) => type === 'CCDC').map(({bands}) => bands)
 
-// Change Alerts' own image operation, run as far as the alert algebra and no further. Reaching that point is
-// part of the assertion: any other failure, and any completion without it, is reported rather than accepted.
-const alertImageUpToTheAlgebra = reference =>
-    assert.rejects(
-        firstValueFrom(changeAlerts(alertsOver(reference)).getImage$()),
-        error => error instanceof StopBeforeAlertAlgebra
-    )
+// Change Alerts' own image operation, run up to and including the call into its algorithm.
+const alertImage$ = reference =>
+    firstValueFrom(changeAlerts(alertsOver(reference)).getImage$())
+
+// What the algorithm was handed, as the identity of the image plus the representation it was told the
+// dates are in.
+const alertAlgebraCall = () => {
+    const {segmentsImage: {source, masks}, dateFormat} = alertAlgebra.at(-1)
+    return {segmentsImage: {source, masks}, dateFormat}
+}
 
 // The real pixel-chart job, over the reference Change Alerts holds.
 const chartSample$ = reference =>
@@ -167,7 +203,15 @@ const chartSample$ = reference =>
     }))
 
 beforeEach(() => {
-    catalogue = {'ccdc-1': ccdcRecipe, 'masking-1': maskingRecipe}
+    catalogue = {
+        'ccdc-1': ccdcRecipe,
+        'masking-1': maskingRecipe,
+        'asset-mosaic-1': assetMosaicRecipe,
+        'masked-asset-mosaic': maskedAssetMosaicRecipe
+    }
+    alertAlgebra = []
+    assets = {[SEGMENTS_ASSET]: {properties: {dateFormat: 2}}}
+    selections = []
     loaded = []
     maskApplications = []
     collectionRequests = []
@@ -175,13 +219,13 @@ beforeEach(() => {
 
 describe('the image Change Alerts monitors', () => {
     inOperation('is masked when the reference is a Masking recipe', async () => {
-        await alertImageUpToTheAlgebra(MASKED_REFERENCE)
+        await alertImage$(MASKED_REFERENCE)
 
         assert.deepEqual(maskApplications, [{source: 'segments', masks: [MASK_ASSET]}])
     })
 
     inOperation('still has the monitored band selected on the CCDC underneath it', async () => {
-        await alertImageUpToTheAlgebra(MASKED_REFERENCE)
+        await alertImage$(MASKED_REFERENCE)
 
         assert.deepEqual(segmentBandsRequested(), [['ndvi', 'red']])
     })
@@ -199,7 +243,7 @@ describe('the image Change Alerts monitors', () => {
     // reference. One operation reads each recipe once, and the mask still survives into every one of them.
     inOperation('is built from one record of each recipe, however many factories the operation constructs', async () => {
         await firstValueFrom(changeAlerts(alertsOver(MASKED_REFERENCE)).getGeometry$())
-        await alertImageUpToTheAlgebra(MASKED_REFERENCE)
+        await alertImage$(MASKED_REFERENCE)
         const sampled = await chartSample$(MASKED_REFERENCE)
 
         assert.deepEqual(recipesLoaded(), ['masking-1', 'ccdc-1'])
@@ -208,10 +252,64 @@ describe('the image Change Alerts monitors', () => {
     })
 
     inOperation('is unmasked when the reference is a CCDC recipe', async () => {
-        await alertImageUpToTheAlgebra(DIRECT_REFERENCE)
+        await alertImage$(DIRECT_REFERENCE)
 
         assert.deepEqual(recipesLoaded(), ['ccdc-1'])
         assert.deepEqual(maskApplications, [])
+    })
+})
+
+describe('what the alert algorithm is handed', () => {
+    inOperation('is the masked image, with the date representation the producer declares', async () => {
+        await alertImage$(MASKED_REFERENCE)
+
+        assert.deepEqual(alertAlgebraCall(), {
+            segmentsImage: {source: 'segments', masks: [MASK_ASSET]},
+            dateFormat: ccdcRecipe.model.ccdcOptions.dateFormat
+        })
+    })
+
+    // The producer's current declaration, not the copy Change Alerts keeps beside the reference.
+    inOperation('is the producer\'s date representation, not the conflicting copy saved beside the reference', async () => {
+        catalogue['ccdc-1'] = {...ccdcRecipe, model: {...ccdcRecipe.model, ccdcOptions: {dateFormat: 2}}}
+
+        await alertImage$({type: 'RECIPE_REF', id: 'masking-1', dateFormat: 1})
+
+        assert.equal(alertAlgebraCall().dateFormat, 2)
+    })
+
+    inOperation('is resolved through several wrappers', async () => {
+        catalogue['outer'] = {
+            id: 'outer',
+            type: 'MASKING',
+            model: {
+                imageToMask: {type: 'RECIPE_REF', id: 'masking-1'},
+                imageMask: {type: 'ASSET', id: MASK_ASSET}
+            }
+        }
+
+        await alertImage$({type: 'RECIPE_REF', id: 'outer', dateFormat: 2})
+
+        assert.equal(alertAlgebraCall().dateFormat, ccdcRecipe.model.ccdcOptions.dateFormat)
+        assert.deepEqual(alertAlgebraCall().segmentsImage.masks, [MASK_ASSET, MASK_ASSET])
+    })
+
+    // An asset-backed producer answers to its physical segment bands, so nothing selects the monitored
+    // band on it - not for the image, and not for the geometry and bands resolved on the way.
+    inOperation('selects no band at all on an asset-backed producer', async () => {
+        await alertImage$({type: 'RECIPE_REF', id: 'masked-asset-mosaic'})
+
+        assert.deepEqual(bandsSelected(), [])
+        assert.equal(alertAlgebraCall().dateFormat, 2)
+    })
+
+    inOperation('is the unmasked image for a direct CCDC reference', async () => {
+        await alertImage$(DIRECT_REFERENCE)
+
+        assert.deepEqual(alertAlgebraCall(), {
+            segmentsImage: {source: 'segments', masks: []},
+            dateFormat: ccdcRecipe.model.ccdcOptions.dateFormat
+        })
     })
 })
 

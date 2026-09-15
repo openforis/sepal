@@ -6,8 +6,8 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
+import {withSegmentSource$} from '#sepal/ee/timeSeries/segmentSource'
 import {fileName} from '#sepal/path'
-import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 
 const worker$ = ({
     requestArgs: {recipe, latLng, bands}
@@ -41,13 +41,8 @@ const worker$ = ({
             id: recipe.id
         }).getImage$()
 
-    // Whether the base band names can be selected on the referenced recipe is a fact its own definition
-    // declares. One load answers it and produces the image, so the facts and the execution are the same
-    // record's.
-    const recipeRef$ = () => imageFactory(recipe).withRecord$((record, buildImage) => {
-        const {selectableBaseBands} = recipeType(record.type)?.segmentSource || {}
-        return buildImage({selection: selectableBaseBands === false ? [] : bands})
-    })
+    const recipeRef$ = () => withSegmentSource$(recipe, ({selectableBaseBands}, buildImage) =>
+        buildImage({selection: selectableBaseBands ? bands : []}))
 
     const recipeSegments$ = () =>
         of(ccdc(
