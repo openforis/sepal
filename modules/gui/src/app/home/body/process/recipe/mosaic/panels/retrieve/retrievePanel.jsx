@@ -14,7 +14,7 @@ import {
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {updateProject} from '~/app/home/body/process/recipeList/projectActions'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'

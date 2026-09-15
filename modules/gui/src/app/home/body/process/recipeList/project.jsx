@@ -3,17 +3,22 @@ import React from 'react'
 
 import {compose} from '~/compose'
 import {msg} from '~/translate'
+import {ButtonPopup} from '~/widget/buttonPopup'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
+import {Widget} from '~/widget/widget'
 
+import {FolderPicker} from './folderPicker'
 import styles from './project.module.css'
+import {folderPathLabel} from './recipeTree'
 
 const fields = {
     name: new Form.Field()
         .notBlank('process.project.form.name.required')
-        .predicate((name, {projectNames}) => !projectNames.includes(name.toLowerCase()), 'process.project.form.name.unique')
+        .predicate((name, {projectNames}) => !projectNames.includes(name.toLowerCase()), 'process.project.form.name.unique'),
+    parentId: new Form.Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -23,6 +28,7 @@ const mapStateToProps = (state, ownProps) => {
         values: {
             id: project && project.id,
             name: (project && project.name) || '',
+            parentId: (project && project.parentId) || null,
             projectNames: projectNames
         }
     }
@@ -30,7 +36,7 @@ const mapStateToProps = (state, ownProps) => {
 
 class _Project extends React.Component {
     renderPanel() {
-        const {inputs: {name}} = this.props
+        const {parentEditable, inputs: {name}} = this.props
         return (
             <React.Fragment>
                 <Panel.Content>
@@ -41,10 +47,37 @@ class _Project extends React.Component {
                             input={name}
                             spellCheck={false}
                         />
+                        {parentEditable ? this.renderParent() : null}
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
             </React.Fragment>
+        )
+    }
+
+    renderParent() {
+        const {projects, project, inputs: {parentId}} = this.props
+        return (
+            <Widget label={msg('process.project.form.parent.label')}>
+                <ButtonPopup
+                    shape='pill'
+                    label={parentId.value
+                        ? folderPathLabel(projects, parentId.value)
+                        : msg('process.project.parent.root')}
+                    vPlacement='below'
+                    hPlacement='over-right'>
+                    {onBlur => (
+                        <FolderPicker
+                            projects={projects}
+                            excludeFolderId={project.id}
+                            onSelect={folderId => {
+                                parentId.set(folderId)
+                                onBlur()
+                            }}
+                        />
+                    )}
+                </ButtonPopup>
+            </Widget>
         )
     }
 
@@ -76,6 +109,8 @@ export const Project = compose(
 Project.propTypes = {
     project: PropTypes.object.isRequired,
     projectNames: PropTypes.array.isRequired,
+    parentEditable: PropTypes.any,
+    projects: PropTypes.array.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 }

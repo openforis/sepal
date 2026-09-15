@@ -35,7 +35,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     recipeFormPanel: () => Component => Component
 }))
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: () => {}}))
+vi.mock('~/app/home/body/process/recipeList/projectActions', () => ({updateProject: () => {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({getPreSetVisualizations: () => []})}))
 
 const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
