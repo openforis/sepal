@@ -14,7 +14,6 @@ import {getAvailableBands} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
-import {ReferenceSync} from './referenceSync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -36,7 +35,6 @@ class _ChangeAlerts extends React.Component {
             <Map>
                 <ChangeAlertsToolbar/>
                 <Aoi value={reference.type && reference}/>
-                <ReferenceSync/>
                 <SourceEvidenceSync observation={changeAlertsObservation}/>
             </Map>
         )

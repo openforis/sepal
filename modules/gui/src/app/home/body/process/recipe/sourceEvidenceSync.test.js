@@ -612,11 +612,10 @@ describe('a change while an observation is in flight', () => {
 // underneath it. What the operation started from has to be remembered from the start, not read back at the
 // end - by then the session has already moved.
 describe('a change while a dependency is still loading', () => {
-    const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
-    const withMask = {
-        id: 'masked-1',
+    const inner = {
+        id: 'inner',
         type: 'MASKING',
-        model: {imageToMask: recipeSelection('inner'), imageMask: recipeSelection('mask-1')}
+        model: {imageToMask: recipeSelection('source-1'), imageMask: recipeSelection('mask-1')}
     }
     const atStart = {inner, 'source-1': ccdcRecipe('source-1', [{id: 'v-old', bands: ['red']}])}
     const edited = {...atStart, 'source-1': ccdcRecipe('source-1', [{id: 'v-new', bands: ['nir']}])}
@@ -625,7 +624,7 @@ describe('a change while a dependency is still loading', () => {
         bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
         const mask = new Subject()
         const {component, rerender, evidence} = sync({
-            recipe: withMask,
+            recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
             loadedRecipes: atStart,
             loadRecipe$: () => mask
         })
@@ -651,7 +650,7 @@ describe('a change while a dependency is still loading', () => {
         bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
         const mask = new Subject()
         const {component, rerender, evidence} = sync({
-            recipe: withMask,
+            recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
             loadedRecipes: atStart,
             loadRecipe$: id => (id === 'mask-1' ? mask : of(atStart[id]))
         })
@@ -729,10 +728,9 @@ describe('a cycle deeper in the chain', () => {
     })
 })
 
-// Availability is decided by the whole closure, so what restores it is not only the inherited source.
-describe('a repaired mask', () => {
+describe('a selected source with a missing mask', () => {
     const withMask = mask => ({
-        id: 'masked-1',
+        id: 'inner',
         type: 'MASKING',
         model: {imageToMask: recipeSelection('source-1'), imageMask: mask}
     })
@@ -740,7 +738,8 @@ describe('a repaired mask', () => {
     it('is observed again after a missing one made the source unavailable', () => {
         bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
         const {component, rerender, evidence} = sync({
-            recipe: withMask(recipeSelection('gone')),
+            recipe: maskingRecipe({primary: recipeSelection('inner')}),
+            loadedRecipes: {inner: withMask(recipeSelection('gone'))},
             loadRecipe$: id => (id === 'gone'
                 ? throwError(() => new Error('no such recipe'))
                 : of(ccdcRecipe(id)))
@@ -749,11 +748,33 @@ describe('a repaired mask', () => {
         expect(evidence()[0].status).toBe('UNAVAILABLE')
 
         rerender({
-            recipe: withMask(recipeSelection('good-mask')),
+            loadedRecipes: {inner: withMask(recipeSelection('good-mask'))},
             loadRecipe$: id => of(ccdcRecipe(id))
         })
 
         expect(evidence()[1].status).toBe('OBSERVED')
+    })
+})
+
+describe('a consumer with a missing mask', () => {
+    it('still observes the selected source', () => {
+        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        const {component, evidence} = sync({
+            recipe: {
+                ...maskingRecipe({primary: recipeSelection('source-1')}),
+                model: {imageToMask: recipeSelection('source-1'), imageMask: recipeSelection('gone')}
+            },
+            loadRecipe$: id => id === 'gone'
+                ? throwError(() => new Error('no such recipe'))
+                : of(ccdcRecipe(id))
+        })
+
+        component.componentDidMount()
+
+        expect(evidence()).toEqual([expect.objectContaining({
+            status: 'OBSERVED',
+            visualizations: CCDC_PRESETS
+        })])
     })
 })
 

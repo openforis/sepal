@@ -35,10 +35,8 @@ export const sourceKeyOf = reference =>
 export const inheritedSourceKey = recipe =>
     sourceKeyOf(inheritedSourceReference(recipe))
 
-// The model field behind every source this recipe declares, without naming a field of a recipe it does not
-// own. An observer watches all of them rather than only the inherited one: what can be answered about the
-// source depends on the whole closure, so a mask that was missing and has been replaced is as much a reason
-// to look again as the primary image changing.
+// Model fields behind the consumer's declared selections. Reapplying a source panel requests a fresh
+// observation even when its source IDs are unchanged.
 export const declaredSelections = recipe =>
     directSourceEdges(recipe).edges.map(({path}) => _.get(recipe, path))
 

@@ -84,19 +84,12 @@ const assetMosaic = () => ({
     }
 })
 
-const CLASSIFICATION_EDGE = {
-    sourceRecipeId: 'ccdc-1',
-    role: 'CLASSIFICATION_SOURCE',
-    reference: {type: 'RECIPE_REF', id: 'classification-1'}
-}
-
 const sync = ({
     recipe,
     loadedRecipes = {},
     catalogue = [],
     assetVersions = [],
     earthEngineGeneration = {},
-    edges = [],
     loadRecipe$ = id => of(loadedRecipes[id])
 }) => {
     const dispatched = []
@@ -109,13 +102,8 @@ const sync = ({
             dispatched.push(this.written)
         }
     })
-    const observation = {
-        ...sliceObservation,
-        // The closure the shared lifecycle resolves; its own construction is covered where it is built.
-        observe$: args => sliceObservation.observe$({...args, graph: {...args.graph, edges}})
-    }
     const component = new SourceEvidenceSync({
-        observation,
+        observation: sliceObservation,
         recipe,
         loadedRecipes,
         catalogue,
@@ -161,8 +149,7 @@ describe('slicing a CCDC recipe', () => {
     it('includes the bands of the Classification CCDC declares', () => {
         const {component, evidence} = sync({
             recipe: sliceOver(recipeSelection('ccdc-1')),
-            loadedRecipes: {'ccdc-1': ccdc({classification: 'classification-1'}), 'classification-1': classification()},
-            edges: [CLASSIFICATION_EDGE]
+            loadedRecipes: {'ccdc-1': ccdc({classification: 'classification-1'}), 'classification-1': classification()}
         })
 
         component.componentDidMount()
@@ -445,8 +432,7 @@ describe('looking again', () => {
         const source = ccdc({classification: 'classification-1'})
         const {component, rerender, evidence} = sync({
             recipe: sliceOver(recipeSelection('ccdc-1')),
-            loadedRecipes: {'ccdc-1': source, 'classification-1': classification()},
-            edges: [CLASSIFICATION_EDGE]
+            loadedRecipes: {'ccdc-1': source, 'classification-1': classification()}
         })
         component.componentDidMount()
 

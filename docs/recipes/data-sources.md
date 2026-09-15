@@ -521,14 +521,20 @@ Landed:
 - The recipe-type and blanket `sourceRecipe` candidate filter is replaced by `mayProvideSegments`, a declaration
   query. Change Alerts names no pass-through recipe type.
 - Nothing writes a fresh copy of the description any more: the reference panel keeps the selection and its
-  configuration, and the sync keeps only Change Alerts' own monitoring configuration. Copies in saved recipes are
-  still read as the fallback while nothing has been observed, and are never rewritten.
+  configuration. Copies in saved recipes are still read as the fallback while nothing has been observed.
+- Change Alerts has one producer-resolution path. Its observation resolves the producer through the capability
+  declarations; the shared lifecycle owns watching, cancellation and rejection of superseded answers. The
+  observation's `applyAccepted` policy applies monitoring settings in the same action as accepted evidence,
+  comparing with the last successful observation so a failed read cannot reset user edits on recovery. Asset
+  descriptions and monitoring settings come from one metadata response. Directly selected assets retain their
+  existing date-format initialization and correction policy. `ReferenceSync` is removed; `loadSourceRecipe$`
+  remains for BAYTS and Pyeo.
+- Observation completes the selected source's dependencies, so obsolete monitoring settings or a missing mask
+  on the consumer cannot block acquisition. Dependencies of the selected source still participate in closure
+  validation and observation invalidation.
 
 Still to do here:
 
-- `loadSourceRecipe$`'s `sourceRecipe` rule survives for ONE purpose: seeding `model.sources` and `model.options`
-  from the producer when a reference is selected. That is Change Alerts' own monitoring configuration, not a source
-  description, and it is the next thing to move onto the capability.
 - Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
   generic image inputs and Classification/Regression reuse. Every migration needs a stated stopping rule,
   coexistence plan and removal of the superseded local synchronization path.

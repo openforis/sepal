@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {filter, Subject, switchMap, take, takeUntil} from 'rxjs'
+import {filter, map, of, Subject, switchMap, take, takeUntil} from 'rxjs'
 
 import {
     completeRecipeClosure$,
@@ -20,6 +20,8 @@ import {declaredSelections, OBSERVED, sourceKeyOf, UNAVAILABLE} from './sourceEv
 
 const log = getLogger('sourceEvidence')
 
+const EMPTY_GRAPH = {recipes: [], edges: [], diagnostics: []}
+
 let observations = 0
 
 // Keeps a recipe's evidence about its source current while the recipe is open.
@@ -30,10 +32,8 @@ let observations = 0
 // around that call: when to read, what the reading was based on, whether an answer may still be published,
 // and what happens when it cannot be had. Nothing here knows what a source is for.
 //
-// The closure comes from the shared completion boundary, which owns traversal, cycle detection, missing
-// sources, deduplicated loading and its own limits - so there is no second walk of the graph here and no
-// depth number of this component's choosing. An observation reads one declared edge at a time over records
-// that boundary already resolved.
+// Resolve the selected source's closure so obsolete consumer dependencies cannot block a new selection.
+// The shared completion boundary owns traversal, cycle detection, missing sources, loading and limits.
 //
 // WHEN it observes again turns on one idea: an answer is about the sources it was ACTUALLY read from, so one
 // basis records those and every decision is made against it. The basis is captured from the resolved closure
@@ -156,7 +156,8 @@ class _SourceEvidenceSync extends React.Component {
         }
     }
 
-    // What the operation actually read: every record the closure resolved, and every asset its edges named.
+    // What the operation actually read: every record the closure resolved, the asset it was rooted at where
+    // the selection is one, and every asset the resolved edges named.
     // `used` is the record that went into the answer and `seeded` the one the session held when the
     // operation STARTED - both, because a record this operation refreshed is briefly one and then the other,
     // and neither is a change. Reading `seeded` here from the session as it is now would defeat the check:
@@ -164,9 +165,13 @@ class _SourceEvidenceSync extends React.Component {
     // read from, and an answer read from the version before it would publish as current.
     resolvedBasis(graph, recipesById, session) {
         const {recipe} = this.props
-        const assetIds = new Set(graph.edges
-            .filter(({reference}) => reference.type === ASSET)
-            .map(({reference}) => reference.id))
+        const selected = this.sourceReference()
+        const assetIds = new Set([
+            ...(selected.type === ASSET ? [selected.id] : []),
+            ...graph.edges
+                .filter(edge => edge.reference.type === ASSET)
+                .map(edge => edge.reference.id)
+        ])
         return {
             ...this.operationState(),
             dependencies: [
@@ -215,21 +220,38 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     closure$(session) {
-        const {recipe, loadRecipe$, reloadRecipe$} = this.props
-        return completeRecipeClosure$({
-            rootRecipe: recipe,
-            seedRecipesById: this.currentRecords(session),
-            // The session's own reference-counted load, so records the closure completes are visible to the
-            // catalogue this component watches, and are released with the components using them. A record
-            // the catalogue has moved past is read again rather than answered from the cache.
-            loadRecipesById$: createLoadRecipesById$({
-                loadRecipe$: id => isBehind(session, id) ? reloadRecipe$(id) : loadRecipe$(id)
-            }),
-            limits: DEFAULT_RECIPE_CLOSURE_LIMITS
-        }).pipe(
-            filter(({status}) => status === 'COMPLETE'),
-            take(1)
-        )
+        const reference = this.sourceReference()
+        // A directly selected asset has no recipe edges; resolvedBasis tracks its version explicitly.
+        return reference.type === ASSET
+            ? of({graph: EMPTY_GRAPH, recipesById: new Map()})
+            : this.sourceRecord$(reference.id, session).pipe(
+                switchMap(rootRecipe => completeRecipeClosure$({
+                    rootRecipe,
+                    seedRecipesById: this.currentRecords(session),
+                    loadRecipesById$: this.loadRecipesById$(session),
+                    limits: DEFAULT_RECIPE_CLOSURE_LIMITS
+                }).pipe(
+                    filter(({status}) => status === 'COMPLETE'),
+                    take(1)
+                ))
+            )
+    }
+
+    sourceRecord$(id, session) {
+        const seeded = this.currentRecords(session).get(id)
+        return seeded
+            ? of(seeded)
+            : this.loadRecipesById$(session)({ids: [id], concurrency: 1}).pipe(map(([record]) => record))
+    }
+
+    // The session's own reference-counted load, so records the closure completes are visible to the catalogue
+    // this component watches, and are released with the components using them. A record the catalogue has
+    // moved past is read again rather than answered from the cache.
+    loadRecipesById$(session) {
+        const {loadRecipe$, reloadRecipe$} = this.props
+        return createLoadRecipesById$({
+            loadRecipe$: id => isBehind(session, id) ? reloadRecipe$(id) : loadRecipe$(id)
+        })
     }
 
     // Seeded with what the session holds, minus anything the catalogue has moved past: leaving a stale record
@@ -246,14 +268,32 @@ class _SourceEvidenceSync extends React.Component {
         if (!basis || this.outdated(basis)) {
             return
         }
-        recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
-            .set('ui.sourceEvidence', {
-                sourceKey: basis.key,
-                observation: ++observations,
-                ...evidence,
-                ...retainedObservation(recipe, evidence)
-            })
-            .dispatch()
+        const published = {
+            sourceKey: basis.key,
+            observation: ++observations,
+            ...evidence,
+            ...retainedObservation(recipe, evidence)
+        }
+        this.applied(
+            recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
+                .set('ui.sourceEvidence', published),
+            published
+        ).dispatch()
+    }
+
+    // Apply consumer settings atomically with accepted evidence. Failures never seed settings or replace
+    // the successful observation used to detect producer changes.
+    applied(builder, evidence) {
+        const {recipe, observation} = this.props
+        if (evidence.status !== OBSERVED || !observation.applyAccepted) {
+            return builder
+        }
+        return observation
+            .applyAccepted({recipe, evidence, previous: lastObserved(recipe)})
+            .reduce(
+                (applied, {path, value, merge}) => merge ? applied.assign(path, value) : applied.set(path, value),
+                builder
+            )
     }
 }
 
@@ -276,9 +316,13 @@ const retainedObservation = (recipe, evidence) => {
     if (evidence.status === OBSERVED) {
         return {}
     }
-    const previous = recipe?.ui?.sourceEvidence
-    const observed = previous?.status === OBSERVED ? previous : previous?.lastObserved
+    const observed = lastObserved(recipe)
     return observed ? {lastObserved: observed} : {}
+}
+
+const lastObserved = recipe => {
+    const evidence = recipe?.ui?.sourceEvidence
+    return evidence?.status === OBSERVED ? evidence : evidence?.lastObserved
 }
 
 const assetVersion = ({assetVersions}, assetId) =>
@@ -324,6 +368,10 @@ export const SourceEvidenceSync = compose(
 )
 
 SourceEvidenceSync.propTypes = {
-    // {sourceReference: recipe => reference | null, observe$: ({recipe, graph, recipesById}) => Observable}
+    // {
+    //     sourceReference: recipe => reference | null,
+    //     observe$: ({recipe, graph, recipesById}) => Observable,
+    //     applyAccepted?: ({recipe, evidence, previous}) => [{path, value, merge?}]
+    // }
     observation: PropTypes.object.isRequired
 }

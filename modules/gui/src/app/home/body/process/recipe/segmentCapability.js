@@ -7,6 +7,7 @@ import {
     segmentProviderStep,
     UNSUPPORTED_SEGMENT_SOURCE
 } from '#sepal/recipe/capability/ccdcSegments'
+import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {ASSET} from '#sepal/recipe/source/reference'
 
 import {getRecipeType} from '../recipeTypeRegistry'
@@ -30,9 +31,12 @@ export class SegmentSourceError extends Error {
 
 export const describeSegmentSource$ = (reference, {graph, recipesById}) => {
     const producer = resolveSegmentProducer(reference, recipesById)
-    if (producer.error) {
-        return throwError(() => producer.error)
-    }
+    return producer.error
+        ? throwError(() => producer.error)
+        : describeProducer$(producer, {graph, recipesById})
+}
+
+export const describeProducer$ = (producer, {graph, recipesById}) => {
     if (producer.assetId !== undefined) {
         return describeSegmentsAsset$(producer.assetId)
     }
@@ -45,9 +49,15 @@ export const describeSegmentSource$ = (reference, {graph, recipesById}) => {
         ))
 }
 
+// Null for a producer that computes its segments instead of reading an asset.
+export const segmentsAssetOf = producer =>
+    producer.assetId !== undefined
+        ? producer.assetId
+        : recipeType(producer.record?.type)?.segmentSource?.segmentsAsset?.(producer.record.model) ?? null
+
 // Which recipe or asset produces the segments this reference stands for, over records already resolved.
 // Cycles cannot be followed here: the closure that produced these records rejected them already.
-const resolveSegmentProducer = (reference, recipesById) => {
+export const resolveSegmentProducer = (reference, recipesById) => {
     const seen = new Set()
     let current = reference
     while (current) {
