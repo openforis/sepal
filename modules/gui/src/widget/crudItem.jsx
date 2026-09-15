@@ -51,7 +51,7 @@ class _CrudItem extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconDimmed, iconTooltip, tooltipPlacement} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconClassName, iconDimmed, iconTooltip, tooltipPlacement} = this.props
         return icon
             ? (
                 <div className={styles.icon}>
@@ -60,6 +60,7 @@ class _CrudItem extends React.Component {
                         size={iconSize}
                         type={iconType}
                         variant={iconVariant}
+                        className={iconClassName}
                         attributes={iconAttributes}
                         dimmed={iconDimmed}
                         tooltip={iconTooltip}
@@ -328,6 +329,7 @@ CrudItem.propTypes = {
     highlightTitle: PropTypes.any,
     icon: PropTypes.any,
     iconAttributes: PropTypes.any,
+    iconClassName: PropTypes.string,
     iconDimmed: PropTypes.any,
     iconSize: PropTypes.any,
     iconTooltip: PropTypes.any,

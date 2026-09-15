@@ -1,0 +1,33 @@
+.separator {
+    opacity: .4;
+    padding: 0 .35rem;
+    align-self: center;
+}
+
+.link,
+.current {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    align-self: center;
+    white-space: nowrap;
+    font: inherit;
+    color: inherit;
+    padding: 0;
+}
+
+.link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: .7;
+}
+
+.link:hover {
+    opacity: 1;
+}
+
+.label {
+    text-decoration: underline dotted;
+    text-underline-offset: .25em;
+}
