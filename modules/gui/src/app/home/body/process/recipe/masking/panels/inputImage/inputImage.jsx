@@ -155,6 +155,7 @@ export const valuesToModel = values => {
 }
 
 InputImage.propTypes = {
+    filter: PropTypes.func,
     form: PropTypes.object.isRequired,
     inputs: PropTypes.object.isRequired,
     recipeActionBuilder: PropTypes.any.isRequired,

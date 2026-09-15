@@ -98,35 +98,39 @@ class _RecipeInput extends React.Component {
     }
 
     getOptions() {
-        const {projectId, projects, recipes, filter} = this.props
+        const groups = _.groupBy(this.offeredRecipes(), 'projectId')
+        return this.orderedProjects(Object.keys(groups))
+            .map(({id, project}) => ({
+                // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
+                // rather than by name: groups sharing a heading would otherwise be one group, and leaving
+                // the view one belongs to would leave its heading behind.
+                key: `project:${id}`,
+                label: project ? project.name : msg('process.project.noProjectOption'),
+                filterOptions: isMatchingGroup => !isMatchingGroup,
+                options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
+            }))
+    }
+
+    // ALL widens which projects are offered, never what the caller can use.
+    offeredRecipes() {
+        const {projectId, recipes, filter} = this.props
         const {all} = this.state
-        const filteredRecipes = recipes
+        return recipes
             .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
             .filter(recipe => !this.isOwnRecipe(recipe.id))
             .filter(recipe => {
-                const {projectId: p, type} = recipe
-                const recipeType = getRecipeType(type)
-                return all || (p === projectId || (!p && !projectId))
-                   && (filter && recipeType ? filter(recipeType, recipe) : true)
+                const recipeType = getRecipeType(recipe.type)
+                return filter && recipeType ? filter(recipeType, recipe) : true
             })
-        const groups = _.groupBy(filteredRecipes, 'projectId')
-        const options = Object.keys(groups)
-            .map(projectId => {
-                const project = projects.find(({id}) => id === projectId)
-                const group = project
-                    ? project.name
-                    : msg('process.project.noProjectOption')
-                return {
-                    label: group,
-                    filterOptions: isMatchingGroup => !isMatchingGroup,
-                    options: groups[projectId]
-                        .map(recipe => ({
-                            value: recipe.id,
-                            label: recipe.name
-                        }))
-                }
-            })
-        return _.sortBy(options, 'label')
+            .filter(({projectId: p}) => all || p === projectId || (!p && !projectId))
+    }
+
+    orderedProjects(ids) {
+        const {projects} = this.props
+        return _.sortBy(
+            ids.map(id => ({id, project: projects.find(project => project.id === id)})),
+            [({project}) => project ? 1 : 0, ({project}) => project?.name?.toLowerCase(), 'id']
+        )
     }
 
     // A recipe saved before this rule can still name itself. The value is left exactly as it was saved -
