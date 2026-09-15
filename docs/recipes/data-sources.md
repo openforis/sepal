@@ -541,6 +541,8 @@ Still to do here:
 
 ## Deliberately deferred
 
+- Explore [map inspection and capability-driven layer actions](map-inspection.md), including charts for added
+  layers. Discussion only; scope and scheduling undecided.
 - Persistent source metadata across page reloads.
 - A distributed GEE metadata cache.
 - Fine-grained data/schema/presentation fingerprints.
