@@ -232,6 +232,16 @@ describe('POST /project/:id', () => {
         })
         expect(response.body).toEqual(service.recipes)
     })
+
+    test('moves to the reserved root id, translating it to no project at all', async () => {
+        const moved = [A_RECIPE_ID]
+
+        await POST('/project/none', {json: moved})
+
+        expect(service.moveRecipesCommand).toEqual({
+            principal: authenticatedUser, projectId: null, recipeIds: moved
+        })
+    })
 })
 
 describe('POST /project', () => {
@@ -243,6 +253,36 @@ describe('POST /project', () => {
 
         expect(service.saveProjectCommand).toEqual({principal: authenticatedUser, project})
         expect(response.body).toEqual(service.projects)
+    })
+
+    test('passes the parent through, turning an empty parent into no parent at all', async () => {
+        const project = aProject({parentId: ''})
+
+        await POST('/project', {json: project})
+
+        expect(service.saveProjectCommand.project.parentId).toBeNull()
+    })
+
+    test('refuses to save a project under the reserved root id', async () => {
+        const project = aProject({id: 'none'})
+
+        const response = await POST('/project', {json: project})
+
+        expect(response.status).toBe(400)
+        expect(response.body).toEqual({code: 'PROJECT_ID_RESERVED'})
+        expect(service.reached).toBe(false)
+    })
+
+    test.each([
+        {outcome: 'cycle', code: 'PROJECT_CYCLE'},
+        {outcome: 'parentNotFound', code: 'PROJECT_PARENT_NOT_FOUND'}
+    ])('answers 409 $code when the service reports $outcome', async ({outcome, code}) => {
+        service.saveProjectOutcome = {outcome}
+
+        const response = await POST('/project', {json: aProject()})
+
+        expect(response.status).toBe(409)
+        expect(response.body).toEqual({code})
     })
 })
 
@@ -256,6 +296,15 @@ describe('DELETE /project/:id', () => {
             principal: authenticatedUser, projectId: A_PROJECT_ID
         })
         expect(response.body).toEqual(service.projects)
+    })
+
+    test('answers 409 with the counts when the project still holds something', async () => {
+        service.removeProjectOutcome = {outcome: 'notEmpty', folders: 2, recipes: 5}
+
+        const response = await DELETE(`/project/${A_PROJECT_ID}`)
+
+        expect(response.status).toBe(409)
+        expect(response.body).toEqual({code: 'PROJECT_NOT_EMPTY', folders: 2, recipes: 5})
     })
 })
 
@@ -319,6 +368,8 @@ function recipeServiceSpy() {
         recipes: [],
         projects: [],
         saveOutcome: {outcome: 'saved', revision: 1},
+        saveProjectOutcome: {outcome: 'saved', projects: []},
+        removeProjectOutcome: {outcome: 'removed'},
 
         reset: () => {
             spy.loadRecipeCommand = null
@@ -334,6 +385,8 @@ function recipeServiceSpy() {
             spy.recipes = []
             spy.projects = []
             spy.saveOutcome = {outcome: 'saved', revision: 1}
+            spy.saveProjectOutcome = {outcome: 'saved', projects: []}
+            spy.removeProjectOutcome = {outcome: 'removed'}
         },
 
         loadRecipe: async command => {
@@ -369,12 +422,16 @@ function recipeServiceSpy() {
         saveProject: async command => {
             spy.saveProjectCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.saveProjectOutcome.outcome === 'saved'
+                ? {outcome: 'saved', projects: spy.projects}
+                : spy.saveProjectOutcome
         },
         removeProject: async command => {
             spy.removeProjectCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.removeProjectOutcome.outcome === 'removed'
+                ? {outcome: 'removed', projects: spy.projects}
+                : spy.removeProjectOutcome
         }
     }
     return spy
@@ -392,7 +449,7 @@ const aRecipeSummary = (over = {}) => ({
 })
 
 const aProject = (over = {}) => ({
-    id: A_PROJECT_ID, name: 'A project',
+    id: A_PROJECT_ID, name: 'A project', parentId: null,
     defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
 })
 
