@@ -18,6 +18,7 @@ import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions, toDates} from '../changeAlertsRecipe'
+import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescriptionGeneration} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -27,12 +28,15 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: selectFrom(recipe, 'model.reference.dateFormat'),
+    dateFormat: dateFormatOf(recipe),
+    // Samples are interpreted with the description they were taken under, so a newly accepted one
+    // supersedes them - and the description lives in ui, which recipe.model cannot see.
+    descriptionGeneration: segmentDescriptionGeneration(recipe),
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     band: selectFrom(recipe, 'model.sources.band'),
-    bands: selectFrom(recipe, 'model.reference.bands'),
-    baseBands: selectFrom(recipe, 'model.reference.baseBands'),
+    bands: segmentBandsOf(recipe),
+    baseBands: baseBandsOf(recipe),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
     extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),
@@ -151,14 +155,14 @@ class _ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {band, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, descriptionGeneration, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
             selectedBand.set(band)
 
         if (latLng && selectedBand.value && !_.isEqual(
-            [recipe.model, latLng, selectedBand.value],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
+            [recipe.model, latLng, selectedBand.value, descriptionGeneration],
+            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.descriptionGeneration])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})

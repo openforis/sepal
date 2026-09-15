@@ -1,21 +1,17 @@
-import {map, throwError} from 'rxjs'
+import {map} from 'rxjs'
 
-import {ASSET} from '#sepal/recipe/source/reference'
-
-import {getRecipeType} from '../../recipeTypeRegistry'
-import {describeSegmentsAsset$} from '../ccdc/segmentsAsset'
+import {describeSegmentSource$} from '../segmentCapability'
 import {withKnownIdentities} from '../visualizationMatching'
 import {knownTemplates, selectedSource} from './sliceEvidence'
 
 // What CCDC Slice observes about the source it slices: the description of the segments that source
 // produces. Read by the shared evidence lifecycle, which decides when.
 //
-// Slice asks the source to describe itself. A recipe source is dispatched through the recipe type registry
-// to the provider its own type registers, so nothing here recognises producer types or reaches into their
-// models; a bare asset is described by the segments-asset adapter.
+// Slice asks for the CCDC_SEGMENTS capability of the source it selected. Which recipe actually produces
+// those segments, and whether the selection stands for one at all, is the capability's to answer.
 
 export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
-    describeSource$(selectedSource(recipe), {graph, recipesById}).pipe(
+    describeSegmentSource$(selectedSource(recipe), {graph, recipesById}).pipe(
         map(segments => ({
             segments: {
                 ...segments,
@@ -30,19 +26,4 @@ export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
 export const sliceObservation = {
     sourceReference: selectedSource,
     observe$: resolveEvidence$
-}
-
-const describeSource$ = (reference, {graph, recipesById}) => {
-    if (reference.type === ASSET) {
-        return describeSegmentsAsset$(reference.id)
-    }
-    const record = recipesById.get(reference.id)
-    if (!record) {
-        return throwError(() => new Error(`Source recipe ${reference.id} was not resolved`))
-    }
-    const describe$ = getRecipeType(record.type)?.describeSegments$
-    if (!describe$) {
-        return throwError(() => new Error(`A ${record.type} recipe does not produce CCDC segments`))
-    }
-    return describe$({recipe: record, graph, recipesById})
 }

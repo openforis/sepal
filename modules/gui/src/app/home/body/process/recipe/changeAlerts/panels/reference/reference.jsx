@@ -22,13 +22,7 @@ const fields = {
         .notBlank('process.changeAlerts.panel.reference.form.recipe.required'),
     dateFormat: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
-    bands: new Form.Field(),
-    baseBands: new Form.Field(),
-    segmentBands: new Form.Field(),
-    startDate: new Form.Field(),
-    endDate: new Form.Field(),
-    visualizations: new Form.Field(),
+        .notBlank()
 }
 
 class _Reference extends React.Component {
@@ -72,16 +66,10 @@ class _Reference extends React.Component {
         )
     }
 }
-const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+const modelToValues = ({id, type, dateFormat}) => {
     const values = {
         section: type || 'SELECTION',
-        dateFormat,
-        bands,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        dateFormat
     }
     switch (type) {
         case 'RECIPE_REF':
@@ -93,16 +81,12 @@ const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, st
     }
 }
 
-const valuesToModel = ({type, section, asset, recipe, bands, dateFormat, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+// The selection and the configuration made about it. The description of what it produces is the source's,
+// read when it is needed, and is not written here.
+const valuesToModel = ({type, section, asset, recipe, dateFormat}) => {
     const model = {
         type: section,
-        bands,
-        dateFormat: type === 'RECIPE_REF' ? null : dateFormat,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        dateFormat: type === 'RECIPE_REF' ? null : dateFormat
     }
     switch (section) {
         case 'RECIPE_REF':

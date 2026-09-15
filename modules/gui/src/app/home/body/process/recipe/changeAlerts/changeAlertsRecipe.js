@@ -8,6 +8,7 @@ import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/
 import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {selectFrom} from '~/stateUtils'
 
+import {segmentVisualizations} from './referenceEvidence'
 import {visualizationOptions} from './visualizations'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -117,7 +118,7 @@ export const getAllVisualizations = recipe => {
         ? [
             ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
             ...changesVisualizations,
-            ...selectFrom(recipe, 'model.reference.visualizations') || []
+            ...segmentVisualizations(recipe)
         ]
         : []
 }

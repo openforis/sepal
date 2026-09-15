@@ -503,18 +503,32 @@ This is the next recipe-model extension after the repository-consistency work. S
 the information Change Alerts consumes and consolidate the existing Slice providers into it. Do not add generic
 section validation, discovery infrastructure or execution bundles to this packet.
 
-- Make Change Alerts the first `CCDC_SEGMENTS` consumer: retain the selected outer execution reference, obtain CCDC
-  semantics through the primary lineage, and reject an absent capability without entering algorithm code.
-- Landed ahead of that migration, as a bug fix rather than a step towards it: selecting a wrapper recipe no longer
-  replaces the reference with the producer found underneath it, so a Masking over CCDC executes its mask. The
-  producer is still resolved through `loadSourceRecipe$` and still supplies the copied description beside the
-  reference; what changed is that the description is merged into the selection instead of replacing it. The copies,
-  the terminal-reference discovery and the recipe-type candidate filter are all still there for the migration to
-  remove.
-- Replace its recipe-type and blanket `sourceRecipe` candidate filter with the generic per-source capability query;
-  Change Alerts declares only that it requires `CCDC_SEGMENTS` and has no knowledge of pass-through recipe types.
-- Remove its terminal-reference replacement and copied CCDC metadata path only when the capability-backed path is
-  complete, and retain typed backend validation as a safety boundary rather than the source of semantics.
+Landed:
+
+- `CCDC_SEGMENTS` is a requestable capability. `lib/js/shared/src/recipe/capability/ccdcSegments.js` owns the rule
+  and nothing else: given a record it answers `PRODUCES` (with the type's own `segmentSource` declaration),
+  `PRESERVES` (with the input filling the declared preserving role), or a controlled `UNSUPPORTED`/`MALFORMED`
+  outcome. It is pure, recognises no recipe type by name and follows no mask, fill or AOI. Execution walks it as it
+  loads records; the GUI walks it over the records the closure already resolved. There is one rule and two
+  adapters, not two resolvers.
+- Change Alerts is its first consumer. It mounts the shared source-evidence lifecycle with its own observation, and
+  its panels, pixel chart and visualizations read the CURRENT description through `referenceEvidence.js` instead of
+  a copy beside the reference. The selected reference is unchanged throughout selection, refresh, reopening and
+  execution: a Masking over CCDC remains what runs while CCDC supplies the semantics.
+- Slice's local description-resolution path is gone; `sliceObservation` asks the same capability, which also gives
+  Slice wrapper sources it did not resolve before. The asset description has one implementation
+  (`ccdc/segmentsAsset.js`); Change Alerts' duplicate `toAssetReference` is removed.
+- The recipe-type and blanket `sourceRecipe` candidate filter is replaced by `mayProvideSegments`, a declaration
+  query. Change Alerts names no pass-through recipe type.
+- Nothing writes a fresh copy of the description any more: the reference panel keeps the selection and its
+  configuration, and the sync keeps only Change Alerts' own monitoring configuration. Copies in saved recipes are
+  still read as the fallback while nothing has been observed, and are never rewritten.
+
+Still to do here:
+
+- `loadSourceRecipe$`'s `sourceRecipe` rule survives for ONE purpose: seeding `model.sources` and `model.options`
+  from the producer when a reference is selected. That is Change Alerts' own monitoring configuration, not a source
+  description, and it is the next thing to move onto the capability.
 - Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
   generic image inputs and Classification/Regression reuse. Every migration needs a stated stopping rule,
   coexistence plan and removal of the superseded local synchronization path.

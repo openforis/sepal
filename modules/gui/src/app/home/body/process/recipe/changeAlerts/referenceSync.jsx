@@ -5,40 +5,45 @@ import {Subject, takeUntil} from 'rxjs'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {getAvailableBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
 import {recipeAccess} from '../../recipeAccess'
 import {withRecipe} from '../../recipeContext'
-import {getAllVisualizations} from '../ccdc/ccdcRecipe'
-import {toAssetReference} from './panels/reference/assetSection'
+
+// Change Alerts' own monitoring configuration, kept in step with the producer it was seeded from.
+//
+// The segment description is not written here: it is the source's, and the shared evidence lifecycle holds
+// the current one. What this owns is `model.sources` and `model.options` - the collection Change Alerts
+// monitors against and the corrections it applies - which are seeded from the producer and editable
+// afterwards, and which follow the producer while it changes under the same id.
+//
+// Which producer that is is resolved once per selection and remembered in `ui`, so the producer's record can
+// be watched. The selected reference is never replaced by it.
 
 const mapRecipeToProps = (recipe, ownProps) => ({
     ...ownProps,
-    referenceSourceId: selectFrom(recipe, 'ui.reference.sourceId'),
-    referenceSourceType: selectFrom(recipe, 'ui.reference.sourceType'),
+    reference: selectFrom(recipe, 'model.reference'),
+    producerId: selectFrom(recipe, 'ui.reference.sourceId'),
+    producerType: selectFrom(recipe, 'ui.reference.sourceType'),
     recipeId: recipe.id
 })
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId, referenceSourceId, referenceSourceType} = ownProps
-    const reference = referenceSourceType === 'ASSET'
-        ? {type: 'ASSET', id: referenceSourceId}
-        : referenceSourceId
-            ? selectFrom(state, ['process.loadedRecipes', referenceSourceId])
-            : selectFrom(state, ['process.loadedRecipes', recipeId, 'model.reference'])
-    return {reference}
-}
+const mapStateToProps = (state, {producerId, producerType}) => ({
+    producer: producerType === 'ASSET'
+        ? {type: 'ASSET', id: producerId}
+        : producerId
+            ? selectFrom(state, ['process.loadedRecipes', producerId])
+            : null
+})
 
 class _ReferenceSync extends React.Component {
     cancel$ = new Subject()
 
     shouldComponentUpdate(nextProps) {
-        const {reference} = this.props
-        const {reference: nextReference} = nextProps
-        return !_.isEqual(reference, nextReference)
+        const {reference, producer} = this.props
+        return !_.isEqual(reference, nextProps.reference) || !_.isEqual(producer, nextProps.producer)
     }
 
     render() {
@@ -46,130 +51,100 @@ class _ReferenceSync extends React.Component {
     }
 
     componentDidMount() {
-        const {reference} = this.props
-        this.fetchRecipe(reference)
+        this.resolveProducer()
+        this.applyConfiguration()
     }
 
     componentDidUpdate(prevProps) {
-        const {reference} = this.props
-        this.fetchRecipe(reference, prevProps.reference)
+        this.resolveProducer(prevProps.reference)
+        this.applyConfiguration(prevProps)
     }
 
-    fetchRecipe(recipe, prevReference) {
-        const {stream, loadSourceRecipe$, recipeActionBuilder} = this.props
-        const type = recipe.type
-        if (!type) {
+    componentWillUnmount() {
+        this.cancel$.next()
+    }
+
+    // Which recipe or asset the selection stands for. A wrapper leads to whatever it wraps; the selection
+    // itself is left alone.
+    resolveProducer(prevReference = {}) {
+        const {reference = {}, stream, loadSourceRecipe$, recipeActionBuilder} = this.props
+        if (reference.type !== 'RECIPE_REF' || reference.id === prevReference.id) {
             return
         }
-        if (type === 'RECIPE_REF') {
-            !stream('FETCH_REFERENCE').active && stream('FETCH_REFERENCE',
-                loadSourceRecipe$(recipe.id),
-                ccdcRecipe => {
-                    const {id, type} = ccdcRecipe
-                    recipeActionBuilder('SET_REFERENCE_SOURCE_ID', {id, type})
-                        .set('ui.reference.sourceId', id)
-                        .set('ui.reference.sourceType', type)
-                        .dispatch()
-                },
-                error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
-            )
-        } else if (type === 'ASSET') {
-            this.initAsset(prevReference)
-        } else {
-            this.updateRecipeReference({ccdcRecipe: recipe})
+        if (stream('RESOLVE_PRODUCER').active) {
+            return
+        }
+        stream('RESOLVE_PRODUCER',
+            loadSourceRecipe$(reference.id).pipe(takeUntil(this.cancel$)),
+            ({id, type}) => recipeActionBuilder('SET_REFERENCE_SOURCE_ID', {id, type})
+                .set('ui.reference.sourceId', id)
+                .set('ui.reference.sourceType', type)
+                .dispatch(),
+            error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
+        )
+    }
+
+    // A directly selected asset is its own producer, and is read when the SELECTION changes - a correction
+    // to the date representation of the asset already selected is the user's answer, not a reason to ask
+    // the asset again. A recipe selection waits for the producer it resolved to, and follows that record
+    // while it changes.
+    applyConfiguration({reference: prevReference = {}, producer: prevProducer} = {}) {
+        const {reference = {}, producer} = this.props
+        if (reference.type === 'ASSET') {
+            if (reference.id !== prevReference.id) {
+                this.fromAsset(reference.id, {configureReference: true})
+            }
+        } else if (producer && !_.isEqual(producer, prevProducer)) {
+            producer.type === 'ASSET'
+                ? this.fromAsset(producer.id, {configureReference: false})
+                : this.fromRecipe(producer)
         }
     }
 
-    initAsset(prevReference = {}) {
-        const {stream, reference = {}} = this.props
-        if ((reference.id && reference.id === prevReference.id) || stream('LOAD').active) {
+    fromRecipe(producer) {
+        const {recipeActionBuilder} = this.props
+        if (!producer.model?.sources) {
             return
         }
-        stream('LOAD',
-            api.gee.assetMetadata$({asset: reference.id}).pipe(
-                takeUntil(this.cancel$)
-            ),
-            metadata => this.updateAssetReference(metadata, reference),
+        recipeActionBuilder('UPDATE_MONITORING_CONFIGURATION', {id: producer.id})
+            .assign('model.sources', producer.model.sources)
+            .assign('model.options', producer.model.options)
+            .dispatch()
+    }
+
+    // A segments asset carries the configuration it was exported with. Whether it was selected directly or
+    // reached through a wrapper, it is what the monitoring collection is seeded from.
+    fromAsset(assetId, {configureReference}) {
+        const {stream} = this.props
+        if (!assetId || stream('LOAD_ASSET').active) {
+            return
+        }
+        stream('LOAD_ASSET',
+            api.gee.assetMetadata$({asset: assetId}).pipe(takeUntil(this.cancel$)),
+            metadata => this.fromAssetMetadata(metadata, {configureReference}),
             error => Notifications.error({message: msg('process.changeAlerts.reference.asset.loadError'), error})
         )
     }
 
-    updateAssetReference(metadata, reference) {
-        const {recipeActionBuilder} = this.props
-        const assetDateFormat = metadata.properties.dateFormat
-        const dateFormat = assetDateFormat === undefined ? reference.dateFormat : assetDateFormat
-        const referenceDetails = {
-            ...toAssetReference(metadata.bandNames, metadata.properties),
-            dateFormat
-        }
-        const builder = recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
-            .assign('model.reference', referenceDetails)
-        
-        const assignOptions = builder => {
-            const assetOptionsString = metadata?.properties?.recipe_options
-            if (assetOptionsString) {
-                const assetOptions = JSON.parse(assetOptionsString)
-                return builder
-                    .assign('model.options', assetOptions)
-            } else {
-                return builder
-            }
-        }
-        const assignSources = builder => {
-            const assetSourcesString = metadata?.properties?.recipe_sources
-            if (assetSourcesString) {
-                return builder
-                    .assign('model.sources', JSON.parse(assetSourcesString))
-            } else {
-                return builder
-            }
-        }
-
-        assignSources(assignOptions(builder)).dispatch()
-    }
-
-    // The producer describes the segments; it does not become the reference. What was selected is what
-    // Change Alerts executes - a Masking recipe over CCDC has to run its mask - so only the description is
-    // written here, merged into the selection rather than replacing it. `assign` names every derived field,
-    // so nothing a previous source left behind survives.
-    updateRecipeReference({ccdcRecipe}) {
-        const {reference, recipeActionBuilder} = this.props
-        const nextReference = this.recipeDescription({ccdcRecipe})
-        if (!_.isEqual(reference, nextReference)) {
-            recipeActionBuilder('UPDATE_REFERENCE', {reference})
-                .assign('model.sources', ccdcRecipe.model.sources)
-                .assign('model.options', ccdcRecipe.model.options)
-                .assign('model.reference', nextReference)
-                .dispatch()
-        }
-    }
-
-    recipeDescription({ccdcRecipe}) {
-        const corrections = ccdcRecipe.model.options.corrections
-        const baseBands = getAvailableBands({
-            dataSets: Object.values(ccdcRecipe.model.sources.dataSets).flat(),
-            corrections
-        }).map(name => ({
-            name,
-            bandTypes: ['value', 'rmse', 'magnitude', 'intercept', 'slope',
-                'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
-        }))
-        const segmentBands = [{name: 'tStart'}, {name: 'tEnd'}, {name: 'tBreak'}, {name: 'numObs'}, {name: 'changeProb'}]
-        const bands = [
-            ...baseBands.map(({name, bandTypes}) => bandTypes.map(bandType => `${name}_${bandType === 'value' ? 'coefs' : bandType}`)),
-            segmentBands.map(({name}) => name)
-        ].flat()
-        return {
-            bands,
-            baseBands,
-            segmentBands,
-            dateFormat: ccdcRecipe.model.ccdcOptions.dateFormat,
-            startDate: ccdcRecipe.model.dates.startDate,
-            endDate: ccdcRecipe.model.dates.endDate,
-            visualizations: getAllVisualizations(ccdcRecipe)
-        }
+    fromAssetMetadata(metadata, {configureReference}) {
+        const {reference = {}, recipeActionBuilder} = this.props
+        const builder = recipeActionBuilder('UPDATE_MONITORING_CONFIGURATION', {})
+        // A directly selected asset's date representation is the user's, prefilled from the asset.
+        const withReference = configureReference
+            ? builder.set('model.reference.dateFormat',
+                metadata.properties.dateFormat === undefined
+                    ? reference.dateFormat
+                    : metadata.properties.dateFormat)
+            : builder
+        const options = parsed(metadata?.properties?.recipe_options)
+        const sources = parsed(metadata?.properties?.recipe_sources)
+        const withOptions = options ? withReference.assign('model.options', options) : withReference
+        const withSources = sources ? withOptions.assign('model.sources', sources) : withOptions
+        withSources.dispatch()
     }
 }
+
+const parsed = value => value ? JSON.parse(value) : null
 
 export const ReferenceSync = compose(
     _ReferenceSync,

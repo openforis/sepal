@@ -9,9 +9,11 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
+import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {getAvailableBands} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
+import {changeAlertsObservation} from './referenceObservation'
 import {ReferenceSync} from './referenceSync'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -35,6 +37,7 @@ class _ChangeAlerts extends React.Component {
                 <ChangeAlertsToolbar/>
                 <Aoi value={reference.type && reference}/>
                 <ReferenceSync/>
+                <SourceEvidenceSync observation={changeAlertsObservation}/>
             </Map>
         )
     }

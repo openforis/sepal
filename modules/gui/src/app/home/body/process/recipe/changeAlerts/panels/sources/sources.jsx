@@ -17,6 +17,7 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {baseBandsOf, segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
 const fields = {
@@ -43,8 +44,8 @@ const mapStateToProps = () => {
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
-    bands: selectFrom(recipe, 'model.reference.bands'),
-    baseBands: selectFrom(recipe, 'model.reference.baseBands'),
+    bands: segmentBandsOf(recipe),
+    baseBands: baseBandsOf(recipe),
     corrections: selectFrom(recipe, 'model.options.corrections')
 })
 

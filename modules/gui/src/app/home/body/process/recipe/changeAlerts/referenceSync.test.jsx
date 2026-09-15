@@ -9,9 +9,9 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 
-// Which reference Change Alerts executes, and which producer it is initialized from. The two are not the
-// same thing: a Masking recipe over CCDC is what must run, while the CCDC underneath it is what describes
-// the segments.
+// Which reference Change Alerts executes, and which producer its monitoring configuration is initialized
+// from. The two are not the same thing: a Masking recipe over CCDC is what must run, while the CCDC
+// underneath it is what its collection and corrections are seeded from.
 //
 // Synchronization is driven the way the application drives it - the component connected to a real store,
 // dispatching through the real action builder - so what is observed is the recipe the store ends up
@@ -27,7 +27,9 @@ vi.mock('../ccdc/ccdcRecipe', () => ({getAllVisualizations: recipe => recipe.mod
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
     getRecipeType: type => type === 'MASKING'
         ? {sourceRecipe: recipe => recipe.model.imageToMask}
-        : {}
+        : type === 'ASSET_MOSAIC'
+            ? {sourceRecipe: recipe => ({type: 'ASSET', id: recipe.model.assetDetails.assetId})}
+            : {}
 }))
 
 const {ReferenceSync} = await import('./referenceSync')
@@ -38,6 +40,8 @@ const ALERTS = 'alerts-1'
 const MASKING = 'masking-1'
 const CCDC = 'ccdc-1'
 const SEGMENTS_ASSET = 'users/x/segments'
+const WRAPPED_ASSET = 'masking-over-asset'
+const ASSET_MOSAIC = 'asset-mosaic-1'
 
 let root, container, store
 
@@ -60,22 +64,19 @@ describe('selecting a recipe as the reference', () => {
         expect(reference().type).toBe('RECIPE_REF')
     })
 
-    it('describes the segments from the producer underneath it', () => {
-        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
-
-        expect(reference().dateFormat).toBe(1)
-        expect(reference().startDate).toBe('2015-01-01')
-        expect(reference().endDate).toBe('2021-01-01')
-        expect(reference().baseBands.map(({name}) => name)).toEqual(['red', 'nir'])
-        expect(reference().bands).toContain('red_coefs')
-        expect(reference().visualizations).toEqual([{id: 'v-red'}])
-    })
-
     it('keeps a directly selected CCDC recipe as the reference', () => {
         sync({selection: {type: 'RECIPE_REF', id: CCDC}})
 
         expect(reference().id).toBe(CCDC)
-        expect(reference().dateFormat).toBe(1)
+        expect(reference().type).toBe('RECIPE_REF')
+    })
+
+    // The description of what the source produces is the source's, read when it is needed. Nothing writes
+    // a copy of it beside the reference any more.
+    it('writes no description of the source beside the reference', () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+
+        expect(reference()).toEqual({type: 'RECIPE_REF', id: MASKING})
     })
 
     // The producer supplies the initial datasets; the band, dataset type and cloud threshold are the user's.
@@ -90,6 +91,39 @@ describe('selecting a recipe as the reference', () => {
             cloudPercentageThreshold: 42,
             dataSets: {LANDSAT: ['RED', 'NIR']}
         })
+    })
+})
+
+describe('the producer of a selected recipe', () => {
+    // The monitoring configuration follows the producer while it changes under the same id; the segment
+    // description it is consistent with is read from the same record.
+    it('supplies refreshed datasets and corrections when it changes', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+
+        await update(CCDC, {
+            sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}},
+            options: {corrections: []}
+        })
+
+        expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(alertsRecipe().model.options).toEqual({corrections: []})
+    })
+
+    // A wrapper leading to a segments asset has no recipe model to seed from; the asset carries what it
+    // was exported with.
+    it('is the asset a wrapper leads to, whose exported configuration seeds monitoring', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({
+            dateFormat: 2,
+            recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}}),
+            recipe_options: JSON.stringify({corrections: ['SPECKLE']})
+        })))
+
+        sync({selection: {type: 'RECIPE_REF', id: WRAPPED_ASSET}})
+        await settled()
+
+        expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(alertsRecipe().model.options).toEqual({corrections: ['SPECKLE']})
+        expect(reference()).toEqual({type: 'RECIPE_REF', id: WRAPPED_ASSET})
     })
 })
 
@@ -110,6 +144,19 @@ describe('selecting a segments asset as the reference', () => {
         expect(reference().dateFormat).toBe(0)
     })
 
+    // A correction the user applied to the asset already selected is their answer; asking the asset again
+    // would put its own property straight back.
+    it('keeps a correction applied to the asset already selected', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({dateFormat: 2})))
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        expect(reference().dateFormat).toBe(2)
+
+        await update(ALERTS, {reference: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 0}})
+
+        expect(reference().dateFormat).toBe(0)
+    })
+
     it('keeps what was configured beside the reference when the asset states none', () => {
         assetMetadata$.mockReturnValue(of(assetMetadata({})))
 
@@ -118,6 +165,25 @@ describe('selecting a segments asset as the reference', () => {
         expect(reference().dateFormat).toBe(1)
     })
 })
+
+const settled = () => act(async () => {})
+
+const update = (id, model) => act(async () => store.dispatch({
+    type: 'UPDATE_RECORD',
+    reduce: state => ({
+        ...state,
+        process: {
+            ...state.process,
+            loadedRecipes: {
+                ...state.process.loadedRecipes,
+                [id]: {
+                    ...state.process.loadedRecipes[id],
+                    model: {...state.process.loadedRecipes[id].model, ...model}
+                }
+            }
+        }
+    })
+}))
 
 const alertsRecipe = () => selectFrom(store.getState(), ['process.loadedRecipes', ALERTS])
 
@@ -139,7 +205,17 @@ const sync = ({selection, sources = {}}) => {
                     type: 'MASKING',
                     model: {imageToMask: {type: 'RECIPE_REF', id: CCDC}}
                 },
-                [CCDC]: ccdcRecipe()
+                [CCDC]: ccdcRecipe(),
+                [WRAPPED_ASSET]: {
+                    id: WRAPPED_ASSET,
+                    type: 'MASKING',
+                    model: {imageToMask: {type: 'RECIPE_REF', id: ASSET_MOSAIC}}
+                },
+                [ASSET_MOSAIC]: {
+                    id: ASSET_MOSAIC,
+                    type: 'ASSET_MOSAIC',
+                    model: {assetDetails: {assetId: SEGMENTS_ASSET}}
+                }
             },
             recipes: [],
             projects: [],

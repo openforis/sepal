@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
 
+import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {compose} from '~/compose'
 import {RecipeInput} from '~/widget/recipeInput'
@@ -16,9 +17,7 @@ class _RecipeSection extends React.Component {
         const {inputs: {recipe}} = this.props
         return (
             <RecipeInput
-                filter={type => {
-                    return type.id === 'CCDC' || type.sourceRecipe // TODO: Include optional sourceType on recipes (store as column in db). Default to type
-                }}
+                filter={type => mayProvideSegments(type.id)}
                 input={recipe}
                 autoFocus
                 errorMessage
