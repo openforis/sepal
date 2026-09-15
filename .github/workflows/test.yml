@@ -1,0 +1,49 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{matrix.module}}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: modules/gui
+          - module: modules/gee
+            libs: lib/js/shared lib/js/ee
+          - module: modules/task
+            libs: lib/js/shared lib/js/ee
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            ${{matrix.module}}/package-lock.json
+            lib/js/*/package-lock.json
+      - name: Install shared libraries
+        if: matrix.libs
+        run: |
+          for lib in ${{matrix.libs}}; do
+            (cd "$lib" && npm ci --no-audit --no-fund)
+          done
+      - run: npm ci
+        working-directory: ${{matrix.module}}
+      # vitest single-shots rather than watching because Actions sets CI
+      - run: npm test
+        working-directory: ${{matrix.module}}
+      # gee and task have no lint script; only gui carries its own eslint
+      - run: npm run lint --if-present
+        if: '!cancelled()'
+        working-directory: ${{matrix.module}}
