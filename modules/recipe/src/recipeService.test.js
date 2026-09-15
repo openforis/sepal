@@ -107,9 +107,23 @@ describe('saveProject', () => {
     test('returns the owner\'s projects, the new one among them', async () => {
         const project = aProject()
 
-        const projects = await service.saveProject({principal: owner, project})
+        const result = await service.saveProject({principal: owner, project})
 
-        expect(projects).toEqual([expect.objectContaining({...project, username: owner.username})])
+        expect(result).toEqual({
+            outcome: 'saved',
+            projects: [expect.objectContaining({...project, username: owner.username})]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the projects', async () => {
+        const stored = projectToStore()
+        await repository.saveProject(stored)
+
+        const result = await service.saveProject({
+            principal: owner, project: {...aProject(), parentId: stored.id}
+        })
+
+        expect(result).toEqual({outcome: 'cycle'})
     })
 })
 
@@ -120,9 +134,22 @@ describe('removeProject', () => {
         await repository.saveProject(removed)
         await repository.saveProject(kept)
 
-        const remaining = await service.removeProject({principal: owner, projectId: removed.id})
+        const result = await service.removeProject({principal: owner, projectId: removed.id})
 
-        expect(remaining.map(({id}) => id)).toEqual([kept.id])
+        expect(result).toEqual({
+            outcome: 'removed',
+            projects: [expect.objectContaining({id: kept.id})]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the projects', async () => {
+        const project = projectToStore()
+        await repository.saveProject(project)
+        await repository.saveRecipe(recipeToStore({projectId: project.id}))
+
+        const result = await service.removeProject({principal: owner, projectId: project.id})
+
+        expect(result).toEqual({outcome: 'notEmpty', folders: 0, recipes: 1})
     })
 })
 

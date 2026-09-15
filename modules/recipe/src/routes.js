@@ -1,5 +1,11 @@
 import {gunzipSync} from 'zlib'
 
+// Reserved to mean "no project" on a move (see modules/gui/src/api/recipe.js): a path segment can
+// carry neither null nor empty. Ids are client-generated UUIDs, so this cannot collide by accident,
+// and POST /project (below) refuses to save one under it outright, so the reservation holds even if
+// a client ever sends this literally.
+const NO_PROJECT_ID = 'none'
+
 const createRoutes = ({recipeService, requireAuth}) => router => router
     .get('/healthcheck', ctx => {
         ctx.body = {status: 'ok'}
@@ -8,21 +14,26 @@ const createRoutes = ({recipeService, requireAuth}) => router => router
     .post('/project/:id', requireAuth, async ctx => {
         ctx.body = await recipeService.moveRecipes({
             principal: principal(ctx),
-            projectId: ctx.params.id,
+            projectId: ctx.params.id === NO_PROJECT_ID ? null : ctx.params.id,
             recipeIds: ctx.request.body || []
         })
     })
     .delete('/project/:id', requireAuth, async ctx => {
-        ctx.body = await recipeService.removeProject({
+        respondToProjectRemove(ctx, await recipeService.removeProject({
             principal: principal(ctx), projectId: ctx.params.id
-        })
+        }))
     })
     .post('/project', requireAuth, async ctx => {
-        const {id, name, defaultAssetFolder, defaultWorkspaceFolder} = ctx.request.body || {}
-        ctx.body = await recipeService.saveProject({
-            principal: principal(ctx),
-            project: {id, name, defaultAssetFolder, defaultWorkspaceFolder}
-        })
+        const {id, name, parentId, defaultAssetFolder, defaultWorkspaceFolder} = ctx.request.body || {}
+        if (id === NO_PROJECT_ID) {
+            ctx.status = 400
+            ctx.body = {code: 'PROJECT_ID_RESERVED'}
+        } else {
+            respondToProjectSave(ctx, await recipeService.saveProject({
+                principal: principal(ctx),
+                project: {id, name, parentId: parentId || null, defaultAssetFolder, defaultWorkspaceFolder}
+            }))
+        }
     })
     .get('/project', requireAuth, async ctx => {
         ctx.body = await recipeService.listProjects({principal: principal(ctx)})
@@ -87,6 +98,31 @@ const respondToSave = (ctx, result) => {
         ctx.status = 404
     } else {
         throw new Error(`Unrecognized save outcome: ${result.outcome}`)
+    }
+}
+
+const respondToProjectSave = (ctx, result) => {
+    if (result.outcome === 'saved') {
+        ctx.body = result.projects
+    } else if (result.outcome === 'cycle') {
+        ctx.status = 409
+        ctx.body = {code: 'PROJECT_CYCLE'}
+    } else if (result.outcome === 'parentNotFound') {
+        ctx.status = 409
+        ctx.body = {code: 'PROJECT_PARENT_NOT_FOUND'}
+    } else {
+        throw new Error(`Unrecognized project save outcome: ${result.outcome}`)
+    }
+}
+
+const respondToProjectRemove = (ctx, result) => {
+    if (result.outcome === 'removed') {
+        ctx.body = result.projects
+    } else if (result.outcome === 'notEmpty') {
+        ctx.status = 409
+        ctx.body = {code: 'PROJECT_NOT_EMPTY', folders: result.folders, recipes: result.recipes}
+    } else {
+        throw new Error(`Unrecognized project remove outcome: ${result.outcome}`)
     }
 }
 

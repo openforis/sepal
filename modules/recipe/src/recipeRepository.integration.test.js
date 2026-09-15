@@ -2,7 +2,6 @@ import {join} from 'path'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {failingDb} from '#sepal/testSupport/db/faultyConnection'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {RecipeRepository} from './recipeRepository.js'
@@ -347,7 +346,7 @@ describe('recipe repository', () => {
 
             const projects = await repository.listProjects('Alice')
             expect(projects).toEqual([{
-                id: project.id, username: 'alice', name: renamed.name,
+                id: project.id, username: 'alice', name: renamed.name, parentId: project.parentId,
                 defaultAssetFolder: project.defaultAssetFolder,
                 defaultWorkspaceFolder: project.defaultWorkspaceFolder
             }])
@@ -362,7 +361,7 @@ describe('recipe repository', () => {
 
             const projects = await repository.listProjects(OWNER)
             expect(projects).toEqual([{
-                id: renamedProject.id, username: OWNER, name: renamedProject.name,
+                id: renamedProject.id, username: OWNER, name: renamedProject.name, parentId: renamedProject.parentId,
                 defaultAssetFolder: renamedProject.defaultAssetFolder,
                 defaultWorkspaceFolder: renamedProject.defaultWorkspaceFolder
             }])
@@ -381,44 +380,154 @@ describe('recipe repository', () => {
             const owners = await repository.listProjects(OWNER)
             const hijackers = await repository.listProjects(ANOTHER_OWNER)
             expect(owners).toEqual([{
-                id: project.id, username: OWNER, name: project.name,
+                id: project.id, username: OWNER, name: project.name, parentId: null,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
             expect(hijackers).toEqual([])
         })
+
+        test('stores a parent, and defaults to no parent', async () => {
+            const parent = aProject({id: 'parent-project', name: 'Parent'})
+            const child = aProject({id: 'child-project', name: 'Child', parentId: parent.id})
+            await repository.saveProject(parent)
+
+            await repository.saveProject(child)
+
+            const projects = await repository.listProjects(OWNER)
+            expect(projects.find(({id}) => id === parent.id).parentId).toBeNull()
+            expect(projects.find(({id}) => id === child.id).parentId).toBe(parent.id)
+        })
+
+        test('reparents an existing project', async () => {
+            const parent = aProject({id: 'parent-project', name: 'Parent'})
+            const child = aProject({id: 'child-project', name: 'Child'})
+            await repository.saveProject(parent)
+            await repository.saveProject(child)
+
+            await repository.saveProject({...child, parentId: parent.id})
+
+            const projects = await repository.listProjects(OWNER)
+            expect(projects.find(({id}) => id === child.id).parentId).toBe(parent.id)
+        })
+
+        test('refuses to reparent a project another user owns', async () => {
+            const foreign = aProject({owner: ANOTHER_OWNER})
+            await repository.saveProject(foreign)
+
+            await repository.saveProject({...foreign, owner: OWNER, parentId: 'somewhere-else'})
+
+            const projects = await repository.listProjects(ANOTHER_OWNER)
+            expect(projects).toEqual([{
+                id: foreign.id, username: ANOTHER_OWNER, name: foreign.name, parentId: null,
+                defaultAssetFolder: null, defaultWorkspaceFolder: null
+            }])
+        })
+
+        // A parentId the attacker legitimately owns clears both parent guards, so this is what reaches
+        // the upsert and exercises the row's own ownership guard rather than one of the parent's.
+        test('refuses to reparent a project another user owns, even to a parent the attacker legitimately owns', async () => {
+            const foreign = aProject({owner: ANOTHER_OWNER})
+            await repository.saveProject(foreign)
+            const ownParent = aProject({id: 'own-parent'})
+            await repository.saveProject(ownParent)
+
+            const result = await repository.saveProject({...foreign, owner: OWNER, parentId: ownParent.id})
+
+            expect(result).toEqual({outcome: 'saved'})
+            const projects = await repository.listProjects(ANOTHER_OWNER)
+            expect(projects.find(({id}) => id === foreign.id).parentId).toBeNull()
+        })
+
+        test('refuses a project that is its own parent', async () => {
+            const project = aProject()
+            await repository.saveProject(project)
+
+            const result = await repository.saveProject({...project, parentId: project.id})
+
+            expect(result).toEqual({outcome: 'cycle'})
+            const projects = await repository.listProjects(OWNER)
+            expect(projects.find(({id}) => id === project.id).parentId).toBeNull()
+        })
+
+        test('refuses a parent that sits below the project being saved', async () => {
+            const grandparent = aProject({id: 'grandparent', name: 'Grandparent'})
+            const parent = aProject({id: 'parent', name: 'Parent', parentId: grandparent.id})
+            const child = aProject({id: 'child', name: 'Child', parentId: parent.id})
+            await repository.saveProject(grandparent)
+            await repository.saveProject(parent)
+            await repository.saveProject(child)
+
+            const result = await repository.saveProject({...grandparent, parentId: child.id})
+
+            expect(result).toEqual({outcome: 'cycle'})
+        })
+
+        test('refuses a parent that does not exist', async () => {
+            const result = await repository.saveProject(aProject({parentId: 'no-such-project'}))
+
+            expect(result).toEqual({outcome: 'parentNotFound'})
+            expect(await repository.listProjects(OWNER)).toEqual([])
+        })
+
+        test('refuses a parent another user owns, reporting it absent', async () => {
+            await repository.saveProject(aProject({id: 'foreign-parent', owner: ANOTHER_OWNER}))
+
+            const result = await repository.saveProject(aProject({parentId: 'foreign-parent'}))
+
+            expect(result).toEqual({outcome: 'parentNotFound'})
+        })
+
+        test('accepts a save with no parent', async () => {
+            const result = await repository.saveProject(aProject())
+
+            expect(result).toEqual({outcome: 'saved'})
+        })
     })
 
     describe('removeProject', () => {
-        test('deletes the project and soft-deletes the recipes it held', async () => {
+        test('removes a project holding nothing', async () => {
             const project = aProject()
-            const held = aRecipe({projectId: project.id})
             await repository.saveProject(project)
-            await repository.saveRecipe(held)
 
-            await repository.removeProject(project.id, OWNER)
+            const result = await repository.removeProject(project.id, OWNER)
 
-            const projects = await repository.listProjects(OWNER)
-            expect(projects).toEqual([])
-            const found = await repository.findRecipe(held.id)
-            expect(found).toBeNull()
+            expect(result).toEqual({outcome: 'removed'})
+            expect(await repository.listProjects(OWNER)).toEqual([])
         })
 
-        test('rolls back when the recipe soft-delete fails', async () => {
+        test('refuses a project holding a recipe, keeping both', async () => {
             const project = aProject()
             const held = aRecipe({projectId: project.id})
             await repository.saveProject(project)
             await repository.saveRecipe(held)
-            const refusingTheSoftDelete = new RecipeRepository(failingDb(testDb.db, {
-                when: theRecipeSoftDelete, error: new Error('soft delete refused')
-            }))
 
-            const interrupted = refusingTheSoftDelete.removeProject(project.id, OWNER)
+            const result = await repository.removeProject(project.id, OWNER)
 
-            await expect(interrupted).rejects.toThrow('soft delete refused')
-            const projects = await repository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
-            const found = await repository.findRecipe(held.id)
-            expect(found).not.toBeNull()
+            expect(result).toEqual({outcome: 'notEmpty', folders: 0, recipes: 1})
+            expect((await repository.listProjects(OWNER)).map(({id}) => id)).toEqual([project.id])
+            expect(await repository.findRecipe(held.id)).not.toBeNull()
+        })
+
+        test('refuses a project holding another project', async () => {
+            const parent = aProject({id: 'parent-project', name: 'Parent'})
+            await repository.saveProject(parent)
+            await repository.saveProject(aProject({id: 'child-project', name: 'Child', parentId: parent.id}))
+
+            const result = await repository.removeProject(parent.id, OWNER)
+
+            expect(result).toEqual({outcome: 'notEmpty', folders: 1, recipes: 0})
+        })
+
+        test('ignores a removed recipe when deciding whether a project is empty', async () => {
+            const project = aProject()
+            const held = aRecipe({projectId: project.id})
+            await repository.saveProject(project)
+            await repository.saveRecipe(held)
+            await repository.removeRecipes([held.id], OWNER)
+
+            const result = await repository.removeProject(project.id, OWNER)
+
+            expect(result).toEqual({outcome: 'removed'})
         })
 
         test('leaves another user\'s project alone', async () => {
@@ -484,7 +593,7 @@ describe('recipe repository', () => {
     })
 
     const aProject = (over = {}) => ({
-        id: A_PROJECT_ID, owner: OWNER, name: 'A project',
+        id: A_PROJECT_ID, owner: OWNER, name: 'A project', parentId: null,
         defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
     })
 
@@ -504,9 +613,6 @@ describe('recipe repository', () => {
     const storeLegacyDocument = (id, document) => testDb.query(
         'UPDATE recipe SET contents = ? WHERE id = ?', [JSON.stringify(document), id]
     )
-
-    // Names the statement the transaction must undo: the soft delete that follows the project delete.
-    const theRecipeSoftDelete = sql => /UPDATE recipe SET removed/i.test(sql)
 
     const A_RECIPE_ID = 'a-recipe'
     const A_PROJECT_ID = 'a-project'
