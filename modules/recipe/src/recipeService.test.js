@@ -113,10 +113,24 @@ describe('saveProject', () => {
     test('returns the owner\'s projects, the new one among them', async () => {
         const project = aProject()
 
-        const projects = await service.saveProject({principal: owner, project})
+        const result = await service.saveProject({principal: owner, project})
 
-        assert.equal(projects.length, 1)
-        assert.partialDeepStrictEqual(projects, [{...project, username: owner.username}])
+        assert.equal(result.projects.length, 1)
+        assert.partialDeepStrictEqual(result, {
+            outcome: 'saved',
+            projects: [{...project, username: owner.username}]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the projects', async () => {
+        const stored = projectToStore()
+        await repository.saveProject(stored)
+
+        const result = await service.saveProject({
+            principal: owner, project: {...aProject(), parentId: stored.id}
+        })
+
+        assert.deepEqual(result, {outcome: 'cycle'})
     })
 })
 
@@ -127,9 +141,23 @@ describe('removeProject', () => {
         await repository.saveProject(removed)
         await repository.saveProject(kept)
 
-        const remaining = await service.removeProject({principal: owner, projectId: removed.id})
+        const result = await service.removeProject({principal: owner, projectId: removed.id})
 
-        assert.deepEqual(remaining.map(({id}) => id), [kept.id])
+        assert.equal(result.projects.length, 1)
+        assert.partialDeepStrictEqual(result, {
+            outcome: 'removed',
+            projects: [{id: kept.id}]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the projects', async () => {
+        const project = projectToStore()
+        await repository.saveProject(project)
+        await repository.saveRecipe(recipeToStore({projectId: project.id}))
+
+        const result = await service.removeProject({principal: owner, projectId: project.id})
+
+        assert.deepEqual(result, {outcome: 'notEmpty', folders: 0, recipes: 1})
     })
 })
 

@@ -263,6 +263,16 @@ describe('POST /project/:id', () => {
         })
         assert.deepEqual(response.body, service.recipes)
     })
+
+    test('moves to the reserved root id, translating it to no project at all', async () => {
+        const moved = [A_RECIPE_ID]
+
+        await POST('/project/none', {json: moved})
+
+        assert.deepEqual(service.moveRecipesCommand, {
+            principal: authenticatedUser, projectId: null, recipeIds: moved
+        })
+    })
 })
 
 describe('POST /project', () => {
@@ -275,6 +285,38 @@ describe('POST /project', () => {
         assert.deepEqual(service.saveProjectCommand, {principal: authenticatedUser, project})
         assert.deepEqual(response.body, service.projects)
     })
+
+    test('passes the parent through, turning an empty parent into no parent at all', async () => {
+        const project = aProject({parentId: ''})
+
+        await POST('/project', {json: project})
+
+        assert.equal(service.saveProjectCommand.project.parentId, null)
+    })
+
+    test('refuses to save a project under the reserved root id', async () => {
+        const project = aProject({id: 'none'})
+
+        const response = await POST('/project', {json: project})
+
+        assert.equal(response.status, 400)
+        assert.deepEqual(response.body, {code: 'PROJECT_ID_RESERVED'})
+        assert.equal(service.reached, false)
+    })
+
+    for (const {outcome, code} of [
+        {outcome: 'cycle', code: 'PROJECT_CYCLE'},
+        {outcome: 'parentNotFound', code: 'PROJECT_PARENT_NOT_FOUND'}
+    ]) {
+        test(`answers 409 ${code} when the service reports ${outcome}`, async () => {
+            service.saveProjectOutcome = {outcome}
+
+            const response = await POST('/project', {json: aProject()})
+
+            assert.equal(response.status, 409)
+            assert.deepEqual(response.body, {code})
+        })
+    }
 })
 
 describe('DELETE /project/:id', () => {
@@ -287,6 +329,15 @@ describe('DELETE /project/:id', () => {
             principal: authenticatedUser, projectId: A_PROJECT_ID
         })
         assert.deepEqual(response.body, service.projects)
+    })
+
+    test('answers 409 with the counts when the project still holds something', async () => {
+        service.removeProjectOutcome = {outcome: 'notEmpty', folders: 2, recipes: 5}
+
+        const response = await DELETE(`/project/${A_PROJECT_ID}`)
+
+        assert.equal(response.status, 409)
+        assert.deepEqual(response.body, {code: 'PROJECT_NOT_EMPTY', folders: 2, recipes: 5})
     })
 })
 
@@ -350,6 +401,8 @@ function recipeServiceSpy() {
         recipes: [],
         projects: [],
         saveOutcome: {outcome: 'saved', revision: 1},
+        saveProjectOutcome: {outcome: 'saved', projects: []},
+        removeProjectOutcome: {outcome: 'removed'},
 
         reset: () => {
             spy.loadRecipeCommand = null
@@ -365,6 +418,8 @@ function recipeServiceSpy() {
             spy.recipes = []
             spy.projects = []
             spy.saveOutcome = {outcome: 'saved', revision: 1}
+            spy.saveProjectOutcome = {outcome: 'saved', projects: []}
+            spy.removeProjectOutcome = {outcome: 'removed'}
         },
 
         loadRecipe: async command => {
@@ -400,12 +455,16 @@ function recipeServiceSpy() {
         saveProject: async command => {
             spy.saveProjectCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.saveProjectOutcome.outcome === 'saved'
+                ? {outcome: 'saved', projects: spy.projects}
+                : spy.saveProjectOutcome
         },
         removeProject: async command => {
             spy.removeProjectCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.removeProjectOutcome.outcome === 'removed'
+                ? {outcome: 'removed', projects: spy.projects}
+                : spy.removeProjectOutcome
         }
     }
     return spy
@@ -429,7 +488,7 @@ const aRecipeSummary = (over = {}) => ({
 })
 
 const aProject = (over = {}) => ({
-    id: A_PROJECT_ID, name: 'A project',
+    id: A_PROJECT_ID, name: 'A project', parentId: null,
     defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
 })
 
