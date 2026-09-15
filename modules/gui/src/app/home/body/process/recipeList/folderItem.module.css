@@ -1,0 +1,4 @@
+/* Folders borrow the scrollbar handle's colour, so the one accent in the list reads as one accent. */
+.icon {
+    color: var(--look-highlight-hover-background-color);
+}
