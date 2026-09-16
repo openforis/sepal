@@ -23,6 +23,7 @@ import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
 import {createSandboxSessionManager} from './sandbox/sandboxSessionManager.js'
+import {sandboxServerRoute} from './sandbox/sandboxServerRoute.js'
 import {sandboxStartRoute} from './sandbox/sandboxStartRoute.js'
 import {sessionAppDissociatedSubscriber} from './sandbox/sessionAppDissociatedSubscriber.js'
 import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscriber.js'
@@ -76,6 +77,7 @@ const main = async () => {
     })
     const {handler: sandboxStartHandler} = sandboxStartRoute(sandboxSessionManager)
     const {handler: sandboxInteractionHandler} = sandboxInteractionRoute(sandboxSessionManager)
+    const {handler: sandboxServerHandler} = sandboxServerRoute(sandboxSessionManager)
     const sandboxClosedSubscriber = workerSessionClosedSubscriber(sandboxSessionManager, event$)
     const sandboxAppDissociatedSubscriber = sessionAppDissociatedSubscriber(sandboxSessionManager, event$)
     const expiryNotifiedSubscriber = sessionExpiryNotifiedSubscriber(event$)
@@ -164,6 +166,7 @@ const main = async () => {
     // The GUI's interaction reports — matched before the /api/sandbox/** proxy for the same reason
     // as /start. No googleAccessTokenMiddleware: nothing downstream of it needs a Google token.
     app.use('/api/sandbox/interaction', authMiddleware, sandboxInteractionHandler)
+    app.use('/api/sandbox/server', authMiddleware, sandboxServerHandler)
     app.use('/api/sandbox', authMiddleware, googleAccessTokenMiddleware, sandboxProxy.middleware)
 
     const proxies = proxyEndpoints(app)

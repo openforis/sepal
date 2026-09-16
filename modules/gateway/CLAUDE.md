@@ -49,8 +49,11 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   retry-on-refused: httpxy has already begun consuming the request stream by the time a
   connection error surfaces, so a bodied request could never be replayed. The ensure is memoized
   per `(sessionId, endpoint)`, so it costs one worker round-trip and a Set lookup thereafter; a
-  failed ensure answers 502 (socket closed on ws) and is not cached. `startApp` also warms the
-  server, but BEST-EFFORT: the proxy is the authoritative gate.
+  failed ensure answers 502 (socket closed on ws) and is not cached.
+- `POST /api/sandbox/server?sessionId=…&endpoint=…` → 204 once the endpoint's server is
+  listening (same `ensureServerStarted`; 4xx passed through, other failures 502). The GUI calls
+  it once the session is ACTIVE so the app tab can show "starting server" as its own phase;
+  `startApp` itself never starts a server, and the proxy remains the authoritative gate.
 - **App ↔ client ownership (worker-owned)**: the downlink sends each browser its
   gateway-minted `clientId` right after ws connect; the GUI tags `POST`/`DELETE
   /api/sandbox/start` with it and the worker stores it on the association

@@ -51,7 +51,10 @@ const waitForSession$ = sessionId => {
     )
 }
 
-export const runApp$ = (path, {sessionId, instanceType, onSession} = {}) => {
+// runApp$ — three phases the app tab shows as it goes: the session (instance provisioned and
+// ACTIVE), then the endpoint's server (rstudio/shiny/jupyter listening), then the caller loads the
+// app. onPhase marks the second; the caller owns the first and the last.
+export const runApp$ = (path, {sessionId, instanceType, onSession, onPhase} = {}) => {
     const {endpoint, label} = appList().find(app => app.path === path)
 
     return api.apps.requestSession$(
@@ -63,6 +66,10 @@ export const runApp$ = (path, {sessionId, instanceType, onSession} = {}) => {
         switchMap(session => session.status === 'STARTED'
             ? of(session)
             : waitForSession$(session.id)),
-        first()
+        first(),
+        tap(() => onPhase && onPhase('STARTING_SERVER')),
+        switchMap(session => api.apps.startServer$({sessionId: session.id, endpoint}).pipe(
+            map(() => session)
+        ))
     )
 }

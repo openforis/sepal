@@ -20,28 +20,30 @@
 
 .backdrop {
     position: absolute;
-    top: 10%;
-    bottom: 10%;
-    left: 10%;
-    right: 10%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: .12;
-    font-weight: bold;
-    font-size: 2.5rem;
-    line-height: 3rem;
-    text-align: center;
-}
-
-.status {
-    position: absolute;
-    bottom: 1rem;
+    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: gray;
-    text-transform: uppercase;
+}
+
+.loading {
+    background-color: hsla(0, 0%, 0%, 0.5);
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    opacity: .5;
+    min-width: 20rem;
+    text-align: center;
+}
+
+.appName {
+    font-size: 1.75rem;
+    line-height: 3rem;
+}
+
+.appStatus {
+    font-size: 1rem;
+    line-height: 3rem;
 }

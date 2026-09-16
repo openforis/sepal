@@ -45,7 +45,11 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
-    "initializing": "Starting session...",
+    "launch": {
+      "startingSession": "Starting session...",
+      "startingServer": "Starting server...",
+      "startingApp": "Starting app..."
+    },
     "loading": {
       "error": "Failed to load apps. Please reload page to try again.",
       "progress": "Loading..."
