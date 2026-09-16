@@ -6163,11 +6163,11 @@
         "extend": "Keep it running {minutes} min",
         "extendFailed": "Could not extend the instance.",
         "extendUnknown": "Keep it running",
-        "idle": "{instance} has not been used for a while and will be stopped.",
-        "idleClosed": "{instance} was stopped to avoid unnecessary cost.",
+        "idle": "{instance} has not been used for a while and will be stopped to avoid unnecessary cost.",
+        "idleClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost.",
         "instance": "{name} ({type})",
         "instanceUnnamed": "One of your instances",
-        "runningClosed": "{instance} was stopped to avoid unnecessary cost, closing:",
+        "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"
       },
       "suspend": {
