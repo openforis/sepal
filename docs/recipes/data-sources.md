@@ -4,29 +4,17 @@ Technical index for aligning how SEPAL recipes consume other recipes and Earth E
 cross-recipe concern. Masking, CCDC, CCDC Slice and Classification provide acceptance cases, but none owns the
 shared model. User-facing documentation belongs in the separate `sepal-doc` repository.
 
-## Current delivery order
+## Current delivery focus
 
-1. Close the independent review follow-ups for both database merges, validate the affected areas, and commit the
-   resolved merge into `feature/recipe-source-resolution`.
-2. Merge the accepted source-resolution branch into `sepal-server` and release the completed scope after the
-   [existing dev/test database preparation](../database-migrations.md#existing-devtest-databases). Further repository
-   conversions and recipe capabilities are not prerequisites for this release.
-3. Start a new repository-consistency branch from that updated `sepal-server`. Recipe and Message are already
-   converted in this baseline; preserve their implementations rather than transplanting Recipe separately or
-   maintaining a second version on `feature/reusable-db-migrations`.
-4. Convert the remaining repositories one module at a time. Use the shared callback database API and isolated
-   integration tests built from real schema migrations. Preserve each module's transaction guarantees, batch
-   performance, named-lock requirements and case-insensitive username semantics. Consistency means common
-   ownership and test guarantees, not identical repository structure. Merge the reviewed work into `sepal-server`.
-5. Return to recipe dependencies with Change Alerts: introduce the smallest `CCDC_SEGMENTS` capability contract
-   that replaces its copied source configuration and synchronization. Consolidate Slice's existing segment
-   description into that contract rather than adding a parallel mechanism. Extend other output declarations where
-   they replace existing logic; do not broaden declarations solely to populate every recipe definition.
+Standardize the classification selectors in PyEO, CCDC, Time Series and Phenology on `RecipeInput`, with project
+grouping and current-project/ALL views. Make selector loading depend on the results a caller requests, preserving
+validation and each panel's prefill lifecycle while eliminating unused and duplicate reads. The
+[selector contract](gui-source-runtime.md#proposed-recipe-selector-loading) defines this bounded packet.
 
-This is the delivery priority, not a requirement to finish the architecture before releasing. Shared dependency
-definitions already cover all registered recipe types; output declarations currently cover CCDC, Masking and CCDC
-Slice. Generic section validation, capability discovery, coherent execution bundles and broad recipe conversions
-remain separate work driven by concrete consumers.
+Keep direct-classification eligibility for that migration. Supporting a masked classification requires a separate
+contract for classifier behavior; changing the selector widget does not establish that support. Further consumer
+validation, capability discovery and coherent execution bundles remain separate packets driven by concrete
+consumers. Their relative order is not fixed by the selector work.
 
 ## Scope and constraints
 
@@ -34,16 +22,16 @@ The architecture provides one contract for resolving sources, describing outputs
 owning visualizations. It must replace recipe-specific copying, derivation and refresh logic incrementally rather
 than introducing another parallel synchronization mechanism.
 
-Recipe storage is now the Node `recipe` module: reads and writes carry a trusted principal, and `revision` is
+Recipe storage is the Node `recipe` module: reads and writes carry a trusted principal, and `revision` is
 owned by the row. GEE reads referenced recipes as the user whose request it is serving, and a task executor as
 its own worker session's owning user; neither holds administrator credentials, and the executor's state and
 progress callbacks are authorized by that session against the task it was assigned. Each execution operation
-reads a given recipe once and keeps that record for its own lifetime, so one operation cannot mix two
-revisions of the same recipe. What remains blocked is coherent execution bundles and the batch or closure read
-they need. A bounded browser preflight completes one selected root's
-closure by calling the existing authenticated per-recipe GUI read behind an operation-local, batch-shaped adapter.
-That measure neither persists a catalogue nor makes browser evidence the execution graph; recipe Fill,
-saved-recipe discovery and execution bundles remain blocked on their permanent boundaries.
+retains each successfully read recipe for its own lifetime, so one operation cannot mix two revisions of the
+same recipe. Failed reads can be retried. Authorized batch/closure endpoints and coherent execution bundles are
+not implemented. Browser resolution completes a selected root's closure through the existing authenticated
+per-recipe read and the shared batch-shaped traversal. Retrieve preflight retains those records locally; the live
+evidence lifecycle uses the session's reference-counted loader. Neither makes browser evidence the execution graph.
+Recipe Fill and instance-level capability discovery still require their own acquisition and validation contracts.
 
 Activate output descriptions and capabilities one runtime boundary or consumer family at a time. Each milestone
 must correct an existing defect or deliver a usable generic contract without requiring the rest of the architecture
@@ -104,19 +92,20 @@ A consumer expectation is derived from the consuming model. Selecting band `ndvi
 exist. Selecting a CCDC measure also requires the corresponding CCDC capability. Discovery updates available
 choices but never silently replaces a missing saved selection.
 
-Consumers read the CURRENT description rather than a copy stored beside the selection, and nothing writes a fresh
-copy. A copy in a saved recipe is the fallback while nothing has been observed, never the answer once something
+Masking, Slice and Change Alerts read current descriptions rather than writing fresh copies beside the selection.
+A copy in a saved recipe is the fallback while nothing has been observed, never the answer once something
 has. The selection itself is durable intent and is never replaced by what it stands for: a Masking over CCDC
 remains what executes while CCDC supplies the semantics, through selection, refresh, reopening and execution.
 
-Acquisition is owned once, by the shared source-evidence lifecycle: when to read, what a reading was based on,
-cancellation, and rejection of superseded answers. It completes the closure of the SELECTED SOURCE, not of the
+Live acquisition is owned by the shared source-evidence lifecycle: when to read, what a reading was based on,
+cancellation, and rejection of superseded answers. It completes the closure of the selected source, not of the
 consumer, so a consumer whose own configuration has lost a dependency can still acquire the source that would
 repair it; the source's own dependencies still take part in invalidation. A consumer may declare what to do with
 an answer that was accepted - its settings are written in the same action as the evidence, compared against the
-last SUCCESSFUL observation, so a failed read cannot reset user edits on recovery - and what to say when one was
+last successful observation, so a failed read cannot reset user edits on recovery - and what to say when one was
 not, since a panel that shows no withheld state would otherwise fail silently. One read answers everything asked
-of one asset.
+of one asset. Panel prefill can instead use a one-shot read: PyEO stages proposed configuration until Apply and
+keeps acquisition separate from the decision to copy defaults.
 
 ### Products and capabilities
 
@@ -142,11 +131,13 @@ Candidacy is not evidence either: an asset mosaic declares where something would
 asset holds. Consumers therefore acquire source information and derive defaults as separate questions, and an
 answer to one survives a failure of the other.
 
-There is one rule and two adapters, not two resolvers. Candidate selectors ask the declaration query rather than
-recipe-type predicates or blanket pass-through checks, so a consumer names no wrapper type.
+The adapters share the producer-step rule. Change Alerts and BAYTS candidate selectors use its declaration query;
+Slice's selector and the four classification pickers still use type filters. Declaration candidacy does not establish
+support for a particular wrapper instance; that requires resolving the selected source and its evidence.
 
-An asset mosaic now carries three declarations of the same shape, one per capability. A fourth is the point to
-replace them with a single "stands for its asset" declaration rather than a fourth copy.
+An asset mosaic carries three declarations of the same shape, one per capability. Before adding another, review
+whether a single "stands for its asset" declaration can express the shared fact without erasing capability-specific
+requirements.
 
 Add another capability only when a migrated consumer demonstrates that product schema, adapter identity and current
 capabilities cannot express its contract. A future `CLASSIFICATION_RESULT` may be useful, but it should be defined
@@ -166,8 +157,9 @@ chooses one matching instance silently.
 
 ### Shared contract home
 
-Pure reference, edge, band, capability, bundle, fingerprint and validation contracts belong under
-`lib/js/shared/src/recipe/source`. They must not depend on React, Redux, Earth Engine or task infrastructure.
+Pure recipe contracts belong under `lib/js/shared/src/recipe`, grouped by responsibility: `source/` for references
+and traversal, `output/` for products and transformations, `capability/` for named consumer requirements, and `type/`
+for recipe definitions. They must not depend on React, Redux, Earth Engine or task infrastructure.
 GUI, GEE and Task adapt the same contract at their boundaries.
 
 Recipe-specific behavior belongs to one shared recipe definition per type. A single minimal catalogue imports
@@ -255,46 +247,33 @@ domain capabilities and recipe-specific operation controls merely because one ac
 ## Architecture milestones
 
 The numbered milestones retain their identifiers for cross-references and describe architectural dependencies,
-not the current work queue; follow the delivery order above. Each is an independent merge candidate. Do not hold
-completed foundations or usable behavior until later architecture is ready. The Node replacement has landed;
-caller-authorized closure loading remains a prerequisite only for the work that depends on it.
+not the current work queue; follow the delivery focus above. Current contracts and remaining work are identified
+separately. Do not hold usable behavior until later architecture is ready. Coherent closure acquisition remains a
+prerequisite only for the work that depends on it.
 
 ### 1. Establish runtime image output contracts
 
-Deliver this milestone as separate merges, in this order:
+The shared `IMAGE_OUTPUT` contract describes outer execution identity, ordered bands, per-band export requirements
+and evidence. The browser's one-shot runtime completes a bounded dependency closure and observes bands through
+existing execution APIs. Masking Retrieve consumes that description for band selection, destination compatibility
+and pyramiding policy, with an explicit coexistence boundary for unmigrated recipes.
 
-1. Define the pure `IMAGE_OUTPUT` product contract: outer execution reference, ordered band descriptions, per-band
-   export requirements, evidence and stable diagnoses. Do not add domain capabilities yet.
-2. Define intrinsic, one-input and n-ary transformation contracts and a bottom-up resolver over the existing graph.
-   Use pure synthetic composition tests without activating Stack or another broad consumer family.
-3. Add a runtime adapter that observes actual bands through existing execution boundaries and keeps descriptions in
-   runtime state. Do not change persisted recipe JSON or introduce backend recipe loading.
-4. Migrate Retrieve to derive selected bands and pyramiding policy from the resolved output. Keep an explicit
-   coexistence path for unmigrated recipes and remove each legacy policy only when its recipe is accepted.
-5. Prove direct CCDC and physically observed array-valued asset bands use `sample`, Apply mask preserves it for a
-   successful masked CCDC Segments asset export, and ordinary continuous and categorical outputs retain their own
-   policies. Array-band selection allows only Earth Engine asset export in both the Retrieve UI and submission
-   validation. Complete missing browser dependencies through the existing authenticated recipe read without Redux
-   writes, with the shared graph as the sole cycle authority and explicit closure limits. No recipe may inspect
-   another recipe's type.
+Remaining work:
 
-Explicitly defer domain capabilities, capability-indexed recipe selection, date-range and visualization ownership,
-saved-recipe catalogue queries, coherent bundles and broad recipe-family migrations.
-
-Do not schedule a standalone Change Alerts date-format patch in this phase. When Change Alerts migrates to the
-capability contract, its execution boundary must still reject legacy, incomplete and directly submitted models
-with a typed error, but that defensive check is acceptance work for the migration rather than a separate feature.
-
-Exit criterion: one generic runtime output description drives a migrated Retrieve path; export requirements survive
-declared transformations; a Masking recipe with a CCDC Segments asset as its primary input exports successfully
-to Earth Engine without a Masking-to-CCDC type check; incompatible Drive and SEPAL submissions are prevented;
-unmigrated recipes retain their existing behavior through an explicit and removable coexistence boundary.
+- Extend output declarations to further consumers where they replace existing logic. Keep source observations in
+  runtime state and remove each legacy policy only when its replacement is accepted.
+- Verify exported pixels and metadata for the supported direct and wrapped sources. Runtime witnesses establish
+  contract handoffs, not live Earth Engine computation.
+- Keep declaration-driven array-band policies and destination checks consistent between forms and submission.
+  Do not add recipe-type checks to Masking or silently apply an export-policy fallback to unresolved bands.
 
 ### 2. Stabilize Apply mask
 
-- ~~Stop treating copied primary bands and visualizations as authoritative source state.~~ Done, generically:
-  the transformation declaration states that band mapping is identity and values are preserved, and consumers
-  read the inherited source's current bands and presets rather than the copied snapshot.
+Masking declares identity band mapping and preserved values at valid pixels. Its live evidence comes from the
+selected primary source; copied bands and presets are only an unobserved compatibility fallback.
+
+Remaining work:
+
 - Extend the resolved description incrementally with preserved date range and source-visualization ownership.
 - Capture current Earth Engine behavior, add explicit mask-band selection with legacy first-band compatibility, and
   validate required operation inputs.
@@ -322,42 +301,38 @@ bundle, provenance or caller-aware loading requirement.
 
 Exit criterion: asset Fill is validated end to end and cannot silently remap bands by position.
 
-### External prerequisite: Node server replacement
+### Storage and loading prerequisites
 
-The Groovy `sepal-server` has been replaced. `/api/processing-recipes` is served by the Node `recipe` module
-behind the authenticating gateway, and the storage contract this architecture depends on is in place:
+`/api/processing-recipes` is served by the Node `recipe` module behind the authenticating gateway:
 
-- every recipe read and write requires a trusted SEPAL principal, and reads are scoped to the owner;
+- recipe reads and writes use the trusted SEPAL principal; reads apply the owner-or-administrator policy without
+  substituting service-account authority for the requesting user;
 - `revision` is a column on the recipe row, injected as an additive top-level field and never stored in recipe
   content, with list, load and save all exposing the same committed revision;
 - save accepts `expectedRevision` and returns the committed revision, so a client maintains a revision registry
   and detects concurrent writes;
 - owner, non-owner and missing-principal behavior is covered by the module's own tests.
 
-Two things remain, and they are what still blocks the milestones below rather than the replacement itself:
-
-- there is no authorized batch or closure read. The temporary browser preflight used by steps 1 through 4 reuses
-  only the per-recipe read; it is not a coherent server resolver and must not grow into one;
-- Earth Engine still reads referenced recipes with ambient administrator credentials
-  (`lib/js/ee/src/recipe.js`), which the recipe service still honours. That access is removed once caller-aware
-  loading owns every legitimate read.
+GEE and Task use caller-authorized readers and operation-scoped records. The remaining execution-bundle work is
+trusted closure acquisition and graph-wide coherence. A batch or closure API can reduce round trips but does not
+itself provide a coherent snapshot; a transaction or bounded revision-recheck protocol must establish that.
 
 The full storage contract, including no-op save behavior and normalization requirements, is defined in
 [source-freshness.md](source-freshness.md). `revision` is distinct from the existing `typeVersion`, which is
 the recipe schema-migration version.
 
-Graph traversal, capability derivation, caching and bundle construction remain shared JavaScript concerns rather
-than server endpoint logic.
+An endpoint may orchestrate the shared JavaScript traversal and bundle logic; it must not introduce a separate
+definition of edges, capability rules or access policy.
 
 ### 5. Add Sampling Design derived-result freshness
 
-Requires `revision` from the prerequisite above. No interim unversioned-recipe path is planned or built:
+Uses the existing storage `revision`. No interim unversioned-recipe path is planned or built:
 there is no temporary browser content-hash bridge and no `update_time` freshness rung.
 
 - Add the recipe snapshot provider that distinguishes an editable root draft from operation-local persisted
   dependency snapshots, keyed by `revision`. Dependency snapshots never enter the shared loaded-recipe map.
-- Add the request-scoped snapshot cache at the execution boundary: one snapshot and revision per recipe ID per
-  operation, shared in-flight loads, and an exact evidence vector returned with each result.
+- Reuse the existing operation-scoped recipe records and shared in-flight reads. Add the exact recipe/asset
+  evidence vector to derived results; record sharing alone does not establish persisted-result freshness.
 - Resolve recipe AOIs through the AOI geometry product they expose, including transitive recipe and asset evidence,
   rather than teaching Sampling Design which recipe fields affect geometry. Unmigrated recipe types fall back to
   conservative whole persisted-source evidence.
@@ -382,13 +357,14 @@ No update-time or temporary content-hash bridge is involved.
 
 ### 6. Add recipe Fill
 
-- Activate caller-authorized resolution for the fill reference.
+- Reuse caller-authorized loading for the fill reference and define its acquisition and execution requirements.
 - Reuse the shared graph for cycles, missing sources and execution-versus-capability-provider identity.
 - Apply the same explicit band mapping and output-preservation contract as asset Fill.
 
 ### 7. Complete coherent execution and live freshness infrastructure
 
-- Introduce live and bundled resolution contexts only after authorized loading exists.
+- Add explicit live and bundled resolution contexts on top of the authorized operation-scoped reader. A bundled
+  operation must never fall back to live reads for a missing member.
 - Build bundles by loading the closure and coherently rechecking every revision with bounded retries. A content
   digest remains optional until a concrete integrity or provenance requirement needs exact byte identity.
 - Extend the session catalogue and product-scoped fingerprints established by Sampling Design with remote
@@ -404,110 +380,31 @@ No update-time or temporary content-hash bridge is involved.
 
 ### 8. Migrate CCDC Slice capabilities and visualizations
 
-Done ahead of steps 5 to 7, because Slice's hand-written synchronization was the first copied-source model to
-replace once Masking had proven the shared evidence lifecycle. What landed:
+Slice and Change Alerts share the CCDC producer contract and source-evidence lifecycle. Their current execution,
+date-format and compatibility rules are described in
+[source resolution](source-resolution.md#current-segment-consumer-contract); GUI refresh and template identity
+belong to [GUI source runtime](gui-source-runtime.md#live-source-evidence). No second synchronization or producer
+discovery path is needed.
 
-- Each producer of segments describes its own, through a provider its recipe type registers: CCDC from its model
-  (`recipe/ccdc/segmentDescription.js`), finding the Classification it fits through the edge it declares; an
-  asset mosaic and a bare asset from asset metadata read at observation time (`recipe/ccdc/segmentsAsset.js`,
-  which owns the band-name parsing), not from the copy taken when the asset was selected. Slice dispatches
-  through the registry and recognises no producer type.
-- Slice derives its output from that description together with its date mode and options
-  (`recipe/ccdcSlice/sliceEvidence.js`). One mode-aware derivation (`#sepal/recipe/type/ccdcSlice`) is used by
-  the declaration, the GUI and Earth Engine's own band reporting, so an operation asked for no harmonics
-  advertises none. The shared definition declares a transformation - segment arrays into scalar slice bands -
-  rather than preservation, so a wrapper-inheritance rule cannot mistake it for a pass-through.
-- One shared evidence lifecycle (`recipe/sourceEvidenceSync.jsx`) serves Masking and Slice through a per-recipe
-  observation; `ccdcSlice/sourceSync.jsx` is gone. Preview, band selection, presets, date and options controls,
-  Retrieve and the pixel chart read the same resolved description. Each published answer is numbered, so the
-  chart and Preview reload when the source was READ again rather than only when what it describes differs. A
-  failed read withholds what the source describes but retains which source was last read successfully, so a
-  recovery can tell whether the templates a saved selection names are its own. Restored styles are bound to
-  their original source when Slice opens, before the first read, so changing source during that read cannot
-  transfer their identities. Slice
-  no longer reconciles or gates its own visualization selection: it offers one preset list and the generic layer
-  owns the rest, so a selection whose bands are gone is neither redirected nor drawn.
-- A consuming recipe resolves a source's description as part of its own dependency resolution, so a saved Slice
-  that has never been opened still offers what it describes to a Masking recipe over it.
-- Execution no longer depends on the copied `dateFormat` and `targetType`. The producer's definition declares
-  how its segment dates are represented and whether its base band names are selectable on it; a producer whose
-  segments ARE an asset names the asset instead of a value, and execution reads the representation off that
-  asset rather than off the metadata copied beside the reference - which is what makes the GUI and the running
-  image agree about an asset re-exported since it was selected. A collection's properties are read the way the
-  GUI's metadata endpoint reads them, its members' included, for the same reason. `recipeRef` derives the facts and the image from
-  one load, so the two cannot describe different records. The copies remain in saved recipes as a fallback and
-  are not rewritten; the source panel stops writing them, and the configured date format of a bare asset source
-  is preserved as user configuration, zero included, taking precedence over the asset property that prefills it.
-- Retrieve submits the band names its selection resolves to, and offers only the base bands, measures and
-  segment bands the selected operation produces. A saved template selection survives reopening: the styles a
-  recipe's own layers were saved with are the identities a fresh asset read is reconciled against, since `ui`
-  is not persisted. A selection whose bands are gone is left as the user left it, by the same rule the generic
-  layer applies.
-- Execution resolves segment-producer facts THROUGH preserving wrappers. The producer of a source's segments is
-  not necessarily the recipe selected: a Slice, Change Alerts or segment chart over a Masking runs the Masking's
-  image and reads the underlying producer's `{dateFormat, selectableBaseBands}`. The chain is followed only where
-  a recipe type declares that it preserves its input's schema and values, and only through the input filling that
-  declared role, so a mask, a fill or an AOI can never become the producer. Both terminations are handled: a
-  producer declaring a date representation answers from its own model, and one whose segments ARE an asset names
-  the asset, whose properties are read now. All reads use the operation's authorized records, so producer
-  discovery and image construction are the same records within one operation.
-- Controlled failures are distinguished rather than absorbed: a declared preserving role a model does not fill
-  exactly once is `MALFORMED_SEGMENT_SOURCE`, a terminal recipe declaring no segments at all is
-  `UNSUPPORTED_SEGMENT_SOURCE`, a preservation chain closing on itself is the existing `CYCLIC_DEPENDENCY`, and a
-  failed recipe or asset read propagates as itself - never answered from the copy saved beside the reference.
-  Sources that used to fall through to that copy are now rejected before the segment algorithm runs.
+Remaining work:
 
-Still to do here:
-
-- Promote the existing segments description into a requestable `CCDC_SEGMENTS` capability alongside the implemented
-  `IMAGE_OUTPUT` contract, driven by the Change Alerts migration in step 9. The description above is currently
-  Slice's evidence, not yet a capability other consumers can request. Execution-side resolution is in place and
-  is deliberately narrower: it answers `{dateFormat, selectableBaseBands}` and nothing about band descriptions or
-  GUI discovery.
-- Remove the copied source metadata and the GUI's selection filters and synchronization. They are unchanged: the
-  copies remain in saved models, are still written where they were, and are still the compatibility fallback when
-  a supported producer declares no date representation.
-- Complete export acceptance as recorded below. Automated tests cover source, observer, chart and layer
-  boundaries. Execution-side source resolution and band discovery have runtime witnesses with substituted
-  external boundaries (`modules/gee/src/jobs/ee/ccdc/sliceSourceFacts.runtime.mjs` and `ccdcBands.runtime.mjs`);
-  these do not establish successful Earth Engine pixel execution.
-- Define the closed `CCDC_SEGMENT_SLICE` transformation and materialize its presentation templates only after the
-  source capability, required evidence and exact Slice output bands resolve.
-- Preserve existing CCDC Segments assets through a narrow structural asset contract. Continue interpreting their
-  legacy `visualization_*` and `baseBands` properties as Slice template configuration after that contract validates;
-  do not require assets to be recreated or rewritten.
-- Prove both direct CCDC assets and CCDC assets carried through Masking. Masking preserves the capability and
-  templates only while its explicit transformation effects preserve the required structure.
-- Migrate Preview, map selection and Retrieve filtering together. New structured provenance may be dual-written for
-  stronger future consumers, but it is not a prerequisite for existing CCDC Slice assets.
-
-Manual acceptance, confirmed by the user for the sources and modes exercised (not every source variant):
-
-- Successful tile and chart rendering; panel interactions without unintended Slice reloads; genuine computation
-  changes refreshing Slice while the available bands stay the same.
-- Optical-to-radar visualization updates and corrected chart-band selection.
-- Opening Slice's visualization panel and using a saved Slice as a Masking dependency without opening Slice first.
-- Saved-preset restoration after reopening, and date-mode and harmonics behavior.
-
-Export acceptance: the user confirmed the longer-history Image export completed with valid pixels. The earlier
-Image completed fully masked; insufficient Landsat 9 history remains the user's explanation rather than a verified
-cause. ImageCollection completion remains unconfirmed. No additional exports were launched for this review.
-
-Map Layers acceptance: the user confirmed the existing-layer refresh fix works after replacing an asset under the
-same ID while its recipe stays open. This does not establish every invalidation or source variant. The bounded fix
-re-reads metadata on activation, on a changed catalogue `updateTime`, and through the asset layer's **Refresh asset**
-control. A successful read renews the preview even with identical metadata, keeps unchanged preset identities, and
-withholds missing-band or array styles without deleting saved selections. Refresh errors are reported and superseded
-responses are rejected. Broader shared metadata ownership and task-reported destination invalidation remain
-[asset freshness follow-ups](source-freshness.md#asset-freshness).
-
-The final review's break-confidence band mapping, unconfigured asset date fallback and SR chart correction are
-covered by regression tests and accepted by inspection; they have no separate browser confirmation yet.
+- Replace Slice's hard-coded CCDC/ASSET_MOSAIC candidate filter with the declaration query, while keeping candidacy
+  distinct from verified support for a specific recipe or asset.
+- Define the closed `CCDC_SEGMENT_SLICE` transformation and structural capability evidence. The current mode-aware
+  band derivation is not a complete capability-validation contract.
+- Preserve existing CCDC Segments assets through a narrow structural asset contract. Interpret legacy
+  `visualization_*` and `baseBands` properties as template configuration after validation; do not require assets
+  to be recreated or rewritten solely to adopt that contract.
+- Verify direct and masked segment sources against live Earth Engine, including ImageCollection retrieval,
+  date representations and output-band semantics. Node runtime witnesses substitute external boundaries and
+  cannot establish correct pixels.
+- Keep Preview, map selection and Retrieve filtering aligned as validation strengthens. Structured provenance
+  may support future consumers but is not a prerequisite for existing Slice assets.
 
 ### Later follow-up: Band Math dependencies
 
-After the repository work and the bounded Change Alerts capability migration, implement one chain: **input band ->
-calculation -> output**. This is a separate consumer-validation packet, not a prerequisite for either release.
+Implement one chain: **input band -> calculation -> output**. This is a separate consumer-validation packet,
+independent of selector presentation and acquisition changes.
 Follow the [declarative evaluation direction](source-freshness.md#declarative-dependency-evaluation), reusing the
 shared source-observation lifecycle rather than adding another watcher, cache or source traversal.
 
@@ -529,19 +426,33 @@ Acceptance scenarios, without closing or reopening the recipe:
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
 
-Use requirements exposed by Change Alerts as another real consumer when shaping the evaluation contract, without
-making its earlier capability migration depend on this packet. Sampling Design's persisted-result freshness remains
+Use requirements exposed by Change Alerts as another real consumer when shaping the evaluation contract.
+Sampling Design's persisted-result freshness remains
 step 5; neither its planner nor all input forms are rewritten here. The declaration API is determined by these
 workflows, not by a speculative framework or synthetic consumer.
 
-### 9. Migrate Change Alerts, then further consumers
+### 9. Source selection and further consumers
 
-This is the next recipe-model extension after the repository-consistency work. Scope the capability contract to
-the information Change Alerts consumes and consolidate the existing Slice providers into it. Do not add generic
-section validation, discovery infrastructure or execution bundles to this packet.
+Extend the shared contracts where a consumer demonstrates a requirement. Keep selector presentation, source
+compatibility, panel defaults and execution behavior as separate responsibilities and separately reviewable work.
 
 Still to do here:
 
+- Standardize the four classification selectors and make `RecipeInput` loading depend on requested results, as
+  described in [GUI source runtime](gui-source-runtime.md#proposed-recipe-selector-loading). Keep the existing
+  classification eligibility and panel policies; no wrapper support or new discovery infrastructure is required.
+- Define [classification output versus reusable classifier behavior](source-resolution.md#classification-results-and-reusable-classifiers)
+  before admitting masked classifications to PyEO, CCDC, Time Series or Phenology. Decide mask semantics for the
+  baseline image, training and newly classified monitoring images; never unwrap a selection and silently drop it.
+- Fix PyEO Sources Apply during a pending prefill: it can commit the new `model.sources` while keeping the old
+  options and dates. Define a pending/failed/manual-configuration policy so an applied selection and its settings
+  are intentional together; preserve Cancel and user-edited datasets.
+- Resolve PyEO's gate-index behavior for asset-backed imagery through wrappers. Execution currently selects an
+  index for any `RECIPE_REF` and computes it for a direct asset; a successful defaults read does not establish
+  wrapped-asset execution support. Preserve the selected image and verify both paths through execution.
+- Decide whether PyEO's selected-scenes restriction is only a limit on deriving defaults or an execution
+  requirement. It is currently checked during prefill, not when opening a saved recipe; apply the chosen policy
+  at the appropriate boundaries rather than broadening rejection incidentally during selector migration.
 - Surface recipe-dependency diagnostics in the GUI's shared layer-error handling. A rejected cycle should
   explain the circular dependency and show its path, using known recipe names where available, instead of
   only "Failed to load layer - Bad request". Preserve the execution rejection and retain a generic fallback
@@ -552,6 +463,9 @@ Still to do here:
 
 ## Deliberately deferred
 
+- Decide asset date-format authority separately from source-resolution migrations: whether a stated asset format
+  can be overridden, and how missing or incorrect metadata can be corrected. Preserve the current explicit
+  override, including zero, until that decision defines validation and saved-recipe compatibility.
 - Explore [map inspection and capability-driven layer actions](map-inspection.md), including charts for added
   layers. Discussion only; scope and scheduling undecided.
 - Persistent source metadata across page reloads.
@@ -563,11 +477,11 @@ Still to do here:
   visualizations while the panel stays open, applying the same dependency-evaluation rules. This remains separate
   from correcting explicit asset/recipe switching and must preserve live visualization propagation into Masking.
 - One repository-wide migration commit.
-- Recipe Fill before the Node server replacement supplies its permanent caller-authorized source boundary.
-- Execution bundles before recipe content has reliable monotonic revision evidence.
+- Recipe Fill before its source acquisition and execution requirements are defined.
+- Execution bundles before trusted closure acquisition, graph-wide coherence and task acceptance are implemented.
 - Any interim unversioned-recipe freshness path: no temporary browser content hashing and no `update_time`
-  freshness rung. Persisted derived-result freshness waits for `revision` rather than approximating it.
-- CCDC capability migration as a prerequisite for constant Fill.
+  freshness rung. Persisted derived-result freshness uses the existing `revision` contract.
+- Requiring domain-capability work as a prerequisite for constant Fill.
 - Shared gateway-authentication middleware for Node/Koa modules. Extract the repeated `sepal-user` parsing,
   `ctx.state.currentUser` assignment, 401 handling and role guards from Recipe, Budget, Message, Scene Metadata
   and Worker into shared HTTP infrastructure, with loggers injected at composition roots. Preserve each module's
@@ -576,7 +490,7 @@ Still to do here:
 
 ### Task-driven asset invalidation
 
-Defer this wiring until after the current CCDC Slice and Map Layers refresh commit.
+Connect task completion to the shared asset-freshness design in a separate packet.
 
 - Exporters report actual affected asset IDs to shared asset invalidation, without knowing which recipes or
   layers consume them. Invalidate when a destination may have changed and recheck after success, failure or

@@ -24,9 +24,8 @@ changes afterward.
 This catalogue is not a prerequisite for the first Masking robustness slice, Apply-mask stabilization, constant
 Fill or direct asset Fill.
 
-Persisted derived-result freshness does depend on one external prerequisite: a server-owned monotonic
-`revision` returned atomically with recipe content by the Node recipe-storage replacement. That replacement
-lands before the Sampling Design freshness milestone, so no interim unversioned-recipe tier is designed or built.
+Persisted derived-result freshness uses the server-owned monotonic `revision` that the Recipe service returns
+atomically with recipe content. No interim unversioned-recipe tier is needed for Sampling Design freshness.
 There is no temporary browser content-hash bridge, no `update_time` freshness rung and no dual-phase snapshot
 provider that later swaps its evidence. `update_time` remains display and audit metadata only. Websocket revision
 events and patch transport remain optional latency and transport improvements that correctness never requires.
@@ -69,10 +68,10 @@ pinned. Keep these values separate:
 
 ### Recipe storage contract
 
-The Node recipe-storage replacement provides:
+The Recipe service provides:
 
 ```
-list / revision-vector read   ->  recipe ID + revision, per entry
+list                          ->  recipe ID + revision, per entry
 load                          ->  the recipe, with the revision injected as an additive top-level field,
                                   read from one committed row
 save(expectedRevision)        ->  committed revision
@@ -101,7 +100,7 @@ Required semantics:
 - Existing rows may be backfilled with one fixed initial revision. That value carries no meaning: existing derived
   results are `UNKNOWN` because they lack `calculatedFrom`, and a backfilled revision never retroactively
   validates them.
-- Display-only changes such as rename or project movement may advance the revision. Product fingerprint comparison
+- Display-only changes such as rename may advance the revision. Product fingerprint comparison
   absorbs that conservative invalidation, so the storage boundary needs no second display-only revision.
 - Deletion receives the same ordered treatment as an update. After a *successful* authorized revision-list refresh,
   an absent referenced ID is a missing-source result, reported without disclosing foreign ownership. Failure to

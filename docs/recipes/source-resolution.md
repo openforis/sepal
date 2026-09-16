@@ -7,6 +7,10 @@ and the distinction between canonical output and map-only products belong in
 [output-products.md](output-products.md). This document owns the traversal and evidence machinery that resolves
 those declarations.
 
+Structured dependency edges, authorized operation-scoped recipe reads and declaration-based producer resolution
+are implemented. The explicit live/bundled graph API, coherent execution bundles, generalized capability discovery
+and versioned provenance verification below describe the target design, not guarantees of current execution.
+
 ## Responsibilities
 
 This subsystem owns:
@@ -46,10 +50,10 @@ supplies it. Omitting the principal fails before any recipe is loaded.
 
 The resolver remains JavaScript so recipe-type edge extraction and traversal have one implementation. A
 caller-aware server boundary enforces access and returns authorized recipe records; it does not duplicate edge or
-capability logic in a server endpoint. Recipe contents and their server-owned monotonic revisions must eventually
-be observed together, and the complete closure needs a bounded coherent revision recheck. Whether the Node server
-exposes this as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite
-for the pure contract.
+capability logic in a server endpoint. Recipe contents and their server-owned monotonic revisions are read
+together. Graph-wide coherence additionally needs a consistent transaction or bounded revision-recheck protocol.
+Whether the Node server exposes this as batch HTTP, an internal repository adapter or both is an implementation
+decision, not a prerequisite for the pure contract.
 
 Neither executor reads recipes with administrator credentials. A GEE job reads as the user the gateway
 authenticated on the request that job was built from; a task executor reads as its own worker session, which
@@ -62,9 +66,9 @@ answered exactly as a missing one.
 One execution operation - one submitted GEE worker job, one task execution - owns both the reader it is
 authorized with and the records it has read. Its `configure` task opens that operation on the request's own
 worker state, every later task of the request runs inside it, and the finalize pass ends it however the
-request ended. Within it, a recipe ID is read at most once: concurrent references share the read in flight,
-and every later reference gets the record already read, so the several factories one operation constructs
-from one reference cannot derive geometry, metadata and imagery from different revisions. A read that fails
+request ended. Concurrent references share the read in flight, and after a successful read every later reference
+gets the retained record, so the several factories one operation constructs from one reference cannot derive
+geometry, metadata and imagery from different revisions. A read that fails
 is not retained, so a later attempt reads again rather than replaying the failure. Reads still resolve at
 subscribe, and ancestry remains path-local: a shared record carries no ancestry from whichever branch read
 it first. Ending the operation unsubscribes reads still in flight and releases the records; a later
@@ -77,18 +81,17 @@ assets, and it is not an accepted Retrieve execution bundle.
 As a bounded migration measure, a browser operation may complete its preflight graph through the existing
 authenticated per-recipe GUI read. It starts with the exact unsaved root and the session's loaded records, requests
 deduplicated missing frontiers under the current user, and retains returned records only for that operation. This
-does not require a new Groovy endpoint, does not use administrator credentials and does not make browser evidence a
-coherent execution graph. Missing or forbidden records still fail closed.
+does not use administrator credentials and does not make browser evidence a coherent execution graph. Missing or
+forbidden records still fail closed.
 
-The permanent live-resolution and execution-bundle boundary remains blocked, no longer on the Node replacement
-for `sepal-server` - which has merged - but on the authorized batch or closure read that replacement does not yet
-expose. Do not activate an administrator-backed loading path in its place. Graph traversal, capability derivation,
-operation-local closure completion, bundle construction and cache behavior remain in JavaScript.
+The Node Recipe service exposes authorized per-recipe reads; batch and closure endpoints are future work.
+Neither endpoint shape alone would establish graph-wide coherence. The trusted bundle-acquisition and task-
+acceptance boundaries must also enforce the snapshot protocol. Endpoints can orchestrate shared JavaScript
+traversal, capability derivation and bundle construction without introducing a separate resolver.
 
-Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. The existing GEE
-configuration credentials are removed when caller-aware loading replaces their only GEE use, or narrowly scoped if
-a separately audited operation proves that it needs them. An administrator service call acting on behalf of a user
-must carry a trusted principal and enforce that principal's access rather than inherit administrator visibility.
+Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. A separately
+authorized administrative operation must remain explicit; acting on behalf of a user must enforce that user's
+access rather than inherit service-account visibility.
 
 Any server-side or shared recipe, description or resolved-graph cache includes the SEPAL principal in its key.
 Asset metadata caches additionally include the linked Earth Engine identity or authorization context. Cache hits
@@ -135,6 +138,12 @@ All edges affect execution fingerprinting. Recipe references participate in depe
 asset references contribute observations and drift checks. Only roles declared to supply inherited capabilities
 participate in capability-provider lineage. Mask and fill inputs affect pixels but do not supply the wrapper's
 inherited capabilities. An `AOI` edge affects output extent and geometry but does not provide image semantics.
+
+An absent AOI means "no restriction" to the shared geometry resolver. Whether absence is allowed belongs to the
+recipe's operation contract: PyEO requires an AOI for image and geometry execution but can report static band names
+without one. Required-input validation returns an actionable client error; it does not depend on GUI wizard state.
+The resolver remains strict about malformed descriptors rather than treating them as unrestricted geometry. The
+GUI must not request initial bounds for an unconfigured selection, including a saved empty AOI object.
 
 Every inventoried recipe type declares every output-relevant recipe and asset reference, including references
 outside image-input sections. Executable references use canonical source-reference shapes. A test-only structural
@@ -260,15 +269,74 @@ policy is known. Consequently, a mixed scalar/array image can resolve completely
 export to Earth Engine with `sample`, while a scalar-only selection can use Drive or SEPAL. An all-band selection
 must satisfy the requirements of every described band.
 
-Start with one canonical product and one domain capability:
+The current shared contracts include:
 
 - the `IMAGE_OUTPUT` product: executable image, ordered output bands and per-band export requirements;
 - the `CCDC_SEGMENTS` capability: stored CCDC bands, base-band derivation, available measures and date
-  interpretation.
+  interpretation;
+- `BAYTS_HISTORICAL_STATS`: the producer whose processing options BAYTS Alerts uses as defaults;
+- `OPTICAL_COLLECTION_DEFAULTS`: imagery configuration available for panel prefill, independently of whether that
+  imagery can execute.
+
+The generic `providerStep(record, capability)` reads the capability's declaration key and returns `PRODUCES`,
+`PRESERVES`, `UNSUPPORTED` or `MALFORMED`. A preserving step follows only the input filling its declared role.
+The GUI's `resolveProvider` walks already-resolved records; execution's segment resolver loads records through the
+operation's reader. Both use that same step. A possible provider is not verified asset content or a guarantee of
+compatibility with every operation. Instance-level discovery and richer evidence requirements remain future work.
+
+### Current segment consumer contract
+
+CCDC Slice and Change Alerts ask the GUI's segment capability adapter for a description. Registered producer
+providers describe CCDC from its model and declared dependencies, or an asset from its metadata. The shared
+evidence lifecycle owns watching and acceptance; consumers derive their bands, dates, presets and operation choices
+from the accepted description. A saved Slice can supply a description to another recipe without first being opened.
+
+Slice uses the shared mode-aware output-band derivation for its declaration, GUI and execution band reporting.
+Segment slicing and interpolation/range modes retain their distinct harmonic behavior. Presets and Retrieve
+selections are filtered against the bands the chosen operation actually produces. Saved selections are retained
+when their bands disappear, but are not silently redirected or rendered. Stable preset identities are reconciled
+against the selected source and the styles restored from saved layers.
+
+Slice, Change Alerts and the segment chart resolve execution facts through
+`lib/js/ee/src/timeSeries/segmentSource.js`. It obtains `{dateFormat, selectableBaseBands}` before the consumer
+chooses image-construction arguments. A declared asset-backed producer names the asset whose properties supply
+the date representation. Discovery and construction reuse the operation's recipe records, and construction
+retains the selected outer reference and its ancestry: Masking supplies the image while its primary producer
+supplies segment facts. Asset metadata and pixels are not frozen by that record sharing.
+
+For a recipe source, the producer's declared date representation or asset property takes precedence over a legacy
+copy beside the reference; a missing value may use that copy. For a directly selected asset, an explicitly
+configured date format takes precedence, including zero. Slice retains its final zero default; Change Alerts does
+not introduce one. Fresh descriptions are not copied into these consumers' models, and saved copies are not
+rewritten. Changing the date-format override policy is a separate decision.
+
+Unsupported and malformed sources fail before segment algebra with `UNSUPPORTED_SEGMENT_SOURCE` and
+`MALFORMED_SEGMENT_SOURCE`. Preservation-chain cycles use the execution path's `CYCLIC_DEPENDENCY`; unavailable
+recipe or asset reads propagate instead of falling back to a copy. The GUI additionally identifies unresolved
+records as `UNRESOLVED_SEGMENT_SOURCE`. Runtime witnesses live under `modules/gee/test/jobs/ee/ccdc/` and
+`modules/gee/test/jobs/ee/timeSeries/`; their external substitutes do not prove live Earth Engine pixel results.
 
 `CLASSIFICATION_RESULT` remains a likely later capability for classification-specific contracts. Generic
 categorical metadata must not be stretched into classifier behavior, reusable training data or other algorithmic
 capabilities.
+
+### Classification results and reusable classifiers
+
+These are distinct candidate contracts, to define from their consumers. A classified result supplies pixels and
+their categorical meaning. A reusable classifier supplies the behavior needed to classify another image, including
+its training and input requirements. PyEO needs the baseline classified image and classifier behavior; CCDC, Time
+Series and Phenology also apply a selected classifier to collection images. Band or legend availability alone
+cannot establish compatibility for those operations.
+
+Masking a Classification preserves values at the remaining valid pixels; it does not by itself establish how to
+reuse that classifier. Before accepting such wrappers, decide whether the mask affects only the baseline, also
+newly classified images, or the training footprint, and define preservation for each requested operation. Execution
+must retain the selected wrapper wherever its output is consumed. Resolving a classifier provider cannot silently
+replace that output with the unmasked Classification.
+
+An optical input masked before Classification is a different composition from a Classification whose output is
+masked. Support for the former does not prove the latter. Standardizing selector presentation is independent of
+this design and should retain existing eligibility until the behavioral contract is established.
 
 ### Transformation and preservation
 
@@ -360,21 +428,26 @@ missing, forbidden, incomplete, cyclic and incompatible.
 ## Coherent execution bundles
 
 Execution bundles are a later milestone, not a prerequisite for Masking dependency safety, Apply-mask
-stabilization, constant Fill or direct asset Fill. They require caller-authorized loading from the Node server
-replacement and reliable recipe revisions returned atomically with content.
+stabilization, constant Fill or direct asset Fill. Caller-authorized loading and recipe revisions returned
+atomically with content already exist. Bundles additionally require coherent graph acquisition and a trusted
+task-acceptance boundary.
 
 The current recipe `update_time` is a plain second-resolution SQL `TIMESTAMP`. Two saves in one second are therefore
 indistinguishable, so it must not be used as a coherent-build revision or cache key, and equal timestamps never
-establish unchanged content. The replacement storage boundary persists a server-owned monotonic `revision`
-atomically with recipe content. It orders websocket events, supports cheap invalidation and optimistic concurrency,
-and is distinct from the existing `typeVersion`, which is the recipe schema-migration version.
+establish unchanged content. The Recipe service persists a server-owned monotonic `revision` atomically with
+recipe content and enforces optimistic concurrency on save. That revision also provides ordering evidence for
+future websocket events and cache invalidation. It is distinct from `typeVersion`, the recipe schema-migration
+version.
 
-Recipe list, load, save and future batch or closure operations expose the same committed revision, and the same
-revision always returns the same execution-relevant content. Coherent construction uses that same ordinary load,
-which returns content and revision from one committed row. A save carries an expected revision and returns the
-committed one. A websocket update is published only after commit and carries at least recipe ID and revision,
-allowing clients to ignore duplicate or out-of-order events before fetching changed content. A no-op save returns the
-existing revision and publishes no event. `update_time` remains useful for display and audit only.
+Recipe list, load and save expose the committed revision, and the same revision always returns the same
+execution-relevant content. Future batch or closure operations must preserve that contract. Coherent construction
+uses the ordinary load, which returns content and revision from one committed row, plus the graph-wide snapshot
+protocol. A save carries an expected revision and returns the committed one. `update_time` remains useful for
+display and audit only.
+
+Websocket revision events and semantic no-op saves are future work. An event must be published only after commit
+and carry at least recipe ID and revision, allowing clients to ignore duplicate or out-of-order events before
+fetching changed content. A no-op save should return the existing revision and publish no event.
 
 Semantic no-op detection compares normalized content, which requires defined normalization — transient UI state
 excluded, key order irrelevant, meaningful array order preserved, value types preserved, migration and default
@@ -590,25 +663,14 @@ may strengthen later consumers, but it is not a prerequisite for CCDC Slice and 
 
 ## Implementation boundary
 
-Activate the generic `IMAGE_OUTPUT` product before domain capabilities or another recipe-specific resolver:
+Extend the existing generic `IMAGE_OUTPUT`, producer-step and observation contracts one consumer at a time. Keep
+an explicit coexistence boundary for unmigrated Retrieve paths. Adding a capability must not introduce another
+resolver or type checks in Masking. Constant Fill needs no dependency; direct asset Fill uses the linked Earth
+Engine identity. Recipe Fill must define its acquisition and execution requirements over caller-authorized loading,
+without presenting browser preflight as trusted execution evidence.
 
-- define execution identity, ordered bands and per-band export requirements in the shared contract;
-- resolve intrinsic, one-input and n-ary transformations bottom-up over the existing graph;
-- observe runtime bands through existing execution boundaries without persisting descriptions;
-- migrate Retrieve behind an explicit coexistence boundary;
-- use direct CCDC and masked CCDC as export-policy witnesses, not as type checks in Masking.
-
-Domain capabilities, capability-indexed selectors and broad consumer migration follow only after this output
-contract is accepted. Masking consumes the generic description to stabilize Apply mask and ship constant Fill
-without adding a dependency.
-
-Direct asset Fill may follow because it uses the linked Earth Engine identity rather than loading another SEPAL
-recipe. Recipe Fill remains blocked on the permanent caller-authorized loading boundary from the Node server
-replacement. The temporary browser closure loader is approved only for bounded preflight of an already selected
-root; reusing it for a new source-selection or execution feature requires a separate authorization and coherence
-review.
-
-CCDC Slice is a later capability and bundle witness. The resolved path supports:
+The current segment consumer contract above does not yet provide coherent bundles or structural admission of all
+legacy assets. Use CCDC Slice as a witness for those extensions, covering:
 
 - direct CCDC recipes;
 - existing and new CCDC assets satisfying the validated structural CCDC asset contract;
@@ -673,9 +735,8 @@ credentials bypass the requested principal.
 - Measured bundle depth, node and serialized-byte limits across the complete task path.
 - Coherent-build retry count and the optional integrity/provenance requirements, if any, that would justify a
   persisted content digest.
-- `revision` representation, the normalization rules behind semantic no-op detection, websocket event
-  ordering and dirty-draft conflict behavior.
-- Batch recipe endpoint transport details in the Node server replacement.
+- Normalization rules behind semantic no-op detection, websocket event ordering and dirty-draft conflict behavior.
+- Batch recipe endpoint transport details in the Recipe service.
 - Whether and where detailed task manifests are retained.
 - Output handling when asset drift is detected after completion.
 - ImageCollection membership behavior of `system:version` and the fallback evidence required when it is

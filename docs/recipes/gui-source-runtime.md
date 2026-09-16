@@ -1,8 +1,9 @@
 # GUI source runtime
 
-Design proposal for exposing source resolution to GUI consumers without making recipe components own Redux,
-dependency catalogues, loading or cache policy. This is a browser integration boundary around the pure shared
-contracts; it is not a second source resolver.
+Current browser source-resolution boundaries and their proposed extensions. The implemented one-shot
+`resolveImageOutput$` operation and the separate live `SourceEvidenceSync` lifecycle reuse pure shared contracts.
+The unified `watchSource$`, instance-level `querySources$`, versioned resource cache and coherent execution bundles
+remain design proposals. Components should not own dependency traversal or cache policy.
 
 ## Purpose
 
@@ -207,6 +208,42 @@ an asset ID proves that the source still has the same content. The first reusabl
 runtime's future versioned-resource layer described in
 [Source freshness, caching and invalidation](source-freshness.md).
 
+## Proposed recipe selector loading
+
+`RecipeInput` should provide project grouping, current-project/ALL filtering and self-reference validation without
+requiring a recipe or Earth Engine request. Loading is requested by callbacks that consume its results:
+
+| Callback | Requested work |
+|---|---|
+| `onChange(id)` | Notify selection only; the consumer may own its own acquisition workflow. |
+| `onRecipeLoaded({recipe, type})` | Resolve the recipe record, without requesting bands. |
+| `onBandsLoaded({recipe, type, bandNames})` | Resolve the record and request its bands. |
+
+With neither loading callback, selection performs no read. With both, the callbacks share the same record read.
+`onLoading` and `onError` describe requested work; their presence alone must not trigger it. A record-only caller
+must not depend on the availability of the bands endpoint. Changing selection or unmounting cancels outstanding
+selector work and rejects superseded results.
+
+Validation runs independently of acquisition, on mount for a saved value and on selection. In particular, skipping
+I/O must not skip invalidating a saved self-reference. Preserve `allowOwnRecipe` for selections which do not create
+a dependency. ALL widens project scope only; caller eligibility remains in force.
+
+Migrate existing callers according to the results they consume. Slice, Change Alerts, BAYTS and Mosaic AOI need
+selection only: their evidence or bounds workflows own the required reads. Verify these with a cold cache, since
+the selector's current read also populates and retains a shared cache entry. Map Layers and the Classification and
+Regression training-recipe pickers consume records; image-input and sampling callers also consume bands.
+
+Use the standard selector for the classification fields in PyEO, CCDC, Time Series and Phenology. Their own
+record/prefill workflow may start from `onChange`, with no selector loading callback, or consume the record callback
+if that replaces its existing read. Choose one owner per read. Forward the panel's loading and error presentation,
+tooltips and clearing behavior, and preserve saved-value initialization, selection, Apply/Cancel staging and
+supersession. Keep direct-classification eligibility for this packet; reusable classifier capabilities are a
+separate design decision.
+
+Verify observable requests and form behavior: no reads for selection-only callers, no bands request for a
+record-only caller, one record read when both results are requested, preserved self-reference validation, project
+grouping and eligibility, and a representative classification-prefill workflow without duplicate acquisition.
+
 ## React and rerender contract
 
 Process owns the provider: it wraps Process at its exported boundary, not a recipe, panel, tab or map layer, and
@@ -410,8 +447,8 @@ pure Redux updates, and the only store access is the injected lazy environment a
 
 ### Runtime image output
 
-The first implementation adapts the existing loaded-recipe cache, the existing authenticated per-recipe read and
-the image-band observation boundaries to the committed shared image-output observer. Recipe observations need
+The one-shot runtime adapts the loaded-recipe cache, the authenticated per-recipe read and
+the image-band observation boundaries to the shared image-output observer. Recipe observations need
 ordered names for their declarations; asset observations additionally retain verified array dimensionality so the
 shared contract can derive `sample` without a recipe-type branch. It does not persist descriptions or loaded
 closure records. The completed operation-local graph supplies interactive evidence only; it is not presented as a
@@ -440,8 +477,8 @@ The shared graph builder remains the sole authority for edges, dependency paths 
 The loader must not recursively walk newly returned models on its own. Diamond references are requested once, a
 cycle terminates with the graph's existing cycle diagnostic, and each round makes monotonic progress in one
 operation-local map. The operation must enforce explicit depth, node-count, serialized-byte, round and in-flight
-request limits with controlled failures. Their numeric values are selected from measured recipe graphs before the
-loader turns green, not guessed in this document.
+request limits with controlled failures. The implemented defaults live in `DEFAULT_RECIPE_CLOSURE_LIMITS` in
+`lib/js/shared/src/recipe/source/completeRecipeClosure.js`; changes should be informed by measured recipe graphs.
 
 The exact unsaved root and records captured from the editing session take precedence over loaded persisted
 records. A response must contain at most one record for each requested ID, must not contain unrequested records and
@@ -450,11 +487,11 @@ Unsubscription, runtime closure and Earth Engine identity invalidation tear down
 as band observations. No loaded record is dispatched to Redux, so closure completion causes no React rerender and
 cannot change another operation's snapshot.
 
-This is a bounded browser-preflight adapter, not the permanent live-resolution or execution-authority boundary. It
-adds no Groovy endpoint, uses no administrator recipe access and cannot make the browser graph coherent with the
-persisted graph Task later reads. Its batch-shaped seam is deliberate: after the Node server replacement,
-`loadRecipesById$` can become one authorized batch call, or `completeRecipeClosure$` can become one root-oriented
-server closure call, without changing `sourceRuntime.resolveImageOutput$({recipe})` or any recipe consumer.
+This operation-local adapter supplies browser preflight, not execution authority. It uses no administrator recipe
+access and cannot make the browser graph coherent with the persisted graph Task later reads. Its batch-shaped seam
+allows a future authorized batch or server-closure call without changing `sourceRuntime.resolveImageOutput$`.
+The shared traversal is also used by live observations and panel prefill; those callers supply their own reader
+and retention lifetime. The no-Redux-write guarantee above belongs to this one-shot source-runtime adapter.
 
 ### Apply-mask stabilization
 
@@ -462,6 +499,8 @@ Preview, map and Retrieve can consume the same resolved output while keeping dis
 range and source visualizations can be added to a source description without adding Masking-specific context
 methods or another source traversal. Inherited source visualizations are evidence; locally edited visualization
 state, applicability and final export filtering remain owned by their consumers.
+
+### Live source evidence
 
 Current bands and visualizations are inherited while the consuming recipe is open, but not yet through this
 runtime. `SourceEvidenceSync` uses the shared closure-completion boundary with the session's reference-counted
@@ -474,29 +513,58 @@ or invalidate pending answers. The full model remains part of the comparison: co
 invalidate even when the resulting band description is identical. The same comparison controls re-observation
 and whether a pending answer may publish.
 
-The lifecycle is not Masking's: `SourceEvidenceSync` takes a per-recipe `observation` - the source it depends
-on, and how to read evidence about it - and CCDC Slice mounts the same component to read the segment description
-it transforms (`recipe/ccdcSlice/sliceObservation.js`). What a source is for stays in the recipe definitions.
+`SourceEvidenceSync` takes a per-recipe observation describing the selected source and how to read evidence about
+it. Masking, CCDC Slice, Change Alerts and BAYTS Alerts use this lifecycle. It completes the selected source's
+closure rather than the consumer's, so an unrelated incomplete consumer input cannot block acquisition of a
+replacement source. The selected source's own dependency failures still matter.
+
+An observation can supply `applyAccepted` assignments, written in the same action as accepted evidence, and a
+`reportUnavailable` callback for an accepted failure. Configuration policy compares source identity and payload
+against the last successful observation, so unchanged recovery does not overwrite user edits. Change Alerts and
+BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
+responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
+
+Accepted observations have a generation as well as a payload: charts and previews may need to discard prior
+results after re-observation even when the described bands are identical. Slice and Change Alerts reconcile
+preset identities against the selected source and restored saved-layer styles. A different source cannot inherit
+those identities merely because its first response arrives late.
+
+PyEO's classification-imagery prefill is a separate one-shot workflow, not a live observer. It resolves the selected
+imagery's closure, excluding the Classification's unrelated training-data edges, and acquires bands independently
+of optional defaults. The panel owns immediate legend/band presentation, staged options/dates, Apply and Cancel.
+An unavailable defaults capability does not mean the imagery cannot execute.
 
 Evidence stays in runtime state for synchronous map, layer-form, Retrieve and export consumers. Open drafts are
 not overwritten by persisted dependency reloads. Failed observations offer no bands or visualizations; saved
 snapshots remain the fallback only where nothing has been observed. A shared live `watchSource$` would make this
 evidence available without an open consuming recipe and allow that fallback to retire.
 
+### Asset map-layer refresh
+
+Asset map layers read metadata on activation, a changed catalogue `updateTime`, or explicit Refresh asset. A
+successful observation renews the preview even if the metadata is identical, retains unchanged preset identities
+and withholds missing-band or array styles without deleting saved selections. Failed reads are reported and
+superseded responses cannot publish. This does not detect every external asset change: task-reported invalidation
+and shared versioned metadata ownership remain future work in [source freshness](source-freshness.md#asset-freshness).
+
 ### Fill operations
 
 Constant Fill requires no new source lookup. Direct asset Fill can reuse asset observation through the source
-runtime. Recipe Fill remains blocked until the permanent caller-authorized source boundary exists; the temporary
-preflight loader is not approval to activate another consumer. No context API change is required when that boundary
-is introduced.
+runtime. Recipe Fill still needs its acquisition and execution requirements defined over the existing authorized
+reader. A browser preflight graph is not an execution bundle. No new context operation is required merely to use
+another recipe as a source.
 
 ### Capabilities and candidate discovery
 
-`CCDC_SEGMENTS` and later capabilities extend the shared resolved description. Consumers submit an
-operation-specific requirement containing only the structural, adapter or capability constraints that operation
-actually needs, plus cardinality and saved selections. Validation distinguishes a valid source plan from a
-`SUPPORTED`, `UNSUPPORTED` or `NEEDS_EVIDENCE` consumer answer. `querySources$` can then return those answers without
-enumerating recipe types or persisting an effective type.
+The implemented producer-step rule supports `CCDC_SEGMENTS`, `BAYTS_HISTORICAL_STATS` and
+`OPTICAL_COLLECTION_DEFAULTS`. Change Alerts and BAYTS selectors query type-level candidacy, so they can offer a
+Masking recipe whose particular input does not satisfy their requirement. Slice and the classification pickers
+still have type filters. None of these is instance-level capability discovery.
+
+The proposed discovery query accepts an operation-specific requirement containing only the structural, adapter or
+capability constraints that operation needs, plus cardinality and saved selections. Validation distinguishes a
+valid source plan from a `SUPPORTED`, `UNSUPPORTED` or `NEEDS_EVIDENCE` consumer answer. `querySources$` can return
+those answers without enumerating recipe types or persisting an effective type.
 
 The query may combine runtime and requirement results for presentation, but the shared validator keeps them
 separate. A transport or authorization failure remains runtime `UNAVAILABLE`; it is never relabelled as
@@ -508,13 +576,14 @@ source-runtime API does not assume whether candidates came from Redux, a JSONB q
 
 ### Caller-authorized loading and freshness
 
-The temporary browser loader uses the current authenticated per-recipe read only for operation-local preflight.
-After the Node server replacement, the runtime can replace it with an authorization-scoped batch or complete-
-closure loader and key cached descriptions by principal, linked Earth Engine identity and an actual versioned
-contract. Existing consumers do not change because loading remains behind the service.
+The one-shot runtime currently uses authenticated per-recipe reads. A future authorization-scoped batch or closure
+API can replace that transport without changing consumers. Cached descriptions additionally need keys containing
+principal, linked Earth Engine identity and an actual versioned contract; a transport change alone supplies neither
+freshness nor graph coherence.
 
-Live consumers use `watchSource$`; one-shot commands continue to use a captured resolution. Cache entries publish
-description, fingerprint, freshness and availability without putting that state into React context.
+In the proposed unified runtime, live consumers use `watchSource$`; one-shot commands keep captured resolution.
+Cache entries publish description, fingerprint, freshness and availability without putting that state into React
+context.
 
 Shared reuse is a generic derived-resource concern. Image-output descriptions, visualization applicability and
 Sampling Design stratum-area and per-stratum-probability resources should use the same source-version registry and
@@ -531,7 +600,7 @@ The intended version evidence is:
 - an Earth Engine asset ID plus `system:version`, normalized as an opaque string, when that property is available;
 - principal, linked Earth Engine identity and contract version where they affect the answer.
 
-The current second-resolution recipe timestamp is display metadata, never a revision and never freshness evidence.
+The recipe timestamp is display metadata, never a revision and never freshness evidence.
 A source without reliable persisted version evidence is observed afresh rather than cached as though it were stable.
 The snapshot-provider boundary states whether it is handing over an editable root draft or an operation-local
 persisted snapshot; a persisted derived calculation binds to the latter, and dependency snapshots are never written
@@ -658,7 +727,7 @@ behavior that can be asserted below that boundary.
 - Which first capability selector justifies `querySources$` and its authorized search scope.
 - Whether a second command consumer demonstrates enough repeated safe-notification behavior to justify a shared
   operation-error presenter.
-- Measured initial depth, node-count, serialized-byte, round and request-concurrency limits for temporary browser
-  closure completion.
-- Whether the Node replacement first exposes a batch-by-ID read or a root-oriented complete-closure operation; the
+- Whether measured graph sizes require revising the current depth, node-count, serialized-byte, round and
+  request-concurrency limits for browser closure completion.
+- Whether the Recipe service first exposes a batch-by-ID read or a root-oriented complete-closure operation; the
   source-runtime consumer API is unchanged either way.
