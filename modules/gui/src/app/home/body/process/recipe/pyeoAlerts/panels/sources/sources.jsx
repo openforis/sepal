@@ -9,10 +9,8 @@ import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {connect} from '~/connect'
 import {toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
-import {select} from '~/store'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Icon} from '~/widget/icon'
@@ -20,6 +18,7 @@ import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
+import {RecipeInput} from '~/widget/recipeInput'
 
 import {NOT_DERIVABLE, readInputImagery$, SELECTED_SCENES} from '../../inputImagery'
 import toDateString from '../../toDateString'
@@ -44,10 +43,6 @@ const fields = {
             'process.pyeoAlerts.panel.sources.form.changeToClasses.overlap'
         )
 }
-
-const mapStateToProps = () => ({
-    recipes: select('process.recipes') || []
-})
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
@@ -112,20 +107,17 @@ class _Sources extends React.Component {
     }
 
     renderClassification() {
-        const {recipes, inputs: {classification}} = this.props
-        const options = recipes
-            .filter(({type}) => type === 'CLASSIFICATION')
-            .map(recipe => ({value: recipe.id, label: recipe.name}))
+        const {inputs: {classification}} = this.props
         return (
-            <Form.Combo
+            <RecipeInput
                 label={msg('process.pyeoAlerts.panel.sources.form.classification.label')}
                 tooltip={msg('process.pyeoAlerts.panel.sources.form.classification.tooltip')}
                 placeholder={msg('process.pyeoAlerts.panel.sources.form.classification.placeholder')}
-                options={options}
                 input={classification}
+                filter={type => type.id === 'CLASSIFICATION'}
                 busyMessage={this.isLoading()}
                 errorMessage={this.state.classificationError}
-                onChange={option => this.onClassificationSelected(option)}
+                onChange={id => this.onClassificationSelected(id)}
             />
         )
     }
@@ -226,8 +218,7 @@ class _Sources extends React.Component {
     }
 
     // User picked a classification: load its legend and stage derived params (pending Apply).
-    onClassificationSelected(option) {
-        const id = option && option.value
+    onClassificationSelected(id) {
         if (id === this.loadedClassificationId) {
             return
         }
@@ -430,7 +421,6 @@ const modelToValues = ({classification, dataSets, cloudPercentageThreshold, chan
 
 export const Sources = compose(
     _Sources,
-    connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     recipeFormPanel({id: 'sources', fields, modelToValues, valuesToModel}),
     recipeAccess()

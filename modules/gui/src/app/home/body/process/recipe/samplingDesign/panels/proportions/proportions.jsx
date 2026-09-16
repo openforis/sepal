@@ -104,7 +104,7 @@ class _Proportions extends React.Component {
         this.onImageChanged = this.onImageChanged.bind(this)
         this.onImageLoading = this.onImageLoading.bind(this)
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
-        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
+        this.onRecipeBandsLoaded = this.onRecipeBandsLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
         this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
@@ -197,7 +197,7 @@ class _Proportions extends React.Component {
             onImageChanged={this.onImageChanged}
             onImageLoading={this.onImageLoading}
             onAssetLoaded={this.onAssetLoaded}
-            onRecipeLoaded={this.onRecipeLoaded}
+            onRecipeBandsLoaded={this.onRecipeBandsLoaded}
             onBandChanged={this.onBandChanged}
             onScaleChanged={this.onScaleChanged}
             onPercentageChanged={this.onPercentageChanged}
@@ -399,7 +399,7 @@ class _Proportions extends React.Component {
         this.onImageLoaded(bands, visualizations)
     }
 
-    onRecipeLoaded({bandNames: bands, recipe}) {
+    onRecipeBandsLoaded({bandNames: bands, recipe}) {
         this.updateImageLayerSources({
             id: recipe.id,
             type: 'Recipe',

@@ -12,7 +12,7 @@ export class RecipeSection extends React.Component {
                 filter={type => type.id === 'CLASSIFICATION'}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
+                onRecipeLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
             />
         )
     }

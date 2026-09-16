@@ -91,7 +91,7 @@ class _Stratification extends React.Component {
         this.onImageChanged = this.onImageChanged.bind(this)
         this.onImageLoading = this.onImageLoading.bind(this)
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
-        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
+        this.onRecipeBandsLoaded = this.onRecipeBandsLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
         this.onGridChanged = this.onGridChanged.bind(this)
         this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
@@ -228,7 +228,7 @@ class _Stratification extends React.Component {
                 autoFocus
                 onChange={this.onImageChanged}
                 onLoading={this.onImageLoading}
-                onLoaded={this.onRecipeLoaded}
+                onBandsLoaded={this.onRecipeBandsLoaded}
             />
         )
     }
@@ -559,7 +559,7 @@ class _Stratification extends React.Component {
         this.onImageLoaded(bands, visualizations)
     }
 
-    onRecipeLoaded({bandNames: bands, recipe}) {
+    onRecipeBandsLoaded({bandNames: bands, recipe}) {
         // A recipe is a computed image: it reports Earth Engine's degree-scale default rather than a grid, so
         // there is nothing to derive and a band selection takes the plain default.
         this.bandMetadata = undefined

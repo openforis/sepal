@@ -147,7 +147,7 @@ class _SampleImageSection extends React.Component {
                     this.setState({bands: []})
                     this.props.inputs.referenceData.set(null)
                 }}
-                onLoaded={({bandNames: bands, recipe}) => {
+                onBandsLoaded={({bandNames: bands, recipe}) => {
                     if (bands.includes(this.props.inputs.valueColumn.value)) {
                         this.setState({bands, recipeToSample: recipe}, () => this.sampleData({
                             asset: this.props.inputs.assetToSample.value,

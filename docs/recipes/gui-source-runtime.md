@@ -208,10 +208,10 @@ an asset ID proves that the source still has the same content. The first reusabl
 runtime's future versioned-resource layer described in
 [Source freshness, caching and invalidation](source-freshness.md).
 
-## Proposed recipe selector loading
+## Recipe selector loading
 
-`RecipeInput` should provide project grouping, current-project/ALL filtering and self-reference validation without
-requiring a recipe or Earth Engine request. Loading is requested by callbacks that consume its results:
+`RecipeInput` provides project grouping, current-project/ALL filtering and self-reference validation without
+requiring a recipe or Earth Engine request. Loading is requested by the callbacks that consume its results:
 
 | Callback | Requested work |
 |---|---|
@@ -220,29 +220,27 @@ requiring a recipe or Earth Engine request. Loading is requested by callbacks th
 | `onBandsLoaded({recipe, type, bandNames})` | Resolve the record and request its bands. |
 
 With neither loading callback, selection performs no read. With both, the callbacks share the same record read.
-`onLoading` and `onError` describe requested work; their presence alone must not trigger it. A record-only caller
-must not depend on the availability of the bands endpoint. Changing selection or unmounting cancels outstanding
+`onLoading` and `onError` describe requested work; their presence alone does not trigger it. A record-only caller
+does not depend on the availability of the bands endpoint. Changing selection or unmounting cancels outstanding
 selector work and rejects superseded results.
 
-Validation runs independently of acquisition, on mount for a saved value and on selection. In particular, skipping
-I/O must not skip invalidating a saved self-reference. Preserve `allowOwnRecipe` for selections which do not create
-a dependency. ALL widens project scope only; caller eligibility remains in force.
+Validation runs independently of acquisition, on mount for a saved value and on selection: skipping I/O does not
+skip invalidating a saved self-reference. `allowOwnRecipe` remains for selections which do not create a
+dependency. ALL widens project scope only; caller eligibility remains in force.
 
-Migrate existing callers according to the results they consume. Slice, Change Alerts, BAYTS and Mosaic AOI need
-selection only: their evidence or bounds workflows own the required reads. Verify these with a cold cache, since
-the selector's current read also populates and retains a shared cache entry. Map Layers and the Classification and
-Regression training-recipe pickers consume records; image-input and sampling callers also consume bands.
+Callers request what they consume. Slice, Change Alerts, BAYTS, Mosaic AOI and the four classification fields
+need selection only, because their own evidence, bounds or classifier workflow owns the required reads - so the
+selector also leaves the shared record cache untouched for them, and those consumers read from a cold one. Map
+Layers and the Classification and Regression training-recipe pickers consume records; image-input and sampling
+callers consume bands.
 
-Use the standard selector for the classification fields in PyEO, CCDC, Time Series and Phenology. Their own
-record/prefill workflow may start from `onChange`, with no selector loading callback, or consume the record callback
-if that replaces its existing read. Choose one owner per read. Forward the panel's loading and error presentation,
-tooltips and clearing behavior, and preserve saved-value initialization, selection, Apply/Cancel staging and
-supersession. Keep direct-classification eligibility for this packet; reusable classifier capabilities are a
-separate design decision.
-
-Verify observable requests and form behavior: no reads for selection-only callers, no bands request for a
-record-only caller, one record read when both results are requested, preserved self-reference validation, project
-grouping and eligibility, and a representative classification-prefill workflow without duplicate acquisition.
+The classification fields in PyEO, CCDC, Time Series and Phenology use this selector, and each panel owns its own
+read. That ownership is not a free choice: what a panel derives from a classification - band options, or staged
+prefill - is used by controls that are not always rendered beside the selector, and a selector that is not
+rendered reads nothing. Acquisition therefore belongs to the panel lifecycle, which also decides what a selection
+means; only PyEO distinguishes a user's selection, which stages prefilled settings, from opening a saved recipe,
+which must not. Eligibility is direct `CLASSIFICATION` only; reusable classifier capabilities are a separate
+design decision.
 
 ## React and rerender contract
 

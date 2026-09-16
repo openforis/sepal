@@ -30,8 +30,7 @@ const mapRecipeToProps = recipe => {
 
 class _RecipeInput extends React.Component {
     state = {
-        all: false,
-        result: undefined
+        all: false
     }
     cancel$ = new Subject()
 
@@ -40,7 +39,10 @@ class _RecipeInput extends React.Component {
     }
 
     render() {
-        const {stream, input, label, labelButtons, placeholder, autoFocus, onChange} = this.props
+        const {
+            stream, input, label, labelButtons, placeholder, tooltip, allowClear, autoFocus,
+            busyMessage, errorMessage, onChange
+        } = this.props
         const {all} = this.state
         const options = this.getOptions()
 
@@ -69,11 +71,15 @@ class _RecipeInput extends React.Component {
                 label={label || msg('widget.recipeInput.label')}
                 labelButtons={labelButtons}
                 placeholder={placeholder || msg('widget.recipeInput.placeholder')}
+                tooltip={tooltip}
                 options={options}
                 autoFocus={autoFocus}
+                allowClear={allowClear}
                 buttons={buttons}
-                busyMessage={stream('LOAD_RECIPE').active}
-                onChange={({value}) => {
+                busyMessage={stream('LOAD_RECIPE').active || busyMessage}
+                errorMessage={errorMessage}
+                onChange={option => {
+                    const value = option?.value
                     onChange && onChange(value)
                     this.loadRecipe(value)
                 }}
@@ -139,37 +145,43 @@ class _RecipeInput extends React.Component {
     // non-blank, as several of these are, would go on satisfying Apply with a reference nothing can
     // resolve. Choosing another recipe clears it, because setting a value clears that field's errors.
     loadRecipe(recipeId) {
-        const {input, stream, onError, onLoading, onLoaded, loadRecipe$} = this.props
+        const {input, stream, onError, onLoading, onRecipeLoaded, onBandsLoaded} = this.props
+        // Whatever a previous selection had in flight can no longer be about what is selected now.
         this.cancel$.next()
-        if (recipeId) {
-            onLoading && onLoading(recipeId)
-            if (this.isOwnRecipe(recipeId)) {
-                input.setInvalid(msg('widget.recipeInput.ownRecipe.invalid'))
-                onError && onError(new Error(`Recipe ${recipeId} cannot be an input to itself`))
-                return
-            }
-            stream('LOAD_RECIPE',
-                loadRecipe$(recipeId).pipe(
-                    switchMap(recipe => {
-                        return api.gee.bands$({recipe}).pipe(
-                            map(bandNames => ({
-                                recipe,
-                                bandNames,
-                                type: getRecipeType(recipe.type)
-                            }))
-                        )
-                    }
-                    )
-                ).pipe(
-                    takeUntil(this.cancel$)
-                ),
-                result => {
-                    this.setState({result})
-                    return onLoaded && onLoaded(result)
-                },
-                error => onError && onError(error)
-            )
+        if (!recipeId) {
+            return
         }
+        // Validation is not acquisition: a saved self-reference is refused whether or not anything is read.
+        if (this.isOwnRecipe(recipeId)) {
+            input.setInvalid(msg('widget.recipeInput.ownRecipe.invalid'))
+            onError && onError(new Error(`Recipe ${recipeId} cannot be an input to itself`))
+            return
+        }
+        // What is read is what a consumer asked to be given. A caller that only needs to know what was
+        // selected reads nothing, and one that never asks for bands never reaches Earth Engine.
+        if (!onRecipeLoaded && !onBandsLoaded) {
+            return
+        }
+        onLoading && onLoading(recipeId)
+        stream('LOAD_RECIPE',
+            this.result$(recipeId).pipe(takeUntil(this.cancel$)),
+            ({recipe, bandNames}) => {
+                const type = getRecipeType(recipe.type)
+                onRecipeLoaded && onRecipeLoaded({recipe, type})
+                onBandsLoaded && onBandsLoaded({recipe, type, bandNames})
+            },
+            error => onError && onError(error)
+        )
+    }
+
+    // One record read, whichever results were asked for.
+    result$(recipeId) {
+        const {onBandsLoaded, loadRecipe$} = this.props
+        const record$ = loadRecipe$(recipeId)
+        return onBandsLoaded
+            ? record$.pipe(switchMap(recipe =>
+                api.gee.bands$({recipe}).pipe(map(bandNames => ({recipe, bandNames})))))
+            : record$.pipe(map(recipe => ({recipe})))
     }
 }
 
@@ -188,12 +200,19 @@ RecipeInput.propTypes = {
     // their `recipeIdToSample` out of directSources for exactly that reason). Never set it on an input
     // execution resolves.
     allowOwnRecipe: PropTypes.bool,
+    allowClear: PropTypes.bool,
+    busyMessage: PropTypes.any,
+    errorMessage: PropTypes.any,
     filter: PropTypes.func,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
-    onError: PropTypes.func,
+    tooltip: PropTypes.any,
+    // What a consumer asks to be given decides what is read. Neither reads nothing; both share one record
+    // read, and only onBandsLoaded reaches Earth Engine.
+    onBandsLoaded: PropTypes.func,
     onChange: PropTypes.func,
-    onLoaded: PropTypes.func,
+    onError: PropTypes.func,
     onLoading: PropTypes.func,
+    onRecipeLoaded: PropTypes.func,
 }

@@ -64,7 +64,7 @@ class _SelectRecipe extends React.Component {
                 allowOwnRecipe
                 autoFocus
                 onLoading={() => this.setState({recipe: null})}
-                onLoaded={({recipe}) => this.setState({recipe})}
+                onRecipeLoaded={({recipe}) => this.setState({recipe})}
             />
         )
     }

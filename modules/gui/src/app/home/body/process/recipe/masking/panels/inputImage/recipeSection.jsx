@@ -23,7 +23,7 @@ export class RecipeSection extends React.Component {
                 filter={filter}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
+                onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }

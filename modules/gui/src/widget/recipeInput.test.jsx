@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {of} from 'rxjs'
+import {of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
@@ -27,7 +27,7 @@ vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // The legacy flag as the production definitions carry it: CCDC and the table recipe both declare they have
 // no canonical image output. What the segment declaration then says about CCDC is the real one.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
-    getRecipeType: type => ({type, noImageOutput: ['TABLE_ONLY', 'CCDC'].includes(type)})
+    getRecipeType: type => ({id: type, type, noImageOutput: ['TABLE_ONLY', 'CCDC'].includes(type)})
 }))
 
 const {RecipeInput} = await import('./recipeInput')
@@ -37,12 +37,14 @@ const {maskableImage} = await import(
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-let root, container, store, loaded, form
+let root, container, store, loaded, loading, selected, form
 
 beforeEach(() => {
     loaded = []
+    loading = []
+    selected = []
     bands$.mockReset().mockImplementation(() => of(['red', 'nir']))
-    load$.mockReset().mockImplementation(recipeId => of({id: recipeId, type: 'MOSAIC', model: {}}))
+    load$.mockReset().mockImplementation(recipeId => of(recipeOf(recipeId)))
 })
 
 afterEach(async () => {
@@ -109,6 +111,112 @@ it('offers and reads the recipe itself where the caller declares it is not an in
     await choose('The owner')
 
     expect(loaded).toEqual([{id: OWNER, bandNames: ['red', 'nir']}])
+})
+
+// What a consumer asks to be given is what gets read. The selector offers, groups and validates without it.
+describe('a caller that only wants to know what was selected', () => {
+    it('reads nothing, on mount or on selection', async () => {
+        show({value: OTHER, requests: {}})
+        expect(load$).not.toHaveBeenCalled()
+
+        await choose('A CCDC')
+
+        expect(load$).not.toHaveBeenCalled()
+        expect(bands$).not.toHaveBeenCalled()
+        expect(loading).toEqual([])
+        expect(selected).toEqual(['ccdc'])
+    })
+
+    // The selector's read used to populate the shared record cache as a side effect. A consumer that owns
+    // its own loading must work from a cold one.
+    it('leaves the record cache as it found it', async () => {
+        show({requests: {}})
+
+        await choose('Another recipe')
+
+        expect(Object.keys(cachedRecipes())).toEqual([OWNER])
+    })
+
+    // Refusing to read is not refusing to validate: a recipe saved as its own input is still rejected.
+    it('still refuses a saved self-reference', () => {
+        show({value: OWNER, requests: {}})
+
+        expect(form.isInvalid()).toBe(true)
+        expect(load$).not.toHaveBeenCalled()
+    })
+})
+
+// Clearing hands the selector no option at all, and the consumer has to be told - it is what tells a panel
+// to drop whatever it derived from the selection.
+describe('clearing the selection', () => {
+    it('notifies the consumer that nothing is selected', async () => {
+        show({value: OTHER, requests: {}})
+
+        await clear()
+
+        expect(selected).toEqual([undefined])
+        expect(selectedValue()).toBeFalsy()
+    })
+
+    it('stops a read in flight from arriving after it', async () => {
+        const records = []
+        const held = new Subject()
+        load$.mockReturnValue(held)
+        show({requests: {onRecipeLoaded: ({recipe}) => records.push(recipe.id)}})
+        await choose('Another recipe')
+
+        await clear()
+        await act(async () => {
+            held.next(recipeOf(OTHER))
+            held.complete()
+        })
+
+        expect(selected).toEqual([OTHER, undefined])
+        expect(records).toEqual([])
+    })
+})
+
+describe('a caller that wants the record', () => {
+    it('is given it without a bands request', async () => {
+        const records = []
+        show({requests: {onRecipeLoaded: ({recipe, type}) => records.push({id: recipe.id, type: type.id})}})
+
+        await choose('Another recipe')
+
+        expect(records).toEqual([{id: OTHER, type: 'MOSAIC'}])
+        expect(bands$).not.toHaveBeenCalled()
+    })
+
+    it('shares one record read with a caller that also wants bands', async () => {
+        const records = []
+        show({requests: {
+            onRecipeLoaded: ({recipe}) => records.push(recipe.id),
+            ...bandsRequested
+        }})
+
+        await choose('Another recipe')
+
+        expect(records).toEqual([OTHER])
+        expect(loaded).toEqual([{id: OTHER, bandNames: ['red', 'nir']}])
+        expect(load$).toHaveBeenCalledTimes(1)
+    })
+
+    // A selection replaced while its read is in flight is no longer what the consumer asked about.
+    it('is not given the record of a selection that has been replaced', async () => {
+        const records = []
+        const held = new Subject()
+        load$.mockImplementation(recipeId => recipeId === OTHER ? held : of(recipeOf(recipeId)))
+        show({requests: {onRecipeLoaded: ({recipe}) => records.push(recipe.id)}})
+        await choose('Another recipe')
+
+        await choose('A CCDC')
+        await act(async () => {
+            held.next(recipeOf(OTHER))
+            held.complete()
+        })
+
+        expect(records).toEqual(['ccdc'])
+    })
 })
 
 // Masking's own eligibility rule over the production CCDC declaration: a recipe with no canonical image
@@ -222,19 +330,29 @@ const DEFAULT_PROJECTS = [{id: 'p1', name: 'Project one'}, {id: 'p2', name: 'Pro
 
 const fields = {recipe: new Form.Field()}
 
-const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecipe, filter}) => {
+const bandsRequested = {
+    onBandsLoaded: ({recipe, bandNames}) => loaded.push({id: recipe.id, bandNames})
+}
+
+const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecipe, filter, requests}) => {
     form = theForm
     return (
         <RecipeInput
             input={recipe}
             allowOwnRecipe={allowOwnRecipe}
             filter={filter}
-            onLoaded={({recipe, bandNames}) => loaded.push({id: recipe.id, bandNames})}
+            allowClear
+            onChange={id => selected.push(id)}
+            onLoading={id => loading.push(id)}
+            {...requests}
         />
     )
 })
 
-const show = ({value, allowOwnRecipe, filter, recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS} = {}) => {
+const show = ({
+    value, allowOwnRecipe, filter, requests = bandsRequested,
+    recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS
+} = {}) => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
@@ -259,6 +377,7 @@ const show = ({value, allowOwnRecipe, filter, recipes = DEFAULT_RECIPES, project
                         values={value === undefined ? {} : {recipe: value}}
                         allowOwnRecipe={allowOwnRecipe}
                         filter={filter}
+                        requests={requests}
                     />
                 </Recipe>
             </EventShield>
@@ -269,6 +388,10 @@ const show = ({value, allowOwnRecipe, filter, recipes = DEFAULT_RECIPES, project
 const combo = () => container.querySelector('input')
 
 // What a panel reads when it is applied.
+const recipeOf = recipeId => ({id: recipeId, type: 'MOSAIC', model: {}})
+
+const cachedRecipes = () => store.getState().process.loadedRecipes
+
 const selectedValue = () => form.values().recipe
 
 const open = () => act(async () => combo().click())
@@ -285,6 +408,13 @@ const headings = () => [...document.querySelectorAll('li')]
 const optionElements = () => [...document.querySelectorAll('li')]
     .filter(option => !option.className.includes('sticky'))
     .map(option => option.firstElementChild)
+
+// The control the user clicks to clear a selection, found by the icon that names it.
+const clear = () => act(async () => {
+    const clearButton = document.querySelector('[data-icon="xmark"]')?.closest('button')
+    expect(clearButton, 'the selector offers no way to clear').toBeDefined()
+    clearButton.click()
+})
 
 const choose = async label => act(async () => {
     await act(async () => combo().click())

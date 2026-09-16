@@ -6,15 +6,13 @@ shared model. User-facing documentation belongs in the separate `sepal-doc` repo
 
 ## Current delivery focus
 
-Standardize the classification selectors in PyEO, CCDC, Time Series and Phenology on `RecipeInput`, with project
-grouping and current-project/ALL views. Make selector loading depend on the results a caller requests, preserving
-validation and each panel's prefill lifecycle while eliminating unused and duplicate reads. The
-[selector contract](gui-source-runtime.md#proposed-recipe-selector-loading) defines this bounded packet.
+Every recipe selector is `RecipeInput`, and what it reads is what its caller asks to be given - the
+[selector contract](gui-source-runtime.md#recipe-selector-loading).
 
-Keep direct-classification eligibility for that migration. Supporting a masked classification requires a separate
-contract for classifier behavior; changing the selector widget does not establish that support. Further consumer
-validation, capability discovery and coherent execution bundles remain separate packets driven by concrete
-consumers. Their relative order is not fixed by the selector work.
+Eligibility for the classification selectors is direct `CLASSIFICATION`. Supporting a masked classification
+requires a separate contract for classifier behavior; the selector does not establish that support. Further
+consumer validation, capability discovery and coherent execution bundles remain separate packets driven by
+concrete consumers.
 
 ## Scope and constraints
 
@@ -438,9 +436,6 @@ compatibility, panel defaults and execution behavior as separate responsibilitie
 
 Still to do here:
 
-- Standardize the four classification selectors and make `RecipeInput` loading depend on requested results, as
-  described in [GUI source runtime](gui-source-runtime.md#proposed-recipe-selector-loading). Keep the existing
-  classification eligibility and panel policies; no wrapper support or new discovery infrastructure is required.
 - Define [classification output versus reusable classifier behavior](source-resolution.md#classification-results-and-reusable-classifiers)
   before admitting masked classifications to PyEO, CCDC, Time Series or Phenology. Decide mask semantics for the
   baseline image, training and newly classified monitoring images; never unwrap a selection and silently drop it.

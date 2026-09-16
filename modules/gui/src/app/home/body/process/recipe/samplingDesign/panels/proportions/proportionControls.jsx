@@ -80,7 +80,7 @@ export const ImageSelection = ({
     onImageChanged,
     onImageLoading,
     onAssetLoaded,
-    onRecipeLoaded,
+    onRecipeBandsLoaded,
     onBandChanged,
     onScaleChanged,
     onPercentageChanged
@@ -103,7 +103,7 @@ export const ImageSelection = ({
                     typeButtons={typeButtons}
                     onImageChanged={onImageChanged}
                     onImageLoading={onImageLoading}
-                    onRecipeLoaded={onRecipeLoaded}
+                    onRecipeBandsLoaded={onRecipeBandsLoaded}
                 />
                 : null}
             <Layout type='horizontal'>
@@ -232,7 +232,7 @@ const AssetSource = ({assetId, typeButtons, onImageChanged, onImageLoading, onAs
         onLoaded={onAssetLoaded}
     />
 
-const RecipeSource = ({recipeId, typeButtons, onImageChanged, onImageLoading, onRecipeLoaded}) =>
+const RecipeSource = ({recipeId, typeButtons, onImageChanged, onImageLoading, onRecipeBandsLoaded}) =>
     <RecipeInput
         label={msg('process.samplingDesign.panel.proportions.form.image.label')}
         input={recipeId}
@@ -241,7 +241,7 @@ const RecipeSource = ({recipeId, typeButtons, onImageChanged, onImageLoading, on
         autoFocus
         onChange={onImageChanged}
         onLoading={onImageLoading}
-        onLoaded={onRecipeLoaded}
+        onBandsLoaded={onRecipeBandsLoaded}
     />
 
 const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrategy, bands = [], onBandChanged, onPercentageChanged}) => {

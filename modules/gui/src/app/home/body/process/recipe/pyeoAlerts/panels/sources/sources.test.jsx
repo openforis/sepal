@@ -41,7 +41,7 @@ describe('a classification the user has just selected', () => {
     it('reads the imagery it names, not the classification that named it', () => {
         const {panel} = sources()
 
-        panel.onClassificationSelected({value: CLASSIFICATION})
+        panel.onClassificationSelected(CLASSIFICATION)
 
         expect(readInputImagery$).toHaveBeenCalledTimes(1)
         const [reference] = readInputImagery$.mock.calls[0]
@@ -53,7 +53,7 @@ describe('a classification the user has just selected', () => {
     it('asks for its configuration, as opening a saved recipe does not', () => {
         const {panel} = sources()
 
-        panel.onClassificationSelected({value: CLASSIFICATION})
+        panel.onClassificationSelected(CLASSIFICATION)
         expect(readInputImagery$.mock.calls[0][2]).toEqual({defaults: true})
 
         readInputImagery$.mockClear()
@@ -68,7 +68,7 @@ describe('a classification the user has just selected', () => {
         readInputImagery$.mockReturnValue(throwError(() => new Error('imagery unavailable')))
         const {panel, written} = sources()
 
-        panel.onClassificationSelected({value: CLASSIFICATION})
+        panel.onClassificationSelected(CLASSIFICATION)
 
         expect(written['ui.classificationLegend']).toEqual(LEGEND)
         expect(notifyError).toHaveBeenCalled()
@@ -78,7 +78,7 @@ describe('a classification the user has just selected', () => {
         readInputImagery$.mockReturnValue(of({bands: ['red'], defaults: null, restriction: 'NOT_DERIVABLE'}))
         const {panel, written} = sources()
 
-        panel.onClassificationSelected({value: CLASSIFICATION})
+        panel.onClassificationSelected(CLASSIFICATION)
 
         expect(written['ui.classificationBands']).toEqual(['red'])
     })
