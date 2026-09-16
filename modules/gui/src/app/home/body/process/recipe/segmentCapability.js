@@ -1,17 +1,14 @@
 import {throwError} from 'rxjs'
 
 import {
+    CCDC_SEGMENTS,
     MALFORMED_SEGMENT_SOURCE,
-    PRESERVES,
-    PRODUCES,
-    segmentProviderStep,
     UNSUPPORTED_SEGMENT_SOURCE
 } from '#sepal/recipe/capability/ccdcSegments'
-import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
-import {ASSET} from '#sepal/recipe/source/reference'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {describeSegmentsAsset$} from './ccdc/segmentsAsset'
+import {NOT_A_SOURCE, resolveProvider, UNRESOLVED, UNSUPPORTED} from './sourceProvider'
 
 // The GUI's side of the CCDC_SEGMENTS capability: it acquires evidence, the shared rule decides where from.
 //
@@ -49,41 +46,33 @@ export const describeProducer$ = (producer, {graph, recipesById}) => {
         ))
 }
 
-// Null for a producer that computes its segments instead of reading an asset.
-export const segmentsAssetOf = producer =>
-    producer.assetId !== undefined
-        ? producer.assetId
-        : recipeType(producer.record?.type)?.segmentSource?.segmentsAsset?.(producer.record.model) ?? null
+// Where a producer's segments live, from the terms it declared. Null for one that computes them.
+export const segmentsAssetOf = ({assetId, record, declared}) =>
+    assetId !== undefined
+        ? assetId
+        : declared?.segmentsAsset?.(record.model) ?? null
 
-// Which recipe or asset produces the segments this reference stands for, over records already resolved.
-// Cycles cannot be followed here: the closure that produced these records rejected them already.
 export const resolveSegmentProducer = (reference, recipesById) => {
-    const seen = new Set()
-    let current = reference
-    while (current) {
-        if (current.type === ASSET) {
-            return {assetId: current.id}
-        }
-        if (seen.has(current.id)) {
-            return {error: new SegmentSourceError(
-                MALFORMED_SEGMENT_SOURCE, `Source references itself: ${current.id}`
-            )}
-        }
-        seen.add(current.id)
-        const record = recipesById.get(current.id)
-        if (!record) {
-            return {error: new SegmentSourceError(
-                UNRESOLVED_SEGMENT_SOURCE, `Source recipe ${current.id} was not resolved`
-            )}
-        }
-        const {status, reference: preserved} = segmentProviderStep(record)
-        if (status === PRODUCES) {
-            return {record}
-        }
-        if (status !== PRESERVES) {
-            return {error: new SegmentSourceError(status, `${record.type} recipe ${record.id} produces no segments`)}
-        }
-        current = preserved
+    const producer = resolveProvider(reference, recipesById, CCDC_SEGMENTS)
+    return producer.error
+        ? {error: asSegmentSourceError(producer.error)}
+        : producer
+}
+
+// The codes and wording a reader of segments reports, which are observable here and at the Earth Engine
+// boundary. The walk's own diagnosis of a source it could not resolve or follow already reads correctly.
+const asSegmentSourceError = ({reason, record, message}) => {
+    if (record) {
+        return new SegmentSourceError(
+            reason === UNSUPPORTED ? UNSUPPORTED_SEGMENT_SOURCE : MALFORMED_SEGMENT_SOURCE,
+            `${record.type} recipe ${record.id} produces no segments`
+        )
     }
-    return {error: new SegmentSourceError(MALFORMED_SEGMENT_SOURCE, 'Not a source segments can be read from')}
+    if (reason === UNRESOLVED) {
+        return new SegmentSourceError(UNRESOLVED_SEGMENT_SOURCE, message)
+    }
+    return new SegmentSourceError(
+        MALFORMED_SEGMENT_SOURCE,
+        reason === NOT_A_SOURCE ? 'Not a source segments can be read from' : message
+    )
 }

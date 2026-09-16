@@ -9,10 +9,11 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
+import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {getAvailableBands} from './bands'
 import {defaultModel, RecipeActions} from './baytsAlertsRecipe'
 import {BaytsAlertsToolbar} from './panels/baytsAlertsToolbar'
-import {ReferenceSync} from './referenceSync'
+import {baytsAlertsObservation} from './referenceObservation'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -34,7 +35,7 @@ class _BaytsAlerts extends React.Component {
             <Map>
                 <BaytsAlertsToolbar/>
                 <Aoi value={reference.type && reference}/>
-                <ReferenceSync/>
+                <SourceEvidenceSync observation={baytsAlertsObservation}/>
             </Map>
         )
     }

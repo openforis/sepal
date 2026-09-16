@@ -113,7 +113,7 @@ class _SourceEvidenceSync extends React.Component {
             evidence => this.publish({status: OBSERVED, ...evidence}),
             error => {
                 log.debug(() => `Could not observe source ${this.sourceKey()}: ${error.message}`)
-                this.publish({status: UNAVAILABLE})
+                this.publish({status: UNAVAILABLE}, error)
             }
         )
     }
@@ -262,7 +262,7 @@ class _SourceEvidenceSync extends React.Component {
             .filter(([id]) => !isBehind(session, id)))
     }
 
-    publish(evidence) {
+    publish(evidence, error) {
         const {recipe, recipeActionBuilder} = this.props
         const basis = this.basis
         if (!basis || this.outdated(basis)) {
@@ -279,6 +279,18 @@ class _SourceEvidenceSync extends React.Component {
                 .set('ui.sourceEvidence', published),
             published
         ).dispatch()
+        this.reported(published, error)
+    }
+
+    // Withholding an answer is the whole of what this does about a failure. Whether that is visible is the
+    // consumer's: one presenting the withheld state needs nothing, while one whose panels go on showing what
+    // they held would otherwise fail silently. Reported after acceptance, so a superseded read is not
+    // announced, and the error is passed rather than published - it is not evidence about the source.
+    reported(evidence, error) {
+        const {recipe, observation} = this.props
+        if (evidence.status === UNAVAILABLE && observation.reportUnavailable) {
+            observation.reportUnavailable({recipe, error})
+        }
     }
 
     // Apply consumer settings atomically with accepted evidence. Failures never seed settings or replace
@@ -371,7 +383,8 @@ SourceEvidenceSync.propTypes = {
     // {
     //     sourceReference: recipe => reference | null,
     //     observe$: ({recipe, graph, recipesById}) => Observable,
-    //     applyAccepted?: ({recipe, evidence, previous}) => [{path, value, merge?}]
+    //     applyAccepted?: ({recipe, evidence, previous}) => [{path, value, merge?}],
+    //     reportUnavailable?: ({recipe, error}) => void
     // }
     observation: PropTypes.object.isRequired
 }

@@ -527,11 +527,17 @@ Landed:
   observation's `applyAccepted` policy applies monitoring settings in the same action as accepted evidence,
   comparing with the last successful observation so a failed read cannot reset user edits on recovery. Asset
   descriptions and monitoring settings come from one metadata response. Directly selected assets retain their
-  existing date-format initialization and correction policy. `ReferenceSync` is removed; `loadSourceRecipe$`
-  remains for BAYTS and Pyeo.
+  existing date-format initialization and correction policy. `ReferenceSync` is removed.
 - Observation completes the selected source's dependencies, so obsolete monitoring settings or a missing mask
   on the consumer cannot block acquisition. Dependencies of the selected source still participate in closure
   validation and observation invalidation.
+- BAYTS Alerts resolves its historical producer through a `BAYTS_HISTORICAL_STATS` declaration and seeds
+  `model.options` from it through the shared lifecycle. The traversal step is shared with `CCDC_SEGMENTS`
+  (`capability/providerStep.js`, `recipe/sourceProvider.js`); each capability keeps its own declaration,
+  failure names and evidence. Candidacy is not evidence: an asset mosaic says where options would be read
+  from, not that the asset carries BAYTS statistics. Its `ReferenceSync`, `ui.reference.sourceId` and the
+  blanket `sourceRecipe` selector filter are removed, and the previously selectable types - BAYTS historical,
+  asset mosaics and preserving wrappers - stay selectable. `loadSourceRecipe$` remains for Pyeo only.
 
 Still to do here:
 
