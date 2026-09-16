@@ -1600,7 +1600,7 @@
           "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
           "form": {
             "useIndexGate": {
-              "label": "Require index drop",
+              "label": "Require drop",
               "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
               "off": "No",
               "on": "Yes",

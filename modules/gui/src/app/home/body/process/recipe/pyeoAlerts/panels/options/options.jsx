@@ -69,23 +69,32 @@ class _Options extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {useIndexGate, minConsecutiveDetections}} = this.props
+        const {inputs: {useIndexGate, gateIndex, minConsecutiveDetections}} = this.props
         const gateAvailable = this.availableIndexes().length > 0
         return (
             <Layout>
-                <Form.Buttons
-                    label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
-                    tooltip={msg(gateAvailable
-                        ? 'process.pyeoAlerts.panel.options.form.useIndexGate.tooltip'
-                        : 'process.pyeoAlerts.panel.options.form.useIndexGate.unavailable')}
-                    input={useIndexGate}
-                    options={[
-                        {value: false, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.off')},
-                        {value: true, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.on')}
-                    ]}
-                    disabled={!gateAvailable}
-                />
-                {useIndexGate.value && gateAvailable ? this.renderIndexGate() : null}
+                <Layout type='horizontal' alignment='distribute' spacing='loose'>
+                    <Form.Combo
+                        label={msg('process.pyeoAlerts.panel.options.form.gateIndex.label')}
+                        tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
+                        input={gateIndex}
+                        options={this.indexOptions()}
+                        disabled={!useIndexGate.value || !gateAvailable}
+                    />
+                    <Form.Buttons
+                        label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
+                        tooltip={msg(gateAvailable
+                            ? 'process.pyeoAlerts.panel.options.form.useIndexGate.tooltip'
+                            : 'process.pyeoAlerts.panel.options.form.useIndexGate.unavailable')}
+                        input={useIndexGate}
+                        options={[
+                            {value: false, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.off')},
+                            {value: true, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.on')}
+                        ]}
+                        disabled={!gateAvailable}
+                    />
+                </Layout>
+                {useIndexGate.value && gateAvailable ? this.renderIndexThreshold() : null}
                 <Form.Slider
                     label={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.label')}
                     tooltip={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.tooltip')}
@@ -99,27 +108,19 @@ class _Options extends React.Component {
         )
     }
 
-    renderIndexGate() {
-        const {inputs: {gateIndex, gateThreshold}} = this.props
+    renderIndexThreshold() {
+        const {inputs: {gateThreshold}} = this.props
         return (
-            <Layout>
-                <Form.Combo
-                    label={msg('process.pyeoAlerts.panel.options.form.gateIndex.label')}
-                    tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
-                    input={gateIndex}
-                    options={this.indexOptions()}
-                />
-                <Form.Slider
-                    label={msg('process.pyeoAlerts.panel.options.form.gateThreshold.label')}
-                    tooltip={msg('process.pyeoAlerts.panel.options.form.gateThreshold.tooltip')}
-                    input={gateThreshold}
-                    minValue={0}
-                    maxValue={1}
-                    decimals={2}
-                    ticks={[0, 0.25, 0.5, 0.75, 1]}
-                    info={value => msg('process.pyeoAlerts.panel.options.form.gateThreshold.value', {value})}
-                />
-            </Layout>
+            <Form.Slider
+                label={msg('process.pyeoAlerts.panel.options.form.gateThreshold.label')}
+                tooltip={msg('process.pyeoAlerts.panel.options.form.gateThreshold.tooltip')}
+                input={gateThreshold}
+                minValue={0}
+                maxValue={1}
+                decimals={2}
+                ticks={[0, 0.25, 0.5, 0.75, 1]}
+                info={value => msg('process.pyeoAlerts.panel.options.form.gateThreshold.value', {value})}
+            />
         )
     }
 
