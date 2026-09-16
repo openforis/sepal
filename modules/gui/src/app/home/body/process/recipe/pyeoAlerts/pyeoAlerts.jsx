@@ -33,7 +33,7 @@ class _PyeoAlerts extends React.Component {
         return (
             <Map>
                 <PyeoAlertsToolbar/>
-                <Aoi value={aoi}/>
+                <Aoi value={aoi?.type && aoi}/>
             </Map>
         )
     }

@@ -6,7 +6,6 @@ import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
-    aoi: {},
     sources: {
         classification: undefined,
         dataSets: {},
