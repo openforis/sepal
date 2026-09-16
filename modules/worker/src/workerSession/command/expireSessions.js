@@ -83,12 +83,14 @@ const manageLink = url =>
         <br><br>`
         : ''
 
+const plural = running => running.includes(' and ')
+
 const expiryEmail = ({instanceType, policy, url, running, name}) => ({
     subject: 'Your SEPAL instance is about to be stopped',
     content: `
         ${instanceText({name, instanceType})} has not been used for a while, and
         will be <b>stopped in about ${policy.graceMinutes} minutes</b> unless you keep it.
-        ${running ? `<br><br><b>${running}</b> ${running.includes(' and ') ? 'are' : 'is'} running on it.` : ''}
+        ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'are' : 'is'} running on it.` : ''}
         <br><br>
         ${manageLink(url)}
         Simply using the instance — typing in a notebook, an app or a terminal — keeps it running
@@ -100,14 +102,14 @@ const expiryEmail = ({instanceType, policy, url, running, name}) => ({
 })
 
 const closedEmail = ({instanceType, running, name}) => ({
-    subject: 'Your unused SEPAL instance was stopped',
+    subject: 'Your SEPAL instance was stopped',
     content: `
-        ${instanceText({name, instanceType})} was stopped after going unused, to
-        avoid unnecessary cost.
-        ${running ? `<br><br>This closed <b>${running}</b>.` : ''}
+        ${instanceText({name, instanceType})} had not been used for a while, and
+        was <b>stopped</b> to avoid unnecessary cost.
+        ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'were' : 'was'} running on it and ${plural(running) ? 'have' : 'has'} been closed.` : ''}
         <br><br>
-        Your files are untouched — everything in your home directory is preserved. You can start a
-        new instance at any time.
+        Your files are untouched: everything in your home directory is preserved, and
+        you can start a new instance at any time.
     `,
 })
 
