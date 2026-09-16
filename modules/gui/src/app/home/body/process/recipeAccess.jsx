@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
-import {map, of, switchMap, tap} from 'rxjs'
+import {map, of, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -11,7 +11,6 @@ import {select} from '~/store'
 import {uuid} from '~/uuid'
 
 import {initializeRecipe, isRecipeOpen, recipePath} from './recipe'
-import {getRecipeType} from './recipeTypeRegistry'
 
 let componentIdsByRecipeId = {}
 
@@ -38,7 +37,6 @@ export const recipeAccess = () =>
                     usingRecipe: recipeId => this.usingRecipe(recipeId),
                     loadRecipe$: recipeId => this.loadRecipe$(recipeId),
                     reloadRecipe$: recipeId => this.reloadRecipe$(recipeId),
-                    loadSourceRecipe$: recipeId => this.loadSourceRecipe$(recipeId),
                     loadedRecipes
                 })
             }
@@ -102,25 +100,6 @@ export const recipeAccess = () =>
                 }
                 this.cacheRecipe(recipe)
                 return recipe
-            }
-
-            loadSourceRecipe$(recipeId) {
-                return this.loadRecipe$(recipeId).pipe(
-                    switchMap(recipe => {
-                        const type = getRecipeType(recipe.type)
-                        const sourceRecipe = type?.sourceRecipe && type.sourceRecipe(recipe)
-                        if (sourceRecipe) {
-                            if (sourceRecipe.type === 'ASSET') {
-                                return of(sourceRecipe)
-                            } else {
-                                return this.loadSourceRecipe$(sourceRecipe.id)
-                            }
-                        } else {
-                            this.cacheRecipe(recipe)
-                            return of(recipe)
-                        }
-                    })
-                )
             }
 
             cacheRecipe(recipe) {

@@ -55,7 +55,6 @@ export default () => ({
     components: {
         recipe: Masking
     },
-    sourceRecipe: recipe => recipe.model.imageToMask,
     getAvailableBands,
     getPreSetVisualizations
 })

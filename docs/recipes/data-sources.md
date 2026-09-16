@@ -104,12 +104,49 @@ A consumer expectation is derived from the consuming model. Selecting band `ndvi
 exist. Selecting a CCDC measure also requires the corresponding CCDC capability. Discovery updates available
 choices but never silently replaces a missing saved selection.
 
+Consumers read the CURRENT description rather than a copy stored beside the selection, and nothing writes a fresh
+copy. A copy in a saved recipe is the fallback while nothing has been observed, never the answer once something
+has. The selection itself is durable intent and is never replaced by what it stands for: a Masking over CCDC
+remains what executes while CCDC supplies the semantics, through selection, refresh, reopening and execution.
+
+Acquisition is owned once, by the shared source-evidence lifecycle: when to read, what a reading was based on,
+cancellation, and rejection of superseded answers. It completes the closure of the SELECTED SOURCE, not of the
+consumer, so a consumer whose own configuration has lost a dependency can still acquire the source that would
+repair it; the source's own dependencies still take part in invalidation. A consumer may declare what to do with
+an answer that was accepted - its settings are written in the same action as the evidence, compared against the
+last SUCCESSFUL observation, so a failed read cannot reset user edits on recovery - and what to say when one was
+not, since a panel that shows no withheld state would otherwise fail silently. One read answers everything asked
+of one asset.
+
 ### Products and capabilities
 
-Start with one canonical product and one domain capability:
+One canonical product, and a capability per requirement a migrated consumer has shown cannot be expressed
+without one:
 
 - the `IMAGE_OUTPUT` product: executable image, ordered output-band schema and per-band export requirements;
-- the `CCDC_SEGMENTS` capability: CCDC stored bands, base bands, measures and date interpretation.
+- `CCDC_SEGMENTS`: stored bands, base bands, measures and date interpretation, for CCDC Slice and Change Alerts;
+- `BAYTS_HISTORICAL_STATS`: which record or asset produced the statistics BAYTS Alerts monitors against;
+- `OPTICAL_COLLECTION_DEFAULTS`: the collection configuration and window PyEO Alerts fills its panels from.
+
+A capability is a name and the declaration key it asks for. A recipe type states what it produces by declaring
+that key, and the shared step (`capability/providerStep.js`) answers `PRODUCES` with what was declared,
+`PRESERVES` with the input filling a declared preserving role, or `UNSUPPORTED`/`MALFORMED`. It is pure,
+recognises no recipe type by name, and follows no mask, fill or AOI. Execution walks it as it loads records; the
+GUI walks it over records the closure already resolved (`recipe/sourceProvider.js`), which answers
+`{record, declared}`, `{assetId}` or a diagnosed `{error}`. Naming a failure, and deciding what a producer must
+then prove, belongs to the capability that asked.
+
+A declaration establishes what a consumer can READ, never what may execute. A producer declaring no
+`OPTICAL_COLLECTION_DEFAULTS` still answers about its bands, still classifies and is configured by hand.
+Candidacy is not evidence either: an asset mosaic declares where something would be read from, not what its
+asset holds. Consumers therefore acquire source information and derive defaults as separate questions, and an
+answer to one survives a failure of the other.
+
+There is one rule and two adapters, not two resolvers. Candidate selectors ask the declaration query rather than
+recipe-type predicates or blanket pass-through checks, so a consumer names no wrapper type.
+
+An asset mosaic now carries three declarations of the same shape, one per capability. A fourth is the point to
+replace them with a single "stands for its asset" declaration rather than a fourth copy.
 
 Add another capability only when a migrated consumer demonstrates that product schema, adapter identity and current
 capabilities cannot express its contract. A future `CLASSIFICATION_RESULT` may be useful, but it should be defined
@@ -503,44 +540,12 @@ This is the next recipe-model extension after the repository-consistency work. S
 the information Change Alerts consumes and consolidate the existing Slice providers into it. Do not add generic
 section validation, discovery infrastructure or execution bundles to this packet.
 
-Landed:
-
-- `CCDC_SEGMENTS` is a requestable capability. `lib/js/shared/src/recipe/capability/ccdcSegments.js` owns the rule
-  and nothing else: given a record it answers `PRODUCES` (with the type's own `segmentSource` declaration),
-  `PRESERVES` (with the input filling the declared preserving role), or a controlled `UNSUPPORTED`/`MALFORMED`
-  outcome. It is pure, recognises no recipe type by name and follows no mask, fill or AOI. Execution walks it as it
-  loads records; the GUI walks it over the records the closure already resolved. There is one rule and two
-  adapters, not two resolvers.
-- Change Alerts is its first consumer. It mounts the shared source-evidence lifecycle with its own observation, and
-  its panels, pixel chart and visualizations read the CURRENT description through `referenceEvidence.js` instead of
-  a copy beside the reference. The selected reference is unchanged throughout selection, refresh, reopening and
-  execution: a Masking over CCDC remains what runs while CCDC supplies the semantics.
-- Slice's local description-resolution path is gone; `sliceObservation` asks the same capability, which also gives
-  Slice wrapper sources it did not resolve before. The asset description has one implementation
-  (`ccdc/segmentsAsset.js`); Change Alerts' duplicate `toAssetReference` is removed.
-- The recipe-type and blanket `sourceRecipe` candidate filter is replaced by `mayProvideSegments`, a declaration
-  query. Change Alerts names no pass-through recipe type.
-- Nothing writes a fresh copy of the description any more: the reference panel keeps the selection and its
-  configuration. Copies in saved recipes are still read as the fallback while nothing has been observed.
-- Change Alerts has one producer-resolution path. Its observation resolves the producer through the capability
-  declarations; the shared lifecycle owns watching, cancellation and rejection of superseded answers. The
-  observation's `applyAccepted` policy applies monitoring settings in the same action as accepted evidence,
-  comparing with the last successful observation so a failed read cannot reset user edits on recovery. Asset
-  descriptions and monitoring settings come from one metadata response. Directly selected assets retain their
-  existing date-format initialization and correction policy. `ReferenceSync` is removed.
-- Observation completes the selected source's dependencies, so obsolete monitoring settings or a missing mask
-  on the consumer cannot block acquisition. Dependencies of the selected source still participate in closure
-  validation and observation invalidation.
-- BAYTS Alerts resolves its historical producer through a `BAYTS_HISTORICAL_STATS` declaration and seeds
-  `model.options` from it through the shared lifecycle. The traversal step is shared with `CCDC_SEGMENTS`
-  (`capability/providerStep.js`, `recipe/sourceProvider.js`); each capability keeps its own declaration,
-  failure names and evidence. Candidacy is not evidence: an asset mosaic says where options would be read
-  from, not that the asset carries BAYTS statistics. Its `ReferenceSync`, `ui.reference.sourceId` and the
-  blanket `sourceRecipe` selector filter are removed, and the previously selectable types - BAYTS historical,
-  asset mosaics and preserving wrappers - stay selectable. `loadSourceRecipe$` remains for Pyeo only.
-
 Still to do here:
 
+- Surface recipe-dependency diagnostics in the GUI's shared layer-error handling. A rejected cycle should
+  explain the circular dependency and show its path, using known recipe names where available, instead of
+  only "Failed to load layer - Bad request". Preserve the execution rejection and retain a generic fallback
+  for unrecognised failures. Cover the diagnostic's passage from the execution response to the visible error.
 - Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
   generic image inputs and Classification/Regression reuse. Every migration needs a stated stopping rule,
   coexistence plan and removal of the superseded local synchronization path.

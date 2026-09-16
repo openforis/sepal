@@ -63,10 +63,6 @@ export default () => ({
     components: {
         recipe: Asset
     },
-    sourceRecipe: recipe => ({
-        type: 'ASSET',
-        id: recipe.model.assetDetails.assetId
-    }),
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations,

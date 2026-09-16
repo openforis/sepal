@@ -4,11 +4,10 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {getDataSetBands, getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {toSources} from '~/sources'
@@ -22,6 +21,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
+import {NOT_DERIVABLE, readInputImagery$, SELECTED_SCENES} from '../../inputImagery'
 import toDateString from '../../toDateString'
 import styles from './sources.module.css'
 
@@ -102,9 +102,7 @@ class _Sources extends React.Component {
 
     isLoading() {
         const {stream} = this.props
-        return stream('LOAD_CLASSIFICATION').active
-            || stream('LOAD_MOSAIC').active
-            || stream('LOAD_ASSET_METADATA').active
+        return stream('LOAD_CLASSIFICATION').active || stream('LOAD_INPUT_IMAGERY').active
     }
 
     hasClasses() {
@@ -286,10 +284,8 @@ class _Sources extends React.Component {
         }
         this.setLegend(classification.model.legend)
         const input = images[0]
-        if (input.type === 'RECIPE_REF') {
-            this.loadInputRecipeRef(input, prefill)
-        } else if (input.type === 'ASSET') {
-            this.loadInputAsset(input, prefill)
+        if (input.type === 'RECIPE_REF' || input.type === 'ASSET') {
+            this.loadInputImagery(input, prefill)
         } else {
             this.setClassificationBands(undefined)
             if (prefill) {
@@ -298,49 +294,34 @@ class _Sources extends React.Component {
         }
     }
 
-    loadInputRecipeRef(input, prefill) {
-        const {stream, loadSourceRecipe$} = this.props
-        stream('LOAD_MOSAIC',
-            loadSourceRecipe$(input.id).pipe(takeUntil(this.cancel$)),
-            mosaic => {
-                const dataSets = selectFrom(mosaic, 'model.sources.dataSets')
-                this.setClassificationBands(dataSets ? getDataSetBands(mosaic) : undefined)
+    // The bands are wanted whichever way the panel was opened; the configuration only when the user has
+    // just chosen this classification. What could not supply one is configured by hand, not rejected.
+    loadInputImagery(input, prefill) {
+        const {stream, loadRecipe$, loadedRecipes} = this.props
+        stream('LOAD_INPUT_IMAGERY',
+            readInputImagery$(
+                input,
+                {loadRecipe$, loadedRecipes, assetMetadata$: args => api.gee.assetMetadata$(args)},
+                {defaults: prefill}
+            ).pipe(takeUntil(this.cancel$)),
+            ({bands, defaults, restriction}) => {
+                this.setClassificationBands(bands)
                 if (!prefill) {
                     return
                 }
-                if (mosaic.model.sceneSelectionOptions && mosaic.model.sceneSelectionOptions.type === 'SELECT') {
-                    this.setClassificationError('process.pyeoAlerts.classification.selectedScenesUnsupported', {clearLegend: true})
-                    return
-                }
-                const options = mosaic.model.compositeOptions || mosaic.model.options
-                const [start, end] = getRecipeType(mosaic.type).getDateRange(mosaic)
-                this.prefill({options, sources: mosaic.model.sources, start, end})
-            },
-            error => Notifications.error({message: msg('process.pyeoAlerts.classification.mosaicLoadError'), error})
-        )
-    }
-
-    loadInputAsset(input, prefill) {
-        const {stream} = this.props
-        stream('LOAD_ASSET_METADATA',
-            api.gee.assetMetadata$({asset: input.id}).pipe(takeUntil(this.cancel$)),
-            metadata => {
-                this.setClassificationBands((metadata && metadata.bandNames) || undefined)
-                if (!prefill) {
-                    return
-                }
-                const props = (metadata && metadata.properties) || {}
-                const optionsString = props.recipe_compositeOptions || props.recipe_options
-                const sourcesString = props.recipe_sources
-                const start = props['system:time_start']
-                const end = props['system:time_end']
-                if (!optionsString || !sourcesString || start === undefined || end === undefined) {
+                if (restriction === SELECTED_SCENES) {
+                    this.setClassificationError(
+                        'process.pyeoAlerts.classification.selectedScenesUnsupported', {clearLegend: true}
+                    )
+                } else if (restriction === NOT_DERIVABLE) {
                     this.notDerivable()
-                    return
+                } else {
+                    this.prefill(defaults)
                 }
-                this.prefill({options: JSON.parse(optionsString), sources: JSON.parse(sourcesString), start, end})
             },
-            error => Notifications.error({message: msg('process.pyeoAlerts.classification.assetLoadError'), error})
+            error => Notifications.error({message: msg(input.type === 'ASSET'
+                ? 'process.pyeoAlerts.classification.assetLoadError'
+                : 'process.pyeoAlerts.classification.mosaicLoadError'), error})
         )
     }
 
