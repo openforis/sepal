@@ -62,7 +62,7 @@
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
     "gpuRequiredTooltip": "This app requires an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
-    "sessionTakenOver": "{app} was opened in another browser window — this tab has been closed.",
+    "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
       "instance": "instance {number} ({type})",
