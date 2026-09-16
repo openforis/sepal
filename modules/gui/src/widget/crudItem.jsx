@@ -238,7 +238,7 @@ class _CrudItem extends React.Component {
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
-                    editDisabled={editDisabled}
+                    disabled={editDisabled}
                     onClick={onEdit}
                 />
             )
@@ -263,7 +263,7 @@ class _CrudItem extends React.Component {
     }
 
     renderRemoveButton() {
-        const {onRemove, removeTooltip, removeTitle, removeMessage, removeConfirmationLabel, removeDisabled, removeContent,
+        const {onRemove, removeTooltip, removeTitle, removeMessage, removeConfirmationLabel, removeDisabled, removePending, removeContent,
             tooltipPlacement, unsafeRemove} = this.props
         return onRemove
             ? (
@@ -276,6 +276,7 @@ class _CrudItem extends React.Component {
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
+                    pending={removePending}
                     disabled={removeDisabled}
                     onRemove={onRemove}
                 >
@@ -343,6 +344,7 @@ CrudItem.propTypes = {
     removeConfirmationLabel: PropTypes.string,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
+    removePending: PropTypes.any,
     removeTitle: PropTypes.string,
     removeTooltip: PropTypes.any,
     selectDisabled: PropTypes.any,

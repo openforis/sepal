@@ -15,8 +15,8 @@ vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{childre
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({title, description, timestampFootnote, removeMessage}) =>
-        <div>
+    CrudItem: ({title, description, timestampFootnote, removeMessage, editDisabled, removePending}) =>
+        <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}>
             <div>{title}</div>
             <div>{description}</div>
             <div className='footnote'>{timestampFootnote}</div>
@@ -52,13 +52,16 @@ const session = overrides => ({
 describe('the session list', () => {
     let mounted
 
-    const render = sessions => {
+    // connect() is mocked away, so the stream prop it would inject is stubbed here: a name is
+    // active while its session is being stopped, nothing else is.
+    const render = (sessions, {stopping = []} = {}) => {
+        const stream = name => ({active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)})
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <UserSessions sessions={sessions}/>
+                <UserSessions sessions={sessions} stream={stream}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -158,6 +161,22 @@ describe('the session list', () => {
         // 09:22 UTC, and a relative distance moment computes against the real clock.
         const text = render([session()]).textContent
         expect(text).toMatch(/Keep-alive until \d{1,2}:\d{2} (AM|PM) \((in a|in \d+|a|\d+).* (minutes?|hours?|days?|months?|years?)( ago)?\)/)
+    })
+
+    // Stopping takes as long as the worker takes to answer, and the row only leaves the list on that
+    // answer — until then nothing on it may be clicked again, and the stop button says it is busy.
+    it('disables the buttons and marks the stop button pending while a session is being stopped', () => {
+        const container = render([session({id: 's1'})], {stopping: ['s1']})
+        const row = container.querySelector('.session')
+        expect(row.dataset.editDisabled).toBe('true')
+        expect(row.dataset.removePending).toBe('true')
+    })
+
+    it('leaves the other sessions active while one is being stopped', () => {
+        const container = render([session({id: 's1'}), session({id: 's2'})], {stopping: ['s1']})
+        const [, other] = container.querySelectorAll('.session')
+        expect(other.dataset.editDisabled).toBe('false')
+        expect(other.dataset.removePending).toBe('false')
     })
 
     it('adds the close time once a notified session is under enforcement', () => {

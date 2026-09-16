@@ -25,12 +25,17 @@ const mapStateToProps = () => ({
 class _UserSessions extends React.Component {
     stopSession(session) {
         const {stream} = this.props
-        stream('STOP_USER_SESSION',
+        stream('STOP_USER_SESSION_' + session.id,
             stopCurrentUserSession$(session),
             // no success toast — the session leaves the list (and its app tabs close)
             null,
             error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )
+    }
+
+    isStoppingSession(session) {
+        const {stream} = this.props
+        return stream('STOP_USER_SESSION_' + session.id).active
     }
 
     selectSession(session) {
@@ -147,9 +152,11 @@ class _UserSessions extends React.Component {
                     timestamp={session.creationTime}
                     timestampFootnote={format.dollars(session.costSinceCreation)}
                     editTooltip={msg('user.userSession.update.tooltip')}
+                    editDisabled={this.isStoppingSession(session)}
                     removeMessage={this.renderRemoveMessage(session, index)}
                     removeContent={this.renderRunning(session)}
                     removeTooltip={msg('user.userSession.stop.tooltip')}
+                    removePending={this.isStoppingSession(session)}
                     onEdit={() => this.selectSession(session)}
                     onRemove={() => this.stopSession(session)}
                 />
