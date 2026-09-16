@@ -175,7 +175,7 @@
     },
     "reload": {
       "tooltip": "Reload assets",
-      "progress": "Reloading... {count}"
+      "progress": "Reloading assets..."
     },
     "browser": {
       "tooltip": "Open asset browser",
