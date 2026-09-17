@@ -6,13 +6,14 @@ shared model. User-facing documentation belongs in the separate `sepal-doc` repo
 
 ## Current delivery focus
 
-Every recipe selector is `RecipeInput`, and what it reads is what its caller asks to be given - the
-[selector contract](gui-source-runtime.md#recipe-selector-loading).
+Develop the shared [band-encoding contract](#band-encoding) for recipe outputs and exported assets. Start with
+an optical recipe -> export -> asset-read acceptance case that preserves physical-value interpretation.
+Broader presentation changes and recipe-specific algorithm improvements are separate work.
 
-Eligibility for the classification selectors is direct `CLASSIFICATION`. Supporting a masked classification
-requires a separate contract for classifier behavior; the selector does not establish that support. Further
-consumer validation, capability discovery and coherent execution bundles remain separate packets driven by
-concrete consumers.
+Consumer migrations should adopt the shared contracts, preserve existing behavior and fix regressions they
+introduce. Existing limitations unrelated to those contracts belong in recipe developer notes, not as implicit
+requirements of a migration. [PyEO Alerts](../../recipes/pyeo-alerts.md) records its deferred index-handling work
+on that basis.
 
 ## Scope and constraints
 
@@ -54,6 +55,11 @@ to land.
 
 Observability is cross-cutting. Each design document specifies its Prometheus metrics, structured logs and the
 signals that require action.
+
+### Recipe developer notes
+
+Individual recipes' purpose, workflow, invariants and deferred local issues belong in
+[`docs/recipes/`](../../recipes/README.md), separately from the shared designs and roadmap here.
 
 ## Shared model
 
@@ -439,12 +445,6 @@ Still to do here:
 - Define [classification output versus reusable classifier behavior](source-resolution.md#classification-results-and-reusable-classifiers)
   before admitting masked classifications to PyEO, CCDC, Time Series or Phenology. Decide mask semantics for the
   baseline image, training and newly classified monitoring images; never unwrap a selection and silently drop it.
-- Resolve PyEO's gate-index behavior for asset-backed imagery through wrappers. Execution currently selects an
-  index for any `RECIPE_REF` and computes it for a direct asset; a successful defaults read does not establish
-  wrapped-asset execution support. Preserve the selected image and verify both paths through execution.
-- Decide whether PyEO's selected-scenes restriction is only a limit on deriving defaults or an execution
-  requirement. It is currently checked during prefill, not when opening a saved recipe; apply the chosen policy
-  at the appropriate boundaries rather than broadening rejection incidentally during selector migration.
 - Surface recipe-dependency diagnostics in the GUI's shared layer-error handling. A rejected cycle should
   explain the circular dependency and show its path, using known recipe names where available, instead of
   only "Failed to load layer - Bad request". Preserve the execution rejection and retain a generic fallback
@@ -452,6 +452,22 @@ Still to do here:
 - Continue one consumer family at a time. Likely groups are the remaining alert recipes, Stack and Band Math,
   generic image inputs and Classification/Regression reuse. Every migration needs a stated stopping rule,
   coexistence plan and removal of the superseded local synchronization path.
+
+### Band encoding
+
+Define a shared per-band encoding contract for recipe outputs and exported assets, following the
+representation/measurement distinction in [output products](output-products.md). The initial acceptance case is
+an optical recipe whose selected bands retain the same physical interpretation after export and asset loading.
+This is shared infrastructure; it does not require changing PyEO's index algorithm.
+
+- Producers declare `physical = stored * scale + offset` and units for their actual output bands. This scale
+  describes numeric encoding, not spatial pixel size.
+- Exporters persist the resulting encoding after selection, renaming and value conversion; asset readers expose
+  the same contract. Define how value-preserving transformations carry it and when calculations leave it unknown.
+- Convert pixels or visualization ranges at one boundary, never both. Derived quantities need their own rules;
+  phase and timing do not inherit a base band's multiplier.
+- Preserve existing assets and saved styles. Missing encoding remains unknown; do not infer it from band names,
+  data types or today's producer configuration. Settle legacy compatibility before expanding the contract.
 
 ## Deliberately deferred
 
@@ -492,20 +508,13 @@ Connect task completion to the shared asset-freshness design in a separate packe
   when the asset returns. Notifications trigger reads of actual state, not blind catalogue additions or removals.
 - Keep catalogue scanning and explicit refresh for external changes and missed notifications.
 
-### Band encoding and physical-value presentation
+### Physical-value presentation
 
-Defer general scale/offset propagation and physical-unit legends, charts and pixel inspection. This is not a
-prerequisite for decoupling Slice: producers supply correct descriptions and ready-to-use visualizations;
-consumers need no optical, radar or Planet-specific encoding knowledge.
-
-Follow the representation/measurement distinction in [output products](output-products.md):
-
-- Producers declare per-band encoding as `physical = stored * scale + offset`. Share that declaration between
-  execution and preset conversion where it removes duplicated assumptions, preserving pixel values and casts.
-- Convert pixels or visualization ranges at one boundary, never both. Derived quantities need their own rules;
-  phase and timing do not inherit a base band's multiplier.
-- Preserve existing assets and saved styles. Do not infer their encoding from today's producer configuration or
-  reinterpret already-encoded ranges; settle compatibility before expanding the contract.
+General physical-unit legends, charts and pixel inspection remain deferred beyond the bounded
+[band-encoding contract](#band-encoding). Slice's description and visualization consumers need no producer-specific
+encoding knowledge: producers supply ready-to-use descriptions and visualizations. Share encoding declarations
+between execution and preset conversion where that removes duplicated assumptions without changing pixel values
+or reinterpreting saved ranges.
 
 The narrow radar RGB preset correction need not wait: its ratio range must match the existing x1000 encoding,
 not the x100 used for VV/VH. Verify matching ranges and unchanged pixel encoding without broadening this into

@@ -248,7 +248,7 @@ unchanged while a referenced recipe is edited or an Earth Engine asset is replac
 fields with the saved fields cannot establish that those results remain current.
 
 Sampling Design is the first consumer of the generic derived-resource contract in
-[source-freshness.md](source-freshness.md). It declares two named calculations:
+[source freshness](../design/recipes/source-freshness.md). It declares two named calculations:
 
 - `SAMPLING_STRATUM_AREAS` consumes the resolved AOI geometry, stratification product and selected band, and the
   configured Stratification CRS and Scale;

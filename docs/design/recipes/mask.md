@@ -1,6 +1,6 @@
-# Mask and Fill - developer notes and roadmap
+# Mask and Fill — design
 
-Technical notes for evolving the existing Masking recipe into a general Mask and Fill recipe. The user-facing
+Design for evolving the existing Masking recipe into a general Mask and Fill recipe. The user-facing
 guide belongs in the separate `sepal-doc` repository.
 
 The internal recipe type is `MASKING`. Keeping that identifier is a compatibility constraint even if the visible

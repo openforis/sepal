@@ -49,4 +49,4 @@ tool-registration framework.
 [GUI source runtime](gui-source-runtime.md) owns access to source information;
 [source freshness](source-freshness.md) owns refresh and cancellation;
 [visualizations](visualizations.md) owns layer styles and their validity. General physical-value presentation is
-already a deferred topic in the [roadmap](data-sources.md#band-encoding-and-physical-value-presentation).
+already a deferred topic in the [roadmap](data-sources.md#physical-value-presentation).

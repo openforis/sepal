@@ -12,6 +12,10 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 
 When introducing or restructuring workflows, follow [Code design](docs/code-design.md).
 
+Recipe developer notes live in [docs/recipes](docs/recipes/README.md). Shared recipe architecture and proposals
+live in [docs/design/recipes](docs/design/recipes/data-sources.md). Document current behavior or future design,
+not implementation history; recipe-specific issues are deferred unless explicitly scheduled.
+
 ### Module Types
 
 **Node.js microservices** (most modules use Koa web framework + RxJS; the former Java/Groovy services — `sepal-server` and the old `user` module — were rewritten as Node.js modules and deleted, along with the Gradle build):
