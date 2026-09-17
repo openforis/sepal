@@ -425,6 +425,9 @@
       "message": "Please reload your browser to make sure everything works as expected.",
       "reloadNow": "Reload now"
     },
+    "loginSession": {
+      "switched": "You're now logged in as {username}"
+    },
     "sections": {
       "account": "Account settings",
       "app-launch-pad": "Apps",

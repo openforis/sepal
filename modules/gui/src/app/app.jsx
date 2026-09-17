@@ -12,7 +12,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {isPathInLocation} from '~/route'
 import {selectFrom} from '~/stateUtils'
-import {loadUser$, startLoggedOff} from '~/user'
+import {loadUser$, startLoggedOff$} from '~/user'
 import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
 import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
@@ -48,11 +48,7 @@ class _App extends React.Component {
 
     componentDidMount() {
         const {stream} = this.props
-        if (isSetPasswordLink()) {
-            startLoggedOff()
-        } else {
-            stream('LOAD_USER', loadUser$())
-        }
+        stream('LOAD_USER', isSetPasswordLink() ? startLoggedOff$() : loadUser$())
     }
 }
 

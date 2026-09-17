@@ -396,6 +396,9 @@
       "message": "",
       "reloadNow": "Recargar ahora"
     },
+    "loginSession": {
+      "switched": ""
+    },
     "sections": {
       "account": "Configuración de la cuenta",
       "app-launch-pad": "Aplicaciones",
