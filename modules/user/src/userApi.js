@@ -199,8 +199,14 @@ const acceptPrivacyPolicy = async ctx => {
 }
 
 // POST /lock (admin) {username} -> userToMap. Publishes UserLocked. Idempotent on already-locked.
+// Refuses the caller's own account: locking ends every session, so a self-lock is a lockout.
 const lock = async ctx => {
     const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
+    if (username === storedUsername(ctx.state.currentUser.username)) {
+        ctx.status = 400
+        ctx.body = {message: 'Cannot lock your own account'}
+        return
+    }
     const user = await repository.findByUsername(username)
     if (!user) {
         ctx.status = 404
