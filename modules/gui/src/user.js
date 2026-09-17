@@ -97,10 +97,20 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
+// For password-reset and account-activation links: the tab shows the form whoever the browser is
+// logged in as. The current user is not loaded, so Home never claims the tab, and the session is
+// left alone until the new password is submitted.
+export const startLoggedOff = () =>
+    updateUser(null)
+
+// The browser may be logged in as someone else: that session is dropped before logging in as the
+// reset account, since the gateway would otherwise relabel it in place and every other tab of that
+// browser would silently switch account. It happens after the reset, so a rejected reset changes nothing.
 export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
         delay(2000),
+        switchMap(() => api.user.logout$()),
         switchMap(() => login$({username, password})),
         switchMap(user =>
             api.user.invalidateOtherSessions$().pipe(

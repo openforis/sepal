@@ -10,8 +10,9 @@ import {Home} from '~/app/home/home'
 import {Landing} from '~/app/landing/landing'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {isPathInLocation} from '~/route'
 import {selectFrom} from '~/stateUtils'
-import {loadUser$} from '~/user'
+import {loadUser$, startLoggedOff} from '~/user'
 import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
 import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
@@ -47,9 +48,18 @@ class _App extends React.Component {
 
     componentDidMount() {
         const {stream} = this.props
-        stream('LOAD_USER', loadUser$())
+        if (isSetPasswordLink()) {
+            startLoggedOff()
+        } else {
+            stream('LOAD_USER', loadUser$())
+        }
     }
 }
+
+const SET_PASSWORD_PATHS = ['/reset-password', '/setup-account']
+
+const isSetPasswordLink = () =>
+    SET_PASSWORD_PATHS.some(path => isPathInLocation(path, window.location.pathname))
 
 const Loader = () =>
     <div className="app-loader">
