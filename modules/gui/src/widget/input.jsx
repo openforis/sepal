@@ -102,10 +102,19 @@ class _Input extends React.Component {
         )
     }
 
+    // Password managers key off the autocomplete tokens (username, new-password, ...), so a string is
+    // passed through untouched; a boolean is the plain on/off switch.
+    getAutoComplete() {
+        const {autoComplete} = this.props
+        return typeof autoComplete === 'string'
+            ? autoComplete
+            : autoComplete ? 'on' : 'off'
+    }
+
     renderInput() {
         const {
             type, name, placeholder, maxLength, tabIndex,
-            autoFocus, autoComplete, autoCorrect, autoCapitalize,
+            autoFocus, autoCorrect, autoCapitalize,
             spellCheck, disabled, readOnly, value,
             inputTooltip, inputTooltipPlacement, onAccept, onCancel
         } = this.props
@@ -130,7 +139,7 @@ class _Input extends React.Component {
                         maxLength={maxLength}
                         tabIndex={disabled || readOnly ? -1 : tabIndex}
                         autoFocus={autoFocus && !isMobile()}
-                        autoComplete={autoComplete ? 'on' : 'off'}
+                        autoComplete={this.getAutoComplete()}
                         autoCorrect={autoCorrect ? 'on' : 'off'}
                         autoCapitalize={autoCapitalize ? 'on' : 'off'}
                         spellCheck={spellCheck ? 'true' : 'false'}
