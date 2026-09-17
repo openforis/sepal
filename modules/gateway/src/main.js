@@ -22,8 +22,8 @@ import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
 import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
-import {createSandboxSessionManager} from './sandbox/sandboxSessionManager.js'
 import {sandboxServerRoute} from './sandbox/sandboxServerRoute.js'
+import {createSandboxSessionManager} from './sandbox/sandboxSessionManager.js'
 import {sandboxStartRoute} from './sandbox/sandboxStartRoute.js'
 import {sessionAppDissociatedSubscriber} from './sandbox/sessionAppDissociatedSubscriber.js'
 import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscriber.js'
@@ -239,7 +239,7 @@ const main = async () => {
                 } else {
                     firstValueFrom(userStore.getUser$(username))
                         .then(user => {
-                            if (user) {
+                            if (user?.status === 'ACTIVE') {
                                 log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
                                 setRequestUser(req, user)
                                 handleProxiedWebSocket(requestPath, req, socket, head, username)

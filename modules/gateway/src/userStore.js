@@ -92,13 +92,20 @@ const UserStore = (redis, event$) => {
         }
     }
 
+    // A locked user's sessions are destroyed on the UserLocked event, but that arrives on its own
+    // path; a session that outlives it must still not identify the user, or the userUpdated push
+    // the lock triggers can be answered with a successful request.
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         removeRequestUser(req)
         if (username) {
             firstValueFrom(getUser$(username))
                 .then(user => {
-                    setRequestUser(req, user)
+                    if (user.status === 'ACTIVE') {
+                        setRequestUser(req, user)
+                    } else {
+                        log.info(`${usernameTag(username)} Session user is ${user.status}, not injecting into request`)
+                    }
                     next()
                 })
                 .catch(err => {
