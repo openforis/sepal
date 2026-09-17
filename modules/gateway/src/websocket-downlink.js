@@ -101,7 +101,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
             filter(({clientId: currentClientId, disconnected}) => currentClientId === clientId && disconnected)
         )
 
-    const onClientConnected = (ws, username) => {
+    const onClientConnected = (ws, username, sessionId) => {
         const clientId = uuid()
         log.info(`${clientTag(username, clientId)} connected`)
 
@@ -120,7 +120,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
             complete: () => log.debug(`${clientTag(username, clientId)} heartbeat stopped`)
         })
 
-        clients.add(username, clientId, ws)
+        clients.add(username, clientId, ws, sessionId)
         client$.next({username, clientId, connected: true})
 
         ws.on('message', message => onClientMessage(username, clientId, message))
@@ -214,8 +214,8 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
         clients.remove(clientId)
     }
 
-    wss.on('connection', (ws, _req, username) =>
-        onClientConnected(ws, username)
+    wss.on('connection', (ws, _req, username, sessionId) =>
+        onClientConnected(ws, username, sessionId)
     )
 }
 

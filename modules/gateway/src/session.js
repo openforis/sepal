@@ -1,3 +1,4 @@
+import {LOGIN_SESSION_INVALIDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 import {isStoredUsername, storedUsername} from '#sepal/username'
 import {toPromise} from '#sepal/util'
@@ -7,7 +8,7 @@ import {getSessionUsername} from './user.js'
 
 const log = getLogger('session')
 
-const SessionManager = (sessionStore, redis) => {
+const SessionManager = (sessionStore, redis, event$) => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
             callback => sessionStore.all(callback)
@@ -15,10 +16,15 @@ const SessionManager = (sessionStore, redis) => {
         return sessions
     }
     
-    const removeSession = async id =>
+    const removeSession = async (username, id) => {
         await toPromise(
             callback => sessionStore.destroy(id, callback)
         )
+        sessionInvalidated(username, id)
+    }
+
+    const sessionInvalidated = (username, sessionId) =>
+        event$.next({type: LOGIN_SESSION_INVALIDATED, data: {username, sessionId}})
     
     const getSessionIdsByUsername = async username => {
         const sessions = await getAllSessions()
@@ -33,7 +39,7 @@ const SessionManager = (sessionStore, redis) => {
     
         return Promise.all(
             userSessionIds.map(
-                async sessionId => await removeSession(sessionId)
+                async sessionId => await removeSession(username, sessionId)
             )
         ).then(async () => {
             return true
@@ -79,15 +85,17 @@ const SessionManager = (sessionStore, redis) => {
 
     const logout = async (req, res, _next) => {
         const username = getSessionUsername(req)
+        const sessionId = req.sessionID
         await new Promise((resolve, reject) =>
             req.session.destroy(err => err ? reject(err) : resolve())
         )
         
         if (username) {
+            sessionInvalidated(username, sessionId)
             const userSessionIds = await getSessionIdsByUsername(username)
             log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
         } else {
-            log.warn('Logout without user in session')
+            log.debug('Logout without user in session')
         }
 
         const cookieHeader = req.get('Cookie')
@@ -110,7 +118,7 @@ const SessionManager = (sessionStore, redis) => {
         await Promise.all(
             userSessionIds
                 .filter(sessionId => sessionId !== req.sessionID)
-                .map(async sessionId => await removeSession(sessionId))
+                .map(async sessionId => await removeSession(username, sessionId))
         )
 
         res.status(200).send({status: 'success', message: 'other sessions invalidated'})

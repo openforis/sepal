@@ -7,6 +7,7 @@ import {
     GOOGLE_ACCESS_TOKEN_ADDED,
     GOOGLE_ACCESS_TOKEN_REMOVED,
     GOOGLE_ACCESS_TOKEN_UPDATED,
+    LOGIN_SESSION_INVALIDATED,
     MODULE_DOWN,
     MODULE_UP,
     SUBSCRIPTION_DOWN,
@@ -95,6 +96,11 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
         clients.sendEventToClient(username, clientId, CLIENT_VERSION_MISMATCH)
     }
 
+    const loginSessionInvalidated = ({username, sessionId}) => {
+        log.debug(`${userTag(username)} login session invalidated`)
+        clients.sendEventToSession(sessionId, LOGIN_SESSION_INVALIDATED)
+    }
+
     const subscriptionUp = ({module, username, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag(username, clientId, subscriptionId)} up`)
         firstValueFrom(userStore.getUser$(username))
@@ -173,6 +179,8 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
                 return clientDown(data)
             case CLIENT_VERSION_MISMATCH:
                 return clientVersionMismatch(data)
+            case LOGIN_SESSION_INVALIDATED:
+                return loginSessionInvalidated(data)
             case SUBSCRIPTION_UP:
                 return subscriptionUp(data)
             case SUBSCRIPTION_DOWN:

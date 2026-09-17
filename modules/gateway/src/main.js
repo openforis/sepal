@@ -53,7 +53,7 @@ const main = async () => {
     const userStore = UserStore(redis, event$)
     const sessionStore = new RedisSessionStore({client: redis})
 
-    const {messageHandler, logout, invalidateOtherSessions, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis)
+    const {messageHandler, logout, invalidateOtherSessions, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis, event$)
 
     try {
         await userStore.normalizeCase()
@@ -185,10 +185,10 @@ const main = async () => {
         socket.destroy()
     }
 
-    const handleGlobalWebSocket = (requestPath, req, socket, head, username) => {
+    const handleGlobalWebSocket = (requestPath, req, socket, head, username, sessionId) => {
         log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
         wss.handleUpgrade(req, socket, head, ws =>
-            wss.emit('connection', ws, req, username)
+            wss.emit('connection', ws, req, username, sessionId)
         )
     }
 
@@ -235,7 +235,7 @@ const main = async () => {
             if (username) {
                 const requestPath = url.parse(req.url).pathname
                 if (requestPath === webSocketPath) {
-                    handleGlobalWebSocket(requestPath, req, socket, head, username)
+                    handleGlobalWebSocket(requestPath, req, socket, head, username, req.sessionID)
                 } else {
                     firstValueFrom(userStore.getUser$(username))
                         .then(user => {
