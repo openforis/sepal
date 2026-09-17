@@ -1,3 +1,4 @@
+import {EventEmitter} from 'events'
 import {Subject} from 'rxjs'
 
 import {SessionManager} from './session.js'
@@ -45,6 +46,50 @@ describe('user.UserLocked', () => {
     })
 })
 
+describe('ensureSessionFor', () => {
+    test('replaces a session held by another user, announcing it once the response has gone out', async () => {
+        const store = sessionStoreHolding({s1: 'alice'})
+        const {manager, invalidated} = sessionManagerOver(store)
+        const req = requestFor(store, 's1', 'alice')
+        const res = aResponse()
+
+        await manager.ensureSessionFor(req, res, 'bob')
+
+        expect(store.ids()).not.toContain('s1')
+        expect(req.sessionID).not.toBe('s1')
+        expect(invalidated).toEqual([])
+        res.emit('finish')
+        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1'}])
+    })
+
+    test('keeps the session of the same user', async () => {
+        const store = sessionStoreHolding({s1: 'alice'})
+        const {manager, invalidated} = sessionManagerOver(store)
+        const req = requestFor(store, 's1', 'alice')
+        const res = aResponse()
+
+        await manager.ensureSessionFor(req, res, 'Alice')
+
+        res.emit('finish')
+        expect(store.ids()).toEqual(['s1'])
+        expect(req.sessionID).toBe('s1')
+        expect(invalidated).toEqual([])
+    })
+
+    test('keeps a session nobody is logged in to', async () => {
+        const store = sessionStoreHolding({s1: null})
+        const {manager, invalidated} = sessionManagerOver(store)
+        const req = requestFor(store, 's1', null)
+        const res = aResponse()
+
+        await manager.ensureSessionFor(req, res, 'bob')
+
+        res.emit('finish')
+        expect(req.sessionID).toBe('s1')
+        expect(invalidated).toEqual([])
+    })
+})
+
 const sessionStoreHolding = usernamesById => {
     const sessions = {...usernamesById}
     return {
@@ -65,17 +110,31 @@ const sessionManagerOver = store => {
     return {manager: SessionManager(store, {}, event$), invalidated}
 }
 
-// express-session's req.session.destroy() removes the session from the store.
-const requestFor = (store, sessionId, username) => ({
-    sessionID: sessionId,
-    session: {
+// express-session's req.session.destroy() removes the session from the store; regenerate() removes it
+// and gives the request a fresh, empty one under a new id.
+const requestFor = (store, sessionId, username) => {
+    const req = {
+        sessionID: sessionId,
+        get: () => undefined
+    }
+    const sessionFor = id => ({
         username,
-        destroy: callback => store.destroy(sessionId, callback)
-    },
-    get: () => undefined
-})
+        destroy: callback => store.destroy(id, callback),
+        regenerate: callback => store.destroy(id, error => {
+            req.sessionID = `${id}-regenerated`
+            req.session = sessionFor(req.sessionID)
+            req.session.username = undefined
+            callback(error)
+        })
+    })
+    req.session = sessionFor(sessionId)
+    return req
+}
 
 const aResponse = () => {
-    const res = {status: () => res, send: () => res, cookie: () => res}
+    const res = new EventEmitter()
+    res.status = () => res
+    res.send = () => res
+    res.cookie = () => res
     return res
 }

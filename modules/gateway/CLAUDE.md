@@ -86,7 +86,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current. Every destroyed session (also on `user.UserLocked`) is announced on `event$` as `loginSessionInvalidated {username, sessionId}` (the `workerSession*` events are the sandbox ones); browser websockets are bound to the session that upgraded them, so the tabs of that session get the event and are then closed — the GUI reloads on it
 
 ### Authentication
-- `src/authMiddleware.js`: Checks `sepal-user` header, falls back to HTTP Basic Auth via POST to `http://user/authenticate`
+- `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
 
 ### RabbitMQ

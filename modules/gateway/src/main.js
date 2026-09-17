@@ -53,7 +53,7 @@ const main = async () => {
     const userStore = UserStore(redis, event$)
     const sessionStore = new RedisSessionStore({client: redis})
 
-    const {messageHandler, logout, invalidateOtherSessions, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis, event$)
+    const {messageHandler, logout, invalidateOtherSessions, ensureSessionFor, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis, event$)
 
     try {
         await userStore.normalizeCase()
@@ -62,7 +62,7 @@ const main = async () => {
         log.error('Cannot normalize username case in Redis, continuing', error)
     }
 
-    const {authMiddleware} = AuthMiddleware(userStore)
+    const {authMiddleware} = AuthMiddleware(userStore, ensureSessionFor)
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
 

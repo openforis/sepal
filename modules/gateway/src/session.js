@@ -111,6 +111,21 @@ const SessionManager = (sessionStore, redis, event$) => {
         res.status(200).send({status: 'success', message: 'logout'})
     }
 
+    // A login on a session that another user holds replaces the session rather than relabelling it,
+    // so that user's tabs are kicked instead of silently switching account. They are told only once
+    // the response carrying the new cookie has gone out, so their reload already lands as the new user.
+    const ensureSessionFor = async (req, res, username) => {
+        const previousUsername = getSessionUsername(req)
+        const previousSessionId = req.sessionID
+        if (previousUsername && storedUsername(previousUsername) !== storedUsername(username)) {
+            await toPromise(
+                callback => req.session.regenerate(callback)
+            )
+            log.info(`${usernameTag(username)} Login replaces session of ${usernameTag(previousUsername)}`)
+            res.on('finish', () => sessionInvalidated(previousUsername, previousSessionId))
+        }
+    }
+
     const invalidateOtherSessions = async (req, res, _next) => {
         const username = getSessionUsername(req)
         const userSessionIds = await getSessionIdsByUsername(username)
@@ -125,7 +140,7 @@ const SessionManager = (sessionStore, redis, event$) => {
     }
     
     return {
-        messageHandler, logout, invalidateOtherSessions, normalizeCase
+        messageHandler, logout, invalidateOtherSessions, ensureSessionFor, normalizeCase
     }
 }
 
