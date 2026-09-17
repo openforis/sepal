@@ -4,14 +4,9 @@
 .build/
 .eslintcache
 
-#docker-sync
-.docker-sync
 *.tmp
 
 #Sepal binaries
-
-#Vagrant
-.vagrant
 
 #Ansible
 *.retry
