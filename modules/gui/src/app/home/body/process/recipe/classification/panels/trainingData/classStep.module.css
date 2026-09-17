@@ -66,3 +66,17 @@
     display: flex;
     flex-direction: row;
 }
+
+.trainingDataRefinement {
+    padding: 1rem;
+    border: var(--wireframe);
+    border-radius: .3rem;
+}
+
+.sampleCountRow {
+    align-items: center;
+}
+
+.sampleCount {
+    width: 5rem;
+}

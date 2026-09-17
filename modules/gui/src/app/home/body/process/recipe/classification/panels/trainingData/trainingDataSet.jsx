@@ -5,6 +5,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
@@ -15,6 +16,7 @@ import {CsvUploadSection} from './csvUploadSection'
 import {EETableSection} from './eeTableSection'
 import {LocationStep} from './locationStep'
 import {RecipeSection} from './recipeSection'
+import {SAMPLEABLE_TYPES} from './sampleableTypes'
 import {SampleClassificationSection} from './sampleClassificationSection'
 import {SectionSelection} from './sectionSelection'
 import styles from './trainingDataSet.module.css'
@@ -100,6 +102,18 @@ const fields = {
     referenceData: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 3)
         .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
+    sampleMode: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 3)
+        .skip((value, {type}) => !SAMPLEABLE_TYPES.includes(type)),
+    // Not form-validated (unlike most other fields here) - the EE pipeline
+    // already treats a missing/out-of-range value as "no reduction", so a
+    // strict validator here would only ever risk blocking Done for no
+    // functional reason. The slider widget's own minValue/maxValue already
+    // keeps user-entered values sane in the UI.
+    samplePercentage: new Form.Field(),
+    sampleCountByClass: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 3)
+        .skip((value, {type}) => !SAMPLEABLE_TYPES.includes(type)),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -107,6 +121,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _TrainingDataSet extends React.Component {
+    state = {more: false}
+
     render() {
         const {dataCollectionManager, inputs} = this.props
 
@@ -122,8 +138,27 @@ class _TrainingDataSet extends React.Component {
                     step={inputs.wizardStep}
                     icon='table'
                     label={msg('process.classification.panel.trainingData.sectionSelection.title')}
+                    extraButtons={this.renderExtraButtons()}
                 />
             </RecipeFormPanel>
+        )
+    }
+
+    showMoreButton() {
+        const {inputs: {type, wizardStep}} = this.props
+        return SAMPLEABLE_TYPES.includes(type.value) && wizardStep.value === 3
+    }
+
+    renderExtraButtons() {
+        if (!this.showMoreButton()) {
+            return null
+        }
+        const {more} = this.state
+        return (
+            <Button
+                label={more ? msg('button.less') : msg('button.more')}
+                onClick={() => this.setState(({more}) => ({more: !more}))}
+            />
         )
     }
 
@@ -142,7 +177,10 @@ class _TrainingDataSet extends React.Component {
                     <CsvUploadSection {...this.props}/>,
                     <LocationStep {...this.props}/>,
                     <ClassStep {...this.props}/>,
-                    <ClassMappingStep {...this.props}/>
+                    <ClassMappingStep
+                        {...this.props}
+                        more={this.state.more}
+                    />
                 ]
             },
             {
@@ -154,7 +192,10 @@ class _TrainingDataSet extends React.Component {
                     <EETableSection {...this.props}/>,
                     <LocationStep {...this.props}/>,
                     <ClassStep {...this.props}/>,
-                    <ClassMappingStep {...this.props}/>
+                    <ClassMappingStep
+                        {...this.props}
+                        more={this.state.more}
+                    />
                 ]
             },
             {
@@ -166,7 +207,10 @@ class _TrainingDataSet extends React.Component {
                     <SampleClassificationSection {...this.props}/>,
                     <LocationStep {...this.props}/>,
                     <ClassStep {...this.props}/>,
-                    <ClassMappingStep {...this.props}/>
+                    <ClassMappingStep
+                        {...this.props}
+                        more={this.state.more}
+                    />
                 ]
             },
             {
@@ -185,7 +229,10 @@ class _TrainingDataSet extends React.Component {
                     <CeoSection {...this.props}/>,
                     <LocationStep {...this.props}/>,
                     <ClassStep {...this.props}/>,
-                    <ClassMappingStep {...this.props}/>
+                    <ClassMappingStep
+                        {...this.props}
+                        more={this.state.more}
+                    />
 
                 ]
             }
@@ -254,6 +301,14 @@ const modelToValues = model => {
         columnMapping: model.columnMapping,
         customMapping: model.customMapping,
         defaultValue: model.defaultValue,
+        // Defaulted here (rather than relying on ClassMappingStep's
+        // componentDidMount) so samplePercentage's validators are satisfied
+        // from the form's very first render, with no dependency on a child
+        // component's mount timing - it was otherwise possible for Done to
+        // stay disabled until something forced a re-render after mount.
+        sampleMode: model.sampleMode || 'PERCENTAGE',
+        samplePercentage: model.samplePercentage ?? 100,
+        sampleCountByClass: model.sampleCountByClass || {},
 
         institution: model.institution,
         project: model.project,

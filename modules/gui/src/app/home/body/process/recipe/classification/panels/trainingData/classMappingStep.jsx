@@ -11,6 +11,7 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
 import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
+import {Form} from '~/widget/form'
 import {Icon} from '~/widget/icon'
 import {Input} from '~/widget/input'
 import {Label} from '~/widget/label'
@@ -20,6 +21,7 @@ import {ListItem} from '~/widget/listItem'
 
 import styles from './classStep.module.css'
 import {filterReferenceData$, remapReferenceData$} from './inputData'
+import {SAMPLEABLE_TYPES} from './sampleableTypes'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend'),
@@ -39,8 +41,95 @@ class _ClassMappingStep extends Component {
                 {this.renderSingleColumnForm()}
                 {this.renderMultipleColumnsForm()}
                 {this.renderOtherFormatForm()}
+                {this.renderTrainingDataRefinement()}
             </Layout>
         )
+    }
+
+    renderTrainingDataRefinement() {
+        const {more, inputs: {type, sampleMode}} = this.props
+        if (!SAMPLEABLE_TYPES.includes(type.value) || !more) {
+            return null
+        }
+        return (
+            <Layout className={styles.trainingDataRefinement}>
+                <Label msg={msg('process.classification.panel.trainingData.classMapping.trainingDataRefinement.title')}/>
+                <Form.Buttons
+                    label={msg('process.classification.panel.trainingData.classMapping.sampleMode.label')}
+                    input={sampleMode}
+                    multiple={false}
+                    options={[
+                        {
+                            value: 'PERCENTAGE',
+                            label: msg('process.classification.panel.trainingData.classMapping.sampleMode.PERCENTAGE.label')
+                        },
+                        {
+                            value: 'CUSTOM_NUMBER',
+                            label: msg('process.classification.panel.trainingData.classMapping.sampleMode.CUSTOM_NUMBER.label')
+                        }
+                    ]}
+                />
+                {sampleMode.value === 'CUSTOM_NUMBER'
+                    ? this.renderSampleCountByClass()
+                    : this.renderSamplePercentage()}
+            </Layout>
+        )
+    }
+
+    renderSamplePercentage() {
+        const {inputs: {samplePercentage}} = this.props
+        return (
+            <Form.Slider
+                label={msg('process.classification.panel.trainingData.classMapping.samplePercentage.label')}
+                tooltip={msg('process.classification.panel.trainingData.classMapping.samplePercentage.tooltip')}
+                input={samplePercentage}
+                minValue={1}
+                maxValue={100}
+                ticks={[1, 25, 50, 75, 100]}
+                range='low'
+                info={percentage =>
+                    msg('process.classification.panel.trainingData.classMapping.samplePercentage.value', {percentage})
+                }
+            />
+        )
+    }
+
+    renderSampleCountByClass() {
+        const {legend, inputs: {sampleCountByClass}} = this.props
+        const countByClass = sampleCountByClass.value || {}
+        return (
+            <Layout spacing='compact'>
+                {legend.entries.map(({id, value, label, color}) =>
+                    <Layout
+                        key={id}
+                        type='horizontal-nowrap'
+                        spacing='compact'
+                        className={styles.sampleCountRow}>
+                        <LegendItem color={color} label={label} value={value}/>
+                        <Layout.Spacer/>
+                        <Input
+                            className={styles.sampleCount}
+                            type='number'
+                            placeholder={msg('process.classification.panel.trainingData.classMapping.sampleCountByClass.placeholder')}
+                            value={countByClass[value] ?? ''}
+                            onChange={e => this.setSampleCountForClass(value, e.target.value)}
+                        />
+                    </Layout>
+                )}
+            </Layout>
+        )
+    }
+
+    setSampleCountForClass(legendValue, rawValue) {
+        const {inputs: {sampleCountByClass}} = this.props
+        const countByClass = {...(sampleCountByClass.value || {})}
+        const count = parseInt(rawValue)
+        if (rawValue === '' || !_.isFinite(count)) {
+            delete countByClass[legendValue]
+        } else {
+            countByClass[legendValue] = count
+        }
+        sampleCountByClass.set(countByClass)
     }
 
     renderSingleColumnForm() {
@@ -137,18 +226,38 @@ class _ClassMappingStep extends Component {
     }
 
     renderCount(legendValue) {
-        const {stream, inputs: {referenceData}} = this.props
+        const {stream, inputs: {referenceData, type, sampleMode, samplePercentage, sampleCountByClass}} = this.props
         const active = stream('UPDATE_REFERENCE_DATA').active
+        const total = referenceData.value ? (referenceData.value.counts[legendValue] || 0) : null
+        const sampled = this.sampledCount(total, legendValue, {
+            type: type.value,
+            sampleMode: sampleMode.value,
+            samplePercentage: samplePercentage.value,
+            sampleCountByClass: sampleCountByClass.value
+        })
         return (
             <div className={styles.count}>
                 {active
                     ? <Icon name='spinner'/>
-                    : referenceData.value ?
-                        (referenceData.value.counts[legendValue] || 0)
+                    : total !== null
+                        ? (sampled !== null ? `${sampled} / ${total}` : total)
                         : null
                 }
             </div>
         )
+    }
+
+    sampledCount(total, legendValue, {type, sampleMode, samplePercentage, sampleCountByClass}) {
+        if (total === null || !SAMPLEABLE_TYPES.includes(type)) {
+            return null
+        }
+        if (sampleMode === 'CUSTOM_NUMBER') {
+            const maxCount = (sampleCountByClass || {})[legendValue]
+            return _.isFinite(maxCount) ? Math.min(total, maxCount) : null
+        }
+        return _.isFinite(samplePercentage) && samplePercentage < 100
+            ? Math.round(total * samplePercentage / 100)
+            : null
     }
 
     renderMapping(mappingType, legendValue) {
@@ -396,5 +505,6 @@ export const ClassMappingStep = compose(
 
 ClassMappingStep.propTypes = {
     children: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    more: PropTypes.bool
 }
