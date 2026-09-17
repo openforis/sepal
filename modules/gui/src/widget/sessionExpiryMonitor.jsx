@@ -157,7 +157,7 @@ export const SessionExpiryMonitor = () => {
         const open = new Set()
 
         const notifiedSubscription = event$.pipe(
-            filter(({type}) => type === 'sessionExpiryNotified')
+            filter(({type}) => type === 'workerSessionExpiryNotified')
         ).subscribe(({data = {}}) => {
             const {sessionId} = data
             open.add(sessionId)
@@ -182,7 +182,7 @@ export const SessionExpiryMonitor = () => {
             setTimeout(() => usageHint(false), HINT_DURATION_MS)
         })
         const closedSubscription = event$.pipe(
-            filter(({type}) => type === 'sessionExpiryClosed')
+            filter(({type}) => type === 'workerSessionExpiryClosed')
         ).subscribe(({data = {}}) => {
             // Replace the warning: its buttons are now meaningless — there is nothing left to
             // extend and nothing left to silence — and leaving them on screen invites a click that

@@ -1,7 +1,7 @@
 // No gateway-internal state to update — the event only drives the GUI's expiry notification,
 // which carries the Extend and Dismiss buttons.
 
-import {SESSION_EXPIRY_NOTIFIED} from '#sepal/event/definitions'
+import {WORKER_SESSION_EXPIRY_NOTIFIED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('sessionExpiryNotifiedSubscriber')
@@ -16,7 +16,7 @@ const sessionExpiryNotifiedSubscriber = event$ => {
         // Both fields required: sendEvent treats a falsy username as "broadcast to everyone".
         if (username && sessionId) {
             event$ && event$.next({
-                type: SESSION_EXPIRY_NOTIFIED,
+                type: WORKER_SESSION_EXPIRY_NOTIFIED,
                 data: {username, sessionId, apps, terminals, ordinal, name, typeName}
             })
         }

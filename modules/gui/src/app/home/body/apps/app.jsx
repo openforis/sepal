@@ -204,7 +204,7 @@ class _App extends React.Component {
         plan.toCloseLocal.forEach(tabId => closeTab(tabId, 'apps'))
         // Dissociate every conflicting association BEFORE starting: the worker's
         // association-wins rule would otherwise steer the start back to the old instance.
-        // Other browsers' tabs close via the appSessionDissociated push.
+        // Other browsers' tabs close via the workerSessionAppDissociated push.
         forkJoin(plan.toRelease.map(path => api.apps.releaseSession$(path))).subscribe({
             next: () => this.openApp(app, selection),
             error: error => {

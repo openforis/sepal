@@ -16,7 +16,7 @@ const log = getLogger('appSessionMonitor')
 // Primary signal: the pushed 'workerSessionClosed' websocket event (gateway).
 // Self-correction: every user-report poll (10s) closes tabs whose sessionId was
 // PREVIOUSLY SEEN in a report and is now gone — covers events missed while offline.
-// Also handles client-scoped app ownership: 'appSessionDissociated' (another browser
+// Also handles client-scoped app ownership: 'workerSessionAppDissociated' (another browser
 // took the app over) closes the local tab, and a ws reconnect (new clientId) re-asserts
 // the open tabs' associations released by the old clientId's clientDown.
 // The seen-then-gone invariant is essential: a tab is stamped with its sessionId on
@@ -118,7 +118,7 @@ export const AppSessionMonitor = () => {
             ({data: {sessionId} = {}}) => closeTabsForSession(sessionId, select('apps.tabs'))
         )
         const dissociatedSubscription = event$.pipe(
-            filter(({type}) => type === 'appSessionDissociated')
+            filter(({type}) => type === 'workerSessionAppDissociated')
         ).subscribe(
             ({data: {appPath} = {}}) => closeTabsForDissociatedApp(appPath, select('apps.tabs'))
         )

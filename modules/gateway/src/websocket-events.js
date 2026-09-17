@@ -1,7 +1,6 @@
 import {firstValueFrom} from 'rxjs'
 
 import {
-    APP_SESSION_DISSOCIATED,
     CLIENT_DOWN,
     CLIENT_UP,
     CLIENT_VERSION_MISMATCH,
@@ -10,14 +9,15 @@ import {
     GOOGLE_ACCESS_TOKEN_UPDATED,
     MODULE_DOWN,
     MODULE_UP,
-    SESSION_EXPIRY_CLOSED,
-    SESSION_EXPIRY_NOTIFIED,
     SUBSCRIPTION_DOWN,
     SUBSCRIPTION_UP,
     USER_DOWN,
     USER_UP,
     USER_UPDATED,
+    WORKER_SESSION_APP_DISSOCIATED,
     WORKER_SESSION_CLOSED,
+    WORKER_SESSION_EXPIRY_CLOSED,
+    WORKER_SESSION_EXPIRY_NOTIFIED,
 } from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
@@ -135,24 +135,24 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     // apps/terminals/ordinal/name ride along so the browser can name the instance the way the SSH menu
     // does and say what is running on it, without a round trip. extensionMinutes is what the
     // Extend button buys, so it can be labelled with the duration the worker actually grants.
-    const sessionExpiryNotified = ({username, sessionId, apps, terminals, ordinal, name, typeName, extensionMinutes}) => {
+    const workerSessionExpiryNotified = ({username, sessionId, apps, terminals, ordinal, name, typeName, extensionMinutes}) => {
         log.debug(`${userTag(username)} Worker session expiry notified: ${sessionId}`)
-        clients.sendEventToUser(username, SESSION_EXPIRY_NOTIFIED,
+        clients.sendEventToUser(username, WORKER_SESSION_EXPIRY_NOTIFIED,
             {sessionId, apps, terminals, ordinal, name, typeName, extensionMinutes})
     }
 
-    const sessionExpiryClosed = ({username, sessionId, apps, terminals, ordinal, name, typeName}) => {
+    const workerSessionExpiryClosed = ({username, sessionId, apps, terminals, ordinal, name, typeName}) => {
         log.debug(`${userTag(username)} Worker session expired and closed: ${sessionId}`)
-        clients.sendEventToUser(username, SESSION_EXPIRY_CLOSED,
+        clients.sendEventToUser(username, WORKER_SESSION_EXPIRY_CLOSED,
             {sessionId, apps, terminals, ordinal, name, typeName})
     }
 
     // Unicast to the OWNER of an app association someone else dissociated (another browser's
     // takeover) — that browser closes the app's tab. Self-initiated dissociations never get
     // here (the subscriber filters owner === requester).
-    const appSessionDissociated = ({username, clientId, appPath, sessionId}) => {
+    const workerSessionAppDissociated = ({username, clientId, appPath, sessionId}) => {
         log.debug(`${clientTag(username, clientId)} App session dissociated: ${appPath}`)
-        clients.sendEventToClient(username, clientId, APP_SESSION_DISSOCIATED, {appPath, sessionId})
+        clients.sendEventToClient(username, clientId, WORKER_SESSION_APP_DISSOCIATED, {appPath, sessionId})
     }
 
     const handleEvent = (type, data) => {
@@ -185,12 +185,12 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
                 return googleAccesstokenRemoved(data)
             case WORKER_SESSION_CLOSED:
                 return workerSessionClosed(data)
-            case SESSION_EXPIRY_NOTIFIED:
-                return sessionExpiryNotified(data)
-            case SESSION_EXPIRY_CLOSED:
-                return sessionExpiryClosed(data)
-            case APP_SESSION_DISSOCIATED:
-                return appSessionDissociated(data)
+            case WORKER_SESSION_EXPIRY_NOTIFIED:
+                return workerSessionExpiryNotified(data)
+            case WORKER_SESSION_EXPIRY_CLOSED:
+                return workerSessionExpiryClosed(data)
+            case WORKER_SESSION_APP_DISSOCIATED:
+                return workerSessionAppDissociated(data)
             default:
                 log.warn(`Unknown event type ${type}`)
         }

@@ -61,7 +61,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   gateway only broadcasts the event). `startApp` hitting an existing association still calls
   the worker associate to refresh ownership (reconnect re-assert). The
   `gateway.sessionAppDissociated` subscriber drops the cached app entry on every
-  dissociation and, when the owner ≠ requester (takeover), unicasts `appSessionDissociated
+  dissociation and, when the owner ≠ requester (takeover), unicasts `workerSessionAppDissociated
   {appPath, sessionId}` to the owner client, whose GUI closes the app's tab. The reconnect
   re-assert sends `reassert=true`, which the gateway forwards in the associate body: the worker
   refreshes ownership but moves NO deadline, since the socket dropping is not a user opening an

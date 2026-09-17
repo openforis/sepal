@@ -29,7 +29,7 @@ describe('sessionAppDissociatedSubscriber', () => {
             clientId: 'c-owner', requestingClientId: 'c-other'
         })
         expect(events).toEqual([{
-            type: 'appSessionDissociated',
+            type: 'workerSessionAppDissociated',
             data: {username: 'bob', clientId: 'c-owner', appPath: '/sandbox/shiny/foo', sessionId: 's-1'}
         }])
     })
