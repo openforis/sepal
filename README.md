@@ -174,13 +174,10 @@ instructions will change, and improve, over time.
 In order to build and run the SEPAL system, a Linux or macOS installation is needed.
 The end-users on the other hand, are of course free to use whatever Operating system they prefer, including Windows.
 
-In addition to this, the following software must be installed:
-
-[Java](http://www.oracle.com/technetwork/java/javase/downloads/index.html),
-[Maven](https://maven.apache.org/download.cgi), and
-[Ansible](http://docs.ansible.com/ansible/intro_installation.html).
-If you want to run the system locally, you need [Vagrant](https://www.vagrantup.com/downloads.html), and
-to deploy on Amazon Web Services EC2 instances, you need an [AWS account](https://aws.amazon.com/account/).
+In addition to this, [Docker](https://docs.docker.com/get-docker/) must be installed. Development happens inside
+the `sepal-dev` container, started with `bin/dev-env start`, which provides Node.js, Docker Compose and the `sepal`
+CLI used to build and run modules. To deploy on Amazon Web Services EC2 instances, you need an
+[AWS account](https://aws.amazon.com/account/).
 
 ### Configuration
 TBD
