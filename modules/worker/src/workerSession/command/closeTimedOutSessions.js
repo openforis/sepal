@@ -2,11 +2,9 @@
 // try/catch so one failure does not abort the rest.
 //
 // PENDING ONLY. An ACTIVE session's lifetime is the stored timeout_time, swept by ExpireSessions;
-// this sweep now only kills provisions that hung for ten minutes.
-//
-// STARTUP GRACE: kept, though a PENDING session's update_time is never refreshed anyway — a worker
-// that was down while an instance came up should not close the session before the activation it
-// missed can land. The caller supplies both; without a startTime the sweep runs unconditionally.
+// this sweep now only kills provisions that hung for ten minutes. A PENDING session's update_time
+// is never refreshed, so a worker that was down while an instance came up must let
+// ReconcilePendingSessions land the missed activation first — the scheduler sequences the two.
 
 import {getLogger} from '#sepal/log'
 
@@ -15,11 +13,7 @@ import {closeSession} from './closeSession.js'
 
 const log = getLogger('worker/closeTimedOutSessions')
 
-const closeTimedOutSessions = async ({repo, instanceManager, emitWorkerSessionClosed, startTime = null, startupGraceMs = 0, clock = () => new Date()}) => {
-    if (startTime && clock().getTime() - startTime.getTime() < startupGraceMs) {
-        log.info('Within the startup grace period - skipping the timed-out session sweep')
-        return null
-    }
+const closeTimedOutSessions = async ({repo, instanceManager, emitWorkerSessionClosed}) => {
     const sessions = await repo.timedOutSessions()
     for (const session of sessions) {
         try {

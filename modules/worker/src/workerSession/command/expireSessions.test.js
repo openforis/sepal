@@ -228,25 +228,11 @@ describe('notify mode', () => {
     })
 })
 
-describe('off mode and the startup grace', () => {
+describe('off mode', () => {
     test('off does not even look at the sessions', async () => {
         const repo = makeRepo([session()])
         await run(repo, {mode: 'off'})
         expect(repo.expiredSessions).not.toHaveBeenCalled()
-    })
-
-    // A stored deadline survives an outage, but the SENDERS of extension events cannot reach a
-    // down worker, so they need wall-clock time to re-assert.
-    test('within the startup grace the sweep is inert', async () => {
-        const repo = makeRepo([session()])
-        await run(repo, {startTime: new Date(NOW.getTime() - 30_000), startupGraceMs: 120_000})
-        expect(repo.expiredSessions).not.toHaveBeenCalled()
-    })
-
-    test('after the startup grace it runs', async () => {
-        const repo = makeRepo([session()])
-        await run(repo, {startTime: new Date(NOW.getTime() - 180_000), startupGraceMs: 120_000})
-        expect(repo.expiredSessions).toHaveBeenCalled()
     })
 })
 

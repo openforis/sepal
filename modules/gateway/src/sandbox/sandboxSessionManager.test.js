@@ -431,9 +431,8 @@ describe('heartbeat', () => {
         })
     })
 
-    // The worker's startup grace (workerSession/index.js STARTUP_GRACE_MS) only saves a session if
-    // a heartbeat lands during it. That requires this cache to SURVIVE the outage — a worker that
-    // is down must not look like a worker that closed the session.
+    // A worker that is down must not look like a worker that closed the session: the cache has to
+    // SURVIVE the outage so heartbeats — and any interaction they carry — resume when it is back.
     test('keeps the cache entry when the worker is unreachable', async () => {
         const fetch = jest.fn()
             .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))

@@ -75,30 +75,21 @@ const build = clock => {
 // drain before asserting.
 const flush = () => new Promise(resolve => setImmediate(resolve))
 
-test('the timed-out sweep stays inert on the first run after start', async () => {
+// A restart is exactly when a PENDING session is most at risk: its instance may have come up while
+// the worker was down. The recovery sweep must get to it before the timed-out sweep does — in the
+// same tick, not after a wall-clock grace that a crash loop can starve forever.
+test('the timed-out sweep runs on the first tick, after the reconcile sweep', async () => {
     const {component, repo, events} = build(() => STARTED_AT)
 
     component.start()
     await flush()
     component.stop()
 
-    expect(repo.timedOutSessions).not.toHaveBeenCalled()
-    expect(events.emitWorkerSessionClosed).not.toHaveBeenCalled()
-})
-
-test('the timed-out sweep runs once the grace period has elapsed', async () => {
-    // start() captures the start time synchronously; the job body runs a microtask later, so
-    // advancing the clock here is observed by the sweep but not by the captured start time.
-    let now = STARTED_AT
-    const {component, repo, events} = build(() => now)
-
-    component.start()
-    now = new Date(STARTED_AT.getTime() + 60 * 60_000)
-    await flush()
-    component.stop()
-
     expect(repo.timedOutSessions).toHaveBeenCalled()
     expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
+    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
+    expect(repo.sessions.mock.invocationCallOrder[0])
+        .toBeLessThan(repo.timedOutSessions.mock.invocationCallOrder[0])
 })
 
 // Both sweeps are pure scheduling: nothing else calls them, and ReclaimStaleClaims is the only
@@ -140,17 +131,4 @@ test('the reconcile sweep runs over the PENDING sessions', async () => {
 
     expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
     expect(instanceManager.sessionsWithoutInstance).toHaveBeenCalledWith([pendingSession])
-})
-
-// It never closes a session — it only activates or re-provisions — so unlike the closing sweeps it
-// must run inside the startup grace, which is exactly when a restart leaves sessions stranded.
-test('the reconcile sweep is not gated on the startup grace', async () => {
-    const {component, repo} = build(() => STARTED_AT)
-
-    component.start()
-    await flush()
-    component.stop()
-
-    expect(repo.timedOutSessions).not.toHaveBeenCalled()
-    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
 })

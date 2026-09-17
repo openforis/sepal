@@ -1,11 +1,10 @@
 // workerSession/index.js — session component lifecycle wiring. Owns the session schedulers;
 // NOT the command/query surface (sessionManager.js) nor the REST surface (sessionsApi.js).
 //
-// Scheduling (fixed-delay, initial run immediate — except CloseTimedOutSessions and
-// ExpireSessions, which stay inert for STARTUP_GRACE_MS so a worker outage does not close every
-// open session on restart):
-//   @1min:  CloseTimedOutSessions, ExpireSessions, CloseSessionsWithoutInstance,
-//           ReleaseUnusedInstances(5, MINUTES), ReclaimStaleClaims, ReconcilePendingSessions
+// Scheduling (fixed-delay, initial run immediate):
+//   @1min:  ReconcilePendingSessions → CloseTimedOutSessions (one job, in that order),
+//           ExpireSessions, CloseSessionsWithoutInstance, ReleaseUnusedInstances(5, MINUTES),
+//           ReclaimStaleClaims
 //   @12min: RemoveOrphanedTmpDirs, RemoveOrphanedContainers (local-daemon container sweep;
 //           the first run is immediate, so a worker restart cleans up at startup)
 //   @5min:  RefreshGoogleTokens
@@ -43,18 +42,6 @@ const RELEASE_UNUSED_MIN_AGE_MINUTES = 5
 // grace outright when the SDK is backing off. The margin is slim, not generous.
 const CLAIM_GRACE_MS = 10 * MINUTE_MS
 
-// STARTUP_GRACE_MS — how long after startup the closing sweeps stay inert. A stored deadline is
-// not destroyed by a worker outage, but the SENDERS of extension events cannot reach a down
-// worker, so after an outage they need wall-clock time to re-assert what is still alive. It
-// suppresses the sweep rather than shifting deadlines. The cost of being wrong is that a genuinely
-// dead session survives two extra minutes.
-//
-// Measured from process start, which is exactly what leaves the crash-loop gap open: a worker
-// restarting more often than this reaches no sweep and closes nothing (see
-// docs/session-expiration-model.md §8 — the durable deadline does NOT fix that, and closing a
-// crash-loop gap needs a grace satisfiable across restarts).
-const STARTUP_GRACE_MS = 2 * MINUTE_MS
-
 const createSessionComponent = ({
     sessionManager,
     repo,
@@ -75,13 +62,19 @@ const createSessionComponent = ({
         // In-proc instance → session seam (onInstanceActivated / onFailedToProvisionInstance).
         sessionManager.registerInstanceManagerHooks(instanceManager)
 
-        const startTime = clock()
-
-        // @1min: close timed-out + without-instance sessions; release unused instances.
+        // @1min: the PENDING sessions — recover first, then kill what is still hanging. One job
+        // rather than two, so a restart activates a session whose instance came up while the
+        // worker was down before the timed-out sweep can see it. Sequencing replaces the old
+        // startup grace: the recovery does not need wall-clock time, and a grace measured from
+        // process start was starved by any crash loop faster than it.
         scheduler.schedule(
-            'CloseTimedOutSessions',
-            () => sessionManager.closeTimedOutSessions({startTime, startupGraceMs: STARTUP_GRACE_MS}),
+            'ReconcilePendingSessions',
+            async () => {
+                await sessionManager.reconcilePendingSessions()
+                await sessionManager.closeTimedOutSessions()
+            },
             MINUTE_MS)
+        // @1min: close without-instance sessions; release unused instances.
         // The tracker lives for the component's lifetime: it is what turns a per-sweep probe
         // verdict into a decision, so it must survive across sweeps (and only across them — a
         // restart starting from a clean slate is the safe direction).
@@ -98,21 +91,13 @@ const createSessionComponent = ({
             'ReclaimStaleClaims',
             () => sessionManager.reclaimStaleClaims(CLAIM_GRACE_MS),
             MINUTE_MS)
-        // @1min: finish the PENDING sessions whose provisioning nobody is driving any more —
-        // the worker that started them restarted. Deliberately NOT gated on the startup grace:
-        // it only ever activates or re-provisions, never closes, and a restart is exactly when
-        // it is needed.
-        scheduler.schedule(
-            'ReconcilePendingSessions',
-            () => sessionManager.reconcilePendingSessions(),
-            MINUTE_MS)
-
         // @1min: the expiry sweep — notify → email → close over stored deadlines. It is a no-op
         // under SESSION_EXPIRY_MODE=off, but the ratchets that feed it run regardless, so mode=off
-        // still records what would have been decided.
+        // still records what would have been decided. Not held back after a restart: a deadline
+        // that passed during an outage earns a notification and the full grace, never a close.
         scheduler.schedule(
             'ExpireSessions',
-            () => sessionManager.expireSessions({startTime, startupGraceMs: STARTUP_GRACE_MS}),
+            () => sessionManager.expireSessions(),
             MINUTE_MS)
 
         // @12min: remove orphaned tmp dirs + orphaned containers on the shared local daemon.

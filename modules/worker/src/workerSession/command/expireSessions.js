@@ -16,10 +16,9 @@
 // minute, and an interaction landing between candidate selection and the close leaves the session
 // open (the guarded close changes zero rows).
 //
-// STARTUP GRACE: a stored deadline survives a worker outage, but the SENDERS of extension events
-// cannot reach a down worker, so they need wall-clock time to re-assert. As before this suppresses
-// the sweep rather than shifting deadlines. Measured from process start, so a worker crash-looping
-// faster than the grace reaches no sweep and closes nothing — see §8, that gap is not fixed here.
+// No startup grace: a deadline that passed during a worker outage is met with a notification and
+// the full grace, never a close, so the sweep has nothing to wait for after a restart — and a
+// grace measured from process start was what let a crash loop starve enforcement (§8).
 //
 // Per-item try/catch: a failed notification never blocks the close, a failed close never blocks the
 // next session.
@@ -153,15 +152,9 @@ const expireSessions = async ({
     emitWorkerSessionClosed,
     emitSessionChanged,
     metrics = null,
-    startTime = null,
-    startupGraceMs = 0,
     clock = () => new Date(),
 }) => {
     if (mode === MODE.OFF) {
-        return null
-    }
-    if (startTime && clock().getTime() - startTime.getTime() < startupGraceMs) {
-        log.info('Within the startup grace period - skipping the session expiry sweep')
         return null
     }
     const sessions = await repo.expiredSessions()
