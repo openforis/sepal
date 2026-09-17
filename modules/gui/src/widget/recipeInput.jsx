@@ -41,7 +41,7 @@ class _RecipeInput extends React.Component {
     render() {
         const {
             stream, input, label, labelButtons, placeholder, tooltip, allowClear, autoFocus,
-            busyMessage, errorMessage, onChange
+            busyMessage, errorMessage, warningMessage, onChange
         } = this.props
         const {all} = this.state
         const options = this.getOptions()
@@ -78,6 +78,7 @@ class _RecipeInput extends React.Component {
                 buttons={buttons}
                 busyMessage={stream('LOAD_RECIPE').active || busyMessage}
                 errorMessage={errorMessage}
+                warningMessage={warningMessage}
                 onChange={option => {
                     const value = option?.value
                     onChange && onChange(value)
@@ -208,6 +209,7 @@ RecipeInput.propTypes = {
     labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any,
+    warningMessage: PropTypes.any,
     // What a consumer asks to be given decides what is read. Neither reads nothing; both share one record
     // read, and only onBandsLoaded reaches Earth Engine.
     onBandsLoaded: PropTypes.func,

@@ -1632,6 +1632,8 @@
         "assetLoadError": "Failed to read the classification asset metadata: {error}",
         "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
+        "pending": "Reading the selected classification\u2026",
+        "unavailable": "The selected classification could not be read. Choose it again to retry.",
         "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
       }
     },

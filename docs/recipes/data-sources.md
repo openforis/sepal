@@ -439,9 +439,6 @@ Still to do here:
 - Define [classification output versus reusable classifier behavior](source-resolution.md#classification-results-and-reusable-classifiers)
   before admitting masked classifications to PyEO, CCDC, Time Series or Phenology. Decide mask semantics for the
   baseline image, training and newly classified monitoring images; never unwrap a selection and silently drop it.
-- Fix PyEO Sources Apply during a pending prefill: it can commit the new `model.sources` while keeping the old
-  options and dates. Define a pending/failed/manual-configuration policy so an applied selection and its settings
-  are intentional together; preserve Cancel and user-edited datasets.
 - Resolve PyEO's gate-index behavior for asset-backed imagery through wrappers. Execution currently selects an
   index for any `RECIPE_REF` and computes it for a direct asset; a successful defaults read does not establish
   wrapped-asset execution support. Preserve the selected image and verify both paths through execution.

@@ -97,7 +97,7 @@ export const recipeFormPanel = (
     }
 }
 
-export const RecipeFormPanel = ({className, placement, isActionForm, onApply, onCancel, onClose, children}) =>
+export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
         {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
@@ -106,7 +106,10 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                     onApply && onApply(values)
                 } else if (valuesToModel) {
                     const model = valuesToModel(values)
-                    setModelAndValues({evaluatedPath, statePath, model, values})
+                    setModelAndValues({
+                        evaluatedPath, statePath, model, values,
+                        updates: additionalUpdates ? additionalUpdates(values) : []
+                    })
                     onApply && onApply(values, model, prevValues)
                 }
             }
@@ -136,6 +139,9 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
 
 RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
+    // The rest of the recipe this panel's values imply, as [{path, value, merge}] over recipe-relative
+    // paths, published in the same action as the panel's own model.
+    additionalUpdates: PropTypes.func,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
     placement: PropTypes.any,
@@ -144,12 +150,19 @@ RecipeFormPanel.propTypes = {
     onClose: PropTypes.func
 }
 
-const setModelAndValues = ({evaluatedPath, statePath, model, values}) => {
+// One action, so no subscriber observes this panel's new model beside settings it was applied to replace.
+const setModelAndValues = ({evaluatedPath, statePath, model, values, updates = []}) => {
     if (!evaluatedPath)
         return
-    return actionBuilder('SET_MODEL_AND_VALUES', {evaluatedPath, model, values})
-        .setIfChanged([statePath, 'ui', evaluatedPath], values)
-        .setIfChanged([statePath, 'model', evaluatedPath], model)
+    return updates
+        .reduce(
+            (builder, {path, value, merge}) => merge
+                ? builder.assign([statePath, path], value)
+                : builder.set([statePath, path], value),
+            actionBuilder('SET_MODEL_AND_VALUES', {evaluatedPath, model, values})
+                .setIfChanged([statePath, 'ui', evaluatedPath], values)
+                .setIfChanged([statePath, 'model', evaluatedPath], model)
+        )
         .dispatch()
 }
 

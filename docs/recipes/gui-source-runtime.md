@@ -235,10 +235,45 @@ Layers and the Classification and Regression training-recipe pickers consume rec
 callers consume bands.
 
 The classification fields in PyEO, CCDC, Time Series and Phenology use this selector, and each panel owns its own
-read. That ownership is not a free choice: what a panel derives from a classification - band options, or staged
-prefill - is used by controls that are not always rendered beside the selector, and a selector that is not
-rendered reads nothing. Acquisition therefore belongs to the panel lifecycle, which also decides what a selection
-means; only PyEO distinguishes a user's selection, which stages prefilled settings, from opening a saved recipe,
+read.
+
+A panel that derives settings from a selection holds ONE record of what it knows about that selection: which
+classification it concerns, whether that selection may be committed, the settings it proposes for the rest of the
+recipe, and what the field has to say. Changing the selection replaces the record as a whole and cancels what was
+in flight, so readiness and the proposal cannot disagree; readiness, messages and the proposal are read from the
+record rather than maintained beside it.
+
+Committing requires the record in hand to be the one for the selected value, compared at the moment a submission
+asks to commit. No submission path - Apply, a wizard step or a keyboard submit - commits any part of a proposal
+read from a different classification, whether the user has replaced the selection or returned to an earlier one,
+and this holds in the instant between the field taking a new value and the panel being told about it. An answer
+arriving for a superseded selection is cancelled before it lands and authorizes nothing. The field carries the
+reason it is not ready, and an unready panel refuses forward moves only: going back to an earlier wizard panel
+stays available, and commits nothing.
+
+The selection and the settings derived from it are one configuration, published in a single model-changing
+action: nothing observing the recipe sees a new classification beside the settings it replaces. A panel
+contributes those related updates to its own commit, over recipe-relative paths that preserve merge behavior and
+unrelated fields; panels contributing none are unaffected. Acquisition state stays in the panel's session state
+and never reaches the recipe model.
+
+The outcomes differ:
+
+- derived settings are proposed and committed with the selection on Apply, leaving user-edited datasets alone;
+- a source stating nothing to copy is the manual-configuration path - applicable, with `dates.derived = false`,
+  and a warning that the dates are to be set by hand;
+- a failed read commits nothing, reports what happened, and leaves the committed configuration intact; choosing
+  the same classification again retries it;
+- the single-input and hand-picked-scene restrictions are settled answers that derive nothing, so they leave the
+  selection unapplicable without changing what those policies admit.
+
+Cancel discards the proposal and restores the committed selection's presentation. Opening a saved recipe acquires
+presentation metadata only and never re-derives what was saved.
+
+That ownership is not a free choice: what a panel derives from a classification - band options, or a proposal for
+the rest of the recipe - is used by controls that are not always rendered beside the selector, and a selector that
+is not rendered reads nothing. Acquisition therefore belongs to the panel lifecycle, which also decides what a
+selection means; only PyEO distinguishes a user's selection, which proposes settings, from opening a saved recipe,
 which must not. Eligibility is direct `CLASSIFICATION` only; reusable classifier capabilities are a separate
 design decision.
 

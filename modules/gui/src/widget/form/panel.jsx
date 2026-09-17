@@ -54,10 +54,15 @@ class _FormPanel extends React.Component {
         onClose && onClose()
     }
 
+    // Every submission path arrives here, and nothing is committed from an invalid form. The Apply and
+    // wizard buttons already refuse; a keyboard submit reaches the same decision rather than around it.
     apply(onSuccess) {
         const {form, confirmation, onApply, onError} = this.props
         const {confirmed} = this.state
 
+        if (this.isInvalid()) {
+            return
+        }
         if (confirmation && !confirmed) {
             this.setState({confirm: true, onSuccess})
         } else {
@@ -104,9 +109,26 @@ class _FormPanel extends React.Component {
         }
     }
 
+    // Going back commits nothing invalid, but it still goes back: the button is offered whenever there is a
+    // panel behind this one, and a guard that refused to navigate would leave it enabled and inert. The
+    // forward steps go on refusing - they are the ones that would commit.
     back() {
         const {panelWizard} = this.props
-        panelWizard && this.apply(panelWizard.back)
+        if (!panelWizard) {
+            return
+        }
+        if (this.isInvalid()) {
+            this.leave(panelWizard.back)
+        } else {
+            this.apply(panelWizard.back)
+        }
+    }
+
+    // Leaving the panel the way apply() does, minus the commit.
+    leave(navigate) {
+        this.autoCancel = false
+        navigate && navigate()
+        this.onClose()
     }
 
     next() {
@@ -128,10 +150,22 @@ class _FormPanel extends React.Component {
         this.setState({confirm: false})
     }
 
-    submit(...args) {
-        const {form = false, onApply} = this.props
-        console.warn('Unexpected PanelForm submit() called', args)
-        onApply && onApply(form && form.values())
+    // Enter in a field submits the surrounding form, and submission means what this panel's own forward
+    // button means: Apply on an ordinary panel, and the wizard's own step on one the wizard is walking
+    // through - where applying and closing would abandon the sequence the user is in.
+    submit() {
+        const {panelWizard: {next} = {}} = this.props
+        if (this.inWizard()) {
+            next ? this.next() : this.done()
+        } else {
+            this.ok()
+        }
+    }
+
+    // The same rule the buttons are chosen by: a wizard may be running over panels this one is not part of.
+    inWizard() {
+        const {id, panelWizard: {wizard} = {}} = this.props
+        return !!(wizard && wizard.includes(id))
     }
 
     render() {
