@@ -2,3 +2,9 @@
 .icon {
     color: var(--look-highlight-hover-background-color);
 }
+
+/* The pointer gives the hover look to every row it passes, so a valid drop target needs its own mark. */
+.dropTarget {
+    outline: 2px solid var(--look-highlight-hover-background-color);
+    border-radius: var(--container-border-radius);
+}

@@ -11,7 +11,7 @@ const byName = folder => folder.name.toUpperCase()
 
 // Stored ids say "no parent" as an empty string as often as null, so falsiness, not nullishness, is
 // what puts something at the root.
-const at = folderId => folderId || ROOT
+export const at = folderId => folderId || ROOT
 
 export const childFolders = (folders, folderId) =>
     _.sortBy(folders.filter(folder => at(folder.parentId) === at(folderId)), byName)
