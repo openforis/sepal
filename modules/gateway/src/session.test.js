@@ -15,7 +15,7 @@ describe('logout', () => {
         await manager.logout(requestFor(store, 's1', 'alice'), aResponse())
 
         expect(store.ids()).toEqual([])
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1'}])
+        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1', reason: 'logout'}])
     })
 })
 
@@ -27,7 +27,7 @@ describe('invalidateOtherSessions', () => {
         await manager.invalidateOtherSessions(requestFor(store, 's1', 'alice'), aResponse())
 
         expect(store.ids()).toEqual(['s1', 's3'])
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's2'}])
+        expect(invalidated).toEqual([{username: 'alice', sessionId: 's2', reason: 'invalidated'}])
     })
 })
 
@@ -40,8 +40,8 @@ describe('user.UserLocked', () => {
 
         expect(store.ids()).toEqual(['s3'])
         expect(invalidated).toEqual([
-            {username: 'alice', sessionId: 's1'},
-            {username: 'alice', sessionId: 's2'}
+            {username: 'alice', sessionId: 's1', reason: 'locked'},
+            {username: 'alice', sessionId: 's2', reason: 'locked'}
         ])
     })
 })
@@ -59,7 +59,7 @@ describe('ensureSessionFor', () => {
         expect(req.sessionID).not.toBe('s1')
         expect(invalidated).toEqual([])
         res.emit('finish')
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1'}])
+        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1', reason: 'replaced'}])
     })
 
     test('keeps the session of the same user', async () => {

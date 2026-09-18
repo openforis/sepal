@@ -238,7 +238,7 @@ always forces delivery.
 | `moduleUp` / `moduleDown` | `{module}` |
 | `userUp` / `userDown` / `userUpdated` | `{user}` |
 | `clientUp` / `clientDown` / `clientVersionMismatch` | `{username, clientId}` |
-| `loginSessionInvalidated` | `{username, sessionId}` — a login (cookie) session destroyed by logout, invalidate-other-sessions or `user.UserLocked` ([session.js](modules/gateway/src/session.js)); the browsers that authenticated with it receive the event and their sockets are closed. The id is of a session that no longer exists, and cookies are signed, so it grants nothing |
+| `loginSessionInvalidated` | `{username, sessionId, reason}` — a login (cookie) session destroyed by logout (`logout`), a login as another user on it (`replaced`), invalidate-other-sessions (`invalidated`) or `user.UserLocked` (`locked`) ([session.js](modules/gateway/src/session.js)); the browsers that authenticated with it receive the event (with `reason`) and their sockets are closed. The id is of a session that no longer exists, and cookies are signed, so it grants nothing |
 | `subscriptionUp` / `subscriptionDown` | `{module, username, clientId, subscriptionId}` |
 | `googleAccessTokenAdded` / `googleAccessTokenUpdated` / `googleAccessTokenRemoved` | `{user}` |
 | `workerSessionClosed` | `{username, sessionId}` — emitted onto the same internal `event$` by the `workerSession.WorkerSessionClosed` subscriber (not from the WebSocket/user-store stream), so it reaches browsers and gets republished here like every other type |

@@ -99,10 +99,12 @@ const authenticate$ = ({username, password}, recaptchaToken) => {
     )
 }
 
-export const logout$ = () =>
-    api.user.logout$().pipe(
+export const logout$ = () => {
+    forgetPreviousUsername()
+    return api.user.logout$().pipe(
         tap(() => document.location = '/' /* force full state reset*/)
     )
+}
 
 // For password-reset and account-activation links: the tab shows the form whoever the browser is
 // logged in as. The session is left alone, and the app starts logged off so Home never claims the

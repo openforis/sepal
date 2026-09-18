@@ -52,12 +52,21 @@ describe('LoginSessionMonitor', () => {
             expect(replace).toHaveBeenCalledWith('/')
         })
 
-        it('leaves the tab a note of who it was logged in as, for after the reload', () => {
+        it('leaves the tab a note of who it was logged in as when another user logged in on its session', () => {
             mount()
 
-            act(() => event$.next({type: 'loginSessionInvalidated'}))
+            act(() => event$.next({type: 'loginSessionInvalidated', data: {reason: 'replaced'}}))
 
             expect(window.sessionStorage.getItem('loginSession.previousUsername')).toBe('alice')
+        })
+
+        it('leaves no note when the session simply ended, as on a logout in another window', () => {
+            mount()
+
+            act(() => event$.next({type: 'loginSessionInvalidated', data: {reason: 'logout'}}))
+
+            expect(replace).toHaveBeenCalledWith('/')
+            expect(window.sessionStorage.getItem('loginSession.previousUsername')).toBeNull()
         })
 
         it('ignores other events', () => {
@@ -79,6 +88,21 @@ describe('LoginSessionMonitor', () => {
             expect(notifications).toEqual([
                 expect.objectContaining({message: 'home.loginSession.switched {"username":"bob"}', timeout: 0})
             ])
+        })
+
+        it('replaces an earlier message rather than stacking a second one', () => {
+            window.sessionStorage.setItem('loginSession.previousUsername', 'alice')
+            store.user = {username: 'bob'}
+            mount()
+            act(() => root.unmount())
+            window.sessionStorage.setItem('loginSession.previousUsername', 'bob')
+            store.user = {username: 'carol'}
+
+            mount()
+
+            expect(notifications).toHaveLength(2)
+            expect(notifications[1].id).toBeDefined()
+            expect(notifications[1].id).toBe(notifications[0].id)
         })
 
         it('consumes the note, so a later reload says nothing', () => {

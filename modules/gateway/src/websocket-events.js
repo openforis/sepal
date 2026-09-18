@@ -96,9 +96,9 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
         clients.sendEventToClient(username, clientId, CLIENT_VERSION_MISMATCH)
     }
 
-    const loginSessionInvalidated = ({username, sessionId}) => {
-        log.debug(`${userTag(username)} login session invalidated`)
-        clients.sendEventToSession(sessionId, LOGIN_SESSION_INVALIDATED)
+    const loginSessionInvalidated = ({username, sessionId, reason}) => {
+        log.debug(`${userTag(username)} login session invalidated: ${reason}`)
+        clients.sendEventToSession(sessionId, LOGIN_SESSION_INVALIDATED, {reason})
     }
 
     const subscriptionUp = ({module, username, clientId, subscriptionId}) => {

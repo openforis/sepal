@@ -16,15 +16,17 @@ const SessionManager = (sessionStore, redis, event$) => {
         return sessions
     }
     
-    const removeSession = async (username, id) => {
+    const removeSession = async (username, id, reason) => {
         await toPromise(
             callback => sessionStore.destroy(id, callback)
         )
-        sessionInvalidated(username, id)
+        sessionInvalidated(username, id, reason)
     }
 
-    const sessionInvalidated = (username, sessionId) =>
-        event$.next({type: LOGIN_SESSION_INVALIDATED, data: {username, sessionId}})
+    // The reason lets a kicked tab tell a login as another user in its browser ('replaced', worth
+    // telling the user about) from an ordinary end of its session.
+    const sessionInvalidated = (username, sessionId, reason) =>
+        event$.next({type: LOGIN_SESSION_INVALIDATED, data: {username, sessionId, reason}})
     
     const getSessionIdsByUsername = async username => {
         const sessions = await getAllSessions()
@@ -39,7 +41,7 @@ const SessionManager = (sessionStore, redis, event$) => {
     
         return Promise.all(
             userSessionIds.map(
-                async sessionId => await removeSession(username, sessionId)
+                async sessionId => await removeSession(username, sessionId, 'locked')
             )
         ).then(async () => {
             return true
@@ -91,7 +93,7 @@ const SessionManager = (sessionStore, redis, event$) => {
         )
         
         if (username) {
-            sessionInvalidated(username, sessionId)
+            sessionInvalidated(username, sessionId, 'logout')
             const userSessionIds = await getSessionIdsByUsername(username)
             log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
         } else {
@@ -122,7 +124,7 @@ const SessionManager = (sessionStore, redis, event$) => {
                 callback => req.session.regenerate(callback)
             )
             log.info(`${usernameTag(username)} Login replaces session of ${usernameTag(previousUsername)}`)
-            res.on('finish', () => sessionInvalidated(previousUsername, previousSessionId))
+            res.on('finish', () => sessionInvalidated(previousUsername, previousSessionId, 'replaced'))
         }
     }
 
@@ -133,7 +135,7 @@ const SessionManager = (sessionStore, redis, event$) => {
         await Promise.all(
             userSessionIds
                 .filter(sessionId => sessionId !== req.sessionID)
-                .map(async sessionId => await removeSession(username, sessionId))
+                .map(async sessionId => await removeSession(username, sessionId, 'invalidated'))
         )
 
         res.status(200).send({status: 'success', message: 'other sessions invalidated'})

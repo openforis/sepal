@@ -59,7 +59,7 @@ vi.mock('~/store', () => ({select: () => undefined}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}, warning: () => {}}}))
 
-const {login$, resetPassword$, startLoggedOff$} = await import('./user')
+const {login$, logout$, resetPassword$, startLoggedOff$} = await import('./user')
 const {notePreviousUsername, takePreviousUsername} = await import('./loginSession')
 
 const RESET = {token: 't-1', username: 'bob', password: 'new-password-123', type: 'reset', recaptchaToken: 'r'}
@@ -112,6 +112,17 @@ describe('login$', () => {
         browser.session = null
 
         await firstValueFrom(login$({username: 'bob', password: 'bob-pw'}, 'r'))
+
+        expect(takePreviousUsername()).toBeNull()
+    })
+})
+
+describe('logout$', () => {
+    it('discards the note of who the browser was logged in as: nothing is to be told after a logout', async () => {
+        notePreviousUsername('alice')
+        vi.spyOn(document, 'location', 'set').mockImplementation(() => {})
+
+        await firstValueFrom(logout$())
 
         expect(takePreviousUsername()).toBeNull()
     })
