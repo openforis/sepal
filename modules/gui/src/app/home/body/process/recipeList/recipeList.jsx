@@ -166,11 +166,18 @@ class _RecipeList extends React.Component {
         this.setState({dropTarget: null})
         if (dragged && dropTarget) {
             if (dragged.kind === 'recipe') {
-                onMove([dragged.id], dropTarget.folderId)
+                onMove(this.draggedRecipeIds(dragged.id), dropTarget.folderId)
             } else {
                 updateFolder({...dragged.folder, parentId: dropTarget.folderId})
             }
         }
+    }
+
+    // Dragging one of the selected recipes takes the whole selection with it, as the Move button does.
+    draggedRecipeIds(recipeId) {
+        return this.isSelected(recipeId)
+            ? this.getFilteredSelectedIds()
+            : [recipeId]
     }
 
     renderList() {
@@ -460,7 +467,7 @@ class _RecipeList extends React.Component {
                     counts={folderCounts(folders, recipes, item.folder.id)}
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
-                    drag$={edit ? null : this.drag$}
+                    drag$={this.drag$}
                     onClick={folder => this.navigateTo(folder.id)}
                     onEdit={folder => this.editFolder(folder)}
                     onRemove={folder => this.removeFolder(folder)}
@@ -476,7 +483,7 @@ class _RecipeList extends React.Component {
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
                     edit={edit}
-                    drag$={edit ? null : this.drag$}
+                    drag$={this.drag$}
                     selected={this.isSelected(item.recipe.id)}
                     onClick={recipe => this.handleClick(recipe)}
                     onSelect={recipeId => this.toggleOne(recipeId)}

@@ -63,8 +63,9 @@ const EMPTY = {id: 'empty', name: 'Empty', parentId: 'kenya'}
 const folders = [KENYA, Y2024, EMPTY, MOSAICS]
 
 const AT_ROOT = {id: 'r1', name: 'loose_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
+const ALSO_AT_ROOT = {id: 'r3', name: 'second_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-03'}
 const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'MOSAIC', folderId: '2024', updateTime: '2026-01-02'}
-const recipes = [AT_ROOT, IN_2024]
+const recipes = [AT_ROOT, ALSO_AT_ROOT, IN_2024]
 
 let container
 let mounted
@@ -118,7 +119,7 @@ describe('RecipeList', () => {
     it('shows the folders and the recipes of the open folder, folders first', () => {
         mount()
 
-        expect(rowTitles()).toEqual(['Kenya', 'loose_draft'])
+        expect(rowTitles()).toEqual(['Kenya', 'second_draft', 'loose_draft'])
     })
 
     it('shows the contents of the folder it was told to open', () => {
@@ -208,13 +209,31 @@ describe('drag and drop', () => {
         expect(updateFolder).not.toHaveBeenCalled()
     })
 
-    it('gives the rows no drag in edit mode', () => {
+    it('moves every selected recipe when one of them is dragged', () => {
+        const onMove = vi.fn()
+        mount({onMove, selectedIds: [AT_ROOT.id, ALSO_AT_ROOT.id]})
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+
+        const [movedIds, folderId] = onMove.mock.calls[0]
+        expect([...movedIds].sort()).toEqual([AT_ROOT.id, ALSO_AT_ROOT.id].sort())
+        expect(folderId).toBe(KENYA.id)
+    })
+
+    it('moves only the dragged recipe when it is not one of the selected', () => {
+        const onMove = vi.fn()
+        mount({onMove, selectedIds: [ALSO_AT_ROOT.id]})
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+
+        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], KENYA.id)
+    })
+
+    it('can drag in edit mode as well', () => {
         mount()
 
         act(() => button('process.recipe.edit.label').click())
-        listItems.length = 0
-        act(() => container.querySelectorAll('[data-row]')[0]?.click())
 
-        expect(listItems.every(({drag$}) => !drag$)).toBe(true)
+        expect(listItems.some(({drag$, dragValue}) => drag$ && dragValue?.kind === 'recipe')).toBe(true)
     })
 })
