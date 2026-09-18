@@ -12,7 +12,8 @@ export const RecipeItem = ({
         hovered={hovered}
         drag$={drag$ || undefined}
         dragValue={{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}}
-        dragTarget='handle'
+        dragPointer='mouse'
+        showDragHandle={false}
         onClick={() => edit ? onSelect(recipe.id) : onClick(recipe)}>
         <CrudItem
             icon='globe'
