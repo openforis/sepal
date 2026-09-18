@@ -72,7 +72,7 @@ const updateRecipeList = recipe =>
     actionBuilder('SET_RECIPES')
         .assign(['process.recipes', {id: recipe.id}], {
             id: recipe.id,
-            projectId: recipe.projectId,
+            folderId: recipe.folderId,
             name: recipe.title || recipe.placeholder,
             type: recipe.type
         })
@@ -142,10 +142,10 @@ export const exportRecipe$ = recipe =>
         data: serialize(_.omit(recipe, NON_CONTENT))
     })
 
-export const loadProjects$ = () =>
-    api.project.loadAll$().pipe(
-        map(projects => actionBuilder('SET_PROJECTS', {projects})
-            .set('process.projects', projects)
+export const loadFolders$ = () =>
+    api.folder.loadAll$().pipe(
+        map(folders => actionBuilder('SET_FOLDERS', {folders})
+            .set('process.folders', folders)
             .dispatch())
     )
 
@@ -222,17 +222,17 @@ export const removeRecipes$ = recipeIds =>
         )
     )
 
-export const moveRecipes$ = (recipeIds, projectId) => {
+export const moveRecipes$ = (recipeIds, folderId) => {
     const loadedRecipes = select('process.loadedRecipes') || []
     const request = startListingRequest()
-    return api.recipe.move$(recipeIds, projectId).pipe(
+    return api.recipe.move$(recipeIds, folderId).pipe(
         map(response => {
             const {recipes, listingState} = mergeListing(request, response)
             recipeIds
                 .filter(id => loadedRecipes[id])
                 .reduce(
-                    (builder, id) => builder.set(['process.loadedRecipes', id, 'projectId'], projectId),
-                    actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
+                    (builder, id) => builder.set(['process.loadedRecipes', id, 'folderId'], folderId),
+                    actionBuilder('MOVE_RECIPES', {recipeIds, folderId})
                         .set('process.recipes', recipes)
                         .set(LISTING_STATE_PATH, touchedListing(listingState, recipeIds))
                 ).dispatch()
@@ -297,7 +297,7 @@ const postRecipe = ({recipe, expectedRevision}) => firstValueFrom(
         switchMap(gzippedContents =>
             api.recipe.save$({
                 id: recipe.id,
-                projectId: recipe.projectId,
+                folderId: recipe.folderId,
                 type: recipe.type,
                 name: recipe.title || recipe.placeholder,
                 gzippedContents,

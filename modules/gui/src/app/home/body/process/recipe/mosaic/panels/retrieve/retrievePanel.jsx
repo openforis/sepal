@@ -16,7 +16,7 @@ import {
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {updateProject} from '~/app/home/body/process/recipeList/projectActions'
+import {updateFolder} from '~/app/home/body/process/recipeList/folderActions'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -126,7 +126,7 @@ const constraints = {
 const mapStateToProps = (state, {requestGate, inputs, recipeId, sourceRuntime}) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
     return {
-        projects: selectFrom(state, 'process.projects'),
+        folders: selectFrom(state, 'process.folders'),
         requestHold: requestGate ? requestGate(state, selectedValues(inputs?.bands?.value)) : null,
         withdrawn: Boolean(recipe) && Boolean(retrieveAvailability({
             state,
@@ -139,7 +139,7 @@ const mapStateToProps = (state, {requestGate, inputs, recipeId, sourceRuntime}) 
 }
 
 const mapRecipeToProps = recipe => ({
-    projectId: recipe.projectId,
+    folderId: recipe.folderId,
     recipeTitle: recipe.title,
     recipePlaceholder: recipe.placeholder
 })
@@ -752,7 +752,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     // What is accepted is submitted, a request about the recipe's output decided again by the submission itself from
-    // the session as it now stands. The project remembers the destination only once the retrieval was accepted.
+    // the session as it now stands. The folder remembers the destination only once the retrieval was accepted.
     retrieve(values) {
         const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
         if (requestOptions) {
@@ -771,12 +771,12 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     rememberDestination({assetId, workspacePath}) {
-        const project = this.findProject()
-        if (project) {
-            updateProject({
-                ...project,
-                defaultAssetFolder: assetId ? dirname(assetId) : project.defaultAssetFolder,
-                defaultWorkspaceFolder: workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
+        const folder = this.findFolder()
+        if (folder) {
+            updateFolder({
+                ...folder,
+                defaultAssetFolder: assetId ? dirname(assetId) : folder.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? dirname(workspacePath) : folder.defaultWorkspaceFolder
             })
         }
     }
@@ -962,9 +962,9 @@ class _MosaicRetrievePanel extends React.Component {
         destination.set(replacement)
     }
 
-    findProject() {
-        const {projects, projectId} = this.props
-        return projects.find(({id}) => id === projectId)
+    findFolder() {
+        const {folders, folderId} = this.props
+        return folders.find(({id}) => id === folderId)
     }
     
     getRecipeName() {

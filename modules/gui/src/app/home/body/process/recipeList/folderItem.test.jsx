@@ -47,13 +47,13 @@ describe('FolderItem', () => {
         mount({folder, counts: {folders: 2, recipes: 4}, onClick: () => {}})
 
         expect(lastProps().title).toBe('Kenya')
-        expect(lastProps().description).toBe('process.project.folderCount · process.project.description')
+        expect(lastProps().description).toBe('process.folder.folderCount · process.folder.description')
     })
 
     it('omits the folder count on a leaf folder', () => {
         mount({folder, counts: {folders: 0, recipes: 4}, onClick: () => {}})
 
-        expect(lastProps().description).toBe('process.project.description')
+        expect(lastProps().description).toBe('process.folder.description')
     })
 
     it('offers edit and remove when handlers are given', () => {
@@ -66,8 +66,8 @@ describe('FolderItem', () => {
     it('names what removal asks about, rather than a bare confirmation', () => {
         mount({folder, counts: {folders: 0, recipes: 0}, onClick: () => {}, onRemove: () => {}})
 
-        expect(lastProps().removeTitle).toBe('process.project.remove.title')
-        expect(lastProps().removeMessage).toBe('process.project.remove.confirm')
+        expect(lastProps().removeTitle).toBe('process.folder.remove.title')
+        expect(lastProps().removeMessage).toBe('process.folder.remove.confirm')
     })
 
     it('offers neither edit nor remove without handlers', () => {

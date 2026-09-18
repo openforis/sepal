@@ -17,7 +17,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const A = {id: 'a', name: 'A', parentId: null}
 const B = {id: 'b', name: 'B', parentId: null}
 const C = {id: 'c', name: 'C', parentId: 'a'}
-const projects = [A, B, C]
+const folders = [A, B, C]
 
 let mounted
 let container
@@ -42,7 +42,7 @@ const clickOption = name => act(() => {
 
 const clickSelectHere = () => act(() => {
     const button = [...container.querySelectorAll('button')]
-        .find(el => el.textContent === 'process.project.selectHere')
+        .find(el => el.textContent === 'process.folder.selectHere')
     button.click()
 })
 
@@ -59,23 +59,23 @@ describe('FolderPicker', () => {
     // way around - swapping isSelfOrDescendant's arguments would instead hide an ancestor of
     // excludeFolderId, which is what this pins.
     it('does not exclude an ancestor from the destination list', () => {
-        mount({projects, excludeFolderId: 'c', onSelect: () => {}})
+        mount({folders, excludeFolderId: 'c', onSelect: () => {}})
 
         expect(names()).toEqual(['A', 'B'])
     })
 
     it('excludes a folder from being offered as its own destination', () => {
-        mount({projects, excludeFolderId: 'c', onSelect: () => {}})
+        mount({folders, excludeFolderId: 'c', onSelect: () => {}})
 
         clickOption('A')
 
         expect(names()).toEqual([])
-        expect(container.textContent).toContain('process.projects.noProjects')
+        expect(container.textContent).toContain('process.folder.none')
     })
 
     it('selects the root when nothing has been navigated into', () => {
         const onSelect = vi.fn()
-        mount({projects, onSelect})
+        mount({folders, onSelect})
 
         clickSelectHere()
 
@@ -84,7 +84,7 @@ describe('FolderPicker', () => {
 
     it('selects the folder that was navigated into', () => {
         const onSelect = vi.fn()
-        mount({projects, onSelect})
+        mount({folders, onSelect})
 
         clickOption('A')
         clickSelectHere()
