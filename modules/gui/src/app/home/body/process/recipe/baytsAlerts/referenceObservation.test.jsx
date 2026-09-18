@@ -249,7 +249,7 @@ const sync = ({selection, options = {}}) => {
                 }
             },
             recipes: [],
-            projects: [],
+            folders: [],
             // No open tab: autosave is triggered from there and is not what synchronization exercises.
             tabs: [{id: ALERTS}]
         },
