@@ -13,7 +13,7 @@ export const RecipeItem = ({
         onClick={() => edit ? onSelect(recipe.id) : onClick(recipe)}>
         <CrudItem
             icon='globe'
-            iconSize='xl'
+            iconSize='lg'
             title={recipe.name}
             description={[path, typeName].filter(part => part).join(' · ')}
             timestamp={recipe.updateTime}
