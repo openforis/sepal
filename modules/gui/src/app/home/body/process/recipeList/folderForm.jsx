@@ -10,31 +10,31 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
+import styles from './folderForm.module.css'
 import {FolderPicker} from './folderPicker'
-import styles from './project.module.css'
 import {folderPathLabel} from './recipeTree'
 
 const fields = {
     name: new Form.Field()
-        .notBlank('process.project.form.name.required')
-        .predicate((name, {projectNames}) => !projectNames.includes(name.toLowerCase()), 'process.project.form.name.unique'),
+        .notBlank('process.folder.form.name.required')
+        .predicate((name, {folderNames}) => !folderNames.includes(name.toLowerCase()), 'process.folder.form.name.unique'),
     parentId: new Form.Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const project = ownProps.project
-    const projectNames = ownProps.projectNames
+    const folder = ownProps.folder
+    const folderNames = ownProps.folderNames
     return {
         values: {
-            id: project && project.id,
-            name: (project && project.name) || '',
-            parentId: (project && project.parentId) || null,
-            projectNames: projectNames
+            id: folder && folder.id,
+            name: (folder && folder.name) || '',
+            parentId: (folder && folder.parentId) || null,
+            folderNames: folderNames
         }
     }
 }
 
-class _Project extends React.Component {
+class _FolderForm extends React.Component {
     renderPanel() {
         const {parentEditable, inputs: {name}} = this.props
         return (
@@ -42,7 +42,7 @@ class _Project extends React.Component {
                 <Panel.Content>
                     <Layout>
                         <Form.Input
-                            label={msg('process.project.form.name.label')}
+                            label={msg('process.folder.form.name.label')}
                             autoFocus
                             input={name}
                             spellCheck={false}
@@ -56,20 +56,20 @@ class _Project extends React.Component {
     }
 
     renderParent() {
-        const {projects, project, inputs: {parentId}} = this.props
+        const {folders, folder, inputs: {parentId}} = this.props
         return (
-            <Widget label={msg('process.project.form.parent.label')}>
+            <Widget label={msg('process.folder.form.parent.label')}>
                 <ButtonPopup
                     shape='pill'
                     label={parentId.value
-                        ? folderPathLabel(projects, parentId.value)
-                        : msg('process.project.parent.root')}
+                        ? folderPathLabel(folders, parentId.value)
+                        : msg('process.folder.parent.root')}
                     vPlacement='below'
                     hPlacement='over-right'>
                     {onBlur => (
                         <FolderPicker
-                            projects={projects}
-                            excludeFolderId={project.id}
+                            folders={folders}
+                            excludeFolderId={folder.id}
                             onSelect={folderId => {
                                 parentId.set(folderId)
                                 onBlur()
@@ -89,28 +89,28 @@ class _Project extends React.Component {
                 placement='modal'
                 form={form}
                 isActionForm={true}
-                statePath='project'
-                onApply={project => onApply(project)}
+                statePath='folder'
+                onApply={folder => onApply(folder)}
                 onCancel={onCancel}>
                 <Panel.Header
-                    icon='diagram-project'
-                    title={msg('process.project.title')}/>
+                    icon='folder-open'
+                    title={msg('process.folder.title')}/>
                 {this.renderPanel()}
             </Form.Panel>
         )
     }
 }
 
-export const Project = compose(
-    _Project,
+export const FolderForm = compose(
+    _FolderForm,
     withForm({fields, mapStateToProps})
 )
 
-Project.propTypes = {
-    project: PropTypes.object.isRequired,
-    projectNames: PropTypes.array.isRequired,
+FolderForm.propTypes = {
+    folder: PropTypes.object.isRequired,
+    folderNames: PropTypes.array.isRequired,
     parentEditable: PropTypes.any,
-    projects: PropTypes.array.isRequired,
+    folders: PropTypes.array.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 }

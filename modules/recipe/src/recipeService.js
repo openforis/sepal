@@ -34,26 +34,26 @@ class RecipeService {
         return await this.#repository.listRecipes(principal.username)
     }
 
-    async moveRecipes({principal, projectId, recipeIds}) {
-        await this.#repository.moveRecipes({projectId, recipeIds, owner: principal.username})
+    async moveRecipes({principal, folderId, recipeIds}) {
+        await this.#repository.moveRecipes({folderId, recipeIds, owner: principal.username})
         return await this.#repository.listRecipes(principal.username)
     }
 
-    listProjects({principal}) {
-        return this.#repository.listProjects(principal.username)
+    listFolders({principal}) {
+        return this.#repository.listFolders(principal.username)
     }
 
-    async saveProject({principal, project}) {
-        const result = await this.#repository.saveProject({...project, owner: principal.username})
+    async saveFolder({principal, folder}) {
+        const result = await this.#repository.saveFolder({...folder, owner: principal.username})
         return result.outcome === 'saved'
-            ? {outcome: 'saved', projects: await this.#repository.listProjects(principal.username)}
+            ? {outcome: 'saved', folders: await this.#repository.listFolders(principal.username)}
             : result
     }
 
-    async removeProject({principal, projectId}) {
-        const result = await this.#repository.removeProject(projectId, principal.username)
+    async removeFolder({principal, folderId}) {
+        const result = await this.#repository.removeFolder(folderId, principal.username)
         return result.outcome === 'removed'
-            ? {outcome: 'removed', projects: await this.#repository.listProjects(principal.username)}
+            ? {outcome: 'removed', folders: await this.#repository.listFolders(principal.username)}
             : result
     }
 }

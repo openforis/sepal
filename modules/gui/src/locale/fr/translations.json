@@ -4441,37 +4441,11 @@
       },
       "tabPlaceholder": ""
     },
-    "projects": {
-      "title": "",
-      "label": "",
-      "tooltip": "",
-      "noProjects": "",
-      "search.placeholder": "",
-      "selected": "",
-      "add": "Ajouter"
-    },
-    "project": {
-      "title": "",
-      "description": "",
+    "folder": {
       "form": {
         "name.label": "Nom",
-        "name.required": "Le nom est requis",
-        "name.unique": ""
-      },
-      "edit": {
-        "tooltip": ""
-      },
-      "remove": {
-        "tooltip": "",
-        "title": "",
-        "confirm": "",
-        "error": ""
-      },
-      "update": {
-        "error": "Impossible de mettre à jour le projet"
-      },
-      "noProject": "aucun projet",
-      "noProjectOption": "[aucun projet]"
+        "name.required": "Le nom est requis"
+      }
     },
     "recipe": {
       "lastUpdate": "Dernière mise à jour",

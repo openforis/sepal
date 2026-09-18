@@ -4757,10 +4757,7 @@
       },
       "tabPlaceholder": "Phenology"
     },
-    "projects": {
-      "noProjects": "No folders"
-    },
-    "project": {
+    "folder": {
       "title": "Folder",
       "add": "Create folder",
       "loadingError": "Failed to load folders. Please reload the page to try again.",
@@ -4792,8 +4789,7 @@
         "root": "Home"
       },
       "selectHere": "Move here",
-      "noProject": "no project",
-      "noProjectOption": "[no project]"
+      "none": "No folders"
     },
     "recipe": {
       "lastUpdate": "Last update",
@@ -4834,7 +4830,7 @@
         "label": "Move",
         "title": "Move recipes",
         "tooltip": "Move selected recipes to a folder",
-        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {project}?"
+        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?"
       },
       "export": {
         "success": "Recipe has been exported.",

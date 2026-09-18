@@ -26,7 +26,7 @@ import {getRecipeType} from './recipeTypeRegistry'
 
 const mapStateToProps = state => {
     return {
-        projectId: select('process.projectId'),
+        folderId: select('process.folderId'),
         panel: state.ui && state.ui.createRecipe,
         modal: state.ui && state.ui.modal
     }
@@ -44,23 +44,23 @@ export const closePanel = () =>
         .del('ui.modal')
         .dispatch()
 
-const createRecipe = ({projectId, recipeId, type, tabPlaceholder}) => {
+const createRecipe = ({folderId, recipeId, type, tabPlaceholder}) => {
     publishEvent('create_recipe', {recipe_type: type})
-    setTabType({projectId, recipeId, type, tabPlaceholder})
+    setTabType({folderId, recipeId, type, tabPlaceholder})
     closePanel()
 }
 
-const setTabType = ({projectId, recipeId, type, tabPlaceholder}) => {
+const setTabType = ({folderId, recipeId, type, tabPlaceholder}) => {
     const placeholder = `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
     const recipe = {
         id: recipeId,
-        projectId,
+        folderId,
         type,
         placeholder,
         ui: {unsaved: true}
     }
-    return actionBuilder('SET_TAB_TYPE', {projectId, recipeId, type, tabPlaceholder})
-        .merge(['process.tabs', {id: recipeId}], {projectId, placeholder, type})
+    return actionBuilder('SET_TAB_TYPE', {folderId, recipeId, type, tabPlaceholder})
+        .merge(['process.tabs', {id: recipeId}], {folderId, placeholder, type})
         .merge(['process.loadedRecipes', recipeId], recipe)
         .dispatch()
 }
@@ -236,11 +236,11 @@ class _CreateRecipe extends React.Component {
     }
 
     renderRecipeType(recipeType, hovered) {
-        const {projectId, recipeId} = this.props
+        const {folderId, recipeId} = this.props
         return (
             <RecipeType
                 key={recipeType.id}
-                projectId={projectId}
+                folderId={folderId}
                 recipeId={recipeId}
                 type={recipeType}
                 onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
@@ -252,8 +252,8 @@ class _CreateRecipe extends React.Component {
     }
 
     createRecipe(recipeType) {
-        const {projectId, recipeId} = this.props
-        createRecipe({projectId, recipeId, type: recipeType.id, tabPlaceholder: recipeType.labels.tabPlaceholder})
+        const {folderId, recipeId} = this.props
+        createRecipe({folderId, recipeId, type: recipeType.id, tabPlaceholder: recipeType.labels.tabPlaceholder})
     }
 
     showRecipeTypeInfo(type) {
@@ -352,7 +352,7 @@ class RecipeType extends React.Component {
     }
 
     createRecipe() {
-        const {projectId, recipeId, type: {id: recipeTypeId, labels: {tabPlaceholder}}} = this.props
-        createRecipe({projectId, recipeId, type: recipeTypeId, tabPlaceholder})
+        const {folderId, recipeId, type: {id: recipeTypeId, labels: {tabPlaceholder}}} = this.props
+        createRecipe({folderId, recipeId, type: recipeTypeId, tabPlaceholder})
     }
 }

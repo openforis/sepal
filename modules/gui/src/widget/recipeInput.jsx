@@ -18,13 +18,13 @@ import {Form} from './form'
 const mapStateToProps = () => {
     return {
         recipes: select('process.recipes'),
-        projects: select('process.projects')
+        folders: select('process.folders')
     }
 }
 
 const mapRecipeToProps = recipe => {
     return ({
-        projectId: recipe.projectId
+        folderId: recipe.folderId
     })
 }
 
@@ -105,38 +105,38 @@ class _RecipeInput extends React.Component {
     }
 
     getOptions() {
-        const groups = _.groupBy(this.offeredRecipes(), 'projectId')
-        return this.orderedProjects(Object.keys(groups))
-            .map(({id, project}) => ({
+        const groups = _.groupBy(this.offeredRecipes(), 'folderId')
+        return this.orderedFolders(Object.keys(groups))
+            .map(({id, folder}) => ({
                 // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
                 // rather than by name: groups sharing a heading would otherwise be one group, and leaving
                 // the view one belongs to would leave its heading behind.
-                key: `project:${id}`,
-                label: project ? project.name : msg('process.project.noProjectOption'),
+                key: `folder:${id}`,
+                label: folder ? folder.name : msg('process.recipeList.root'),
                 filterOptions: isMatchingGroup => !isMatchingGroup,
                 options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
             }))
     }
 
-    // ALL widens which projects are offered, never what the caller can use.
+    // ALL widens which folders are offered, never what the caller can use.
     offeredRecipes() {
-        const {projectId, recipes, filter} = this.props
+        const {folderId, recipes, filter} = this.props
         const {all} = this.state
         return recipes
-            .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
+            .map(recipe => ({...recipe, folderId: recipe.folderId || ''}))
             .filter(recipe => !this.isOwnRecipe(recipe.id))
             .filter(recipe => {
                 const recipeType = getRecipeType(recipe.type)
                 return filter && recipeType ? filter(recipeType, recipe) : true
             })
-            .filter(({projectId: p}) => all || p === projectId || (!p && !projectId))
+            .filter(({folderId: p}) => all || p === folderId || (!p && !folderId))
     }
 
-    orderedProjects(ids) {
-        const {projects} = this.props
+    orderedFolders(ids) {
+        const {folders} = this.props
         return _.sortBy(
-            ids.map(id => ({id, project: projects.find(project => project.id === id)})),
-            [({project}) => project ? 1 : 0, ({project}) => project?.name?.toLowerCase(), 'id']
+            ids.map(id => ({id, folder: folders.find(folder => folder.id === id)})),
+            [({folder}) => folder ? 1 : 0, ({folder}) => folder?.name?.toLowerCase(), 'id']
         )
     }
 
