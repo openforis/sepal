@@ -25,7 +25,8 @@ export const FolderItem = ({folder, counts, highlight, hovered, drag$, onClick, 
                 hovered={hovered}
                 drag$={drag$ || undefined}
                 dragValue={{kind: 'folder', id: folder.id, folderId: folder.parentId, folder}}
-                dragTarget='handle'
+                dragPointer='mouse'
+                showDragHandle={false}
                 onClick={() => onClick(folder)}>
                 <CrudItem
                     icon='folder-open'
