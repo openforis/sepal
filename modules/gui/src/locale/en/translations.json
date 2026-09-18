@@ -1055,7 +1055,8 @@
         "sections": {
           "title": "Image to include"
         },
-        "title": "Input imagery"
+        "title": "Input imagery",
+        "tooltip": "Select input imagery"
       }
     },
     "mapZoom": {
@@ -2069,7 +2070,8 @@
                       "label": "Mahalanobis",
                       "tooltip": "Mahalanobis distance from the class mean"
                     }
-                  }
+                  },
+                  "tooltip": "Distance measure used to compare a pixel with each class mean"
                 }
               },
               "label": "Min distance"
@@ -2140,7 +2142,8 @@
                 },
                 "degree": {
                   "label": "Degree of polynomial",
-                  "placeholder": "Degree..."
+                  "placeholder": "Degree...",
+                  "tooltip": "Degree of the polynomial kernel"
                 },
                 "gamma": {
                   "label": "Gamma",
@@ -5971,6 +5974,7 @@
     },
     "report": {
       "resources": {
+        "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
         "max": "Max",
         "instanceSpending": "Instance spending",
         "storageSpending": "Storage spending",
@@ -6048,13 +6052,17 @@
         },
         "emailNotifications": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Do not receive optional email notifications",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Receive optional email notifications",
           "label": "Email notifications",
           "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)"
         },
         "manualMapRendering": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Render map layers automatically",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Render map layers only when requested",
           "label": "Manual map rendering",
           "tooltip": "Enable or disable manual map rendering"
         },
