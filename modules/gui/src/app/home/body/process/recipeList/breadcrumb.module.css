@@ -12,6 +12,9 @@
     align-self: center;
     white-space: nowrap;
     font: inherit;
+    /* After the shorthand, which resets the size: these match the buttons beside the breadcrumb. */
+    font-size: .9rem;
+    letter-spacing: 0;
     color: inherit;
     padding: 0;
 }

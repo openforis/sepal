@@ -10,7 +10,7 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
-import {PATH_SEPARATOR, NO_FOLDER_SYMBOL} from './recipeListConstants'
+import {NO_FOLDER_SYMBOL, PATH_SEPARATOR} from './recipeListConstants'
 
 const mapStateToProps = () => ({
     folders: select('process.folders')

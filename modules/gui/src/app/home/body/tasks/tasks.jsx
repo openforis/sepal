@@ -140,7 +140,7 @@ class _Tasks extends React.Component {
                     description={this.getRecipePath(task)}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
-                    iconSize='xl'
+                    iconSize='lg'
                     iconVariant={iconVariant}
                     inlineComponents={[
                         this.renderTaskMetadata(task),
