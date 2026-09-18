@@ -52,7 +52,7 @@ const sliceRetrieving = retrieveOptions => ({
     id: 'slice-1',
     type: 'CCDC_SLICE',
     placeholder: 'Slice',
-    projectId: null,
+    folderId: null,
     model: {
         source: {type: 'RECIPE_REF', id: 'ccdc-1'},
         date: {dateType: 'SINGLE', date: '2020-06-01'},

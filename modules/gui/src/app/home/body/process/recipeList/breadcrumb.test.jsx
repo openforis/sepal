@@ -13,7 +13,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
 const Y2024 = {id: '2024', name: '2024', parentId: 'kenya'}
-const projects = [KENYA, Y2024]
+const folders = [KENYA, Y2024]
 
 let mounted
 let container
@@ -41,20 +41,20 @@ afterEach(() => {
 
 describe('Breadcrumb', () => {
     it('shows home as the current segment, not a link, when already there', () => {
-        mount({projects, folderId: null, onNavigate: () => {}})
+        mount({folders, folderId: null, onNavigate: () => {}})
 
         expect(container.textContent).toContain('process.recipeList.root')
         expect(labels()).toEqual([])
     })
 
     it('offers home as a link once you have left it', () => {
-        mount({projects, folderId: 'kenya', onNavigate: () => {}})
+        mount({folders, folderId: 'kenya', onNavigate: () => {}})
 
         expect(labels()).toEqual(['process.recipeList.root'])
     })
 
     it('shows every ancestor and the current folder', () => {
-        mount({projects, folderId: '2024', onNavigate: () => {}})
+        mount({folders, folderId: '2024', onNavigate: () => {}})
 
         expect(container.textContent).toContain('Kenya')
         expect(container.textContent).toContain('2024')
@@ -62,7 +62,7 @@ describe('Breadcrumb', () => {
 
     it('navigates to an ancestor but not to the current folder', () => {
         const onNavigate = vi.fn()
-        mount({projects, folderId: '2024', onNavigate})
+        mount({folders, folderId: '2024', onNavigate})
 
         act(() => container.querySelectorAll('button')[0].click())
 
@@ -72,7 +72,7 @@ describe('Breadcrumb', () => {
 
     it('makes the root clickable when the current folder no longer exists', () => {
         const onNavigate = vi.fn()
-        mount({projects, folderId: 'deleted', onNavigate})
+        mount({folders, folderId: 'deleted', onNavigate})
 
         expect(labels()).toEqual(['process.recipeList.root'])
 

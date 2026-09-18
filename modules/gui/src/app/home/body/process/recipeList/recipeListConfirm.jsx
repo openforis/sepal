@@ -10,10 +10,10 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
+import {PATH_SEPARATOR, NO_FOLDER_SYMBOL} from './recipeListConstants'
 
 const mapStateToProps = () => ({
-    projects: select('process.projects')
+    folders: select('process.folders')
 })
 
 class _RecipeListConfirm extends React.Component {
@@ -42,13 +42,13 @@ class _RecipeListConfirm extends React.Component {
     }
 
     getRecipePath(recipe) {
-        const {projects} = this.props
+        const {folders} = this.props
         const name = recipe.name
-        const project = _.find(projects, ({id}) => id === recipe.projectId)
+        const folder = _.find(folders, ({id}) => id === recipe.folderId)
         return [
-            project?.name ?? NO_PROJECT_SYMBOL,
+            folder?.name ?? NO_FOLDER_SYMBOL,
             name
-        ].join(PROJECT_RECIPE_SEPARATOR)
+        ].join(PATH_SEPARATOR)
     }
 
     getRecipeTypeName(type) {

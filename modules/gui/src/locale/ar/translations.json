@@ -4441,38 +4441,6 @@
       },
       "tabPlaceholder": ""
     },
-    "projects": {
-      "title": "",
-      "label": "",
-      "tooltip": "",
-      "noProjects": "",
-      "search.placeholder": "",
-      "selected": "",
-      "add": ""
-    },
-    "project": {
-      "title": "",
-      "description": "",
-      "form": {
-        "name.label": "",
-        "name.required": "",
-        "name.unique": ""
-      },
-      "edit": {
-        "tooltip": ""
-      },
-      "remove": {
-        "tooltip": "",
-        "title": "",
-        "confirm": "",
-        "error": ""
-      },
-      "update": {
-        "error": ""
-      },
-      "noProject": "",
-      "noProjectOption": ""
-    },
     "recipe": {
       "lastUpdate": "",
       "loading": "",

@@ -10,8 +10,8 @@ import {folderPath, ROOT} from './recipeTree'
 
 export class Breadcrumb extends React.Component {
     render() {
-        const {projects, folderId} = this.props
-        const path = folderPath(projects, folderId)
+        const {folders, folderId} = this.props
+        const path = folderPath(folders, folderId)
         // A folderId with no path means the folder was removed underneath us: home is then not the
         // current segment, so it stays clickable and the list never strands with no way out.
         const atHome = path.length === 0 && !folderId
@@ -53,7 +53,7 @@ export class Breadcrumb extends React.Component {
 }
 
 Breadcrumb.propTypes = {
-    projects: PropTypes.array.isRequired,
+    folders: PropTypes.array.isRequired,
     folderId: PropTypes.string,
     onNavigate: PropTypes.func.isRequired
 }
