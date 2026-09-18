@@ -372,10 +372,17 @@ class _ListItem extends React.Component {
 
     onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
+        this.showDragCursor(true)
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue, coords})
             onDragStart && onDragStart(dragValue)
         })
+    }
+
+    // The copy under the pointer lets every event through, so without this the cursor would take its
+    // shape from whatever the pointer passes over: a row, the gap between two rows, a button.
+    showDragCursor(dragging) {
+        document.body.classList.toggle(styles.dragCursor, dragging)
     }
 
     onDragMove({coords, position}) {
@@ -387,6 +394,7 @@ class _ListItem extends React.Component {
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
+        this.showDragCursor(false)
         this.setState({dragging: false, position: null, size: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
@@ -413,6 +421,10 @@ class _ListItem extends React.Component {
                 () => onExpandDelayed && onExpandDelayed()
             )
         )
+    }
+
+    componentWillUnmount() {
+        this.showDragCursor(false)
     }
 
     componentDidMount() {
