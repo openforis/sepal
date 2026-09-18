@@ -16,13 +16,13 @@ import {Form} from '~/widget/form'
 const DEBOUNCE_TIME_MS = 750
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects'),
+    folders: selectFrom(state, 'process.folders'),
     tasks: selectFrom(state, 'tasks')
 })
 
 const mapRecipeToProps = recipe => ({
     user: currentUser(),
-    projectId: recipe.projectId,
+    folderId: recipe.folderId,
     recipeName: recipe.title || recipe.placeholder
 })
 
@@ -116,22 +116,22 @@ class _WorkspaceDestination extends React.Component {
 
     defaultWorkspacePath() {
         const {recipeName} = this.props
-        const project = this.findProject()
-        if (project?.defaultWorkspaceFolder) {
-            return `${project?.defaultWorkspaceFolder}/${recipeName}`
+        const folder = this.findFolder()
+        if (folder?.defaultWorkspaceFolder) {
+            return `${folder?.defaultWorkspaceFolder}/${recipeName}`
         } else {
-            if (project) {
-                const projectDir = toSafeString(project?.name)
-                return `downloads/${projectDir}/${recipeName}`
+            if (folder) {
+                const folderDir = toSafeString(folder?.name)
+                return `downloads/${folderDir}/${recipeName}`
             } else {
                 return `downloads/${recipeName}`
             }
         }
     }
 
-    findProject() {
-        const {projects, projectId} = this.props
-        return projects.find(({id}) => id === projectId)
+    findFolder() {
+        const {folders, folderId} = this.props
+        return folders.find(({id}) => id === folderId)
     }
 
     findConflictingTasks(path) {

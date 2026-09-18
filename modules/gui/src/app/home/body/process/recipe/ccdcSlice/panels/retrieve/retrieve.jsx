@@ -11,7 +11,7 @@ import {
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {updateProject} from '~/app/home/body/process/recipeList/projectActions'
+import {updateFolder} from '~/app/home/body/process/recipeList/folderActions'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -88,11 +88,11 @@ const constraints = {
 }
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects')
+    folders: selectFrom(state, 'process.folders')
 })
 
 const mapRecipeToProps = recipe => ({
-    projectId: recipe.projectId
+    folderId: recipe.folderId
 })
 
 class _Retrieve extends React.Component {
@@ -610,12 +610,12 @@ class _Retrieve extends React.Component {
         const request = sliceRequest({output, retrieveOptions: values})
         if (submitRetrieve({recipe, output, pending, request, task: retrieveTask})) {
             const {assetId, workspacePath} = values
-            const project = this.findProject()
-            if (project) {
-                updateProject({
-                    ...project,
-                    defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-                    defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+            const folder = this.findFolder()
+            if (folder) {
+                updateFolder({
+                    ...folder,
+                    defaultAssetFolder: assetId ? Path.dirname(assetId) : folder.defaultAssetFolder,
+                    defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : folder.defaultWorkspaceFolder
                 })
             }
         }
@@ -656,9 +656,9 @@ class _Retrieve extends React.Component {
         return this.props.retrieveOutput.output.bands.map(({name}) => name)
     }
 
-    findProject() {
-        const {projects, projectId} = this.props
-        return projects.find(({id}) => id === projectId)
+    findFolder() {
+        const {folders, folderId} = this.props
+        return folders.find(({id}) => id === folderId)
     }
 
     requiresDestinationValidation(props = this.props) {

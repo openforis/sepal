@@ -1,7 +1,7 @@
 import {storedUsername} from '#sepal/username'
 
 const RECIPE = 'recipe'
-const PROJECT = 'project'
+const FOLDER = 'folder'
 const INITIAL_REVISION = 1
 
 export class RecipeRepository {
@@ -12,18 +12,18 @@ export class RecipeRepository {
     }
 
     // The conditional update atomically enforces ownership, type, revision and deletion, so a writer whose
-    // base revision has moved changes nothing. Project placement belongs to moveRecipes and must not be
+    // base revision has moved changes nothing. Folder placement belongs to moveRecipes and must not be
     // overwritten by a retried save.
-    async saveRecipe({id, owner, projectId, name, type, typeVersion, content, expectedRevision}) {
+    async saveRecipe({id, owner, folderId, name, type, typeVersion, content, expectedRevision}) {
         return await this.#db.withTransaction(async connection => {
             const now = new Date()
             if (expectedRevision == null) {
                 try {
                     await connection.query(
                         `INSERT INTO ${RECIPE}
-                            (id, project_id, name, type, type_version, username, contents, creation_time, update_time, revision)
+                            (id, folder_id, name, type, type_version, username, contents, creation_time, update_time, revision)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [id, projectId, name, type, typeVersion, storedUsername(owner),
+                        [id, folderId, name, type, typeVersion, storedUsername(owner),
                             contentsColumn(content), now, now, INITIAL_REVISION]
                     )
                     return {outcome: 'saved', revision: INITIAL_REVISION}
@@ -55,7 +55,7 @@ export class RecipeRepository {
     async findRecipe(id) {
         return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
-                `SELECT username, project_id, contents, revision
+                `SELECT username, folder_id, contents, revision
                  FROM ${RECIPE} WHERE id = ? AND removed = FALSE`,
                 [id]
             )
@@ -67,7 +67,7 @@ export class RecipeRepository {
     async listRecipes(owner) {
         return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
-                `SELECT id, project_id, name, type, creation_time, update_time, revision
+                `SELECT id, folder_id, name, type, creation_time, update_time, revision
                  FROM ${RECIPE} WHERE username = ? AND removed = FALSE ORDER BY name, update_time DESC`,
                 [owner]
             )
@@ -88,13 +88,13 @@ export class RecipeRepository {
         })
     }
 
-    async moveRecipes({projectId, recipeIds, owner}) {
+    async moveRecipes({folderId, recipeIds, owner}) {
         await this.#db.withTransaction(async connection => {
             if (recipeIds.length) {
                 await connection.query(
-                    `UPDATE ${RECIPE} SET project_id = ?
+                    `UPDATE ${RECIPE} SET folder_id = ?
                      WHERE id IN (${placeholders(recipeIds)}) AND username = ?`,
-                    [projectId, ...recipeIds, owner]
+                    [folderId, ...recipeIds, owner]
                 )
             }
         })
@@ -131,14 +131,14 @@ export class RecipeRepository {
         })
     }
 
-    async listProjects(owner) {
+    async listFolders(owner) {
         return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, name, username, parent_id, default_asset_folder, default_workspace_folder
-                 FROM ${PROJECT} WHERE username = ? ORDER BY name`,
+                 FROM ${FOLDER} WHERE username = ? ORDER BY name`,
                 [owner]
             )
-            return rows.map(toProject)
+            return rows.map(toFolder)
         })
     }
 
@@ -146,15 +146,15 @@ export class RecipeRepository {
     // updates only when the stored row already belongs to the writer, and username is never assigned, so
     // an id someone else owns can be neither taken over nor altered. The parent is resolved and walked in
     // the same transaction as the write, so both read one consistent snapshot.
-    async saveProject({id, owner, name, parentId = null, defaultAssetFolder, defaultWorkspaceFolder}) {
+    async saveFolder({id, owner, name, parentId = null, defaultAssetFolder, defaultWorkspaceFolder}) {
         return await this.#db.withTransaction(async connection => {
-            if (parentId && !await ownsProject(connection, parentId, owner)) {
+            if (parentId && !await ownsFolder(connection, parentId, owner)) {
                 return {outcome: 'parentNotFound'}
             } else if (parentId && await descendsFrom(connection, parentId, id, owner)) {
                 return {outcome: 'cycle'}
             } else {
                 await connection.query(
-                    `INSERT INTO ${PROJECT}
+                    `INSERT INTO ${FOLDER}
                         (id, name, username, parent_id, default_asset_folder, default_workspace_folder)
                      VALUES (?, ?, ?, ?, ?, ?)
                      ON DUPLICATE KEY UPDATE
@@ -173,22 +173,22 @@ export class RecipeRepository {
 
     // Counting and deleting share one transaction: the counts and the delete read one consistent
     // snapshot, and the delete rolls back if anything in the transaction fails.
-    async removeProject(id, owner) {
+    async removeFolder(id, owner) {
         return await this.#db.withTransaction(async connection => {
             const [[folders]] = await connection.query(
-                `SELECT COUNT(*) AS count FROM ${PROJECT} WHERE parent_id = ? AND username = ?`,
+                `SELECT COUNT(*) AS count FROM ${FOLDER} WHERE parent_id = ? AND username = ?`,
                 [id, owner]
             )
             const [[recipes]] = await connection.query(
                 `SELECT COUNT(*) AS count FROM ${RECIPE}
-                 WHERE project_id = ? AND username = ? AND removed = FALSE`,
+                 WHERE folder_id = ? AND username = ? AND removed = FALSE`,
                 [id, owner]
             )
             if (folders.count || recipes.count) {
                 return {outcome: 'notEmpty', folders: folders.count, recipes: recipes.count}
             } else {
                 await connection.query(
-                    `DELETE FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner]
+                    `DELETE FROM ${FOLDER} WHERE id = ? AND username = ?`, [id, owner]
                 )
                 return {outcome: 'removed'}
             }
@@ -202,20 +202,20 @@ const contentsColumn = content => {
     if (!content || typeof content !== 'object' || Array.isArray(content)) {
         throw new Error('A recipe must be a JSON object')
     }
-    const stored = {...content}
+    const stored = withoutLegacyPlacement(content)
     delete stored.revision
-    delete stored.projectId
+    delete stored.folderId
     return JSON.stringify(stored)
 }
 
-const ownsProject = async (connection, id, owner) => {
+const ownsFolder = async (connection, id, owner) => {
     const [rows] = await connection.query(
-        `SELECT 1 FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner]
+        `SELECT 1 FROM ${FOLDER} WHERE id = ? AND username = ?`, [id, owner]
     )
     return !!rows[0]
 }
 
-// Walks from the proposed parent to the root looking for the project being saved. Ids already seen end
+// Walks from the proposed parent to the root looking for the folder being saved. Ids already seen end
 // the walk: a stored chain that revisits one is broken, and stopping beats spinning on it.
 const descendsFrom = async (connection, parentId, id, owner) => {
     const visited = new Set()
@@ -226,7 +226,7 @@ const descendsFrom = async (connection, parentId, id, owner) => {
         }
         visited.add(current)
         const [rows] = await connection.query(
-            `SELECT parent_id FROM ${PROJECT} WHERE id = ? AND username = ?`, [current, owner]
+            `SELECT parent_id FROM ${FOLDER} WHERE id = ? AND username = ?`, [current, owner]
         )
         current = rows[0]?.parent_id ?? null
     }
@@ -252,14 +252,22 @@ const explainRejection = async (connection, id, owner, type) => {
 // The columns are authoritative for placement and revision, so they override whatever a document
 // stored before they were stripped happens to carry.
 const toRecipe = row => ({
-    ...JSON.parse(row.contents),
-    projectId: row.project_id,
+    ...withoutLegacyPlacement(JSON.parse(row.contents)),
+    folderId: row.folder_id,
     revision: row.revision
 })
 
+// Documents written before folders were named folders carry a projectId of their own, which no column
+// overwrites any more.
+const withoutLegacyPlacement = document => {
+    const stored = {...document}
+    delete stored.projectId
+    return stored
+}
+
 const toSummary = row => ({
     id: row.id,
-    projectId: row.project_id,
+    folderId: row.folder_id,
     name: row.name,
     type: row.type,
     creationTime: row.creation_time,
@@ -279,7 +287,7 @@ const parsedOrNull = contents => {
     }
 }
 
-const toProject = row => ({
+const toFolder = row => ({
     id: row.id,
     name: row.name,
     username: row.username,

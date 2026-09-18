@@ -18,14 +18,14 @@ import {AssetDestinationBrowser} from './assetDestinationBrowser'
 import {Button} from './button'
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects'),
+    folders: selectFrom(state, 'process.folders'),
     assetRoots: selectFrom(state, 'assets.roots'),
     tasks: selectFrom(state, 'tasks')
 })
 
 const mapRecipeToProps = recipe => ({
     user: currentUser(),
-    projectId: recipe.projectId,
+    folderId: recipe.folderId,
     recipeName: recipe.title || recipe.placeholder
 })
 
@@ -203,14 +203,14 @@ class _AssetDestination extends React.Component {
 
     defaultAssetId() {
         const {assetRoots, recipeName} = this.props
-        const project = this.findProject()
+        const folder = this.findFolder()
         let assetId
-        if (project?.defaultAssetFolder) {
-            assetId = `${project.defaultAssetFolder}/${recipeName}`
+        if (folder?.defaultAssetFolder) {
+            assetId = `${folder.defaultAssetFolder}/${recipeName}`
         } else if (assetRoots && assetRoots.length) {
-            if (project) {
-                const projectDir = toSafeString(project?.name)
-                assetId = `${assetRoots[0]}/${projectDir}/${recipeName}`
+            if (folder) {
+                const folderDir = toSafeString(folder?.name)
+                assetId = `${assetRoots[0]}/${folderDir}/${recipeName}`
             } else {
                 assetId = `${assetRoots[0]}/${recipeName}`
             }
@@ -218,9 +218,9 @@ class _AssetDestination extends React.Component {
         return sanitizeEarthEngineAssetId(assetId)
     }
 
-    findProject() {
-        const {projects, projectId} = this.props
-        return projects.find(({id}) => id === projectId)
+    findFolder() {
+        const {folders, folderId} = this.props
+        return folders.find(({id}) => id === folderId)
     }
 
     hasTaskConflict(assetId) {

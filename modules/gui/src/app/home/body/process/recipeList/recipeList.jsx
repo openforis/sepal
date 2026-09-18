@@ -25,13 +25,13 @@ import {SearchBox} from '~/widget/searchBox'
 import {SortButtons} from '~/widget/sortButtons'
 
 import {CreateRecipe} from '../createRecipe'
-import {loadProjects$, loadRecipes$} from '../recipe'
+import {loadFolders$, loadRecipes$} from '../recipe'
 import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
 import {Breadcrumb} from './breadcrumb'
+import {updateFolder} from './folderActions'
+import {FolderForm} from './folderForm'
 import {FolderItem} from './folderItem'
 import {FolderPicker} from './folderPicker'
-import {Project} from './project'
-import {updateProject} from './projectActions'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, searchTree} from './recipeTree'
@@ -39,8 +39,8 @@ import {childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, search
 const EMPTY_ARRAY = []
 
 const mapStateToProps = () => ({
-    projects: select('process.projects') ?? EMPTY_ARRAY,
-    projectId: select('process.projectId'),
+    folders: select('process.folders') ?? EMPTY_ARRAY,
+    folderId: select('process.folderId'),
     recipes: select('process.recipes'),
     sortingOrder: select('process.sortingOrder') ?? 'updateTime',
     sortingDirection: select('process.sortingDirection') ?? -1,
@@ -58,21 +58,21 @@ const getHighlightMatcher = memoizeOne(
 // Called only when at least one count is nonzero, so `parts` is never empty.
 const notEmptyCounts = ({folders, recipes}) => {
     const parts = [
-        folders ? msg('process.project.folderCount', {count: folders}) : null,
-        recipes ? msg('process.project.description', {count: recipes}) : null
+        folders ? msg('process.folder.folderCount', {count: folders}) : null,
+        recipes ? msg('process.folder.description', {count: recipes}) : null
     ].filter(part => part)
     return parts.length === 2
-        ? msg('process.project.remove.notEmpty.and', {a: parts[0], b: parts[1]})
+        ? msg('process.folder.remove.notEmpty.and', {a: parts[0], b: parts[1]})
         : parts[0]
 }
 
 const notEmptyMessage = (name, counts) =>
-    msg('process.project.remove.notEmpty', {name, counts: notEmptyCounts(counts)})
+    msg('process.folder.remove.notEmpty', {name, counts: notEmptyCounts(counts)})
 
-const getItems = memoizeOne((projects, recipes, folderId, filterValues, sortingOrder, sortingDirection) => {
+const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) => {
     const searching = filterValues.length > 0
-    const matched = searching ? searchTree({projects, recipes, filterValues, folderId}) : null
-    const folders = matched ? matched.folders : childFolders(projects, folderId)
+    const matched = searching ? searchTree({folders, recipes, filterValues, folderId}) : null
+    const shown = matched ? matched.folders : childFolders(folders, folderId)
     const found = matched ? matched.recipes : folderRecipes(recipes, folderId)
     const sorted = _.orderBy(
         found,
@@ -80,7 +80,7 @@ const getItems = memoizeOne((projects, recipes, folderId, filterValues, sortingO
         sortingDirection === 1 ? 'asc' : 'desc'
     )
     return [
-        ...folders.map(folder => ({kind: 'folder', id: folder.id, folder})),
+        ...shown.map(folder => ({kind: 'folder', id: folder.id, folder})),
         ...sorted.map(recipe => ({kind: 'recipe', id: recipe.id, recipe}))
     ]
 })
@@ -163,8 +163,8 @@ class _RecipeList extends React.Component {
     }
 
     getItems() {
-        const {projects, recipes, projectId, filterValues, sortingOrder, sortingDirection} = this.props
-        return getItems(projects, recipes ?? EMPTY_ARRAY, projectId ?? ROOT,
+        const {folders, recipes, folderId, filterValues, sortingOrder, sortingDirection} = this.props
+        return getItems(folders, recipes ?? EMPTY_ARRAY, folderId ?? ROOT,
             filterValues, sortingOrder, sortingDirection)
     }
 
@@ -182,12 +182,12 @@ class _RecipeList extends React.Component {
     }
 
     renderHeader2() {
-        const {projects, projectId} = this.props
+        const {folders, folderId} = this.props
         return (
             <Layout type='horizontal' spacing='compact'>
                 <Breadcrumb
-                    projects={projects}
-                    folderId={projectId ?? ROOT}
+                    folders={folders}
+                    folderId={folderId ?? ROOT}
                     onNavigate={folderId => this.navigateTo(folderId)}
                 />
                 <Layout.Spacer/>
@@ -204,8 +204,8 @@ class _RecipeList extends React.Component {
                 look='default'
                 shape='pill'
                 icon='folder-plus'
-                label={msg('process.project.add')}
-                onClick={() => this.editFolder({id: uuid(), name: '', parentId: this.props.projectId ?? ROOT})}
+                label={msg('process.folder.add')}
+                onClick={() => this.editFolder({id: uuid(), name: '', parentId: this.props.folderId ?? ROOT})}
             />
         )
     }
@@ -215,19 +215,19 @@ class _RecipeList extends React.Component {
     }
 
     renderFolderForm() {
-        const {projects} = this.props
+        const {folders} = this.props
         const {editFolder} = this.state
         // A folder being created lands where you already are, so there is nothing to choose. Only an
         // existing folder offers a parent, which is how it gets moved.
-        const existing = projects.some(({id}) => id === editFolder.id)
+        const existing = folders.some(({id}) => id === editFolder.id)
         return (
-            <Project
-                project={editFolder}
-                projects={projects}
+            <FolderForm
+                folder={editFolder}
+                folders={folders}
                 parentEditable={existing}
-                projectNames={projects.filter(({id}) => id !== editFolder.id).map(({name}) => name.toLowerCase())}
+                folderNames={folders.filter(({id}) => id !== editFolder.id).map(({name}) => name.toLowerCase())}
                 onApply={folder => {
-                    updateProject({...editFolder, ...folder})
+                    updateFolder({...editFolder, ...folder})
                     this.editFolder(null)
                 }}
                 onCancel={() => this.editFolder(null)}
@@ -300,13 +300,13 @@ class _RecipeList extends React.Component {
                 tooltip={msg('process.recipe.move.tooltip')}>
                 {onBlur => (
                     <FolderPicker
-                        projects={this.props.projects}
+                        folders={this.props.folders}
                         onSelect={folderId => {
                             this.setMove({
-                                projectId: folderId,
-                                projectName: folderId
-                                    ? folderPathLabel(this.props.projects, folderId)
-                                    : msg('process.project.parent.root')
+                                folderId: folderId,
+                                folderName: folderId
+                                    ? folderPathLabel(this.props.folders, folderId)
+                                    : msg('process.folder.parent.root')
                             })
                             onBlur()
                         }}
@@ -317,14 +317,14 @@ class _RecipeList extends React.Component {
     }
 
     renderMoveConfirmation() {
-        const {move: {projectId, projectName}, confirmedIds} = this.state
+        const {move: {folderId, folderName}, confirmedIds} = this.state
         const selected = confirmedIds?.length
         return (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count: selected, project: projectName})}
+                message={msg('process.recipe.move.confirm', {count: selected, folder: folderName})}
                 disabled={!selected}
-                onConfirm={() => this.moveSelected(projectId)}
+                onConfirm={() => this.moveSelected(folderId)}
                 onCancel={() => this.setMove(false)}>
                 <RecipeListConfirm
                     recipes={this.getFilteredPreselectedIds()}
@@ -393,13 +393,13 @@ class _RecipeList extends React.Component {
     }
 
     renderItem(item, hovered) {
-        const {projects, recipes, projectId, filterValues} = this.props
+        const {folders, recipes, folderId, filterValues} = this.props
         const {edit} = this.state
         if (item.kind === 'folder') {
             return (
                 <FolderItem
                     folder={item.folder}
-                    counts={folderCounts(projects, recipes, item.folder.id)}
+                    counts={folderCounts(folders, recipes, item.folder.id)}
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
                     onClick={folder => this.navigateTo(folder.id)}
@@ -413,7 +413,7 @@ class _RecipeList extends React.Component {
                 <RecipeItem
                     recipe={item.recipe}
                     typeName={this.getRecipeTypeName(item.recipe.type)}
-                    path={filterValues.length ? folderPathLabel(projects, item.recipe.projectId, projectId ?? ROOT) : ''}
+                    path={filterValues.length ? folderPathLabel(folders, item.recipe.folderId, folderId ?? ROOT) : ''}
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
                     edit={edit}
@@ -435,7 +435,7 @@ class _RecipeList extends React.Component {
     // Navigating answers where you asked to go, so a search that took you here has done its job.
     navigateTo(folderId) {
         const builder = actionBuilder('NAVIGATE_TO_FOLDER', {folderId})
-        folderId ? builder.set('process.projectId', folderId) : builder.del('process.projectId')
+        folderId ? builder.set('process.folderId', folderId) : builder.del('process.folderId')
         builder
             .set('process.filterValue', '')
             .set('process.filterValues', [])
@@ -464,26 +464,26 @@ class _RecipeList extends React.Component {
 
     // folderCounts counts direct children only, same as the server's own check.
     removeFolder(folder) {
-        const {projects, recipes} = this.props
-        const counts = folderCounts(projects, recipes, folder.id)
+        const {folders, recipes} = this.props
+        const counts = folderCounts(folders, recipes, folder.id)
         if (counts.folders || counts.recipes) {
             Notifications.warning({message: notEmptyMessage(folder.name, counts)})
         } else {
-            this.props.stream('REMOVE_PROJECT',
-                api.project.remove$(folder.id),
-                projects => actionBuilder('REMOVE_PROJECT', {folder})
-                    .set('process.projects', projects)
+            this.props.stream('REMOVE_FOLDER',
+                api.folder.remove$(folder.id),
+                folders => actionBuilder('REMOVE_FOLDER', {folder})
+                    .set('process.folders', folders)
                     .dispatch(),
                 error => {
-                    const refusal = error.response?.code === 'PROJECT_NOT_EMPTY' ? error.response : null
+                    const refusal = error.response?.code === 'FOLDER_NOT_EMPTY' ? error.response : null
                     if (refusal) {
                         Notifications.warning({message: notEmptyMessage(folder.name, refusal)})
                         // The refusal means our copy of the tree disagrees with the server's; refresh
                         // both so the next attempt (and the counts shown meanwhile) reflect reality.
-                        this.props.stream('LOAD_PROJECTS', loadProjects$())
+                        this.props.stream('LOAD_FOLDERS', loadFolders$())
                         this.props.stream('LOAD_RECIPES', loadRecipes$())
                     } else {
-                        Notifications.error({message: msg('process.project.remove.error'), error})
+                        Notifications.error({message: msg('process.folder.remove.error'), error})
                     }
                 }
             )
@@ -580,10 +580,10 @@ class _RecipeList extends React.Component {
         this.setSelectedIds([])
     }
 
-    moveSelected(projectId) {
+    moveSelected(folderId) {
         const {onMove} = this.props
         const {confirmedIds} = this.state
-        onMove(confirmedIds, projectId)
+        onMove(confirmedIds, folderId)
         this.setMove(false)
     }
 

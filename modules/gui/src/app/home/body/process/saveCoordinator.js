@@ -112,4 +112,4 @@ const isRefusal = error => error?.status >= 400 && error?.status < 500 && error?
 
 // Compare only what a save writes: JSON omits undefined, while placement and the revision are server-owned
 // and would otherwise make every stored recipe differ from the one that produced it.
-const comparable = recipe => _.omit(JSON.parse(JSON.stringify(recipe)), ['projectId', 'revision'])
+const comparable = recipe => _.omit(JSON.parse(JSON.stringify(recipe)), ['folderId', 'revision'])

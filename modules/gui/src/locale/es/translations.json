@@ -4441,37 +4441,10 @@
       },
       "tabPlaceholder": ""
     },
-    "projects": {
-      "title": "",
-      "label": "",
-      "tooltip": "",
-      "noProjects": "",
-      "search.placeholder": "",
-      "selected": "",
-      "add": "Añadir"
-    },
-    "project": {
-      "title": "",
-      "description": "",
+    "folder": {
       "form": {
-        "name.label": "",
-        "name.required": "El nombre es obligatorio",
-        "name.unique": ""
-      },
-      "edit": {
-        "tooltip": ""
-      },
-      "remove": {
-        "tooltip": "",
-        "title": "",
-        "confirm": "",
-        "error": ""
-      },
-      "update": {
-        "error": ""
-      },
-      "noProject": "",
-      "noProjectOption": ""
+        "name.required": "El nombre es obligatorio"
+      }
     },
     "recipe": {
       "lastUpdate": "Última actualización",

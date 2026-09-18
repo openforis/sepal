@@ -35,7 +35,7 @@ describe('recipe repository', () => {
             expect(created.owner).toBe('alice')
             expect(result).toEqual({outcome: 'saved', revision: revision + 1})
             expect(found).toEqual({
-                owner: 'alice', recipe: {...updated.content, projectId: recipe.projectId, revision: revision + 1}
+                owner: 'alice', recipe: {...updated.content, folderId: recipe.folderId, revision: revision + 1}
             })
         })
 
@@ -51,7 +51,7 @@ describe('recipe repository', () => {
 
             expect(result).toEqual({outcome, currentRevision: revision})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+            expect(found.recipe).toEqual({...recipe.content, folderId: recipe.folderId, revision})
         })
 
         test('creates at column revision 1, storing the content it was given', async () => {
@@ -61,13 +61,13 @@ describe('recipe repository', () => {
 
             expect(result).toEqual({outcome: 'saved', revision: 1})
             const found = await repository.findRecipe(recipe.id)
-            expect(found).toEqual({owner: recipe.owner, recipe: {...recipe.content, projectId: recipe.projectId, revision: 1}})
+            expect(found).toEqual({owner: recipe.owner, recipe: {...recipe.content, folderId: recipe.folderId, revision: 1}})
         })
 
         // A client may echo back the placement and revision a load injected; neither may reach the column.
         test('strips server metadata a client echoed back when creating', async () => {
             const content = aRecipeContent()
-            const recipe = aRecipe({content: {...content, revision: 97, projectId: 'echoed-project'}})
+            const recipe = aRecipe({content: {...content, revision: 97, folderId: 'echoed-folder'}})
 
             await repository.saveRecipe(recipe)
 
@@ -80,7 +80,7 @@ describe('recipe repository', () => {
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             const updatedRecipe = aRecipe({
-                expectedRevision: revision, content: {...content, revision: 97, projectId: 'echoed-project'}
+                expectedRevision: revision, content: {...content, revision: 97, folderId: 'echoed-folder'}
             })
 
             await repository.saveRecipe(updatedRecipe)
@@ -104,7 +104,7 @@ describe('recipe repository', () => {
 
             expect(result).toEqual({outcome: 'saved', revision: revision + 1})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...updatedRecipe.content, projectId: recipe.projectId, revision: revision + 1})
+            expect(found.recipe).toEqual({...updatedRecipe.content, folderId: recipe.folderId, revision: revision + 1})
         })
 
         test('changes neither the contents nor the column on a stale update', async () => {
@@ -141,7 +141,7 @@ describe('recipe repository', () => {
 
             expect(result).toEqual({outcome: 'notFound'})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+            expect(found.recipe).toEqual({...recipe.content, folderId: recipe.folderId, revision})
         })
 
         test('can never resurrect a removed recipe', async () => {
@@ -171,20 +171,20 @@ describe('recipe repository', () => {
             expect(found.recipe.revision).toBe(revision)
         })
 
-        // A retry at the unchanged revision must not write stale project placement back.
-        test('leaves the project alone, so a retry after a move cannot undo it', async () => {
-            const recipe = aRecipe({projectId: A_PROJECT_ID})
+        // A retry at the unchanged revision must not write stale folder placement back.
+        test('leaves the folder alone, so a retry after a move cannot undo it', async () => {
+            const recipe = aRecipe({folderId: A_FOLDER_ID})
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                projectId: DESTINATION_PROJECT_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: DESTINATION_FOLDER_ID, recipeIds: [recipe.id], owner: OWNER
             })
 
             await repository.saveRecipe(aRecipe({
-                projectId: A_PROJECT_ID, expectedRevision: revision, content: aRecipeContent({retried: true})
+                folderId: A_FOLDER_ID, expectedRevision: revision, content: aRecipeContent({retried: true})
             }))
 
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe.projectId).toBe(DESTINATION_PROJECT_ID)
+            expect(found.recipe.folderId).toBe(DESTINATION_FOLDER_ID)
         })
     })
 
@@ -197,7 +197,7 @@ describe('recipe repository', () => {
 
             expect(found).toEqual({
                 owner: recipe.owner,
-                recipe: {...recipe.content, projectId: recipe.projectId, revision}
+                recipe: {...recipe.content, folderId: recipe.folderId, revision}
             })
         })
 
@@ -215,25 +215,25 @@ describe('recipe repository', () => {
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             await storeLegacyDocument(recipe.id, {
-                ...recipe.content, revision: 97, projectId: 'echoed-project'
+                ...recipe.content, revision: 97, folderId: 'echoed-folder', projectId: 'a-folder-by-its-old-name'
             })
 
             const found = await repository.findRecipe(recipe.id)
 
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+            expect(found.recipe).toEqual({...recipe.content, folderId: recipe.folderId, revision})
         })
 
-        test('injects the new project after a move, which advances no revision', async () => {
+        test('injects the new folder after a move, which advances no revision', async () => {
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                projectId: DESTINATION_PROJECT_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: DESTINATION_FOLDER_ID, recipeIds: [recipe.id], owner: OWNER
             })
 
             const found = await repository.findRecipe(recipe.id)
 
             expect(found.recipe).toEqual({
-                ...recipe.content, projectId: DESTINATION_PROJECT_ID, revision
+                ...recipe.content, folderId: DESTINATION_FOLDER_ID, revision
             })
         })
     })
@@ -247,7 +247,7 @@ describe('recipe repository', () => {
             const [summary] = await repository.listRecipes(OWNER)
 
             expect(summary).toEqual({
-                id: recipe.id, projectId: recipe.projectId, name: recipe.name, type: recipe.type,
+                id: recipe.id, folderId: recipe.folderId, name: recipe.name, type: recipe.type,
                 revision, creationTime: expect.any(Date), updateTime: expect.any(Date)
             })
         })
@@ -313,7 +313,7 @@ describe('recipe repository', () => {
             await repository.saveMigratedRecipe(migration)
 
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...migration.content, projectId: recipe.projectId, revision: revision + 1})
+            expect(found.recipe).toEqual({...migration.content, folderId: recipe.folderId, revision: revision + 1})
         })
 
         test('strips server metadata a migration would otherwise write back', async () => {
@@ -322,7 +322,7 @@ describe('recipe repository', () => {
             await repository.saveRecipe(recipe)
 
             await repository.saveMigratedRecipe(aRecipeMigration({
-                content: {...content, revision: 97, projectId: 'echoed-project'}
+                content: {...content, revision: 97, folderId: 'echoed-folder'}
             }))
 
             const stored = await storedRow(recipe.id)
@@ -336,88 +336,88 @@ describe('recipe repository', () => {
         })
     })
 
-    describe('saveProject', () => {
-        test('stores a lowercase owner and updates the project using another spelling of its case', async () => {
-            const project = aProject({owner: 'Alice'})
-            await repository.saveProject(project)
-            const renamed = {...project, owner: 'ALICE', name: 'Renamed'}
+    describe('saveFolder', () => {
+        test('stores a lowercase owner and updates the folder using another spelling of its case', async () => {
+            const folder = aFolder({owner: 'Alice'})
+            await repository.saveFolder(folder)
+            const renamed = {...folder, owner: 'ALICE', name: 'Renamed'}
 
-            await repository.saveProject(renamed)
+            await repository.saveFolder(renamed)
 
-            const projects = await repository.listProjects('Alice')
-            expect(projects).toEqual([{
-                id: project.id, username: 'alice', name: renamed.name, parentId: project.parentId,
-                defaultAssetFolder: project.defaultAssetFolder,
-                defaultWorkspaceFolder: project.defaultWorkspaceFolder
+            const folders = await repository.listFolders('Alice')
+            expect(folders).toEqual([{
+                id: folder.id, username: 'alice', name: renamed.name, parentId: folder.parentId,
+                defaultAssetFolder: folder.defaultAssetFolder,
+                defaultWorkspaceFolder: folder.defaultWorkspaceFolder
             }])
         })
 
         test('creates, then updates in place', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
-            const renamedProject = aProject({name: 'Renamed', defaultAssetFolder: 'assets'})
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const renamedFolder = aFolder({name: 'Renamed', defaultAssetFolder: 'assets'})
 
-            await repository.saveProject(renamedProject)
+            await repository.saveFolder(renamedFolder)
 
-            const projects = await repository.listProjects(OWNER)
-            expect(projects).toEqual([{
-                id: renamedProject.id, username: OWNER, name: renamedProject.name, parentId: renamedProject.parentId,
-                defaultAssetFolder: renamedProject.defaultAssetFolder,
-                defaultWorkspaceFolder: renamedProject.defaultWorkspaceFolder
+            const folders = await repository.listFolders(OWNER)
+            expect(folders).toEqual([{
+                id: renamedFolder.id, username: OWNER, name: renamedFolder.name, parentId: renamedFolder.parentId,
+                defaultAssetFolder: renamedFolder.defaultAssetFolder,
+                defaultWorkspaceFolder: renamedFolder.defaultWorkspaceFolder
             }])
         })
 
-        // An upsert that updated unconditionally would let anyone overwrite a project by guessing its id.
+        // An upsert that updated unconditionally would let anyone overwrite a folder by guessing its id.
         test('changes nothing and claims nothing when another user saves the same id', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            await repository.saveProject(aProject({
+            await repository.saveFolder(aFolder({
                 owner: ANOTHER_OWNER, name: 'Hijacked',
                 defaultAssetFolder: 'theirs', defaultWorkspaceFolder: 'theirs'
             }))
 
-            const owners = await repository.listProjects(OWNER)
-            const hijackers = await repository.listProjects(ANOTHER_OWNER)
+            const owners = await repository.listFolders(OWNER)
+            const hijackers = await repository.listFolders(ANOTHER_OWNER)
             expect(owners).toEqual([{
-                id: project.id, username: OWNER, name: project.name, parentId: null,
+                id: folder.id, username: OWNER, name: folder.name, parentId: null,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
             expect(hijackers).toEqual([])
         })
 
         test('stores a parent, and defaults to no parent', async () => {
-            const parent = aProject({id: 'parent-project', name: 'Parent'})
-            const child = aProject({id: 'child-project', name: 'Child', parentId: parent.id})
-            await repository.saveProject(parent)
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            const child = aFolder({id: 'child-folder', name: 'Child', parentId: parent.id})
+            await repository.saveFolder(parent)
 
-            await repository.saveProject(child)
+            await repository.saveFolder(child)
 
-            const projects = await repository.listProjects(OWNER)
-            expect(projects.find(({id}) => id === parent.id).parentId).toBeNull()
-            expect(projects.find(({id}) => id === child.id).parentId).toBe(parent.id)
+            const folders = await repository.listFolders(OWNER)
+            expect(folders.find(({id}) => id === parent.id).parentId).toBeNull()
+            expect(folders.find(({id}) => id === child.id).parentId).toBe(parent.id)
         })
 
-        test('reparents an existing project', async () => {
-            const parent = aProject({id: 'parent-project', name: 'Parent'})
-            const child = aProject({id: 'child-project', name: 'Child'})
-            await repository.saveProject(parent)
-            await repository.saveProject(child)
+        test('reparents an existing folder', async () => {
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            const child = aFolder({id: 'child-folder', name: 'Child'})
+            await repository.saveFolder(parent)
+            await repository.saveFolder(child)
 
-            await repository.saveProject({...child, parentId: parent.id})
+            await repository.saveFolder({...child, parentId: parent.id})
 
-            const projects = await repository.listProjects(OWNER)
-            expect(projects.find(({id}) => id === child.id).parentId).toBe(parent.id)
+            const folders = await repository.listFolders(OWNER)
+            expect(folders.find(({id}) => id === child.id).parentId).toBe(parent.id)
         })
 
-        test('refuses to reparent a project another user owns', async () => {
-            const foreign = aProject({owner: ANOTHER_OWNER})
-            await repository.saveProject(foreign)
+        test('refuses to reparent a folder another user owns', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
 
-            await repository.saveProject({...foreign, owner: OWNER, parentId: 'somewhere-else'})
+            await repository.saveFolder({...foreign, owner: OWNER, parentId: 'somewhere-else'})
 
-            const projects = await repository.listProjects(ANOTHER_OWNER)
-            expect(projects).toEqual([{
+            const folders = await repository.listFolders(ANOTHER_OWNER)
+            expect(folders).toEqual([{
                 id: foreign.id, username: ANOTHER_OWNER, name: foreign.name, parentId: null,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
@@ -425,119 +425,119 @@ describe('recipe repository', () => {
 
         // A parentId the attacker legitimately owns clears both parent guards, so this is what reaches
         // the upsert and exercises the row's own ownership guard rather than one of the parent's.
-        test('refuses to reparent a project another user owns, even to a parent the attacker legitimately owns', async () => {
-            const foreign = aProject({owner: ANOTHER_OWNER})
-            await repository.saveProject(foreign)
-            const ownParent = aProject({id: 'own-parent'})
-            await repository.saveProject(ownParent)
+        test('refuses to reparent a folder another user owns, even to a parent the attacker legitimately owns', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const ownParent = aFolder({id: 'own-parent'})
+            await repository.saveFolder(ownParent)
 
-            const result = await repository.saveProject({...foreign, owner: OWNER, parentId: ownParent.id})
+            const result = await repository.saveFolder({...foreign, owner: OWNER, parentId: ownParent.id})
 
             expect(result).toEqual({outcome: 'saved'})
-            const projects = await repository.listProjects(ANOTHER_OWNER)
-            expect(projects.find(({id}) => id === foreign.id).parentId).toBeNull()
+            const folders = await repository.listFolders(ANOTHER_OWNER)
+            expect(folders.find(({id}) => id === foreign.id).parentId).toBeNull()
         })
 
-        test('refuses a project that is its own parent', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+        test('refuses a folder that is its own parent', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            const result = await repository.saveProject({...project, parentId: project.id})
+            const result = await repository.saveFolder({...folder, parentId: folder.id})
 
             expect(result).toEqual({outcome: 'cycle'})
-            const projects = await repository.listProjects(OWNER)
-            expect(projects.find(({id}) => id === project.id).parentId).toBeNull()
+            const folders = await repository.listFolders(OWNER)
+            expect(folders.find(({id}) => id === folder.id).parentId).toBeNull()
         })
 
-        test('refuses a parent that sits below the project being saved', async () => {
-            const grandparent = aProject({id: 'grandparent', name: 'Grandparent'})
-            const parent = aProject({id: 'parent', name: 'Parent', parentId: grandparent.id})
-            const child = aProject({id: 'child', name: 'Child', parentId: parent.id})
-            await repository.saveProject(grandparent)
-            await repository.saveProject(parent)
-            await repository.saveProject(child)
+        test('refuses a parent that sits below the folder being saved', async () => {
+            const grandparent = aFolder({id: 'grandparent', name: 'Grandparent'})
+            const parent = aFolder({id: 'parent', name: 'Parent', parentId: grandparent.id})
+            const child = aFolder({id: 'child', name: 'Child', parentId: parent.id})
+            await repository.saveFolder(grandparent)
+            await repository.saveFolder(parent)
+            await repository.saveFolder(child)
 
-            const result = await repository.saveProject({...grandparent, parentId: child.id})
+            const result = await repository.saveFolder({...grandparent, parentId: child.id})
 
             expect(result).toEqual({outcome: 'cycle'})
         })
 
         test('refuses a parent that does not exist', async () => {
-            const result = await repository.saveProject(aProject({parentId: 'no-such-project'}))
+            const result = await repository.saveFolder(aFolder({parentId: 'no-such-folder'}))
 
             expect(result).toEqual({outcome: 'parentNotFound'})
-            expect(await repository.listProjects(OWNER)).toEqual([])
+            expect(await repository.listFolders(OWNER)).toEqual([])
         })
 
         test('refuses a parent another user owns, reporting it absent', async () => {
-            await repository.saveProject(aProject({id: 'foreign-parent', owner: ANOTHER_OWNER}))
+            await repository.saveFolder(aFolder({id: 'foreign-parent', owner: ANOTHER_OWNER}))
 
-            const result = await repository.saveProject(aProject({parentId: 'foreign-parent'}))
+            const result = await repository.saveFolder(aFolder({parentId: 'foreign-parent'}))
 
             expect(result).toEqual({outcome: 'parentNotFound'})
         })
 
         test('accepts a save with no parent', async () => {
-            const result = await repository.saveProject(aProject())
+            const result = await repository.saveFolder(aFolder())
 
             expect(result).toEqual({outcome: 'saved'})
         })
     })
 
-    describe('removeProject', () => {
-        test('removes a project holding nothing', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+    describe('removeFolder', () => {
+        test('removes a folder holding nothing', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            const result = await repository.removeProject(project.id, OWNER)
+            const result = await repository.removeFolder(folder.id, OWNER)
 
             expect(result).toEqual({outcome: 'removed'})
-            expect(await repository.listProjects(OWNER)).toEqual([])
+            expect(await repository.listFolders(OWNER)).toEqual([])
         })
 
-        test('refuses a project holding a recipe, keeping both', async () => {
-            const project = aProject()
-            const held = aRecipe({projectId: project.id})
-            await repository.saveProject(project)
+        test('refuses a folder holding a recipe, keeping both', async () => {
+            const folder = aFolder()
+            const held = aRecipe({folderId: folder.id})
+            await repository.saveFolder(folder)
             await repository.saveRecipe(held)
 
-            const result = await repository.removeProject(project.id, OWNER)
+            const result = await repository.removeFolder(folder.id, OWNER)
 
             expect(result).toEqual({outcome: 'notEmpty', folders: 0, recipes: 1})
-            expect((await repository.listProjects(OWNER)).map(({id}) => id)).toEqual([project.id])
+            expect((await repository.listFolders(OWNER)).map(({id}) => id)).toEqual([folder.id])
             expect(await repository.findRecipe(held.id)).not.toBeNull()
         })
 
-        test('refuses a project holding another project', async () => {
-            const parent = aProject({id: 'parent-project', name: 'Parent'})
-            await repository.saveProject(parent)
-            await repository.saveProject(aProject({id: 'child-project', name: 'Child', parentId: parent.id}))
+        test('refuses a folder holding another folder', async () => {
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            await repository.saveFolder(parent)
+            await repository.saveFolder(aFolder({id: 'child-folder', name: 'Child', parentId: parent.id}))
 
-            const result = await repository.removeProject(parent.id, OWNER)
+            const result = await repository.removeFolder(parent.id, OWNER)
 
             expect(result).toEqual({outcome: 'notEmpty', folders: 1, recipes: 0})
         })
 
-        test('ignores a removed recipe when deciding whether a project is empty', async () => {
-            const project = aProject()
-            const held = aRecipe({projectId: project.id})
-            await repository.saveProject(project)
+        test('ignores a removed recipe when deciding whether a folder is empty', async () => {
+            const folder = aFolder()
+            const held = aRecipe({folderId: folder.id})
+            await repository.saveFolder(folder)
             await repository.saveRecipe(held)
             await repository.removeRecipes([held.id], OWNER)
 
-            const result = await repository.removeProject(project.id, OWNER)
+            const result = await repository.removeFolder(folder.id, OWNER)
 
             expect(result).toEqual({outcome: 'removed'})
         })
 
-        test('leaves another user\'s project alone', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+        test('leaves another user\'s folder alone', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            await repository.removeProject(project.id, ANOTHER_OWNER)
+            await repository.removeFolder(folder.id, ANOTHER_OWNER)
 
-            const projects = await repository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
+            const folders = await repository.listFolders(OWNER)
+            expect(folders.map(({id}) => id)).toEqual([folder.id])
         })
     })
 
@@ -572,28 +572,28 @@ describe('recipe repository', () => {
             expect(stored.recipe.revision).toBe(revision + 1)
         })
 
-        // Two browsers creating the same project must converge, not surface a duplicate-key failure.
-        test('lets concurrent creates of the same id all succeed, leaving one project', async () => {
-            const project = aProject()
+        // Two browsers creating the same folder must converge, not surface a duplicate-key failure.
+        test('lets concurrent creates of the same id all succeed, leaving one folder', async () => {
+            const folder = aFolder()
 
             const results = await Promise.allSettled(
-                Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveProject(project))
+                Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveFolder(folder))
             )
 
             expect(results.map(({status}) => status)).toEqual(Array(COMPETING_WRITERS).fill('fulfilled'))
-            const projects = await concurrentRepository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
+            const folders = await concurrentRepository.listFolders(OWNER)
+            expect(folders.map(({id}) => id)).toEqual([folder.id])
         })
     })
 
     const aRecipe = (over = {}) => ({
-        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', projectId: A_PROJECT_ID,
+        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', folderId: A_FOLDER_ID,
         typeVersion: OUTDATED_TYPE_VERSION, content: aRecipeContent(),
         ...over
     })
 
-    const aProject = (over = {}) => ({
-        id: A_PROJECT_ID, owner: OWNER, name: 'A project', parentId: null,
+    const aFolder = (over = {}) => ({
+        id: A_FOLDER_ID, owner: OWNER, name: 'A folder', parentId: null,
         defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
     })
 
@@ -615,8 +615,8 @@ describe('recipe repository', () => {
     )
 
     const A_RECIPE_ID = 'a-recipe'
-    const A_PROJECT_ID = 'a-project'
-    const DESTINATION_PROJECT_ID = 'destination-project'
+    const A_FOLDER_ID = 'a-folder'
+    const DESTINATION_FOLDER_ID = 'destination-folder'
     const OWNER = 'bob'
     const ANOTHER_OWNER = 'alice'
     const CURRENT_TYPE_VERSION = 8

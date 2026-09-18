@@ -176,7 +176,7 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
     // Build recipe properties
     const recipeProperties = {
         recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
+        recipe_projectId: recipe.folderId,
         recipe_type: recipe.type,
         recipe_title: recipe.title || recipe.placeholder,
         ..._(recipe.model)

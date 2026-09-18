@@ -16,23 +16,23 @@ export class FolderPicker extends React.Component {
     state = {folderId: ROOT}
 
     render() {
-        const {projects} = this.props
+        const {folders} = this.props
         const {folderId} = this.state
         const options = this.getOptions()
         return (
             <Layout type='vertical' spacing='tight'>
                 <Breadcrumb
-                    projects={projects}
+                    folders={folders}
                     folderId={folderId}
                     onNavigate={next => this.setState({folderId: next})}
                 />
                 {options.length
                     ? options.map(folder => this.renderOption(folder))
-                    : <NoData message={msg('process.projects.noProjects')}/>}
+                    : <NoData message={msg('process.folder.none')}/>}
                 <Button
                     look='apply'
                     shape='pill'
-                    label={msg('process.project.selectHere')}
+                    label={msg('process.folder.selectHere')}
                     onClick={() => this.props.onSelect(folderId)}
                 />
             </Layout>
@@ -49,15 +49,15 @@ export class FolderPicker extends React.Component {
 
     // A folder cannot be moved into itself or below itself, so those destinations are never offered.
     getOptions() {
-        const {projects, excludeFolderId} = this.props
+        const {folders, excludeFolderId} = this.props
         const {folderId} = this.state
-        return childFolders(projects, folderId)
-            .filter(folder => !excludeFolderId || !isSelfOrDescendant(projects, folder.id, excludeFolderId))
+        return childFolders(folders, folderId)
+            .filter(folder => !excludeFolderId || !isSelfOrDescendant(folders, folder.id, excludeFolderId))
     }
 }
 
 FolderPicker.propTypes = {
-    projects: PropTypes.array.isRequired,
+    folders: PropTypes.array.isRequired,
     onSelect: PropTypes.func.isRequired,
     excludeFolderId: PropTypes.string
 }

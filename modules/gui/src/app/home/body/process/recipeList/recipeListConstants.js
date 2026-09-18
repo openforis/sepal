@@ -1,3 +1,3 @@
-export const PROJECT_RECIPE_SEPARATOR = ' / '
+export const PATH_SEPARATOR = ' / '
 
-export const NO_PROJECT_SYMBOL = '<no folder>'
+export const NO_FOLDER_SYMBOL = '<no folder>'
