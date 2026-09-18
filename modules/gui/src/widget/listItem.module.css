@@ -123,3 +123,8 @@
 .draggableClone > * {
     flex-grow: 1;
 }
+
+.dragCursor,
+.dragCursor * {
+    cursor: grabbing !important;
+}
