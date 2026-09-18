@@ -6,9 +6,12 @@ import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 
 import styles from './breadcrumb.module.css'
-import {folderPath, ROOT} from './recipeTree'
+import {DropTargetContext} from './dropTargetContext'
+import {at, folderPath, ROOT} from './recipeTree'
 
 export class Breadcrumb extends React.Component {
+    static contextType = DropTargetContext
+
     render() {
         const {folders, folderId} = this.props
         const path = folderPath(folders, folderId)
@@ -43,12 +46,18 @@ export class Breadcrumb extends React.Component {
             : (
                 <button
                     type='button'
-                    className={styles.link}
+                    className={[styles.link, this.isDropTarget(id) ? styles.dropTarget : null].join(' ')}
+                    {...(id === ROOT ? {'data-drop-home': true} : {'data-drop-folder-id': id})}
                     onClick={() => onNavigate(id)}>
                     {icon ? <Icon name={icon}/> : null}
                     <span className={styles.label}>{name}</span>
                 </button>
             )
+    }
+
+    isDropTarget(id) {
+        const dropTarget = this.context
+        return !!dropTarget && at(dropTarget.folderId) === at(id)
     }
 }
 
