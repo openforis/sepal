@@ -44,13 +44,17 @@ class RecipeService {
     }
 
     async saveProject({principal, project}) {
-        await this.#repository.saveProject({...project, owner: principal.username})
-        return await this.#repository.listProjects(principal.username)
+        const result = await this.#repository.saveProject({...project, owner: principal.username})
+        return result.outcome === 'saved'
+            ? {outcome: 'saved', projects: await this.#repository.listProjects(principal.username)}
+            : result
     }
 
     async removeProject({principal, projectId}) {
-        await this.#repository.removeProject(projectId, principal.username)
-        return await this.#repository.listProjects(principal.username)
+        const result = await this.#repository.removeProject(projectId, principal.username)
+        return result.outcome === 'removed'
+            ? {outcome: 'removed', projects: await this.#repository.listProjects(principal.username)}
+            : result
     }
 }
 

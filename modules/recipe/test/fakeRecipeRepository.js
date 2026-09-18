@@ -75,22 +75,56 @@ class FakeRecipeRepository {
             .map(project => ({...project}))
     }
 
-    async saveProject({id, owner, name, defaultAssetFolder = null, defaultWorkspaceFolder = null}) {
-        const stored = this.#projects.get(id)
-        if (!stored) {
-            this.#projects.set(id, {id, username: storedUsername(owner), name, defaultAssetFolder, defaultWorkspaceFolder})
-        } else if (stored.username === storedUsername(owner)) {
-            this.#projects.set(id, {...stored, name, defaultAssetFolder, defaultWorkspaceFolder})
+    async saveProject({id, owner, name, parentId = null, defaultAssetFolder = null, defaultWorkspaceFolder = null}) {
+        const username = storedUsername(owner)
+        if (parentId && !this.#ownsProject(parentId, username)) {
+            return {outcome: 'parentNotFound'}
+        } else if (parentId && this.#descendsFrom(parentId, id, username)) {
+            return {outcome: 'cycle'}
+        } else {
+            const stored = this.#projects.get(id)
+            if (!stored) {
+                this.#projects.set(id, {id, username, name, parentId, defaultAssetFolder, defaultWorkspaceFolder})
+            } else if (stored.username === username) {
+                this.#projects.set(id, {...stored, name, parentId, defaultAssetFolder, defaultWorkspaceFolder})
+            }
+            return {outcome: 'saved'}
         }
     }
 
+    #ownsProject(id, username) {
+        return this.#projects.get(id)?.username === username
+    }
+
+    #descendsFrom(parentId, id, username) {
+        const visited = new Set()
+        let current = parentId
+        while (current && !visited.has(current)) {
+            if (current === id) {
+                return true
+            }
+            visited.add(current)
+            const stored = this.#projects.get(current)
+            current = stored?.username === username ? stored.parentId : null
+        }
+        return false
+    }
+
     async removeProject(id, owner) {
+        const username = storedUsername(owner)
         const stored = this.#projects.get(id)
-        if (stored && stored.username === storedUsername(owner)) {
-            this.#projects.delete(id)
-            this.#ownedBy(owner)
-                .filter(recipe => recipe.projectId === id)
-                .forEach(recipe => this.#recipes.set(recipe.id, {...recipe, removed: true}))
+        if (stored?.username !== username) {
+            return {outcome: 'removed'}
+        } else {
+            const folders = [...this.#projects.values()]
+                .filter(project => project.parentId === id && project.username === username).length
+            const recipes = this.#ownedBy(owner).filter(recipe => recipe.projectId === id).length
+            if (folders || recipes) {
+                return {outcome: 'notEmpty', folders, recipes}
+            } else {
+                this.#projects.delete(id)
+                return {outcome: 'removed'}
+            }
         }
     }
 
