@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google-cloud/storage": "^8.1.0",
+        "@google-cloud/storage": "^8.2.0",
         "commander": "^15.0.0",
         "fast-crc32c": "^2.0.0",
         "googleapis": "^181.0.0",
