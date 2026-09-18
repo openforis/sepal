@@ -54,6 +54,12 @@ export const folderCounts = (folders, recipes, folderId) => ({
 export const isSelfOrDescendant = (folders, candidateId, folderId) =>
     !!candidateId && folderPath(folders, candidateId).some(({id}) => id === folderId)
 
+// A move has to change something, and a folder can go neither into itself nor below itself. `dragged`
+// is {kind, id, folderId}, where folderId is the folder holding it — for a folder, its parent.
+export const canDropInto = ({folders, dragged, targetFolderId}) =>
+    at(dragged.folderId) !== at(targetFolderId)
+        && !(dragged.kind === 'folder' && isSelfOrDescendant(folders, targetFolderId, dragged.id))
+
 const searchable = value => simplifyString(value ?? '', {removeNonAlphanumeric: true, removeAccents: true})
 
 const matchesEvery = (matchers, values) =>
