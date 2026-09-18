@@ -20,7 +20,7 @@ export const FolderItem = ({folder, counts, highlight, hovered, onClick, onEdit,
         <CrudItem
             icon='folder-open'
             iconClassName={styles.icon}
-            iconSize='xl'
+            iconSize='lg'
             title={folder.name}
             description={description(counts)}
             highlight={highlight}
