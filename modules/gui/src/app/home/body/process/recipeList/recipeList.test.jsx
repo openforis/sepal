@@ -2,8 +2,8 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-const {crudItems, dispatched, listItems, removeFolder$, warnings} = vi.hoisted(() => ({
-    crudItems: [], dispatched: [], listItems: [], removeFolder$: vi.fn(), warnings: []
+const {crudItems, dispatched, listItems, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
+    crudItems: [], dispatched: [], listItems: [], removeFolder$: vi.fn(), updateFolder: vi.fn(), warnings: []
 }))
 
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
@@ -14,6 +14,7 @@ vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('../createRecipe', () => ({CreateRecipe: () => null}))
 // The folder form and the confirmation list pull in the whole form stack, which this test never uses.
 vi.mock('./folderForm', () => ({FolderForm: () => null}))
+vi.mock('./folderActions', () => ({updateFolder}))
 vi.mock('./recipeListConfirm', () => ({RecipeListConfirm: () => null}))
 vi.mock('../recipe', () => ({loadFolders$: () => ({}), loadRecipes$: () => ({})}))
 vi.mock('~/apiRegistry', () => ({default: {folder: {remove$: removeFolder$}}}))
@@ -57,8 +58,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
 const Y2024 = {id: '2024', name: '2024', parentId: 'kenya'}
+const MOSAICS = {id: 'mosaics', name: 'Mosaics_2024', parentId: '2024'}
 const EMPTY = {id: 'empty', name: 'Empty', parentId: 'kenya'}
-const folders = [KENYA, Y2024, EMPTY]
+const folders = [KENYA, Y2024, EMPTY, MOSAICS]
 
 const AT_ROOT = {id: 'r1', name: 'loose_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
 const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'MOSAIC', folderId: '2024', updateTime: '2026-01-02'}
@@ -96,6 +98,8 @@ const rowTitles = () => [...container.querySelectorAll('[data-title]')].map(row 
 
 const rowFor = title => crudItems.find(props => props.title === title)
 
+const button = label => [...container.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
+
 beforeEach(() => {
     mounted = []
     crudItems.length = 0
@@ -103,6 +107,7 @@ beforeEach(() => {
     listItems.length = 0
     warnings.length = 0
     removeFolder$.mockReset()
+    updateFolder.mockReset()
 })
 
 afterEach(() => {
@@ -119,7 +124,7 @@ describe('RecipeList', () => {
     it('shows the contents of the folder it was told to open', () => {
         mount({folderId: '2024'})
 
-        expect(rowTitles()).toEqual(['nairobi_mosaic'])
+        expect(rowTitles()).toEqual(['Mosaics_2024', 'nairobi_mosaic'])
     })
 
     it('opens the folder that was clicked, and clears the search', () => {
@@ -155,5 +160,61 @@ describe('RecipeList', () => {
 
         expect(warnings).toEqual([])
         expect(removeFolder$).toHaveBeenCalledWith(EMPTY.id)
+    })
+})
+
+describe('drag and drop', () => {
+    const drop = (draggedId, target) => {
+        const row = listItems.find(({dragValue}) => dragValue?.id === draggedId)
+        vi.spyOn(document, 'elementFromPoint').mockReturnValue(target)
+        act(() => row.drag$.next({dragging: true, value: row.dragValue, coords: {x: 1, y: 1}}))
+        act(() => row.drag$.next({coords: {x: 2, y: 2}}))
+        act(() => row.drag$.next({dragging: false}))
+    }
+
+    const dropTarget = folderId => container.querySelector(`[data-drop-folder-id="${folderId}"]`)
+
+    it('moves a recipe into the folder it is dropped on', () => {
+        const onMove = vi.fn()
+        mount({onMove})
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+
+        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], KENYA.id)
+    })
+
+    it('moves nothing when the drop is outside every target', () => {
+        const onMove = vi.fn()
+        mount({onMove})
+
+        drop(AT_ROOT.id, container)
+
+        expect(onMove).not.toHaveBeenCalled()
+    })
+
+    it('moves a folder to the root when it is dropped on home', () => {
+        mount({folderId: KENYA.id})
+
+        drop(Y2024.id, container.querySelector('[data-drop-home]'))
+
+        expect(updateFolder).toHaveBeenCalledWith(expect.objectContaining({id: Y2024.id, parentId: null}))
+    })
+
+    it('moves no folder into one of its own subfolders', () => {
+        mount({filterValue: '2024', filterValues: ['2024']})
+
+        drop(Y2024.id, dropTarget(MOSAICS.id))
+
+        expect(updateFolder).not.toHaveBeenCalled()
+    })
+
+    it('gives the rows no drag in edit mode', () => {
+        mount()
+
+        act(() => button('process.recipe.edit.label').click())
+        listItems.length = 0
+        act(() => container.querySelectorAll('[data-row]')[0]?.click())
+
+        expect(listItems.every(({drag$}) => !drag$)).toBe(true)
     })
 })
