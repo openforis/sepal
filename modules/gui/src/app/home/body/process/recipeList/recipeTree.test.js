@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest'
 
 import {
-    childFolders, folderCounts, folderPath, folderPathLabel, folderRecipes,
+    canDropInto, childFolders, folderCounts, folderPath, folderPathLabel, folderRecipes,
     isSelfOrDescendant, ROOT, searchTree
 } from './recipeTree'
 
@@ -157,5 +157,35 @@ describe('searchTree', () => {
 
     it('does not match a recipe on an ancestor of the folder searched', () => {
         expect(ids(searchTree({folders, recipes, filterValues: ['kenya'], folderId: '2024'}).recipes)).toEqual([])
+    })
+})
+
+describe('canDropInto', () => {
+    const recipe = {kind: 'recipe', id: 'r1', folderId: 'kenya'}
+    const folder = {kind: 'folder', id: 'kenya', folderId: null}
+
+    it('accepts another folder for a recipe', () => {
+        expect(canDropInto({folders, dragged: recipe, targetFolderId: '2024'})).toBe(true)
+    })
+
+    it('refuses the folder the recipe is already in', () => {
+        expect(canDropInto({folders, dragged: recipe, targetFolderId: 'kenya'})).toBe(false)
+    })
+
+    it('refuses the root for a recipe already there, whichever empty value it holds', () => {
+        expect(canDropInto({folders, dragged: {...recipe, folderId: null}, targetFolderId: ROOT})).toBe(false)
+        expect(canDropInto({folders, dragged: {...recipe, folderId: ''}, targetFolderId: ROOT})).toBe(false)
+    })
+
+    it('refuses a folder into itself', () => {
+        expect(canDropInto({folders, dragged: folder, targetFolderId: 'kenya'})).toBe(false)
+    })
+
+    it('refuses a folder into one of its own subfolders', () => {
+        expect(canDropInto({folders, dragged: folder, targetFolderId: 'mosaics'})).toBe(false)
+    })
+
+    it('accepts a folder into another branch of the tree', () => {
+        expect(canDropInto({folders, dragged: folder, targetFolderId: 'mozambique'})).toBe(true)
     })
 })
