@@ -5,11 +5,14 @@ import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
 export const RecipeItem = ({
-    recipe, typeName, path, highlight, hovered, edit, selected,
+    recipe, typeName, path, highlight, hovered, edit, selected, drag$,
     onClick, onSelect, onDuplicate, onRemove
 }) =>
     <ListItem
         hovered={hovered}
+        drag$={drag$ || undefined}
+        dragValue={{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}}
+        dragTarget='handle'
         onClick={() => edit ? onSelect(recipe.id) : onClick(recipe)}>
         <CrudItem
             icon='globe'
@@ -31,6 +34,7 @@ export const RecipeItem = ({
 RecipeItem.propTypes = {
     recipe: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
+    drag$: PropTypes.object,
     edit: PropTypes.bool,
     highlight: PropTypes.any,
     hovered: PropTypes.any,

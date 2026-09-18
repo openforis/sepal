@@ -2,6 +2,7 @@ import _ from 'lodash'
 import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {filter, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -9,6 +10,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
 import {simplifyString, splitString} from '~/string'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {Button} from '~/widget/button'
@@ -28,13 +30,14 @@ import {CreateRecipe} from '../createRecipe'
 import {loadFolders$, loadRecipes$} from '../recipe'
 import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
 import {Breadcrumb} from './breadcrumb'
+import {DropTargetContext} from './dropTargetContext'
 import {updateFolder} from './folderActions'
 import {FolderForm} from './folderForm'
 import {FolderItem} from './folderItem'
 import {FolderPicker} from './folderPicker'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, searchTree} from './recipeTree'
+import {canDropInto, childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, searchTree} from './recipeTree'
 
 const EMPTY_ARRAY = []
 
@@ -86,6 +89,8 @@ const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOr
 })
 
 class _RecipeList extends React.Component {
+    drag$ = new Subject()
+
     state = {
         edit: false,
         move: false,
@@ -93,7 +98,8 @@ class _RecipeList extends React.Component {
         editFolder: null,
         preselectedIds: null,
         confirmedIds: null,
-        navigationCount: 0
+        navigationCount: 0,
+        dropTarget: null
     }
 
     constructor() {
@@ -119,8 +125,56 @@ class _RecipeList extends React.Component {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
 
+    componentDidMount() {
+        const {addSubscription} = this.props
+        const release$ = this.drag$.pipe(filter(({dragging}) => dragging === false))
+        addSubscription(
+            this.drag$.pipe(
+                filter(({dragging}) => dragging === true),
+                switchMap(({value}) => {
+                    this.dragged = value
+                    return this.drag$.pipe(
+                        takeUntil(release$),
+                        map(({coords}) => coords ? this.validTargetAt(coords) : null)
+                    )
+                })
+            ).subscribe(dropTarget => this.setState({dropTarget})),
+            release$.subscribe(() => this.drop())
+        )
+    }
+
+    // The dragged copy of the row ignores the pointer, so what lies under it is the row itself.
+    validTargetAt({x, y}) {
+        const {folders} = this.props
+        const element = document.elementFromPoint(x, y)?.closest('[data-drop-folder-id], [data-drop-home]')
+        if (!element) {
+            return null
+        }
+        const folderId = element.hasAttribute('data-drop-home')
+            ? ROOT
+            : element.getAttribute('data-drop-folder-id')
+        return canDropInto({folders, dragged: this.dragged, targetFolderId: folderId})
+            ? {folderId}
+            : null
+    }
+
+    drop() {
+        const {onMove} = this.props
+        const {dropTarget} = this.state
+        const dragged = this.dragged
+        this.dragged = null
+        this.setState({dropTarget: null})
+        if (dragged && dropTarget) {
+            if (dragged.kind === 'recipe') {
+                onMove([dragged.id], dropTarget.folderId)
+            } else {
+                updateFolder({...dragged.folder, parentId: dropTarget.folderId})
+            }
+        }
+    }
+
     renderList() {
-        const {edit, move, remove, editFolder} = this.state
+        const {edit, move, remove, editFolder, dropTarget} = this.state
         const items = this.getItems()
         const highlightKey = this.getHighlightMatcher().toString()
         // FastList rows are pure and the derived items are referentially stable across a selection
@@ -128,27 +182,31 @@ class _RecipeList extends React.Component {
         const selectedIds = edit ? this.getFilteredSelectedIds() : EMPTY_ARRAY
         const itemKey = item => `${item.kind}|${item.id}|${edit}|${selectedIds.includes(item.id)}|${highlightKey}`
         return (
-            <Layout type='vertical' spacing='compact'>
-                {this.renderHeader1()}
-                {this.renderHeader2()}
-                {items.length
-                    ? (
-                        <FastList
-                            items={items}
-                            itemKey={itemKey}
-                            itemRenderer={this.renderItem}
-                            spacing='tight'
-                            overflow={50}
-                            onEnter={item => item.kind === 'folder'
-                                ? this.navigateTo(item.folder.id)
-                                : this.handleClick(item.recipe)}
-                        />
-                    )
-                    : this.renderEmpty()}
-                {move && this.renderMoveConfirmation()}
-                {remove && this.renderRemoveConfirmation()}
-                {editFolder && this.renderFolderForm()}
-            </Layout>
+            // The target reaches the rows through the context rather than through itemKey: a key change
+            // makes a new row, and a new dragged row would end the drag it is in the middle of.
+            <DropTargetContext.Provider value={dropTarget}>
+                <Layout type='vertical' spacing='compact'>
+                    {this.renderHeader1()}
+                    {this.renderHeader2()}
+                    {items.length
+                        ? (
+                            <FastList
+                                items={items}
+                                itemKey={itemKey}
+                                itemRenderer={this.renderItem}
+                                spacing='tight'
+                                overflow={50}
+                                onEnter={item => item.kind === 'folder'
+                                    ? this.navigateTo(item.folder.id)
+                                    : this.handleClick(item.recipe)}
+                            />
+                        )
+                        : this.renderEmpty()}
+                    {move && this.renderMoveConfirmation()}
+                    {remove && this.renderRemoveConfirmation()}
+                    {editFolder && this.renderFolderForm()}
+                </Layout>
+            </DropTargetContext.Provider>
         )
     }
 
@@ -402,6 +460,7 @@ class _RecipeList extends React.Component {
                     counts={folderCounts(folders, recipes, item.folder.id)}
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
+                    drag$={edit ? null : this.drag$}
                     onClick={folder => this.navigateTo(folder.id)}
                     onEdit={folder => this.editFolder(folder)}
                     onRemove={folder => this.removeFolder(folder)}
@@ -417,6 +476,7 @@ class _RecipeList extends React.Component {
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
                     edit={edit}
+                    drag$={edit ? null : this.drag$}
                     selected={this.isSelected(item.recipe.id)}
                     onClick={recipe => this.handleClick(recipe)}
                     onSelect={recipeId => this.toggleOne(recipeId)}
@@ -620,7 +680,8 @@ class _RecipeList extends React.Component {
 
 export const RecipeList = compose(
     _RecipeList,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    withSubscriptions()
 )
 
 RecipeList.propTypes = {
