@@ -11,6 +11,7 @@ import {withSubscriptions} from '~/subscription'
 import styles from './blurDetector.module.css'
 import {isOverElement} from './dom'
 import {withEventShield} from './eventShield'
+import {Notifications} from './notifications'
 
 const ANIMATION_DURATION_MS = 250
 const SKIP_INITIAL_EVENTS_MS = 100
@@ -184,8 +185,15 @@ class _BlurDetector extends React.Component {
         return _.last(blurDetectorStack) === this
     }
     
+    // Notifications float above every overlay: acting on one (a button in a warning, say) is
+    // never a click outside the overlay.
     isOver(e) {
-        return this.isRefEvent(e) || this.isExcludedEvent(e)
+        return this.isRefEvent(e) || this.isExcludedEvent(e) || this.isNotificationEvent(e)
+    }
+
+    isNotificationEvent(e) {
+        const notifications = Notifications.container()
+        return !!notifications && isOverElement(e, notifications)
     }
 
     isRefEvent(e) {
