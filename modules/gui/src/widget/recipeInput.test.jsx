@@ -6,7 +6,6 @@ import {of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {NO_FOLDER_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
@@ -275,15 +274,14 @@ describe('the headings of the folders on offer', () => {
         expect(headings()).toEqual(['Zulu folder'])
     })
 
-    // Three different things read as "[no folder]": filed under nothing, filed under a folder this
-    // session cannot resolve, and filed under the very symbol that stands for being unfiled.
-    it('leave none of the no-folder label behind when what it stands for goes', async () => {
+    // Two different things read as Home: filed under nothing, and filed under a folder this session
+    // cannot resolve.
+    it('leave none of the Home label behind when what it stands for goes', async () => {
         show({
             recipes: [
                 {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
                 {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
                 {id: 'unfiled', name: 'Filed under nothing', type: 'MOSAIC'},
-                {id: 'symbol', name: 'Filed under the symbol', type: 'MOSAIC', folderId: NO_FOLDER_SYMBOL},
                 {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', folderId: 'unknown-a'}
             ],
             folders: [{id: 'p1', name: 'Zulu folder'}]
@@ -291,7 +289,7 @@ describe('the headings of the folders on offer', () => {
         await open()
 
         await showAll()
-        expect(headings()).toEqual([NO_FOLDER, NO_FOLDER, NO_FOLDER, 'Zulu folder'])
+        expect(headings()).toEqual([NO_FOLDER, NO_FOLDER, 'Zulu folder'])
         await showAll()
 
         expect(headings()).toEqual(['Zulu folder'])

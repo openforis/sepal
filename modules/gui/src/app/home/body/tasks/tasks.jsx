@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {NO_FOLDER_SYMBOL, PATH_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
+import {PATH_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -225,7 +225,7 @@ class _Tasks extends React.Component {
             // Tasks made before the rename hold the old key.
             const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
             const folder = folders?.find(({id}) => id === folderId)
-            const folderName = folder?.name ?? NO_FOLDER_SYMBOL
+            const folderName = folder?.name ?? msg('process.recipeList.root')
             const searchable = [
                 task.name,
                 task.description,
@@ -346,7 +346,7 @@ class _Tasks extends React.Component {
         const {folders} = this.props
         const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
         const folder = folders?.find(({id}) => id === folderId)
-        const folderName = folder?.name ?? NO_FOLDER_SYMBOL
+        const folderName = folder?.name ?? msg('process.recipeList.root')
         const recipeName = task.description || task.name
         return [folderName, recipeName].join(PATH_SEPARATOR)
     }

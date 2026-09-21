@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {NO_FOLDER_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -166,7 +165,7 @@ class _TaskDetails extends React.Component {
         const recipeType = taskInfo?.recipeType || recipe?.type
         const folderId = taskInfo?.folderId ?? taskInfo?.projectId
         const folder = folders?.find(({id}) => id === folderId)
-        const folderName = folder?.name ?? NO_FOLDER_SYMBOL
+        const folderName = folder?.name ?? msg('process.recipeList.root')
         const recipeName = task.params?.description
 
         return (

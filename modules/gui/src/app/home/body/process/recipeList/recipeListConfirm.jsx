@@ -12,7 +12,7 @@ import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {folderDescription} from './folderItem'
-import {NO_FOLDER_SYMBOL, PATH_SEPARATOR} from './recipeListConstants'
+import {PATH_SEPARATOR} from './recipeListConstants'
 import {folderCounts} from './recipeTree'
 
 const mapStateToProps = () => ({
@@ -84,7 +84,7 @@ class _RecipeListConfirm extends React.Component {
         const {folders} = this.props
         const folder = _.find(folders, ({id}) => id === recipe.folderId)
         return [
-            folder?.name ?? NO_FOLDER_SYMBOL,
+            folder?.name ?? msg('process.recipeList.root'),
             recipe.name
         ].join(PATH_SEPARATOR)
     }
