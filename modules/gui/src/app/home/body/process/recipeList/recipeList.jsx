@@ -2,7 +2,7 @@ import _ from 'lodash'
 import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {filter, map, Subject, switchMap, takeUntil} from 'rxjs'
+import {concat, filter, last, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -73,6 +73,11 @@ const notEmptyCounts = ({folders, recipes}) => {
 
 const notEmptyMessage = (name, counts) =>
     msg('process.folder.remove.notEmpty', {name, counts: notEmptyCounts(counts)})
+
+// A row and the value a drag carries say the same thing in different shapes.
+const asDragged = item => item.kind === 'folder'
+    ? {kind: 'folder', id: item.folder.id, folderId: item.folder.parentId, folder: item.folder}
+    : {kind: 'recipe', id: item.recipe.id, folderId: item.recipe.folderId}
 
 const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) => {
     const searching = filterValues.length > 0
@@ -155,49 +160,59 @@ class _RecipeList extends React.Component {
         const folderId = element.hasAttribute('data-drop-home')
             ? ROOT
             : element.getAttribute('data-drop-folder-id')
-        return canDropInto({folders, dragged: this.dragged, targetFolderId: folderId})
+        return this.draggedItems().every(dragged => canDropInto({folders, dragged, targetFolderId: folderId}))
             ? {folderId}
             : null
     }
 
     drop() {
         const {dropTarget} = this.state
-        const dragged = this.dragged
+        const items = this.draggedItems()
         this.dragged = null
         this.setState({dropTarget: null})
-        if (dragged && dropTarget) {
-            if (dragged.kind === 'recipe') {
-                this.moveRecipes(this.draggedRecipeIds(dragged.id), dropTarget.folderId)
-            } else {
-                this.moveFolder(dragged.folder, dropTarget.folderId)
-            }
+        if (items.length && dropTarget) {
+            this.moveItems(items, dropTarget.folderId)
         }
     }
 
-    // A move is easy to make by accident, so every one of them offers its own way back. Each recipe
-    // returns to the folder it came from, which is not one folder when a search moved several at once.
-    moveRecipes(recipeIds, folderId) {
-        const {recipes, onMove} = this.props
-        const origin = recipeIds.map(recipeId => ({
-            recipeId,
-            folderId: recipes.find(({id}) => id === recipeId)?.folderId ?? ROOT
-        }))
-        onMove(recipeIds, folderId)
-        this.offerUndo(
-            msg('process.recipe.move.done', {count: recipeIds.length, folder: this.folderLabel(folderId)}),
-            () => _.forEach(
-                _.groupBy(origin, ({folderId}) => folderId ?? ROOT),
-                moved => onMove(moved.map(({recipeId}) => recipeId), moved[0].folderId)
-            )
-        )
+    // Dragging one of the selected rows takes the whole selection with it, as the Move button does.
+    draggedItems() {
+        const dragged = this.dragged
+        if (!dragged) {
+            return []
+        }
+        return this.isSelected(dragged.id)
+            ? this.getFilteredSelectedItems().map(asDragged)
+            : [dragged]
     }
 
-    moveFolder(folder, parentId) {
-        updateFolder({...folder, parentId})
-        this.offerUndo(
-            msg('process.folder.move.done', {name: folder.name, folder: this.folderLabel(parentId)}),
-            () => updateFolder({...folder, parentId: folder.parentId ?? ROOT})
-        )
+    // A move is easy to make by accident, so every one of them offers its own way back. Each row
+    // returns where it came from, which is not one folder when a search moved several at once.
+    moveItems(items, folderId) {
+        const {onMove} = this.props
+        const recipes = items.filter(({kind}) => kind === 'recipe')
+        const folders = items.filter(({kind}) => kind === 'folder')
+        if (recipes.length) {
+            onMove(recipes.map(({id}) => id), folderId)
+        }
+        folders.forEach(({folder}) => updateFolder({...folder, parentId: folderId}))
+        this.offerUndo(this.movedMessage(items, folderId), () => {
+            _.forEach(
+                _.groupBy(recipes, ({folderId}) => folderId ?? ROOT),
+                moved => onMove(moved.map(({id}) => id), moved[0].folderId ?? ROOT)
+            )
+            folders.forEach(({folder}) => updateFolder({...folder, parentId: folder.parentId ?? ROOT}))
+        })
+    }
+
+    movedMessage(items, folderId) {
+        const folder = this.folderLabel(folderId)
+        if (items.length === 1 && items[0].kind === 'folder') {
+            return msg('process.folder.move.done', {name: items[0].folder.name, folder})
+        }
+        return items.every(({kind}) => kind === 'recipe')
+            ? msg('process.recipe.move.done', {count: items.length, folder})
+            : msg('process.recipeList.moved', {count: items.length, folder})
     }
 
     offerUndo(message, undo) {
@@ -224,13 +239,6 @@ class _RecipeList extends React.Component {
         return folderId
             ? folderPathLabel(folders, folderId)
             : msg('process.recipeList.root')
-    }
-
-    // Dragging one of the selected recipes takes the whole selection with it, as the Move button does.
-    draggedRecipeIds(recipeId) {
-        return this.isSelected(recipeId)
-            ? this.getFilteredSelectedIds()
-            : [recipeId]
     }
 
     renderList() {
@@ -415,6 +423,7 @@ class _RecipeList extends React.Component {
                 {onBlur => (
                     <FolderPicker
                         folders={this.props.folders}
+                        excludeFolderIds={this.selectedFolderIds()}
                         onSelect={folderId => {
                             this.setMove({
                                 folderId: folderId,
@@ -430,6 +439,10 @@ class _RecipeList extends React.Component {
         )
     }
 
+    selectedFolderIds() {
+        return this.getFilteredSelectedItems().filter(({kind}) => kind === 'folder').map(({id}) => id)
+    }
+
     renderMoveConfirmation() {
         const {move: {folderId, folderName}, confirmedIds} = this.state
         const selected = confirmedIds?.length
@@ -441,9 +454,9 @@ class _RecipeList extends React.Component {
                 onConfirm={() => this.moveSelected(folderId)}
                 onCancel={() => this.setMove(false)}>
                 <RecipeListConfirm
-                    recipes={this.getFilteredPreselectedIds()}
-                    isSelected={recipeId => this.isConfirmed(recipeId)}
-                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                    items={this.getFilteredPreselectedItems()}
+                    isSelected={id => this.isConfirmed(id)}
+                    onSelect={id => this.toggleConfirmed(id)}
                 />
             </Confirm>
         )
@@ -473,9 +486,10 @@ class _RecipeList extends React.Component {
                 onConfirm={() => this.removeSelected()}
                 onCancel={() => this.setRemove(false)}>
                 <RecipeListConfirm
-                    recipes={this.getFilteredPreselectedIds()}
-                    isSelected={recipeId => this.isConfirmed(recipeId)}
-                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                    items={this.getFilteredPreselectedItems()}
+                    disabledIds={this.keptFolderIds()}
+                    isSelected={id => this.isConfirmed(id)}
+                    onSelect={id => this.toggleConfirmed(id)}
                 />
             </Confirm>
         )
@@ -486,9 +500,9 @@ class _RecipeList extends React.Component {
         return getHighlightMatcher(filterValues)
     }
 
-    getFilteredPreselectedIds() {
+    getFilteredPreselectedItems() {
         const {preselectedIds} = this.state
-        return this.getVisibleRecipes().filter(({id}) => preselectedIds.includes(id))
+        return this.getItems().filter(({id}) => preselectedIds.includes(id))
     }
 
     renderSortButtons() {
@@ -516,8 +530,11 @@ class _RecipeList extends React.Component {
                     counts={folderCounts(folders, recipes, item.folder.id)}
                     highlight={this.getHighlightMatcher()}
                     hovered={hovered}
+                    edit={edit}
                     drag$={this.drag$}
+                    selected={this.isSelected(item.folder.id)}
                     onClick={folder => this.navigateTo(folder.id)}
+                    onSelect={folderId => this.toggleOne(folderId)}
                     onEdit={folder => this.editFolder(folder)}
                     onRemove={folder => this.removeFolder(folder)}
                 />
@@ -572,7 +589,12 @@ class _RecipeList extends React.Component {
     setRemove(remove) {
         const filteredSelectedIds = this.getFilteredSelectedIds()
         if (remove) {
-            this.setState({remove, preselectedIds: filteredSelectedIds, confirmedIds: filteredSelectedIds})
+            const kept = this.keptFolderIds()
+            this.setState({
+                remove,
+                preselectedIds: filteredSelectedIds,
+                confirmedIds: filteredSelectedIds.filter(id => !kept.includes(id))
+            })
         } else {
             this.setState({remove: false, preselectedIds: null, confirmedIds: null})
         }
@@ -697,16 +719,64 @@ class _RecipeList extends React.Component {
     }
 
     moveSelected(folderId) {
-        const {confirmedIds} = this.state
-        this.moveRecipes(confirmedIds, folderId)
+        this.moveItems(this.getConfirmedItems().map(asDragged), folderId)
         this.setMove(false)
     }
 
+    getConfirmedItems() {
+        const {confirmedIds} = this.state
+        return this.getItems().filter(({id}) => confirmedIds.includes(id))
+    }
+
+    // A folder that still holds something cannot be removed, so it stays behind and says so.
     removeSelected() {
         const {onRemove} = this.props
-        const {confirmedIds} = this.state
-        onRemove(confirmedIds)
+        const items = this.getConfirmedItems()
+        const recipeIds = items.filter(({kind}) => kind === 'recipe').map(({id}) => id)
+        const [removable, kept] = _.partition(
+            items.filter(({kind}) => kind === 'folder').map(({folder}) => folder),
+            folder => this.isEmptyFolder(folder)
+        )
+        if (recipeIds.length) {
+            onRemove(recipeIds)
+        }
+        if (removable.length) {
+            this.removeFolders(removable)
+        }
+        if (kept.length) {
+            Notifications.warning({
+                message: msg('process.folder.remove.skipped', {names: kept.map(({name}) => name).join(', ')})
+            })
+        }
         this.setRemove(false)
+    }
+
+    // One request at a time: each answer carries the whole folder list, and the last one must be the
+    // list with every removal in it.
+    removeFolders(removable) {
+        this.props.stream('REMOVE_FOLDERS',
+            concat(...removable.map(({id}) => api.folder.remove$(id))).pipe(last()),
+            folders => actionBuilder('REMOVE_FOLDERS', {folders: removable})
+                .set('process.folders', folders)
+                .dispatch(),
+            error => {
+                Notifications.error({message: msg('process.folder.remove.error'), error})
+                this.props.stream('LOAD_FOLDERS', loadFolders$())
+                this.props.stream('LOAD_RECIPES', loadRecipes$())
+            }
+        )
+    }
+
+    isEmptyFolder(folder) {
+        const {folders, recipes} = this.props
+        const counts = folderCounts(folders, recipes ?? EMPTY_ARRAY, folder.id)
+        return !counts.folders && !counts.recipes
+    }
+
+    keptFolderIds() {
+        return this.getFilteredSelectedItems()
+            .filter(({kind, folder}) => kind === 'folder' && !this.isEmptyFolder(folder))
+            .map(({id}) => id)
     }
 
     getVisibleRecipes() {
@@ -714,7 +784,13 @@ class _RecipeList extends React.Component {
     }
 
     getFilteredIds() {
-        return this.getVisibleRecipes().map(({id}) => id)
+        return this.getItems().map(({id}) => id)
+    }
+
+    // The rows carry what an action needs: a folder to put back where it was, a recipe to move.
+    getFilteredSelectedItems() {
+        const selectedIds = this.getFilteredSelectedIds()
+        return this.getItems().filter(({id}) => selectedIds.includes(id))
     }
 
     getFilteredSelectedIds() {
