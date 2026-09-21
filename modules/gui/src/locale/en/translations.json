@@ -4844,6 +4844,7 @@
     },
     "recipeList.root": "Home",
     "recipeList.undo": "Undo",
+    "recipeList.undoHint": "Undo puts everything back where it was.",
     "recipeList.moved": "Moved {count} {count, plural, one {item} other {items}} to {folder}.",
     "remapping": {
       "create": "Remapping",

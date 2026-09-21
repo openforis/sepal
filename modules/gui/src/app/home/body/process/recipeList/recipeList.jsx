@@ -35,6 +35,7 @@ import {updateFolder} from './folderActions'
 import {FolderForm} from './folderForm'
 import {FolderItem} from './folderItem'
 import {FolderPicker} from './folderPicker'
+import {MoveNotification} from './moveNotification'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {canDropInto, childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, searchTree} from './recipeTree'
@@ -221,16 +222,11 @@ class _RecipeList extends React.Component {
 
     offerUndo(message, undo) {
         Notifications.info({
-            message,
             timeout: UNDO_TIMEOUT_SECONDS,
             content: dismiss =>
-                <Button
-                    look='transparent'
-                    shape='pill'
-                    size='small'
-                    icon='rotate-left'
-                    label={msg('process.recipeList.undo')}
-                    onClick={() => {
+                <MoveNotification
+                    message={message}
+                    onUndo={() => {
                         undo()
                         dismiss()
                     }}

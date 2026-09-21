@@ -117,11 +117,11 @@ const confirm = () => act(() => document.querySelector('[data-confirm]').click()
 
 const button = label => [...document.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
 
-// The notification renders its own control through content(dismiss); the element carries the handler.
+// The notification renders its own card through content(dismiss); the element carries the handler.
 const undoLastMove = () => {
     const dismiss = vi.fn()
-    const control = notifications[notifications.length - 1].content(dismiss)
-    act(() => control.props.onClick())
+    const card = notifications[notifications.length - 1].content(dismiss)
+    act(() => card.props.onUndo())
     return dismiss
 }
 
