@@ -9,13 +9,13 @@ import {DropTargetContext} from './dropTargetContext'
 import styles from './folderItem.module.css'
 
 // Direct children only, so what the row claims and what removal allows never disagree.
-const description = ({folders, recipes}) =>
+export const folderDescription = ({folders, recipes}) =>
     [
         folders ? msg('process.folder.folderCount', {count: folders}) : null,
         msg('process.folder.description', {count: recipes})
     ].filter(part => part).join(' · ')
 
-export const FolderItem = ({folder, counts, highlight, hovered, drag$, onClick, onEdit, onRemove}) => {
+export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, drag$, onClick, onSelect, onEdit, onRemove}) => {
     const dropTarget = useContext(DropTargetContext)
     return (
         <div
@@ -27,20 +27,23 @@ export const FolderItem = ({folder, counts, highlight, hovered, drag$, onClick, 
                 dragValue={{kind: 'folder', id: folder.id, folderId: folder.parentId, folder}}
                 dragPointer='mouse'
                 showDragHandle={false}
-                onClick={() => onClick(folder)}>
+                onClick={() => edit ? onSelect(folder.id) : onClick(folder)}>
                 <CrudItem
                     icon='folder-open'
                     iconClassName={styles.icon}
                     iconSize='lg'
                     title={folder.name}
-                    description={description(counts)}
+                    description={folderDescription(counts)}
                     highlight={highlight}
                     editTooltip={msg('process.folder.edit.tooltip')}
                     removeTooltip={msg('process.folder.remove.tooltip')}
                     removeTitle={msg('process.folder.remove.title')}
                     removeMessage={msg('process.folder.remove.confirm')}
-                    onEdit={onEdit ? () => onEdit(folder) : undefined}
-                    onRemove={onRemove ? () => onRemove(folder) : undefined}
+                    selectTooltip={msg('process.menu.selectRecipe.tooltip')}
+                    selected={edit ? selected : undefined}
+                    onEdit={!edit && onEdit ? () => onEdit(folder) : undefined}
+                    onRemove={!edit && onRemove ? () => onRemove(folder) : undefined}
+                    onSelect={edit ? () => onSelect(folder.id) : undefined}
                 />
             </ListItem>
         </div>
@@ -52,8 +55,11 @@ FolderItem.propTypes = {
     folder: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
     drag$: PropTypes.object,
+    edit: PropTypes.bool,
     highlight: PropTypes.any,
     hovered: PropTypes.any,
+    selected: PropTypes.bool,
     onEdit: PropTypes.func,
-    onRemove: PropTypes.func
+    onRemove: PropTypes.func,
+    onSelect: PropTypes.func
 }

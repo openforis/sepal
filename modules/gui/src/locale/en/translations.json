@@ -4777,6 +4777,8 @@
         "confirm": "Remove this folder?",
         "notEmpty": "Cannot remove {name}: it still holds {counts}. Move or remove them first.",
         "notEmpty.and": "{a} and {b}",
+        "skipped": "These folders still hold something, so they stay: {names}",
+        "stays": "Still holds something, so it stays",
         "error": "Cannot remove folder"
       },
       "update": {
@@ -4842,6 +4844,7 @@
     },
     "recipeList.root": "Home",
     "recipeList.undo": "Undo",
+    "recipeList.moved": "Moved {count} {count, plural, one {item} other {items}} to {folder}.",
     "remapping": {
       "create": "Remapping",
       "description": "Remap categorical and continuous image bands into new categories.",

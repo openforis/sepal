@@ -61,12 +61,13 @@ import {RecipeList} from './recipeList'
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
-const Y2024 = {id: '2024', name: '2024', parentId: 'kenya'}
+const MOZAMBIQUE = {id: 'mozambique', name: 'Mozambique', parentId: null}
+const Y2024 = {id: '2024', name: 'Kenya_2024', parentId: 'kenya'}
 const MOSAICS = {id: 'mosaics', name: 'Mosaics_2024', parentId: '2024'}
 const EMPTY = {id: 'empty', name: 'Empty', parentId: 'kenya'}
-const folders = [KENYA, Y2024, EMPTY, MOSAICS]
+const folders = [KENYA, MOZAMBIQUE, Y2024, EMPTY, MOSAICS]
 
-const AT_ROOT = {id: 'r1', name: 'loose_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
+const AT_ROOT = {id: 'r1', name: 'kenya_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
 const ALSO_AT_ROOT = {id: 'r3', name: 'mosaic_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-03'}
 const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'MOSAIC', folderId: '2024', updateTime: '2026-01-02'}
 const recipes = [AT_ROOT, ALSO_AT_ROOT, IN_2024]
@@ -132,7 +133,7 @@ describe('RecipeList', () => {
     it('shows the folders and the recipes of the open folder, folders first', () => {
         mount()
 
-        expect(rowTitles()).toEqual(['Kenya', 'mosaic_draft', 'loose_draft'])
+        expect(rowTitles()).toEqual(['Kenya', 'Mozambique', 'mosaic_draft', 'kenya_draft'])
     })
 
     it('shows the contents of the folder it was told to open', () => {
@@ -174,6 +175,42 @@ describe('RecipeList', () => {
 
         expect(warnings).toEqual([])
         expect(removeFolder$).toHaveBeenCalledWith(EMPTY.id)
+    })
+})
+
+describe('edit mode', () => {
+    const editMode = () => act(() => button('process.recipe.edit.label').click())
+
+    const selectedIds = () => {
+        const selection = dispatched.filter(({type}) => type === 'SET_SELECTED_IDS').pop()
+        return selection ? selection.changes[0][2] : []
+    }
+
+    it('selects a folder instead of opening it', () => {
+        mount()
+
+        editMode()
+        act(() => container.querySelectorAll('[data-row]')[0].click())
+
+        expect(selectedIds()).toEqual([KENYA.id])
+        expect(dispatched.some(({type}) => type === 'NAVIGATE_TO_FOLDER')).toBe(false)
+    })
+
+    it('opens the folder again once edit mode is off', () => {
+        mount()
+
+        act(() => container.querySelectorAll('[data-row]')[0].click())
+
+        expect(dispatched.some(({type}) => type === 'NAVIGATE_TO_FOLDER')).toBe(true)
+    })
+
+    it('selects the folders and the recipes together', () => {
+        mount()
+
+        editMode()
+        act(() => button('process.recipe.select.label').click())
+
+        expect(selectedIds().sort()).toEqual([KENYA.id, MOZAMBIQUE.id, AT_ROOT.id, ALSO_AT_ROOT.id].sort())
     })
 })
 
@@ -281,6 +318,38 @@ describe('drag and drop', () => {
         drop(AT_ROOT.id, container)
 
         expect(notifications).toEqual([])
+    })
+
+    it('moves every selected folder and recipe when one of them is dragged', () => {
+        const onMove = vi.fn()
+        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id]})
+
+        drop(KENYA.id, dropTarget(MOZAMBIQUE.id))
+
+        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], MOZAMBIQUE.id)
+        expect(updateFolder).toHaveBeenCalledWith(expect.objectContaining({id: KENYA.id, parentId: MOZAMBIQUE.id}))
+    })
+
+    it('puts a folder and a recipe back together', () => {
+        const onMove = vi.fn()
+        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id]})
+
+        drop(KENYA.id, dropTarget(MOZAMBIQUE.id))
+        undoLastMove()
+
+        expect(onMove).toHaveBeenLastCalledWith([AT_ROOT.id], null)
+        expect(updateFolder).toHaveBeenLastCalledWith(expect.objectContaining({id: KENYA.id, parentId: null}))
+    })
+
+    it('refuses a destination that lies inside a folder the selection holds', () => {
+        const onMove = vi.fn()
+        // A search shows Kenya, the folder inside it, and a recipe, so all three can take part at once.
+        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id], filterValue: 'kenya', filterValues: ['kenya']})
+
+        drop(AT_ROOT.id, dropTarget(Y2024.id))
+
+        expect(onMove).not.toHaveBeenCalled()
+        expect(updateFolder).not.toHaveBeenCalled()
     })
 
     it('can drag in edit mode as well', () => {
