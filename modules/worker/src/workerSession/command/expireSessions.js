@@ -16,10 +16,9 @@
 // minute, and an interaction landing between candidate selection and the close leaves the session
 // open (the guarded close changes zero rows).
 //
-// STARTUP GRACE: a stored deadline survives a worker outage, but the SENDERS of extension events
-// cannot reach a down worker, so they need wall-clock time to re-assert. As before this suppresses
-// the sweep rather than shifting deadlines. Measured from process start, so a worker crash-looping
-// faster than the grace reaches no sweep and closes nothing — see §8, that gap is not fixed here.
+// No startup grace: a deadline that passed during a worker outage is met with a notification and
+// the full grace, never a close, so the sweep has nothing to wait for after a restart — and a
+// grace measured from process start was what let a crash loop starve enforcement (§8).
 //
 // Per-item try/catch: a failed notification never blocks the close, a failed close never blocks the
 // next session.
@@ -55,15 +54,9 @@ const expireSessions = async ({
     emitWorkerSessionClosed,
     emitSessionChanged,
     metrics = null,
-    startTime = null,
-    startupGraceMs = 0,
     clock,
 }) => {
     if (mode === MODE.OFF) {
-        return null
-    }
-    if (startTime && clock().getTime() - startTime.getTime() < startupGraceMs) {
-        log.info('Within the startup grace period - skipping the session expiry sweep')
         return null
     }
     const sessions = await repo.expiredSessions()
@@ -215,14 +208,14 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
 }
 
 const closedEmail = ({instanceType, running, name}) => ({
-    subject: 'Your unused SEPAL instance was stopped',
+    subject: 'Your SEPAL instance was stopped',
     content: `
-        ${instanceText({name, instanceType})} was stopped after going unused, to
-        avoid unnecessary cost.
-        ${running ? `<br><br>This closed <b>${running}</b>.` : ''}
+        ${instanceText({name, instanceType})} had not been used for a while, and
+        was <b>stopped</b> to avoid unnecessary cost.
+        ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'were' : 'was'} running on it and ${plural(running) ? 'have' : 'has'} been closed.` : ''}
         <br><br>
-        Your files are untouched — everything in your home directory is preserved. You can start a
-        new instance at any time.
+        Your files are untouched: everything in your home directory is preserved, and
+        you can start a new instance at any time.
     `,
 })
 
@@ -247,7 +240,7 @@ const expiryEmail = ({instanceType, policy, url, running, name}) => ({
     content: `
         ${instanceText({name, instanceType})} has not been used for a while, and
         will be <b>stopped in about ${policy.graceMinutes} minutes</b> unless you keep it.
-        ${running ? `<br><br><b>${running}</b> ${running.includes(' and ') ? 'are' : 'is'} running on it.` : ''}
+        ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'are' : 'is'} running on it.` : ''}
         <br><br>
         ${manageLink(url)}
         Simply using the instance — typing in a notebook, an app or a terminal — keeps it running
@@ -267,5 +260,7 @@ const manageLink = url =>
         ? `<a href="${url}">Keep it running or terminate it</a>
         <br><br>`
         : ''
+
+const plural = running => running.includes(' and ')
 
 export {expireSessions, MODE}

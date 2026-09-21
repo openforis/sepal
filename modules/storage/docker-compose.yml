@@ -9,7 +9,7 @@ services:
     volumes:
       # Keeps the pre-rename directory name so existing deployments carry their data over.
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
-      - "${SEPAL_PROJECT_DIR}/modules/storage/redis.conf:/usr/local/etc/redis/redis.conf:ro"
+      - "./modules/storage/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

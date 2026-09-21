@@ -125,9 +125,11 @@ on every file save. Four mechanisms carry instance management across it:
 - **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
   container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
   runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.
-
-Still open: `STARTUP_GRACE_MS` is measured from process start, so a worker crash-looping faster
-than two minutes reaches no closing sweep — see `docs/session-expiration-model.md` §8.
+- **No startup grace.** `ReconcilePendingSessions` and `CloseTimedOutSessions` run as one job, in
+  that order, so a restart lands a missed activation before the timed-out sweep can see the PENDING
+  row. `ExpireSessions` needs no head start: a deadline that passed during an outage earns a
+  notification and the full grace, never a close. The former 2-minute grace, measured from process
+  start, was what let a crash loop starve every closing sweep.
 
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first

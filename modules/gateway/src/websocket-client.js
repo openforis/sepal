@@ -18,8 +18,8 @@ const Clients = () => {
         }
     }
 
-    const add = (username, clientId, ws) => {
-        clients[clientId] = {username, ws, subscriptions: {}}
+    const add = (username, clientId, ws, sessionId) => {
+        clients[clientId] = {username, ws, sessionId, subscriptions: {}}
         log.debug(`${clientTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
     }
 
@@ -65,11 +65,11 @@ const Clients = () => {
         }
     }
 
-    const send = (clientId, message) => {
+    const send = (clientId, message, onSent) => {
         try {
             const {ws} = get(clientId)
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(message))
+                ws.send(JSON.stringify(message), onSent)
             } else {
                 log.warn('Cannot send message to non-open WebSocket', message)
             }
@@ -107,6 +107,15 @@ const Clients = () => {
         sendEvent({type, data})
     }
 
+    // The login session that authenticated these sockets is gone, so they are closed — but only
+    // once the event has left, so the tab learns why before its reconnect attempts start failing.
+    const sendEventToSession = (sessionId, type, data) => {
+        log.debug(`Sending ${eventTag(type)} to clients of session ${sessionId}, then closing them`)
+        Object.entries(clients)
+            .filter(([_, {sessionId: currentSessionId}]) => currentSessionId === sessionId)
+            .forEach(([clientId, {ws}]) => send(clientId, {event: {type, data}}, () => ws.close()))
+    }
+
     const sendEvent = ({type, data, username, clientId}) =>
         Object.entries(clients)
             .filter(([currentClientId, {username: currentUsername}]) =>
@@ -127,7 +136,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, broadcastEvent}
+    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, sendEventToSession, broadcastEvent}
 }
 
 export {Clients}

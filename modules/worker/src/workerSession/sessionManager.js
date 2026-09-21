@@ -167,9 +167,8 @@ const createSessionManager = ({
         return true
     }
 
-    // options: {startTime, startupGraceMs} — the caller's startup grace (see the command).
-    const closeTimedOutSessions = (options = {}) =>
-        _closeTimedOutSessions({...closeDeps, ...options, clock})
+    const closeTimedOutSessions = () =>
+        _closeTimedOutSessions(closeDeps)
 
     // tracker — the caller's cross-sweep memory (../missingInstanceTracker.js); it is what decides
     // whether a probe verdict has earned a close.
@@ -271,8 +270,7 @@ const createSessionManager = ({
         return redeemed
     }
 
-    // options: {startTime, startupGraceMs} — the caller's startup grace (see the command).
-    const expireSessions = (options = {}) =>
+    const expireSessions = () =>
         _expireSessions({
             repo,
             appRepo,
@@ -289,7 +287,6 @@ const createSessionManager = ({
             emitSessionChanged: emitChanged,
             metrics: expiryMetrics,
             clock,
-            ...options,
         })
 
     // ── queries ─────────────────────────────────────────────────────────────

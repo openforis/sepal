@@ -19,6 +19,14 @@ export default {
             query: _.omitBy({endpoint: endpoint ? endpoint : 'shiny', appPath, appLabel, sessionId, instanceType, clientId: getClientId(), reassert: reassert ? 'true' : undefined}, _.isUndefined)
         }),
 
+    // Start the endpoint's server (rstudio/shiny/jupyter) on the session's instance; completes once
+    // it is listening. The proxy would start it on the first app request anyway — asking explicitly
+    // is what lets the app tab show "starting server" as its own phase.
+    startServer$: ({sessionId, endpoint}) =>
+        post$('/api/sandbox/server', {
+            query: {sessionId, endpoint}
+        }),
+
     // Unbind the app from its instance — the instance stays up; the app can then be
     // re-opened on a different instance. Used on tab close AND to dissociate a conflicting
     // app before a confirmed move (takeover); clientId identifies this client as the

@@ -4,31 +4,14 @@
 .build/
 .eslintcache
 
-#docker-sync
-.docker-sync
 *.tmp
 
-#Maven
-target
-
-#bin
-build
-
-
-#Eclipse
-.classpath
-.project
-.settings
-
 #Sepal binaries
-
-#Vagrant
-.vagrant
 
 #Ansible
 *.retry
 
-#JRE error
+#Logs
 *.log
 
 #Python

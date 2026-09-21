@@ -19,7 +19,7 @@ services:
       - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
       - SEPAL_HOST=${SEPAL_HOST}
     volumes:
-      - ${SEPAL_PROJECT_DIR}/modules/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - "./modules/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
       - "${SEPAL_DATA_DIR}/prometheus:/prometheus"
     depends_on:
     - cadvisor

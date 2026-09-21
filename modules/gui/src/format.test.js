@@ -185,12 +185,12 @@ test('format.round(${JSON.stringify(params)}) === ${result}')
         {params: {value: 499.99, magnitude: 3}, result: 0},
     )
 
-test('format.round(${JSON.stringify(fractionalYears)}) === ${result}')
+test('format.fractionalYearsToDate(${JSON.stringify(fractionalYears)}) === ${result}')
     .assert(({fractionalYears, result}) => expect(format.fractionalYearsToDate(fractionalYears)).toEqual(result))
     .where(
-        {fractionalYears: 2020, result: new Date('2020-01-01')},
-        {fractionalYears: 2020.5, result: new Date('2020-07-02')},
-        {fractionalYears: 2020.99999, result: new Date('2020-12-31')},
+        {fractionalYears: 2020, result: new Date(2020, 0, 1)},
+        {fractionalYears: 2020.5, result: new Date(2020, 6, 2)},
+        {fractionalYears: 2020.99999, result: new Date(2020, 11, 31)},
     )
 
 const SECOND = 1000

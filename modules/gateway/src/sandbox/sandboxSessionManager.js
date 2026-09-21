@@ -289,9 +289,6 @@ const createSandboxSessionManager = ({
         })
     }
 
-    // startApp — per app: a live association wins; else join a chosen session or create a new one.
-    // `reused` is set when the worker steered us to a different session than the one explicitly
-    // requested (it refuses to move a live association). clientId is stored as the association's owner.
     const ensureServerStarted = async ({username, sessionId, endpoint}) => {
         if (!username || !sessionId || !isEndpoint(endpoint)) {
             return
@@ -313,7 +310,14 @@ const createSandboxSessionManager = ({
         return await starting
     }
 
-    const startAppInternal = async ({username, endpoint = DEFAULT_ENDPOINT, appPath: requestedAppPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
+    // startApp — per app: a live association wins; else join a chosen session or create a new one.
+    // `reused` is set when the worker steered us to a different session than the one explicitly
+    // requested (it refuses to move a live association). clientId is stored as the association's owner.
+    //
+    // The endpoint's server is NOT started here: the GUI asks for that separately
+    // (sandboxServerRoute) once the session is ACTIVE, so it can show the server start as its own
+    // phase; the proxy ensures it again before forwarding.
+    const startApp = async ({username, endpoint = DEFAULT_ENDPOINT, appPath: requestedAppPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
         const appPath = requestedAppPath ?? legacyAppPath(endpoint)
         const label = appLabel ?? (requestedAppPath ? null : LEGACY_APP_LABEL[endpoint])
         // 1. A live association is permanent — it wins over any requested pick. `reused` flags that an
@@ -390,26 +394,6 @@ const createSandboxSessionManager = ({
             endpoint, appPath
         })
         return {id: entry.sessionId, status: toClientStatus(entry.status), ...reused ? {reused: true} : {}}
-    }
-
-    // startApp — warm the endpoint's server while the GUI still shows its own spinner, so the
-    // iframe opens onto a listening port instead of waiting on the proxy's pre-flight.
-    //
-    // Best-effort ON PURPOSE. The proxy ensures the same server before it forwards anything, so
-    // that is the authoritative gate and a real failure surfaces there as a 502; failing the app
-    // open here as well would only add a second, earlier failure path for one condition. A
-    // STARTING session has no instance to start a server on yet — the proxy covers that too.
-    const startApp = async params => {
-        const result = await startAppInternal(params)
-        if (result?.status === 'STARTED') {
-            const endpoint = params.endpoint ?? DEFAULT_ENDPOINT
-            try {
-                await ensureServerStarted({username: params.username, sessionId: result.id, endpoint})
-            } catch (error) {
-                log.warn(`Failed to pre-start sandbox ${endpoint} for ${params.username}`, error)
-            }
-        }
-        return result
     }
 
     // releaseApp — unbind an app from its session (GUI tab close, or a takeover dissociating

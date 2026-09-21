@@ -15,6 +15,7 @@ import {ContentPadding} from '~/widget/sectionLayout'
 import {withTab} from '~/widget/tabs/tabContext'
 
 import styles from './appInstance.module.css'
+import {FAILED, launchStatusMessageKey, READY, STARTING_APP, STARTING_SESSION} from './appLaunchStatus'
 
 const log = getLogger('apps')
 
@@ -40,7 +41,7 @@ class _AppInstance extends React.Component {
     observableTimer = null
 
     state = {
-        appState: 'REQUESTED',
+        appState: STARTING_SESSION,
         src: undefined,
         srcDoc: undefined
     }
@@ -50,6 +51,7 @@ class _AppInstance extends React.Component {
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
         this.onInteraction = this.onInteraction.bind(this)
         this.onSession = this.onSession.bind(this)
+        this.onPhase = this.onPhase.bind(this)
     }
 
     render() {
@@ -60,10 +62,10 @@ class _AppInstance extends React.Component {
                 className={styles.appInstance}>
                 <div className={styles.content}>
                     <div className={styles.backdrop}>
-                        {label || alt}
-                    </div>
-                    <div className={styles.status}>
-                        {this.renderStatus()}
+                        <div className={styles.loading}>
+                            <div className={styles.appName}>{label || alt}</div>
+                            <div className={styles.appStatus}>{this.renderStatus()}</div>
+                        </div>
                     </div>
                     {this.renderIFrame()}
                 </div>
@@ -91,13 +93,10 @@ class _AppInstance extends React.Component {
     }
 
     renderStatus() {
-        const {app} = this.props
+        const {app: {label, alt}} = this.props
         const {appState} = this.state
-        return appState === 'REQUESTED'
-            ? msg('apps.initializing')
-            : appState === 'FAILED'
-                ? msg('apps.run.error', {label: app.label || app.alt})
-                : msg('apps.loading.progress')
+        const key = launchStatusMessageKey(appState)
+        return key ? msg(key, {label: label || alt}) : null
     }
 
     componentDidMount() {
@@ -105,6 +104,7 @@ class _AppInstance extends React.Component {
         if (endpoint === 'docker') {
             busy.set(id, true)
             publishEvent('launch_app', {app: id})
+            this.setState({appState: STARTING_APP})
             stream('RUN_APP',
                 get$(`${path}`, {
                     responseType: 'text',
@@ -112,13 +112,13 @@ class _AppInstance extends React.Component {
                         maxRetries: 9
                     }
                 }).pipe(
-                    map(() => ({appState: 'INITIALIZED', src: path}))
+                    map(() => ({src: path}))
                 ),
                 result => this.setState(result),
                 error => this.onError(error)
             )
         } else if (!endpoint) {
-            this.setState({appState: 'INITIALIZED', src: path}, () =>
+            this.setState({appState: STARTING_APP, src: path}, () =>
                 stream('RUN_APP', of())
             )
         } else {
@@ -153,7 +153,7 @@ class _AppInstance extends React.Component {
         this.attachInteractionListeners()
         if (this.useIFrameSrc() && src) {
             busy.set(id, false)
-            this.setState({appState: 'READY'})
+            this.setState({appState: READY})
         }
     }
 
@@ -161,6 +161,10 @@ class _AppInstance extends React.Component {
         const {onSession} = this.props
         this.sessionId = session?.id ?? this.sessionId
         onSession && onSession(session)
+    }
+
+    onPhase(appState) {
+        this.setState({appState})
     }
 
     // attachInteractionListeners — best-effort by construction. An inaccessible frame (an app
@@ -261,10 +265,10 @@ class _AppInstance extends React.Component {
         publishEvent('launch_app', {app: app.id})
         stream('RUN_APP',
             forkJoin([
-                runApp$(app.path, {...selection, onSession: this.onSession}),
+                runApp$(app.path, {...selection, onSession: this.onSession, onPhase: this.onPhase}),
                 timer(500)
             ]).pipe(
-                tap(() => this.setState({appState: 'INITIALIZED'})),
+                tap(() => this.setState({appState: STARTING_APP})),
                 switchMap(() => {
                     if (this.useIFrameSrc()) {
                         return of({src: `/api${app.path}`})
@@ -289,7 +293,7 @@ class _AppInstance extends React.Component {
     onError(error) {
         const {app: {id, label, alt}, tab: {busy}} = this.props
         log.error('Failed to load app', error)
-        this.setState({appState: 'FAILED'})
+        this.setState({appState: FAILED})
         Notifications.error({message: msg('apps.run.error', {label: label || alt})})
         busy.set(id, false)
     }

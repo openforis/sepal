@@ -294,34 +294,6 @@ describe('closeTimedOutSessions', () => {
         await mgr.closeTimedOutSessions()
         expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-b'})
     })
-
-    // Heartbeats can only arrive while the worker is up: after an outage longer than the session
-    // timeout EVERY open session looks stale, so the sweep must wait for the heartbeat senders to
-    // catch up before believing the update times.
-    test('stays inert within the startup grace period', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const repo = makeRepo({timedOutSessions: () => [a], getSession: () => a})
-        const {mgr, events} = build({repo})
-        // fixedClock is 12:00:00 — the worker started 1 minute ago, grace is 2 minutes.
-        await mgr.closeTimedOutSessions({
-            startTime: new Date('2026-01-01T11:59:00Z'),
-            startupGraceMs: 2 * 60_000,
-        })
-        expect(repo.timedOutSessions).not.toHaveBeenCalled()
-        expect(events.emitWorkerSessionClosed).not.toHaveBeenCalled()
-    })
-
-    test('sweeps once the startup grace period has elapsed', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const repo = makeRepo({timedOutSessions: () => [a], getSession: () => a})
-        const {mgr, events} = build({repo})
-        // Started 5 minutes before fixedClock — well past the 2-minute grace.
-        await mgr.closeTimedOutSessions({
-            startTime: new Date('2026-01-01T11:55:00Z'),
-            startupGraceMs: 2 * 60_000,
-        })
-        expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-a'})
-    })
 })
 
 describe('closeSessionsWithoutInstance', () => {

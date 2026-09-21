@@ -15,7 +15,7 @@ const log = getLogger('worker/sizeIdlePool')
 const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
 
 const sizeIdlePool = async (targetIdleCountByInstanceType, {provider}) => {
-    log.info('Sizing idle pool', targetIdleCountByInstanceType)
+    log.debug('Sizing idle pool', targetIdleCountByInstanceType)
 
     const targetMap = targetIdleCountByInstanceType instanceof Map
         ? targetIdleCountByInstanceType

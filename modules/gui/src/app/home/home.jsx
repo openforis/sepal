@@ -7,6 +7,7 @@ import {ActivationContext} from '~/widget/activation/activationContext'
 import {Assets} from '~/widget/assets'
 import {BudgetMonitor} from '~/widget/budgetMonitor'
 import {GoogleAccountConnection} from '~/widget/googleAccountConnection'
+import {LoginSessionMonitor} from '~/widget/loginSessionMonitor'
 import {MessagesMonitor} from '~/widget/messagesMonitor'
 import {PortalContainer} from '~/widget/portal'
 import {PrivacyPolicy} from '~/widget/privacyPolicy'
@@ -56,6 +57,7 @@ class _Home extends React.Component {
                     <Assets/>
                     <GoogleAccountConnection/>
                     <VersionCheck/>
+                    <LoginSessionMonitor/>
                     <PrivacyPolicy/>
                 </div>
             </ActivationContext>

@@ -165,6 +165,11 @@ export class UserApi {
     // Idempotent: an already-locked user is returned unchanged.
     async lock(ctx) {
         const username = suppliedUsername(ctx)
+        if (username === storedUsername(ctx.state.currentUser.username)) {
+            ctx.status = 400
+            ctx.body = {message: 'Cannot lock your own account'}
+            return
+        }
         const user = username ? await this.#repository.findByUsername(username) : null
         if (!user) {
             ctx.status = 404

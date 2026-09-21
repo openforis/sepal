@@ -49,8 +49,11 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   retry-on-refused: httpxy has already begun consuming the request stream by the time a
   connection error surfaces, so a bodied request could never be replayed. The ensure is memoized
   per `(sessionId, endpoint)`, so it costs one worker round-trip and a Set lookup thereafter; a
-  failed ensure answers 502 (socket closed on ws) and is not cached. `startApp` also warms the
-  server, but BEST-EFFORT: the proxy is the authoritative gate.
+  failed ensure answers 502 (socket closed on ws) and is not cached.
+- `POST /api/sandbox/server?sessionId=…&endpoint=…` → 204 once the endpoint's server is
+  listening (same `ensureServerStarted`; 4xx passed through, other failures 502). The GUI calls
+  it once the session is ACTIVE so the app tab can show "starting server" as its own phase;
+  `startApp` itself never starts a server, and the proxy remains the authoritative gate.
 - **App ↔ client ownership (worker-owned)**: the downlink sends each browser its
   gateway-minted `clientId` right after ws connect; the GUI tags `POST`/`DELETE
   /api/sandbox/start` with it and the worker stores it on the association
@@ -58,7 +61,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   gateway only broadcasts the event). `startApp` hitting an existing association still calls
   the worker associate to refresh ownership (reconnect re-assert). The
   `gateway.sessionAppDissociated` subscriber drops the cached app entry on every
-  dissociation and, when the owner ≠ requester (takeover), unicasts `appSessionDissociated
+  dissociation and, when the owner ≠ requester (takeover), unicasts `workerSessionAppDissociated
   {appPath, sessionId}` to the owner client, whose GUI closes the app's tab. The reconnect
   re-assert sends `reassert=true`, which the gateway forwards in the associate body: the worker
   refreshes ownership but moves NO deadline, since the socket dropping is not a user opening an
@@ -80,10 +83,10 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - Cookie: `SEPAL-SESSIONID`
 - Redis store via `connect-redis`
 - Session secret persisted in Redis (survives restarts)
-- `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current
+- `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current. Every destroyed session (also on `user.UserLocked`) is announced on `event$` as `loginSessionInvalidated {username, sessionId}` (the `workerSession*` events are the sandbox ones); browser websockets are bound to the session that upgraded them, so the tabs of that session get the event and are then closed — the GUI reloads on it
 
 ### Authentication
-- `src/authMiddleware.js`: Checks `sepal-user` header, falls back to HTTP Basic Auth via POST to `http://user/authenticate`
+- `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
 - **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
   api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
   `{username, sessionId, workerType}`; the user is injected as `sepal-user` and the session as
@@ -104,4 +107,4 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - **User header injection**: Downstream services receive authenticated user as JSON in `sepal-user` request header. The gateway strips any client-injected values first.
 - **`sepal-user-updated` response header**: When a downstream service sets this header, the gateway triggers a user refresh from the user module.
 - **Tag utilities** (`src/tag.js`): Formatted log tags like `Client<username:ab12>`, `Subscription<user:id:sub>`.
-- **Only test file**: `src/rewrite.test.js` tests HTTP Location header rewriting for proxied redirects.
+- **Tests**: `src/rewrite.test.js` (Location header rewriting), `src/userStore.test.js`, `src/session.test.js`, `src/websocket-client.test.js`.

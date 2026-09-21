@@ -1,9 +1,10 @@
-import {firstValueFrom, of} from 'rxjs'
+import {firstValueFrom, of, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/apiRegistry', () => ({
     default: {apps: {
-        requestSession$: vi.fn(() => of({id: 's-1', status: 'STARTED'}))
+        requestSession$: vi.fn(() => of({id: 's-1', status: 'STARTED'})),
+        startServer$: vi.fn(() => of(undefined))
     }}
 }))
 
@@ -98,5 +99,23 @@ describe('runApp$', () => {
         pushReport([{id: 's-1', status: 'ACTIVE'}])
 
         expect(await sessionPromise).toEqual({id: 's-1', status: 'ACTIVE'})
+    })
+
+    it('starts the endpoint server once the session is ACTIVE, reporting the phase', async () => {
+        api.apps.requestSession$.mockReturnValueOnce(of({id: 's-1', status: 'STARTING'}))
+        const onPhase = vi.fn()
+        const sessionPromise = firstValueFrom(runApp$('/sandbox/shiny/foo', {onPhase}))
+        expect(api.apps.startServer$).not.toHaveBeenCalled()
+
+        pushReport([{id: 's-1', status: 'ACTIVE'}])
+
+        expect(await sessionPromise).toEqual({id: 's-1', status: 'ACTIVE'})
+        expect(onPhase).toHaveBeenCalledWith('STARTING_SERVER')
+        expect(api.apps.startServer$).toHaveBeenCalledWith({sessionId: 's-1', endpoint: 'shiny'})
+    })
+
+    it('fails when the endpoint server cannot be started', async () => {
+        api.apps.startServer$.mockReturnValueOnce(throwError(() => new Error('502')))
+        await expect(firstValueFrom(runApp$('/sandbox/shiny/foo', {}))).rejects.toThrow('502')
     })
 })

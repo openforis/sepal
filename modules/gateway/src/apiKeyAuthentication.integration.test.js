@@ -112,7 +112,7 @@ let gatewayUrl
 
 const startGateway = async () => {
     const userStore = UserStore(fakeRedis(), new Subject())
-    const {authMiddleware} = AuthMiddleware(userStore)
+    const {authMiddleware} = AuthMiddleware(userStore, async () => {})
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const app = express()
     // No browser login: these requests arrive with credentials, not a cookie.

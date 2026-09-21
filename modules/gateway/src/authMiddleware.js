@@ -27,7 +27,7 @@ const OK = 200
 const UNAUTHORIZED = 401
 const INTERNAL_SERVER_ERROR = 500
 
-const AuthMiddleware = userStore => {
+const AuthMiddleware = (userStore, ensureSessionFor) => {
     const authMiddleware = async (req, res, next) => {
         try {
             const isAuthenticated = () => !!(getRequestUser(req))
@@ -42,6 +42,7 @@ const AuthMiddleware = userStore => {
 
             const authenticatedGuiRequest$ = (username, user) =>
                 userStore.setUser$(user).pipe(
+                    switchMap(() => ensureSessionFor(req, res, username)),
                     switchMap(() => of(OK).pipe(
                         tap(() => {
                             setSessionUsername(req, username)
@@ -163,10 +164,12 @@ const AuthMiddleware = userStore => {
                 return of(UNAUTHORIZED)
             }
     
-            const statusCode$ = isAuthenticated()
-                ? of(OK)
-                : hasBasicAuthHeaders()
-                    ? authenticate$()
+            // Presented credentials win over the session's user: a login from a browser logged in as
+            // someone else must authenticate the submitted account, not pass as the current one.
+            const statusCode$ = hasBasicAuthHeaders()
+                ? authenticate$()
+                : isAuthenticated()
+                    ? of(OK)
                     : missingAuthHeader$()
     
             const statusCode = await firstValueFrom(statusCode$)

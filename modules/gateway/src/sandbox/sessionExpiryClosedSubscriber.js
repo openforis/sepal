@@ -1,7 +1,7 @@
 // Cache teardown is NOT done here — the close cascade's WorkerSessionClosed already handles it;
 // this event only explains WHY the session closed.
 
-import {SESSION_EXPIRY_CLOSED} from '#sepal/event/definitions'
+import {WORKER_SESSION_EXPIRY_CLOSED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('sessionExpiryClosedSubscriber')
@@ -16,7 +16,7 @@ const sessionExpiryClosedSubscriber = event$ => {
         // Both fields required: sendEvent treats a falsy username as "broadcast to everyone".
         if (username && sessionId) {
             event$ && event$.next({
-                type: SESSION_EXPIRY_CLOSED,
+                type: WORKER_SESSION_EXPIRY_CLOSED,
                 data: {username, sessionId, apps, terminals, ordinal, name, typeName}
             })
         }

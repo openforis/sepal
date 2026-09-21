@@ -14,7 +14,7 @@ const invitationContent = (user, activationLink) => `<h2>Hello ${user.name},</h2
 <p>
     An account on SEPAL has been created for you.
     <br>
-    Please follow <a href="${activationLink}">this</a> link to activate it.
+    Please <a href="${activationLink}">follow this link</a> to activate it.
 </p>
 ${DOCS_FOOTER}`
 
@@ -25,7 +25,7 @@ const passwordResetContent = (user, passwordResetLink) => `<h2>Hello ${user.name
     <br>
     If you didn't make the request, you can safely ignore this email.
     <br>
-    Otherwise, please follow <a href="${passwordResetLink}">this</a> link to reset your password.
+    Otherwise, please <a href="${passwordResetLink}">follow this link</a> to reset your password.
 </p>
 
 ${DOCS_FOOTER}`

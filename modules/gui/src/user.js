@@ -4,6 +4,7 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {userDetailsHint} from '~/app/home/user/userDetails'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
+import {forgetPreviousUsername, notePreviousUsername} from '~/loginSession'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
@@ -82,7 +83,13 @@ const unspecifiedError$ = () => {
     return of(null)
 }
 
-export const login$ = ({username, password}, recaptchaToken) => {
+// The user chose this account, so no switch is to be told.
+export const login$ = (credentials, recaptchaToken) => {
+    forgetPreviousUsername()
+    return authenticate$(credentials, recaptchaToken)
+}
+
+const authenticate$ = ({username, password}, recaptchaToken) => {
     resetInvalidCredentials()
     return api.user.login$({username, password, recaptchaToken}).pipe(
         tap(user => {
@@ -92,16 +99,32 @@ export const login$ = ({username, password}, recaptchaToken) => {
     )
 }
 
-export const logout$ = () =>
-    api.user.logout$().pipe(
+export const logout$ = () => {
+    forgetPreviousUsername()
+    return api.user.logout$().pipe(
         tap(() => document.location = '/' /* force full state reset*/)
     )
+}
 
+// For password-reset and account-activation links: the tab shows the form whoever the browser is
+// logged in as. The session is left alone, and the app starts logged off so Home never claims the
+// tab; who the browser was logged in as is noted, to tell the user if the tab comes back as another account.
+export const startLoggedOff$ = () =>
+    api.user.loadCurrentUser$().pipe(
+        catchError(() => of(null)),
+        tap(user => {
+            notePreviousUsername(user?.username)
+            updateUser(null)
+        })
+    )
+
+// The browser may be logged in as someone else: the gateway replaces that session on login and kicks
+// its other tabs once the new cookie is out, so no logout is needed here — and a rejected reset changes nothing.
 export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
         delay(2000),
-        switchMap(() => login$({username, password})),
+        switchMap(() => authenticate$({username, password})),
         switchMap(user =>
             api.user.invalidateOtherSessions$().pipe(
                 map(() => user)

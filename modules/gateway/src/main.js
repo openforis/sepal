@@ -22,6 +22,7 @@ import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
 import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
+import {sandboxServerRoute} from './sandbox/sandboxServerRoute.js'
 import {createSandboxSessionManager} from './sandbox/sandboxSessionManager.js'
 import {sandboxStartRoute} from './sandbox/sandboxStartRoute.js'
 import {sessionAppDissociatedSubscriber} from './sandbox/sessionAppDissociatedSubscriber.js'
@@ -52,7 +53,7 @@ const main = async () => {
     const userStore = UserStore(redis, event$)
     const sessionStore = new RedisSessionStore({client: redis})
 
-    const {messageHandler, logout, invalidateOtherSessions, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis)
+    const {messageHandler, logout, invalidateOtherSessions, ensureSessionFor, normalizeCase: normalizeSessionCase} = SessionManager(sessionStore, redis, event$)
 
     try {
         await userStore.normalizeCase()
@@ -61,7 +62,7 @@ const main = async () => {
         log.error('Cannot normalize username case in Redis, continuing', error)
     }
 
-    const {authMiddleware} = AuthMiddleware(userStore)
+    const {authMiddleware} = AuthMiddleware(userStore, ensureSessionFor)
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
 
@@ -76,6 +77,7 @@ const main = async () => {
     })
     const {handler: sandboxStartHandler} = sandboxStartRoute(sandboxSessionManager)
     const {handler: sandboxInteractionHandler} = sandboxInteractionRoute(sandboxSessionManager)
+    const {handler: sandboxServerHandler} = sandboxServerRoute(sandboxSessionManager)
     const sandboxClosedSubscriber = workerSessionClosedSubscriber(sandboxSessionManager, event$)
     const sandboxAppDissociatedSubscriber = sessionAppDissociatedSubscriber(sandboxSessionManager, event$)
     const expiryNotifiedSubscriber = sessionExpiryNotifiedSubscriber(event$)
@@ -164,6 +166,7 @@ const main = async () => {
     // The GUI's interaction reports — matched before the /api/sandbox/** proxy for the same reason
     // as /start. No googleAccessTokenMiddleware: nothing downstream of it needs a Google token.
     app.use('/api/sandbox/interaction', authMiddleware, sandboxInteractionHandler)
+    app.use('/api/sandbox/server', authMiddleware, sandboxServerHandler)
     app.use('/api/sandbox', authMiddleware, googleAccessTokenMiddleware, sandboxProxy.middleware)
 
     const proxies = proxyEndpoints(app)
@@ -182,10 +185,10 @@ const main = async () => {
         socket.destroy()
     }
 
-    const handleGlobalWebSocket = (requestPath, req, socket, head, username) => {
+    const handleGlobalWebSocket = (requestPath, req, socket, head, username, sessionId) => {
         log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
         wss.handleUpgrade(req, socket, head, ws =>
-            wss.emit('connection', ws, req, username)
+            wss.emit('connection', ws, req, username, sessionId)
         )
     }
 
@@ -232,11 +235,11 @@ const main = async () => {
             if (username) {
                 const requestPath = url.parse(req.url).pathname
                 if (requestPath === webSocketPath) {
-                    handleGlobalWebSocket(requestPath, req, socket, head, username)
+                    handleGlobalWebSocket(requestPath, req, socket, head, username, req.sessionID)
                 } else {
                     firstValueFrom(userStore.getUser$(username))
                         .then(user => {
-                            if (user) {
+                            if (user?.status === 'ACTIVE') {
                                 log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
                                 setRequestUser(req, user)
                                 handleProxiedWebSocket(requestPath, req, socket, head, username)

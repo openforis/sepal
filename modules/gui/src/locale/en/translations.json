@@ -45,7 +45,11 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
-    "initializing": "Starting session...",
+    "launch": {
+      "startingSession": "Starting session...",
+      "startingServer": "Starting server...",
+      "startingApp": "Starting app..."
+    },
     "loading": {
       "error": "Failed to load apps. Please reload page to try again.",
       "progress": "Loading..."
@@ -58,7 +62,7 @@
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
     "gpuRequiredTooltip": "This app requires an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
-    "sessionTakenOver": "{app} was opened in another browser window — this tab has been closed.",
+    "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
       "instance": "instance {number} ({type})",
@@ -420,6 +424,9 @@
       "title": "SEPAL has been updated!",
       "message": "Please reload your browser to make sure everything works as expected.",
       "reloadNow": "Reload now"
+    },
+    "loginSession": {
+      "switched": "You're now logged in as {username}"
     },
     "sections": {
       "account": "Account settings",
@@ -1048,7 +1055,8 @@
         "sections": {
           "title": "Image to include"
         },
-        "title": "Input imagery"
+        "title": "Input imagery",
+        "tooltip": "Select input imagery"
       }
     },
     "mapZoom": {
@@ -2065,7 +2073,8 @@
                       "label": "Mahalanobis",
                       "tooltip": "Mahalanobis distance from the class mean"
                     }
-                  }
+                  },
+                  "tooltip": "Distance measure used to compare a pixel with each class mean"
                 }
               },
               "label": "Min distance"
@@ -2136,7 +2145,8 @@
                 },
                 "degree": {
                   "label": "Degree of polynomial",
-                  "placeholder": "Degree..."
+                  "placeholder": "Degree...",
+                  "tooltip": "Degree of the polynomial kernel"
                 },
                 "gamma": {
                   "label": "Gamma",
@@ -5971,6 +5981,7 @@
     },
     "report": {
       "resources": {
+        "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
         "max": "Max",
         "instanceSpending": "Instance spending",
         "storageSpending": "Storage spending",
@@ -6048,13 +6059,17 @@
         },
         "emailNotifications": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Do not receive optional email notifications",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Receive optional email notifications",
           "label": "Email notifications",
           "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)"
         },
         "manualMapRendering": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Render map layers automatically",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Render map layers only when requested",
           "label": "Manual map rendering",
           "tooltip": "Enable or disable manual map rendering"
         },
@@ -6166,11 +6181,11 @@
         "extend": "Keep it running {minutes} min",
         "extendFailed": "Could not extend the instance.",
         "extendUnknown": "Keep it running",
-        "idle": "{instance} has not been used for a while and will be stopped.",
-        "idleClosed": "{instance} was stopped to avoid unnecessary cost.",
+        "idle": "{instance} has not been used for a while and will be stopped to avoid unnecessary cost.",
+        "idleClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost.",
         "instance": "{name} ({type})",
         "instanceUnnamed": "One of your instances",
-        "runningClosed": "{instance} was stopped to avoid unnecessary cost, closing:",
+        "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"
       },
       "suspend": {

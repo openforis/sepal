@@ -396,6 +396,9 @@
       "message": "",
       "reloadNow": ""
     },
+    "loginSession": {
+      "switched": ""
+    },
     "sections": {
       "account": "",
       "app-launch-pad": "",

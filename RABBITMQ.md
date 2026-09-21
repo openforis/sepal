@@ -132,7 +132,7 @@ apiKey: null}`.
   sweep sets both to the downed client, so it never reads as a takeover).
 - **sub:** ssh-gateway — same `workerSession.*` wildcard binding as `SessionAppAssociated`.
 - **sub:** gateway (queue `gateway.sessionAppDissociated`) — drops its cached app entry, and
-  when `clientId && clientId !== requestingClientId` unicasts `appSessionDissociated
+  when `clientId && clientId !== requestingClientId` unicasts `workerSessionAppDissociated
   {appPath, sessionId}` to the owner client, whose GUI closes the app's tab (takeover close).
 
 ### `workerSession.SessionExpiryNotified` — `{username, sessionId, session}`
@@ -141,7 +141,7 @@ apiKey: null}`.
   `session` has `apiKey` stripped. Fires once per cycle — the transition is a guarded UPDATE, and
   any extension resets the cycle to `NONE`.
 - **sub:** gateway (queue `gateway.sessionExpiryNotified`) — relays to the user's browser tabs as
-  websocket event `sessionExpiryNotified` `{sessionId}`, which the GUI renders as a notification
+  websocket event `workerSessionExpiryNotified` `{sessionId}`, which the GUI renders as a notification
   carrying [Keep it running] [Dismiss]. Also reaches ssh-gateway's `workerSession.*` wildcard
   binding (menu refresh only).
 
@@ -151,7 +151,7 @@ apiKey: null}`.
   cascade) to say why. Any extension during the grace — including simply using the instance —
   cancels it.
 - **sub:** gateway (queue `gateway.sessionExpiryClosed`) — relays to the user's browser tabs as
-  websocket event `sessionExpiryClosed` `{sessionId}` (toast).
+  websocket event `workerSessionExpiryClosed` `{sessionId}` (toast).
 
 ## `workerInstance.*` — worker instance lifecycle
 
@@ -238,7 +238,8 @@ always forces delivery.
 | `moduleUp` / `moduleDown` | `{module}` |
 | `userUp` / `userDown` / `userUpdated` | `{user}` |
 | `clientUp` / `clientDown` / `clientVersionMismatch` | `{username, clientId}` |
+| `loginSessionInvalidated` | `{username, sessionId, reason}` — a login (cookie) session destroyed by logout (`logout`), a login as another user on it (`replaced`), invalidate-other-sessions (`invalidated`) or `user.UserLocked` (`locked`) ([session.js](modules/gateway/src/session.js)); the browsers that authenticated with it receive the event (with `reason`) and their sockets are closed. The id is of a session that no longer exists, and cookies are signed, so it grants nothing |
 | `subscriptionUp` / `subscriptionDown` | `{module, username, clientId, subscriptionId}` |
 | `googleAccessTokenAdded` / `googleAccessTokenUpdated` / `googleAccessTokenRemoved` | `{user}` |
 | `workerSessionClosed` | `{username, sessionId}` — emitted onto the same internal `event$` by the `workerSession.WorkerSessionClosed` subscriber (not from the WebSocket/user-store stream), so it reaches browsers and gets republished here like every other type |
-| `appSessionDissociated` | `{username, clientId, appPath, sessionId}` — emitted onto `event$` by the `workerSession.SessionAppDissociated` subscriber when another client dissociated the owner's app (takeover); unicast to that owner client, which closes the app's tab |
+| `workerSessionAppDissociated` | `{username, clientId, appPath, sessionId}` — emitted onto `event$` by the `workerSession.SessionAppDissociated` subscriber when another client dissociated the owner's app (takeover); unicast to that owner client, which closes the app's tab |

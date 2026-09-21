@@ -1,0 +1,90 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [sepal-server, master]
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{matrix.module}}
+    runs-on: ubuntu-latest
+    # The *.integration.test.js suites reach a real MySQL, since the schema, collation and
+    # transaction guarantees they cover cannot be shown against a fake. Modules without such
+    # a suite ignore the service.
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: sepal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psepal"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_USER: root
+      MYSQL_PASSWORD: sepal
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: modules/gui
+          - module: modules/gee
+            libs: lib/js/shared lib/js/ee
+          - module: modules/task
+            libs: lib/js/shared lib/js/ee
+          - module: modules/budget
+            libs: lib/js/shared
+          - module: modules/gateway
+            libs: lib/js/shared
+          - module: modules/message
+            libs: lib/js/shared
+          - module: modules/recipe
+            libs: lib/js/shared
+          - module: modules/scene-metadata
+            libs: lib/js/shared
+          - module: modules/ssh-gateway
+            libs: lib/js/shared
+          - module: modules/storage
+            libs: lib/js/shared
+          - module: modules/user
+            libs: lib/js/shared
+          - module: modules/worker
+            libs: lib/js/shared
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            ${{matrix.module}}/package-lock.json
+            lib/js/*/package-lock.json
+      - name: Install shared libraries
+        if: matrix.libs
+        run: |
+          for lib in ${{matrix.libs}}; do
+            (cd "$lib" && npm install --no-audit --no-fund)
+          done
+      - run: npm ci
+        working-directory: ${{matrix.module}}
+      # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
+      # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
+      # and the schemas the integration suites create fail to build.
+      - name: Match the SEPAL MySQL settings
+        run: mysql -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" -e 'SET GLOBAL explicit_defaults_for_timestamp = ON'
+      # vitest single-shots rather than watching because Actions sets CI
+      - run: npm test
+        working-directory: ${{matrix.module}}
+      # only gui carries its own eslint
+      - run: npm run lint --if-present
+        if: '!cancelled()'
+        working-directory: ${{matrix.module}}

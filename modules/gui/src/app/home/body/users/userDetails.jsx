@@ -4,7 +4,7 @@ import React from 'react'
 import {compose} from '~/compose'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {requestPasswordReset$} from '~/user'
+import {currentUser, requestPasswordReset$} from '~/user'
 import {Confirm} from '~/widget/confirm'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
@@ -221,6 +221,13 @@ class _UserDetails extends React.Component {
             : this.renderLockButton()
     }
 
+    // Locking ends every session of the account, so the current user must not be able to lock
+    // (and thereby be unable to unlock) their own.
+    isCurrentUser() {
+        const {userDetails: {username}} = this.props
+        return username === currentUser()?.username
+    }
+
     renderLockButton() {
         const {form} = this.props
         return (
@@ -229,7 +236,7 @@ class _UserDetails extends React.Component {
                 icon='lock'
                 tooltip={msg('user.userDetails.lock.tooltip')}
                 message={msg('user.userDetails.lock.message')}
-                disabled={form.isDirty()}
+                disabled={this.isCurrentUser() || form.isDirty()}
                 onConfirm={() => this.lock()}
             />
         )
@@ -243,7 +250,7 @@ class _UserDetails extends React.Component {
                 icon='lock-open'
                 tooltip={msg('user.userDetails.unlock.tooltip')}
                 message={msg('user.userDetails.unlock.message')}
-                disabled={email.isInvalid() || form.isDirty()}
+                disabled={this.isCurrentUser() || email.isInvalid() || form.isDirty()}
                 onConfirm={() => this.unlock()}
             />
         )

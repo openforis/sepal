@@ -17,8 +17,9 @@
 //   UNKNOWN     — nothing. An inconclusive probe is not evidence, and CloseTimedOutSessions
 //                 stays the backstop for a session that never becomes probeable.
 //
-// It never closes a session, which is why it is NOT gated on the startup grace: a restart is
-// exactly when it needs to run.
+// It never closes a session, and it runs BEFORE CloseTimedOutSessions in the same scheduled job:
+// a restart is exactly when it is needed, and the timed-out sweep must not see a PENDING row whose
+// activation this sweep is about to land.
 //
 // An instance already being provisioned in this process is skipped — provisionInstance opens by
 // deleting the instance's containers, so re-entering it would destroy the work in flight.

@@ -431,9 +431,8 @@ describe('heartbeat', () => {
         })
     })
 
-    // The worker's startup grace (workerSession/index.js STARTUP_GRACE_MS) only saves a session if
-    // a heartbeat lands during it. That requires this cache to SURVIVE the outage — a worker that
-    // is down must not look like a worker that closed the session.
+    // A worker that is down must not look like a worker that closed the session: the cache has to
+    // SURVIVE the outage so heartbeats — and any interaction they carry — resume when it is back.
     test('keeps the cache entry when the worker is unreachable', async () => {
         const fetch = jest.fn()
             .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))
@@ -545,6 +544,15 @@ describe('startApp', () => {
         const manager = createManager({fetch})
         await expect(manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', sessionId: 'ghost'}))
             .rejects.toMatchObject({statusCode: 404})
+    })
+
+    it('does not start the endpoint server — that is the GUI\'s explicit next step', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [{path: '/sandbox/jupyter/foo', label: 'Foo', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}]
+        })
+        const manager = createManager({fetch})
+        await manager.startApp({username: 'bob', endpoint: 'jupyter', appPath: '/sandbox/jupyter/foo'})
+        expect(fetch.requested('POST /sessions/session/s-1/server/jupyter')).toBe(false)
     })
 
     it('creates a session of the requested type and associates the app', async () => {
@@ -851,34 +859,5 @@ describe('ensureServerStarted', () => {
         await manager.ensureServerStarted({username: 'bob', sessionId: null, endpoint: 'shiny'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'sshd'})
         expect(fetch.keys).toEqual([])
-    })
-})
-
-describe('startApp server start', () => {
-    it('ensures the endpoint server when the app is STARTED', async () => {
-        const fetch = fetchStub({
-            'GET /sessions/app-sessions': [],
-            'GET /sessions/active': [{id: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'M6aXlarge'}],
-            'POST /sessions/session/s-2/app': {sessionId: 's-2', path: '/sandbox/shiny/foo', label: 'Foo'},
-            'POST /sessions/session/s-2/server/shiny': null
-        })
-        const manager = createManager({fetch})
-        const result = await manager.startApp({
-            username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
-        expect(result).toEqual({id: 's-2', status: 'STARTED'})
-        expect(fetch.requested('POST /sessions/session/s-2/server/shiny')).toBe(true)
-    })
-
-    it('still reports STARTED when the ensure fails - the proxy is the gate', async () => {
-        const fetch = fetchStub({
-            'GET /sessions/app-sessions': [],
-            'GET /sessions/active': [{id: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'M6aXlarge'}],
-            'POST /sessions/session/s-2/app': {sessionId: 's-2', path: '/sandbox/shiny/foo', label: 'Foo'}
-            // no server route -> 404 -> the ensure rejects
-        })
-        const manager = createManager({fetch})
-        const result = await manager.startApp({
-            username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
-        expect(result).toEqual({id: 's-2', status: 'STARTED'})
     })
 })
