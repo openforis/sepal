@@ -84,10 +84,14 @@ const assetSelection = id => ({type: 'ASSET', id})
 
 const catalogue = recipes => Object.fromEntries(recipes.map(recipe => [recipe.id, recipe]))
 
-const CCDC_BANDS = [
-    {name: 'tStart', arrayDimensions: 1},
-    {name: 'ndvi_coefs', arrayDimensions: 2}
+// CCDC is asked what it can be asked for, so names come back and CCDC's own declaration supplies their facts.
+const CCDC_BANDS = ['tStart', 'ndvi_coefs']
+
+const DECLARED_CCDC_BANDS = [
+    {name: 'tStart', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'},
+    {name: 'ndvi_coefs', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'}
 ]
+
 const sampled = observed => observed.map(({name, arrayDimensions}) => ({
     name,
     dataType: {arrayDimensions},
@@ -100,12 +104,22 @@ describe('observing a CCDC recipe directly', () => {
         const {observer} = observerOver()
         observer.observe({recipe, loadedRecipes: catalogue([recipe])})
 
-        expect(state.calls).toEqual([{recipe, includeDataTypes: true}])
+        expect(state.calls).toEqual([{recipe}])
         expect(state.calls[0].recipe.model).toEqual({})
         expect(state.calls[0].recipe.type).toBe('CCDC')
     })
 
-    it('turns typed recipe evidence into a ready description retaining dimensionality', () => {
+    // Without data types the bands API answers from what the recipe says it can be asked for, which is the
+    // question CCDC's declaration puts; the image it builds unrequested is a different, narrower answer.
+    it('asks what the recipe can be asked for, not for the image it builds unrequested', () => {
+        const recipe = ccdc()
+        const {observer} = observerOver()
+        observer.observe({recipe, loadedRecipes: catalogue([recipe])})
+
+        expect(state.calls[0].includeDataTypes).toBeUndefined()
+    })
+
+    it('gives every declared band the physical facts and policy CCDC states', () => {
         const recipe = ccdc()
         const {observer, states} = observerOver()
         observer.observe({recipe, loadedRecipes: catalogue([recipe])})
@@ -115,7 +129,7 @@ describe('observing a CCDC recipe directly', () => {
             status: 'READY',
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'ccdc-1'},
-                output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
+                output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
             }
         }))
@@ -137,7 +151,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1'], includeDataTypes: true}])
+        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}])
         expect(state.subscribed).toEqual(['RECIPE_REF:ccdc-1'])
     })
 
@@ -151,7 +165,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
             status: 'READY',
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
-                output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
+                output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
             }
         }))
@@ -262,14 +276,14 @@ describe('classifying what the session cannot answer', () => {
     // The coexistence boundary for the Retrieve migration: falling back is allowed only when a recipe type
     // has declared no output, never because a migrated recipe is invalid or its evidence is pending.
     it('reports a registered but unmigrated recipe type as invalid, observing nothing', () => {
-        const root = {id: 'mosaic-1', type: 'MOSAIC', model: {}}
+        const root = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
         expect(state.calls).toEqual([])
         expect(latest(states)).toEqual(envelope({
             status: 'INVALID',
-            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['mosaic-1']}]
+            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['radar-1']}]
         }))
     })
 })
@@ -317,7 +331,7 @@ describe('inputs are evidence, not storage', () => {
             status: 'READY',
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
-                output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
+                output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
             }
         }))

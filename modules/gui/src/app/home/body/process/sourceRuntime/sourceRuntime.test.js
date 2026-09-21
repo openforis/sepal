@@ -178,10 +178,14 @@ const sampled = bands => bands.map(({name, arrayDimensions}) => ({
     pyramidingPolicy: 'sample'
 }))
 
+// What an asset holding segments shows, and - separately - the names CCDC says it can be asked for, whose
+// physical facts its own declaration supplies.
 const CCDC_BANDS = [
     {name: 'tStart', arrayDimensions: 1},
     {name: 'ndvi_coefs', arrayDimensions: 2}
 ]
+
+const DECLARED_CCDC_BANDS = ['tStart', 'ndvi_coefs']
 
 describe('capturing the environment', () => {
     it('subscribes to the environment only when the operation is subscribed', () => {
@@ -206,7 +210,7 @@ describe('capturing the environment', () => {
         env.set(environment({catalogue: catalogue([inner])}))
         operation$.subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
     })
 
     it('gives two subscriptions independent snapshots', () => {
@@ -220,7 +224,7 @@ describe('capturing the environment', () => {
 
         env.set(environment({catalogue: catalogue([ccdc()])}))
         operation$.subscribe()
-        expect(state.bandsCalls).toEqual([{recipe: ccdc(), includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}])
         expect(env.subscribeCount()).toBe(2)
     })
 
@@ -234,7 +238,7 @@ describe('capturing the environment', () => {
 
         env.change(environment({catalogue: {}, earthEngineGeneration: 1}))
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
         expect(state.torndown).toEqual([])
     })
 
@@ -250,7 +254,7 @@ describe('capturing the environment', () => {
         const runtime = createSourceRuntime({environment$: env.environment$})
         runtime.resolveImageOutput$({recipe: current}).subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: ccdc(), includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}])
     })
 })
 
@@ -359,7 +363,7 @@ describe('the one-shot envelope', () => {
     it('emits LOADING, one terminal READY and completes, never emitting PENDING', () => {
         const {env, recipe} = maskedCcdc()
         const observed = observing({environment$: env.environment$, recipe})
-        emit('RECIPE_REF:ccdc-1', CCDC_BANDS)
+        emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
 
         expect(observed.states.map(({status}) => status)).toEqual(['LOADING', 'READY'])
         expect(observed.latest()).toEqual(envelope({
@@ -418,7 +422,7 @@ describe('the one-shot envelope', () => {
     it('tears down its own observation and environment subscription on completion', () => {
         const {env, recipe} = maskedCcdc()
         observing({environment$: env.environment$, recipe})
-        emit('RECIPE_REF:ccdc-1', CCDC_BANDS)
+        emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
 
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
         expect(env.liveCount()).toBe(0)
@@ -525,7 +529,7 @@ describe('runtime invalidation', () => {
         expect(state.bandsCalls).toEqual([])
         expect(state.torndown).toEqual([])
 
-        emit('RECIPE_REF:ccdc-1', CCDC_BANDS)
+        emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
         expect(states).toHaveLength(2)
     })
 

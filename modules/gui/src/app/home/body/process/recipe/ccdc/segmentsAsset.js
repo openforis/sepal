@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import {map} from 'rxjs'
 
+import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {uuid} from '~/uuid'
@@ -34,8 +35,6 @@ export const segmentsAssetDescription = ({bandNames = [], properties = {}} = {})
     // the one before it, not here.
     visualizations: toVisualizations(properties, bandNames).map(visualization => ({...visualization, id: uuid()}))
 })
-
-const SEGMENT_BANDS = ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb']
 
 const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
 

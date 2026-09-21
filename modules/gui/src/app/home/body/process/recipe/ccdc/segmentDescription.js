@@ -1,6 +1,7 @@
 import {of} from 'rxjs'
 
 import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
+import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 import {getAvailableBands} from '~/sources'
 
 import {getAllVisualizations} from './ccdcRecipe'
@@ -26,7 +27,7 @@ export const FITTED_MEASURES = [
     'rmse', 'magnitude'
 ]
 
-export const SEGMENT_BANDS = ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb']
+export {SEGMENT_BANDS}
 
 export const describeSegments = (ccdc, {classification} = {}) => {
     const baseBandNames = getAvailableBands({

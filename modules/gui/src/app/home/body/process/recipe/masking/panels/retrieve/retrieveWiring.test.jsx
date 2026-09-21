@@ -24,10 +24,6 @@ vi.mock('~/app/home/body/process/recipe/masking/maskingRecipe', () => ({
     submitMaskingRetrieve: args => state.commands.push(args)
 }))
 
-vi.mock('~/app/home/body/process/recipe/masking/bands', () => ({
-    getGroupedBandOptions: () => []
-}))
-
 const RECIPE = {id: 'masked-1', type: 'MASKING', model: {}, ui: {}}
 
 vi.mock('~/app/home/body/process/recipeContext', () => ({
@@ -87,12 +83,16 @@ describe('the Masking Retrieve panel', () => {
         expect('loadedRecipes' in command).toBe(false)
     })
 
-    it('gives the generic panel one cold resolution for the exact recipe snapshot', () => {
+    // What the resolution answers about is this recipe's execution configuration together with the current
+    // evidence about the source it inherits from; the title, the revision and the rest of `ui` are not part of
+    // the question.
+    it('gives the generic panel one cold resolution, identified by what the answer depends on', () => {
         mount()
 
         expect(state.panelProps.imageOutputResolution).toEqual({
-            key: RECIPE,
+            key: {model: RECIPE.model, evidence: null},
             state$: expect.objectContaining({subscribe: expect.any(Function)})
         })
+        expect(state.panelProps.imageOutputResolution.key.model).toBe(RECIPE.model)
     })
 })

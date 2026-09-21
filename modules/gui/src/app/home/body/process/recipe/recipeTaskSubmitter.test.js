@@ -232,13 +232,12 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
         expect(imageOf(submitted).pyramidingPolicy).toEqual({class: 'someFuturePolicy'})
     })
 
-    // An empty or absent selection means all bands, which is what `useAllBands` submits. Describing none of
-    // them would export every band under Earth Engine's default policy - the masked-CCDC failure again,
-    // reached through the all-bands path instead of the selected one.
+    // A legacy caller that states no selection means all bands. They are submitted by name, so what is executed
+    // is what the policies describe rather than the producer's default image.
     it.each([
         ['an empty selection', []],
         ['an absent selection', undefined]
-    ])('describes every band in the description for %s', (_name, selection) => {
+    ])('submits every described band by name for %s', (_name, selection) => {
         const submitted = submitRecipe(outerRecipe(selection), {
             imageOutputDescription: resolved({
                 bands: [band('coefs', 'sample'), band('class', 'mode')]
@@ -246,7 +245,7 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
         })
 
         expect(imageOf(submitted).pyramidingPolicy).toEqual({coefs: 'sample', class: 'mode'})
-        expect(imageOf(submitted).bands).toEqual({selection})
+        expect(imageOf(submitted).bands).toEqual({selection: ['coefs', 'class']})
     })
 
     // Dropping it would export a band with Earth Engine's default policy while reporting success, and
@@ -455,7 +454,7 @@ describe('submitRetrieveRecipeTask with resolved output and a migration fallback
 
         expect(fallbackPyramidingPolicy).toHaveBeenCalledWith(['scalar'])
         expect(imageOf(submitted).pyramidingPolicy).toEqual({array: 'sample', scalar: 'mean'})
-        expect(imageOf(submitted).bands).toEqual({selection: bands})
+        expect(imageOf(submitted).bands).toEqual({selection: ['array', 'scalar']})
     })
 
     it('uses a valid object fallback to fill a missing scalar policy', () => {

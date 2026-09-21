@@ -39,9 +39,11 @@ export const pyramidingPolicies = {
 // description still carrying the inner reference describes a different export. Identity is the type and id
 // together, because an asset and a recipe can share a string.
 //
-// Selected bands are matched by NAME. Order is schema, not correspondence. An empty or absent selection means
-// all bands. Earth Engine requires policy authority for every selected band; the direct scalar renderers
-// require verified scalar dimensionality and receive no resolved pyramiding policy.
+// Selected bands are matched by NAME. Order is schema, not correspondence. The resolved names are what is
+// executed: "all bands", and a legacy absent selection, become every available name rather than an empty
+// selection the producer would answer with its default image. Earth Engine requires policy authority for every
+// selected band; the direct scalar renderers require verified scalar dimensionality and receive no resolved
+// pyramiding policy.
 //
 // Policies are carried verbatim. A whitelist would reject a policy Earth Engine gains before SEPAL learns of
 // it, and deriving one from a band name is the coupling this contract exists to remove.
@@ -166,7 +168,7 @@ export const submitRetrieveRecipeTask = (recipe, {
             fallbackPyramidingPolicy
         )
         : undefined
-    const effectiveRetrieveOptions = imageOutputDescription && retrieveOptions.useAllBands === true
+    const effectiveRetrieveOptions = imageOutputDescription
         ? {...retrieveOptions, bands: resolvedRequirements.selectedBandNames}
         : retrieveOptions
     const effectiveBands = effectiveRetrieveOptions.bands

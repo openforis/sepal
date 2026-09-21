@@ -174,6 +174,10 @@ const LEGACY = bands => Object.fromEntries(bands.map(name => [name, name === 'ch
 const OPTIONS = {destination: 'GEE', bands: ['tStart', 'ndvi_coefs']}
 const arrayBands = names => names.map((name, index) => ({name, arrayDimensions: index % 2 + 1}))
 
+// CCDC is asked for the catalogue it declares, so its answer is names and its own declaration states that
+// every one of them is a `sample` array band.
+const declaredBands = names => names
+
 // Tolerant of an empty submission so a missing task fails as a diff rather than a TypeError.
 const taskOf = tasks => tasks[0] || {params: {}}
 const imageOf = tasks => taskOf(tasks).params.image || {}
@@ -193,7 +197,7 @@ describe('resolved submission', () => {
         const {recipe, inner, resolveImageOutput$} = maskedCcdc()
         submit({recipe, resolveImageOutput$})
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
     })
 
     it('submits nothing while the observation is in flight', () => {
@@ -203,7 +207,7 @@ describe('resolved submission', () => {
         expect(state.submitted).toEqual([])
         expect(state.events).toEqual([])
 
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart', 'ndvi_coefs']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs']))
         expect(state.submitted).toHaveLength(1)
         expect(state.events).toHaveLength(1)
     })
@@ -211,7 +215,7 @@ describe('resolved submission', () => {
     it('gives every selected CCDC band sample, under the outer Masking recipe', () => {
         const {recipe, resolveImageOutput$} = maskedCcdc()
         submit({recipe, resolveImageOutput$, fallbackPyramidingPolicy: LEGACY})
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart', 'ndvi_coefs', 'ndvi_rmse']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs', 'ndvi_rmse']))
 
         expect(imageOf(state.submitted).pyramidingPolicy).toEqual({tStart: 'sample', ndvi_coefs: 'sample'})
         expect(imageOf(state.submitted).recipe.id).toBe('masked-1')
@@ -226,28 +230,27 @@ describe('resolved submission', () => {
         const recipe = masking({id: 'masked-1', primary: recipeRef('masked-inner')})
         const {resolveImageOutput$} = runtimeWith([recipe, middle, inner])
         submit({recipe, resolveImageOutput$})
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart', 'ndvi_coefs']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs']))
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
         expect(imageOf(state.submitted).pyramidingPolicy).toEqual({tStart: 'sample', ndvi_coefs: 'sample'})
     })
 
     it.each([
         ['an empty selection', []],
         ['an absent selection', undefined]
-    ])('describes every band for %s', (_name, bands) => {
+    ])('gives every described band sample for %s', (_name, bands) => {
         const {recipe, resolveImageOutput$} = maskedCcdc()
         submit({recipe, resolveImageOutput$, retrieveOptions: {destination: 'GEE', bands}})
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart', 'ndvi_coefs']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs']))
 
         expect(imageOf(state.submitted).pyramidingPolicy).toEqual({tStart: 'sample', ndvi_coefs: 'sample'})
-        expect(imageOf(state.submitted).bands).toEqual({selection: bands})
     })
 
     it('keeps unrelated task configuration on the resolved path', () => {
         const {recipe, resolveImageOutput$} = maskedCcdc()
         submit({recipe, resolveImageOutput$, taskConfig: {dataSetType: 'OPTICAL'}})
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart', 'ndvi_coefs']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs']))
 
         expect(state.events).toEqual([{
             event: 'submit_task',
@@ -306,6 +309,90 @@ describe('resolved scalar asset migration compatibility', () => {
         expect(imageOf(state.submitted).pyramidingPolicy).toEqual({tStart: 'mean', ndvi_coefs: 'mean'})
         expect(fallbackPyramidingPolicy).toHaveBeenCalledWith(['tStart', 'ndvi_coefs'])
         expect(state.notifications).toEqual([])
+    })
+})
+
+// The mosaic's available bands include indexes its default composite does not compute, so what is submitted is
+// always the names: a selection the producer answered with its default image would silently drop them.
+describe('Masking over an optical mosaic', () => {
+    const maskedMosaic = () => {
+        const inner = {
+            id: 'mosaic-1',
+            type: 'MOSAIC',
+            model: {
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+                compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
+            }
+        }
+        const recipe = masking({primary: recipeRef(inner.id)})
+        return {recipe, ...runtimeWith([recipe, inner])}
+    }
+
+    it('submits a selected generated index without observing the mosaic', () => {
+        const {recipe, resolveImageOutput$} = maskedMosaic()
+
+        submit({
+            recipe,
+            resolveImageOutput$,
+            fallbackPyramidingPolicy: LEGACY,
+            retrieveOptions: {destination: 'GEE', bands: ['nbr', 'red'], scale: 30}
+        })
+
+        expect(state.notifications).toEqual([])
+        expect(state.bandsCalls).toEqual([])
+        expect(imageOf(state.submitted).bands).toEqual({selection: ['nbr', 'red']})
+        expect(imageOf(state.submitted).pyramidingPolicy).toEqual({nbr: 'mean', red: 'mean'})
+    })
+
+    it('submits "all bands" as every available name, generated ones included, ignoring a retained selection', () => {
+        const {recipe, resolveImageOutput$} = maskedMosaic()
+
+        submit({
+            recipe,
+            resolveImageOutput$,
+            fallbackPyramidingPolicy: LEGACY,
+            retrieveOptions: {destination: 'GEE', bands: ['red'], useAllBands: true, scale: 30}
+        })
+
+        const {bands: {selection}, pyramidingPolicy} = imageOf(state.submitted)
+        expect(selection).toEqual(expect.arrayContaining(['red', 'thermal', 'greenness', 'nbr', 'ebbi']))
+        expect(Object.keys(pyramidingPolicy)).toEqual(selection)
+    })
+
+    it('submits a legacy absent selection as every available name', () => {
+        const {recipe, resolveImageOutput$} = maskedMosaic()
+
+        submit({recipe, resolveImageOutput$, fallbackPyramidingPolicy: LEGACY, retrieveOptions: {destination: 'GEE'}})
+
+        expect(imageOf(state.submitted).bands.selection).toEqual(expect.arrayContaining(['red', 'nbr']))
+    })
+
+    it('blocks an explicitly empty manual selection', () => {
+        const {recipe, resolveImageOutput$} = maskedMosaic()
+
+        submit({
+            recipe,
+            resolveImageOutput$,
+            fallbackPyramidingPolicy: LEGACY,
+            retrieveOptions: {destination: 'GEE', bands: [], useAllBands: false, scale: 30}
+        })
+
+        expect(state.submitted).toEqual([])
+        expect(state.notifications).not.toEqual([])
+    })
+
+    it('refuses a band the contributing data sets cannot supply', () => {
+        const {recipe, resolveImageOutput$} = maskedMosaic()
+
+        submit({
+            recipe,
+            resolveImageOutput$,
+            fallbackPyramidingPolicy: LEGACY,
+            retrieveOptions: {destination: 'GEE', bands: ['redEdge1'], scale: 30}
+        })
+
+        expect(state.submitted).toEqual([])
+        expect(state.notifications).not.toEqual([])
     })
 })
 
@@ -382,7 +469,7 @@ describe('exact snapshots', () => {
         const {resolveImageOutput$} = runtimeWith([stale, inner])
         submit({recipe: current, resolveImageOutput$})
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
     })
 
     it('submits the explicit options even when the stored ones are stale', () => {
@@ -390,7 +477,7 @@ describe('exact snapshots', () => {
         const recipe = masking({primary: recipeRef('ccdc-1')})
         const {resolveImageOutput$} = runtimeWith([recipe, inner])
         submit({recipe, resolveImageOutput$, retrieveOptions: {destination: 'GEE', bands: ['tStart'], scale: 30}})
-        emit('RECIPE_REF:ccdc-1', arrayBands(['tStart']))
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart']))
 
         const task = taskOf(state.submitted)
         expect(task.operation).toBe('image.GEE')
@@ -403,8 +490,8 @@ describe('exact snapshots', () => {
 
 describe('the coexistence fallback', () => {
     const undeclared = () => {
-        const inner = {id: 'mosaic-1', type: 'MOSAIC', model: {}}
-        const recipe = masking({primary: recipeRef('mosaic-1')})
+        const inner = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
+        const recipe = masking({primary: recipeRef('radar-1')})
         const {resolveImageOutput$} = runtimeWith([recipe, inner])
         return {recipe, resolveImageOutput$}
     }
@@ -486,7 +573,7 @@ describe('fallback authority validation', () => {
         ['a string', 'sample'],
         ['an array', ['sample']]
     ])('rejects %s before resolving output', (_name, fallbackPyramidingPolicy) => {
-        const recipe = masking({primary: recipeRef('mosaic-1')})
+        const recipe = masking({primary: recipeRef('radar-1')})
         const resolveImageOutput$ = vi.fn(() => of(undeclaredOutput))
         let error
 
@@ -505,7 +592,7 @@ describe('fallback authority validation', () => {
     })
 
     it('accepts an object policy as explicit fallback authority', () => {
-        const recipe = masking({primary: recipeRef('mosaic-1')})
+        const recipe = masking({primary: recipeRef('radar-1')})
         const fallbackPyramidingPolicy = {'.default': 'sample'}
         const resolveImageOutput$ = vi.fn(() => of(undeclaredOutput))
 
@@ -705,7 +792,7 @@ describe('blocked submissions', () => {
         const {resolveImageOutput$} = runtimeWith([recipe, inner])
         submit({recipe, resolveImageOutput$, retrieveOptions: {destination: 'GEE', bands: ['tStart', 'gone']}})
 
-        expect(() => emit('RECIPE_REF:ccdc-1', arrayBands(['tStart']))).not.toThrow()
+        expect(() => emit('RECIPE_REF:ccdc-1', declaredBands(['tStart']))).not.toThrow()
         expectBlocked('process.retrieve.error.imageOutput')
         expect(state.logged.flat().some(entry => entry instanceof Error && /gone/.test(entry.message))).toBe(true)
     })

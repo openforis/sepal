@@ -169,10 +169,22 @@ const outputOperation = (key = {id: 'recipe-1'}) => {
 }
 
 const option = value => capture.destinationButtons?.options.find(option => option.value === value)
-const expectEnabled = (...values) => values.forEach(value => expect(option(value)?.disabled).not.toBe(true))
+
+// An absent option is not an enabled one: the panel withholds the whole form while it is opening, and a
+// missing control must fail this rather than pass it.
+const expectEnabled = (...values) => values.forEach(value => {
+    expect(option(value), `no ${value} destination option`).toBeDefined()
+    expect(option(value).disabled).not.toBe(true)
+})
 const expectDisabled = (...values) => values.forEach(value => expect(option(value)?.disabled).toBe(true))
 
+// The panel opens on a loading view held for a minimum, so a scenario about the ready form waits it out.
+// Revealing needs an answer as well, so this alone never opens a panel whose resolution is still pending.
+const MINIMUM_LOADING_MS = 500
+const passMinimum = () => act(() => vi.advanceTimersByTime(MINIMUM_LOADING_MS + 50))
+
 beforeEach(() => {
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
     capture.destinationButtons = null
     capture.googleAccount = true
     capture.onApply = null
@@ -181,6 +193,7 @@ beforeEach(() => {
 
 afterEach(() => {
     roots.splice(0).forEach(root => act(() => root.unmount()))
+    vi.useRealTimers()
 })
 
 describe('resolved image-output destination compatibility', () => {
@@ -189,6 +202,7 @@ describe('resolved image-output destination compatibility', () => {
         mount(baseProps({formInputs: inputs({bands: []}), imageOutputResolution: contract}))
 
         resolution.next(ready([band('first', 1, 'sample'), band('second', 2, 'sample')]))
+        passMinimum()
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
         expect(capture.destinationButtons.options.map(({value}) => value)).toEqual(['GEE', 'DRIVE', 'SEPAL'])
@@ -201,6 +215,7 @@ describe('resolved image-output destination compatibility', () => {
         mount(baseProps({formInputs: inputs({bands: []}), imageOutputResolution: contract}))
 
         resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
     })
@@ -210,6 +225,7 @@ describe('resolved image-output destination compatibility', () => {
         mount(baseProps({formInputs: inputs({bands: ['scalar']}), imageOutputResolution: contract}))
 
         resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
     })
@@ -219,6 +235,7 @@ describe('resolved image-output destination compatibility', () => {
         const scalarInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
         const mounted = mount(baseProps({formInputs: scalarInputs, imageOutputResolution: operation.contract}))
         operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
         expect(scalarInputs.destination.set).not.toHaveBeenCalled()
 
         const mixedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
@@ -238,6 +255,7 @@ describe('resolved image-output destination compatibility', () => {
         }))
 
         operation.resolution.next(ready([band('array', 1, 'sample')]))
+        passMinimum()
 
         expect(formInputs.destination.set).toHaveBeenCalledWith(null)
 
@@ -255,6 +273,7 @@ describe('resolved image-output destination compatibility', () => {
         const mixedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
         const mounted = mount(baseProps({formInputs: mixedInputs, imageOutputResolution: operation.contract}))
         operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
         expect(mixedInputs.destination.set).toHaveBeenCalledWith('GEE')
 
         const scalarInputs = inputs({bands: ['scalar'], destination: 'GEE'})
@@ -272,6 +291,7 @@ describe('resolved image-output destination compatibility', () => {
         }))
 
         operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
 
         expectEnabled('GEE')
         expectDisabled('DRIVE', 'SEPAL')
@@ -286,6 +306,7 @@ describe('resolved image-output destination compatibility', () => {
             formInputs,
             imageOutputResolution: {key: {id: 'recipe-1'}, state$: of(terminal)}
         }))
+        passMinimum()
 
         expect(formInputs.useAllBands.set).toHaveBeenCalledWith(true)
         expectEnabled('GEE')
@@ -301,6 +322,7 @@ describe('resolved image-output destination compatibility', () => {
         }))
 
         operation.resolution.next(ready([band('first', 0), band('second', 0)]))
+        passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
     })
@@ -316,6 +338,7 @@ describe('resolved image-output destination compatibility', () => {
         }))
 
         operation.resolution.next(ready(outputBands))
+        passMinimum()
 
         expectDisabled('GEE', 'DRIVE', 'SEPAL')
         expect(capture.panelButtons.invalid).toBe(true)
@@ -323,14 +346,20 @@ describe('resolved image-output destination compatibility', () => {
 })
 
 describe('resolution and submission lifecycle', () => {
-    it('disables the destination control without changing its selection until scalar output resolves', () => {
+    it('withholds the destination control without changing its selection until scalar output resolves', () => {
         const operation = outputOperation()
         const formInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
         mount(baseProps({formInputs, imageOutputResolution: operation.contract}))
 
-        expect(capture.destinationButtons.disabled).toBe(true)
+        expect(capture.destinationButtons).toBe(null)
+        expect(capture.panelButtons.invalid).toBe(true)
         expect(formInputs.destination.value).toBe('DRIVE')
         expect(formInputs.destination.set).not.toHaveBeenCalled()
+
+        // Waiting out the minimum reveals nothing on its own: the resolution has still not answered.
+        passMinimum()
+
+        expect(capture.destinationButtons).toBe(null)
 
         operation.resolution.next(ready([band('scalar', 0)]))
 
@@ -346,13 +375,14 @@ describe('resolution and submission lifecycle', () => {
             const {container} = mount(baseProps({imageOutputResolution: operation.contract}))
 
             expect(capture.panelButtons.invalid).toBe(true)
-            expect(capture.destinationButtons.disabled).toBe(true)
+            expect(capture.destinationButtons).toBe(null)
             operation.resolution.next({
                 status,
                 description: null,
                 diagnostics: [],
                 error: new Error('private transport detail')
             })
+            // Shown as soon as it arrives - the opening minimum is never waited out here.
             expect(capture.panelButtons.invalid).toBe(true)
             expect(capture.destinationButtons.disabled).toBe(true)
             expect(container.textContent).not.toContain('private transport detail')
@@ -365,6 +395,7 @@ describe('resolution and submission lifecycle', () => {
         const formInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
         const mounted = mount(baseProps({formInputs, imageOutputResolution: operation.contract, onRetrieve}))
         operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
 
         const changedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
         mounted.render(baseProps({formInputs: changedInputs, imageOutputResolution: operation.contract, onRetrieve}))
@@ -385,6 +416,7 @@ describe('resolution and submission lifecycle', () => {
             imageOutputResolution: operation.contract
         }))
         operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        passMinimum()
 
         mounted.render(baseProps({
             formInputs: inputs({bands: ['scalar', 'array']}),
@@ -408,6 +440,7 @@ describe('resolution and submission lifecycle', () => {
         }))
         const terminal = ready([band('scalar', 0)])
         operation.resolution.next(terminal)
+        passMinimum()
 
         capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
 
@@ -445,6 +478,7 @@ describe('resolution and submission lifecycle', () => {
         const mounted = mount(baseProps({formInputs, imageOutputResolution: first.contract}))
         expect(first.resolution.state.subscriptions).toBe(1)
         first.resolution.next(ready([band('scalar', 0)]))
+        passMinimum()
         expect(capture.destinationButtons.disabled).not.toBe(true)
 
         mounted.render(baseProps({formInputs, imageOutputResolution: second.contract}))

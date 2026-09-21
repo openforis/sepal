@@ -1,6 +1,6 @@
 import {defer, filter, take} from 'rxjs'
 
-import {UNDECLARED_OUTPUT} from '#sepal/recipe/output/diagnostic'
+import {isUndeclaredOutputOnly} from '#sepal/recipe/output/diagnostic'
 import {submitRetrieveRecipeTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
@@ -30,9 +30,7 @@ const validateFallbackPyramidingPolicy = policy => {
 
 // Only UNDECLARED_OUTPUT is a temporary migration gap; missing dependencies, unavailable evidence,
 // malformed output, and runtime failures must block.
-export const canUseRetrieveFallback = diagnostics =>
-    diagnostics.length > 0
-    && diagnostics.every(({code}) => code === UNDECLARED_OUTPUT)
+export const canUseRetrieveFallback = isUndeclaredOutputOnly
 
 export const submitObservedRetrieve = args => {
     const {

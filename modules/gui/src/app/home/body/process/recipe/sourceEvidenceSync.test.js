@@ -89,9 +89,9 @@ beforeEach(() => {
 })
 
 describe('observing a recipe source', () => {
-    it('asks what the loaded source recipe actually produces, with its band types', () => {
+    it('asks what the loaded source recipe actually produces, and states its band facts', () => {
         const source = ccdcRecipe('source-1')
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}, {name: 'coefs', arrayDimensions: 2}]))
+        bands$.mockReturnValue(of(['red', 'ndvi_coefs']))
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(source)
@@ -99,20 +99,20 @@ describe('observing a recipe source', () => {
 
         component.componentDidMount()
 
-        expect(bands$).toHaveBeenCalledWith({recipe: source, includeDataTypes: true})
+        expect(bands$).toHaveBeenCalledWith({recipe: source})
         expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:source-1',
             status: 'OBSERVED',
             bands: [
-                {name: 'red', dataType: {arrayDimensions: 0}},
-                {name: 'coefs', dataType: {arrayDimensions: 2}}
+                {name: 'red', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'},
+                {name: 'ndvi_coefs', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'}
             ],
             visualizations: CCDC_PRESETS
         })])
     })
 
     it('takes the presets from the source recipe, which Earth Engine knows nothing about', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(ccdcRecipe('source-1'))
@@ -131,7 +131,7 @@ describe('a style added, edited and deleted on the source', () => {
     const RATIO = {id: 'v-ratio', bands: ['ratio'], type: 'continuous', userDefined: true}
 
     const editing = () => {
-        bands$.mockReturnValue(of([{name: 'ratio', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['ratio']))
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {'source-1': withOwn([])},
@@ -192,7 +192,7 @@ describe('observing a wrapper around another wrapper', () => {
     }
 
     it('takes presets from the recipe that owns them, not the wrapper in between', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const {component, evidence} = sync(nested())
 
         component.componentDidMount()
@@ -200,16 +200,31 @@ describe('observing a wrapper around another wrapper', () => {
         expect(evidence()[0].visualizations).toEqual(CCDC_PRESETS)
     })
 
-    it('still takes bands from the immediate source, which is what it outputs', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
-        const {component} = sync(nested())
+    it('takes bands from what the immediate source resolves to, observing only what its declarations observe', () => {
+        bands$.mockReturnValue(of(['red']))
+        const {component, evidence} = sync(nested())
 
         component.componentDidMount()
 
-        expect(bands$).toHaveBeenCalledWith({
-            recipe: expect.objectContaining({id: 'inner'}),
-            includeDataTypes: true
+        expect(bands$).toHaveBeenCalledTimes(1)
+        expect(bands$).toHaveBeenCalledWith({recipe: expect.objectContaining({id: 'source-1'})})
+        expect(evidence()[0].bands).toEqual([{name: 'red', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}])
+    })
+
+    it('still observes the immediate source\'s running image when what it wraps declares no output', () => {
+        bands$.mockReturnValue(of([{name: 'VV', arrayDimensions: 0}]))
+        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('radar-1')}}
+        const records = {inner, 'radar-1': {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}}
+        const {component, evidence} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('inner')}),
+            loadRecipe$: id => of(records[id])
         })
+
+        component.componentDidMount()
+
+        expect(bands$).toHaveBeenCalledTimes(1)
+        expect(bands$).toHaveBeenCalledWith({recipe: inner, includeDataTypes: true})
+        expect(evidence()[0].bands).toEqual([{name: 'VV', dataType: {arrayDimensions: 0}}])
     })
 
     // The shared graph is the authority on cycles, and a graph that cannot run has no evidence to give.
@@ -217,7 +232,7 @@ describe('observing a wrapper around another wrapper', () => {
     // preserves what it wraps, is also this recipe's. What it copied when its own source was selected is
     // the stale snapshot, and stays out.
     it('takes styles the wrapper owns, without reviving the presets it copied', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const inner = styled({
             id: 'inner',
             type: 'MASKING',
@@ -238,7 +253,7 @@ describe('observing a wrapper around another wrapper', () => {
     })
 
     it('reports a cyclic chain as unavailable rather than following it', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const looping = {id: 'looping', type: 'MASKING', model: {imageToMask: recipeSelection('looping')}}
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('looping')}),
@@ -273,7 +288,7 @@ describe('observing an asset source', () => {
 // itself is edited.
 describe('asking again', () => {
     const observing = extra => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const source = ccdcRecipe('source-1')
         return {
             source,
@@ -297,7 +312,7 @@ describe('asking again', () => {
     })
 
     it('does not happen because this component\'s own load reached the catalogue', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const source = ccdcRecipe('source-1')
         const {component, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
@@ -312,7 +327,7 @@ describe('asking again', () => {
     })
 
     it('happens when that record is then edited', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const source = ccdcRecipe('source-1')
         const {component, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
@@ -348,7 +363,7 @@ describe('asking again', () => {
     })
 
     it('happens when a recipe deeper in the chain is edited', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
         const records = {inner, 'source-1': ccdcRecipe('source-1')}
         const {component, rerender} = sync({
@@ -452,7 +467,7 @@ describe('an answer for a source that is no longer selected', () => {
         component.componentDidMount()
 
         rerender({recipe: maskingRecipe({primary: recipeSelection('source-2')})})
-        answer.next([{name: 'stale', arrayDimensions: 0}])
+        answer.next(['stale'])
 
         expect(dispatched.filter(({value}) => value.sourceKey === 'RECIPE_REF:source-1')).toEqual([])
     })
@@ -460,7 +475,7 @@ describe('an answer for a source that is no longer selected', () => {
 
 describe('each answer published', () => {
     it('distinguishes a renewed read even when the source describes the same bands', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const source = ccdcRecipe('source-1')
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
@@ -505,7 +520,7 @@ describe('a dependency the catalogue has moved past', () => {
     const ahead = ccdcRecipe('source-1', [{id: 'v-new', bands: ['nir']}])
 
     const observing = ({openRecipeIds = []} = {}) => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const reloadRecipe$ = vi.fn(() => of({...ahead, revision: 4}))
         return {
             reloadRecipe$,
@@ -556,7 +571,7 @@ describe('a change while an observation is in flight', () => {
 
     it('keeps the pending read and publishes its answer after a UI-only edit', () => {
         const held = new Subject()
-        bands$.mockReturnValueOnce(held).mockReturnValue(of([{name: 'unexpected-restart'}]))
+        bands$.mockReturnValueOnce(held).mockReturnValue(of(['unexpected-restart']))
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: records
@@ -567,13 +582,13 @@ describe('a change while an observation is in flight', () => {
             ...records,
             'source-1': {...records['source-1'], ui: {dates: {endDate: '2022-01-01', dirty: true}}}
         }})
-        held.next([{name: 'red', arrayDimensions: 0}])
+        held.next(['red'])
         held.complete()
 
         expect(bands$).toHaveBeenCalledTimes(1)
         expect(evidence()).toEqual([expect.objectContaining({
             status: 'OBSERVED',
-            bands: [{name: 'red', dataType: {arrayDimensions: 0}}],
+            bands: [{name: 'red', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}],
             visualizations: records['source-1'].model.presets
         })])
     })
@@ -582,7 +597,7 @@ describe('a change while an observation is in flight', () => {
     // responses complete, so what is asserted is what actually reached the recipe.
     const raced = () => {
         const held = new Subject()
-        bands$.mockReturnValueOnce(held).mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValueOnce(held).mockReturnValue(of(['red']))
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: records,
@@ -591,7 +606,7 @@ describe('a change while an observation is in flight', () => {
         component.componentDidMount()
 
         rerender({loadedRecipes: edited, loadRecipe$: id => of(edited[id])})
-        held.next([{name: 'red', arrayDimensions: 0}])
+        held.next(['red'])
         held.complete()
 
         return evidence()
@@ -621,7 +636,7 @@ describe('a change while a dependency is still loading', () => {
     const edited = {...atStart, 'source-1': ccdcRecipe('source-1', [{id: 'v-new', bands: ['nir']}])}
 
     it('accepts the completed closure after a source panel changes only its draft', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const mask = new Subject()
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
@@ -647,7 +662,7 @@ describe('a change while a dependency is still loading', () => {
     // The mask's load is held open. While it is pending the terminal recipe is edited, and only then does
     // the mask arrive and let the closure complete.
     const raced = () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const mask = new Subject()
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
@@ -686,7 +701,7 @@ describe('a change while a dependency is still loading', () => {
 // A record read after the catalogue was listed is newer than the summary, not behind it.
 describe('a dependency newer than the catalogue summary', () => {
     it('is neither reloaded nor observed twice', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const reloadRecipe$ = vi.fn(() => of(ccdcRecipe('source-1')))
         const {component, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
@@ -710,7 +725,7 @@ describe('a cycle deeper in the chain', () => {
     const repaired = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
 
     it('is observed again once the deeper recipe is repaired', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: {inner: cyclic},
@@ -736,7 +751,7 @@ describe('a selected source with a missing mask', () => {
     })
 
     it('is observed again after a missing one made the source unavailable', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const {component, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: {inner: withMask(recipeSelection('gone'))},
@@ -758,7 +773,7 @@ describe('a selected source with a missing mask', () => {
 
 describe('a consumer with a missing mask', () => {
     it('still observes the selected source', () => {
-        bands$.mockReturnValue(of([{name: 'red', arrayDimensions: 0}]))
+        bands$.mockReturnValue(of(['red']))
         const {component, evidence} = sync({
             recipe: {
                 ...maskingRecipe({primary: recipeSelection('source-1')}),

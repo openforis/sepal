@@ -11,6 +11,7 @@ import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
 import tile from '#sepal/ee/tile'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
 import {getLogger} from '#sepal/log'
+import {planetSource} from '#sepal/recipe/collectionType'
 import {swallow} from '#sepal/rxjs'
 import {terminal$} from '#sepal/terminal'
 import {sequence} from '#sepal/utils/array'
@@ -168,7 +169,7 @@ const exportTiles$ = (taskId, featureCollection, {
                 ? hasRadarImagery({geometry, startDate, endDate, orbits: recipe.model.options.orbits})
                 : isOptical()
                     ? hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate})
-                    : hasPlanetImagery({sources: {...sources, source: Object.values(sources.dataSets).flat()[0]}, geometry, startDate, endDate}),
+                    : hasPlanetImagery({sources: {...sources, source: planetSource(sources.dataSets)}, geometry, startDate, endDate}),
             'check if date range has imagery'
         )
 

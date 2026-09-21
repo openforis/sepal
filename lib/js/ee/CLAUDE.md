@@ -19,7 +19,6 @@ Consuming modules use two import maps:
 |-----------|---------|
 | `optical/` | Optical satellite processing: compositing (MEDIAN/MEDOID), cloud/shadow/haze masking, BRDF correction, pan-sharpening, spectral indexes (NDVI, NDMI, EVI, NBR, etc.) |
 | `optical/imageProcess/` | Individual processors: `addIndexes`, `addCloud`, `addShadowScore`, `applySentinel2CloudScorePlus`, `applyLandsatCFMask`, `applyBRDFCorrection`, etc. |
-| `optical/dataSetSpecs.json` | Band name mappings and specs for Landsat/Sentinel-2 datasets |
 | `radar/` | SAR (Sentinel-1) processing |
 | `planet/` | Planet basemap/daily/collection integration |
 | `timeSeries/` | Multi-temporal analysis |
@@ -34,6 +33,10 @@ Consuming modules use two import maps:
 ## Non-Obvious Conventions
 
 - **`imageFactory.js`**: Central factory that creates EE images from various sources (recipes, assets, collections). This is the main entry point for image creation in both `gee` and `task` modules.
+- **Optical data sets**: band mappings, native encodings and band availability live in the shared library
+  (`#sepal/recipe/optical/dataSetSpecs`, `#sepal/recipe/optical/opticalBands`), because the output declaration and
+  the GUI answer the same questions execution does. `OPTICAL_STORED_PER_UNIT` (`#sepal/recipe/optical/encoding`)
+  is the storage multiplier the optical pipeline applies.
 - **`aoi.js`**: Area of Interest geometry handling - converts various AOI formats to EE geometries.
 - **`tile.js`**: Splits AOI into tiles for parallel processing during exports.
 - **`eeLimiterService.js`**: Rate limiting for EE API calls to avoid quota issues.

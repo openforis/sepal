@@ -111,7 +111,7 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: withLoaded(store.getState(), [inner])})
         runtime.resolveImageOutput$({recipe}).subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
     })
 
     it('applies a catalogue dispatched after creation but before subscription', () => {
@@ -123,7 +123,7 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: withLoaded(store.getState(), [inner])})
         operation$.subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner, includeDataTypes: true}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}])
     })
 
     // Deliberately conservative: a replaced credential container invalidates, because the runtime may not inspect

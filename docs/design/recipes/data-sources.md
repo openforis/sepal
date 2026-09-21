@@ -6,9 +6,9 @@ shared model. User-facing documentation belongs in the separate `sepal-doc` repo
 
 ## Current delivery focus
 
-Develop the shared [band-encoding contract](#band-encoding) for recipe outputs and exported assets. Start with
-an optical recipe -> export -> asset-read acceptance case that preserves physical-value interpretation.
-Broader presentation changes and recipe-specific algorithm improvements are separate work.
+The shared [band-encoding contract](#band-encoding) describes recipe outputs and exported assets, with the optical
+mosaic as its first producer through the image asset export and asset read. Adopting it in further producers,
+destinations and physical-value presentation is separate work, as are recipe-specific algorithm improvements.
 
 Consumer migrations should adopt the shared contracts, preserve existing behavior and fix regressions they
 introduce. Existing limitations unrelated to those contracts belong in recipe developer notes, not as implicit
@@ -88,9 +88,9 @@ compatibility evidence.
 
 ### Source descriptions and expectations
 
-A source description is observed evidence: ordered output bands, per-band export requirements, provisional generic
-band semantics, source visualizations, capabilities, revision evidence and diagnostics. It belongs to runtime state,
-not persisted recipe configuration.
+A source description is runtime evidence: the ordered bands available from the source with their export requirements
+and encoding, provisional generic band semantics, source visualizations, capabilities, revision evidence and
+diagnostics. It belongs to runtime state, not persisted recipe configuration.
 
 A consumer expectation is derived from the consuming model. Selecting band `ndvi` means that `ndvi` must still
 exist. Selecting a CCDC measure also requires the corresponding CCDC capability. Discovery updates available
@@ -100,6 +100,13 @@ Masking, Slice and Change Alerts read current descriptions rather than writing f
 A copy in a saved recipe is the fallback while nothing has been observed, never the answer once something
 has. The selection itself is durable intent and is never replaced by what it stands for: a Masking over CCDC
 remains what executes while CCDC supplies the semantics, through selection, refresh, reopening and execution.
+
+A source whose type has an image-output provider is described by resolving that
+[provider](output-products.md#declaration-and-description) over the closure the lifecycle already completed. Its
+running image is observed only where a provider asks for it, or when the source's type has no provider yet; a failed
+acquisition or an invalid description withholds the answer rather than falling back to that observation. A directly
+selected asset is read through its band evidence, encoding included. Band choices, visualization choices and preset
+filtering all read the same evidence.
 
 Live acquisition is owned by the shared source-evidence lifecycle: when to read, what a reading was based on,
 cancellation, and rejection of superseded answers. It completes the closure of the selected source, not of the
@@ -173,8 +180,19 @@ declare the output transformation needed for generic capability preservation. Ad
 updating separate switches for dependencies, bands, capabilities and runtime consumers.
 
 The intended end state is that implementing a recipe primarily means declaring its model edges, output
-transformations and capabilities, plus genuinely recipe-specific execution and UI behavior. Generic consumers must
-derive behavior from those declarations rather than require copied orchestration or per-recipe compatibility code.
+transformations and capabilities, plus its own execution and UI behavior, through small, well-defined APIs.
+Apply the [complexity and extension API guidance](../../code-design.md#complexity-and-extension-apis): shared
+infrastructure may be complex, while each recipe implementation remains minimal and focused on its differences.
+Recipe authors should not need to reconstruct graph traversal, acquisition, cancellation, refresh or submission
+mechanics. Generic consumers derive behavior from the contracts rather than require copied orchestration or
+per-recipe compatibility code.
+
+A configured collection should own its source merging, filtering, normalization and band availability, with
+execution and description reusing those rules. For example, CCDC should ask that collection which measures it
+supplies and define how those become segment outputs; it should not reconstruct optical, radar and Planet
+collection behavior. Review simplification by the responsibilities and knowledge removed from recipe code, not
+by relocation into a shared directory or reduced line count alone.
+
 During migration, recipe-specific adapters must remain thin and removable. Extract a new shared API only when a
 second consumer demonstrates the same stable repeated shape; temporary fallback policy must not become part of the
 permanent recipe API.
@@ -258,9 +276,10 @@ prerequisite only for the work that depends on it.
 ### 1. Establish runtime image output contracts
 
 The shared `IMAGE_OUTPUT` contract describes outer execution identity, ordered bands, per-band export requirements
-and evidence. The browser's one-shot runtime completes a bounded dependency closure and observes bands through
-existing execution APIs. Masking Retrieve consumes that description for band selection, destination compatibility
-and pyramiding policy, with an explicit coexistence boundary for unmigrated recipes.
+and evidence. The browser's one-shot runtime completes a bounded dependency closure, resolves providers and observes
+bands through existing execution APIs where a provider asks for them. Masking Retrieve consumes that
+description for band choices, selection, destination compatibility and pyramiding policy, submitting the selected
+names, with an explicit coexistence boundary for unmigrated recipes.
 
 Remaining work:
 
@@ -442,6 +461,11 @@ compatibility, panel defaults and execution behavior as separate responsibilitie
 
 Still to do here:
 
+- Add an **Open recipe** action to the shared recipe selector, enabled when a recipe is selected. Focus its
+  existing SEPAL tab by recipe ID, or open it in a new tab without replacing the current recipe. Preserve
+  unsaved edits in existing tabs and support references across projects. Keep navigation in a shared
+  open-or-focus operation that reuses normal recipe loading and revision initialization. Navigation may load
+  on click; displaying the button or changing the selection must add no reads to the selector's callback contract.
 - Define [classification output versus reusable classifier behavior](source-resolution.md#classification-results-and-reusable-classifiers)
   before admitting masked classifications to PyEO, CCDC, Time Series or Phenology. Decide mask semantics for the
   baseline image, training and newly classified monitoring images; never unwrap a selection and silently drop it.
@@ -455,22 +479,98 @@ Still to do here:
 
 ### Band encoding
 
-Define a shared per-band encoding contract for recipe outputs and exported assets, following the
-representation/measurement distinction in [output products](output-products.md). The initial acceptance case is
-an optical recipe whose selected bands retain the same physical interpretation after export and asset loading.
-This is shared infrastructure; it does not require changing PyEO's index algorithm.
+Each band of an image output may state what its stored values mean: `physical = stored * scale + offset`, in
+`unit` where established. The field is part of the shared output-band record described in
+[output products](output-products.md#output-band-description); it describes representation, not measurement
+identity, and it is numeric encoding, not pixel size. Absent is unknown — never 1, and never inferred from band
+names, data types or a producer's current configuration.
 
-- Producers declare `physical = stored * scale + offset` and units for their actual output bands. This scale
-  describes numeric encoding, not spatial pixel size.
-- Exporters persist the resulting encoding after selection, renaming and value conversion; asset readers expose
-  the same contract. Define how value-preserving transformations carry it and when calculations leave it unknown.
-- Convert pixels or visualization ranges at one boundary, never both. Derived quantities need their own rules;
-  phase and timing do not inherit a base band's multiplier.
-- Preserve existing assets and saved styles. Missing encoding remains unknown; do not infer it from band names,
-  data types or today's producer configuration. Settle legacy compatibility before expanding the contract.
+**Producers.** A producer states the encoding of the bands it actually emits. The optical mosaic declares a
+available bands derived from its persisted model: the data sets that actually contribute observations (the selected
+scenes' data sets when scenes are picked by hand, after alias expansion and model migration), and the indexes and
+tasseled-cap components computable from the logical bands they share. Without a contributing data set nothing can be
+asked for, whatever the composing method. The same rule is execution's `getBands$()` and the GUI's index
+availability. Normalization maps native data-set encodings onto reflectance and kilokelvin, and the composer stores
+every composited band at 10000 per unit of that quantity, so reflectance bands, indexes and tasseled-cap components
+are stored at `1e-4` (`'1'`) and thermal bands at `0.1` (`'K'`). Date bands, added after storage, and the native
+`qa` bitmask are undeclared.
+
+**Transformations.** A preserving provider carries each available band with its encoding. Any other provider states
+its own output; a band keeping its name through a calculation inherits nothing. An Asset recipe provides the bands
+its own configured image holds — its filtering, masking and compositing included — because a collection asset is
+read as its first image, which a recipe filtered to any other one does not provide. Its encoding comes from the
+asset's own metadata, never from the properties its running image carries: it keeps that encoding for an image and
+for mosaic, median, mean, minimum, maximum and mode composites, whose values are stored values or linear in them,
+while a standard-deviation composite leaves encoding unknown. A band the asset reading does not hold has no stated
+encoding to take, so it stays unknown.
+
+**Persisted form.** An Earth Engine string property of an image or an image collection holds at most 16,384 UTF-8
+bytes. A direct property update rejects a larger value; a batch export accepts one and completes with the property
+silently missing. That is the measured limit for those two metadata paths — not a universal Earth Engine property
+limit, and no safe number of properties per asset was established. A 31-band optical output takes about 1.5 kB, but
+an output with hundreds of bands does not fit one property: 293 bands take about 17 kB.
+
+An export therefore writes the encoding as a manifest plus as many parts as it needs, each within the limit:
+
+```json
+sepal_band_encoding    {"version": 2, "parts": 2}
+sepal_band_encoding_1  {"red": {"scale": 0.0001, "offset": 0, "unit": "1"}, "…": {}}
+sepal_band_encoding_2  {"…": {}}
+```
+
+Bands with unknown encoding are absent from the parts. The manifest alone says what the value is: every part it
+names must be readable, or nothing is known — a partial dictionary would otherwise read as an authoritative
+statement that the missing bands have no encoding. A property the manifest does not name is left over from an
+earlier write and is never part of the value, which is what stops an inherited or obsolete property from becoming
+authoritative. Within a complete representation a malformed entry withholds only its own band. The manifest is
+always written, with no parts when nothing is known. Version 1, which held the whole dictionary inline in
+`sepal_band_encoding`, is still read; the version is part of the durable contract, and an unsupported version is
+unknown, not guessed. At most 64 parts are written or read, so a reader can name every property it needs before it
+reads the asset.
+
+**Failure.** An encoding that cannot be represented stops the export: a band whose single entry exceeds a whole
+property, or more parts than can be read back, fails before anything is created, replaced, deleted, updated or
+submitted, naming the entry or property, its measured size and the limit. There is no truncation, no partial
+encoding and no silent downgrade to unknown. Size is measured on the string the property is set to, not on its
+characters and not on the request body. The same limit governs the property filter in front of `setAssetProperties`,
+which keeps a value Earth Engine would reject from failing the whole write; a property of another origin that
+exceeds it is still dropped there.
+
+**Export authority.** The task resolves the output description itself, from the recipe it exports: it completes the
+recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and
+the exported image come from the same records. The export names its bands, the image returned has exactly those
+bands, and encoding is written for them; an export naming none builds the producer's default image, which the
+available bands do not describe, and records no encoding. Where the only thing resolution reports is an undeclared
+output — the exported recipe's own, or that of a recipe it depends on — the export proceeds as before with unknown
+encoding. A failed read, an incomplete closure or an invalid description fails the export rather than being
+recorded as unknown.
+
+An image collection keeps its existing tiles unless it is replaced, so its encoding must describe those too.
+Resuming compares the persisted and proposed encodings as facts:
+
+| Established encodings | Outcome |
+|---|---|
+| disagree for a band: a different scale, offset or stated unit | refused before any property changes or tile is submitted; use Replace |
+| agree for the same set of bands, with the same units stated | the encoding is kept |
+| incomplete, with no contradiction (absent, empty, partial, unreadable or unsupported metadata — a missing part included — or a unit stated on one side only) | exported as explicitly unknown |
+
+**Asset reading.** Asset band evidence reads the encoding in the same evaluation as the bands and their
+dimensionality, however many properties it occupies. An asset without the property, or with an unreadable, unsupported or partially malformed one, still
+describes its bands, and each band it cannot establish is unknown; a failed evaluation remains a failed read. A
+recipe's encoding comes from its provider and is never read from its running image. An image collection is read
+through its own properties; consuming a collection requires its members to be homogeneous in the bands and encoding
+consumed, which is what lets one description stand for the whole.
+
+**Not included.** Nothing converts pixels or visualization ranges. Convert at one boundary, never both, when a
+consumer needs physical values; derived quantities need their own rules, and phase and timing do not inherit a base
+band's multiplier. Other producers, export destinations, charts and legends adopt the contract separately.
 
 ## Deliberately deferred
 
+- Consolidate [structured band selection](output-products.md#structured-band-selection-deferred) across producer
+  and preserving-wrapper Retrieve panels, using CCDC and Slice as the first cases. This includes base-band/result-type
+  relationships and a shared picker, beyond option grouping; defaults and automatic band inclusion need explicit
+  policy. Keep it separate from band encoding and catalogue correctness.
 - Decide asset date-format authority separately from source-resolution migrations: whether a stated asset format
   can be overridden, and how missing or incorrect metadata can be corrected. Preserve the current explicit
   override, including zero, until that decision defines validation and saved-recipe compatibility.

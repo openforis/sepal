@@ -41,7 +41,8 @@ let recipe implementations declare only behavior specific to that recipe.
 - Command discovery declares named direct references; the shared graph alone completes the authorized closure; the
   product resolver then evaluates declarations bottom-up through scoped child bindings.
 - Plan validity is separate from operation-specific requirement validation and runtime availability.
-- Selection domains describe valid form choices; product declarations describe configured output.
+- An image output describes the bands available from the configured recipe. An operation selects from them by
+  name, and execution produces that selection; how a requested band is built is the producer's responsibility.
 - Product compatibility follows physical and structured semantic guarantees, never modality or matching names
   alone.
 - Browser plans are preflight evidence; trusted execution rebuilds or validates commands from an authorized bundle.
@@ -106,21 +107,81 @@ not a guarantee available before the projection exists.
 
 ### Declaration and description
 
-A declaration states how a product is derived. A resolved description is the exact result for one recipe graph and
+A declaration states how a product is derived. A resolved description is the result for one recipe graph and
 runtime evidence. A declaration can provide useful guarantees before exact band names are known; a description owns
 the final ordered bands.
 
+A recipe type's image-output provider answers one consumer-facing question: which bands does this configured recipe
+provide, and what is established about them? The type owns how that answer is obtained:
+
+- the optical mosaic describes its bands from its configuration;
+- CCDC asks the producer which bands it can be asked for;
+- an Asset recipe reads its asset's description and states what its configured composite leaves of it;
+- Masking preserves its primary source's band facts;
+- CCDC Slice transforms its source's description.
+
+A provider receives narrow access - its own observation, the source filling its declared role, or every
+role-bearing source - and asks only for what its answer needs. A provider also names WHICH question about its own
+image an observation answers: the running image the producer builds when asked for nothing, with the physical facts
+of its pixels, or the catalogue the producer says it can be asked for, whose physical facts the provider then
+supplies from its own declarations. Shared resolution owns graph traversal, role
+validation, acquisition and its deduplication, cancellation, supersession, diagnostics and description validation;
+an answer that depended on anything unavailable is discarded. Declared roles and preservation effects stay data,
+because capability resolution reads them without resolving anything. A consumer cannot tell how a description was
+acquired.
+
+Observation is one way to establish availability, not its definition. An unselected running image is not
+universally the available-band catalogue: the optical mosaic's composite for an empty selection includes its
+tasseled-cap components but computes no indexes, and CCDC fits only the measures it is asked for, so the image it
+builds for an empty request holds its breakpoint measures alone. Discovering a catalogue must not mean running the
+producer once per candidate output.
+
+Where a catalogue depends on imagery rather than configuration, it is established from the imagery that actually
+contributes. A Planet Daily collection carries four bands or eight depending on its members, and its recipe states
+only what every contributing image carries: the configured assets merged and filtered exactly as execution filters
+them, then read for the schemas the Daily branch recognises, stopping short of the processing itself. Merging
+branches is not a union - a branch no imagery matched contributes nothing - and processing narrows further, since
+histogram matching returns the four bands it matches whatever it was given. No contributing imagery at all is a
+third outcome again: the collection carries nothing, rather than the bands it would have carried had there been
+imagery, so its recipe offers no measure built from it. A collection that cannot be read has an unknown schema,
+and that failure reaches the consumer rather than becoming a narrower catalogue no evidence supports.
+
+Four things stay separate:
+
+| Stage | Carries |
+| --- | --- |
+| Recipe description | available bands and their facts |
+| Operation request | selected physical output names |
+| Producer internals | the inputs needed to construct those outputs |
+| Returned image | exactly the requested output bands, in the requested order |
+
+A consumer projects the selected schema from the available band records by name, and uses those records for
+destination compatibility, export policies and encoding. "All bands" names every available band, ignoring a manual
+selection retained beside it; an explicitly empty manual selection names none and cannot run. A request that states
+no selection at all predates that option and is normalized to all bands where the consumer interprets it. A recipe's
+own configured restrictions define what downstream consumers may request.
+
+Image exports to Earth Engine assets, Drive and SEPAL hand the image factory the selected names twice: as the
+producer's usual `selection`, and as `outputBands`, the bands to return. A producer whose selection already names
+its outputs builds from it as before. One that builds from other inputs translates the request: CCDC fits the
+measures its `_coefs`, `_rmse` and `_magnitude` bands come from and returns exactly the named bands. One that would
+return more projects it, as a directly selected asset does. Masking forwards the request to its primary image and
+still applies its mask. Internal callers whose selection means something producer-specific - Slice, Change Alerts,
+the segment chart and the dedicated CCDC export, all naming CCDC measures - send no `outputBands`, and preview
+selects the bands of the visualization it draws.
+
 ### Output-band description
 
-The current ordered band record contains several classes of established fact:
+The ordered band record contains several classes of established fact:
 
 ```js
 {
-    name: 'ndvi_coefs',
+    name: 'ndvi',
     dataType: {
-        arrayDimensions: 1
+        arrayDimensions: 0
     },
-    pyramidingPolicy: 'sample'
+    pyramidingPolicy: 'mean',
+    encoding: {scale: 0.0001, offset: 0, unit: '1'}
 }
 ```
 
@@ -129,7 +190,14 @@ The current ordered band record contains several classes of established fact:
 without establishing the correct scalar policy, and temporary fallback policy remains migration configuration rather
 than observed evidence.
 
-Fields remain optional when evidence is absent. Precision, numeric range, grid, units, categorical value semantics
+`encoding` states what a stored value means: `physical = stored * scale + offset`, in `unit` where one is
+established (`'1'` for dimensionless quantities). It is numeric encoding, not pixel size. An absent encoding is
+unknown — never 1, never inferred from a name, data type or producer configuration. A producer states the encoding
+of its actual output bands; a reader of a stored asset takes it from the asset's persisted metadata; a preserving
+transformation carries it with the band. Stated encodings are compared as facts: an omitted offset is zero. See
+[Band encoding](data-sources.md#band-encoding) for the persisted form and export rules.
+
+Fields remain optional when evidence is absent. Precision, numeric range, grid, categorical value semantics
 and other candidates enter the shared contract only when a migrated consumer establishes their source, ownership and
 validation rules. Physical schema, export requirements and semantic evidence may remain fields in one compatible
 band record, but their ownership and completion rules stay distinct. The current GUI `precision` vocabulary is not
@@ -140,11 +208,11 @@ decoration rather than output schema.
 
 ### Canonical image output
 
-`IMAGE_OUTPUT` describes the recipe's default executable image product. Downstream image consumers resolve it, and
-Retrieve uses it where that consumer supports the product. The existing shared `imageOutput` declaration is this
-product. Consumer support is separate: CCDC can declare its image output while continuing to export through its
-custom task path. The declaration must not absorb map-only bands merely because the GUI registry currently asks one
-function to describe both.
+`IMAGE_OUTPUT` describes the bands available from the recipe's canonical executable image product. Downstream image
+consumers resolve it, and Retrieve uses it where that consumer supports the product. The existing shared
+`imageOutput` declaration is this product. Consumer support is separate: CCDC can declare its image output while
+continuing to export through its custom task path. The declaration must not absorb map-only bands merely because the
+GUI registry currently asks one function to describe both.
 
 ### Named map products
 
@@ -199,6 +267,78 @@ owned by `CCDC_SEGMENT_SLICE`. The property record never decides its own product
 Band labels, translated tooltips and option groups are projections of a product description plus GUI metadata. They
 may live near a recipe's UI while the physical declaration is shared. A form group cannot determine execution
 order, physical type or export policy.
+
+### Band choices in Retrieve
+
+Where a Retrieve panel owns an output resolution, that resolution is the only authority for what may be
+selected. The same resolved description supplies the choices offered, the destination-compatibility check, the
+submitted band names, the pyramiding policies and the encoding, so those cannot describe different bands. The
+band options a recipe type supplies are then presentation alone - labels and tooltips matched by name - and can
+neither add a band nor withhold one.
+
+Until that resolution settles the panel offers no choices at all, and retrieval stays disabled. The band names
+copied into a recipe when its source was selected are a snapshot nothing has verified since, and offering them
+would let a user select, and submit, a band the recipe may no longer provide. A failed acquisition or an invalid
+description is reported where the choices would be, and likewise offers nothing. That snapshot remains what a
+map layer draws from, which has no resolution of its own.
+
+A panel opens on a loading view rather than on a form that fills in as answers arrive. The view is held for a
+minimum once shown, so a resolution answering almost at once cannot make it flicker past; the minimum overlaps
+the acquisition rather than following it, so a slower read reveals the form as soon as it answers. The complete
+form appears at once when it does. A failure is shown without waiting. This applies to opening only: a panel
+already open withholds its choices and blocks retrieval while a later resolution runs, but is never hidden
+behind that view again.
+
+What identifies a resolution is everything its answer depends on, and nothing else: the recipe's own execution
+configuration, and the current evidence about the source it inherits from. The producer behind a wrapper can be
+reconfigured, or become unreadable, while the wrapper's own model is untouched, so evidence bears on whether a
+displayed answer is still valid. That evidence is runtime state rather than saved content, which is a statement
+about where it is kept, not about what it affects. A recipe record is also replaced for reasons the answer does
+not depend on - panel state, a rename, a new server revision - and restarting for those would discard a settled
+answer only to re-acquire the same one. A change to either half invalidates the displayed result at once and
+starts a new resolution, whose predecessor can no longer describe anything; a failed refresh withholds the
+choices and blocks retrieval rather than leaving the previous description in force.
+
+A saved selection survives loading and failure untouched. Once the catalogue is known, a selected name it does
+not hold is named to the user and blocks retrieval until the selection is corrected, rather than being dropped
+from the submission unannounced.
+
+A panel with no output resolution keeps offering exactly what its recipe type supplies.
+
+### Structured band selection (deferred)
+
+Sharing band selection between a producer and a preserving wrapper requires more than copying group labels. The
+current Retrieve panels expose different selection semantics:
+
+| Panel | Selection |
+| --- | --- |
+| CCDC | Base bands; execution includes their coefficients, RMSE and magnitude, the configured breakpoint measures, and shared segment bands. |
+| CCDC Slice | Base bands and result types, with segment bands selected separately; choices are limited to the configured slice's output. |
+| Masking | Individual physical band names from a flat list. |
+
+The proposed consolidation uses Slice's selection approach: choose base bands, result types and independent
+segment bands, then resolve the choices to explicit physical names. For CCDC, choosing `nir`, coefficients and
+RMSE, plus `tStart`, would select `nir_coefs`, `nir_rmse` and `tStart`. Slice has different result types because
+it produces scalar results rather than segment arrays.
+
+Ownership and constraints for this follow-up:
+
+- The producer supplies relationships between its available physical bands, such as base band and result type.
+  These describe the existing catalogue; they must not introduce a second authority for availability.
+- A shared GUI band picker projects those relationships into controls. Producer and wrapper Retrieve panels use
+  the same picker, while labels, translations and tooltips remain GUI metadata.
+- Masking carries the structure through because it preserves bands. A transformation such as Slice describes the
+  structure of its own output. Band-name suffixes alone do not establish that structure.
+- Without established structure, including for an asset with no such description, the ordinary physical-band
+  picker remains available.
+- Selection resolves to explicit output names before submission. Destination checks, pyramiding policies and
+  encoding use those same selected band records.
+- Defaults and automatic inclusion of segment or breakpoint bands are separate export-policy decisions. Sharing
+  the picker does not automatically inherit a source panel's destinations, validation or other export behavior.
+
+This work is deferred from the band-encoding and catalogue-correctness delivery. The metadata representation and
+default-selection policy remain to be designed against both CCDC and Slice. The implementation should replace
+their duplicated selection logic, rather than add recipe-type branches to Masking or delegate whole panels.
 
 ## Output guarantees and early compatibility
 
@@ -370,9 +510,9 @@ One configured command must distinguish what a form may select from what executi
 }
 ```
 
-`selectionDomain` is parameter metadata, not an executable product. Classification binding can extend it before the
-user chooses output bands. The exact product declaration is the configured projection. GUI option groups are a
-presentation projection of the selection domain and cannot become another band authority.
+`selectionDomain` is the configured command's available bands, with their facts. Classification binding can extend it
+before the user chooses output bands. `productDeclaration` is the projection of one configured selection by name. GUI
+option groups are a presentation projection of the available bands and cannot become another band authority.
 
 A discovered skeleton records scoped references explicitly:
 
@@ -478,15 +618,16 @@ and adapter identity cannot express. It is granted only by its producer or an ex
 have no inferred inheritance from modality, names or similar fields, and supported adapter options do not become
 capabilities automatically. Exact version matching is sufficient initially.
 
-Band names identify bands within one product; they do not establish cross-product semantics. A future semantic band
-description may separate physical representation from value meaning and encoding:
+Band names identify bands within one product; they do not establish cross-product semantics. Encoding describes
+representation only; matching encodings do not establish that two bands measure the same thing. A future semantic
+band description may add measurement identity beside the established encoding:
 
 ```js
 {
     name: 'ndvi',
     dataType: {/* established physical facts */},
-    measurement: {id: 'SEPAL_OPTICAL_NDVI', version: 1},
-    encoding: {scale: 0.0001, offset: 0, unit: '1'}
+    encoding: {scale: 0.0001, offset: 0, unit: '1'},
+    measurement: {id: 'SEPAL_OPTICAL_NDVI', version: 1}
 }
 ```
 
@@ -661,27 +802,31 @@ Named presentation transformations remain closed contracts. `CCDC_SEGMENT_SLICE@
 references and Slice parameters, and materializes a concrete target-product visualization. The template does not
 repeat the transformation's accepted input contract or source requirements.
 
-### Current resolver limitation
+### Current provider limitation
 
-The committed `INTRINSIC` declaration always asks `observationFor(reference)` before invoking its `derive` function.
-That is correct for the first CCDC migration, whose exact running bands were intentionally observed, but it prevents
-static and model-derived recipes from resolving synchronously. Regression, Phenology, Classification and several
-alert products can state their ordered names and scalar shape without evaluating an EE image.
+Providers answer from configuration, from an observation of their running image, from the catalogue their producer
+declares, or from their sources' descriptions.
+Regression, Phenology, Classification and several alert products could describe their ordered names and scalar shape
+from configuration, but have no provider yet. No provider combines declared constraints with an observation that
+supplies exact bands. The eventual contract must support all three outcomes:
 
-The eventual declaration contract must distinguish facts derivable from the recipe graph from facts requiring
-observation. It must support all three outcomes:
-
-1. an exact declared description requiring no observation;
+1. an exact description from configuration requiring no observation;
 2. useful declared constraints followed by observation that supplies exact bands;
 3. an entirely observed description for assets and arbitrary runtime output.
 
-Do not implement this by passing an optional observation into one callback and letting each recipe guess when it is
-complete. Declaration validation and the resolver must make the evidence requirement explicit. An observation that
-contradicts a declared invariant is a controlled invalid result, not a reason to silently prefer either side.
+Do not implement the second by letting each provider guess when an optional observation is complete. The evidence
+requirement must stay explicit in what a provider asks for. An observation that contradicts a declared invariant is a
+controlled invalid result, not a reason to silently prefer either side.
 
-The current resolved contract retains ordered names, physical array dimensionality and optional export policy.
-Expanding it to precision, range, grid or semantics is a separate contract change backed by consumers; it is not
-required for the scalar/array destination fast path.
+The current resolved contract retains, per band, ordered names, physical array dimensionality, optional export
+policy and optional [encoding](data-sources.md#band-encoding). Expanding it to precision, range, grid or semantics
+is a separate contract change backed by consumers; it is not required for the scalar/array destination fast path.
+
+### Current execution-request limitation
+
+Only a producer that translates or projects `outputBands`, or whose selection already names its outputs, returns
+exactly the requested bands. The export adapters supply `outputBands` alongside the selection for every recipe,
+declared or not; the limitation is whether the producer honors it.
 
 ## Preliminary recipe audit
 
@@ -759,7 +904,9 @@ semantics.
 Collection and algorithm implementations independently select, add and rename bands in Earth Engine. A shared pure
 declaration can own deterministic model-derived output, but Earth Engine remains the execution boundary. Each
 migrated type needs a focused comparison against the image returned by its real `getImage$()` path, evaluating
-`bandNames()` and `bandTypes()` as the oracle. Comparing a declaration only with `getBands$()` is insufficient because
+`bandNames()` and `bandTypes()` of the image returned for representative selections as the oracle; where a producer
+computes bands only on request, the image built for an empty selection is not. Comparing a declaration only with
+`getBands$()` is insufficient because
 that helper is one of the independently maintained projections already shown to drift. Runtime observation remains
 necessary where the EE graph determines the answer.
 
@@ -849,7 +996,7 @@ The following illustrates responsibilities only. Names and nesting are not accep
 defineRecipeType({
     type: 'EXAMPLE',
     directSources,
-    imageOutput: preservingTransformation({role: PRIMARY_IMAGE}),
+    imageOutput: preservingProvider({role: PRIMARY_IMAGE}),
     products: {
         annualMosaic: derivedProduct({/* declaration */})
     },
@@ -937,7 +1084,7 @@ Add the closed temporal composer and representative hard cases:
 
 ### Phase E: migrate incrementally
 
-Begin with one static intrinsic output, one preserving transformation and one collection consumer. Keep old
+Begin with one output described from configuration, one preserving provider and one collection consumer. Keep old
 `bands.js` and `visualizations.js` exports as thin projections until their callers migrate. Do not migrate all recipe
 types in one commit, persist resolved descriptions or plans into recipe JSON, or add a generic matching registry in
 anticipation of future adapters.
@@ -961,7 +1108,7 @@ validation and direct visualization applicability.
 Boundary tests prove:
 
 - GUI adapters preserve existing grouped options and applicable presets during migration;
-- EE representative outputs agree with declared names and array dimensionality;
+- EE outputs for representative selections agree with declared names and array dimensionality;
 - map-only products never enter canonical Retrieve output;
 - copied legacy snapshots cannot override current resolved evidence;
 - malformed presentation remains distinct from an unsupported product;

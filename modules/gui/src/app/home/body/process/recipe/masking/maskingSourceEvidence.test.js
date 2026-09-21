@@ -14,7 +14,7 @@ vi.mock('../../recipeTypeRegistry', async () => {
     return {getRecipeType: () => ({getAvailableBands, getPreSetVisualizations})}
 })
 
-const {getAvailableBands, getGroupedBandOptions} = await import('./bands')
+const {getAvailableBands} = await import('./bands')
 const {getPreSetVisualizations} = await import('./visualizations')
 const {getAllVisualizations} = await import('../visualizations')
 
@@ -60,13 +60,6 @@ describe('a source that has dropped a band since the recipe was saved', () => {
         expect(getPreSetVisualizations(recipe)).toEqual([RED])
     })
 
-    it('removes it from the Retrieve band options too, so both agree', () => {
-        expect(getGroupedBandOptions(recipe)).toEqual([[
-            {value: 'red', label: 'red'},
-            {value: 'nir', label: 'nir'}
-        ]])
-    })
-
     it('keeps offering the removed band while nothing has been observed', () => {
         expect(Object.keys(getAvailableBands(maskingRecipe()))).toEqual(['red', 'nir', 'ndvi'])
     })
@@ -77,7 +70,6 @@ describe('a source that has dropped a band since the recipe was saved', () => {
         })
 
         expect(getAvailableBands(unavailable)).toEqual({})
-        expect(getGroupedBandOptions(unavailable)).toEqual([[]])
     })
 })
 

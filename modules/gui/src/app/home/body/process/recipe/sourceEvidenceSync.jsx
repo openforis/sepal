@@ -364,12 +364,13 @@ const sameSelections = (current, basis) =>
 const moved = (before, after) =>
     before !== undefined && after !== undefined && before !== after
 
-// Observed band descriptions as evidence carries them: a name, and dimensionality where it was reported.
+// Observed band descriptions as evidence carries them: a name, with dimensionality and encoding where reported.
 export const observedBands = bands => (bands || []).map(band => _.isString(band)
     ? {name: band}
     : {
         name: band.name,
-        ...(Number.isInteger(band.arrayDimensions) && {dataType: {arrayDimensions: band.arrayDimensions}})
+        ...(Number.isInteger(band.arrayDimensions) && {dataType: {arrayDimensions: band.arrayDimensions}}),
+        ...(band.encoding && {encoding: band.encoding})
     })
 
 export const SourceEvidenceSync = compose(

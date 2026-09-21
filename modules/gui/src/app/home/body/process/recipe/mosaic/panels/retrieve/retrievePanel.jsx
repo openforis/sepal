@@ -12,15 +12,21 @@ import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {isEqual} from '~/hash'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
 import {AssetDestination} from '~/widget/assetDestination'
 import {Button} from '~/widget/button'
+import {Buttons} from '~/widget/buttons'
 import {Form} from '~/widget/form'
+import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
+import {NoData} from '~/widget/noData'
 import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
+import {Widget} from '~/widget/widget'
 import {WorkspaceDestination} from '~/widget/workspaceDestination'
 
 import styles from './retrievePanel.module.css'
@@ -68,6 +74,14 @@ const fields = {
     crsTransform: new Form.Field()
 }
 
+const DECLARED_CHOICES = 'DECLARED_CHOICES'
+const LOADING_CHOICES = 'LOADING_CHOICES'
+const UNRESOLVED_CHOICES = 'UNRESOLVED_CHOICES'
+const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
+
+// A resolution that answers almost at once would otherwise replace the opening view before it could be read.
+const MINIMUM_LOADING_MS = 500
+
 const constraints = {
     fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
         .skip(({destination}) => destination !== 'SEPAL')
@@ -94,10 +108,14 @@ class _MosaicRetrievePanel extends React.Component {
             destinationValidationPending: this.requiresDestinationValidation(props),
             destinationReconciliation: null,
             imageOutputResolutionKey: props.imageOutputResolution?.key,
-            imageOutputTerminal: null
+            imageOutputTerminal: null,
+            initialLoadingDone: false
         }
         this.imageOutputOperation = null
+        this.minimumLoadingElapsed = false
+        this.initialLoadingTimer = null
         this.mounted = false
+        this.onBandsChange = this.onBandsChange.bind(this)
         this.onDestinationChange = this.onDestinationChange.bind(this)
         this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
@@ -105,7 +123,8 @@ class _MosaicRetrievePanel extends React.Component {
     render() {
         const {className, form} = this.props
         const {more, destinationValidationPending, destinationReconciliation} = this.state
-        const invalid = destinationValidationPending
+        const invalid = this.isInitialLoading()
+            || destinationValidationPending
             || Boolean(destinationReconciliation)
             || this.resolvedOutputBlocksSubmission()
             || form.isInvalid()
@@ -139,6 +158,9 @@ class _MosaicRetrievePanel extends React.Component {
     renderContent() {
         const {allBands, allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
         const {more} = this.state
+        if (this.isInitialLoading()) {
+            return this.renderLoading()
+        }
         return (
             <Layout>
                 {allBands ? null : this.renderBandOptions()}
@@ -157,6 +179,20 @@ class _MosaicRetrievePanel extends React.Component {
                     {more ? this.renderCrsTransform() : null}
                 </Layout>
             </Layout>
+        )
+    }
+
+    renderLoading() {
+        return (
+            <NoData
+                alignment='left'
+                message={(
+                    <div>
+                        <Icon name='spinner'/>
+                        {' ' + msg('process.retrieve.form.bands.loading')}
+                    </div>
+                )}
+            />
         )
     }
 
@@ -352,23 +388,74 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderBandOptions() {
-        const {bandOptions, single, inputs: {bands}} = this.props
-        if (!bandOptions?.length) {
+        const {status, choices} = this.bandChoices()
+        if (status === LOADING_CHOICES) {
             return null
-        } else {
-            const options = bandOptions
-                .filter(group => group.length)
-                .map(group => ({options: group}))
-            return (
-                <Form.Buttons
+        }
+        if (status === UNRESOLVED_CHOICES) {
+            return this.renderBandsMessage(msg('process.retrieve.error.imageOutput'), 'triangle-exclamation')
+        }
+        if (!choices?.length) {
+            return null
+        }
+        const options = choices
+            .filter(group => group.length)
+            .map(group => ({options: group}))
+        return status === DECLARED_CHOICES
+            ? this.renderDeclaredBandOptions(options)
+            : this.renderResolvedBandOptions(options)
+    }
+
+    // What a recipe type supplies is the whole truth here, so the control is free to drop a selected name its
+    // options no longer carry.
+    renderDeclaredBandOptions(options) {
+        const {single, inputs: {bands}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.bands.label')}
+                input={bands}
+                multiple={!single}
+                options={options}
+                framed
+            />
+        )
+    }
+
+    // The control is given the selection rather than the form field, because a name the catalogue does not
+    // hold has to SURVIVE: it is what the warning names and what blocks retrieval, and dropping it would
+    // submit a different export than the one the user saved. Only an edit of the selection removes it.
+    renderResolvedBandOptions(options) {
+        const {single, inputs: {bands}} = this.props
+        const missing = this.missingSelection()
+        return (
+            <Layout spacing='compact'>
+                <Buttons
                     label={msg('process.retrieve.form.bands.label')}
-                    input={bands}
+                    selected={bands.value}
                     multiple={!single}
                     options={options}
+                    onChange={this.onBandsChange}
                     framed
                 />
-            )
-        }
+                {missing.length
+                    ? (
+                        <Message
+                            type='warning'
+                            icon='triangle-exclamation'
+                            text={msg('process.retrieve.form.bands.unavailable', {bands: missing.join(', ')})}
+                        />
+                    )
+                    : null}
+            </Layout>
+        )
+    }
+
+    renderBandsMessage(text, icon) {
+        return (
+            <Widget label={msg('process.retrieve.form.bands.label')} framed>
+                <Message type='info' icon={icon} text={text}/>
+            </Widget>
+        )
     }
 
     renderScale() {
@@ -424,11 +511,12 @@ class _MosaicRetrievePanel extends React.Component {
             filenamePrefix.set(recipeName)
         }
         this.startImageOutputResolution()
+        this.startMinimumLoading()
         this.update()
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.imageOutputResolution?.key !== this.props.imageOutputResolution?.key) {
+        if (!isEqual(prevProps.imageOutputResolution?.key, this.props.imageOutputResolution?.key)) {
             this.startImageOutputResolution()
         }
         if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
@@ -441,6 +529,18 @@ class _MosaicRetrievePanel extends React.Component {
     componentWillUnmount() {
         this.mounted = false
         this.stopImageOutputResolution()
+        clearTimeout(this.initialLoadingTimer)
+        this.initialLoadingTimer = null
+    }
+
+    startMinimumLoading() {
+        this.initialLoadingTimer = setTimeout(() => {
+            this.initialLoadingTimer = null
+            this.minimumLoadingElapsed = true
+            if (this.mounted) {
+                this.settleInitialLoading(this.getImageOutputTerminal())
+            }
+        }, MINIMUM_LOADING_MS)
     }
 
     update() {
@@ -497,7 +597,7 @@ class _MosaicRetrievePanel extends React.Component {
 
         const operation = {key: contract.key, sawTerminal: false, subscription: null}
         this.imageOutputOperation = operation
-        if (this.state.imageOutputResolutionKey !== contract.key || this.state.imageOutputTerminal) {
+        if (!isEqual(this.state.imageOutputResolutionKey, contract.key) || this.state.imageOutputTerminal) {
             this.setState({
                 destinationReconciliation: null,
                 imageOutputResolutionKey: contract.key,
@@ -511,7 +611,10 @@ class _MosaicRetrievePanel extends React.Component {
                 && ['READY', 'UNAVAILABLE', 'INVALID'].includes(terminal?.status)
             ) {
                 operation.sawTerminal = true
-                this.setState({imageOutputTerminal: terminal}, () => this.reconcileDestination())
+                this.setState({imageOutputTerminal: terminal}, () => {
+                    this.reconcileDestination()
+                    this.settleInitialLoading(terminal)
+                })
             }
         }
 
@@ -555,12 +658,53 @@ class _MosaicRetrievePanel extends React.Component {
         operation?.subscription?.unsubscribe()
     }
 
+    // The opening view stands until the resolution has answered AND it has been up long enough to read. A
+    // failure is shown as soon as it arrives, and once the panel is open a later resolution never hides it
+    // again.
+    settleInitialLoading(terminal) {
+        if (this.state.initialLoadingDone || !terminal) {
+            return
+        }
+        if (terminal.status !== 'READY' || this.minimumLoadingElapsed) {
+            this.setState({initialLoadingDone: true})
+        }
+    }
+
+    isInitialLoading() {
+        return Boolean(this.props.imageOutputResolution) && !this.state.initialLoadingDone
+    }
+
     getImageOutputTerminal() {
         const {imageOutputResolution} = this.props
         const {imageOutputResolutionKey, imageOutputTerminal} = this.state
-        return imageOutputResolution && imageOutputResolution.key === imageOutputResolutionKey
+        return imageOutputResolution && isEqual(imageOutputResolution.key, imageOutputResolutionKey)
             ? imageOutputTerminal
             : null
+    }
+
+    // Where this panel owns an output resolution, that resolution is the only authority for what may be
+    // selected, so the choices offered and the description validated and submitted cannot disagree. The
+    // options a recipe type supplies then carry presentation alone, matched by name; they neither add a band
+    // nor withhold one. A panel with no resolution keeps offering exactly what its type supplies.
+    bandChoices() {
+        const {bandOptions, imageOutputResolution} = this.props
+        if (!imageOutputResolution) {
+            return {status: DECLARED_CHOICES, choices: bandOptions}
+        }
+        const terminal = this.getImageOutputTerminal()
+        if (!terminal) {
+            return {status: LOADING_CHOICES}
+        }
+        if (terminal.status !== 'READY') {
+            return {status: UNRESOLVED_CHOICES}
+        }
+        const presentation = new Map((bandOptions || []).flat().map(option => [option.value, option]))
+        return {
+            status: RESOLVED_CHOICES,
+            choices: [terminal.description.output.bands.map(({name}) =>
+                ({label: name, ...presentation.get(name), value: name})
+            )]
+        }
     }
 
     getPhysicalDestinationCompatibility() {
@@ -591,6 +735,32 @@ class _MosaicRetrievePanel extends React.Component {
         return terminal?.status !== 'READY'
             || compatibility?.selectionStatus !== VALID_SELECTION
             || compatibility.destinations[destination] === false
+    }
+
+    // Read from the selection that is actually held, against the catalogue as it stands now - so restoring a
+    // band restores the selection with it, and a resolution of something else cannot make a missing band
+    // look present. Retrieval is already blocked by destination compatibility, which reads the same names.
+    missingSelection() {
+        const available = this.availableBandNames()
+        return available
+            ? (this.props.inputs.bands.value || []).filter(name => !available.has(name))
+            : []
+    }
+
+    availableBandNames() {
+        const terminal = this.getImageOutputTerminal()
+        return terminal?.status === 'READY'
+            ? new Set(terminal.description.output.bands.map(({name}) => name))
+            : null
+    }
+
+    // The control offers only bands the catalogue holds, so a selected name it does not hold has no button to
+    // clear it with. Editing the selection is the correction: the edit is kept and the unavailable names go
+    // with it - after they have been named, and after they have blocked retrieval, never in silence.
+    onBandsChange(selection) {
+        const {inputs: {bands}} = this.props
+        const available = this.availableBandNames()
+        bands.set(available ? selection.filter(name => available.has(name)) : selection)
     }
 
     reconcileDestination() {

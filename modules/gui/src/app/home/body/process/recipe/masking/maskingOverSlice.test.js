@@ -113,7 +113,18 @@ const sync = ({recipe, loadedRecipes}) => {
 beforeEach(() => {
     bands$.mockReset()
     assetMetadata$.mockReset()
-    bands$.mockReturnValue(of([{name: 'ndvi', arrayDimensions: 0}, {name: 'ndvi_rmse', arrayDimensions: 0}]))
+    // CCDC answers with the names it says it can be asked for; an asset is read as the image it stores.
+    bands$.mockImplementation(({asset}) => of(asset
+        ? [
+            ...['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].map(name => ({name, arrayDimensions: 1})),
+            {name: 'ndvi_coefs', arrayDimensions: 2},
+            {name: 'ndvi_rmse', arrayDimensions: 1},
+            {name: 'ndvi_magnitude', arrayDimensions: 1}
+        ]
+        : [
+            'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
+            'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'
+        ]))
 })
 
 describe('masking a saved slice that has never been opened', () => {
@@ -122,16 +133,17 @@ describe('masking a saved slice that has never been opened', () => {
         loadedRecipes: {'slice-1': savedSlice(), 'ccdc-1': ccdc()}
     })
 
-    it('takes the bands from the slice, whose image is what it outputs', () => {
+    it('takes the scalar bands the slice declares over the segments of its CCDC', () => {
         const {component, evidence} = open()
 
         component.componentDidMount()
 
-        expect(bands$).toHaveBeenCalledWith({
-            recipe: expect.objectContaining({id: 'slice-1'}),
-            includeDataTypes: true
-        })
-        expect(evidence()[0].bands.map(({name}) => name)).toEqual(['ndvi', 'ndvi_rmse'])
+        expect(bands$).not.toHaveBeenCalledWith(expect.objectContaining({
+            recipe: expect.objectContaining({id: 'slice-1'})
+        }))
+        const bands = evidence()[0].bands
+        expect(bands.map(({name}) => name)).toEqual(expect.arrayContaining(['ndvi', 'ndvi_phase_1', 'tStart']))
+        expect(bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
     })
 
     // The presets are the slice's, materialized against what the slice produces - which needs the CCDC

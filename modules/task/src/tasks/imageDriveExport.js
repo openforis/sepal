@@ -1,6 +1,7 @@
 import {forkJoin, switchMap} from 'rxjs'
 
 import ImageFactory from '#sepal/ee/imageFactory'
+import {withOutputBands} from '#sepal/ee/outputBands'
 import {getCurrentContext$} from '#task/jobs/service/context'
 
 import {exportImageToDrive$} from '../jobs/export/toDrive.js'
@@ -17,7 +18,7 @@ export const submit$ = (taskId, {image: {recipe, bands, driveFolder: folder, ...
 }
 
 const export$ = (taskId, {description, recipe, bands, scale, folder, ...retrieveOptions}) => {
-    const factory = ImageFactory(recipe, bands)
+    const factory = ImageFactory(recipe, withOutputBands(bands))
     return forkJoin({
         image: factory.getImage$(),
         geometry: factory.getGeometry$()

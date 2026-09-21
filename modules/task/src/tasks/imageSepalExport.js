@@ -2,6 +2,7 @@ import moment from 'moment'
 import {concat, forkJoin, switchMap} from 'rxjs'
 
 import ImageFactory from '#sepal/ee/imageFactory'
+import {withOutputBands} from '#sepal/ee/outputBands'
 import {createVrt$, setBandNames$} from '#sepal/gdal'
 import {getCurrentContext$} from '#task/jobs/service/context'
 import {mkdir$} from '#task/rxjs/fileSystem'
@@ -32,7 +33,7 @@ export const submit$ = (taskId, {image: {recipe, workspacePath, bands, filenameP
 }
 
 const export$ = (taskId, {description, exportPrefix, recipe, bands, scale, ...retrieveOptions}) => {
-    const factory = ImageFactory(recipe, bands)
+    const factory = ImageFactory(recipe, withOutputBands(bands))
     return forkJoin({
         image: factory.getImage$(),
         geometry: factory.getGeometry$()

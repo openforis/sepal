@@ -4,15 +4,18 @@ import {sourceEvidenceOr} from '../sourceEvidence'
 // and nothing about the schema. Current evidence answers that whenever it exists; the band names copied into
 // the model when the source was selected are only what remains when it does not.
 //
-// Observed dimensionality rides along, because deciding what may be drawn needs it. It never removes a band:
-// an array band stays here, and stays exportable, whatever a renderer can do with it.
+// What a snapshot is good enough for is DRAWING: a layer rendered inside another recipe's map has nothing
+// observing, and showing it as it was last seen is better than showing nothing. Retrieve does not read this -
+// it owns a resolution of its own, and exports what that resolution describes.
+//
+// Dimensionality and encoding ride along, because deciding what may be drawn needs the first. Neither removes a
+// band: an array band stays here, and stays exportable, whatever a renderer can do with it.
 export const getAvailableBands = recipe => {
     const {bands} = sourceEvidenceOr(recipe, recipe.model?.imageToMask)
     const availableBands = {}
-    bands.forEach(({name, dataType}) => availableBands[name] = dataType ? {dataType} : {})
+    bands.forEach(({name, dataType, encoding}) => availableBands[name] = {
+        ...(dataType && {dataType}),
+        ...(encoding && {encoding})
+    })
     return availableBands
 }
-
-export const getGroupedBandOptions = recipe => [
-    Object.keys(getAvailableBands(recipe)).map(band => ({value: band, label: band}))
-]

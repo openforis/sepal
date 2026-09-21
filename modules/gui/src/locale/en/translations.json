@@ -1632,7 +1632,7 @@
         "assetLoadError": "Failed to read the classification asset metadata: {error}",
         "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
-        "pending": "Reading the selected classification\u2026",
+        "pending": "Reading the selected classification…",
         "unavailable": "The selected classification could not be read. Choose it again to retry.",
         "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
       }
@@ -4868,7 +4868,9 @@
         },
         "bands": {
           "atLeastOne": "At least one band must be retrieved",
-          "label": "Bands to retrieve"
+          "label": "Bands to retrieve",
+          "loading": "Loading available bands...",
+          "unavailable": "These bands are no longer available from this recipe: {bands}. Select from the bands offered above."
         },
         "crs": {
           "label": "CRS",
@@ -5685,6 +5687,8 @@
         "asset": {
           "createFolder": "Create asset folder {assetId}",
           "delete": "Delete asset {assetId}",
+          "encodingConflict": "The image collection {assetId} already holds images stored with a different band encoding. Export with the Replace strategy instead of Resume.",
+          "encodingTooLarge": "The band encoding of {assetId} cannot be stored as Earth Engine asset metadata: {reason}",
           "prepareImageCollection": "Prepare image collection {assetId}",
           "startExport": "Start export of {tileCount} tiles",
           "sharing": "Sharing asset {assetId}",
