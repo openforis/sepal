@@ -168,10 +168,14 @@ class _RecipeList extends React.Component {
     drop() {
         const {dropTarget} = this.state
         const items = this.draggedItems()
+        const fromSelection = !!this.dragged && this.isSelected(this.dragged.id)
         this.dragged = null
         this.setState({dropTarget: null})
         if (items.length && dropTarget) {
             this.moveItems(items, dropTarget.folderId)
+            if (fromSelection) {
+                this.leaveEdit()
+            }
         }
     }
 
@@ -395,6 +399,12 @@ class _RecipeList extends React.Component {
 
     toggleEdit() {
         this.setState(({edit}) => ({edit: !edit}))
+        this.unselectAll()
+    }
+
+    // An action that used the selection leaves nothing to work on, so the mode it needed ends with it.
+    leaveEdit() {
+        this.setState({edit: false})
         this.unselectAll()
     }
 
@@ -721,6 +731,7 @@ class _RecipeList extends React.Component {
     moveSelected(folderId) {
         this.moveItems(this.getConfirmedItems().map(asDragged), folderId)
         this.setMove(false)
+        this.leaveEdit()
     }
 
     getConfirmedItems() {
@@ -749,6 +760,7 @@ class _RecipeList extends React.Component {
             })
         }
         this.setRemove(false)
+        this.leaveEdit()
     }
 
     // One request at a time: each answer carries the whole folder list, and the last one must be the
