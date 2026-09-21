@@ -11,6 +11,7 @@ import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {folderDescription} from './folderItem'
+import {PATH_SEPARATOR} from './recipeListConstants'
 import {folderCounts, folderPathLabel} from './recipeTree'
 
 const mapStateToProps = () => ({
@@ -48,17 +49,12 @@ class _RecipeListConfirm extends React.Component {
         )
     }
 
-    // The same shape as the row in the list: the name first, then where it lives and what it is.
     renderRecipe(recipe) {
         return (
             <ListItem key={recipe.id}>
                 <CrudItem
-                    icon='globe'
-                    iconSize='lg'
-                    title={recipe.name}
-                    description={[this.getFolderLabel(recipe), this.getRecipeTypeName(recipe.type)]
-                        .filter(part => part)
-                        .join(' · ')}
+                    title={this.getRecipeTypeName(recipe.type)}
+                    description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
                     {...this.selection(recipe.id)}
                 />
@@ -83,9 +79,11 @@ class _RecipeListConfirm extends React.Component {
         return !!disabledIds && disabledIds.includes(id)
     }
 
-    getFolderLabel(recipe) {
+    // The whole path, because two folders of the same name can sit in different branches.
+    getRecipePath(recipe) {
         const {folders} = this.props
-        return folderPathLabel(folders || [], recipe.folderId) || msg('process.recipeList.root')
+        const path = folderPathLabel(folders || [], recipe.folderId) || msg('process.recipeList.root')
+        return [path, recipe.name].join(PATH_SEPARATOR)
     }
 
     getRecipeTypeName(type) {

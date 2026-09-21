@@ -57,16 +57,16 @@ afterEach(() => {
 })
 
 describe('RecipeListConfirm', () => {
-    it('names the recipe first, and says where it lives and what it is', () => {
+    it('names the type, and gives the whole path down to the recipe', () => {
         mount({items: [recipeItem(IN_2024)]})
 
-        expect(itemFor('nairobi_mosaic').description).toBe('Kenya / 2024 · MOSAIC recipe')
+        expect(itemFor('MOSAIC recipe').description).toBe('Kenya / 2024 / nairobi_mosaic')
     })
 
     it('calls the root Home for a recipe that is in no folder', () => {
         mount({items: [recipeItem(AT_ROOT)]})
 
-        expect(itemFor('loose_draft').description).toContain('process.recipeList.root')
+        expect(itemFor('MOSAIC recipe').description).toBe('process.recipeList.root / loose_draft')
     })
 
     it('shows a folder with what it holds', () => {
@@ -87,9 +87,9 @@ describe('RecipeListConfirm', () => {
         const onSelect = vi.fn()
         mount({items: [recipeItem(AT_ROOT)], isSelected: () => true, onSelect})
 
-        itemFor('loose_draft').onSelect()
+        itemFor('MOSAIC recipe').onSelect()
 
-        expect(itemFor('loose_draft').selected).toBe(true)
+        expect(itemFor('MOSAIC recipe').selected).toBe(true)
         expect(onSelect).toHaveBeenCalledWith(AT_ROOT.id)
     })
 })
