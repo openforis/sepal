@@ -5176,7 +5176,8 @@
       "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
       "title": "Détails de l'utilisateur",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -5307,7 +5308,15 @@
         }
       }
     },
-    "page": "Page {pageNumber} de {pageCount}"
+    "page": "Page {pageNumber} de {pageCount}",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {

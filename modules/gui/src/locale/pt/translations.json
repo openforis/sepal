@@ -5176,7 +5176,8 @@
       "switchingToSEPALGoogleAccount": "",
       "title": "",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -5303,7 +5304,15 @@
         }
       }
     },
-    "page": ""
+    "page": "",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {

@@ -23,6 +23,7 @@ const isUniqueUser = (id, check) => !(select('users.users') || []).find(user => 
 
 const fields = {
     id: new Form.Field(),
+    revision: new Form.Field(),
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
         .username('user.userDetails.form.username.format')
@@ -57,14 +58,14 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
-    const {id, username, name, email, organization, intendedUse, admin = false} = userDetails
+    const {id, revision, username, name, email, organization, intendedUse, admin = false} = userDetails
     const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
     return {
         values: {
-            id, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
+            id, revision, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
             userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }
@@ -78,10 +79,11 @@ class _UserDetails extends React.Component {
         this.onChangeStorageQuota = this.onChangeStorageQuota.bind(this)
     }
 
+    // Returns the save observable: the panel waits for the backend, spinning its Apply button, and
+    // closes on completion. On failure it stays open with the edits, for another try.
     save(userDetails) {
-        const {onSave, onCancel} = this.props
-        onSave({...userDetails})
-        onCancel()
+        const {onSave} = this.props
+        return onSave({...userDetails})
     }
 
     cancel() {
@@ -89,13 +91,29 @@ class _UserDetails extends React.Component {
         onCancel()
     }
 
+    // The record changed underneath the panel (an accepted live update): the form is rebuilt from
+    // it, and any local edits go. The revision tells a changed record from a re-rendered row.
+    componentDidUpdate({userDetails: previous}) {
+        const {userDetails, form} = this.props
+        if (userDetails.revision !== previous.revision) {
+            form.setInitialValues(mapStateToProps(null, this.props).values)
+        }
+    }
+
+    isLocked() {
+        const {locked} = this.props
+        return !!locked
+    }
+
     render() {
         const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, admin}} = this.props
+        const locked = this.isLocked()
         return (
             <Form.Panel
                 className={styles.panel}
                 placement='modal'
                 form={form}
+                locked={locked}
                 statePath='userDetails'
                 confirmation={
                     admin.isDirty() ?
@@ -130,6 +148,7 @@ class _UserDetails extends React.Component {
                         <Form.Input
                             label={msg('user.userDetails.form.name.label')}
                             input={name}
+                            disabled={locked}
                             autoComplete={false}
                             spellCheck={false}
                             autoFocus
@@ -137,18 +156,21 @@ class _UserDetails extends React.Component {
                         <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
+                            disabled={locked}
                             autoComplete={false}
                             spellCheck={false}
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
+                            disabled={locked}
                             autoComplete={false}
                             spellCheck={false}
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.intendedUse.label')}
                             input={intendedUse}
+                            disabled={locked}
                             spellCheck={false}
                             textArea
                             minRows={4}
@@ -165,6 +187,7 @@ class _UserDetails extends React.Component {
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'
                                 input={instanceSpending}
+                                disabled={locked}
                                 spellCheck={false}
                                 prefix='US$/mo.'
                                 errorMessage={false}
@@ -174,6 +197,7 @@ class _UserDetails extends React.Component {
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
                                 type='number'
                                 input={storageSpending}
+                                disabled={locked}
                                 spellCheck={false}
                                 prefix='US$/mo.'
                                 errorMessage={false}
@@ -183,6 +207,7 @@ class _UserDetails extends React.Component {
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
                                 type='number'
                                 input={storageQuota}
+                                disabled={locked}
                                 spellCheck={false}
                                 prefix='GB'
                                 errorMessage={false}
@@ -208,7 +233,7 @@ class _UserDetails extends React.Component {
                 icon='key'
                 tooltip={msg('user.userDetails.resetPassword.tooltip')}
                 message={msg('user.userDetails.resetPassword.message')}
-                disabled={UserStatus.isLocked(status) || email.isInvalid() || form.isDirty()}
+                disabled={this.isLocked() || UserStatus.isLocked(status) || email.isInvalid() || form.isDirty()}
                 onConfirm={() => this.requestPasswordReset(email.value)}
             />
         )
@@ -236,7 +261,7 @@ class _UserDetails extends React.Component {
                 icon='lock'
                 tooltip={msg('user.userDetails.lock.tooltip')}
                 message={msg('user.userDetails.lock.message')}
-                disabled={this.isCurrentUser() || form.isDirty()}
+                disabled={this.isLocked() || this.isCurrentUser() || form.isDirty()}
                 onConfirm={() => this.lock()}
             />
         )
@@ -250,7 +275,7 @@ class _UserDetails extends React.Component {
                 icon='lock-open'
                 tooltip={msg('user.userDetails.unlock.tooltip')}
                 message={msg('user.userDetails.unlock.message')}
-                disabled={this.isCurrentUser() || email.isInvalid() || form.isDirty()}
+                disabled={this.isLocked() || this.isCurrentUser() || email.isInvalid() || form.isDirty()}
                 onConfirm={() => this.unlock()}
             />
         )
@@ -299,6 +324,7 @@ class _UserDetails extends React.Component {
         return (
             <Form.Buttons
                 input={admin}
+                disabled={this.isLocked()}
                 multiple={false}
                 options={[{
                     value: false,
@@ -373,6 +399,7 @@ class _UserDetails extends React.Component {
                 alignment='distribute'
                 options={options}
                 input={input}
+                disabled={this.isLocked()}
                 onChange={value => value
                     ? valueInput.set(userRequestValue)
                     : valueInput.resetValue()
@@ -415,4 +442,5 @@ UserDetails.propTypes = {
     onLock: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onUnlock: PropTypes.func.isRequired,
+    locked: PropTypes.any
 }

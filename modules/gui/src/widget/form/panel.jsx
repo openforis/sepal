@@ -44,9 +44,11 @@ class _FormPanel extends React.Component {
         return stream('FORM_PANEL_APPLY').active
     }
 
+    // A locked panel keeps Cancel and Close working but never applies: the record it edits is not
+    // the one the user sees.
     isInvalid() {
-        const {form} = this.props
-        return form && form.isInvalid()
+        const {form, locked} = this.props
+        return !!locked || (form && form.isInvalid())
     }
 
     onClose() {
@@ -209,6 +211,7 @@ FormPanel.propTypes = {
     className: PropTypes.string,
     confirmation: PropTypes.func,
     isActionForm: PropTypes.any,
+    locked: PropTypes.any,
     placement: PropTypes.any,
     policy: PropTypes.func,
     type: PropTypes.string,
