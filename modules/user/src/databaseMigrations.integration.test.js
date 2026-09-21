@@ -63,6 +63,17 @@ describe('user database migrations', () => {
         expect(columns).toEqual(expect.arrayContaining(['password_hash', 'ssh_public_key', 'uid', 'gid']))
     })
 
+    test('add the revision column optimistic locking checks, defaulting existing rows to 1', async () => {
+        const dbName = await reserveDatabase()
+
+        const {version} = await initDb(dbName, SCHEMA_PATH)
+
+        const stored = await insertUser(dbName, aUser())
+        const [rows] = await admin.query('SELECT revision FROM ??.sepal_user WHERE username = ?', [dbName, stored.username])
+        expect(version).toBe(2)
+        expect(rows).toEqual([{revision: 1}])
+    })
+
     test('leave identities to start from one, and create no legacy relics', async () => {
         const dbName = await reserveDatabase()
 

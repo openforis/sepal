@@ -3,7 +3,7 @@ import {storedUsername} from '#sepal/username'
 
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
-import {publishUserLocked, publishUserUpdated} from './events.js'
+import {publishUserLocked, publishUserUnlocked, publishUserUpdated} from './events.js'
 import {googleOAuth} from './googleOAuth.js'
 import {googleService} from './googleService.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
@@ -125,16 +125,18 @@ const changePassword = async ctx => {
 
 // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
 const INVALID_EMAIL = Symbol('invalid-email')
+const CONFLICT = Symbol('conflict')
 
-// Returns the reloaded user, null when the user does not exist, or INVALID_EMAIL when the body
-// carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both callers
-// funnel through here, so neither can skip the check.
+// Returns the reloaded user, null when the user does not exist, INVALID_EMAIL when the body carries
+// an email the database would reject (malformed, or over EMAIL_MAX_LENGTH), or CONFLICT when the
+// body's revision is not the stored one — the caller edited a record that has since changed. Both
+// callers funnel through here, so neither can skip the checks.
 const applyDetails = async (ctx, {targetUsername, adminValue}) => {
     const body = readBody(ctx)
     if (body.email != null && !isValidEmail(body.email)) {
         return INVALID_EMAIL
     }
-    await repository.updateUserDetails({
+    const updated = await repository.updateUserDetails({
         username: targetUsername,
         name: body.name,
         email: body.email,
@@ -142,15 +144,29 @@ const applyDetails = async (ctx, {targetUsername, adminValue}) => {
         intendedUse: body.intendedUse,
         emailNotificationsEnabled: body.emailNotificationsEnabled === true || body.emailNotificationsEnabled === 'true',
         manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
-        admin: adminValue
+        admin: adminValue,
+        revision: toRevision(body.revision)
     })
     const user = await repository.findByUsername(targetUsername)
     if (!user) {
         return null
     }
+    if (!updated) {
+        return CONFLICT
+    }
     publishUserUpdated(user)
     ctx.set('sepal-user-updated', targetUsername)
     return user
+}
+
+const toRevision = revision =>
+    revision == null || revision === '' ? null : Number(revision)
+
+// 409 with the record as it is now, so the caller can show it and retry from it.
+const rejectConflict = async (ctx, username, withGoogleTokens) => {
+    const user = await repository.findByUsername(username)
+    ctx.status = 409
+    ctx.body = {message: 'User was updated by someone else', user: userToMap(user, withGoogleTokens)}
 }
 
 // POST /current/details -> own details; admin flag forced to the caller's current admin status.
@@ -161,6 +177,9 @@ const updateCurrentDetails = async ctx => {
         ctx.status = 400
         ctx.body = {message: 'Invalid email'}
         return
+    }
+    if (user === CONFLICT) {
+        return rejectConflict(ctx, current.username, true)
     }
     if (!user) {
         ctx.status = 404
@@ -181,6 +200,9 @@ const updateDetails = async ctx => {
         ctx.status = 400
         ctx.body = {message: 'Invalid email'}
         return
+    }
+    if (user === CONFLICT) {
+        return rejectConflict(ctx, body.username, false)
     }
     if (!user) {
         ctx.status = 404
@@ -227,6 +249,7 @@ const lock = async ctx => {
 // POST /unlock (ADMIN) {username} -> userToMap. Flips a LOCKED user to PENDING, issues a fresh token,
 // and emails a password reset. Idempotent: an already-unlocked user is returned unchanged.
 // Mirrors the Java UnlockUser flow (no UserUpdated event; sets sepal-user-updated on actual change).
+// Watching admin browsers still learn of it through userChanged$.
 const unlock = async ctx => {
     const username = storedUsername(readBody(ctx).username || ctx.query.username || '')
     const user = await repository.findByUsername(username)
@@ -244,6 +267,7 @@ const unlock = async ctx => {
     await repository.updateToken(username, token)
     const unlockedUser = await repository.findByUsername(username)
     sendPasswordReset(unlockedUser, token)
+    publishUserUnlocked(unlockedUser)
     ctx.set('sepal-user-updated', username)
     ctx.body = userToMap(unlockedUser)
 }

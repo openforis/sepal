@@ -5,6 +5,10 @@ import {rowToUser, toISOString} from './user.js'
 
 const TABLE = 'sepal_user'
 
+// Every write that changes the record bumps `revision`, the version optimistic locking checks. The
+// login stamp is the one exception: it records activity, not a change to the record.
+const BUMP = 'revision = revision + 1, update_time = NOW()'
+
 // insertUser is the only statement that writes `username`, so it is the only one that normalizes
 // (see #sepal/username). Every query below passes the caller's value through untouched: the column
 // is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
@@ -81,7 +85,7 @@ const updateGoogleTokens = async (username, tokens) => {
     await getPool().query(
         `UPDATE ${TABLE}
          SET google_refresh_token = ?, google_access_token = ?, google_access_token_expiration = ?,
-             google_project_id = ?, google_legacy_project = ?, update_time = NOW()
+             google_project_id = ?, google_legacy_project = ?, ${BUMP}
          WHERE username = ?`,
         [
             tokens?.refreshToken ?? null,
@@ -96,34 +100,37 @@ const updateGoogleTokens = async (username, tokens) => {
 
 const updatePassword = async (username, passwordHash) => {
     await getPool().query(
-        `UPDATE ${TABLE} SET password_hash = ? WHERE username = ?`,
+        `UPDATE ${TABLE} SET password_hash = ?, ${BUMP} WHERE username = ?`,
         [passwordHash, username]
     )
 }
 
-// Mirrors the Java updateUserDetails column set; update_time = NOW().
+// Mirrors the Java updateUserDetails column set. With a `revision`, the write only happens if the
+// row still has it — the check and the write are one statement, so two callers holding the same
+// revision cannot both get through. Returns whether a row was written.
 const updateUserDetails = async ({username, name, email, organization, intendedUse,
-    emailNotificationsEnabled, manualMapRenderingEnabled, admin}) => {
-    await getPool().query(
+    emailNotificationsEnabled, manualMapRenderingEnabled, admin, revision}) => {
+    const [result] = await getPool().query(
         `UPDATE ${TABLE}
          SET name = ?, email = ?, organization = ?, intended_use = ?,
-             email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, update_time = NOW()
-         WHERE username = ?`,
+             email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
+         WHERE username = ? AND (? IS NULL OR revision = ?)`,
         [name, email, organization, intendedUse,
-            emailNotificationsEnabled, manualMapRenderingEnabled, admin, username]
+            emailNotificationsEnabled, manualMapRenderingEnabled, admin, username, revision ?? null, revision ?? null]
     )
+    return result.affectedRows > 0
 }
 
 const acceptPrivacyPolicy = async username => {
     await getPool().query(
-        `UPDATE ${TABLE} SET privacy_policy_accepted = TRUE WHERE username = ?`,
+        `UPDATE ${TABLE} SET privacy_policy_accepted = TRUE, ${BUMP} WHERE username = ?`,
         [username]
     )
 }
 
 const updateStatus = async (username, status) => {
     await getPool().query(
-        `UPDATE ${TABLE} SET status = ? WHERE username = ?`,
+        `UPDATE ${TABLE} SET status = ?, ${BUMP} WHERE username = ?`,
         [status, username]
     )
 }
@@ -132,7 +139,7 @@ const updateStatus = async (username, status) => {
 // reset-request and unlock to (re)issue the link token.
 const updateToken = async (username, token) => {
     await getPool().query(
-        `UPDATE ${TABLE} SET token = ?, token_generation_time = NOW() WHERE username = ?`,
+        `UPDATE ${TABLE} SET token = ?, token_generation_time = NOW(), ${BUMP} WHERE username = ?`,
         [token, username]
     )
 }
@@ -140,7 +147,7 @@ const updateToken = async (username, token) => {
 // Clear the token after it is consumed (activate/reset). token_generation_time is NOT NULL, so
 // only the token itself is nulled.
 const invalidateToken = async token => {
-    await getPool().query(`UPDATE ${TABLE} SET token = NULL WHERE token = ?`, [token])
+    await getPool().query(`UPDATE ${TABLE} SET token = NULL, ${BUMP} WHERE token = ?`, [token])
 }
 
 const findByEmail = async email => {
@@ -176,7 +183,7 @@ const assignDerivedPosixIds = async id => {
 
 const updateSshPublicKey = async (username, sshPublicKey) => {
     await getPool().query(
-        `UPDATE ${TABLE} SET ssh_public_key = ? WHERE username = ?`,
+        `UPDATE ${TABLE} SET ssh_public_key = ?, ${BUMP} WHERE username = ?`,
         [sshPublicKey, username]
     )
 }
