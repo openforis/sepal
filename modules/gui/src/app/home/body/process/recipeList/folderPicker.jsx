@@ -10,7 +10,7 @@ import {NoData} from '~/widget/noData'
 
 import {Breadcrumb} from './breadcrumb'
 import folderStyles from './folderItem.module.css'
-import {childFolders, ROOT} from './recipeTree'
+import {childFolders, isSelfOrDescendant, ROOT} from './recipeTree'
 
 export class FolderPicker extends React.Component {
     state = {folderId: ROOT}
@@ -47,14 +47,17 @@ export class FolderPicker extends React.Component {
         )
     }
 
+    // Nothing inside a folder being moved can be its own destination, so those never appear.
     getOptions() {
-        const {folders} = this.props
+        const {folders, excludeFolderIds = []} = this.props
         const {folderId} = this.state
         return childFolders(folders, folderId)
+            .filter(folder => !excludeFolderIds.some(excluded => isSelfOrDescendant(folders, folder.id, excluded)))
     }
 }
 
 FolderPicker.propTypes = {
     folders: PropTypes.array.isRequired,
-    onSelect: PropTypes.func.isRequired
+    onSelect: PropTypes.func.isRequired,
+    excludeFolderIds: PropTypes.array
 }
