@@ -134,7 +134,8 @@ Test boundaries and collaborator choices: [Code design](docs/code-design.md#test
 - Assert ordering required by the contract, not a transcript of implementation steps. Meaningful commands to injected adapters are valid observations; incidental internal calls are not.
 - Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or MySQL; tests over fakes remain `*.test.js`.
 - Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
-- Run the targeted test file while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed. A module's full suite belongs before a commit or after a broad change, not after every edit.
+- Run the affected test files and relevant boundary tests while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed.
+- Reserve the full GUI suite for the final readiness check before commit, after implementation and review corrections are complete and targeted checks pass. During iteration, use a targeted subset even for shared-component changes; broaden that subset when the affected behavior warrants it. Do not run the full suite after each correction round. Report which targeted tests ran and that the final full run is still pending.
 - Validate through `sepal npm-test <module>`. Raw `npx jest` in dev-env fails every `#sepal/ee/ee`-importing suite with a post-teardown import error — stable, and indistinguishable from a real failure.
 
 ## Code Style

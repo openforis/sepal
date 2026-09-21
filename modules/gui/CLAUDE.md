@@ -15,8 +15,8 @@ From the SEPAL dev environment, prefer the repository CLI so tests run in the mo
 container:
 
 ```bash
-sepal npm-test gui                         # Run GUI Vitest
-sepal npm-test gui -- --run <test-path>    # Run focused GUI Vitest tests
+sepal npm-test gui -- --run <test-path>     # Development and review: targeted tests
+sepal npm-test gui -- --run                 # Final readiness check before commit only
 sepal eslint gui                           # Run GUI ESLint
 ```
 

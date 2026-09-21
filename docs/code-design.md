@@ -12,6 +12,18 @@ separate class or file; do not restructure a whole module before testing its beh
 Share behavior when it represents the same policy, not because unrelated policies look similar.
 Reuse adapters that fit; add no speculative operations or wrappers solely to name a port.
 
+## Complexity and extension APIs
+
+Keep domain-specific implementations focused on their own rules behind small, explicit APIs. Shared machinery
+may be complex when it owns a recurring responsibility and removes that complexity from each implementation.
+Judge the design by what an implementor must understand, supply and change, rather than total line count alone.
+The contract should make inputs, results, failures and lifecycle ownership clear.
+
+Moving type-specific branches into a shared file does not make them generic. A shared component must own a
+cohesive responsibility and replace its competing implementations; it must not require each caller to reconstruct
+the same behavior. Keep intrinsic algorithms and policies with their domain owner. Establish extension APIs from
+real consumers rather than building a speculative framework.
+
 ## Ports and adapters
 
 Ports are the application's boundary contracts. Inbound adapters call its public operations. Outbound
