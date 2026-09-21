@@ -24,17 +24,14 @@ vi.mock('~/widget/crudItem', () => ({
         </div>
 }))
 
-import {TranslationProvider} from '~/translate'
+import {setLanguage, TranslationProvider} from '~/translate'
 
 import {UserSessions} from './userSessions'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-// TranslationProvider picks the locale off localStorage, which this environment does not provide.
-globalThis.localStorage = {
-    getItem: () => 'en',
-    setItem: () => {}
-}
+// TranslationProvider resolves the locale through localStorage.
+setLanguage('en')
 
 const session = overrides => ({
     id: 's1',
