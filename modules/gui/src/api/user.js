@@ -1,6 +1,11 @@
 import {delete$, get$, post$} from '~/http-client'
 
+import {moduleWebSocket$} from './ws.js'
+
 export default {
+    // Admin-only: the user module pushes every user change to subscribers of the user list.
+    ws: () => moduleWebSocket$('user'),
+
     loadCurrentUser$: () =>
         get$('/api/user/current', {
             validStatuses: [200, 401]
@@ -60,9 +65,9 @@ export default {
             body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
+    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}
+            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}
         }),
 
     acceptPrivacyPolicy$: () =>

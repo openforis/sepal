@@ -1,7 +1,9 @@
 import {randomBytes} from 'crypto'
+import {cp, mkdtemp, rm} from 'fs/promises'
+import {tmpdir} from 'os'
 import {join} from 'path'
 
-import {createConnection, initDb} from '#sepal/db/mysql'
+import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
@@ -54,13 +56,27 @@ describe('user database migrations', () => {
 
     // Guarantees the old text-based contract test made about the schema file, now read from the database
     // the migration actually builds.
-    test('create the table at its full shape, with no follow-up column migration', async () => {
+    test('create the table with the credential and posix columns the repository writes', async () => {
         const dbName = await reserveDatabase()
 
         await initDb(dbName, SCHEMA_PATH)
 
         const columns = await columnNames(dbName, 'sepal_user')
         expect(columns).toEqual(expect.arrayContaining(['password_hash', 'ssh_public_key', 'uid', 'gid']))
+    })
+
+    describe('002.do.revision.sql', () => {
+        test('backfills every row that predates the column to revision 1', async () => {
+            const dbName = await aDatabaseAtSchemaVersionOne()
+            await insertUser(dbName, aUser({username: 'bob'}))
+            await insertUser(dbName, aUser({username: 'alice'}))
+
+            const {version} = await migrateDb(dbName, SCHEMA_PATH)
+
+            const [rows] = await admin.query('SELECT username, revision FROM ??.sepal_user ORDER BY username', [dbName])
+            expect(version).toBe(2)
+            expect(rows).toEqual([{username: 'alice', revision: 1}, {username: 'bob', revision: 1}])
+        })
     })
 
     test('leave identities to start from one, and create no legacy relics', async () => {
@@ -74,6 +90,19 @@ describe('user database migrations', () => {
         expect(rows[0].id).toBe(1)
         expect(tables).toEqual(['schema_version', 'sepal_user'])
     })
+
+    // Copy the real first migration unchanged so the full stream validates it before applying 002.
+    const aDatabaseAtSchemaVersionOne = async () => {
+        const dbName = await reserveDatabase()
+        const firstVersionOnly = await mkdtemp(join(tmpdir(), 'user-schema-v1-'))
+        try {
+            await cp(join(SCHEMA_PATH, '001.do.schema.sql'), join(firstVersionOnly, '001.do.schema.sql'))
+            await initDb(dbName, firstVersionOnly)
+        } finally {
+            await rm(firstVersionOnly, {recursive: true, force: true})
+        }
+        return dbName
+    }
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
@@ -124,8 +153,10 @@ describe('user database migrations', () => {
     }
 })
 
-const aUser = () => ({
-    username: 'bob', name: 'Bob', email: 'bob@example.org', admin: 0, system_user: 0, status: 'ACTIVE'
+// The email is unique in the schema, so it follows the username rather than being fixed.
+const aUser = ({username = 'bob', ...over} = {}) => ({
+    username, name: 'Bob', email: `${username}@example.org`, admin: 0, system_user: 0, status: 'ACTIVE',
+    ...over
 })
 
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')

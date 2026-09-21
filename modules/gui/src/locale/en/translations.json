@@ -6152,7 +6152,8 @@
       "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",
       "update": {
-        "error": "Could not update user."
+        "error": "Could not update user.",
+        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again."
       },
       "confirmation": {
         "message": "User role will be changed to \"{role}\""
@@ -6311,7 +6312,15 @@
         }
       }
     },
-    "page": "Page {pageNumber} of {pageCount}"
+    "page": "Page {pageNumber} of {pageCount}",
+    "record": {
+      "changed": "This record has changed",
+      "update": "Update"
+    },
+    "update": {
+      "label": "Update{count, plural, =0 {} other {: #}}",
+      "tooltip": "Apply the changes received since the list was loaded"
+    }
   },
   "widget": {
     "assetDestination": {

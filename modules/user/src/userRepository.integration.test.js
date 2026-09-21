@@ -39,6 +39,14 @@ describe('UserRepository', () => {
             expect(stored.systemUser).toBe(false)
         })
 
+        test('starts a new user at revision 1', async () => {
+            await repository.insertUser(aUser())
+
+            const stored = await repository.findByUsername(USERNAME)
+
+            expect(stored.revision).toBe(1)
+        })
+
         test('gives the new user a posix identity derived from the id it returns', async () => {
             const id = await repository.insertUser(aUser())
 
@@ -218,6 +226,17 @@ describe('UserRepository', () => {
             expect(login.timestamp).toBe(new Date(stored.lastLoginTime).toISOString())
         })
 
+        // A login records activity, not a change to the record, so it must not invalidate an edit
+        // its owner is holding.
+        test('leaves the revision alone', async () => {
+            await repository.insertUser(aUser())
+
+            await repository.setLastLoginTime(USERNAME)
+
+            const stored = await repository.findByUsername(USERNAME)
+            expect(stored.revision).toBe(1)
+        })
+
         test('reports the login times of every non-system user that has logged in', async () => {
             await repository.insertUser(aUser())
             await givenImportedUser({username: 'sepaladmin', system_user: 1})
@@ -275,6 +294,38 @@ describe('UserRepository', () => {
             expect(stored.admin).toBe(true)
             expect(stored.roles).toEqual(['application_admin'])
         })
+
+        test('reports the write and bumps the revision when the caller holds the current one', async () => {
+            await repository.insertUser(aUser())
+
+            const updated = await repository.updateUserDetails(details({name: 'Robert', revision: 1}))
+
+            const stored = await repository.findByUsername(USERNAME)
+            expect(updated).toBe(true)
+            expect(stored).toMatchObject({name: 'Robert', revision: 2})
+        })
+
+        test('writes nothing when the caller holds a stale revision', async () => {
+            await repository.insertUser(aUser())
+            await repository.updateUserDetails(details({name: 'Robert', revision: 1}))
+
+            const updated = await repository.updateUserDetails(details({name: 'Bobby', revision: 1}))
+
+            const stored = await repository.findByUsername(USERNAME)
+            expect(updated).toBe(false)
+            expect(stored).toMatchObject({name: 'Robert', revision: 2})
+        })
+
+        test('writes unconditionally when no revision is given', async () => {
+            await repository.insertUser(aUser())
+            await repository.updateUserDetails(details({name: 'Robert', revision: 1}))
+
+            const updated = await repository.updateUserDetails(details({name: 'Bobby'}))
+
+            const stored = await repository.findByUsername(USERNAME)
+            expect(updated).toBe(true)
+            expect(stored).toMatchObject({name: 'Bobby', revision: 3})
+        })
     })
 
     describe('updatePassword', () => {
@@ -296,6 +347,16 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByUsername(USERNAME)
             expect(stored.status).toBe('ACTIVE')
+        })
+
+        // Optimistic locking covers the whole record, not just the details endpoint that checks it.
+        test('bumps the revision, so an edit made before the status changed is stale', async () => {
+            await repository.insertUser(aUser())
+
+            await repository.updateStatus(USERNAME, 'LOCKED')
+
+            const stored = await repository.findByUsername(USERNAME)
+            expect(stored).toMatchObject({status: 'LOCKED', revision: 2})
         })
     })
 
@@ -379,6 +440,39 @@ describe('UserRepository', () => {
         })
     })
 
+    describe('writers running at the same time', () => {
+        let concurrent
+        let concurrentRepository
+
+        beforeAll(async () => {
+            concurrent = await createTestDb({
+                name: 'user_repository_concurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
+            })
+            concurrentRepository = new UserRepository(concurrent.db)
+        })
+
+        beforeEach(() => concurrent.reset())
+
+        afterAll(() => concurrent?.remove())
+
+        // Both updates are in flight together; MySQL decides how they interleave. The claim is only
+        // that one of them loses, whichever order it settles on — a caller told nothing happened is
+        // what lets the details endpoint answer 409 rather than silently drop an edit.
+        test('lets exactly one of two writers holding the same revision through', async () => {
+            await concurrentRepository.insertUser(aUser())
+
+            const outcomes = await Promise.all([
+                concurrentRepository.updateUserDetails(details({name: 'First', revision: 1})),
+                concurrentRepository.updateUserDetails(details({name: 'Second', revision: 1}))
+            ])
+
+            const stored = await concurrentRepository.findByUsername(USERNAME)
+            expect(outcomes.filter(Boolean)).toHaveLength(1)
+            expect(stored.revision).toBe(2)
+            expect(['First', 'Second']).toContain(stored.name)
+        })
+    })
+
     const aUser = (over = {}) => ({
         username: USERNAME, name: 'Bob', email: EMAIL, organization: null, intendedUse: null,
         token: 'a-token', ...over
@@ -406,6 +500,11 @@ describe('UserRepository', () => {
     // How the coercion arrives over HTTP: a one-element JSON array, which the driver formats as `0`.
     const NOT_A_STRING = [0]
     const REFUSED = 'Invalid selector'
+
+    // Enough connections for every writer the concurrency scenario starts at once; queueing stays
+    // off, so one more acquisition than this would fail rather than wait.
+    const COMPETING_WRITERS = 2
+
     const LONG_AGO = new Date('2020-01-01T00:00:00Z')
     const RECENTLY = new Date('2026-01-01T00:00:00Z')
     const GOOGLE_TOKENS = {

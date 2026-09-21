@@ -3,7 +3,7 @@ import {storedUsername} from '#sepal/username'
 
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
-import {publishUserLocked, publishUserUpdated} from './events.js'
+import {publishUserLocked, publishUserUnlocked, publishUserUpdated} from './events.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
@@ -15,6 +15,10 @@ const log = getLogger('userApi')
 // What #applyDetails answers with when the body carries an email the database would reject, so its
 // callers can tell that apart from an unknown user.
 const INVALID_EMAIL = Symbol('invalid-email')
+
+// What #applyDetails answers with when the body's revision is not the stored one — the caller edited
+// a record that has since changed.
+const CONFLICT = Symbol('conflict')
 
 export class UserApi {
     #repository
@@ -126,6 +130,9 @@ export class UserApi {
             ctx.body = {message: 'Invalid email'}
             return
         }
+        if (user === CONFLICT) {
+            return this.#rejectConflict(ctx, current.username, true)
+        }
         if (!user) {
             ctx.status = 404
             ctx.body = {message: 'User not found'}
@@ -145,6 +152,9 @@ export class UserApi {
             ctx.status = 400
             ctx.body = {message: 'Invalid email'}
             return
+        }
+        if (user === CONFLICT) {
+            return this.#rejectConflict(ctx, body.username, false)
         }
         if (!user) {
             ctx.status = 404
@@ -188,7 +198,8 @@ export class UserApi {
     }
 
     // Idempotent: an already-unlocked user is returned unchanged. No UserUpdated event; the refresh
-    // header is set only when the unlock actually changed something.
+    // header is set only when the unlock actually changed something. Watching admin browsers still
+    // learn of it through userChanged$.
     async unlock(ctx) {
         const username = suppliedUsername(ctx)
         const user = username ? await this.#repository.findByUsername(username) : null
@@ -206,6 +217,7 @@ export class UserApi {
         await this.#repository.updateToken(username, token)
         const unlockedUser = await this.#repository.findByUsername(username)
         sendPasswordReset(unlockedUser, token)
+        publishUserUnlocked(unlockedUser)
         ctx.set('sepal-user-updated', username)
         ctx.body = userToMap(unlockedUser)
     }
@@ -447,9 +459,10 @@ export class UserApi {
     }
 
     // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
-    // Returns the reloaded user, null when the request names no existing user, or INVALID_EMAIL when
-    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH). Both
-    // callers funnel through here, so neither can skip the check.
+    // Returns the reloaded user, null when the request names no existing user, INVALID_EMAIL when
+    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH), or
+    // CONFLICT when the body's revision is not the stored one. Both callers funnel through here, so
+    // neither can skip the checks.
     async #applyDetails(ctx, {targetUsername, adminValue}) {
         if (!isText(targetUsername)) {
             return null
@@ -458,7 +471,7 @@ export class UserApi {
         if (body.email != null && !isValidEmail(body.email)) {
             return INVALID_EMAIL
         }
-        await this.#repository.updateUserDetails({
+        const updated = await this.#repository.updateUserDetails({
             username: targetUsername,
             name: body.name,
             email: body.email,
@@ -466,15 +479,26 @@ export class UserApi {
             intendedUse: body.intendedUse,
             emailNotificationsEnabled: body.emailNotificationsEnabled === true || body.emailNotificationsEnabled === 'true',
             manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
-            admin: adminValue
+            admin: adminValue,
+            revision: toRevision(body.revision)
         })
         const user = await this.#repository.findByUsername(targetUsername)
         if (!user) {
             return null
         }
+        if (!updated) {
+            return CONFLICT
+        }
         publishUserUpdated(user)
         ctx.set('sepal-user-updated', targetUsername)
         return user
+    }
+
+    // 409 with the record as it is now, so the caller can show it and retry from it.
+    async #rejectConflict(ctx, username, withGoogleTokens) {
+        const user = await this.#repository.findByUsername(username)
+        ctx.status = 409
+        ctx.body = {message: 'User was updated by someone else', user: userToMap(user, withGoogleTokens)}
     }
 
     // Create a PENDING user, send the invitation email, and publish UserUpdated. Returns the reloaded
@@ -493,6 +517,9 @@ export class UserApi {
 }
 
 const readBody = ctx => ctx.request.body || {}
+
+const toRevision = revision =>
+    revision == null || revision === '' ? null : Number(revision)
 
 // Both admin endpoints take the name from the body or the query, in that order, and normalize it to
 // the spelling the database stores. Null when nothing usable was supplied, so no lookup is attempted.

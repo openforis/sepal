@@ -32,7 +32,20 @@ const userToEventMap = user => ({
 const userUpdated$ = new Subject()
 const userLocked$ = new Subject()
 
-const publishUserUpdated = user => userUpdated$.next(userToEventMap(user))
-const publishUserLocked = user => userLocked$.next(userToEventMap(user))
+// Every change to a user, as the internal user object, for pushing to admin browsers watching the
+// user list. Unlike the RabbitMQ events it also covers unlocks, which have no consumer over AMQP.
+const userChanged$ = new Subject()
 
-export {publishUserLocked, publishUserUpdated, userLocked$, userToEventMap, userUpdated$}
+const publishUserUpdated = user => {
+    userUpdated$.next(userToEventMap(user))
+    userChanged$.next(user)
+}
+
+const publishUserLocked = user => {
+    userLocked$.next(userToEventMap(user))
+    userChanged$.next(user)
+}
+
+const publishUserUnlocked = user => userChanged$.next(user)
+
+export {publishUserLocked, publishUserUnlocked, publishUserUpdated, userChanged$, userLocked$, userToEventMap, userUpdated$}

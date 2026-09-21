@@ -56,7 +56,9 @@ class _UserDetails extends React.Component {
     // regular subscription to make sure backend request is not cancelled
     updateUserDetails(userDetails) {
         updateCurrentUserDetails$(userDetails).subscribe({
-            error: error => Notifications.error({message: msg('user.userDetails.update.error'), error})
+            error: error => error.status === 409
+                ? Notifications.error({message: msg('user.userDetails.update.conflict')})
+                : Notifications.error({message: msg('user.userDetails.update.error'), error})
         })
     }
 

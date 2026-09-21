@@ -47,6 +47,7 @@ const rowToUser = row => {
         admin,
         creationTime: toISOString(row.creation_time),
         updateTime: toISOString(row.update_time),
+        revision: row.revision,
         lastLoginTime: toMillis(row.last_login_time),
         token: row.token,
         tokenGenerationTime: toMillis(row.token_generation_time),
@@ -80,6 +81,7 @@ const userToMap = (user, withGoogleTokens = true) => ({
     systemUser: user.systemUser,
     creationTime: user.creationTime,
     updateTime: user.updateTime,
+    revision: user.revision,
     admin: user.admin
 })
 

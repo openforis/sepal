@@ -13,11 +13,15 @@ import {uuid} from '~/uuid'
 import styles from './notifications.module.css'
 import {Scrollable} from './scrollable'
 
-const PUBLISH_ANIMATION_DURATION_MS = 1000
-const DISMISS_ANIMATION_DURATION_MS = 1000
+const PUBLISH_ANIMATION_DURATION_MS = 300
+const DISMISS_ANIMATION_DURATION_MS = 500
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
+
+// The mounted container, for the BlurDetector: a click on a notification is never a click outside
+// an overlay.
+let containerElement = null
 
 const autoDismiss$ = publish$.pipe(
     filter(({timeout}) => timeout),
@@ -193,7 +197,7 @@ class _Notifications extends React.Component {
 
     render() {
         return (
-            <div className={styles.container}>
+            <div className={styles.container} ref={element => containerElement = element}>
                 <Scrollable
                     direction='y'
                     className={styles.scrollable}
@@ -210,20 +214,23 @@ class _Notifications extends React.Component {
         return noGroup || uniqueGroup
     }
 
+    // A notification published under an id already on screen replaces that one in place, mid-
+    // animation included; a repeat of a grouped message is dropped, as before.
+    withPublished(notifications, notification) {
+        const shown = notifications[notification.id]
+        if (shown) {
+            return {...notifications, [notification.id]: {...notification, adding: shown.adding, removing: false}}
+        }
+        return this.isUniqueGroup(notifications, notification)
+            ? {...notifications, [notification.id]: notification}
+            : notifications
+    }
+
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
             publish$.subscribe(notification => {
-                this.setState(({notifications}) => {
-                    if (this.isUniqueGroup(notifications, notification)) {
-                        return {
-                            notifications: {
-                                ...notifications,
-                                [notification.id]: notification
-                            }
-                        }
-                    }
-                })
+                this.setState(({notifications}) => ({notifications: this.withPublished(notifications, notification)}))
             }),
             dismiss$.subscribe(id => {
                 this.setState(({notifications, timeouts}) => {
@@ -256,9 +263,12 @@ class _Notifications extends React.Component {
                     return {notifications}
                 })
             }),
+            // Only a notification still on its way out goes: one re-published meanwhile stays.
             removed$.subscribe(id =>
                 this.setState(({notifications}) => {
-                    delete notifications[id]
+                    if (notifications[id]?.removing) {
+                        delete notifications[id]
+                    }
                     return {notifications}
                 })
             )
@@ -299,6 +309,9 @@ Notifications.error = notification => {
         : (notification.message || notification)
     )
 }
+
+Notifications.container = () =>
+    containerElement
 
 Notifications.dismiss = notificationId =>
     dismiss(notificationId)
