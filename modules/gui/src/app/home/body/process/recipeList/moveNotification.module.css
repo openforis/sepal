@@ -1,20 +1,19 @@
 .notification {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: .6rem;
-    text-align: center;
-    padding: .3rem 0 .2rem;
+    gap: .4rem;
 }
 
 .message {
-    font-size: 1.1rem;
-    line-height: 1.6rem;
-    color: #fff;
+    color: #ccc;
 }
 
 .hint {
     font-size: .9rem;
-    line-height: 1.2rem;
-    color: #bbb;
+    color: #999;
+}
+
+.undo {
+    display: flex;
+    justify-content: center;
 }
