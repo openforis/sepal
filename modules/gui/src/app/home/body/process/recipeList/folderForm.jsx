@@ -3,22 +3,17 @@ import React from 'react'
 
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import {ButtonPopup} from '~/widget/buttonPopup'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {Widget} from '~/widget/widget'
 
 import styles from './folderForm.module.css'
-import {FolderPicker} from './folderPicker'
-import {folderPathLabel} from './recipeTree'
 
 const fields = {
     name: new Form.Field()
         .notBlank('process.folder.form.name.required')
-        .predicate((name, {folderNames}) => !folderNames.includes(name.toLowerCase()), 'process.folder.form.name.unique'),
-    parentId: new Form.Field()
+        .predicate((name, {folderNames}) => !folderNames.includes(name.toLowerCase()), 'process.folder.form.name.unique')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -28,15 +23,16 @@ const mapStateToProps = (state, ownProps) => {
         values: {
             id: folder && folder.id,
             name: (folder && folder.name) || '',
-            parentId: (folder && folder.parentId) || null,
             folderNames: folderNames
         }
     }
 }
 
+// The form names a folder and nothing else. A folder moves by drag and drop, and a new one lands in
+// the folder that is open, so neither needs a parent to choose here.
 class _FolderForm extends React.Component {
     renderPanel() {
-        const {parentEditable, inputs: {name}} = this.props
+        const {inputs: {name}} = this.props
         return (
             <React.Fragment>
                 <Panel.Content>
@@ -47,37 +43,10 @@ class _FolderForm extends React.Component {
                             input={name}
                             spellCheck={false}
                         />
-                        {parentEditable ? this.renderParent() : null}
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
             </React.Fragment>
-        )
-    }
-
-    renderParent() {
-        const {folders, folder, inputs: {parentId}} = this.props
-        return (
-            <Widget label={msg('process.folder.form.parent.label')}>
-                <ButtonPopup
-                    shape='pill'
-                    label={parentId.value
-                        ? folderPathLabel(folders, parentId.value)
-                        : msg('process.folder.parent.root')}
-                    vPlacement='below'
-                    hPlacement='over-right'>
-                    {onBlur => (
-                        <FolderPicker
-                            folders={folders}
-                            excludeFolderId={folder.id}
-                            onSelect={folderId => {
-                                parentId.set(folderId)
-                                onBlur()
-                            }}
-                        />
-                    )}
-                </ButtonPopup>
-            </Widget>
         )
     }
 
@@ -109,8 +78,6 @@ export const FolderForm = compose(
 FolderForm.propTypes = {
     folder: PropTypes.object.isRequired,
     folderNames: PropTypes.array.isRequired,
-    parentEditable: PropTypes.any,
-    folders: PropTypes.array.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 }

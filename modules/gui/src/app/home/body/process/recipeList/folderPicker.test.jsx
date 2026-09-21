@@ -55,22 +55,10 @@ afterEach(() => {
 })
 
 describe('FolderPicker', () => {
-    // A candidate is excluded when it is `excludeFolderId` itself or lies below it, never the other
-    // way around - swapping isSelfOrDescendant's arguments would instead hide an ancestor of
-    // excludeFolderId, which is what this pins.
-    it('does not exclude an ancestor from the destination list', () => {
-        mount({folders, excludeFolderId: 'c', onSelect: () => {}})
+    it('lists the root folders first', () => {
+        mount({folders, onSelect: () => {}})
 
         expect(names()).toEqual(['A', 'B'])
-    })
-
-    it('excludes a folder from being offered as its own destination', () => {
-        mount({folders, excludeFolderId: 'c', onSelect: () => {}})
-
-        clickOption('A')
-
-        expect(names()).toEqual([])
-        expect(container.textContent).toContain('process.folder.none')
     })
 
     it('selects the root when nothing has been navigated into', () => {
