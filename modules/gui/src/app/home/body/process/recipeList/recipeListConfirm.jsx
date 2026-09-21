@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -12,8 +11,7 @@ import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {folderDescription} from './folderItem'
-import {PATH_SEPARATOR} from './recipeListConstants'
-import {folderCounts} from './recipeTree'
+import {folderCounts, folderPathLabel} from './recipeTree'
 
 const mapStateToProps = () => ({
     folders: select('process.folders'),
@@ -50,12 +48,17 @@ class _RecipeListConfirm extends React.Component {
         )
     }
 
+    // The same shape as the row in the list: the name first, then where it lives and what it is.
     renderRecipe(recipe) {
         return (
             <ListItem key={recipe.id}>
                 <CrudItem
-                    title={this.getRecipeTypeName(recipe.type)}
-                    description={this.getRecipePath(recipe)}
+                    icon='globe'
+                    iconSize='lg'
+                    title={recipe.name}
+                    description={[this.getFolderLabel(recipe), this.getRecipeTypeName(recipe.type)]
+                        .filter(part => part)
+                        .join(' · ')}
                     timestamp={recipe.updateTime}
                     {...this.selection(recipe.id)}
                 />
@@ -80,13 +83,9 @@ class _RecipeListConfirm extends React.Component {
         return !!disabledIds && disabledIds.includes(id)
     }
 
-    getRecipePath(recipe) {
+    getFolderLabel(recipe) {
         const {folders} = this.props
-        const folder = _.find(folders, ({id}) => id === recipe.folderId)
-        return [
-            folder?.name ?? msg('process.recipeList.root'),
-            recipe.name
-        ].join(PATH_SEPARATOR)
+        return folderPathLabel(folders || [], recipe.folderId) || msg('process.recipeList.root')
     }
 
     getRecipeTypeName(type) {
