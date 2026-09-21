@@ -41,6 +41,8 @@ import {canDropInto, childFolders, folderCounts, folderPathLabel, folderRecipes,
 
 const EMPTY_ARRAY = []
 
+const UNDO_TIMEOUT_SECONDS = 15
+
 const mapStateToProps = () => ({
     folders: select('process.folders') ?? EMPTY_ARRAY,
     folderId: select('process.folderId'),
@@ -159,18 +161,69 @@ class _RecipeList extends React.Component {
     }
 
     drop() {
-        const {onMove} = this.props
         const {dropTarget} = this.state
         const dragged = this.dragged
         this.dragged = null
         this.setState({dropTarget: null})
         if (dragged && dropTarget) {
             if (dragged.kind === 'recipe') {
-                onMove(this.draggedRecipeIds(dragged.id), dropTarget.folderId)
+                this.moveRecipes(this.draggedRecipeIds(dragged.id), dropTarget.folderId)
             } else {
-                updateFolder({...dragged.folder, parentId: dropTarget.folderId})
+                this.moveFolder(dragged.folder, dropTarget.folderId)
             }
         }
+    }
+
+    // A move is easy to make by accident, so every one of them offers its own way back. Each recipe
+    // returns to the folder it came from, which is not one folder when a search moved several at once.
+    moveRecipes(recipeIds, folderId) {
+        const {recipes, onMove} = this.props
+        const origin = recipeIds.map(recipeId => ({
+            recipeId,
+            folderId: recipes.find(({id}) => id === recipeId)?.folderId ?? ROOT
+        }))
+        onMove(recipeIds, folderId)
+        this.offerUndo(
+            msg('process.recipe.move.done', {count: recipeIds.length, folder: this.folderLabel(folderId)}),
+            () => _.forEach(
+                _.groupBy(origin, ({folderId}) => folderId ?? ROOT),
+                moved => onMove(moved.map(({recipeId}) => recipeId), moved[0].folderId)
+            )
+        )
+    }
+
+    moveFolder(folder, parentId) {
+        updateFolder({...folder, parentId})
+        this.offerUndo(
+            msg('process.folder.move.done', {name: folder.name, folder: this.folderLabel(parentId)}),
+            () => updateFolder({...folder, parentId: folder.parentId ?? ROOT})
+        )
+    }
+
+    offerUndo(message, undo) {
+        Notifications.info({
+            message,
+            timeout: UNDO_TIMEOUT_SECONDS,
+            content: dismiss =>
+                <Button
+                    look='transparent'
+                    shape='pill'
+                    size='small'
+                    icon='rotate-left'
+                    label={msg('process.recipeList.undo')}
+                    onClick={() => {
+                        undo()
+                        dismiss()
+                    }}
+                />
+        })
+    }
+
+    folderLabel(folderId) {
+        const {folders} = this.props
+        return folderId
+            ? folderPathLabel(folders, folderId)
+            : msg('process.recipeList.root')
     }
 
     // Dragging one of the selected recipes takes the whole selection with it, as the Move button does.
@@ -648,9 +701,8 @@ class _RecipeList extends React.Component {
     }
 
     moveSelected(folderId) {
-        const {onMove} = this.props
         const {confirmedIds} = this.state
-        onMove(confirmedIds, folderId)
+        this.moveRecipes(confirmedIds, folderId)
         this.setMove(false)
     }
 
