@@ -37,6 +37,14 @@ vi.mock('~/widget/crudItem', () => ({
         return <div data-title>{props.title}</div>
     }
 }))
+// The real dialog renders through a portal that this isolated test has no root for.
+vi.mock('~/widget/confirm', () => ({
+    Confirm: ({children, disabled, onConfirm}) =>
+        <div>
+            {children}
+            <button data-confirm disabled={disabled} onClick={onConfirm}>confirm</button>
+        </div>
+}))
 vi.mock('~/widget/notifications', () => ({
     Notifications: {
         info: notification => notifications.push(notification),
@@ -104,7 +112,10 @@ const rowTitles = () => [...container.querySelectorAll('[data-title]')].map(row 
 
 const rowFor = title => crudItems.find(props => props.title === title)
 
-const button = label => [...container.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
+// A dialog renders through a portal, outside the container this test mounted into.
+const confirm = () => act(() => document.querySelector('[data-confirm]').click())
+
+const button = label => [...document.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
 
 // The notification renders its own control through content(dismiss); the element carries the handler.
 const undoLastMove = () => {
@@ -202,6 +213,40 @@ describe('edit mode', () => {
         act(() => container.querySelectorAll('[data-row]')[0].click())
 
         expect(dispatched.some(({type}) => type === 'NAVIGATE_TO_FOLDER')).toBe(true)
+    })
+
+    it('ends edit mode once the selection has been removed', () => {
+        const onRemove = vi.fn()
+        mount({onRemove, selectedIds: [AT_ROOT.id]})
+
+        editMode()
+        act(() => button('process.recipe.remove.label').click())
+        confirm()
+
+        expect(onRemove).toHaveBeenCalledWith([AT_ROOT.id])
+        expect(button('process.recipe.remove.label')).toBeUndefined()
+    })
+
+    it('removes the recipes but leaves a folder that still holds something', () => {
+        const onRemove = vi.fn()
+        mount({onRemove, selectedIds: [KENYA.id, AT_ROOT.id]})
+
+        editMode()
+        act(() => button('process.recipe.remove.label').click())
+        confirm()
+
+        expect(onRemove).toHaveBeenCalledWith([AT_ROOT.id])
+        expect(removeFolder$).not.toHaveBeenCalled()
+    })
+
+    it('removes an empty folder of the selection', () => {
+        mount({selectedIds: [EMPTY.id], folderId: KENYA.id})
+
+        editMode()
+        act(() => button('process.recipe.remove.label').click())
+        confirm()
+
+        expect(removeFolder$).toHaveBeenCalledWith(EMPTY.id)
     })
 
     it('selects the folders and the recipes together', () => {
@@ -350,6 +395,24 @@ describe('drag and drop', () => {
 
         expect(onMove).not.toHaveBeenCalled()
         expect(updateFolder).not.toHaveBeenCalled()
+    })
+
+    it('ends edit mode once the selection has been moved', () => {
+        mount({selectedIds: [AT_ROOT.id]})
+        act(() => button('process.recipe.edit.label').click())
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+
+        expect(button('process.recipe.move.label')).toBeUndefined()
+    })
+
+    it('stays in edit mode when the dragged row was not selected', () => {
+        mount({selectedIds: [ALSO_AT_ROOT.id]})
+        act(() => button('process.recipe.edit.label').click())
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+
+        expect(button('process.recipe.move.label')).toBeDefined()
     })
 
     it('can drag in edit mode as well', () => {
