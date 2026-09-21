@@ -20,7 +20,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     recipeFormPanel: () => Component => Component
 }))
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: vi.fn()}))
+vi.mock('~/app/home/body/process/recipeList/projectActions', () => ({updateProject: vi.fn()}))
 vi.mock('~/classComponent', () => ({asFunctionalComponent: () => Component => Component}))
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
 vi.mock('~/translate', () => ({msg: key => Array.isArray(key) ? key.join('.') : key}))

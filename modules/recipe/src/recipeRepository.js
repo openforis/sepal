@@ -137,7 +137,7 @@ export class RecipeRepository {
     async listProjects(owner) {
         return await this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
-                `SELECT id, name, username, default_asset_folder, default_workspace_folder
+                `SELECT id, name, username, parent_id, default_asset_folder, default_workspace_folder
                  FROM ${PROJECT} WHERE username = ? ORDER BY name`,
                 [owner]
             )
@@ -147,34 +147,81 @@ export class RecipeRepository {
 
     // One statement, so concurrent creates of the same id converge instead of colliding. Each column
     // updates only when the stored row already belongs to the writer, and username is never assigned, so
-    // an id someone else owns can be neither taken over nor altered.
-    async saveProject({id, owner, name, defaultAssetFolder, defaultWorkspaceFolder}) {
-        await this.#db.withTransaction(async connection => {
-            await connection.query(
-                `INSERT INTO ${PROJECT} (id, name, username, default_asset_folder, default_workspace_folder)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE
-                     name = IF(username = VALUES(username), VALUES(name), name),
-                     default_asset_folder =
-                         IF(username = VALUES(username), VALUES(default_asset_folder), default_asset_folder),
-                     default_workspace_folder =
-                         IF(username = VALUES(username), VALUES(default_workspace_folder), default_workspace_folder)`,
-                [id, name, storedUsername(owner), defaultAssetFolder, defaultWorkspaceFolder]
-            )
+    // an id someone else owns can be neither taken over nor altered. The parent is resolved and walked in
+    // the same transaction as the write, so both read one consistent snapshot.
+    async saveProject({id, owner, name, parentId = null, defaultAssetFolder, defaultWorkspaceFolder}) {
+        return await this.#db.withTransaction(async connection => {
+            if (parentId && !await ownsProject(connection, parentId, owner)) {
+                return {outcome: 'parentNotFound'}
+            } else if (parentId && await descendsFrom(connection, parentId, id, owner)) {
+                return {outcome: 'cycle'}
+            } else {
+                await connection.query(
+                    `INSERT INTO ${PROJECT}
+                        (id, name, username, parent_id, default_asset_folder, default_workspace_folder)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE
+                         name = IF(username = VALUES(username), VALUES(name), name),
+                         parent_id = IF(username = VALUES(username), VALUES(parent_id), parent_id),
+                         default_asset_folder =
+                             IF(username = VALUES(username), VALUES(default_asset_folder), default_asset_folder),
+                         default_workspace_folder =
+                             IF(username = VALUES(username), VALUES(default_workspace_folder), default_workspace_folder)`,
+                    [id, name, storedUsername(owner), parentId, defaultAssetFolder, defaultWorkspaceFolder]
+                )
+                return {outcome: 'saved'}
+            }
         })
     }
 
-    // Removing the project and hiding the recipes it held is one fact in two statements. Half-applied,
-    // it leaves recipes pointing at a project id that no longer resolves.
+    // Counting and deleting share one transaction: the counts and the delete read one consistent
+    // snapshot, and the delete rolls back if anything in the transaction fails.
     async removeProject(id, owner) {
-        await this.#db.withTransaction(async connection => {
-            await connection.query(`DELETE FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner])
-            await connection.query(
-                `UPDATE ${RECIPE} SET removed = TRUE WHERE project_id = ? AND username = ?`,
+        return await this.#db.withTransaction(async connection => {
+            const [[folders]] = await connection.query(
+                `SELECT COUNT(*) AS count FROM ${PROJECT} WHERE parent_id = ? AND username = ?`,
                 [id, owner]
             )
+            const [[recipes]] = await connection.query(
+                `SELECT COUNT(*) AS count FROM ${RECIPE}
+                 WHERE project_id = ? AND username = ? AND removed = FALSE`,
+                [id, owner]
+            )
+            if (folders.count || recipes.count) {
+                return {outcome: 'notEmpty', folders: folders.count, recipes: recipes.count}
+            } else {
+                await connection.query(
+                    `DELETE FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner]
+                )
+                return {outcome: 'removed'}
+            }
         })
     }
+}
+
+const ownsProject = async (connection, id, owner) => {
+    const [rows] = await connection.query(
+        `SELECT 1 FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner]
+    )
+    return !!rows[0]
+}
+
+// Walks from the proposed parent to the root looking for the project being saved. Ids already seen end
+// the walk: a stored chain that revisits one is broken, and stopping beats spinning on it.
+const descendsFrom = async (connection, parentId, id, owner) => {
+    const visited = new Set()
+    let current = parentId
+    while (current && !visited.has(current)) {
+        if (current === id) {
+            return true
+        }
+        visited.add(current)
+        const [rows] = await connection.query(
+            `SELECT parent_id FROM ${PROJECT} WHERE id = ? AND username = ?`, [current, owner]
+        )
+        current = rows[0]?.parent_id ?? null
+    }
+    return false
 }
 
 // Which precondition failed is only knowable from the row. A foreign recipe is reported absent, so
@@ -215,6 +262,7 @@ const toProject = row => ({
     id: row.id,
     name: row.name,
     username: row.username,
+    parentId: row.parent_id ?? null,
     defaultAssetFolder: row.default_asset_folder ?? null,
     defaultWorkspaceFolder: row.default_workspace_folder ?? null
 })

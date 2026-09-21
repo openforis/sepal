@@ -27,7 +27,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     recipeFormPanel: () => Component => Component
 }))
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: () => {}}))
+vi.mock('~/app/home/body/process/recipeList/projectActions', () => ({updateProject: () => {}}))
 
 const {Retrieve} = await import('./retrieve')
 const {mapRecipeToProps} = await import('./retrieve')
