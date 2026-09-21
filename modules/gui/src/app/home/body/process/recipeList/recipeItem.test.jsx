@@ -43,17 +43,17 @@ afterEach(() => {
 })
 
 describe('RecipeItem', () => {
-    it('leads with the recipe name and follows with its type', () => {
+    it('names the type, and puts the recipe name in the description', () => {
         mount({recipe, typeName: 'Optical mosaic', path: '', onClick: () => {}})
 
-        expect(lastProps().title).toBe('nairobi_mosaic')
-        expect(lastProps().description).toBe('Optical mosaic')
+        expect(lastProps().title).toBe('Optical mosaic')
+        expect(lastProps().description).toBe('nairobi_mosaic')
     })
 
     it('shows no path while browsing a folder', () => {
         mount({recipe, typeName: 'Optical mosaic', path: '', onClick: () => {}})
 
-        expect(lastProps().description).toBe('Optical mosaic')
+        expect(lastProps().description).toBe('nairobi_mosaic')
     })
 
     // The path rides in the description rather than the metadata slot: only the description is
@@ -61,7 +61,7 @@ describe('RecipeItem', () => {
     it('leads the description with the folder path when given one', () => {
         mount({recipe, typeName: 'Optical mosaic', path: 'Kenya / 2024', onClick: () => {}})
 
-        expect(lastProps().description).toBe('Kenya / 2024 · Optical mosaic')
+        expect(lastProps().description).toBe('Kenya / 2024 / nairobi_mosaic')
         expect(lastProps().metadata).toBeUndefined()
     })
 

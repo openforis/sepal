@@ -4,6 +4,8 @@ import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
+import {PATH_SEPARATOR} from './recipeListConstants'
+
 export const RecipeItem = ({
     recipe, typeName, path, highlight, hovered, edit, selected, drag$,
     onClick, onSelect, onDuplicate, onRemove
@@ -18,10 +20,12 @@ export const RecipeItem = ({
         <CrudItem
             icon='globe'
             iconSize='lg'
-            title={recipe.name}
-            description={[path, typeName].filter(part => part).join(' · ')}
+            title={typeName}
+            description={[path, recipe.name].filter(part => part).join(PATH_SEPARATOR)}
             timestamp={recipe.updateTime}
             highlight={highlight}
+            // A search matches the name and the path, never the type, so the title must not claim a hit.
+            highlightTitle={false}
             duplicateTooltip={msg('process.menu.duplicateRecipe.tooltip')}
             removeTooltip={msg('process.menu.removeRecipe.tooltip')}
             selectTooltip={msg('process.menu.selectRecipe.tooltip')}
