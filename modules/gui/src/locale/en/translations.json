@@ -4977,6 +4977,9 @@
       "parent": {
         "root": "Home"
       },
+      "move": {
+        "done": "Moved {name} to {folder}."
+      },
       "selectHere": "Move here",
       "none": "No folders"
     },
@@ -5020,7 +5023,8 @@
         "label": "Move",
         "title": "Move recipes",
         "tooltip": "Move selected recipes to a folder",
-        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?"
+        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?",
+        "done": "Moved {count} {count, plural, one {recipe} other {recipes}} to {folder}."
       },
       "export": {
         "success": "Recipe has been exported.",
@@ -5028,6 +5032,7 @@
       }
     },
     "recipeList.root": "Home",
+    "recipeList.undo": "Undo",
     "remapping": {
       "create": "Remapping",
       "description": "Remap categorical and continuous image bands into new categories.",
