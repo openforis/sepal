@@ -12,6 +12,10 @@ vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('../createRecipe', () => ({CreateRecipe: () => null}))
+vi.mock('../recipeTypeRegistry', () => ({
+    getRecipeType: type => ({labels: {name: type}}),
+    listRecipeTypes: () => []
+}))
 // The folder form and the confirmation list pull in the whole form stack, which this test never uses.
 vi.mock('./folderForm', () => ({FolderForm: () => null}))
 vi.mock('./folderActions', () => ({updateFolder}))
@@ -76,8 +80,8 @@ const EMPTY = {id: 'empty', name: 'Empty', parentId: 'kenya'}
 const folders = [KENYA, MOZAMBIQUE, Y2024, EMPTY, MOSAICS]
 
 const AT_ROOT = {id: 'r1', name: 'kenya_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
-const ALSO_AT_ROOT = {id: 'r3', name: 'mosaic_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-03'}
-const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'MOSAIC', folderId: '2024', updateTime: '2026-01-02'}
+const ALSO_AT_ROOT = {id: 'r3', name: 'mosaic_draft', type: 'CCDC', folderId: null, updateTime: '2026-01-03'}
+const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'TIME_SERIES', folderId: '2024', updateTime: '2026-01-02'}
 const recipes = [AT_ROOT, ALSO_AT_ROOT, IN_2024]
 
 let container
@@ -144,13 +148,13 @@ describe('RecipeList', () => {
     it('shows the folders and the recipes of the open folder, folders first', () => {
         mount()
 
-        expect(rowTitles()).toEqual(['Kenya', 'Mozambique', 'mosaic_draft', 'kenya_draft'])
+        expect(rowTitles()).toEqual(['Kenya', 'Mozambique', 'CCDC', 'MOSAIC'])
     })
 
     it('shows the contents of the folder it was told to open', () => {
         mount({folderId: '2024'})
 
-        expect(rowTitles()).toEqual(['Mosaics_2024', 'nairobi_mosaic'])
+        expect(rowTitles()).toEqual(['Mosaics_2024', 'TIME_SERIES'])
     })
 
     it('opens the folder that was clicked, and clears the search', () => {
@@ -166,8 +170,8 @@ describe('RecipeList', () => {
     it('finds a recipe of a subfolder by its name, and names the folder holding it', () => {
         mount({filterValue: 'nairobi', filterValues: ['nairobi']})
 
-        expect(rowTitles()).toEqual(['nairobi_mosaic'])
-        expect(rowFor('nairobi_mosaic').description).toContain('2024')
+        expect(rowTitles()).toEqual(['TIME_SERIES'])
+        expect(rowFor('TIME_SERIES').description).toBe('Kenya / Kenya_2024 / nairobi_mosaic')
     })
 
     it('refuses to remove a folder that still holds something, and asks the server nothing', () => {
