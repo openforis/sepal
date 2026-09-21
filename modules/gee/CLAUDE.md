@@ -25,7 +25,8 @@ that raises the child's report on failure. They exist because `imageFactory` loa
 implementation through `createRequire`, which Jest's CJS resolver answers with `ERR_REQUIRE_ESM`. Jest does
 not discover them directly; `sepal npm-test gee` reaches them through their bridges.
 
-`verify/` is separate: hand-run gates against live Earth Engine, outside any suite.
+`verify/` is separate: hand-run gates against live Earth Engine, outside any suite. The helpers those scripts
+share are ordinary modules, and `test/verify/` covers them over fakes.
 
 ## Key Architecture
 

@@ -5,7 +5,18 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 
 const baseConfig = {
-    files: ['**/*.js', 'modules/gee/test/**/*.mjs'],
+    files: [
+        '**/*.js',
+        'modules/gee/test/**/*.mjs',
+        // The hand-run Earth Engine probes that carry shared logic, named one by one: the other scripts in
+        // modules/gee/verify predate this configuration and are not covered by it.
+        'modules/gee/verify/probeRun.mjs',
+        'modules/gee/verify/eeFailures.mjs',
+        'modules/gee/verify/assetPropertyLimits.mjs',
+        'modules/gee/verify/bandEncodingPersistence.mjs',
+        'modules/gee/verify/filteredCollectionEvidence.mjs',
+        'modules/gee/verify/ccdcOutputBandSelection.mjs'
+    ],
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {
@@ -68,4 +79,18 @@ const testSupportBoundary = {
     }
 }
 
-export default [baseConfig, testSupportBoundary]
+// A hand-run probe's report is its output, written to stdout by the entry point that assembles it. The helpers
+// those two share have no report to write.
+const verifyEntryPoints = {
+    files: [
+        'modules/gee/verify/assetPropertyLimits.mjs',
+        'modules/gee/verify/bandEncodingPersistence.mjs',
+        'modules/gee/verify/filteredCollectionEvidence.mjs',
+        'modules/gee/verify/ccdcOutputBandSelection.mjs'
+    ],
+    rules: {
+        'no-console': ['error', {allow: ['log', 'info', 'warn', 'error']}]
+    }
+}
+
+export default [baseConfig, testSupportBoundary, verifyEntryPoints]
