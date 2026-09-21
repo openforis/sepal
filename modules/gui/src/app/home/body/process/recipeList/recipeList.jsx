@@ -335,15 +335,11 @@ class _RecipeList extends React.Component {
     renderFolderForm() {
         const {folders} = this.props
         const {editFolder} = this.state
-        // A folder being created lands where you already are, so there is nothing to choose. Only an
-        // existing folder offers a parent, which is how it gets moved.
-        const existing = folders.some(({id}) => id === editFolder.id)
         return (
             <FolderForm
                 folder={editFolder}
-                folders={folders}
-                parentEditable={existing}
                 folderNames={folders.filter(({id}) => id !== editFolder.id).map(({name}) => name.toLowerCase())}
+                // The form leaves the placement alone, so the folder keeps the parent it was given.
                 onApply={folder => {
                     updateFolder({...editFolder, ...folder})
                     this.editFolder(null)

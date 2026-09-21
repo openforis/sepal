@@ -4766,8 +4766,7 @@
       "form": {
         "name.label": "Name",
         "name.required": "Name is required",
-        "name.unique": "Folder name is already in use",
-        "parent.label": "Parent folder"
+        "name.unique": "Folder name is already in use"
       },
       "edit": {
         "tooltip": "Edit folder"
