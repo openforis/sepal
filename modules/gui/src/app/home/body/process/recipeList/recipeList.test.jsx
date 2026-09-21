@@ -2,8 +2,8 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-const {crudItems, dispatched, listItems, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
-    crudItems: [], dispatched: [], listItems: [], removeFolder$: vi.fn(), updateFolder: vi.fn(), warnings: []
+const {crudItems, dispatched, listItems, notifications, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
+    crudItems: [], dispatched: [], listItems: [], notifications: [], removeFolder$: vi.fn(), updateFolder: vi.fn(), warnings: []
 }))
 
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
@@ -38,7 +38,11 @@ vi.mock('~/widget/crudItem', () => ({
     }
 }))
 vi.mock('~/widget/notifications', () => ({
-    Notifications: {warning: message => warnings.push(message), error: message => warnings.push(message)}
+    Notifications: {
+        info: notification => notifications.push(notification),
+        warning: message => warnings.push(message),
+        error: message => warnings.push(message)
+    }
 }))
 vi.mock('~/action-builder', () => ({
     actionBuilder: type => {
@@ -63,7 +67,7 @@ const EMPTY = {id: 'empty', name: 'Empty', parentId: 'kenya'}
 const folders = [KENYA, Y2024, EMPTY, MOSAICS]
 
 const AT_ROOT = {id: 'r1', name: 'loose_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-01'}
-const ALSO_AT_ROOT = {id: 'r3', name: 'second_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-03'}
+const ALSO_AT_ROOT = {id: 'r3', name: 'mosaic_draft', type: 'MOSAIC', folderId: null, updateTime: '2026-01-03'}
 const IN_2024 = {id: 'r2', name: 'nairobi_mosaic', type: 'MOSAIC', folderId: '2024', updateTime: '2026-01-02'}
 const recipes = [AT_ROOT, ALSO_AT_ROOT, IN_2024]
 
@@ -101,12 +105,21 @@ const rowFor = title => crudItems.find(props => props.title === title)
 
 const button = label => [...container.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
 
+// The notification renders its own control through content(dismiss); the element carries the handler.
+const undoLastMove = () => {
+    const dismiss = vi.fn()
+    const control = notifications[notifications.length - 1].content(dismiss)
+    act(() => control.props.onClick())
+    return dismiss
+}
+
 beforeEach(() => {
     mounted = []
     crudItems.length = 0
     dispatched.length = 0
     listItems.length = 0
     warnings.length = 0
+    notifications.length = 0
     removeFolder$.mockReset()
     updateFolder.mockReset()
 })
@@ -119,7 +132,7 @@ describe('RecipeList', () => {
     it('shows the folders and the recipes of the open folder, folders first', () => {
         mount()
 
-        expect(rowTitles()).toEqual(['Kenya', 'second_draft', 'loose_draft'])
+        expect(rowTitles()).toEqual(['Kenya', 'mosaic_draft', 'loose_draft'])
     })
 
     it('shows the contents of the folder it was told to open', () => {
@@ -227,6 +240,47 @@ describe('drag and drop', () => {
         drop(AT_ROOT.id, dropTarget(KENYA.id))
 
         expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], KENYA.id)
+    })
+
+    it('offers an undo that puts the recipe back where it was', () => {
+        const onMove = vi.fn()
+        mount({onMove})
+
+        drop(AT_ROOT.id, dropTarget(KENYA.id))
+        const dismiss = undoLastMove()
+
+        expect(onMove.mock.calls).toEqual([[[AT_ROOT.id], KENYA.id], [[AT_ROOT.id], null]])
+        expect(dismiss).toHaveBeenCalled()
+    })
+
+    it('puts each recipe back in its own folder', () => {
+        const onMove = vi.fn()
+        // A search reaches into the subfolders, so one move can take recipes out of several folders.
+        mount({onMove, filterValue: 'mosaic', filterValues: ['mosaic'], selectedIds: [ALSO_AT_ROOT.id, IN_2024.id]})
+
+        drop(ALSO_AT_ROOT.id, dropTarget(MOSAICS.id))
+        undoLastMove()
+
+        const undoCalls = onMove.mock.calls.slice(1)
+        expect(undoCalls).toContainEqual([[ALSO_AT_ROOT.id], null])
+        expect(undoCalls).toContainEqual([[IN_2024.id], Y2024.id])
+    })
+
+    it('offers an undo that puts a folder back under its parent', () => {
+        mount({folderId: KENYA.id})
+
+        drop(Y2024.id, container.querySelector('[data-drop-home]'))
+        undoLastMove()
+
+        expect(updateFolder).toHaveBeenLastCalledWith(expect.objectContaining({id: Y2024.id, parentId: KENYA.id}))
+    })
+
+    it('says nothing when a drop moves nothing', () => {
+        mount()
+
+        drop(AT_ROOT.id, container)
+
+        expect(notifications).toEqual([])
     })
 
     it('can drag in edit mode as well', () => {
