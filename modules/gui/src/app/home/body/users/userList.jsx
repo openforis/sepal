@@ -10,9 +10,9 @@ import format from '~/format'
 import {simplifyString, splitString} from '~/string'
 import lookStyles from '~/style/look.module.css'
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
 import {FastList} from '~/widget/fastList'
+import {FloatingButton} from '~/widget/floatingButton'
 import {Icon} from '~/widget/icon'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
@@ -295,14 +295,17 @@ export class UserList extends React.Component {
 
     // Live changes are held back until asked for, so the list does not shift under the admin.
     renderUpdateButton() {
-        const {updateCount, onUpdate} = this.props
+        const {updatePending, onUpdate} = this.props
         return (
-            <Button
+            <FloatingButton
                 look='add'
-                shape='pill'
-                label={msg('users.update.label', {count: updateCount})}
+                air='more'
+                shape='circle'
+                size='large'
+                icon='refresh'
                 tooltip={msg('users.update.tooltip')}
-                disabled={!updateCount}
+                tooltipPlacement='left'
+                hidden={!updatePending}
                 onClick={onUpdate}
             />
         )
@@ -359,10 +362,7 @@ export class UserList extends React.Component {
                 <Content horizontalPadding verticalPadding menuPadding>
                     <Layout type='horizontal' spacing='compact'>
                         {this.renderTextFilter()}
-                        <Layout type='horizontal' spacing='compact'>
-                            {this.renderStatusFilter()}
-                            {this.renderUpdateButton()}
-                        </Layout>
+                        {this.renderStatusFilter()}
                     </Layout>
                     <Scrollable
                         direction='x'
@@ -370,6 +370,7 @@ export class UserList extends React.Component {
                         {this.renderHeader(users)}
                         {this.renderUsers(users)}
                     </Scrollable>
+                    {this.renderUpdateButton()}
                 </Content>
             </SectionLayout>
         )
@@ -380,7 +381,7 @@ UserList.propTypes = {
     users: PropTypes.array.isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
-    updateCount: PropTypes.number
+    updatePending: PropTypes.bool,
 }
 
 class UserItem extends React.PureComponent {
