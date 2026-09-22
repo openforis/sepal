@@ -79,7 +79,7 @@
       "placeholder": "Select an instance...",
       "runningSection": "Running instances",
       "newSection": "New instance",
-      "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GiB RAM{gpu}). Contact your administrator.",
+      "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
     "admin": {
@@ -6196,6 +6196,11 @@
       "deadline": {
         "stopping": "stops at {time}",
         "until": "Keep-alive until {time} ({relative})"
+      },
+      "specs": {
+        "cpu": "{count} CPU",
+        "gpu": "{count} GPU",
+        "ram": "{gb} GB"
       },
       "usage": {
         "cpu": "CPU",

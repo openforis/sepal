@@ -95,7 +95,7 @@ There are three types of server instances:
    This instance can be fairly small.
 
 Users can at times require a lot of processing power and memory for their processing jobs. The large instances
-needed for this type of jobs are quite expensive. For instance, an r3.8xlarge (32 CPUs, 244 GiB memory) costs over 3 USD
+needed for this type of jobs are quite expensive. For instance, an r3.8xlarge (32 CPUs, 244 GB memory) costs over 3 USD
 an hour, which adds up to more than 2,300 USD a month. When using such expensive instances, care have to be taken to
 use them efficiently, and not have them sitting idle at any time. To maximize the utility of the worker instances,
 SEPAL will automatically launch them when they are requested, and terminate them when they're not used anymore.

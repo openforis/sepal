@@ -14,6 +14,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Scrollable} from '~/widget/scrollable'
+import {Tag} from '~/widget/tag'
 
 import styles from './userSessions.module.css'
 import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
@@ -53,8 +54,12 @@ class _UserSessions extends React.Component {
     // The number is the instance's 1-based position in this list — the same one the SSH menu prints
     // and the expiry notification quotes, because the report is ordered by creation time.
     renderTitle(session, index) {
-        const {hourlyCost} = session.instanceType
-        return `${instanceLabel(session, index)} (${format.dollarsPerHour(hourlyCost)})`
+        return (
+            <div className={styles.title}>
+                <span>{instanceLabel(session, index)}</span>
+                {this.renderSpecs(session.instanceType)}
+            </div>
+        )
     }
 
     renderMetric({key, pct, bytesPerS}) {
@@ -96,6 +101,21 @@ class _UserSessions extends React.Component {
                 time: moment(closeTime).format('LT')
             })
         ].filter(Boolean).join(' — ')
+    }
+
+    // GPUs are counted only where there are any: "0 GPU" on every ordinary instance would be noise.
+    renderSpecs({cpuCount, gpuCount, ramGiB, hourlyCost}) {
+        const specs = [
+            msg('user.userSession.specs.cpu', {count: cpuCount}),
+            gpuCount ? msg('user.userSession.specs.gpu', {count: gpuCount}) : null,
+            msg('user.userSession.specs.ram', {gb: ramGiB}),
+            format.dollarsPerHour(hourlyCost)
+        ].filter(Boolean)
+        return (
+            <div className={styles.specs}>
+                <Tag size='small' label={specs.join(' · ')}/>
+            </div>
+        )
     }
 
     renderDescription(session) {
@@ -147,7 +167,6 @@ class _UserSessions extends React.Component {
             <ListItem key={session.id}>
                 <CrudItem
                     title={this.renderTitle(session, index)}
-                    titleTooltip={session.instanceType.description}
                     description={this.renderDescription(session)}
                     timestamp={session.creationTime}
                     timestampFootnote={format.dollars(session.costSinceCreation)}

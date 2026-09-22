@@ -511,7 +511,7 @@ test('apiKeyAuthenticate → reads apiKey from query too', async () => {
 test('generateReportSelf → full report map with session + instanceType', async () => {
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
-        description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+        description: '1 CPU, 2 GB', hourlyCost: 0.02,
     }
     sessionManager.generateUserSessionReport.mockResolvedValue({
         sessions: [pendingSession({
@@ -537,7 +537,7 @@ test('generateReportSelf → full report map with session + instanceType', async
         timeoutHours: 0,
         instanceType: {
             id: 'T3aSmall', path: 'sessions/instance-type/T3aSmall', name: 't3a.small',
-            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, description: '1 CPU, 2 GB', hourlyCost: 0.02,
         },
         creationTime: '2026-07-01T10:00:00.000Z',
         // 2h since creation (clock 12:00, creation 10:00) → ceil(2) * 0.02 = 0.04
@@ -574,7 +574,7 @@ test('creationTime carries the instant, not a bare wall clock', async () => {
 test('generateReportOther → admin path form in session + instanceType', async () => {
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
-        description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+        description: '1 CPU, 2 GB', hourlyCost: 0.02,
     }
     sessionManager.generateUserSessionReport.mockResolvedValue({
         sessions: [pendingSession({username: 'bob', instanceType: 'T3aSmall'})],
@@ -593,7 +593,7 @@ test('generateReportOther → admin path form in session + instanceType', async 
 test('report sessions include their associated apps', () => {
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
-        description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+        description: '1 CPU, 2 GB', hourlyCost: 0.02,
     }
     const report = {
         sessions: [pendingSession({
@@ -641,7 +641,7 @@ const notifiedReport = () => ({
     })],
     instanceTypes: [{
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
-        description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+        description: '1 CPU, 2 GB', hourlyCost: 0.02,
     }],
 })
 
@@ -712,7 +712,7 @@ test('serializes fresh usage and nulls stale or missing usage', () => {
     // is stale.
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,
-        description: '1 CPU, 2 GiB', hourlyCost: 0.02,
+        description: '1 CPU, 2 GB', hourlyCost: 0.02,
     }
     const reportWithUsage = usage => ({
         sessions: [pendingSession({state: 'ACTIVE', instanceType: 'T3aSmall', apps: [], usage})],
@@ -840,7 +840,7 @@ test('appSessions → maps PENDING/ACTIVE to STARTING/ACTIVE, self user', async 
 
 test('serializes gpuCount on instance types', () => {
     const instanceType = {id: 'G5Xlarge', name: 'g5.xlarge', tag: 'g4', cpuCount: 4,
-        ramGiB: 16, hourlyCost: 1.123, description: '4 CPU, 1 GPU, 16 GiB', gpuCount: 1}
+        ramGiB: 16, hourlyCost: 1.123, description: '4 CPU, 1 GPU, 16 GB', gpuCount: 1}
     const report = {sessions: [], instanceTypes: [instanceType]}
     const map = api._internal.reportAsMap(report, 'bob', true)
     expect(map.instanceTypes[0].gpuCount).toBe(1)

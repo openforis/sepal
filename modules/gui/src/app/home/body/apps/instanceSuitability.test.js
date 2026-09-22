@@ -5,11 +5,11 @@ import {
     defaultPickerValue, hasSuitableOption, isSuitableInstanceType, sessionNumber, suitableInstanceTypes
 } from './instanceSuitability'
 
-const T3 = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, hourlyCost: 0.0204, gpuCount: 0, description: '1 CPU, 2 GiB'}
-const M6 = {id: 'M6aXlarge', name: 'm6a.xlarge', tag: 'm4', cpuCount: 4, ramGiB: 16, hourlyCost: 0.1926, gpuCount: 0, description: '4 CPU, 16 GiB'}
-const G5 = {id: 'G5Xlarge', name: 'g5.xlarge', tag: 'g4', cpuCount: 4, ramGiB: 16, hourlyCost: 1.123, gpuCount: 1, description: '4 CPU, 1 GPU, 16 GiB'}
-const G548 = {id: 'G548xlarge', name: 'g5.48xlarge', tag: 'g192', cpuCount: 192, ramGiB: 768, hourlyCost: 16.288, gpuCount: 8, description: '192 CPU, 8 GPU, 768 GiB'}
-const LEGACY = {id: 'T2Small', name: 't2.small', cpuCount: 1, ramGiB: 2, hourlyCost: 0.025, gpuCount: 0, description: '1 CPU, 2 GiB'} // no tag
+const T3 = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, hourlyCost: 0.0204, gpuCount: 0, description: '1 CPU, 2 GB'}
+const M6 = {id: 'M6aXlarge', name: 'm6a.xlarge', tag: 'm4', cpuCount: 4, ramGiB: 16, hourlyCost: 0.1926, gpuCount: 0, description: '4 CPU, 16 GB'}
+const G5 = {id: 'G5Xlarge', name: 'g5.xlarge', tag: 'g4', cpuCount: 4, ramGiB: 16, hourlyCost: 1.123, gpuCount: 1, description: '4 CPU, 1 GPU, 16 GB'}
+const G548 = {id: 'G548xlarge', name: 'g5.48xlarge', tag: 'g192', cpuCount: 192, ramGiB: 768, hourlyCost: 16.288, gpuCount: 8, description: '192 CPU, 8 GPU, 768 GB'}
+const LEGACY = {id: 'T2Small', name: 't2.small', cpuCount: 1, ramGiB: 2, hourlyCost: 0.025, gpuCount: 0, description: '1 CPU, 2 GB'} // no tag
 const TYPES = [M6, T3, G5, LEGACY]
 
 const session = (id, instanceType) => ({id, instanceType, apps: []})
@@ -82,7 +82,7 @@ describe('buildPickerOptions', () => {
         const [option] = options[0].options
         expect(option.label).toBe('1: t1 — 2 apps')
         expect(option.apps).toEqual(['Foo', '/sandbox/jupyter/bar.ipynb'])
-        expect(option.searchableText).toBe('1: t1 — 1 CPU, 2 GiB, 0.02 USD/h Foo /sandbox/jupyter/bar.ipynb')
+        expect(option.searchableText).toBe('1: t1 — 1 CPU, 2 GB, 0.02 USD/h Foo /sandbox/jupyter/bar.ipynb')
     })
 
     // The row is two columns: the picker puts the title left and right-aligns the detail, so the
@@ -90,8 +90,8 @@ describe('buildPickerOptions', () => {
     it('splits each option into the instance and its specs', () => {
         const sessions = [{id: 's-1', instanceType: T3, apps: [{path: '/sandbox/shiny/foo', label: 'Foo'}]}]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: t1', detail: '1 CPU, 2 GiB, 0.02 USD/h'})
-        expect(options[1].options[1]).toMatchObject({title: 'm4', detail: '4 CPU, 16 GiB, 0.19 USD/h'})
+        expect(options[0].options[0]).toMatchObject({title: '1: t1', detail: '1 CPU, 2 GB, 0.02 USD/h'})
+        expect(options[1].options[1]).toMatchObject({title: 'm4', detail: '4 CPU, 16 GB, 0.19 USD/h'})
     })
 
     it('prefixes running instances with their 1-based report position, disabled ones included', () => {
@@ -102,8 +102,8 @@ describe('buildPickerOptions', () => {
         expect(options[1].options.map(({label}) => label)).toEqual(['m4', 'g4'])
         // the filter still matches what the right-hand column says
         expect(options[1].options.map(({searchableText}) => searchableText)).toEqual([
-            'm4 — 4 CPU, 16 GiB, 0.19 USD/h',
-            'g4 — 4 CPU, 1 GPU, 16 GiB, 1.12 USD/h'
+            'm4 — 4 CPU, 16 GB, 0.19 USD/h',
+            'g4 — 4 CPU, 1 GPU, 16 GB, 1.12 USD/h'
         ])
     })
 
@@ -121,7 +121,7 @@ describe('buildPickerOptions', () => {
     // Legacy types are not offered as new instances, but a session can still be running on one.
     it('falls back to the AWS name for a running untagged type', () => {
         const options = buildPickerOptions({sessions: [session('s-1', LEGACY)], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: t2.small', detail: '1 CPU, 2 GiB, 0.03 USD/h'})
+        expect(options[0].options[0]).toMatchObject({title: '1: t2.small', detail: '1 CPU, 2 GB, 0.03 USD/h'})
     })
 
     it('omits the running section when no instance is running', () => {
