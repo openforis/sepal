@@ -59,7 +59,8 @@ class _UserBrowser extends React.Component {
         userId: null,
         // Rows held back until the admin asks for them, latest per user, each newer than shown.
         pending: {},
-        saving: false
+        saving: false,
+        applyingUpdates: false
     }
 
     constructor(props) {
@@ -70,6 +71,7 @@ class _UserBrowser extends React.Component {
         this.lockUser = this.lockUser.bind(this)
         this.unlockUser = this.unlockUser.bind(this)
         this.applyUpdates = this.applyUpdates.bind(this)
+        this.onUpdate = this.onUpdate.bind(this)
     }
 
     // Mounted on the first visit to the users section and kept, so the live subscription starts
@@ -128,9 +130,15 @@ class _UserBrowser extends React.Component {
         this.setState(({pending}) => ({pending: withoutStale(pending, rows)}))
     }
 
+    onUpdate() {
+        this.setState({applyingUpdates: true})
+        setImmediate(() => this.applyUpdates())
+    }
+
     applyUpdates(usernames = Object.keys(this.state.pending)) {
         const {pending} = this.state
         this.writeRows(usernames.map(username => pending[username]))
+        this.setState({applyingUpdates: false})
     }
 
     rows() {
@@ -160,12 +168,12 @@ class _UserBrowser extends React.Component {
     }
 
     renderLoaded() {
-        const {pending} = this.state
+        const {pending, applyingUpdates} = this.state
         return (
             <UserList
                 users={this.rows()}
-                updateCount={_.size(pending)}
-                onUpdate={() => this.applyUpdates()}
+                updatePending={!_.isEmpty(pending) && !applyingUpdates}
+                onUpdate={this.onUpdate}
                 onSelect={this.editUser}/>
         )
     }

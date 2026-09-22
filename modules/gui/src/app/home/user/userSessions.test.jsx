@@ -14,11 +14,12 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
+vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
 vi.mock('~/widget/crudItem', () => ({
     CrudItem: ({title, description, timestampFootnote, removeMessage, editDisabled, removePending}) =>
         <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}>
-            <div>{title}</div>
-            <div>{description}</div>
+            <div className='title'>{title}</div>
+            <div className='description'>{description}</div>
             <div className='footnote'>{timestampFootnote}</div>
             <div className='remove-message'>{removeMessage}</div>
         </div>
@@ -35,7 +36,7 @@ setLanguage('en')
 
 const session = overrides => ({
     id: 's1',
-    instanceType: {name: 't3a.small', tag: 't1', description: '1 CPU, 2 GiB', hourlyCost: 0.0204, gpuCount: 0},
+    instanceType: {name: 't3a.small', tag: 't1', cpuCount: 1, gpuCount: 0, ramGiB: 2, hourlyCost: 0.0204},
     creationTime: '2026-08-17T07:17:29.000Z',
     costSinceCreation: 0.04,
     apps: [],
@@ -73,18 +74,31 @@ describe('the session list', () => {
 
     // The number leads (it is what the SSH menu accepts), then the instance's own name, then its
     // type — the same name the expiry notification, the email and its management page show.
-    it('numbers each instance, names it, and prices it by the hour', () => {
-        const text = render([
+    it('numbers each instance and names it', () => {
+        const labels = [...render([
             session({id: 's1', name: 'humble-robin'}),
             session({id: 's2', name: 'lunar-owl'}),
-        ]).textContent
-        expect(text).toContain('1: humble-robin - t1 ($0.02/h)')
-        expect(text).toContain('2: lunar-owl - t1 ($0.02/h)')
+        ]).querySelectorAll('.title > div > span')].map(({textContent}) => textContent)
+        expect(labels).toEqual(['1: humble-robin - t1', '2: lunar-owl - t1'])
     })
 
     it('falls back to number and type for a session with no name', () => {
-        const text = render([session({id: 's1', name: null})]).textContent
-        expect(text).toContain('1: t1 ($0.02/h)')
+        const label = render([session({id: 's1', name: null})]).querySelector('.title > div > span')
+        expect(label.textContent).toBe('1: t1')
+    })
+
+    // One pill on the title line after the label: capacity first, then what it costs, separated the
+    // way the usage line separates its metrics.
+    it('sizes and prices the instance in a pill on the title line', () => {
+        const pill = render([session()]).querySelector('.title .pill')
+        expect(pill.textContent).toBe('1 CPU · 2 GB · $0.02/h')
+    })
+
+    it('counts the GPUs of a GPU instance', () => {
+        const gpu = session({
+            instanceType: {name: 'g5.xlarge', tag: 'g4', cpuCount: 4, gpuCount: 1, ramGiB: 16, hourlyCost: 1.123}
+        })
+        expect(render([gpu]).querySelector('.title .pill').textContent).toBe('4 CPU · 1 GPU · 16 GB · $1.12/h')
     })
 
     // Under the relative start time, not in a column of its own.
@@ -94,7 +108,7 @@ describe('the session list', () => {
     })
 
     it('reports the sampled usage and the verdict', () => {
-        expect(render([session()]).textContent).toContain('CPU 12% · NET 1.23 kB/s · RAM 35% — unused')
+        expect(render([session()]).textContent).toContain('CPU 12% · RAM 35% · NET 1.23 kB/s — unused')
     })
 
     it('says so when there is no usage sample', () => {

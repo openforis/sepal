@@ -12,7 +12,7 @@
 //   gpuCount    — GPU count (default 0)
 //
 // Derived:
-//   description — "$cpuCount CPU, $ramGiB GiB" ("$gpuCount GPU" after the CPU count when gpuCount > 0)
+//   description — "$cpuCount CPU, $ramGiB GB" ("$gpuCount GPU" after the CPU count when gpuCount > 0)
 //   ramBytes    — ramGiB * 2^30
 
 const makeInstanceType = ({id, name, tag, cpuCount, ramGiB, hourlyCost, idleCount, devices, gpuCount}) => ({
@@ -25,7 +25,7 @@ const makeInstanceType = ({id, name, tag, cpuCount, ramGiB, hourlyCost, idleCoun
     idleCount: idleCount ?? 0,
     devices: devices ?? [],
     gpuCount: gpuCount ?? 0,
-    get description() { return `${cpuCount} CPU, ${gpuCount ? `${gpuCount} GPU, ` : ''}${ramGiB} GiB` },
+    get description() { return `${cpuCount} CPU, ${gpuCount ? `${gpuCount} GPU, ` : ''}${ramGiB} GB` },
     get ramBytes() { return ramGiB * Math.pow(2, 30) },
 })
 

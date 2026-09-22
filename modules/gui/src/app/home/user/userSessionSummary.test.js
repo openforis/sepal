@@ -12,19 +12,19 @@ const session = ({gpuCount = 0, ...overrides} = {}) => ({
 })
 
 describe('usageMetrics', () => {
-    it('reports cpu, network and ram, in that order', () => {
+    it('reports cpu, ram and network, in that order', () => {
         expect(usageMetrics(session())).toEqual([
             {key: 'cpu', pct: 12.4},
-            {key: 'net', bytesPerS: 1234},
-            {key: 'ram', pct: 34.6}
+            {key: 'ram', pct: 34.6},
+            {key: 'net', bytesPerS: 1234}
         ])
     })
 
     // A GPU reading on a CPU instance is meaningless, and a permanent "GPU 0%" on every session
     // trains the eye to skip the line the verdict lives on.
-    it('reports gpu between cpu and network, but only on GPU instances', () => {
+    it('reports gpu between cpu and ram, but only on GPU instances', () => {
         const gpu = session({gpuCount: 1, usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: 80, netBytesPerS: 1234}})
-        expect(usageMetrics(gpu).map(({key}) => key)).toEqual(['cpu', 'gpu', 'net', 'ram'])
+        expect(usageMetrics(gpu).map(({key}) => key)).toEqual(['cpu', 'gpu', 'ram', 'net'])
         expect(usageMetrics(gpu)[1]).toEqual({key: 'gpu', pct: 80})
     })
 

@@ -5,7 +5,7 @@
 // directly. Labels and number formatting stay in the component — this decides only WHAT is worth
 // showing, which is where the rules that can be wrong live.
 
-// usageMetrics — the sampled metrics in reading order (cpu, gpu, network, ram), or null when there
+// usageMetrics — the sampled metrics in reading order (cpu, gpu, ram, network), or null when there
 // is nothing to report. `usage` is already null when the sample is missing or stale (the report
 // serializer's 5-minute guard), so anything here is live.
 //
@@ -21,10 +21,10 @@ export const usageMetrics = session => {
     return [
         {key: 'cpu', pct: usage.cpuPct},
         ...session.instanceType?.gpuCount ? [{key: 'gpu', pct: usage.gpuPct ?? 0}] : [],
+        {key: 'ram', pct: usage.ramPct},
         ...usage.netBytesPerS === null || usage.netBytesPerS === undefined
             ? []
-            : [{key: 'net', bytesPerS: usage.netBytesPerS}],
-        {key: 'ram', pct: usage.ramPct}
+            : [{key: 'net', bytesPerS: usage.netBytesPerS}]
     ]
 }
 

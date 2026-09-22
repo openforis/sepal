@@ -26,14 +26,14 @@ test('every Local type has all 8 required fields', () => {
     }
 })
 
-test('description is "$cpuCount CPU, $ramGiB GiB"', () => {
+test('description is "$cpuCount CPU, $ramGiB GB"', () => {
     const t = AWS_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
-    expect(t.description).toBe('1 CPU, 2 GiB')
+    expect(t.description).toBe('1 CPU, 2 GB')
 })
 
 test('description shows the GPU count right after the CPU count when gpuCount > 0', () => {
-    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G5Xlarge').description).toBe('4 CPU, 1 GPU, 16 GiB')
-    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G512xlarge').description).toBe('48 CPU, 4 GPU, 192 GiB')
+    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G5Xlarge').description).toBe('4 CPU, 1 GPU, 16 GB')
+    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G512xlarge').description).toBe('48 CPU, 4 GPU, 192 GB')
 })
 
 test('ramBytes is ramGiB * 2^30', () => {
