@@ -89,10 +89,11 @@ const main = async () => {
     })
 
     // The locked-users set starts EMPTY on every worker restart and only catches up on the budget
-    // module's hourly cycle, so it is the FALLBACK gate, not the authoritative one: requestSession
-    // asks budgetClient for a live verdict and only falls back to this set when budget is
-    // unreachable. The set is still what closes an over-budget user's running sessions, driven by
-    // the budget.UserBudgetExceeded subscriber below.
+    // module's cycles (every minute for users with open sessions, hourly for the rest), so it is
+    // the FALLBACK gate, not the authoritative one: requestSession asks budgetClient for a live
+    // verdict and only falls back to this set when budget is unreachable. The set is still what
+    // closes an over-budget user's running sessions, driven by the budget.UserBudgetExceeded
+    // subscriber below.
     // closeUserSessions is bound to the raw command here rather than to sessionManager, which would
     // be a construction cycle (sessionManager depends on lockedUsers).
     const lockedUsers = createLockedUsers({

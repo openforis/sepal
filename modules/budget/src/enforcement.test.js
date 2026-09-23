@@ -2,15 +2,6 @@ import {jest} from '@jest/globals'
 
 import {createEnforcement} from './enforcement.js'
 
-const createEvents = () => {
-    const emitted = []
-    return {
-        emitted,
-        emitUserBudgetExceeded: username => emitted.push(['x', username]),
-        emitUserBudgetCleared: username => emitted.push(['c', username]),
-    }
-}
-
 test('publishes Exceeded for over-budget users and Cleared for the rest, every cycle', async () => {
     const budgetManager = {usersExceedingBudget: jest.fn(async () => ['over'])}
     const userClient = {eachUsername: async fn => { await fn('over'); await fn('ok') }}
@@ -51,3 +42,34 @@ test('iterates every user known to userClient, not just the exceeded ones', asyn
 
     expect(events.emitted).toEqual([['c', 'a'], ['c', 'b'], ['c', 'c']])
 })
+
+test('publishes the live verdict for each user with an open session', async () => {
+    const budgetManager = {verdict: async username => ({username, exceeded: username === 'over'})}
+    const openSessionUse = {usersWithOpenSessions: async () => ['over', 'ok']}
+    const events = createEvents()
+
+    const enforcement = createEnforcement({budgetManager, openSessionUse, events})
+    await enforcement.publishOpenSessionVerdicts()
+
+    expect(events.emitted).toEqual([['x', 'over'], ['c', 'ok']])
+})
+
+test('leaves users without open sessions to the hourly pass', async () => {
+    const budgetManager = {verdict: async username => ({username, exceeded: true})}
+    const openSessionUse = {usersWithOpenSessions: async () => []}
+    const events = createEvents()
+
+    const enforcement = createEnforcement({budgetManager, openSessionUse, events})
+    await enforcement.publishOpenSessionVerdicts()
+
+    expect(events.emitted).toEqual([])
+})
+
+const createEvents = () => {
+    const emitted = []
+    return {
+        emitted,
+        emitUserBudgetExceeded: username => emitted.push(['x', username]),
+        emitUserBudgetCleared: username => emitted.push(['c', username]),
+    }
+}
