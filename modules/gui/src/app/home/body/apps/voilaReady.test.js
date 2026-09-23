@@ -7,7 +7,7 @@ import {voilaReady$} from './voilaReady'
 // `widgetManager.restoredStatus` once the widget models are restored from the kernel. A widget output is an
 // empty lm-Panel reading "Loading widget..." until its view is rendered into it.
 
-const TIMEOUT_MS = 60 * 1000
+const TIMEOUT_MS = 3 * 60 * 1000
 const A_WHILE_MS = 30 * 1000
 const A_MOMENT_MS = 1000
 
@@ -101,7 +101,7 @@ describe('a voila notebook', () => {
         expect(watch.ready).toBe(true)
     })
 
-    it('stops being waited for after a minute', () => {
+    it('stops being waited for after three minutes', () => {
         const watch = watchReady(frameWith(voilaPage(loadingWidget())))
 
         advance(TIMEOUT_MS - 1)

@@ -1,7 +1,9 @@
 import {filter, interval, race, startWith, take, timer} from 'rxjs'
 
 const POLL_INTERVAL_MS = 250
-const TIMEOUT_MS = 60 * 1000
+// Long enough for the widget bundles to arrive over a poor connection, which is exactly where hiding the wait
+// matters most.
+const TIMEOUT_MS = 3 * 60 * 1000
 
 // Emits once the page written into an app's frame can be shown. Only a voila notebook is waited for: its page
 // arrives before its frontend has started, and until the widget models are restored from the kernel and every
