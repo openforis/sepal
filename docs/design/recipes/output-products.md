@@ -915,18 +915,18 @@ necessary where the EE graph determines the answer.
 The source comparison found helper drift and production defects. They must be fixed before the first adapter or
 temporal-composer contract is declared:
 
-- Radar point-in-time GUI bands include `ratio_VV_VH`, while `radar/mosaic.js` omits it from `getBands$()` even
-  though `toDateComposite()` creates it.
-- Radar time-scan execution adds `VV_const`, `VV_t`, `VH_const` and `VH_t` when harmonic dependents are requested,
-  including the default all-band path, while its `getBands$()` reports only phase, amplitude and residual harmonic
-  bands. Conversely, the raw GUI band dictionary makes `VV_fit` and `VH_fit` available to ungrouped callers, but the
-  grouped picker and source-band list omit them and the final mosaic adds the harmonics summary rather than
-  per-observation fitted bands.
+- Radar Mosaic's point-in-time `getBands$()` does not report every band its composite carries. The quality mosaic
+  keeps each collection band, so the image also holds `angle`, `quality` and `unixTimeDays`. An empty selection makes
+  both polarisations harmonic dependents, which adds the per-observation `VV_t`, `VV_constant`, `VV_cos` and
+  `VV_sin` bands and their VH counterparts, and then the harmonics summary. Its `VV_t` and `VH_t` repeat names the
+  composite already holds, and Earth Engine renames them `VV_t_1` and `VH_t_1` rather than refusing them. Whether a
+  point-in-time composite should carry these bands at all needs a product decision.
+  `modules/gee/verify/declaredOutputBands.mjs` reports the difference against live Earth Engine.
 - Optical GUI and EE code maintain separate data-set band catalogues. EE also exposes `unixTimeDays` for a MEDOID
   output while the GUI metadata group currently offers only `dayOfYear` and `daysFromTarget`. Whether
   `unixTimeDays` is intentionally hidden or accidentally omitted needs a product-level decision.
-- BAYTS non-alert map modes delegate image construction to a Radar Mosaic product, but their `getBands$()` branch
-  returns an alerts-band list instead of delegating. The GUI does delegate its band helper in those modes.
+- Change Alerts' GUI change-band dictionary lists the same nine bands as Earth Engine in a different order, and that
+  order drives the option list.
 - Temporal Sentinel-1 derives `ratio_VV_VH` by dividing values after the source adapter converted VV and VH to dB,
   while Radar Mosaic subtracts VH from VV. The shared name therefore currently identifies different measurements.
 - Several temporal defaults contain `DECENDING`, while the executor expects `DESCENDING`; the effective selection
