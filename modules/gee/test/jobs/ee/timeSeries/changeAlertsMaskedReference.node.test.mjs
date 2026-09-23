@@ -76,6 +76,7 @@ mock.module('#gee/jobs/job', {exports: {job: ({worker$}) => worker$}})
 // Alerts makes into it: which image, and which representation it says the dates are in.
 mock.module('#sepal/ee/timeSeries/changeAlertsAlgorithm', {
     exports: {
+        CHANGE_BANDS: [],
         analyzeChanges: ({segmentsImage, dateFormat}) => {
             alertAlgebra.push({segmentsImage, dateFormat})
             return eeImage('alerts')
@@ -165,9 +166,9 @@ const alertsOver = reference => ({
         date: {
             monitoringEnd: '2024-01-01',
             monitoringDuration: 1,
-            monitoringDurationUnit: 'year',
+            monitoringDurationUnit: 'months',
             calibrationDuration: 2,
-            calibrationDurationUnit: 'year'
+            calibrationDurationUnit: 'months'
         },
         changeAlertsOptions: {}
     }

@@ -125,12 +125,14 @@ class _BaytsAlertsImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams, visualizationType}, mapArea: {updateLayerConfig}} = this.props
-
-        if (!visualizationType) {
-            updateLayerConfig(defaultLayerConfig)
+        const {layerConfig, mapArea: {updateLayerConfig}} = this.props
+        // A layer config saved before the alert filter existed names a visualization type but no filter, and
+        // would leave the form showing nothing selected while the preview applies the unfiltered default.
+        const unstated = _.omitBy(defaultLayerConfig, (_value, field) => field in layerConfig)
+        if (!_.isEmpty(unstated)) {
+            updateLayerConfig(unstated)
         }
-        this.update(visParams)
+        this.update(layerConfig.visParams)
     }
 
     componentDidUpdate(prevProps) {
