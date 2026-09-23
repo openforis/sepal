@@ -14,8 +14,8 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Scrollable} from '~/widget/scrollable'
-import {Tag} from '~/widget/tag'
 
+import {InstanceSpecsTag} from '../instanceSpecs'
 import styles from './userSessions.module.css'
 import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
 
@@ -57,7 +57,7 @@ class _UserSessions extends React.Component {
         return (
             <div className={styles.title}>
                 <span>{instanceLabel(session, index)}</span>
-                {this.renderSpecs(session.instanceType)}
+                <InstanceSpecsTag instanceType={session.instanceType}/>
             </div>
         )
     }
@@ -101,19 +101,6 @@ class _UserSessions extends React.Component {
                 time: moment(closeTime).format('LT')
             })
         ].filter(Boolean).join(' — ')
-    }
-
-    // GPUs are counted only where there are any: "0 GPU" on every ordinary instance would be noise.
-    renderSpecs({cpuCount, gpuCount, ramGiB, hourlyCost}) {
-        const specs = [
-            msg('user.userSession.specs.cpu', {count: cpuCount}),
-            gpuCount ? msg('user.userSession.specs.gpu', {count: gpuCount}) : null,
-            msg('user.userSession.specs.ram', {gb: ramGiB}),
-            format.dollarsPerHour(hourlyCost)
-        ].filter(Boolean)
-        return (
-            <Tag size='small' label={specs.join(' · ')} upperCase={false}/>
-        )
     }
 
     renderDescription(session) {

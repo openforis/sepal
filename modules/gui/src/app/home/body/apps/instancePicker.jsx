@@ -10,6 +10,7 @@ import {msg} from '~/translate'
 import {Combo} from '~/widget/combo'
 import {Panel} from '~/widget/panel/panel'
 
+import {InstanceSpecsTag} from '../../instanceSpecs'
 import {conflictingAssociations} from './appOpenPlan'
 import styles from './instancePicker.module.css'
 import {appRequirements, buildPickerOptions, defaultPickerValue, hasSuitableOption} from './instanceSuitability'
@@ -78,12 +79,12 @@ class _InstancePicker extends React.Component {
     // Every option is a two-column row: what the instance IS on the left, what it provides and
     // costs right-aligned, so the options can be compared straight down the column instead of
     // across a separator. A running instance hosting apps lists them dimmed underneath.
-    renderOption({title, detail, apps}) {
+    renderOption({title, instanceType, apps}) {
         return (
             <div className={styles.option}>
                 <div className={styles.instance}>
                     <div className={styles.title}>{title}</div>
-                    <div className={styles.detail}>{detail}</div>
+                    <InstanceSpecsTag instanceType={instanceType}/>
                 </div>
                 {apps?.length
                     ? (

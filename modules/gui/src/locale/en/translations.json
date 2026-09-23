@@ -6204,11 +6204,6 @@
         "stopping": "stops at {time}",
         "until": "Keep-alive until {time} ({relative})"
       },
-      "specs": {
-        "cpu": "{count} CPU",
-        "gpu": "{count} GPU",
-        "ram": "{gb} GB"
-      },
       "usage": {
         "cpu": "CPU",
         "gpu": "GPU",
