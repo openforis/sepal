@@ -78,12 +78,12 @@ describe('the session list', () => {
         const labels = [...render([
             session({id: 's1', name: 'humble-robin'}),
             session({id: 's2', name: 'lunar-owl'}),
-        ]).querySelectorAll('.title > div > span')].map(({textContent}) => textContent)
+        ]).querySelectorAll('.title > div > span:first-child')].map(({textContent}) => textContent)
         expect(labels).toEqual(['1: humble-robin - t1', '2: lunar-owl - t1'])
     })
 
     it('falls back to number and type for a session with no name', () => {
-        const label = render([session({id: 's1', name: null})]).querySelector('.title > div > span')
+        const label = render([session({id: 's1', name: null})]).querySelector('.title > div > span:first-child')
         expect(label.textContent).toBe('1: t1')
     })
 

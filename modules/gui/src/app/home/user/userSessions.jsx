@@ -112,9 +112,7 @@ class _UserSessions extends React.Component {
             format.dollarsPerHour(hourlyCost)
         ].filter(Boolean)
         return (
-            <div className={styles.specs}>
-                <Tag size='small' label={specs.join(' · ')}/>
-            </div>
+            <Tag size='small' label={specs.join(' · ')} upperCase={false}/>
         )
     }
 

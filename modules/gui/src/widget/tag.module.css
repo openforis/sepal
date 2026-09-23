@@ -1,6 +1,10 @@
 .contents {
-    text-transform: uppercase;
+    text-transform: none;
     display: inline-flex;
     align-items: center;
     gap: .4rem;
+}
+
+.upperCase {
+    text-transform: uppercase;
 }
