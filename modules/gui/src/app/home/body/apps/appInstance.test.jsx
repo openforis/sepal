@@ -47,14 +47,30 @@ describe('launching a voila app', () => {
         expect(isShown(appFrame())).toBe(true)
         expect(tabBusy[voilaApp().id]).toBe(false)
     })
+
+    // Transparency alone leaves the frame in the tab order, so the keyboard could reach an app nobody can see.
+    it('keeps the app out of the keyboard\'s reach while it is out of sight', () => {
+        server.page = voilaPage(loadingWidget())
+        launch(voilaApp())
+        advance(SESSION_START_MS + A_WHILE_MS)
+
+        expect(isInert(appFrame())).toBe(true)
+
+        startFrontend(appFrame().contentWindow)
+        renderWidgets(appFrame().contentWindow)
+        advance(A_MOMENT_MS)
+
+        expect(isInert(appFrame())).toBe(false)
+    })
 })
 
 describe('launching an app served from its own URL', () => {
-    it('shows the app while it loads', () => {
+    it('shows the app, and leaves it usable, while it loads', () => {
         launch(rstudioApp())
         advance(SESSION_START_MS)
 
         expect(isShown(appFrame())).toBe(true)
+        expect(isInert(appFrame())).toBe(false)
     })
 })
 
@@ -95,6 +111,8 @@ const isShown = frame => {
     const style = window.getComputedStyle(frame)
     return style.opacity !== '0' && style.pointerEvents !== 'none'
 }
+
+const isInert = frame => frame.hasAttribute('inert')
 
 const startFrontend = appWindow => {
     appWindow.jupyterapp = {name: 'Voila', widgetManager: {restoredStatus: true}}

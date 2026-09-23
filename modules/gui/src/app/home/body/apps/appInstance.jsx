@@ -87,6 +87,7 @@ class _AppInstance extends React.Component {
                     frameBorder='0'
                     src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
+                    inert={!shown}
                     style={{
                         border: 'none',
                         display: 'block',
