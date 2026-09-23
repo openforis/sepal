@@ -318,6 +318,12 @@ program
             .argParser(parseVolumeInitializationRate)
             .default(0)
     )
+    .addOption(
+        new Option('--prewarm-idle-volumes <boolean>', 'Idle-pool workers read their whole Docker volume at first boot [aws only]')
+            .env('PREWARM_IDLE_VOLUMES')
+            .argParser(v => v === 'true')
+            .default(false)
+    )
 
     .parse()
 
@@ -372,6 +378,7 @@ const {
     syslogAddress,
     environment,
     volumeInitializationRate,
+    prewarmIdleVolumes,
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -404,6 +411,7 @@ export {
     notificationVisibleMinutes,
     openExtensionMinutes,
     port,
+    prewarmIdleVolumes,
     rabbitmqHost,
     rabbitmqPort,
     region,

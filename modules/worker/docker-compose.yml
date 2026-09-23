@@ -87,6 +87,9 @@ services:
       # MiB/s (100-300) at which a new worker's volumes are copied from their snapshot, billed per
       # GiB of snapshot data on every launch. 0 leaves EBS loading blocks lazily on first read.
       VOLUME_INITIALIZATION_RATE: "${AWS_VOLUME_INITIALIZATION_RATE:-0}"
+      # true: idle-pool workers read their whole Docker volume at first boot, so it is loaded from
+      # the snapshot before a session lands on them.
+      PREWARM_IDLE_VOLUMES: "${AWS_PREWARM_IDLE_VOLUMES:-false}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       # start_period: 60s

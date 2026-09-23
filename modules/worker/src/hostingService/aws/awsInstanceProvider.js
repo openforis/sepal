@@ -191,6 +191,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         accessKey,
         secretKey,
         volumeInitializationRate,
+        prewarmIdleVolumes,
     } = config
 
     const codec = createInstanceTypeCodec(instanceTypes)
@@ -402,10 +403,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     // ({username: '', workerType: ''}) — an untrue claim about an instance the provider itself
     // just launched idle.
     //
-    // Only idle instances pre-read their volume: they have time to spare, while a reserved launch
+    // Only idle instances pre-read their volume, when enabled: they have time to spare, while a reserved launch
     // would have the read compete with the startup the user is waiting on.
     const launchIdle = async (instanceType, count) => {
-        const awsInstances = await launch(instanceType, count, {userData: PREWARM_USER_DATA})
+        const userData = prewarmIdleVolumes ? PREWARM_USER_DATA : undefined
+        const awsInstances = await launch(instanceType, count, {userData})
         const results = []
         for (const awsInst of awsInstances) {
             await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), idleTags(environment))

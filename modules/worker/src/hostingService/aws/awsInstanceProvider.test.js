@@ -302,7 +302,7 @@ describe('launch params (RunInstancesCommand)', () => {
         ])
     })
 
-    test('idle instances boot with the volume prewarm script as user data', async () => {
+    test('idle instances boot without user data unless prewarming is enabled', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
         ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
@@ -315,17 +315,33 @@ describe('launch params (RunInstancesCommand)', () => {
         provider.stop()
 
         const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
-        const userData = Buffer.from(runCall.args[0].input.UserData, 'base64').toString()
-        expect(userData).toBe(fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url), 'utf8'))
+        expect(runCall.args[0].input.UserData).toBeUndefined()
     })
 
-    test('reserved instances boot without user data', async () => {
+    test('idle instances boot with the volume prewarm script as user data when enabled', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
         ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
         ec2Mock.on(CreateTagsCommand).resolves({})
         ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
 
-        const provider = createAwsInstanceProvider(CONFIG)
+        const provider = createAwsInstanceProvider({...CONFIG, prewarmIdleVolumes: true})
+        await provider.start()
+
+        await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        const userData = Buffer.from(runCall.args[0].input.UserData, 'base64').toString()
+        expect(userData).toBe(fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url), 'utf8'))
+    })
+
+    test('reserved instances boot without user data even when prewarming is enabled', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider({...CONFIG, prewarmIdleVolumes: true})
         await provider.start()
 
         await provider.launchReserved('T3aSmall', RESERVATION)
