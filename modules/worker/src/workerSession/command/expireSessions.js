@@ -257,7 +257,7 @@ const expiryEmail = ({instanceType, policy, url, running, name}) => ({
 // goes out, and using the instance rescues it just as well as the link would have.
 const manageLink = url =>
     url
-        ? `<a href="${url}">Keep it running or terminate it</a>
+        ? `<a href="${url}">Manage your instance</a>
         <br><br>`
         : ''
 
