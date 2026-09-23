@@ -11,6 +11,15 @@ const DEFAULT_DOCKER_PORT = 2375
 const DEFAULT_RABBITMQ_PORT = 5672
 const DEFAULT_WORKER_PORT = 8080
 
+// EC2 accepts 100-300 MiB/s; anything else fails every RunInstances, so refuse it at boot instead.
+const parseVolumeInitializationRate = value => {
+    const rate = parseInt(value)
+    if (rate !== 0 && !(rate >= 100 && rate <= 300)) {
+        throw new Error(`VOLUME_INITIALIZATION_RATE must be 0 or 100-300 MiB/s, got: ${value}`)
+    }
+    return rate
+}
+
 const program = new Command()
 
 program
@@ -303,6 +312,12 @@ program
         new Option('--environment <string>', 'AWS environment tag value (e.g. production) [aws only]')
             .env('ENVIRONMENT')
     )
+    .addOption(
+        new Option('--volume-initialization-rate <MiB/s>', 'EBS volume initialization rate for launched workers, 100-300; 0 = lazy loading [aws only]')
+            .env('VOLUME_INITIALIZATION_RATE')
+            .argParser(parseVolumeInitializationRate)
+            .default(0)
+    )
 
     .parse()
 
@@ -356,6 +371,7 @@ const {
     secretKey,
     syslogAddress,
     environment,
+    volumeInitializationRate,
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -409,5 +425,6 @@ export {
     usageHourlyRetentionDays,
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
+    volumeInitializationRate,
     workerPort,
 }

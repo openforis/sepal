@@ -265,6 +265,41 @@ describe('launch params (RunInstancesCommand)', () => {
         expect(input.ImageId).toBe('ami-test123')
     })
 
+    test('launches without volume overrides when no initialization rate is configured', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        await provider.launchReserved('T3aSmall', RESERVATION)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        expect(runCall.args[0].input.BlockDeviceMappings).toBeUndefined()
+    })
+
+    test('initializes both AMI volumes at the configured rate', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider({...CONFIG, volumeInitializationRate: 300})
+        await provider.start()
+
+        await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        expect(runCall.args[0].input.BlockDeviceMappings).toEqual([
+            {DeviceName: '/dev/xvda', Ebs: {VolumeInitializationRate: 300}},
+            {DeviceName: '/dev/xvdf', Ebs: {VolumeInitializationRate: 300}},
+        ])
+    })
+
     test('CreateTagsCommand is called with launch+idle tags for launchIdle', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({
             Images: [{ImageId: 'ami-abc'}],

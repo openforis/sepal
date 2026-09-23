@@ -17,6 +17,8 @@ import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
 const log = getLogger('worker/aws')
 
 const SECURITY_GROUP = 'Sandbox'
+// The worker AMI's volumes, as packer.json maps them: the root disk and /var/lib/docker.
+const VOLUME_DEVICE_NAMES = ['/dev/xvda', '/dev/xvdf']
 const PUBLIC_IP_RETRIES = 300
 const POLL_INTERVAL_MS = 10_000
 
@@ -114,6 +116,19 @@ const filterTypeWorker = environment => [
     filterPendingOrRunning(),
 ]
 
+// A volume restored from a snapshot otherwise fetches each block from S3 on first read, so the
+// images baked into the AMI stay slow for as long as nothing has touched them. Only the rate is
+// overridden; every other volume attribute is inherited from the AMI's mapping.
+const volumeInitialization = rate =>
+    rate
+        ? {
+            BlockDeviceMappings: VOLUME_DEVICE_NAMES.map(DeviceName => ({
+                DeviceName,
+                Ebs: {VolumeInitializationRate: rate},
+            })),
+        }
+        : {}
+
 const collectInstances = response =>
     (response.Reservations ?? []).flatMap(r => r.Instances ?? [])
 
@@ -171,6 +186,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         environment,
         accessKey,
         secretKey,
+        volumeInitializationRate,
     } = config
 
     const codec = createInstanceTypeCodec(instanceTypes)
@@ -250,6 +266,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
             MinCount: count,
             MaxCount: count,
             Placement: {AvailabilityZone: availabilityZone},
+            ...volumeInitialization(volumeInitializationRate),
         }))
         const instances = response.Instances ?? []
         if (instances.length === 0) {
