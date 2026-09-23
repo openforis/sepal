@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {appReady$} from './appReady'
+import {voilaReady$} from './voilaReady'
 
 // Pages are shaped like voila 0.5's lab template and written into a same-origin iframe, as AppInstance does.
 // Voila's frontend reports its progress on the frame's window: `jupyterapp` once it has started, and
@@ -154,7 +154,7 @@ const watchReady = appWindow => {
             return this.readyCount > 0
         }
     }
-    subscriptions.push(appReady$(appWindow).subscribe(() => watch.readyCount++))
+    subscriptions.push(voilaReady$(appWindow).subscribe(() => watch.readyCount++))
     return watch
 }
 

@@ -16,7 +16,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 
 import styles from './appInstance.module.css'
 import {FAILED, launchStatusMessageKey, READY, STARTING_APP, STARTING_SESSION} from './appLaunchStatus'
-import {appReady$} from './appReady'
+import {voilaReady$} from './voilaReady'
 
 const log = getLogger('apps')
 
@@ -150,7 +150,7 @@ class _AppInstance extends React.Component {
     showWhenReady(appWindow) {
         const {app: {id}, tab: {busy}, stream} = this.props
         stream('APP_READY',
-            appReady$(appWindow),
+            voilaReady$(appWindow),
             () => {
                 busy.set(id, false)
                 this.setState({appState: READY})

@@ -3,9 +3,11 @@ import {filter, interval, race, startWith, take, timer} from 'rxjs'
 const POLL_INTERVAL_MS = 250
 const TIMEOUT_MS = 60 * 1000
 
-// Voila's page arrives before its frontend has started. Until the widget models are restored from the kernel
-// and each widget output is rendered, the page is a blank sheet of "Loading widget..." placeholders.
-export const appReady$ = appWindow =>
+// Emits once the page written into an app's frame can be shown. Only a voila notebook is waited for: its page
+// arrives before its frontend has started, and until the widget models are restored from the kernel and every
+// widget output is rendered it is a blank sheet of "Loading widget..." placeholders. Any other page — JupyterLab,
+// the notebook tree, voila's own error pages — is ready as soon as the browser has parsed it.
+export const voilaReady$ = appWindow =>
     race(
         interval(POLL_INTERVAL_MS).pipe(
             startWith(0),
