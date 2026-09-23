@@ -96,10 +96,16 @@ describe('hasBudget', () => {
 })
 
 describe('isBudgetExceeded', () => {
-    it('is true once any one of the three limits is reached', () => {
-        expect(isBudgetExceeded(spending({instanceBudget: 1, instanceSpending: 1}))).toBe(true)
-        expect(isBudgetExceeded(spending({storageBudget: 1, storageSpending: 1}))).toBe(true)
-        expect(isBudgetExceeded(spending({storageQuota: 1, storageUsed: 1}))).toBe(true)
+    const withinLimits = {instanceBudget: 10, storageBudget: 10, storageQuota: 10}
+
+    it('is true once either budget is reached', () => {
+        expect(isBudgetExceeded(spending({...withinLimits, instanceSpending: 10}))).toBe(true)
+        expect(isBudgetExceeded(spending({...withinLimits, storageSpending: 10}))).toBe(true)
+    })
+
+    it('is true once the storage quota is passed, not when it is reached', () => {
+        expect(isBudgetExceeded(spending({...withinLimits, storageUsed: 10}))).toBe(false)
+        expect(isBudgetExceeded(spending({...withinLimits, storageUsed: 10.1}))).toBe(true)
     })
 
     it('is false while every limit still has room', () => {
