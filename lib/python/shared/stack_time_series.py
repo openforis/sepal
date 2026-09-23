@@ -4,7 +4,6 @@ import os
 
 import re
 import subprocess
-import sys
 from glob import glob
 from os import listdir, pardir
 from os.path import abspath, exists, join, relpath, basename
@@ -19,7 +18,7 @@ chunk_file_pattern = re.compile('chunk-(.*)')
 nodata_value = 0
 
 
-def stack_time_series(directory):
+def stack_time_series(directory, band=None):
     chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
@@ -32,6 +31,8 @@ def stack_time_series(directory):
     dates = get_dates(chunks)
     create_stack(directory, dates)
     create_dates_csv(directory, dates)
+    if band:
+        create_sits_files(directory, tiles, band)
     print('    Done.')
 
 
@@ -232,15 +233,49 @@ def create_dates_csv(directory, dates):
             f.write(d + '\n')
 
 
+def create_sits_files(directory, tiles, band):
+    # one GeoTIFF per tile per date, named to match a sits local_cube
+    # parse_info of c("X1", "tile", "band", "date"). sits requires the band
+    # token in the file name to be upper case for raw (non-results) cubes.
+    sits_dir = join(directory, 'sits')
+    create_tile_dir(sits_dir)
+    band = band.replace('_', '-').upper()
+    for tile in tiles:
+        create_sits_tile_files(sits_dir, tile, band)
+
+
+def create_sits_tile_files(sits_dir, tile, band):
+    tile_dir = tile['tile_dir']
+    tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
+    stack_file = join(tile_dir, 'stack.vrt')
+    ds = gdal.Open(stack_file, GA_ReadOnly)
+    for band_index in range(1, ds.RasterCount + 1):
+        date = ds.GetRasterBand(band_index).GetDescription()
+        out_file = join(sits_dir, 'SEPAL_{}_{}_{}.tif'.format(tile_name, band, date))
+        gdal.Translate(
+            out_file, ds,
+            format='GTiff',
+            bandList=[band_index],
+            noData=nodata_value
+        )
+    ds = None
+
+
 def make_relative_to_vrt(vrt_file):
     subprocess.check_call(['sed', '-i', 's/relativeToVRT="0"/relativeToVRT="1"/g', vrt_file])
 
 
 if __name__ == '__main__':
-    dirs = sys.argv[1:]
-    for d in dirs:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('directories', nargs='+')
+    parser.add_argument('--band', help='Indicator name, used to also emit sits-compatible per-date GeoTIFFs')
+    args = parser.parse_args()
+
+    for d in args.directories:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(abspath(d))
+            stack_time_series(abspath(d), args.band)
         else:
             print('Not found: {}'.format(d))
