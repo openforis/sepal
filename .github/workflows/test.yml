@@ -23,6 +23,11 @@ jobs:
           MYSQL_ROOT_PASSWORD: sepal
         ports:
           - 3306:3306
+        # scene-metadata hands MySQL a path and the server reads the file itself, so the runner and
+        # the server have to see one directory under the same name. This is the image's
+        # secure_file_priv, the only directory a server-side read is allowed to reach.
+        volumes:
+          - /var/lib/mysql-files:/var/lib/mysql-files
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psepal"
           --health-interval=10s
@@ -32,6 +37,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
       MYSQL_USER: root
       MYSQL_PASSWORD: sepal
+      MYSQL_FILES_DIR: /var/lib/mysql-files
     strategy:
       fail-fast: false
       matrix:
@@ -81,6 +87,10 @@ jobs:
       # and the schemas the integration suites create fail to build.
       - name: Match the SEPAL MySQL settings
         run: mysql -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" -e 'SET GLOBAL explicit_defaults_for_timestamp = ON'
+      # The MySQL image takes the shared directory over for its own user; the runner writes the files
+      # there and MySQL reads them back.
+      - name: Let the runner write to the MySQL files directory
+        run: sudo chmod 0777 "$MYSQL_FILES_DIR"
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test
         working-directory: ${{matrix.module}}

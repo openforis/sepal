@@ -15,6 +15,16 @@ const JOB_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'support', 
 const PENDING_RECIPE = 'never-answered'
 const GATE_RECIPE = 'gate'
 
+// The module configures itself from the worker thread's own environment, which is not the one this file
+// can assign to: the runner hands a test file its own copy of process.env, and a worker thread inherits
+// the real process. So the configuration the worker runs under is stated here and passed to it.
+const WORKER_ENV = {
+    SEPAL_ENDPOINT: 'http://sepal.test',
+    GOOGLE_PROJECT_ID: 'test-project',
+    EE_ACCOUNT: 'test@example.iam.gserviceaccount.com',
+    EE_PRIVATE_KEY: 'test-key'
+}
+
 const held = new Map()
 const waitingFor = new Map()
 
@@ -24,11 +34,7 @@ let submit$
 
 beforeAll(async () => {
     recipeServer = await startRecipeEndpoint()
-    process.env.RECIPE_ENDPOINT = `http://127.0.0.1:${recipeServer.address().port}`
-    process.env.SEPAL_ENDPOINT = 'http://sepal.test'
-    process.env.GOOGLE_PROJECT_ID = 'test-project'
-    process.env.EE_ACCOUNT = 'test@example.iam.gserviceaccount.com'
-    process.env.EE_PRIVATE_KEY = 'test-key'
+    const recipeEndpoint = `http://127.0.0.1:${recipeServer.address().port}`
 
     const {configureNoLogging} = await import('#sepal/log')
     configureNoLogging()
@@ -40,13 +46,13 @@ beforeAll(async () => {
     const {addServices} = await import('#sepal/service/registry')
     addServices([{
         serviceName: 'ContextService',
-        serviceHandler$: () => of({recipeEndpoint: process.env.RECIPE_ENDPOINT})
+        serviceHandler$: () => of({recipeEndpoint})
     }])
 
     const {initWorker$} = await import('#sepal/worker/factory')
     worker = new Subscription()
     submit$ = await new Promise(resolve =>
-        worker.add(initWorker$({workerId: 'lifecycle'}).subscribe(resolve)))
+        worker.add(initWorker$({workerId: 'lifecycle', env: WORKER_ENV}).subscribe(resolve)))
 }, 60000)
 
 afterAll(() => {
