@@ -6,14 +6,105 @@ shared model. User-facing documentation belongs in the separate `sepal-doc` repo
 
 ## Current delivery focus
 
-The shared [band-encoding contract](#band-encoding) describes recipe outputs and exported assets, with the optical
-mosaic as its first producer through the image asset export and asset read. Adopting it in further producers,
-destinations and physical-value presentation is separate work, as are recipe-specific algorithm improvements.
+Make the shared output declaration the single band authority for every recipe type. The work after it —
+requirement validation, capability projection and visualization applicability — needs a description for every
+source, and falls back to per-type helpers wherever one is missing.
 
 Consumer migrations should adopt the shared contracts, preserve existing behavior and fix regressions they
 introduce. Existing limitations unrelated to those contracts belong in recipe developer notes, not as implicit
 requirements of a migration. [PyEO Alerts](../../recipes/pyeo-alerts.md) records its deferred index-handling work
 on that basis.
+
+### Output-declaration migration
+
+Only Asset, CCDC, CCDC Slice, Masking and Optical Mosaic declare an `IMAGE_OUTPUT` provider, and even for those the
+GUI consumers still read the per-type helpers: map layers, preset filtering and the visualization selector through
+the registered `getAvailableBands()` and `getPreSetVisualizations()`, and every Retrieve panel except Masking's by
+importing its type's `bands.js` directly. Declared types therefore have two band authorities, and undeclared types
+keep independent GUI and Earth Engine band lists that the
+[execution comparison](output-products.md#early-execution-comparison-findings) has shown to drift.
+
+`getAvailableBands()` answers several [different questions](output-products.md#problem). A migration splits them
+between their owners rather than wrapping the helper in a provider, which would carry its mixed meanings into the
+shared contract:
+
+- the configured recipe's output bands: the type's `IMAGE_OUTPUT` provider;
+- bands shown by one map mode: a named map product, never an unqualified union with the canonical output;
+- labels, tooltips, groups and display ranges: GUI band presentation;
+- presets: product presets under [visualization ownership](visualizations.md).
+
+Every type is to declare its image output; not declaring one is a migration state, not a supported answer. The
+migration cannot land at once, so its order is chosen to keep that state in one place, removable by deletion alone,
+and short-lived. Rework — rebuilding a consumer because a decision it depended on came later — is worse than a
+temporary answer, because it cannot be deleted.
+
+1. **Decide what shapes the consumer API.** Before any consumer switches:
+   - *Map-product identity.* Which product a map layer displays, and how a map mode names it
+     ([open](output-products.md#open-decisions)). Only types with map modes depend on it: LandTrendr, BAYTS Alerts,
+     Change Alerts and CCDC's `count`.
+   - *Reading a recipe's own output.* Map layers read bands synchronously during render. `resolveImageOutput` is
+     pure and synchronous, so a provider that asks for no observation can answer the same way, but it withholds
+     every answer while the graph has any diagnostic: a Classification whose training recipe is not loaded gets no
+     description although its provider needs nothing from that source. The read must state which answers are
+     synchronous, which await observation, and what a consumer sees meanwhile.
+2. **Unblock in parallel.** Correct the defects that would hold families back, on the integration branch:
+   - BAYTS Alerts' radar-mosaic map modes report the alert bands from `getBands$()` while the image comes from the
+     delegate;
+   - Change Alerts' `getBands$()` omits `confirmation_date`, which its algorithm builds;
+   - Change Alerts fabricates an Optical Mosaic model with `compositeOptions` beside `model` rather than inside it,
+     so the optical helper loses the composing method and corrections;
+   - Change Alerts asks the Radar Mosaic helper about its own model, which has no `dates`, so the GUI always
+     reports point-in-time bands while Earth Engine builds a time scan unless the mosaic type is `latest`;
+   - BAYTS Alerts and Change Alerts ignore the Retrieve band selection and export every band;
+   - Radar Mosaic has the [documented drift](output-products.md#early-execution-comparison-findings).
+3. **One seam, then switch the consumers once.** Types without a provider are answered in one GUI module from their
+   registered helpers, as a distinct, unverified legacy answer — never as resolved evidence with physical facts or
+   export policy. Map layers, preset filtering and Retrieve read through the same boundary for every type and do
+   not branch on whether a type is declared. Retrieve's existing `UNDECLARED_OUTPUT` fallback is folded into that
+   seam. Map layers of mode-bearing types stay on the seam until their map products are declared.
+4. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
+   matters less than their independence:
+   - model-derived outputs whose GUI and Earth Engine vocabularies
+     [already agree](output-products.md#representative-agreement-findings): Regression, Unsupervised
+     Classification, Phenology, PyEO Alerts, Index Change, Class Change, Remapping and Classification;
+   - map-product types: LandTrendr, BAYTS Alerts, Change Alerts, and CCDC's `count`;
+   - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
+     [source planning](output-products.md#source-planning-and-collection-composition);
+   - Stack, through the existing `inputs()` access for name-based selection and renaming; only its capability
+     preservation waits for
+     [capability projection](output-products.md#transformation-effects-and-capability-projection);
+   - Band Math, which needs the provider outcome combining declared constraints with observation. That is a
+     provider-contract change, so design it early rather than last.
+5. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
+   product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
+   runtime, and the seam, `noImageOutput` and the registered helpers are deleted together.
+
+Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
+helper. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands independently of
+the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band presentation, not a
+migration state.
+
+### Following work
+
+In order, each independently mergeable:
+
+1. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+   behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
+   boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
+   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
+2. **Declarative dependency evaluation**, starting with the
+   [Band Math chain](#later-follow-up-band-math-dependencies).
+3. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
+   whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
+   product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
+4. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
+5. **Caller-authorized closure reads and coherent execution**
+   ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
+6. **Source planning and the temporal collection composer**, following the
+   [research plan](output-products.md#research-plan).
+
+Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
+is a separate small packet.
 
 ## Scope and constraints
 
@@ -202,8 +293,8 @@ work must start explicitly after dispatch through runtime or command boundaries,
 `actionBuilder.sideEffect()`. When a migrated path already uses a reducer-side effect, remove it when behavior and
 ordering can be preserved within that packet; unrelated uses remain separate cleanup work.
 
-Known scientific or execution defects are corrected on `master` before the new contracts describe the affected
-behavior. Contract versions identify deliberate durable contract evolution; they do not preserve old bugs as
+Known scientific or execution defects are corrected on the integration branch before the new contracts describe the
+affected behavior. Contract versions identify deliberate durable contract evolution; they do not preserve old bugs as
 supported algorithms. Existing assets produced by defective code receive no source-resolution workaround and may
 need to be recreated when correctness matters. This does not prohibit backward-compatible readers for established
 asset formats: preserving CCDC metadata and Slice usability is format compatibility, not preservation of a defective

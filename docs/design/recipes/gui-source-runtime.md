@@ -648,6 +648,118 @@ browser cache state and browser-planned source commands are never treated as the
 boundary discovers and binds commands from the authorized bundle, or validates a server-built frozen plan, under an
 explicit supported contract version.
 
+### Reading a recipe's own output
+
+Step 1 of the [output-declaration migration](data-sources.md#output-declaration-migration). Every consumer of a
+recipe's own output bands reads them synchronously: map layers from `render` and from mount and update
+reconciliation, preset filtering from a plain function, the visualization selector from its option builders.
+Nothing awaits, and the one async precedent in the GUI is the non-recipe asset layer, which holds metadata in
+component state and reconciles when it arrives.
+
+A read that returned a promise would therefore rewrite every consumer before any type had migrated. The read is
+instead synchronous and total: it answers with a status beside the description, and a consumer that cannot yet be
+answered is told so rather than given a weaker answer that looks like an answer.
+
+**Synchronous, observed and unavailable.** `resolveImageOutput` is pure and synchronous, and a provider that asks
+for no observation is already answered without one. The read supplies the evidence the runtime happens to hold and
+classifies the result:
+
+- *resolved* - every provider the answer depended on was satisfied. Optical Mosaic reaches this always: it describes
+  from its own model. Masking reaches it whenever what it preserves does.
+- *needs observation* - a provider asked for a reading the runtime does not hold. CCDC reaches this always: it
+  observes its available bands. The distinction is already drawn in the observer, which separates references
+  reported unavailable because nothing was asked yet from faults no observation can repair.
+- *unavailable* or *invalid* - the existing terminal states, unchanged.
+
+While a read needs observation the consumer shows what it shows today for a recipe with no bands: no layer, no
+options, and the saved selection untouched. Withholding what would be presented, rather than deleting what was
+selected, is the rule Masking's evidence already follows.
+
+**Who acquires.** The read never acquires, and needs observation is a truthful answer whether or not anything acts
+on it. Acquisition belongs to a consumer's own lifecycle, and only where one exists:
+
+- Masking's Retrieve owns its answer. It subscribes to the one-shot runtime operation and holds the result for as
+  long as the panel needs it.
+- The map layers, presets and selectors of Masking and CCDC Slice read what `SourceEvidenceSync` observed. That
+  component is mounted by the recipe's own root component, so acquisition exists exactly while that recipe is the
+  one being edited.
+- CCDC's own consumers never reach needs observation. Its map layer shows the count product, a fixed vocabulary,
+  and its Retrieve offers the measures of the collection it fits, submitted through its own task. Neither asks for
+  the canonical Segments output.
+- An Asset recipe's layer form and Retrieve read the band list copied into the model when the asset was selected.
+  Under an observing provider both need observation, and neither has an acquirer: the panel that wrote the snapshot
+  when the asset was chosen is the only one.
+- A recipe's layer opened on another recipe's map has no acquirer at all. That is why an unobserved source is still
+  answered from the copied snapshot rather than from nothing.
+
+Masking's Retrieve is therefore the only consumer that can meet needs observation by itself. A consumer that wants
+the observed answer must bring an acquirer whose lifetime covers its own: subscribing to the runtime operation and
+holding the result, as Retrieve does, or observing from a lifetime that spans the consumer, as a recipe's root
+component does for the recipe being edited. A layer rendered inside another recipe's map has no such lifetime; a
+shared live `watchSource$` is what would give it one.
+
+**The graph gate.** Resolution has two gates. The second discards the root description when any diagnostic was
+collected, and is already scoped to what was asked: a provider's inputs are read through thunks, so a source no
+provider asked about is never resolved and never diagnosed. The first gate is not scoped. The dependency graph
+descends every declared recipe edge, and resolution refuses to call any declaration while the graph carries a
+diagnostic. A Classification whose training recipe is not loaded is the case: its provider needs the training
+recipe for nothing, but the missing source is a graph diagnostic and no description is produced.
+
+A structural diagnostic is therefore carried on the edge it belongs to rather than in a list consulted before any
+provider runs, and resolution surfaces it when it resolves that edge. A provider that asks for the missing source
+meets the diagnostic and has its answer discarded exactly as today, so the gate is not weakened where it bears. A
+cyclic edge is attached the same way and refuses traversal, which also removes resolution's reliance on the
+pre-gate to keep its recursion finite.
+
+Being described is not being executable. A recipe whose graph carries a structural diagnostic can resolve a
+description when no provider it depends on asks for the broken edge; Preview and Retrieve still require a complete
+graph, and what a known-bad state blocks stays owned by [legacy policy](source-resolution.md#legacy-policy).
+Resolution is shared, so Earth Engine and Task inherit edge scoping and need their own witnesses for it.
+
+**One legacy seam.** A type with no provider is answered in one GUI module from its registered helpers. The seam
+relocates that answer; it does not change it. What the helper returns passes through unchanged - band names and the
+`dataType` hints beside them - marked as a legacy answer. Those hints are load-bearing: a map layer builds the data
+types it hands Earth Engine with every preview from the same helper result, and renderable-visualization filtering
+decides which styles may be drawn from them. Withholding them would change what every undeclared type draws for the
+whole migration window, and no later deletion recovers that.
+
+A legacy answer is never resolved evidence and never export authority. Retrieve's policy already keeps the two
+apart: a panel owning an output resolution takes its choices, destination compatibility, band names, policies and
+encoding from that resolution alone, while a panel with none keeps offering what its recipe type supplies. A type
+earns the stricter treatment when it declares its output, not before.
+
+The seam answers whole closures, not root types. Retrieve's existing undeclared-output fallback already behaves
+that way: it applies when every diagnostic is an undeclared output anywhere in the closure, which is why the one
+production caller passing a fallback policy is Masking - a declared type whose source may not be. Folding that
+fallback into the seam is what stops consumers branching on whether a type is declared: the seam reports a legacy
+answer, and Retrieve's existing policy applies to legacy answers alone.
+
+The seam cannot sit at the recipe-type registry. Map layers, preset filtering and the visualization selector reach
+the helpers through the registry, but Retrieve panels import each type's `bands.js` directly. Only a module both
+import paths are routed through can be removed by deletion when the last type declares its output.
+
+**One meaning per argument.** A registered helper answers about a recipe and the evidence held about the source it
+inherits from:
+
+```js
+getAvailableBands(recipe, evidence)
+getPreSetVisualizations(recipe, evidence)
+```
+
+`evidence` is a resolved description the caller already holds, so a caller that has just observed need not wait for
+the same answer to reach runtime state; a caller without one is answered from the evidence the recipe carries. It
+is never a map mode: which product a layer shows is named, not passed positionally to a question about bands - see
+[map-product identity](output-products.md#map-product-identity). The mode and band-group second arguments that the
+LandTrendr, BAYTS, Change Alerts and mosaic modules pass among themselves stay type-local and never reach the
+registered seam; product identity replaces the mode meaning, and the band-group projection remains a type's own
+presentation concern.
+
+**Walk-through.** Optical Mosaic resolves synchronously from its model. CCDC always needs observation, and its
+consumers see nothing drawn until something acquires it. Masking inherits its source's answer and so inherits its
+status. Classification resolves synchronously once structural diagnostics are edge-scoped, and not before.
+Regression has no provider and is answered by the seam, with the names and hints its helper returns today, until it
+declares one.
+
 ## Alternatives not selected
 
 ### Passing `loadedRecipes` through recipe components

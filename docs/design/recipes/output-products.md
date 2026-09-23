@@ -233,6 +233,43 @@ The eventual request therefore identifies a product and validated parameters. It
 or accept an unstructured `visualizationType` bag. Parameters affect the product description and its presets, but do
 not alter the canonical image output declaration.
 
+### Map-product identity
+
+Step 1 of the [output-declaration migration](data-sources.md#output-declaration-migration), for the four types whose
+map layers show more than one product.
+
+A layer names its product today only by leaving a `visualizationType` in `layerConfig`, which the preview request
+spreads whole into the image factory's arguments alongside the band selection. Every other axis a mode needs -
+LandTrendr's `year`, Change Alerts' `mosaicType`, BAYTS' `previouslyConfirmed` and `minConfidence` - rides in the
+same bag. Two consequences follow from the code rather than from style. Export passes neither a mode nor a
+parameter, so it always builds the canonical product, with whatever each producer does for a parameter it was not
+given. Both callers that ask a recipe for its bands construct the factory with no arguments at all, so the answer
+is always the mode-less branch, and what a map mode shows is never what the band question answers.
+
+A layer therefore names a product and supplies that product's declared parameters. Every product a type exposes is
+named, including its canonical image output: absence is not an identity, and a request carrying an unknown product
+or an unvalidated parameter is refused rather than silently resolved as the canonical one. A type declares its map
+products beside its canonical output, and a product declares its parameters. Product names are local to their
+recipe type, because nothing compares them across types and a shared vocabulary would invite exactly the
+matching-by-name that product compatibility refuses.
+
+A product whose image is another recipe's declares that, rather than restating bands. This is the difference
+between the two patterns already in the tree: Change Alerts' mosaic modes delegate every accessor to the mosaic
+they build, so the bands reported are the mosaic's; BAYTS' radar modes return the image of a radar-mosaic delegate
+while `getBands$` answers with a hardcoded list of the six alert bands. Naming the product and declaring it
+delegating removes that class of disagreement by construction rather than by remembering to keep two lists equal.
+
+| Type | Canonical output | Map products | Parameters |
+| --- | --- | --- | --- |
+| LandTrendr | change map | annual mosaic, delegating to an Optical Mosaic | `{year}` |
+| BAYTS Alerts | alerts | radar observation, delegating to a Radar Mosaic | `{position: first \| last}`; alerts takes `{previouslyConfirmed, minConfidence}` |
+| Change Alerts | changes | collection mosaic, delegating to the configured mosaic | `{period: monitoring \| calibration, mosaicType: latest \| median}` |
+| CCDC | segments | count | none |
+
+CCDC is the case that shows why absence is not an identity: `COUNT` is the only mode string it has, and its segments
+product is simply what it builds when no mode is present. Naming both makes the canonical product something a
+consumer asks for rather than something it gets by omission.
+
 ### Domain capabilities
 
 Some downstream operations need more than a flat image description. CCDC Slice needs segment measures, base bands
@@ -868,6 +905,11 @@ provided. Retrieve offers only the change bands. Change Alerts and BAYTS similar
 and source-collection mosaic products. CCDC's GUI helper exposes scalar `count`, while its custom asset export is the
 array-valued Segments image.
 
+What a type returns for no mode at all differs between them, and each generic caller passes no mode: LandTrendr
+merges both products, BAYTS answers its alerts product, and Change Alerts answers its mosaic product. The merged
+answer is deliberate and documented in LandTrendr's helper; the other two are simply whichever branch the condition
+falls through to.
+
 The shared definition therefore keeps one canonical `imageOutput`; additional map products require explicit names.
 Callers must not ask for an unqualified union.
 
@@ -947,11 +989,11 @@ temporal-composer contract is declared:
   while the custom CCDC task exports the array-valued Segments product. `noImageOutput` controls no export path;
   its name asserts an output fact it does not own.
 
-Do not encode these defects as compatibility profiles, legacy measurement contracts or accepted composer behavior.
-For each defect, reproduce the failure, define the intended behavior in a red regression test, fix it on `master`,
-and merge the correction into this branch. The first contract describes only the corrected behavior. Investigation
-may use temporary characterization or read-only inventories, but committed product-contract tests must not bless a
-known scientific defect.
+Do not encode these defects as compatibility profiles, legacy measurement contracts or accepted composer behavior. For
+each defect, reproduce the failure, define the intended behavior in a red regression test, fix it on the integration
+branch, and merge the correction into this branch. The first contract describes only the corrected behavior.
+Investigation may use temporary characterization or read-only inventories, but committed product-contract tests must
+not bless a known scientific defect.
 
 Persisted recipe normalization may need a focused migration decision when a typo or obsolete option is stored. That
 is input migration, not a product guarantee. Assets already produced by defective algorithms receive no special
@@ -1026,9 +1068,9 @@ applicability and active bindings remain separately owned. It must not introduce
 ### Phase A: correct known production defects
 
 Address the ratio formula, orbit spelling, speckle authority, classification encoding and unsafe unknown-source
-fallback on `master`, with intended-behavior regression tests. Merge those fixes into this branch before defining
-the first source or temporal-composer contract. Inventory impact where useful, but do not create supported legacy
-contracts for defective outputs.
+fallback on the integration branch, with intended-behavior regression tests. Merge those fixes into this branch before
+defining the first source or temporal-composer contract. Inventory impact where useful, but do not create supported
+legacy contracts for defective outputs.
 
 Continue the product matrix for every registered recipe type:
 
@@ -1121,7 +1163,6 @@ Boundary tests prove:
 
 - Minimal representation for partial band-schema guarantees and their composition.
 - Whether output name is sufficient band identity for every transformation.
-- Product identity and parameterization for map modes.
 - Minimum structured value and observation-protocol evidence required by the first relational consumer.
 - Shared data-set catalogue ownership, including availability and logical-band mappings, without exposing EE objects
   or GUI translations across runtime boundaries.
