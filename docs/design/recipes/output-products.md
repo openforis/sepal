@@ -253,11 +253,11 @@ products beside its canonical output, and a product declares its parameters. Pro
 recipe type, because nothing compares them across types and a shared vocabulary would invite exactly the
 matching-by-name that product compatibility refuses.
 
-A product whose image is another recipe's declares that, rather than restating bands. This is the difference
-between the two patterns already in the tree: Change Alerts' mosaic modes delegate every accessor to the mosaic
-they build, so the bands reported are the mosaic's; BAYTS' radar modes return the image of a radar-mosaic delegate
-while `getBands$` answers with a hardcoded list of the six alert bands. Naming the product and declaring it
-delegating removes that class of disagreement by construction rather than by remembering to keep two lists equal.
+A product whose image is another recipe's declares that, rather than restating bands. Change Alerts' mosaic modes
+and BAYTS' radar modes delegate every accessor to the mosaic they build, so the bands reported are the mosaic's, but
+only because each accessor is delegated by hand: one that restates a band list instead reports bands the image does
+not carry. Naming the product and declaring it delegating removes that class of disagreement by construction rather
+than by remembering to keep every accessor in step.
 
 | Type | Canonical output | Map products | Parameters |
 | --- | --- | --- | --- |

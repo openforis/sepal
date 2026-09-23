@@ -38,44 +38,36 @@ migration cannot land at once, so its order is chosen to keep that state in one 
 and short-lived. Rework — rebuilding a consumer because a decision it depended on came later — is worse than a
 temporary answer, because it cannot be deleted.
 
-1. **Decide what shapes the consumer API.** Before any consumer switches:
-   - *Map-product identity.* Which product a map layer displays, and how a map mode names it
-     ([open](output-products.md#open-decisions)). Only types with map modes depend on it: LandTrendr, BAYTS Alerts,
-     Change Alerts and CCDC's `count`.
-   - *Reading a recipe's own output.* Map layers read bands synchronously during render. `resolveImageOutput` is
-     pure and synchronous, so a provider that asks for no observation can answer the same way, but it withholds
-     every answer while the graph has any diagnostic: a Classification whose training recipe is not loaded gets no
-     description although its provider needs nothing from that source. The read must state which answers are
-     synchronous, which await observation, and what a consumer sees meanwhile.
-2. **Unblock in parallel.** Correct the defects that would hold families back, on the integration branch:
-   - BAYTS Alerts' radar-mosaic map modes report the alert bands from `getBands$()` while the image comes from the
-     delegate;
-   - Change Alerts' `getBands$()` omits `confirmation_date`, which its algorithm builds;
-   - Change Alerts fabricates an Optical Mosaic model with `compositeOptions` beside `model` rather than inside it,
-     so the optical helper loses the composing method and corrections;
-   - Change Alerts asks the Radar Mosaic helper about its own model, which has no `dates`, so the GUI always
-     reports point-in-time bands while Earth Engine builds a time scan unless the mosaic type is `latest`;
-   - BAYTS Alerts and Change Alerts ignore the Retrieve band selection and export every band;
-   - Radar Mosaic has the [documented drift](output-products.md#early-execution-comparison-findings).
-3. **One seam, then switch the consumers once.** Types without a provider are answered in one GUI module from their
+1. **The consumer API**, settled before any consumer switches:
+   - *Map-product identity.* A map layer names the product it displays and supplies that product's declared
+     parameters; the absence of a mode is not an identity
+     ([map-product identity](output-products.md#map-product-identity)). Only types with map modes depend on it:
+     LandTrendr, BAYTS Alerts, Change Alerts and CCDC's `count`.
+   - *Reading a recipe's own output.* Consumers read bands synchronously, so the read is synchronous and total. It
+     answers with a status (resolved, needs observation, unavailable or invalid) and never acquires. It carries a
+     structural diagnostic on its edge, so a provider that needs nothing from a missing source still answers
+     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)).
+2. **One seam, then switch the consumers once.** Types without a provider are answered in one GUI module from their
    registered helpers, as a distinct, unverified legacy answer — never as resolved evidence with physical facts or
    export policy. Map layers, preset filtering and Retrieve read through the same boundary for every type and do
    not branch on whether a type is declared. Retrieve's existing `UNDECLARED_OUTPUT` fallback is folded into that
    seam. Map layers of mode-bearing types stay on the seam until their map products are declared.
-4. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
+3. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
    matters less than their independence:
    - model-derived outputs whose GUI and Earth Engine vocabularies
      [already agree](output-products.md#representative-agreement-findings): Regression, Unsupervised
      Classification, Phenology, PyEO Alerts, Index Change, Class Change, Remapping and Classification;
    - map-product types: LandTrendr, BAYTS Alerts, Change Alerts, and CCDC's `count`;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
-     [source planning](output-products.md#source-planning-and-collection-composition);
+     [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
+     output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which
+     bands an unrequested composite carries;
    - Stack, through the existing `inputs()` access for name-based selection and renaming; only its capability
      preservation waits for
      [capability projection](output-products.md#transformation-effects-and-capability-projection);
    - Band Math, which needs the provider outcome combining declared constraints with observation. That is a
      provider-contract change, so design it early rather than last.
-5. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
+4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
    product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
    runtime, and the seam, `noImageOutput` and the registered helpers are deleted together.
 
