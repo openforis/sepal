@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+
 import {
     CreateTagsCommand,
     DescribeImagesCommand,
@@ -17,6 +19,8 @@ import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
 const log = getLogger('worker/aws')
 
 const SECURITY_GROUP = 'Sandbox'
+// RunInstances takes user data base64-encoded; the SDK passes it through as given.
+const PREWARM_USER_DATA = fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url)).toString('base64')
 // The worker AMI's volumes, as packer.json maps them: the root disk and /var/lib/docker.
 const VOLUME_DEVICE_NAMES = ['/dev/xvda', '/dev/xvdf']
 const PUBLIC_IP_RETRIES = 300
@@ -255,7 +259,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     // destructures undefined and the TypeError names neither EC2 nor the instance type. A SHORT
     // answer is not rejected: MinCount makes it EC2's error to raise, and throwing here would
     // discard instances it did create.
-    const launch = async (instanceType, count) => {
+    const launch = async (instanceType, count, {userData} = {}) => {
         const awsInstanceType = codec.toAwsName(instanceType)
         log.info(`Launching ${instanceType} (${awsInstanceType})`)
         const response = await client.send(new RunInstancesCommand({
@@ -267,6 +271,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
             MaxCount: count,
             Placement: {AvailabilityZone: availabilityZone},
             ...volumeInitialization(volumeInitializationRate),
+            ...(userData ? {UserData: userData} : {}),
         }))
         const instances = response.Instances ?? []
         if (instances.length === 0) {
@@ -396,8 +401,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     // carries no State tag, and toWorkerInstance would read the instance as reserved-by-nobody
     // ({username: '', workerType: ''}) — an untrue claim about an instance the provider itself
     // just launched idle.
+    //
+    // Only idle instances pre-read their volume: they have time to spare, while a reserved launch
+    // would have the read compete with the startup the user is waiting on.
     const launchIdle = async (instanceType, count) => {
-        const awsInstances = await launch(instanceType, count)
+        const awsInstances = await launch(instanceType, count, {userData: PREWARM_USER_DATA})
         const results = []
         for (const awsInst of awsInstances) {
             await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), idleTags(environment))

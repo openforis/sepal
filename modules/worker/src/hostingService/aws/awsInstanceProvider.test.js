@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+
 import {
     CreateTagsCommand,
     DescribeImagesCommand,
@@ -298,6 +300,39 @@ describe('launch params (RunInstancesCommand)', () => {
             {DeviceName: '/dev/xvda', Ebs: {VolumeInitializationRate: 300}},
             {DeviceName: '/dev/xvdf', Ebs: {VolumeInitializationRate: 300}},
         ])
+    })
+
+    test('idle instances boot with the volume prewarm script as user data', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        await provider.launchIdle('T3aSmall', 1)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        const userData = Buffer.from(runCall.args[0].input.UserData, 'base64').toString()
+        expect(userData).toBe(fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url), 'utf8'))
+    })
+
+    test('reserved instances boot without user data', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        await provider.launchReserved('T3aSmall', RESERVATION)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        expect(runCall.args[0].input.UserData).toBeUndefined()
     })
 
     test('CreateTagsCommand is called with launch+idle tags for launchIdle', async () => {
