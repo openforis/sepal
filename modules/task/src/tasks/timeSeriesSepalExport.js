@@ -90,7 +90,7 @@ const exportTiles$ = (taskId, featureCollection, {
         concat(
             of({tileIndex, chunks: 0}),
             exportChunks$(createChunks$({tileId, tileIndex})),
-            postProcess$(Path.join(downloadDir, `${tileIndex}`))
+            postProcess$(Path.join(downloadDir, `${tileIndex}`), indicator)
         )
 
     const createChunks$ = ({tileId, tileIndex}) => {
@@ -228,8 +228,8 @@ const exportTiles$ = (taskId, featureCollection, {
     )
 }
 
-const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [downloadDir])
+const postProcess$ = (downloadDir, band) =>
+    terminal$('sepal-stack-time-series', [downloadDir, '--band', band])
         .pipe(
             tap(({stream, value}) => {
                 if (value)
