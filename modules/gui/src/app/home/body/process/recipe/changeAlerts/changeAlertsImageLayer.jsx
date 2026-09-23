@@ -94,7 +94,7 @@ class _ChangeAlertsImageLayer extends React.Component {
     renderVisualizationSelector() {
         const {layerConfig: {visualizationType, mosaicType}, recipe, source, layerConfig = {}} = this.props
         const options = visualizationOptions(recipe, visualizationType, mosaicType)
-        const availableBands = getAvailableBands(recipe, visualizationType)
+        const availableBands = getAvailableBands(recipe, visualizationType, mosaicType)
         return (
             <VisualizationSelector
                 source={source}
@@ -144,7 +144,7 @@ class _ChangeAlertsImageLayer extends React.Component {
     toAllVis() {
         const {userDefinedVisualizations, layerConfig: {visualizationType, mosaicType}, recipe} = this.props
         const options = visualizationOptions(recipe, visualizationType, mosaicType)
-        const availableBands = getAvailableBands(recipe, visualizationType)
+        const availableBands = getAvailableBands(recipe, visualizationType, mosaicType)
         const flatten = options => options
             .map(option => option.options
                 ? flatten(option.options)

@@ -59,9 +59,9 @@ const changeRecipe = dataSetType => ({
         date: {
             monitoringEnd: '2024-01-01',
             monitoringDuration: 1,
-            monitoringDurationUnit: 'year',
+            monitoringDurationUnit: 'months',
             calibrationDuration: 2,
-            calibrationDurationUnit: 'year'
+            calibrationDurationUnit: 'months'
         },
         changeAlertsOptions: {}
     }

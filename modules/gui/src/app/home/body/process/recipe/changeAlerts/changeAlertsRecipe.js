@@ -1,5 +1,4 @@
-import moment from 'moment'
-
+import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -10,8 +9,6 @@ import {selectFrom} from '~/stateUtils'
 
 import {segmentVisualizations} from './referenceEvidence'
 import {visualizationOptions} from './visualizations'
-
-const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
     reference: {},
@@ -86,7 +83,7 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
 
 // TODO: Might need to tweak the recipe for this
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
-    const {monitoringEnd, calibrationStart} = toDates(recipe)
+    const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
     return api.gee.loadTimeSeriesObservations$({
         recipe: {model: {
             dates: {
@@ -99,14 +96,6 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
         latLng,
         bands
     })
-}
-
-export const toDates = recipe => {
-    const model = recipe.model
-    const monitoringEnd = model.date.monitoringEnd
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(model.date.calibrationDuration, model.date.calibrationDurationUnit).format(DATE_FORMAT)
-    return {monitoringEnd, monitoringStart, calibrationStart}
 }
 
 export const getAllVisualizations = recipe => {

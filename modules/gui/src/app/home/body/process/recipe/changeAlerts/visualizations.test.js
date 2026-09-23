@@ -11,7 +11,14 @@ it('provides visualization options for optical monitoring mosaics', () => {
                 dataSetType: 'OPTICAL',
                 dataSets: {SENTINEL_2: ['SENTINEL_2']}
             },
-            options: {corrections: []}
+            options: {corrections: []},
+            date: {
+                monitoringEnd: '2024-06-15',
+                monitoringDuration: 2,
+                monitoringDurationUnit: 'months',
+                calibrationDuration: 3,
+                calibrationDurationUnit: 'months'
+            }
         }
     }
 
