@@ -1,7 +1,10 @@
+import {ALERT_BANDS} from '#sepal/recipe/bayts/alertBands'
 import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
+
+const ALERT_BAND_TYPES = {flag: typeInt, flag_orbit: typeInt}
 
 export const getAvailableBands = (recipe, visualizationType) => {
     return !visualizationType || visualizationType === 'alerts'
@@ -9,20 +12,12 @@ export const getAvailableBands = (recipe, visualizationType) => {
         : radarBands(recipe)
 }
 
-export const alertsBands = () => {
-    return {
-        non_forest_probability: {dataType: typeFloat},
-        change_probability: {dataType: typeFloat},
-        flag: {dataType: typeInt},
-        flag_orbit: {dataType: typeInt},
-        first_detection_date: {dataType: typeFloat},
-        confirmation_date: {dataType: typeFloat},
-        VV: {dataType: typeFloat},
-        VH: {dataType: typeFloat},
-        ratio_VV_VH: {dataType: typeFloat},
-    }
-}
-        
+// The bands of the alert product, each with the data type it is written as.
+export const alertsBands = () =>
+    Object.fromEntries(
+        ALERT_BANDS.map(name => [name, {dataType: ALERT_BAND_TYPES[name] || typeFloat}])
+    )
+
 export const getGroupedBandOptions = () => {
     const toOption = band => ({value: band, label: band})
     return [

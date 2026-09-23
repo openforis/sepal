@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 
+import {ALERT_BANDS} from '#sepal/recipe/bayts/alertBands'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
@@ -9,7 +10,6 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {alertsBands} from '../../bands'
 import styles from './options.module.css'
 
 const fields = {
@@ -295,7 +295,7 @@ class _Options extends React.Component {
     onPreviousAlertsAssetLoaded({metadata}) {
         const {inputs: {previousAlertsAsset}} = this.props
         const bands = metadata.bands.map(({id}) => id)
-        const requiredBands = Object.keys(alertsBands())
+        const requiredBands = ALERT_BANDS
         const missingBands = requiredBands
             .filter(requiredBand => !bands.includes(requiredBand))
         if (missingBands.length) {
