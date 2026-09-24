@@ -84,14 +84,14 @@ const createInstanceTypeCodec = (instanceTypes = AWS_INSTANCE_TYPES) => {
     }
 }
 
-const workerTags = (environment, sepalVersion) => [
+const workerTags = (environment, workerAmiVersion) => [
     mkTag('Environment', environment),
     mkTag('Type', 'Worker'),
-    mkTag('Version', sepalVersion),
+    mkTag('Version', workerAmiVersion),
 ]
 
-const launchTags = (environment, sepalVersion) => [
-    ...workerTags(environment, sepalVersion),
+const launchTags = (environment, workerAmiVersion) => [
+    ...workerTags(environment, workerAmiVersion),
     mkTag('Starting', 'true'),
 ]
 
@@ -215,7 +215,7 @@ const retry = async (tries, operation) => {
 // instanceTypes — the catalog backing the id ↔ EC2-name translation; injectable for tests.
 const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} = {}) => {
     const {
-        sepalVersion,
+        workerAmiVersion,
         region,
         availabilityZone,
         environment,
@@ -245,12 +245,12 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     const fetchImageId = async () => {
         const response = await client.send(new DescribeImagesCommand({
             Filters: [
-                mkFilter('tag:Version', sepalVersion),
+                mkFilter('tag:Version', workerAmiVersion),
                 mkFilter('tag:Region', region),
             ],
         }))
         if (!response.Images || response.Images.length === 0) {
-            throw new Error(`UnableToGetImageId: sepalVersion=${sepalVersion}, region=${region}, availabilityZone=${availabilityZone}`)
+            throw new Error(`UnableToGetImageId: workerAmiVersion=${workerAmiVersion}, region=${region}, availabilityZone=${availabilityZone}`)
         }
         const img = response.Images[0]
         log.info(`Using sandbox image ${img.ImageId}`)
@@ -322,19 +322,19 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         const response = await client.send(new DescribeInstancesCommand(requestInput))
         const awsInstances = collectInstances(response)
         const instancesWithValidVersion = onlyCorrectVersion
-            ? awsInstances.filter(i => !isOlderVersion(instanceVersion(i), sepalVersion))
+            ? awsInstances.filter(i => !isOlderVersion(instanceVersion(i), workerAmiVersion))
             : awsInstances
         return instancesWithValidVersion.map(i => toWorkerInstance(i, codec))
     }
 
-    // Terminates instances whose Version tag is older than sepalVersion AND State=idle.
+    // Terminates instances whose Version tag is older than workerAmiVersion AND State=idle.
     //
     // Auto-cleanup terminates are best-effort: a single transient failure must not abort the rest
     // of sweep(). Caller-initiated terminate() still throws on final failure so callers can
     // react; only here we catch and log.
     const terminateOldIdle = async awsInstances => {
         const old = awsInstances.filter(i =>
-            isOlderVersion(instanceVersion(i), sepalVersion) &&
+            isOlderVersion(instanceVersion(i), workerAmiVersion) &&
             tagValue(i, 'State') === 'idle'
         )
         await Promise.all(old.map(i =>
@@ -391,7 +391,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         }))
         const now = Date.now()
         const isStray = i => tagValue(i, 'State') === 'pooled'
-            ? isOlderVersion(instanceVersion(i), sepalVersion)
+            ? isOlderVersion(instanceVersion(i), workerAmiVersion)
                 || (i.State?.Name === 'running' && now - new Date(i.LaunchTime).getTime() > MAX_POOLED_RUNNING_MS)
             : i.State?.Name === 'stopped'
         await Promise.all(collectInstances(response).filter(isStray).map(i =>
@@ -465,7 +465,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         const awsInstances = await launch(instanceType, count, {userData})
         const results = []
         for (const awsInst of awsInstances) {
-            await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), idleTags(environment))
+            await tagInstance(awsInst.InstanceId, launchTags(environment, workerAmiVersion), idleTags(environment))
             results.push({...toWorkerInstance(awsInst, codec), reservation: null})
         }
         return results
@@ -477,7 +477,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     // keeps ReleaseUnusedInstances off the instance and only then waits, through awaitHost.
     const launchReserved = async (instanceType, reservation) => {
         const [awsInst] = await launch(instanceType, 1)
-        await tagInstance(awsInst.InstanceId, launchTags(environment, sepalVersion), reserveTags(environment, reservation))
+        await tagInstance(awsInst.InstanceId, launchTags(environment, workerAmiVersion), reserveTags(environment, reservation))
         return {...toWorkerInstance(awsInst, codec), reservation}
     }
 
@@ -489,7 +489,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         })
         const results = []
         for (const awsInst of awsInstances) {
-            await tagInstance(awsInst.InstanceId, workerTags(environment, sepalVersion), pooledTags(environment))
+            await tagInstance(awsInst.InstanceId, workerTags(environment, workerAmiVersion), pooledTags(environment))
             results.push({...toWorkerInstance(awsInst, codec), reservation: null})
         }
         return results
@@ -611,7 +611,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         start,
         stop,
         _isOlderVersion: isOlderVersion,
-        _launchTags: () => launchTags(environment, sepalVersion),
+        _launchTags: () => launchTags(environment, workerAmiVersion),
         _idleTags: () => idleTags(environment),
         _reserveTags: reservation => reserveTags(environment, reservation),
     }

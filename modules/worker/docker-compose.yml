@@ -28,7 +28,8 @@ services:
       # ─── Hosting service (default local; prod sets aws at cutover) ──────────
       HOSTING_SERVICE: "${HOSTING_SERVICE:-local}"
       # ─── SEPAL creds / host ────────────────────────────────────────────────
-      SEPAL_VERSION: "${SEPAL_VERSION:-latest}"
+      # The build the worker AMI was made from: older than SEPAL_VERSION when a deploy reuses the AMI.
+      WORKER_AMI_VERSION: "${WORKER_AMI_VERSION:-${SEPAL_VERSION:-latest}}"
       SEPAL_USER: "sepaladmin"
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_HTTPS_PORT: "${SEPAL_HTTPS_PORT}"

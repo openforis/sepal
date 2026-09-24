@@ -386,7 +386,7 @@ describe('createHostingService integration', () => {
         const {createHostingService} = await import('../index.js')
         const svc = createHostingService({
             hostingService: 'aws',
-            sepalVersion: '1.0.0',
+            workerAmiVersion: '1.0.0',
             region: 'eu-central-1',
             availabilityZone: 'eu-central-1a',
             environment: 'test',

@@ -49,8 +49,8 @@ program
 
     // ─── SEPAL creds / host ─────────────────────────────────────────────────
     .addOption(
-        new Option('--sepal-version <string>', 'Deployed SEPAL version (e.g. 1.23.4)')
-            .env('SEPAL_VERSION')
+        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox and task images were made from (e.g. 1937)')
+            .env('WORKER_AMI_VERSION')
     )
     .addOption(
         new Option('--sepal-user <string>', 'SEPAL service username for inter-service calls')
@@ -344,7 +344,7 @@ program
 const {
     port,
     hostingService,
-    sepalVersion,
+    workerAmiVersion,
     sepalUser,
     sepalHost,
     sepalHttpsPort,
@@ -437,7 +437,6 @@ export {
     sepalHostProjectDir,
     sepalHttpsPort,
     sepalUser,
-    sepalVersion,
     sessionExpiryMode,
     sessionExpirySecret,
     sessionGraceMinutes,
@@ -450,5 +449,6 @@ export {
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
     volumeInitializationRate,
+    workerAmiVersion,
     workerPort,
 }

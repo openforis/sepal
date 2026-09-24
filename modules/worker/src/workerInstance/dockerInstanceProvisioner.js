@@ -35,7 +35,7 @@ const ORPHAN_GRACE_MS = 10 * 60_000
 const PROBE_TIMEOUT_MS = 10_000
 
 const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, extraHosts = [], defaultDaemonHost = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
-    const {dockerPort, dockerEntryPoint, dockerRegistryHost, sepalVersion, syslogAddress} = config
+    const {dockerPort, dockerEntryPoint, dockerRegistryHost, workerAmiVersion, syslogAddress} = config
 
     // normalizeInstance — heal instances that arrive without daemonHost (reconstructed from
     // worker_session rows, which persist only the host alias). Local hosting sets
@@ -174,7 +174,7 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         // tell one open terminal from another — the same two-word name the GUI, the SSH menu and
         // the container itself carry, rather than the container id Docker defaults to.
         const body = {
-            Image: `${dockerRegistryHost}/openforis/${image.name}:${sepalVersion}`,
+            Image: `${dockerRegistryHost}/openforis/${image.name}:${workerAmiVersion}`,
             Hostname: instanceName(instance.reservation.sessionId),
             Tty: true,
             Cmd: image.runCommand,

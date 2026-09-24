@@ -26,7 +26,7 @@ import {
 } from './awsInstanceProvider.js'
 
 const CONFIG = {
-    sepalVersion: '5.0.0',
+    workerAmiVersion: '5.0.0',
     region: 'eu-central-1',
     availabilityZone: 'eu-central-1a',
     environment: 'test-env',
@@ -908,7 +908,7 @@ describe('terminateOldIdle', () => {
                 {Key: 'State', Value: 'idle'},
                 {Key: 'Type', Value: 'Worker'},
                 {Key: 'Environment', Value: 'test-env'},
-                {Key: 'Version', Value: '1.0.0'},  // older than CONFIG.sepalVersion=5.0.0
+                {Key: 'Version', Value: '1.0.0'},  // older than CONFIG.workerAmiVersion=5.0.0
             ],
         })
 
@@ -942,7 +942,7 @@ describe('terminateOldIdle', () => {
                 {Key: 'State', Value: 'idle'},
                 {Key: 'Type', Value: 'Worker'},
                 {Key: 'Environment', Value: 'test-env'},
-                {Key: 'Version', Value: '5.0.0'},  // same as CONFIG.sepalVersion
+                {Key: 'Version', Value: '5.0.0'},  // same as CONFIG.workerAmiVersion
             ],
         })
 

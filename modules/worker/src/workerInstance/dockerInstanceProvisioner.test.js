@@ -27,7 +27,7 @@ const {instanceName} = await import('../instanceName.js')
 const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
 
 const CONFIG = {
-    sepalVersion: '5.1.0',
+    workerAmiVersion: '5.1.0',
     sepalHost: 'sepal.example.com',
     sepalHttpsPort: 443,
     sepalHostDataDir: '/data',
@@ -772,7 +772,7 @@ const ORPHAN_CONFIG = {
     dockerPort: 2375,
     dockerEntryPoint: 'v1.41',
     dockerRegistryHost: 'registry',
-    sepalVersion: 'test',
+    workerAmiVersion: 'test',
     syslogAddress: null,
 }
 
