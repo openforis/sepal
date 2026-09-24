@@ -1,9 +1,11 @@
 import moment from 'moment'
 import {describe, expect, it, vi} from 'vitest'
 
-// What a CCDC Slice retrieval submits. The panel's selection is base bands and measures; what leaves for
-// Earth Engine is the band names the operation produces from them - and the shared submitter needs those
-// names, not only the customized image, because it decides which visualizations travel with the export.
+// What a CCDC Slice retrieval submits, from the selection the panel holds to the task that leaves: the selection is
+// base bands and measures; what leaves for Earth Engine is the band names they ask for, checked against the slice's
+// read of its own output, under Earth Engine's default policy for each verified scalar band, with the templates that
+// survive over exactly those bands. The slice's declaration, the common read, the decision and the generic
+// submitter are the real ones; the terminal a Retrieve panel's acquisition would retain is supplied.
 
 vi.mock('~/app/home/body/process/recipe', () => ({recipeActionBuilder: () => () => ({})}))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -26,15 +28,20 @@ vi.mock('~/apiRegistry', () => ({
 const registry = vi.hoisted(() => ({}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
 
-const {availableBandsOf, materializedTemplates} = await import('./sliceEvidence')
-const {submitRetrieveRecipeTask} = await import('./ccdcSliceRecipe')
+vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+
+const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
+const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
+const {materializedTemplates, sliceRequest} = await import('./sliceEvidence')
+const {retrieveTask} = await import('./ccdcSliceRecipe')
+const {readRecipeOutput} = await import('../recipeOutput')
+const {submitRetrieve} = await import('../retrieveOutput')
 
 registry.CCDC_SLICE = {
     getDateRange: recipe => {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
-    legacySubmissionBands: recipe => availableBandsOf(recipe),
     getPreSetVisualizations: (recipe, evidence) => materializedTemplates(recipe, evidence?.segments)
 }
 
@@ -74,10 +81,37 @@ const sliceRetrieving = retrieveOptions => ({
     }
 })
 
+// The slice's output as its read answers it once the source's segments are observed: what the slice's own
+// derivation makes of them, each band scalar.
+const readOf = recipe => {
+    const terminal = {
+        status: 'READY',
+        description: {
+            executionReference: {type: 'RECIPE_REF', id: recipe.id},
+            output: {
+                kind: 'IMAGE',
+                bands: sliceOutputBands(recipe.ui.sourceEvidence.segments.bands, recipe.model)
+                    .map(name => ({name, dataType: {arrayDimensions: 0}}))
+            },
+            evidence: []
+        },
+        diagnostics: [],
+        error: null,
+        dependencyValidity: {status: 'VALID', diagnostics: []}
+    }
+    const graph = buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([[recipe.id, recipe]])})
+    return {
+        recipe,
+        output: readRecipeOutput({recipe, product: {name: 'IMAGE_OUTPUT'}, graph, heldFor: () => terminal}),
+        pending: false
+    }
+}
+
 const submit = recipe => {
     submitted.length = 0
-    submitRetrieveRecipeTask(recipe)
-    return submitted[0].params.image
+    const submittedOptions = recipe.ui.retrieveOptions
+    submitRetrieve({...readOf(recipe), request: sliceRequest({retrieveOptions: submittedOptions}), task: retrieveTask})
+    return submitted[0]?.params.image
 }
 
 describe('submitting a slice retrieval', () => {
@@ -88,10 +122,11 @@ describe('submitting a slice retrieval', () => {
     })
 
     it('exports the band names the selection resolves to', () => {
-        expect(submit(selectingNdviValueAndStart).bands).toEqual({
-            selection: ['ndvi', 'tStart'],
-            baseBands: ['ndvi']
-        })
+        expect(submit(selectingNdviValueAndStart).bands).toEqual({selection: ['ndvi', 'tStart']})
+    })
+
+    it('gives each band Earth Engine\'s default policy, the slice declaring none', () => {
+        expect(submit(selectingNdviValueAndStart).pyramidingPolicy).toEqual({ndvi: 'mean', tStart: 'mean'})
     })
 
     it('carries the templates over exported bands', () => {
@@ -100,5 +135,15 @@ describe('submitting a slice retrieval', () => {
 
     it('leaves behind a template naming a band the export does not include', () => {
         expect(submit(selectingNdviValueAndStart).visualizations.map(({id}) => id)).not.toContain('t-rmse')
+    })
+
+    it('submits nothing for a combination the slice does not produce, rather than the rest of the selection', () => {
+        expect(submit(sliceRetrieving({baseBands: ['ndvi', 'nbr'], bandTypes: ['value'], segmentBands: []})))
+            .toBeUndefined()
+    })
+
+    it('submits nothing for a measure it does not recognize, rather than reading it as another', () => {
+        expect(submit(sliceRetrieving({baseBands: ['ndvi'], bandTypes: ['value', 'coefs'], segmentBands: []})))
+            .toBeUndefined()
     })
 })

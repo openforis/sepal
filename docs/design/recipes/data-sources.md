@@ -19,10 +19,9 @@ on that basis.
 
 Only Asset, CCDC, CCDC Slice, Masking and Optical Mosaic declare an `IMAGE_OUTPUT` provider.
 
-- Map layers, their forms and the visualization selector and editor read bands through the common read. A declared
-  type is answered through its declaration there; any other is answered by the legacy seam.
-- Every Retrieve panel except Masking's still imports its type's `bands.js` directly, so declared types keep a
-  second band authority there.
+- Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
+  bands through the common read. A declared type is answered through its declaration there; any other is answered by
+  the legacy seam. Retrieve panels take only labels and groups from a type's `bands.js`.
 - Undeclared types keep independent GUI and Earth Engine band lists, which the
   [execution comparison](output-products.md#early-execution-comparison-findings) has shown to drift.
 
@@ -98,8 +97,8 @@ Deliver steps 1–2 as three separately reviewable packets:
 1. **Dependency-scoped descriptions and structural dependency checks.** The resolver and observer fail a
    description only on what its providers read, detect cycles on the path of provider reads, and withhold a
    recipe's own observation when any structural diagnosis lies below it. The complete closure answers
-   `dependencyValidity` separately, and two execution boundaries - Masking's observed Retrieve and Task's asset
-   export of a declared root - require it to be `VALID`. A known
+   `dependencyValidity` separately, and Retrieve and Task's asset export of a declared root require it to be
+   `VALID`. A known
    schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
    After a failed closure, `SourceEvidenceSync` re-observes when a record it read changes; restoring only the
    recipe it could not read does not.
@@ -111,16 +110,17 @@ Deliver steps 1–2 as three separately reviewable packets:
    - Legacy answers stay unverified. Their display hints are presentation, as declared types' labels and cursor
      precision are.
    - Input workflows and Sampling Design filter the presets they copy against the names they observed.
-   - Task submission's exported visualizations are unchanged until Retrieve migrates.
    - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
      [live source evidence](gui-source-runtime.md#live-source-evidence).
-3. **Retrieve consumers.** Route GUI export choices through the same API and absorb the existing
-   undeclared-output fallback into its legacy adapter, including declared wrappers over undeclared sources.
-   Acquisition failures, broken dependencies and invalid descriptions never qualify for fallback. Legacy answers
-   do not become proof of destination compatibility, export policy or encoding. Task keeps its independent,
-   authorized resolution through shared contracts and runtime adapters; it neither imports the GUI API nor trusts
-   a browser description. Masking's existing undeclared-output fallback is currently unreachable from its panel,
-   which blocks any answer that is not `READY`; whether it becomes reachable is this packet's decision.
+3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
+   acquisition while open. Undeclared outputs, including declared wrappers over undeclared sources, are answered by
+   the legacy adapter; acquisition failures, broken dependencies and invalid descriptions never qualify. A legacy
+   answer supplies choices alone and never destination compatibility, export policy or encoding: an undeclared type
+   keeps its own legacy policy, and a declared wrapper's fallback reaches only bands its evidence lifecycle currently
+   vouches for as scalar. CCDC's measures and Slice's structured selection are translated into the names they export
+   and checked against the answer. Task keeps its independent, authorized resolution through shared contracts and
+   runtime adapters; it neither imports the GUI API nor trusts a browser description
+   ([Retrieve integration](gui-source-runtime.md#retrieve-integration)).
 
 Acceptance: a later recipe migration adds its declaration and removes its legacy entry without requiring another
 consumer rewrite. Each packet identifies and removes the paths it supersedes. Use targeted tests while iterating;
@@ -414,9 +414,9 @@ prerequisite only for the work that depends on it.
 
 The shared `IMAGE_OUTPUT` contract describes outer execution identity, ordered bands, per-band export requirements
 and evidence. The browser's one-shot runtime completes a bounded dependency closure, resolves providers and observes
-bands through existing execution APIs where a provider asks for them. Masking Retrieve consumes that
-description for band choices, selection, destination compatibility and pyramiding policy, submitting the selected
-names, with an explicit coexistence boundary for unmigrated recipes.
+bands through existing execution APIs where a provider asks for them. Retrieve consumes that description for band
+choices, selection, destination compatibility and pyramiding policy, submitting the selected names; an unmigrated
+recipe is answered by the legacy adapter, which supplies choices alone.
 
 Remaining work:
 

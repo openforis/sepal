@@ -8,6 +8,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {addRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore, select} from '~/store'
 
 import createSliceType from './ccdcSlice'
@@ -117,9 +118,11 @@ const openSlice = recipe => {
     root = createRoot(document.createElement('div'))
     act(() => root.render(
         <Provider store={store}>
-            <Recipe id={recipe.id}>
-                <Slice/>
-            </Recipe>
+            <SourceRuntimeProvider>
+                <Recipe id={recipe.id}>
+                    <Slice/>
+                </Recipe>
+            </SourceRuntimeProvider>
         </Provider>
     ))
 }

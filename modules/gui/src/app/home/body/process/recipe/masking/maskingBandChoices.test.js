@@ -25,6 +25,7 @@ vi.mock('../../recipeTypeRegistry', () => ({
 
 const {ccdcMeasures, ccdcOutputBands} = await import('#sepal/recipe/type/ccdc')
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {PublishedEvidenceBases} = await import('../sourceEvidenceBasis')
 const {maskingObservation} = await import('./maskingSourceEvidence')
 const {getAvailableBands} = await import('./bands')
 
@@ -325,15 +326,17 @@ const sync = ({recipe, records}) => {
     const byId = Object.fromEntries(records.map(record => [record.id, record]))
     let held = recipe
     const recipeActionBuilder = () => ({
+        writes: [],
         set(path, value) {
-            this.written = {path, value}
+            this.writes.push({path, value})
             return this
         },
         dispatch() {
-            held = _.set(_.cloneDeep(held), this.written.path, this.written.value)
+            held = this.writes.reduce((recipe, {path, value}) => _.set(recipe, path, value), _.cloneDeep(held))
         }
     })
     const component = new SourceEvidenceSync({
+        sourceRuntime: {publishedEvidence: new PublishedEvidenceBases()},
         observation: maskingObservation,
         recipe,
         loadedRecipes: byId,

@@ -63,7 +63,8 @@ const submit = (recipeType, config) => {
     state.submitted = []
     state.events = []
     state.recipeType = recipeType
-    submitRetrieveRecipeTask(recipe(), config)
+    const submitted = recipe()
+    submitRetrieveRecipeTask(submitted, {retrieveOptions: submitted.ui.retrieveOptions, ...config})
     return state.submitted
 }
 
@@ -75,7 +76,7 @@ const submitRecipe = (recipeInstance, config) => {
     state.submitted = []
     state.events = []
     state.recipeType = {id: 'SYNTHETIC'}
-    submitRetrieveRecipeTask(recipeInstance, config)
+    submitRetrieveRecipeTask(recipeInstance, {retrieveOptions: recipeInstance.ui.retrieveOptions, ...config})
     return state.submitted
 }
 

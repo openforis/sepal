@@ -2,7 +2,7 @@ import React from 'react'
 
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {getGroupedBandOptions} from '~/app/home/body/process/recipe/phenology/bands'
-import {RecipeActions} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
+import {retrieveTask} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 
@@ -20,7 +20,7 @@ class _Retrieve extends React.Component {
                 toSepal
                 toEE
                 toDrive
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+                task={retrieveTask}
             />
         )
     }
@@ -28,11 +28,6 @@ class _Retrieve extends React.Component {
     bandOptions() {
         const {recipe} = this.props
         return getGroupedBandOptions(recipe)
-    }
-
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }
 

@@ -1,4 +1,4 @@
-import {sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
+import {SEGMENT_BANDS, sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 import {selectFrom} from '~/stateUtils'
 
 import {OBSERVED, sourceKeyOf, UNAVAILABLE, UNOBSERVED} from '../sourceEvidence'
@@ -92,33 +92,43 @@ const MEASURE_SUFFIXES = {
     amplitude_3: '_amplitude_3'
 }
 
-// What a retrieve selection may be made from: the source's base bands, the measures they carry and their
-// segment bands, each kept to what the selected operation produces. Which bands a slice produces depends on
-// the operation, so a source that fitted three harmonics is still offered none by a slice producing none.
-export const retrievableBands = recipe => {
-    const produced = outputBandsOf(recipe)
-    const baseBands = baseBandsOf(recipe)
-    const carried = carriedMeasures(baseBands)
-    const measures = Object.keys(MEASURE_SUFFIXES).filter(measure =>
-        carried.has(measure) && baseBands.some(({name}) => produced.includes(measureBand(name, measure)))
+// What a retrieve selection may be made from, read from the names this recipe's output holds by the rule the slice
+// names its bands with: `b` with a measure's suffix is that measure of base band `b`, a segment band is one of the
+// segment bands, and a base band carries its value under its own name. A name can be both - `red_phase_1` is a phase
+// of `red`, and is also a base band where the source fitted a measure of that name - so a name is a base band unless
+// it is a measure of another band and has no measures of its own. Every name the output holds can be chosen; a
+// combination it does not hold is for the request to name.
+export const retrievableBands = outputBandNames => {
+    const names = outputBandNames.filter(name => !SEGMENT_BANDS.includes(name))
+    const present = new Set(names)
+    const measuresOf = name => Object.keys(MEASURE_SUFFIXES).filter(measure => present.has(measureBand(name, measure)))
+    const isMeasureOfAnother = name => Object.entries(MEASURE_SUFFIXES).some(([measure, suffix]) =>
+        measure !== 'value' && name.endsWith(suffix) && present.has(name.slice(0, -suffix.length))
     )
+    const hasMeasures = name => measuresOf(name).some(measure => measure !== 'value')
+    const baseBands = names.filter(name => !isMeasureOfAnother(name) || hasMeasures(name))
     return {
-        baseBands: baseBands.filter(({name}) =>
-            measures.some(measure => produced.includes(measureBand(name, measure)))
+        baseBands: baseBands.map(name => ({name})),
+        measures: Object.keys(MEASURE_SUFFIXES).filter(measure =>
+            baseBands.some(name => measuresOf(name).includes(measure))
         ),
-        measures,
-        segmentBands: segmentBandsOf(recipe).filter(({name}) => produced.includes(name))
+        segmentBands: SEGMENT_BANDS.filter(name => outputBandNames.includes(name)).map(name => ({name}))
     }
 }
 
-// What a retrieve selection actually resolves to: every measure asked for on every base band asked for, kept
-// only where this operation produces it. An empty result is a selection this recipe cannot export.
-export const selectedOutputBands = (recipe, {baseBands = [], bandTypes = [], segmentBands = []} = {}) => {
-    const produced = outputBandsOf(recipe)
-    return [
-        ...baseBands.flatMap(name => bandTypes.map(measure => measureBand(name, measure))),
+// The bands a retrieve selection asks for, as a Retrieve request: every measure asked for on every base band asked
+// for, and the segment bands. Every combination is kept - one the output does not hold is for the caller to name and refuse, never to
+// drop - and a measure this vocabulary does not know is no band at all, returned as unrecognized rather than read
+// as another.
+export const sliceRequest = ({retrieveOptions}) => {
+    const {baseBands = [], bandTypes = [], segmentBands = []} = retrieveOptions
+    const unrecognized = bandTypes.filter(measure => !Object.hasOwn(MEASURE_SUFFIXES, measure))
+    const recognized = bandTypes.filter(measure => Object.hasOwn(MEASURE_SUFFIXES, measure))
+    const names = [
+        ...baseBands.flatMap(name => recognized.map(measure => measureBand(name, measure))),
         ...segmentBands
-    ].filter(band => produced.includes(band))
+    ]
+    return {names, unrecognized, retrieveOptions: {...retrieveOptions, bands: names}}
 }
 
 // The source reference as the pixel-chart endpoint expects it: what the recipe selected, plus the date
@@ -157,19 +167,7 @@ const savedLayerTemplates = recipe => {
         .filter(visParams => visParams?.id && visParams?.bands)
 }
 
-const segmentBandsOf = recipe =>
-    segmentDescription(recipe).description?.segmentBands || []
-
-const measureBand = (name, measure) => `${name}${MEASURE_SUFFIXES[measure] ?? ''}`
-
-// Break confidence is not fitted; it is a magnitude over a residual, so a source carrying both carries it.
-const carriedMeasures = baseBands => {
-    const carried = new Set(baseBands.flatMap(({measures}) => measures || []))
-    if (carried.has('rmse') && carried.has('magnitude')) {
-        carried.add('breakConfidence')
-    }
-    return carried
-}
+const measureBand = (name, measure) => `${name}${MEASURE_SUFFIXES[measure]}`
 
 const isSet = value => value !== undefined && value !== null
 

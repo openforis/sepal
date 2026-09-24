@@ -12,8 +12,11 @@ Visualizations currently come from several incompatible paths:
 - asset properties are parsed into continuous, RGB or categorical presets;
 - user-defined visualizations are persisted under recipe layer state;
 - some source-input models copy visualizations when selected;
-- Stack and Band Math rewrite source visualization bands;
-- map components and Retrieve filter visualizations differently.
+- Stack and Band Math rewrite source visualization bands.
+
+Map layers and Retrieve filter a recipe's styles against the same read of its output; Retrieve then attaches those
+naming only bands the export carries. CCDC's own export is the exception: every template CCDC offers is attached, and
+its task keeps those whose bands it derives.
 
 Copied source presets become stale when source bands, properties, categories, labels or palettes change. Positional
 band remapping can silently apply a style to the wrong output.

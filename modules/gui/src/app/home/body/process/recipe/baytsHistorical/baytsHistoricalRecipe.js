@@ -1,9 +1,6 @@
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-
-import {getAvailableBands} from './bands'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -47,22 +44,9 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_BAYTS_HISTORICAL_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const bands = Object.keys(getAvailableBands(recipe))
-    return submitTask(recipe, {
-        dataSetType: 'RADAR',
-        customizeImage: image => ({...image, bands: {selection: bands}})
-    })
+export const retrieveTask = {
+    dataSetType: 'RADAR'
 }

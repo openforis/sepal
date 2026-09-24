@@ -11,12 +11,13 @@ import {ASSET} from '#sepal/recipe/source/reference'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {getLogger} from '~/log'
-import {selectFrom} from '~/stateUtils'
 
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
 import {createLoadRecipesById$} from '../sourceRuntime/recipeClosureLoader'
+import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {declaredSelections, OBSERVED, sourceKeyOf, UNAVAILABLE} from './sourceEvidence'
+import {assetVersion, earthEngineGeneration, evidenceSession, outdatedBasis, publishedRevision} from './sourceEvidenceBasis'
 
 const log = getLogger('sourceEvidence')
 
@@ -42,18 +43,14 @@ let observations = 0
 // those records is what would make it answerable again.
 //
 // The same basis decides both questions: whether to look again, and whether an answer may still be
-// published. A source the answer was read from that has since become something else fails both.
+// published. A source the answer was read from that has since become something else fails both. The basis of what
+// it publishes is retained with its source runtime before the evidence is dispatched, so a consumer can ask the same
+// question of the session as it stands (sourceEvidenceBasis.js).
 
-const mapStateToProps = state => ({
-    // The container is replaced when Google credentials change, so its identity is an invalidation epoch.
-    // Its contents are never read, compared or published.
-    earthEngineGeneration: selectFrom(state, ['user', 'currentUser', 'googleTokens']),
-    catalogue: selectFrom(state, 'process.recipes'),
-    // A recipe with a tab is being edited. Its cached record is a draft, and no dependency read may replace
-    // it with what happens to be persisted.
-    openRecipeIds: (selectFrom(state, 'process.tabs') || []).map(({id}) => id),
-    assetVersions: [...(selectFrom(state, 'assets.user') || []), ...(selectFrom(state, 'assets.other') || [])]
-})
+const mapStateToProps = state => {
+    const {catalogue, openRecipeIds, assetVersions} = evidenceSession(state)
+    return {earthEngineGeneration: earthEngineGeneration(state), catalogue, openRecipeIds, assetVersions}
+}
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -75,6 +72,7 @@ class _SourceEvidenceSync extends React.Component {
 
     componentWillUnmount() {
         this.cancel$.next()
+        this.props.sourceRuntime.publishedEvidence.release(this)
     }
 
     update() {
@@ -198,25 +196,13 @@ class _SourceEvidenceSync extends React.Component {
             : {id, used, seeded: session.loadedRecipes[id], version: publishedRevision(session, id)}
     }
 
-    // Only what was actually observed can be seen to change. A record or version that was unknown when the
-    // answer was read says nothing about it now, and a record the session has released says only that.
     outdated(basis) {
         const {recipe, earthEngineGeneration} = this.props
-        return basis.key !== this.sourceKey()
-            || !sameSelections(declaredSelections(recipe), basis.selections)
-            || basis.earthEngineGeneration !== earthEngineGeneration
-            || basis.dependencies.some(dependency => this.dependencyChanged(dependency))
-    }
-
-    dependencyChanged({id, assetId, used, seeded, version}) {
-        const now = this.sessionSnapshot()
-        if (assetId) {
-            return moved(version, assetVersion(now, assetId))
-        }
-        const record = now.loadedRecipes[id]
-        const observed = used !== undefined || seeded !== undefined
-        return (observed && record !== undefined && !sameSourceRecord(record, used) && !sameSourceRecord(record, seeded))
-            || moved(version, publishedRevision(now, id))
+        return outdatedBasis(basis, {
+            recipe,
+            sourceKey: this.sourceKey(),
+            session: {...this.sessionSnapshot(), earthEngineGeneration}
+        })
     }
 
     closure$(session) {
@@ -270,7 +256,7 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     publish(evidence, error) {
-        const {recipe, recipeActionBuilder} = this.props
+        const {recipe, recipeActionBuilder, sourceRuntime} = this.props
         const basis = this.basis
         if (!basis || this.outdated(basis)) {
             return
@@ -281,6 +267,7 @@ class _SourceEvidenceSync extends React.Component {
             ...evidence,
             ...retainedObservation(recipe, evidence)
         }
+        sourceRuntime.publishedEvidence.retain(this, published.observation, basis)
         this.applied(
             recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
                 .set('ui.sourceEvidence', published),
@@ -316,17 +303,6 @@ class _SourceEvidenceSync extends React.Component {
     }
 }
 
-const sameSourceRecord = (current, previous) =>
-    current === previous || (previous !== undefined && _.isEqual(sourceInputs(current), sourceInputs(previous)))
-
-// Keep persisted inputs conservative: equal bands do not imply equal pixels. Runtime evidence and restored
-// style provenance also affect descriptions; panel values, dirtiness and chart state do not.
-const sourceInputs = recipe => ({
-    ..._.omit(recipe, 'ui'),
-    sourceEvidence: recipe.ui?.sourceEvidence,
-    savedLayerSource: recipe.ui?.savedLayerSource
-})
-
 // A read that failed says the source could not be reached. It does not unsay what the last successful read
 // found, or which source that was - and which source an answer was about is what a consumer needs to know
 // whether an answer coming back now is about the one it last had an answer for. Availability is the status;
@@ -344,12 +320,6 @@ const lastObserved = recipe => {
     return evidence?.status === OBSERVED ? evidence : evidence?.lastObserved
 }
 
-const assetVersion = ({assetVersions}, assetId) =>
-    assetVersions.find(({id}) => id === assetId)?.updateTime
-
-const publishedRevision = ({catalogue}, id) =>
-    catalogue.find(summary => summary.id === id)?.revision
-
 const isBehind = (session, id) => {
     // A recipe open for editing is a draft, not a copy of what is persisted. The cache boundary refuses to
     // overwrite one; not asking for it in the first place saves a read that could only be discarded.
@@ -364,13 +334,6 @@ const isBehind = (session, id) => {
         && record.revision < published
 }
 
-const sameSelections = (current, basis) =>
-    current.length === basis.length && current.every((selection, index) => selection === basis[index])
-
-// A version that was unknown on either side is no evidence of movement.
-const moved = (before, after) =>
-    before !== undefined && after !== undefined && before !== after
-
 // Observed band descriptions as evidence carries them: a name, with dimensionality and encoding where reported.
 export const observedBands = bands => (bands || []).map(band => _.isString(band)
     ? {name: band}
@@ -384,7 +347,8 @@ export const SourceEvidenceSync = compose(
     _SourceEvidenceSync,
     withRecipe(mapRecipeToProps),
     connect(mapStateToProps),
-    recipeAccess()
+    recipeAccess(),
+    withSourceRuntime()
 )
 
 SourceEvidenceSync.propTypes = {

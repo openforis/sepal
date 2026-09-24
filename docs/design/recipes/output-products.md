@@ -309,45 +309,38 @@ order, physical type or export policy.
 
 ### Band choices in Retrieve
 
-Where a Retrieve panel owns an output resolution, that resolution is the only authority for what may be
-selected. The same resolved description supplies the choices offered, the destination-compatibility check, the
-submitted band names, the pyramiding policies and the encoding, so those cannot describe different bands. The
-band options a recipe type supplies are then presentation alone - labels and tooltips matched by name - and can
-neither add a band nor withhold one.
+A Retrieve panel over its recipe's image output reads it through the common read, and that read is the only authority
+for what may be selected ([Retrieve integration](gui-source-runtime.md#retrieve-integration)). A described answer
+supplies the choices, the destination-compatibility check, the submitted band names and the policies, so those cannot
+describe different bands. A legacy answer supplies the choices alone. The band options a recipe type supplies are
+presentation - labels, tooltips and groups matched by name - and can neither add a choice nor withhold one; a choice
+they do not present is offered after the groups they do.
 
-Until that resolution settles the panel offers no choices at all, and retrieval stays disabled. The band names
-copied into a recipe when its source was selected are a snapshot nothing has verified since, and offering them
-would let a user select, and submit, a band the recipe may no longer provide. A failed acquisition or an invalid
-description is reported where the choices would be, and likewise offers nothing. That snapshot remains what a
-map layer draws from, which has no resolution of its own.
+Until the read answers, the panel offers no choices and retrieval stays disabled. The band names copied into a recipe
+when its source was selected are a snapshot nothing has verified since, and are never offered in its place. A failed
+acquisition, an invalid description or dependencies not known to be sound are reported where the choices would be,
+and likewise offer nothing.
 
-A panel opens on a loading view rather than on a form that fills in as answers arrive. The view is held for a
-minimum once shown, so a resolution answering almost at once cannot make it flicker past; the minimum overlaps
-the acquisition rather than following it, so a slower read reveals the form as soon as it answers. The complete
-form appears at once when it does. A failure is shown without waiting. This applies to opening only: a panel
-already open withholds its choices and blocks retrieval while a later resolution runs, but is never hidden
-behind that view again.
+What identifies an answer is the content of every record the session's graph holds, evidence included, and the
+credential epoch it was acquired under. A record is also replaced for reasons the answer does not depend on - panel
+state, a rename, a new server revision - and those restart nothing. A change that the answer does depend on
+invalidates it at once and acquires anew; a failed acquisition withholds the choices rather than leaving the previous
+answer in force.
 
-What identifies a resolution is everything its answer depends on, and nothing else: the recipe's own execution
-configuration, and the current evidence about the source it inherits from. The producer behind a wrapper can be
-reconfigured, or become unreadable, while the wrapper's own model is untouched, so evidence bears on whether a
-displayed answer is still valid. That evidence is runtime state rather than saved content, which is a statement
-about where it is kept, not about what it affects. A recipe record is also replaced for reasons the answer does
-not depend on - panel state, a rename, a new server revision - and restarting for those would discard a settled
-answer only to re-acquire the same one. A change to either half invalidates the displayed result at once and
-starts a new resolution, whose predecessor can no longer describe anything; a failed refresh withholds the
-choices and blocks retrieval rather than leaving the previous description in force.
+A saved selection survives acquisition and failure untouched. Once the answer is known, a selected name it does not
+hold is named to the user and blocks retrieval until the selection is edited, rather than being dropped from the
+submission unannounced.
 
-A saved selection survives loading and failure untouched. Once the catalogue is known, a selected name it does
-not hold is named to the user and blocks retrieval until the selection is corrected, rather than being dropped
-from the submission unannounced.
-
-A panel with no output resolution keeps offering exactly what its recipe type supplies.
+A request that is not about the recipe's image output - Time Series' indicator, a measure of its collection - offers
+exactly what its recipe type supplies and reads nothing.
 
 ### Structured band selection (deferred)
 
-Sharing band selection between a producer and a preserving wrapper requires more than copying group labels. The
-current Retrieve panels expose different selection semantics:
+Sharing band selection between a producer and a preserving wrapper requires more than copying group labels. Each
+Retrieve panel translates its own selection into the physical names it exports, and those names are checked against
+the answer like any other selection: CCDC by the bands its own fitting rule exports for the measures chosen, breakpoint
+bands included; Slice by every base band and measure combination asked for, an unknown measure refused. What remains
+deferred is sharing the picker itself. The panels expose different selection semantics:
 
 | Panel | Selection |
 | --- | --- |

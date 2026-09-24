@@ -46,10 +46,3 @@ export const layerProduct = (recipe, layerConfig) => {
 // from the same arguments, so they concern one product.
 export const productArgs = (recipe, layerConfig) =>
     _.omit(effectiveLayerConfig(recipe, layerConfig), ['visParams'])
-
-// The band answer Task submission filters exported visualizations against, exactly as before the read existed.
-// Transitional: Retrieve's own migration replaces it.
-export const submissionBands = recipe => {
-    const {legacySubmissionBands, getAvailableBands} = getRecipeType(recipe.type) || {}
-    return (legacySubmissionBands || getAvailableBands)?.(recipe) || {}
-}

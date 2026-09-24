@@ -1,6 +1,16 @@
 import Path from 'path'
 import React from 'react'
 
+import {
+    BLOCKED,
+    RESOLVING,
+    RETRIEVABLE,
+    retrieveDecision,
+    submitRetrieve,
+    UNRESOLVED_OUTPUT,
+    UNSOUND_DEPENDENCIES
+} from '~/app/home/body/process/recipe/retrieveOutput'
+import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
@@ -11,15 +21,19 @@ import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
 import {AssetDestination} from '~/widget/assetDestination'
 import {Button} from '~/widget/button'
+import {Buttons} from '~/widget/buttons'
 import {Form} from '~/widget/form'
+import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
-import {Notifications} from '~/widget/notifications'
+import {Message} from '~/widget/message'
+import {NoData} from '~/widget/noData'
 import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
+import {Widget} from '~/widget/widget'
 import {WorkspaceDestination} from '~/widget/workspaceDestination'
 
-import {RecipeActions} from '../../ccdcSliceRecipe'
-import {retrievableBands, segmentDescription, selectedOutputBands} from '../../sliceEvidence'
+import {retrieveTask} from '../../ccdcSliceRecipe'
+import {retrievableBands, sliceRequest} from '../../sliceEvidence'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -78,17 +92,9 @@ const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects')
 })
 
-export const mapRecipeToProps = recipe => {
-    const {baseBands, measures, segmentBands} = retrievableBands(recipe)
-    return {
-        recipe,
-        baseBands,
-        measures,
-        segmentBands,
-        outputUnavailable: segmentDescription(recipe).status === 'UNAVAILABLE',
-        projectId: recipe.projectId
-    }
-}
+const mapRecipeToProps = recipe => ({
+    projectId: recipe.projectId
+})
 
 class _Retrieve extends React.Component {
     constructor(props) {
@@ -97,8 +103,7 @@ class _Retrieve extends React.Component {
             more: false,
             destinationValidationPending: this.requiresDestinationValidation(props)
         }
-        const {recipeId, inputs: {scale}} = this.props
-        this.recipeActions = RecipeActions(recipeId)
+        const {inputs: {scale}} = this.props
         if (!scale.value)
             scale.set(30)
         this.onDestinationChange = this.onDestinationChange.bind(this)
@@ -107,10 +112,8 @@ class _Retrieve extends React.Component {
 
     render() {
         const {form} = this.props
-        const {outputUnavailable} = this.props
         const {more, destinationValidationPending} = this.state
-        // A panel left open while the source became unreachable has nothing to export from.
-        const invalid = destinationValidationPending || outputUnavailable || form.isInvalid()
+        const invalid = destinationValidationPending || this.decision().status !== RETRIEVABLE || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -143,9 +146,7 @@ class _Retrieve extends React.Component {
         const {more} = this.state
         return (
             <Layout>
-                {this.renderBaseBands()}
-                {this.renderBandTypes()}
-                {this.renderSegmentBands()}
+                {this.renderSelection()}
                 {this.renderScale()}
                 {this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
@@ -331,22 +332,63 @@ class _Retrieve extends React.Component {
         )
     }
 
-    renderBaseBands() {
-        const {baseBands, inputs} = this.props
-        const bandOptions = baseBands.map(({name}) => ({value: name, label: name}))
-
+    // Offered only once the output is known, and only what it holds. The controls are given the selection rather
+    // than the form field, so a saved choice the output does not hold survives to be named, and blocks, until the
+    // user edits it.
+    renderSelection() {
+        const decision = this.decision()
+        if (decision.status === RESOLVING) {
+            return this.renderLoading()
+        }
+        if (decision.status === BLOCKED && [UNRESOLVED_OUTPUT, UNSOUND_DEPENDENCIES].includes(decision.reason)) {
+            return this.renderUnresolved()
+        }
+        const structure = retrievableBands(this.outputBandNames())
+        const unavailable = decision.missingBandNames
         return (
-            <Form.Buttons
-                label={msg('process.ccdcSlice.panel.retrieve.form.baseBands.label')}
-                input={inputs.baseBands}
-                multiple
-                options={bandOptions}
-                framed/>
+            <Layout spacing='compact'>
+                {this.renderBaseBands(structure)}
+                {this.renderBandTypes(structure)}
+                {this.renderSegmentBands(structure)}
+                {unavailable.length
+                    ? (
+                        <Message
+                            type='warning'
+                            icon='triangle-exclamation'
+                            text={msg('process.retrieve.form.bands.unavailable', {bands: unavailable.join(', ')})}
+                        />
+                    )
+                    : null}
+            </Layout>
         )
     }
 
-    renderBandTypes() {
-        const {measures, inputs} = this.props
+    renderLoading() {
+        return (
+            <NoData
+                alignment='left'
+                message={<div><Icon name='spinner'/>{' ' + msg('process.retrieve.form.bands.loading')}</div>}
+            />
+        )
+    }
+
+    renderUnresolved() {
+        return (
+            <Widget label={msg('process.ccdcSlice.panel.retrieve.form.baseBands.label')} framed>
+                <Message type='info' icon='triangle-exclamation' text={msg('process.retrieve.error.imageOutput')}/>
+            </Widget>
+        )
+    }
+
+    renderBaseBands({baseBands}) {
+        const bandOptions = baseBands.map(({name}) => ({value: name, label: name}))
+        return this.renderChoice('baseBands', {
+            label: msg('process.ccdcSlice.panel.retrieve.form.baseBands.label'),
+            options: bandOptions
+        })
+    }
+
+    renderBandTypes({measures}) {
         const bandTypeOptions = [
             {
                 value: 'value',
@@ -409,18 +451,13 @@ class _Retrieve extends React.Component {
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.tooltip')
             }
         ].filter(({value}) => measures.includes(value))
-        return (
-            <Form.Buttons
-                label={msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label')}
-                input={inputs.bandTypes}
-                multiple
-                options={bandTypeOptions}
-                framed/>
-        )
+        return this.renderChoice('bandTypes', {
+            label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label'),
+            options: bandTypeOptions
+        })
     }
 
-    renderSegmentBands() {
-        const {segmentBands, inputs} = this.props
+    renderSegmentBands({segmentBands}) {
         const bands = segmentBands.map(({name}) => name)
         const options = [
             {
@@ -450,16 +487,28 @@ class _Retrieve extends React.Component {
             }
         ].filter(({value}) => bands.includes(value))
         return options.length
-            ? (
-                <Form.Buttons
-                    label={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.label')}
-                    tooltip={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip')}
-                    input={inputs.segmentBands}
-                    multiple
-                    options={options}
-                    framed/>
-            )
+            ? this.renderChoice('segmentBands', {
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip'),
+                options
+            })
             : null
+    }
+
+    // An edit keeps what was chosen from what is offered; a saved choice no longer offered goes with it.
+    renderChoice(field, {label, tooltip, options}) {
+        const input = this.props.inputs[field]
+        const offered = new Set(options.map(({value}) => value))
+        return (
+            <Buttons
+                label={label}
+                tooltip={tooltip}
+                selected={input.value}
+                multiple
+                options={options}
+                onChange={selected => input.set(selected.filter(value => offered.has(value)))}
+                framed/>
+        )
     }
 
     renderScale() {
@@ -552,23 +601,42 @@ class _Retrieve extends React.Component {
         }
     }
 
-    // Checked here as well as through the disabled button: a panel can be open while the source changes
-    // under it, and what it submits must be bands this recipe still produces.
+    // Decided again by the submission, from the session as it stands now: a panel can be open while the source
+    // changes under it, and what it submits must be bands this recipe still produces.
     retrieve(values) {
-        const {recipe, outputUnavailable} = this.props
-        if (outputUnavailable || !selectedOutputBands(recipe, values).length) {
-            return Notifications.error({message: msg('process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne')})
+        const read = this.props.readRetrieveOutput()
+        if (!read) {
+            return
         }
-        const {assetId, workspacePath} = values
-        const project = this.findProject()
-        if (project) {
-            updateProject({
-                ...project,
-                defaultAssetFolder: assetId ? Path.dirname(assetId) : project?.defaultAssetFolder,
-                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project?.defaultWorkspaceFolder
-            })
+        const {recipe, output, pending, sourceFacts} = read
+        const request = sliceRequest({retrieveOptions: values})
+        if (submitRetrieve({recipe, output, pending, sourceFacts, request, task: retrieveTask})) {
+            const {assetId, workspacePath} = values
+            const project = this.findProject()
+            if (project) {
+                updateProject({
+                    ...project,
+                    defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
+                    defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+                })
+            }
         }
-        this.recipeActions.retrieve(values).dispatch()
+    }
+
+    decision() {
+        const {retrieveOutput: {output, pending, sourceFacts}, inputs} = this.props
+        const {names, unrecognized} = sliceRequest({retrieveOptions: {
+            baseBands: inputs.baseBands.value || [],
+            bandTypes: inputs.bandTypes.value || [],
+            segmentBands: inputs.segmentBands.value || []
+        }})
+        return retrieveDecision({
+            output, pending, sourceFacts, names, unrecognized, destination: inputs.destination.value, task: retrieveTask
+        })
+    }
+
+    outputBandNames() {
+        return this.props.retrieveOutput.output.bands.map(({name}) => name)
     }
 
     findProject() {
@@ -599,6 +667,7 @@ class _Retrieve extends React.Component {
 export const Retrieve = compose(
     _Retrieve,
     connect(mapStateToProps),
+    withRetrieveOutput(),
     recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
     asFunctionalComponent({
         scaleTicks: [10, 15, 20, 30, 60, 100],

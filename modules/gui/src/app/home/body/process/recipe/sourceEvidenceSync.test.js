@@ -28,6 +28,7 @@ vi.mock('../recipeTypeRegistry', () => ({
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
 const {SourceEvidenceSync} = await import('./sourceEvidenceSync')
+const {currentSourceFacts, earthEngineGeneration, PublishedEvidenceBases} = await import('./sourceEvidenceBasis')
 const {maskingObservation} = await import('./masking/maskingSourceEvidence')
 
 const CCDC_PRESETS = [{id: 'v-red', bands: ['red']}]
@@ -43,6 +44,11 @@ const maskingRecipe = ({primary, sourceEvidence} = {}) => ({
 
 const ccdcRecipe = (id, presets = CCDC_PRESETS) => ({id, type: 'CCDC', model: {presets}})
 
+// The evidence the lifecycle published, apart from its marks that it is reading again.
+const published = writes => writes
+    .filter(({path}) => path === 'ui.sourceEvidence')
+    .map(({value}) => value)
+
 const sync = ({
     recipe,
     loadedRecipes = {},
@@ -51,19 +57,22 @@ const sync = ({
     assetVersions = [],
     earthEngineGeneration = {},
     loadRecipe$ = id => of(ccdcRecipe(id)),
-    reloadRecipe$ = id => of(ccdcRecipe(id))
+    reloadRecipe$ = id => of(ccdcRecipe(id)),
+    publishedEvidence = new PublishedEvidenceBases()
 }) => {
     const dispatched = []
     const recipeActionBuilder = () => ({
+        writes: [],
         set(path, value) {
-            this.written = {path, value}
+            this.writes.push({path, value})
             return this
         },
         dispatch() {
-            dispatched.push(this.written)
+            dispatched.push(...this.writes)
         }
     })
     const component = new SourceEvidenceSync({
+        sourceRuntime: {publishedEvidence},
         observation: maskingObservation,
         recipe,
         loadedRecipes,
@@ -80,7 +89,7 @@ const sync = ({
         component.props = {...component.props, ...props}
         component.componentDidUpdate()
     }
-    return {component, dispatched, rerender, evidence: () => dispatched.map(({value}) => value)}
+    return {component, dispatched, rerender, evidence: () => published(dispatched)}
 }
 
 beforeEach(() => {
@@ -490,6 +499,66 @@ describe('each answer published', () => {
         const [first, second] = evidence()
         expect(second.bands).toEqual(first.bands)
         expect(second).not.toEqual(first)
+    })
+})
+
+// What a consumer authorizes from is judged against the session by the basis the publishing lifecycle retained with its
+// runtime. Each lifecycle retains and releases its own: one stopping takes nothing from another publishing for the
+// same recipe, and a consumer reacting to a publication already finds its basis.
+describe('the basis of what a lifecycle publishes', () => {
+    const source = ccdcRecipe('source-1')
+    const recipe = maskingRecipe({primary: recipeSelection('source-1')})
+    const state = {user: {currentUser: {googleTokens: {}}}, process: {loadedRecipes: {'source-1': source}}}
+    const publishing = publishedEvidence => sync({
+        recipe,
+        loadedRecipes: state.process.loadedRecipes,
+        earthEngineGeneration: earthEngineGeneration(state),
+        publishedEvidence
+    })
+    const factsOf = (evidence, publishedEvidence) =>
+        currentSourceFacts({...recipe, ui: {sourceEvidence: evidence}}, state, publishedEvidence).status
+
+    it('is still the latest publisher\'s once another lifecycle of the recipe stops', () => {
+        bands$.mockReturnValue(of(['red']))
+        const publishedEvidence = new PublishedEvidenceBases()
+        const earlier = publishing(publishedEvidence)
+        const later = publishing(publishedEvidence)
+        earlier.component.componentDidMount()
+        later.component.componentDidMount()
+
+        earlier.component.componentWillUnmount()
+
+        expect(factsOf(later.evidence().at(-1), publishedEvidence)).toBe('OBSERVED')
+    })
+
+    it('is gone once the lifecycle that published it stops', () => {
+        bands$.mockReturnValue(of(['red']))
+        const publishedEvidence = new PublishedEvidenceBases()
+        const {component, evidence} = publishing(publishedEvidence)
+        component.componentDidMount()
+
+        component.componentWillUnmount()
+
+        expect(factsOf(evidence().at(-1), publishedEvidence)).toBe('UNOBSERVED')
+    })
+
+    it('is retained before the evidence it describes is published', () => {
+        bands$.mockReturnValue(of(['red']))
+        const publications = []
+        let evidenceOf = () => []
+        const publishedEvidence = new class extends PublishedEvidenceBases {
+            retain(...args) {
+                publications.push(evidenceOf().length)
+                super.retain(...args)
+            }
+        }()
+        const {component, evidence} = publishing(publishedEvidence)
+        evidenceOf = evidence
+
+        component.componentDidMount()
+
+        expect(publications).toEqual([0])
+        expect(evidence()).toHaveLength(1)
     })
 })
 

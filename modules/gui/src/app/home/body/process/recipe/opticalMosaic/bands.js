@@ -29,6 +29,13 @@ export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes
         .map(bands => bands.map(band => ({value: band, label: band, ...availableBands[band]})))
 }
 
+// The groups every band a mosaic can hold is presented in, whatever a configured mosaic holds: a control shows the
+// ones its answer holds, and none of these decides which that is.
+export const groupedBandPresentation = () => {
+    const allBands = getBands()
+    return bandGroups.map(bands => bands.map(band => ({value: band, label: band, ...allBands[band]})))
+}
+
 // Display decoration for every band a mosaic can hold - tooltips, cursor precision and range - by name. What a
 // configured mosaic holds is its declaration's to say; this only decorates what that says.
 export const bandPresentation = () => getBands()

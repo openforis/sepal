@@ -4,12 +4,12 @@ import moment from 'moment'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
 import {renderableVisualizations} from '../visualizationMatching'
-import {availableBandsOf, chartSourceReference, dateFormatOf, materializedTemplates, segmentDatesOf, selectedOutputBands} from './sliceEvidence'
+import {availableBandsOf, chartSourceReference, dateFormatOf, materializedTemplates, segmentDatesOf} from './sliceEvidence'
 
 export const defaultModel = {
     date: {
@@ -44,15 +44,6 @@ export const RecipeActions = id => {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
                 .dispatch()
-        },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
         }
     }
 }
@@ -112,19 +103,8 @@ const additionalVisualizations = (recipe, resolved) => {
     ]
 }
 
-// The selection is base bands and measures; the export is the band names those resolve to. The shared
-// submitter is handed them as its band selection - it filters the exported visualizations by them - while
-// the image also carries the base bands the slice operation needs.
-export const submitRetrieveRecipeTask = recipe => {
-    const retrieveOptions = recipe.ui.retrieveOptions
-    const bands = selectedOutputBands(recipe, retrieveOptions)
-
-    return submitTask(recipe, {
-        retrieveOptions: {...retrieveOptions, bands},
-        filterVisualizations: true,
-        customizeImage: image => ({
-            ...image,
-            bands: {selection: bands, baseBands: retrieveOptions.baseBands}
-        })
-    })
+// Every band a slice derives is scalar and declares no policy; the generic export sends Earth Engine's own default
+// for each, as it always has, and nothing for a band that is not verified scalar.
+export const retrieveTask = {
+    fallbackPyramidingPolicy: pyramidingPolicies.mean
 }

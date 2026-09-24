@@ -2,7 +2,7 @@ import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultHistoricalModel} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -41,15 +41,6 @@ export const RecipeActions = id => {
                 .set('ui.chartPixel', latLng)
                 .dispatch()
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_BAYTS_ALERTS_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
@@ -60,7 +51,6 @@ export const toDates = recipe => {
     return {monitoringEnd, monitoringStart}
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.sample
-    })
+export const retrieveTask = {
+    pyramidingPolicy: pyramidingPolicies.sample
+}

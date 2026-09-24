@@ -16,6 +16,7 @@ import {recipeContent} from './recipeContent'
 //   status     READY | NEEDS_EVIDENCE | UNAVAILABLE | INVALID
 //   authority  DESCRIBED - resolved through the type's declaration; bands carry physical facts
 //              LEGACY    - a registered helper's answer; band names only, never physical evidence
+//   description         the resolved description itself, as resolved, for a DESCRIBED answer; null otherwise
 //   presentation        display decoration by band name - labels, tooltips, `display` precision and range -
 //                       only for bands the answer holds, never deciding which exist
 //   availableBands      the two joined by name, in the shape selectors and presets filter against
@@ -130,6 +131,7 @@ const described = ({recipe, product, description, validity}) => {
     return answer({
         status: READY,
         authority: DESCRIBED,
+        description,
         bands,
         presentation,
         availableBands: Object.fromEntries(bands.map(({name, dataType, encoding}) => [name, {
@@ -176,9 +178,11 @@ const displayed = entry => {
 }
 
 const answer = ({
-    status, authority = null, bands = [], presentation = {}, availableBands = {}, validity = null, diagnostics = [],
-    error = null
-}) => ({status, authority, bands, presentation, availableBands, dependencyValidity: validity, diagnostics, error})
+    status, authority = null, description = null, bands = [], presentation = {}, availableBands = {}, validity = null,
+    diagnostics = [], error = null
+}) => ({
+    status, authority, description, bands, presentation, availableBands, dependencyValidity: validity, diagnostics, error
+})
 
 const isComplete = graph =>
     !graph.diagnostics.some(({code}) => code === MISSING_SOURCE)

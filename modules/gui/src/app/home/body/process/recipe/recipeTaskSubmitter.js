@@ -6,7 +6,6 @@ import {
 } from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {RECIPE_REF} from '#sepal/recipe/source/reference'
 import api from '~/apiRegistry'
-import {submissionBands} from '~/app/home/body/process/recipe/legacyOutput'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
@@ -30,12 +29,18 @@ export const pyramidingPolicies = {
     },
 
     //  For alert recipes - use sample for all bands
-    sample: {'.default': 'sample'}
+    sample: {'.default': 'sample'},
+
+    //  Earth Engine's own default, stated. Only ever a fallback: subordinate to a declared policy and applied to
+    //  verified scalar bands alone - it says nothing about whether averaging suits a band.
+    mean: {'.default': 'mean'}
 }
 
-// Export requirements taken from a resolved IMAGE_OUTPUT description instead of a recipe-type policy.
+// Export requirements taken from physical facts instead of a recipe-type policy: a resolved IMAGE_OUTPUT
+// description, or - for a declared wrapper over a source that declares nothing - what its evidence lifecycle
+// currently vouches for about that source.
 //
-// The description is evidence about ONE execution, so it is accepted only for the recipe being submitted:
+// A description is evidence about ONE execution, so it is accepted only for the recipe being submitted:
 // resolving a Masking over CCDC yields CCDC's bands, but under the Masking's own execution reference, and a
 // description still carrying the inner reference describes a different export. Identity is the type and id
 // together, because an asset and a recipe can share a string.
@@ -62,22 +67,17 @@ const fallbackPolicyForBand = (fallbackPolicies, name) => {
         : undefined
 }
 
-const resolvedImageOutputRequirements = (
-    recipe,
-    destination,
-    bands,
-    useAllBands,
-    {executionReference, output},
-    fallbackPyramidingPolicy
-) => {
+const describedRequirements = (recipe, {executionReference, output}, selection) => {
     if (executionReference?.type !== RECIPE_REF || executionReference?.id !== recipe.id) {
         throw new Error(`Resolved image output describes execution ${JSON.stringify(executionReference)}, not the submitted recipe ${recipe.id}`)
     }
-    const compatibility = physicalDestinationCompatibility({
-        bands: output.bands,
-        selectedBandNames: bands,
-        useAllBands
-    })
+    return physicalRequirements(output.bands, selection)
+}
+
+const physicalRequirements = (physicalBands, selection) => {
+    const {destination} = selection
+    const requirements = exportRequirements(physicalBands, selection)
+    const {compatibility} = requirements
     if (compatibility.selectionStatus !== VALID_SELECTION) {
         if (compatibility.missingBandNames.length) {
             throw new Error(`Selected band "${compatibility.missingBandNames[0]}" is not described by the resolved image output`)
@@ -87,71 +87,88 @@ const resolvedImageOutputRequirements = (
     if (['GEE', 'DRIVE', 'SEPAL'].includes(destination) && !compatibility.destinations[destination]) {
         throw new Error(`Resolved selected band schema is not physically compatible with destination ${destination}`)
     }
-    const selected = compatibility.selectedBands
-
-    if (destination === 'GEE') {
-        const policyByBand = new Map()
-        const missingScalarPolicies = []
-
-        selected.forEach(({name, dataType, pyramidingPolicy}) => {
-            if (isNonBlankPolicy(pyramidingPolicy)) {
-                policyByBand.set(name, pyramidingPolicy)
-            } else if (fallbackPyramidingPolicy === undefined) {
-                throw new Error(`Selected band "${name}" has no resolved Earth Engine pyramiding policy`)
-            } else if (dataType?.arrayDimensions !== 0) {
-                throw new Error(`Selected band "${name}" is not a verified scalar band eligible for fallback policy`)
-            } else {
-                missingScalarPolicies.push(name)
-            }
-        })
-
-        if (missingScalarPolicies.length) {
-            const fallbackPolicies = typeof fallbackPyramidingPolicy === 'function'
-                ? fallbackPyramidingPolicy(missingScalarPolicies)
-                : fallbackPyramidingPolicy
-
-            missingScalarPolicies.forEach(name => {
-                const policy = fallbackPolicyForBand(fallbackPolicies, name)
-                if (!isNonBlankPolicy(policy)) {
-                    throw new Error(`Fallback pyramiding policy does not provide selected scalar band "${name}"`)
-                }
-                policyByBand.set(name, policy)
-            })
-        }
-
-        return {
-            pyramidingPolicy: Object.fromEntries(selected.map(({name}) => [name, policyByBand.get(name)])),
-            selectedBandNames: selected.map(({name}) => name)
-        }
+    if (destination === 'GEE' && requirements.policyError) {
+        throw new Error(requirements.policyError)
     }
-
     return {
-        pyramidingPolicy: undefined,
+        pyramidingPolicy: destination === 'GEE' ? requirements.pyramidingPolicy : undefined,
+        selectedBandNames: requirements.selectedBandNames
+    }
+}
+
+// What exporting these bands requires: the destinations their physical schema allows, and the Earth Engine policy
+// for each - its declared one, or the fallback for a verified scalar. Earth Engine is allowed only where every band
+// has one. The one definition, whether a panel is deciding what to offer or a submission what to send. Policies are
+// derived only where they are consumed: for Earth Engine, or with no destination named, to decide whether it is
+// allowed.
+export const exportRequirements = (physicalBands, {bands, useAllBands, fallbackPyramidingPolicy, destination}) => {
+    const compatibility = physicalDestinationCompatibility({bands: physicalBands, selectedBandNames: bands, useAllBands})
+    if (compatibility.selectionStatus !== VALID_SELECTION) {
+        return {compatibility, destinations: null}
+    }
+    const selected = compatibility.selectedBands
+    const {pyramidingPolicy, policyError} = destination === undefined || destination === 'GEE'
+        ? earthEnginePolicies(selected, fallbackPyramidingPolicy)
+        : {}
+    return {
+        compatibility,
+        destinations: {...compatibility.destinations, GEE: compatibility.destinations.GEE && !policyError},
+        pyramidingPolicy,
+        policyError,
         selectedBandNames: selected.map(({name}) => name)
     }
 }
 
-export const submitRetrieveRecipeTask = (recipe, {
-    retrieveOptions = recipe.ui.retrieveOptions,
-    ...config
-} = {}) => {
+const earthEnginePolicies = (selected, fallbackPyramidingPolicy) => {
+    const policyByBand = new Map()
+    const missingScalarPolicies = []
+    for (const {name, dataType, pyramidingPolicy} of selected) {
+        if (isNonBlankPolicy(pyramidingPolicy)) {
+            policyByBand.set(name, pyramidingPolicy)
+        } else if (fallbackPyramidingPolicy === undefined) {
+            return {policyError: `Selected band "${name}" has no resolved Earth Engine pyramiding policy`}
+        } else if (dataType?.arrayDimensions !== 0) {
+            return {policyError: `Selected band "${name}" is not a verified scalar band eligible for fallback policy`}
+        } else {
+            missingScalarPolicies.push(name)
+        }
+    }
+    if (missingScalarPolicies.length) {
+        const fallbackPolicies = typeof fallbackPyramidingPolicy === 'function'
+            ? fallbackPyramidingPolicy(missingScalarPolicies)
+            : fallbackPyramidingPolicy
+        for (const name of missingScalarPolicies) {
+            const policy = fallbackPolicyForBand(fallbackPolicies, name)
+            if (!isNonBlankPolicy(policy)) {
+                return {policyError: `Fallback pyramiding policy does not provide selected scalar band "${name}"`}
+            }
+            policyByBand.set(name, policy)
+        }
+    }
+    return {pyramidingPolicy: Object.fromEntries(selected.map(({name}) => [name, policyByBand.get(name)]))}
+}
+
+// The Retrieve options are explicit: the ones validated are the ones submitted, whatever the recipe last stored.
+// `visualizationBands` is the caller's answer about the output, which the styles attached to the export are drawn
+// from; only those naming bands the export carries are attached.
+export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) => {
     const {
         dataSetType,
         pyramidingPolicy,
         imageOutputDescription,
+        observedBands,
         fallbackPyramidingPolicy,
         includeTimeRange = true,
-        filterVisualizations = false,
-        customizeImage
+        visualizationBands
     } = config
 
     // Two authorities for one decision, which is the defect this contract removes. Refused rather than
     // resolved by precedence, so a half-finished migration cannot silently keep exporting the old policy.
-    if (imageOutputDescription && pyramidingPolicy) {
-        throw new Error(`Recipe ${recipe.id} configures both a resolved image output and a legacy pyramiding policy; only one may decide export requirements`)
+    if ([imageOutputDescription, observedBands, pyramidingPolicy].filter(authority => authority).length > 1) {
+        throw new Error(`Recipe ${recipe.id} configures more than one of a resolved image output, observed source bands and a legacy pyramiding policy; only one may decide export requirements`)
     }
-    if (hasOwn(config, 'fallbackPyramidingPolicy') && !imageOutputDescription) {
-        throw new Error(`Recipe ${recipe.id} configures fallback pyramiding policy without a resolved image output description`)
+    if (hasOwn(config, 'fallbackPyramidingPolicy') && !imageOutputDescription && !observedBands) {
+        throw new Error(`Recipe ${recipe.id} configures fallback pyramiding policy without physical facts to apply it to`)
     }
 
     const name = recipe.title || recipe.placeholder
@@ -159,27 +176,19 @@ export const submitRetrieveRecipeTask = (recipe, {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = retrieveOptions.bands
     const operation = `image.${destination}`
+    const selection = {destination, bands, useAllBands: retrieveOptions.useAllBands, fallbackPyramidingPolicy}
     const resolvedRequirements = imageOutputDescription
-        ? resolvedImageOutputRequirements(
-            recipe,
-            destination,
-            bands,
-            retrieveOptions.useAllBands,
-            imageOutputDescription,
-            fallbackPyramidingPolicy
-        )
-        : undefined
-    const effectiveRetrieveOptions = imageOutputDescription
+        ? describedRequirements(recipe, imageOutputDescription, selection)
+        : observedBands
+            ? physicalRequirements(observedBands, selection)
+            : undefined
+    const effectiveRetrieveOptions = resolvedRequirements
         ? {...retrieveOptions, bands: resolvedRequirements.selectedBandNames}
         : retrieveOptions
-    const effectiveBands = effectiveRetrieveOptions.bands
+    const effectiveBands = effectiveRetrieveOptions.bands || []
 
-    let visualizations = recipeVisualizations(recipe, submissionBands(recipe))
-    if (filterVisualizations) {
-        visualizations = visualizations.filter(({bands: visBands}) =>
-            visBands.every(band => effectiveBands.includes(band))
-        )
-    }
+    const visualizations = recipeVisualizations(recipe, visualizationBands)
+        .filter(({bands: visBands}) => visBands.every(band => effectiveBands.includes(band)))
     
     // Build recipe properties
     const recipeProperties = {
@@ -222,7 +231,7 @@ export const submitRetrieveRecipeTask = (recipe, {
     }
     
     // Add pyramiding policy if specified
-    if (imageOutputDescription) {
+    if (resolvedRequirements) {
         if (resolvedRequirements.pyramidingPolicy) {
             image.pyramidingPolicy = resolvedRequirements.pyramidingPolicy
         }
@@ -232,11 +241,6 @@ export const submitRetrieveRecipeTask = (recipe, {
         } else {
             image.pyramidingPolicy = pyramidingPolicy
         }
-    }
-    
-    // Allow custom modifications to the image object
-    if (customizeImage) {
-        image = customizeImage(image, taskInfo, recipe)
     }
     
     if (destination === 'DRIVE') {

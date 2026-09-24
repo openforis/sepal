@@ -13,7 +13,7 @@ import {sourceKeyOf} from '../sourceEvidence'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {defaultModel, preSetVisualizations, RecipeActions} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {availableBandsOf, selectedSource} from './sliceEvidence'
+import {selectedSource} from './sliceEvidence'
 import {resolveEvidence$, sliceObservation} from './sliceObservation'
 
 const mapRecipeToProps = recipe => ({
@@ -68,6 +68,5 @@ export default () => ({
         return [date, date]
     },
     resolveEvidence$,
-    legacySubmissionBands: recipe => availableBandsOf(recipe),
     getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments)
 })

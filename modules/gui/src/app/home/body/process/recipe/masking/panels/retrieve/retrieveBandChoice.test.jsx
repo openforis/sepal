@@ -146,6 +146,19 @@ describe('retrieving a CCDC measure it does not break on, through Masking', () =
         expect(submitted).toHaveLength(1)
         expect(submitted[0].params.image.bands).toEqual({selection: ['red_coefs', 'tStart']})
     })
+
+    // Masking preserves what CCDC declares of its bands; its own fallback never reaches an array band.
+    it('exports each under the policy CCDC declares', async () => {
+        observed.answer = ({recipe}) => ccdcOutputBands(ccdcMeasures({model: recipe.model}))
+
+        await open({recipes: [MASKED_CCDC, CCDC], id: MASKED_CCDC.id})
+        await click('red_coefs')
+        await click('tStart')
+        await click('process.retrieve.form.destination.GEE')
+        await click('process.retrieve.apply')
+
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({red_coefs: 'sample', tStart: 'sample'})
+    })
 })
 
 // What Retrieve offers is what the resolution in flight eventually describes - never the band names copied
@@ -492,6 +505,107 @@ describe('the view a panel opens with', () => {
     })
 })
 
+// A source that declares no output is described by what the evidence lifecycle observed of it. Masking has no policy
+// of its own, so its fallback reaches only the bands that evidence currently vouches for as scalar.
+describe('retrieving from Masking over a recipe that declares no output', () => {
+    it('offers what its source was observed to hold, and exports a scalar band under the fallback', async () => {
+        observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
+
+        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+        await click('class')
+        await click('process.retrieve.form.destination.GEE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['class']})
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({class: 'mean'})
+    })
+
+    it('exports no band observed as an array, for which it has no policy', async () => {
+        observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
+
+        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+        await click('probability')
+        await click('process.retrieve.form.destination.GEE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
+    })
+
+    it('offers nothing until its source has been observed', async () => {
+        answering()
+
+        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+
+        expect(offers('class')).toBe(false)
+    })
+})
+
+// Evidence is about the source as it was read. Once the lifecycle reads the source again - it changed, or the
+// credentials it was read under were replaced - what it published before no longer describes the current source, and
+// pairing it with the session as it now stands must not authorize an export.
+describe('evidence observed of a source before it changed', () => {
+    const SCALAR = [{name: 'class', arrayDimensions: 0}]
+    const savedDrive = {...MASKED_REMAPPING, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+
+    const openObserved = async () => {
+        observed.answer = () => SCALAR
+        await open({recipes: [savedDrive, REMAPPING], id: savedDrive.id})
+        expect(offers('class')).toBe(true)
+    }
+
+    it.each([
+        ['its source is edited, keeping its id', () => editRecipe(REMAPPING.id, {
+            model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}
+        })],
+        ['the credentials it was read under are replaced', () => replaceCredentials()]
+    ])('authorizes nothing once %s, until the source is observed again', async (_case, change) => {
+        await openObserved()
+        const answer = answering()
+
+        await change()
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
+
+        await answer.arrive(SCALAR)
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+    })
+
+    // A click can land after the session changed and before the lifecycle has rendered that change, so whether the
+    // evidence is still current is decided when Apply is clicked, not when the lifecycle next reacts.
+    it.each([
+        ['its source is edited, keeping its id', () => editAction(REMAPPING.id, {
+            model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}
+        })],
+        ['the credentials it was read under are replaced', () => credentialsAction()]
+    ])('authorizes nothing when applied as %s, before the lifecycle has reacted', async (_case, change) => {
+        await openObserved()
+        answering()
+        const apply = buttons().find(button => button.textContent === 'process.retrieve.apply')
+
+        await act(async () => {
+            store.dispatch(change())
+            apply.click()
+        })
+
+        expect(submitted).toEqual([])
+    })
+
+    it('exports nothing the source has since become that its policy cannot cover', async () => {
+        await openObserved()
+        const answer = answering()
+
+        await editRecipe(REMAPPING.id, {model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}})
+        await answer.arrive([{name: 'class', arrayDimensions: 1}])
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
+    })
+})
+
 const CCDC = {
     id: 'ccdc-1',
     type: 'CCDC',
@@ -551,6 +665,24 @@ const MASKED_ASSET = {
     model: {
         imageToMask: {type: 'RECIPE_REF', id: ASSET_RECIPE.id},
         imageMask: {type: 'RECIPE_REF', id: ASSET_RECIPE.id}
+    },
+    ui: {}
+}
+
+// A recipe type that declares no output, over nothing, and a Masking over it.
+const REMAPPING = {
+    id: 'remapping-1',
+    type: 'REMAPPING',
+    model: {inputImagery: {images: []}}
+}
+
+const MASKED_REMAPPING = {
+    id: 'masked-remapping-1',
+    type: 'MASKING',
+    title: 'Masked remapping',
+    model: {
+        imageToMask: {type: 'RECIPE_REF', id: REMAPPING.id},
+        imageMask: {type: 'RECIPE_REF', id: REMAPPING.id}
     },
     ui: {}
 }
@@ -615,7 +747,9 @@ const shown = () => document.body.textContent
 
 // The panel reads the recipe out of the store, so replacing the record is what a user editing the recipe
 // does - and what changes the basis the panel resolves.
-const editRecipe = (id, update) => act(async () => store.dispatch({
+const editRecipe = (id, update) => act(async () => store.dispatch(editAction(id, update)))
+
+const editAction = (id, update) => ({
     type: 'EDIT_RECIPE',
     reduce: state => ({
         ...state,
@@ -627,7 +761,18 @@ const editRecipe = (id, update) => act(async () => store.dispatch({
             }
         }
     })
-}))
+})
+
+// The Earth Engine credentials replaced, as signing in again replaces them.
+const replaceCredentials = () => act(async () => store.dispatch(credentialsAction()))
+
+const credentialsAction = () => ({
+    type: 'REPLACE_CREDENTIALS',
+    reduce: state => ({
+        ...state,
+        user: {...state.user, currentUser: {...state.user.currentUser, googleTokens: {accessTokenExpiryDate: Date.now()}}}
+    })
+})
 
 // A transient view change, leaving everything the panel resolves - and the evidence the sync component holds -
 // exactly as it was.

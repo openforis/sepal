@@ -10,7 +10,7 @@ import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
 import {UnsupervisedClassificationToolbar} from './panels/unsupervisedClassificationToolbar'
-import {getDefaultModel, RecipeActions} from './unsupervisedClassificationRecipe'
+import {getDefaultModel} from './unsupervisedClassificationRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -24,7 +24,6 @@ class _UnsupervisedClassification extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers

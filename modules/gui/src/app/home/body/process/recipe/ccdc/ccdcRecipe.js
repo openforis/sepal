@@ -85,16 +85,6 @@ export const RecipeActions = id => {
                 .build()
                 .dispatch()
         },
-
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
         setClassification({classificationLegend, classifierType} = {}) {
             actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
                 .set('ui.classification', {classificationLegend, classifierType})
@@ -195,9 +185,13 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
         recipe, latLng, bands
     })
 
-const submitRetrieveRecipeTask = recipe => {
+// CCDC's own export: the measures asked for, fitted with the breakpoint bands and exported with every band they
+// produce, under `sample` throughout (modules/task/src/tasks/ccdcAssetExport.js). The templates attached are all
+// CCDC offers; the task keeps those whose bands the export derives - `red`, `red_intercept`, `red_phase_1` - which
+// no filter over the stored `red_coefs` could decide.
+export const submitRetrieveTask = ({recipe, retrieveOptions}) => {
     const name = recipe.title || recipe.placeholder
-    const bands = recipe.ui.retrieveOptions.bands
+    const bands = retrieveOptions.bands
     const destination = 'GEE'
     const taskTitle = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
@@ -219,7 +213,7 @@ const submitRetrieveRecipeTask = recipe => {
             title: taskTitle,
             description: name,
             image: {
-                ...recipe.ui.retrieveOptions,
+                ...retrieveOptions,
                 recipe: _.omit(recipe, ['ui']),
                 bands,
                 visualizations,
@@ -228,7 +222,7 @@ const submitRetrieveRecipeTask = recipe => {
             taskInfo: getTaskInfo({
                 recipe,
                 destination,
-                retrieveOptions: recipe.ui.retrieveOptions
+                retrieveOptions
             })
         }
     }

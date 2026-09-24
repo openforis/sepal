@@ -2,7 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -31,15 +31,6 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CLASS_CHANGE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
@@ -63,7 +54,6 @@ export const hasConfidence = recipe => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.changeBased('transition')
-    })
+export const retrieveTask = {
+    pyramidingPolicy: pyramidingPolicies.changeBased('transition')
+}
