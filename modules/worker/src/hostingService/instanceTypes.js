@@ -32,7 +32,7 @@ const makeInstanceType = ({id, name, tag, cpuCount, ramGiB, hourlyCost, idleCoun
 // ─── AWS instance catalog (62 types) ─────────────────────────────────────────
 const AWS_INSTANCE_TYPES = [
     // Current generation — AMD Graviton/AMD Milan/Genoa (tagged, actively pooled)
-    makeInstanceType({id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2, idleCount: 1}),
+    makeInstanceType({id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2}),
     makeInstanceType({id: 'T3aMedium', name: 't3a.medium', tag: 't2', hourlyCost: 0.0408, cpuCount: 2, ramGiB: 4}),
     makeInstanceType({id: 'M6aLarge', name: 'm6a.large', tag: 'm2', hourlyCost: 0.0963, cpuCount: 2, ramGiB: 8}),
     makeInstanceType({id: 'M6aXlarge', name: 'm6a.xlarge', tag: 'm4', hourlyCost: 0.1926, cpuCount: 4, ramGiB: 16}),
@@ -101,7 +101,7 @@ const AWS_INSTANCE_TYPES = [
 // ─── Local instance catalog (43 types) ────────────────────────────────────────
 const LOCAL_INSTANCE_TYPES = [
     // Current generation (tagged, actively pooled)
-    makeInstanceType({id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2, idleCount: 1}),
+    makeInstanceType({id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2}),
     makeInstanceType({id: 'T3aMedium', name: 't3a.medium', tag: 't2', hourlyCost: 0.0408, cpuCount: 2, ramGiB: 4}),
     makeInstanceType({id: 'M5aLarge', name: 'm5a.large', tag: 'm2', hourlyCost: 0.096, cpuCount: 2, ramGiB: 8}),
     makeInstanceType({id: 'M5aXlarge', name: 'm5a.xlarge', tag: 'm4', hourlyCost: 0.192, cpuCount: 4, ramGiB: 16}),

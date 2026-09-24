@@ -41,7 +41,7 @@ test('ramBytes is ramGiB * 2^30', () => {
     expect(t.ramBytes).toBeCloseTo(8 * Math.pow(2, 30))
 })
 
-test('AWS T3aSmall has idleCount=1 and correct fields', () => {
+test('AWS T3aSmall has correct fields', () => {
     const t = AWS_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
     expect(t).toMatchObject({
         id: 'T3aSmall',
@@ -50,8 +50,13 @@ test('AWS T3aSmall has idleCount=1 and correct fields', () => {
         hourlyCost: 0.0204,
         cpuCount: 1,
         ramGiB: 2,
-        idleCount: 1,
     })
+})
+
+// Requests are served from the stopped pool (STOPPED_POOL_SIZE) instead of running idle instances.
+test('no instance type keeps running idle instances', () => {
+    const idle = [...AWS_INSTANCE_TYPES, ...LOCAL_INSTANCE_TYPES].filter(t => t.idleCount > 0)
+    expect(idle.map(({id}) => id)).toEqual([])
 })
 
 test('AWS T3aMedium has idleCount=0 (default)', () => {
@@ -158,7 +163,7 @@ test('AWS G512xlarge spot-check', () => {
     })
 })
 
-test('Local T3aSmall has idleCount=1', () => {
+test('Local T3aSmall has correct fields', () => {
     const t = LOCAL_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
     expect(t).toMatchObject({
         id: 'T3aSmall',
@@ -167,7 +172,6 @@ test('Local T3aSmall has idleCount=1', () => {
         hourlyCost: 0.0204,
         cpuCount: 1,
         ramGiB: 2,
-        idleCount: 1,
     })
 })
 
