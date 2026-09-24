@@ -179,11 +179,14 @@ class _FastListContent extends React.PureComponent {
     renderItem(item, index, firstRenderedItem) {
         const {itemKey, itemRenderer, children} = this.props
         const {keyboardHover, mouseHover} = this.state
+        // Undefined, never false, for a row the keyboard has not reached: false would hold it back
+        // from the hover the pointer gives it.
+        const hovered = (!mouseHover && (keyboardHover - firstRenderedItem) === index) || undefined
         return (
             <FastListItem
                 item={item}
                 key={itemKey(item)}
-                hovered={!mouseHover && (keyboardHover - firstRenderedItem) === index}>
+                hovered={hovered}>
                 {itemRenderer || children}
             </FastListItem>
         )

@@ -13,7 +13,8 @@
     color: #999;
 }
 
-.undo {
-    display: flex;
-    justify-content: center;
+/* A button that spans the card puts its icon and its label against the two edges. Holding the pair
+   at its own width leaves the button's own centring to place them, together, in the middle. */
+.undo > * {
+    flex-grow: 0 !important;
 }
