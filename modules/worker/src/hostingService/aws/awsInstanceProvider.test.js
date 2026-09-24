@@ -19,7 +19,6 @@ import {
     createAwsInstanceProvider,
     createInstanceTypeCodec,
     idleTags,
-    isOlderVersion,
     launchTags,
     mkFilter,
     reserveTags,
@@ -109,18 +108,6 @@ describe('instance-type id ↔ EC2 name translation', () => {
         expect(codec.toAwsName('NotInCatalog')).toBe('NotInCatalog')
         expect(codec.toCatalogId('x9.42xlarge')).toBe('x9.42xlarge')
     })
-})
-
-describe('isOlderVersion', () => {
-    test('1 < 5 → true', () => expect(isOlderVersion('1.0.0', '5.0.0')).toBe(true))
-    test('5 < 5 → false', () => expect(isOlderVersion('5.0.0', '5.0.0')).toBe(false))
-    test('5 < 1 → false', () => expect(isOlderVersion('5.0.0', '1.0.0')).toBe(false))
-    test('10 < 9 → false', () => expect(isOlderVersion('10.0.0', '9.0.0')).toBe(false))
-    test('9 < 10 → true', () => expect(isOlderVersion('9.0.0', '10.0.0')).toBe(true))
-    test('null < 5 → true (null leading digit is 0)', () => expect(isOlderVersion(null, '5.0.0')).toBe(true))
-    test('0 < 5 → true', () => expect(isOlderVersion('0.1.2', '5.0.0')).toBe(true))
-    test('equal versions → false', () => expect(isOlderVersion('12.3.4', '12.3.4')).toBe(false))
-    test('extracts first run of digits (e.g. "v10.1" → 10)', () => expect(isOlderVersion('v10.1', '11.0')).toBe(true))
 })
 
 describe('launchTags', () => {
@@ -605,6 +592,43 @@ describe('idleInstances — type filter', () => {
     })
 })
 
+// A deploy that reuses an earlier AMI moves the version back, and instances launched from a later
+// AMI lack that version's sandbox and task images: every version but the current one is stale.
+describe('idleInstances — version', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    test('leaves out idle instances of any version but the current one', async () => {
+        const idleOfVersion = (InstanceId, version) => makeAwsInstance({
+            InstanceId,
+            Tags: [
+                {Key: 'State', Value: 'idle'},
+                {Key: 'Type', Value: 'Worker'},
+                {Key: 'Environment', Value: 'test-env'},
+                {Key: 'Version', Value: version},
+            ],
+        })
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            idleOfVersion('i-older', '4.0.0'),
+            idleOfVersion('i-current', CONFIG.workerAmiVersion),
+            idleOfVersion('i-newer', '6.0.0'),
+        ]))
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        const instances = await provider.idleInstances()
+
+        expect(instances.map(({id}) => id)).toEqual(['i-current'])
+    })
+})
+
 describe('reads are free of side effects', () => {
     let ec2Mock
 
@@ -692,6 +716,18 @@ describe('stopped pool', () => {
         const filters = ec2Mock.commandCalls(DescribeInstancesCommand)[0].args[0].input.Filters
         expect(filters).toContainEqual({Name: 'tag:State', Values: ['pooled']})
         expect(filters).toContainEqual({Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']})
+    })
+
+    test('pooledInstances leaves out pooled instances of a newer version', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            makePooledAwsInstance({InstanceId: 'i-current'}),
+            makePooledAwsInstance({InstanceId: 'i-newer', Version: '6.0.0'}),
+        ]))
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        const pooled = await provider.pooledInstances()
+
+        expect(pooled.map(({id}) => id)).toEqual(['i-current'])
     })
 
     test('pooledInstances({ready: true}) asks only for stopped instances', async () => {
@@ -789,6 +825,12 @@ describe('stopped pool', () => {
             const terminated = await sweepTerminating([makePooledAwsInstance({InstanceId: 'i-old', Version: '4.0.0'})])
 
             expect(terminated).toEqual(['i-old'])
+        })
+
+        test('terminates stopped pooled instances of a newer version', async () => {
+            const terminated = await sweepTerminating([makePooledAwsInstance({InstanceId: 'i-newer', Version: '6.0.0'})])
+
+            expect(terminated).toEqual(['i-newer'])
         })
 
         // A warm-up whose script never powered it off, or a pooling whose StopInstances failed.
@@ -933,6 +975,26 @@ describe('terminateOldIdle', () => {
         const terminateCalls = ec2Mock.commandCalls(TerminateInstancesCommand)
         const terminatedIds = terminateCalls.flatMap(c => c.args[0].input.InstanceIds)
         expect(terminatedIds).toContain('i-old-idle')
+    })
+
+    test('terminates idle instances with a newer Version tag', async () => {
+        const newerIdleInstance = makeAwsInstance({
+            InstanceId: 'i-newer-idle',
+            Tags: [
+                {Key: 'State', Value: 'idle'},
+                {Key: 'Type', Value: 'Worker'},
+                {Key: 'Environment', Value: 'test-env'},
+                {Key: 'Version', Value: '6.0.0'},
+            ],
+        })
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([newerIdleInstance]))
+        ec2Mock.on(TerminateInstancesCommand).resolves({TerminatingInstances: []})
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.sweep()
+
+        const terminatedIds = ec2Mock.commandCalls(TerminateInstancesCommand).flatMap(c => c.args[0].input.InstanceIds)
+        expect(terminatedIds).toContain('i-newer-idle')
     })
 
     test('does not terminate idle instances with current version', async () => {

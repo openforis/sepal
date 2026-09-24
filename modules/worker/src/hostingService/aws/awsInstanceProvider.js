@@ -38,17 +38,6 @@ const VOLUME_DEVICE_NAMES = ['/dev/xvda', '/dev/xvdf']
 const PUBLIC_IP_RETRIES = 300
 const POLL_INTERVAL_MS = 10_000
 
-// Compares the first run of digits in each version string as an int:
-// "1.23.4" → 1, "12.0.0" → 12, "" → 0, null/undefined → 0.
-const isOlderVersion = (v1, v2) => {
-    const leading = v => {
-        if (!v) return 0
-        const m = v.match(/\d+/)
-        return m ? parseInt(m[0], 10) : 0
-    }
-    return leading(v1) < leading(v2)
-}
-
 const mkTag = (key, value) => ({Key: key, Value: String(value)})
 const mkFilter = (name, values) => ({Name: name, Values: Array.isArray(values) ? values : [values]})
 
@@ -318,23 +307,27 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         return findInstancesByRequest(onlyCorrectVersion, {Filters: filters})
     }
 
+    // Only instances of workerAmiVersion hold its sandbox and task images. A deploy that reuses an
+    // earlier AMI moves the version back, so a newer version is as stale as an older one.
+    const isStale = awsInstance => instanceVersion(awsInstance) !== workerAmiVersion
+
     const findInstancesByRequest = async (onlyCorrectVersion, requestInput) => {
         const response = await client.send(new DescribeInstancesCommand(requestInput))
         const awsInstances = collectInstances(response)
         const instancesWithValidVersion = onlyCorrectVersion
-            ? awsInstances.filter(i => !isOlderVersion(instanceVersion(i), workerAmiVersion))
+            ? awsInstances.filter(i => !isStale(i))
             : awsInstances
         return instancesWithValidVersion.map(i => toWorkerInstance(i, codec))
     }
 
-    // Terminates instances whose Version tag is older than workerAmiVersion AND State=idle.
+    // Terminates instances whose Version tag is not workerAmiVersion AND State=idle.
     //
     // Auto-cleanup terminates are best-effort: a single transient failure must not abort the rest
     // of sweep(). Caller-initiated terminate() still throws on final failure so callers can
     // react; only here we catch and log.
     const terminateOldIdle = async awsInstances => {
         const old = awsInstances.filter(i =>
-            isOlderVersion(instanceVersion(i), workerAmiVersion) &&
+            isStale(i) &&
             tagValue(i, 'State') === 'idle'
         )
         await Promise.all(old.map(i =>
@@ -380,7 +373,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     }
 
     // Only the pool keeps workers stopped. Terminates, best-effort like the other cleanups:
-    //   - pooled instances of an older version, whatever their state;
+    //   - pooled instances of another version, whatever their state;
     //   - pooled instances still running long after their start;
     //   - stopped instances outside the pool — a start EC2 accepted and then failed, or an
     //     AWS-initiated stop. Every other query sees only pending/running instances, so a stopped
@@ -391,7 +384,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         }))
         const now = Date.now()
         const isStray = i => tagValue(i, 'State') === 'pooled'
-            ? isOlderVersion(instanceVersion(i), workerAmiVersion)
+            ? isStale(i)
                 || (i.State?.Name === 'running' && now - new Date(i.LaunchTime).getTime() > MAX_POOLED_RUNNING_MS)
             : i.State?.Name === 'stopped'
         await Promise.all(collectInstances(response).filter(isStray).map(i =>
@@ -610,7 +603,6 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         onInstanceLaunched,
         start,
         stop,
-        _isOlderVersion: isOlderVersion,
         _launchTags: () => launchTags(environment, workerAmiVersion),
         _idleTags: () => idleTags(environment),
         _reserveTags: reservation => reserveTags(environment, reservation),
@@ -621,7 +613,6 @@ export {
     createAwsInstanceProvider,
     createInstanceTypeCodec,
     idleTags,
-    isOlderVersion,
     launchTags,
     mkFilter,
     mkTag,
