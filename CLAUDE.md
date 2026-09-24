@@ -211,9 +211,11 @@ task-executor transition (drain task executors before deploying that change).
 
 The worker AMI is built only when its content hash changes: the sandbox and task image IDs, every file in
 `hosting-services/aws/sepal/worker-ami/`, and the env values listed in `worker_ami.py`. Anything the AMI
-build reads belongs in that directory. Force a rebuild with
-`bin/deploy -s aws/sepal/build-worker-ami.sh -b <build> -c <config>`. One AMI can serve many builds, so check
-which one the current deployment resolves to before deleting old AMIs.
+build reads belongs in that directory. Force a rebuild (to pick up newer OS packages or GPU drivers) with
+`bin/deploy -s aws/sepal/build-worker-ami.sh -b <build> -c <config>` under a build newer than the current
+AMI's (the script refuses the AMI's own build, whose AMI the running worker launches from), then deploy that
+build so the worker switches to it. One AMI can serve many builds, so check which one the current
+deployment resolves to before deleting old AMIs.
 
 When adding a new deployable module (or renaming an existing one), you MUST update
 `modules/ops/script/build-and-push-images.sh` to include `build <module>` and `push <module>`
