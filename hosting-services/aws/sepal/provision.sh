@@ -69,4 +69,4 @@ packer build \
   --var AWS_WORKER_AMI="$AWS_WORKER_AMI" \
   --var VERSION="$VERSION" \
   --var CONFIG_HOME="$CONFIG_HOME" \
-  packer.json
+  worker-ami/packer.json
