@@ -6,7 +6,6 @@ import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
 import {DropTargetContext} from './dropTargetContext'
-import styles from './folderItem.module.css'
 
 // Direct children only, so what the row claims and what removal allows never disagree.
 export const folderDescription = ({folders, recipes}) =>
@@ -16,13 +15,11 @@ export const folderDescription = ({folders, recipes}) =>
     ].filter(part => part).join(' · ')
 
 export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, drag$, onClick, onSelect, onEdit, onRemove}) => {
-    const dropTarget = useContext(DropTargetContext)
+    const drag = useContext(DropTargetContext)
     return (
-        <div
-            data-drop-folder-id={folder.id}
-            className={dropTarget?.folderId === folder.id ? styles.dropTarget : null}>
+        <div data-drop-folder-id={folder.id}>
             <ListItem
-                hovered={hovered}
+                hovered={drag ? drag.target?.folderId === folder.id : hovered}
                 drag$={drag$ || undefined}
                 dragValue={{kind: 'folder', id: folder.id, folderId: folder.parentId, folder}}
                 dragPointer='mouse'
@@ -30,8 +27,8 @@ export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, 
                 onClick={() => edit ? onSelect(folder.id) : onClick(folder)}>
                 <CrudItem
                     icon='folder-open'
-                    iconClassName={styles.icon}
                     iconSize='lg'
+                    iconVariant='info'
                     title={folder.name}
                     description={folderDescription(counts)}
                     highlight={highlight}

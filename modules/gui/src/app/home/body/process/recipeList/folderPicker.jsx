@@ -9,7 +9,6 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
 import {Breadcrumb} from './breadcrumb'
-import folderStyles from './folderItem.module.css'
 import {childFolders, isSelfOrDescendant, ROOT} from './recipeTree'
 
 export class FolderPicker extends React.Component {
@@ -42,7 +41,7 @@ export class FolderPicker extends React.Component {
     renderOption(folder) {
         return (
             <ListItem key={folder.id} onClick={() => this.setState({folderId: folder.id})}>
-                <CrudItem icon='folder-open' iconClassName={folderStyles.icon} title={folder.name}/>
+                <CrudItem icon='folder-open' iconVariant='info' title={folder.name}/>
             </ListItem>
         )
     }

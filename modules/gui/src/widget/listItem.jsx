@@ -154,7 +154,11 @@ class _ListItem extends React.Component {
                 ? lookStyles.interactive
                 : null,
             this.isDisabled() ? lookStyles.disabled : null,
-            hovered ? lookStyles.hoverForcedOn : null
+            hovered === false
+                ? lookStyles.hoverForcedOff
+                : hovered
+                    ? lookStyles.hoverForcedOn
+                    : null
         ]
     }
 
@@ -461,7 +465,7 @@ ListItem.propTypes = {
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
     expansionInteractive: PropTypes.any,
-    hovered: PropTypes.any,
+    hovered: PropTypes.any, // three-state
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,

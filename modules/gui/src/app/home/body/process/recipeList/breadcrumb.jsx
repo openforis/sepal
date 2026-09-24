@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import lookStyles from '~/style/look.module.css'
 import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
@@ -46,7 +47,7 @@ export class Breadcrumb extends React.Component {
             : (
                 <button
                     type='button'
-                    className={[styles.link, this.isDropTarget(id) ? styles.dropTarget : null].join(' ')}
+                    className={this.linkClassName(id)}
                     {...(id === ROOT ? {'data-drop-home': true} : {'data-drop-folder-id': id})}
                     onClick={() => onNavigate(id)}>
                     {icon ? <Icon name={icon}/> : null}
@@ -55,9 +56,26 @@ export class Breadcrumb extends React.Component {
             )
     }
 
-    isDropTarget(id) {
-        const dropTarget = this.context
-        return !!dropTarget && at(dropTarget.folderId) === at(id)
+    // The look gives a segment the same hover as the buttons beside it, which a drop target then wears
+    // while the pointer is over it.
+    linkClassName(id) {
+        return [
+            lookStyles.look,
+            lookStyles.transparent,
+            lookStyles.chromeless,
+            this.dragHoverClassName(id),
+            styles.link
+        ].filter(className => className).join(' ')
+    }
+
+    dragHoverClassName(id) {
+        const drag = this.context
+        if (!drag) {
+            return null
+        }
+        return drag.target && at(drag.target.folderId) === at(id)
+            ? lookStyles.hoverForcedOn
+            : lookStyles.hoverForcedOff
     }
 }
 

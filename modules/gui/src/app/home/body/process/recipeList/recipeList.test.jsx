@@ -30,8 +30,8 @@ vi.mock('~/widget/fastList', () => ({
         items.map(item => <div key={itemKey(item)}>{itemRenderer(item, false)}</div>)
 }))
 vi.mock('~/widget/listItem', () => ({
-    ListItem: ({children, drag$, dragValue, onClick}) => {
-        listItems.push({drag$, dragValue})
+    ListItem: ({children, drag$, dragValue, hovered, onClick}) => {
+        listItems.push({drag$, dragValue, hovered})
         return <div data-row onClick={onClick}>{children}</div>
     }
 }))
@@ -264,15 +264,40 @@ describe('edit mode', () => {
 })
 
 describe('drag and drop', () => {
-    const drop = (draggedId, target) => {
+    // Holding the pointer over the target leaves the rows of that render in listItems, and nothing else.
+    const dragOver = (draggedId, target) => {
         const row = listItems.find(({dragValue}) => dragValue?.id === draggedId)
         vi.spyOn(document, 'elementFromPoint').mockReturnValue(target)
         act(() => row.drag$.next({dragging: true, value: row.dragValue, coords: {x: 1, y: 1}}))
+        listItems.length = 0
         act(() => row.drag$.next({coords: {x: 2, y: 2}}))
+        return row
+    }
+
+    const drop = (draggedId, target) => {
+        const row = dragOver(draggedId, target)
         act(() => row.drag$.next({dragging: false}))
     }
 
     const dropTarget = folderId => container.querySelector(`[data-drop-folder-id="${folderId}"]`)
+
+    const hoveredIds = () => listItems.filter(({hovered}) => hovered).map(({dragValue}) => dragValue.id)
+
+    it('hovers the folder the drop would land in, and nothing else', () => {
+        mount()
+
+        dragOver(AT_ROOT.id, dropTarget(KENYA.id))
+
+        expect(hoveredIds()).toEqual([KENYA.id])
+    })
+
+    it('hovers nothing while the pointer is over what cannot take the drop', () => {
+        mount()
+
+        dragOver(AT_ROOT.id, container)
+
+        expect(hoveredIds()).toEqual([])
+    })
 
     it('moves a recipe into the folder it is dropped on', () => {
         const onMove = vi.fn()

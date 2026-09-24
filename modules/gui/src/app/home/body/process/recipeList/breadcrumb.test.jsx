@@ -8,6 +8,7 @@ vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 
 import {Breadcrumb} from './breadcrumb'
+import {DropTargetContext} from './dropTargetContext'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -18,11 +19,15 @@ const folders = [KENYA, Y2024]
 let mounted
 let container
 
-const mount = props => {
+const mount = (props, drag = null) => {
     container = document.createElement('div')
     document.body.appendChild(container)
     const root = createRoot(container)
-    act(() => root.render(<Breadcrumb {...props}/>))
+    act(() => root.render(
+        <DropTargetContext.Provider value={drag}>
+            <Breadcrumb {...props}/>
+        </DropTargetContext.Provider>
+    ))
     mounted.push(() => {
         act(() => root.unmount())
         container.remove()
@@ -30,6 +35,10 @@ const mount = props => {
 }
 
 const labels = () => [...container.querySelectorAll('button')].map(button => button.textContent)
+
+const hoveredLabels = () => [...container.querySelectorAll('button')]
+    .filter(button => button.className.includes('hoverForcedOn'))
+    .map(button => button.textContent)
 
 beforeEach(() => {
     mounted = []
@@ -68,6 +77,24 @@ describe('Breadcrumb', () => {
 
         expect(onNavigate).toHaveBeenCalledWith(null)
         expect(labels()).not.toContain('2024')
+    })
+
+    it('hovers the segment a drop would land in', () => {
+        mount({folders, folderId: '2024', onNavigate: () => {}}, {target: {folderId: 'kenya'}})
+
+        expect(hoveredLabels()).toEqual(['Kenya'])
+    })
+
+    it('hovers home when a drop would land there', () => {
+        mount({folders, folderId: '2024', onNavigate: () => {}}, {target: {folderId: null}})
+
+        expect(hoveredLabels()).toEqual(['process.recipeList.root'])
+    })
+
+    it('hovers no segment while the drag is over none of them', () => {
+        mount({folders, folderId: '2024', onNavigate: () => {}}, {target: null})
+
+        expect(hoveredLabels()).toEqual([])
     })
 
     it('makes the root clickable when the current folder no longer exists', () => {

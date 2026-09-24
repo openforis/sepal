@@ -1,6 +1,6 @@
 .separator {
     opacity: .4;
-    padding: 0 .35rem;
+    padding: 0 .2rem;
     align-self: center;
 }
 
@@ -16,27 +16,13 @@
     font-size: .9rem;
     letter-spacing: 0;
     color: inherit;
-    padding: 0;
-}
-
-.link {
-    background: none;
-    border: none;
-    cursor: pointer;
-    opacity: .7;
-}
-
-.link:hover {
-    opacity: 1;
+    /* The link carries the look's own border; the current segment matches it, so both sit on one line. */
+    border: 1px solid transparent;
+    border-radius: var(--button-border-radius);
+    padding: .1rem .4rem;
 }
 
 .label {
     text-decoration: underline dotted;
     text-underline-offset: .25em;
-}
-
-.dropTarget {
-    outline: 2px solid var(--look-highlight-hover-background-color);
-    border-radius: var(--button-border-radius);
-    opacity: 1;
 }

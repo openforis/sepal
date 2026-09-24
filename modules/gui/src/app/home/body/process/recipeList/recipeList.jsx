@@ -107,6 +107,7 @@ class _RecipeList extends React.Component {
         preselectedIds: null,
         confirmedIds: null,
         navigationCount: 0,
+        dragging: false,
         dropTarget: null
     }
 
@@ -141,6 +142,7 @@ class _RecipeList extends React.Component {
                 filter(({dragging}) => dragging === true),
                 switchMap(({value}) => {
                     this.dragged = value
+                    this.setState({dragging: true})
                     return this.drag$.pipe(
                         takeUntil(release$),
                         map(({coords}) => coords ? this.validTargetAt(coords) : null)
@@ -171,7 +173,7 @@ class _RecipeList extends React.Component {
         const items = this.draggedItems()
         const fromSelection = !!this.dragged && this.isSelected(this.dragged.id)
         this.dragged = null
-        this.setState({dropTarget: null})
+        this.setState({dragging: false, dropTarget: null})
         if (items.length && dropTarget) {
             this.moveItems(items, dropTarget.folderId)
             if (fromSelection) {
@@ -242,7 +244,7 @@ class _RecipeList extends React.Component {
     }
 
     renderList() {
-        const {edit, move, remove, editFolder, dropTarget} = this.state
+        const {edit, move, remove, editFolder, dragging, dropTarget} = this.state
         const items = this.getItems()
         const highlightKey = this.getHighlightMatcher().toString()
         // FastList rows are pure and the derived items are referentially stable across a selection
@@ -250,9 +252,9 @@ class _RecipeList extends React.Component {
         const selectedIds = edit ? this.getFilteredSelectedIds() : EMPTY_ARRAY
         const itemKey = item => `${item.kind}|${item.id}|${edit}|${selectedIds.includes(item.id)}|${highlightKey}`
         return (
-            // The target reaches the rows through the context rather than through itemKey: a key change
+            // The drag reaches the rows through the context rather than through itemKey: a key change
             // makes a new row, and a new dragged row would end the drag it is in the middle of.
-            <DropTargetContext.Provider value={dropTarget}>
+            <DropTargetContext.Provider value={dragging ? {target: dropTarget} : null}>
                 <Layout type='vertical' spacing='compact'>
                     {this.renderHeader1()}
                     {this.renderHeader2()}
