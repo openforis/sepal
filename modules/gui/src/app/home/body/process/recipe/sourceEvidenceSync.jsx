@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {filter, map, of, Subject, switchMap, take, takeUntil} from 'rxjs'
+import {filter, map, of, Subject, switchMap, take, takeUntil, tap} from 'rxjs'
 
 import {
     completeRecipeClosure$,
@@ -231,6 +231,13 @@ class _SourceEvidenceSync extends React.Component {
                     loadRecipesById$: this.loadRecipesById$(session),
                     limits: DEFAULT_RECIPE_CLOSURE_LIMITS
                 }).pipe(
+                    // A closure that fails still read records before it stopped, and repairing one of those is
+                    // what would let it succeed - so they become the basis, as a completed closure's do.
+                    tap(({status, graph, recipesById}) => {
+                        if (status === 'FAILED') {
+                            this.basis = this.resolvedBasis(graph, recipesById, session)
+                        }
+                    }),
                     filter(({status}) => status === 'COMPLETE'),
                     take(1)
                 ))

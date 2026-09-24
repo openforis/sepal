@@ -238,6 +238,38 @@ describe('an output that cannot be described', () => {
     })
 })
 
+// Describing a recipe reads only the dependencies its providers need, and Masking's description never reads its
+// mask. Whether the recipe may run is asked of every dependency, before anything is described.
+describe('a recipe whose dependencies are not structurally sound', () => {
+    const selfMask = {type: 'RECIPE_REF', id: 'masking-1'}
+
+    it('fails the export naming the cycle, though its output could be described', async () => {
+        state.catalogue = {'mosaic-1': landsatMosaic()}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'mosaic-1'}, mask: selfMask})
+
+        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/cannot run.*CYCLIC_DEPENDENCY/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export rather than record unknown encoding for a source that declares no output', async () => {
+        state.catalogue = {'radar-1': {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'radar-1'}, mask: selfMask})
+
+        await expect(submit({recipe, bands: ['VV']})).rejects.toThrow(/CYCLIC_DEPENDENCY/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails with the unreadable dependency as the cause, naming the cycle already found', async () => {
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}, mask: selfMask})
+
+        const error = await submit({recipe, bands: ['red']}).then(() => null, error => error)
+
+        expect(error.message).toMatch(/CYCLIC_DEPENDENCY/)
+        expect(error.cause.message).toBe('Recipe could not be read: unreadable')
+        expect(state.exported).toEqual([])
+    })
+})
+
 const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     id: 'mosaic-1',
     type: 'MOSAIC',
@@ -247,10 +279,10 @@ const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     }
 })
 
-const masking = ({primary}) => ({
+const masking = ({primary, mask = {type: 'ASSET', id: 'users/x/mask'}}) => ({
     id: 'masking-1',
     type: 'MASKING',
-    model: {imageToMask: primary, imageMask: {type: 'ASSET', id: 'users/x/mask'}}
+    model: {imageToMask: primary, imageMask: mask}
 })
 
 const state = {}

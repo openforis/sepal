@@ -143,7 +143,9 @@ describe('the lazy Redux adapter', () => {
             status: 'UNAVAILABLE',
             description: null,
             diagnostics: [],
-            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'})
+            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
+            // The closure had completed; only the observation of its one source was cut short.
+            dependencyValidity: {status: 'VALID', diagnostics: []}
         })
     })
 
@@ -177,7 +179,9 @@ describe('the lazy Redux adapter', () => {
             status: 'UNAVAILABLE',
             description: null,
             diagnostics: [],
-            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'})
+            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
+            // The closure had completed; only the observation of its one source was cut short.
+            dependencyValidity: {status: 'VALID', diagnostics: []}
         })
         expect(JSON.stringify(states)).not.toContain('secret-token')
         expect(JSON.stringify(states)).not.toContain('fresh')
@@ -197,7 +201,9 @@ describe('the lazy Redux adapter', () => {
             status: 'UNAVAILABLE',
             description: null,
             diagnostics: [],
-            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'})
+            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
+            // The closure had completed; only the observation of its one source was cut short.
+            dependencyValidity: {status: 'VALID', diagnostics: []}
         })
 
         const later = []
@@ -365,7 +371,9 @@ describe('the provider', () => {
             status: 'UNAVAILABLE',
             description: null,
             diagnostics: [],
-            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'})
+            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
+            // The closure had completed; only the observation of its one source was cut short.
+            dependencyValidity: {status: 'VALID', diagnostics: []}
         })
         expect(completed).toBe(true)
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])

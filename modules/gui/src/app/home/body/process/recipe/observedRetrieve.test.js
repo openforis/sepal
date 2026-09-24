@@ -564,7 +564,8 @@ describe('fallback authority validation', () => {
         status: 'INVALID',
         description: null,
         diagnostics: [{code: 'UNDECLARED_OUTPUT'}],
-        error: null
+        error: null,
+        dependencyValidity: {status: 'VALID', diagnostics: []}
     }
 
     it.each([
@@ -782,6 +783,45 @@ describe('blocked submissions', () => {
         expect(state.bandsCalls).toEqual([])
         expectBlocked('process.retrieve.error.imageOutput')
         expect(JSON.stringify(state.notifications)).not.toContain('CYCLIC_DEPENDENCY')
+    })
+
+    // A description reads only what its providers need. Whether the recipe can run also depends on the
+    // dependencies it does not read, and that is asked of the whole closure.
+    it('blocks a recipe it can describe when a dependency it does not read closes a cycle', () => {
+        const recipe = masking({primary: recipeRef('ccdc-1'), mask: recipeRef('masked-1')})
+        const {resolveImageOutput$} = runtimeWith([recipe, ccdc()])
+        submit({recipe, resolveImageOutput$, fallbackPyramidingPolicy: LEGACY})
+        emit('RECIPE_REF:ccdc-1', declaredBands(['tStart', 'ndvi_coefs']))
+
+        expectBlocked('process.retrieve.error.imageOutput')
+        expect(state.logged.flat()).toContainEqual([expect.objectContaining({code: 'CYCLIC_DEPENDENCY'})])
+    })
+
+    it('takes no legacy fallback for an undeclared source when a dependency closes a cycle', () => {
+        const recipe = masking({primary: recipeRef('radar-1'), mask: recipeRef('masked-1')})
+        const {resolveImageOutput$} = runtimeWith([recipe, {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}])
+        submit({recipe, resolveImageOutput$, fallbackPyramidingPolicy: LEGACY})
+
+        expect(state.bandsCalls).toEqual([])
+        expectBlocked('process.retrieve.error.imageOutput')
+    })
+
+    it('blocks a terminal that does not say whether its dependencies are sound', () => {
+        const recipe = masking({primary: recipeRef('ccdc-1')})
+        const resolveImageOutput$ = () => of({
+            status: 'READY',
+            description: {
+                executionReference: recipeRef('masked-1'),
+                output: {kind: 'IMAGE', bands: [{name: 'tStart', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}]},
+                evidence: []
+            },
+            diagnostics: [],
+            error: null,
+            dependencyValidity: null
+        })
+        submit({recipe, resolveImageOutput$, retrieveOptions: {destination: 'GEE', bands: ['tStart']}})
+
+        expectBlocked('process.retrieve.error.imageOutput')
     })
 
     // Masking's selection comes from a band snapshot copied when the source was chosen, so a selection the

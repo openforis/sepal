@@ -44,9 +44,17 @@ temporary answer, because it cannot be deleted.
      ([map-product identity](output-products.md#map-product-identity)). Only types with map modes depend on it:
      LandTrendr, BAYTS Alerts, Change Alerts and CCDC's `count`.
    - *Reading a recipe's own output.* Consumers read bands synchronously, so the read is synchronous and total. It
-     answers with a status (resolved, needs observation, unavailable or invalid) and never acquires. It carries a
-     structural diagnostic on its edge, so a provider that needs nothing from a missing source still answers
-     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)).
+     answers with a status (resolved, needs observation, unavailable or invalid) and never acquires. Descriptions
+     are dependency-scoped, so a provider that needs nothing from a missing source still answers, and structural
+     soundness of the whole closure is reported separately
+     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). The read's context
+     is still open: with only a settled terminal and no records, it cannot describe Masking over an Optical
+     Mosaic the session has already loaded. It needs either an explicit resolution context captured by its
+     acquisition owner or a runtime-owned synchronous read that supplies one; consumers never assemble
+     dependency catalogues themselves.
+   - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
+     covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
+     Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
 2. **One seam, then switch the consumers once.** Types without a provider are answered in one GUI module from their
    registered helpers, as a distinct, unverified legacy answer — never as resolved evidence with physical facts or
    export policy. Map layers, preset filtering and Retrieve read through the same boundary for every type and do
@@ -69,12 +77,52 @@ temporary answer, because it cannot be deleted.
      provider-contract change, so design it early rather than last.
 4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
    product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
-   runtime, and the seam, `noImageOutput` and the registered helpers are deleted together.
+   runtime. Delete the legacy adapter, `noImageOutput` and the registered band authorities; retain the common
+   consumer API. Labels, tooltips, groups and display ranges remain GUI presentation.
 
 Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
 helper. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands independently of
 the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band presentation, not a
 migration state.
+
+#### Preparation packets
+
+Before implementation, inventory every band-helper call site, including direct imports in Retrieve and specialized
+map layers. For each, name its product and parameters, read contract, evidence source, acquisition owner and
+lifetime, pending/failure behavior, and legacy behavior that must be preserved. Include execution boundaries whose
+refusal currently depends on an unavailable description. Review the inventory and plan before changing code.
+
+Deliver steps 1–2 as three separately reviewable packets:
+
+1. **Dependency-scoped descriptions and structural dependency checks.** The resolver and observer fail a
+   description only on what its providers read, detect cycles on the path of provider reads, and withhold a
+   recipe's own observation when any structural diagnosis lies below it. The complete closure answers
+   `dependencyValidity` separately, and the two execution boundaries that refused because a description failed -
+   Masking's observed Retrieve and Task's asset export of a declared root - require it to be `VALID`. A known
+   schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
+   Manually accepted: Masking over an optical mosaic and over a CCDC asset; a deleted recipe reference makes
+   Retrieve report the failure and block submission. Recovery is established only by automated tests, after an
+   already-read record is repaired; recovery from a deleted reference was not exercised.
+2. **Common GUI read API and display consumers.** Settle product identity and acquisition ownership before moving
+   map layers, preset filtering and visualization selectors. Keep legacy answers explicitly unverified and preserve
+   their existing display hints. Reuse existing lifecycle machinery rather than introducing another watcher or
+   cache. Remove the replaced direct helper reads. Open before this packet starts: the read's resolution context
+   (step 1 above); acquisition owners for the consumers no map layer serves - input forms copying presets at
+   selection, Sampling Design, task submission's visualization properties, the visualization editor and the CCDC
+   preset readers; and cursor precision, which legacy helpers carry in `dataType` beside physical
+   dimensionality and which migrated types must keep supplying from band presentation. The
+   `SourceEvidenceSync` whole-graph check moves with the acquisition work.
+3. **Retrieve consumers.** Route GUI export choices through the same API and absorb the existing
+   undeclared-output fallback into its legacy adapter, including declared wrappers over undeclared sources.
+   Acquisition failures, broken dependencies and invalid descriptions never qualify for fallback. Legacy answers
+   do not become proof of destination compatibility, export policy or encoding. Task keeps its independent,
+   authorized resolution through shared contracts and runtime adapters; it neither imports the GUI API nor trusts
+   a browser description. Masking's existing undeclared-output fallback is currently unreachable from its panel,
+   which blocks any answer that is not `READY`; whether it becomes reachable is this packet's decision.
+
+Acceptance: a later recipe migration adds its declaration and removes its legacy entry without requiring another
+consumer rewrite. Each packet identifies and removes the paths it supersedes. Use targeted tests while iterating;
+reserve the full GUI suite for the final readiness check.
 
 ### Following work
 
@@ -97,6 +145,10 @@ In order, each independently mergeable:
 
 Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
 is a separate small packet.
+
+Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
+its origin has not been investigated, and whether it is a regression is not established. Investigate the error
+presentation separately.
 
 ## Scope and constraints
 
@@ -626,7 +678,8 @@ bands, and encoding is written for them; an export naming none builds the produc
 available bands do not describe, and records no encoding. Where the only thing resolution reports is an undeclared
 output — the exported recipe's own, or that of a recipe it depends on — the export proceeds as before with unknown
 encoding. A failed read, an incomplete closure or an invalid description fails the export rather than being
-recorded as unknown.
+recorded as unknown, and so does a closure whose dependencies are not structurally sound, even where the
+description reads none of the broken part.
 
 An image collection keeps its existing tiles unless it is replaced, so its encoding must describe those too.
 Resuming compares the persisted and proposed encodings as facts:

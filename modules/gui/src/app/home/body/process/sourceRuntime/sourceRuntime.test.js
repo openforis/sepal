@@ -169,8 +169,17 @@ const observing = ({environment$, recipe, createObserver}) => {
     }
 }
 
-const envelope = ({status, description = null, diagnostics = [], error = null}) =>
-    ({status, description, diagnostics, error})
+const envelope = ({status, description = null, diagnostics = [], error = null, dependencyValidity = null}) =>
+    ({status, description, diagnostics, error, dependencyValidity})
+
+// Every reference in the operation's closure resolved and none closed a cycle.
+const SOUND = {status: 'VALID', diagnostics: []}
+
+// A closure that stopped while a recipe it had to read was still missing: not known to be sound.
+const unknownWithMissing = id => ({
+    status: 'UNAVAILABLE',
+    diagnostics: [expect.objectContaining({code: 'MISSING_SOURCE', recipePath: expect.arrayContaining([id])})]
+})
 
 const sampled = bands => bands.map(({name, arrayDimensions}) => ({
     name,
@@ -299,7 +308,11 @@ describe('completing the operation-local recipe closure', () => {
 
         failRecipe('nested-1', failure)
 
-        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure}))
+        expect(observed.latest()).toEqual(envelope({
+            status: 'UNAVAILABLE',
+            error: failure,
+            dependencyValidity: unknownWithMissing('nested-1')
+        }))
         expect(observed.latest().diagnostics).toEqual([])
         expect(state.bandsCalls).toEqual([])
     })
@@ -331,7 +344,8 @@ describe('completing the operation-local recipe closure', () => {
 
         expect(states).toEqual([envelope({
             status: 'UNAVAILABLE',
-            error: expect.objectContaining({code: 'RECIPE_CLOSURE_NODE_LIMIT'})
+            error: expect.objectContaining({code: 'RECIPE_CLOSURE_NODE_LIMIT'}),
+            dependencyValidity: unknownWithMissing('nested-1')
         })])
         expect(errored).toBe(null)
         expect(state.recipeCalls).toEqual([])
@@ -372,7 +386,8 @@ describe('the one-shot envelope', () => {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
                 evidence: []
-            }
+            },
+            dependencyValidity: SOUND
         }))
         expect(observed.completed()).toBe(true)
         expect(observed.errored()).toBe(null)
@@ -397,7 +412,7 @@ describe('the one-shot envelope', () => {
         const observed = observing({environment$: env.environment$, recipe})
         fail('RECIPE_REF:ccdc-1', failure)
 
-        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure}))
+        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure, dependencyValidity: SOUND}))
         expect(observed.latest().error).toBe(failure)
         expect(observed.errored()).toBe(null)
         expect(observed.completed()).toBe(true)
@@ -414,7 +429,7 @@ describe('the one-shot envelope', () => {
             }
         })
 
-        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: broken}))
+        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: broken, dependencyValidity: SOUND}))
         expect(observed.errored()).toBe(null)
         expect(observed.completed()).toBe(true)
     })
@@ -441,6 +456,75 @@ describe('the one-shot envelope', () => {
 
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-a'])
         expect(env.liveCount()).toBe(1)
+    })
+})
+
+// Whether the recipe's dependencies are structurally sound is asked of the whole closure this operation completed,
+// beside - never folded into - what its providers read to describe it.
+describe('structural dependency validity', () => {
+    it('describes a recipe while reporting a cycle among dependencies it does not read', () => {
+        const env = environmentOf()
+        const recipe = masking({primary: recipeSelection('ccdc-1'), mask: recipeSelection('masked-1')})
+        env.set(environment({catalogue: catalogue([recipe, ccdc()])}))
+        const observed = observing({environment$: env.environment$, recipe})
+        emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
+
+        expect(observed.latest().status).toBe('READY')
+        expect(observed.latest().dependencyValidity).toEqual({
+            status: 'INVALID',
+            diagnostics: [expect.objectContaining({code: 'CYCLIC_DEPENDENCY', role: 'MASK_IMAGE'})]
+        })
+    })
+
+    // Loading continues past the cycle to the branch still missing, and that read can fail. The failure is the
+    // outcome and keeps its cause; the cycle already established still says the dependencies are unsound.
+    it('keeps the loader failure as the outcome and the known cycle as its validity', () => {
+        const env = environmentOf()
+        const failure = Object.assign(new Error('recipe not found'), {status: 404})
+        const recipe = masking({primary: recipeSelection('gone'), mask: recipeSelection('masked-1')})
+        env.set(environment({catalogue: catalogue([recipe])}))
+        const observed = observing({environment$: env.environment$, recipe})
+
+        failRecipe('gone', failure)
+
+        expect(observed.latest()).toEqual(envelope({
+            status: 'UNAVAILABLE',
+            error: failure,
+            dependencyValidity: {
+                status: 'INVALID',
+                diagnostics: [
+                    expect.objectContaining({code: 'MISSING_SOURCE'}),
+                    expect.objectContaining({code: 'CYCLIC_DEPENDENCY'})
+                ]
+            }
+        }))
+    })
+
+    it('never reports a failed closure as sound, even when what it had read holds no diagnosis', () => {
+        const env = environmentOf()
+        const failure = new Error('closure failed')
+        const recipe = ccdc()
+        env.set(environment({catalogue: catalogue([recipe])}))
+        const runtime = createSourceRuntime({
+            environment$: env.environment$,
+            completeClosure$: ({rootRecipe}) => new Observable(subscriber => {
+                subscriber.next({
+                    status: 'FAILED',
+                    recipesById: new Map([[rootRecipe.id, rootRecipe]]),
+                    graph: {recipes: [rootRecipe], edges: [], diagnostics: []}
+                })
+                subscriber.error(failure)
+            })
+        })
+        const states = []
+        runtime.resolveImageOutput$({recipe}).subscribe(published => states.push(published))
+
+        expect(states).toEqual([envelope({
+            status: 'UNAVAILABLE',
+            error: failure,
+            dependencyValidity: {status: 'UNAVAILABLE', diagnostics: []}
+        })])
+        expect(state.bandsCalls).toEqual([])
     })
 })
 
@@ -565,7 +649,7 @@ describe('runtime invalidation', () => {
         const observed = observing({environment$: env.environment$, recipe: ccdc()})
         env.fail(failure)
 
-        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure}))
+        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure, dependencyValidity: SOUND}))
         expect(observed.errored()).toBe(null)
         expect(observed.completed()).toBe(true)
     })
@@ -585,7 +669,8 @@ describe('runtime invalidation', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'})
+            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
+            dependencyValidity: SOUND
         }))
         expect(observed.latest().diagnostics).toEqual([])
         expect(observed.completed()).toBe(true)
@@ -598,7 +683,8 @@ describe('runtime invalidation', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'})
+            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
+            dependencyValidity: SOUND
         }))
         expect(observed.completed()).toBe(true)
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
@@ -624,7 +710,8 @@ describe('runtime invalidation', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'})
+            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
+            dependencyValidity: SOUND
         }))
         const {error} = observed.latest()
         expect(Object.keys(error)).toEqual(['code'])

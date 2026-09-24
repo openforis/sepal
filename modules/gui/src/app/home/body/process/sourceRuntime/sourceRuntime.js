@@ -4,6 +4,7 @@ import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
+import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
 import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
 import {createLoadRecipesById$} from './recipeClosureLoader'
@@ -21,6 +22,10 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // public cancellation. The stream never errors - a failed observation, a broken environment and an unexpected
 // throw all become a terminal UNAVAILABLE carrying the original error - so no consumer has to defend the error
 // channel to stay correct.
+//
+// A terminal answers two questions about the one closure this operation completed: what the recipe's output is,
+// from what its providers read, and whether its dependencies are structurally sound, from the whole closure.
+// `dependencyValidity` is null where the operation ended before its closure said anything.
 
 const PENDING = 'PENDING'
 
@@ -45,6 +50,7 @@ export const createSourceRuntime = ({
         let settled = false
         let observer = null
         let captured = null
+        let closureOutcome = null
         let loadingPublished = false
         const work = new Subscription()
 
@@ -60,7 +66,10 @@ export const createSourceRuntime = ({
                 return
             }
             settled = true
-            subscriber.next(envelope)
+            subscriber.next({
+                ...envelope,
+                dependencyValidity: closureOutcome ? dependencyValidity(closureOutcome) : null
+            })
             release()
             subscriber.complete()
         }
@@ -116,7 +125,11 @@ export const createSourceRuntime = ({
                         if (state.status === 'LOADING') {
                             publishLoading()
                         } else if (state.status === 'COMPLETE') {
+                            closureOutcome = state
                             observe(state.graph)
+                        } else if (state.status === 'FAILED') {
+                            // What the failed closure had established, for the failure it is about to deliver.
+                            closureOutcome = state
                         } else {
                             unavailable(new Error(`Source runtime: unexpected closure state ${state.status}`))
                         }

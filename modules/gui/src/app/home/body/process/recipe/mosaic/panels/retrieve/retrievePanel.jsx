@@ -7,6 +7,7 @@ import {
     physicalDestinationCompatibility,
     VALID_SELECTION
 } from '#sepal/recipe/output/physicalDestinationCompatibility'
+import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
@@ -665,7 +666,7 @@ class _MosaicRetrievePanel extends React.Component {
         if (this.state.initialLoadingDone || !terminal) {
             return
         }
-        if (terminal.status !== 'READY' || this.minimumLoadingElapsed) {
+        if (!isUsable(terminal) || this.minimumLoadingElapsed) {
             this.setState({initialLoadingDone: true})
         }
     }
@@ -695,7 +696,7 @@ class _MosaicRetrievePanel extends React.Component {
         if (!terminal) {
             return {status: LOADING_CHOICES}
         }
-        if (terminal.status !== 'READY') {
+        if (!isUsable(terminal)) {
             return {status: UNRESOLVED_CHOICES}
         }
         const presentation = new Map((bandOptions || []).flat().map(option => [option.value, option]))
@@ -709,7 +710,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     getPhysicalDestinationCompatibility() {
         const terminal = this.getImageOutputTerminal()
-        if (terminal?.status !== 'READY' || !terminal.description?.output?.bands) {
+        if (!isUsable(terminal) || !terminal.description?.output?.bands) {
             return null
         }
         const {allBands, inputs: {bands, useAllBands}} = this.props
@@ -722,7 +723,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     isDestinationControlDisabled() {
         return Boolean(this.props.imageOutputResolution)
-            && this.getImageOutputTerminal()?.status !== 'READY'
+            && !isUsable(this.getImageOutputTerminal())
     }
 
     resolvedOutputBlocksSubmission() {
@@ -732,7 +733,7 @@ class _MosaicRetrievePanel extends React.Component {
         const terminal = this.getImageOutputTerminal()
         const compatibility = this.getPhysicalDestinationCompatibility()
         const destination = this.props.inputs.destination.value
-        return terminal?.status !== 'READY'
+        return !isUsable(terminal)
             || compatibility?.selectionStatus !== VALID_SELECTION
             || compatibility.destinations[destination] === false
     }
@@ -749,7 +750,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     availableBandNames() {
         const terminal = this.getImageOutputTerminal()
-        return terminal?.status === 'READY'
+        return isUsable(terminal)
             ? new Set(terminal.description.output.bands.map(({name}) => name))
             : null
     }
@@ -856,3 +857,8 @@ MosaicRetrievePanel.propTypes = {
         state$: PropTypes.shape({subscribe: PropTypes.func.isRequired}).isRequired
     })
 }
+
+// A resolution this panel may offer and submit from: a description, over dependencies known to be structurally
+// sound. Anything else is presented as unresolved, whichever of the two is missing.
+const isUsable = terminal =>
+    terminal?.status === 'READY' && terminal.dependencyValidity?.status === VALID

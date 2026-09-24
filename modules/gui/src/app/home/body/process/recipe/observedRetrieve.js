@@ -1,6 +1,7 @@
 import {defer, filter, take} from 'rxjs'
 
 import {isUndeclaredOutputOnly} from '#sepal/recipe/output/diagnostic'
+import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {submitRetrieveRecipeTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
@@ -68,9 +69,13 @@ export const submitObservedRetrieve = args => {
         }
     }
 
-    const handleTerminal = ({description, diagnostics = [], error}) => {
+    // Structural dependency validity is one condition of running, and neither a description nor a fallback
+    // stands in for it: a description reads only what its providers need. Unknown blocks as surely as invalid.
+    const handleTerminal = ({description, diagnostics = [], error, dependencyValidity}) => {
         if (error) {
             blockForError(error)
+        } else if (dependencyValidity?.status !== VALID) {
+            blockForOutput(dependencyValidity?.diagnostics || 'dependency validity unknown')
         } else if (description) {
             submit({
                 ...taskConfig,

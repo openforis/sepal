@@ -65,11 +65,12 @@ const description = bands => ({
     output: {bands}
 })
 
-const ready = bands => ({
+const ready = (bands, dependencyValidity = {status: 'VALID', diagnostics: []}) => ({
     status: 'READY',
     description: description(bands),
     diagnostics: [],
-    error: null
+    error: null,
+    dependencyValidity
 })
 
 const input = (name, value) => {
@@ -388,6 +389,22 @@ describe('resolution and submission lifecycle', () => {
             expect(container.textContent).not.toContain('private transport detail')
         }
     )
+
+    // A description is what the recipe's providers read; whether it can run depends on the whole closure.
+    it.each([
+        ['unsound', {status: 'INVALID', diagnostics: [{code: 'CYCLIC_DEPENDENCY'}]}],
+        ['of unknown soundness', null]
+    ])('disables Apply and destination for a description whose dependencies are %s', (_name, dependencyValidity) => {
+        const onRetrieve = vi.fn()
+        const operation = outputOperation()
+        mount(baseProps({imageOutputResolution: operation.contract, onRetrieve}))
+
+        operation.resolution.next(ready([band('scalar', 0)], dependencyValidity))
+
+        expect(capture.panelButtons.invalid).toBe(true)
+        expect(capture.destinationButtons.disabled).toBe(true)
+        expect(onRetrieve).not.toHaveBeenCalled()
+    })
 
     it('prevents Apply from racing a stale destination during reconciliation', () => {
         const onRetrieve = vi.fn()

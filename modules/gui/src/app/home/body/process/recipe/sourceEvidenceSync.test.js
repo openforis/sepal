@@ -743,6 +743,55 @@ describe('a cycle deeper in the chain', () => {
     })
 })
 
+// Loading continues past a cycle to a branch still missing, and that read can fail. The records read before the
+// failure are still what a repair would change, so the failure keeps them as its basis.
+describe('a cycle deeper in the chain beside a dependency that cannot be read', () => {
+    const outer = {id: 'outer', type: 'MASKING', model: {imageToMask: recipeSelection('inner'), imageMask: recipeSelection('gone')}}
+    const cyclic = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('inner')}}
+    const repaired = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
+
+    const failing = () => {
+        const loads = []
+        const loadRecipe$ = id => {
+            loads.push(id)
+            return id === 'gone' ? throwError(() => new Error('no such recipe')) : of(ccdcRecipe(id))
+        }
+        return {loads, loadRecipe$}
+    }
+
+    it('is observed again once a recipe it had read is repaired', () => {
+        bands$.mockReturnValue(of(['red']))
+        const {loadRecipe$} = failing()
+        const {component, rerender, evidence} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('outer')}),
+            loadedRecipes: {outer, inner: cyclic},
+            loadRecipe$
+        })
+        component.componentDidMount()
+        expect(evidence()[0].status).toBe('UNAVAILABLE')
+
+        rerender({
+            loadedRecipes: {outer, inner: repaired, 'source-1': ccdcRecipe('source-1')},
+            loadRecipe$: id => of(ccdcRecipe(id))
+        })
+
+        expect(evidence()[1].status).toBe('OBSERVED')
+    })
+
+    it('does not read again merely because the attempt failed', () => {
+        const {loads, loadRecipe$} = failing()
+        const {component, rerender} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('outer')}),
+            loadedRecipes: {outer, inner: cyclic},
+            loadRecipe$
+        })
+        component.componentDidMount()
+        rerender({})
+
+        expect(loads.filter(id => id === 'gone')).toHaveLength(1)
+    })
+})
+
 describe('a selected source with a missing mask', () => {
     const withMask = mask => ({
         id: 'inner',

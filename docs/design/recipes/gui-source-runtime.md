@@ -104,10 +104,20 @@ The returned Observable has this contract:
 - it completes immediately after the terminal envelope;
 - it never uses the Observable error channel: observation and unexpected runtime failures emit `UNAVAILABLE` with
   the original error, while resolution diagnostics decide between `UNAVAILABLE` and `INVALID`;
+- every terminal carries `dependencyValidity` beside its status: whether the closure this operation completed is
+  structurally sound, `null` when the operation ended before its closure said anything;
 - unsubscription is the only cancellation mechanism.
 
-`LOADING` is optional. A graph with definitive diagnostics can resolve synchronously without starting an
-observation. Future authorized loading remains part of `LOADING`; it does not require a public zero-duration
+The status answers what the recipe's providers read to describe it; `dependencyValidity` answers for the whole
+closure, including dependencies no provider read. Both concern the same operation and graph, and neither stands in
+for the other. `dependencyValidity` is `VALID`, `UNAVAILABLE` or `INVALID` with the complete graph diagnostics
+(`#sepal/recipe/source/dependencyValidity`). It is one condition execution requires - every reference resolves
+and none closes a cycle - not a claim that the recipe can execute: it says nothing about assets, configuration
+or Earth Engine. A closure that failed is never `VALID`, even when what it had read holds no diagnosis; a
+definitive diagnosis found before the failure makes it `INVALID`, and anything less is `UNAVAILABLE`.
+
+`LOADING` is optional. A description whose providers read a definitive diagnosis resolves synchronously without
+starting an observation. Future authorized loading remains part of `LOADING`; it does not require a public zero-duration
 `PENDING` state. The committed shared observer may retain `PENDING` internally without exposing it from this
 one-shot boundary.
 
@@ -402,7 +412,12 @@ policy-stability gate prevents the more dangerous case where the same band name 
 from a different dependency version.
 
 An incomplete closure is not resolved evidence. The runtime first attempts to complete the closure through its
-authenticated recipe loader. `MISSING_SOURCE` after that attempt must block the initial Masking activation: the
+authenticated recipe loader. The orchestrator submits only a terminal whose `dependencyValidity` is `VALID`, and a
+migration fallback qualifies only under the same condition, so neither a description nor an undeclared-output
+answer can stand in for sound dependencies; an unknown `dependencyValidity` blocks as surely as an invalid one.
+The Retrieve panel presents a description over dependencies not known to be sound exactly as an unresolved
+output: no choices, destination and Apply disabled. `MISSING_SOURCE` after that attempt must block the initial
+Masking activation: the
 missing source could be CCDC, and applying Masking's legacy `mean` fallback would reproduce the array-pyramiding
 defect this path is intended to prevent. Fallback may remain only for a separately reviewed coexistence gap whose
 legacy policy is independently known to be safe. Earth Engine does not report an asset's persisted policy, but
@@ -498,10 +513,21 @@ completeRecipeClosure$({rootRecipe, seedRecipesById, loadRecipesById$})
 loadRecipesById$({ids})
 ```
 
-`completeRecipeClosure$` repeatedly builds the shared dependency graph. If it has any definitive diagnostic, such
-as a cycle or malformed direct-source declaration, the operation stops without loading unrelated records. If its
-only diagnostics are `MISSING_SOURCE`, their dependency-path tails identify one deduplicated frontier of known
-recipe IDs. The loader fetches that frontier and rebuilds the graph. The current `loadRecipesById$` adapter fans a
+`completeRecipeClosure$` repeatedly builds the shared dependency graph. While the graph reports `MISSING_SOURCE`,
+the dependency-path tails of those diagnostics identify one deduplicated frontier of known recipe IDs; the loader
+fetches that frontier and rebuilds the graph. Loading continues past a definitive diagnostic such as a cycle or a
+malformed direct-source declaration: that says nothing about whether another branch can be read, and a
+description reading only that other branch needs it. The operation completes once nothing is missing.
+
+A failure - a loader error, a malformed response or an exceeded limit - is the operation's outcome. It is
+delivered on the error channel exactly as raised, never annotated, since a loader's error can be shared, and is
+preceded by a `FAILED` notification carrying the graph as it stood when the operation stopped and the records it
+was built from. That one operation-local context is what a caller needs to keep a cycle it had already found, or
+to know which records a repair would change. Continuing to load means a graph that also has a definitive
+diagnostic can end in a loader failure rather than completing with the diagnostic: the one-shot runtime then
+reports `UNAVAILABLE` carrying the loader error, with `dependencyValidity` `INVALID` from the definitive
+diagnostic; `SourceEvidenceSync` and PyEO's imagery read report the loader failure; Task fails the export naming
+both. The current `loadRecipesById$` adapter fans a
 frontier out over the existing authenticated `api.recipe.load$(id)` operation with bounded concurrency.
 Consequently, the temporary implementation needs at most one logical request batch per discovered graph depth; it
 does not pretend that the browser knows transitive IDs before reading their parents.
@@ -541,7 +567,11 @@ recipe loader. It observes the immediate source's bands and follows declared inh
 records for visualizations, including styles owned by the source and intermediate wrappers rather than their
 copied presets. Its operation basis compares persisted dependency inputs by value, retaining runtime
 `ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
-asset listing `updateTime` and Earth Engine identity. Panel drafts and dirty state do not renew observations
+asset listing `updateTime` and Earth Engine identity. The basis covers every record the closure read, whether the
+closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
+record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
+The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
+without observing, because the capability walkers its observations use rely on it. Panel drafts and dirty state do not renew observations
 or invalidate pending answers. The full model remains part of the comparison: computation changes must
 invalidate even when the resulting band description is identical. The same comparison controls re-observation
 and whether a pending answer may publish.
@@ -695,26 +725,40 @@ on it. Acquisition belongs to a consumer's own lifecycle, and only where one exi
 Masking's Retrieve is therefore the only consumer that can meet needs observation by itself. A consumer that wants
 the observed answer must bring an acquirer whose lifetime covers its own: subscribing to the runtime operation and
 holding the result, as Retrieve does, or observing from a lifetime that spans the consumer, as a recipe's root
-component does for the recipe being edited. A layer rendered inside another recipe's map has no such lifetime; a
-shared live `watchSource$` is what would give it one.
+component does for the recipe being edited. A layer rendered inside another recipe's map has no such owner today.
+Its migration must establish one through the shared runtime, including refresh and cancellation, before replacing
+its existing read. This does not require the future `watchSource$` API: choose an existing operation whose lifecycle
+fits the consumer. Returning needs observation indefinitely is not an acceptable migration of a working consumer.
 
-**The graph gate.** Resolution has two gates. The second discards the root description when any diagnostic was
-collected, and is already scoped to what was asked: a provider's inputs are read through thunks, so a source no
-provider asked about is never resolved and never diagnosed. The first gate is not scoped. The dependency graph
-descends every declared recipe edge, and resolution refuses to call any declaration while the graph carries a
-diagnostic. A Classification whose training recipe is not loaded is the case: its provider needs the training
-recipe for nothing, but the missing source is a graph diagnostic and no description is produced.
+**Dependency-scoped descriptions.** A description depends only on what its providers read, so only what they
+read can fail it. The graph builder holds each structural diagnosis where it belongs - on every edge whose target
+is absent, not only the first the traversal reached; on the edge whose target closes a cycle; and under the recipe
+whose own model produced it - while `graph.diagnostics` stays the complete, deduplicated account. Resolution
+surfaces a diagnosis when a provider reaches it: reading an edge to an absent recipe reports that edge, a role
+whose own field is malformed reports that field rather than a missing role, and a recipe whose own model cannot be
+read fails before its provider is consulted, so an unsupported type is never taken for an undeclared output.
 
-A structural diagnostic is therefore carried on the edge it belongs to rather than in a list consulted before any
-provider runs, and resolution surfaces it when it resolves that edge. A provider that asks for the missing source
-meets the diagnostic and has its answer discarded exactly as today, so the gate is not weakened where it bears. A
-cyclic edge is attached the same way and refuses traversal, which also removes resolution's reliance on the
-pre-gate to keep its recursion finite.
+Cycles are detected on the path of provider reads. Which edge the graph marks as closing a cycle depends on the
+order it walked in, so a description whose reads form no cycle is never failed by that mark; a read of a recipe
+still being described is the cycle, is diagnosed on that edge and is not followed, which also bounds the
+recursion. The graph's cycle diagnostics remain evidence for dependency validity and for the observation check
+below.
 
-Being described is not being executable. A recipe whose graph carries a structural diagnostic can resolve a
-description when no provider it depends on asks for the broken edge; Preview and Retrieve still require a complete
-graph, and what a known-bad state blocks stays owned by [legacy policy](source-resolution.md#legacy-policy).
-Resolution is shared, so Earth Engine and Task inherit edge scoping and need their own witnesses for it.
+Asking for a recipe's own observation answers for more than itself: observing its running image, or the catalogue
+it says it can be asked for, may consult any part of what it depends on. As a conservative policy, covering both
+`RUNNING_IMAGE` and `AVAILABLE_BANDS`, every structural diagnosis reachable from that recipe - found by which
+recipe or edge owns it, not by the path the graph recorded - is reported and nothing is requested. The observer
+applies the same rule through discovery, so a doomed request never reaches Earth Engine.
+
+Being described is not being executable. A recipe whose closure carries a structural diagnosis can be described
+when no provider reads it; whether its dependencies are sound is answered from the complete closure by
+`dependencyValidity`, and what a known-bad state blocks stays owned by
+[legacy policy](source-resolution.md#legacy-policy). Two execution boundaries require `dependencyValidity` to be
+`VALID`: Masking's observed Retrieve, and Task's asset export of a recipe whose type declares its output. Task
+resolves only for declared roots, so the export of a type that declares no output is not checked. Earth Engine does not resolve descriptions at all: Preview and its other endpoints build
+images lazily and refuse what they execute - a cycle through `recipeRef`, a failed read through the operation's
+recipe scope - so it inherits neither the scoping nor a new check. Map preview does not consult the graph; it
+withholds a layer whose recipe reports no bands.
 
 **One legacy seam.** A type with no provider is answered in one GUI module from its registered helpers. The seam
 relocates that answer; it does not change it. What the helper returns passes through unchanged - band names and the
@@ -732,11 +776,14 @@ The seam answers whole closures, not root types. Retrieve's existing undeclared-
 that way: it applies when every diagnostic is an undeclared output anywhere in the closure, which is why the one
 production caller passing a fallback policy is Masking - a declared type whose source may not be. Folding that
 fallback into the seam is what stops consumers branching on whether a type is declared: the seam reports a legacy
-answer, and Retrieve's existing policy applies to legacy answers alone.
+answer, and Retrieve's existing policy applies to legacy answers alone. Acquisition failures, broken dependencies
+and invalid descriptions never become legacy answers. Task continues to resolve shared declarations independently
+through its authorized runtime adapters; the common GUI read is not a backend dependency or execution authority.
 
 The seam cannot sit at the recipe-type registry. Map layers, preset filtering and the visualization selector reach
 the helpers through the registry, but Retrieve panels import each type's `bands.js` directly. Only a module both
-import paths are routed through can be removed by deletion when the last type declares its output.
+import paths are routed through can isolate the compatibility behavior. When the last type declares its output,
+delete the legacy adapter and retain the common consumer API; consumers must not need another migration.
 
 **One meaning per argument.** A registered helper answers about a recipe and the evidence held about the source it
 inherits from:
@@ -756,7 +803,8 @@ presentation concern.
 
 **Walk-through.** Optical Mosaic resolves synchronously from its model. CCDC always needs observation, and its
 consumers see nothing drawn until something acquires it. Masking inherits its source's answer and so inherits its
-status. Classification resolves synchronously once structural diagnostics are edge-scoped, and not before.
+status. Classification will resolve synchronously once it declares a provider: its training recipe is an edge the
+description never reads.
 Regression has no provider and is answered by the seam, with the names and hints its helper returns today, until it
 declares one.
 
@@ -832,6 +880,8 @@ prove only runtime-owned behavior:
 - while output resolution is pending, the destination selector is disabled as a whole without clearing its value;
   after `READY`, only incompatible destinations are disabled and reconciliation occurs once;
 - synchronous invalid resolution emits no `LOADING`, emits one terminal state and completes;
+- a terminal reports `dependencyValidity` from the same closure as its description, never `VALID` for a closure
+  that failed, and Retrieve blocks a description whose dependencies are not known to be sound;
 - a synchronous exception during graph construction or observer setup becomes terminal `UNAVAILABLE`, retains the
   error and completes without using the Observable error channel;
 - the one-shot public API never emits `PENDING`;
