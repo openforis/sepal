@@ -13,6 +13,9 @@ set +a
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
+# Resolved before any playbook runs, so a missing image or unreachable registry touches no host
+WORKER_AMI_HASH=$(python3 worker-ami/worker_ami.py hash "$VERSION")
+
 echo "Provisioning Sepal on AWS [\
 CONFIG_HOME: $CONFIG_HOME, \
 VERSION: $VERSION, \
@@ -62,11 +65,9 @@ ansible-playbook configure-efs.yml \
     --extra-vars "env_file=$CONFIG_HOME/env"
 
 
-packer build \
-  --var AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-  --var AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-  --var AWS_REGION="$AWS_REGION" \
-  --var AWS_WORKER_AMI="$AWS_WORKER_AMI" \
-  --var VERSION="$VERSION" \
-  --var CONFIG_HOME="$CONFIG_HOME" \
-  worker-ami/packer.json
+WORKER_AMI_VERSION=$(python3 worker-ami/worker_ami.py lookup "$WORKER_AMI_HASH")
+if [ -z "$WORKER_AMI_VERSION" ]; then
+    ./build-worker-ami.sh "$VERSION" "$CONFIG_HOME"
+else
+    echo "Reusing worker AMI $WORKER_AMI_VERSION (hash $WORKER_AMI_HASH)"
+fi

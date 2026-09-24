@@ -254,6 +254,7 @@
         dest: "/etc/sepal/env.d/env-current"
         content: |
           SEPAL_VERSION={{ version }}
+          WORKER_AMI_VERSION={{ worker_ami_version }}
           SEPAL_IP={{ sepal_ip }}
           SEPAL_SSH_IP={{ sepal_ssh_ip }}
           SYSLOG_ADDRESS={{ syslog_address }}

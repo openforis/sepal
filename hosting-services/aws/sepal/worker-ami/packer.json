@@ -4,7 +4,8 @@
     "AWS_SECRET_ACCESS_KEY": "",
     "AWS_WORKER_AMI": "",
     "AWS_REGION": "",
-    "VERSION": ""
+    "VERSION": "",
+    "CONTENT_HASH": ""
   },
   "builders": [
     {
@@ -20,7 +21,8 @@
       "ami_name": "Sandbox({{user  `AWS_REGION`}}) - {{user `VERSION`}}",
       "tags": {
         "Version": "{{user `VERSION`}}",
-        "Region": "{{user `AWS_REGION`}}"
+        "Region": "{{user `AWS_REGION`}}",
+        "ContentHash": "{{user `CONTENT_HASH`}}"
       },
       "run_tags":{
          "Name":"Packer"

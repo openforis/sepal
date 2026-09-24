@@ -209,6 +209,12 @@ Worker sessions authenticate with per-session API keys; see
 [modules/worker/CLAUDE.md](modules/worker/CLAUDE.md#session-api-keys), including the one-time
 task-executor transition (drain task executors before deploying that change).
 
+The worker AMI is built only when its content hash changes: the sandbox and task image IDs, every file in
+`hosting-services/aws/sepal/worker-ami/`, and the env values listed in `worker_ami.py`. Anything the AMI
+build reads belongs in that directory. Force a rebuild with
+`bin/deploy -s aws/sepal/build-worker-ami.sh -b <build> -c <config>`. One AMI can serve many builds, so check
+which one the current deployment resolves to before deleting old AMIs.
+
 When adding a new deployable module (or renaming an existing one), you MUST update
 `modules/ops/script/build-and-push-images.sh` to include `build <module>` and `push <module>`
 entries for it. This script builds and pushes all production Docker images; a module missing

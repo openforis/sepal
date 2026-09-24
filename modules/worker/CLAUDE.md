@@ -153,6 +153,13 @@ members; only `stopped` ones are candidates.
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
 - Recycled instances only carry the blocks their sessions read; warm-ups are fully read.
 
+## Worker AMI version (AWS)
+`WORKER_AMI_VERSION` (default `SEPAL_VERSION`) names the build the worker AMI was made from. The worker
+finds the AMI by that `Version` tag, tags its instances with it (older ones are recycled), and runs the
+`sandbox` and `task` images of that tag, the ones baked into the AMI, so the provisioner never pulls.
+A deploy reuses the AMI while its content hash (`hosting-services/aws/sepal/worker-ami/worker_ami.py`)
+is unchanged, so this is often an older build than the one deployed.
+
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
 (`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
