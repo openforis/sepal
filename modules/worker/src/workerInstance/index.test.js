@@ -13,7 +13,7 @@ const flush = async () => {
     }
 }
 
-const build = ({instanceTypes, idle = [], reserved = [], claims = {
+const build = ({instanceTypes, idle = [], reserved = [], stoppedPoolSize, claims = {
     claim: jest.fn(async () => true),
     release: jest.fn(async () => true),
     all: jest.fn(async () => []),
@@ -25,11 +25,13 @@ const build = ({instanceTypes, idle = [], reserved = [], claims = {
         idleInstances: jest.fn(async () => idle),
         reservedInstances: jest.fn(async () => reserved),
         launchIdle: jest.fn(async () => []),
+        pooledInstances: jest.fn(async () => []),
+        launchPooled: jest.fn(async () => []),
         terminate: jest.fn(async () => {}),
         sweep: jest.fn(async () => {}),
     }
     const component = createWorkerInstanceComponent({
-        claims, provider, provisioner: {}, instanceTypes,
+        claims, provider, provisioner: {}, instanceTypes, stoppedPoolSize,
     })
     return {claims, component, provider}
 }
@@ -61,6 +63,26 @@ test('still tops the pool up to target when a type declares one', async () => {
     component.stop()
 
     expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
+})
+
+test('fills the configured stopped pool on the pool cycle', async () => {
+    const {component, provider} = build({instanceTypes: [], stoppedPoolSize: 2})
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    expect(provider.launchPooled).toHaveBeenCalledWith(2)
+})
+
+test('leaves the stopped pool alone by default', async () => {
+    const {component, provider} = build({instanceTypes: []})
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    expect(provider.pooledInstances).not.toHaveBeenCalled()
 })
 
 // The provider sweep collects what no allocation path can see (older-version and untagged

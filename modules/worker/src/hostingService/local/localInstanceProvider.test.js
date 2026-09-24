@@ -8,6 +8,25 @@ test('LOCAL_HOST is host.docker.internal', () => {
     expect(LOCAL_HOST).toBe('host.docker.internal')
 })
 
+// Instances on the shared dev daemon cost nothing idle, so there is nothing to stop into a pool.
+describe('stopped pool', () => {
+    test('is always empty', async () => {
+        const provider = createLocalInstanceProvider(INSTANCE_TYPE)
+        provider.launchIdle('T3aSmall', 1)
+
+        expect(await provider.pooledInstances()).toEqual([])
+        expect(await provider.pooledInstances({ready: true})).toEqual([])
+    })
+
+    test('refuses to fill the pool', async () => {
+        const provider = createLocalInstanceProvider(INSTANCE_TYPE)
+        const [idle] = provider.launchIdle('T3aSmall', 1)
+
+        await expect(provider.launchPooled(1)).rejects.toThrow(/not supported/)
+        await expect(provider.pool(idle.id)).rejects.toThrow(/not supported/)
+    })
+})
+
 describe('launchIdle', () => {
     test('returns an array containing exactly 1 instance regardless of count', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)

@@ -71,7 +71,8 @@ const backfillClaims = async ({claims, provider}) => {
     }
 }
 
-const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes, openSessionInstances = null}) => {
+// stoppedPoolSize — target size of the type-agnostic pool of stopped, disk-warm instances (AWS).
+const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceTypes, openSessionInstances = null, stoppedPoolSize = 0}) => {
 
     // ONE registry shared by both provisioning paths — the event handler below and the
     // reconcile sweep reaching in through instanceManager.reprovisionInstance. Two registries
@@ -122,20 +123,22 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
         }
 
         // Scheduled UNCONDITIONALLY, even with no idle pool configured. SizeIdlePool is the only
-        // step that terminates a released instance — releaseInstance merely un-reserves it (on AWS,
-        // re-tags it State=idle), and the provider's own cleanup sweeps only idle instances of an
-        // OLDER version. An empty target map is not "nothing to do": every idle instance then has
-        // target 0 and is terminated, which is exactly what should happen. Gating on
-        // `size > 0` made the whole termination path hinge on one catalog entry carrying idleCount.
+        // step that terminates, or stops into the pool, a released instance — releaseInstance
+        // merely un-reserves it (on AWS, re-tags it State=idle), and the provider's own cleanup
+        // sweeps only idle instances of an OLDER version. An empty target map is not "nothing to
+        // do": every idle instance then has target 0 and is terminated, which is exactly what should
+        // happen. Gating on `size > 0` made the whole termination path hinge on one catalog entry
+        // carrying idleCount.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
-        // SizeIdlePool is the only step that terminates a released instance — releaseInstance
-        // merely un-reserves it. The provider sweep then collects what no allocation path can see:
-        // instances of an older version, and untagged instances whose CreateTags never ran. A
-        // sweep failure must not stop the sizing, hence the two independent catches.
+        // SizeIdlePool is the only step that terminates, or pools, a released instance —
+        // releaseInstance merely un-reserves it. The provider sweep then collects what no
+        // allocation path can see: instances of an older version, and untagged instances whose
+        // CreateTags never ran. A sweep failure must not stop the sizing, hence the two
+        // independent catches.
         const runPoolCycle = async () => {
             try {
-                await sizeIdlePool(targetIdleCountByInstanceType, {provider})
+                await sizeIdlePool(targetIdleCountByInstanceType, stoppedPoolSize, {provider, claims})
             } catch (err) {
                 log.error('SizeIdlePool failed:', err.message)
             }

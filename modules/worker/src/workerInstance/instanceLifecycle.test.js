@@ -127,6 +127,9 @@ describe('requestInstance', () => {
 
     const makeProvider = (overrides = {}) => ({
         idleInstances: jest.fn().mockResolvedValue([]),
+        pooledInstances: jest.fn().mockResolvedValue([]),
+        startPooled: jest.fn(async (instance, instanceType, reservation) =>
+            ({...instance, type: instanceType, host: null, reservation})),
         launchReserved: jest.fn().mockResolvedValue(makeReservedInstance({id: 'i-new'})),
         reserve: jest.fn().mockResolvedValue(undefined),
         awaitHost: jest.fn(async instance => instance),
@@ -312,6 +315,72 @@ describe('requestInstance', () => {
 
         expect(claimedBeforeWait).toBe(true)
         expect(result.host).toBe('9.9.9.9')
+    })
+
+    // Provisioning starts from the request, as for an idle instance, rather than waiting for the
+    // started-instance poll to notice the start.
+    test('no idle instance: starts the oldest ready pooled instance as the requested type', async () => {
+        const pending = []
+        events.instancePendingProvisioning$.subscribe(v => pending.push(v))
+        const older = makeInstance({id: 'i-pooled-old', type: 'T3aSmall', host: null, running: false, launchTime: new Date(1000)})
+        const newer = makeInstance({id: 'i-pooled-new', type: 'T3aSmall', host: null, running: false, launchTime: new Date(2000)})
+        const claims = makeClaims()
+        const provider = makeProvider({
+            pooledInstances: jest.fn().mockResolvedValue([newer, older]),
+            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9'})),
+        })
+
+        const result = await requestInstance({...REQUEST, instanceType: 'M6aXlarge'}, {claims, provider})
+
+        expect(provider.pooledInstances).toHaveBeenCalledWith({ready: true})
+        expect(claims.claim).toHaveBeenCalledWith('i-pooled-old', 's-42')
+        expect(provider.startPooled).toHaveBeenCalledWith(older, 'M6aXlarge', RESERVATION)
+        expect(provider.launchReserved).not.toHaveBeenCalled()
+        expect(result).toMatchObject({id: 'i-pooled-old', type: 'M6aXlarge', host: '9.9.9.9', reservation: RESERVATION})
+        expect(pending[pending.length - 1].instance).toMatchObject({id: 'i-pooled-old', type: 'M6aXlarge', reservation: RESERVATION})
+    })
+
+    test('an idle instance of the requested type is used before a pooled one', async () => {
+        const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
+        const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
+        const provider = makeProvider({
+            idleInstances: jest.fn().mockResolvedValue([idle]),
+            pooledInstances: jest.fn().mockResolvedValue([pooled]),
+        })
+
+        const result = await requestInstance(REQUEST, {claims: makeClaims(), provider})
+
+        expect(result.id).toBe('i-idle')
+        expect(provider.startPooled).not.toHaveBeenCalled()
+    })
+
+    // Capacity and type-compatibility failures belong to the requested type, not to the pooled
+    // instance, so a second pooled candidate would fail the same way: launch instead.
+    test('a failed pooled start releases the claim and launches', async () => {
+        const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
+        const claims = makeClaims()
+        const provider = makeProvider({
+            pooledInstances: jest.fn().mockResolvedValue([pooled]),
+            startPooled: jest.fn().mockRejectedValue(new Error('InsufficientInstanceCapacity')),
+        })
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(claims.release).toHaveBeenCalledWith('i-pooled')
+        expect(result.id).toBe('i-new')
+    })
+
+    test('a lost claim on the pooled instance launches', async () => {
+        const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
+        const claims = makeClaims({claim: jest.fn()
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(true)})
+        const provider = makeProvider({pooledInstances: jest.fn().mockResolvedValue([pooled])})
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        expect(provider.startPooled).not.toHaveBeenCalled()
+        expect(result.id).toBe('i-new')
     })
 
     test('on exception: emits FailedToRequestInstance and rethrows', async () => {
@@ -555,15 +624,121 @@ describe('sizeIdlePool', () => {
         ;({sizeIdlePool} = await import('./command/sizeIdlePool.js'))
     })
 
-    const makeProvider = ({idleInstances = [], launchResult = [makeInstance({id: 'i-new'})]} = {}) => ({
+    const makeProvider = ({idleInstances = [], pooledInstances = [], launchResult = [makeInstance({id: 'i-new'})]} = {}) => ({
         idleInstances: jest.fn().mockResolvedValue(idleInstances),
+        pooledInstances: jest.fn().mockResolvedValue(pooledInstances),
         launchIdle: jest.fn().mockResolvedValue(launchResult),
+        launchPooled: jest.fn().mockResolvedValue([]),
+        pool: jest.fn().mockResolvedValue(undefined),
         terminate: jest.fn().mockResolvedValue(undefined),
+    })
+
+    const minutesAgo = m => new Date(Date.now() - m * 60_000)
+
+    const makeClaims = (claimed = []) => ({
+        claim: jest.fn(async instanceId => !claimed.includes(instanceId)),
+        release: jest.fn().mockResolvedValue(true),
+    })
+
+    // A request claims an idle instance before tagging it reserved; stopping or terminating it in
+    // that window costs the user their session.
+    test('a surplus instance a request has claimed is neither pooled nor terminated', async () => {
+        const idleInstances = [
+            makeInstance({id: 'i-requested', type: 'T3aSmall', launchTime: minutesAgo(10)}),
+            makeInstance({id: 'i-free', type: 'T3aSmall', launchTime: minutesAgo(5)}),
+        ]
+        const provider = makeProvider({idleInstances})
+        await sizeIdlePool({}, 1, {provider, claims: makeClaims(['i-requested'])})
+
+        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-free'])
+        expect(provider.terminate).not.toHaveBeenCalled()
+    })
+
+    test('holds the claim on a surplus instance only while pooling or terminating it', async () => {
+        const idleInstances = [
+            makeInstance({id: 'i-pooled', type: 'T3aSmall', launchTime: minutesAgo(10)}),
+            makeInstance({id: 'i-terminated', type: 'T3aSmall', launchTime: minutesAgo(5)}),
+        ]
+        const provider = makeProvider({idleInstances})
+        const claims = makeClaims()
+        await sizeIdlePool({}, 1, {provider, claims})
+
+        expect(claims.claim.mock.calls.map(([id]) => id)).toEqual(['i-pooled', 'i-terminated'])
+        expect(claims.release.mock.calls.map(([id]) => id)).toEqual(['i-pooled', 'i-terminated'])
+    })
+
+    test('the pool slot of an instance a request took is warm-up launched', async () => {
+        const idleInstances = [makeInstance({id: 'i-requested', type: 'T3aSmall'})]
+        const provider = makeProvider({idleInstances})
+        await sizeIdlePool({}, 1, {provider, claims: makeClaims(['i-requested'])})
+
+        expect(provider.pool).not.toHaveBeenCalled()
+        expect(provider.launchPooled).toHaveBeenCalledWith(1)
+    })
+
+    test('a stopped pool of size 0 is never queried, filled or launched', async () => {
+        const provider = makeProvider({idleInstances: [makeInstance({id: 'i-a'}), makeInstance({id: 'i-b'})]})
+        await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
+
+        expect(provider.pooledInstances).not.toHaveBeenCalled()
+        expect(provider.pool).not.toHaveBeenCalled()
+        expect(provider.launchPooled).not.toHaveBeenCalled()
+    })
+
+    // The oldest surplus instances have read the most of their disk, so they are the warmest to keep.
+    test('surplus idle instances fill the stopped pool oldest first; the rest are terminated', async () => {
+        const idleInstances = [
+            makeInstance({id: 'i-kept', type: 'T3aSmall', launchTime: minutesAgo(120)}),
+            makeInstance({id: 'i-old', type: 'T3aSmall', launchTime: minutesAgo(90)}),
+            makeInstance({id: 'i-new', type: 'T3aSmall', launchTime: minutesAgo(1)}),
+            makeInstance({id: 'i-mid', type: 'M6aXlarge', launchTime: minutesAgo(30)}),
+        ]
+        const provider = makeProvider({idleInstances, pooledInstances: [makeInstance({id: 'i-pooled'})]})
+        await sizeIdlePool({'T3aSmall': 1}, 3, {provider, claims: makeClaims()})
+
+        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-old', 'i-mid'])
+        expect(provider.terminate.mock.calls.map(([id]) => id)).toEqual(['i-new'])
+        expect(provider.launchPooled).not.toHaveBeenCalled()
+    })
+
+    test('the deficit surplus cannot fill is warm-up launched', async () => {
+        const idleInstances = [makeInstance({id: 'i-surplus', type: 'T3aSmall'})]
+        const provider = makeProvider({idleInstances, pooledInstances: [makeInstance({id: 'i-pooled'})]})
+        await sizeIdlePool({}, 4, {provider, claims: makeClaims()})
+
+        expect(provider.pool).toHaveBeenCalledWith('i-surplus')
+        expect(provider.launchPooled).toHaveBeenCalledWith(2)
+    })
+
+    test('a full stopped pool takes no surplus and launches no warm-up', async () => {
+        const idleInstances = [makeInstance({id: 'i-surplus', type: 'T3aSmall'})]
+        const pooledInstances = [makeInstance({id: 'i-p1'}), makeInstance({id: 'i-p2'})]
+        const provider = makeProvider({idleInstances, pooledInstances})
+        await sizeIdlePool({}, 2, {provider, claims: makeClaims()})
+
+        expect(provider.pool).not.toHaveBeenCalled()
+        expect(provider.launchPooled).not.toHaveBeenCalled()
+        expect(provider.terminate).toHaveBeenCalledWith('i-surplus')
+    })
+
+    // The deficit is recomputed every cycle, so a failed pooling or warm-up is retried next minute
+    // rather than failing the sizing of everything else.
+    test('a failed pooling or warm-up launch does not fail the cycle', async () => {
+        const idleInstances = [
+            makeInstance({id: 'i-fails', type: 'T3aSmall', launchTime: minutesAgo(10)}),
+            makeInstance({id: 'i-pools', type: 'T3aSmall', launchTime: minutesAgo(5)}),
+        ]
+        const provider = makeProvider({idleInstances})
+        provider.pool.mockRejectedValueOnce(new Error('stop failed'))
+        provider.launchPooled.mockRejectedValue(new Error('launch failed'))
+
+        await expect(sizeIdlePool({}, 3, {provider, claims: makeClaims()})).resolves.toBeUndefined()
+        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-fails', 'i-pools'])
     })
 
     test('current < target: calls launchIdle with deficit count', async () => {
         const provider = makeProvider({idleInstances: []})
-        await sizeIdlePool({'T3aSmall': 2}, {provider})
+        await sizeIdlePool({'T3aSmall': 2}, 0, {provider, claims: makeClaims()})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 2)
         expect(provider.terminate).not.toHaveBeenCalled()
@@ -576,7 +751,7 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-c', type: 'T3aSmall'}),
         ]
         const provider = makeProvider({idleInstances: surplus})
-        await sizeIdlePool({'T3aSmall': 1}, {provider})
+        await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
         expect(provider.terminate).toHaveBeenCalledTimes(2)
         expect(provider.launchIdle).not.toHaveBeenCalled()
@@ -587,13 +762,12 @@ describe('sizeIdlePool', () => {
     // that may still be booting and throws away the warm one, so the next session pays for a cold
     // boot that the pool exists to avoid.
     test('current > target: terminates the most recently launched, keeping the warm one', async () => {
-        const minutesAgo = m => new Date(Date.now() - m * 60_000)
         const idleInstances = [
             makeInstance({id: 'i-warm', type: 'T3aSmall', launchTime: minutesAgo(90)}),
             makeInstance({id: 'i-cold', type: 'T3aSmall', launchTime: minutesAgo(1)}),
         ]
         const provider = makeProvider({idleInstances})
-        await sizeIdlePool({'T3aSmall': 1}, {provider})
+        await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
         expect(provider.terminate).toHaveBeenCalledTimes(1)
         expect(provider.terminate).toHaveBeenCalledWith('i-cold')
@@ -602,7 +776,7 @@ describe('sizeIdlePool', () => {
     test('current == target: no-op', async () => {
         const idle = [makeInstance({id: 'i-x', type: 'T3aSmall'})]
         const provider = makeProvider({idleInstances: idle})
-        await sizeIdlePool({'T3aSmall': 1}, {provider})
+        await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
         expect(provider.launchIdle).not.toHaveBeenCalled()
         expect(provider.terminate).not.toHaveBeenCalled()
@@ -615,7 +789,7 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-big-3', type: 'C5aXlarge'}),
         ]
         const provider = makeProvider({idleInstances})
-        await sizeIdlePool({'T3aSmall': 1, 'C5aXlarge': 1}, {provider})
+        await sizeIdlePool({'T3aSmall': 1, 'C5aXlarge': 1}, 0, {provider, claims: makeClaims()})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
         expect(provider.terminate).toHaveBeenCalledTimes(2)
@@ -623,7 +797,7 @@ describe('sizeIdlePool', () => {
 
     test('accepts Map instead of plain object', async () => {
         const provider = makeProvider({idleInstances: []})
-        await sizeIdlePool(new Map([['T3aSmall', 1]]), {provider})
+        await sizeIdlePool(new Map([['T3aSmall', 1]]), 0, {provider, claims: makeClaims()})
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
     })
 
@@ -635,7 +809,7 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-extra-2', type: 'C5aXlarge'}),
         ]
         const provider = makeProvider({idleInstances: nonTargetInstances})
-        await sizeIdlePool({'T3aSmall': 1}, {provider})
+        await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
         expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
         expect(provider.terminate).toHaveBeenCalledTimes(2)
@@ -984,6 +1158,7 @@ describe('instanceManager', () => {
         },
         provider: {
             idleInstances: jest.fn().mockResolvedValue([]),
+            pooledInstances: jest.fn().mockResolvedValue([]),
             launchReserved: jest.fn().mockResolvedValue(makeReservedInstance({id: 'i-mgr'})),
             reserve: jest.fn().mockResolvedValue(undefined),
             getInstance: jest.fn().mockResolvedValue(makeReservedInstance()),

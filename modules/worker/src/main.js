@@ -86,6 +86,7 @@ const main = async () => {
         provisioner: instanceProvisioner,
         instanceTypes,
         openSessionInstances,
+        stoppedPoolSize: config.stoppedPoolSize,
     })
 
     // The locked-users set starts EMPTY on every worker restart and only catches up on the budget

@@ -140,13 +140,23 @@ const createLocalInstanceProvider = _instanceType => {
 
     const sweep = () => { /* no-op */ }
 
+    // No stopped pool: instances on the shared dev daemon cost nothing while idle.
+    const pooledInstances = async () => []
+    const unsupported = operation => async () => {
+        throw new Error(`${operation} is not supported by the local hosting service`)
+    }
+
     return {
         launchReserved,
         launchIdle,
+        launchPooled: unsupported('launchPooled'),
+        pool: unsupported('pool'),
+        startPooled: unsupported('startPooled'),
         terminate,
         reserve: reserveInstance,
         release: releaseInstance,
         idleInstances,
+        pooledInstances,
         reservedInstances,
         getInstance,
         restore,

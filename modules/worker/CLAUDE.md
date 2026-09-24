@@ -131,6 +131,28 @@ on every file save. Four mechanisms carry instance management across it:
   notification and the full grace, never a close. The former 2-minute grace, measured from process
   start, was what let a crash loop starve every closing sweep.
 
+## Stopped-instance pool (AWS)
+`STOPPED_POOL_SIZE` (default 0 = off) keeps that many stopped worker instances whose disk has already
+been read from the AMI snapshot. A stopped instance costs only its EBS storage and can be started as
+any instance type, so one type-agnostic pool serves every request. EC2 tag `State=pooled` marks
+members; only `stopped` ones are candidates.
+
+- `requestInstance` order: running idle instance of the type → oldest ready pooled instance
+  (`ModifyInstanceAttribute` → `StartInstances` → tag reserved) → cold launch. A
+  failed pooled start (capacity, incompatible type) leaves it in the pool and cold-launches. It is
+  tagged only once started: nothing but the pool may leave a worker stopped.
+  The request emits `InstancePendingProvisioning` itself, as for an idle instance; a pooled start is
+  never tagged `Starting=true`, since the started-instance poll would provision it a second time.
+- `SizeIdlePool` recycles: surplus idle instances fill the pool (oldest first) instead of being
+  terminated. It pools or terminates a surplus instance only under an `instance_claim` (session id
+  `pool-cycle`), the election a request runs before reserving, so it never takes an instance a
+  request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
+  rest. User data runs on the first boot only, so a pooled instance does not power off when started.
+- `sweep` terminates pooled instances of an older version, pooled instances still running an hour
+  after their start (failed warm-up or stop), and stopped instances outside the pool — every other
+  query sees only pending/running instances, so those would otherwise bill for their disk forever.
+- Recycled instances only carry the blocks their sessions read; warm-ups are fully read.
+
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
 (`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed

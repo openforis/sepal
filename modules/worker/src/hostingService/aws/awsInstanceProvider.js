@@ -5,7 +5,10 @@ import {
     DescribeImagesCommand,
     DescribeInstancesCommand,
     EC2Client,
+    ModifyInstanceAttributeCommand,
     RunInstancesCommand,
+    StartInstancesCommand,
+    StopInstancesCommand,
     TerminateInstancesCommand,
 } from '@aws-sdk/client-ec2'
 
@@ -19,8 +22,17 @@ import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
 const log = getLogger('worker/aws')
 
 const SECURITY_GROUP = 'Sandbox'
+const PREWARM_SCRIPT = fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url), 'utf8')
 // RunInstances takes user data base64-encoded; the SDK passes it through as given.
-const PREWARM_USER_DATA = fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url)).toString('base64')
+const PREWARM_USER_DATA = Buffer.from(PREWARM_SCRIPT).toString('base64')
+// A warm-up reads its disk and stops itself, which is what makes it a ready member of the stopped
+// pool. User data runs on the first boot only, so a pooled instance started later stays up.
+const WARM_UP_USER_DATA = Buffer.from(`${PREWARM_SCRIPT}poweroff\n`).toString('base64')
+// Cheapest type: a warm-up only reads its disk, and a pooled instance takes its type when started.
+const WARM_UP_INSTANCE_TYPE = 'T3aSmall'
+// A pooled instance running this long after its start never stopped: a failed warm-up script,
+// or a StopInstances that failed after the instance was tagged.
+const MAX_POOLED_RUNNING_MS = 60 * 60_000
 // The worker AMI's volumes, as packer.json maps them: the root disk and /var/lib/docker.
 const VOLUME_DEVICE_NAMES = ['/dev/xvda', '/dev/xvdf']
 const PUBLIC_IP_RETRIES = 300
@@ -72,10 +84,14 @@ const createInstanceTypeCodec = (instanceTypes = AWS_INSTANCE_TYPES) => {
     }
 }
 
-const launchTags = (environment, sepalVersion) => [
+const workerTags = (environment, sepalVersion) => [
     mkTag('Environment', environment),
     mkTag('Type', 'Worker'),
     mkTag('Version', sepalVersion),
+]
+
+const launchTags = (environment, sepalVersion) => [
+    ...workerTags(environment, sepalVersion),
     mkTag('Starting', 'true'),
 ]
 
@@ -86,6 +102,17 @@ const idleTags = environment => [
     // InStateSince is informational only (no consumer parses it); format intentionally ISO-8601.
     mkTag('InStateSince', new Date().toISOString()),
     mkTag('Name', `${environment}: Idle worker`),
+]
+
+// Clears the previous session's Username/WorkerType/SessionId, so a stopped instance is never listed
+// under a user it no longer serves.
+const pooledTags = environment => [
+    mkTag('State', 'pooled'),
+    mkTag('Username', ''),
+    mkTag('WorkerType', ''),
+    mkTag('SessionId', ''),
+    mkTag('InStateSince', new Date().toISOString()),
+    mkTag('Name', `${environment}: Pooled worker`),
 ]
 
 // The Name tag is written, never read: no filter matches on it and toWorkerInstance ignores it.
@@ -114,9 +141,13 @@ const filterTaggedWith = (tagName, value) => mkFilter(`tag:${tagName}`, value)
 const filterRunning = () => mkFilter('instance-state-name', 'running')
 const filterPendingOrRunning = () => mkFilter('instance-state-name', ['pending', 'running'])
 const filterInstanceType = instanceTypeName => mkFilter('instance-type', instanceTypeName)
-const filterTypeWorker = environment => [
+const filterPooledStates = () => mkFilter('instance-state-name', ['pending', 'running', 'stopping', 'stopped'])
+const filterWorker = environment => [
     filterTaggedWith('Type', 'Worker'),
     filterTaggedWith('Environment', environment),
+]
+const filterTypeWorker = environment => [
+    ...filterWorker(environment),
     filterPendingOrRunning(),
 ]
 
@@ -146,9 +177,9 @@ const instanceVersion = awsInstance => tagValue(awsInstance, 'Version')
 // `codec` translates EC2's instance-type value back to the catalog id the rest of the worker
 // keys on — see createInstanceTypeCodec.
 const toWorkerInstance = (awsInstance, codec) => {
-    const idle = tagValue(awsInstance, 'State') === 'idle'
+    const unreserved = ['idle', 'pooled'].includes(tagValue(awsInstance, 'State'))
     const running = awsInstance.State?.Name === 'running'
-    const reservation = idle ? null : {
+    const reservation = unreserved ? null : {
         username: tagValue(awsInstance, 'Username') ?? '',
         workerType: tagValue(awsInstance, 'WorkerType') ?? '',
         sessionId: tagValue(awsInstance, 'SessionId') ?? null,
@@ -260,7 +291,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     // destructures undefined and the TypeError names neither EC2 nor the instance type. A SHORT
     // answer is not rejected: MinCount makes it EC2's error to raise, and throwing here would
     // discard instances it did create.
-    const launch = async (instanceType, count, {userData} = {}) => {
+    const launch = async (instanceType, count, {userData, shutdownBehavior} = {}) => {
         const awsInstanceType = codec.toAwsName(instanceType)
         log.info(`Launching ${instanceType} (${awsInstanceType})`)
         const response = await client.send(new RunInstancesCommand({
@@ -273,6 +304,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
             Placement: {AvailabilityZone: availabilityZone},
             ...volumeInitialization(volumeInitializationRate),
             ...(userData ? {UserData: userData} : {}),
+            ...(shutdownBehavior ? {InstanceInitiatedShutdownBehavior: shutdownBehavior} : {}),
         }))
         const instances = response.Instances ?? []
         if (instances.length === 0) {
@@ -344,6 +376,29 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         }))
         await terminateOldIdle(collectInstances(response))
         await terminateUntagged()
+        await terminatePoolStrays()
+    }
+
+    // Only the pool keeps workers stopped. Terminates, best-effort like the other cleanups:
+    //   - pooled instances of an older version, whatever their state;
+    //   - pooled instances still running long after their start;
+    //   - stopped instances outside the pool — a start EC2 accepted and then failed, or an
+    //     AWS-initiated stop. Every other query sees only pending/running instances, so a stopped
+    //     reserved or idle instance would otherwise pay for its disk forever.
+    const terminatePoolStrays = async () => {
+        const response = await client.send(new DescribeInstancesCommand({
+            Filters: [...filterWorker(environment), filterPooledStates()],
+        }))
+        const now = Date.now()
+        const isStray = i => tagValue(i, 'State') === 'pooled'
+            ? isOlderVersion(instanceVersion(i), sepalVersion)
+                || (i.State?.Name === 'running' && now - new Date(i.LaunchTime).getTime() > MAX_POOLED_RUNNING_MS)
+            : i.State?.Name === 'stopped'
+        await Promise.all(collectInstances(response).filter(isStray).map(i =>
+            terminate(i.InstanceId).catch(err =>
+                log.warn(`Failed to terminate pool stray ${instanceTag(i.InstanceId)}: ${err.message}`)
+            )
+        ))
     }
 
     // Polls getInstance up to PUBLIC_IP_RETRIES times until the host is set. Each iteration is a
@@ -426,6 +481,42 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         return {...toWorkerInstance(awsInst, codec), reservation}
     }
 
+    // Warm-up launches: never tagged Starting, so the started-instance poll leaves them alone.
+    const launchPooled = async count => {
+        const awsInstances = await launch(WARM_UP_INSTANCE_TYPE, count, {
+            userData: WARM_UP_USER_DATA,
+            shutdownBehavior: 'stop',
+        })
+        const results = []
+        for (const awsInst of awsInstances) {
+            await tagInstance(awsInst.InstanceId, workerTags(environment, sepalVersion), pooledTags(environment))
+            results.push({...toWorkerInstance(awsInst, codec), reservation: null})
+        }
+        return results
+    }
+
+    const pool = async instanceId => {
+        await tagInstance(instanceId, pooledTags(environment))
+        await retry(2, () => client.send(new StopInstancesCommand({InstanceIds: [instanceId]})))
+        log.info(`Stopped ${instanceTag(instanceId)} into the pool`)
+    }
+
+    // instanceType is a catalog ID. Tagged only once started: a failed start leaves the instance
+    // untouched in the pool, and a failed tagging terminates it (tagInstance). Never Starting=true:
+    // the caller provisions it, and the started-instance poll would provision it again once the
+    // first provisioning had finished. EC2 assigns a new public IP on every start, so the returned
+    // instance has no host until awaitHost.
+    const startPooled = async (instance, instanceType, reservation) => {
+        await client.send(new ModifyInstanceAttributeCommand({
+            InstanceId: instance.id,
+            InstanceType: {Value: codec.toAwsName(instanceType)},
+        }))
+        await client.send(new StartInstancesCommand({InstanceIds: [instance.id]}))
+        await tagInstance(instance.id, reserveTags(environment, reservation))
+        log.info(`Started pooled ${instanceTag(instance)} as ${instanceType}`)
+        return {...instance, type: instanceType, host: null, running: false, reservation}
+    }
+
     const reserveInstance = async instance => {
         await tagInstance(instance.id, reserveTags(environment, instance.reservation))
     }
@@ -445,6 +536,16 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
         }
         return findInstancesByFilters(true, filterTaggedWith('State', 'idle'))
     }
+
+    // instanceType-agnostic. ready → only stopped instances, the ones a request can start.
+    const pooledInstances = async ({ready = false} = {}) =>
+        findInstancesByRequest(true, {
+            Filters: [
+                filterTaggedWith('State', 'pooled'),
+                ...filterWorker(environment),
+                ready ? mkFilter('instance-state-name', 'stopped') : filterPooledStates(),
+            ],
+        })
 
     const reservedInstances = async () =>
         findInstancesByFilters(false, filterTaggedWith('State', 'reserved'))
@@ -493,10 +594,14 @@ const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} 
     return {
         launchReserved,
         launchIdle,
+        launchPooled,
+        pool,
+        startPooled,
         terminate,
         reserve: reserveInstance,
         release: releaseInstance,
         idleInstances,
+        pooledInstances,
         reservedInstances,
         getInstance,
         restore,

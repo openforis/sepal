@@ -5,7 +5,10 @@ import {
     DescribeImagesCommand,
     DescribeInstancesCommand,
     EC2Client,
+    ModifyInstanceAttributeCommand,
     RunInstancesCommand,
+    StartInstancesCommand,
+    StopInstancesCommand,
     TerminateInstancesCommand,
 } from '@aws-sdk/client-ec2'
 import {mockClient} from 'aws-sdk-client-mock'
@@ -54,6 +57,21 @@ const makeAwsInstance = (overrides = {}) => ({
 // RunInstances response with makeAwsInstance() — that is what hid the launchIdle reservation bug.
 const makeRunInstancesResponse = (overrides = {}) => ({
     Instances: [makeAwsInstance({Tags: undefined, State: {Name: 'pending'}, PublicIpAddress: undefined, ...overrides})],
+})
+
+// A stopped instance has no public address; Version overrides the tag, since only it varies.
+const makePooledAwsInstance = ({Version = '5.0.0', ...overrides} = {}) => makeAwsInstance({
+    State: {Name: 'stopped'},
+    PublicIpAddress: undefined,
+    Tags: [
+        {Key: 'State', Value: 'pooled'},
+        {Key: 'Username', Value: ''},
+        {Key: 'WorkerType', Value: ''},
+        {Key: 'Type', Value: 'Worker'},
+        {Key: 'Environment', Value: 'test-env'},
+        {Key: 'Version', Value: Version},
+    ],
+    ...overrides,
 })
 
 const describeResponse = instances => ({
@@ -645,6 +663,184 @@ describe('reads are free of side effects', () => {
         expect(terminated.length).toBeGreaterThanOrEqual(1)
         expect(terminated[0].args[0].input.InstanceIds).toEqual(['i-old'])
     })
+})
+
+describe('stopped pool', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    const PREWARM_SCRIPT = fs.readFileSync(new URL('./prewarmVolume.sh', import.meta.url), 'utf8')
+
+    test('pooledInstances counts every pooled instance of the current version, as unreserved', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            makePooledAwsInstance({InstanceId: 'i-current'}),
+            makePooledAwsInstance({InstanceId: 'i-old', Version: '4.0.0'}),
+        ]))
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        const pooled = await provider.pooledInstances()
+
+        expect(pooled.map(({id, reservation}) => ({id, reservation}))).toEqual([{id: 'i-current', reservation: null}])
+        const filters = ec2Mock.commandCalls(DescribeInstancesCommand)[0].args[0].input.Filters
+        expect(filters).toContainEqual({Name: 'tag:State', Values: ['pooled']})
+        expect(filters).toContainEqual({Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']})
+    })
+
+    test('pooledInstances({ready: true}) asks only for stopped instances', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        await provider.pooledInstances({ready: true})
+
+        const filters = ec2Mock.commandCalls(DescribeInstancesCommand)[0].args[0].input.Filters
+        expect(filters).toContainEqual({Name: 'instance-state-name', Values: ['stopped']})
+    })
+
+    test('launchPooled warm-up launches T3aSmall instances that read their disk and stop themselves', async () => {
+        const provider = await startedProvider()
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse({InstanceId: 'i-warm'}))
+        ec2Mock.on(CreateTagsCommand).resolves({})
+
+        await provider.launchPooled(2)
+
+        const run = ec2Mock.commandCalls(RunInstancesCommand)[0].args[0].input
+        const userData = Buffer.from(run.UserData, 'base64').toString()
+        expect(run).toMatchObject({InstanceType: 't3a.small', MinCount: 2, MaxCount: 2, InstanceInitiatedShutdownBehavior: 'stop'})
+        expect(userData.startsWith(PREWARM_SCRIPT)).toBe(true)
+        expect(userData.trimEnd().split('\n').pop()).toBe('poweroff')
+        const tags = ec2Mock.commandCalls(CreateTagsCommand).flatMap(c => c.args[0].input.Tags)
+        expect(tags).toContainEqual({Key: 'State', Value: 'pooled'})
+        expect(tags).not.toContainEqual({Key: 'Starting', Value: 'true'})
+    })
+
+    test('pool tags an instance pooled before stopping it', async () => {
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(StopInstancesCommand).resolves({})
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        await provider.pool('i-released')
+
+        const [tag, stop] = ec2Mock.calls().map(call => call.args[0])
+        expect(tag).toBeInstanceOf(CreateTagsCommand)
+        expect(tag.input.Tags).toContainEqual({Key: 'State', Value: 'pooled'})
+        expect(tag.input.Tags).toContainEqual({Key: 'Username', Value: ''})
+        expect(stop).toBeInstanceOf(StopInstancesCommand)
+        expect(stop.input.InstanceIds).toEqual(['i-released'])
+    })
+
+    // Tagged only once started: a stopped instance tagged reserved would be released to a stopped
+    // idle instance that no query sees. Never Starting=true: the request provisions the instance
+    // itself, and the started-instance poll would provision it a second time.
+    test('startPooled changes the type, starts the instance, then tags the reservation', async () => {
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(StartInstancesCommand).resolves({})
+        const provider = createAwsInstanceProvider(CONFIG)
+        const pooled = (await pooledInstanceFrom(provider))
+        const reservation = {...RESERVATION, sessionId: 's-42'}
+
+        const started = await provider.startPooled(pooled, 'M6aXlarge', reservation)
+
+        const [modify, start, tag] = ec2Mock.calls().map(call => call.args[0])
+            .filter(command => !(command instanceof DescribeInstancesCommand))
+        expect(modify.input).toEqual({InstanceId: 'i-pooled', InstanceType: {Value: 'm6a.xlarge'}})
+        expect(tag.input.Tags).toContainEqual({Key: 'State', Value: 'reserved'})
+        expect(tag.input.Tags).toContainEqual({Key: 'SessionId', Value: 's-42'})
+        expect(tag.input.Tags).not.toContainEqual({Key: 'Starting', Value: 'true'})
+        expect(start.input.InstanceIds).toEqual(['i-pooled'])
+        expect(started).toMatchObject({id: 'i-pooled', type: 'M6aXlarge', host: null, reservation})
+    })
+
+    test('a failed start leaves the instance in the pool and rethrows', async () => {
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(StartInstancesCommand).rejects(new Error('InsufficientInstanceCapacity'))
+        const provider = createAwsInstanceProvider(CONFIG)
+        const pooled = await pooledInstanceFrom(provider)
+
+        await expect(provider.startPooled(pooled, 'M6aXlarge', RESERVATION))
+            .rejects.toThrow('InsufficientInstanceCapacity')
+
+        expect(ec2Mock.commandCalls(CreateTagsCommand)).toHaveLength(0)
+    })
+
+    describe('sweep', () => {
+        const hoursAgo = h => new Date(Date.now() - h * 3_600_000).toISOString()
+
+        const sweepTerminating = async pooled => {
+            ec2Mock.on(DescribeInstancesCommand).callsFake(input =>
+                (input.Filters ?? []).some(f => f.Name === 'instance-state-name' && f.Values.includes('stopped'))
+                    ? describeResponse(pooled)
+                    : emptyDescribeResponse())
+            ec2Mock.on(TerminateInstancesCommand).resolves({})
+            await createAwsInstanceProvider(CONFIG).sweep()
+            return ec2Mock.commandCalls(TerminateInstancesCommand).flatMap(c => c.args[0].input.InstanceIds)
+        }
+
+        test('terminates stopped pooled instances of an older version', async () => {
+            const terminated = await sweepTerminating([makePooledAwsInstance({InstanceId: 'i-old', Version: '4.0.0'})])
+
+            expect(terminated).toEqual(['i-old'])
+        })
+
+        // A warm-up whose script never powered it off, or a pooling whose StopInstances failed.
+        test('terminates a pooled instance still running an hour after its start', async () => {
+            const terminated = await sweepTerminating([makePooledAwsInstance({
+                InstanceId: 'i-stuck', State: {Name: 'running'}, LaunchTime: hoursAgo(1.5),
+            })])
+
+            expect(terminated).toEqual(['i-stuck'])
+        })
+
+        // Only the pool keeps instances stopped. A stopped reserved or idle instance — a start EC2
+        // accepted and then failed, or an AWS-initiated stop — is invisible to every other query.
+        test('terminates stopped worker instances outside the pool', async () => {
+            const terminated = await sweepTerminating([
+                makePooledAwsInstance({InstanceId: 'i-stopped-reserved', Tags: [
+                    {Key: 'State', Value: 'reserved'},
+                    {Key: 'Type', Value: 'Worker'},
+                    {Key: 'Environment', Value: 'test-env'},
+                    {Key: 'Version', Value: '5.0.0'},
+                ]}),
+            ])
+
+            expect(terminated).toEqual(['i-stopped-reserved'])
+        })
+
+        test('keeps warming and stopped pooled instances of the current version', async () => {
+            const terminated = await sweepTerminating([
+                makePooledAwsInstance({InstanceId: 'i-warming', State: {Name: 'running'}, LaunchTime: hoursAgo(0.5)}),
+                makePooledAwsInstance({InstanceId: 'i-ready', LaunchTime: hoursAgo(48)}),
+            ])
+
+            expect(terminated).toEqual([])
+        })
+    })
+
+    // start() is only needed for the AMI id a launch sends; its polling is stopped straight away.
+    const startedProvider = async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        provider.stop()
+        ec2Mock.reset()
+        return provider
+    }
+
+    const pooledInstanceFrom = async provider => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makePooledAwsInstance({InstanceId: 'i-pooled'})]))
+        const [pooled] = await provider.pooledInstances({ready: true})
+        return pooled
+    }
 })
 
 describe('awaitHost', () => {

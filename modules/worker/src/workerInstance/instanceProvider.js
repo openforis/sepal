@@ -6,6 +6,17 @@
 //     the caller must call awaitHost on the result before using its address.
 //   launchIdle(instanceType, count)           → Promise<WorkerInstance[]>
 //     NOTE: the LOCAL provider IGNORES count and always launches exactly 1.
+//   launchPooled(count)                       → Promise<WorkerInstance[]>
+//     Warm-up launches for the stopped pool: each reads its whole disk, then stops itself.
+//   pool(instanceId)                          → Promise<void>
+//     Moves an idle instance into the stopped pool: tagged pooled, then stopped.
+//   startPooled(instance, instanceType, reservation) → Promise<WorkerInstance>
+//     Starts a ready pooled instance as instanceType, reserved. Like launchReserved, the result has
+//     no address yet — the caller must awaitHost. A failed start leaves the instance in the pool.
+//   pooledInstances({ready}?)                 → Promise<WorkerInstance[]>
+//     Every pool member of the current version (warming, stopping, stopped), unreserved;
+//     ready: true → only the stopped ones a request can start.
+//     The LOCAL provider has no pool: always [], and the pool writes above reject.
 //   terminate(instanceId)                     → Promise<void>
 //   reserve(instance)                         → Promise<void>
 //     The instance already carries the reservation; this persists it.
@@ -22,7 +33,9 @@
 //     Resolves once the instance has an address; returns it unchanged if it already has one.
 //     Required after launchReserved before the instance's address can be used.
 //   sweep()                                   → Promise<void>
-//     Terminates old idle and untagged instances. Called once per pool cycle, never from a read.
+//     Terminates old idle and untagged instances, pooled instances that are of an old version or
+//     never stopped, and stopped instances outside the pool. Called once per pool cycle, never from
+//     a read.
 //   onInstanceLaunched(listener)              → void   (called asynchronously)
 //   start() / stop()                          → background polling; no-ops for local.
 //

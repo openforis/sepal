@@ -20,6 +20,14 @@ const parseVolumeInitializationRate = value => {
     return rate
 }
 
+const parseStoppedPoolSize = value => {
+    const size = Number(value)
+    if (!Number.isInteger(size) || size < 0) {
+        throw new Error(`STOPPED_POOL_SIZE must be a non-negative integer, got: ${value}`)
+    }
+    return size
+}
+
 const program = new Command()
 
 program
@@ -319,6 +327,12 @@ program
             .default(0)
     )
     .addOption(
+        new Option('--stopped-pool-size <number>', 'Stopped, disk-warm workers kept ready to start as any instance type; 0 = no pool [aws only]')
+            .env('STOPPED_POOL_SIZE')
+            .argParser(parseStoppedPoolSize)
+            .default(0)
+    )
+    .addOption(
         new Option('--prewarm-idle-volumes <boolean>', 'Idle-pool workers read their whole Docker volume at first boot [aws only]')
             .env('PREWARM_IDLE_VOLUMES')
             .argParser(v => v === 'true')
@@ -379,6 +393,7 @@ const {
     environment,
     volumeInitializationRate,
     prewarmIdleVolumes,
+    stoppedPoolSize,
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -427,6 +442,7 @@ export {
     sessionExpirySecret,
     sessionGraceMinutes,
     startupLeaseMinutes,
+    stoppedPoolSize,
     syslogAddress,
     taskExtensionMinutes,
     unknownBusyGraceTicks,

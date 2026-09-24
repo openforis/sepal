@@ -90,6 +90,9 @@ services:
       # true: idle-pool workers read their whole Docker volume at first boot, so it is loaded from
       # the snapshot before a session lands on them.
       PREWARM_IDLE_VOLUMES: "${AWS_PREWARM_IDLE_VOLUMES:-false}"
+      # Stopped, disk-warm workers a request starts as whatever instance type it asks for. Released
+      # instances are recycled into the pool; warm-up launches fill the rest. 0 = no pool.
+      STOPPED_POOL_SIZE: "${AWS_STOPPED_POOL_SIZE:-0}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       # start_period: 60s
