@@ -38,7 +38,14 @@ const isVoilaNotebook = document =>
     document.getElementById('rendered_cells') !== null
 
 const isVoilaNotebookReady = (document, app) =>
-    !!app && isRestored(app.widgetManager) && !hasLoadingWidget(document)
+    !!app && (hasLostItsKernel(app.widgetManager) || (isRestored(app.widgetManager) && !hasLoadingWidget(document)))
+
+// Widgets are rendered from state the kernel holds, so once the kernel is gone they never will be. Waiting out
+// the timeout would only keep a broken app behind the launch status for three minutes.
+const hasLostItsKernel = widgetManager => {
+    const kernel = widgetManager?.kernel
+    return !!kernel && (kernel.status === 'dead' || kernel.connectionStatus === 'disconnected')
+}
 
 const isRestored = widgetManager =>
     !widgetManager || widgetManager.restoredStatus

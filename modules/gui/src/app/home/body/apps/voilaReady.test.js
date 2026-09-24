@@ -101,6 +101,26 @@ describe('a voila notebook', () => {
         expect(watch.ready).toBe(true)
     })
 
+    it('is not waited for once its kernel has died', () => {
+        const appWindow = frameWith(voilaPage(loadingWidget()))
+        startFrontend(appWindow, {restored: false, kernel: {status: 'dead', connectionStatus: 'connected'}})
+        const watch = watchReady(appWindow)
+
+        advance(A_MOMENT_MS)
+
+        expect(watch.ready).toBe(true)
+    })
+
+    it('is not waited for once its kernel connection has given up', () => {
+        const appWindow = frameWith(voilaPage(loadingWidget()))
+        startFrontend(appWindow, {restored: false, kernel: {status: 'idle', connectionStatus: 'disconnected'}})
+        const watch = watchReady(appWindow)
+
+        advance(A_MOMENT_MS)
+
+        expect(watch.ready).toBe(true)
+    })
+
     it('stops being waited for after three minutes', () => {
         const watch = watchReady(frameWith(voilaPage(loadingWidget())))
 
@@ -176,7 +196,11 @@ const frameWith = html => {
 const stillParsing = appWindow =>
     Object.defineProperty(appWindow.document, 'readyState', {configurable: true, get: () => 'loading'})
 
-const startFrontend = (appWindow, {restored = true, widgetManager = {restoredStatus: restored}}) => {
+const startFrontend = (appWindow, {
+    restored = true,
+    kernel = {status: 'busy', connectionStatus: 'connected'},
+    widgetManager = {restoredStatus: restored, kernel}
+}) => {
     appWindow.jupyterapp = {name: 'Voila', widgetManager}
 }
 
