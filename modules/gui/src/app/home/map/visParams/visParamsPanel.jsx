@@ -3,6 +3,7 @@ import React from 'react'
 import {filter, Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {LegendBuilder} from '~/app/home/map/legendBuilder'
 import {withMap} from '~/app/home/map/mapContext'
@@ -92,15 +93,19 @@ const fields = {
         .number(),
 }
 
-const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
+const mapRecipeToProps = (recipe, {area, activatable: {imageLayerSourceId}}) => ({
     visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || [],
+    areaImageLayer: selectFrom(recipe, ['layers.areas', area, 'imageLayer']),
     aoi: selectFrom(recipe, 'model.aoi'),
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries')
 })
 
+// The editor works from the context its selector captured when it opened - the recipe, the band choices and the
+// arguments naming the product the layer shows - and asks about bands, histograms and values with that context
+// alone, never a newer recipe beside older choices. If its area stops showing that layer or that product, the
+// context no longer describes what a saved style would be applied to, and the editor closes without saving.
 class _VisParamsPanel extends React.Component {
     state = {
-        bands: null,
         histograms: {},
         askConfirmation: false,
         legendEntries: [],
@@ -306,8 +311,8 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderLegendBuilder() {
-        const {stream} = this.props
-        const {bands, legendEntries} = this.state
+        const {stream, activatable: {bands}} = this.props
+        const {legendEntries} = this.state
         const loading = stream('LOAD_DISTINCT_IMAGE_VALUES').active
         return (
             <Layout>
@@ -334,8 +339,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderBandForm(i, label) {
-        const {inputs: {type}} = this.props
-        const {bands} = this.state
+        const {inputs: {type}, activatable: {bands}} = this.props
         return (
             <BandForm
                 bands={bands}
@@ -394,12 +398,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, inputs, activatable: {recipe, visParams}} = this.props
-        stream('LOAD_BANDS',
-            api.gee.bands$({recipe}),
-            bands => this.setState({bands}),
-            error => Notifications.error({message: msg('map.visParams.bands.loadError'), error})
-        )
+        const {inputs, activatable: {visParams}} = this.props
         if (visParams) {
             inputs.type.set(visParams.type)
             visParams.palette && inputs.palette.set(visParams.palette.map(color => ({id: uuid(), color})))
@@ -438,13 +437,23 @@ class _VisParamsPanel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {importedLegendEntries, recipeActionBuilder} = this.props
+        const {importedLegendEntries, recipeActionBuilder, activatable: {deactivate}} = this.props
+        if (!this.closing && !this.showsEditedLayer()) {
+            this.closing = true
+            return deactivate()
+        }
         if (importedLegendEntries && !_.isEqual(importedLegendEntries, prevProps.importedLegendEntries)) {
             recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
                 .del('ui.importedLegendEntries')
                 .dispatch()
             this.setState({legendEntries: importedLegendEntries})
         }
+    }
+
+    showsEditedLayer() {
+        const {areaImageLayer, activatable: {recipe, imageLayerSourceId, productArgs: editedProductArgs}} = this.props
+        return areaImageLayer?.sourceId === imageLayerSourceId
+            && _.isEqual(productArgs(recipe, areaImageLayer.layerConfig), editedProductArgs)
     }
 
     addLegendEntry() {
@@ -487,7 +496,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}, aoi, map: {getBounds}} = this.props
+        const {stream, activatable: {recipe, productArgs: imageArgs}, aoi, map: {getBounds}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -503,7 +512,7 @@ class _VisParamsPanel extends React.Component {
         } else if (!stream(`LOAD_HISTOGRAM_${name}`).active) {
             const mapBounds = getBounds()
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, aoi, band: name, mapBounds}).pipe(
+                api.gee.histogram$({...imageArgs, recipe, aoi, band: name, mapBounds}).pipe(
                     takeUntil(this.cancelHistogram$.pipe(
                         filter(nameToCancel => nameToCancel === name)
                     ))
@@ -561,7 +570,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {recipe}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
+        const {activatable: {recipe, productArgs: imageArgs}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
             id: uuid(),
             value,
@@ -572,7 +581,7 @@ class _VisParamsPanel extends React.Component {
         if (!stream('LOAD_DISTINCT_IMAGE_VALUES').active) {
             const mapBounds = getBounds()
             stream('LOAD_DISTINCT_IMAGE_VALUES',
-                api.gee.distinctBandValues$({recipe, band: name1.value, aoi, mapBounds}),
+                api.gee.distinctBandValues$({...imageArgs, recipe, band: name1.value, aoi, mapBounds}),
                 values => this.setState({legendEntries: toEntries(values)}),
                 () => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError')})
             )

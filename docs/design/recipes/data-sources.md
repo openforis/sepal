@@ -17,12 +17,14 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, CCDC, CCDC Slice, Masking and Optical Mosaic declare an `IMAGE_OUTPUT` provider, and even for those the
-GUI consumers still read the per-type helpers: map layers, preset filtering and the visualization selector through
-the registered `getAvailableBands()` and `getPreSetVisualizations()`, and every Retrieve panel except Masking's by
-importing its type's `bands.js` directly. Declared types therefore have two band authorities, and undeclared types
-keep independent GUI and Earth Engine band lists that the
-[execution comparison](output-products.md#early-execution-comparison-findings) has shown to drift.
+Only Asset, CCDC, CCDC Slice, Masking and Optical Mosaic declare an `IMAGE_OUTPUT` provider.
+
+- Map layers, their forms and the visualization selector and editor read bands through the common read. A declared
+  type is answered through its declaration there; any other is answered by the legacy seam.
+- Every Retrieve panel except Masking's still imports its type's `bands.js` directly, so declared types keep a
+  second band authority there.
+- Undeclared types keep independent GUI and Earth Engine band lists, which the
+  [execution comparison](output-products.md#early-execution-comparison-findings) has shown to drift.
 
 `getAvailableBands()` answers several [different questions](output-products.md#problem). A migration splits them
 between their owners rather than wrapping the helper in a provider, which would carry its mixed meanings into the
@@ -47,11 +49,10 @@ temporary answer, because it cannot be deleted.
      answers with a status (resolved, needs observation, unavailable or invalid) and never acquires. Descriptions
      are dependency-scoped, so a provider that needs nothing from a missing source still answers, and structural
      soundness of the whole closure is reported separately
-     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). The read's context
-     is still open: with only a settled terminal and no records, it cannot describe Masking over an Optical
-     Mosaic the session has already loaded. It needs either an explicit resolution context captured by its
-     acquisition owner or a runtime-owned synchronous read that supplies one; consumers never assemble
-     dependency catalogues themselves.
+     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). It reads the records
+     the session holds, through the graph a map layer already derives, so Masking over an Optical Mosaic the
+     session has loaded is answered at once. A terminal its acquisition owner retains answers the rest, while it
+     is still about those records. Consumers never assemble dependency catalogues themselves.
    - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
      covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
      Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
@@ -97,21 +98,22 @@ Deliver steps 1–2 as three separately reviewable packets:
 1. **Dependency-scoped descriptions and structural dependency checks.** The resolver and observer fail a
    description only on what its providers read, detect cycles on the path of provider reads, and withhold a
    recipe's own observation when any structural diagnosis lies below it. The complete closure answers
-   `dependencyValidity` separately, and the two execution boundaries that refused because a description failed -
-   Masking's observed Retrieve and Task's asset export of a declared root - require it to be `VALID`. A known
+   `dependencyValidity` separately, and two execution boundaries - Masking's observed Retrieve and Task's asset
+   export of a declared root - require it to be `VALID`. A known
    schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
-   Manually accepted: Masking over an optical mosaic and over a CCDC asset; a deleted recipe reference makes
-   Retrieve report the failure and block submission. Recovery is established only by automated tests, after an
-   already-read record is repaired; recovery from a deleted reference was not exercised.
-2. **Common GUI read API and display consumers.** Settle product identity and acquisition ownership before moving
-   map layers, preset filtering and visualization selectors. Keep legacy answers explicitly unverified and preserve
-   their existing display hints. Reuse existing lifecycle machinery rather than introducing another watcher or
-   cache. Remove the replaced direct helper reads. Open before this packet starts: the read's resolution context
-   (step 1 above); acquisition owners for the consumers no map layer serves - input forms copying presets at
-   selection, Sampling Design, task submission's visualization properties, the visualization editor and the CCDC
-   preset readers; and cursor precision, which legacy helpers carry in `dataType` beside physical
-   dimensionality and which migrated types must keep supplying from band presentation. The
-   `SourceEvidenceSync` whole-graph check moves with the acquisition work.
+   After a failed closure, `SourceEvidenceSync` re-observes when a record it read changes; restoring only the
+   recipe it could not read does not.
+2. **Common GUI read API and display consumers.** Map layers read the product they name through the common read,
+   and retain what they acquire through the runtime's one-shot operations for as long as they are mounted
+   ([who acquires](gui-source-runtime.md#reading-a-recipes-own-output)). Their forms, the visualization selector and
+   the visualization editor are given that read. The editor's requests carry the product the layer shows.
+   Map preview requires `VALID` dependencies.
+   - Legacy answers stay unverified. Their display hints are presentation, as declared types' labels and cursor
+     precision are.
+   - Input workflows and Sampling Design filter the presets they copy against the names they observed.
+   - Task submission's exported visualizations are unchanged until Retrieve migrates.
+   - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
+     [live source evidence](gui-source-runtime.md#live-source-evidence).
 3. **Retrieve consumers.** Route GUI export choices through the same API and absorb the existing
    undeclared-output fallback into its legacy adapter, including declared wrappers over undeclared sources.
    Acquisition failures, broken dependencies and invalid descriptions never qualify for fallback. Legacy answers

@@ -8,6 +8,7 @@ import {
     VALID_SELECTION
 } from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
+import {TerminalOperation} from '~/app/home/body/process/recipe/terminalOperation'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
@@ -112,7 +113,7 @@ class _MosaicRetrievePanel extends React.Component {
             imageOutputTerminal: null,
             initialLoadingDone: false
         }
-        this.imageOutputOperation = null
+        this.imageOutputOperation = new TerminalOperation()
         this.minimumLoadingElapsed = false
         this.initialLoadingTimer = null
         this.mounted = false
@@ -596,8 +597,6 @@ class _MosaicRetrievePanel extends React.Component {
             return
         }
 
-        const operation = {key: contract.key, sawTerminal: false, subscription: null}
-        this.imageOutputOperation = operation
         if (!isEqual(this.state.imageOutputResolutionKey, contract.key) || this.state.imageOutputTerminal) {
             this.setState({
                 destinationReconciliation: null,
@@ -605,58 +604,18 @@ class _MosaicRetrievePanel extends React.Component {
                 imageOutputTerminal: null
             })
         }
-
-        const publishTerminal = terminal => {
-            if (this.mounted
-                && this.imageOutputOperation === operation
-                && ['READY', 'UNAVAILABLE', 'INVALID'].includes(terminal?.status)
-            ) {
-                operation.sawTerminal = true
+        this.imageOutputOperation.start(contract.state$, terminal => {
+            if (this.mounted) {
                 this.setState({imageOutputTerminal: terminal}, () => {
                     this.reconcileDestination()
                     this.settleInitialLoading(terminal)
                 })
             }
-        }
-
-        try {
-            const subscription = contract.state$.subscribe({
-                next: publishTerminal,
-                error: () => publishTerminal({
-                    status: 'UNAVAILABLE',
-                    description: null,
-                    diagnostics: [],
-                    error: null
-                }),
-                complete: () => {
-                    if (!operation.sawTerminal) {
-                        publishTerminal({
-                            status: 'UNAVAILABLE',
-                            description: null,
-                            diagnostics: [],
-                            error: null
-                        })
-                    }
-                }
-            })
-            operation.subscription = subscription
-            if (this.imageOutputOperation !== operation) {
-                subscription.unsubscribe()
-            }
-        } catch (_error) {
-            publishTerminal({
-                status: 'UNAVAILABLE',
-                description: null,
-                diagnostics: [],
-                error: null
-            })
-        }
+        })
     }
 
     stopImageOutputResolution() {
-        const operation = this.imageOutputOperation
-        this.imageOutputOperation = null
-        operation?.subscription?.unsubscribe()
+        this.imageOutputOperation.stop()
     }
 
     // The opening view stands until the resolution has answered AND it has been up long enough to read. A

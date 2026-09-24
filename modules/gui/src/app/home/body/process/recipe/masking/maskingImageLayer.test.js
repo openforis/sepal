@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Masking's layer form, on the band-name question only. The rule itself is pure and tested in
 // visualizationMatching.test.js; what is checked here is that Masking asks it about the presets it copied from its
-// source, and that the answer reaches the selector.
+// source, against the bands its layer read, and that the answer reaches the selector.
 //
 // The stale-selection case runs the real VisualizationSelector on the props Masking produced, because "no longer
 // appears selected" is the selector's own reading of those props, and asserting it from a duplicate of that
@@ -42,7 +42,8 @@ const selectorOf = ({bands, visualizations, visParams}) => {
     const instance = new MaskingImageLayer({
         recipe: recipeOf({bands, visualizations}),
         source: {id: 'source-1'},
-        layerConfig
+        layerConfig,
+        imageOutput: {availableBands: Object.fromEntries(bands.map(name => [name, {}]))}
     })
     return {selector: instance.renderImageLayerForm(), layerConfig}
 }

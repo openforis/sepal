@@ -27,7 +27,7 @@ class _CCDCSliceImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const options = [{
             label: msg('process.classification.layers.imageLayer.preSets'),
             options: preSetVisualizations(recipe).map(visParams => ({
@@ -41,6 +41,7 @@ class _CCDCSliceImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -59,6 +60,7 @@ CCDCSliceImageLayer.propTypes = {
     currentRecipe: PropTypes.object.isRequired,
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

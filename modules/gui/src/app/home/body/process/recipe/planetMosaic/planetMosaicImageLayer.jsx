@@ -25,13 +25,14 @@ class _PlanetMosaicImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const options = visualizationOptions(recipe)
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -48,6 +49,7 @@ export const PlanetMosaicImageLayer = compose(
 PlanetMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

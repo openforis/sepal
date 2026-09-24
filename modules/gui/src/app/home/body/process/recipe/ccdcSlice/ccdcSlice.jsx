@@ -68,6 +68,6 @@ export default () => ({
         return [date, date]
     },
     resolveEvidence$,
-    getAvailableBands: (recipe, evidence) => availableBandsOf(recipe, evidence?.segments),
+    legacySubmissionBands: recipe => availableBandsOf(recipe),
     getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments)
 })

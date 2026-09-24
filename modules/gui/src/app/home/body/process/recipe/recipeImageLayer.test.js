@@ -1,4 +1,8 @@
+import _ from 'lodash'
+import {Observable} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 
 // Narrow smoke tests for the render-time guard and the visualization reconciler. The durable rules - matching and
 // applicability - are pure and tested in visualizationMatching.test.js; what is checked here is only that the
@@ -32,16 +36,30 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
     }
 }))
 
+vi.mock('~/translate', () => ({msg: key => key}))
+
 const availableBandsByType = vi.hoisted(() => ({}))
 
-vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
-    getRecipeType: type => ({
-        getAvailableBands: () => availableBandsByType[type],
-        getPreSetVisualizations: () => []
-    })
-}))
+// What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation and
+// CCDC's own map products.
+vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
+    const {mapProducts} = await import('./ccdc/bands')
+    const registeredByType = {
+        MOSAIC: {bandPresentation: () => ({blue: {dataType: {precision: 'int'}}})},
+        CCDC: {mapProducts}
+    }
+    return {
+        getRecipeType: type => ({
+            getAvailableBands: () => availableBandsByType[type],
+            getPreSetVisualizations: () => [],
+            ...registeredByType[type]
+        })
+    }
+})
 
 const {RecipeImageLayer} = await import('./recipeImageLayer')
+const {recipeContent} = await import('./recipeContent')
+const {productArgs} = await import('./recipeOutput')
 
 beforeEach(() => {
     state.constructed = []
@@ -468,3 +486,228 @@ describe('visualization reconciliation', () => {
         expect(updates).toEqual([])
     })
 })
+
+// What the layer acquires about its output, and what it draws from the answer. The real graph builder, shared
+// declarations and read run; the runtime's two operations and its credential epochs are driven by hand.
+describe('acquiring what the layer shows', () => {
+    const COUNT_STYLE = {id: 'count-style', bands: ['count'], type: 'continuous'}
+    const BLUE_STYLE = {id: 'blue-style', bands: ['blue'], type: 'continuous'}
+
+    it('draws masking over an optical mosaic the session holds at once, acquiring nothing', () => {
+        const {instance, runtime} = shown({
+            recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+            records: [mosaic()],
+            visParams: BLUE_STYLE
+        })
+
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(runtime.operations).toEqual([])
+    })
+
+    it('keeps the display precision the optical mosaic presents for the cursor', () => {
+        const {instance} = shown({recipe: {...mosaic(), ...ownStyles([BLUE_STYLE])}, visParams: BLUE_STYLE})
+
+        instance.maybeCreateLayer()
+
+        expect(state.constructed[0].dataTypes.blue).toEqual({precision: 'int'})
+    })
+
+    describe('a count layer whose dependency the session does not hold', () => {
+        const countLayer = () => shown({
+            recipe: {...ccdc({aoi: {type: 'RECIPE', id: 'aoi-1'}}), ...ownStyles([COUNT_STYLE])},
+            layerConfig: {visualizationType: 'COUNT', visParams: COUNT_STYLE}
+        })
+
+        it('only completes the dependencies, never describing the output it does not show', () => {
+            const {runtime} = countLayer()
+
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+        })
+
+        it('is withheld until they are known to be sound, then drawn', () => {
+            const {instance, runtime, settle} = countLayer()
+            expect(instance.maybeCreateLayer()).toBe(null)
+
+            settle(runtime.operations[0], completed(instance.props.recipe))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+        })
+
+        it('requests its preview with the arguments naming its product, as its editor does', () => {
+            const {instance, runtime, settle} = countLayer()
+            settle(runtime.operations[0], completed(instance.props.recipe))
+
+            instance.maybeCreateLayer()
+
+            expect(state.constructed[0].previewRequest).toEqual({
+                recipe: _.omit(instance.props.recipe, ['ui', 'layers']),
+                ...productArgs(instance.props.recipe, instance.props.layerConfig),
+                visParams: COUNT_STYLE
+            })
+            expect(productArgs(instance.props.recipe, instance.props.layerConfig)).toEqual({visualizationType: 'COUNT'})
+        })
+
+        it('asks for the count it offers before its form has written the mode', () => {
+            const {instance, runtime, settle} = shown({
+                recipe: {...ccdc({aoi: {type: 'RECIPE', id: 'aoi-1'}}), ...ownStyles([COUNT_STYLE])},
+                visParams: COUNT_STYLE
+            })
+            settle(runtime.operations[0], completed(instance.props.recipe))
+
+            instance.maybeCreateLayer()
+
+            expect(state.constructed[0].previewRequest.visualizationType).toBe('COUNT')
+        })
+
+        it('is withheld, keeping its selection, when one cannot be read', () => {
+            const {instance, runtime, settle, updates} = countLayer()
+
+            settle(runtime.operations[0], unreadable(instance.props.recipe))
+            instance.componentDidUpdate(instance.props)
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(updates).toEqual([])
+        })
+
+        it('rebuilds the preview on a restyle without acquiring anything again', () => {
+            const {instance, runtime, settle, setLayerConfig} = countLayer()
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+            const restyled = {...COUNT_STYLE, palette: ['#000000', '#ffffff']}
+
+            setLayerConfig({visualizationType: 'COUNT', visParams: restyled})
+
+            expect(runtime.operations).toHaveLength(1)
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(state.constructed).toHaveLength(2)
+            expect(state.constructed[1].visParams).toEqual(restyled)
+        })
+
+        // The withheld layer was taken off the map and cancelled, so recovery must draw a new one.
+        it('is withheld when credentials change after it was drawn, then drawn anew once acquired again', () => {
+            const {instance, runtime, settle} = countLayer()
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            const drawn = instance.maybeCreateLayer()
+
+            runtime.changeCredentials()
+            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(runtime.operations).toHaveLength(2)
+            settle(runtime.operations[1], completed(instance.props.recipe))
+            const redrawn = instance.maybeCreateLayer()
+
+            expect(redrawn).not.toBe(null)
+            expect(redrawn).not.toBe(drawn)
+            expect(state.constructed).toHaveLength(2)
+        })
+    })
+
+    it('withholds masking whose unread mask was deleted, keeping its selection', () => {
+        const {instance, runtime, settle, updates} = shown({
+            recipe: masking({mask: {type: 'RECIPE_REF', id: 'deleted-mask'}, styles: [BLUE_STYLE]}),
+            records: [mosaic()],
+            visParams: BLUE_STYLE
+        })
+        expect(runtime.operations.map(({kind}) => kind)).toEqual(['DESCRIBE'])
+
+        settle(runtime.operations[0], {...unreadable(instance.props.recipe), description: null, diagnostics: []})
+        instance.componentDidUpdate(instance.props)
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(updates).toEqual([])
+    })
+})
+
+const ownStyles = styles => ({
+    ui: {initialized: true},
+    layers: {userDefinedVisualizations: {'this-recipe': styles}}
+})
+
+const mosaic = () => ({
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100},
+        compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
+    }
+})
+
+const masking = ({mask, styles}) => ({
+    id: 'masked-1',
+    type: 'MASKING',
+    model: {imageToMask: {type: 'RECIPE_REF', id: 'mosaic-1'}, imageMask: mask},
+    ...ownStyles(styles)
+})
+
+const ccdc = model => ({id: 'ccdc-1', type: 'CCDC', model})
+
+const basisOf = recipe => [{id: recipe.id, content: recipeContent(recipe)}]
+
+const completed = recipe => ({
+    status: 'COMPLETE',
+    error: null,
+    dependencyValidity: {status: 'VALID', diagnostics: []},
+    basis: basisOf(recipe)
+})
+
+const unreadable = recipe => ({
+    status: 'UNAVAILABLE',
+    error: new Error('recipe not found'),
+    dependencyValidity: {status: 'UNAVAILABLE', diagnostics: [{code: 'MISSING_SOURCE'}]},
+    basis: basisOf(recipe)
+})
+
+const runtimeOf = () => {
+    const operations = []
+    const listeners = new Set()
+    const operation = kind => () => new Observable(subscriber => {
+        const entry = {kind, subscriber}
+        operations.push(entry)
+    })
+    return {
+        operations,
+        sourceRuntime: {
+            resolveImageOutput$: operation('DESCRIBE'),
+            completeDependencies$: operation('DEPENDENCIES'),
+            identity$: () => new Observable(subscriber => {
+                listeners.add(subscriber)
+                subscriber.next({})
+                return () => listeners.delete(subscriber)
+            })
+        },
+        changeCredentials: () => [...listeners].forEach(listener => listener.next({}))
+    }
+}
+
+// A mounted layer over the records the real graph builder links. Re-rendering is React's; here the lifecycle is
+// called as React would call it.
+const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => {
+    const runtime = runtimeOf()
+    const updates = []
+    const recipesById = new Map([recipe, ...records].map(record => [record.id, record]))
+    const instance = new RecipeImageLayer({
+        currentRecipe: recipe,
+        recipe,
+        sourceId: 'this-recipe',
+        source: {id: 'this-recipe'},
+        layerConfig,
+        dependencyGraph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById}),
+        sourceRuntime: runtime.sourceRuntime,
+        map: {},
+        mapArea: {updateLayerConfig: layerConfig => updates.push(layerConfig)},
+        tab: {busy: {set: () => {}}},
+        boundsChanged$: null,
+        dragging$: null,
+        cursor$: null
+    })
+    instance.forceUpdate = () => {}
+    instance.componentDidMount()
+    const settle = ({subscriber}, terminal) => {
+        subscriber.next(terminal)
+        subscriber.complete()
+    }
+    const setLayerConfig = next => {
+        instance.props = {...instance.props, layerConfig: next}
+        instance.componentDidUpdate(instance.props)
+    }
+    return {instance, runtime, updates, settle, setLayerConfig}
+}

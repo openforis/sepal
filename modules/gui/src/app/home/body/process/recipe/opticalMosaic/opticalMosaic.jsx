@@ -9,7 +9,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {AutoSelectScenes} from './autoSelectScenes'
-import {getAvailableBands} from './bands'
+import {bandPresentation, getAvailableBands} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './opticalMosaicRecipe'
 import {MosaicToolbar} from './panels/opticalMosaicToolbar'
 import {SceneAreas} from './sceneAreas'
@@ -68,6 +68,7 @@ export default () => ({
         recipe: OpticalMosaic
     },
     getDateRange: recipe => dateRange(recipe.model.dates),
-    getAvailableBands,
+    bandPresentation,
+    legacySubmissionBands: getAvailableBands,
     getPreSetVisualizations
 })

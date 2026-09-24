@@ -32,13 +32,15 @@ export const outputOwnedVisualizations = recipe =>
     getUserDefinedVisualizations(recipe, OUTPUT_LAYER_ID)
         .map(({userDefined: _userDefined, ...visParams}) => visParams)
 
-export const getAllVisualizations = recipe => {
-    const recipeType = getRecipeType(recipe.type)
-    const availableBands = recipeType.getAvailableBands(recipe) || {}
-    const userDefinedVisualizations = getUserDefinedVisualizations(recipe, OUTPUT_LAYER_ID)
-    const preSetVisualizations = recipeType.getPreSetVisualizations(recipe)
-    return renderableVisualizations([
-        ...userDefinedVisualizations,
-        ...preSetVisualizations
-    ], availableBands)
-}
+// What a recipe offers for its own output that can be drawn from the given bands: the styles the user made for it
+// and the presets its type derives. The bands are the caller's answer about that output - a layer's read, the
+// names an input workflow observed - and are never looked up here.
+export const recipeVisualizations = (recipe, availableBands) =>
+    renderableVisualizations([
+        ...getUserDefinedVisualizations(recipe, OUTPUT_LAYER_ID),
+        ...(getRecipeType(recipe.type)?.getPreSetVisualizations(recipe) || [])
+    ], availableBands || {})
+
+// Observed band names, in the shape the filter reads: each known to exist, nothing known about its dimensionality.
+export const namedBands = names =>
+    Object.fromEntries((names || []).map(name => [name, {}]))

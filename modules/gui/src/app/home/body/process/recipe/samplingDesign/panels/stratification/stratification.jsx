@@ -4,7 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {namedBands, recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -570,7 +570,7 @@ class _Stratification extends React.Component {
                 recipeId: recipe.id
             },
         })
-        this.onImageLoaded(bands, getAllVisualizations(recipe))
+        this.onImageLoaded(bands, recipeVisualizations(recipe, namedBands(bands)))
     }
 
     onImageLoaded(bands, visualizations) {

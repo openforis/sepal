@@ -145,7 +145,8 @@ describe('the lazy Redux adapter', () => {
             diagnostics: [],
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             // The closure had completed; only the observation of its one source was cut short.
-            dependencyValidity: {status: 'VALID', diagnostics: []}
+            dependencyValidity: {status: 'VALID', diagnostics: []},
+            basis: expect.any(Array)
         })
     })
 
@@ -162,6 +163,21 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: {...current, user: {currentUser: {googleTokens: current.user.currentUser.googleTokens}}}})
 
         expect(states.map(({status}) => status)).toEqual(['LOADING'])
+    })
+
+    it('gives a new credential epoch for a replaced credential container and none for a catalogue change', () => {
+        const store = storeWith()
+        const {runtime} = runtimeFor(store)
+        const epochs = []
+        runtime.identity$().subscribe(epoch => epochs.push(epoch))
+
+        const current = store.getState()
+        store.dispatch({type: 'SET', state: withLoaded(current, [ccdc()])})
+        expect(epochs).toHaveLength(1)
+        store.dispatch({type: 'SET', state: {...store.getState(), user: {currentUser: {googleTokens: {accessToken: 'fresh'}}}}})
+
+        expect(epochs).toHaveLength(2)
+        expect(JSON.stringify(epochs)).not.toContain('fresh')
     })
 
     it('never copies credential material into an emitted envelope', () => {
@@ -181,7 +197,8 @@ describe('the lazy Redux adapter', () => {
             diagnostics: [],
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             // The closure had completed; only the observation of its one source was cut short.
-            dependencyValidity: {status: 'VALID', diagnostics: []}
+            dependencyValidity: {status: 'VALID', diagnostics: []},
+            basis: expect.any(Array)
         })
         expect(JSON.stringify(states)).not.toContain('secret-token')
         expect(JSON.stringify(states)).not.toContain('fresh')
@@ -203,7 +220,8 @@ describe('the lazy Redux adapter', () => {
             diagnostics: [],
             error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
             // The closure had completed; only the observation of its one source was cut short.
-            dependencyValidity: {status: 'VALID', diagnostics: []}
+            dependencyValidity: {status: 'VALID', diagnostics: []},
+            basis: expect.any(Array)
         })
 
         const later = []
@@ -373,7 +391,8 @@ describe('the provider', () => {
             diagnostics: [],
             error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
             // The closure had completed; only the observation of its one source was cut short.
-            dependencyValidity: {status: 'VALID', diagnostics: []}
+            dependencyValidity: {status: 'VALID', diagnostics: []},
+            basis: expect.any(Array)
         })
         expect(completed).toBe(true)
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])

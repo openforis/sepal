@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {getAllVisualizations, sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {namedBands, recipeVisualizations, sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
@@ -34,7 +34,7 @@ export class RecipeSection extends React.Component {
 
     extractBands(recipe, bandNames) {
         const bands = {}
-        const categoricalVisualizations = getAllVisualizations(recipe)
+        const categoricalVisualizations = recipeVisualizations(recipe, namedBands(bandNames))
             .filter(({type}) => type === 'categorical')
         bandNames
             .forEach(bandName => {

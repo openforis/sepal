@@ -5,10 +5,6 @@ import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recip
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-import {selectFrom} from '~/stateUtils'
-
-import {segmentVisualizations} from './referenceEvidence'
-import {visualizationOptions} from './visualizations'
 
 export const defaultModel = {
     reference: {},
@@ -96,20 +92,6 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
         latLng,
         bands
     })
-}
-
-export const getAllVisualizations = recipe => {
-    const changesVisualizations = visualizationOptions(recipe, 'changes')
-        .map(option => option.options ? option.options : option)
-        .flat()
-        .map(({visParams}) => visParams)
-    return recipe.ui.initialized
-        ? [
-            ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-            ...changesVisualizations,
-            ...segmentVisualizations(recipe)
-        ]
-        : []
 }
 
 const submitRetrieveRecipeTask = recipe =>

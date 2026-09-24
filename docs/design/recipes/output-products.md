@@ -12,8 +12,8 @@ would centralize several incompatible meanings without simplifying them.
 
 ## Problem
 
-The GUI currently registers one `getAvailableBands()` and one `getPreSetVisualizations()` function per recipe type.
-Those names conceal several different questions:
+Where a recipe type still registers a single `getAvailableBands()` beside its `getPreSetVisualizations()`, those
+names conceal several different questions:
 
 - which bands the recipe can export;
 - which bands one map-layer mode happens to display;
@@ -238,13 +238,15 @@ not alter the canonical image output declaration.
 Step 1 of the [output-declaration migration](data-sources.md#output-declaration-migration), for the four types whose
 map layers show more than one product.
 
-A layer names its product today only by leaving a `visualizationType` in `layerConfig`, which the preview request
-spreads whole into the image factory's arguments alongside the band selection. Every other axis a mode needs -
-LandTrendr's `year`, Change Alerts' `mosaicType`, BAYTS' `previouslyConfirmed` and `minConfidence` - rides in the
-same bag. Two consequences follow from the code rather than from style. Export passes neither a mode nor a
-parameter, so it always builds the canonical product, with whatever each producer does for a parameter it was not
-given. Both callers that ask a recipe for its bands construct the factory with no arguments at all, so the answer
-is always the mode-less branch, and what a map mode shows is never what the band question answers.
+In the GUI a layer names its product from its type's vocabulary over its `layerConfig`, and a value the type does
+not know is refused ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)).
+
+On the wire the product still travels as that layer config, spread whole into the image factory's arguments beside
+the band selection. Every other axis a mode needs - LandTrendr's `year`, Change Alerts' `mosaicType`, BAYTS'
+`previouslyConfirmed` and `minConfidence` - rides in the same bag. The preview and the visualization editor's
+histogram and distinct-value requests all send that same bag, so they concern one product. Export passes neither a
+mode nor a parameter, so it always builds the canonical product, with whatever each producer does for a parameter it
+was not given. The canonical observation (`/bands`) is asked with no arguments: the canonical product by omission.
 
 A layer therefore names a product and supplies that product's declared parameters. Every product a type exposes is
 named, including its canonical image output: absence is not an identity, and a request carrying an unknown product

@@ -1,6 +1,7 @@
 import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {msg} from '~/translate'
 
+import {IMAGE_OUTPUT} from '../legacyOutput'
 import {toMosaicRecipe} from './mosaicRecipe'
 
 const typeInt = {precision: 'int'}
@@ -26,6 +27,25 @@ export const getAvailableBands = (recipe, visualizationType) => {
         case 'changes': return changeBands()
         case 'mosaics': return mosaicBands(recipe)
         default: return {...changeBands(), ...mosaicBands(recipe)}
+    }
+}
+
+// The change map is the output; a layer may instead show the annual mosaic it was fitted from.
+export const mapProducts = {
+    defaults: {visualizationType: 'changes'},
+    productOf: ({visualizationType, year}) => {
+        switch (visualizationType) {
+            case 'changes': return {name: IMAGE_OUTPUT}
+            case 'mosaics': return {name: 'ANNUAL_MOSAIC', parameters: {year}}
+            default: return null
+        }
+    },
+    bands: (recipe, {name}) => {
+        switch (name) {
+            case IMAGE_OUTPUT: return getAvailableBands(recipe, 'changes')
+            case 'ANNUAL_MOSAIC': return getAvailableBands(recipe, 'mosaics')
+            default: return undefined
+        }
     }
 }
 

@@ -56,9 +56,9 @@ export default {
             }
         }),
 
-    distinctBandValues$: ({recipe, band, aoi, mapBounds}) =>
+    distinctBandValues$: ({recipe, band, aoi, mapBounds, ...params}) =>
         postJson$('/api/gee/image/distinctBandValues', {
-            body: {recipe, band, aoi, mapBounds},
+            body: {recipe, band, aoi, mapBounds, ...params},
             retry: {
                 maxRetries: 0
             }

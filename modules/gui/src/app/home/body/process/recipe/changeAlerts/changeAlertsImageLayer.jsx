@@ -13,13 +13,10 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {getAvailableBands} from './bands'
+import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 
-const defaultLayerConfig = {
-    visualizationType: 'changes',
-    mosaicType: 'latest'
-}
+const defaultLayerConfig = mapProducts.defaults
 
 const mapRecipeToProps = (recipe, {source}) => {
     return {
@@ -92,15 +89,14 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     renderVisualizationSelector() {
-        const {layerConfig: {visualizationType, mosaicType}, recipe, source, layerConfig = {}} = this.props
+        const {layerConfig: {visualizationType, mosaicType}, recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const options = visualizationOptions(recipe, visualizationType, mosaicType)
-        const availableBands = getAvailableBands(recipe, visualizationType, mosaicType)
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
-                availableBands={Object.keys(availableBands)}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -142,9 +138,8 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     toAllVis() {
-        const {userDefinedVisualizations, layerConfig: {visualizationType, mosaicType}, recipe} = this.props
+        const {userDefinedVisualizations, layerConfig: {visualizationType, mosaicType}, recipe, imageOutput: {availableBands}} = this.props
         const options = visualizationOptions(recipe, visualizationType, mosaicType)
-        const availableBands = getAvailableBands(recipe, visualizationType, mosaicType)
         const flatten = options => options
             .map(option => option.options
                 ? flatten(option.options)
@@ -185,6 +180,7 @@ export const ChangeAlertsImageLayer = compose(
 ChangeAlertsImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

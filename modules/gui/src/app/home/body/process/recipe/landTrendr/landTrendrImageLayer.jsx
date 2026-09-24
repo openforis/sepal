@@ -14,10 +14,10 @@ import {Combo} from '~/widget/combo'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {getAvailableBands} from './bands'
+import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 
-const defaultLayerConfig = {visualizationType: 'changes'}
+const defaultLayerConfig = mapProducts.defaults
 
 const mapRecipeToProps = (recipe, {source}) => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -84,14 +84,14 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     renderVisualizationSelector() {
-        const {recipe, source, layerConfig = {}} = this.props
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const {visualizationType} = layerConfig
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
                 presetOptions={visualizationOptions(recipe, visualizationType)}
-                availableBands={Object.keys(getAvailableBands(recipe, visualizationType))}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -131,8 +131,7 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     toAllVis() {
-        const {userDefinedVisualizations, layerConfig: {visualizationType}, recipe} = this.props
-        const availableBands = getAvailableBands(recipe, visualizationType)
+        const {userDefinedVisualizations, layerConfig: {visualizationType}, recipe, imageOutput: {availableBands}} = this.props
         const flatten = options => options
             .map(option => option.options
                 ? flatten(option.options)
@@ -173,6 +172,7 @@ export const LandTrendrImageLayer = compose(
 LandTrendrImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

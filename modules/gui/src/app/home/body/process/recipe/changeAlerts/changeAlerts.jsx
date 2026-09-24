@@ -11,7 +11,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
-import {getAvailableBands} from './bands'
+import {getAvailableBands, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
@@ -68,5 +68,6 @@ export default () => ({
         return [moment.utc(monitoringStart, 'YYYY-MM-DD'), moment.utc(monitoringEnd, 'YYYY-MM-DD')]
     },
     getAvailableBands,
+    mapProducts,
     getPreSetVisualizations
 })

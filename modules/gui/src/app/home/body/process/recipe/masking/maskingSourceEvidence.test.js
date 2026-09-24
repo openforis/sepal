@@ -1,22 +1,22 @@
 import {describe, expect, it, vi} from 'vitest'
 
-// What Masking's consumers answer once the source has been observed. The layer form, the generic
-// reconciler, Retrieve's band options and the exported visualization filter all read the same two helpers,
-// so this is where "Preview, input choices and Retrieve agree" is decided.
+// What Masking answers from the evidence it holds about its source. Its band helper is its legacy answer - read
+// where the source declares no output - and task submission filters exported styles against it; its presets are
+// what any consumer offers. The preset filter is given that band answer, as a consumer holding it would give it.
 //
-// `getAllVisualizations` reaches the recipe type through the registry, which only the running application
-// populates. It is mocked to Masking's own helpers - the entry masking.jsx registers - so the reconciler's
-// view is exercised without mounting the app.
+// `recipeVisualizations` reaches the presets through the registry, which only the running application populates.
+// It is mocked to Masking's own entry, so the filter's view is exercised without mounting the app.
 
 vi.mock('../../recipeTypeRegistry', async () => {
-    const {getAvailableBands} = await import('./bands')
     const {getPreSetVisualizations} = await import('./visualizations')
-    return {getRecipeType: () => ({getAvailableBands, getPreSetVisualizations})}
+    return {getRecipeType: () => ({getPreSetVisualizations})}
 })
 
 const {getAvailableBands} = await import('./bands')
 const {getPreSetVisualizations} = await import('./visualizations')
-const {getAllVisualizations} = await import('../visualizations')
+const {recipeVisualizations} = await import('../visualizations')
+
+const offered = recipe => recipeVisualizations(recipe, getAvailableBands(recipe))
 
 const NDVI = {id: 'v-ndvi', bands: ['ndvi'], type: 'continuous'}
 const RED = {id: 'v-red', bands: ['red'], type: 'continuous'}
@@ -64,12 +64,13 @@ describe('a source that has dropped a band since the recipe was saved', () => {
         expect(Object.keys(getAvailableBands(maskingRecipe()))).toEqual(['red', 'nir', 'ndvi'])
     })
 
-    it('offers nothing at all once the source is known to be unavailable', () => {
+    it('answers nothing - never an empty answer - once the source is known to be unavailable', () => {
         const unavailable = maskingRecipe({
             sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'UNAVAILABLE', bands: [], visualizations: []}
         })
 
-        expect(getAvailableBands(unavailable)).toEqual({})
+        expect(getAvailableBands(unavailable)).toBeNull()
+        expect(offered(unavailable)).toEqual([])
     })
 })
 
@@ -79,7 +80,7 @@ describe('a local style naming a band the source has dropped', () => {
     const recipe = maskingRecipe({sourceEvidence: dropped, userDefined: [LOCAL_NDVI]})
 
     it('is not offered as a candidate', () => {
-        expect(getAllVisualizations(recipe).map(({id}) => id)).toEqual(['v-red'])
+        expect(offered(recipe).map(({id}) => id)).toEqual(['v-red'])
     })
 
     it('is still saved on the recipe, unchanged', () => {
@@ -92,7 +93,7 @@ describe('a local style naming a band the source has dropped', () => {
             userDefined: [LOCAL_NDVI]
         })
 
-        expect(getAllVisualizations(restored).map(({id}) => id)).toEqual(['local-1', 'v-ndvi', 'v-red'])
+        expect(offered(restored).map(({id}) => id)).toEqual(['local-1', 'v-ndvi', 'v-red'])
     })
 })
 
@@ -130,11 +131,11 @@ describe('a masked CCDC Segments asset', () => {
     const asArrays = SEGMENT_BANDS.map(name => ({name, dataType: {arrayDimensions: 1}}))
 
     it('offers no direct visualization, because every band is an array', () => {
-        expect(getAllVisualizations(maskedSegments(asArrays))).toEqual([])
+        expect(offered(maskedSegments(asArrays))).toEqual([])
     })
 
     it('does not offer the residual band merely because its name is present', () => {
-        expect(getAllVisualizations(maskedSegments(asArrays)).map(({id}) => id)).not.toContain('v-rmse')
+        expect(offered(maskedSegments(asArrays)).map(({id}) => id)).not.toContain('v-rmse')
     })
 
     it('still reports both templates as the source\u2019s presets, which is what they are', () => {
@@ -153,7 +154,7 @@ describe('a masked CCDC Segments asset', () => {
         const local = {id: 'local-rmse', bands: ['ndvi_rmse'], type: 'continuous'}
         recipe.layers.userDefinedVisualizations = {'this-recipe': [local]}
 
-        expect(getAllVisualizations(recipe)).toEqual([])
+        expect(offered(recipe)).toEqual([])
         expect(recipe.layers.userDefinedVisualizations['this-recipe']).toEqual([local])
     })
 
@@ -166,7 +167,7 @@ describe('a masked CCDC Segments asset', () => {
             'this-recipe': [{id: 'local-change', bands: ['changeProb'], type: 'continuous'}]
         }
 
-        expect(getAllVisualizations(recipe).map(({id}) => id)).toEqual(['local-change'])
+        expect(offered(recipe).map(({id}) => id)).toEqual(['local-change'])
     })
 
     it('keeps the array bands exportable', () => {

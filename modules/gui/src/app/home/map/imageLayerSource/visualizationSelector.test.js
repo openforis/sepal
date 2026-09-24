@@ -20,11 +20,6 @@ vi.mock('~/translate', () => ({
     msg: key => (Array.isArray(key) ? key.join('.') : key)
 }))
 
-// A layer form that names no bands leaves the recipe being shown to say what it has.
-vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
-    getRecipeType: () => ({getAvailableBands: recipe => recipe.availableBands})
-}))
-
 const {VisualizationSelector} = await import('./visualizationSelector')
 const {PresentationToggle} = await import('./presentationToggle')
 
@@ -42,6 +37,7 @@ const comboOf = ({selectedVisParams, userDefinedVisualizations = [USER_DEFINED]}
         recipe: {id: 'recipe-1'},
         userDefinedVisualizations,
         presetOptions,
+        availableBands: {ndvi: {}, evi: {}},
         selectedVisParams
     }).render()
 
@@ -119,11 +115,6 @@ const bandMath = (own = [SOURCE_STYLE]) => ({
     layers: {userDefinedVisualizations: {'this-recipe': own}}
 })
 
-const bandMathWithBands = names => ({
-    ...bandMath(),
-    availableBands: Object.fromEntries(names.map(name => [name, {}]))
-})
-
 const inheritingProps = ({
     sourceRecipe = bandMath(),
     userDefinedVisualizations = [],
@@ -131,6 +122,7 @@ const inheritingProps = ({
     selectedVisParams
 } = {}) => ({
     source: {id: 'band-math-1', sourceConfig: {recipeId: 'band-math-1'}},
+    recipe: {id: 'masking-1', type: 'MASKING'},
     recipeId: 'masking-1',
     sourceRecipe,
     userDefinedVisualizations,
@@ -237,11 +229,54 @@ describe('a style the renderer could not draw', () => {
         expect(sourceRecipe.layers.userDefinedVisualizations['this-recipe']).toEqual([SOURCE_STYLE])
     })
 
-    // Band Math's layer form supplies no band list of its own, so the recipe being shown answers for it.
-    it('is withheld even when the layer names no bands itself', () => {
-        const combo = inheriting({sourceRecipe: bandMathWithBands(['VV'])}).render()
+    // The layer that owns the answer gives the bands. Given none, nothing is known about them, and filtering
+    // against nothing would withhold every style.
+    it('is offered when the layer gives no band answer at all, because unknown stays unknown', () => {
+        const combo = inheriting({availableBands: undefined}).render()
 
-        expect(renderedGroups(combo).some(([label]) => label === INHERITED)).toBe(false)
+        expect(renderedGroups(combo)).toContainEqual([INHERITED, ['v-ratio']])
+    })
+})
+
+// The editor asks nothing about bands itself. It opens on what this layer's answer holds and the arguments naming
+// the product the layer shows, captured together - so it can only open once those bands are known.
+describe('opening the visualization editor', () => {
+    const COUNT_LAYER = {visualizationType: 'COUNT', visParams: {id: 'v-count', bands: ['count']}}
+
+    const editing = ({availableBands, areaLayerConfig = COUNT_LAYER}) => {
+        const activated = []
+        const selector = new VisualizationSelector({
+            ...inheritingProps({availableBands}),
+            recipe: RECIPE,
+            areaLayerConfig,
+            activator: {activatables: {
+                visParams: {activate: props => activated.push(props)},
+                mapAreaMenu: {deactivate: () => {}}
+            }}
+        })
+        const addButton = selector.render().props.labelButtons.find(({key}) => key === 'add')
+        return {addButton, activated}
+    }
+
+    const RECIPE = {id: 'ccdc-1', type: 'CCDC'}
+
+    it('captures the recipe, the bands this layer\u2019s answer holds and the product it shows', () => {
+        const {addButton, activated} = editing({availableBands: {count: {}}})
+
+        addButton.props.onClick()
+
+        expect(activated).toEqual([{
+            recipe: RECIPE,
+            imageLayerSourceId: 'band-math-1',
+            bands: ['count'],
+            productArgs: {visualizationType: 'COUNT'}
+        }])
+    })
+
+    it('cannot be opened while no band is known', () => {
+        const {addButton} = editing({availableBands: {}})
+
+        expect(addButton.props.disabled).toBe(true)
     })
 })
 

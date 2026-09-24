@@ -37,7 +37,7 @@ vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({
 }))
 
 vi.mock('~/app/home/body/process/recipe/visualizations', () => ({
-    getAllVisualizations: () => []
+    recipeVisualizations: () => []
 }))
 
 vi.mock('~/eventPublisher', () => ({

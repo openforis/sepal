@@ -10,7 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {getAvailableBands} from './bands'
+import {getAvailableBands, mapProducts} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
 import {describeSegments$} from './segmentDescription'
@@ -89,6 +89,7 @@ export default () => ({
     noImageOutput: true,
     describeSegments$,
     getDateRange: recipe => dateRange(recipe.model.dates),
-    getAvailableBands,
+    mapProducts,
+    legacySubmissionBands: getAvailableBands,
     getPreSetVisualizations
 })

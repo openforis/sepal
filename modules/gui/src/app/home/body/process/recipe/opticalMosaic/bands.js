@@ -29,6 +29,10 @@ export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes
         .map(bands => bands.map(band => ({value: band, label: band, ...availableBands[band]})))
 }
 
+// Display decoration for every band a mosaic can hold - tooltips, cursor precision and range - by name. What a
+// configured mosaic holds is its declaration's to say; this only decorates what that says.
+export const bandPresentation = () => getBands()
+
 const int10000 = {precision: 'int', min: -10000, max: 10000}
 const intFullRange = {precision: 'int', min: -32768, max: 32767}
 

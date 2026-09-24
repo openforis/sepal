@@ -11,6 +11,7 @@ import {addRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {initStore, select} from '~/store'
 
 import createSliceType from './ccdcSlice'
+import {availableBandsOf} from './sliceEvidence'
 
 const assetMetadata$ = vi.hoisted(() => vi.fn())
 vi.mock('~/apiRegistry', () => ({default: {gee: {assetMetadata$}}}))
@@ -49,7 +50,7 @@ describe('opening a saved Slice', () => {
         const saved = aSavedSlice()
         assetMetadata$.mockReturnValue(throwError(() => new Error('unreachable')))
         openSlice(saved)
-        expect(sliceType.getAvailableBands(currentRecipe())).toEqual({})
+        expect(availableBandsOf(currentRecipe())).toEqual({})
         assetMetadata$.mockReturnValue(of(segmentMetadata()))
 
         act(() => actionBuilder('ASSET_UPDATED')
@@ -85,7 +86,7 @@ describe('opening a saved Slice', () => {
         const saved = aSavedSlice()
         assetMetadata$.mockReturnValue(throwError(() => new Error('unreachable')))
         openSlice(saved)
-        expect(sliceType.getAvailableBands(currentRecipe())).toEqual({})
+        expect(availableBandsOf(currentRecipe())).toEqual({})
         assetMetadata$.mockReturnValue(of(segmentMetadata('3')))
 
         act(() => actionBuilder('CHANGE_SOURCE')

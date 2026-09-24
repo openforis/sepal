@@ -2,9 +2,10 @@ import _ from 'lodash'
 import {of, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// The bands Masking offers, as its consumers read them once the shared evidence lifecycle has acquired them.
+// The bands Masking's evidence answers once the shared evidence lifecycle has acquired them: its legacy answer,
+// read where the source declares no output, and the answer task submission filters exported styles against.
 // Declarations, resolution, the output observer and the lifecycle are real; only the Earth Engine bands API and
-// the GUI recipe-type registry are substituted.
+// the GUI recipe-type registry are substituted. Evidence that could not be had is no answer at all.
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -126,7 +127,7 @@ describe('Masking over an Asset recipe that filters its collection', () => {
         component.componentDidMount()
 
         expect(current().ui.sourceEvidence.status).toBe('UNAVAILABLE')
-        expect(bandChoices(current())).toEqual([])
+        expect(getAvailableBands(current())).toBeNull()
     })
 })
 
@@ -166,7 +167,7 @@ describe('a declared source that cannot be described', () => {
 
         expect(bands$).toHaveBeenCalledTimes(1)
         expect(current().ui.sourceEvidence.status).toBe('UNAVAILABLE')
-        expect(bandChoices(current())).toEqual([])
+        expect(getAvailableBands(current())).toBeNull()
     })
 })
 

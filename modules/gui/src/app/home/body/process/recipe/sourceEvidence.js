@@ -10,8 +10,7 @@ import {withKnownIdentities} from './visualizationMatching'
 //
 // A recipe that declares it preserves an input's band mapping and values has that input's CURRENT bands and
 // presets, not the ones copied into its model when the input was selected. This reads what the sync
-// component observed; it is the only reader, so consumers keep asking `getAvailableBands(recipe)` and get a
-// current answer wherever one exists.
+// component observed, and is the only reader: the types that inherit answer from it through their own helpers.
 //
 // Runtime only. `recipe.ui` is stripped before persisting, so nothing here is written into a saved recipe,
 // no saved recipe is rewritten, and a session that never observes simply has no evidence.

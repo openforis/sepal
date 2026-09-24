@@ -6,14 +6,11 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('../recipeTypeRegistry', () => ({
     getRecipeType: type => (type === 'BAND_MATH'
-        ? {
-            getAvailableBands: () => ({ratio: {}, VV: {}, VH: {}}),
-            getPreSetVisualizations: recipe => recipe.model.presets || []
-        }
+        ? {getPreSetVisualizations: recipe => recipe.model.presets || []}
         : undefined)
 }))
 
-const {getAllVisualizations, getUserDefinedVisualizations, outputOwnedVisualizations, sourceVisualizations} =
+const {getUserDefinedVisualizations, namedBands, outputOwnedVisualizations, recipeVisualizations, sourceVisualizations} =
     await import('./visualizations')
 
 const RATIO = {id: 'v-ratio', bands: ['ratio'], type: 'continuous', userDefined: true}
@@ -80,16 +77,22 @@ describe('what a source offers as a whole', () => {
 })
 
 // The recipe's own candidate list is a different question: there its styles ARE its own, and what it offers
-// is filtered by what it can draw.
+// is filtered by the bands the caller says it has.
 describe('a recipe showing its own output', () => {
+    const BANDS = namedBands(['ratio', 'VV', 'VH'])
+
     it('keeps its styles editable', () => {
-        expect(getAllVisualizations(bandMath({own: [RATIO]}))[0].userDefined).toBe(true)
+        expect(recipeVisualizations(bandMath({own: [RATIO]}), BANDS)[0].userDefined).toBe(true)
     })
 
     it('withholds a style naming a band it does not have', () => {
         const recipe = bandMath({presets: [{id: 'p-gone', bands: ['ratio_VV_VH'], type: 'continuous'}]})
 
-        expect(getAllVisualizations(recipe)).toEqual([])
+        expect(recipeVisualizations(recipe, BANDS)).toEqual([])
+    })
+
+    it('offers nothing while no bands are known', () => {
+        expect(recipeVisualizations(bandMath({own: [RATIO], presets: [PRESET]}), undefined)).toEqual([])
     })
 })
 

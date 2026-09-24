@@ -1,13 +1,16 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {ccdcMeasures} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
+import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
-import {getAllVisualizations as recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {namedBands, recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
 import {selectFrom} from '~/stateUtils'
@@ -116,7 +119,8 @@ const allOpticalMosaicVisualizations = recipe => {
             compositeOptions: selectFrom(recipe, 'model.options')
         }
     }
-    const baseVisualizations = recipeVisualizations(opticalMosaicRecipe)
+    // Templates for the measures this CCDC fits, which its declaration derives from the same optical model.
+    const baseVisualizations = recipeVisualizations(opticalMosaicRecipe, namedBands(ccdcMeasures({model: recipe.model})))
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
@@ -138,7 +142,7 @@ const allRadarMosaicVisualizations = recipe => {
         }
     }
     return [
-        ...recipeVisualizations(radarMosaicRecipe)
+        ...recipeVisualizations(radarMosaicRecipe, radarBands(radarMosaicRecipe))
             .map(visParams => ({
                 ...visParams,
                 min: visParams.min.map(min => min * RADAR_BAND_SCALE),
@@ -170,7 +174,7 @@ const allPlanetMosaicVisualizations = recipe => {
             }
         }
     }
-    const baseVisualizations = recipeVisualizations(planetMosaicRecipe)
+    const baseVisualizations = recipeVisualizations(planetMosaicRecipe, planetBands(planetMosaicRecipe))
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')

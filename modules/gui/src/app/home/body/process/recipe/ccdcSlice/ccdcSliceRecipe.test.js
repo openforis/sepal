@@ -34,7 +34,7 @@ registry.CCDC_SLICE = {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
-    getAvailableBands: (recipe, evidence) => availableBandsOf(recipe, evidence?.segments),
+    legacySubmissionBands: recipe => availableBandsOf(recipe),
     getPreSetVisualizations: (recipe, evidence) => materializedTemplates(recipe, evidence?.segments)
 }
 

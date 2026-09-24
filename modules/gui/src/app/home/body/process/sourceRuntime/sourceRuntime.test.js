@@ -169,8 +169,20 @@ const observing = ({environment$, recipe, createObserver}) => {
     }
 }
 
-const envelope = ({status, description = null, diagnostics = [], error = null, dependencyValidity = null}) =>
-    ({status, description, diagnostics, error, dependencyValidity})
+const envelope = ({
+    status, description = null, diagnostics = [], error = null, dependencyValidity = null, basis = expect.any(Array)
+}) => ({status, description, diagnostics, error, dependencyValidity, basis})
+
+const completing = ({environment$, recipe}) => {
+    const runtime = createSourceRuntime({environment$})
+    const states = []
+    let completed = false
+    const subscription = runtime.completeDependencies$({recipe}).subscribe({
+        next: published => states.push(published),
+        complete: () => completed = true
+    })
+    return {states, subscription, completed: () => completed, latest: () => states[states.length - 1]}
+}
 
 // Every reference in the operation's closure resolved and none closed a cycle.
 const SOUND = {status: 'VALID', diagnostics: []}
@@ -525,6 +537,134 @@ describe('structural dependency validity', () => {
             dependencyValidity: {status: 'UNAVAILABLE', diagnostics: []}
         })])
         expect(state.bandsCalls).toEqual([])
+    })
+})
+
+describe('completing dependencies without describing', () => {
+    it('completes the closure and reports its validity without observing any output', () => {
+        const env = environmentOf()
+        const recipe = masking({primary: recipeSelection('ccdc-1'), mask: assetSelection('users/x/mask')})
+        env.set(environment({catalogue: catalogue([recipe])}))
+        const completed = completing({environment$: env.environment$, recipe})
+
+        emitRecipe('ccdc-1', ccdc())
+
+        expect(completed.states).toEqual([
+            {status: 'LOADING', error: null},
+            {
+                status: 'COMPLETE',
+                error: null,
+                dependencyValidity: SOUND,
+                basis: [
+                    {id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})},
+                    {id: 'ccdc-1', content: expect.objectContaining({type: 'CCDC'})}
+                ]
+            }
+        ])
+        expect(state.bandsCalls).toEqual([])
+        expect(completed.completed()).toBe(true)
+    })
+
+    it('reports a dependency that could not be read as the outcome, keeping what the closure established', () => {
+        const env = environmentOf()
+        const failure = Object.assign(new Error('recipe not found'), {status: 404})
+        const recipe = masking({primary: recipeSelection('gone'), mask: recipeSelection('masked-1')})
+        env.set(environment({catalogue: catalogue([recipe])}))
+        const completed = completing({environment$: env.environment$, recipe})
+
+        failRecipe('gone', failure)
+
+        expect(completed.latest()).toEqual({
+            status: 'UNAVAILABLE',
+            error: failure,
+            dependencyValidity: expect.objectContaining({status: 'INVALID'}),
+            basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}]
+        })
+        expect(state.bandsCalls).toEqual([])
+    })
+
+    it('is invalidated by a credential change like any other operation', () => {
+        const env = environmentOf()
+        const recipe = masking({primary: recipeSelection('ccdc-1'), mask: assetSelection('users/x/mask')})
+        env.set(environment({catalogue: catalogue([recipe])}))
+        const completed = completing({environment$: env.environment$, recipe})
+
+        env.change(environment({catalogue: catalogue([recipe]), earthEngineGeneration: 2}))
+
+        expect(completed.latest()).toEqual({
+            status: 'UNAVAILABLE',
+            error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
+            dependencyValidity: null,
+            basis: []
+        })
+        expect(state.recipeTorndown).toEqual(['ccdc-1'])
+    })
+})
+
+describe('what an operation read', () => {
+    it('is the content of every record its description was resolved over, without session state', () => {
+        const env = environmentOf()
+        const recipe = {
+            ...masking({primary: recipeSelection('ccdc-1'), mask: assetSelection('users/x/mask')}),
+            title: 'Masked',
+            revision: 7,
+            layers: {areas: {}},
+            ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:ccdc-1'}}
+        }
+        env.set(environment({catalogue: catalogue([recipe, ccdc()])}))
+        const observed = observing({environment$: env.environment$, recipe})
+
+        emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
+
+        expect(observed.latest().basis).toEqual([
+            {
+                id: 'masked-1',
+                content: {
+                    id: 'masked-1',
+                    type: 'MASKING',
+                    model: recipe.model,
+                    sourceEvidence: {sourceKey: 'RECIPE_REF:ccdc-1'}
+                }
+            },
+            {id: 'ccdc-1', content: {...ccdc(), sourceEvidence: undefined}}
+        ])
+    })
+
+    it('is empty when the operation ended before reading anything', () => {
+        const env = environmentOf()
+        env.close()
+
+        const observed = observing({environment$: env.environment$, recipe: ccdc()})
+
+        expect(observed.latest().basis).toEqual([])
+    })
+})
+
+describe('credential epochs', () => {
+    it('gives a token on subscription and a different one on each credential change', () => {
+        const env = environmentOf()
+        const runtime = createSourceRuntime({environment$: env.environment$})
+        const epochs = []
+        runtime.identity$().subscribe(epoch => epochs.push(epoch))
+
+        env.change(environment({earthEngineGeneration: 2}))
+
+        expect(epochs).toHaveLength(2)
+        expect(epochs[1]).not.toBe(epochs[0])
+    })
+
+    it('completes when the owning runtime scope closes, and releases the environment when left', () => {
+        const env = environmentOf()
+        const runtime = createSourceRuntime({environment$: env.environment$})
+        let completed = false
+        const left = runtime.identity$().subscribe()
+        runtime.identity$().subscribe({complete: () => completed = true})
+
+        left.unsubscribe()
+        expect(env.liveCount()).toBe(1)
+        env.close()
+
+        expect(completed).toBe(true)
     })
 })
 

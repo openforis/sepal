@@ -36,7 +36,7 @@ class _BandMathImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipes, recipe, source, layerConfig = {}} = this.props
+        const {recipes, recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const images = recipe.model.inputImagery?.images || []
         const recipeNameById = {}
         images
@@ -50,6 +50,7 @@ class _BandMathImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -73,6 +74,7 @@ export const BandMathImageLayer = compose(
 BandMathImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

@@ -6,8 +6,9 @@ import {
 } from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {RECIPE_REF} from '#sepal/recipe/source/reference'
 import api from '~/apiRegistry'
+import {submissionBands} from '~/app/home/body/process/recipe/legacyOutput'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
@@ -173,7 +174,7 @@ export const submitRetrieveRecipeTask = (recipe, {
         : retrieveOptions
     const effectiveBands = effectiveRetrieveOptions.bands
 
-    let visualizations = getAllVisualizations(recipe)
+    let visualizations = recipeVisualizations(recipe, submissionBands(recipe))
     if (filterVisualizations) {
         visualizations = visualizations.filter(({bands: visBands}) =>
             visBands.every(band => effectiveBands.includes(band))
