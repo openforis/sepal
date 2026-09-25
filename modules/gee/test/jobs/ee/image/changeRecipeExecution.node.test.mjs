@@ -3,11 +3,11 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {firstValueFrom, of, throwError} from 'rxjs'
 
-// Which source bands Class Change reads, and in which precedence Index Change's legend rules are applied, through
-// the REAL imageFactory, asset, Class Change and Index Change code. Only Earth Engine is substituted, and only what
-// these questions need is modelled: an input image refuses a band it does not hold, and a constant image keeps the
-// value it was made from, so the collection a mosaic is built from can be read back. Everything else answers
-// anything, so this says nothing about pixel values.
+// Which source bands Class Change reads, and in which precedence Index Change's and Remapping's legend rules are
+// applied, through the REAL imageFactory, asset, Class Change, Index Change and Remapping code. Only Earth Engine is
+// substituted, and only what these questions need is modelled: an input image refuses a band it does not hold, and a
+// constant image keeps the value it was made from, so the collection a mosaic is built from can be read back.
+// Everything else answers anything, so this says nothing about pixel values.
 
 const ASSETS = {
     'users/x/from': ['class', 'probability_1', 'probability_2'],
@@ -150,6 +150,40 @@ describe('Index Change built twice from one model', () => {
 
     inOperation('leaves the legend of its model as it was', async () => {
         const recipe = indexChange()
+
+        await firstValueFrom(imageFactory(recipe).getImage$())
+
+        assert.deepEqual(recipe.model.legend.entries.map(({value}) => value), [1, 2, 3])
+    })
+})
+
+// Remapping applies its rules as Index Change does: the first legend entry decides a pixel two rules both match.
+describe('Remapping built twice from one model', () => {
+    const rule = value => ({
+        value,
+        booleanOperator: 'and',
+        constraints: [{image: 'image-1', band: 'ndvi', operator: '>', value: 0}]
+    })
+    const remapping = () => ({
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/before', includedBands: [{band: 'ndvi'}]}]},
+            legend: {entries: [rule(1), rule(2), rule(3)]}
+        }
+    })
+
+    inOperation('gives its first legend rule precedence both times', async () => {
+        const recipe = remapping()
+
+        await firstValueFrom(imageFactory(recipe).getImage$())
+        await firstValueFrom(imageFactory(recipe).getImage$())
+
+        assert.deepEqual(mosaics, [[3, 2, 1], [3, 2, 1]])
+    })
+
+    inOperation('leaves the legend of its model as it was', async () => {
+        const recipe = remapping()
 
         await firstValueFrom(imageFactory(recipe).getImage$())
 

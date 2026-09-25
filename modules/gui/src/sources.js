@@ -1,3 +1,4 @@
+import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {getAvailableBands as getAvailablePlanetBands, getGroupedBandOptions as getGroupedPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
@@ -5,7 +6,6 @@ import {toSources as toPlanetSources} from '~/app/home/body/process/recipe/plane
 import {getAvailableBands as getAvailableRadarBands, getGroupedBandOptions as getGroupedRadarBandOptions} from '~/app/home/body/process/recipe/radarMosaic/bands'
 import {getDataSetOptions as radarDataSetOptions, isRadarDataSet, toSources as toRadarSources} from '~/app/home/body/process/recipe/radarMosaic/sources'
 
-import {supportProbability, supportRegression} from './app/home/body/process/recipe/classification/classificationRecipe'
 import {msg} from './translate'
 
 export const groupedDataSetOptions = ({dataSetIds, startDate, endDate}) => {

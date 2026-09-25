@@ -3,15 +3,14 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {
-    BLOCKED,
+    isUnresolved,
     MISSING_SELECTION,
     physicalRequest,
+    reconciledChoices,
     RESOLVING,
     RETRIEVABLE,
     retrieveDecision,
-    submitRetrieve,
-    UNRESOLVED_OUTPUT,
-    UNSOUND_DEPENDENCIES
+    submitRetrieve
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -125,7 +124,6 @@ class _MosaicRetrievePanel extends React.Component {
         this.minimumLoadingElapsed = false
         this.initialLoadingTimer = null
         this.mounted = false
-        this.onBandsChange = this.onBandsChange.bind(this)
         this.onDestinationChange = this.onDestinationChange.bind(this)
         this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
@@ -431,9 +429,9 @@ class _MosaicRetrievePanel extends React.Component {
         )
     }
 
-    // The control is given the selection rather than the form field, because a name the output does not hold
-    // has to SURVIVE: it is what the warning names and what blocks retrieval, and dropping it would submit a
-    // different export than the one the user saved. Only an edit of the selection removes it.
+    // The control is given the selection rather than the form field: the selection is reconciled with the output
+    // here (reconcileBands), and a control dropping names by its own options would be a second authority. What is
+    // still named as unavailable is what no saved choice can remove - a CCDC breakpoint band, for one.
     renderResolvedBandOptions(options) {
         const {single, inputs: {bands}} = this.props
         const missing = this.missingSelection()
@@ -444,7 +442,7 @@ class _MosaicRetrievePanel extends React.Component {
                     selected={bands.value}
                     multiple={!single}
                     options={options}
-                    onChange={this.onBandsChange}
+                    onChange={selected => bands.set(selected)}
                     framed
                 />
                 {missing.length
@@ -524,6 +522,7 @@ class _MosaicRetrievePanel extends React.Component {
             this.startMinimumLoading()
         }
         this.update()
+        this.reconcileBands()
         this.reconcileDestination()
     }
 
@@ -533,6 +532,7 @@ class _MosaicRetrievePanel extends React.Component {
         }
         this.update()
         this.settleInitialLoading()
+        this.reconcileBands()
         this.reconcileDestination()
     }
 
@@ -650,8 +650,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     isUnresolved() {
         const decision = this.decision()
-        return decision?.status === BLOCKED
-            && [UNRESOLVED_OUTPUT, UNSOUND_DEPENDENCIES].includes(decision.reason)
+        return Boolean(decision) && isUnresolved(decision)
     }
 
     // What the output lets the user choose from, grouped as the recipe type presents it. A choice the presentation
@@ -687,8 +686,8 @@ class _MosaicRetrievePanel extends React.Component {
         return Boolean(decision) && decision.status !== RETRIEVABLE
     }
 
-    // Named in the terms of the selection, against the output as it stands now - so restoring a band restores the
-    // selection with it. Retrieval is blocked by the same decision, which reads the same names.
+    // Named in the terms of the selection, against the output as it stands now. Retrieval is blocked by the same
+    // decision, which reads the same names.
     missingSelection() {
         const decision = this.decision()
         const {selection = physicalSelection} = this.props
@@ -697,13 +696,17 @@ class _MosaicRetrievePanel extends React.Component {
             : []
     }
 
-    // The control offers only what the output holds, so a selected name it does not hold has no button to clear
-    // it with. Editing the selection is the correction: the edit is kept and the unavailable names go with it -
-    // after they have been named, and after they have blocked retrieval, never in silence.
-    onBandsChange(chosen) {
+    // Once the output has answered, a saved choice it no longer offers goes from the selection, and the rest stay.
+    reconcileBands() {
+        const decision = this.decision()
+        if (!decision) {
+            return
+        }
         const {inputs: {bands}, retrieveOutput, selection = physicalSelection} = this.props
-        const available = new Set(selection.choices(retrieveOutput.output))
-        bands.set(chosen.filter(name => available.has(name)))
+        const kept = reconciledChoices({decision, saved: bands.value, offered: selection.choices(retrieveOutput.output)})
+        if (kept) {
+            bands.set(kept)
+        }
     }
 
     reconcileDestination() {

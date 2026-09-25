@@ -383,8 +383,10 @@ one rule (`retrieveOutput.js`) from one read:
   without changing its value, and Apply is disabled. The saved selection is untouched.
 - An answer that is not `READY`, or whose `dependencyValidity` is not `VALID`, blocks; a legacy answer is no
   exception. Acquisition failures, invalid descriptions and broken dependencies never become a fallback.
-- A selection is translated into the physical names it exports, its request. A name the answer does not hold is named
-  to the user and blocks until the selection is edited; it is never dropped. An option a structured selection cannot
+- A selection is translated into the physical names it exports, its request, in the output's order. Once the answer
+  is known, the form drops a saved choice it no longer offers (`reconciledChoices`), keeping the rest and choosing
+  nothing in its place; a pending or failed read changes nothing. A requested name the answer still does not hold -
+  one no saved choice accounts for - is named to the user and blocks. An option a structured selection cannot
   translate blocks as well, rather than being read as another.
 - Physical facts decide destinations and policies, by the one evaluation submission validates with
   (`exportRequirements`):

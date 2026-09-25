@@ -1,7 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Regression, Unsupervised Classification, Index Change and Class Change through their real registrations, shared declarations, the
-// common read and the generic Retrieve submission. Only the task API and notifications are replaced.
+// Regression, Unsupervised Classification, Index Change, Class Change, Classification and Remapping through their real
+// registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
+// notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -27,10 +28,14 @@ const {default: regression} = await import('./regression/regression')
 const {default: unsupervisedClassification} = await import('./unsupervisedClassification/unsupervisedClassification')
 const {default: indexChange} = await import('./indexChange/indexChange')
 const {default: classChange} = await import('./classChange/classChange')
+const {default: classification} = await import('./classification/classification')
+const {default: remapping} = await import('./remapping/remapping')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
 const {retrieveTask: classChangeTask} = await import('./classChange/classChangeRecipe')
+const {retrieveTask: classificationTask} = await import('./classification/classificationRecipe')
+const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe')
 const {canPreview, displayTypes} = await import('./recipeOutput')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
@@ -39,6 +44,8 @@ addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
 addRecipeType(indexChange())
 addRecipeType(classChange())
+addRecipeType(classification())
+addRecipeType(remapping())
 
 beforeEach(() => {
     submitted.length = 0
@@ -126,11 +133,11 @@ describe('an index change', () => {
             .toEqual(['difference', 'normalized_difference', 'ratio'])
     })
 
-    it('exports the bands selected, in the order selected, keeping the most common change class', () => {
+    it('exports the bands selected, in the order execution builds them, keeping the most common change class', () => {
         retrieve(read(indexChangeOf()), 'GEE', indexChangeTask, {bands: ['change', 'difference']})
 
         expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
-            .toEqual([[{selection: ['change', 'difference']}, {change: 'mode', difference: 'mean'}]])
+            .toEqual([[{selection: ['difference', 'change']}, {difference: 'mean', change: 'mode'}]])
     })
 
     // No Index Change panel asks for all bands; a request that does takes them in the order execution builds.
@@ -187,11 +194,116 @@ describe('a class change', () => {
     })
 })
 
+describe('a classification', () => {
+    // In the order execution builds them: the class, what the classifier supports, then one probability per legend
+    // entry.
+    it.each([
+        ['a random forest', 'RANDOM_FOREST', ['class', 'class_probability', 'regression', 'probability_1', 'probability_2']],
+        ['a gradient tree boost', 'GRADIENT_TREE_BOOST', ['class', 'class_probability', 'regression', 'probability_1', 'probability_2']],
+        ['a support vector machine', 'SVM', ['class', 'class_probability', 'probability_1', 'probability_2']],
+        ['a naive Bayes classifier', 'NAIVE_BAYES', ['class', 'class_probability', 'probability_1', 'probability_2']],
+        ['a minimum distance classifier', 'MINIMUM_DISTANCE', ['class']],
+        ['a decision tree', 'DECISION_TREE', ['class']]
+    ])('by %s is described with the bands execution builds, while the recipe it trains on is not even loaded', (_case, type, names) => {
+        const {output} = read(classificationOf({classifier: type, trainingRecipe: 'training-1'}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(names)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is described with its probabilities in the order its legend stores its entries, however they are valued', () => {
+        const {output} = read(classificationOf({values: [10, 2, 5]}))
+
+        expect(output.bands.map(({name}) => name).filter(name => name.startsWith('probability_')))
+            .toEqual(['probability_10', 'probability_2', 'probability_5'])
+    })
+
+    it('is described with the bands its classifier supports while its legend has no entries yet', () => {
+        const {output} = read(classificationOf({values: []}))
+
+        expect(output.bands.map(({name}) => name)).toEqual(['class', 'class_probability', 'regression'])
+    })
+
+    it('is presented with labels, the legend\'s range on its class and regression, percentages on its probabilities, and the preset styles of the bands it has', () => {
+        const recipe = classificationOf({classifier: 'SVM'})
+        const {output} = read(recipe)
+
+        expect(output.presentation.probability_2.label).toBe('process.classification.bands.probability')
+        expect(displayTypes(output)).toEqual({
+            class: {precision: 'int', min: 1, max: 2},
+            class_probability: {precision: 'int', min: 0, max: 100},
+            probability_1: {precision: 'int', min: 0, max: 100},
+            probability_2: {precision: 'int', min: 0, max: 100}
+        })
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['class', 'class_probability', 'probability_1', 'probability_2'])
+    })
+
+    // The selection is a set of buttons, so the order they were pressed in is no order a user chose.
+    it('exports the bands selected in the order execution builds them, keeping the most common class and averaging the rest', () => {
+        retrieve(read(classificationOf()), 'GEE', classificationTask, {bands: ['probability_2', 'class', 'regression']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['class', 'regression', 'probability_2']},
+            {class: 'mode', regression: 'mean', probability_2: 'mean'}
+        ]])
+    })
+
+    it('names a saved band its classifier no longer provides, and exports nothing', () => {
+        const answer = read(classificationOf({classifier: 'SVM'}))
+        const bands = ['class', 'regression']
+
+        retrieve(answer, 'GEE', classificationTask, {bands})
+
+        expect(retrieveDecision({...answer, names: bands, destination: 'GEE', task: classificationTask}))
+            .toMatchObject({status: 'BLOCKED', reason: 'MISSING_SELECTION', missingBandNames: ['regression']})
+        expect(submitted).toEqual([])
+    })
+})
+
+describe('a remapping', () => {
+    it('is described with its class while the imagery it remaps is not even loaded', () => {
+        const {output} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1'}]}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
+    })
+
+    // Execution builds an image without bands when there is no rule to remap by.
+    it('is described with no bands, offers no style and cannot be previewed, while its legend has no entries', () => {
+        const recipe = remappingOf({values: []})
+        const {output} = read(recipe)
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED', bands: []})
+        expect(recipeVisualizations(recipe, output.availableBands)).toEqual([])
+        expect(canPreview(output)).toBe(false)
+    })
+
+    it('is presented with the legend\'s range as cursor precision, and its preset style', () => {
+        const recipe = remappingOf()
+        const {output} = read(recipe)
+
+        expect(output.presentation.class.label).toBe('process.classification.bands.class')
+        expect(displayTypes(output)).toEqual({class: {precision: 'int', min: 1, max: 3}})
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands)).toEqual([['class']])
+    })
+
+    it('exports its class to Earth Engine keeping the most common class in coarser pyramid levels', () => {
+        retrieve(read(remappingOf()), 'GEE', remappingTask)
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
+            .toEqual([[{selection: ['class']}, {class: 'mode'}]])
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
     ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
     ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
-    ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask]
+    ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
+    ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
+    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -277,6 +389,37 @@ const classChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE]} = {}) =
         toImage: classImage(to, 'landcover'),
         legend: {entries: [1, 2, 3, 4].map(value => ({value, label: `transition ${value}`, color: '#000000'}))},
         options: {minConfidence: 0}
+    }
+})
+
+const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], trainingRecipe} = {}) => ({
+    id: ID,
+    type: 'CLASSIFICATION',
+    title: 'Land cover',
+    model: {
+        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}]},
+        legend: {entries: values.map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
+        trainingData: {dataSets: trainingRecipe
+            ? [{type: 'RECIPE', recipe: trainingRecipe}]
+            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
+        classifier: {type: classifier}
+    }
+})
+
+const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes'}], values = [1, 2, 3]} = {}) => ({
+    id: ID,
+    type: 'REMAPPING',
+    title: 'Forest',
+    model: {
+        inputImagery: {images},
+        legend: {entries: values.map(value => ({
+            id: `entry-${value}`,
+            value,
+            label: `class ${value}`,
+            color: '#000000',
+            booleanOperator: 'and',
+            constraints: [{image: 'image-1', band: 'class', operator: '=', value}]
+        }))}
     }
 })
 

@@ -16,12 +16,6 @@ export const getDefaultModel = () => ({
     }
 })
 
-export const supportRegression = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(classifierType)
-
-export const supportProbability = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
-
 export const retrieveTask = {
     includeTimeRange: false
 }

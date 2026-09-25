@@ -28,14 +28,14 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: remapping} = await import('./remapping/remapping')
+const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe')
+const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(remapping())
+addRecipeType(pyeoAlerts())
 addRecipeType(baytsHistorical())
 
 beforeEach(() => {
@@ -45,21 +45,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies under its own policy', () => {
-        retrieve(read([REMAPPING, SOURCE]), {destination: 'GEE', bands: ['class']}, remappingTask)
+        retrieve(read([PYEO_ALERTS, SOURCE]), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
 
         expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
-            .toEqual([[{selection: ['class']}, {class: 'mode'}]])
+            .toEqual([[{selection: ['total_changes']}, {'.default': 'sample'}]])
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([REMAPPING, SOURCE])
+        const {recipe, output, pending} = read([PYEO_ALERTS, SOURCE])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['class'], destination: 'DRIVE', task: remappingTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['total_changes'], destination: 'DRIVE', task: pyeoAlertsTask}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([REMAPPING, SOURCE]), {destination: 'GEE', bands: ['class', 'probability']}, remappingTask)
+        retrieve(read([PYEO_ALERTS, SOURCE]), {destination: 'GEE', bands: ['total_changes', 'probability']}, pyeoAlertsTask)
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -74,13 +74,13 @@ describe('"all bands" of a recipe type declaring no output', () => {
     })
 })
 
-// The session has not loaded the recipe the remapping reads, so whether its dependencies are sound is what the
+// The session has not loaded the classification the alerts read, so whether its dependencies are sound is what the
 // panel's acquisition completes.
 describe('a recipe type declaring no output, over a dependency the session has not loaded', () => {
     it('is still being resolved until its dependencies are completed', () => {
-        const {recipe, output, pending} = read([REMAPPING])
+        const {recipe, output, pending} = read([PYEO_ALERTS])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['class'], destination: 'GEE', task: remappingTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['total_changes'], destination: 'GEE', task: pyeoAlertsTask}).status)
             .toBe('RESOLVING')
     })
 
@@ -88,7 +88,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([REMAPPING], terminal), {destination: 'GEE', bands: ['class']}, remappingTask)
+        retrieve(read([PYEO_ALERTS], terminal), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
 
         expect(submitted).toEqual([])
     })
@@ -96,7 +96,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([REMAPPING], completed), {destination: 'GEE', bands: ['class']}, remappingTask)
+        retrieve(read([PYEO_ALERTS], completed), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
 
         expect(submitted).toHaveLength(1)
     })
@@ -111,13 +111,12 @@ const SOURCE = {
     }
 }
 
-const REMAPPING = {
-    id: 'remapping-1',
-    type: 'REMAPPING',
-    title: 'Remapped',
+const PYEO_ALERTS = {
+    id: 'pyeo-alerts-1',
+    type: 'PYEO_ALERTS',
+    title: 'Alerts',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: SOURCE.id}]},
-        legend: {entries: [{value: 1}, {value: 3}]}
+        sources: {classification: SOURCE.id}
     }
 }
 

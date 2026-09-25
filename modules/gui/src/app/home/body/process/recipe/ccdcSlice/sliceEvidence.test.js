@@ -289,7 +289,7 @@ describe('what a retrieve selection offers', () => {
         const output = sliceOutputBands(['red_coefs', 'red_phase_1_coefs'], interpolating(0))
         const {baseBands, measures, segmentBands} = retrievableBands(output)
 
-        const selectable = sliceRequest({retrieveOptions: {
+        const selectable = sliceRequest({output: {bands: output.map(name => ({name}))}, retrieveOptions: {
             baseBands: baseBands.map(({name}) => name),
             bandTypes: measures,
             segmentBands: segmentBands.map(({name}) => name)

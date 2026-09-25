@@ -2,7 +2,6 @@ import _ from 'lodash'
 
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
@@ -147,14 +146,7 @@ export const RecipeActions = id => {
     }
 }
 
-export const supportRegression = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(classifierType)
-
-export const supportProbability = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
-
 export const retrieveTask = {
-    pyramidingPolicy: pyramidingPolicies.classBased,
     includeTimeRange: false
 }
 

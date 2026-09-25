@@ -56,6 +56,12 @@ describe('retrieving a measure CCDC does not break on', () => {
         expect(names).toEqual(expect.arrayContaining(['red_coefs', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude', 'tStart']))
     })
 
+    it('asks CCDC for the measures chosen in the order it offers them, whatever order they were chosen in', () => {
+        retrieve(ccdc, ['swir1', 'red'])
+
+        expect(submitted[0].params.image.bands).toEqual(['red', 'swir1'])
+    })
+
     it('asks CCDC for the measure chosen, not the bands it exports', () => {
         retrieve(ccdc, ['red'])
 
@@ -126,7 +132,7 @@ const readOf = ccdc => {
 const options = measures => ({destination: 'GEE', assetId: 'users/x/segments', scale: 30, bands: measures})
 
 const request = (ccdc, measures) =>
-    ccdcMeasureSelection.request({recipe: ccdc, retrieveOptions: options(measures)})
+    ccdcMeasureSelection.request({recipe: ccdc, output: readOf(ccdc).output, retrieveOptions: options(measures)})
 
 const retrieve = (ccdc, measures) =>
     submitRetrieve({...readOf(ccdc), request: request(ccdc, measures), submitTask: submitRetrieveTask})

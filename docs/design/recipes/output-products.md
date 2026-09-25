@@ -156,7 +156,9 @@ Four things stay separate:
 | Returned image | exactly the requested output bands, in the requested order |
 
 A consumer projects the selected schema from the available band records by name, and uses those records for
-destination compatibility, export policies and encoding. "All bands" names every available band, ignoring a manual
+destination compatibility, export policies and encoding. A selection is a set of choices, not a sequence: Retrieve
+requests the chosen bands in the output's order, whatever order they were chosen in, and CCDC's measures in the order
+it offers them. "All bands" names every available band, ignoring a manual
 selection retained beside it; an explicitly empty manual selection names none and cannot run. A request that states
 no selection at all predates that option and is normalized to all bands where the consumer interprets it. A recipe's
 own configured restrictions define what downstream consumers may request.
@@ -368,9 +370,12 @@ state, a rename, a new server revision - and those restart nothing. A change tha
 invalidates it at once and acquires anew; a failed acquisition withholds the choices rather than leaving the previous
 answer in force.
 
-A saved selection survives acquisition and failure untouched. Once the answer is known, a selected name it does not
-hold is named to the user and blocks retrieval until the selection is edited, rather than being dropped from the
-submission unannounced.
+A saved selection survives acquisition and failure untouched: neither shows that a band disappeared. Once the answer
+is known, a saved choice it no longer offers goes from the selection and the others stay; if none remain, the user
+chooses again, and an empty selection never means every band. Only choices go: a request built from offered choices
+that the output still does not hold - a CCDC breakpoint band the collection no longer carries, a Slice combination
+it does not produce - is named and blocks. Submission decides again against the output as it then stands, so a
+reconciled form never makes a stale request acceptable.
 
 A request that is not about the recipe's image output - Time Series' indicator, a measure of its collection - offers
 exactly what its recipe type supplies and reads nothing.
@@ -879,9 +884,9 @@ repeat the transformation's accepted input contract or source requirements.
 
 Providers answer from configuration, from an observation of their running image, from the catalogue their producer
 declares, or from their sources' descriptions.
-Regression, Unsupervised Classification, Index Change and Class Change describe their bands from configuration. Phenology,
-Classification and several alert products could describe their ordered names and scalar shape the same way, but
-have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
+Regression, Unsupervised Classification, Index Change, Class Change, Classification and Remapping describe their bands
+from configuration. Phenology and several alert products could describe their ordered names and scalar shape the same
+way, but have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
 
 1. an exact description from configuration requiring no observation;
 2. useful declared constraints followed by observation that supplies exact bands;
@@ -898,7 +903,8 @@ is a separate contract change backed by consumers; it is not required for the sc
 ### Current execution-request limitation
 
 Only a producer that translates or projects `outputBands`, or whose selection already names its outputs, returns
-exactly the requested bands. The export adapters supply `outputBands` alongside the selection for every recipe,
+exactly the requested bands. Classification builds its bands in one fixed order and projects `outputBands` at the end of
+`getImage$()`; a caller passing a selection without `outputBands` receives that fixed order. The export adapters supply `outputBands` alongside the selection for every recipe,
 declared or not; the limitation is whether the producer honors it.
 
 ## Preliminary recipe audit
@@ -916,7 +922,7 @@ matches execution. The execution comparison is a research gate below.
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
 | Change Alerts | scalar alert result | monitoring/calibration collection mosaics | fixed change bands plus fabricated family recipes | scalar |
 | Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
-| Classification | class, optional regression and probabilities | classification categories | classifier capability and legend | scalar |
+| Classification | class, optional class probability, regression and per-class probabilities | classification categories | shared declaration from classifier and legend | scalar |
 | Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
 | LandTrendr | change result | annual optical mosaic map product | fixed change bands plus fabricated mosaic recipe | scalar |
 | Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
@@ -926,7 +932,7 @@ matches execution. The execution comparison is a research gate below.
 | PyEO Alerts | alert result | internal classified monitoring collection | fixed vocabulary | scalar |
 | Radar Mosaic | point-in-time or time-scan composite | internal radar collection | date-dependent fixed families | scalar |
 | Regression | regression image | none identified | shared declaration | scalar |
-| Remapping | remapped class image | categorical semantics | fixed band plus legend | scalar |
+| Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
 | Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
 | Stack | selected and renamed input bands | mapped source presets | copied input snapshots and output mapping | inherited composition; may be mixed |
 | Time Series | no generic image export established | scalar count map product and chart series | fixed count plus collection helpers | count scalar |
@@ -1051,9 +1057,11 @@ The comparison also found useful stable declarations rather than only defects:
 
 - LandTrendr uses the same seven fixed change bands in GUI and EE; its annual mosaic branch is explicitly map-only.
 - Phenology's fixed base and month band lists agree with the EE product construction.
-- The Classification recipe derives the same optional regression and probability band names from classifier
-  capability and legend values on both sides. This does not settle the inconsistent temporal-composer encoding
-  paths identified above. Its categorical labels and palette remain presentation and semantic concerns.
+- Classification's optional bands follow from classifier capability and legend entries. Its declaration is the
+  order execution builds - `class`, `class_probability`, `regression`, then one `probability_<value>` per legend
+  entry in the legend's stored order - which the former Earth Engine catalogue did not match. This does not settle
+  the inconsistent temporal-composer encoding paths identified above. Its categorical labels and palette remain
+  presentation and semantic concerns.
 - Regression and Unsupervised Classification each have one fixed scalar output band.
 - PyEO Alerts has one fixed change-report vocabulary shared in intent by GUI and EE.
 - Masking's EE `getBands$()` delegates to the primary image exactly as the shared preserving transformation states.

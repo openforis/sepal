@@ -1,6 +1,7 @@
 import {SEGMENT_BANDS, sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 import {selectFrom} from '~/stateUtils'
 
+import {inOrderOf} from '../retrieveOutput'
 import {OBSERVED, sourceKeyOf, UNAVAILABLE, UNOBSERVED} from '../sourceEvidence'
 import {renderableVisualizations} from '../visualizationMatching'
 import {OUTPUT_LAYER_ID} from '../visualizations'
@@ -117,17 +118,17 @@ export const retrievableBands = outputBandNames => {
 }
 
 // The bands a retrieve selection asks for, as a Retrieve request: every measure asked for on every base band asked
-// for, and the segment bands. Every combination is kept - one the output does not hold is for the caller to name and refuse, never to
-// drop - and a measure this vocabulary does not know is no band at all, returned as unrecognized rather than read
-// as another.
-export const sliceRequest = ({retrieveOptions}) => {
+// for, and the segment bands, in the output's order. Every combination is kept - one the output does not hold is for
+// the caller to name and refuse, never to drop - and a measure this vocabulary does not know is no band at all,
+// returned as unrecognized rather than read as another.
+export const sliceRequest = ({output, retrieveOptions}) => {
     const {baseBands = [], bandTypes = [], segmentBands = []} = retrieveOptions
     const unrecognized = bandTypes.filter(measure => !Object.hasOwn(MEASURE_SUFFIXES, measure))
     const recognized = bandTypes.filter(measure => Object.hasOwn(MEASURE_SUFFIXES, measure))
-    const names = [
+    const names = inOrderOf(output.bands.map(({name}) => name), [
         ...baseBands.flatMap(name => recognized.map(measure => measureBand(name, measure))),
         ...segmentBands
-    ]
+    ])
     return {names, unrecognized, retrieveOptions: {...retrieveOptions, bands: names}}
 }
 

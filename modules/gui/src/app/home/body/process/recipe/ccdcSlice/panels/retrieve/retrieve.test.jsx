@@ -2,8 +2,9 @@ import {describe, expect, it, vi} from 'vitest'
 
 // The Retrieve panel of CCDC Slice, on what it lets through. Its selection is structured - base bands, measures and
 // segment bands - and every combination it asks for is checked against the slice's read of its own output: one the
-// output does not hold is refused and named, never dropped from the export. The read, the decision and the generic
-// submitter are the real ones; the panel's form wrappers, the task API and notifications are replaced.
+// output does not hold is refused and named, never dropped from the export. Once the output has answered, a saved
+// option it no longer offers goes from the selection. The read, the decision and the generic submitter are the real
+// ones; the panel's form wrappers, the task API and notifications are replaced.
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -89,6 +90,35 @@ describe('a selection naming a measure the slice vocabulary does not know', () =
     })
 })
 
+describe('a saved selection once the slice has answered', () => {
+    it('keeps the base bands and measures still offered, and drops the rest', () => {
+        const instance = panel(describedRead(), {baseBands: ['ndvi', 'nbr'], bandTypes: ['value', 'coefs'], segmentBands: ['tStart']})
+
+        instance.reconcileSelection()
+
+        expect(changes(instance)).toEqual({baseBands: ['ndvi'], bandTypes: ['value']})
+    })
+
+    // Both options are offered, as nbr and as ndvi's rmse; only their combination is not. Dropping either would
+    // export something else.
+    it('leaves a combination the slice does not produce as saved, still named and refused', () => {
+        const instance = panel(outputRead(['ndvi', 'ndvi_rmse', 'nbr', 'tStart']), {baseBands: ['ndvi', 'nbr'], bandTypes: ['value', 'rmse']})
+
+        instance.reconcileSelection()
+
+        expect(changes(instance)).toEqual({})
+        expect(instance.decision().missingBandNames).toEqual(['nbr_rmse'])
+    })
+
+    it('is left as saved while the slice cannot be read', () => {
+        const instance = panel(unavailableRead(), {baseBands: ['ndvi', 'nbr'], bandTypes: ['value']})
+
+        instance.reconcileSelection()
+
+        expect(changes(instance)).toEqual({})
+    })
+})
+
 describe('an open panel whose source became unreachable', () => {
     it('cannot be applied', () => {
         expect(panel(unavailableRead(), {baseBands: ['ndvi'], bandTypes: ['value']}).decision().status).toBe('BLOCKED')
@@ -117,13 +147,15 @@ const SLICE = {
 const SOURCE_BANDS = ['ndvi_coefs', 'ndvi_rmse', 'tStart']
 
 // The slice's read once its acquisition holds a description: what its own derivation makes of the source's bands.
-const describedRead = () => readOf({
+const describedRead = () => outputRead(sliceOutputBands(SOURCE_BANDS, SLICE.model))
+
+const outputRead = names => readOf({
     status: 'READY',
     description: {
         executionReference: {type: 'RECIPE_REF', id: SLICE.id},
         output: {
             kind: 'IMAGE',
-            bands: sliceOutputBands(SOURCE_BANDS, SLICE.model).map(name => ({name, dataType: {arrayDimensions: 0}}))
+            bands: names.map(name => ({name, dataType: {arrayDimensions: 0}}))
         },
         evidence: []
     },
@@ -160,8 +192,11 @@ const selecting = selection => ({
 const panel = (read, {baseBands = [], bandTypes = [], segmentBands = []} = {}) => {
     submitted.length = 0
     notified.length = 0
+    const selectionInput = (field, value) => ({value, set: selected => instance.changes[field] = selected})
     const inputs = {
-        baseBands: {value: baseBands}, bandTypes: {value: bandTypes}, segmentBands: {value: segmentBands},
+        baseBands: selectionInput('baseBands', baseBands),
+        bandTypes: selectionInput('bandTypes', bandTypes),
+        segmentBands: selectionInput('segmentBands', segmentBands),
         scale: {value: 30, set: () => {}}, destination: {value: 'GEE'}, assetType: {value: 'Image'}
     }
     const instance = new Retrieve({
@@ -173,5 +208,9 @@ const panel = (read, {baseBands = [], bandTypes = [], segmentBands = []} = {}) =
         form: {isInvalid: () => false}
     })
     instance.setState = state => Object.assign(instance.state, state)
+    instance.changes = {}
     return instance
 }
+
+// What the panel set its selection fields to.
+const changes = instance => instance.changes

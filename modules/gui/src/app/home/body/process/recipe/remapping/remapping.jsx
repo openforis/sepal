@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {RemappingToolbar} from './panels/remappingToolbar'
 import {getDefaultModel} from './remappingRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -55,6 +55,6 @@ export default () => ({
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

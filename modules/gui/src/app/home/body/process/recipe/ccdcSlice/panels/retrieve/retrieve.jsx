@@ -2,13 +2,12 @@ import Path from 'path'
 import React from 'react'
 
 import {
-    BLOCKED,
+    isUnresolved,
+    reconciledChoices,
     RESOLVING,
     RETRIEVABLE,
     retrieveDecision,
-    submitRetrieve,
-    UNRESOLVED_OUTPUT,
-    UNSOUND_DEPENDENCIES
+    submitRetrieve
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -333,14 +332,14 @@ class _Retrieve extends React.Component {
     }
 
     // Offered only once the output is known, and only what it holds. The controls are given the selection rather
-    // than the form field, so a saved choice the output does not hold survives to be named, and blocks, until the
-    // user edits it.
+    // than the form field, which is reconciled with the output once it has answered. A combination of offered
+    // choices the output does not produce is still named, and blocks.
     renderSelection() {
         const decision = this.decision()
         if (decision.status === RESOLVING) {
             return this.renderLoading()
         }
-        if (decision.status === BLOCKED && [UNRESOLVED_OUTPUT, UNSOUND_DEPENDENCIES].includes(decision.reason)) {
+        if (isUnresolved(decision)) {
             return this.renderUnresolved()
         }
         const structure = retrievableBands(this.outputBandNames())
@@ -495,10 +494,8 @@ class _Retrieve extends React.Component {
             : null
     }
 
-    // An edit keeps what was chosen from what is offered; a saved choice no longer offered goes with it.
     renderChoice(field, {label, tooltip, options}) {
         const input = this.props.inputs[field]
-        const offered = new Set(options.map(({value}) => value))
         return (
             <Buttons
                 label={label}
@@ -506,7 +503,7 @@ class _Retrieve extends React.Component {
                 selected={input.value}
                 multiple
                 options={options}
-                onChange={selected => input.set(selected.filter(value => offered.has(value)))}
+                onChange={selected => input.set(selected)}
                 framed/>
         )
     }
@@ -580,7 +577,7 @@ class _Retrieve extends React.Component {
             sharing.set('PRIVATE')
         }
         this.update()
-
+        this.reconcileSelection()
     }
 
     componentDidUpdate(prevProps) {
@@ -588,6 +585,7 @@ class _Retrieve extends React.Component {
             this.setDestinationValidationPending(this.requiresDestinationValidation())
         }
         this.update()
+        this.reconcileSelection()
     }
 
     update() {
@@ -609,7 +607,7 @@ class _Retrieve extends React.Component {
             return
         }
         const {recipe, output, pending, sourceFacts} = read
-        const request = sliceRequest({retrieveOptions: values})
+        const request = sliceRequest({output, retrieveOptions: values})
         if (submitRetrieve({recipe, output, pending, sourceFacts, request, task: retrieveTask})) {
             const {assetId, workspacePath} = values
             const project = this.findProject()
@@ -625,13 +623,32 @@ class _Retrieve extends React.Component {
 
     decision() {
         const {retrieveOutput: {output, pending, sourceFacts}, inputs} = this.props
-        const {names, unrecognized} = sliceRequest({retrieveOptions: {
+        const {names, unrecognized} = sliceRequest({output, retrieveOptions: {
             baseBands: inputs.baseBands.value || [],
             bandTypes: inputs.bandTypes.value || [],
             segmentBands: inputs.segmentBands.value || []
         }})
         return retrieveDecision({
             output, pending, sourceFacts, names, unrecognized, destination: inputs.destination.value, task: retrieveTask
+        })
+    }
+
+    // Once the output has answered, a saved base band, measure or segment band it no longer offers goes from the
+    // selection, and the rest stay.
+    reconcileSelection() {
+        const decision = this.decision()
+        const {baseBands, measures, segmentBands} = retrievableBands(this.outputBandNames())
+        const offered = {
+            baseBands: baseBands.map(({name}) => name),
+            bandTypes: measures,
+            segmentBands: segmentBands.map(({name}) => name)
+        }
+        Object.entries(offered).forEach(([field, choices]) => {
+            const input = this.props.inputs[field]
+            const kept = reconciledChoices({decision, saved: input.value, offered: choices})
+            if (kept) {
+                input.set(kept)
+            }
         })
     }
 

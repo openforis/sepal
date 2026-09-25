@@ -13,13 +13,6 @@ import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 
 export const pyramidingPolicies = {
-    
-    //  For classification recipe - 'class' band uses 'mode', others use 'mean'
-    classBased: bands => {
-        const policy = {}
-        bands.forEach(band => policy[band] = band === 'class' ? 'mode' : 'mean')
-        return policy
-    },
 
     //  For change detection recipes - specified band uses 'mode', others use 'mean'
     changeBased: bandName => bands => {

@@ -4,7 +4,7 @@ import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 
 // The synchronous read, over graphs the real builder produces and the real shared declarations: Optical Mosaic
 // describes from its model, Masking preserves its primary input, CCDC observes what it can be asked for, and
-// Remapping declares nothing. Only the GUI registry is replaced, by the entries each type registers: legacy
+// Band Math declares nothing. Only the GUI registry is replaced, by the entries each type registers: legacy
 // helpers, map products and band presentation.
 //
 // Statuses, authorities and codes are literals, so a production rename cannot pass unnoticed.
@@ -21,7 +21,7 @@ vi.mock('../recipeTypeRegistry', async () => {
                 blue: {dataType: {precision: 'int', min: -10000, max: 10000}, tooltip: 'Blue'}
             })
         },
-        REMAPPING: {
+        BAND_MATH: {
             getAvailableBands: () => ({class: {dataType: {precision: 'int'}, label: 'Class'}})
         },
         MASKING: {
@@ -93,7 +93,7 @@ describe('an answer from the session alone', () => {
 
 describe('a legacy answer', () => {
     it('passes an undeclared type\'s helper through as names, its data type as display only', () => {
-        const recipe = remapping()
+        const recipe = bandMath()
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe])})
 
@@ -102,9 +102,9 @@ describe('a legacy answer', () => {
     })
 
     it('answers a declared wrapper over an undeclared source from the wrapper\'s own helper', () => {
-        const recipe = masking({primary: 'remapping-1'})
+        const recipe = masking({primary: 'band-math-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, remapping()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, bandMath()])})
 
         expect(read).toMatchObject({status: 'READY', authority: 'LEGACY'})
         expect(read.availableBands).toEqual({class: {dataType: {arrayDimensions: 0}}})
@@ -112,9 +112,9 @@ describe('a legacy answer', () => {
 
     it('is never taken from evidence that could not be had', () => {
         registered.maskingEvidence = 'UNAVAILABLE'
-        const recipe = masking({primary: 'remapping-1'})
+        const recipe = masking({primary: 'band-math-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, remapping()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, bandMath()])})
         registered.maskingEvidence = 'OBSERVED'
 
         expect(read).toMatchObject({status: 'UNAVAILABLE', authority: null, bands: [], acquisition: null})
@@ -125,7 +125,7 @@ describe('a map product', () => {
     it('is named from the layer config, and an unknown value is no product at all', () => {
         expect(layerProduct(ccdc(), {visualizationType: 'COUNT'})).toEqual({name: 'COUNT'})
         expect(layerProduct(ccdc(), {visualizationType: 'SEGMENTS'})).toBeNull()
-        expect(layerProduct(remapping(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
+        expect(layerProduct(bandMath(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
     })
 
     // A layer whose form has not yet written its defaults shows the same product it will show once it has, and
@@ -242,7 +242,7 @@ describe('a retained description', () => {
 describe('whether a retained terminal is about the records held now', () => {
     it('holds while every record it read that the session also holds is unchanged', () => {
         const recipe = masking({primary: 'mosaic-1'})
-        const basis = [recipe, mosaic(), remapping()].map(record => ({id: record.id, content: recipeContent(record)}))
+        const basis = [recipe, mosaic(), bandMath()].map(record => ({id: record.id, content: recipeContent(record)}))
 
         expect(compatibleBasis(basis, graphOf([{...recipe, title: 'Renamed', revision: 9}, mosaic()]))).toBe(true)
     })
@@ -278,7 +278,7 @@ const masking = ({primary, mask}) => ({
     }
 })
 
-const remapping = () => ({id: 'remapping-1', type: 'REMAPPING', model: {}})
+const bandMath = () => ({id: 'band-math-1', type: 'BAND_MATH', model: {}})
 
 const ccdc = (model = {}) => ({id: 'ccdc-1', type: 'CCDC', model})
 

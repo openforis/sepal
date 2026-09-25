@@ -2,7 +2,6 @@ import _ from 'lodash'
 
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {uuid} from '~/uuid'
 
 export const getDefaultModel = () => ({
@@ -23,7 +22,6 @@ export const RecipeActions = id => {
 }
 
 export const retrieveTask = {
-    pyramidingPolicy: pyramidingPolicies.classBased,
     includeTimeRange: false
 }
 

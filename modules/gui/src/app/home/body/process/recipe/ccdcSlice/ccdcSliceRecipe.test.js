@@ -110,7 +110,8 @@ const readOf = recipe => {
 const submit = recipe => {
     submitted.length = 0
     const submittedOptions = recipe.ui.retrieveOptions
-    submitRetrieve({...readOf(recipe), request: sliceRequest({retrieveOptions: submittedOptions}), task: retrieveTask})
+    const read = readOf(recipe)
+    submitRetrieve({...read, request: sliceRequest({output: read.output, retrieveOptions: submittedOptions}), task: retrieveTask})
     return submitted[0]?.params.image
 }
 
@@ -123,6 +124,16 @@ describe('submitting a slice retrieval', () => {
 
     it('exports the band names the selection resolves to', () => {
         expect(submit(selectingNdviValueAndStart).bands).toEqual({selection: ['ndvi', 'tStart']})
+    })
+
+    it('exports them in the order the slice holds them, whatever order they were chosen in', () => {
+        const selectingRmseFirst = sliceRetrieving({
+            baseBands: ['ndvi'],
+            bandTypes: ['rmse', 'value'],
+            segmentBands: ['tStart']
+        })
+
+        expect(submit(selectingRmseFirst).bands).toEqual({selection: ['ndvi', 'ndvi_rmse', 'tStart']})
     })
 
     it('gives each band Earth Engine\'s default policy, the slice declaring none', () => {

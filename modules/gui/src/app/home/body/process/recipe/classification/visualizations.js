@@ -1,9 +1,8 @@
 import _ from 'lodash'
 
+import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
-
-import {supportProbability, supportRegression} from './classificationRecipe'
 
 export const getPreSetVisualizations = recipe => {
     const legend = selectFrom(recipe, 'model.legend') || {}

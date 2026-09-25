@@ -81,7 +81,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     return {
         getRecipeType: type => type === 'MASKING'
             ? {id: 'MASKING', getAvailableBands, getPreSetVisualizations}
-            : {id: type, getPreSetVisualizations: () => []}
+            : {id: type, getDateRange: () => [], getPreSetVisualizations: () => []}
     }
 })
 
@@ -89,6 +89,8 @@ const {ccdcMeasures, ccdcOutputBands} = await import('#sepal/recipe/type/ccdc')
 const {SourceEvidenceSync} = await import('~/app/home/body/process/recipe/sourceEvidenceSync')
 const {maskingObservation} = await import('../../maskingSourceEvidence')
 const {Retrieve} = await import('./retrieve')
+const {Retrieve: ClassificationRetrieve} = await import('../../../classification/panels/retrieve/retrieve')
+const {Retrieve: CcdcRetrieve} = await import('../../../ccdc/panels/retrieve/retrieve')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -133,7 +135,7 @@ describe('retrieving from Masking over an Asset recipe that filters its collecti
 // CCDC fits only the measures it is asked for, so the image it builds unrequested holds the breakpoint
 // measures alone. What Retrieve may offer is the catalogue CCDC declares.
 describe('retrieving a CCDC measure it does not break on, through Masking', () => {
-    it('shows it in the band control, and submits the physical bands once clicked and applied', async () => {
+    it('shows it in the band control, and submits the physical bands in CCDC\'s order once clicked and applied', async () => {
         observed.answer = ({recipe}) => ccdcOutputBands(ccdcMeasures({model: recipe.model}))
 
         await open({recipes: [MASKED_CCDC, CCDC], id: MASKED_CCDC.id})
@@ -144,7 +146,7 @@ describe('retrieving a CCDC measure it does not break on, through Masking', () =
         await click('process.retrieve.apply')
 
         expect(submitted).toHaveLength(1)
-        expect(submitted[0].params.image.bands).toEqual({selection: ['red_coefs', 'tStart']})
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart', 'red_coefs']})
     })
 
     // Masking preserves what CCDC declares of its bands; its own fallback never reaches an array band.
@@ -211,7 +213,7 @@ describe('a saved band snapshot that disagrees with the catalogue', () => {
         expect(submitted[0].params.image.bands).toEqual({selection: ['tStart', 'red_coefs']})
     })
 
-    it('names a saved band the catalogue does not hold and refuses to submit it', async () => {
+    it('drops a saved band the catalogue does not hold once it answers, and submits the rest', async () => {
         const answer = answering()
         const saved = {
             ...staleSnapshot(),
@@ -221,11 +223,31 @@ describe('a saved band snapshot that disagrees with the catalogue', () => {
         await open({recipes: [saved, CCDC], id: MASKED_CCDC.id})
         await answer.arrive(catalogue())
 
-        expect(shown()).toContain(`process.retrieve.form.bands.unavailable ${STALE}`)
+        expect(shown()).not.toContain('process.retrieve.form.bands.unavailable')
 
         await click('process.retrieve.apply')
 
-        expect(submitted).toEqual([])
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart']})
+    })
+
+    // A failure shows nothing about which bands exist, so the next answer is what decides the selection.
+    it('keeps the saved selection through a failed resolution', async () => {
+        const failing = answering()
+        const saved = {
+            ...staleSnapshot(['tStart']),
+            ui: {retrieve: {destination: 'GEE', bands: ['tStart', 'red_coefs']}}
+        }
+
+        await open({recipes: [saved, CCDC], id: MASKED_CCDC.id})
+        await failing.fail()
+        const answer = answering()
+        await editRecipe(MASKED_CCDC.id, {model: {...saved.model, imageMask: {type: 'RECIPE_REF', id: CCDC.id, revised: true}}})
+        await answer.arrive(catalogue())
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart', 'red_coefs']})
     })
 
     it('offers nothing and explains itself when the resolution fails', async () => {
@@ -261,9 +283,8 @@ describe('a saved band snapshot that disagrees with the catalogue', () => {
     })
 })
 
-// A selected band the catalogue does not hold is not the panel's to drop. It is what the warning names and
-// what blocks retrieval, and it has to survive anything but the user editing the selection - otherwise a
-// later resolution quietly submits a different export than the one the user saved.
+// Once the catalogue has answered, a selected band it does not hold is no longer a choice, and goes from the
+// selection. The bands still offered stay selected; nothing is chosen in its place.
 describe('a selected band the catalogue does not hold', () => {
     const MISSING = 'red_coefs'
 
@@ -277,29 +298,18 @@ describe('a selected band the catalogue does not hold', () => {
         await open({recipes: [saved(bands), CCDC], id: MASKED_CCDC.id})
     }
 
-    it('names it and refuses to submit', async () => {
+    it('goes silently, and the bands still offered are submitted', async () => {
         await opened()
 
-        expect(shown()).toContain(`process.retrieve.form.bands.unavailable ${MISSING}`)
+        expect(shown()).not.toContain('process.retrieve.form.bands.unavailable')
 
         await click('process.retrieve.apply')
 
-        expect(submitted).toEqual([])
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart']})
     })
 
-    it('still names it and still refuses after the recipe is renamed', async () => {
-        await opened()
-
-        await editRecipe(MASKED_CCDC.id, {title: 'Renamed'})
-
-        expect(shown()).toContain(`process.retrieve.form.bands.unavailable ${MISSING}`)
-
-        await click('process.retrieve.apply')
-
-        expect(submitted).toEqual([])
-    })
-
-    it('submits it once the catalogue holds it again, without the user selecting it', async () => {
+    it('stays gone when the catalogue holds it again', async () => {
         await opened()
 
         observed.answer = () => withRed()
@@ -307,20 +317,83 @@ describe('a selected band the catalogue does not hold', () => {
         await click('process.retrieve.apply')
 
         expect(submitted).toHaveLength(1)
-        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart', MISSING]})
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart']})
     })
 
-    it('goes when the user edits the selection, which is what unblocks retrieval', async () => {
-        await opened()
+    // An empty selection is not "all bands": the user chooses again.
+    it('leaves nothing selected when it was the only band, and blocks until one is chosen', async () => {
+        await opened([MISSING])
+
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
 
         await click('ndvi_coefs')
+        await click('process.retrieve.apply')
 
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['ndvi_coefs']})
+    })
+})
+
+describe('retrieving from a Classification whose classifier changes', () => {
+    const saved = {
+        ...CLASSIFICATION,
+        ui: {retrieve: {destination: 'GEE', bands: ['class', 'regression']}}
+    }
+
+    const toSvm = () => editRecipe(CLASSIFICATION.id, {
+        model: {...CLASSIFICATION.model, classifier: {type: 'SVM'}}
+    })
+
+    it('drops the regression SVM does not provide, keeping the class, which it submits', async () => {
+        await open({recipes: [saved], id: CLASSIFICATION.id, Panel: ClassificationRetrieve})
+
+        await toSvm()
+
+        expect(offers('regression')).toBe(false)
         expect(shown()).not.toContain('process.retrieve.form.bands.unavailable')
 
         await click('process.retrieve.apply')
 
         expect(submitted).toHaveLength(1)
-        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart', 'ndvi_coefs']})
+        expect(submitted[0].params.image.bands).toEqual({selection: ['class']})
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({class: 'mode'})
+    })
+})
+
+describe('retrieving CCDC measures', () => {
+    const catalogue = ({recipe}) => ccdcOutputBands(ccdcMeasures({model: recipe.model}))
+
+    const retrieving = (measures, ccdc = CCDC) => ({...ccdc, ui: {retrieve: {destination: 'GEE', bands: measures}}})
+
+    const onSentinel2 = ccdc => ({...ccdc, model: {...ccdc.model, sources: {...ccdc.model.sources, dataSets: {SENTINEL_2: ['SENTINEL_2']}}}})
+
+    // Thermal is carried by Landsat and not by Sentinel-2.
+    it('drops a saved measure the collection no longer carries, and submits the rest', async () => {
+        observed.answer = catalogue
+        const saved = onSentinel2(retrieving(['red', 'thermal']))
+
+        await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual(['red'])
+    })
+
+    // A breakpoint band is the recipe's configuration, not a saved choice: nothing chosen can be dropped to fix it.
+    it('still names a breakpoint band the collection no longer carries, and submits nothing', async () => {
+        observed.answer = catalogue
+        const breakingOnThermal = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['thermal']}}}
+        const saved = onSentinel2(retrieving(['red'], breakingOnThermal))
+
+        await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
+
+        expect(shown()).toContain('process.retrieve.form.bands.unavailable thermal')
+
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
     })
 })
 
@@ -402,17 +475,17 @@ describe('a change to the producer behind the mask', () => {
         expect(offers(THERMAL)).toBe(true)
     }
 
-    it('withdraws a band it no longer provides, names the saved selection and blocks submission', async () => {
+    it('withdraws a band it no longer provides, dropping it from the selection and submitting the rest', async () => {
         await openSelecting(['tStart', THERMAL])
 
         await editRecipe(CCDC.id, SENTINEL_2)
 
         expect(offers(THERMAL)).toBe(false)
-        expect(shown()).toContain(`process.retrieve.form.bands.unavailable ${THERMAL}`)
 
         await click('process.retrieve.apply')
 
-        expect(submitted).toEqual([])
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['tStart']})
     })
 
     it('withholds its choices and blocks submission when the source cannot be read again', async () => {
@@ -510,7 +583,10 @@ describe.each([
     ['a regression', () => REGRESSION, 'regression', 'mean'],
     ['an unsupervised classification', () => CLUSTERS, 'class', 'mode'],
     ['an index change', () => INDEX_CHANGE, 'change', 'mode'],
-    ['a class change', () => CLASS_CHANGE, 'confidence', 'mean']
+    ['a class change', () => CLASS_CHANGE, 'confidence', 'mean'],
+    ['a classification', () => CLASSIFICATION, 'class', 'mode'],
+    ['a classification', () => CLASSIFICATION, 'probability_2', 'mean'],
+    ['a remapping', () => REMAPPING, 'class', 'mode']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -533,7 +609,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers what its source was observed to hold, and exports a scalar band under the fallback', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
         await click('class')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -546,7 +622,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('exports no band observed as an array, for which it has no policy', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
         await click('probability')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -557,7 +633,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers nothing until its source has been observed', async () => {
         answering()
 
-        await open({recipes: [MASKED_REMAPPING, REMAPPING], id: MASKED_REMAPPING.id})
+        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
 
         expect(offers('class')).toBe(false)
     })
@@ -568,17 +644,17 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
 // pairing it with the session as it now stands must not authorize an export.
 describe('evidence observed of a source before it changed', () => {
     const SCALAR = [{name: 'class', arrayDimensions: 0}]
-    const savedDrive = {...MASKED_REMAPPING, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+    const savedDrive = {...MASKED_BAND_MATH, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
 
     const openObserved = async () => {
         observed.answer = () => SCALAR
-        await open({recipes: [savedDrive, REMAPPING], id: savedDrive.id})
+        await open({recipes: [savedDrive, BAND_MATH], id: savedDrive.id})
         expect(offers('class')).toBe(true)
     }
 
     it.each([
-        ['its source is edited, keeping its id', () => editRecipe(REMAPPING.id, {
-            model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}
+        ['its source is edited, keeping its id', () => editRecipe(BAND_MATH.id, {
+            model: {...BAND_MATH.model, outputBands: {outputImages: []}}
         })],
         ['the credentials it was read under are replaced', () => replaceCredentials()]
     ])('authorizes nothing once %s, until the source is observed again', async (_case, change) => {
@@ -599,8 +675,8 @@ describe('evidence observed of a source before it changed', () => {
     // A click can land after the session changed and before the lifecycle has rendered that change, so whether the
     // evidence is still current is decided when Apply is clicked, not when the lifecycle next reacts.
     it.each([
-        ['its source is edited, keeping its id', () => editAction(REMAPPING.id, {
-            model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}
+        ['its source is edited, keeping its id', () => editAction(BAND_MATH.id, {
+            model: {...BAND_MATH.model, outputBands: {outputImages: []}}
         })],
         ['the credentials it was read under are replaced', () => credentialsAction()]
     ])('authorizes nothing when applied as %s, before the lifecycle has reacted', async (_case, change) => {
@@ -620,7 +696,7 @@ describe('evidence observed of a source before it changed', () => {
         await openObserved()
         const answer = answering()
 
-        await editRecipe(REMAPPING.id, {model: {...REMAPPING.model, legend: {entries: [{value: 2}]}}})
+        await editRecipe(BAND_MATH.id, {model: {...BAND_MATH.model, outputBands: {outputImages: []}}})
         await answer.arrive([{name: 'class', arrayDimensions: 1}])
         await click('process.retrieve.apply')
 
@@ -692,19 +768,19 @@ const MASKED_ASSET = {
 }
 
 // A recipe type that declares no output, over nothing, and a Masking over it.
-const REMAPPING = {
-    id: 'remapping-1',
-    type: 'REMAPPING',
+const BAND_MATH = {
+    id: 'band-math-1',
+    type: 'BAND_MATH',
     model: {inputImagery: {images: []}}
 }
 
-const MASKED_REMAPPING = {
+const MASKED_BAND_MATH = {
     id: 'masked-remapping-1',
     type: 'MASKING',
-    title: 'Masked remapping',
+    title: 'Masked band math',
     model: {
-        imageToMask: {type: 'RECIPE_REF', id: REMAPPING.id},
-        imageMask: {type: 'RECIPE_REF', id: REMAPPING.id}
+        imageToMask: {type: 'RECIPE_REF', id: BAND_MATH.id},
+        imageMask: {type: 'RECIPE_REF', id: BAND_MATH.id}
     },
     ui: {}
 }
@@ -754,6 +830,26 @@ const CLASS_CHANGE = {
     }
 }
 
+const CLASSIFICATION = {
+    id: 'classification-1',
+    type: 'CLASSIFICATION',
+    model: {
+        inputImagery: {images: [COVARIATES]},
+        legend: {entries: CLASSES},
+        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
+        classifier: {type: 'RANDOM_FOREST'}
+    }
+}
+
+const REMAPPING = {
+    id: 'remapping-1',
+    type: 'REMAPPING',
+    model: {
+        inputImagery: {images: [COVARIATES]},
+        legend: {entries: [{value: 1, booleanOperator: 'and', constraints: []}]}
+    }
+}
+
 const maskingOver = source => ({
     id: `masked-${source.id}`,
     type: 'MASKING',
@@ -775,7 +871,7 @@ const open = async (args = {}) => {
     await advanceBy(PAST_MINIMUM_MS)
 }
 
-const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id} = {}) => {
+const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retrieve} = {}) => {
     const [, ...sources] = recipes
     store = createStore(
         (state = {
@@ -802,7 +898,7 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id} = {}) => {
                     <SourceRuntimeProvider>
                         <Recipe id={id}>
                             <SourceEvidenceSync observation={maskingObservation}/>
-                            <Retrieve/>
+                            <Panel/>
                         </Recipe>
                     </SourceRuntimeProvider>
                 </EventShield>

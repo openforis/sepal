@@ -58,14 +58,26 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, publishedEvidence}
     return {recipe, graph, output, pending, sourceFacts: currentSourceFacts(recipe, state, publishedEvidence)}
 }
 
-// A selection of physical output names. "All bands" names every band the answer holds, ignoring a manual selection
-// kept beside it, as does a stored selection that predates the option and states neither.
+// A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
+// ignoring a manual selection kept beside it, as does a stored selection that predates the option and states neither.
 export const physicalRequest = ({output, retrieveOptions = {}}) => {
     const {useAllBands, bands} = retrieveOptions
+    const outputNames = output.bands.map(({name}) => name)
     const names = useAllBands === true || (useAllBands === undefined && bands === undefined)
-        ? output.bands.map(({name}) => name)
-        : bands || []
+        ? outputNames
+        : inOrderOf(outputNames, bands || [])
     return {names, retrieveOptions: {...retrieveOptions, bands: names}}
+}
+
+// Chosen names in the order they are offered in. A selection is a set of buttons, so the order they were pressed in
+// is no order anyone chose; an export follows the output instead. A name no longer offered keeps its place after the
+// rest, so it is still named and refused.
+export const inOrderOf = (offered, chosen) => {
+    const offeredNames = new Set(offered)
+    return [
+        ...offered.filter(name => chosen.includes(name)),
+        ...chosen.filter(name => !offeredNames.has(name))
+    ]
 }
 
 export const retrieveDecision = ({output, pending, sourceFacts, names, unrecognized = [], destination, task = {}}) => {
@@ -99,6 +111,24 @@ export const retrieveDecision = ({output, pending, sourceFacts, names, unrecogni
     return destination && destinations[destination] === false
         ? decision(BLOCKED, INCOMPATIBLE_DESTINATION, {destinations})
         : decision(RETRIEVABLE, null, {destinations})
+}
+
+// Whether the output could not be established - it failed, or its dependencies are not known to be sound. Neither
+// says anything about which bands it holds.
+export const isUnresolved = ({status, reason}) =>
+    status === BLOCKED && [UNRESOLVED_OUTPUT, UNSOUND_DEPENDENCIES].includes(reason)
+
+// The saved choices a form keeps once the output has answered: those it still offers, in their saved order. None
+// may remain, which asks for a new selection; it never means every band. Undefined when nothing is to change - also
+// while the output is being resolved or could not be, since neither shows that a choice disappeared. A choice is
+// dropped only because it is no longer offered: a request built from offered choices that the output still cannot
+// satisfy is left to the decision to name and refuse.
+export const reconciledChoices = ({decision, saved, offered}) => {
+    if (decision.status === RESOLVING || isUnresolved(decision) || !Array.isArray(saved)) {
+        return undefined
+    }
+    const kept = saved.filter(choice => offered.includes(choice))
+    return kept.length === saved.length ? undefined : kept
 }
 
 // Decides from the read it is handed, which is the caller's to take at the moment of submission, and submits exactly
