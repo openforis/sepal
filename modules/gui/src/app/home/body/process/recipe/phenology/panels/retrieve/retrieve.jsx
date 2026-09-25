@@ -1,7 +1,7 @@
 import React from 'react'
 
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/phenology/bands'
+import {groupedBandPresentation} from '~/app/home/body/process/recipe/phenology/bands'
 import {retrieveTask} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -26,8 +26,7 @@ class _Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {recipe} = this.props
-        return getGroupedBandOptions(recipe)
+        return groupedBandPresentation()
     }
 }
 

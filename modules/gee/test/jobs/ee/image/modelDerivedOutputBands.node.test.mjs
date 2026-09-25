@@ -295,6 +295,21 @@ for (const [type, recipe] of [
     })
 }
 
+// Phenology's temporal analysis and PyEO's change detection are not modelled here; what they build is checked against
+// live Earth Engine (verify/phenologyPyeoOutputBands.mjs). What they say they can be asked for needs no imagery.
+for (const recipe of [
+    {id: 'phenology-1', type: 'PHENOLOGY', model: {aoi: {type: 'POLYGON', path: []}, dates: {fromYear: 2022, toYear: 2022}, sources: {band: 'evi'}}},
+    {id: 'pyeo-alerts-1', type: 'PYEO_ALERTS', model: {dates: {}, sources: {changeFromClasses: [1], changeToClasses: [2]}}}
+]) {
+    describe(recipe.type, () => {
+        inOperation('says it can be asked for exactly the bands it declares', async () => {
+            const catalogue = await firstValueFrom(imageFactory(recipe).getBands$())
+
+            assert.deepEqual(catalogue, declared(recipe).map(({name}) => name))
+        })
+    })
+}
+
 // Exports name the bands they want twice, as the selection to build and as the bands to return in order.
 describe('Classification built for an export', () => {
     const names = image => image.bands.map(({name}) => name)

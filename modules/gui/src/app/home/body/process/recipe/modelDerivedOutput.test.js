@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Regression, Unsupervised Classification, Index Change, Class Change, Classification and Remapping through their real
-// registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
-// notifications are replaced.
+// Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology and PyEO
+// Alerts through their real registrations, shared declarations, the common read and the generic Retrieve submission.
+// Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -30,12 +30,16 @@ const {default: indexChange} = await import('./indexChange/indexChange')
 const {default: classChange} = await import('./classChange/classChange')
 const {default: classification} = await import('./classification/classification')
 const {default: remapping} = await import('./remapping/remapping')
+const {default: phenology} = await import('./phenology/phenology')
+const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
 const {retrieveTask: classChangeTask} = await import('./classChange/classChangeRecipe')
 const {retrieveTask: classificationTask} = await import('./classification/classificationRecipe')
 const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe')
+const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe')
+const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {canPreview, displayTypes} = await import('./recipeOutput')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
@@ -46,6 +50,8 @@ addRecipeType(indexChange())
 addRecipeType(classChange())
 addRecipeType(classification())
 addRecipeType(remapping())
+addRecipeType(phenology())
+addRecipeType(pyeoAlerts())
 
 beforeEach(() => {
     submitted.length = 0
@@ -297,13 +303,83 @@ describe('a remapping', () => {
     })
 })
 
+const PHENOLOGY_METRICS = [
+    'background', 'amplitude', 'median',
+    'dayOfYear_1', 'days_1', 'median_1', 'slope_1', 'offset_1',
+    'dayOfYear_2', 'days_2', 'median_2', 'slope_2', 'offset_2',
+    'dayOfYear_3', 'days_3', 'median_3', 'slope_3', 'offset_3',
+    'dayOfYear_4', 'days_4', 'median_4', 'slope_4', 'offset_4'
+]
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+
+describe('a phenology', () => {
+    // Its metrics, then its months; a month without observations is a masked band, so neither depends on the imagery.
+    it('is described with its metrics and months, while the collection it analyses is not even loaded', () => {
+        const {output} = read(phenologyOf({classification: 'classification-1'}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual([...PHENOLOGY_METRICS, ...MONTHS])
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented grouped by segment and by month, and offers every preset style', () => {
+        const recipe = phenologyOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output).dayOfYear_1).toEqual({precision: 'int'})
+        expect(['slope_1', 'slope_2', 'slope_3', 'slope_4'].map(band => displayTypes(output)[band]))
+            .toEqual(Array(4).fill({precision: 'float'}))
+        expect(displayTypes(output).january).toEqual({precision: 'float'})
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands.join(',')))
+            .toEqual(expect.arrayContaining(['dayOfYear_2,days_1,slope_2', 'january', 'december']))
+    })
+
+    it('exports the bands selected in the order execution builds them, averaged into coarser pyramid levels', () => {
+        retrieve(read(phenologyOf()), 'GEE', phenologyTask, {bands: ['december', 'slope_2', 'background']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['background', 'slope_2', 'december']},
+            {background: 'mean', slope_2: 'mean', december: 'mean'}
+        ]])
+    })
+})
+
+describe('a PyEO alerts recipe', () => {
+    it('is described with its change report, while the classification it applies is not even loaded', () => {
+        const {output} = read(pyeoAlertsOf({classification: 'classification-1'}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands).toHaveLength(18)
+        expect(output.bands.slice(0, 3).map(({name}) => name)).toEqual(['available_image_count', 'occluded_count', 'total_changes'])
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with its labels and ranges', () => {
+        const {output} = read(pyeoAlertsOf())
+
+        expect(output.presentation.total_changes.label).toBe('Total changes')
+        expect(displayTypes(output).post_fcd_change_repeatability_pct).toEqual({precision: 'float', min: 0, max: 100})
+    })
+
+    it('exports the bands selected in the order the report holds them, sampled into coarser pyramid levels', () => {
+        retrieve(read(pyeoAlertsOf()), 'GEE', pyeoAlertsTask, {bands: ['binary_decision_from_to_map', 'total_changes']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['total_changes', 'binary_decision_from_to_map']},
+            {total_changes: 'sample', binary_decision_from_to_map: 'sample'}
+        ]])
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
     ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
     ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
     ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
-    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask]
+    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask],
+    ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
+    ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -420,6 +496,31 @@ const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x
             booleanOperator: 'and',
             constraints: [{image: 'image-1', band: 'class', operator: '=', value}]
         }))}
+    }
+})
+
+const AOI = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [1, 0]]}
+
+const phenologyOf = ({classification} = {}) => ({
+    id: ID,
+    type: 'PHENOLOGY',
+    title: 'Seasonality',
+    model: {
+        aoi: AOI,
+        dates: {fromYear: 2022, toYear: 2022},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'evi', ...(classification && {classification})},
+        options: {corrections: ['SR']}
+    }
+})
+
+const pyeoAlertsOf = ({classification} = {}) => ({
+    id: ID,
+    type: 'PYEO_ALERTS',
+    title: 'Alerts',
+    model: {
+        aoi: AOI,
+        dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
+        sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2], ...(classification && {classification})}
     }
 })
 

@@ -9,7 +9,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {PyeoAlertsToolbar} from './panels/pyeoAlertsToolbar'
 import {defaultModel} from './pyeoAlertsRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -64,6 +64,6 @@ export default () => ({
         recipe: PyeoAlerts
     },
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

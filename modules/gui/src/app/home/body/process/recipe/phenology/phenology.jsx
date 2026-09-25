@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
 import {defaultModel} from './phenologyRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -58,7 +58,7 @@ export default () => ({
         recipe: Phenology
     },
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations,
     beta: true
 })

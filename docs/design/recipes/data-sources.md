@@ -17,8 +17,8 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, CCDC, CCDC Slice, Class Change, Classification, Index Change, Masking, Optical Mosaic, Regression,
-Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+Only Asset, CCDC, CCDC Slice, Class Change, Classification, Index Change, Masking, Optical Mosaic, Phenology, PyEO
+Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -75,9 +75,8 @@ where a family still needs observation.
    seam. Map layers of mode-bearing types stay on the seam until their map products are declared.
 3. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
    matters less than their independence:
-   - model-derived outputs whose GUI and Earth Engine vocabularies
-     [already agree](output-products.md#representative-agreement-findings): Phenology and PyEO Alerts. Regression,
-     Unsupervised Classification, Index Change, Class Change, Classification and Remapping have migrated: each
+   - model-derived outputs: Regression, Unsupervised Classification, Index Change, Class Change, Classification,
+     Remapping, Phenology and PyEO Alerts have migrated: each
      declares its scalar bands in execution order with their pyramiding policies, and Earth Engine's catalogue and
      optional-band conditions come from the declaration. Index Change declares `error` and `confidence` only when
      both images name an error band, and `change` only when its legend has entries. Class Change always declares
@@ -90,7 +89,11 @@ where a family still needs observation.
      request for `class` alone still runs; that requirement is left to requirement validation. Remapping declares
      `class` (mode) only when its legend has entries, and otherwise no bands, which is what execution builds.
      Masking over either inherits these policies, so its `class` is exported with `mode` where its fallback
-     applied `mean`;
+     applied `mean`. [Phenology](../../recipes/phenology.md) declares its 23 metrics and 12 months (mean); a month
+     without observations is a masked band rather than a missing one, and an empty selection returns every declared
+     band. [PyEO Alerts](../../recipes/pyeo-alerts.md) declares its 18 report bands (sample). Masking now describes
+     Phenology from its declaration instead of observing its running image, which offered no bands, and exports PyEO
+     with `sample` where its fallback applied `mean`;
    - map-product types: LandTrendr, BAYTS Alerts, Change Alerts, and CCDC's `count`;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time

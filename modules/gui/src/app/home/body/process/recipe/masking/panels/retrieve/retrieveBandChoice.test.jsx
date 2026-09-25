@@ -91,6 +91,7 @@ const {maskingObservation} = await import('../../maskingSourceEvidence')
 const {Retrieve} = await import('./retrieve')
 const {Retrieve: ClassificationRetrieve} = await import('../../../classification/panels/retrieve/retrieve')
 const {Retrieve: CcdcRetrieve} = await import('../../../ccdc/panels/retrieve/retrieve')
+const {Retrieve: PhenologyRetrieve} = await import('../../../phenology/panels/retrieve/retrieve')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -362,6 +363,20 @@ describe('retrieving from a Classification whose classifier changes', () => {
     })
 })
 
+// A band Phenology never offers - one of the arrays it builds its metrics from - saved beside ones it does.
+describe('retrieving from a Phenology with a saved band it does not offer', () => {
+    it('drops that band and submits the rest', async () => {
+        const saved = {...PHENOLOGY, ui: {retrieve: {destination: 'GEE', bands: ['segment_1', 'background']}}}
+
+        await open({recipes: [saved], id: PHENOLOGY.id, Panel: PhenologyRetrieve})
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['background']})
+        expect(geeReads).toEqual([])
+    })
+})
+
 describe('retrieving CCDC measures', () => {
     const catalogue = ({recipe}) => ccdcOutputBands(ccdcMeasures({model: recipe.model}))
 
@@ -586,7 +601,9 @@ describe.each([
     ['a class change', () => CLASS_CHANGE, 'confidence', 'mean'],
     ['a classification', () => CLASSIFICATION, 'class', 'mode'],
     ['a classification', () => CLASSIFICATION, 'probability_2', 'mean'],
-    ['a remapping', () => REMAPPING, 'class', 'mode']
+    ['a remapping', () => REMAPPING, 'class', 'mode'],
+    ['a phenology', () => PHENOLOGY, 'slope_1', 'mean'],
+    ['a PyEO alerts recipe', () => PYEO_ALERTS, 'total_changes', 'sample']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -847,6 +864,29 @@ const REMAPPING = {
     model: {
         inputImagery: {images: [COVARIATES]},
         legend: {entries: [{value: 1, booleanOperator: 'and', constraints: []}]}
+    }
+}
+
+const AOI = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [1, 0]]}
+
+const PHENOLOGY = {
+    id: 'phenology-1',
+    type: 'PHENOLOGY',
+    model: {
+        aoi: AOI,
+        dates: {fromYear: 2022, toYear: 2022},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'evi'},
+        options: {corrections: ['SR']}
+    }
+}
+
+const PYEO_ALERTS = {
+    id: 'pyeo-alerts-1',
+    type: 'PYEO_ALERTS',
+    model: {
+        aoi: AOI,
+        dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
+        sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
     }
 }
 

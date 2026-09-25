@@ -7,6 +7,7 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 - [Sampling Design](sampling-design.md)
 - [PyEO Alerts](pyeo-alerts.md)
 - [Class Change](class-change.md)
+- [Phenology](phenology.md)
 
 Shared architecture, design proposals and the cross-recipe roadmap belong in
 [`docs/design/recipes/`](../design/recipes/data-sources.md). Recipe notes link to those contracts rather than

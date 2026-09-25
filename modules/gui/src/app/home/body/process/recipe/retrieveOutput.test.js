@@ -28,14 +28,14 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
+const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
+const {retrieveTask: baytsAlertsTask} = await import('./baytsAlerts/baytsAlertsRecipe')
 const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(pyeoAlerts())
+addRecipeType(baytsAlerts())
 addRecipeType(baytsHistorical())
 
 beforeEach(() => {
@@ -45,21 +45,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies under its own policy', () => {
-        retrieve(read([PYEO_ALERTS, SOURCE]), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
+        retrieve(read([BAYTS_ALERTS, SOURCE]), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
 
         expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
-            .toEqual([[{selection: ['total_changes']}, {'.default': 'sample'}]])
+            .toEqual([[{selection: ['flag']}, {'.default': 'sample'}]])
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([PYEO_ALERTS, SOURCE])
+        const {recipe, output, pending} = read([BAYTS_ALERTS, SOURCE])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['total_changes'], destination: 'DRIVE', task: pyeoAlertsTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['flag'], destination: 'DRIVE', task: baytsAlertsTask}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([PYEO_ALERTS, SOURCE]), {destination: 'GEE', bands: ['total_changes', 'probability']}, pyeoAlertsTask)
+        retrieve(read([BAYTS_ALERTS, SOURCE]), {destination: 'GEE', bands: ['flag', 'probability']}, baytsAlertsTask)
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -74,13 +74,13 @@ describe('"all bands" of a recipe type declaring no output', () => {
     })
 })
 
-// The session has not loaded the classification the alerts read, so whether its dependencies are sound is what the
+// The session has not loaded the recipe the alerts read, so whether its dependencies are sound is what the
 // panel's acquisition completes.
 describe('a recipe type declaring no output, over a dependency the session has not loaded', () => {
     it('is still being resolved until its dependencies are completed', () => {
-        const {recipe, output, pending} = read([PYEO_ALERTS])
+        const {recipe, output, pending} = read([BAYTS_ALERTS])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['total_changes'], destination: 'GEE', task: pyeoAlertsTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['flag'], destination: 'GEE', task: baytsAlertsTask}).status)
             .toBe('RESOLVING')
     })
 
@@ -88,7 +88,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([PYEO_ALERTS], terminal), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
+        retrieve(read([BAYTS_ALERTS], terminal), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
 
         expect(submitted).toEqual([])
     })
@@ -96,7 +96,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([PYEO_ALERTS], completed), {destination: 'GEE', bands: ['total_changes']}, pyeoAlertsTask)
+        retrieve(read([BAYTS_ALERTS], completed), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
 
         expect(submitted).toHaveLength(1)
     })
@@ -111,12 +111,13 @@ const SOURCE = {
     }
 }
 
-const PYEO_ALERTS = {
-    id: 'pyeo-alerts-1',
-    type: 'PYEO_ALERTS',
+const BAYTS_ALERTS = {
+    id: 'bayts-alerts-1',
+    type: 'BAYTS_ALERTS',
     title: 'Alerts',
     model: {
-        sources: {classification: SOURCE.id}
+        reference: {type: 'RECIPE_REF', id: SOURCE.id},
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months'}
     }
 }
 

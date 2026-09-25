@@ -884,9 +884,9 @@ repeat the transformation's accepted input contract or source requirements.
 
 Providers answer from configuration, from an observation of their running image, from the catalogue their producer
 declares, or from their sources' descriptions.
-Regression, Unsupervised Classification, Index Change, Class Change, Classification and Remapping describe their bands
-from configuration. Phenology and several alert products could describe their ordered names and scalar shape the same
-way, but have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
+Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology and PyEO
+Alerts describe their bands from configuration. Several other alert products could describe their ordered names and
+scalar shape the same way, but have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
 
 1. an exact description from configuration requiring no observation;
 2. useful declared constraints followed by observation that supplies exact bands;
@@ -927,9 +927,9 @@ matches execution. The execution comparison is a research gate below.
 | LandTrendr | change result | annual optical mosaic map product | fixed change bands plus fabricated mosaic recipe | scalar |
 | Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
 | Optical Mosaic | selected composite | internal optical collection | dataset/intersection/index/compose helpers | scalar |
-| Phenology | seasonality metrics | internal source collection | fixed grouped vocabulary | scalar |
+| Phenology | seasonality metrics and month composites | internal source collection | shared declaration | scalar |
 | Planet Mosaic | selected composite | internal Planet collection | fixed GUI vocabulary | scalar |
-| PyEO Alerts | alert result | internal classified monitoring collection | fixed vocabulary | scalar |
+| PyEO Alerts | alert result | internal classified monitoring collection | shared declaration | scalar |
 | Radar Mosaic | point-in-time or time-scan composite | internal radar collection | date-dependent fixed families | scalar |
 | Regression | regression image | none identified | shared declaration | scalar |
 | Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
@@ -1056,14 +1056,15 @@ authority. Choosing either current side wholesale would preserve a different set
 The comparison also found useful stable declarations rather than only defects:
 
 - LandTrendr uses the same seven fixed change bands in GUI and EE; its annual mosaic branch is explicitly map-only.
-- Phenology's fixed base and month band lists agree with the EE product construction.
+- Phenology's fixed metric and month band lists are its declaration. Execution omitted a month without observations
+  and returned no bands when asked for none; it now masks such a month and returns every declared band.
 - Classification's optional bands follow from classifier capability and legend entries. Its declaration is the
   order execution builds - `class`, `class_probability`, `regression`, then one `probability_<value>` per legend
   entry in the legend's stored order - which the former Earth Engine catalogue did not match. This does not settle
   the inconsistent temporal-composer encoding paths identified above. Its categorical labels and palette remain
   presentation and semantic concerns.
 - Regression and Unsupervised Classification each have one fixed scalar output band.
-- PyEO Alerts has one fixed change-report vocabulary shared in intent by GUI and EE.
+- PyEO Alerts has one fixed change-report vocabulary, which is the band list its algorithm assembles.
 - Masking's EE `getBands$()` delegates to the primary image exactly as the shared preserving transformation states.
 - Stack's execution selects and renames by the persisted name mapping in input order. Its physical types must be
   inherited from the selected source bands rather than recovered from output names.
