@@ -6,6 +6,8 @@ vi.mock('~/translate', () => ({msg: key => key}))
 // The breadcrumb's home Icon renders a Tooltip, which reads the store; a passthrough avoids one.
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/crudItem', () => ({CrudItem: ({title}) => title}))
+// The real scrollable carries a Keybinding, which reads a store this isolated test has none of.
+vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => children}))
 vi.mock('~/widget/listItem', () => ({
     ListItem: ({onClick, children}) => <div className='option' onClick={onClick}>{children}</div>
 }))

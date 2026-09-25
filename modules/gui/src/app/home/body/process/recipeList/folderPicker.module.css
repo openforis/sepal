@@ -1,0 +1,29 @@
+.picker {
+    width: 18rem;
+}
+
+/* A deep path scrolls rather than widening the box. The scrollbar stays hidden, as it does in every
+   other list here. */
+.path {
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.path::-webkit-scrollbar {
+    display: none;
+}
+
+/* Room for five folders, held whether the open folder has one or fifty. */
+.options {
+    height: 11rem;
+}
+
+.name {
+    text-overflow: ellipsis;
+}
+
+/* A button that spans the box leaves its label against the edge; holding the label at its own width
+   lets the button's own centring place it. */
+.select > * {
+    flex-grow: 0 !important;
+}
