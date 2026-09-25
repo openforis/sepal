@@ -37,6 +37,10 @@ export class EventEmittingTaskRepository {
         return this.#taskRepository.pendingOrActiveTasksInSession(sessionId)
     }
 
+    hasUnfinishedTasksInSession(sessionId) {
+        return this.#taskRepository.hasUnfinishedTasksInSession(sessionId)
+    }
+
     pendingOrActiveUserTasks(username) {
         return this.#taskRepository.pendingOrActiveUserTasks(username)
     }

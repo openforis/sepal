@@ -10,6 +10,7 @@
     bottom: 0;
     left: 0;
     right: 0;
+    transition: opacity 250ms ease-in;
 }
 
 .content {

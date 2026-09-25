@@ -75,7 +75,11 @@ injects the session as `sepal-session`; the two task-executor callbacks (`POST /
 role is never sufficient: every session of a user would share it.
 
 Keys resolve only while the session is PENDING or ACTIVE; closing a session clears `api_key`, so the
-last terminal callback of a session revokes its own credential.
+last terminal callback of a session revokes its own credential. Task-driven automatic closure waits
+until no assigned task is PENDING, ACTIVE or CANCELING (`hasUnfinishedTasksInSession`): a task being
+cancelled still awaits the executor's CANCELED confirmation. User action, expiry, budget enforcement
+and instance loss close a session regardless. Scheduling (`pendingOrActiveTasksInSession`) never
+dispatches a cancelling task again.
 
 **One-time transition (task executors).** Task executors previously authenticated with
 `SEPAL_ADMIN_PASSWORD`. Executors already running when this change deploys hold no key and their

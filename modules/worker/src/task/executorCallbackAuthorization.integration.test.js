@@ -191,9 +191,9 @@ describe('a task-executor callback', () => {
             tasks[task.id] = task
             return task
         },
-        pendingOrActiveTasksInSession: async sessionId =>
-            Object.values(tasks).filter(task =>
-                task.sessionId === sessionId && (task.state === State.PENDING || task.state === State.ACTIVE)),
+        hasUnfinishedTasksInSession: async sessionId =>
+            Object.values(tasks).some(task => task.sessionId === sessionId
+                && [State.PENDING, State.ACTIVE, State.CANCELING].includes(task.state)),
     })
 })
 
