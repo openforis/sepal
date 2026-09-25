@@ -23,7 +23,7 @@ const TMP_VOLUME_PREFIX = 'sepal-tmp.'
 const tmpVolumeName = instanceId => `${TMP_VOLUME_PREFIX}${instanceId}`
 
 // nocopy: a session's /tmp starts empty, not with what the image's build left there.
-const tmpMounts = ['/tmp:nocopy', `/home/${USER_HOME_NAME}/tmp:nocopy`]
+const tmpMounts = ['/tmp:nocopy', '/var/tmp:nocopy', `/home/${USER_HOME_NAME}/tmp:nocopy`]
 
 // WORKER_IMAGE_NAMES — every image name a worker instance can run; the provisioner uses
 // these to recognize SEPAL worker containers among everything else on a (shared) daemon.

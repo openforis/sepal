@@ -162,10 +162,11 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.HostConfig.Binds).toContain('/data/sepal/home/alice:/home/sepal-user')
     })
 
-    test('HostConfig.Binds mounts the instance\'s tmp volume at /tmp and ~/tmp, without the image\'s /tmp', async () => {
+    test('HostConfig.Binds mounts the instance\'s tmp volume at /tmp, /var/tmp and ~/tmp, without the image\'s /tmp', async () => {
         await runProvision()
         expect(capturedBody.HostConfig.Binds).toEqual(expect.arrayContaining([
             'sepal-tmp.inst-abc123:/tmp:nocopy',
+            'sepal-tmp.inst-abc123:/var/tmp:nocopy',
             'sepal-tmp.inst-abc123:/home/sepal-user/tmp:nocopy',
         ]))
     })

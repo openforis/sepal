@@ -132,7 +132,7 @@ on every file save. Four mechanisms carry instance management across it:
   start, was what let a crash loop starve every closing sweep.
 
 ## Session /tmp
-A worker container's `/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
+A worker container's `/tmp`, `/var/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
 removed with the instance's containers on provision and undeploy, so every session starts with an
 empty one. The provisioner creates it and sets its mode 1777 from a throwaway `{image}.prepare-tmp`
 container; both mounts are `nocopy`, since Docker would otherwise fill the empty volume with what the
