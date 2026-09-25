@@ -29,9 +29,6 @@ RUN chmod u+x /script/init_orfeo.sh && sync && (cd /script; ./init_orfeo.sh)
 ADD modules/${MODULE_NAME}/script/init_gcloud.sh /script/
 RUN chmod u+x /script/init_gcloud.sh && sync && /script/init_gcloud.sh
 
-ADD modules/${MODULE_NAME}/script/init_drive.sh /script/
-RUN chmod u+x /script/init_drive.sh && sync && /script/init_drive.sh
-
 ADD modules/${MODULE_NAME}/script/init_node.sh /script/
 RUN chmod u+x /script/init_node.sh && sync && /script/init_node.sh
 
