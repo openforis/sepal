@@ -1,25 +1,13 @@
-import {AWS_INSTANCE_TYPES, LOCAL_INSTANCE_TYPES} from './instanceTypes.js'
+import {INSTANCE_TYPES} from './instanceTypes.js'
 
-test('AWS catalog has 62 instance types', () => {
-    expect(AWS_INSTANCE_TYPES).toHaveLength(62)
-})
-
-test('Local catalog has 43 instance types', () => {
-    expect(LOCAL_INSTANCE_TYPES).toHaveLength(43)
+test('catalog has 90 instance types', () => {
+    expect(INSTANCE_TYPES).toHaveLength(90)
 })
 
 const REQUIRED_FIELDS = ['id', 'name', 'cpuCount', 'ramGiB', 'hourlyCost', 'idleCount', 'devices', 'description']
 
-test('every AWS type has all 8 required fields', () => {
-    for (const t of AWS_INSTANCE_TYPES) {
-        for (const field of REQUIRED_FIELDS) {
-            expect(t).toHaveProperty(field)
-        }
-    }
-})
-
-test('every Local type has all 8 required fields', () => {
-    for (const t of LOCAL_INSTANCE_TYPES) {
+test('every type has all 8 required fields', () => {
+    for (const t of INSTANCE_TYPES) {
         for (const field of REQUIRED_FIELDS) {
             expect(t).toHaveProperty(field)
         }
@@ -27,46 +15,46 @@ test('every Local type has all 8 required fields', () => {
 })
 
 test('description is "$cpuCount CPU, $ramGiB GB"', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
-    expect(t.description).toBe('1 CPU, 2 GB')
+    const t = INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
+    expect(t.description).toBe('2 CPU, 2 GB')
 })
 
 test('description shows the GPU count right after the CPU count when gpuCount > 0', () => {
-    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G5Xlarge').description).toBe('4 CPU, 1 GPU, 16 GB')
-    expect(AWS_INSTANCE_TYPES.find(x => x.id === 'G512xlarge').description).toBe('48 CPU, 4 GPU, 192 GB')
+    expect(INSTANCE_TYPES.find(x => x.id === 'G5Xlarge').description).toBe('4 CPU, 1 GPU, 16 GB')
+    expect(INSTANCE_TYPES.find(x => x.id === 'G512xlarge').description).toBe('48 CPU, 4 GPU, 192 GB')
 })
 
 test('ramBytes is ramGiB * 2^30', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'M6aLarge')
+    const t = INSTANCE_TYPES.find(x => x.id === 'M6aLarge')
     expect(t.ramBytes).toBeCloseTo(8 * Math.pow(2, 30))
 })
 
-test('AWS T3aSmall has correct fields', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
+test('T3aSmall has correct fields', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
     expect(t).toMatchObject({
         id: 'T3aSmall',
         name: 't3a.small',
         tag: 't1',
         hourlyCost: 0.0204,
-        cpuCount: 1,
+        cpuCount: 2,
         ramGiB: 2,
     })
 })
 
 // Requests are served from the stopped pool (STOPPED_POOL_SIZE) instead of running idle instances.
 test('no instance type keeps running idle instances', () => {
-    const idle = [...AWS_INSTANCE_TYPES, ...LOCAL_INSTANCE_TYPES].filter(t => t.idleCount > 0)
+    const idle = INSTANCE_TYPES.filter(t => t.idleCount > 0)
     expect(idle.map(({id}) => id)).toEqual([])
 })
 
-test('AWS T3aMedium has idleCount=0 (default)', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'T3aMedium')
+test('T3aMedium has idleCount=0 (default)', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'T3aMedium')
     expect(t.idleCount).toBe(0)
     expect(t.tag).toBe('t2')
 })
 
-test('AWS M6a12xlarge matches Groovy verbatim', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'M6a12xlarge')
+test('M6a12xlarge matches Groovy verbatim', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'M6a12xlarge')
     expect(t).toMatchObject({
         id: 'M6a12xlarge',
         name: 'm6a.12xlarge',
@@ -77,51 +65,53 @@ test('AWS M6a12xlarge matches Groovy verbatim', () => {
     })
 })
 
-test('AWS C7a12xlarge is c7a.12xlarge', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'C7a12xlarge')
+test('C8a12xlarge is c8a.12xlarge', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'C8a12xlarge')
     expect(t).toMatchObject({
-        id: 'C7a12xlarge',
-        name: 'c7a.12xlarge',
+        id: 'C8a12xlarge',
+        name: 'c8a.12xlarge',
         tag: 'c48',
-        hourlyCost: 2.64288,
+        hourlyCost: 2.77512,
         cpuCount: 48,
         ramGiB: 96,
     })
 })
 
-test('AWS C7a16xlarge is c7a.16xlarge', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'C7a16xlarge')
-    expect(t).toMatchObject({
-        id: 'C7a16xlarge',
-        name: 'c7a.16xlarge',
-        tag: 'c64',
-        hourlyCost: 3.52384,
-        cpuCount: 64,
-        ramGiB: 128,
-    })
+// The c8a family prices linearly off c8a.large, so each entry is 0.11563 * cpuCount / 2.
+test('c8a hourly costs scale linearly with cpuCount', () => {
+    const c8a = INSTANCE_TYPES.filter(({name}) => name.startsWith('c8a.'))
+    expect(c8a).toHaveLength(7)
+    for (const {id, cpuCount, hourlyCost} of c8a) {
+        expect([id, hourlyCost]).toEqual([id, Number((0.11563 * cpuCount / 2).toFixed(5))])
+    }
 })
 
-// The c7a family prices linearly off c7a.large, so each entry is 0.11012 * cpuCount / 2.
-test('AWS c7a hourly costs scale linearly with cpuCount', () => {
-    const c7a = AWS_INSTANCE_TYPES.filter(({name}) => name.startsWith('c7a.'))
-    expect(c7a).toHaveLength(7)
-    for (const {id, cpuCount, hourlyCost} of c7a) {
-        expect([id, hourlyCost]).toEqual([id, Number((0.11012 * cpuCount / 2).toFixed(5))])
-    }
+// A replaced type stays in the catalog untagged: sessions recorded on it still resolve, but it is
+// no longer offered.
+test('c7a and x1 types remain as untagged legacy types', () => {
+    const legacy = INSTANCE_TYPES.filter(({name}) => name.startsWith('c7a.') || name.startsWith('x1.'))
+    expect(legacy).toHaveLength(9)
+    legacy.forEach(type => expect(type.tag).toBeUndefined())
+})
+
+// The GUI picker and the SSH menu both select an instance type by its tag.
+test('tags are unique', () => {
+    const tags = INSTANCE_TYPES.map(({tag}) => tag).filter(Boolean)
+    expect(new Set(tags).size).toBe(tags.length)
 })
 
 // M5a12xlarge's name must be m5a.12xlarge: `name` IS the launched type, and m4.10xlarge would
 // collide with M410xlarge's name — sending M5a12xlarge sessions to an m4.10xlarge.
 // cpuCount/ramGiB/hourlyCost all describe m5a.12xlarge.
-test('AWS M5a12xlarge is m5a.12xlarge', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'M5a12xlarge')
+test('M5a12xlarge is m5a.12xlarge', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'M5a12xlarge')
     expect(t.name).toBe('m5a.12xlarge')
     expect(t.cpuCount).toBe(48)
     expect(t.ramGiB).toBe(192)
 })
 
-test('AWS R4Large has non-integer ramGiB=15.25', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'R4Large')
+test('R4Large has non-integer ramGiB=15.25', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'R4Large')
     expect(t).toMatchObject({
         hourlyCost: 0.148,
         cpuCount: 2,
@@ -129,19 +119,41 @@ test('AWS R4Large has non-integer ramGiB=15.25', () => {
     })
 })
 
-test('AWS X132xlarge has ramGiB=1920 and cpuCount=128', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'X132xlarge')
+test('X2idn32xlarge is x2idn.32xlarge with its NVMe capacity', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'X2idn32xlarge')
     expect(t).toMatchObject({
-        name: 'x1.32xlarge',
+        name: 'x2idn.32xlarge',
         tag: 'x128',
         hourlyCost: 16.006,
         cpuCount: 128,
-        ramGiB: 1920,
+        ramGiB: 2048,
+        ssdGB: 3800,
     })
 })
 
-test('AWS G5Xlarge is a GPU type with empty devices array (to be set by provisioner)', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'G5Xlarge')
+// Each SSD tier is its base tier's tag with a trailing "d": m4d is the m4 shape with local NVMe.
+test('SSD tiers have local NVMe and the shape of their base tier', () => {
+    const byTag = Object.fromEntries(INSTANCE_TYPES.filter(({tag}) => tag).map(type => [type.tag, type]))
+    const ssdTags = Object.keys(byTag).filter(tag => /^[mcr]\d+d$/.test(tag))
+    expect(ssdTags).toHaveLength(19)
+    for (const tag of ssdTags) {
+        const base = byTag[tag.slice(0, -1)]
+        expect([tag, byTag[tag].ssdGB > 0]).toEqual([tag, true])
+        expect([tag, byTag[tag].cpuCount, byTag[tag].ramGiB]).toEqual([tag, base.cpuCount, base.ramGiB])
+    }
+})
+
+test('ssdGB defaults to 0', () => {
+    expect(INSTANCE_TYPES.find(x => x.id === 'M6aLarge').ssdGB).toBe(0)
+})
+
+test('performance is relative to t3a.small', () => {
+    expect(INSTANCE_TYPES.find(x => x.id === 'T3aSmall').performance).toBe(1)
+    INSTANCE_TYPES.forEach(type => expect([type.id, type.performance]).toEqual([type.id, expect.any(Number)]))
+})
+
+test('G5Xlarge is a GPU type with empty devices array (to be set by provisioner)', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'G5Xlarge')
     expect(t).toMatchObject({
         name: 'g5.xlarge',
         tag: 'g4',
@@ -152,8 +164,8 @@ test('AWS G5Xlarge is a GPU type with empty devices array (to be set by provisio
     expect(Array.isArray(t.devices)).toBe(true)
 })
 
-test('AWS G512xlarge spot-check', () => {
-    const t = AWS_INSTANCE_TYPES.find(x => x.id === 'G512xlarge')
+test('G512xlarge spot-check', () => {
+    const t = INSTANCE_TYPES.find(x => x.id === 'G512xlarge')
     expect(t).toMatchObject({
         name: 'g5.12xlarge',
         tag: 'g48',
@@ -163,52 +175,13 @@ test('AWS G512xlarge spot-check', () => {
     })
 })
 
-test('Local T3aSmall has correct fields', () => {
-    const t = LOCAL_INSTANCE_TYPES.find(x => x.id === 'T3aSmall')
-    expect(t).toMatchObject({
-        id: 'T3aSmall',
-        name: 't3a.small',
-        tag: 't1',
-        hourlyCost: 0.0204,
-        cpuCount: 1,
-        ramGiB: 2,
-    })
+test('list order: first entry is T3aSmall, second is T3aMedium', () => {
+    expect(INSTANCE_TYPES[0].id).toBe('T3aSmall')
+    expect(INSTANCE_TYPES[1].id).toBe('T3aMedium')
 })
 
-test('Local M5a12xlarge is m5a.12xlarge', () => {
-    const t = LOCAL_INSTANCE_TYPES.find(x => x.id === 'M5a12xlarge')
-    expect(t.name).toBe('m5a.12xlarge')
-    expect(t.tag).toBe('m48')
-})
-
-test('Local G512xlarge spot-check', () => {
-    const t = LOCAL_INSTANCE_TYPES.find(x => x.id === 'G512xlarge')
-    expect(t).toMatchObject({
-        name: 'g5.12xlarge',
-        tag: 'g48',
-        hourlyCost: 6.332,
-        cpuCount: 48,
-        ramGiB: 192,
-    })
-})
-
-test('AWS list order: first entry is T3aSmall, second is T3aMedium', () => {
-    expect(AWS_INSTANCE_TYPES[0].id).toBe('T3aSmall')
-    expect(AWS_INSTANCE_TYPES[1].id).toBe('T3aMedium')
-})
-
-test('Local list order: first entry is T3aSmall, third is M5aLarge', () => {
-    expect(LOCAL_INSTANCE_TYPES[0].id).toBe('T3aSmall')
-    expect(LOCAL_INSTANCE_TYPES[2].id).toBe('M5aLarge')
-})
-
-test('AWS IDs are unique', () => {
-    const ids = AWS_INSTANCE_TYPES.map(t => t.id)
-    expect(new Set(ids).size).toBe(ids.length)
-})
-
-test('Local IDs are unique', () => {
-    const ids = LOCAL_INSTANCE_TYPES.map(t => t.id)
+test('IDs are unique', () => {
+    const ids = INSTANCE_TYPES.map(t => t.id)
     expect(new Set(ids).size).toBe(ids.length)
 })
 
@@ -216,13 +189,8 @@ test('Local IDs are unique', () => {
 // `instance-type` filter matches (awsInstanceProvider's codec translates id ↔ name). A duplicate
 // name makes name → id ambiguous, so two ids would collapse onto one and the round-trip would
 // silently return the wrong instance type.
-test('AWS names are unique', () => {
-    const names = AWS_INSTANCE_TYPES.map(t => t.name)
-    expect(new Set(names).size).toBe(names.length)
-})
-
-test('Local names are unique', () => {
-    const names = LOCAL_INSTANCE_TYPES.map(t => t.name)
+test('names are unique', () => {
+    const names = INSTANCE_TYPES.map(t => t.name)
     expect(new Set(names).size).toBe(names.length)
 })
 
@@ -235,32 +203,28 @@ const idImpliedByName = name => {
     return cap(family) + cap(size)
 }
 
-test.each([['AWS', AWS_INSTANCE_TYPES], ['Local', LOCAL_INSTANCE_TYPES]])(
-    '%s ids and names describe the same instance type', (_label, instanceTypes) => {
-        for (const {id, name} of instanceTypes) {
-            expect(idImpliedByName(name)).toBe(id)
-        }
+test('ids and names describe the same instance type', () => {
+    for (const {id, name} of INSTANCE_TYPES) {
+        expect(idImpliedByName(name)).toBe(id)
     }
-)
+})
 
 describe('instanceTypes gpuCount count', () => {
     it('defaults gpuCount to 0', () => {
-        const t3a = AWS_INSTANCE_TYPES.find(({id}) => id === 'T3aSmall')
+        const t3a = INSTANCE_TYPES.find(({id}) => id === 'T3aSmall')
         expect(t3a.gpuCount).toBe(0)
     })
 
-    it('gives g5 types their GPU count in both catalogs', () => {
-        for (const catalog of [AWS_INSTANCE_TYPES, LOCAL_INSTANCE_TYPES]) {
-            const g5 = catalog.filter(({name}) => name.startsWith('g5.'))
-            expect(g5.length).toBeGreaterThan(0)
-            g5.forEach(type => expect(type.gpuCount).toBeGreaterThanOrEqual(1))
-        }
-        const g5xlarge = AWS_INSTANCE_TYPES.find(({name}) => name === 'g5.xlarge')
+    it('gives g5 types their GPU count', () => {
+        const g5 = INSTANCE_TYPES.filter(({name}) => name.startsWith('g5.'))
+        expect(g5.length).toBeGreaterThan(0)
+        g5.forEach(type => expect(type.gpuCount).toBeGreaterThanOrEqual(1))
+        const g5xlarge = INSTANCE_TYPES.find(({name}) => name === 'g5.xlarge')
         expect(g5xlarge.gpuCount).toBe(1)
     })
 
     it('non-g5 types have no gpus', () => {
-        AWS_INSTANCE_TYPES
+        INSTANCE_TYPES
             .filter(({name}) => !name.startsWith('g5.'))
             .forEach(type => expect(type.gpuCount).toBe(0))
     })

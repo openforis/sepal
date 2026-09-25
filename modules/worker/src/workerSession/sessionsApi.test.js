@@ -541,7 +541,7 @@ test('generateReportSelf → full report map with session + instanceType', async
         timeoutHours: 0,
         instanceType: {
             id: 'T3aSmall', path: 'sessions/instance-type/T3aSmall', name: 't3a.small',
-            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, description: '1 CPU, 2 GB', hourlyCost: 0.02,
+            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, ssdGB: 0, description: '1 CPU, 2 GB', hourlyCost: 0.02,
         },
         creationTime: '2026-07-01T10:00:00.000Z',
         // 2h since creation (clock 12:00, creation 10:00) → ceil(2) * 0.02 = 0.04
@@ -848,4 +848,12 @@ test('serializes gpuCount on instance types', () => {
     const report = {sessions: [], instanceTypes: [instanceType]}
     const map = api._internal.reportAsMap(report, 'bob', true)
     expect(map.instanceTypes[0].gpuCount).toBe(1)
+})
+
+test('serializes the local SSD capacity and relative performance of instance types', () => {
+    const instanceType = {id: 'R8idXlarge', name: 'r8id.xlarge', tag: 'r4d', cpuCount: 4,
+        ramGiB: 32, hourlyCost: 0.3696, description: '4 CPU, 32 GB', ssdGB: 237, performance: 4.3}
+    const report = {sessions: [], instanceTypes: [instanceType]}
+    const map = api._internal.reportAsMap(report, 'bob', true)
+    expect(map.instanceTypes[0]).toMatchObject({ssdGB: 237, performance: 4.3})
 })

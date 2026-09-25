@@ -14,7 +14,7 @@ import {
 import {mockClient} from 'aws-sdk-client-mock'
 
 import {instanceName} from '../../instanceName.js'
-import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
+import {INSTANCE_TYPES} from '../instanceTypes.js'
 import {
     createAwsInstanceProvider,
     createInstanceTypeCodec,
@@ -84,7 +84,7 @@ const emptyDescribeResponse = () => ({Reservations: []})
 // `instance-type` filter matches nothing, and an instance read back with a name-shaped `type`
 // misses sizeIdlePool's id-keyed target map and dockerInstanceProvisioner's instanceTypeById.
 describe('instance-type id ↔ EC2 name translation', () => {
-    const codec = createInstanceTypeCodec(AWS_INSTANCE_TYPES)
+    const codec = createInstanceTypeCodec(INSTANCE_TYPES)
 
     test('catalog id → EC2 name', () => {
         expect(codec.toAwsName('T3aSmall')).toBe('t3a.small')
@@ -99,7 +99,7 @@ describe('instance-type id ↔ EC2 name translation', () => {
     })
 
     test('every catalog id round-trips back to itself', () => {
-        for (const {id} of AWS_INSTANCE_TYPES) {
+        for (const {id} of INSTANCE_TYPES) {
             expect(codec.toCatalogId(codec.toAwsName(id))).toBe(id)
         }
     })
@@ -1399,7 +1399,7 @@ describe('restore', () => {
     // comes back, and a restore that issued calls here would spend a DescribeInstances round trip
     // per open session on every boot.
     test('restore is a no-op that issues no EC2 calls', async () => {
-        const provider = createAwsInstanceProvider(CONFIG, {instanceTypes: AWS_INSTANCE_TYPES})
+        const provider = createAwsInstanceProvider(CONFIG, {instanceTypes: INSTANCE_TYPES})
 
         await provider.restore([{id: 'i-1'}])
 

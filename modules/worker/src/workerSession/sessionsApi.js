@@ -54,6 +54,8 @@ const instanceTypeAsMap = (instanceType, username, forCurrentUser) => ({
     cpuCount: instanceType.cpuCount,
     ramGiB: instanceType.ramGiB,
     gpuCount: instanceType.gpuCount ?? 0,
+    ssdGB: instanceType.ssdGB ?? 0,
+    performance: instanceType.performance,
     description: instanceType.description,
     hourlyCost: instanceType.hourlyCost,
 })

@@ -4,6 +4,7 @@
 // No React, no store — unit-testable.
 
 import {instanceSpecs} from '../../instanceSpecs'
+import {instanceLabel} from '../../user/userSessionSummary'
 
 export const DEFAULT_REQUIREMENTS = {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}
 
@@ -15,16 +16,16 @@ export const isSuitableInstanceType = (instanceType, requirements) =>
     && instanceType.ramGiB >= requirements.minRamGiB
     && (instanceType.gpuCount ?? 0) >= requirements.minGpuCount
 
-// Tagged types only (untagged = legacy, not user-selectable — same filter as the
-// ssh-gateway menu), cheapest first.
+// Tagged types only (untagged = legacy, not user-selectable), in catalog order — the same filter
+// and order as the ssh-gateway menu.
 export const suitableInstanceTypes = (instanceTypes, requirements) =>
     (instanceTypes || [])
         .filter(({tag}) => tag)
         .filter(instanceType => isSuitableInstanceType(instanceType, requirements))
-        .sort((a, b) => a.hourlyCost - b.hourlyCost)
 
 export const cheapestSuitableInstanceType = (instanceTypes, requirements) =>
-    suitableInstanceTypes(instanceTypes, requirements)[0] || null
+    suitableInstanceTypes(instanceTypes, requirements)
+        .reduce((cheapest, instanceType) => !cheapest || instanceType.hourlyCost < cheapest.hourlyCost ? instanceType : cheapest, null)
 
 // Is there anything the user could actually pick? (drives the picker's dead-end message)
 export const hasSuitableOption = ({sessions, instanceTypes, requirements}) =>
@@ -66,23 +67,23 @@ const sessionApps = session =>
 // Two labelled combo sections: every running instance (unsuitable ones disabled),
 // then the suitable new instance types. Option values: 'session:<id>' / 'type:<id>'.
 //
-// `title`/`instanceType` are the two columns of an option row. `label` is the closed field's one
+// `title`/`instanceType` are the two columns of a new instance type's row; a running instance's row
+// has only its title, since its specs are what the session list shows. `label` is the closed field's one
 // line, which names the instance and how many apps it hosts and leaves the specs to the list — they
 // are what a choice is made on, not what a made choice needs to keep repeating. `searchableText`
 // is what the typed filter matches, and it says everything.
-export const buildPickerOptions = ({sessions, instanceTypes, requirements, runningLabel = 'Running instances', newLabel = 'New instance', appCountLabel = count => `${count} app${count === 1 ? '' : 's'}`}) => {
+export const buildPickerOptions = ({sessions, instanceTypes, requirements, runningLabel = 'Running instances', newLabel = 'New instance without SSD', newSsdLabel = 'New instance with SSD', appCountLabel = count => `${count} app${count === 1 ? '' : 's'}`}) => {
     const runningOptions = (sessions || []).map((session, index) => {
-        // index + 1 IS sessionNumber(sessions, session.id) — same list, same order
-        const title = `${index + 1}: ${instanceTypeTitle(session.instanceType)}`
-        const instanceLabel = oneLine(title, session.instanceType)
+        // index + 1 IS sessionNumber(sessions, session.id) — same list, same order — and the label
+        // is the session list's, so both name a running instance the same way.
+        const title = instanceLabel(session, index)
         const apps = sessionApps(session)
         return {
             value: `session:${session.id}`,
             label: apps.length ? `${title} — ${appCountLabel(apps.length)}` : title,
             title,
-            instanceType: session.instanceType,
             apps,
-            searchableText: [instanceLabel, ...apps].join(' '),
+            searchableText: [title, ...apps].join(' '),
             disabled: !isSuitableInstanceType(session.instanceType, requirements)
         }
     })
@@ -93,9 +94,11 @@ export const buildPickerOptions = ({sessions, instanceTypes, requirements, runni
         instanceType,
         searchableText: oneLine(instanceTypeTitle(instanceType), instanceType)
     }))
+    const section = (label, options) => options.length ? [{label, options}] : []
     return [
-        ...runningOptions.length ? [{label: runningLabel, options: runningOptions}] : [],
-        {label: newLabel, options: typeOptions}
+        ...section(runningLabel, runningOptions),
+        ...section(newLabel, typeOptions.filter(({instanceType}) => !instanceType.ssdGB)),
+        ...section(newSsdLabel, typeOptions.filter(({instanceType}) => instanceType.ssdGB))
     ]
 }
 

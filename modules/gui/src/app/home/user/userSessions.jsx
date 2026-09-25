@@ -57,7 +57,8 @@ class _UserSessions extends React.Component {
         return (
             <div className={styles.title}>
                 <span>{instanceLabel(session, index)}</span>
-                <InstanceSpecsTag instanceType={session.instanceType}/>
+                /
+                <InstanceSpecsTag instanceType={session.instanceType} compact/>
             </div>
         )
     }

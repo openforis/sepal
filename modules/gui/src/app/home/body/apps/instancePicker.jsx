@@ -17,7 +17,7 @@ import {appRequirements, buildPickerOptions, defaultPickerValue, hasSuitableOpti
 
 // Modal picker shown before starting a sandbox app that has no live instance
 // association. Two combo sections: the user's running instances (unsuitable ones
-// disabled) and the suitable new instance types (cheapest first). Default: first
+// disabled) and the suitable new instance types (in catalog order). Default: first
 // suitable running instance, else the cheapest suitable type.
 class _InstancePicker extends React.Component {
     state = {
@@ -58,6 +58,7 @@ class _InstancePicker extends React.Component {
                 .map(({sessionId}) => sessionId),
             runningLabel: msg('apps.instancePicker.runningSection'),
             newLabel: msg('apps.instancePicker.newSection'),
+            newSsdLabel: msg('apps.instancePicker.newSsdSection'),
             appCountLabel: count => msg('apps.count', {count})
         }
     }
@@ -76,15 +77,16 @@ class _InstancePicker extends React.Component {
         onConfirm(kind === 'session' ? {sessionId: id} : {instanceType: id})
     }
 
-    // Every option is a two-column row: what the instance IS on the left, what it provides and
-    // costs right-aligned, so the options can be compared straight down the column instead of
-    // across a separator. A running instance hosting apps lists them dimmed underneath.
+    // A new instance type's option is a two-column row: what the instance IS on the left, what it
+    // provides and costs right-aligned, so the options can be compared straight down the column
+    // instead of across a separator. A running instance shows its title only, and lists the apps it
+    // hosts dimmed underneath.
     renderOption({title, instanceType, apps}) {
         return (
             <div className={styles.option}>
                 <div className={styles.instance}>
                     <div className={styles.title}>{title}</div>
-                    <InstanceSpecsTag instanceType={instanceType}/>
+                    {instanceType ? <InstanceSpecsTag instanceType={instanceType}/> : null}
                 </div>
                 {apps?.length
                     ? (

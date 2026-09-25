@@ -78,7 +78,8 @@
       "instance": "Instance",
       "placeholder": "Select an instance...",
       "runningSection": "Running instances",
-      "newSection": "New instance",
+      "newSection": "New instance without SSD",
+      "newSsdSection": "New instance with SSD",
       "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },

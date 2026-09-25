@@ -2,10 +2,14 @@ import _ from 'lodash'
 
 import {format} from './console.js'
 
+// A value may carry its own styling (format()), whose escape codes take no space on screen.
+// eslint-disable-next-line no-control-regex
+const visibleLength = value => `${value}`.replace(/\u001B\[[0-9;]*m/g, '').length
+
 const th = cells => ({type: 'hr', cells})
 const tr = cells => ({type: 'tr', cells})
 const td = props => {
-    props.width = props.width || `${props.value}`.length
+    props.width = props.width || visibleLength(props.value)
     return props
 }
 const table = rows => new AsciiTable(rows).toString()
@@ -72,10 +76,11 @@ class Cell {
 
     paddedValue() {
         const s = _.toString(this.value)
+        const padding = Math.max(0, this.width - visibleLength(s))
         switch (this.align) {
-            case 'right': return s.padStart(this.width)
-            case 'left': return s.padEnd(this.width)
-            default: return s.padStart((s.length + this.width) / 2).padEnd(this.width)
+            case 'right': return ' '.repeat(padding) + s
+            case 'left': return s + ' '.repeat(padding)
+            default: return ' '.repeat(Math.floor(padding / 2)) + s + ' '.repeat(Math.ceil(padding / 2))
         }
     }
 

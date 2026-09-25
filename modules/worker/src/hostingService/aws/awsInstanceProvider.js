@@ -17,7 +17,7 @@ import {getLogger} from '#sepal/log'
 import {instanceName} from '../../instanceName.js'
 import {instanceTag} from '../../tag.js'
 import {createWorkerInstance} from '../../workerInstance/workerInstance.js'
-import {AWS_INSTANCE_TYPES} from '../instanceTypes.js'
+import {INSTANCE_TYPES} from '../instanceTypes.js'
 
 const log = getLogger('worker/aws')
 
@@ -56,7 +56,7 @@ const mkFilter = (name, values) => ({Name: name, Values: Array.isArray(values) ?
 // Unknown values pass through untouched rather than throwing: an instance of a type no longer in
 // the catalog still gets an id-shaped `type`, and the provisioner reports it as an unknown
 // instance type exactly as before.
-const createInstanceTypeCodec = (instanceTypes = AWS_INSTANCE_TYPES) => {
+const createInstanceTypeCodec = (instanceTypes = INSTANCE_TYPES) => {
     const nameById = new Map()
     const idByName = new Map()
     for (const {id, name} of instanceTypes) {
@@ -202,7 +202,7 @@ const retry = async (tries, operation) => {
 }
 
 // instanceTypes — the catalog backing the id ↔ EC2-name translation; injectable for tests.
-const createAwsInstanceProvider = (config, {instanceTypes = AWS_INSTANCE_TYPES} = {}) => {
+const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}) => {
     const {
         workerAmiVersion,
         region,
