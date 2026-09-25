@@ -35,9 +35,10 @@ printf '%s\n' \
     'GSSAPIAuthentication no' \
     >> /etc/ssh/sshd_config
 
-# The prompt names the instance: the worker sets the container's hostname to the two-word name the
-# user already reads everywhere else, so \h tells one open terminal from another. It used to be
-# hardcoded to "sepal" because the hostname was the container id.
+# The prompt names the instance and its type: the worker sets the container's hostname to the
+# two-word name the user already reads everywhere else, so \h tells one open terminal from another,
+# and passes the type's tag (as the GUI shows it) in SEPAL_INSTANCE_TYPE — e.g.
+# "quirky-thrush(m2d):~/foo$". A container without it shows just the name.
 #
 # It has to be set from PROMPT_COMMAND, not by assigning PS1 here: the user's home is persistent
 # and holds the Debian skeleton ~/.bashrc, which is sourced after everything in /etc and sets its
@@ -48,14 +49,15 @@ printf '%s\n' \
 #
 # Colors follow the skeleton's own rule, so a terminal that never had a colored prompt still
 # doesn't: green name, blue directory, on the same TERM test it used.
-printf '%s\n' \
-    'sepal_prompt() {' \
-    '    case "$TERM" in' \
-    "        xterm-color|*-256color) PS1='\[\033[01;32m\]\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\\$ ';;" \
-    "        *) PS1='\h:\w\\\$ ';;" \
-    '    esac' \
-    '    unset PROMPT_COMMAND' \
-    '    unset -f sepal_prompt' \
-    '}' \
-    'PROMPT_COMMAND=sepal_prompt' \
-    >> /etc/bash.bashrc
+cat >> /etc/bash.bashrc <<'EOF'
+sepal_prompt() {
+    local name="\h${SEPAL_INSTANCE_TYPE:+($SEPAL_INSTANCE_TYPE)}"
+    case "$TERM" in
+        xterm-color|*-256color) PS1="\[\033[01;32m\]$name\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\\$ ";;
+        *) PS1="$name:\w\\\$ ";;
+    esac
+    unset PROMPT_COMMAND
+    unset -f sepal_prompt
+}
+PROMPT_COMMAND=sepal_prompt
+EOF

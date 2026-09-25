@@ -44,6 +44,7 @@ const CONFIG_WITH_SYSLOG = {
 const INSTANCE_TYPE_T3A = {
     id: 'T3aSmall',
     name: 't3a.small',
+    tag: 't1',
     cpuCount: 1,
     ramGiB: 2,
     hourlyCost: 0.0204,
@@ -241,7 +242,22 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.NetworkingConfig.EndpointsConfig.sepal).toBeDefined()
     })
 
-    // The shell prompt inside the sandbox is "{hostname}:{dir}$", so the hostname is what a user
+    test('Env names the instance type by its tag', async () => {
+        await runProvision()
+        expect(capturedBody.Env).toContain('SEPAL_INSTANCE_TYPE=t1')
+    })
+
+    test('Env names an untagged instance type by its name', async () => {
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+        })
+        await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
+        expect(capturedBody.Env).toContain('SEPAL_INSTANCE_TYPE=g5.xlarge')
+    })
+
+    // The shell prompt inside the sandbox starts with the hostname, so the hostname is what a user
     // reads to tell one open terminal from another — it has to be the same two-word name every
     // other surface calls this instance, not the container id Docker would otherwise assign.
     test('Hostname is the instance\'s two-word name', async () => {

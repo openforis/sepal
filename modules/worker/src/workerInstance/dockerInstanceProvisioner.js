@@ -244,11 +244,15 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
             }
             : null
 
-        const env = Object.entries(image.environment).map(([k, v]) => `${k}=${v}`)
+        // SEPAL_INSTANCE_TYPE: shown in the sandbox prompt, as the GUI shows the type.
+        const env = Object.entries({
+            ...image.environment,
+            SEPAL_INSTANCE_TYPE: instanceType.tag ?? instanceType.name,
+        }).map(([k, v]) => `${k}=${v}`)
 
-        // Hostname: the sandbox prompt is "{hostname}:{dir}$", so this is the name a user reads to
-        // tell one open terminal from another — the same two-word name the GUI, the SSH menu and
-        // the container itself carry, rather than the container id Docker defaults to.
+        // Hostname: the sandbox prompt is "{hostname}({instance type}):{dir}$", so this is the name
+        // a user reads to tell one open terminal from another — the same two-word name the GUI, the
+        // SSH menu and the container itself carry, rather than the container id Docker defaults to.
         const body = {
             Image: imageRef(image),
             Hostname: instanceName(instance.reservation.sessionId),
