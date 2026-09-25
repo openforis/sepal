@@ -3,6 +3,8 @@
   user: ec2-user
   become: yes
   gather_facts: true
+  gather_subset:
+    - '!all'
 
   pre_tasks:
     # bash prompt
@@ -26,9 +28,12 @@
       dnf:
         name: 'spal-release'
 
-    - name: Install monit
+    # One transaction: each yum task reloads the repository metadata
+    - name: Install packages
       yum:
-        name: 'monit'
+        name:
+          - monit
+          - amazon-efs-utils
 
     - name: Stop monit
       systemd:
@@ -75,9 +80,12 @@
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+      register: rsyslog_conf
 
     - name: Start rsyslog
-      service: name=rsyslog state=restarted
+      service:
+        name: rsyslog
+        state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
 
     # docker
     - name: Create filesystem on Docker volume
@@ -101,6 +109,11 @@
       copy:
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
+
+    # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
+    - name: Install docker
+      yum:
+        name: "docker{{ '-' ~ lookup('env', 'DOCKER_VERSION') if lookup('env', 'DOCKER_VERSION') else '' }}"
 
     - name: Create /etc/docker
       file:
@@ -146,20 +159,6 @@
         remote_addrs: ["{{ sepal_private_ip }}:2377"]
 
     # EFS
-    - name: Install amazon-efs-utils
-      yum:
-        name: "amazon-efs-utils"
-
-    - name: Create /data
-      file:
-        path: "/data"
-        state: directory
-
-    - name: Create /data/sepal
-      file:
-        path: "/data/sepal"
-        state: directory
-
     - name: Create /data/sepal/home
       file:
         path: "/data/sepal/home"
@@ -180,13 +179,13 @@
         state: directory
 
     - uri:
-        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/v{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: +x
         status_code: [200, 304]
 
     - uri:
-        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
         dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]

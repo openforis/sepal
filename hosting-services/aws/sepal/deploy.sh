@@ -25,8 +25,9 @@ WORKER_AMI_VERSION: $WORKER_AMI_VERSION]"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
-export DOCKER_COMPOSE_VERSION=v5.1.3
-export DOCKER_BUILDX_VERSION=v0.33.0
+export DOCKER_VERSION=25.0.16
+export DOCKER_COMPOSE_VERSION=5.5.1
+export DOCKER_BUILDX_VERSION=0.37.1
 
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Sepal)" \

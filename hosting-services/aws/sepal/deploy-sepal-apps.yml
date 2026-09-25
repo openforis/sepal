@@ -3,6 +3,8 @@
   user: ec2-user
   become: yes
   gather_facts: true
+  gather_subset:
+    - '!all'
 
   pre_tasks:
     # bash prompt
@@ -24,6 +26,8 @@
 
     - name: Install epel
       command: "amazon-linux-extras install epel -y"
+      args:
+        creates: /etc/yum.repos.d/epel.repo
 
     - name: Install monit
       yum:
@@ -74,9 +78,12 @@
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+      register: rsyslog_conf
 
     - name: Start rsyslog
-      service: name=rsyslog state=restarted
+      service:
+        name: rsyslog
+        state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
 
     # docker
     - name: Create filesystem on Docker volume
@@ -101,11 +108,14 @@
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
+    - name: Enable the Docker extras topic
+      command: "amazon-linux-extras enable docker"
+      changed_when: false
+
+    # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
       yum:
-        name:
-          - docker
-        state: present
+        name: "docker{{ '-' ~ lookup('env', 'DOCKER_VERSION') if lookup('env', 'DOCKER_VERSION') else '' }}"
 
     - name: Create /etc/docker
       file:
@@ -127,14 +137,11 @@
         enabled: yes
         masked: no
 
-    - name: pip install urllib3
+    - name: pip install urllib3 and requests
       pip:
-        name: urllib3==1.26.18
-        executable: pip3
-
-    - name: pip install requests
-      pip:
-        name: requests
+        name:
+          - urllib3==1.26.18
+          - requests
         executable: pip3
 
     - docker_network:
@@ -155,13 +162,13 @@
         state: directory
 
     - uri:
-        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/v{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: +x
         status_code: [200, 304]
 
     - uri:
-        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
         dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
