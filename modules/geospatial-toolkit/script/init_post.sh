@@ -19,6 +19,7 @@ printf '%s\n' \
     'SEPAL="true"' \
     'PROJ_LIB="/usr/share/proj"' \
     'LOCALTILESERVER_CLIENT_PREFIX="/api/sandbox/jupyter/proxy/{port}"' \
+    'DASK_DISTRIBUTED__DASHBOARD__LINK="/api/sandbox/jupyter/proxy/{port}/status"' \
     'OTB_INSTALL_DIR=/usr/local/lib/orfeo' \
     'OTB_APPLICATION_PATH=/usr/local/lib/orfeo/lib/otb/applications' \
     'PYTHONPATH=/usr/local/lib/orfeo/lib/otb/python' \
