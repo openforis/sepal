@@ -40,6 +40,18 @@ migration cannot land at once, so its order is chosen to keep that state in one 
 and short-lived. Rework — rebuilding a consumer because a decision it depended on came later — is worse than a
 temporary answer, because it cannot be deleted.
 
+**Next: bounded Asset band and metadata acquisition.** Follow
+[band discovery without image construction](output-products.md#band-discovery-without-image-construction): known
+schemas come from declarations, referenced schemas through provider reads, and collection schemas from the first
+image. Asset recipes apply their configured filters first to support heterogeneous collections. Remove unfiltered
+mosaics and aggregate-geometry work from schema/encoding acquisition in both GEE and Task, preserving execution
+extent and metadata authority. Use `GOOGLE/DYNAMICWORLD/V1` as a large-collection acceptance case.
+
+Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, BAYTS Alerts, Stack and
+Band Math, whose band readers construct their output, and the generic typed `/bands` path, which bypasses cheaper
+catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
+Keep these family changes separate from the immediate Asset correction.
+
 1. **The consumer API**, settled before any consumer switches:
    - *Map-product identity.* A map layer names the product it displays and supplies that product's declared
      parameters; the absence of a mode is not an identity
@@ -136,19 +148,38 @@ reserve the full GUI suite for the final readiness check.
 
 In order, each independently mergeable:
 
-1. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+1. **Shared live output descriptions**, immediately after the output declarations are mandatory and the legacy
+   adapter is removed. The source runtime owns reusable descriptions and in-flight acquisitions; map layers and
+   Retrieve subscribe to the same current answer rather than acquiring independently on every panel opening.
+   Reuse the common read and acquisition contracts, with no recipe-specific caches.
+   - One source-version registry tracks local draft changes, recipe revisions, credential context and observed
+     asset versions. Relevant changes invalidate dependent answers immediately and trigger background refresh;
+     superseded responses cannot publish. Closing one consumer must not cancel work another still needs.
+   - Recipe revision refreshes and asset-version checks establish freshness. Prioritize assets used by active
+     consumers and share checks across dependents. SEPAL operations can invalidate immediately; polling must cover
+     external changes. Establish what collection versions reveal about member and metadata changes before relying
+     on them. Polling intervals and acceptable evidence age belong to this packet's contract review.
+   - Retrieve opens without a new acquisition when a current answer is held. Otherwise it waits for refresh, and
+     Apply rechecks currency before accepting the answer. Refresh failures never authorize stale options.
+   - Websocket recipe revision events can follow as a latency optimization; revision refresh on reconnect covers
+     missed events, and correctness must not depend on notification delivery.
+   This implements the interactive description-sharing part of
+   [source freshness](source-freshness.md). Persisted calculation freshness and coherent task execution remain
+   separate, later milestones. Acceptance: visualization and Retrieve share one acquisition for the same question,
+   and dependency or credential changes withdraw its authority for both until a current answer is available.
+2. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
    boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
    [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
-2. **Declarative dependency evaluation**, starting with the
+3. **Declarative dependency evaluation**, starting with the
    [Band Math chain](#later-follow-up-band-math-dependencies).
-3. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
+4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
-4. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
-5. **Caller-authorized closure reads and coherent execution**
+5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
+6. **Caller-authorized closure reads and coherent execution**
    ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
-6. **Source planning and the temporal collection composer**, following the
+7. **Source planning and the temporal collection composer**, following the
    [research plan](output-products.md#research-plan).
 
 Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
@@ -157,6 +188,14 @@ is a separate small packet.
 Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
 its origin has not been investigated, and whether it is a regression is not established. Investigate the error
 presentation separately.
+
+**Default colors for large categorical legends.** Replace the shared default-color overflow behavior, which
+assigns the last of 20 palette colors to every further entry. Class Change can need many more colors: seven
+source classes yield 49 transitions. Reuse the palette application's `pickColors(count, colors)` interpolation
+to distribute default colors across the complete legend instead of adding a recipe-specific color generator.
+Use entry position and total count, not category values, and account for Class Change's one-based codes skipping
+the first color. Preserve saved and user-edited colors. Check categorical distinguishability at larger counts;
+interpolation avoids a repeated final color but does not guarantee that every category is easy to distinguish.
 
 ## Scope and constraints
 
@@ -535,12 +574,13 @@ No update-time or temporary content-hash bridge is involved.
   digest remains optional until a concrete integrity or provenance requirement needs exact byte identity.
 - Extend the session catalogue and product-scoped fingerprints established by Sampling Design with remote
   invalidation and coherent execution support.
-- Add one source-version registry for recipe revision events, local draft generations and Earth Engine asset
-  `system:version` evidence. Build generic versioned derived resources above it so image-output descriptions,
-  visualization applicability and Sampling Design stratum areas and per-stratum probabilities share invalidation,
-  in-flight deduplication and replay rather than creating recipe-specific caches.
-- Add websocket revision events and, if justified, patch transport. Both remain latency and transport
-  optimizations; correctness established in step 5 never depends on them.
+- Extend the source-version registry and shared resources introduced by shared live output descriptions
+  ([following work](#following-work)) to visualization applicability and Sampling Design stratum areas and
+  per-stratum probabilities. Reuse their invalidation, in-flight deduplication and replay rather than creating
+  another registry or recipe-specific caches.
+- Extend remote invalidation to these resources; add websocket revision events if not already provided and,
+  if justified, patch transport. Both remain latency and transport optimizations; correctness established in
+  step 5 never depends on them.
 - Progressively migrate recipe types to explicit AOI and image product projections, reducing the conservative
   whole-source recalculation that unmigrated providers fall back to.
 
@@ -769,6 +809,15 @@ General physical-unit legends, charts and pixel inspection remain deferred beyon
 encoding knowledge: producers supply ready-to-use descriptions and visualizations. Share encoding declarations
 between execution and preset conversion where that removes duplicated assumptions without changing pixel values
 or reinterpreting saved ranges.
+
+**Input-aware Index Change defaults.** Derive the default difference visualization from resolved input-band
+semantics and trustworthy ranges, accounting for encoding and units. The current preset uses copied input ranges,
+whose input-form fallback is -10,000 to 10,000. For two probability bands bounded by [0, 1], such as Dynamic World
+tree probabilities, the difference is bounded by [-1, 1]. In general, `to - from` has bounds
+`[toMin - fromMax, toMax - fromMin]` when both ranges are known and expressed in compatible units. Distinguish
+semantic bounds from a chosen display stretch; encoding alone establishes neither. Keep this as presentation
+work, without changing pixel arithmetic, and preserve user-edited or saved styles. Define a fallback for unknown
+ranges when the richer input-band contract is designed.
 
 The narrow radar RGB preset correction need not wait: its ratio range must match the existing x1000 encoding,
 not the x100 used for VV/VH. Verify matching ranges and unchanged pixel encoding without broadening this into

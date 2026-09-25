@@ -1,10 +1,8 @@
 import {catchError, defer, filter, map, of, switchMap, take, tap, throwError} from 'rxjs'
 
-import {assetBandEvidence, typedBands} from '#sepal/ee/bandEvidence'
-import ee from '#sepal/ee/ee'
+import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {loadRecipe$} from '#sepal/ee/recipe'
-import {bandsWithEncoding, encodingPropertyKeys} from '#sepal/recipe/output/bandEncoding'
 import {isUndeclaredOutputOnly} from '#sepal/recipe/output/diagnostic'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
@@ -83,22 +81,12 @@ const closure$ = recipe => defer(() => {
 // no image and no evaluation; its physical facts come from the declaration that asked.
 const acquisition = {
     observeBands$: ({reference, recipe, observes}) => reference.type === ASSET
-        ? assetEvidence$(reference.id)
+        ? assetBandEvidence$(reference.id)
         : observes === AVAILABLE_BANDS
             ? ImageFactory(recipe).getBands$().pipe(map(bandNames => bandNames.map(name => ({name}))))
-            : ImageFactory(recipe).getImage$().pipe(
-                switchMap(image => ee.getInfo$(typedBands(image), 'image band evidence'))
-            ),
+            : imageBandEvidence$(recipe),
     declarationFor: recipe => recipeType(recipe.type)?.imageOutput
 }
-
-const assetEvidence$ = id => ImageFactory({type: ASSET, id}).getImage$().pipe(
-    switchMap(image => ee.getInfo$(
-        assetBandEvidence(image, {encodingProperties: encodingPropertyKeys()}),
-        'asset band evidence'
-    )),
-    map(({bands, encoding}) => bandsWithEncoding(bands, encoding))
-)
 
 const codesOf = diagnostics => diagnostics.map(({code}) => code).join(', ')
 

@@ -170,6 +170,47 @@ still applies its mask. Internal callers whose selection means something produce
 the segment chart and the dedicated CCDC export, all naming CCDC measures - send no `outputBands`, and preview
 selects the bands of the visualization it draws.
 
+### Band discovery without image construction
+
+Band questions are answered without building an image where configuration or metadata can answer them, and
+without computing an aggregate extent merely to answer them.
+
+**Implemented acquisition** (`lib/js/ee/src/bandEvidence.js`, shared by the gee `/bands` job and Task):
+
+- An asset's schema is read directly: an image's own bands, or a raw collection's first image. Its stored encoding
+  is the image's or the collection's own metadata, read in the same evaluation; a collection's member properties
+  are not encoding authority. A collection holding no images is a failure, not an asset without bands. No mosaic
+  is constructed and no collection geometry is aggregated.
+- A recipe's running image is read through its producer's optional `getSchemaImage$()` where it has one, and
+  otherwise through `getImage$()`. The hook guarantees a schema, not an execution: the band names, order and array
+  dimensionality `getImage$()` builds, under the first-contributing-image assumption. It reports configuration
+  errors on its own path, such as no contributing image, but cannot detect every failure of full execution - a
+  later member with incompatible bands, for example. A failed schema read is a failure; it never falls back to
+  building the image. The hook stays inside the Earth Engine implementations: providers still ask only for their
+  output description.
+- An Asset recipe over a collection implements the hook with execution's own AOI, date and property filters,
+  one contributing image, and its masking, selection and composite; it neither clips nor copies properties, so an
+  `ASSET_BOUNDS` recipe computes no collection geometry here. Filtering is an intentional workaround for
+  heterogeneous collections: the unfiltered first image never decides a filtered recipe's schema. Its name-only
+  `getBands$()` reads the same image, so typed and name-only requests answer the same question. A one-image
+  composite reproduces the full composite's schema for every supported composite; Earth Engine refuses median,
+  mean, mode and standard deviation over array bands, on either path (`modules/gee/verify/assetCollectionSchema.mjs`).
+
+Trusting the first image is a collection-schema assumption, not verification that every member agrees. Do not
+replace that assumption with a collection-wide schema scan.
+
+**Remaining migration:**
+
+- Return names and physical dimensionality directly when configuration establishes them. Asking for types must
+  not automatically turn a known schema into an observation of the running image.
+- When the answer depends on a referenced source, use the provider's existing `input()` or `inputs()` access and
+  preserve or transform its description. Resolution owns reference traversal and acquisition.
+- Observe a constructed output only when its schema cannot be established by these means. Such observation is an
+  explicit provider requirement, not a generic fallback for a caller requesting dimensionality.
+- An `ASSET_BOUNDS` Asset recipe still previews and exports within its whole collection's bounds, which for a
+  global collection is computed from every member's footprint. Changing that extent is a separate decision from
+  schema discovery.
+
 ### Output-band description
 
 The ordered band record contains several classes of established fact:

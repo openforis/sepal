@@ -3,8 +3,11 @@ import {firstValueFrom, of} from 'rxjs'
 
 import {ENCODING_PROPERTY, encodingPropertyKeys} from '#sepal/recipe/output/bandEncoding'
 
+let assetType = 'Image'
 let assetBands = []
 let assetProperties = {}
+let firstImageProperties = {}
+let collectionSize = 1
 let recipeBands = []
 let recipePhysicalBands = []
 let recipeProperties = {}
@@ -73,7 +76,27 @@ const materialize = value => {
     return value
 }
 
+// A collection answers what reading its schema and metadata needs. Mosaicking it or combining its geometry would
+// be a read of every member, which for a large collection exceeds Earth Engine's memory, so both refuse.
+const collectionFor = id => ({
+    merge: () => ({first: () => imageFor(`${id}/first`, assetBands, firstImageProperties)}),
+    limit: () => ({size: () => collectionSize}),
+    toDictionary: imageFor(id, [], assetProperties).toDictionary,
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    },
+    geometry: () => {
+        throw new Error('combined the whole collection\'s geometry')
+    }
+})
+
 const ee = {
+    getAsset$: () => of({type: assetType}),
+    Image: id => imageFor(id, typeof id === 'string' ? assetBands : [], assetProperties),
+    ImageCollection: id => collectionFor(id),
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    },
     Dictionary: values => ({kind: 'DICTIONARY', values}),
     PixelType: value => {
         pixelTypeCalls.push(value)
@@ -87,15 +110,17 @@ const ee = {
 
 jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
 jest.unstable_mockModule('#gee/jobs/job', () => ({job: config => config}))
+// An asset is read directly, never as the image execution builds from it.
 jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
     default: source => {
         factoryCalls.push(source)
-        return source.type === 'ASSET'
-            ? {getImage$: () => of(imageFor(source.id, assetBands, assetProperties))}
-            : {
-                getBands$: () => of(recipeBands),
-                getImage$: () => of(imageFor(source.id, recipePhysicalBands, recipeProperties))
-            }
+        if (source.type === 'ASSET') {
+            throw new Error('read an asset through the image execution builds')
+        }
+        return {
+            getBands$: () => of(recipeBands),
+            getImage$: () => of(imageFor(source.id, recipePhysicalBands, recipeProperties))
+        }
     }
 }))
 
@@ -105,8 +130,11 @@ const {worker$} = bandsJob
 const run = requestArgs => firstValueFrom(worker$({requestArgs}))
 
 beforeEach(() => {
+    assetType = 'Image'
     assetBands = []
     assetProperties = {}
+    firstImageProperties = {}
+    collectionSize = 1
     recipeBands = []
     recipePhysicalBands = []
     recipeProperties = {}
@@ -126,7 +154,6 @@ describe('the existing response contract', () => {
         ]
 
         await expect(run({asset: 'users/x/image'})).resolves.toEqual(['array', 'scalar'])
-        expect(factoryCalls).toEqual([{type: 'ASSET', id: 'users/x/image'}])
     })
 
     it('keeps an ordinary recipe request as the existing string array', async () => {
@@ -332,6 +359,17 @@ describe('stored band encoding', () => {
         ])
     })
 
+    it('is read from a collection\'s own properties, not its images\'', async () => {
+        assetType = 'ImageCollection'
+        assetProperties = storing({red: REFLECTANCE})
+        firstImageProperties = storing({red: THERMAL, thermal: THERMAL})
+
+        await expect(readAsset()).resolves.toEqual([
+            {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
+            {name: 'thermal', arrayDimensions: 0}
+        ])
+    })
+
     it('is never read from a recipe image', async () => {
         recipePhysicalBands = [{name: 'red', arrayDimensions: 0}]
         recipeProperties = storing({red: THERMAL})
@@ -340,5 +378,32 @@ describe('stored band encoding', () => {
 
         expect(bands).toEqual([{name: 'red', arrayDimensions: 0}])
         expect(toDictionaryCalls).toEqual([])
+    })
+})
+
+// A collection is described by its first image - an assumption that its members share one schema, not a scan of
+// them - so describing it reads neither a mosaic of it nor its combined geometry.
+describe('a collection asset', () => {
+    beforeEach(() => {
+        assetType = 'ImageCollection'
+        assetBands = [
+            {name: 'label', arrayDimensions: 0},
+            {name: 'probabilities', arrayDimensions: 1}
+        ]
+    })
+
+    it('is described by its first image\'s bands and their dimensionality, in one evaluation', async () => {
+        await expect(run({asset: 'users/x/collection', includeDataTypes: true})).resolves.toEqual(assetBands)
+        expect(getInfoCalls).toHaveLength(1)
+    })
+
+    it('is named by its first image\'s bands', async () => {
+        await expect(run({asset: 'users/x/collection'})).resolves.toEqual(['label', 'probabilities'])
+    })
+
+    it('fails when it holds no images, rather than answering with no bands', async () => {
+        collectionSize = 0
+
+        await expect(run({asset: 'users/x/collection', includeDataTypes: true})).rejects.toThrow(/holds no images/)
     })
 })

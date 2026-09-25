@@ -114,6 +114,7 @@ describe('encoding recorded for a recipe over a filtered collection asset', () =
         const source = assetRecipe()
         state.catalogue = {[source.id]: source}
         state.assets['users/x/collection'] = {
+            type: 'ImageCollection',
             bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}],
             properties: {
                 sepal_band_encoding: JSON.stringify({version: 1, bands: {red: REFLECTANCE, nir: REFLECTANCE}})
@@ -315,8 +316,24 @@ const assetImage = ({bands, properties}) => ({
     toDictionary: keys => Object.fromEntries(keys.filter(key => key in properties).map(key => [key, properties[key]]))
 })
 
+// An asset is read directly: an image, or a collection's first image with the collection's own properties. A
+// collection refuses to be mosaicked, which is a read of every member.
+const collection = ({bands, properties}) => ({
+    merge: () => ({first: () => assetImage({bands, properties: {}})}),
+    limit: () => ({size: () => 1}),
+    toDictionary: assetImage({bands: [], properties}).toDictionary,
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    }
+})
+
 jest.unstable_mockModule('#sepal/ee/ee', () => ({
     default: {
+        getAsset$: id => state.assets[id]
+            ? of({type: state.assets[id].type || 'Image'})
+            : throwError(() => new Error(`Asset could not be read: ${id}`)),
+        Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
+        ImageCollection: id => collection(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
         Dictionary: values => values,
         PixelType: band => ({dimensions: () => band.arrayDimensions}),
         getInfo$: value => of(value)
@@ -333,9 +350,7 @@ jest.unstable_mockModule('#sepal/ee/recipe', () => ({
 jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
     default: source => source.type === 'ASSET'
         ? {
-            getImage$: () => state.assets[source.id]
-                ? of(assetImage(state.assets[source.id]))
-                : throwError(() => new Error(`Asset could not be read: ${source.id}`))
+            getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
         }
         : {
             getImage$: () => of(recipeImage(source.id)),
