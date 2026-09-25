@@ -134,8 +134,9 @@ on every file save. Four mechanisms carry instance management across it:
 ## Session /tmp
 A worker container's `/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
 removed with the instance's containers on provision and undeploy, so every session starts with an
-empty one. Only the `/tmp` mount copies the image's `/tmp` into the new volume (the `~/tmp` mount is
-`nocopy`): that copy is what makes it mode 1777. On the shared local daemon the orphan sweep also
+empty one. The provisioner creates it and sets its mode 1777 from a throwaway `{image}.prepare-tmp`
+container; both mounts are `nocopy`, since Docker would otherwise fill the empty volume with what the
+image's build left in `/tmp`. On the shared local daemon the orphan sweep also
 removes volumes no live instance claims.
 
 On AWS the volume lives on local disk, never on EFS:
@@ -146,7 +147,7 @@ On AWS the volume lives on local disk, never on EFS:
   `provisionInstance` has the provider attach it as `/dev/xvdg` (idempotent across retries), and the
   provisioner formats it as XFS with the host's `mkfs.xfs`, from a throwaway privileged container
   of the worker image chrooted into the host (`{image}.format-tmp.{instanceId}`), then creates the
-  tmp volume on the device (`local` driver, `type=xfs`). Docker mounts it with the first container and unmounts it with the last, so
+  tmp volume on the device (`local` driver, `type=xfs`) before preparing it as above. Docker mounts it with the first container and unmounts it with the last, so
   `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
   Volumes are tagged `Type=WorkerScratch` from creation and marked delete-on-termination once
   attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need

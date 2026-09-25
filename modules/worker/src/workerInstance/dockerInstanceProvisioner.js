@@ -31,18 +31,12 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 // the daemon is never mistaken for an orphan.
 const ORPHAN_GRACE_MS = 10 * 60_000
 
-// FORMAT_SCRIPT — run as root in a throwaway privileged container of the worker image, chrooted
-// into the host: the worker images carry no mkfs.xfs, and the device's /dev/xvdg name is a host
-// udev symlink that can trail the attachment. -K skips the discard pass on the blank volume. The
-// root directory is set to mode 1777 for Docker's copy of the image's /tmp to keep.
+// FORMAT_SCRIPT — run chrooted into the host: the worker images carry no mkfs.xfs, and the
+// device's /dev/xvdg name is a host udev symlink that can trail the attachment. -K skips the
+// discard pass on the blank volume.
 const FORMAT_SCRIPT = `set -e
 for _ in $(seq 60); do [ -b "$1" ] && break; sleep 1; done
-mkfs.xfs -q -f -K "$1"
-dir=$(mktemp -d)
-mount "$1" "$dir"
-chmod 1777 "$dir"
-umount "$dir"
-rmdir "$dir"`
+mkfs.xfs -q -f -K "$1"`
 
 // PROBE_TIMEOUT_MS — bound on each instanceStatus container inspect. Without it an unreachable
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
@@ -156,48 +150,51 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         await deleteTmpVolume(instance)
     }
 
-    // createTmpVolume — a volume on tmpDevice, formatted first; without one, the containers create
-    // an ordinary volume under Docker's volume directory when they first mount it.
+    // createTmpVolume — an empty volume of mode 1777, on tmpDevice when there is one (the session's
+    // scratch disk), formatted first. The containers mount it nocopy: Docker would otherwise fill
+    // the empty volume with whatever the image's build left in /tmp.
     const createTmpVolume = async (instance, image, tmpDevice) => {
-        if (!tmpDevice) {
-            return
+        if (tmpDevice) {
+            await runHelper(instance, image, 'format-tmp', {
+                Entrypoint: ['chroot', '/host', '/bin/sh', '-c', FORMAT_SCRIPT, 'format-tmp', tmpDevice],
+                HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
+            })
         }
-        await formatDevice(instance, image, tmpDevice)
         const name = tmpVolumeName(instance.id)
         await dockerFetch(baseUrl(instance), 'volumes/create', {
             method: 'POST',
-            body: {Name: name, Driver: 'local', DriverOpts: {type: 'xfs', device: tmpDevice, o: 'noatime'}},
+            body: {
+                Name: name,
+                Driver: 'local',
+                DriverOpts: tmpDevice ? {type: 'xfs', device: tmpDevice, o: 'noatime'} : {},
+            },
         })
-        log.debug(`Created volume ${name} on ${tmpDevice} of ${instanceTag(instance)}`)
+        await runHelper(instance, image, 'prepare-tmp', {
+            Entrypoint: ['chmod', '1777', '/tmp-volume'],
+            HostConfig: {Binds: [`${name}:/tmp-volume:nocopy`], NetworkMode: 'none'},
+        })
+        log.debug(`Created volume ${name}${tmpDevice ? ` on ${tmpDevice}` : ''} of ${instanceTag(instance)}`)
     }
 
-    // Named like a worker container of the instance, so the deletes and the orphan sweep cover
-    // one left behind.
-    const formatDevice = async (instance, image, device) => {
-        const name = `${image.name}.format-tmp.${instance.id}`
-        log.debug(`Formatting ${device} of ${instanceTag(instance)}...`)
+    // runHelper — runs a throwaway root container of the worker image to completion. Named like a
+    // worker container of the instance, so the deletes and the orphan sweep cover one left behind.
+    const runHelper = async (instance, image, task, {Entrypoint, HostConfig}) => {
+        const name = `${image.name}.${task}.${instance.id}`
         await dockerFetch(baseUrl(instance), 'containers/create', {
             method: 'POST',
             query: {name},
-            body: {
-                Image: imageRef(image),
-                User: 'root',
-                Entrypoint: ['chroot', '/host', '/bin/sh', '-c', FORMAT_SCRIPT, 'format-tmp', device],
-                Cmd: null,
-                HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
-            },
+            body: {Image: imageRef(image), User: 'root', Entrypoint, Cmd: null, HostConfig},
         })
         try {
             await dockerFetch(baseUrl(instance), `containers/${name}/start`, {method: 'POST', body: {}})
             const {StatusCode} = await dockerFetch(baseUrl(instance), `containers/${name}/wait`, {method: 'POST'})
             if (StatusCode !== 0) {
                 const output = await dockerFetch(baseUrl(instance), `containers/${name}/logs`, {query: {stdout: true, stderr: true}})
-                throw new DockerProvisionerError(instance, `Failed to format ${device} (exit ${StatusCode}): ${output}`)
+                throw new DockerProvisionerError(instance, `${task} failed on ${instanceTag(instance)} (exit ${StatusCode}): ${output}`)
             }
         } finally {
             await deleteContainer(instance, name)
         }
-        log.debug(`Formatted ${device} of ${instanceTag(instance)}`)
     }
 
     const imageRef = image => `${dockerRegistryHost}/openforis/${image.name}:${workerAmiVersion}`
@@ -340,7 +337,7 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     //   2. removeInstanceContainers (containers and /tmp volume)
     //   3. apiKeyForInstance (with retry)
     //   4. createWorkerType → get images
-    //   5. createTmpVolume on tmpDevice, the session's scratch disk (null: none)
+    //   5. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
     //   6. for each image: createContainer, startContainer
     //   7. for each image: waitUntilInitialized
     const provisionInstance = async (rawInstance, {tmpDevice = null} = {}) => {

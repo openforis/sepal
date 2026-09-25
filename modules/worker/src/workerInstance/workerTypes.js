@@ -17,14 +17,13 @@ const USER_HOME_NAME = 'sepal-user'
 
 const TMP_VOLUME_PREFIX = 'sepal-tmp.'
 
-// The instance's /tmp is a Docker volume, removed with the instance's containers. The provisioner
-// creates it on the session's scratch device when there is one; otherwise the first container to
-// mount it creates it under Docker's volume directory, which the worker AMI puts on local SSDs.
+// The instance's /tmp is a Docker volume, created by the provisioner and removed with the
+// instance's containers: on the session's scratch device when there is one, otherwise under
+// Docker's volume directory, which the worker AMI puts on local SSDs.
 const tmpVolumeName = instanceId => `${TMP_VOLUME_PREFIX}${instanceId}`
 
-// Only the /tmp mount copies the image's /tmp into the new, empty volume, which is what gives the
-// volume its mode 1777; a copy from ~/tmp would impose that directory's ownership instead.
-const tmpMounts = ['/tmp', `/home/${USER_HOME_NAME}/tmp:nocopy`]
+// nocopy: a session's /tmp starts empty, not with what the image's build left there.
+const tmpMounts = ['/tmp:nocopy', `/home/${USER_HOME_NAME}/tmp:nocopy`]
 
 // WORKER_IMAGE_NAMES — every image name a worker instance can run; the provisioner uses
 // these to recognize SEPAL worker containers among everything else on a (shared) daemon.
