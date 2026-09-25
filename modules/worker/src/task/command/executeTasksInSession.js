@@ -21,8 +21,7 @@ const executeTask = async (task, session, {repo, sessionManager, workerGateway})
     } catch (error) {
         log.error(`Failed to submit ${taskTag(task.id)}`, error)
         await repo.update(fail(task, 'Failed to submit task'))
-        const tasksInSession = await repo.pendingOrActiveTasksInSession(task.sessionId)
-        if (!tasksInSession.length) {
+        if (!await repo.hasUnfinishedTasksInSession(task.sessionId)) {
             log.debug('No tasks in session, closing session')
             await sessionManager.closeSession({sessionId: task.sessionId})
         }

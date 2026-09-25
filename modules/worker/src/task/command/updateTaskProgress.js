@@ -11,7 +11,8 @@
 //   (c) incoming state != CANCELED while task NOT in [PENDING, ACTIVE]   → no-op (return null).
 // Otherwise: persist update(state, statusDescription); after commit:
 //   - if the updated task is terminal (failed/completed/canceled):
-//       no pending/active tasks remain in the session → closeSession; else → extend.
+//       no unfinished task (PENDING, ACTIVE or CANCELING) remains in the session → closeSession;
+//       else → extend. A cancelling task still awaits its confirmation over the session's credential.
 //   - else (non-terminal) → extend.
 //
 // The extension is a ratchet, not just the sweep's task filter. Excluding sessions with a running
@@ -66,8 +67,7 @@ const _afterCommit = async (updatedTask, {repo, sessionManager}) => {
         }
         return
     }
-    const tasksInSession = await repo.pendingOrActiveTasksInSession(updatedTask.sessionId)
-    if (!tasksInSession.length) {
+    if (!await repo.hasUnfinishedTasksInSession(updatedTask.sessionId)) {
         log.debug(() => `No tasks left in ${sessionTag(updatedTask.sessionId)}, closing it`)
         await sessionManager.closeSession({sessionId: updatedTask.sessionId})
     } else {

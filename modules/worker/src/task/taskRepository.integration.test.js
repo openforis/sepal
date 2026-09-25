@@ -154,15 +154,34 @@ describe('TaskRepository', () => {
     })
 
     describe('pendingOrActiveTasksInSession', () => {
-        test('reports the unfinished tasks of that session alone', async () => {
+        // What the session is to run: a task being cancelled is not dispatched again.
+        test('reports the tasks of that session still to run, and no task being cancelled', async () => {
             await repository.insert(aTask({id: 'pending', state: State.PENDING}))
             await repository.insert(aTask({id: 'active', state: State.ACTIVE}))
+            await repository.insert(aTask({id: 'canceling', state: State.CANCELING}))
             await repository.insert(aTask({id: 'completed', state: State.COMPLETED}))
             await repository.insert(aTask({id: 'other-session', sessionId: 's-other', state: State.ACTIVE}))
 
             const tasks = await repository.pendingOrActiveTasksInSession(SESSION_ID)
 
             expect(tasks.map(({id}) => id).sort()).toEqual(['active', 'pending'])
+        })
+    })
+
+    describe('hasUnfinishedTasksInSession', () => {
+        test.each([State.PENDING, State.ACTIVE, State.CANCELING])('holds while a task of that session is %s', async state => {
+            await repository.insert(aTask({state}))
+
+            expect(await repository.hasUnfinishedTasksInSession(SESSION_ID)).toBe(true)
+        })
+
+        test('no longer holds once every task of that session has finished', async () => {
+            await repository.insert(aTask({id: 'completed', state: State.COMPLETED}))
+            await repository.insert(aTask({id: 'canceled', state: State.CANCELED}))
+            await repository.insert(aTask({id: 'failed', state: State.FAILED}))
+            await repository.insert(aTask({id: 'other-session', sessionId: 's-other', state: State.CANCELING}))
+
+            expect(await repository.hasUnfinishedTasksInSession(SESSION_ID)).toBe(false)
         })
     })
 
@@ -199,12 +218,14 @@ describe('TaskRepository', () => {
             const found = await decorated.getTask(TASK_ID)
             const listed = await decorated.userTasks(USERNAME)
             const inSession = await decorated.pendingOrActiveTasksInSession(SESSION_ID)
+            const unfinishedInSession = await decorated.hasUnfinishedTasksInSession(SESSION_ID)
             const unfinished = await decorated.pendingOrActiveUserTasks(USERNAME)
             const timedOut = await decorated.timedOutTasks()
 
             expect(found.id).toBe(TASK_ID)
             expect(listed.map(({id}) => id)).toEqual([TASK_ID])
             expect(inSession.map(({id}) => id)).toEqual([TASK_ID])
+            expect(unfinishedInSession).toBe(true)
             expect(unfinished.map(({id}) => id)).toEqual([TASK_ID])
             expect(timedOut).toEqual([])
         })

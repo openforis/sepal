@@ -44,9 +44,9 @@ const cancelTimedOutTasks = async ({repo, sessionManager, workerGateway}) => {
     }
 
     for (const sessionId of sessionById.keys()) {
-        const tasksInSession = await isolate(`tasksInSession ${sessionId}`,
-            () => repo.pendingOrActiveTasksInSession(sessionId))
-        if (tasksInSession && !tasksInSession.length) {
+        const unfinished = await isolate(`unfinishedTasksInSession ${sessionId}`,
+            () => repo.hasUnfinishedTasksInSession(sessionId))
+        if (unfinished === false) {
             await isolate(`closeSession ${sessionId}`, () => sessionManager.closeSession({sessionId}))
         }
     }

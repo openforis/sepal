@@ -53,6 +53,10 @@ const makeRepo = (canned = {}) => {
             record('pendingOrActiveTasksInSession', id)
             return canned.pendingOrActiveTasksInSession ? canned.pendingOrActiveTasksInSession(id) : []
         }),
+        hasUnfinishedTasksInSession: jest.fn(async id => {
+            record('hasUnfinishedTasksInSession', id)
+            return canned.hasUnfinishedTasksInSession ? canned.hasUnfinishedTasksInSession(id) : false
+        }),
         pendingOrActiveUserTasks: jest.fn(async u => {
             record('pendingOrActiveUserTasks', u)
             return canned.pendingOrActiveUserTasks ? canned.pendingOrActiveUserTasks(u) : []
@@ -152,14 +156,8 @@ describe('executeTasksInSession', () => {
     })
 
     test('on execute failure fails the task; closes session if none remain', async () => {
-        const repo = makeRepo()
+        const repo = makeRepo({pendingOrActiveTasksInSession: () => [task({id: 't-1'})]})
         const workerGateway = makeGateway({execute: jest.fn(async () => { throw new Error('boom') })})
-        // first read returns the task; then executeTask fails it and re-reads → empty
-        let firstRead = true
-        repo.pendingOrActiveTasksInSession = jest.fn(async () => {
-            if (firstRead) { firstRead = false; return [task({id: 't-1'})] }
-            return []
-        })
         const {manager, sessionManager} = make({repo, workerGateway})
         await manager.executeTasksInSession(activeSession())
         const failed = repo.update.mock.calls.map(c => c[0]).find(t => t.state === State.FAILED)
@@ -169,11 +167,9 @@ describe('executeTasksInSession', () => {
 
     test('on execute failure does NOT close session if tasks remain', async () => {
         const workerGateway = makeGateway({execute: jest.fn(async () => { throw new Error('boom') })})
-        const repo = makeRepo()
-        let firstRead = true
-        repo.pendingOrActiveTasksInSession = jest.fn(async () => {
-            if (firstRead) { firstRead = false; return [task({id: 't-1'})] }
-            return [task({id: 't-2'})]
+        const repo = makeRepo({
+            pendingOrActiveTasksInSession: () => [task({id: 't-1'})],
+            hasUnfinishedTasksInSession: () => true,
         })
         const {manager, sessionManager} = make({repo, workerGateway})
         await manager.executeTasksInSession(activeSession())
@@ -199,7 +195,7 @@ describe('updateTaskProgress', () => {
 
     test('terminal + empty session → closeSession after persist', async () => {
         const order = []
-        const repo = makeRepo({getTask: () => task({state: State.ACTIVE}), pendingOrActiveTasksInSession: () => []})
+        const repo = makeRepo({getTask: () => task({state: State.ACTIVE}), hasUnfinishedTasksInSession: () => false})
         repo.update = jest.fn(async t => { order.push('update'); return t })
         const sessionManager = makeSessionManager()
         sessionManager.closeSession = jest.fn(async () => { order.push('closeSession') })
@@ -213,7 +209,7 @@ describe('updateTaskProgress', () => {
     test('terminal but tasks remain → extend, not close', async () => {
         const repo = makeRepo({
             getTask: () => task({state: State.ACTIVE}),
-            pendingOrActiveTasksInSession: () => [task({id: 't-2'})],
+            hasUnfinishedTasksInSession: () => true,
         })
         const {manager, sessionManager} = make({repo})
         await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.FAILED})
@@ -231,18 +227,15 @@ describe('updateTaskProgress', () => {
         expect(sessionManager.closeSession).not.toHaveBeenCalled()
     })
 
-    test('guard (b): ACTIVE while task CANCELING → re-invoke CancelTask, no persist of ACTIVE', async () => {
+    // The retry leaves the task as it was, so the cancellation keeps its original deadline.
+    test('guard (b): ACTIVE while task CANCELING → re-invoke CancelTask, persist nothing', async () => {
         const repo = makeRepo({getTask: () => task({state: State.CANCELING})})
         const workerGateway = makeGateway()
         const {manager} = make({repo, workerGateway})
         const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.ACTIVE})
         expect(result).toBeNull()
-        // CancelTask ran: it updated the task to CANCELING again (never ACTIVE)
-        const states = repo.update.mock.calls.map(c => c[0].state)
-        expect(states).not.toContain(State.ACTIVE)
-        expect(states).toContain(State.CANCELING)
-        // task was CANCELING (not PENDING) → executor cancel invoked
-        expect(workerGateway.cancel).toHaveBeenCalled()
+        expect(repo.update).not.toHaveBeenCalled()
+        expect(workerGateway.cancel).toHaveBeenCalledWith('t-1', expect.anything())
     })
 
     test('guard (c): non-CANCELED state while task not in [PENDING,ACTIVE] → no-op', async () => {
@@ -255,7 +248,7 @@ describe('updateTaskProgress', () => {
     })
 
     test('CANCELED while CANCELING → persist CANCELED (allowed)', async () => {
-        const repo = makeRepo({getTask: () => task({state: State.CANCELING}), pendingOrActiveTasksInSession: () => []})
+        const repo = makeRepo({getTask: () => task({state: State.CANCELING}), hasUnfinishedTasksInSession: () => false})
         const {manager, sessionManager} = make({repo})
         const result = await manager.updateTaskProgress({...assignedExecutor, taskId: 't-1', state: State.CANCELED})
         expect(result.state).toBe(State.CANCELED)
@@ -341,7 +334,7 @@ describe('cancelTimedOutTasks', () => {
             task({id: 'a', state: State.ACTIVE, sessionId: 's-1'}),
             task({id: 'c', state: State.CANCELING, sessionId: 's-2'}),
         ]
-        const repo = makeRepo({timedOutTasks: () => timedOut, pendingOrActiveTasksInSession: () => []})
+        const repo = makeRepo({timedOutTasks: () => timedOut, hasUnfinishedTasksInSession: () => false})
         const {manager, workerGateway, sessionManager} = make({repo})
         await manager.cancelTimedOutTasks()
         const byId = Object.fromEntries(repo.update.mock.calls.map(c => [c[0].id, c[0].state]))
@@ -358,7 +351,7 @@ describe('cancelTimedOutTasks', () => {
 
     test('non-transactional isolation: one failing update does not abort the rest', async () => {
         const timedOut = [task({id: 'p', state: State.PENDING}), task({id: 'a', state: State.ACTIVE})]
-        const repo = makeRepo({timedOutTasks: () => timedOut, pendingOrActiveTasksInSession: () => []})
+        const repo = makeRepo({timedOutTasks: () => timedOut})
         let first = true
         repo.update = jest.fn(async t => {
             if (first) { first = false; throw new Error('db blip') }
@@ -371,7 +364,7 @@ describe('cancelTimedOutTasks', () => {
 
     test('session with remaining tasks is not closed', async () => {
         const timedOut = [task({id: 'p', state: State.PENDING, sessionId: 's-1'})]
-        const repo = makeRepo({timedOutTasks: () => timedOut, pendingOrActiveTasksInSession: () => [task({id: 'other'})]})
+        const repo = makeRepo({timedOutTasks: () => timedOut, hasUnfinishedTasksInSession: () => true})
         const {manager, sessionManager} = make({repo})
         await manager.cancelTimedOutTasks()
         expect(sessionManager.closeSession).not.toHaveBeenCalled()

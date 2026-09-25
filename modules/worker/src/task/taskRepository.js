@@ -116,6 +116,22 @@ export class TaskRepository {
         })
     }
 
+    // An executor session is needed until each task assigned to it has finished: a task being
+    // cancelled still awaits the executor's confirmation, which the session's credential carries.
+    hasUnfinishedTasksInSession(sessionId) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT 1
+                    FROM task
+                    WHERE session_id = ?
+                    AND state IN (?, ?, ?)
+                    LIMIT 1`,
+                [sessionId, PENDING, ACTIVE, CANCELING]
+            )
+            return rows.length > 0
+        })
+    }
+
     userTasks(username) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
