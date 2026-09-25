@@ -168,7 +168,7 @@
         status_code: [200, 304]
 
     - uri:
-        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
         dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
