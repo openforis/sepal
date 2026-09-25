@@ -142,6 +142,9 @@ const createLocalInstanceProvider = _instanceType => {
 
     // No stopped pool: instances on the shared dev daemon cost nothing while idle.
     const pooledInstances = async () => []
+    // No scratch volumes: a session's /tmp is a plain volume on the dev machine's disk.
+    const attachScratchVolume = async () => null
+    const deleteScratchVolume = async () => { /* no-op */ }
     const unsupported = operation => async () => {
         throw new Error(`${operation} is not supported by the local hosting service`)
     }
@@ -153,6 +156,8 @@ const createLocalInstanceProvider = _instanceType => {
         pool: unsupported('pool'),
         startPooled: unsupported('startPooled'),
         terminate,
+        attachScratchVolume,
+        deleteScratchVolume,
         reserve: reserveInstance,
         release: releaseInstance,
         idleInstances,

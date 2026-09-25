@@ -5,10 +5,11 @@
 // to a client library's defaults.
 //
 // Methods:
-//   provisionInstance(instance)               — full provision sequence
-//   undeploy(instance)                        — delete all *.worker containers
+//   provisionInstance(instance, {tmpDevice})  — full provision sequence
+//   undeploy(instance)                        — delete the worker containers and the /tmp volume
 //   instanceStatus(instance)                  — liveness probe → PROVISIONED | MISSING | UNKNOWN
-//   removeOrphanedContainers(liveInstanceIds) — shared-daemon sweep for leaked containers
+//   removeOrphanedContainers(liveInstanceIds) — shared-daemon sweep for leaked containers and
+//                                               /tmp volumes
 
 import {getLogger} from '#sepal/log'
 
@@ -16,7 +17,7 @@ import {instanceName} from '../instanceName.js'
 import {containerTag, instanceTag} from '../tag.js'
 import {dockerFetch} from './dockerApi.js'
 import {InstanceStatus} from './instanceStatus.js'
-import {createWorkerType, WORKER_IMAGE_NAMES} from './workerTypes.js'
+import {createWorkerType, TMP_VOLUME_PREFIX, tmpVolumeName, WORKER_IMAGE_NAMES} from './workerTypes.js'
 
 const log = getLogger('dockerInstanceProvisioner')
 
@@ -25,10 +26,23 @@ const _MIN_HOST_RAM_GiB = 0.3
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-// ORPHAN_GRACE_MS — removeOrphanedContainers keeps containers younger than this, so a
-// container created between the caller snapshotting live instances and the sweep listing
+// ORPHAN_GRACE_MS — removeOrphanedContainers keeps containers and volumes younger than this, so
+// one created between the caller snapshotting live instances and the sweep listing
 // the daemon is never mistaken for an orphan.
 const ORPHAN_GRACE_MS = 10 * 60_000
+
+// FORMAT_SCRIPT — run as root in a throwaway privileged container of the worker image, chrooted
+// into the host: the worker images carry no mkfs.xfs, and the device's /dev/xvdg name is a host
+// udev symlink that can trail the attachment. -K skips the discard pass on the blank volume. The
+// root directory is set to mode 1777 for Docker's copy of the image's /tmp to keep.
+const FORMAT_SCRIPT = `set -e
+for _ in $(seq 60); do [ -b "$1" ] && break; sleep 1; done
+mkfs.xfs -q -f -K "$1"
+dir=$(mktemp -d)
+mount "$1" "$dir"
+chmod 1777 "$dir"
+umount "$dir"
+rmdir "$dir"`
 
 // PROBE_TIMEOUT_MS — bound on each instanceStatus container inspect. Without it an unreachable
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
@@ -123,6 +137,71 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         }
     }
 
+    // deleteTmpVolume — the instance's /tmp goes with its containers, so the next session on the
+    // instance starts with an empty one. Docker refuses to remove a volume a container still uses.
+    const deleteTmpVolume = async instance => {
+        const name = tmpVolumeName(instance.id)
+        try {
+            await dockerFetch(baseUrl(instance), `volumes/${name}`, {method: 'DELETE'})
+            log.debug(`Deleted volume ${name} from ${instanceTag(instance)}`)
+        } catch (e) {
+            if (e.statusCode !== 404) {
+                throw e
+            }
+        }
+    }
+
+    const removeInstanceContainers = async instance => {
+        await deleteExistingContainers(instance)
+        await deleteTmpVolume(instance)
+    }
+
+    // createTmpVolume — a volume on tmpDevice, formatted first; without one, the containers create
+    // an ordinary volume under Docker's volume directory when they first mount it.
+    const createTmpVolume = async (instance, image, tmpDevice) => {
+        if (!tmpDevice) {
+            return
+        }
+        await formatDevice(instance, image, tmpDevice)
+        const name = tmpVolumeName(instance.id)
+        await dockerFetch(baseUrl(instance), 'volumes/create', {
+            method: 'POST',
+            body: {Name: name, Driver: 'local', DriverOpts: {type: 'xfs', device: tmpDevice, o: 'noatime'}},
+        })
+        log.debug(`Created volume ${name} on ${tmpDevice} of ${instanceTag(instance)}`)
+    }
+
+    // Named like a worker container of the instance, so the deletes and the orphan sweep cover
+    // one left behind.
+    const formatDevice = async (instance, image, device) => {
+        const name = `${image.name}.format-tmp.${instance.id}`
+        log.debug(`Formatting ${device} of ${instanceTag(instance)}...`)
+        await dockerFetch(baseUrl(instance), 'containers/create', {
+            method: 'POST',
+            query: {name},
+            body: {
+                Image: imageRef(image),
+                User: 'root',
+                Entrypoint: ['chroot', '/host', '/bin/sh', '-c', FORMAT_SCRIPT, 'format-tmp', device],
+                Cmd: null,
+                HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
+            },
+        })
+        try {
+            await dockerFetch(baseUrl(instance), `containers/${name}/start`, {method: 'POST', body: {}})
+            const {StatusCode} = await dockerFetch(baseUrl(instance), `containers/${name}/wait`, {method: 'POST'})
+            if (StatusCode !== 0) {
+                const output = await dockerFetch(baseUrl(instance), `containers/${name}/logs`, {query: {stdout: true, stderr: true}})
+                throw new DockerProvisionerError(instance, `Failed to format ${device} (exit ${StatusCode}): ${output}`)
+            }
+        } finally {
+            await deleteContainer(instance, name)
+        }
+        log.debug(`Formatted ${device} of ${instanceTag(instance)}`)
+    }
+
+    const imageRef = image => `${dockerRegistryHost}/openforis/${image.name}:${workerAmiVersion}`
+
     // buildContainerBody — constructs the exact Docker container-create JSON body, field by field.
     const buildContainerBody = (instance, image, instanceType) => {
         const shmSize = Math.floor(instanceType.ramBytes / 2)
@@ -174,7 +253,7 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         // tell one open terminal from another — the same two-word name the GUI, the SSH menu and
         // the container itself carry, rather than the container id Docker defaults to.
         const body = {
-            Image: `${dockerRegistryHost}/openforis/${image.name}:${workerAmiVersion}`,
+            Image: imageRef(image),
             Hostname: instanceName(instance.reservation.sessionId),
             Tty: true,
             Cmd: image.runCommand,
@@ -258,16 +337,17 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
-    //   2. deleteExistingContainers
+    //   2. removeInstanceContainers (containers and /tmp volume)
     //   3. apiKeyForInstance (with retry)
     //   4. createWorkerType → get images
-    //   5. for each image: createContainer, startContainer
-    //   6. for each image: waitUntilInitialized
-    const provisionInstance = async rawInstance => {
+    //   5. createTmpVolume on tmpDevice, the session's scratch disk (null: none)
+    //   6. for each image: createContainer, startContainer
+    //   7. for each image: waitUntilInitialized
+    const provisionInstance = async (rawInstance, {tmpDevice = null} = {}) => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
         await waitUntilDockerIsAvailable(instance)
-        await deleteExistingContainers(instance)
+        await removeInstanceContainers(instance)
 
         const apiKey = await sandboxSessionApiKey.apiKeyForInstance(instance.id)
         log.debug(`ApiKey for ${instanceTag(instance)}: ${apiKey ? '[obtained]' : '[null]'}`)
@@ -278,13 +358,12 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
             throw new DockerProvisionerError(instance, `No session api key for instance: ${instance.id}`)
         }
 
-        // Validate the instance type BEFORE createWorkerType (which has a tempDir fs side effect),
-        // so an unknown type fails without leaving an orphaned tmp dir on the host.
         const instanceType = instanceTypeById[instance.type]
         if (!instanceType) {
             throw new DockerProvisionerError(instance, `Unknown instance type: ${instance.type}`)
         }
         const workerType = createWorkerType(instance.reservation.workerType, instance, config, apiKey)
+        await createTmpVolume(instance, workerType.images[0], tmpDevice)
 
         for (const image of workerType.images) {
             await createContainer(instance, image, instanceType)
@@ -299,22 +378,22 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     const undeploy = async rawInstance => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Undeploying ${instanceTag(instance)}...`)
-        await deleteExistingContainers(instance)
+        await removeInstanceContainers(instance)
         log.info(`Undeployed ${instanceTag(instance)}`)
     }
 
-    // removeOrphanedContainers — delete worker containers on the shared local daemon that no
-    // live instance claims. Instance tracking on local hosting is in-memory, so a worker
-    // restart forgets live instances; when their sessions later close, releaseInstance finds
-    // nothing to undeploy and the containers leak (they are otherwise never revisited —
+    // removeOrphanedContainers — delete worker containers, then their /tmp volumes, on the shared
+    // local daemon that no live instance claims. Instance tracking on local hosting is in-memory,
+    // so a worker restart forgets live instances; when their sessions later close,
+    // releaseInstance finds nothing to undeploy and the containers leak (they are otherwise never revisited —
     // deleteExistingContainers is scoped to a single instance's names).
     // Only meaningful with defaultDaemonHost (shared daemon); on dedicated hosts (AWS) the
     // containers die with the instance, so this is a no-op there.
     // liveInstanceIds: instance ids that may legitimately own containers (open sessions +
     // every instance the provider still tracks). Ownership is decided by ownedByInstance, the
     // same test deleteExistingContainers uses.
-    // Containers younger than ORPHAN_GRACE_MS are kept — they may belong to an instance
-    // launched after the caller computed liveInstanceIds.
+    // Containers and volumes younger than ORPHAN_GRACE_MS are kept — they may belong to an
+    // instance launched after the caller computed liveInstanceIds.
     const removeOrphanedContainers = async liveInstanceIds => {
         if (!defaultDaemonHost) {
             return []
@@ -330,6 +409,26 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
             log.warn(`Removing orphaned worker ${containerTag(name)} (${c.Id})`)
             await deleteContainer(daemon, c.Id)
             removed.push(name)
+        }
+        return [...removed, ...await removeOrphanedTmpVolumes(daemon, liveInstanceIds)]
+    }
+
+    const removeOrphanedTmpVolumes = async (daemon, liveInstanceIds) => {
+        const data = await dockerFetch(baseUrl(daemon), 'volumes', {
+            query: {filters: JSON.stringify({name: [TMP_VOLUME_PREFIX]})},
+            timeoutMs: 5000,
+        })
+        const minCreated = Date.now() - ORPHAN_GRACE_MS
+        const orphans = (data?.Volumes ?? []).filter(({Name, CreatedAt}) =>
+            Name.startsWith(TMP_VOLUME_PREFIX)
+            && !liveInstanceIds.some(id => Name === tmpVolumeName(id))
+            && Date.parse(CreatedAt) < minCreated
+        )
+        const removed = []
+        for (const {Name} of orphans) {
+            log.warn(`Removing orphaned worker volume ${Name}`)
+            await dockerFetch(baseUrl(daemon), `volumes/${Name}`, {method: 'DELETE'})
+            removed.push(Name)
         }
         return removed
     }

@@ -131,6 +131,27 @@ on every file save. Four mechanisms carry instance management across it:
   notification and the full grace, never a close. The former 2-minute grace, measured from process
   start, was what let a crash loop starve every closing sweep.
 
+## Session /tmp
+A worker container's `/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
+removed with the instance's containers on provision and undeploy, so every session starts with an
+empty one. Only the `/tmp` mount copies the image's `/tmp` into the new volume (the `~/tmp` mount is
+`nocopy`): that copy is what makes it mode 1777. On the shared local daemon the orphan sweep also
+removes volumes no live instance claims.
+
+On AWS the volume lives on local disk, never on EFS:
+- **Types with local NVMe SSDs:** `sepal-scratch.service` in the worker AMI formats them at every
+  boot (RAID 0 when there are several) and mounts them over `/var/lib/docker/volumes` before Docker
+  starts, so the plain volume lands on them.
+- **Other types** get a blank 100 GiB gp3 EBS volume per session (`hostingService/aws/scratchVolumes.js`).
+  `provisionInstance` has the provider attach it as `/dev/xvdg` (idempotent across retries), and the
+  provisioner formats it as XFS with the host's `mkfs.xfs`, from a throwaway privileged container
+  of the worker image chrooted into the host (`{image}.format-tmp.{instanceId}`), then creates the
+  tmp volume on the device (`local` driver, `type=xfs`). Docker mounts it with the first container and unmounts it with the last, so
+  `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
+  Volumes are tagged `Type=WorkerScratch` from creation and marked delete-on-termination once
+  attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need
+  `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
+
 ## Stopped-instance pool (AWS)
 `STOPPED_POOL_SIZE` (default 0 = off) keeps that many stopped worker instances whose disk has already
 been read from the AMI snapshot. A stopped instance costs only its EBS storage and can be started as

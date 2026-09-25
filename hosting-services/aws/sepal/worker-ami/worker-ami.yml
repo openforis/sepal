@@ -141,6 +141,26 @@
     - name: Copy /etc/systemd/system/docker.service.d/docker.conf
       copy: src=docker/docker.conf dest=/etc/systemd/system/docker.service.d/docker.conf
 
+    # Scratch disk for the sandboxes' /tmp, formatted and mounted on every boot
+    - name: Install mdadm
+      dnf:
+        name: mdadm
+
+    - name: Copy /usr/local/bin/sepal-scratch
+      copy:
+        src: scratch/sepal-scratch.sh
+        dest: /usr/local/bin/sepal-scratch
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Copy /etc/systemd/system/sepal-scratch.service
+      copy: src=scratch/sepal-scratch.service dest=/etc/systemd/system/sepal-scratch.service
+
+    - name: Enable sepal-scratch
+      systemd:
+        name: sepal-scratch
+        enabled: yes
+        daemon_reload: yes
+
     - name: Enable docker
       systemd:
         name: docker

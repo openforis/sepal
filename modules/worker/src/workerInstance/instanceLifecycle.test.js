@@ -408,6 +408,29 @@ describe('provisionInstance', () => {
     })
 
     const noDelay = () => Promise.resolve()
+    const noScratchVolume = {attachScratchVolume: async () => null}
+
+    test('provisions on the scratch volume the provider attached', async () => {
+        const provider = {attachScratchVolume: jest.fn().mockResolvedValue('/dev/xvdg')}
+        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+        const inst = makeReservedInstance()
+
+        await provisionInstance(inst, {provider, provisioner, _delayFn: noDelay})
+
+        expect(provider.attachScratchVolume).toHaveBeenCalledWith(inst)
+        expect(provisioner.provisionInstance).toHaveBeenCalledWith(inst, {tmpDevice: '/dev/xvdg'})
+    })
+
+    test('retries a failed scratch volume attachment', async () => {
+        const provider = {attachScratchVolume: jest.fn()
+            .mockRejectedValueOnce(new Error('IncorrectState'))
+            .mockResolvedValue('/dev/xvdg')}
+        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+
+        await provisionInstance(makeReservedInstance(), {provider, provisioner, _delayFn: noDelay})
+
+        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
+    })
 
     test('success on first try: emits InstanceProvisioned', async () => {
         const provisioned = []
@@ -415,7 +438,7 @@ describe('provisionInstance', () => {
 
         const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
         const inst = makeReservedInstance()
-        await provisionInstance(inst, {provisioner, _delayFn: noDelay})
+        await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
 
         expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
         expect(provisioned.length).toBeGreaterThanOrEqual(1)
@@ -432,7 +455,7 @@ describe('provisionInstance', () => {
         const inst = makeReservedInstance({id: 'i-fail'})
 
         await expect(
-            provisionInstance(inst, {provisioner, _delayFn: noDelay})
+            provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
         ).rejects.toThrow('docker unreachable')
 
         expect(provisioner.provisionInstance).toHaveBeenCalledTimes(10)
@@ -450,7 +473,7 @@ describe('provisionInstance', () => {
                 .mockResolvedValue(undefined),
         }
         const inst = makeReservedInstance()
-        await provisionInstance(inst, {provisioner, _delayFn: noDelay})
+        await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
         expect(provisioner.provisionInstance).toHaveBeenCalledTimes(3)
     })
 
@@ -461,7 +484,7 @@ describe('provisionInstance', () => {
 
         const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
         const inst = makeReservedInstance({id: 'i-inproc'})
-        await provisionInstance(inst, {provisioner, _delayFn: noDelay})
+        await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
 
         expect(inProcPayloads).toHaveLength(1)
         expect(inProcPayloads[0]).toBe(inst)
@@ -476,7 +499,7 @@ describe('provisionInstance', () => {
             provisionInstance: jest.fn().mockRejectedValue(new Error('fail'))
         }
         const inst = makeReservedInstance({id: 'i-inproc-fail'})
-        await provisionInstance(inst, {provisioner, _delayFn: noDelay}).catch(() => {})
+        await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay}).catch(() => {})
 
         expect(inProcPayloads).toHaveLength(1)
         expect(inProcPayloads[0].i).toBe(inst)
@@ -502,6 +525,7 @@ describe('releaseInstance', () => {
             getInstance: jest.fn().mockResolvedValue(makeReservedInstance()),
             release: jest.fn().mockResolvedValue(undefined),
             terminate: jest.fn().mockResolvedValue(undefined),
+            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
         },
         provisioner: {
             undeploy: jest.fn().mockResolvedValue(undefined),
@@ -555,6 +579,24 @@ describe('releaseInstance', () => {
         await releaseInstance('i-001', deps)
 
         expect(order).toEqual(['undeploy', 'claim'])
+    })
+
+    // The scratch volume is mounted until the containers are gone, and the claim keeps a failed
+    // deletion retriable.
+    test('deletes the scratch volume after the undeploy and before dropping the claim', async () => {
+        const order = []
+        const deps = makeDeps()
+        deps.provisioner.undeploy = jest.fn(async () => { order.push('undeploy') })
+        deps.provider.deleteScratchVolume = jest.fn(async () => { order.push('scratch') })
+        deps.claims.release = jest.fn(async () => {
+            order.push('claim')
+            return true
+        })
+
+        await releaseInstance('i-001', deps)
+
+        expect(deps.provider.deleteScratchVolume).toHaveBeenCalledWith('i-001')
+        expect(order).toEqual(['undeploy', 'scratch', 'claim'])
     })
 
     test('a claim already gone still undeploys, and still releases and emits', async () => {
@@ -859,6 +901,7 @@ describe('reclaimStaleClaims', () => {
             getInstance: jest.fn().mockResolvedValue(instance),
             release: jest.fn().mockResolvedValue(undefined),
             terminate: jest.fn().mockResolvedValue(undefined),
+            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
         }
         const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
 
@@ -915,6 +958,7 @@ describe('reclaimStaleClaims', () => {
                 instance.reservation = null
             }),
             terminate: jest.fn(async () => undefined),
+            deleteScratchVolume: jest.fn(async () => undefined),
         }
         const provisioner = {undeploy: jest.fn(async () => undefined)}
 
@@ -978,6 +1022,7 @@ describe('releaseUnusedInstances', () => {
             getInstance: jest.fn(id => Promise.resolve(reservedInstances.find(i => i.id === id) ?? null)),
             release: jest.fn().mockResolvedValue(undefined),
             terminate: jest.fn().mockResolvedValue(undefined),
+            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
         },
         provisioner: {
             undeploy: jest.fn().mockResolvedValue(undefined),
@@ -1087,6 +1132,7 @@ describe('releaseUnusedInstances', () => {
             getInstance: jest.fn().mockResolvedValue(old),
             release: jest.fn().mockResolvedValue(undefined),
             terminate: jest.fn(),
+            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
         }
         const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
 

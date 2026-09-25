@@ -1,9 +1,14 @@
 import fs from 'node:fs'
 
 import {
+    AttachVolumeCommand,
     CreateTagsCommand,
+    CreateVolumeCommand,
+    DeleteVolumeCommand,
     DescribeImagesCommand,
     DescribeInstancesCommand,
+    DescribeVolumesCommand,
+    DetachVolumeCommand,
     EC2Client,
     ModifyInstanceAttributeCommand,
     RunInstancesCommand,
@@ -686,6 +691,121 @@ describe('reads are free of side effects', () => {
         const terminated = ec2Mock.commandCalls(TerminateInstancesCommand)
         expect(terminated.length).toBeGreaterThanOrEqual(1)
         expect(terminated[0].args[0].input.InstanceIds).toEqual(['i-old'])
+    })
+})
+
+describe('scratch volume', () => {
+    let ec2Mock
+
+    beforeEach(() => {
+        ec2Mock = mockClient(EC2Client)
+        ec2Mock.reset()
+    })
+
+    afterEach(() => {
+        ec2Mock.restore()
+    })
+
+    const withScratchVolume = volumeId => ({
+        BlockDeviceMappings: [
+            {DeviceName: '/dev/xvda', Ebs: {VolumeId: 'vol-root'}},
+            {DeviceName: '/dev/xvdf', Ebs: {VolumeId: 'vol-docker'}},
+            {DeviceName: '/dev/xvdg', Ebs: {VolumeId: volumeId}},
+        ],
+    })
+    const instance = {id: 'i-0123456789abcdef0', type: 'M6aXlarge'}
+    const commands = () => ec2Mock.calls().map(call => call.args[0])
+    const indexOf = type => commands().findIndex(command => command instanceof type)
+
+    test('attaches a new volume to an instance without local SSD and resolves its device', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance()]))
+        ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+        ec2Mock.on(DescribeVolumesCommand)
+            .resolvesOnce({Volumes: [{VolumeId: 'vol-new', State: 'available'}]})
+            .resolves({Volumes: [{VolumeId: 'vol-new', State: 'in-use'}]})
+        ec2Mock.on(AttachVolumeCommand).resolves({})
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+
+        const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume(instance)
+
+        expect(device).toBe('/dev/xvdg')
+        const [create] = ec2Mock.commandCalls(CreateVolumeCommand)
+        expect(create.args[0].input).toMatchObject({
+            AvailabilityZone: 'eu-central-1a',
+            Size: 100,
+            VolumeType: 'gp3',
+            TagSpecifications: [{ResourceType: 'volume', Tags: [
+                {Key: 'Type', Value: 'WorkerScratch'},
+                {Key: 'Environment', Value: 'test-env'},
+            ]}],
+        })
+        const [attach] = ec2Mock.commandCalls(AttachVolumeCommand)
+        expect(attach.args[0].input).toEqual({InstanceId: instance.id, VolumeId: 'vol-new', Device: '/dev/xvdg'})
+        const [modify] = ec2Mock.commandCalls(ModifyInstanceAttributeCommand)
+        expect(modify.args[0].input).toEqual({
+            InstanceId: instance.id,
+            BlockDeviceMappings: [{DeviceName: '/dev/xvdg', Ebs: {DeleteOnTermination: true}}],
+        })
+        expect(indexOf(AttachVolumeCommand)).toBeLessThan(indexOf(ModifyInstanceAttributeCommand))
+    })
+
+    test('resolves no device for an instance type with local SSD', async () => {
+        const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume({...instance, type: 'M6idXlarge'})
+
+        expect(device).toBeNull()
+        expect(ec2Mock.calls()).toHaveLength(0)
+    })
+
+    // A provisioning retry: the previous attempt attached the volume and failed later.
+    test('reuses a volume already attached', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance(withScratchVolume('vol-1'))]))
+
+        const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume(instance)
+
+        expect(device).toBe('/dev/xvdg')
+        expect(ec2Mock.commandCalls(CreateVolumeCommand)).toHaveLength(0)
+    })
+
+    test('deleteScratchVolume detaches the volume, then deletes it', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance(withScratchVolume('vol-1'))]))
+        ec2Mock.on(DetachVolumeCommand).resolves({})
+        ec2Mock.on(DescribeVolumesCommand).resolves({Volumes: [{VolumeId: 'vol-1', State: 'available'}]})
+        ec2Mock.on(DeleteVolumeCommand).resolves({})
+
+        await createAwsInstanceProvider(CONFIG).deleteScratchVolume(instance.id)
+
+        const [detach] = ec2Mock.commandCalls(DetachVolumeCommand)
+        expect(detach.args[0].input).toEqual({InstanceId: instance.id, VolumeId: 'vol-1'})
+        expect(ec2Mock.commandCalls(DeleteVolumeCommand).map(c => c.args[0].input)).toEqual([{VolumeId: 'vol-1'}])
+        expect(indexOf(DetachVolumeCommand)).toBeLessThan(indexOf(DeleteVolumeCommand))
+    })
+
+    test('deleteScratchVolume does nothing without a volume', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance()]))
+
+        await createAwsInstanceProvider(CONFIG).deleteScratchVolume(instance.id)
+
+        expect(ec2Mock.commandCalls(DetachVolumeCommand)).toHaveLength(0)
+    })
+
+    test('sweep deletes detached scratch volumes older than ten minutes', async () => {
+        const minutesAgo = m => new Date(Date.now() - m * 60_000).toISOString()
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+        ec2Mock.on(DescribeVolumesCommand).resolves({Volumes: [
+            {VolumeId: 'vol-orphan', State: 'available', CreateTime: minutesAgo(60)},
+            {VolumeId: 'vol-attaching', State: 'available', CreateTime: minutesAgo(2)},
+        ]})
+        ec2Mock.on(DeleteVolumeCommand).resolves({})
+
+        await createAwsInstanceProvider(CONFIG).sweep()
+
+        const [describe] = ec2Mock.commandCalls(DescribeVolumesCommand)
+        expect(describe.args[0].input.Filters).toEqual([
+            {Name: 'tag:Type', Values: ['WorkerScratch']},
+            {Name: 'tag:Environment', Values: ['test-env']},
+            {Name: 'status', Values: ['available']},
+        ])
+        expect(ec2Mock.commandCalls(DeleteVolumeCommand).map(c => c.args[0].input)).toEqual([{VolumeId: 'vol-orphan'}])
     })
 })
 

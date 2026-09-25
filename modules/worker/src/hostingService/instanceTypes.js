@@ -13,8 +13,8 @@
 //   performance — CPU throughput relative to t1 (t3a.small = 1): the type's PassMark CPU Mark as
 //                 measured by Spare Cores (sparecores.com) over t3a.small's. t3a.small's figure is
 //                 at full burst; its sustained baseline is 20% of each vCPU.
-//   ssdGB       — total local NVMe instance-store capacity in GB (default 0). The worker AMI does
-//                 not mount it yet, so no sandbox can use it.
+//   ssdGB       — total local NVMe instance-store capacity in GB (default 0). The worker AMI mounts
+//                 it as the sessions' /tmp; see worker-ami/scratch.
 //
 // Derived:
 //   description — "$cpuCount CPU, $ramGiB GB" ("$gpuCount GPU" after the CPU count when gpuCount > 0)

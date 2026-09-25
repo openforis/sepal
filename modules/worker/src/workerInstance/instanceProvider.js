@@ -18,6 +18,12 @@
 //     ready: true → only the stopped ones a request can start.
 //     The LOCAL provider has no pool: always [], and the pool writes above reject.
 //   terminate(instanceId)                     → Promise<void>
+//   attachScratchVolume(instance)             → Promise<string | null>
+//     Attaches a blank disk for the session's /tmp to the running instance and resolves its
+//     device, or null when the instance has no need for one (local SSDs, local hosting).
+//     Idempotent: a provisioning retry reuses the disk already attached.
+//   deleteScratchVolume(instanceId)           → Promise<void>
+//     Detaches and deletes that disk; its containers must be gone. No-op without one.
 //   reserve(instance)                         → Promise<void>
 //     The instance already carries the reservation; this persists it.
 //   release(instanceId)                       → Promise<void>

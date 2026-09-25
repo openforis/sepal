@@ -1,6 +1,5 @@
 // WorkerTypes — container specs for the SANDBOX and TASK_EXECUTOR worker types.
 //
-// tempDir() has an fs side effect: mkdir /data/home/{username}/tmp/{instanceId} + chmod 1777.
 // containerName(instance) comes from ../containerName.js, which needs both the session id the
 // two-word name derives from (carried on the reservation) and the instance id.
 
@@ -16,17 +15,16 @@ const SANDBOX = 'sandbox'
 const TASK_EXECUTOR = 'task-executor'
 const USER_HOME_NAME = 'sepal-user'
 
-// tempDir — filesystem side effect at provision time: mkdir + chmod 1777 of
-// /data/home/{username}/tmp/{instanceId}. localTmp is ALWAYS under /data/home; the returned
-// mount path uses sepalHostDataDir (the host path visible to Docker).
-const tempDir = (instance, config) => {
-    const username = instance.reservation.username
-    const localTmp = `/data/home/${username}/tmp/${instance.id}`
-    log.debug(`Creating tempDir: ${localTmp}`)
-    fs.mkdirSync(localTmp, {recursive: true})
-    fs.chmodSync(localTmp, 0o1777)
-    return `${config.sepalHostDataDir}/sepal/home/${username}/tmp/${instance.id}`
-}
+const TMP_VOLUME_PREFIX = 'sepal-tmp.'
+
+// The instance's /tmp is a Docker volume, removed with the instance's containers. The provisioner
+// creates it on the session's scratch device when there is one; otherwise the first container to
+// mount it creates it under Docker's volume directory, which the worker AMI puts on local SSDs.
+const tmpVolumeName = instanceId => `${TMP_VOLUME_PREFIX}${instanceId}`
+
+// Only the /tmp mount copies the image's /tmp into the new, empty volume, which is what gives the
+// volume its mode 1777; a copy from ~/tmp would impose that directory's ownership instead.
+const tmpMounts = ['/tmp', `/home/${USER_HOME_NAME}/tmp:nocopy`]
 
 // WORKER_IMAGE_NAMES — every image name a worker instance can run; the provisioner uses
 // these to recognize SEPAL worker containers among everything else on a (shared) daemon.
@@ -53,8 +51,6 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
 const createSandboxWorkerType = (instance, config, apiKey) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
-    const userTmp = tempDir(instance, config)
-
     const pubKeyPath = `/var/lib/sepal/user/home/${username}/.ssh/id_rsa.pub`
     // No .trim(): the raw file contents, trailing newline included.
     const userPublicKey = fs.readFileSync(pubKeyPath, 'utf8')
@@ -77,7 +73,7 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
                     [`${config.sepalHostDataDir}/sepal/shared`]: `/home/${USER_HOME_NAME}/shared`,
                     [`${config.sepalHostDataDir}/sepal/jupyter/current-kernels`]: '/usr/local/share/jupyter/kernels/',
                     [userHome]: `/home/${USER_HOME_NAME}`,
-                    [userTmp]: ['/tmp', `/home/${USER_HOME_NAME}/tmp`],
+                    [tmpVolumeName(instance.id)]: tmpMounts,
                 },
                 environment: {
                     USER_PUBLIC_KEY: userPublicKey,
@@ -97,15 +93,13 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
 const createTaskExecutorWorkerType = (instance, config, apiKey) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
-    const userTmp = tempDir(instance, config)
-
     const eePrivateKey = (config.googleEarthEnginePrivateKey ?? '').replaceAll('\n', '-----LINE BREAK-----')
 
     const sepalEndpoint = `https://${config.sepalHost}:${config.sepalHttpsPort ?? 443}`
 
     const volumes = {
         [userHome]: `/home/${USER_HOME_NAME}`,
-        [userTmp]: ['/tmp', `/home/${USER_HOME_NAME}/tmp`],
+        [tmpVolumeName(instance.id)]: tmpMounts,
     }
 
     // DEV mode: hot-reload mounts for task + shared lib.
@@ -159,4 +153,4 @@ const createWorkerType = (workerTypeId, instance, config, apiKey = null) => {
     throw new Error(`No worker type with id: ${workerTypeId}`)
 }
 
-export {createWorkerType, SANDBOX, TASK_EXECUTOR, tempDir, USER_HOME_NAME, WORKER_IMAGE_NAMES}
+export {createWorkerType, SANDBOX, TASK_EXECUTOR, TMP_VOLUME_PREFIX, tmpVolumeName, USER_HOME_NAME, WORKER_IMAGE_NAMES}

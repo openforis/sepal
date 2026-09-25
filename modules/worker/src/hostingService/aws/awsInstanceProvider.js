@@ -18,6 +18,7 @@ import {instanceName} from '../../instanceName.js'
 import {instanceTag} from '../../tag.js'
 import {createWorkerInstance} from '../../workerInstance/workerInstance.js'
 import {INSTANCE_TYPES} from '../instanceTypes.js'
+import {ScratchVolumes} from './scratchVolumes.js'
 
 const log = getLogger('worker/aws')
 
@@ -225,6 +226,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         },
     })
 
+    const scratchVolumes = new ScratchVolumes({client, environment, availabilityZone, instanceTypes})
+
     let imageId = null
 
     const launchListeners = []
@@ -370,6 +373,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         await terminateOldIdle(collectInstances(response))
         await terminateUntagged()
         await terminatePoolStrays()
+        await scratchVolumes.deleteOrphans()
     }
 
     // Only the pool keeps workers stopped. Terminates, best-effort like the other cleanups:
@@ -591,6 +595,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         pool,
         startPooled,
         terminate,
+        attachScratchVolume: instance => scratchVolumes.attach(instance),
+        deleteScratchVolume: instanceId => scratchVolumes.remove(instanceId),
         reserve: reserveInstance,
         release: releaseInstance,
         idleInstances,

@@ -1,6 +1,6 @@
 // ReleaseInstance:
 //   1. provider.getInstance(instanceId) — if null, drop any orphaned claim and return.
-//   2. instance.host set → provisioner.undeploy(instance).
+//   2. instance.host set → provisioner.undeploy(instance), then provider.deleteScratchVolume.
 //   3. claims.release(instanceId) — cleanup, not an election: the claim outlives the container,
 //      never the other way round.
 //   4. provider.release(instanceId) → forget any in-flight provisioning → emit
@@ -42,6 +42,7 @@ const releaseInstance = async (instanceId, {claims, provider, provisioner, provi
         // so the retry, and a concurrent releaser doing the same thing, find nothing to do.
         if (instance.host) {
             await provisioner.undeploy(instance)
+            await provider.deleteScratchVolume(instanceId)
         }
         await claims.release(instanceId)
 

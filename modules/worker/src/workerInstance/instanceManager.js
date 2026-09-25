@@ -121,7 +121,7 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
     // Resolves false when a provision for that instance was already in flight.
     const _reprovisionInstance = session =>
         provisioning.run(session.instance.id, session.id, () =>
-            provisionInstance(instanceFromSession(session), {provisioner}))
+            provisionInstance(instanceFromSession(session), {provider, provisioner}))
 
     return {
         requestInstance: _requestInstance,
