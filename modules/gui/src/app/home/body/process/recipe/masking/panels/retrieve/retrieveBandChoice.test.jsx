@@ -505,6 +505,26 @@ describe('the view a panel opens with', () => {
     })
 })
 
+// Masking preserves a declared source's description, and with it each band's declared policy.
+describe.each([
+    ['a regression', () => REGRESSION, 'regression', 'mean'],
+    ['an unsupervised classification', () => CLUSTERS, 'class', 'mode']
+])('retrieving from Masking over %s', (_source, source, band, policy) => {
+    it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
+        const masked = maskingOver(source())
+
+        await open({recipes: [masked, source()], id: masked.id})
+        await click(band)
+        await click('process.retrieve.form.destination.GEE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: [band]})
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({[band]: policy})
+        expect(geeReads).toEqual([])
+    })
+})
+
 // A source that declares no output is described by what the evidence lifecycle observed of it. Masking has no policy
 // of its own, so its fallback reaches only the bands that evidence currently vouches for as scalar.
 describe('retrieving from Masking over a recipe that declares no output', () => {
@@ -686,6 +706,37 @@ const MASKED_REMAPPING = {
     },
     ui: {}
 }
+
+const COVARIATES = {imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}
+
+const REGRESSION = {
+    id: 'regression-1',
+    type: 'REGRESSION',
+    model: {
+        inputImagery: {images: [COVARIATES]},
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: []}]}
+    }
+}
+
+const CLUSTERS = {
+    id: 'clusters-1',
+    type: 'UNSUPERVISED_CLASSIFICATION',
+    model: {
+        inputImagery: {images: [COVARIATES]},
+        clusterer: {type: 'KMEANS', numberOfClusters: 5}
+    }
+}
+
+const maskingOver = source => ({
+    id: `masked-${source.id}`,
+    type: 'MASKING',
+    title: 'Masked',
+    model: {
+        imageToMask: {type: 'RECIPE_REF', id: source.id},
+        imageMask: {type: 'RECIPE_REF', id: source.id}
+    },
+    ui: {}
+})
 
 let root
 let store

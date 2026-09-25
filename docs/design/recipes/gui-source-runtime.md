@@ -898,10 +898,15 @@ presentation concern.
 - **Masking** inherits its source's answer, and so its status:
   - over an Optical Mosaic the session holds, it is `READY` at once;
   - over an asset, it needs evidence;
-  - over Regression, it is answered by Masking's own legacy helper, and never from evidence that failed.
+  - over a Regression or Unsupervised Classification the session holds, it is `READY` at once, with the policy each
+    declares;
+  - over a type that declares no output, such as Remapping, it is answered by Masking's own legacy helper, and never
+    from evidence that failed.
 - **Classification** will resolve synchronously once it declares a provider: its training recipe is an edge the
   description never reads.
-- **Regression** has no provider and is answered by the seam, with the names and hints its helper returns today,
+- **Regression** and **Unsupervised Classification** resolve synchronously from their declarations, reading none of
+  their sources; only whether those dependencies are sound still needs the closure completed.
+- **Remapping** has no provider and is answered by the seam, with the names and hints its helper returns today,
   until it declares one.
 
 ## Alternatives not selected

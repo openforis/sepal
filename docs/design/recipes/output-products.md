@@ -838,8 +838,8 @@ repeat the transformation's accepted input contract or source requirements.
 
 Providers answer from configuration, from an observation of their running image, from the catalogue their producer
 declares, or from their sources' descriptions.
-Regression, Phenology, Classification and several alert products could describe their ordered names and scalar shape
-from configuration, but have no provider yet. No provider combines declared constraints with an observation that
+Regression and Unsupervised Classification describe their fixed band from configuration. Phenology, Classification and
+several alert products could describe their ordered names and scalar shape the same way, but have no provider yet. No provider combines declared constraints with an observation that
 supplies exact bands. The eventual contract must support all three outcomes:
 
 1. an exact description from configuration requiring no observation;
@@ -884,12 +884,12 @@ matches execution. The execution comparison is a research gate below.
 | Planet Mosaic | selected composite | internal Planet collection | fixed GUI vocabulary | scalar |
 | PyEO Alerts | alert result | internal classified monitoring collection | fixed vocabulary | scalar |
 | Radar Mosaic | point-in-time or time-scan composite | internal radar collection | date-dependent fixed families | scalar |
-| Regression | regression image | none identified | fixed vocabulary | scalar |
+| Regression | regression image | none identified | shared declaration | scalar |
 | Remapping | remapped class image | categorical semantics | fixed band plus legend | scalar |
 | Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
 | Stack | selected and renamed input bands | mapped source presets | copied input snapshots and output mapping | inherited composition; may be mixed |
 | Time Series | no generic image export established | scalar count map product and chart series | fixed count plus collection helpers | count scalar |
-| Unsupervised Classification | cluster class image | cluster value semantics | fixed band with model-derived range | scalar |
+| Unsupervised Classification | cluster class image | cluster value semantics | shared declaration; model-derived range as presentation | scalar |
 
 ## Detailed findings
 

@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {UnsupervisedClassificationToolbar} from './panels/unsupervisedClassificationToolbar'
 import {getDefaultModel} from './unsupervisedClassificationRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -60,6 +60,6 @@ export default () => ({
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

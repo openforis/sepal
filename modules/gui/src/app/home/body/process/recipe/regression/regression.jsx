@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {RegressionToolbar} from './panels/regressionToolbar'
 import {getDefaultModel} from './regressionRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -60,6 +60,6 @@ export default () => ({
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })
