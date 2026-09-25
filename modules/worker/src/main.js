@@ -26,7 +26,7 @@ import {instanceFromSession} from './workerInstance/instanceFromSession.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
-import {emitWorkerSessionClosed, workerSessionEvents} from './workerSession/events.js'
+import {emitWorkerSessionClosed} from './workerSession/events.js'
 import {createExpiryMetrics} from './workerSession/expiryMetrics.js'
 import {createExpiryTokens} from './workerSession/expiryToken.js'
 import {createGoogleOAuthGateway} from './workerSession/googleOAuthGateway.js'
@@ -210,7 +210,6 @@ const main = async () => {
         control: createDockerSandboxServerControl({
             config, defaultDaemonHost: hostingService.defaultDaemonHost}),
     })
-    workerSessionEvents.on('WorkerSessionClosed', ({sessionId}) => sandboxServers.forget(sessionId))
 
     const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens})
     const tasksApi = createTasksApi({taskManager})

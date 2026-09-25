@@ -79,6 +79,7 @@ const securityHeaders = sepalHost => ({
 const createSandboxProxy = ({
     resolveTarget,
     ensureServerStarted,
+    forgetServerStarted,
     sepalHost,
     proxyTimeout = DEFAULT_PROXY_TIMEOUT,
     timeout = DEFAULT_TIMEOUT,
@@ -89,6 +90,9 @@ const createSandboxProxy = ({
     }
     if (typeof ensureServerStarted !== 'function') {
         throw new Error('sandboxProxy: ensureServerStarted function is required')
+    }
+    if (typeof forgetServerStarted !== 'function') {
+        throw new Error('sandboxProxy: forgetServerStarted function is required')
     }
 
     // selfHandleResponse:false streams the response through untouched; headers are mutated in the
@@ -138,6 +142,12 @@ const createSandboxProxy = ({
 
     proxy.on('error', (error, req, res) => {
         log.error(`Sandbox proxy error for "${req && req.url}":`, error)
+        // Nothing listening: the server is down for good (supervisord FATAL) or restarting. Either
+        // way the next request must re-ensure it rather than trust the memoized start.
+        const {endpoint, target} = req?._sandbox || {}
+        if (error?.code === 'ECONNREFUSED' && endpoint && target?.sessionId) {
+            forgetServerStarted({sessionId: target.sessionId, endpoint})
+        }
         // res is a ServerResponse for web, a Socket for ws.
         if (res && res.writeHead && !res.headersSent) {
             res.writeHead(502, 'Bad Gateway', {'Content-Type': 'text/plain'})

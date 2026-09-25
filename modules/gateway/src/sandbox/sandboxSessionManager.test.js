@@ -853,6 +853,15 @@ describe('ensureServerStarted', () => {
         expect(fetch.keys.filter(key => key === 'POST /sessions/session/s-1/server/shiny')).toHaveLength(2)
     })
 
+    it('starts a forgotten server again', async () => {
+        const fetch = fetchStub({[startKey]: null})
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        manager.forgetServerStarted({sessionId: 's-1', endpoint: 'jupyter'})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        expect(fetch.keys.filter(key => key === startKey)).toHaveLength(2)
+    })
+
     it('is a no-op without a sessionId, and for an unknown endpoint', async () => {
         const fetch = fetchStub({})
         const manager = createManager({fetch})

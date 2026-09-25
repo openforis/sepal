@@ -37,10 +37,11 @@ budget tracking, and gateway route migration.
     servers (`rstudio` | `shiny` | `jupyter`) on the session's instance, 204 once its port is
     listening. The sandbox image starts only `sshd` at boot (`autostart=false` on the other three),
     so the provision wait command covers port 22 alone and the terminal no longer waits for
-    Jupyter. `sandboxServerManager` memoizes started `(sessionId, endpoint)` pairs IN MEMORY and
-    shares one in-flight start between concurrent callers; nothing is persisted because nothing
-    needs to survive a restart — `/script/sandbox-server.sh` exits 0 immediately for a server that
-    is already listening. **Servers are never stopped**; they live until the container does.
+    Jupyter. `sandboxServerManager` shares one in-flight start between concurrent callers but
+    remembers nothing: every call execs `/script/sandbox-server.sh`, which exits 0 immediately
+    for a server that is already listening. The gateway memoizes started pairs and forgets one
+    when its proxy gets a refused connection, so the next call revives a server supervisord gave
+    up on (FATAL). **Servers are never stopped**; they live until the container does.
   - The session ws protocol (`/session/ws`) handles `clientDown` by dissociating every
     association owned by that client (its tabs died with it), one event per app.
   - `POST /sessions/session/:sessionId/extend` — the Usage-panel keepAlive slider, body/query

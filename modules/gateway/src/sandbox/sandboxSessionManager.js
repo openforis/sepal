@@ -57,9 +57,11 @@ const createSandboxSessionManager = ({
     const createLockByKey = new Map()
 
     // Servers this gateway has already had started, keyed 'sessionId:endpoint'. Sandbox servers
-    // are started on first use and never stopped, so a hit is permanent for the life of the
+    // are started on first use and never stopped, so a hit normally lasts for the life of the
     // session — which is what keeps the proxy's per-request path free of a worker round-trip.
-    // A gateway restart costs one idempotent re-ensure per pair.
+    // A gateway restart costs one idempotent re-ensure per pair. A refused proxy connection drops
+    // the hit (forgetServerStarted): supervisord gives up on a server that keeps dying at startup,
+    // and only a fresh ensure starts it again.
     const startedServers = new Set()
     const startingServers = new Map()
 
@@ -308,6 +310,10 @@ const createSandboxSessionManager = ({
             .finally(() => startingServers.delete(key))
         startingServers.set(key, starting)
         return await starting
+    }
+
+    const forgetServerStarted = ({sessionId, endpoint}) => {
+        startedServers.delete(`${sessionId}:${endpoint}`)
     }
 
     // startApp — per app: a live association wins; else join a chosen session or create a new one.
@@ -635,6 +641,7 @@ const createSandboxSessionManager = ({
         status,
         resolveTarget,
         ensureServerStarted,
+        forgetServerStarted,
         recordInteraction,
         onSessionClosed,
         onAppDissociated,
