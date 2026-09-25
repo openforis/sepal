@@ -1,7 +1,6 @@
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {uuid} from '~/uuid'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -82,12 +81,4 @@ export const RecipeActions = id => {
     }
 }
 
-export const hasError = recipe => {
-    const fromImage = recipe.model.fromImage
-    const toImage = recipe.model.toImage
-    return fromImage && fromImage.errorBand && toImage && toImage.errorBand
-}
-
-export const retrieveTask = {
-    pyramidingPolicy: pyramidingPolicies.changeBased('change')
-}
+export const retrieveTask = {}

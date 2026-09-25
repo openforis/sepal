@@ -508,7 +508,9 @@ describe('the view a panel opens with', () => {
 // Masking preserves a declared source's description, and with it each band's declared policy.
 describe.each([
     ['a regression', () => REGRESSION, 'regression', 'mean'],
-    ['an unsupervised classification', () => CLUSTERS, 'class', 'mode']
+    ['an unsupervised classification', () => CLUSTERS, 'class', 'mode'],
+    ['an index change', () => INDEX_CHANGE, 'change', 'mode'],
+    ['a class change', () => CLASS_CHANGE, 'confidence', 'mean']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -724,6 +726,31 @@ const CLUSTERS = {
     model: {
         inputImagery: {images: [COVARIATES]},
         clusterer: {type: 'KMEANS', numberOfClusters: 5}
+    }
+}
+
+const INDEX_CHANGE = {
+    id: 'index-change-1',
+    type: 'INDEX_CHANGE',
+    model: {
+        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
+        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'ndvi'},
+        toImage: {type: 'ASSET', id: 'users/x/after', band: 'ndvi'},
+        legend: {entries: [{value: 1, booleanOperator: 'and', constraints: [{image: 'this-recipe', band: 'difference', operator: '>', value: 0}]}]},
+        options: {minConfidence: 2.5}
+    }
+}
+
+const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
+
+const CLASS_CHANGE = {
+    id: 'class-change-1',
+    type: 'CLASS_CHANGE',
+    model: {
+        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
+        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        toImage: {type: 'ASSET', id: 'users/x/after', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        options: {minConfidence: 0}
     }
 }
 

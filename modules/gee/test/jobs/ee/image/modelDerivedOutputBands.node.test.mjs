@@ -3,12 +3,17 @@ import {describe, it, mock} from 'node:test'
 
 import {firstValueFrom, of, throwError} from 'rxjs'
 
-// The bands Regression and Unsupervised Classification build, through the REAL imageFactory, asset, covariate,
-// training and clustering code, against their shared declarations. Only Earth Engine is substituted: an image is its
+// The bands Regression, Unsupervised Classification, Index Change and Class Change build, through the REAL imageFactory, asset, covariate,
+// training, clustering and change code, against their shared declarations. Only Earth Engine is substituted: an image is its
 // bands' names and dimensionality, and an image operation not modelled here fails. Objects without bands answer
 // anything. Launched from a Jest bridge (test/support/nodeWitness.js).
 
-const ASSETS = {'users/x/covariates': ['red', 'nir', 'swir1']}
+const ASSETS = {
+    'users/x/covariates': ['red', 'nir', 'swir1'],
+    'users/x/ndvi': ['ndvi', 'ndvi_error'],
+    'users/x/classes-before': ['class', 'probability_1', 'probability_2'],
+    'users/x/classes-after': ['landcover', 'probability_1', 'probability_2']
+}
 
 const scalar = name => ({name, arrayDimensions: 0})
 
@@ -38,7 +43,12 @@ const eeImage = bands => new Proxy({bands}, {
 const named = (bands, names) => bands.filter(({name}) => names.includes(name))
 
 // Earth Engine's own naming: classify() yields one scalar `classification` band, cluster() one scalar band under the
-// name it is given, remap() one named `remapped`, and reduce() one band per reducer output.
+// name it is given, remap() one named `remapped`, reduce() one band per reducer output, and a constant or an
+// expression one named `constant`. Arithmetic and comparisons keep their left operand's bands. toArray() makes one
+// array band of them all; arrayGet() and arrayLength() leave scalars.
+const keep = bands => eeImage(bands)
+const toScalars = bands => eeImage(bands.map(band => ({...band, arrayDimensions: 0})))
+
 const IMAGE_OPERATIONS = {
     select: (bands, selection) => eeImage(typeof selection === 'number' ? [bands[selection]] : named(bands, [selection].flat())),
     selectExisting: (bands, names) => eeImage(named(bands, names)),
@@ -52,6 +62,26 @@ const IMAGE_OPERATIONS = {
     cluster: (_bands, _clusterer, outputName = 'cluster') => eeImage([scalar(outputName)]),
     reduce: () => eeImage([scalar('max')]),
     remap: () => eeImage([scalar('remapped')]),
+    expression: () => eeImage([scalar('constant')]),
+    subtract: keep,
+    divide: keep,
+    abs: keep,
+    where: keep,
+    lt: keep,
+    lte: keep,
+    gt: keep,
+    gte: keep,
+    eq: keep,
+    and: keep,
+    int8: keep,
+    int16: keep,
+    multiply: keep,
+    add: keep,
+    toArray: () => eeImage([{name: 'array', arrayDimensions: 1}]),
+    arrayPad: keep,
+    arrayMask: keep,
+    arrayLength: toScalars,
+    arrayGet: toScalars,
     float: bands => eeImage(bands),
     mask: bands => eeImage(bands),
     updateMask: bands => eeImage(bands),
@@ -63,11 +93,43 @@ const IMAGE_OPERATIONS = {
     stratifiedSample: () => opaque()
 }
 
+const imageOf = value => {
+    if (typeof value === 'string') {
+        return eeImage(ASSETS[value].map(scalar))
+    }
+    if (Array.isArray(value)) {
+        return eeImage(value.flatMap(image => image.bands))
+    }
+    if (value === EE_ARRAY) {
+        return eeImage([{name: 'constant', arrayDimensions: 1}])
+    }
+    return value === undefined || typeof value === 'number' ? eeImage([scalar('constant')]) : value
+}
+
+const EE_ARRAY = {}
+
+// A collection is its images; reducing, averaging or mosaicking it keeps the first one's bands, as Earth Engine names
+// them when every image shares one schema. One built on the server is of images unknown here.
+const collectionOf = images => ({
+    images,
+    reduce: () => images[0],
+    mean: () => images[0],
+    toBands: () => eeImage(Array.isArray(images) ? images.flatMap(image => image.bands) : [])
+})
+
 const ee = new Proxy({
     getAsset$: id => ASSETS[id] ? of({type: 'Image'}) : throwError(() => new Error(`No asset ${id}`)),
-    Image: value => typeof value === 'string'
-        ? eeImage(ASSETS[value].map(scalar))
-        : Array.isArray(value) ? eeImage(value.flatMap(image => image.bands)) : value
+    Image: imageOf,
+    ImageCollection: collectionOf,
+    mosaic: ({images}) => eeImage(images[0].bands),
+    Array: () => EE_ARRAY,
+    // Only one branch is evaluated, on the server, from what the images hold: both must build the same bands.
+    Algorithms: {
+        If: (_condition, whenTrue, whenFalse) => {
+            assert.deepEqual(whenFalse.bands, whenTrue.bands, 'both branches build the same bands')
+            return whenTrue
+        }
+    }
 }, {
     get: (target, key) => target[key] || opaque()
 })
@@ -116,9 +178,47 @@ const UNSUPERVISED_CLASSIFICATION = {
     }
 }
 
+const NDVI = {type: 'ASSET', id: 'users/x/ndvi', band: 'ndvi'}
+
+const rule = (value, operator) => ({
+    value,
+    booleanOperator: 'and',
+    constraints: [{image: 'this-recipe', band: 'difference', operator, value: 0}]
+})
+
+const indexChange = ({errorBand, entries = [rule(1, '<'), rule(2, '='), rule(3, '>')]} = {}) => ({
+    id: 'index-change-1',
+    type: 'INDEX_CHANGE',
+    model: {
+        fromImage: {...NDVI, ...(errorBand && {errorBand})},
+        toImage: {...NDVI, ...(errorBand && {errorBand})},
+        legend: {entries},
+        options: {minConfidence: 2.5}
+    }
+})
+
+const LEGEND_ENTRIES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
+
+const CLASS_CHANGE = {
+    id: 'class-change-1',
+    type: 'CLASS_CHANGE',
+    model: {
+        fromImage: {type: 'ASSET', id: 'users/x/classes-before', band: 'class', legendEntries: LEGEND_ENTRIES},
+        toImage: {type: 'ASSET', id: 'users/x/classes-after', band: 'landcover', legendEntries: LEGEND_ENTRIES},
+        options: {minConfidence: 0}
+    }
+}
+
 const declared = recipe => recipeType(recipe.type).imageOutput.describe({recipe}).bands
 
-for (const [type, recipe] of [['Regression', REGRESSION], ['Unsupervised Classification', UNSUPERVISED_CLASSIFICATION]]) {
+for (const [type, recipe] of [
+    ['Regression', REGRESSION],
+    ['Unsupervised Classification', UNSUPERVISED_CLASSIFICATION],
+    ['Index Change with a legend', indexChange()],
+    ['Index Change with error bands', indexChange({errorBand: 'ndvi_error'})],
+    ['Index Change without a legend', indexChange({entries: []})],
+    ['Class Change', CLASS_CHANGE]
+]) {
     describe(type, () => {
         inOperation('builds exactly the bands it declares, with the dimensionality it declares', async () => {
             const built = await firstValueFrom(imageFactory(recipe).getImage$())

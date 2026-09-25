@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Regression and Unsupervised Classification through their real registrations, shared declarations, the common read
-// and the generic Retrieve submission. Only the task API and notifications are replaced.
+// Regression, Unsupervised Classification, Index Change and Class Change through their real registrations, shared declarations, the
+// common read and the generic Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -25,14 +25,20 @@ vi.mock('~/apiRegistry', () => ({
 const {addRecipeType} = await import('../recipeTypeRegistry')
 const {default: regression} = await import('./regression/regression')
 const {default: unsupervisedClassification} = await import('./unsupervisedClassification/unsupervisedClassification')
+const {default: indexChange} = await import('./indexChange/indexChange')
+const {default: classChange} = await import('./classChange/classChange')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
+const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
+const {retrieveTask: classChangeTask} = await import('./classChange/classChangeRecipe')
 const {canPreview, displayTypes} = await import('./recipeOutput')
-const {physicalRequest, readRetrieveOutput, submitRetrieve} = await import('./retrieveOutput')
+const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
+addRecipeType(indexChange())
+addRecipeType(classChange())
 
 beforeEach(() => {
     submitted.length = 0
@@ -88,9 +94,104 @@ describe('an unsupervised classification', () => {
     })
 })
 
+describe('an index change', () => {
+    // In the order execution builds them: the continuous comparisons, the error and confidence derived from both
+    // images' error bands, then the legend's classification of the difference.
+    it.each([
+        ['a legend and no error bands', {}, ['difference', 'normalized_difference', 'ratio', 'change']],
+        ['error bands on both images', {errorBands: true}, ['difference', 'normalized_difference', 'ratio', 'error', 'confidence', 'change']],
+        ['an error band on one image only', {errorBands: 'from'}, ['difference', 'normalized_difference', 'ratio', 'change']],
+        ['an empty legend', {entries: []}, ['difference', 'normalized_difference', 'ratio']]
+    ])('with %s is described with the bands execution builds, reading neither image', (_case, configuration, names) => {
+        const {output} = read(indexChangeOf({images: RECIPE_IMAGES, ...configuration}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(names)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with the legend\'s range on its change band, and the preset styles of the bands it has', () => {
+        const recipe = indexChangeOf({errorBands: true})
+        const {output} = read(recipe)
+
+        expect(displayTypes(output).change).toEqual({precision: 'int', min: 1, max: 3})
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['difference', 'normalized_difference', 'ratio', 'change', 'error', 'confidence'])
+    })
+
+    it('offers no change style without a legend', () => {
+        const recipe = indexChangeOf({entries: []})
+
+        expect(recipeVisualizations(recipe, read(recipe).output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['difference', 'normalized_difference', 'ratio'])
+    })
+
+    it('exports the bands selected, in the order selected, keeping the most common change class', () => {
+        retrieve(read(indexChangeOf()), 'GEE', indexChangeTask, {bands: ['change', 'difference']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
+            .toEqual([[{selection: ['change', 'difference']}, {change: 'mode', difference: 'mean'}]])
+    })
+
+    // No Index Change panel asks for all bands; a request that does takes them in the order execution builds.
+    it('exports all its bands in the order execution builds them', () => {
+        retrieve(read(indexChangeOf({errorBands: true})), 'GEE', indexChangeTask)
+
+        expect(submitted[0].params.image.bands.selection)
+            .toEqual(['difference', 'normalized_difference', 'ratio', 'error', 'confidence', 'change'])
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({
+            difference: 'mean', normalized_difference: 'mean', ratio: 'mean', error: 'mean', confidence: 'mean', change: 'mode'
+        })
+    })
+
+    it('names a saved band its configuration no longer provides, and exports nothing', () => {
+        const answer = read(indexChangeOf())
+        const bands = ['difference', 'error']
+
+        retrieve(answer, 'GEE', indexChangeTask, {bands})
+
+        expect(retrieveDecision({...answer, names: bands, destination: 'GEE', task: indexChangeTask}))
+            .toMatchObject({status: 'BLOCKED', reason: 'MISSING_SELECTION', missingBandNames: ['error']})
+        expect(submitted).toEqual([])
+    })
+})
+
+describe('a class change', () => {
+    // Confidence is measured from both images' probability bands, and masked where either has none; the band is
+    // there either way, whatever the snapshots saved when the images were selected say.
+    it('is described with its transition and confidence, though neither saved snapshot holds a probability band', () => {
+        const {output} = read(classChangeOf({images: RECIPE_IMAGES}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name, dataType}) => [name, dataType.arrayDimensions]))
+            .toEqual([['transition', 0], ['confidence', 0]])
+    })
+
+    it('is presented with the range of its transitions, and the preset styles of both bands', () => {
+        const recipe = classChangeOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual({
+            transition: {precision: 'int', min: 1, max: 4},
+            confidence: {precision: 'int', min: 0, max: 100}
+        })
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['transition', 'confidence'])
+    })
+
+    it('exports its transitions keeping the most common one, and its confidence averaged', () => {
+        retrieve(read(classChangeOf()), 'GEE', classChangeTask, {bands: ['transition', 'confidence']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
+            .toEqual([[{selection: ['transition', 'confidence']}, {transition: 'mode', confidence: 'mean'}]])
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
-    ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask]
+    ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
+    ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
+    ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -99,14 +200,14 @@ describe.each([
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
 
-    // Reading itself as its own source: its band is still known, and none of it may be run.
+    // Reading itself as its own source: its bands are still known, and none of them may be run.
     it('is neither previewed nor exported over dependencies known to be broken', () => {
         const recipe = withSource(ID)
         const answer = read(recipe)
 
         retrieve(answer, 'GEE', task)
 
-        expect(answer.output.bands.map(({name}) => name)).toHaveLength(1)
+        expect(answer.output.bands).not.toHaveLength(0)
         expect(answer.output.dependencyValidity.status).toBe('INVALID')
         expect(canPreview(answer.output)).toBe(false)
         expect(submitted).toEqual([])
@@ -137,6 +238,48 @@ const clusteringOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/
     }
 })
 
+const ASSET_IMAGE = {type: 'ASSET', id: 'users/x/ndvi'}
+const RECIPE_IMAGES = [{type: 'RECIPE_REF', id: 'before-1'}, {type: 'RECIPE_REF', id: 'after-1'}]
+
+const legendEntry = (value, operator) => ({
+    value,
+    label: `class ${value}`,
+    color: '#000000',
+    booleanOperator: 'and',
+    constraints: [{image: 'this-recipe', band: 'difference', operator, value: 0}]
+})
+
+const indexChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE], errorBands, entries} = {}) => ({
+    id: ID,
+    type: 'INDEX_CHANGE',
+    title: 'Greening',
+    model: {
+        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
+        fromImage: {...from, band: 'ndvi', ...(errorBands && {errorBand: 'ndvi_error'})},
+        toImage: {...to, band: 'ndvi', ...(errorBands === true && {errorBand: 'ndvi_error'})},
+        legend: {entries: entries || [legendEntry(1, '<'), legendEntry(2, '='), legendEntry(3, '>')]},
+        options: {minConfidence: 2.5}
+    }
+})
+
+const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
+
+// A snapshot as the input panel saves it: each band with the class values its categorical style names.
+const classImage = (image, band) => ({...image, band, bands: {[band]: {values: [1, 2]}}, legendEntries: CLASSES})
+
+const classChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE]} = {}) => ({
+    id: ID,
+    type: 'CLASS_CHANGE',
+    title: 'Deforestation',
+    model: {
+        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
+        fromImage: classImage(from, 'class'),
+        toImage: classImage(to, 'landcover'),
+        legend: {entries: [1, 2, 3, 4].map(value => ({value, label: `transition ${value}`, color: '#000000'}))},
+        options: {minConfidence: 0}
+    }
+})
+
 // The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
 const read = recipe => readRetrieveOutput({
     state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
@@ -144,10 +287,10 @@ const read = recipe => readRetrieveOutput({
     heldFor: () => null
 })
 
-const retrieve = ({recipe, output, pending}, destination, task) => submitRetrieve({
+const retrieve = ({recipe, output, pending}, destination, task, selection = {useAllBands: true}) => submitRetrieve({
     recipe,
     output,
     pending,
-    request: physicalRequest({output, retrieveOptions: {scale: 30, assetId: 'users/x/out', destination, useAllBands: true}}),
+    request: physicalRequest({output, retrieveOptions: {scale: 30, assetId: 'users/x/out', destination, ...selection}}),
     task
 })

@@ -838,9 +838,9 @@ repeat the transformation's accepted input contract or source requirements.
 
 Providers answer from configuration, from an observation of their running image, from the catalogue their producer
 declares, or from their sources' descriptions.
-Regression and Unsupervised Classification describe their fixed band from configuration. Phenology, Classification and
-several alert products could describe their ordered names and scalar shape the same way, but have no provider yet. No provider combines declared constraints with an observation that
-supplies exact bands. The eventual contract must support all three outcomes:
+Regression, Unsupervised Classification, Index Change and Class Change describe their bands from configuration. Phenology,
+Classification and several alert products could describe their ordered names and scalar shape the same way, but
+have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
 
 1. an exact description from configuration requiring no observation;
 2. useful declared constraints followed by observation that supplies exact bands;
@@ -874,9 +874,9 @@ matches execution. The execution comparison is a research gate below.
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
 | Change Alerts | scalar alert result | monitoring/calibration collection mosaics | fixed change bands plus fabricated family recipes | scalar |
-| Class Change | transition and optional confidence | classification semantics | legend and input configuration | scalar |
+| Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
 | Classification | class, optional regression and probabilities | classification categories | classifier capability and legend | scalar |
-| Index Change | change metrics and optional error/confidence | none identified | fixed schema plus model condition | scalar |
+| Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
 | LandTrendr | change result | annual optical mosaic map product | fixed change bands plus fabricated mosaic recipe | scalar |
 | Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
 | Optical Mosaic | selected composite | internal optical collection | dataset/intersection/index/compose helpers | scalar |

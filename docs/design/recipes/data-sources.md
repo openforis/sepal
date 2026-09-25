@@ -17,8 +17,8 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, CCDC, CCDC Slice, Masking, Optical Mosaic, Regression and Unsupervised Classification declare an
-`IMAGE_OUTPUT` provider.
+Only Asset, CCDC, CCDC Slice, Class Change, Index Change, Masking, Optical Mosaic, Regression and Unsupervised
+Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -64,9 +64,13 @@ temporary answer, because it cannot be deleted.
 3. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
    matters less than their independence:
    - model-derived outputs whose GUI and Earth Engine vocabularies
-     [already agree](output-products.md#representative-agreement-findings): Phenology, PyEO Alerts, Index Change,
-     Class Change, Remapping and Classification. Regression and Unsupervised Classification have migrated: each
-     declares its one scalar band and its pyramiding policy, and Earth Engine names that band from the declaration;
+     [already agree](output-products.md#representative-agreement-findings): Phenology, PyEO Alerts, Remapping and
+     Classification. Regression, Unsupervised Classification, Index Change and Class Change have migrated: each
+     declares its scalar bands in execution order with their pyramiding policies, and Earth Engine's catalogue and
+     optional-band conditions come from the declaration. Index Change declares `error` and `confidence` only when
+     both images name an error band, and `change` only when its legend has entries. Class Change always declares
+     `transition` and `confidence`; confidence is measured from both images' probability bands and is masked where
+     either image holds none, while the transition is still computed;
    - map-product types: LandTrendr, BAYTS Alerts, Change Alerts, and CCDC's `count`;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time

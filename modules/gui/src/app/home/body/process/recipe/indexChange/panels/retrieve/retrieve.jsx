@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/indexChange/bands'
+import {groupedBandPresentation} from '~/app/home/body/process/recipe/indexChange/bands'
 import {retrieveTask} from '~/app/home/body/process/recipe/indexChange/indexChangeRecipe'
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -24,7 +24,7 @@ class _Retrieve extends React.Component {
 
     bandOptions() {
         const {recipe} = this.props
-        return getGroupedBandOptions(recipe)
+        return groupedBandPresentation(recipe)
     }
 }
 

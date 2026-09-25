@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {hasErrorBands} from '#sepal/recipe/type/indexChange'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
@@ -70,7 +71,7 @@ export const getPreSetVisualizations = recipe => {
 
     const hasDifference = fromImage && toImage
     const hasLegend = hasDifference && entries.length
-    const hasError = selectFrom(fromImage, 'errorBand') && selectFrom(toImage, 'errorBand')
+    const hasError = hasErrorBands(recipe.model)
 
     const change = () => {
         const min = entries[0].value
