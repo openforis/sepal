@@ -1,7 +1,8 @@
 // What Class Change builds, pixel by pixel, for each way its two images can carry probability bands, on live Earth
 // Engine. A transition needs only the classes; a confidence needs probabilities on both images and is masked
 // where either holds none, leaving minConfidence nothing to act on. Checks both bands' values and masks at one pixel,
-// at a zero and a nonzero minConfidence, and fails on any difference from what is expected.
+// at a zero and a nonzero minConfidence, and fails on any difference from what is expected. Also checks the code of
+// every transition between legends whose order is neither numeric nor textual against the code the legend labels.
 //
 // Runs the real Class Change calculation over synthetic constant images: only imageFactory is substituted, so each
 // input resolves to its synthetic image. Read-only: nothing is saved and no asset is written. Authenticates with the
@@ -16,6 +17,7 @@ import {firstValueFrom, of} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import ee from '#sepal/ee/ee'
+import {classTransitions} from '#sepal/recipe/type/classChange'
 
 const LEGEND = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
 const MASKED = null
@@ -68,6 +70,20 @@ const CASES = [
     }
 ]
 
+// Each transition between two legends, carrying no probabilities, has the code the GUI labels it with.
+const legend = values => values.map(value => ({value, label: `${value}`}))
+
+const NUMBERING_CASES = [[[2, 10], [2, 10]], [[3, 1, 2], [3, 1, 2]]].flatMap(([fromValues, toValues]) =>
+    classTransitions(legend(fromValues), legend(toValues)).map(({value, from, to}) => ({
+        name: `legends [${fromValues}] to [${toValues}], ${from.value} to ${to.value}`,
+        from: {class: from.value},
+        to: {landcover: to.value},
+        fromLegend: legend(fromValues),
+        toLegend: legend(toValues),
+        expected: {0: {transition: value, confidence: MASKED}}
+    }))
+)
+
 const synthetic = {}
 
 mock.module('#sepal/ee/imageFactory', {
@@ -92,7 +108,7 @@ const authenticate = async () => {
 }
 
 // What the pixel holds, band by band, with a masked band as null.
-const observe = async ({from, to, fromMasked}, minConfidence) => {
+const observe = async ({from, to, fromMasked, fromLegend = LEGEND, toLegend = LEGEND}, minConfidence) => {
     const region = ee.Geometry.Rectangle([10, 10, 10.01, 10.01])
     const pixel = ee.Geometry.Point([10.005, 10.005])
     const image = (bands, masked) => {
@@ -103,8 +119,8 @@ const observe = async ({from, to, fromMasked}, minConfidence) => {
     synthetic.to = {image: image(to), region}
     const built = await firstValueFrom(createClassChange({
         model: {
-            fromImage: {type: 'ASSET', id: 'from', band: 'class', legendEntries: LEGEND},
-            toImage: {type: 'ASSET', id: 'to', band: 'landcover', legendEntries: LEGEND},
+            fromImage: {type: 'ASSET', id: 'from', band: 'class', legendEntries: fromLegend},
+            toImage: {type: 'ASSET', id: 'to', band: 'landcover', legendEntries: toLegend},
             options: {minConfidence}
         }
     }).getImage$())
@@ -120,7 +136,7 @@ const observe = async ({from, to, fromMasked}, minConfidence) => {
 const main = async () => {
     await authenticate()
     let failures = 0
-    for (const testCase of CASES) {
+    for (const testCase of [...CASES, ...NUMBERING_CASES]) {
         for (const [minConfidence, expected] of Object.entries(testCase.expected)) {
             const {bandNames, observed, unmaskedWithoutValue} = await observe(testCase, Number(minConfidence))
             const passed = _.isEqual(bandNames, ['transition', 'confidence'])
