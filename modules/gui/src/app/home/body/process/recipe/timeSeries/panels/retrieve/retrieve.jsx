@@ -27,7 +27,6 @@ class _Retrieve extends React.Component {
                 defaultTileSize={2}
                 defaultShardSize={256}
                 defaultFileDimensionsMultiple={2}
-                single
                 toSepal
                 allowTiling
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
