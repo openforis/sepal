@@ -410,6 +410,45 @@ describe('retrieving CCDC measures', () => {
 
         expect(submitted).toEqual([])
     })
+
+    // A MEDOID collection keeps each scene's acquisition dates; they are metadata, not measures to fit.
+    describe('over a MEDOID collection', () => {
+        const medoid = ccdc => ({...ccdc, model: {...ccdc.model, options: {...ccdc.model.options, compose: 'MEDOID'}}})
+
+        it('offers its spectral measures, and none of the acquisition dates', async () => {
+            observed.answer = catalogue
+
+            await open({recipes: [medoid(CCDC)], id: CCDC.id, Panel: CcdcRetrieve})
+
+            expect(offers('red')).toBe(true)
+            expect(['unixTimeDays', 'dayOfYear', 'daysFromTarget'].filter(offers)).toEqual([])
+        })
+
+        it('drops a saved date measure, and submits the rest', async () => {
+            observed.answer = catalogue
+            const saved = medoid(retrieving(['red', 'unixTimeDays']))
+
+            await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
+            await click('process.retrieve.apply')
+
+            expect(submitted).toHaveLength(1)
+            expect(submitted[0].params.image.bands).toEqual(['red'])
+        })
+
+        it('still names a configured date breakpoint, and submits nothing', async () => {
+            observed.answer = catalogue
+            const breakingOnDates = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['unixTimeDays']}}}
+            const saved = medoid(retrieving(['red'], breakingOnDates))
+
+            await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
+
+            expect(shown()).toContain('process.retrieve.form.bands.unavailable unixTimeDays')
+
+            await click('process.retrieve.apply')
+
+            expect(submitted).toEqual([])
+        })
+    })
 })
 
 describe('what makes the panel resolve again', () => {
