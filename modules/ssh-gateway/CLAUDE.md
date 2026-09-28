@@ -1,6 +1,8 @@
 # CLAUDE.md - modules/ssh-gateway
 
-CLI tool for managing interactive/non-interactive SSH sessions to sandbox workers. **Not an HTTP service** - generates SSH scripts on-demand.
+SSH entry point to SEPAL. `ssh alice@<gateway>` opens the menu (a Node CLI managing sandbox sessions);
+`ssh alice+<instance-name>@<gateway>` connects straight to that running instance's sandbox, with every SSH feature
+(scp, sftp, forwarding, VS Code Remote-SSH). **Not an HTTP service.**
 
 ## Commands
 
@@ -8,6 +10,27 @@ CLI tool for managing interactive/non-interactive SSH sessions to sandbox worker
 npm test              # Jest (src/*.test.js)
 npm run testWatch     # Jest watch mode
 ```
+
+The Go plugin (`router/`) has no toolchain in dev-env; its tests run in the image build (`sepal build ssh-gateway`),
+or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go test ./...`).
+
+## Front door: sshpiperd + `sepal-router`
+
+- **sshpiperd** ([sshpiper](https://github.com/tg123/sshpiper), built from source at a pinned tag and commit in the
+  Dockerfile's `go-build` stage) listens on port 22 with the persisted OpenSSH host keys (`/data/ssh`). After
+  authentication it relays whole SSH connections, so forwarding and subsystems pass through untouched.
+- **`sepal-router`** (`router/`, Go) is its plugin. Per connection it splits the username at the first `+`,
+  authenticates the client against the user module (`/auth/password`, `/auth/authorized-keys`), and picks the
+  upstream, always logging in with the user's SEPAL key `/home/<username>/.ssh/id_rsa`:
+  - no instance named → the internal sshd (menu) on `127.0.0.1:2222` as the user;
+  - exactly one ACTIVE session of the user with that name (worker `GET /sessions/<username>/report`) →
+    `<session.host>:222` as `sepal-user`;
+  - otherwise → the menu with `SEPAL_ROUTING_ERROR` set; `script/ssh-bootstrap` prints it and exits.
+- A direct connection fires the one-shot `POST /sessions/session/:id/opened` when its pipe starts — not while
+  routing, because sshpiper routes a public key before the client proves it holds the key.
+- **Internal sshd**: `127.0.0.1:2222`, public keys only (only sshpiperd reaches it, with the SEPAL key),
+  `DisableForwarding yes`, `ForceCommand ssh-bootstrap`. It sees every login from 127.0.0.1; the router logs
+  client addresses.
 
 ## Key Architecture
 
@@ -43,7 +66,7 @@ npm run testWatch     # Jest watch mode
 
 ## Non-Obvious Conventions
 
-- **Pure CLI tool**: Writes SSH script file instead of serving HTTP
+- **Menu is a pure CLI tool**: Writes SSH script file instead of serving HTTP
 - **Entire app is an RxJS pipeline**: User interaction, HTTP calls, and output all composed as observables
 - **ASCII table rendering**: `src/asciiTable.js` for formatted budget/session display
 - **Session selection logic**: ACTIVE -> STARTING -> create new instance
