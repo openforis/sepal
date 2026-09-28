@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
@@ -7,10 +6,10 @@ import {msg} from '~/translate'
 import {removeSshKey$, sshKeys$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
-import {Button} from '~/widget/button'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
+import {Message} from '~/widget/message'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
@@ -37,7 +36,7 @@ class _SshKeys extends React.Component {
                 <Panel.Header icon='terminal' title={msg('user.sshKeys.title')}/>
                 <Panel.Content scrollable>
                     <Layout type='vertical'>
-                        <div>{this.renderHowTo()}</div>
+                        {this.renderHowTo()}
                         {this.renderKeys()}
                     </Layout>
                 </Panel.Content>
@@ -58,8 +57,8 @@ class _SshKeys extends React.Component {
     }
 
     close() {
-        const {activator: {activatables: {userDetails}}} = this.props
-        userDetails.activate()
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     add() {
@@ -77,10 +76,15 @@ class _SshKeys extends React.Component {
     }
 
     renderHowTo() {
-        return msg('user.sshKeys.howTo', {
-            generate: 'ssh-keygen -t ed25519',
-            publicKeyFile: '~/.ssh/id_ed25519.pub'
-        })
+        return (
+            <Message type='info' icon='comment' iconSize='2x'>
+                <Layout type='vertical' spacing='none'>
+                    <div>{msg('user.sshKeys.howTo.title')}</div>
+                    <div>{msg('user.sshKeys.howTo.generate', {command: 'ssh-keygen -t ed25519'})}</div>
+                    <div>{msg('user.sshKeys.howTo.add', {publicKeyFile: '~/.ssh/id_ed25519.pub'})}</div>
+                </Layout>
+            </Message>
+        )
     }
 
     renderKeys() {
@@ -102,7 +106,7 @@ class _SshKeys extends React.Component {
             <ListItem key={key.id}>
                 <CrudItem
                     title={key.name}
-                    description={`${key.type} · ${key.fingerprint}`}
+                    description={this.renderDescription(key)}
                     timestamp={key.creationTime}
                     removeMessage={msg('user.sshKeys.remove.message', {name: key.name})}
                     removeTooltip={msg('user.sshKeys.remove.tooltip')}
@@ -110,6 +114,19 @@ class _SshKeys extends React.Component {
                     onRemove={() => this.remove(key)}
                 />
             </ListItem>
+        )
+    }
+
+    renderDescription(key) {
+        return (
+            <Layout type='vertical' spacing='none'>
+                <div>
+                    {key.type}
+                </div>
+                <div>
+                    {key.fingerprint}
+                </div>
+            </Layout>
         )
     }
 
@@ -142,30 +159,8 @@ const policy = () => ({
 export const SshKeys = compose(
     _SshKeys,
     connect(),
-    withActivators('userDetails', 'addSshKey'),
+    withActivators('addSshKey'),
     withActivatable({id: 'sshKeys', policy, alwaysAllow: true})
 )
 
 SshKeys.propTypes = {}
-
-class _SshKeysButton extends React.Component {
-    render() {
-        const {disabled, activator: {activatables: {sshKeys: {activate, canActivate}}}} = this.props
-        return (
-            <Button
-                icon='terminal'
-                label={msg('user.sshKeys.label')}
-                disabled={!canActivate || disabled}
-                onClick={activate}/>
-        )
-    }
-}
-
-export const SshKeysButton = compose(
-    _SshKeysButton,
-    withActivators('sshKeys')
-)
-
-SshKeysButton.propTypes = {
-    disabled: PropTypes.any
-}

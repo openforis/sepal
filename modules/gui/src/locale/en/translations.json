@@ -436,7 +436,7 @@
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
       "help": "Open SEPAL documentation in a new tab/window",
-      "logout": "Logout from SEPAL",
+      "logout": "Logout",
       "process": "Process",
       "tasks": "Tasks",
       "terminal": "Terminal",
@@ -6075,7 +6075,11 @@
         "success": "SSH key added.",
         "title": "Add SSH key"
       },
-      "howTo": "Create a key with {generate}, then add the contents of {publicKeyFile} here.",
+      "howTo": {
+        "add": "2) Add the contents of {publicKeyFile} here",
+        "generate": "1) Create a key with {command}",
+        "title": "To add a key:"
+      },
       "label": "SSH keys",
       "load": {
         "error": "Failed to load your SSH keys."

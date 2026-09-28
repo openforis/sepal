@@ -13,6 +13,9 @@ vi.mock('~/widget/activation/activator', () => ({withActivators: () => component
 vi.mock('~/user', () => ({sshKeys$: vi.fn(), removeSshKey$: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
+vi.mock('~/widget/message', () => ({
+    Message: ({type, children}) => <div className={`message ${type}`}>{children}</div>
+}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div className='no-data'>{message}</div>}))
 vi.mock('~/widget/crudItem', () => ({
     CrudItem: ({title, description, removeMessage, onRemove}) =>
@@ -53,14 +56,14 @@ describe('the SSH keys panel', () => {
         return {active: false}
     }
 
-    const render = () => {
+    const render = ({activatable = {deactivate: vi.fn()}} = {}) => {
         const activator = {activatables: {userDetails: {activate: vi.fn()}, addSshKey: {activate: vi.fn()}}}
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <SshKeys stream={stream} activator={activator}/>
+                <SshKeys stream={stream} activator={activator} activatable={activatable}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -76,7 +79,7 @@ describe('the SSH keys panel', () => {
     })
     afterEach(() => mounted.forEach(unmount => unmount()))
 
-    it('lists each key by name, type and fingerprint', () => {
+    it('lists each key by name, with its type and fingerprint on separate lines', () => {
         const laptop = aKey({id: 1, name: 'Laptop'})
         const desktop = aKey({id: 2, name: 'Desktop', type: 'ssh-rsa', fingerprint: 'SHA256:desktop'})
         givenKeys([laptop, desktop])
@@ -85,11 +88,11 @@ describe('the SSH keys panel', () => {
 
         const rows = [...container.querySelectorAll('.key')].map(row => ({
             title: row.querySelector('.title').textContent,
-            description: row.querySelector('.description').textContent
+            description: [...row.querySelectorAll('.description div')].filter(line => !line.children.length).map(line => line.textContent)
         }))
         expect(rows).toEqual([
-            {title: 'Laptop', description: `ssh-ed25519 · ${laptop.fingerprint}`},
-            {title: 'Desktop', description: 'ssh-rsa · SHA256:desktop'}
+            {title: 'Laptop', description: ['ssh-ed25519', laptop.fingerprint]},
+            {title: 'Desktop', description: ['ssh-rsa', 'SHA256:desktop']}
         ])
     })
 
@@ -98,9 +101,10 @@ describe('the SSH keys panel', () => {
 
         const container = render()
 
+        const instructions = container.querySelector('.message.info').textContent
         expect(container.querySelector('.no-data').textContent).toBe('You have no SSH keys.')
-        expect(container.textContent).toContain('ssh-keygen -t ed25519')
-        expect(container.textContent).toContain('~/.ssh/id_ed25519.pub')
+        expect(instructions).toContain('ssh-keygen -t ed25519')
+        expect(instructions).toContain('~/.ssh/id_ed25519.pub')
     })
 
     // The SSH entry point has its own address and port, which the web address does not tell.
@@ -131,6 +135,17 @@ describe('the SSH keys panel', () => {
         const container = render()
 
         expect(container.querySelector('.add').disabled).toBe(true)
+    })
+
+    // Opened from the footer menu, the panel has nothing to go back to.
+    it('closes without opening another panel', () => {
+        givenKeys([])
+        const activatable = {deactivate: vi.fn()}
+        const container = render({activatable})
+
+        act(() => container.querySelector('.close').click())
+
+        expect(activatable.deactivate).toHaveBeenCalled()
     })
 
     it('offers add below twenty keys', () => {

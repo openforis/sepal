@@ -65,6 +65,8 @@ ScrollableList.propTypes = {
             alias: PropTypes.any,
             disabled: PropTypes.any,
             group: PropTypes.any,
+            icon: PropTypes.string,
+            iconType: PropTypes.string,
             indent: PropTypes.any,
             key: PropTypes.any,
             label: PropTypes.any,
@@ -200,6 +202,8 @@ class _List extends React.Component {
                     chromeless
                     look='transparent'
                     air={air}
+                    icon={option.icon}
+                    iconType={option.iconType}
                     label={option.render ? option.render() : option.label}
                     width='max'
                     alignment={alignment}
@@ -233,6 +237,8 @@ class _List extends React.Component {
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
                     dimmed={option.dimmed}
+                    icon={option.icon}
+                    iconType={option.iconType}
                     label={option.render ? null : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}

@@ -9,16 +9,21 @@
     align-items: center;
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 1px solid hsla(0, 0%, 100%, .1);
-    padding: 0 1rem;
     z-index: 2;  /* stay over the menu */
 }
 
 .title {
+    --letter-spacing: .5rem;
     font-family: var(--header-font-family);
     font-size: 1.2rem;
     font-weight: bold;
-    letter-spacing: .5rem;
+    letter-spacing: var(--letter-spacing);
     text-transform: uppercase;
+}
+
+/* letter-spacing also follows the last letter, which would leave more space on the right than on the left */
+.title span {
+    margin-right: calc(-1 * var(--letter-spacing));
 }
 
 .copyright {

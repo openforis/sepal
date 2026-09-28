@@ -307,7 +307,7 @@ class _Button extends React.Component {
                     type={iconType}
                     variant={iconVariant}
                     dimmed={iconDimmed || buttonGroupDimmed}
-                    className={iconClassName}
+                    className={[styles.icon, iconClassName].join(' ')}
                     attributes={iconAttributes}
                 />
             )
@@ -316,7 +316,7 @@ class _Button extends React.Component {
     renderLabel() {
         const {label} = this.props
         return (
-            <span>{label}</span>
+            <span className={styles.label}>{label}</span>
         )
     }
 

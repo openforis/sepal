@@ -9,7 +9,6 @@ import {msg} from '~/translate'
 import {currentUser, isGoogleAccount, updateCurrentUserDetails$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
-import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
@@ -18,10 +17,11 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {AddSshKey} from './addSshKey'
-import {ChangePassword, ChangePasswordButton} from './changePassword'
-import {GoogleAccount, GoogleAccountButton} from './googleAccount'
-import {SshKeys, SshKeysButton} from './sshKeys'
+import {ChangePassword} from './changePassword'
+import {GoogleAccount} from './googleAccount'
+import {SshKeys} from './sshKeys'
 import styles from './userDetails.module.css'
+import {UserMenuButton} from './userMenu'
 
 const fields = {
     name: new Form.Field()
@@ -132,24 +132,9 @@ class _UserDetails extends React.Component {
                         />
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons>
-                    {this.renderExtraButtons()}
-                </Form.PanelButtons>
+                <Form.PanelButtons/>
             </React.Fragment>
         )
-    }
-
-    renderExtraButtons() {
-        const {form} = this.props
-        return form.isDirty()
-            ? null
-            : (
-                <React.Fragment>
-                    <ChangePasswordButton disabled={form.isDirty()}/>
-                    <GoogleAccountButton disabled={form.isDirty()}/>
-                    <SshKeysButton disabled={form.isDirty()}/>
-                </React.Fragment>
-            )
     }
 
     renderConnectionStatus() {
@@ -222,21 +207,11 @@ class _UserDetailsButton extends React.Component {
         const {className, user: {username}, activator: {activatables: {userDetails}}} = this.props
         const {hint} = this.state
         return userDetails ? (
-            <Button
-                chromeless
-                look='transparent'
-                size='large'
-                air='less'
-                additionalClassName={className}
-                icon={isGoogleAccount() ? 'google' : 'user'}
-                iconType={isGoogleAccount() ? 'brands' : null}
-                label={username}
-                disabled={userDetails.active}
-                tooltip={msg('home.sections.user.profile')}
-                tooltipPlacement='top'
-                tooltipDisabled={userDetails.active}
+            <UserMenuButton
+                className={className}
+                username={username}
+                googleAccount={isGoogleAccount()}
                 hint={hint}
-                onClick={userDetails.activate}
             />
         ) : null
     }
