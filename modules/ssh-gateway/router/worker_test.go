@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
 func TestSessionsListsTheUsersSessionsFromTheirReport(t *testing.T) {
-	session := aSession("s-1", "funky-name", "ACTIVE")
-	worker := workerModuleWith(t, reportHandler("alice", session))
+	funky := aSession("s-1", "funky-name", "ACTIVE")
+	worker := workerModuleWith(t, (&fakeWorker{reports: map[string][]session{"alice": {funky}}}).handler())
 
 	sessions, err := worker.sessions("alice")
 
-	if err != nil || len(sessions) != 1 || sessions[0] != session {
-		t.Fatalf("sessions = %+v, %v; want [%+v], nil", sessions, err, session)
+	if err != nil || len(sessions) != 1 || sessions[0] != funky {
+		t.Fatalf("sessions = %+v, %v; want [%+v], nil", sessions, err, funky)
 	}
 }
 
@@ -27,20 +28,20 @@ func TestSessionsFailsWhenTheWorkerFails(t *testing.T) {
 }
 
 func TestOpenedTellsTheWorkerTheUserOpenedTheSession(t *testing.T) {
-	var opened []string
-	worker := workerModuleWith(t, openedHandler("alice", &opened, http.StatusOK))
+	fake := &fakeWorker{reports: map[string][]session{"alice": {aSession("s-1", "funky-name", "ACTIVE")}}, openedStatus: http.StatusOK}
+	worker := workerModuleWith(t, fake.handler())
 
 	err := worker.opened("alice", "s-1")
 
-	if err != nil || len(opened) != 1 || opened[0] != "s-1" {
+	if opened := fake.openedSessions(); err != nil || len(opened) != 1 || opened[0] != "s-1" {
 		t.Fatalf("opened = %v, sessions opened %v; want nil, [s-1]", err, opened)
 	}
 }
 
 // 409: the session's lease already runs past what opening it would give.
 func TestOpenedAcceptsASessionThatNeedsNoExtension(t *testing.T) {
-	var opened []string
-	worker := workerModuleWith(t, openedHandler("alice", &opened, http.StatusConflict))
+	fake := &fakeWorker{reports: map[string][]session{"alice": {aSession("s-1", "funky-name", "ACTIVE")}}, openedStatus: http.StatusConflict}
+	worker := workerModuleWith(t, fake.handler())
 
 	if err := worker.opened("alice", "s-1"); err != nil {
 		t.Fatalf("opened = %v; want nil", err)
@@ -63,30 +64,54 @@ func workerModuleWith(t *testing.T, handler http.Handler) *workerModule {
 	return &workerModule{baseURL: server.URL, password: workerPassword, client: server.Client()}
 }
 
-// reportHandler answers only requests made as the worker expects them from the gateway: as sepaladmin, acting
-// for username with the admin role.
-func reportHandler(username string, sessions ...session) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/sessions/"+username+"/report" || !actsFor(r, username) {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-		report := map[string]any{"sessions": sessionMaps(sessions), "instanceTypes": []any{}}
-		_ = json.NewEncoder(w).Encode(report)
-	})
+// fakeWorker answers only requests made as the worker expects them from the gateway: as sepaladmin, acting for
+// the user with the admin role.
+type fakeWorker struct {
+	reports      map[string][]session
+	openedStatus int
+	mu           sync.Mutex
+	opened       []string
 }
 
-func openedHandler(username string, opened *[]string, status int) http.Handler {
+func (f *fakeWorker) openedSessions() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string(nil), f.opened...)
+}
+
+func (f *fakeWorker) handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /sessions/session/{id}/opened", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /sessions/{username}/report", func(w http.ResponseWriter, r *http.Request) {
+		username := r.PathValue("username")
 		if !actsFor(r, username) {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
-		*opened = append(*opened, r.PathValue("id"))
-		w.WriteHeader(status)
+		report := map[string]any{"sessions": sessionMaps(username, f.reports[username]), "instanceTypes": []any{}}
+		_ = json.NewEncoder(w).Encode(report)
+	})
+	mux.HandleFunc("POST /sessions/session/{id}/opened", func(w http.ResponseWriter, r *http.Request) {
+		if !f.owns(r, r.PathValue("id")) {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		f.mu.Lock()
+		f.opened = append(f.opened, r.PathValue("id"))
+		f.mu.Unlock()
+		w.WriteHeader(f.openedStatus)
 	})
 	return mux
+}
+
+func (f *fakeWorker) owns(r *http.Request, sessionID string) bool {
+	for username, sessions := range f.reports {
+		for _, s := range sessions {
+			if s.ID == sessionID {
+				return actsFor(r, username)
+			}
+		}
+	}
+	return false
 }
 
 func actsFor(r *http.Request, username string) bool {
@@ -100,11 +125,11 @@ func actsFor(r *http.Request, username string) bool {
 		sepalUser.Username == username && len(sepalUser.Roles) == 1 && sepalUser.Roles[0] == "application_admin"
 }
 
-func sessionMaps(sessions []session) []map[string]any {
+func sessionMaps(username string, sessions []session) []map[string]any {
 	maps := []map[string]any{}
 	for _, s := range sessions {
 		maps = append(maps, map[string]any{
-			"id": s.ID, "name": s.Name, "status": s.Status, "host": s.Host, "username": "alice", "apps": []any{},
+			"id": s.ID, "name": s.Name, "status": s.Status, "host": s.Host, "username": username, "apps": []any{},
 		})
 	}
 	return maps
