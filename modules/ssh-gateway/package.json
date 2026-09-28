@@ -18,7 +18,7 @@
         "uuid": "^14.0.2"
     },
     "devDependencies": {
-        "jest": "^30.5.1"
+        "jest": "^30.5.2"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
