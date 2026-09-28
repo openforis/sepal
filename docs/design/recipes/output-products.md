@@ -311,6 +311,16 @@ than by remembering to keep every accessor in step.
 | Change Alerts | changes | collection mosaic, delegating to the configured mosaic | `{period: monitoring \| calibration, mosaicType: latest \| median}` |
 | CCDC | segments | count | none |
 
+**Declared products.** A shared type declares its products beside its canonical output, as
+`mapProducts: {NAME: mapProduct({describe})}` (`lib/js/shared/src/recipe/output/product.js`). Only the root of a read
+is described as a named product; every recipe it reads is still described by its canonical output. A product is
+described from its recipe's configuration alone: its provider is given the recipe and nothing else, and one that reads
+an observation or a source is refused. It takes no parameters yet, so any it is given are refused. The resolver
+attaches its identity as `output.product` after its bands pass the ordinary description validation; a canonical
+description has no such field. Export stays canonical: the GUI's export submission refuses a description naming a
+product. CCDC's `COUNT` is the first declared product; parameters and delegation to another type's declaration
+arrive with LandTrendr's annual mosaic.
+
 CCDC is the case that shows why absence is not an identity: `COUNT` is the only mode string it has, and its segments
 product is simply what it builds when no mode is present. Naming both makes the canonical product something a
 consumer asks for rather than something it gets by omission.

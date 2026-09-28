@@ -1,5 +1,7 @@
 import _ from 'lodash'
 
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+
 import {getRecipeType} from '../recipeTypeRegistry'
 
 // The one module that answers from registered band helpers: what a recipe type without a declared output says it
@@ -10,14 +12,14 @@ import {getRecipeType} from '../recipeTypeRegistry'
 // physical evidence. Its `dataType` is display precision, except where a helper answering from observed evidence
 // states dimensionality; which is which is the read's to separate.
 
-export const IMAGE_OUTPUT = 'IMAGE_OUTPUT'
+export {IMAGE_OUTPUT}
 
 // A table of band name to helper entry; null when the evidence the helper answers from could not be had, which is
 // never an empty answer; undefined when the type has no such product.
 export const legacyBands = (recipe, product) => {
     const {mapProducts, getAvailableBands} = getRecipeType(recipe.type) || {}
     if (mapProducts) {
-        return mapProducts.bands(recipe, product)
+        return mapProducts.bands?.(recipe, product)
     }
     return product.name === IMAGE_OUTPUT && getAvailableBands
         ? getAvailableBands(recipe)

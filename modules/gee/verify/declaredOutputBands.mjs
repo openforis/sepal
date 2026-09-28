@@ -127,6 +127,14 @@ const CATALOGUE = {
 
 const FIXTURES = [
     {
+        // A map product: a count of the observations segmentation would fit, which runs no segmentation. It is asked
+        // for as a map layer asks, never as an export, which is not something a map product is.
+        name: 'CCDC count map product',
+        recipe: ccdcRecipe,
+        args: {visualizationType: 'COUNT'},
+        mapProduct: true
+    },
+    {
         name: 'Change Alerts change product',
         recipe: changeAlertsRecipe
     },
@@ -219,12 +227,13 @@ const reorderedSubset = declared => declared.filter((_band, index) => index % 2 
 
 // A fixture with no arguments passes none, rather than an empty object: a producer's own defaults are part of
 // what it builds, and several apply only to an absent argument.
-const check = async ({name, recipe, args}) => {
+const check = async ({name, recipe, args, mapProduct}) => {
+    const request = selection => mapProduct ? {selection} : withOutputBands({selection})
     try {
         const declared = await firstValueFrom(imageFactory(recipe, args).getBands$())
-        const asDeclared = await bandNamesOf(recipe, {...args, ...withOutputBands({selection: declared})})
+        const asDeclared = await bandNamesOf(recipe, {...args, ...request(declared)})
         const subset = reorderedSubset(declared)
-        const asSubset = await bandNamesOf(recipe, {...args, ...withOutputBands({selection: subset})})
+        const asSubset = await bandNamesOf(recipe, {...args, ...request(subset)})
         const asAsked = await bandNamesOf(recipe, args)
         const missing = missingFrom(declared, asDeclared)
         const disagrees = missing.length

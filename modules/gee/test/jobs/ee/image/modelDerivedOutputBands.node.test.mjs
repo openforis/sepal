@@ -310,6 +310,27 @@ for (const recipe of [
     })
 }
 
+// Counting what segmentation would be fitted to needs neither segmentation nor the catalogue of measures, so the
+// classification the collection would carry is never read: this operation's reader refuses every recipe.
+describe('CCDC showing its count', () => {
+    const ccdc = {
+        id: 'ccdc-1',
+        type: 'CCDC',
+        model: {
+            dates: {startDate: '2000-01-01', endDate: '2020-01-01'},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: 'classification-1'},
+            options: {corrections: ['SR']},
+            ccdcOptions: {dateFormat: 1}
+        }
+    }
+
+    inOperation('says it can be asked for exactly the bands its count product declares, reading no other recipe', async () => {
+        const catalogue = await firstValueFrom(imageFactory(ccdc, {visualizationType: 'COUNT'}).getBands$())
+
+        assert.deepEqual(catalogue, recipeType('CCDC').mapProducts.COUNT.describe({recipe: ccdc}).bands.map(({name}) => name))
+    })
+})
+
 // Exports name the bands they want twice, as the selection to build and as the bands to return in order.
 describe('Classification built for an export', () => {
     const names = image => image.bands.map(({name}) => name)

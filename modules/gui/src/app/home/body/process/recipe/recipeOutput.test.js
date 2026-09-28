@@ -14,7 +14,7 @@ const registered = vi.hoisted(() => ({maskingEvidence: 'OBSERVED'}))
 vi.mock('~/translate', () => ({msg: key => key}))
 
 vi.mock('../recipeTypeRegistry', async () => {
-    const {mapProducts: ccdcProducts} = await import('./ccdc/bands')
+    const {bandPresentation: ccdcPresentation, mapProducts: ccdcProducts} = await import('./ccdc/bands')
     return {getRecipeType: type => ({
         MOSAIC: {
             bandPresentation: () => ({
@@ -29,7 +29,11 @@ vi.mock('../recipeTypeRegistry', async () => {
                 ? null
                 : {class: {dataType: {arrayDimensions: 0}}}
         },
-        CCDC: {mapProducts: ccdcProducts}
+        // A legacy entry left beside the declaration, which a declared product must never be answered from.
+        CCDC: {
+            mapProducts: {...ccdcProducts, bands: () => ({legacy_count: {dataType: {precision: 'int'}}})},
+            bandPresentation: ccdcPresentation
+        }
     })[type]}
 })
 
@@ -145,6 +149,16 @@ describe('a map product', () => {
         expect(read).toMatchObject({status: 'INVALID', bands: [], diagnostics: [{code: 'UNKNOWN_PRODUCT'}]})
     })
 
+    it('is described from its declaration, as the product it is, with its presentation', () => {
+        const recipe = ccdc()
+
+        const read = readRecipeOutput({recipe, product: COUNT, graph: graphOf([recipe])})
+
+        expect(read).toMatchObject({status: 'READY', authority: 'DESCRIBED', bands: [{name: 'count', dataType: {arrayDimensions: 0}}]})
+        expect(read.description.output.product).toEqual({name: 'COUNT'})
+        expect(displayTypes(read)).toEqual({count: {precision: 'int'}})
+    })
+
     it('needs only its dependencies completed when one is not held, never the canonical output described', () => {
         const recipe = ccdc({aoi: {type: 'RECIPE', id: 'aoi-1'}})
 
@@ -152,10 +166,28 @@ describe('a map product', () => {
 
         expect(read).toMatchObject({
             status: 'READY',
-            authority: 'LEGACY',
-            bands: [{name: 'count'}],
+            authority: 'DESCRIBED',
+            bands: [{name: 'count', dataType: {arrayDimensions: 0}}],
             acquisition: {kind: 'DEPENDENCIES'}
         })
+    })
+
+    // Its declaration is the answer: what it refuses is invalid, never answered by the legacy entry beside it.
+    it('refuses parameters it does not take, without falling back to a legacy answer', () => {
+        const recipe = ccdc()
+
+        const read = readRecipeOutput({recipe, product: {name: 'COUNT', parameters: {year: 2020}}, graph: graphOf([recipe])})
+
+        expect(read).toMatchObject({status: 'INVALID', authority: null, bands: [], acquisition: null})
+        expect(read.diagnostics).toEqual([expect.objectContaining({code: 'INVALID_PRODUCT_PARAMETERS'})])
+    })
+
+    it('answers a product the type does not declare from its legacy entry', () => {
+        const recipe = ccdc()
+
+        const read = readRecipeOutput({recipe, product: {name: 'SEGMENTS'}, graph: graphOf([recipe])})
+
+        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', bands: [{name: 'legacy_count'}]})
     })
 
     it('keeps its bands when a dependency cannot be read, withholding the preview for that reason alone', () => {

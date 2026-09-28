@@ -87,7 +87,9 @@ const sessionAnswer = ({recipe, product, graph}) => {
         return {...result, acquisition: pending(DEPENDENCIES, result)}
     }
     if (product.name !== IMAGE_OUTPUT) {
-        return legacy()
+        return productFor(recipe, product.name)
+            ? declaredProduct({recipe, product, graph, validity, pending})
+            : legacy()
     }
     let read
     try {
@@ -106,6 +108,22 @@ const sessionAnswer = ({recipe, product, graph}) => {
     return status === NEEDS_EVIDENCE
         ? {...answer({status: NEEDS_EVIDENCE, diagnostics, validity}), acquisition: DESCRIBE}
         : answer({status: INVALID, diagnostics, validity})
+}
+
+// A declared product is described from its root's configuration alone, so the session answers it and only validity is
+// acquired. It never falls back to a legacy answer: its declaration is the answer, and whatever it refuses is invalid.
+const declaredProduct = ({recipe, product, graph, validity, pending}) => {
+    let read
+    try {
+        read = readImageOutput({graph, declarationFor, product, productFor})
+    } catch (error) {
+        return answer({status: INVALID, error, validity})
+    }
+    if (read.status !== READY) {
+        return answer({status: INVALID, diagnostics: read.diagnostics, validity})
+    }
+    const result = described({recipe, product, description: read.description, validity})
+    return {...result, acquisition: pending(DEPENDENCIES, result)}
 }
 
 const heldAnswer = ({recipe, product, session, kind, terminal}) => {
@@ -188,3 +206,5 @@ const isComplete = graph =>
     !graph.diagnostics.some(({code}) => code === MISSING_SOURCE)
 
 const declarationFor = recipe => recipeType(recipe.type)?.imageOutput
+
+const productFor = (recipe, name) => recipeType(recipe.type)?.mapProducts?.[name]

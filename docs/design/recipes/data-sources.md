@@ -94,7 +94,10 @@ where a family still needs observation.
      band. [PyEO Alerts](../../recipes/pyeo-alerts.md) declares its 18 report bands (sample). Masking now describes
      Phenology from its declaration instead of observing its running image, which offered no bands, and exports PyEO
      with `sample` where its fallback applied `mean`;
-   - map-product types: LandTrendr, BAYTS Alerts, Change Alerts, and CCDC's `count`;
+   - map-product types: LandTrendr, BAYTS Alerts and Change Alerts. CCDC's `COUNT` is declared as a
+     configuration-only map product
+     ([declared products](output-products.md#map-product-identity)): one scalar `count`, never exported, whose
+     layer acquires only its dependencies' validity;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
      output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which

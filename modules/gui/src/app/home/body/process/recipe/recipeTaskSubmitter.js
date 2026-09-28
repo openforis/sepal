@@ -4,6 +4,7 @@ import {
     physicalDestinationCompatibility,
     VALID_SELECTION
 } from '#sepal/recipe/output/physicalDestinationCompatibility'
+import {isCanonicalDescription} from '#sepal/recipe/output/product'
 import {RECIPE_REF} from '#sepal/recipe/source/reference'
 import api from '~/apiRegistry'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
@@ -60,9 +61,13 @@ const fallbackPolicyForBand = (fallbackPolicies, name) => {
         : undefined
 }
 
-const describedRequirements = (recipe, {executionReference, output}, selection) => {
+const describedRequirements = (recipe, description, selection) => {
+    const {executionReference, output} = description
     if (executionReference?.type !== RECIPE_REF || executionReference?.id !== recipe.id) {
         throw new Error(`Resolved image output describes execution ${JSON.stringify(executionReference)}, not the submitted recipe ${recipe.id}`)
+    }
+    if (!isCanonicalDescription(description)) {
+        throw new Error(`Resolved image output describes the map product ${output.product.name} of recipe ${recipe.id}, not its image output`)
     }
     return physicalRequirements(output.bands, selection)
 }

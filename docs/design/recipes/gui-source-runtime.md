@@ -785,8 +785,13 @@ over its effective layer config: the type's defaults beneath what the layer save
 the editor all read the product from that one config, so none of them depends on the layer form having written its
 defaults yet. A value the type does not know is no product at all, answered `INVALID` rather than as the canonical
 output, and a type without map products shows `IMAGE_OUTPUT`. CCDC's layer shows `COUNT`. LandTrendr, Change
-Alerts and BAYTS Alerts name their mosaic and radar modes, and each keeps the configuration guard its layer had. Map
-products are answered by the legacy seam until they are declared.
+Alerts and BAYTS Alerts name their mosaic and radar modes, and each keeps the configuration guard its layer had.
+
+A product its type declares (`mapProducts` in the shared type, [map-product identity](output-products.md#map-product-identity))
+is described through the shared read, from the root's configuration alone, and acquires only `DEPENDENCIES`. Its
+description carries `output.product`, which the resolver attaches, and whatever it refuses - parameters it does not
+take, bands its declaration gets wrong, a provider failure - is `INVALID`, never a legacy answer. Only a product its
+type does not declare is answered by the legacy seam, from `mapProducts.bands`.
 
 On the wire, the preview, the band choices, the histogram and the distinct values all carry the same product
 arguments: the effective layer config without its visualization (`productArgs`). Every
@@ -877,7 +882,7 @@ migration.
 
 ```js
 getAvailableBands(recipe)                    // legacy answer: an undeclared type, or a declared wrapper over one
-mapProducts: {productOf(layerConfig), bands(recipe, product)}
+mapProducts: {defaults, productOf(layerConfig), bands(recipe, product)}  // bands: undeclared products only
 bandPresentation(recipe, product)            // display decoration of a declared type's bands
 getPreSetVisualizations(recipe, evidence)
 ```
@@ -895,8 +900,9 @@ presentation concern.
 - **Optical Mosaic** resolves synchronously from its model, and its presentation keeps the cursor's rounding.
 - **Asset recipe:** its declaration needs its own image and its asset observed, so its layer acquires them and draws
   once they arrive.
-- **CCDC:** its layer shows `COUNT`, answered by the seam, and needs only its dependencies completed. Where its
-  canonical output is read, through Masking or Slice, it needs its available bands observed.
+- **CCDC:** its layer shows `COUNT`, described from its declaration, and needs only its dependencies completed;
+  counting reads neither the segments nor their catalogue. Where its canonical output is read, through Masking or
+  Slice, it needs its available bands observed.
 - **Masking** inherits its source's answer, and so its status:
   - over an Optical Mosaic the session holds, it is `READY` at once;
   - over an asset, it needs evidence;

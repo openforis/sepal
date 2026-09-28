@@ -280,6 +280,18 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
         expect(state.submitted).toHaveLength(0)
     })
 
+    // A map product describes an image a layer shows, never what an export builds. The same description without its
+    // product identity exports, so the identity alone is what refuses it.
+    it('rejects a description of a map product, whose bands and policies would otherwise export', () => {
+        const count = resolved({bands: [band('count', 'mean')]})
+
+        expect(submitRecipe(outerRecipe(['count']), {imageOutputDescription: count})).toHaveLength(1)
+        expect(() => submitRecipe(outerRecipe(['count']), {
+            imageOutputDescription: {...count, output: {...count.output, product: {name: 'COUNT'}}}
+        })).toThrow(/map product COUNT/)
+        expect(state.submitted).toHaveLength(0)
+    })
+
     // Two authorities for one decision is the defect this milestone removes, so their coexistence is a
     // configuration mistake rather than a precedence question to answer silently.
     it('rejects a resolved description alongside a legacy policy', () => {
