@@ -2162,6 +2162,8 @@
               "label": "Cloud masking",
               "tooltip": "How aggressively to mask clouds, shadows and snow in Landsat and Sentinel-2 imagery before computing DI. Radar (Sentinel-1) is unaffected by clouds; PlanetScope is masked separately.",
               "OFF": "Off",
+              "LIGHT": "Light",
+              "LIGHT.tooltip": "Uses only pre-computed cloud masks (Landsat's QA band, Sentinel-2's Cloud Score+ band) - fastest option, recommended for on-the-fly preview to avoid timeouts.",
               "MODERATE": "Moderate",
               "AGGRESSIVE": "Aggressive"
             }
