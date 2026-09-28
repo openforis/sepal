@@ -126,27 +126,31 @@ func TestKeyboardInteractiveLoginsAskForThePassword(t *testing.T) {
 }
 
 func TestLoginsAreRefused(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
-	cases := map[string]func() (*libplugin.Upstream, error){
-		"wrong password": func() (*libplugin.Upstream, error) {
-			return gateway.router.password(aConnection("alice"), []byte("guess"))
-		},
-		"unauthorized key": func() (*libplugin.Upstream, error) {
-			return gateway.router.publicKey(aConnection("alice+funky-name"), aPublicKey(t).Marshal())
-		},
-		"username SEPAL cannot issue": func() (*libplugin.Upstream, error) {
-			return gateway.router.password(aConnection("../alice"), []byte("secret"))
-		},
-		"user without a SEPAL key": func() (*libplugin.Upstream, error) {
-			if err := os.Remove(filepath.Join(gateway.homeDir, "alice", ".ssh", "id_rsa")); err != nil {
+	cases := []struct {
+		name  string
+		login func(g *gateway) (*libplugin.Upstream, error)
+	}{
+		{"wrong password", func(g *gateway) (*libplugin.Upstream, error) {
+			return g.router.password(aConnection("alice"), []byte("guess"))
+		}},
+		{"unauthorized key", func(g *gateway) (*libplugin.Upstream, error) {
+			return g.router.publicKey(aConnection("alice+funky-name"), aPublicKey(t).Marshal())
+		}},
+		{"username SEPAL cannot issue", func(g *gateway) (*libplugin.Upstream, error) {
+			return g.router.password(aConnection("../alice"), []byte("secret"))
+		}},
+		{"user without a SEPAL key", func(g *gateway) (*libplugin.Upstream, error) {
+			if err := os.Remove(filepath.Join(g.homeDir, "alice", ".ssh", "id_rsa")); err != nil {
 				t.Fatal(err)
 			}
-			return gateway.router.password(aConnection("alice"), []byte("secret"))
-		},
+			return g.router.password(aConnection("alice"), []byte("secret"))
+		}},
 	}
-	for name, login := range cases {
-		t.Run(name, func(t *testing.T) {
-			if upstream, err := login(); err == nil {
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+
+			if upstream, err := c.login(gateway); err == nil {
 				t.Fatalf("login accepted with upstream %v", upstream)
 			}
 		})
