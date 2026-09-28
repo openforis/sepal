@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Set by the SSH front door when `user+instance` names no running instance of this user.
+if [ -n "${SEPAL_ROUTING_ERROR:-}" ]; then
+    printf '%s\n' "$SEPAL_ROUTING_ERROR" >&2
+    exit 1
+fi
 interactive="non-interactive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
     interactive="interactive"
