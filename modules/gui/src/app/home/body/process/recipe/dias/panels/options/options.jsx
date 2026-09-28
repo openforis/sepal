@@ -81,6 +81,7 @@ class _Options extends React.Component {
                 input={cloudMasking}
                 options={[
                     {value: 'OFF', label: msg('process.dias.panel.options.form.cloudMasking.OFF')},
+                    {value: 'LIGHT', label: msg('process.dias.panel.options.form.cloudMasking.LIGHT'), tooltip: msg('process.dias.panel.options.form.cloudMasking.LIGHT.tooltip')},
                     {value: 'MODERATE', label: msg('process.dias.panel.options.form.cloudMasking.MODERATE')},
                     {value: 'AGGRESSIVE', label: msg('process.dias.panel.options.form.cloudMasking.AGGRESSIVE')}
                 ]}
