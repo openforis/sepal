@@ -2,16 +2,14 @@ import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/bo
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
+import {IMAGE_OUTPUT} from '../legacyOutput'
+import {bandPresentation} from './bands'
 import {toMosaicRecipe} from './mosaicRecipe'
 
 // Registered on the recipe type, so it feeds the visualization properties
 // attached to exports - which only ever contain change bands.
-export const getPreSetVisualizations = recipe => {
-    const availableBands = getAvailableBands(recipe, 'changes')
-    return changeVisualizations(recipe.model.dates)
-        .filter(({bands}) => bands.every(band => availableBands[band]))
-}
+export const getPreSetVisualizations = recipe =>
+    changeVisualizations(recipe.model.dates)
 
 export const visualizationOptions = (recipe, visualizationType) =>
     visualizationType === 'mosaics'
@@ -19,12 +17,12 @@ export const visualizationOptions = (recipe, visualizationType) =>
         : changeVisualizationOptions(recipe)
 
 const changeVisualizationOptions = recipe => {
-    const availableBands = getAvailableBands(recipe, 'changes')
+    const presentation = bandPresentation(recipe, {name: IMAGE_OUTPUT})
     return [{
         label: msg('process.landTrendr.layers.imageLayer.preSets'),
         options: getPreSetVisualizations(recipe).map(visParams => {
             const band = visParams.bands[0]
-            return {value: band, label: availableBands[band].label, visParams}
+            return {value: band, label: presentation[band].label, visParams}
         })
     }]
 }

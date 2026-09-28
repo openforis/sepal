@@ -894,8 +894,8 @@ repeat the transformation's accepted input contract or source requirements.
 
 Providers answer from configuration, from an observation of their running image, from the catalogue their producer
 declares, or from their sources' descriptions.
-Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology and PyEO
-Alerts describe their bands from configuration. Several other alert products could describe their ordered names and
+Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
+Alerts and LandTrendr describe their bands from configuration. Several other alert products could describe their ordered names and
 scalar shape the same way, but have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
 
 1. an exact description from configuration requiring no observation;
@@ -934,7 +934,7 @@ matches execution. The execution comparison is a research gate below.
 | Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
 | Classification | class, optional class probability, regression and per-class probabilities | classification categories | shared declaration from classifier and legend | scalar |
 | Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
-| LandTrendr | change result | annual optical mosaic map product | fixed change bands plus fabricated mosaic recipe | scalar |
+| LandTrendr | change result | annual optical mosaic map product | shared declaration; mosaic by a fabricated recipe | scalar |
 | Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
 | Optical Mosaic | selected composite | internal optical collection | dataset/intersection/index/compose helpers | scalar |
 | Phenology | seasonality metrics and month composites | internal source collection | shared declaration | scalar |
@@ -952,15 +952,14 @@ matches execution. The execution comparison is a research gate below.
 
 ### One helper currently describes incompatible products
 
-LandTrendr returns change bands for one map mode, optical mosaic bands for another, and their union when no mode is
-provided. Retrieve offers only the change bands. Change Alerts and BAYTS similarly switch between algorithm output
-and source-collection mosaic products. CCDC's GUI helper exposes scalar `count`, while its custom asset export is the
+LandTrendr declares its change result as its canonical output; its annual mosaic is a separate map product still
+answered by its legacy entry. Change Alerts and BAYTS switch between algorithm output and source-collection mosaic
+products. CCDC declares scalar `count` as its `COUNT` map product, while its custom asset export is the
 array-valued Segments image.
 
-What a type returns for no mode at all differs between them, and each generic caller passes no mode: LandTrendr
-merges both products, BAYTS answers its alerts product, and Change Alerts answers its mosaic product. The merged
-answer is deliberate and documented in LandTrendr's helper; the other two are simply whichever branch the condition
-falls through to.
+What a type returns for no mode at all differs between them, and each generic caller passes no mode: BAYTS
+answers its alerts product, and Change Alerts answers its mosaic product - whichever branch the condition falls
+through to.
 
 The shared definition therefore keeps one canonical `imageOutput`; additional map products require explicit names.
 Callers must not ask for an unqualified union.
@@ -1065,7 +1064,8 @@ authority. Choosing either current side wholesale would preserve a different set
 
 The comparison also found useful stable declarations rather than only defects:
 
-- LandTrendr uses the same seven fixed change bands in GUI and EE; its annual mosaic branch is explicitly map-only.
+- LandTrendr's seven fixed change bands are its declaration, in the order execution builds them; its annual mosaic
+  branch is explicitly map-only.
 - Phenology's fixed metric and month band lists are its declaration. Execution omitted a month without observations
   and returned no bands when asked for none; it now masks such a month and returns every declared band.
 - Classification's optional bands follow from classifier capability and legend entries. Its declaration is the

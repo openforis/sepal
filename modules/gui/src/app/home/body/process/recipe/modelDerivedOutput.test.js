@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology and PyEO
-// Alerts through their real registrations, shared declarations, the common read and the generic Retrieve submission.
+// Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
+// Alerts and LandTrendr through their real registrations, shared declarations, the common read and the generic Retrieve submission.
 // Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -32,6 +32,7 @@ const {default: classification} = await import('./classification/classification'
 const {default: remapping} = await import('./remapping/remapping')
 const {default: phenology} = await import('./phenology/phenology')
 const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
+const {default: landTrendr} = await import('./landTrendr/landTrendr')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -40,7 +41,9 @@ const {retrieveTask: classificationTask} = await import('./classification/classi
 const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe')
 const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe')
 const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
-const {canPreview, displayTypes} = await import('./recipeOutput')
+const {retrieveTask: landTrendrTask} = await import('./landTrendr/landTrendrRecipe')
+const {canPreview, displayTypes, layerProduct, readRecipeOutput} = await import('./recipeOutput')
+const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
 
@@ -52,6 +55,7 @@ addRecipeType(classification())
 addRecipeType(remapping())
 addRecipeType(phenology())
 addRecipeType(pyeoAlerts())
+addRecipeType(landTrendr())
 
 beforeEach(() => {
     submitted.length = 0
@@ -371,6 +375,55 @@ describe('a PyEO alerts recipe', () => {
     })
 })
 
+describe('a LandTrendr', () => {
+    const CHANGE_BANDS = ['yod', 'mag', 'dur', 'preval', 'postval', 'rmse', 'sig']
+
+    it('is described with its change result, while the classification its collection names is not even loaded', () => {
+        const {output} = read(landTrendrOf({classification: 'classification-1'}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(CHANGE_BANDS)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with its labels and cursor precision, and offers its change styles', () => {
+        const recipe = landTrendrOf()
+        const {output} = read(recipe)
+
+        expect(output.presentation.yod.label).toBe('process.landTrendr.bands.yod')
+        expect(displayTypes(output)).toMatchObject({yod: {precision: 'int'}, dur: {precision: 'int'}, mag: {precision: 'float'}})
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['mag', 'yod', 'dur', 'preval', 'postval', 'rmse', 'sig'])
+    })
+
+    it('exports the bands selected in the order execution builds them, sampling its years and averaging the rest', () => {
+        retrieve(read(landTrendrOf()), 'GEE', landTrendrTask, {bands: ['sig', 'dur', 'mag', 'yod']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['yod', 'mag', 'dur', 'sig']},
+            {yod: 'sample', mag: 'mean', dur: 'sample', sig: 'mean'}
+        ]])
+    })
+
+    // The annual context mosaic is another product, still answered by its legacy entry until it is declared.
+    it('shows its annual mosaic as before, from the optical bands of that mosaic', () => {
+        const recipe = landTrendrOf()
+        const product = layerProduct(recipe, {visualizationType: 'mosaics', year: 2020})
+
+        const output = readRecipeOutput({
+            recipe,
+            product,
+            graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+            heldFor: () => null
+        })
+
+        expect(product).toEqual({name: 'ANNUAL_MOSAIC', parameters: {year: 2020}})
+        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['red', 'nir', 'ndvi']))
+        expect(output.bands.map(({name}) => name)).not.toContain('yod')
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
     ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
@@ -379,7 +432,8 @@ describe.each([
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
     ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask],
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
-    ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask]
+    ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
+    ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -521,6 +575,19 @@ const pyeoAlertsOf = ({classification} = {}) => ({
         aoi: AOI,
         dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
         sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2], ...(classification && {classification})}
+    }
+})
+
+const landTrendrOf = ({classification} = {}) => ({
+    id: ID,
+    type: 'LANDTRENDR',
+    title: 'Disturbance',
+    model: {
+        aoi: AOI,
+        dates: {startYear: 2000, endYear: 2024},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr', ...(classification && {classification})},
+        options: {corrections: ['SR']},
+        landTrendrOptions: {changeDirection: 'LOSS'}
     }
 })
 

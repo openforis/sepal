@@ -7,6 +7,7 @@ import {toMosaicRecipe} from './mosaicRecipe'
 const typeInt = {precision: 'int'}
 const typeFloat = {precision: 'float'}
 
+// How the change result's bands are shown; which of them exist is its declaration's to say.
 const changeBands = () => ({
     yod: {dataType: typeInt, label: msg('process.landTrendr.bands.yod')},
     mag: {dataType: typeFloat, label: msg('process.landTrendr.bands.mag')},
@@ -17,20 +18,13 @@ const changeBands = () => ({
     sig: {dataType: typeFloat, label: msg('process.landTrendr.bands.sig')}
 })
 
+export const bandPresentation = (_recipe, {name} = {}) =>
+    name === IMAGE_OUTPUT ? changeBands() : {}
+
 const mosaicBands = recipe => opticalBands(toMosaicRecipe(recipe))
 
-// Without a visualizationType the caller is asking what the layer might show at
-// all - recipeImageLayer does this to build its dataTypes lookup - so it needs
-// both modes, not whichever one happens to be the default.
-export const getAvailableBands = (recipe, visualizationType) => {
-    switch (visualizationType) {
-        case 'changes': return changeBands()
-        case 'mosaics': return mosaicBands(recipe)
-        default: return {...changeBands(), ...mosaicBands(recipe)}
-    }
-}
-
-// The change map is the output; a layer may instead show the annual mosaic it was fitted from.
+// The change map is the output; a layer may instead show the annual mosaic it was fitted from, which has not yet
+// been declared and is answered here.
 export const mapProducts = {
     defaults: {visualizationType: 'changes'},
     productOf: ({visualizationType, year}) => {
@@ -40,21 +34,13 @@ export const mapProducts = {
             default: return null
         }
     },
-    bands: (recipe, {name}) => {
-        switch (name) {
-            case IMAGE_OUTPUT: return getAvailableBands(recipe, 'changes')
-            case 'ANNUAL_MOSAIC': return getAvailableBands(recipe, 'mosaics')
-            default: return undefined
-        }
-    }
+    bands: (recipe, {name}) =>
+        name === 'ANNUAL_MOSAIC' ? mosaicBands(recipe) : undefined
 }
 
 // Mosaic bands are deliberately absent: they're plain annual composites,
 // unrelated to the per-pixel change segment the change bands describe, and an
 // Optical Mosaic recipe is the right way to export that imagery.
-export const getGroupedBandOptions = () => {
-    const availableBands = changeBands()
-    return [
-        Object.keys(availableBands).map(band => ({value: band, ...availableBands[band]}))
-    ]
-}
+export const groupedBandPresentation = () => [
+    Object.entries(changeBands()).map(([value, entry]) => ({value, ...entry}))
+]

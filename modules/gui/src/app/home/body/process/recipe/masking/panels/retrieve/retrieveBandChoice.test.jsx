@@ -642,7 +642,10 @@ describe.each([
     ['a classification', () => CLASSIFICATION, 'probability_2', 'mean'],
     ['a remapping', () => REMAPPING, 'class', 'mode'],
     ['a phenology', () => PHENOLOGY, 'slope_1', 'mean'],
-    ['a PyEO alerts recipe', () => PYEO_ALERTS, 'total_changes', 'sample']
+    ['a PyEO alerts recipe', () => PYEO_ALERTS, 'total_changes', 'sample'],
+    ['a LandTrendr', () => LANDTRENDR, 'yod', 'sample'],
+    ['a LandTrendr', () => LANDTRENDR, 'dur', 'sample'],
+    ['a LandTrendr', () => LANDTRENDR, 'mag', 'mean']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -926,6 +929,18 @@ const PYEO_ALERTS = {
         aoi: AOI,
         dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
         sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
+    }
+}
+
+const LANDTRENDR = {
+    id: 'landtrendr-1',
+    type: 'LANDTRENDR',
+    model: {
+        aoi: AOI,
+        dates: {startYear: 2000, endYear: 2024},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'},
+        options: {corrections: ['SR']},
+        landTrendrOptions: {changeDirection: 'LOSS'}
     }
 }
 

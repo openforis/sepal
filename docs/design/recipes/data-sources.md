@@ -17,8 +17,8 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, CCDC, CCDC Slice, Class Change, Classification, Index Change, Masking, Optical Mosaic, Phenology, PyEO
-Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+Only Asset, CCDC, CCDC Slice, Class Change, Classification, Index Change, LandTrendr, Masking, Optical Mosaic,
+Phenology, PyEO Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -97,7 +97,12 @@ where a family still needs observation.
    - map-product types: LandTrendr, BAYTS Alerts and Change Alerts. CCDC's `COUNT` is declared as a
      configuration-only map product
      ([declared products](output-products.md#map-product-identity)): one scalar `count`, never exported, whose
-     layer acquires only its dependencies' validity;
+     layer acquires only its dependencies' validity. LandTrendr's canonical change result is declared: `yod`, `mag`,
+     `dur`, `preval`, `postval`, `rmse` and `sig`, all scalar, with `sample` for `yod` and `dur` and `mean` for the
+     rest, and no encoding. Masking over LandTrendr inherits those policies, so it exports `yod` and `dur` with
+     `sample` where its fallback applied `mean`, and Task's asset export resolves LandTrendr as a declared root and
+     requires its dependencies to be valid. Its annual mosaic is still answered by its legacy entry: its `year`
+     parameter and its delegation to Optical Mosaic are pending;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
      output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which
@@ -190,6 +195,12 @@ In order, each independently mergeable:
 4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
+   Include band-presentation inheritance: producers supply labels and optional descriptions through GUI
+   presentation, and wrappers that preserve a band's meaning, such as Masking, preserve that presentation.
+   Masking Retrieve currently falls back to raw names such as LandTrendr's `yod`. Resolve presentation through
+   the source relationship rather than adding producer-specific cases to Masking; transformations that change
+   a band's meaning supply their own presentation. Translation stays in the GUI, and presentation never decides
+   which bands exist or their physical or export properties.
 5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
 6. **Caller-authorized closure reads and coherent execution**
    ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
@@ -202,6 +213,12 @@ is a separate small packet.
 Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
 its origin has not been investigated, and whether it is a regression is not established. Investigate the error
 presentation separately.
+
+**CCDC breakpoint selection while switching data sets.** The Sources panel clears selected breakpoint bands
+when the data-set selection becomes empty: `Form.Buttons` prunes against the empty options even while disabled.
+Preserve the selection through that incomplete editing state, then reconcile against the next configured
+data sets. Switching Landsat 8 → none → Sentinel-2 must retain NDVI; a band unsupported by the new data sets
+should be removed once their options are established. Applying with no data sets must remain blocked.
 
 **Default colors for large categorical legends.** Replace the shared default-color overflow behavior, which
 assigns the last of 20 palette colors to every further entry. Class Change can need many more colors: seven

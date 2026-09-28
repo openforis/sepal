@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands, mapProducts} from './bands'
+import {bandPresentation, mapProducts} from './bands'
 import {defaultModel} from './landTrendrRecipe'
 import {LandTrendrToolbar} from './panels/landTrendrToolbar'
 import {getPreSetVisualizations} from './visualizations'
@@ -59,7 +59,7 @@ export default () => ({
         recipe: LandTrendr
     },
     getDateRange,
-    getAvailableBands,
     mapProducts,
+    bandPresentation,
     getPreSetVisualizations
 })

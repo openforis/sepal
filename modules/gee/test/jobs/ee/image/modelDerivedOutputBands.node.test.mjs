@@ -310,6 +310,24 @@ for (const recipe of [
     })
 }
 
+// LandTrendr's segmentation is not modelled here; what it builds is checked against live Earth Engine
+// (verify/landTrendrOutputBands.mjs). A layer's request names a mode and no selection, which the producer must take.
+describe('LandTrendr', () => {
+    const landTrendr = {
+        id: 'landtrendr-1',
+        type: 'LANDTRENDR',
+        model: {dates: {startYear: 2015, endYear: 2020}, sources: {index: 'nbr'}, landTrendrOptions: {}}
+    }
+
+    for (const [asked, args] of [['for nothing', undefined], ['for its changes by mode alone', {visualizationType: 'changes'}]]) {
+        inOperation(`asked ${asked}, says it can be asked for exactly the bands it declares`, async () => {
+            const catalogue = await firstValueFrom(imageFactory(landTrendr, args).getBands$())
+
+            assert.deepEqual(catalogue, declared(landTrendr).map(({name}) => name))
+        })
+    }
+})
+
 // Counting what segmentation would be fitted to needs neither segmentation nor the catalogue of measures, so the
 // classification the collection would carry is never read: this operation's reader refuses every recipe.
 describe('CCDC showing its count', () => {

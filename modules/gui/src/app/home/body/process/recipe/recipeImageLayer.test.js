@@ -64,7 +64,7 @@ const {productArgs} = await import('./recipeOutput')
 beforeEach(() => {
     state.constructed = []
     availableBandsByType.SYNTHETIC = {ndvi: {}, evi: {}}
-    availableBandsByType.LANDTRENDR = {ndvi: {}}
+    availableBandsByType.CHANGE_ALERTS = {ndvi: {}}
 })
 
 const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
@@ -171,7 +171,7 @@ describe('the render-time guard', () => {
     // is going to reconcile.
     it('stands down for a self-managed recipe type', () => {
         const {instance} = build({
-            recipe: recipeOf({type: 'LANDTRENDR', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
+            recipe: recipeOf({type: 'CHANGE_ALERTS', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
             visParams: {id: 'gone', bands: ['gone']}
         })
 
@@ -199,7 +199,7 @@ describe('the render-time guard', () => {
     describe('a recipe with no bands at all', () => {
         beforeEach(() => {
             availableBandsByType.SYNTHETIC = {}
-            availableBandsByType.LANDTRENDR = {}
+            availableBandsByType.CHANGE_ALERTS = {}
         })
 
         it('gets no layer', () => {
@@ -215,7 +215,7 @@ describe('the render-time guard', () => {
 
         it('gets no layer even when it manages its own visualizations', () => {
             const {instance} = build({
-                recipe: recipeOf({type: 'LANDTRENDR', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
+                recipe: recipeOf({type: 'CHANGE_ALERTS', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
                 visParams: {id: 'v1', bands: ['ndvi']}
             })
 
@@ -477,7 +477,7 @@ describe('visualization reconciliation', () => {
     // prove nothing here, because nothing writes over one of those any more.
     it('leaves a self-managed recipe type to make its own first selection', () => {
         const {instance, updates, didUpdate} = build({
-            recipe: recipeOf({type: 'LANDTRENDR', userDefined: [{id: 'v1', bands: ['ndvi']}]})
+            recipe: recipeOf({type: 'CHANGE_ALERTS', userDefined: [{id: 'v1', bands: ['ndvi']}]})
         })
 
         instance.componentDidMount()

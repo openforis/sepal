@@ -2,7 +2,7 @@ import {vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: id => id}))
 
-const {getAvailableBands, getGroupedBandOptions} = await import('./bands')
+const {bandPresentation, groupedBandPresentation, mapProducts} = await import('./bands')
 
 const CHANGE_BANDS = ['yod', 'mag', 'dur', 'preval', 'postval', 'rmse', 'sig']
 
@@ -14,29 +14,30 @@ const recipe = {
     }
 }
 
-it('exposes only the change bands in changes mode', () => {
-    expect(Object.keys(getAvailableBands(recipe, 'changes'))).toEqual(CHANGE_BANDS)
+const ANNUAL_MOSAIC = mapProducts.productOf({visualizationType: 'mosaics', year: 2020})
+
+it('presents the change bands of its output, with their labels and cursor precision', () => {
+    const presentation = bandPresentation(recipe, {name: 'IMAGE_OUTPUT'})
+
+    expect(Object.keys(presentation)).toEqual(CHANGE_BANDS)
+    expect(presentation.yod).toEqual({dataType: {precision: 'int'}, label: 'process.landTrendr.bands.yod'})
+    expect(presentation.mag.dataType).toEqual({precision: 'float'})
 })
 
-it('exposes the optical mosaic bands in mosaics mode', () => {
-    const bands = Object.keys(getAvailableBands(recipe, 'mosaics'))
+it('names the annual mosaic a layer shows with its year, and answers its optical bands', () => {
+    expect(ANNUAL_MOSAIC).toEqual({name: 'ANNUAL_MOSAIC', parameters: {year: 2020}})
+
+    const bands = Object.keys(mapProducts.bands(recipe, ANNUAL_MOSAIC))
     expect(bands).toContain('ndvi')
     expect(bands).toContain('red')
+    expect(bands).not.toContain('yod')
 })
 
-it('exposes both sets when no visualization type is given', () => {
-    const bands = Object.keys(getAvailableBands(recipe))
-    expect(bands).toContain('yod')
-    expect(bands).toContain('ndvi')
-})
-
-it('no longer exposes the start and end RGB composites', () => {
-    const bands = Object.keys(getAvailableBands(recipe))
-    expect(bands).not.toContain('startRed')
-    expect(bands).not.toContain('endBlue')
+it('no longer answers its output from the legacy entry, which its declaration does', () => {
+    expect(mapProducts.bands(recipe, {name: 'IMAGE_OUTPUT'})).toBeUndefined()
 })
 
 it('offers only the change bands for retrieval', () => {
-    const bands = getGroupedBandOptions().flat().map(({value}) => value)
+    const bands = groupedBandPresentation().flat().map(({value}) => value)
     expect(bands).toEqual(CHANGE_BANDS)
 })
