@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -14,60 +15,83 @@ import (
 
 const (
 	menuAddress = "127.0.0.1:2222"
-	sandboxPort = "222"
 	sandboxUser = "sepal-user"
 )
 
+// sshpiper logs in upstream for every public key the router routes, before the client proves it holds the key. A
+// client normally needs one; the limit keeps a client holding only a user's public key from making the gateway log in
+// upstream as that user again and again.
+const maxKeyRoutingsPerConnection = 2
+
 // Well past sshpiperd's login grace time (30s), after which a connection that has not started its pipe is closed.
-const pendingOpenLifetime = 5 * time.Minute
+const connectionStateLifetime = 5 * time.Minute
+
+const sandboxReachTimeout = 3 * time.Second
 
 var errRefused = errors.New("login refused")
 
 // router decides, per SSH connection, whether the client is who they say they are and where the connection goes.
 type router struct {
-	users   *userModule
-	worker  *workerModule
-	homeDir string
-	now     func() time.Time
+	users       *userModule
+	worker      *workerModule
+	homeDir     string
+	sandboxPort string
+	now         func() time.Time
 
-	mu sync.Mutex
-	// Sandbox sessions to mark opened once their connection's pipe starts, by connection. sshpiper routes a
-	// public key before the client proves it holds the key, so routing alone must not extend a session.
-	pendingOpens map[string]pendingOpen
+	mu          sync.Mutex
+	connections map[string]*connectionState
+}
+
+// connectionState is what the router remembers of a connection until its pipe starts.
+type connectionState struct {
+	seenAt      time.Time
+	keyRoutings int
+	// Routing alone must not extend a session: sshpiper routes a public key before the client proves it holds it.
+	pendingOpen *pendingOpen
 }
 
 type pendingOpen struct {
 	username  string
 	sessionID string
-	routedAt  time.Time
 }
 
 func newRouter(users *userModule, worker *workerModule, homeDir string) *router {
-	return &router{users: users, worker: worker, homeDir: homeDir, now: time.Now, pendingOpens: map[string]pendingOpen{}}
+	return &router{
+		users:       users,
+		worker:      worker,
+		homeDir:     homeDir,
+		sandboxPort: "222",
+		now:         time.Now,
+		connections: map[string]*connectionState{},
+	}
 }
 
 func (r *router) password(conn libplugin.ConnMetadata, password []byte) (*libplugin.Upstream, error) {
-	login, err := r.login(conn)
+	requested, err := r.login(conn)
 	if err != nil {
 		return nil, err
 	}
-	ok, err := r.users.checkPassword(login.username, password)
-	if err := r.authenticated(conn, ok, err); err != nil {
+	ok, err := r.users.checkPassword(requested.username, password)
+	if err := r.authenticated(conn, "password", ok, err); err != nil {
 		return nil, err
 	}
-	return r.upstream(conn, login)
+	return r.upstream(conn, requested)
 }
 
 func (r *router) publicKey(conn libplugin.ConnMetadata, key []byte) (*libplugin.Upstream, error) {
-	login, err := r.login(conn)
+	requested, err := r.login(conn)
 	if err != nil {
 		return nil, err
 	}
-	ok, err := r.users.hasKey(login.username, key)
-	if err := r.authenticated(conn, ok, err); err != nil {
+	ok, err := r.users.hasKey(requested.username, key)
+	if err := r.authenticated(conn, "publickey", ok, err); err != nil {
 		return nil, err
 	}
-	return r.upstream(conn, login)
+	if !r.countKeyRouting(conn.UniqueID()) {
+		slog.Warn("login refused: too many public keys routed on one connection", "login", conn.User(), "client", conn.RemoteAddr())
+		return nil, errRefused
+	}
+	return r.upstream(conn, requested)
 }
 
 func (r *router) keyboardInteractive(conn libplugin.ConnMetadata, challenge libplugin.KeyboardInteractiveChallenge) (*libplugin.Upstream, error) {
@@ -79,10 +103,11 @@ func (r *router) keyboardInteractive(conn libplugin.ConnMetadata, challenge libp
 }
 
 func (r *router) pipeStart(conn libplugin.ConnMetadata) {
-	open, ok := r.takePendingOpen(conn.UniqueID())
-	if !ok {
+	state := r.forgetConnection(conn.UniqueID())
+	if state == nil || state.pendingOpen == nil {
 		return
 	}
+	open := state.pendingOpen
 	if err := r.worker.opened(open.username, open.sessionID); err != nil {
 		slog.Warn("cannot mark the session opened", "user", open.username, "session", open.sessionID, "error", err)
 	}
@@ -97,52 +122,65 @@ func (r *router) upstreamAuthFailure(conn libplugin.ConnMetadata, method string,
 }
 
 func (r *router) login(conn libplugin.ConnMetadata) (login, error) {
-	login, ok := parseLogin(conn.User())
+	requested, ok := parseLogin(conn.User())
 	if !ok {
 		slog.Info("login refused: not a SEPAL username", "login", conn.User(), "client", conn.RemoteAddr())
-		return login, errRefused
+		return requested, errRefused
 	}
-	return login, nil
+	return requested, nil
 }
 
-func (r *router) authenticated(conn libplugin.ConnMetadata, ok bool, err error) error {
+func (r *router) authenticated(conn libplugin.ConnMetadata, method string, ok bool, err error) error {
 	if err != nil {
-		slog.Error("cannot authenticate", "login", conn.User(), "client", conn.RemoteAddr(), "error", err)
+		slog.Error("cannot authenticate", "login", conn.User(), "client", conn.RemoteAddr(), "method", method, "error", err)
 		return err
 	}
 	if !ok {
+		slog.Info("login refused", "login", conn.User(), "client", conn.RemoteAddr(), "method", method)
 		return errRefused
 	}
 	return nil
 }
 
-func (r *router) upstream(conn libplugin.ConnMetadata, login login) (*libplugin.Upstream, error) {
-	sepalKey, err := os.ReadFile(filepath.Join(r.homeDir, login.username, ".ssh", "id_rsa"))
+func (r *router) upstream(conn libplugin.ConnMetadata, requested login) (*libplugin.Upstream, error) {
+	sepalKey, err := os.ReadFile(filepath.Join(r.homeDir, requested.username, ".ssh", "id_rsa"))
 	if err != nil {
-		slog.Error("cannot read the user's SEPAL key", "user", login.username, "error", err)
+		slog.Error("cannot read the user's SEPAL key", "user", requested.username, "error", err)
 		return nil, err
 	}
-	if login.target == "" {
-		return menuUpstream(login.username, sepalKey, ""), nil
+	if requested.target == "" {
+		slog.Info("routing to the menu", "user", requested.username, "connection", conn.UniqueID(), "client", conn.RemoteAddr())
+		return menuUpstream(requested.username, sepalKey, ""), nil
 	}
-	sessions, err := r.worker.sessions(login.username)
+	sessions, err := r.worker.sessions(requested.username)
 	if err != nil {
-		slog.Error("cannot list the user's sessions", "user", login.username, "error", err)
+		slog.Error("cannot list the user's sessions", "user", requested.username, "error", err)
 		return nil, err
 	}
-	route := chooseRoute(login.username, login.target, sessions)
-	if route.session == nil {
-		slog.Info("routing to the menu", "user", login.username, "target", login.target, "client", conn.RemoteAddr(), "reason", route.routingError)
-		return menuUpstream(login.username, sepalKey, route.routingError), nil
+	chosen := chooseRoute(requested.username, requested.target, sessions)
+	if chosen.session == nil {
+		return r.menuWithReason(conn, requested, sepalKey, chosen.routingError), nil
 	}
-	slog.Info("routing to a sandbox", "user", login.username, "target", login.target, "session", route.session.ID,
-		"host", route.session.Host, "connection", conn.UniqueID(), "client", conn.RemoteAddr())
-	r.addPendingOpen(conn.UniqueID(), pendingOpen{username: login.username, sessionID: route.session.ID, routedAt: r.now()})
+	sandbox := net.JoinHostPort(chosen.session.Host, r.sandboxPort)
+	// sshpiper reports a sandbox it cannot reach as a failed login, which would send the user on to a password prompt.
+	if !reachable(sandbox) {
+		reason := fmt.Sprintf("Instance %s is not reachable right now. Try again in a moment.", requested.target)
+		return r.menuWithReason(conn, requested, sepalKey, reason), nil
+	}
+	slog.Info("routing to a sandbox", "user", requested.username, "target", requested.target, "session", chosen.session.ID,
+		"host", chosen.session.Host, "connection", conn.UniqueID(), "client", conn.RemoteAddr())
+	r.expectPipe(conn.UniqueID(), &pendingOpen{username: requested.username, sessionID: chosen.session.ID})
 	return &libplugin.Upstream{
-		Uri:      "tcp://" + net.JoinHostPort(route.session.Host, sandboxPort),
+		Uri:      "tcp://" + sandbox,
 		UserName: sandboxUser,
 		Auth:     libplugin.CreatePrivateKeyAuth(sepalKey),
 	}, nil
+}
+
+func (r *router) menuWithReason(conn libplugin.ConnMetadata, requested login, sepalKey []byte, reason string) *libplugin.Upstream {
+	slog.Info("routing to the menu", "user", requested.username, "target", requested.target, "connection", conn.UniqueID(),
+		"client", conn.RemoteAddr(), "reason", reason)
+	return menuUpstream(requested.username, sepalKey, reason)
 }
 
 func menuUpstream(username string, sepalKey []byte, routingError string) *libplugin.Upstream {
@@ -157,21 +195,49 @@ func menuUpstream(username string, sepalKey []byte, routingError string) *libplu
 	return upstream
 }
 
-func (r *router) addPendingOpen(connection string, open pendingOpen) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for id, pending := range r.pendingOpens {
-		if open.routedAt.Sub(pending.routedAt) > pendingOpenLifetime {
-			delete(r.pendingOpens, id)
-		}
+func reachable(address string) bool {
+	connection, err := net.DialTimeout("tcp", address, sandboxReachTimeout)
+	if err != nil {
+		return false
 	}
-	r.pendingOpens[connection] = open
+	_ = connection.Close()
+	return true
 }
 
-func (r *router) takePendingOpen(connection string) (pendingOpen, bool) {
+func (r *router) countKeyRouting(connection string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	open, ok := r.pendingOpens[connection]
-	delete(r.pendingOpens, connection)
-	return open, ok
+	state := r.connectionState(connection)
+	state.keyRoutings++
+	return state.keyRoutings <= maxKeyRoutingsPerConnection
+}
+
+func (r *router) expectPipe(connection string, open *pendingOpen) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.connectionState(connection).pendingOpen = open
+}
+
+func (r *router) forgetConnection(connection string) *connectionState {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	state := r.connections[connection]
+	delete(r.connections, connection)
+	return state
+}
+
+// connectionState must be called with mu held. Connections that never start their pipe are dropped as new ones arrive.
+func (r *router) connectionState(connection string) *connectionState {
+	if state, ok := r.connections[connection]; ok {
+		return state
+	}
+	now := r.now()
+	for id, state := range r.connections {
+		if now.Sub(state.seenAt) > connectionStateLifetime {
+			delete(r.connections, id)
+		}
+	}
+	state := &connectionState{seenAt: now}
+	r.connections[connection] = state
+	return state
 }

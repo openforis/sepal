@@ -73,6 +73,12 @@ type fakeWorker struct {
 	opened       []string
 }
 
+func (f *fakeWorker) addSession(username string, s session) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reports[username] = append(f.reports[username], s)
+}
+
 func (f *fakeWorker) openedSessions() []string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -87,7 +93,10 @@ func (f *fakeWorker) handler() http.Handler {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
-		report := map[string]any{"sessions": sessionMaps(username, f.reports[username]), "instanceTypes": []any{}}
+		f.mu.Lock()
+		sessions := f.reports[username]
+		f.mu.Unlock()
+		report := map[string]any{"sessions": sessionMaps(username, sessions), "instanceTypes": []any{}}
 		_ = json.NewEncoder(w).Encode(report)
 	})
 	mux.HandleFunc("POST /sessions/session/{id}/opened", func(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +113,8 @@ func (f *fakeWorker) handler() http.Handler {
 }
 
 func (f *fakeWorker) owns(r *http.Request, sessionID string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	for username, sessions := range f.reports {
 		for _, s := range sessions {
 			if s.ID == sessionID {

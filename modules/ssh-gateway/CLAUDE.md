@@ -25,9 +25,11 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
   - no instance named → the internal sshd (menu) on `127.0.0.1:2222` as the user;
   - exactly one ACTIVE session of the user with that name (worker `GET /sessions/<username>/report`) →
     `<session.host>:222` as `sepal-user`;
-  - otherwise → the menu with `SEPAL_ROUTING_ERROR` set; `script/ssh-bootstrap` prints it and exits.
-- A direct connection fires the one-shot `POST /sessions/session/:id/opened` when its pipe starts — not while
-  routing, because sshpiper routes a public key before the client proves it holds the key.
+  - otherwise, or when that sandbox's port 222 does not answer → the menu with `SEPAL_ROUTING_ERROR` set;
+    `script/ssh-bootstrap` prints it and exits.
+- sshpiper routes a public key, and logs in upstream with it, before the client proves it holds the key. So a direct
+  connection fires the one-shot `POST /sessions/session/:id/opened` only when its pipe starts, and one connection
+  routes at most two public keys.
 - **Internal sshd**: `127.0.0.1:2222`, public keys only (only sshpiperd reaches it, with the SEPAL key),
   `DisableForwarding yes`, `ForceCommand ssh-bootstrap`. It sees every login from 127.0.0.1; the router logs
   client addresses.

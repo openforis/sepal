@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,16 +26,50 @@ func TestALoginWithoutAnInstanceGoesToTheMenu(t *testing.T) {
 }
 
 func TestALoginNamingARunningInstanceGoesToItsSandbox(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+	gateway := aGateway(t)
+	funky := gateway.addSession("s-1", "funky-name", "ACTIVE")
 
 	upstream, err := gateway.router.publicKey(aConnection("alice+funky-name"), gateway.userKey.Marshal())
 
-	assertUpstream(t, upstream, err, "tcp://10.0.0.1:222", "sepal-user", gateway.sepalKey)
+	assertUpstream(t, upstream, err, "tcp://"+net.JoinHostPort(funky.Host, gateway.sandboxPort), "sepal-user", gateway.sepalKey)
+}
+
+func TestALoginNamingAnUnreachableInstanceGoesToTheMenuWithTheReason(t *testing.T) {
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
+	gateway.stopSandboxes()
+
+	upstream, err := gateway.router.publicKey(aConnection("alice+funky-name"), gateway.userKey.Marshal())
+
+	assertUpstream(t, upstream, err, "tcp://127.0.0.1:2222", "alice", gateway.sepalKey)
+	assertMenuReason(t, upstream, "Instance funky-name is not reachable right now. Try again in a moment.")
+}
+
+// sshpiper logs in upstream for each public key it routes, before the client proves it holds the key: one connection
+// holding only a user's public key could otherwise make it log in upstream again and again.
+func TestAConnectionRoutesAtMostTwoPublicKeys(t *testing.T) {
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
+	connection := aConnection("alice+funky-name")
+	for _, user := range []string{"alice+funky-name", "Alice+funky-name"} {
+		connection.user = user
+		if _, err := gateway.router.publicKey(connection, gateway.userKey.Marshal()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	connection.user = "alice+Funky-name"
+
+	_, err := gateway.router.publicKey(connection, gateway.userKey.Marshal())
+
+	if err == nil {
+		t.Fatal("a third public key was routed")
+	}
 }
 
 // A client asks whether a key would be accepted before proving it holds the key; sshpiper routes on the question.
 func TestTheSandboxIsOnlyMarkedOpenedOnceTheConnectionIsEstablished(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
 	connection := aConnection("alice+funky-name")
 	_, err := gateway.router.publicKey(connection, gateway.userKey.Marshal())
 	if err != nil {
@@ -52,7 +87,8 @@ func TestTheSandboxIsOnlyMarkedOpenedOnceTheConnectionIsEstablished(t *testing.T
 }
 
 func TestAMenuLoginMarksNothingOpened(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
 	connection := aConnection("alice")
 	if _, err := gateway.router.password(connection, []byte("secret")); err != nil {
 		t.Fatal(err)
@@ -67,12 +103,13 @@ func TestAMenuLoginMarksNothingOpened(t *testing.T) {
 
 // sshpiperd closes a connection that has not started its pipe within its login grace time.
 func TestARoutingDecisionIsForgottenOnceItsLoginCanNoLongerComplete(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
 	abandoned := aConnection("alice+funky-name")
 	if _, err := gateway.router.publicKey(abandoned, gateway.userKey.Marshal()); err != nil {
 		t.Fatal(err)
 	}
-	gateway.clock = gateway.clock.Add(pendingOpenLifetime + time.Second)
+	gateway.clock = gateway.clock.Add(connectionStateLifetime + time.Second)
 	if _, err := gateway.router.publicKey(aConnection("alice+funky-name"), gateway.userKey.Marshal()); err != nil {
 		t.Fatal(err)
 	}
@@ -85,19 +122,18 @@ func TestARoutingDecisionIsForgottenOnceItsLoginCanNoLongerComplete(t *testing.T
 }
 
 func TestALoginNamingNoRunningInstanceGoesToTheMenuWithTheReason(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "brave-otter", "ACTIVE"))
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "brave-otter", "ACTIVE")
 
 	upstream, err := gateway.router.password(aConnection("alice+funky-name"), []byte("secret"))
 
 	assertUpstream(t, upstream, err, "tcp://127.0.0.1:2222", "alice", gateway.sepalKey)
-	want := "No running instance named funky-name. Your instances: brave-otter"
-	if upstream.Env["SEPAL_ROUTING_ERROR"] != want {
-		t.Errorf("SEPAL_ROUTING_ERROR = %q; want %q", upstream.Env["SEPAL_ROUTING_ERROR"], want)
-	}
+	assertMenuReason(t, upstream, "No running instance named funky-name. Your instances: brave-otter")
 }
 
 func TestALoginNeverReachesAnotherUsersInstance(t *testing.T) {
-	gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+	gateway := aGateway(t)
+	gateway.addSession("s-1", "funky-name", "ACTIVE")
 	gateway.addUser("bob")
 
 	upstream, err := gateway.router.password(aConnection("bob+funky-name"), []byte("secret"))
@@ -148,7 +184,8 @@ func TestLoginsAreRefused(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			gateway := aGateway(t, aSession("s-1", "funky-name", "ACTIVE"))
+			gateway := aGateway(t)
+			gateway.addSession("s-1", "funky-name", "ACTIVE")
 
 			if upstream, err := c.login(gateway); err == nil {
 				t.Fatalf("login accepted with upstream %v", upstream)
@@ -176,24 +213,34 @@ func TestLoginsNamingAnInstanceAreRefusedWhenTheWorkerIsDown(t *testing.T) {
 }
 
 type gateway struct {
-	router   *router
-	worker   *fakeWorker
-	homeDir  string
-	sepalKey []byte
-	userKey  ssh.PublicKey
-	keys     map[string][]ssh.PublicKey
-	clock    time.Time
+	router      *router
+	worker      *fakeWorker
+	sandboxes   net.Listener
+	sandboxPort string
+	homeDir     string
+	sepalKey    []byte
+	userKey     ssh.PublicKey
+	keys        map[string][]ssh.PublicKey
+	clock       time.Time
 }
 
-// aGateway has alice, with password "secret", her SEPAL key in her home directory, a key of her own, and the
-// given sessions.
-func aGateway(t *testing.T, sessions ...session) *gateway {
+// aGateway has alice, with password "secret", her SEPAL key in her home directory and a key of her own, and a
+// port on which every sandbox accepts connections.
+func aGateway(t *testing.T) *gateway {
+	sandboxes, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sandboxes.Close() })
+	_, sandboxPort, _ := net.SplitHostPort(sandboxes.Addr().String())
 	g := &gateway{
-		worker:  &fakeWorker{reports: map[string][]session{"alice": sessions}, openedStatus: http.StatusOK},
-		homeDir: t.TempDir(),
-		userKey: aPublicKey(t),
-		keys:    map[string][]ssh.PublicKey{},
-		clock:   time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC),
+		worker:      &fakeWorker{reports: map[string][]session{}, openedStatus: http.StatusOK},
+		sandboxes:   sandboxes,
+		sandboxPort: sandboxPort,
+		homeDir:     t.TempDir(),
+		userKey:     aPublicKey(t),
+		keys:        map[string][]ssh.PublicKey{},
+		clock:       time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC),
 	}
 	users := http.NewServeMux()
 	users.Handle("/auth/password", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -209,9 +256,20 @@ func aGateway(t *testing.T, sessions ...session) *gateway {
 	}))
 	g.router = newRouter(userModuleWith(t, users), workerModuleWith(t, g.worker.handler()), g.homeDir)
 	g.router.now = func() time.Time { return g.clock }
+	g.router.sandboxPort = sandboxPort
 	g.sepalKey = g.addUser("alice")
 	g.keys["alice"] = []ssh.PublicKey{g.userKey}
 	return g
+}
+
+func (g *gateway) addSession(id, name, status string) session {
+	s := session{ID: id, Name: name, Status: status, Host: "127.0.0.1"}
+	g.worker.addSession("alice", s)
+	return s
+}
+
+func (g *gateway) stopSandboxes() {
+	_ = g.sandboxes.Close()
 }
 
 func (g *gateway) addUser(username string) []byte {
@@ -246,19 +304,22 @@ func assertUpstream(t *testing.T, upstream *libplugin.Upstream, err error, uri, 
 	}
 }
 
+func assertMenuReason(t *testing.T, upstream *libplugin.Upstream, want string) {
+	t.Helper()
+	if got := upstream.Env["SEPAL_ROUTING_ERROR"]; got != want {
+		t.Errorf("SEPAL_ROUTING_ERROR = %q; want %q", got, want)
+	}
+}
+
 type connection struct {
-	user     string
-	uniqueID string
+	user string
 }
 
 func aConnection(user string) *connection {
-	connections++
-	return &connection{user: user, uniqueID: fmt.Sprintf("%s#%d", user, connections)}
+	return &connection{user: user}
 }
-
-var connections int
 
 func (c *connection) User() string            { return c.user }
 func (c *connection) RemoteAddr() string      { return "192.0.2.1:50000" }
-func (c *connection) UniqueID() string        { return c.uniqueID }
+func (c *connection) UniqueID() string        { return fmt.Sprintf("%p", c) }
 func (c *connection) GetMeta(_ string) string { return "" }
