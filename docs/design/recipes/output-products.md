@@ -312,14 +312,31 @@ than by remembering to keep every accessor in step.
 | CCDC | segments | count | none |
 
 **Declared products.** A shared type declares its products beside its canonical output, as
-`mapProducts: {NAME: mapProduct({describe})}` (`lib/js/shared/src/recipe/output/product.js`). Only the root of a read
-is described as a named product; every recipe it reads is still described by its canonical output. A product is
-described from its recipe's configuration alone: its provider is given the recipe and nothing else, and one that reads
-an observation or a source is refused. It takes no parameters yet, so any it is given are refused. The resolver
-attaches its identity as `output.product` after its bands pass the ordinary description validation; a canonical
-description has no such field. Export stays canonical: the GUI's export submission refuses a description naming a
-product. CCDC's `COUNT` is the first declared product; parameters and delegation to another type's declaration
-arrive with LandTrendr's annual mosaic.
+`mapProducts: {NAME: mapProduct({describe, parameters, delegatesTo})}` (`lib/js/shared/src/recipe/output/product.js`).
+Only the root of a read is described as a named product; every recipe it reads is still described by its canonical
+output. A product is described from its recipe's configuration alone: its provider is given the recipe and its
+normalized parameters, and one that reads an observation or a source is refused. The resolver attaches its identity as
+`output.product` after its bands pass the ordinary description validation; a canonical description has no such field.
+Export stays canonical: the GUI's export submission refuses a description naming a product.
+
+- **Parameters.** A product declaring `parameters({recipe, parameters})` normalizes what it is given, or refuses it by
+  path; a refusal is `INVALID_PRODUCT_PARAMETERS` at `['parameters', ...path]`, and nothing is described. A parameter
+  given as `undefined` is omitted, as it is on the wire. A product declaring none takes none. Its identity carries the
+  normalized parameters: `{name, parameters}`, or `{name}` for a product taking none.
+- **Delegation.** A product whose image is another type's declares `delegatesTo` that type and hands `delegate` a
+  recipe it builds. That recipe is described by the delegate type's canonical declaration, on the same terms as the
+  product: a read of an observation or a source is refused, and a recipe of another type, or a type whose declaration
+  is missing or reads its role, is `UNSUPPORTED_DELEGATE`. The built recipe is no graph node and has no identity: its
+  answer is the product's candidate, validated once under the product's own recipe. The registry checks each
+  `delegatesTo` once all types are registered - the type exists and declares an output without a role - without
+  running any provider.
+
+CCDC's `COUNT` takes no parameters. LandTrendr's `ANNUAL_MOSAIC` takes `{year}` - any integer, the recipe's `endYear`
+when omitted or null - and delegates to Optical Mosaic over the calendar-year median mosaic that execution builds from
+the same function (`annualMosaicRecipe`). It describes the bands a layer may ask for, not whether imagery exists for
+that year; Optical Mosaic built with no selection computes no indexes and keeps its `qa` and date bands, and no layer
+asks for it so. The product accepts any integer year, as execution does; the GUI's layer keeps the year it selects
+within the recipe's fitted period ([products and presentation](gui-source-runtime.md#reading-a-recipes-own-output)).
 
 CCDC is the case that shows why absence is not an identity: `COUNT` is the only mode string it has, and its segments
 product is simply what it builds when no mode is present. Naming both makes the canonical product something a
@@ -952,8 +969,8 @@ matches execution. The execution comparison is a research gate below.
 
 ### One helper currently describes incompatible products
 
-LandTrendr declares its change result as its canonical output; its annual mosaic is a separate map product still
-answered by its legacy entry. Change Alerts and BAYTS switch between algorithm output and source-collection mosaic
+LandTrendr declares its change result as its canonical output and its annual mosaic as a separate map product
+delegating to Optical Mosaic. Change Alerts and BAYTS switch between algorithm output and source-collection mosaic
 products. CCDC declares scalar `count` as its `COUNT` map product, while its custom asset export is the
 array-valued Segments image.
 
@@ -970,10 +987,11 @@ The generic GUI source helper and Change Alerts construct partial recipe objects
 helpers. Those objects encode undocumented assumptions about another recipe's persisted model. Adapter and composer
 commands remove both the fake model and the legacy branch switch from consumers.
 
-Earth Engine contains related delegation: LandTrendr constructs an ephemeral Optical Mosaic for its annual context,
-and Change Alerts constructs Optical, Radar or Planet mosaics around monitoring dates. Reusing an execution module is
-reasonable; treating the ephemeral adapter as if it were a persisted recipe contract is not. Product, adapter and
-composer APIs should make the required model projection explicit and test it in one place.
+Earth Engine contains related delegation: Change Alerts constructs Optical, Radar or Planet mosaics around monitoring
+dates. Reusing an execution module is reasonable; treating the ephemeral adapter as if it were a persisted recipe
+contract is not. Product, adapter and composer APIs should make the required model projection explicit and test it in
+one place, as LandTrendr's annual mosaic does: one shared function builds the Optical Mosaic both described and
+executed.
 
 ### Copied descriptions are persisted as configuration
 

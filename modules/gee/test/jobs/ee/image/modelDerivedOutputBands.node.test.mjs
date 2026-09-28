@@ -163,6 +163,8 @@ const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
 const {default: imageFactory} = await import('#sepal/ee/imageFactory')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {withOutputBands} = await import('#sepal/ee/outputBands')
+const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
+const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
 
 const inOperation = (name, fn) => it(name, async () => {
     const scope = new RecipeScope(id => throwError(() => new Error(`No recipe ${id}`)))
@@ -326,7 +328,43 @@ describe('LandTrendr', () => {
             assert.deepEqual(catalogue, declared(landTrendr).map(({name}) => name))
         })
     }
+
+    // The mosaic is built by the same rule its product is described by, so its catalogue is that description's. Which
+    // bands a year's imagery can supply is not modelled; the product describes what may be asked for.
+    const withSources = {
+        ...landTrendr,
+        model: {
+            ...landTrendr.model,
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 75, index: 'nbr'},
+            options: {corrections: ['SR'], compose: 'MEDOID'}
+        }
+    }
+
+    for (const year of [2018, 1990, undefined]) {
+        inOperation(`asked for its annual mosaic of ${year ?? 'no year'}, says it can be asked for exactly the bands that product declares`, async () => {
+            const catalogue = await firstValueFrom(imageFactory(withSources, {visualizationType: 'mosaics', year}).getBands$())
+
+            assert.deepEqual(catalogue, describedProduct(withSources, {name: 'ANNUAL_MOSAIC', parameters: {year}}).map(({name}) => name))
+        })
+    }
+
+    for (const year of ['2018', 2018.5]) {
+        inOperation(`refuses an annual mosaic of ${JSON.stringify(year)}`, async () => {
+            assert.throws(() => imageFactory(withSources, {visualizationType: 'mosaics', year}), /integer year/)
+        })
+    }
 })
+
+const describedProduct = (recipe, product) => {
+    const {status, description, diagnostics} = readImageOutput({
+        graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([[recipe.id, recipe]])}),
+        declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        product,
+        productFor: ({type}, name) => recipeType(type)?.mapProducts?.[name]
+    })
+    assert.equal(status, 'READY', JSON.stringify(diagnostics))
+    return description.output.bands
+}
 
 // Counting what segmentation would be fitted to needs neither segmentation nor the catalogue of measures, so the
 // classification the collection would carry is never read: this operation's reader refuses every recipe.

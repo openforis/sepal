@@ -34,6 +34,8 @@ vi.mock('~/apiRegistry', async () => {
 })
 
 const {VisParamsPanel} = await import('./visParamsPanel')
+const {productArgs} = await import('~/app/home/body/process/recipe/recipeOutput')
+const {layerConfigChanges} = await import('~/app/home/body/process/recipe/landTrendr/bands')
 
 beforeEach(() => {
     requests.bands = []
@@ -98,24 +100,57 @@ describe('an editor whose layer changes while it is open', () => {
     })
 })
 
+// LandTrendr's annual mosaic names its year beside its mode, so the year is part of the product the editor concerns.
+// Its layer form keeps that year within the recipe's fitted period, so shortening the period can change it under an
+// open editor.
+describe('an editor opened on a LandTrendr annual mosaic', () => {
+    const ANNUAL_MOSAIC_2025 = {visualizationType: 'mosaics', year: 2025}
+    const annualMosaic = productArgs => opened({recipe: LANDTRENDR, band: 'nir', productArgs})
+
+    it('stays open while its area restyles the same year', () => {
+        const {editor, deactivated} = annualMosaic(ANNUAL_MOSAIC_2025)
+
+        editor.props = {...editor.props, areaImageLayer: shownIn({...ANNUAL_MOSAIC_2025, visParams: {bands: ['nir'], palette: ['#000']}})}
+        editor.componentDidUpdate(editor.props)
+
+        expect(deactivated()).toBe(0)
+    })
+
+    it('closes when the recipe\'s end year brings its layer to another year, and one opened then asks about that year', () => {
+        const {editor, deactivated} = annualMosaic(ANNUAL_MOSAIC_2025)
+        const reconciled = {...ANNUAL_MOSAIC_2025, ...layerConfigChanges({startYear: 2014, endYear: 2024}, ANNUAL_MOSAIC_2025)}
+
+        editor.props = {...editor.props, areaImageLayer: shownIn(reconciled)}
+        editor.componentDidUpdate(editor.props)
+        const reopened = annualMosaic(productArgs(LANDTRENDR, reconciled)).editor
+        reopened.initHistogram('nir', {stretch: true})
+        reopened.loadDistinctBandValues()
+
+        expect(deactivated()).toBe(1)
+        expect(requests.histogram).toEqual([{visualizationType: 'mosaics', year: 2024, recipe: LANDTRENDR, aoi: undefined, band: 'nir', mapBounds: BOUNDS}])
+        expect(requests.distinctBandValues).toEqual([{visualizationType: 'mosaics', year: 2024, recipe: LANDTRENDR, band: 'nir', aoi: undefined, mapBounds: BOUNDS}])
+    })
+})
+
 const CCDC = {id: 'ccdc-1', type: 'CCDC', model: {}}
+const LANDTRENDR = {id: 'landtrendr-1', type: 'LANDTRENDR', model: {}}
 const BOUNDS = [[0, 0], [1, 1]]
 
 const shownIn = layerConfig => ({sourceId: 'this-recipe', layerConfig})
 
 // What the selector captured on opening, and the rest of what the editor's wrappers would give it.
-const opened = () => {
+const opened = ({recipe = CCDC, band = 'count', productArgs = {visualizationType: 'COUNT'}} = {}) => {
     let deactivations = 0
-    const inputs = new Proxy({}, {get: (fields, name) => fields[name] || (fields[name] = {value: name === 'name1' ? 'count' : undefined, set: () => {}})})
+    const inputs = new Proxy({}, {get: (fields, name) => fields[name] || (fields[name] = {value: name === 'name1' ? band : undefined, set: () => {}})})
     const editor = new VisParamsPanel({
         activatable: {
-            recipe: CCDC,
+            recipe,
             imageLayerSourceId: 'this-recipe',
-            bands: ['count'],
-            productArgs: {visualizationType: 'COUNT'},
+            bands: [band],
+            productArgs,
             deactivate: () => deactivations++
         },
-        areaImageLayer: shownIn({visualizationType: 'COUNT', visParams: {bands: ['count']}}),
+        areaImageLayer: shownIn({...productArgs, visParams: {bands: [band]}}),
         inputs,
         map: {getBounds: () => BOUNDS},
         stream: (name, observable$) => observable$ ? observable$.subscribe() : {active: false},

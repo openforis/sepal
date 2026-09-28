@@ -1,20 +1,27 @@
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {ANNUAL_MOSAIC, annualMosaicRecipe} from '#sepal/recipe/type/landTrendr'
 import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
-import {IMAGE_OUTPUT} from '../legacyOutput'
 import {bandPresentation} from './bands'
-import {toMosaicRecipe} from './mosaicRecipe'
 
 // Registered on the recipe type, so it feeds the visualization properties
 // attached to exports - which only ever contain change bands.
 export const getPreSetVisualizations = recipe =>
     changeVisualizations(recipe.model.dates)
 
-export const visualizationOptions = (recipe, visualizationType) =>
-    visualizationType === 'mosaics'
-        ? opticalVisualizationOptions(toMosaicRecipe(recipe))
+// The styles for the product a layer's read described, and none while it describes nothing: a year that cannot be
+// shown offers nothing to draw, and its layer form stays usable to choose another.
+export const visualizationOptions = (recipe, {description} = {}) => {
+    if (!description) {
+        return []
+    }
+    const {product} = description.output
+    return product?.name === ANNUAL_MOSAIC
+        ? opticalVisualizationOptions(annualMosaicRecipe(recipe, product.parameters.year))
         : changeVisualizationOptions(recipe)
+}
 
 const changeVisualizationOptions = recipe => {
     const presentation = bandPresentation(recipe, {name: IMAGE_OUTPUT})

@@ -46,6 +46,7 @@ const {canPreview, displayTypes, layerProduct, readRecipeOutput} = await import(
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
+const {visualizationOptions: landTrendrVisualizationOptions} = await import('./landTrendr/visualizations')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -404,23 +405,69 @@ describe('a LandTrendr', () => {
             {yod: 'sample', mag: 'mean', dur: 'sample', sig: 'mean'}
         ]])
     })
+})
 
-    // The annual context mosaic is another product, still answered by its legacy entry until it is declared.
-    it('shows its annual mosaic as before, from the optical bands of that mosaic', () => {
-        const recipe = landTrendrOf()
-        const product = layerProduct(recipe, {visualizationType: 'mosaics', year: 2020})
+// The annual context mosaic a LandTrendr layer can show instead of its changes: an optical mosaic of the year the layer
+// names, described from the recipe alone.
+describe('a LandTrendr annual mosaic', () => {
+    const annualMosaic = (recipe, layerConfig) => readRecipeOutput({
+        recipe,
+        product: layerProduct(recipe, {visualizationType: 'mosaics', ...layerConfig}),
+        graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+        heldFor: () => null
+    })
 
-        const output = readRecipeOutput({
-            recipe,
-            product,
-            graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
-            heldFor: () => null
-        })
+    it('is described as the optical mosaic of the year the layer names, acquiring nothing', () => {
+        const output = annualMosaic(landTrendrOf(), {year: 2020})
 
-        expect(product).toEqual({name: 'ANNUAL_MOSAIC', parameters: {year: 2020}})
-        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED', acquisition: null})
+        expect(output.description.output.product).toEqual({name: 'ANNUAL_MOSAIC', parameters: {year: 2020}})
         expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['red', 'nir', 'ndvi']))
         expect(output.bands.map(({name}) => name)).not.toContain('yod')
+        expect(canPreview(output)).toBe(true)
+    })
+
+    it('is presented as an optical mosaic is', () => {
+        const output = annualMosaic(landTrendrOf(), {year: 2020})
+
+        expect(displayTypes(output).red).toEqual({precision: 'int', min: -32768, max: 32767})
+        expect(output.availableBands.nir.tooltip).toBe('bands.nir')
+    })
+
+    it('shows the last fitted year to a layer that has stored none', () => {
+        expect(annualMosaic(landTrendrOf(), {}).description.output.product.parameters).toEqual({year: 2024})
+    })
+
+    // The product takes any integer year; keeping a layer's year within the fitted period is the layer form's choice.
+    it('is described for a year outside the fitted range', () => {
+        expect(annualMosaic(landTrendrOf(), {year: 1990}).description.output.product.parameters).toEqual({year: 1990})
+    })
+
+    it('cannot be previewed for a year that is not an integer', () => {
+        const output = annualMosaic(landTrendrOf(), {year: '2020'})
+
+        expect(output).toMatchObject({
+            status: 'INVALID',
+            description: null,
+            diagnostics: [expect.objectContaining({code: 'INVALID_PRODUCT_PARAMETERS', path: ['parameters', 'year']})]
+        })
+        expect(canPreview(output)).toBe(false)
+    })
+
+    it('offers no styles for a year it cannot show, and those of the mosaic once one it can is chosen', () => {
+        const recipe = landTrendrOf()
+        const styles = output => landTrendrVisualizationOptions(recipe, output).flatMap(({options}) => options).map(({value}) => value)
+
+        expect(styles(annualMosaic(recipe, {year: '2020'}))).toEqual([])
+        expect(styles(annualMosaic(recipe, {year: 2019}))).toContain('red, green, blue')
+    })
+
+    // Retrieve reads the canonical output whatever a layer shows.
+    it('is not what its recipe exports', () => {
+        const {output} = read(landTrendrOf())
+
+        expect(output.description.output.product).toBeUndefined()
+        expect(output.bands.map(({name}) => name)).toEqual(['yod', 'mag', 'dur', 'preval', 'postval', 'rmse', 'sig'])
     })
 })
 

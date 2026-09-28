@@ -3,6 +3,7 @@ import {vi} from 'vitest'
 vi.mock('~/translate', () => ({msg: id => id}))
 
 const {bandPresentation, groupedBandPresentation, mapProducts} = await import('./bands')
+const {bandPresentation: opticalBandPresentation} = await import('../opticalMosaic/bands')
 
 const CHANGE_BANDS = ['yod', 'mag', 'dur', 'preval', 'postval', 'rmse', 'sig']
 
@@ -24,17 +25,17 @@ it('presents the change bands of its output, with their labels and cursor precis
     expect(presentation.mag.dataType).toEqual({precision: 'float'})
 })
 
-it('names the annual mosaic a layer shows with its year, and answers its optical bands', () => {
+it('names the annual mosaic a layer shows with its year', () => {
     expect(ANNUAL_MOSAIC).toEqual({name: 'ANNUAL_MOSAIC', parameters: {year: 2020}})
-
-    const bands = Object.keys(mapProducts.bands(recipe, ANNUAL_MOSAIC))
-    expect(bands).toContain('ndvi')
-    expect(bands).toContain('red')
-    expect(bands).not.toContain('yod')
 })
 
-it('no longer answers its output from the legacy entry, which its declaration does', () => {
-    expect(mapProducts.bands(recipe, {name: 'IMAGE_OUTPUT'})).toBeUndefined()
+it('presents the annual mosaic as an optical mosaic', () => {
+    expect(bandPresentation(recipe, ANNUAL_MOSAIC)).toEqual(opticalBandPresentation())
+})
+
+// Both products are declared, so no band answer is left in the legacy entry.
+it('answers no bands itself', () => {
+    expect(mapProducts.bands).toBeUndefined()
 })
 
 it('offers only the change bands for retrieval', () => {

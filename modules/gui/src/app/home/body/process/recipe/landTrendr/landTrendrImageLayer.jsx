@@ -14,7 +14,7 @@ import {Combo} from '~/widget/combo'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {mapProducts} from './bands'
+import {layerConfigChanges, mapProducts, selectedYear} from './bands'
 import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = mapProducts.defaults
@@ -26,12 +26,15 @@ const mapRecipeToProps = (recipe, {source}) => ({
 })
 
 class _LandTrendrImageLayer extends React.Component {
+    // A layer built for a config that still needs reconciling would request a year the form is about to replace, and
+    // the map mounts it before the form can write the correction. It is withheld until the config agrees; the
+    // corrected config builds a new one.
     render() {
-        const {initialized, layer, map} = this.props
+        const {initialized, layer, map, dates, layerConfig} = this.props
         return initialized
             ? (
                 <MapAreaLayout
-                    layer={layer}
+                    layer={layerConfigChanges(dates, layerConfig) ? null : layer}
                     form={this.renderImageLayerForm()}
                     map={map}
                 />
@@ -68,7 +71,8 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     renderYear() {
-        const {dates: {startYear, endYear}, layerConfig: {year}} = this.props
+        const {dates, layerConfig: {year}} = this.props
+        const {startYear, endYear} = dates
         const options = _.range(startYear, endYear + 1)
             .map(year => ({value: year, label: `${year}`}))
         return (
@@ -77,37 +81,46 @@ class _LandTrendrImageLayer extends React.Component {
                 tooltip={msg('process.landTrendr.imageLayerForm.year.tooltip')}
                 placeholder={msg('process.landTrendr.imageLayerForm.year.label')}
                 options={options}
-                value={year}
+                value={selectedYear(dates, year)}
                 onChange={({value}) => this.selectYear(value)}
             />
         )
     }
 
     renderVisualizationSelector() {
-        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
-        const {visualizationType} = layerConfig
+        const {recipe, source, layerConfig = {}, imageOutput} = this.props
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
-                presetOptions={visualizationOptions(recipe, visualizationType)}
-                availableBands={availableBands}
+                presetOptions={visualizationOptions(recipe, imageOutput)}
+                availableBands={imageOutput.availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams, visualizationType}, dates: {endYear}, mapArea: {updateLayerConfig}} = this.props
-        if (!visualizationType) {
-            updateLayerConfig({...defaultLayerConfig, year: endYear})
-        }
-        this.update(visParams)
+        const {layerConfig: {visParams}} = this.props
+        this.reconcile(visParams)
     }
 
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
-        this.update(prevVisParams)
+        this.reconcile(prevVisParams)
+    }
+
+    // The layer config is brought into the recipe's fitted period before a style is chosen for it: a style is written
+    // with the config it was chosen beside, which would write a stale year back. Only what changes is written, and the
+    // map merges it into the config, so the style is kept.
+    reconcile(prevVisParams) {
+        const {dates, layerConfig, mapArea: {updateLayerConfig}} = this.props
+        const changes = layerConfigChanges(dates, layerConfig)
+        if (changes) {
+            updateLayerConfig(changes)
+        } else {
+            this.update(prevVisParams)
+        }
     }
 
     // Switching mode changes which bands exist, so a visParams selected for the
@@ -131,7 +144,7 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     toAllVis() {
-        const {userDefinedVisualizations, layerConfig: {visualizationType}, recipe, imageOutput: {availableBands}} = this.props
+        const {userDefinedVisualizations, recipe, imageOutput} = this.props
         const flatten = options => options
             .map(option => option.options
                 ? flatten(option.options)
@@ -140,8 +153,8 @@ class _LandTrendrImageLayer extends React.Component {
             .flat()
         return [
             ...userDefinedVisualizations,
-            ...flatten(visualizationOptions(recipe, visualizationType))
-        ].filter(visParams => visParams.bands.every(band => Object.keys(availableBands).includes(band)))
+            ...flatten(visualizationOptions(recipe, imageOutput))
+        ].filter(visParams => visParams.bands.every(band => Object.keys(imageOutput.availableBands).includes(band)))
     }
 
     selectVisualization(visParams) {
@@ -150,8 +163,8 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     selectVisualizationType(visualizationType) {
-        const {dates: {endYear}, layerConfig: {year}, mapArea: {updateLayerConfig}} = this.props
-        updateLayerConfig({visualizationType, year: year ?? endYear})
+        const {mapArea: {updateLayerConfig}} = this.props
+        updateLayerConfig({visualizationType})
     }
 
     selectYear(year) {

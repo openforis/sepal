@@ -40,13 +40,15 @@ vi.mock('~/translate', () => ({msg: key => key}))
 
 const availableBandsByType = vi.hoisted(() => ({}))
 
-// What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation and
-// CCDC's own map products.
+// What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation, and
+// CCDC's and LandTrendr's own map products.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     const {mapProducts} = await import('./ccdc/bands')
+    const landTrendr = await import('./landTrendr/bands')
     const registeredByType = {
         MOSAIC: {bandPresentation: () => ({blue: {dataType: {precision: 'int'}}})},
-        CCDC: {mapProducts}
+        CCDC: {mapProducts},
+        LANDTRENDR: {mapProducts: landTrendr.mapProducts, bandPresentation: landTrendr.bandPresentation}
     }
     return {
         getRecipeType: type => ({
@@ -601,6 +603,29 @@ describe('acquiring what the layer shows', () => {
         })
     })
 
+    // The year is the product's, not the records': another year is described again from the recipe, while what was
+    // acquired about its dependencies still holds.
+    describe('a LandTrendr annual mosaic whose dependency the session does not hold', () => {
+        const RGB = {id: 'rgb', bands: ['red', 'green', 'blue'], type: 'rgb'}
+        const annualMosaic = year => ({visualizationType: 'mosaics', year, visParams: RGB})
+
+        it('rebuilds the preview for another year, reusing what it acquired', () => {
+            const {instance, runtime, settle, setLayerConfig} = shown({
+                recipe: {...landTrendr({aoi: {type: 'RECIPE', id: 'aoi-1'}}), ...ownStyles([])},
+                layerConfig: annualMosaic(2018)
+            })
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+
+            setLayerConfig(annualMosaic(2019))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+            expect(state.constructed.map(({previewRequest: {visualizationType, year}}) => ({visualizationType, year})))
+                .toEqual([{visualizationType: 'mosaics', year: 2018}, {visualizationType: 'mosaics', year: 2019}])
+        })
+    })
+
     it('withholds masking whose unread mask was deleted, keeping its selection', () => {
         const {instance, runtime, settle, updates} = shown({
             recipe: masking({mask: {type: 'RECIPE_REF', id: 'deleted-mask'}, styles: [BLUE_STYLE]}),
@@ -639,6 +664,18 @@ const masking = ({mask, styles}) => ({
 })
 
 const ccdc = model => ({id: 'ccdc-1', type: 'CCDC', model})
+
+const landTrendr = ({aoi}) => ({
+    id: 'landtrendr-1',
+    type: 'LANDTRENDR',
+    model: {
+        aoi,
+        dates: {startYear: 2014, endYear: 2021},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'},
+        options: {corrections: ['SR']},
+        landTrendrOptions: {}
+    }
+})
 
 const basisOf = recipe => [{id: recipe.id, content: recipeContent(recipe)}]
 

@@ -101,8 +101,8 @@ where a family still needs observation.
      `dur`, `preval`, `postval`, `rmse` and `sig`, all scalar, with `sample` for `yod` and `dur` and `mean` for the
      rest, and no encoding. Masking over LandTrendr inherits those policies, so it exports `yod` and `dur` with
      `sample` where its fallback applied `mean`, and Task's asset export resolves LandTrendr as a declared root and
-     requires its dependencies to be valid. Its annual mosaic is still answered by its legacy entry: its `year`
-     parameter and its delegation to Optical Mosaic are pending;
+     requires its dependencies to be valid. Its annual mosaic is a declared map product taking `{year}` and
+     delegating to Optical Mosaic, so LandTrendr has no legacy band entry left;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
      output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which

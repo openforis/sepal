@@ -784,14 +784,25 @@ is acquired.
 over its effective layer config: the type's defaults beneath what the layer saved. The description, the preview and
 the editor all read the product from that one config, so none of them depends on the layer form having written its
 defaults yet. A value the type does not know is no product at all, answered `INVALID` rather than as the canonical
-output, and a type without map products shows `IMAGE_OUTPUT`. CCDC's layer shows `COUNT`. LandTrendr, Change
-Alerts and BAYTS Alerts name their mosaic and radar modes, and each keeps the configuration guard its layer had.
+output, and a type without map products shows `IMAGE_OUTPUT`. CCDC's layer shows `COUNT`, and LandTrendr's its change
+map or its `ANNUAL_MOSAIC` of the layer's `year`. Change Alerts and BAYTS Alerts name their mosaic and radar modes,
+and each keeps the configuration guard its layer had.
+
+LandTrendr's layer form keeps its `year` within the recipe's fitted period, `startYear` to `endYear`, whichever mode
+it shows: a year inside is kept, one past either end becomes that end, and none becomes `endYear`. Its picker offers
+that period alone. It reconciles on mount and whenever the recipe's dates or the layer config change, in each map
+area on its own, writing only the year and only when it changes, so the style is kept; a style is chosen once the
+year agrees. The preview and the editor therefore concern the reconciled year, and an editor opened on the previous
+one closes. A stored value that is not a year is left for the user to replace, and its product is `INVALID`. The
+product itself accepts any integer year; this is the layer's choice.
 
 A product its type declares (`mapProducts` in the shared type, [map-product identity](output-products.md#map-product-identity))
 is described through the shared read, from the root's configuration alone, and acquires only `DEPENDENCIES`. Its
-description carries `output.product`, which the resolver attaches, and whatever it refuses - parameters it does not
-take, bands its declaration gets wrong, a provider failure - is `INVALID`, never a legacy answer. Only a product its
-type does not declare is answered by the legacy seam, from `mapProducts.bands`.
+description carries `output.product` with the parameters it normalized, which the resolver attaches, and whatever it
+refuses - parameters it does not take or values it refuses, bands its declaration gets wrong, a provider failure - is
+`INVALID`, never a legacy answer. Only a product its type does not declare is answered by the legacy seam, from
+`mapProducts.bands`. The acquisition key does not name the product, so another year of LandTrendr's annual mosaic is
+described again from the recipe while the dependencies terminal already held still answers validity.
 
 On the wire, the preview, the band choices, the histogram and the distinct values all carry the same product
 arguments: the effective layer config without its visualization (`productArgs`). Every
