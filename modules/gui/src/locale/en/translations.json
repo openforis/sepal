@@ -6050,6 +6050,44 @@
         "error": "Could not update user"
       }
     },
+    "sshKeys": {
+      "add": {
+        "error": {
+          "DUPLICATE_KEY": "You have already added this key.",
+          "failed": "Failed to add the SSH key.",
+          "INVALID_KEY": "This is not a public key. Paste the single line of a .pub file.",
+          "KEY_TOO_WEAK": "RSA keys must be at least 2048 bits.",
+          "TOO_MANY_KEYS": "You have reached the maximum of 20 keys.",
+          "UNSUPPORTED_TYPE": "This key type is not supported. Use an ed25519, ECDSA or RSA key."
+        },
+        "form": {
+          "name": {
+            "label": "Name",
+            "placeholder": "Defaults to the key's comment"
+          },
+          "publicKey": {
+            "label": "Public key",
+            "placeholder": "ssh-ed25519 AAAA… you@laptop",
+            "required": "Paste a public key"
+          }
+        },
+        "label": "Add",
+        "success": "SSH key added.",
+        "title": "Add SSH key"
+      },
+      "howTo": "Create a key with {generate}, add the contents of {publicKeyFile} here, then log in with {login}.",
+      "label": "SSH keys",
+      "load": {
+        "error": "Failed to load your SSH keys."
+      },
+      "none": "You have no SSH keys.",
+      "remove": {
+        "error": "Failed to remove the SSH key.",
+        "message": "Remove the SSH key {name}? It will no longer let you log in.",
+        "tooltip": "Remove this key"
+      },
+      "title": "SSH keys"
+    },
     "userDetails": {
       "form": {
         "email": {

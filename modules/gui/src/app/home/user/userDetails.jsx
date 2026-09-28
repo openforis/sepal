@@ -17,8 +17,10 @@ import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
+import {AddSshKey} from './addSshKey'
 import {ChangePassword, ChangePasswordButton} from './changePassword'
 import {GoogleAccount, GoogleAccountButton} from './googleAccount'
+import {SshKeys, SshKeysButton} from './sshKeys'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -145,6 +147,7 @@ class _UserDetails extends React.Component {
                 <React.Fragment>
                     <ChangePasswordButton disabled={form.isDirty()}/>
                     <GoogleAccountButton disabled={form.isDirty()}/>
+                    <SshKeysButton disabled={form.isDirty()}/>
                 </React.Fragment>
             )
     }
@@ -180,7 +183,8 @@ class _UserDetails extends React.Component {
 const policy = () => ({
     _: 'disallow',
     changePassword: 'allow-then-deactivate',
-    googleAccount: 'allow-then-deactivate'
+    googleAccount: 'allow-then-deactivate',
+    sshKeys: 'allow-then-deactivate'
 })
 
 const UserDetails = compose(
@@ -208,6 +212,8 @@ class _UserDetailsButton extends React.Component {
                 <UserDetails/>
                 <ChangePassword/>
                 <GoogleAccount/>
+                <SshKeys/>
+                <AddSshKey/>
             </React.Fragment>
         )
     }
