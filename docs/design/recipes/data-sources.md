@@ -127,8 +127,8 @@ where a family still needs observation.
      `_res`, `_const` and `_t` for each polarisation. All are scalar with no encoding; `orbit` keeps its mode,
      `dayOfYear`, `daysFromTarget` and the phases are sampled and the rest averaged, which changes the coarse pyramid
      levels of newly exported assets, Masking's included, and no full-resolution pixel. Earth Engine's catalogue
-     answers the declared bands whatever is selected, while execution computes only the harmonics a selection needs.
-     A point in time asked for nothing still builds every band it constructs. Construction bands - `angle`,
+     answers the declared bands whatever is selected, while execution computes only the harmonics a selection needs;
+     a point in time asked for nothing builds its six bands and no harmonics. Construction bands - `angle`,
      `quality`, `unixTimeDays`, per-image harmonic terms - are not public, though explicit requests for them still
      build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
      consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observations and Change

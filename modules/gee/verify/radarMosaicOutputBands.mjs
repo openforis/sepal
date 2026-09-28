@@ -2,11 +2,14 @@
 //
 // Its declaration - band names, order and scalar shape - is compared with what its catalogue answers and with the
 // running image's bands, for a point in time and a time scan, under minimal options and under the options a new
-// recipe saves: for every declared band as an export asks, for a time scan also when asked for nothing and for an
-// empty selection, and for a subset out of order, which must come back in the order asked. A time scan asked for part
-// of its harmonics, or none, returns just those. A recipe stating a target date beside a period builds a point in
-// time, and one stating no dates is refused as Earth Engine refuses it. A time scan's harmonics must hold valid
-// pixels, so a year of observations is used.
+// recipe saves: when asked for nothing, for an empty selection, for every declared band as an export asks, and for
+// a subset out of order, which must come back in the order asked. A time scan asked for part of its harmonics, or
+// none, returns just those. A recipe stating a target date beside a period builds a point in time, and one stating no
+// dates is refused as Earth Engine refuses it.
+//
+// A point in time asked for nothing computes no harmonics. That must not change the public bands, so they are compared
+// pixel by pixel - values and masks - with the same bands of an image that does compute them, over a small window at
+// the native scale. A time scan's harmonics must hold valid pixels, so a year of observations is used.
 //
 // Explicit requests for bands the output does not declare, which internal callers make, still build, as does the
 // selection BAYTS Historical asks of a time scan. Any unexpected error fails the run. Pixel values are compared only
@@ -16,7 +19,7 @@
 //   docker exec -w /usr/local/src/sepal/modules/gee gee node verify/radarMosaicOutputBands.mjs
 
 import _ from 'lodash'
-import {firstValueFrom, switchMap, timeout} from 'rxjs'
+import {firstValueFrom, forkJoin, switchMap, timeout} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import {typedBands} from '#sepal/ee/bandEvidence'
@@ -28,6 +31,9 @@ import {POINT_IN_TIME, RADAR_MOSAIC_BANDS, TIME_SCAN} from '#sepal/recipe/type/r
 const READ_TIMEOUT_MS = 900000
 
 const AOI = {type: 'POLYGON', path: [[-60.10, -3.18], [-60.10, -3.04], [-60.00, -3.04], [-60.00, -3.18]]}
+// Inside the AOI, small enough to compare every native pixel.
+const WINDOW = [[-60.06, -3.12], [-60.06, -3.10], [-60.04, -3.10], [-60.04, -3.12]]
+
 const MINIMAL = {
     orbits: ['ASCENDING', 'DESCENDING'], orbitNumbers: 'ALL', geometricCorrection: 'ELLIPSOID',
     spatialSpeckleFilter: 'NONE', multitemporalSpeckleFilter: 'NONE', outlierRemoval: 'NONE',
@@ -110,6 +116,40 @@ const expectRefusal = async (name, recipe, reason) => {
     }
 }
 
+// The public bands of a point in time asked for nothing, against the same bands of an image that computes both
+// polarisations' harmonics, as asking for nothing did: masks and values at every native pixel of the window.
+const expectUnchangedByHarmonics = async (name, recipe) => {
+    const start = Date.now()
+    const bands = declaredNames(POINT_IN_TIME)
+    try {
+        const {asked, harmonic} = await firstValueFrom(forkJoin({
+            asked: ImageFactory(recipe).getImage$(),
+            harmonic: ImageFactory(recipe, {selection: [...bands, 'VV_phase', 'VH_phase']}).getImage$()
+        }))
+        const a = asked.select(bands)
+        const b = harmonic.select(bands)
+        const differences = a.mask().neq(b.mask()).rename(bands.map(band => `${band}_mask`))
+            .addBands(a.subtract(b).abs().updateMask(a.mask().and(b.mask())).rename(bands.map(band => `${band}_value`)))
+            .addBands(a.mask().gt(0).rename(bands.map(band => `${band}_valid`)))
+        const stats = await firstValueFrom(read$('pixel comparison', differences.reduceRegion({
+            reducer: ee.Reducer.max().combine(ee.Reducer.count(), '', true),
+            geometry: ee.Geometry.Polygon(WINDOW),
+            scale: 10,
+            maxPixels: 1e9
+        })))
+        const unchanged = bands.every(band =>
+            stats[`${band}_mask_max`] === 0 && stats[`${band}_value_max`] === 0 && stats[`${band}_valid_max`] === 1)
+        report(unchanged, name, {
+            ms: Date.now() - start,
+            byBand: Object.fromEntries(bands.map(band => [band, {
+                masksDiffer: stats[`${band}_mask_max`], maxValueDifference: stats[`${band}_value_max`], pixels: stats[`${band}_valid_count`]
+            }]))
+        })
+    } catch (error) {
+        report(false, name, {ms: Date.now() - start, error: error.message})
+    }
+}
+
 const expectHarmonicsValid = async (name, recipe) => {
     const harmonics = declaredNames(TIME_SCAN).filter(band => /_(phase|amp|res|const|t)$/.test(band))
     try {
@@ -136,12 +176,13 @@ const main = async () => {
     await expectCatalogue('catalogue, no dates', radar({}), undefined, declaredNames(TIME_SCAN))
 
     for (const [label, options] of [['minimal options', MINIMAL], ['saved defaults', SAVED_DEFAULTS]]) {
-        const timeScanRecipe = radar(YEAR, options)
-        await expectBands(`time scan, ${label}, asked for nothing`, timeScanRecipe, undefined, timeScan)
-        await expectBands(`time scan, ${label}, empty selection`, timeScanRecipe, {selection: []}, timeScan)
         for (const [configuration, dates, declared] of [['point in time', TARGET, pointInTime], ['time scan', YEAR, timeScan]]) {
-            await expectBands(`${configuration}, ${label}, every declared band`, radar(dates, options), withOutputBands({selection: declared.map(({name}) => name)}), declared)
+            const recipe = radar(dates, options)
+            await expectBands(`${configuration}, ${label}, asked for nothing`, recipe, undefined, declared)
+            await expectBands(`${configuration}, ${label}, empty selection`, recipe, {selection: []}, declared)
+            await expectBands(`${configuration}, ${label}, every declared band`, recipe, withOutputBands({selection: declared.map(({name}) => name)}), declared)
         }
+        await expectUnchangedByHarmonics(`point in time, ${label}, public pixels without harmonics`, radar(TARGET, options))
     }
 
     const subset = (recipe, names) => expectBands(`${recipe.model.dates.targetDate ? 'point in time' : 'time scan'}, subset ${names.join(',')}`, recipe, withOutputBands({selection: names}), scalarBands(names))
@@ -150,7 +191,7 @@ const main = async () => {
     await subset(radar(YEAR), ['VH_const', 'VV_phase'])
     await subset(radar(YEAR), ['VV_min', 'NDCV'])
 
-    await expectBands('target date beside a period, every declared band', radar({...TARGET, ...YEAR}), withOutputBands({selection: declaredNames(POINT_IN_TIME)}), pointInTime)
+    await expectBands('target date beside a period, asked for nothing', radar({...TARGET, ...YEAR}), undefined, pointInTime)
     await expectRefusal('no dates', radar({}), NO_DATES)
     await expectHarmonicsValid('time scan harmonics hold valid pixels', radar(YEAR))
 

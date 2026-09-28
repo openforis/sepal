@@ -26,11 +26,10 @@ without encoding:
 the observation it took, as whole numbers; a time scan's `orbit` is the most common orbit, stored as a float.
 
 The catalogue is the configuration's declared list whatever a request selects. Asked for no bands, or an empty
-selection, a time scan returns the declared bands in that order, while a point in time returns every band it
-constructs, both polarisations' harmonics included; a selection returns exactly the bands selected, in the order
-selected. Execution computes harmonics only for the polarisations a selection needs. Bands used to construct the
-output - `angle`, `quality`, `unixTimeDays` and the per-image harmonic terms - are not declared, and an explicit
-producer request for one still builds.
+selection, Earth Engine returns the declared bands in that order; a selection returns exactly the bands selected, in
+the order selected. Execution computes harmonics only for the polarisations a selection needs, so a point in time
+asked for nothing computes none. Bands used to construct the output - `angle`, `quality`, `unixTimeDays` and the
+per-image harmonic terms - are not declared, and an explicit producer request for one still builds.
 
 The GUI sets cursor precision and ranges and groups the bands for Retrieve. That is presentation only. BAYTS' first
 and last radar observations and Change Alerts' radar mosaics take their names from this declaration while their own
@@ -55,8 +54,9 @@ a separate contract (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 ## Verification
 
 - `modules/gee/verify/radarMosaicOutputBands.mjs` - on live Earth Engine, for both configurations under minimal and
-  saved-default options: the catalogue, full requests, a time scan's unselected and empty requests, subsets out of
-  order, harmonic subsets, a target date beside a period, the refusal without dates and valid harmonic pixels.
+  saved-default options: the catalogue, unselected, empty and full requests, subsets out of order, harmonic subsets,
+  a target date beside a period, the refusal without dates and valid harmonic pixels. A point in time asked for
+  nothing is compared pixel by pixel, values and masks, with the same bands of an image computing harmonics.
 - `modules/gee/test/jobs/ee/radar/mosaicBands.test.js` - the catalogue per configuration, whatever is selected.
 - `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the declaration, presentation,
   presets, Retrieve groups and export policies through the real registration, and the BAYTS and Change Alerts views

@@ -1032,12 +1032,6 @@ necessary where the EE graph determines the answer.
 The source comparison found helper drift and production defects. They must be fixed before the first adapter or
 temporal-composer contract is declared:
 
-- Radar Mosaic's point-in-time image asked for nothing carries more than its six declared bands. The quality mosaic
-  keeps each collection band, so the image also holds `angle`, `quality` and `unixTimeDays`. An empty selection makes
-  both polarisations harmonic dependents, which adds the per-observation `VV_t`, `VV_constant`, `VV_cos` and
-  `VV_sin` bands and their VH counterparts, and then the harmonics summary. Its `VV_t` and `VH_t` repeat names the
-  composite already holds, and Earth Engine renames them `VV_t_1` and `VH_t_1` rather than refusing them. The
-  declaration excludes these bands; the default image still builds them.
 - Optical GUI and EE code maintain separate data-set band catalogues. EE also exposes `unixTimeDays` for a MEDOID
   output while the GUI metadata group currently offers only `dayOfYear` and `daysFromTarget`. Whether
   `unixTimeDays` is intentionally hidden or accidentally omitted needs a product-level decision.
