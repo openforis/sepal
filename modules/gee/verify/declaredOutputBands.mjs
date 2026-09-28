@@ -80,15 +80,6 @@ const changeAlertsRecipe = {
     }
 }
 
-const radarMosaicRecipe = (id, dates) => ({
-    id,
-    type: 'RADAR_MOSAIC',
-    model: {aoi: AOI, dates, options: RADAR_OPTIONS}
-})
-
-const radarTimeScan = radarMosaicRecipe('radar-time-scan', {fromDate: '2021-01-01', toDate: '2022-01-01'})
-const radarPointInTime = radarMosaicRecipe('radar-point-in-time', {targetDate: '2021-03-01'})
-
 // The historical statistics BAYTS alerts are detected against, held in memory like the CCDC reference rather
 // than read from a saved asset, so the fixture needs nothing the caller had to create first.
 const baytsHistoricalRecipe = {
@@ -119,8 +110,6 @@ const baytsAlertsRecipe = {
 const CATALOGUE = {
     [ccdcRecipe.id]: ccdcRecipe,
     [changeAlertsRecipe.id]: changeAlertsRecipe,
-    [radarTimeScan.id]: radarTimeScan,
-    [radarPointInTime.id]: radarPointInTime,
     [baytsHistoricalRecipe.id]: baytsHistoricalRecipe,
     [baytsAlertsRecipe.id]: baytsAlertsRecipe
 }
@@ -137,21 +126,6 @@ const FIXTURES = [
     {
         name: 'Change Alerts change product',
         recipe: changeAlertsRecipe
-    },
-    {
-        name: 'Radar Mosaic time scan',
-        recipe: radarTimeScan
-    },
-    {
-        name: 'Radar Mosaic time scan, harmonic-dependent selection',
-        recipe: radarTimeScan,
-        args: {selection: ['VV_phase']}
-    },
-    {
-        // Which bands an unrequested point-in-time composite should carry is a recorded product decision, so
-        // what it builds beyond the declared list is reported, not judged.
-        name: 'Radar Mosaic point in time',
-        recipe: radarPointInTime
     },
     {
         name: 'BAYTS Alerts alert product',

@@ -221,9 +221,9 @@ describe('observing a wrapper around another wrapper', () => {
     })
 
     it('still observes the immediate source\'s running image when what it wraps declares no output', () => {
-        bands$.mockReturnValue(of([{name: 'VV', arrayDimensions: 0}]))
-        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('radar-1')}}
-        const records = {inner, 'radar-1': {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}}
+        bands$.mockReturnValue(of([{name: 'VV_mean_asc', arrayDimensions: 0}]))
+        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('bayts-historical-1')}}
+        const records = {inner, 'bayts-historical-1': {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}}
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadRecipe$: id => of(records[id])
@@ -233,7 +233,7 @@ describe('observing a wrapper around another wrapper', () => {
 
         expect(bands$).toHaveBeenCalledTimes(1)
         expect(bands$).toHaveBeenCalledWith({recipe: inner, includeDataTypes: true})
-        expect(evidence()[0].bands).toEqual([{name: 'VV', dataType: {arrayDimensions: 0}}])
+        expect(evidence()[0].bands).toEqual([{name: 'VV_mean_asc', dataType: {arrayDimensions: 0}}])
     })
 
     // The shared graph is the authority on cycles, and a graph that cannot run has no evidence to give.

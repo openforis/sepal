@@ -7,8 +7,8 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
-import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+import {pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {namedBands, recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
@@ -95,7 +95,7 @@ export const RecipeActions = id => {
 
 export const getAllVisualizations = recipe => {
     return !_.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
-        ? allRadarMosaicVisualizations(recipe)
+        ? allRadarMosaicVisualizations()
         : Object.keys(selectFrom(recipe, ['model.sources.dataSets'])).find(source => ['LANDSAT', 'SENTINEL_2'].includes(source))
             ? allOpticalMosaicVisualizations(recipe)
             : allPlanetMosaicVisualizations(recipe)
@@ -124,15 +124,9 @@ const allOpticalMosaicVisualizations = recipe => {
 }
 
 const RADAR_BAND_SCALE = 100
-const allRadarMosaicVisualizations = recipe => {
-    const radarMosaicRecipe = {
-        type: 'RADAR_MOSAIC',
-        model: {
-            options: selectFrom(recipe, 'model.options')
-        }
-    }
+const allRadarMosaicVisualizations = () => {
     return [
-        ...recipeVisualizations(radarMosaicRecipe, radarBands(radarMosaicRecipe))
+        ...pointInTimeVisualizations()
             .map(visParams => ({
                 ...visParams,
                 min: visParams.min.map(min => min * RADAR_BAND_SCALE),

@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr, BAYTS Alerts and Change Alerts through their real registrations, shared declarations, the common
-// read and the generic Retrieve submission. Only the task API and notifications are replaced.
+// Alerts, LandTrendr, BAYTS Alerts, Change Alerts and Radar Mosaic through their real registrations, shared declarations,
+// the common read and the generic Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -35,6 +35,7 @@ const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {default: landTrendr} = await import('./landTrendr/landTrendr')
 const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
+const {default: radarMosaic} = await import('./radarMosaic/radarMosaic')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -44,6 +45,7 @@ const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe'
 const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe')
 const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {retrieveTask: landTrendrTask} = await import('./landTrendr/landTrendrRecipe')
+const {retrieveTask: radarMosaicTask} = await import('./radarMosaic/radarMosaicRecipe')
 const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
@@ -53,6 +55,7 @@ const {groupedBandPresentation: baytsAlertsRetrieveGroups} = await import('./bay
 const {visualizationOptions: baytsAlertsVisualizationOptions} = await import('./baytsAlerts/visualizations')
 const {groupedBandPresentation: changeAlertsRetrieveGroups} = await import('./changeAlerts/bands')
 const {visualizationOptions: changeAlertsVisualizationOptions} = await import('./changeAlerts/visualizations')
+const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
 
 addRecipeType(regression())
@@ -66,6 +69,7 @@ addRecipeType(pyeoAlerts())
 addRecipeType(landTrendr())
 addRecipeType(baytsAlerts())
 addRecipeType(changeAlerts())
+addRecipeType(radarMosaic())
 
 beforeEach(() => {
     submitted.length = 0
@@ -538,8 +542,8 @@ describe('a BAYTS alerts recipe', () => {
 
         expect(product).toEqual({name: 'RADAR_OBSERVATION', parameters: {position}})
         expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
-        expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['VV', 'VH']))
-        expect(output.bands.map(({name}) => name)).not.toContain('flag')
+        expect(output.bands.map(({name}) => name)).toEqual(RADAR_POINT_IN_TIME)
+        expect(displayTypes(output)).toMatchObject({orbit: {precision: 'int'}, VV: {precision: 'float'}})
         const styles = baytsAlertsVisualizationOptions(recipe, position).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(styles).not.toHaveLength(0)
         expect(renderableVisualizations(styles, output.availableBands)).toEqual(styles)
@@ -659,6 +663,107 @@ describe('a Change Alerts recipe', () => {
             expect(layerRead(recipe, {visualizationType: 'changes'}).output.bands.map(({name}) => name)).toEqual(CHANGES)
         })
     })
+
+    // A latest radar mosaic stands at the period's end or start, and a median one scans the period.
+    it.each([
+        ['monitoring', 'latest', RADAR_POINT_IN_TIME, ['VV', 'VH', 'ratio_VV_VH']],
+        ['calibration', 'median', RADAR_TIME_SCAN, ['VV_med', 'VH_med', 'VV_std']]
+    ])('shows the radar %s %s mosaic as Radar Mosaic declares it, with its styles', (period, mosaicType, bands, style) => {
+        const recipe = changeAlertsOf({sources: RADAR_SOURCES})
+        const layerConfig = {visualizationType: period, mosaicType}
+        const {output} = layerRead(recipe, layerConfig)
+
+        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output.bands.map(({name}) => name)).toEqual(bands)
+        const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
+        expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(style)
+    })
+})
+
+describe('a Radar Mosaic', () => {
+    it('is described as a time scan - its statistics, then each polarisation\'s harmonics - while the recipe its AOI comes from is not even loaded', () => {
+        const {output} = read(radarMosaicOf({aoi: {type: 'RECIPE', id: 'aoi-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(RADAR_TIME_SCAN)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it.each([
+        ['a target date', {targetDate: '2024-06-01'}],
+        ['a target date beside a period', {targetDate: '2024-06-01', ...TIME_SCAN_DATES}]
+    ])('is described as a point in time for %s', (_case, dates) => {
+        expect(read(radarMosaicOf({dates})).output.bands.map(({name}) => name)).toEqual(RADAR_POINT_IN_TIME)
+    })
+
+    it('is described as a time scan while it states no dates', () => {
+        expect(read(radarMosaicOf({dates: {}})).output.bands.map(({name}) => name)).toEqual(RADAR_TIME_SCAN)
+    })
+
+    it('is presented as a point in time with whole orbits and days, and offers its combination and date styles', () => {
+        const recipe = radarMosaicOf({dates: {targetDate: '2024-06-01'}})
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual({
+            VV: {precision: 'float'},
+            VH: {precision: 'float'},
+            ratio_VV_VH: {precision: 'float'},
+            orbit: {precision: 'int'},
+            dayOfYear: {precision: 'int', min: 0, max: 366},
+            daysFromTarget: {precision: 'int', min: 0, max: 183}
+        })
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands))
+            .toEqual([['VV', 'VH', 'ratio_VV_VH'], ['dayOfYear'], ['daysFromTarget']])
+    })
+
+    it('is presented as a time scan with a whole orbit, and offers its combination and harmonic styles', () => {
+        const recipe = radarMosaicOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual(Object.fromEntries(RADAR_TIME_SCAN.map(name =>
+            [name, {precision: name === 'orbit' ? 'int' : 'float'}])))
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands)).toEqual([
+            ['VV_max', 'VH_min', 'NDCV'],
+            ['VV_med', 'VH_med', 'VV_std'],
+            ['VV_med', 'VH_med', 'ratio_VV_med_VH_med'],
+            ['VV_max', 'VV_min', 'VV_std'],
+            ['VV_min', 'VH_min', 'VV_std'],
+            ['VV_phase', 'VV_amp', 'VV_res'],
+            ['VH_phase', 'VH_amp', 'VH_res']
+        ])
+    })
+
+    it.each([
+        ['a point in time', {targetDate: '2024-06-01'}, [
+            ['VV', 'VH', 'ratio_VV_VH'],
+            ['orbit', 'dayOfYear', 'daysFromTarget']
+        ]],
+        ['a time scan', TIME_SCAN_DATES, [
+            ['VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv'],
+            ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv'],
+            ['ratio_VV_med_VH_med', 'NDCV'],
+            ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
+            ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
+            ['orbit']
+        ]]
+    ])('offers every band of %s for retrieval, in its groups', (_case, dates, groups) => {
+        const recipe = radarMosaicOf({dates})
+
+        expect(radarMosaicRetrieveGroups(recipe).map(group => group.map(({value}) => value))).toEqual(groups)
+        expect(groups.flat().sort()).toEqual(read(recipe).output.bands.map(({name}) => name).sort())
+    })
+
+    it.each([
+        ['a point in time', {targetDate: '2024-06-01'}, ['daysFromTarget', 'orbit', 'VV'],
+            {VV: 'mean', orbit: 'mode', daysFromTarget: 'sample'}],
+        ['a time scan', TIME_SCAN_DATES, ['VH_phase', 'orbit', 'VV_const', 'VV_min'],
+            {VV_min: 'mean', orbit: 'mode', VV_const: 'mean', VH_phase: 'sample'}]
+    ])('exports bands of %s in the order execution builds them, keeping orbits, dates and phases whole', (_case, dates, chosen, policies) => {
+        retrieve(read(radarMosaicOf({dates})), 'GEE', radarMosaicTask, {bands: chosen})
+
+        expect(submitted.map(({params: {image}}) => [image.bands.selection, image.pyramidingPolicy]))
+            .toEqual([[Object.keys(policies), policies]])
+    })
 })
 
 describe.each([
@@ -672,7 +777,8 @@ describe.each([
     ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
     ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
     ['a BAYTS alerts recipe', recipe => baytsAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined],
-    ['a Change Alerts recipe', recipe => changeAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined]
+    ['a Change Alerts recipe', recipe => changeAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined],
+    ['a Radar Mosaic', recipe => radarMosaicOf(recipe && {aoi: {type: 'RECIPE', id: recipe}}), radarMosaicTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -838,18 +944,37 @@ const PERIOD = {
     calibrationDurationUnit: 'months'
 }
 
+const OPTICAL_SOURCES = {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}}
+const RADAR_SOURCES = {band: 'VV', dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}
+
 // Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded.
-const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD} = {}) => ({
+const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD, sources = OPTICAL_SOURCES} = {}) => ({
     id: ID,
     type: 'CHANGE_ALERTS',
     title: 'Alerts',
     model: {
         reference,
         date,
-        sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        sources,
         options: {corrections: ['SR']},
         changeAlertsOptions: {minConfidence: 5, numberOfObservations: 3, minNumberOfChanges: 3}
     }
+})
+
+const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
+const RADAR_TIME_SCAN = [
+    'VV_min', 'VV_max', 'VV_mean', 'VV_std', 'VV_med', 'VH_min', 'VH_max', 'VH_mean', 'VH_std', 'VH_med',
+    'ratio_VV_med_VH_med', 'VV_cv', 'VH_cv', 'NDCV', 'orbit',
+    'VV_phase', 'VV_amp', 'VV_res', 'VV_const', 'VV_t', 'VH_phase', 'VH_amp', 'VH_res', 'VH_const', 'VH_t'
+]
+const TIME_SCAN_DATES = {fromDate: '2024-01-01', toDate: '2025-01-01'}
+
+// An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
+const radarMosaicOf = ({dates = TIME_SCAN_DATES, aoi = AOI} = {}) => ({
+    id: ID,
+    type: 'RADAR_MOSAIC',
+    title: 'Radar',
+    model: {aoi, dates, options: {orbits: ['ASCENDING', 'DESCENDING']}}
 })
 
 const landTrendrOf = ({classification} = {}) => ({

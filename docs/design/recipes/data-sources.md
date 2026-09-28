@@ -17,9 +17,9 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, BAYTS Alerts, CCDC, CCDC Slice, Class Change, Classification, Index Change, LandTrendr, Masking, Optical
-Mosaic, Phenology, PyEO Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT`
-provider.
+Only Asset, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change, LandTrendr,
+Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping and Unsupervised Classification
+declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -121,12 +121,22 @@ where a family still needs observation.
      Alerts exports every change band with `sample` where its fallback applied `mean`. Its monitoring and calibration
      mosaics are still answered by its legacy entry: their `{period, mosaicType}` parameters and delegation to the
      configured Optical, Radar or Planet Mosaic are pending;
-   - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
-     [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
-     output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which
-     bands an unrequested composite carries;
-   - Stack, through the existing `inputs()` access for name-based selection and renaming; only its capability
-     preservation waits for
+   - Radar Mosaic has migrated ([Radar Mosaic](../../recipes/radar-mosaic.md)). Its shared type declares each
+     configuration: a stated target date makes a point in time - `VV`, `VH`, `ratio_VV_VH`, `orbit`, `dayOfYear`
+     and `daysFromTarget` - and anything else a time scan of 25 bands, its 15 statistics then `_phase`, `_amp`,
+     `_res`, `_const` and `_t` for each polarisation. All are scalar with no encoding; `orbit` keeps its mode,
+     `dayOfYear`, `daysFromTarget` and the phases are sampled and the rest averaged, which changes the coarse pyramid
+     levels of newly exported assets, Masking's included, and no full-resolution pixel. Earth Engine's catalogue
+     answers the declared bands whatever is selected, while execution computes only the harmonics a selection needs.
+     A point in time asked for nothing still builds every band it constructs. Construction bands - `angle`,
+     `quality`, `unixTimeDays`, per-image harmonic terms - are not public, though explicit requests for them still
+     build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
+     consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observations and Change
+     Alerts' radar mosaics take their names from this schema while their products remain undeclared;
+   - Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
+     [source planning](output-products.md#source-planning-and-collection-composition);
+   - Stack, through the existing `inputs()` access for name-based selection and renaming. Review the correspondence
+     between output and input bands before implementation; its capability preservation still waits for
      [capability projection](output-products.md#transformation-effects-and-capability-projection);
    - Band Math, which needs the provider outcome combining declared constraints with observation. That is a
      provider-contract change, so design it early rather than last.
@@ -136,9 +146,34 @@ where a family still needs observation.
    consumer API. Labels, tooltips, groups and display ranges remain GUI presentation.
 
 Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
-helper. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands independently of
-the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band presentation, not a
-migration state.
+helper. Verification distinguishes the public bands available to request, the image built with no selection, and
+the output of an explicit selection ([declaration and description](output-products.md#declaration-and-description)).
+A default image need not contain every available band, and internal working bands do not become public merely
+because they appear in that image. Each family states its default-selection behavior and verifies both default and
+explicit requests. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands
+independently of the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band
+presentation, not a migration state.
+
+#### Contract reviews before the remaining migrations
+
+Review Band Math's provider outcome and Stack's band correspondence before implementing those migrations. These reviews can proceed alongside other independent family migrations;
+they must not wait until only the difficult families remain.
+
+- **Band Math:** establish how configured output names and constraints combine with observed physical facts,
+  including pending and failed evidence. Derive the smallest provider extension from actual expressions and
+  consumers, rather than adding a general expression framework.
+- **Stack:** establish which input band each selected or renamed output corresponds to. That relationship is the
+  basis for later presentation and capability inheritance; copied source snapshots are not its authority. This
+  review does not bring forward the deferred shared picker or capability-projection implementation.
+- **Map products needing more than configuration:** extend provider access, acquisition identity and retained-answer
+  validation together when a product actually needs referenced records or observations. Today's configuration-only
+  products can reuse dependency-validity acquisitions across parameter changes; do not carry that assumption into
+  a more demanding product without establishing what makes its answer current.
+- **Execution requirements:** review the minimum shared result contract before implementing shared live descriptions.
+  A description being `READY` and a closure being `VALID` do not establish that the recipe can execute. Requirements
+  must be evaluated through wrappers and at execution boundaries, with their evidence and freshness explicit; they
+  must not become empty schemas or independent panel guards. This brings forward contract review, while requirement
+  validation remains a separate implementation packet below.
 
 #### Preparation packets
 
@@ -186,8 +221,10 @@ reserve the full GUI suite for the final readiness check.
 In order, each independently mergeable:
 
 1. **Shared live output descriptions**, immediately after the output declarations are mandatory and the legacy
-   adapter is removed. The source runtime owns reusable descriptions and in-flight acquisitions; map layers and
-   Retrieve subscribe to the same current answer rather than acquiring independently on every panel opening.
+   adapter is removed, with the execution-requirements contract reviewed first. Cached description readiness and
+   structural validity must retain their separate meanings rather than implying execution readiness.
+   The source runtime owns reusable descriptions and in-flight acquisitions; map layers and Retrieve subscribe to
+   the same current answer rather than acquiring independently on every panel opening.
    Reuse the common read and acquisition contracts, with no recipe-specific caches.
    - One source-version registry tracks local draft changes, recipe revisions, credential context and observed
      asset versions. Relevant changes invalidate dependent answers immediately and trigger background refresh;
@@ -216,9 +253,13 @@ In order, each independently mergeable:
    Include band-presentation inheritance: producers supply labels and optional descriptions through GUI
    presentation, and wrappers that preserve a band's meaning, such as Masking, preserve that presentation.
    Masking Retrieve currently falls back to raw names such as LandTrendr's `yod`. Resolve presentation through
-   the source relationship rather than adding producer-specific cases to Masking; transformations that change
-   a band's meaning supply their own presentation. Translation stays in the GUI, and presentation never decides
+   the source relationship, including Stack's reviewed selection and renaming correspondence, rather than adding
+   producer-specific cases to Masking; transformations that change a band's meaning supply their own presentation.
+   Translation stays in the GUI, and presentation never decides
    which bands exist or their physical or export properties.
+   Keep semantic facts separate from consumer decisions: a band may state that it represents an observation date,
+   while CCDC owns whether that quantity is suitable for fitting. Scalar or integer shape alone does not establish
+   an appropriate pyramiding policy.
 5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
 6. **Caller-authorized closure reads and coherent execution**
    ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).

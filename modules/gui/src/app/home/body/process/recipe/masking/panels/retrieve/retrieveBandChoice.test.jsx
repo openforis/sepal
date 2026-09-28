@@ -649,7 +649,12 @@ describe.each([
     ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'flag', 'sample'],
     ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'change_probability', 'sample'],
     ['a Change Alerts recipe', () => CHANGE_ALERTS, 'confidence', 'sample'],
-    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'detection_count', 'sample']
+    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'detection_count', 'sample'],
+    ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'VV', 'mean'],
+    ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'orbit', 'mode'],
+    ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'dayOfYear', 'sample'],
+    ['a time-scan Radar Mosaic', () => RADAR_TIME_SCAN, 'VV_const', 'mean'],
+    ['a time-scan Radar Mosaic', () => RADAR_TIME_SCAN, 'VH_phase', 'sample']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -975,6 +980,20 @@ const BAYTS_ALERTS = {
         baytsAlertsOptions: {previousAlertsAsset: {type: 'ASSET', id: 'users/x/previous-alerts'}}
     }
 }
+
+// Drawn on the map, so that nothing either reads has to be loaded or observed.
+const radarMosaic = (id, dates) => ({
+    id,
+    type: 'RADAR_MOSAIC',
+    model: {
+        aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [1, 0]]},
+        dates,
+        options: {orbits: ['ASCENDING', 'DESCENDING']}
+    }
+})
+
+const RADAR_POINT_IN_TIME = radarMosaic('radar-point-in-time', {targetDate: '2024-06-01'})
+const RADAR_TIME_SCAN = radarMosaic('radar-time-scan', {fromDate: '2024-01-01', toDate: '2025-01-01'})
 
 // Monitoring a segments asset, so that nothing it reads has to be loaded or observed.
 const CHANGE_ALERTS = {

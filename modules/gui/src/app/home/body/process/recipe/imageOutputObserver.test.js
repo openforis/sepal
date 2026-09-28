@@ -276,14 +276,14 @@ describe('classifying what the session cannot answer', () => {
     // The coexistence boundary for the Retrieve migration: falling back is allowed only when a recipe type
     // has declared no output, never because a migrated recipe is invalid or its evidence is pending.
     it('reports a registered but unmigrated recipe type as invalid, observing nothing', () => {
-        const root = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
+        const root = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
         expect(state.calls).toEqual([])
         expect(latest(states)).toEqual(envelope({
             status: 'INVALID',
-            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['radar-1']}]
+            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['bayts-historical-1']}]
         }))
     })
 })

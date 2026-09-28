@@ -130,6 +130,13 @@ an answer that depended on anything unavailable is discarded. Declared roles and
 because capability resolution reads them without resolving anything. A consumer cannot tell how a description was
 acquired.
 
+The public bands available to request, the image built with no selection, and the result of one explicit selection
+are distinct contracts. A description answers the first; it does not promise that every available band is already
+present in an unselected image. Each producer states its default-selection behavior, and verification covers both
+default and explicit requests. Internal working bands are not public output merely because an unselected image
+carries them. Consumers must not substitute that image's schema for the public catalogue unless the producer's
+contract establishes that they agree.
+
 Observation is one way to establish availability, not its definition. An unselected running image is not
 universally the available-band catalogue: the optical mosaic's composite for an empty selection includes its
 tasseled-cap components but computes no indexes, and CCDC fits only the measures it is asked for, so the image it
@@ -957,7 +964,7 @@ matches execution. The execution comparison is a research gate below.
 | Phenology | seasonality metrics and month composites | internal source collection | shared declaration | scalar |
 | Planet Mosaic | selected composite | internal Planet collection | fixed GUI vocabulary | scalar |
 | PyEO Alerts | alert result | internal classified monitoring collection | shared declaration | scalar |
-| Radar Mosaic | point-in-time or time-scan composite | internal radar collection | date-dependent fixed families | scalar |
+| Radar Mosaic | point-in-time or time-scan composite | internal radar collection | shared declaration by configuration | scalar |
 | Regression | regression image | none identified | shared declaration | scalar |
 | Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
 | Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
@@ -1025,13 +1032,12 @@ necessary where the EE graph determines the answer.
 The source comparison found helper drift and production defects. They must be fixed before the first adapter or
 temporal-composer contract is declared:
 
-- Radar Mosaic's point-in-time `getBands$()` does not report every band its composite carries. The quality mosaic
+- Radar Mosaic's point-in-time image asked for nothing carries more than its six declared bands. The quality mosaic
   keeps each collection band, so the image also holds `angle`, `quality` and `unixTimeDays`. An empty selection makes
   both polarisations harmonic dependents, which adds the per-observation `VV_t`, `VV_constant`, `VV_cos` and
   `VV_sin` bands and their VH counterparts, and then the harmonics summary. Its `VV_t` and `VH_t` repeat names the
-  composite already holds, and Earth Engine renames them `VV_t_1` and `VH_t_1` rather than refusing them. Whether a
-  point-in-time composite should carry these bands at all needs a product decision.
-  `modules/gee/verify/declaredOutputBands.mjs` reports the difference against live Earth Engine.
+  composite already holds, and Earth Engine renames them `VV_t_1` and `VH_t_1` rather than refusing them. The
+  declaration excludes these bands; the default image still builds them.
 - Optical GUI and EE code maintain separate data-set band catalogues. EE also exposes `unixTimeDays` for a MEDOID
   output while the GUI metadata group currently offers only `dayOfYear` and `daysFromTarget`. Whether
   `unixTimeDays` is intentionally hidden or accidentally omitted needs a product-level decision.

@@ -189,9 +189,9 @@ describe('exporting a masked CCDC', () => {
 
 describe('exporting a recipe type that declares no output', () => {
     it('exports as before, stating that nothing is known about its values', async () => {
-        const recipe = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
+        const recipe = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}
 
-        const {bandEncoding, image} = await submit({recipe, bands: ['VV']})
+        const {bandEncoding, image} = await submit({recipe, bands: ['VV_mean_asc']})
 
         expect(image).toEqual({builtFrom: recipe.id})
         expect(bandEncoding).toEqual({})
@@ -199,11 +199,11 @@ describe('exporting a recipe type that declares no output', () => {
     })
 
     it('exports a recipe preserving such a type as unknown rather than failing', async () => {
-        const radar = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
-        const recipe = masking({primary: {type: 'RECIPE_REF', id: radar.id}})
-        state.catalogue = {[radar.id]: radar}
+        const historical = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: historical.id}})
+        state.catalogue = {[historical.id]: historical}
 
-        const {bandEncoding} = await submit({recipe, bands: ['VV']})
+        const {bandEncoding} = await submit({recipe, bands: ['VV_mean_asc']})
 
         expect(bandEncoding).toEqual({})
     })
@@ -253,10 +253,10 @@ describe('a recipe whose dependencies are not structurally sound', () => {
     })
 
     it('fails the export rather than record unknown encoding for a source that declares no output', async () => {
-        state.catalogue = {'radar-1': {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}}
-        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'radar-1'}, mask: selfMask})
+        state.catalogue = {'bayts-historical-1': {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'bayts-historical-1'}, mask: selfMask})
 
-        await expect(submit({recipe, bands: ['VV']})).rejects.toThrow(/CYCLIC_DEPENDENCY/)
+        await expect(submit({recipe, bands: ['VV_mean_asc']})).rejects.toThrow(/CYCLIC_DEPENDENCY/)
         expect(state.exported).toEqual([])
     })
 

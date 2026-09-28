@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-import {getPreSetVisualizations as getPreSetRadarMosaicVisualizations, visualizationOptions as radarVisualizationOptions} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
+import {pointInTimeOptions, pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -9,14 +9,14 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const getPreSetVisualizations = recipe =>
     ([
-        ...getPreSetRadarMosaicVisualizations(recipe),
+        ...pointInTimeVisualizations(),
         ...Object.values(toAlertVisualiaztions(recipe))
     ])
 
 export const visualizationOptions = (recipe, visualizationType) => {
     return !visualizationType || visualizationType === 'alerts'
         ? alertVisualizationOptions(recipe)
-        : radarVisualizationOptions(recipe)
+        : pointInTimeOptions()
 }
 
 const alertVisualizationOptions = recipe => {

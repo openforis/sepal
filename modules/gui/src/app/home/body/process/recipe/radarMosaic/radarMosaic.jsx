@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {RadarMosaicToolbar} from './panels/radarMosaicToolbar'
 import {defaultModel} from './radarMosaicRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -61,6 +61,6 @@ export default () => ({
         recipe: RadarMosaic
     },
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })
