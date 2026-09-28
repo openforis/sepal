@@ -10,7 +10,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
-import {getAvailableBands, mapProducts} from './bands'
+import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './baytsAlertsRecipe'
 import {BaytsAlertsToolbar} from './panels/baytsAlertsToolbar'
 import {baytsAlertsObservation} from './referenceObservation'
@@ -63,8 +63,8 @@ export default () => ({
             .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
         return [monitoringStart, monitoringEnd]
     },
-    getAvailableBands,
     mapProducts,
+    bandPresentation,
     getPreSetVisualizations,
     beta: true
 })

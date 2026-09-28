@@ -943,7 +943,7 @@ matches execution. The execution comparison is a research gate below.
 | --- | --- | --- | --- | --- |
 | Asset | selected Earth Engine image | asset source presets | copied `assetDetails`, runtime metadata | observed; scalar, array or mixed |
 | Band Math | expression outputs with configured names | rewritten input presets | output expression model and copied inputs | names known; physical type incomplete |
-| BAYTS Alerts | alert result | first/last radar map products | fixed alert bands plus reused Radar helpers | scalar |
+| BAYTS Alerts | alert result | first/last radar map products | shared declaration; radar views by reused Radar helpers | scalar |
 | BAYTS Historical | orbit-selected historical metrics | none identified | fixed vocabulary filtered by model orbits | scalar |
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
@@ -1084,6 +1084,9 @@ The comparison also found useful stable declarations rather than only defects:
 
 - LandTrendr's seven fixed change bands are its declaration, in the order execution builds them; its annual mosaic
   branch is explicitly map-only.
+- BAYTS Alerts' six alert bands are its declaration: execution selects them last, in that order, from its own
+  initial alerts or a previous run's, and its confidence filters only mask. Its former Earth Engine catalogue built
+  and evaluated the whole alert computation to list them; it now answers from the declaration.
 - Phenology's fixed metric and month band lists are its declaration. Execution omitted a month without observations
   and returned no bands when asked for none; it now masks such a month and returns every declared band.
 - Classification's optional bands follow from classifier capability and legend entries. Its declaration is the

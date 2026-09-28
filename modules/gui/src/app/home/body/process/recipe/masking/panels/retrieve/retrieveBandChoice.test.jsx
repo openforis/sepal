@@ -645,7 +645,9 @@ describe.each([
     ['a PyEO alerts recipe', () => PYEO_ALERTS, 'total_changes', 'sample'],
     ['a LandTrendr', () => LANDTRENDR, 'yod', 'sample'],
     ['a LandTrendr', () => LANDTRENDR, 'dur', 'sample'],
-    ['a LandTrendr', () => LANDTRENDR, 'mag', 'mean']
+    ['a LandTrendr', () => LANDTRENDR, 'mag', 'mean'],
+    ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'flag', 'sample'],
+    ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'change_probability', 'sample']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -941,6 +943,18 @@ const LANDTRENDR = {
         sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'},
         options: {corrections: ['SR']},
         landTrendrOptions: {changeDirection: 'LOSS'}
+    }
+}
+
+// Monitoring and continuing from assets, so that nothing it reads has to be loaded or observed.
+const BAYTS_ALERTS = {
+    id: 'bayts-alerts-1',
+    type: 'BAYTS_ALERTS',
+    model: {
+        reference: {type: 'ASSET', id: 'users/x/bayts-historical'},
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+        options: {orbits: ['ASCENDING', 'DESCENDING']},
+        baytsAlertsOptions: {previousAlertsAsset: {type: 'ASSET', id: 'users/x/previous-alerts'}}
     }
 }
 

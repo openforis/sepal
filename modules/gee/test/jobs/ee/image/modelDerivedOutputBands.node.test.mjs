@@ -366,6 +366,35 @@ const describedProduct = (recipe, product) => {
     return description.output.bands
 }
 
+// BAYTS Alerts builds its alerts from a historical reference it monitors and, when continuing, a previous run's alerts;
+// both are what this operation's reader refuses, and no alert operation is modelled here. What it says it can be asked
+// for needs neither - nor a reference at all, as a new recipe has none selected yet. What it builds is checked against
+// live Earth Engine (verify/baytsAlertsOutputBands.mjs).
+describe('BAYTS Alerts', () => {
+    const baytsAlerts = model => ({
+        id: 'bayts-alerts-1',
+        type: 'BAYTS_ALERTS',
+        model: {
+            reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'},
+            date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+            options: {},
+            baytsAlertsOptions: {previousAlertsAsset: {type: 'ASSET', id: 'users/x/previous-alerts'}},
+            ...model
+        }
+    })
+
+    for (const [recipe, over] of [
+        [baytsAlerts(), 'its reference and previous alerts'],
+        [baytsAlerts({reference: {}}), 'no reference selected yet']
+    ]) {
+        inOperation(`says it can be asked for exactly the bands it declares, over ${over}, reading neither`, async () => {
+            const catalogue = await firstValueFrom(imageFactory(recipe).getBands$())
+
+            assert.deepEqual(catalogue, declared(recipe).map(({name}) => name))
+        })
+    }
+})
+
 // Counting what segmentation would be fitted to needs neither segmentation nor the catalogue of measures, so the
 // classification the collection would carry is never read: this operation's reader refuses every recipe.
 describe('CCDC showing its count', () => {

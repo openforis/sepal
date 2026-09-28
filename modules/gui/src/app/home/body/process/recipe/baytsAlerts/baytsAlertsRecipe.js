@@ -2,7 +2,6 @@ import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultHistoricalModel} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -49,8 +48,4 @@ export const toDates = recipe => {
     const monitoringEnd = model.date.monitoringEnd
     const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
     return {monitoringEnd, monitoringStart}
-}
-
-export const retrieveTask = {
-    pyramidingPolicy: pyramidingPolicies.sample
 }

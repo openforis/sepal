@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts and LandTrendr through their real registrations, shared declarations, the common read and the generic Retrieve submission.
+// Alerts, LandTrendr and BAYTS Alerts through their real registrations, shared declarations, the common read and the generic Retrieve submission.
 // Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -33,6 +33,7 @@ const {default: remapping} = await import('./remapping/remapping')
 const {default: phenology} = await import('./phenology/phenology')
 const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {default: landTrendr} = await import('./landTrendr/landTrendr')
+const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -42,11 +43,14 @@ const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe'
 const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe')
 const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {retrieveTask: landTrendrTask} = await import('./landTrendr/landTrendrRecipe')
-const {canPreview, displayTypes, layerProduct, readRecipeOutput} = await import('./recipeOutput')
+const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 const {recipeVisualizations} = await import('./visualizations')
 const {visualizationOptions: landTrendrVisualizationOptions} = await import('./landTrendr/visualizations')
+const {groupedBandPresentation: baytsAlertsRetrieveGroups} = await import('./baytsAlerts/bands')
+const {visualizationOptions: baytsAlertsVisualizationOptions} = await import('./baytsAlerts/visualizations')
+const {renderableVisualizations} = await import('./visualizationMatching')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -57,6 +61,7 @@ addRecipeType(remapping())
 addRecipeType(phenology())
 addRecipeType(pyeoAlerts())
 addRecipeType(landTrendr())
+addRecipeType(baytsAlerts())
 
 beforeEach(() => {
     submitted.length = 0
@@ -471,6 +476,73 @@ describe('a LandTrendr annual mosaic', () => {
     })
 })
 
+describe('a BAYTS alerts recipe', () => {
+    const ALERTS = ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit', 'first_detection_date', 'confirmation_date']
+
+    it('is described with its alerts, while the historical recipe it monitors is not even loaded', () => {
+        const {output} = read(baytsAlertsOf({reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with whole flags and orbits, fractional probabilities and dates, and offers its alert styles', () => {
+        const recipe = baytsAlertsOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual({
+            non_forest_probability: {precision: 'float'},
+            change_probability: {precision: 'float'},
+            flag: {precision: 'int'},
+            flag_orbit: {precision: 'int'},
+            first_detection_date: {precision: 'float'},
+            confirmation_date: {precision: 'float'}
+        })
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0]))
+            .toEqual(['change_probability', 'flag', 'first_detection_date', 'confirmation_date'])
+    })
+
+    it('is offered for retrieval in its probability and date groups', () => {
+        expect(baytsAlertsRetrieveGroups().map(group => group.map(({value}) => value))).toEqual([
+            ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit'],
+            ['first_detection_date', 'confirmation_date']
+        ])
+    })
+
+    it('exports the bands selected in the order execution builds them, all sampled', () => {
+        retrieve(read(baytsAlertsOf()), 'GEE', undefined, {bands: ['confirmation_date', 'flag', 'change_probability']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['change_probability', 'flag', 'confirmation_date']},
+            {change_probability: 'sample', flag: 'sample', confirmation_date: 'sample'}
+        ]])
+    })
+
+    // The radar observations a layer can show instead are another product, still answered by its legacy entry.
+    it.each(['first', 'last'])('shows its %s radar observation as before, with the radar styles and the arguments execution takes', position => {
+        const recipe = baytsAlertsOf()
+        const layerConfig = {visualizationType: position}
+        const product = layerProduct(recipe, layerConfig)
+
+        const output = readRecipeOutput({
+            recipe,
+            product,
+            graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+            heldFor: () => null
+        })
+
+        expect(product).toEqual({name: 'RADAR_OBSERVATION', parameters: {position}})
+        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['VV', 'VH']))
+        expect(output.bands.map(({name}) => name)).not.toContain('flag')
+        const styles = baytsAlertsVisualizationOptions(recipe, position).flatMap(({options}) => options).map(({visParams}) => visParams)
+        expect(styles).not.toHaveLength(0)
+        expect(renderableVisualizations(styles, output.availableBands)).toEqual(styles)
+        expect(productArgs(recipe, layerConfig)).toEqual({visualizationType: position, previouslyConfirmed: 'exclude', minConfidence: 'high'})
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
     ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
@@ -480,7 +552,8 @@ describe.each([
     ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask],
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
     ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
-    ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask]
+    ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
+    ['a BAYTS alerts recipe', recipe => baytsAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -622,6 +695,19 @@ const pyeoAlertsOf = ({classification} = {}) => ({
         aoi: AOI,
         dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
         sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2], ...(classification && {classification})}
+    }
+})
+
+// Monitoring a historical asset unless told otherwise, so that nothing it reads has to be loaded.
+const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historical'}} = {}) => ({
+    id: ID,
+    type: 'BAYTS_ALERTS',
+    title: 'Alerts',
+    model: {
+        reference,
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+        options: {orbits: ['ASCENDING', 'DESCENDING']},
+        baytsAlertsOptions: {}
     }
 })
 

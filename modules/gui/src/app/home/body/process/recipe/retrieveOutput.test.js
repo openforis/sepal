@@ -28,14 +28,14 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
+const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
 const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: baytsAlertsTask} = await import('./baytsAlerts/baytsAlertsRecipe')
+const {retrieveTask: changeAlertsTask} = await import('./changeAlerts/changeAlertsRecipe')
 const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(baytsAlerts())
+addRecipeType(changeAlerts())
 addRecipeType(baytsHistorical())
 
 beforeEach(() => {
@@ -45,21 +45,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies under its own policy', () => {
-        retrieve(read([BAYTS_ALERTS, SOURCE]), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
+        retrieve(read([CHANGE_ALERTS, SOURCE]), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
 
         expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
-            .toEqual([[{selection: ['flag']}, {'.default': 'sample'}]])
+            .toEqual([[{selection: ['confidence']}, {'.default': 'sample'}]])
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([BAYTS_ALERTS, SOURCE])
+        const {recipe, output, pending} = read([CHANGE_ALERTS, SOURCE])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['flag'], destination: 'DRIVE', task: baytsAlertsTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['confidence'], destination: 'DRIVE', task: changeAlertsTask}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([BAYTS_ALERTS, SOURCE]), {destination: 'GEE', bands: ['flag', 'probability']}, baytsAlertsTask)
+        retrieve(read([CHANGE_ALERTS, SOURCE]), {destination: 'GEE', bands: ['confidence', 'probability']}, changeAlertsTask)
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -74,13 +74,13 @@ describe('"all bands" of a recipe type declaring no output', () => {
     })
 })
 
-// The session has not loaded the recipe the alerts read, so whether its dependencies are sound is what the
+// The session has not loaded the recipe the alerts monitor, so whether its dependencies are sound is what the
 // panel's acquisition completes.
 describe('a recipe type declaring no output, over a dependency the session has not loaded', () => {
     it('is still being resolved until its dependencies are completed', () => {
-        const {recipe, output, pending} = read([BAYTS_ALERTS])
+        const {recipe, output, pending} = read([CHANGE_ALERTS])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['flag'], destination: 'GEE', task: baytsAlertsTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['confidence'], destination: 'GEE', task: changeAlertsTask}).status)
             .toBe('RESOLVING')
     })
 
@@ -88,7 +88,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([BAYTS_ALERTS], terminal), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
+        retrieve(read([CHANGE_ALERTS], terminal), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
 
         expect(submitted).toEqual([])
     })
@@ -96,7 +96,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([BAYTS_ALERTS], completed), {destination: 'GEE', bands: ['flag']}, baytsAlertsTask)
+        retrieve(read([CHANGE_ALERTS], completed), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
 
         expect(submitted).toHaveLength(1)
     })
@@ -111,13 +111,21 @@ const SOURCE = {
     }
 }
 
-const BAYTS_ALERTS = {
-    id: 'bayts-alerts-1',
-    type: 'BAYTS_ALERTS',
+const CHANGE_ALERTS = {
+    id: 'change-alerts-1',
+    type: 'CHANGE_ALERTS',
     title: 'Alerts',
     model: {
         reference: {type: 'RECIPE_REF', id: SOURCE.id},
-        date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months'}
+        date: {
+            monitoringEnd: '2024-01-01',
+            monitoringDuration: 1,
+            monitoringDurationUnit: 'months',
+            calibrationDuration: 1,
+            calibrationDurationUnit: 'years'
+        },
+        sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: ['SR']}
     }
 }
 

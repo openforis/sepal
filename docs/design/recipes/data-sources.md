@@ -17,8 +17,9 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, CCDC, CCDC Slice, Class Change, Classification, Index Change, LandTrendr, Masking, Optical Mosaic,
-Phenology, PyEO Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+Only Asset, BAYTS Alerts, CCDC, CCDC Slice, Class Change, Classification, Index Change, LandTrendr, Masking, Optical
+Mosaic, Phenology, PyEO Alerts, Regression, Remapping and Unsupervised Classification declare an `IMAGE_OUTPUT`
+provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -46,8 +47,8 @@ unfiltered mosaics or aggregate geometry. Encoding comes from the asset's own me
 compositing are unchanged, so collection-wide geometry can still make ASSET_BOUNDS drawing, preview and export
 expensive. See [band discovery without image construction](output-products.md#band-discovery-without-image-construction).
 
-Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, BAYTS Alerts, Stack and
-Band Math, whose band readers construct their output, and the generic typed `/bands` path, which bypasses cheaper
+Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, Stack and Band Math, whose
+band readers construct their output, and the generic typed `/bands` path, which bypasses cheaper
 catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
 Known schemas belong in declarations and referenced schemas in provider reads; extend bounded acquisition only
 where a family still needs observation.
@@ -102,7 +103,14 @@ where a family still needs observation.
      rest, and no encoding. Masking over LandTrendr inherits those policies, so it exports `yod` and `dur` with
      `sample` where its fallback applied `mean`, and Task's asset export resolves LandTrendr as a declared root and
      requires its dependencies to be valid. Its annual mosaic is a declared map product taking `{year}` and
-     delegating to Optical Mosaic, so LandTrendr has no legacy band entry left;
+     delegating to Optical Mosaic, so LandTrendr has no legacy band entry left. BAYTS Alerts' canonical alerts are
+     declared from the shared `ALERT_BANDS`: `non_forest_probability`, `change_probability`, `flag`, `flag_orbit`,
+     `first_detection_date` and `confirmation_date`, all scalar and `sample`, with no encoding, whether a run starts
+     from its own initial alerts or continues a previous run's; the layer's confidence filters mask pixels and change
+     no band. Its Earth Engine catalogue answers from that declaration without reading its reference. Masking over
+     BAYTS Alerts exports every alert band with `sample` where its fallback applied `mean`, and Task resolves BAYTS
+     Alerts as a declared root and requires its dependencies to be valid. Its first and last radar observations are
+     still answered by its legacy entry: their `{position}` parameter and delegation to Radar Mosaic are pending;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
      output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which
