@@ -2057,7 +2057,8 @@
       "layers": {
         "imageLayer": {
           "sensors": "Sensors",
-          "dates": "Dates"
+          "dates": "Dates",
+          "forestMask": "Forest mask"
         }
       },
       "panel": {
@@ -2132,6 +2133,10 @@
             "label": "Earth Engine asset",
             "title": "Earth Engine asset"
           },
+          "hansen": {
+            "label": "Hansen Global Forest Change",
+            "title": "Hansen Global Forest Change"
+          },
           "form": {
             "asset": {
               "label": "Forest mask asset",
@@ -2141,6 +2146,12 @@
             },
             "recipe": {
               "required": "A recipe must be specified"
+            },
+            "threshold": {
+              "label": "Forest threshold",
+              "tooltip": "Minimum tree canopy cover in year 2000 (Hansen Global Forest Change) for a pixel to be treated as forest. A pixel that lost forest before the start of the analysis period is excluded regardless of this threshold.",
+              "value": "{value}%",
+              "required": "A forest threshold must be specified"
             }
           }
         },
