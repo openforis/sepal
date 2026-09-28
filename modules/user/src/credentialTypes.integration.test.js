@@ -278,7 +278,7 @@ describe('a credential that is not a string', () => {
         })
         return server.start({
             port: 0,
-            routes: createRoutes(api),
+            routes: createRoutes({userApi: api}),
             // The default collects process-wide Prometheus metrics, which this has nothing to say about.
             metricsMiddleware: (_ctx, next) => next()
         })

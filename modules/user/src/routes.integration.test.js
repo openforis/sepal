@@ -13,6 +13,7 @@ const server = await import('#sepal/httpServer')
 const {hashPassword} = await import('./crypto.js')
 const {createRoutes} = await import('./routes.js')
 const {UserApi} = await import('./userApi.js')
+const {SshKeyApi} = await import('./sshKeyApi.js')
 
 // Requests through the real server: the routes as the module registers them, the guards that protect
 // them, and the api they reach.
@@ -21,6 +22,7 @@ describe('the user routes', () => {
     let running
     let url
     let users
+    let keys
 
     beforeAll(async () => {
         configureNoLogging()
@@ -30,6 +32,7 @@ describe('the user routes', () => {
 
     beforeEach(() => {
         users = {bob: aUser(), alice: aUser({id: 2, username: 'alice', email: 'alice@example.org'})}
+        keys = []
     })
 
     afterAll(() => running && new Promise(resolve => running.close(resolve)))
@@ -101,6 +104,35 @@ describe('the user routes', () => {
         })
     })
 
+    describe('for the current user\'s ssh keys', () => {
+        test('refuse a request carrying no user', async () => {
+            const response = await request('GET', '/current/ssh-keys')
+
+            expect(response.status).toBe(401)
+        })
+
+        test('add, list and remove a key', async () => {
+            const added = await request('POST', '/current/ssh-keys', {user: someone('bob'), body: {publicKey: ED25519_LINE}})
+            const listed = await request('GET', '/current/ssh-keys', {user: someone('bob')})
+            const removed = await request('DELETE', `/current/ssh-keys/${added.body.id}`, {user: someone('bob')})
+            const remaining = await request('GET', '/current/ssh-keys', {user: someone('bob')})
+
+            expect(added.status).toBe(201)
+            expect(listed.body).toEqual([added.body])
+            expect(removed.status).toBe(204)
+            expect(remaining.body).toEqual([])
+        })
+
+        test('serve a user\'s authorized keys as plain text, without authentication', async () => {
+            await request('POST', '/current/ssh-keys', {user: someone('bob'), body: {publicKey: ED25519_LINE}})
+
+            const response = await request('GET', '/auth/authorized-keys?username=bob')
+
+            expect(response.status).toBe(200)
+            expect(response.body).toBe(`${ED25519_LINE}\n`)
+        })
+    })
+
     const request = async (method, path, {user, body} = {}) => {
         const response = await fetch(url(path), {
             method,
@@ -111,7 +143,8 @@ describe('the user routes', () => {
             body: body === undefined ? undefined : JSON.stringify(body)
         })
         const text = await response.text()
-        return {status: response.status, body: text ? JSON.parse(text) : null}
+        const json = response.headers.get('content-type')?.includes('application/json')
+        return {status: response.status, body: text && json ? JSON.parse(text) : text || null}
     }
 
     // The api over a repository that answers from memory, so a response says which handler ran.
@@ -128,9 +161,23 @@ describe('the user routes', () => {
             googleOAuth: {redirectUrl: () => '', requestTokens: async () => null, revokeTokens: async () => undefined},
             ensureProvisioned: async user => user
         })
+        const sshKeyRepository = {
+            list: async username => keys.filter(key => key.username === username),
+            count: async username => keys.filter(key => key.username === username).length,
+            add: async (username, key) => {
+                const stored = {...key, id: keys.length + 1, username, creationTime: '2026-09-28T10:00:00.000Z'}
+                keys.push(stored)
+                return stored
+            },
+            remove: async (username, id) => {
+                const index = keys.findIndex(key => key.username === username && key.id === id)
+                return index >= 0 && keys.splice(index, 1).length === 1
+            }
+        }
+        const sshKeyApi = new SshKeyApi({userRepository: repository, sshKeyRepository, notifyKeyAdded: () => undefined})
         return server.start({
             port: 0,
-            routes: createRoutes(api),
+            routes: createRoutes({userApi: api, sshKeyApi}),
             // The default collects process-wide Prometheus metrics, which this has nothing to say about.
             metricsMiddleware: (_ctx, next) => next()
         })
@@ -149,5 +196,6 @@ describe('the user routes', () => {
     })
 
     const PASSWORD = 'a-long-enough-password'
+    const ED25519_LINE = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFTTtG0hPe95rIxeTXi4nSx4CHf59bz6WQ6e8K0fhOWn'
     const ADMIN_ROLES = ['application_admin']
 })

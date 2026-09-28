@@ -421,15 +421,6 @@ export class UserApi {
         }
     }
 
-    // Backs the ssh-gateway's AuthorizedKeysCommand, which reads this database rather than
-    // sss_ssh_authorizedkeys. An inactive user gets an empty body, never an error.
-    async authorizedKeys(ctx) {
-        const username = ctx.query.username
-        const user = isText(username) ? await this.#repository.findByUsername(username) : null
-        ctx.type = 'text/plain'
-        ctx.body = user && user.status === 'ACTIVE' && user.sshPublicKey ? user.sshPublicKey : ''
-    }
-
     // ETag-aware: the sync agent skips the rewrite when the snapshot has not changed.
     async nssSnapshot(ctx) {
         const identities = await this.#repository.listIdentities()
