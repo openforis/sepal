@@ -30,6 +30,10 @@ export const visualizationOptions = recipe => {
         {
             label: msg('process.dias.layers.imageLayer.dates'),
             options: toOptions(['first_ydoy', 'confirming_ydoy'])
+        },
+        {
+            label: msg('process.dias.layers.imageLayer.forestMask'),
+            options: toOptions(['forest_mask'])
         }
     ]
 }
@@ -54,10 +58,22 @@ const toVisualizations = recipe => {
         max: [max],
         palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
     })
+    // Always exactly 1 wherever the pixel counts as forest (masked out
+    // elsewhere) - a plain grey so it reads as an extent overlay rather
+    // than competing with the DI/alert layers. The map's own per-layer
+    // opacity control is the intended way to make it semi-transparent.
+    const forestMaskVisParams = bands => normalize({
+        type: 'categorical',
+        bands,
+        values: [1],
+        labels: [msg('process.dias.layers.imageLayer.forestMask')],
+        palette: ['#808080']
+    })
     return {
         first_sensor: sensorVisParams(['first_sensor']),
         confirming_sensor: sensorVisParams(['confirming_sensor']),
         first_ydoy: dateVisParams(['first_ydoy']),
-        confirming_ydoy: dateVisParams(['confirming_ydoy'])
+        confirming_ydoy: dateVisParams(['confirming_ydoy']),
+        forest_mask: forestMaskVisParams(['forest_mask'])
     }
 }

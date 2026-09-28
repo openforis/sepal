@@ -15,6 +15,10 @@ export class SectionSelection extends React.Component {
             {
                 value: 'ASSET',
                 label: msg('process.dias.panel.forestMask.asset.label')
+            },
+            {
+                value: 'HANSEN',
+                label: msg('process.dias.panel.forestMask.hansen.label')
             }
         ]
         return (
