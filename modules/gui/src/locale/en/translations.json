@@ -6075,7 +6075,7 @@
         "success": "SSH key added.",
         "title": "Add SSH key"
       },
-      "howTo": "Create a key with {generate}, add the contents of {publicKeyFile} here, then log in with {login}.",
+      "howTo": "Create a key with {generate}, then add the contents of {publicKeyFile} here.",
       "label": "SSH keys",
       "load": {
         "error": "Failed to load your SSH keys."

@@ -4,7 +4,7 @@ import React from 'react'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
-import {currentUser, removeSshKey$, sshKeys$} from '~/user'
+import {removeSshKey$, sshKeys$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
@@ -19,10 +19,6 @@ import styles from './sshKeys.module.css'
 
 // The user module refuses a key beyond this; the panel stops offering Add at the same point.
 const MAX_KEYS = 20
-
-const mapStateToProps = () => ({
-    username: currentUser()?.username
-})
 
 class _SshKeys extends React.Component {
     state = {
@@ -81,11 +77,9 @@ class _SshKeys extends React.Component {
     }
 
     renderHowTo() {
-        const {username} = this.props
         return msg('user.sshKeys.howTo', {
             generate: 'ssh-keygen -t ed25519',
-            publicKeyFile: '~/.ssh/id_ed25519.pub',
-            login: `ssh ${username}@${window.location.hostname}`
+            publicKeyFile: '~/.ssh/id_ed25519.pub'
         })
     }
 
@@ -147,7 +141,7 @@ const policy = () => ({
 
 export const SshKeys = compose(
     _SshKeys,
-    connect(mapStateToProps),
+    connect(),
     withActivators('userDetails', 'addSshKey'),
     withActivatable({id: 'sshKeys', policy, alwaysAllow: true})
 )

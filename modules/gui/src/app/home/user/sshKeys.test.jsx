@@ -10,7 +10,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/widget/activation/activatable', () => ({withActivatable: () => component => component}))
 vi.mock('~/widget/activation/activator', () => ({withActivators: () => component => component}))
-vi.mock('~/user', () => ({currentUser: () => ({username: 'alice'}), sshKeys$: vi.fn(), removeSshKey$: vi.fn()}))
+vi.mock('~/user', () => ({sshKeys$: vi.fn(), removeSshKey$: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div className='no-data'>{message}</div>}))
@@ -60,7 +60,7 @@ describe('the SSH keys panel', () => {
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <SshKeys username='alice' stream={stream} activator={activator}/>
+                <SshKeys stream={stream} activator={activator}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -93,14 +93,23 @@ describe('the SSH keys panel', () => {
         ])
     })
 
-    it('says there are no keys, and how to make and use one', () => {
+    it('says there are no keys, and how to make one', () => {
         givenKeys([])
 
         const container = render()
 
         expect(container.querySelector('.no-data').textContent).toBe('You have no SSH keys.')
         expect(container.textContent).toContain('ssh-keygen -t ed25519')
-        expect(container.textContent).toContain(`ssh alice@${window.location.hostname}`)
+        expect(container.textContent).toContain('~/.ssh/id_ed25519.pub')
+    })
+
+    // The SSH entry point has its own address and port, which the web address does not tell.
+    it('does not guess an SSH login command from the web address', () => {
+        givenKeys([])
+
+        const container = render()
+
+        expect(container.textContent).not.toContain(`@${window.location.hostname}`)
     })
 
     it('removes a key and drops it from the list', () => {
