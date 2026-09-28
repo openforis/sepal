@@ -16,6 +16,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 
 import styles from './appInstance.module.css'
 import {FAILED, launchStatusMessageKey, READY, STARTING_APP, STARTING_SESSION} from './appLaunchStatus'
+import {voilaReady$} from './voilaReady'
 
 const log = getLogger('apps')
 
@@ -75,7 +76,8 @@ class _AppInstance extends React.Component {
 
     renderIFrame() {
         const {app: {label, alt}} = this.props
-        const {src, srcDoc} = this.state
+        const {src, srcDoc, appState} = this.state
+        const shown = this.useIFrameSrc() || appState === READY
         return this.useIFrameSrc() || srcDoc
             ? (
                 <iframe
@@ -85,7 +87,13 @@ class _AppInstance extends React.Component {
                     frameBorder='0'
                     src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
-                    style={{border: 'none', display: 'block'}}
+                    inert={!shown}
+                    style={{
+                        border: 'none',
+                        display: 'block',
+                        opacity: shown ? 1 : 0,
+                        pointerEvents: shown ? 'auto' : 'none'
+                    }}
                     onLoad={this.iFrameLoaded}
                 />
             )
@@ -128,7 +136,6 @@ class _AppInstance extends React.Component {
     }
 
     componentDidUpdate(_prevProps, prevState) {
-        const {app: {id}, tab: {busy}} = this.props
         const {srcDoc} = this.state
         const iFrame = this.iFrameRef.current
         if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
@@ -136,8 +143,19 @@ class _AppInstance extends React.Component {
             doc.open()
             doc.write(srcDoc)
             doc.close()
-            busy.set(id, false)
+            this.showWhenReady(iFrame.contentWindow)
         }
+    }
+
+    showWhenReady(appWindow) {
+        const {app: {id}, tab: {busy}, stream} = this.props
+        stream('APP_READY',
+            voilaReady$(appWindow),
+            () => {
+                busy.set(id, false)
+                this.setState({appState: READY})
+            }
+        )
     }
 
     useIFrameSrc() {

@@ -590,6 +590,16 @@ band's multiplier. Other producers, export destinations, charts and legends adop
 - Any interim unversioned-recipe freshness path: no temporary browser content hashing and no `update_time`
   freshness rung. Persisted derived-result freshness uses the existing `revision` contract.
 - Requiring domain-capability work as a prerequisite for constant Fill.
+- Project requested output bands once, at the export boundary, rather than in each producer. Every producer must
+  honor `outputBands` itself today ([current limitation](output-products.md#current-execution-request-limitation)),
+  and BAYTS Alerts and Change Alerts each project it separately. Only live evidence
+  (`modules/gee/verify/declaredOutputBands.mjs`) guards those projections, since observing a selection without Earth
+  Engine means emulating it. Selecting the named bands after a producer builds its image closes that class for every
+  producer. First audit which producers still honor neither the selection nor `outputBands`; remove the
+  per-producer projections once the boundary owns them. Change Alerts' `toChanges` threads `selection` only to
+  sequence its segment source, and that chain goes with them.
+- One authentication helper for the `modules/gee/verify` scripts. Each script carries its own copy of the
+  service-account and linked-user sign-in.
 - Shared gateway-authentication middleware for Node/Koa modules. Extract the repeated `sepal-user` parsing,
   `ctx.state.currentUser` assignment, 401 handling and role guards from Recipe, Budget, Message, Scene Metadata
   and Worker into shared HTTP infrastructure, with loggers injected at composition roots. Preserve each module's

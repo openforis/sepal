@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {hasMonitoringDates, monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -57,11 +58,14 @@ export default () => ({
     components: {
         recipe: ChangeAlerts
     },
+    // The monitoring period, as instants its callers can take the value of. A recipe that states no period
+    // has no range to offer.
     getDateRange(recipe) {
-        const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
-        const monitoringStart = moment(monitoringEnd)
-            .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
-        return [monitoringStart, monitoringEnd]
+        if (!hasMonitoringDates(recipe.model)) {
+            return null
+        }
+        const {monitoringEnd, monitoringStart} = monitoringDates(recipe.model)
+        return [moment.utc(monitoringStart, 'YYYY-MM-DD'), moment.utc(monitoringEnd, 'YYYY-MM-DD')]
     },
     getAvailableBands,
     getPreSetVisualizations

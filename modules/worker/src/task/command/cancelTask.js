@@ -17,8 +17,12 @@ const cancelTask = async ({taskId, username}, {repo, sessionManager, workerGatew
         return null
     }
 
-    const cancelingTask = canceling(task)
-    await repo.update(cancelingTask)
+    // A retry re-sends the request to the executor but leaves the task as it is: rewriting it would
+    // restart the timeout that settles a cancellation the executor never confirms.
+    const cancelingTask = isCanceling(task) ? task : canceling(task)
+    if (!isCanceling(task)) {
+        await repo.update(cancelingTask)
+    }
     if (!isPending(task)) {
         const session = toTaskSession(await sessionManager.findSessionById(task.sessionId))
         await cancelTaskInWorker(task, session, workerGateway)

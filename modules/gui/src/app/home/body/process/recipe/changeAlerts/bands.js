@@ -1,13 +1,22 @@
+import {hasMonitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {mosaicRecipe} from '#sepal/recipe/changeAlerts/mosaicRecipe'
 import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
 
-export const getAvailableBands = (recipe, visualizationType) =>
+// Which helper describes a mosaic, keyed by the recipe type its projection names.
+const MOSAIC_BANDS = {
+    MOSAIC: opticalBands,
+    RADAR_MOSAIC: radarBands,
+    PLANET_MOSAIC: planetBands
+}
+
+export const getAvailableBands = (recipe, visualizationType, mosaicType) =>
     visualizationType === 'changes'
         ? changesBands()
-        : mosaicBands(recipe)
+        : mosaicBands(recipe, visualizationType, mosaicType)
 
 const changesBands = () => {
     return {
@@ -22,20 +31,17 @@ const changesBands = () => {
         last_detection_date: {dataType: typeFloat}
     }
 }
-        
-const mosaicBands = recipe => {
-    const dataSetType = recipe.model.sources.dataSetType
-    switch(dataSetType) {
-        case 'OPTICAL': return opticalBands({
-            model: {
-                sources: recipe.model.sources
-            },
-            compositeOptions: recipe.model.options
-        })
-        case 'RADAR': return radarBands(recipe)
-        case 'PLANET': return planetBands()
-        default: return {}
+
+// A mosaic mode draws the mosaic Earth Engine builds around the monitoring dates, so the bands offered are
+// read from the same projection the executor builds it from. A recipe that states no period yet has no such
+// mosaic, and another recipe reading this one as a source is answered with nothing rather than an error.
+const mosaicBands = (recipe, visualizationType, mosaicType) => {
+    if (!hasMonitoringDates(recipe.model)) {
+        return {}
     }
+    const mosaic = mosaicRecipe({model: recipe.model, period: visualizationType, mosaicType})
+    const bands = mosaic && MOSAIC_BANDS[mosaic.type]
+    return bands ? bands(mosaic) : {}
 }
 
 export const getGroupedBandOptions = () => {

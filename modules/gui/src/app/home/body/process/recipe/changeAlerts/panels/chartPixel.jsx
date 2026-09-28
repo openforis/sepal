@@ -3,6 +3,7 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {compose} from '~/compose'
 import {getAvailableBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
@@ -17,7 +18,7 @@ import {Panel} from '~/widget/panel/panel'
 import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions, toDates} from '../changeAlertsRecipe'
+import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
 import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescriptionGeneration} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
 
@@ -116,7 +117,7 @@ class _ChartPixel extends React.Component {
             recipe, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
         } = this.props
         const {segments, observations} = this.state
-        const {monitoringEnd, monitoringStart, calibrationStart} = toDates(recipe)
+        const {monitoringEnd, monitoringStart, calibrationStart} = monitoringDates(recipe.model)
         const highlights = [
             {
                 startDate: moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
