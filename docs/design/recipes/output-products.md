@@ -369,9 +369,9 @@ Every referenced band must exist and direct visualization requires scalar bands.
 that a band exists, is scalar or has categorical semantics.
 
 User-defined visualizations remain owned by the recipe or layer where the user edited them. Requested selection is
-distinct from an active product binding, so unavailable evidence or a temporarily missing candidate never requires
-rewriting saved intent. Exact presentation ownership, template and selection contracts belong in
-[visualizations.md](visualizations.md).
+distinct from an active product binding, so pending or unavailable evidence never rewrites it, and a layer replaces
+it only once a settled answer offers candidates none of which matches. Exact presentation ownership, template and
+selection contracts belong in [visualizations.md](visualizations.md).
 
 Preset versus template is an interpretation distinction, not necessarily a storage-format distinction. Existing
 Earth Engine assets use `visualization_*` properties for both. An ordinary image adapter can interpret one as a

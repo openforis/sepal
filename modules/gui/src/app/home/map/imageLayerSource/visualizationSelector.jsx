@@ -4,7 +4,7 @@ import React from 'react'
 
 import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
 import {renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
-import {outputOwnedVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {inheritedVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -130,22 +130,10 @@ class _VisualizationSelector extends React.Component {
 
     // The styles the recipe being shown owns for its output. They are offered here and edited there: this
     // recipe holds no copy, so an edit or a deletion upstream reaches it, and the clone button is what makes
-    // one of them into a style of its own. The recipe's own layer is excluded - there its styles are already
-    // the editable ones above.
-    //
-    // A style this recipe already holds under the same identity is left to the local one. Copies made by
-    // earlier versions share their upstream identity, and offering both puts two options with one value in
-    // the list: whichever resolves first wins the selection, and the wrong one decides whether the style can
-    // be edited. The saved copy is what a selection has been naming, so it keeps the identity; nothing is
-    // deleted, and a style with no local copy is inherited as before.
+    // one of them into a style of its own.
     inheritedVisualizations() {
         const {sourceRecipe, recipeId, userDefinedVisualizations} = this.props
-        if (!sourceRecipe || sourceRecipe.id === recipeId) {
-            return []
-        }
-        const localIds = new Set(userDefinedVisualizations.map(({id}) => id))
-        return outputOwnedVisualizations(sourceRecipe)
-            .filter(({id}) => !localIds.has(id))
+        return inheritedVisualizations({sourceRecipe, recipeId, userDefinedVisualizations})
     }
 
     // One rule for every group. A style naming a band that is gone, or one an array band cannot render, is

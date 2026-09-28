@@ -14,15 +14,15 @@ import {Combo} from '~/widget/combo'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
 import {layerConfigChanges, mapProducts, selectedYear} from './bands'
 import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = mapProducts.defaults
 
-const mapRecipeToProps = (recipe, {source}) => ({
+const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    dates: selectFrom(recipe, 'model.dates'),
-    userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
+    dates: selectFrom(recipe, 'model.dates')
 })
 
 class _LandTrendrImageLayer extends React.Component {
@@ -101,60 +101,45 @@ class _LandTrendrImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams}} = this.props
-        this.reconcile(visParams)
+        this.reconcile()
     }
 
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
-        this.reconcile(prevVisParams)
+    componentDidUpdate() {
+        this.reconcile()
     }
 
     // The layer config is brought into the recipe's fitted period before a style is chosen for it: a style is written
     // with the config it was chosen beside, which would write a stale year back. Only what changes is written, and the
     // map merges it into the config, so the style is kept.
-    reconcile(prevVisParams) {
+    reconcile() {
         const {dates, layerConfig, mapArea: {updateLayerConfig}} = this.props
         const changes = layerConfigChanges(dates, layerConfig)
         if (changes) {
             updateLayerConfig(changes)
         } else {
-            this.update(prevVisParams)
+            this.reconcileVisualization()
         }
     }
 
-    // Switching mode changes which bands exist, so a visParams selected for the
-    // previous mode has to be replaced rather than left dangling.
-    update(prevVisParams) {
-        const {recipe} = this.props
-        if (!recipe) return
-        const allVisualizations = this.toAllVis()
-        if (!allVisualizations.length) return
-        if (prevVisParams) {
-            const visParams = allVisualizations
-                .find(({id, bands}) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
-            if (!visParams) {
-                this.selectVisualization(allVisualizations[0])
-            } else if (!_.isEqual(visParams, prevVisParams)) {
-                this.selectVisualization(visParams)
-            }
-        } else {
-            this.selectVisualization(allVisualizations[0])
+    // Switching mode changes which bands exist, so a style selected for the previous mode gives way to one of this
+    // mode's.
+    reconcileVisualization() {
+        const {recipe, imageOutput, layerConfig: {visParams}} = this.props
+        const selection = layerSelection({recipe, imageOutput, visualizations: this.visualizations(), visParams})
+        if (selection) {
+            this.selectVisualization(selection)
         }
     }
 
-    toAllVis() {
-        const {userDefinedVisualizations, recipe, imageOutput} = this.props
-        const flatten = options => options
-            .map(option => option.options
-                ? flatten(option.options)
-                : option.visParams
-            )
-            .flat()
-        return [
-            ...userDefinedVisualizations,
-            ...flatten(visualizationOptions(recipe, imageOutput))
-        ].filter(visParams => visParams.bands.every(band => Object.keys(imageOutput.availableBands).includes(band)))
+    visualizations() {
+        const {currentRecipe, recipe, source, imageOutput} = this.props
+        return layerVisualizations({
+            currentRecipe,
+            recipe,
+            sourceId: source.id,
+            presets: presetVisualizations(visualizationOptions(recipe, imageOutput)),
+            availableBands: imageOutput.availableBands
+        })
     }
 
     selectVisualization(visParams) {

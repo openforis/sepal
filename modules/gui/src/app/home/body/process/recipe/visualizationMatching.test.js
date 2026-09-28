@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     findVisualization,
+    reconciledSelection,
     renderableVisualizations,
     selectionState,
     visualizationsWithAvailableBands,
@@ -66,6 +67,23 @@ describe('selectionState', () => {
         ['a selection that is no longer available', [preset(['ndvi'])], {bands: ['gone']}, 'STALE']
     ])('reports %s', (_name, visualizations, visParams, expected) => {
         expect(selectionState({visualizations, visParams})).toBe(expected)
+    })
+})
+
+describe('reconciledSelection', () => {
+    const first = preset(['ndvi'])
+    const second = userDefined('v2', ['evi'])
+
+    it.each([
+        ['nothing while nothing is offered, keeping the saved selection', [], {bands: ['gone']}, undefined],
+        ['nothing for a selection naming a candidate as it is', [first, second], second, undefined],
+        ['the first candidate when nothing is selected', [first, second], undefined, first],
+        ['the first candidate for a selection no candidate matches', [first, second],
+            {id: 'gone', bands: ['evi']}, first],
+        ['the candidate\'s current definition for a selection naming an edited one', [first, second],
+            {id: 'v2', bands: ['ndvi']}, second]
+    ])('writes %s', (_name, visualizations, visParams, expected) => {
+        expect(reconciledSelection({visualizations, visParams})).toBe(expected)
     })
 })
 

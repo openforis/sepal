@@ -4,9 +4,8 @@ import _ from 'lodash'
 //
 // One helper, because the same question is asked at two different moments: at render, to decide whether a layer
 // may be built from the current selection, and in the update effect, to decide what to do about that selection -
-// fill in an absent one, refresh a matched one, or leave a stale one for the source change that may restore it.
-// Two copies of this comparison would drift, and the render would then publish a preview the very next effect
-// contradicts.
+// refresh a matched one, or replace an absent or stale one with the first candidate. Two copies of this comparison
+// would drift, and the render would then publish a preview the very next effect contradicts.
 //
 // The rule is the one already in use. An identified visualization matches by id alone, so a user can rename or
 // restyle it without the selection jumping elsewhere. An unidentified one - a source preset - has only its bands
@@ -96,4 +95,20 @@ export const selectionState = ({visualizations, visParams}) => {
     return findVisualization(visualizations, visParams)
         ? MATCHED
         : STALE
+}
+
+// The selection to write, given candidates in the picker's order, or undefined to write nothing. A selection naming
+// a candidate is kept, taking the candidate's current definition when it was edited; any other gives way to the first
+// candidate. With no candidates at all the saved selection stays, undrawn, so the source returning can restore it.
+export const reconciledSelection = ({visualizations, visParams}) => {
+    switch (selectionState({visualizations, visParams})) {
+        case NO_CANDIDATES:
+            return undefined
+        case MATCHED: {
+            const matched = findVisualization(visualizations, visParams)
+            return _.isEqual(matched, visParams) ? undefined : matched
+        }
+        default:
+            return visualizations[0]
+    }
 }

@@ -778,7 +778,10 @@ held or in flight. The runtime scope ending drops what is held and stops the own
 
 While an answer needs evidence the consumer shows what it shows for a recipe with no bands: no layer, no options, and
 the saved selection untouched. A snapshot copied into the model is not offered for a declared product while its answer
-is acquired.
+is acquired. Once the recipe is set up and the answer could be drawn from, the layer keeps a selection matching a
+candidate and otherwise selects the first candidate its picker offers
+([selection behavior](visualizations.md#selection-behavior)). BAYTS Alerts, Change Alerts and LandTrendr apply the same
+rule in their own forms, over the presets of the mode shown, once their mode, filter and year are settled.
 
 **Products and presentation.** A layer names the product it shows from its type's vocabulary (`mapProducts.productOf`)
 over its effective layer config: the type's defaults beneath what the layer saved. The description, the preview and

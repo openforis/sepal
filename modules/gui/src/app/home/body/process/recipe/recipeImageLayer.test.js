@@ -3,11 +3,13 @@ import {Observable} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
+import {radarMosaicBands} from '#sepal/recipe/type/radarMosaic'
 
-// Narrow smoke tests for the render-time guard and the visualization reconciler. The durable rules - matching and
-// applicability - are pure and tested in visualizationMatching.test.js; what is checked here is only that the
-// component asks them at the right moment and acts on the answer. The stale cases select a style the band-name
-// filter removes, so they also cover that the component applies that filter rather than merely importing it.
+// Narrow smoke tests for the render-time guard and the visualization reconciler. The durable rules - matching,
+// applicability and which selection to write - are pure and tested in visualizationMatching.test.js; what is checked
+// here is only that the component asks them at the right moment and acts on the answer. The stale cases select a style
+// the band-name filter removes, so they also cover that the component applies that filter rather than merely importing
+// it.
 //
 // `compose` is mocked to the identity so the exported component is the class itself. Nothing renders: the
 // lifecycle methods are called on an instance whose props are supplied, which is the state React would have
@@ -40,17 +42,20 @@ vi.mock('~/translate', () => ({msg: key => key}))
 
 const availableBandsByType = vi.hoisted(() => ({}))
 
-// What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation, and
-// CCDC's, LandTrendr's and Change Alerts' own map products.
+// What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation,
+// CCDC's, LandTrendr's and Change Alerts' own map products, and Radar Mosaic's presentation and presets.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     const {mapProducts} = await import('./ccdc/bands')
     const landTrendr = await import('./landTrendr/bands')
     const changeAlerts = await import('./changeAlerts/bands')
+    const radarMosaic = await import('./radarMosaic/bands')
+    const {getPreSetVisualizations} = await import('./radarMosaic/visualizations')
     const registeredByType = {
         MOSAIC: {bandPresentation: () => ({blue: {dataType: {precision: 'int'}}})},
         CCDC: {mapProducts},
         LANDTRENDR: {mapProducts: landTrendr.mapProducts, bandPresentation: landTrendr.bandPresentation},
-        CHANGE_ALERTS: {mapProducts: changeAlerts.mapProducts, bandPresentation: changeAlerts.bandPresentation}
+        CHANGE_ALERTS: {mapProducts: changeAlerts.mapProducts, bandPresentation: changeAlerts.bandPresentation},
+        RADAR_MOSAIC: {bandPresentation: radarMosaic.bandPresentation, getPreSetVisualizations}
     }
     return {
         getRecipeType: type => ({
@@ -64,6 +69,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 const {RecipeImageLayer} = await import('./recipeImageLayer')
 const {recipeContent} = await import('./recipeContent')
 const {productArgs} = await import('./recipeOutput')
+const {visualizations: radarPresets} = await import('./radarMosaic/visualizations')
 
 beforeEach(() => {
     state.constructed = []
@@ -372,6 +378,17 @@ describe('visualization reconciliation', () => {
             expect(state.constructed[0].visParams).toBe(VALID)
         })
 
+        it('keeps the saved selection through an empty period and replaces it when other candidates return', () => {
+            const {instance, updates, didUpdate, setRecipe} = build({recipe: styles([]), visParams: STALE_SELECTION})
+
+            instance.componentDidMount()
+            didUpdate()
+            setRecipe(styles([VALID, ALTERNATIVE]))
+            didUpdate()
+
+            expect(selections(updates)).toEqual([VALID])
+        })
+
         // SepalMap owns removal. The rendered null reaches MapAreaLayout first, which calls removeLayer and
         // cancels the instance through its replaying cancel subject. Removing it here as well would make two
         // owners, and keeping the reference would hand that cancelled instance back the next time watchedProps
@@ -419,52 +436,6 @@ describe('visualization reconciliation', () => {
             expect(selections(updates)).toEqual([VALID])
         })
 
-        it('selects the first one when nothing has ever been selected', () => {
-            const {instance, updates} = build({recipe: styles([VALID])})
-
-            instance.componentDidMount()
-
-            expect(selections(updates)).toEqual([VALID])
-        })
-
-        // A selection whose bands are gone is still the user's choice. Replacing it with whatever happens to be
-        // first silently changes what the map means, and the source change that would have restored it can no
-        // longer do so.
-        it('leaves a stale selection alone rather than choosing another', () => {
-            const {updates, didUpdate} = build({
-                recipe: styles([VALID, STALE_SELECTION]),
-                visParams: STALE_SELECTION
-            })
-
-            didUpdate()
-
-            expect(updates).toEqual([])
-        })
-
-        it('reuses a stale selection unchanged once its own candidate returns', () => {
-            const {instance, updates, didUpdate} = build({
-                recipe: styles([VALID, STALE_SELECTION]),
-                visParams: STALE_SELECTION
-            })
-
-            didUpdate()
-            availableBandsByType.SYNTHETIC = {ndvi: {}, evi: {}, gone: {}}
-            didUpdate()
-
-            expect(updates).toEqual([])
-            expect(instance.maybeCreateLayer()).not.toBe(null)
-            expect(state.constructed[0].visParams).toBe(STALE_SELECTION)
-        })
-
-        it('leaves a selection that still matches a candidate alone', () => {
-            const {instance, updates, didUpdate} = build({recipe: styles([VALID]), visParams: VALID})
-
-            instance.componentDidMount()
-            didUpdate()
-
-            expect(updates).toEqual([])
-        })
-
         // Matching is by id, so a restyled visualization still matches the selection that names it. The
         // selection is then rewritten to carry the new fields - that is how an edit reaches the preview.
         it('normalizes a selection whose matching candidate has been edited', () => {
@@ -477,8 +448,6 @@ describe('visualization reconciliation', () => {
         })
     })
 
-    // With no selection at all - the one case generic reconciliation still writes in. A stale selection would
-    // prove nothing here, because nothing writes over one of those any more.
     it('leaves a self-managed recipe type to make its own first selection', () => {
         const {instance, updates, didUpdate} = build({
             recipe: recipeOf({type: 'CHANGE_ALERTS', userDefined: [{id: 'v1', bands: ['ndvi']}]})
@@ -488,6 +457,119 @@ describe('visualization reconciliation', () => {
         didUpdate()
 
         expect(updates).toEqual([])
+    })
+})
+
+// Which visualization a layer shows, over a Radar Mosaic's real presentation and presets. The first candidate is the
+// picker's first: the recipe's own styles, then its presets in the order its form offers them.
+describe('choosing a visualization', () => {
+    const POINT_IN_TIME_FIRST = ['VV', 'VH', 'ratio_VV_VH']
+    const TIME_SCAN_FIRST = ['VV_max', 'VH_min', 'NDCV']
+    const [TIME_SCAN_STYLE] = radarPresets.TIME_SCAN
+    const DAY_OF_YEAR_STYLE = radarPresets.METADATA[0]
+    const VV_STYLE = {id: 'vv-style', bands: ['VV'], type: 'continuous'}
+
+    // A new recipe opens on a period, and the dates panel may replace it with a target date before setup completes.
+    it('writes nothing while the recipe is being set up', () => {
+        const {instance, updates, rerender} = shown({recipe: radarMosaic({dates: PERIOD, initialized: false})})
+
+        rerender()
+
+        expect(updates).toEqual([])
+        expect(instance.maybeCreateLayer()).toBe(null)
+    })
+
+    it.each([
+        ['a target date', TARGET_DATE, POINT_IN_TIME_FIRST],
+        ['a period', PERIOD, TIME_SCAN_FIRST]
+    ])('selects the first visualization once setup completes on %s', (_name, dates, first) => {
+        const {instance, updates, setRecipe} = shown({recipe: radarMosaic({dates: PERIOD, initialized: false})})
+
+        setRecipe(radarMosaic({dates}))
+
+        expect(selections(updates).map(({bands}) => bands)).toEqual([first])
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(state.constructed[0].visParams.bands).toEqual(first)
+    })
+
+    it('replaces a restored selection the output no longer offers with the first candidate', () => {
+        const {instance, updates} = shown({recipe: radarMosaic(), visParams: TIME_SCAN_STYLE})
+
+        expect(selections(updates).map(({bands}) => bands)).toEqual([POINT_IN_TIME_FIRST])
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(state.constructed[0].visParams.bands).toEqual(POINT_IN_TIME_FIRST)
+    })
+
+    it('replaces a selection the output stops offering once the recipe is initialized', () => {
+        const {instance, updates, setRecipe} = shown({recipe: radarMosaic({dates: PERIOD}), visParams: TIME_SCAN_STYLE})
+
+        setRecipe(radarMosaic({dates: TARGET_DATE}))
+
+        expect(selections(updates).map(({bands}) => bands)).toEqual([POINT_IN_TIME_FIRST])
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(state.constructed[0].visParams.bands).toEqual(POINT_IN_TIME_FIRST)
+    })
+
+    it.each([
+        ['a preset other than the first', [], DAY_OF_YEAR_STYLE],
+        ['a user-defined style', [VV_STYLE], VV_STYLE]
+    ])('keeps %s that the output still offers', (_name, userDefined, selected) => {
+        const {instance, updates, rerender} = shown({recipe: radarMosaic({styles: userDefined}), visParams: selected})
+
+        rerender()
+
+        expect(updates).toEqual([])
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+        expect(state.constructed[0].visParams).toEqual(selected)
+    })
+
+    describe('a Radar Mosaic whose area of interest the session does not hold', () => {
+        const unheld = () => shown({
+            recipe: radarMosaic({aoi: {type: 'RECIPE', id: 'aoi-1'}}),
+            visParams: TIME_SCAN_STYLE
+        })
+
+        it('keeps its selection while its output is described, then reconciles it against the answer', () => {
+            const {instance, runtime, settle, updates, rerender} = unheld()
+            rerender()
+            expect(updates).toEqual([])
+
+            settle(runtime.operations[0], described(instance.props.recipe))
+            rerender()
+
+            expect(selections(updates).map(({bands}) => bands)).toEqual([POINT_IN_TIME_FIRST])
+        })
+
+        it('keeps its selection when its output cannot be described, and reconciles it once described again', () => {
+            const {instance, runtime, settle, updates, rerender} = unheld()
+
+            settle(runtime.operations[0], unreadable(instance.props.recipe))
+            rerender()
+            expect(updates).toEqual([])
+            expect(instance.maybeCreateLayer()).toBe(null)
+
+            runtime.changeCredentials()
+            settle(runtime.operations[1], described(instance.props.recipe))
+            rerender()
+
+            expect(selections(updates).map(({bands}) => bands)).toEqual([POINT_IN_TIME_FIRST])
+        })
+
+        it('draws nothing over invalid dependencies, though a visualization is selected', () => {
+            const {instance, runtime, settle, rerender} = shown({
+                recipe: radarMosaic({aoi: {type: 'RECIPE', id: 'aoi-1'}}),
+                visParams: radarPresets.POINT_IN_TIME[0]
+            })
+
+            settle(runtime.operations[0], {
+                ...described(instance.props.recipe),
+                dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'CYCLE'}]}
+            })
+            rerender()
+
+            expect(instance.props.layerConfig.visParams).toBe(radarPresets.POINT_IN_TIME[0])
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
     })
 })
 
@@ -574,12 +656,12 @@ describe('acquiring what the layer shows', () => {
         })
 
         it('rebuilds the preview on a restyle without acquiring anything again', () => {
-            const {instance, runtime, settle, setLayerConfig} = countLayer()
+            const {instance, runtime, settle, setRecipe} = countLayer()
             settle(runtime.operations[0], completed(instance.props.recipe))
             instance.maybeCreateLayer()
             const restyled = {...COUNT_STYLE, palette: ['#000000', '#ffffff']}
 
-            setLayerConfig({visualizationType: 'COUNT', visParams: restyled})
+            setRecipe({...instance.props.recipe, ...ownStyles([restyled])})
 
             expect(runtime.operations).toHaveLength(1)
             expect(instance.maybeCreateLayer()).not.toBe(null)
@@ -667,6 +749,19 @@ const masking = ({mask, styles}) => ({
 
 const ccdc = model => ({id: 'ccdc-1', type: 'CCDC', model})
 
+const TARGET_DATE = {targetDate: '2024-06-01'}
+const PERIOD = {fromDate: '2024-01-01', toDate: '2025-01-01'}
+const DRAWN_AOI = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [1, 0]]}
+
+// On a target date over an area drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
+const radarMosaic = ({dates = TARGET_DATE, aoi = DRAWN_AOI, initialized = true, styles = []} = {}) => ({
+    id: 'radar-1',
+    type: 'RADAR_MOSAIC',
+    model: {aoi, dates, options: {orbits: ['ASCENDING', 'DESCENDING']}},
+    ...ownStyles(styles),
+    ui: {initialized}
+})
+
 const landTrendr = ({aoi}) => ({
     id: 'landtrendr-1',
     type: 'LANDTRENDR',
@@ -686,6 +781,14 @@ const completed = recipe => ({
     error: null,
     dependencyValidity: {status: 'VALID', diagnostics: []},
     basis: basisOf(recipe)
+})
+
+// A Radar Mosaic described from its own declaration.
+const described = recipe => ({
+    ...completed(recipe),
+    status: 'READY',
+    description: {output: {kind: 'IMAGE', bands: radarMosaicBands(recipe.model)}},
+    diagnostics: []
 })
 
 const unreadable = recipe => ({
@@ -718,21 +821,30 @@ const runtimeOf = () => {
 }
 
 // A mounted layer over the records the real graph builder links. Re-rendering is React's; here the lifecycle is
-// called as React would call it.
+// called as React would call it. The map merges what the layer writes into its config, as the store does.
 const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => {
     const runtime = runtimeOf()
     const updates = []
-    const recipesById = new Map([recipe, ...records].map(record => [record.id, record]))
+    const graphOf = recipe => buildRecipeDependencyGraph({
+        rootRecipe: recipe,
+        recipesById: new Map([recipe, ...records].map(record => [record.id, record]))
+    })
+    const rerender = () => instance.componentDidUpdate(instance.props)
+    const updateLayerConfig = layerConfig => {
+        updates.push(layerConfig)
+        instance.props = {...instance.props, layerConfig: {...instance.props.layerConfig, ...layerConfig}}
+        rerender()
+    }
     const instance = new RecipeImageLayer({
         currentRecipe: recipe,
         recipe,
         sourceId: 'this-recipe',
         source: {id: 'this-recipe'},
         layerConfig,
-        dependencyGraph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById}),
+        dependencyGraph: graphOf(recipe),
         sourceRuntime: runtime.sourceRuntime,
         map: {},
-        mapArea: {updateLayerConfig: layerConfig => updates.push(layerConfig)},
+        mapArea: {updateLayerConfig},
         tab: {busy: {set: () => {}}},
         boundsChanged$: null,
         dragging$: null,
@@ -746,7 +858,11 @@ const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => 
     }
     const setLayerConfig = next => {
         instance.props = {...instance.props, layerConfig: next}
-        instance.componentDidUpdate(instance.props)
+        rerender()
     }
-    return {instance, runtime, updates, settle, setLayerConfig}
+    const setRecipe = next => {
+        instance.props = {...instance.props, recipe: next, currentRecipe: next, dependencyGraph: graphOf(next)}
+        rerender()
+    }
+    return {instance, runtime, updates, settle, setLayerConfig, setRecipe, rerender}
 }

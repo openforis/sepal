@@ -293,9 +293,9 @@ from the accepted description. A saved Slice can supply a description to another
 
 Slice uses the shared mode-aware output-band derivation for its declaration, GUI and execution band reporting.
 Segment slicing and interpolation/range modes retain their distinct harmonic behavior. Presets and Retrieve
-selections are filtered against the bands the chosen operation actually produces. Saved selections are retained
-when their bands disappear, but are not silently redirected or rendered. Stable preset identities are reconciled
-against the selected source and the styles restored from saved layers.
+selections are filtered against the bands the chosen operation actually produces. A map layer's selection whose
+bands disappear is never rendered; it gives way to the first style offered, or is kept while none is. Stable preset
+identities are reconciled against the selected source and the styles restored from saved layers.
 
 Slice, Change Alerts and the segment chart resolve execution facts through
 `lib/js/ee/src/timeSeries/segmentSource.js`. It obtains `{dateFormat, selectableBaseBands}` before the consumer

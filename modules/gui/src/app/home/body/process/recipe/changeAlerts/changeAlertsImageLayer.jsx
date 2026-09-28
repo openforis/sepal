@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -13,16 +12,16 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
 import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = mapProducts.defaults
 
-const mapRecipeToProps = (recipe, {source}) => {
+const mapRecipeToProps = recipe => {
     return {
         initialized: selectFrom(recipe, 'ui.initialized'),
-        sources: selectFrom(recipe, 'model.sources'),
-        userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
+        sources: selectFrom(recipe, 'model.sources')
     }
 }
 
@@ -103,53 +102,40 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams, visualizationType}, mapArea: {updateLayerConfig}} = this.props
+        this.reconcile()
+    }
 
-        if (!visualizationType) {
+    componentDidUpdate() {
+        this.reconcile()
+    }
+
+    // The layer config names its mode before a style is chosen for it.
+    reconcile() {
+        const {layerConfig: {visualizationType}, mapArea: {updateLayerConfig}} = this.props
+        if (visualizationType) {
+            this.reconcileVisualization()
+        } else {
             updateLayerConfig(defaultLayerConfig)
         }
-        this.update(visParams)
     }
 
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
-        this.update(prevVisParams)
-    }
-
-    update(prevVisParams) {
-        const {recipe} = this.props
-        if (!recipe) return
-        const allVisualizations = this.toAllVis()
-        if (!allVisualizations.length) return
-        if (prevVisParams) {
-            const visParams = allVisualizations
-                .find(({
-                    id,
-                    bands
-                }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
-            if (!visParams) {
-                this.selectVisualization(allVisualizations[0])
-            } else if (!_.isEqual(visParams, prevVisParams)) {
-                this.selectVisualization(visParams)
-            }
-        } else {
-            this.selectVisualization(allVisualizations[0])
+    reconcileVisualization() {
+        const {recipe, imageOutput, layerConfig: {visParams}} = this.props
+        const selection = layerSelection({recipe, imageOutput, visualizations: this.visualizations(), visParams})
+        if (selection) {
+            this.selectVisualization(selection)
         }
     }
 
-    toAllVis() {
-        const {userDefinedVisualizations, layerConfig: {visualizationType, mosaicType}, recipe, imageOutput: {availableBands}} = this.props
-        const options = visualizationOptions(recipe, visualizationType, mosaicType)
-        const flatten = options => options
-            .map(option => option.options
-                ? flatten(option.options)
-                : option.visParams
-            )
-            .flat()
-        return [
-            ...userDefinedVisualizations,
-            ...flatten(options)
-        ].filter(visParams => visParams.bands.every(band => Object.keys(availableBands).includes(band)))
+    visualizations() {
+        const {currentRecipe, recipe, source, layerConfig: {visualizationType, mosaicType}, imageOutput} = this.props
+        return layerVisualizations({
+            currentRecipe,
+            recipe,
+            sourceId: source.id,
+            presets: presetVisualizations(visualizationOptions(recipe, visualizationType, mosaicType)),
+            availableBands: imageOutput.availableBands
+        })
     }
 
     selectVisualization(visParams) {

@@ -200,17 +200,21 @@ A requested visualization ID is saved presentation intent. It is distinct from t
 Preview consumes the complete active binding. Palette, Legend and Values consume its concrete visualization. A raw
 saved definition or requested ID is never treated as an active product binding.
 
-When a requested visualization cannot become active:
+A map layer reconciles its selection once its recipe is set up and its output answer could be drawn from: known
+bands over dependencies known to be sound. Bands can be known while dependencies are still being acquired, so it is
+readiness to preview that is waited for. The candidates are the picker's, in its order: the styles the recipe holding
+the layer keeps for it, those the recipe shown owns for its output, then the presets of the mode shown. Against that
+answer:
 
-- retain the requested ID and any user-owned definition;
-- explain the missing band or incompatible semantics;
-- exclude an unsupported source preset from selectable options and expose an invalid user definition separately for
-  repair or deletion;
-- do not silently select the first available preset or mutate the saved definition;
-- either stop rendering the layer or use an explicitly temporary fallback without persisting it.
+- a selection matching a candidate is kept, taking the candidate's current definition when it was edited;
+- any other selection, or none, is replaced by the first candidate in the picker's order;
+- with no candidates the selection is kept and nothing is drawn, so the source returning can restore it.
 
-The final fallback UX remains a product decision. Regardless of UX, Preview, map rendering and Retrieve must agree
-on validity.
+While the answer is pending, unavailable or invalid, the selection is kept as saved and nothing is drawn. Replacing a
+selection never deletes or mutates a user-owned definition: it stays in the recipe and is offered again when its
+bands return. An unsupported source preset is excluded from selectable options; an invalid user definition is to be
+exposed separately for repair or deletion, with the missing band or incompatible semantics explained. Preview, map
+rendering and Retrieve must agree on validity.
 
 New and changed source presets update the available choices. A changed palette or label refreshes the map even when
 pixels and band names are unchanged.
@@ -257,7 +261,7 @@ Existing recipes can contain copied source visualizations. During migration:
 - identify whether an entry is source-derived or genuinely user-owned;
 - expose the current source preset separately;
 - preserve deliberate local edits as user-owned styles;
-- do not silently rewrite a missing or incompatible selection;
+- keep a deliberate user style when a layer's selection moves off it;
 - write normalized ownership only when the user edits or saves through the migrated path.
 
 Each migrated consumer should record real legacy shapes before defining automatic reconciliation rules. Masking's
@@ -277,7 +281,8 @@ CCDC asset unsupported.
 
 ## Implementation order
 
-1. Stabilize current Preview by withholding stale or unavailable bindings without rewriting requested selection.
+1. Stabilize current Preview by withholding unavailable bindings and reconciling a stale selection against a settled
+   answer.
 2. Characterize scalar presets, current CCDC export metadata, CCDC Slice ingestion and Masking export behavior.
 3. Add definition validation, direct applicability, deterministic candidate IDs and a pure binding controller.
 4. Define `CCDC_SEGMENT_SLICE`, including its capability requirement, template validator, evidence derivation and
@@ -316,12 +321,11 @@ mappings, template materialization, local clone behavior, active binding and exp
 Focused integration tests prove a migrated map and Retrieve path consume the same validated style set. Earth Engine
 verification checks representative asset metadata parsing against actual output bands.
 
-Manual acceptance covers visible selection behavior, temporary fallback UX, source-preset refresh and preservation
-of deliberate user styles.
+Manual acceptance covers visible selection behavior, source-preset refresh and preservation of deliberate user
+styles.
 
 ## Open decisions
 
-- Invalid-layer UX: unrendered layer versus a visibly stale temporary fallback.
 - Whether referenced recipes expose all user-defined styles as live source choices by default.
 - Exact namespace and derivation rules for stable IDs imported from mutable legacy metadata.
 - How legacy copied visualizations are distinguished from deliberate local edits.

@@ -13,16 +13,16 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
 import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = mapProducts.defaults
 
-const mapRecipeToProps = (recipe, {source}) => {
+const mapRecipeToProps = recipe => {
     return {
         initialized: selectFrom(recipe, 'ui.initialized'),
-        sources: selectFrom(recipe, 'model.sources'),
-        userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
+        sources: selectFrom(recipe, 'model.sources')
     }
 }
 
@@ -120,54 +120,43 @@ class _BaytsAlertsImageLayer extends React.Component {
     }
 
     componentDidMount() {
+        this.reconcile()
+    }
+
+    componentDidUpdate() {
+        this.reconcile()
+    }
+
+    // The layer config is completed before a style is chosen for it. A layer config saved before the alert filter
+    // existed names a visualization type but no filter, and would leave the form showing nothing selected while the
+    // preview applies the unfiltered default.
+    reconcile() {
         const {layerConfig, mapArea: {updateLayerConfig}} = this.props
-        // A layer config saved before the alert filter existed names a visualization type but no filter, and
-        // would leave the form showing nothing selected while the preview applies the unfiltered default.
         const unstated = _.omitBy(defaultLayerConfig, (_value, field) => field in layerConfig)
-        if (!_.isEmpty(unstated)) {
+        if (_.isEmpty(unstated)) {
+            this.reconcileVisualization()
+        } else {
             updateLayerConfig(unstated)
         }
-        this.update(layerConfig.visParams)
     }
 
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
-        this.update(prevVisParams)
-    }
-
-    update(prevVisParams) {
-        const {recipe} = this.props
-        if (!recipe) return
-        const allVisualizations = this.toAllVis()
-        if (!allVisualizations.length) return
-        if (prevVisParams) {
-            const visParams = allVisualizations
-                .find(({id, bands}) =>
-                    id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands))
-                )
-            if (!visParams) {
-                this.selectVisualization(allVisualizations[0])
-            } else if (!_.isEqual(visParams, prevVisParams)) {
-                this.selectVisualization(visParams)
-            }
-        } else {
-            this.selectVisualization(allVisualizations[0])
+    reconcileVisualization() {
+        const {recipe, imageOutput, layerConfig: {visParams}} = this.props
+        const selection = layerSelection({recipe, imageOutput, visualizations: this.visualizations(), visParams})
+        if (selection) {
+            this.selectVisualization(selection)
         }
     }
 
-    toAllVis() {
-        const {userDefinedVisualizations, layerConfig: {visualizationType}, recipe, imageOutput: {availableBands}} = this.props
-        const options = visualizationOptions(recipe, visualizationType)
-        const flatten = options => options
-            .map(option => option.options
-                ? flatten(option.options)
-                : option.visParams
-            )
-            .flat()
-        return [
-            ...userDefinedVisualizations,
-            ...flatten(options)
-        ].filter(visParams => visParams.bands.every(band => Object.keys(availableBands).includes(band)))
+    visualizations() {
+        const {currentRecipe, recipe, source, layerConfig: {visualizationType}, imageOutput} = this.props
+        return layerVisualizations({
+            currentRecipe,
+            recipe,
+            sourceId: source.id,
+            presets: presetVisualizations(visualizationOptions(recipe, visualizationType)),
+            availableBands: imageOutput.availableBands
+        })
     }
 
     selectVisualization(visParams) {
