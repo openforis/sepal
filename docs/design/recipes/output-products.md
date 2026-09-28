@@ -947,7 +947,7 @@ matches execution. The execution comparison is a research gate below.
 | BAYTS Historical | orbit-selected historical metrics | none identified | fixed vocabulary filtered by model orbits | scalar |
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
-| Change Alerts | scalar alert result | monitoring/calibration collection mosaics | fixed change bands plus fabricated family recipes | scalar |
+| Change Alerts | scalar alert result | monitoring/calibration collection mosaics | shared declaration; mosaics by fabricated family recipes | scalar |
 | Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
 | Classification | class, optional class probability, regression and per-class probabilities | classification categories | shared declaration from classifier and legend | scalar |
 | Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
@@ -974,9 +974,8 @@ delegating to Optical Mosaic. Change Alerts and BAYTS switch between algorithm o
 products. CCDC declares scalar `count` as its `COUNT` map product, while its custom asset export is the
 array-valued Segments image.
 
-What a type returns for no mode at all differs between them, and each generic caller passes no mode: BAYTS
-answers its alerts product, and Change Alerts answers its mosaic product - whichever branch the condition falls
-through to.
+Each generic caller passes no mode, and each of these types answers its canonical output then: BAYTS its alerts and
+Change Alerts its changes, from their declarations in the GUI and their algorithms in Earth Engine.
 
 The shared definition therefore keeps one canonical `imageOutput`; additional map products require explicit names.
 Callers must not ask for an unqualified union.
@@ -1036,8 +1035,6 @@ temporal-composer contract is declared:
 - Optical GUI and EE code maintain separate data-set band catalogues. EE also exposes `unixTimeDays` for a MEDOID
   output while the GUI metadata group currently offers only `dayOfYear` and `daysFromTarget`. Whether
   `unixTimeDays` is intentionally hidden or accidentally omitted needs a product-level decision.
-- Change Alerts' GUI change-band dictionary lists the same nine bands as Earth Engine in a different order, and that
-  order drives the option list.
 - Temporal Sentinel-1 derives `ratio_VV_VH` by dividing values after the source adapter converted VV and VH to dB,
   while Radar Mosaic subtracts VH from VV. The shared name therefore currently identifies different measurements.
 - Several temporal defaults contain `DECENDING`, while the executor expects `DESCENDING`; the effective selection

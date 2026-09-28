@@ -18,12 +18,12 @@ import {currentSourceFacts} from './sourceEvidenceBasis'
 // acquisition owner retains. Its authority decides where physical facts come from:
 //
 //   DESCRIBED  the description: choices, destinations, policies and names all from it
-//   LEGACY     a registered helper's names, which offer choices and nothing more. A type's own legacy policy
-//              applies as it always has, with no destination restriction and no physical claim. A declared
-//              wrapper over an undeclared source has no such policy of its own - its fallback is migration
-//              configuration about someone else's bands - so it applies only to bands its evidence lifecycle
-//              vouches for as scalar, judged current against the same session as the read (currentSourceFacts),
-//              never to what the helper's answer says.
+//   LEGACY     a registered helper's names, which offer choices and nothing more: no policy is sent, so Earth
+//              Engine's own default applies, with no destination restriction and no physical claim. A declared
+//              wrapper over an undeclared source configures a fallback - migration configuration about someone
+//              else's bands - so it applies only to bands its evidence lifecycle vouches for as scalar, judged
+//              current against the same session as the read (currentSourceFacts), never to what the helper's
+//              answer says.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -195,8 +195,8 @@ const physicalFacts = ({output, sourceFacts = {status: UNOBSERVED}, task}) => {
     return {status: OBSERVED, bands: null}
 }
 
-const isWrapperFallback = ({pyramidingPolicy, fallbackPyramidingPolicy}) =>
-    !pyramidingPolicy && fallbackPyramidingPolicy !== undefined
+const isWrapperFallback = ({fallbackPyramidingPolicy}) =>
+    fallbackPyramidingPolicy !== undefined
 
 // The destinations these bands can be exported to, by the requirements submission itself validates; null when a
 // band's shape is unverified.
@@ -207,14 +207,14 @@ const physicalDestinations = (physicalBands, names, fallbackPyramidingPolicy) =>
 const emptySelectionDestinations = physicalBands =>
     physicalDestinationCompatibility({bands: physicalBands, selectedBandNames: [], useAllBands: false}).destinations
 
-const exportAuthority = ({output, sourceFacts, task: {pyramidingPolicy, fallbackPyramidingPolicy}}) => {
+const exportAuthority = ({output, sourceFacts, task: {fallbackPyramidingPolicy}}) => {
     if (output.authority === DESCRIBED) {
         return withFallback({imageOutputDescription: output.description}, fallbackPyramidingPolicy)
     }
-    if (isWrapperFallback({pyramidingPolicy, fallbackPyramidingPolicy})) {
+    if (isWrapperFallback({fallbackPyramidingPolicy})) {
         return withFallback({observedBands: sourceFacts.bands}, fallbackPyramidingPolicy)
     }
-    return pyramidingPolicy ? {pyramidingPolicy} : {}
+    return {}
 }
 
 const withFallback = (authority, fallbackPyramidingPolicy) =>

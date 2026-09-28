@@ -41,14 +41,16 @@ vi.mock('~/translate', () => ({msg: key => key}))
 const availableBandsByType = vi.hoisted(() => ({}))
 
 // What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation, and
-// CCDC's and LandTrendr's own map products.
+// CCDC's, LandTrendr's and Change Alerts' own map products.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     const {mapProducts} = await import('./ccdc/bands')
     const landTrendr = await import('./landTrendr/bands')
+    const changeAlerts = await import('./changeAlerts/bands')
     const registeredByType = {
         MOSAIC: {bandPresentation: () => ({blue: {dataType: {precision: 'int'}}})},
         CCDC: {mapProducts},
-        LANDTRENDR: {mapProducts: landTrendr.mapProducts, bandPresentation: landTrendr.bandPresentation}
+        LANDTRENDR: {mapProducts: landTrendr.mapProducts, bandPresentation: landTrendr.bandPresentation},
+        CHANGE_ALERTS: {mapProducts: changeAlerts.mapProducts, bandPresentation: changeAlerts.bandPresentation}
     }
     return {
         getRecipeType: type => ({
@@ -66,7 +68,6 @@ const {productArgs} = await import('./recipeOutput')
 beforeEach(() => {
     state.constructed = []
     availableBandsByType.SYNTHETIC = {ndvi: {}, evi: {}}
-    availableBandsByType.CHANGE_ALERTS = {ndvi: {}}
 })
 
 const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
@@ -79,14 +80,14 @@ const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
 
 // `undefined` means the layer config carries no selection at all; `null` means the reconciler has already
 // cleared one. The two are different questions to ask the reconciler, so the builder keeps them apart.
-const build = ({recipe, visParams, previousLayer}) => {
+const build = ({recipe, visParams, previousLayer, mode = {}}) => {
     const updates = []
     const instance = new RecipeImageLayer({
         currentRecipe: recipe,
         recipe,
         sourceId: 'this-recipe',
         source: {id: 'this-recipe'},
-        layerConfig: visParams === undefined ? {} : {visParams},
+        layerConfig: visParams === undefined ? mode : {...mode, visParams},
         dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []},
         map: {},
         mapArea: {updateLayerConfig: layerConfig => updates.push(layerConfig)},
@@ -201,7 +202,6 @@ describe('the render-time guard', () => {
     describe('a recipe with no bands at all', () => {
         beforeEach(() => {
             availableBandsByType.SYNTHETIC = {}
-            availableBandsByType.CHANGE_ALERTS = {}
         })
 
         it('gets no layer', () => {
@@ -215,9 +215,11 @@ describe('the render-time guard', () => {
             expect(state.constructed).toEqual([])
         })
 
+        // A Change Alerts mosaic mode has no mosaic before the recipe states a period to build it around.
         it('gets no layer even when it manages its own visualizations', () => {
             const {instance} = build({
                 recipe: recipeOf({type: 'CHANGE_ALERTS', userDefined: [{id: 'v1', bands: ['ndvi']}]}),
+                mode: {visualizationType: 'monitoring', mosaicType: 'latest'},
                 visParams: {id: 'v1', bands: ['ndvi']}
             })
 

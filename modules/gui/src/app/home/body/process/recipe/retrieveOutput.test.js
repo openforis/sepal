@@ -2,9 +2,9 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Retrieve over recipe types that declare no output, through their real registrations: the session's records, the
 // shared graph, the common read and its legacy seam, the decision and the generic submitter. A legacy answer names
-// the bands a type supplies and nothing more - its own policy applies as it always has, it restricts no destination,
-// and it never stands in for dependencies not known to be sound. Only the task API and notifications are replaced;
-// the terminal a Retrieve panel's acquisition would retain is supplied where a scenario needs one.
+// the bands a type supplies and nothing more - it sends no policy, so Earth Engine's own default applies, it restricts
+// no destination, and it never stands in for dependencies not known to be sound. Only the task API and notifications
+// are replaced; the terminal a Retrieve panel's acquisition would retain is supplied where a scenario needs one.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -28,14 +28,14 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
+const {default: stack} = await import('./stack/stack')
 const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: changeAlertsTask} = await import('./changeAlerts/changeAlertsRecipe')
+const {retrieveTask: stackTask} = await import('./stack/stackRecipe')
 const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(changeAlerts())
+addRecipeType(stack())
 addRecipeType(baytsHistorical())
 
 beforeEach(() => {
@@ -44,22 +44,22 @@ beforeEach(() => {
 })
 
 describe('a recipe type declaring no output', () => {
-    it('exports the bands it supplies under its own policy', () => {
-        retrieve(read([CHANGE_ALERTS, SOURCE]), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
+    it('exports the bands it supplies with no policy, leaving Earth Engine\'s own default to apply', () => {
+        retrieve(read([STACK, SOURCE]), {destination: 'GEE', bands: ['red_1']}, stackTask)
 
-        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy]))
-            .toEqual([[{selection: ['confidence']}, {'.default': 'sample'}]])
+        expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['red_1']}])
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([CHANGE_ALERTS, SOURCE])
+        const {recipe, output, pending} = read([STACK, SOURCE])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['confidence'], destination: 'DRIVE', task: changeAlertsTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['red_1'], destination: 'DRIVE', task: stackTask}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([CHANGE_ALERTS, SOURCE]), {destination: 'GEE', bands: ['confidence', 'probability']}, changeAlertsTask)
+        retrieve(read([STACK, SOURCE]), {destination: 'GEE', bands: ['red_1', 'nir_1']}, stackTask)
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -74,13 +74,13 @@ describe('"all bands" of a recipe type declaring no output', () => {
     })
 })
 
-// The session has not loaded the recipe the alerts monitor, so whether its dependencies are sound is what the
+// The session has not loaded the image the stack is built from, so whether its dependencies are sound is what the
 // panel's acquisition completes.
 describe('a recipe type declaring no output, over a dependency the session has not loaded', () => {
     it('is still being resolved until its dependencies are completed', () => {
-        const {recipe, output, pending} = read([CHANGE_ALERTS])
+        const {recipe, output, pending} = read([STACK])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['confidence'], destination: 'GEE', task: changeAlertsTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['red_1'], destination: 'GEE', task: stackTask}).status)
             .toBe('RESOLVING')
     })
 
@@ -88,7 +88,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([CHANGE_ALERTS], terminal), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
+        retrieve(read([STACK], terminal), {destination: 'GEE', bands: ['red_1']}, stackTask)
 
         expect(submitted).toEqual([])
     })
@@ -96,7 +96,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([CHANGE_ALERTS], completed), {destination: 'GEE', bands: ['confidence']}, changeAlertsTask)
+        retrieve(read([STACK], completed), {destination: 'GEE', bands: ['red_1']}, stackTask)
 
         expect(submitted).toHaveLength(1)
     })
@@ -111,21 +111,13 @@ const SOURCE = {
     }
 }
 
-const CHANGE_ALERTS = {
-    id: 'change-alerts-1',
-    type: 'CHANGE_ALERTS',
-    title: 'Alerts',
+const STACK = {
+    id: 'stack-1',
+    type: 'STACK',
+    title: 'Stack',
     model: {
-        reference: {type: 'RECIPE_REF', id: SOURCE.id},
-        date: {
-            monitoringEnd: '2024-01-01',
-            monitoringDuration: 1,
-            monitoringDurationUnit: 'months',
-            calibrationDuration: 1,
-            calibrationDurationUnit: 'years'
-        },
-        sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
-        options: {corrections: ['SR']}
+        inputImagery: {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: SOURCE.id}]},
+        bandNames: {bandNames: [{imageId: 'image-1', bands: [{originalName: 'red', outputName: 'red_1'}]}]}
     }
 }
 

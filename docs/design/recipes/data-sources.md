@@ -110,7 +110,17 @@ where a family still needs observation.
      no band. Its Earth Engine catalogue answers from that declaration without reading its reference. Masking over
      BAYTS Alerts exports every alert band with `sample` where its fallback applied `mean`, and Task resolves BAYTS
      Alerts as a declared root and requires its dependencies to be valid. Its first and last radar observations are
-     still answered by its legacy entry: their `{position}` parameter and delegation to Radar Mosaic are pending;
+     still answered by its legacy entry: their `{position}` parameter and delegation to Radar Mosaic are pending.
+     Change Alerts' canonical changes are declared as `CHANGE_ALERT_BANDS` in its shared type:
+     `last_stable_date`, `first_detection_date`, `confirmation_date`, `last_detection_date`, `confidence`,
+     `difference`, `detection_count`, `monitoring_observation_count` and `calibration_observation_count`, all scalar
+     and `sample`, with no encoding. Source type, confidence settings and observations decide masks and values, never bands, and
+     the schema is known before a period or a reference is chosen; being described does not make such a recipe
+     executable ([being described is not being executable](gui-source-runtime.md#reading-a-recipes-own-output)). Its Earth Engine
+     catalogue answers from that declaration without resolving segments or computing a geometry. Masking over Change
+     Alerts exports every change band with `sample` where its fallback applied `mean`. Its monitoring and calibration
+     mosaics are still answered by its legacy entry: their `{period, mosaicType}` parameters and delegation to the
+     configured Optical, Radar or Planet Mosaic are pending;
    - Radar and Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition). Radar Mosaic's point-in-time
      output also waits for the [product decision](output-products.md#early-execution-comparison-findings) on which
@@ -160,9 +170,9 @@ Deliver steps 1–2 as three separately reviewable packets:
 3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
    acquisition while open. Undeclared outputs, including declared wrappers over undeclared sources, are answered by
    the legacy adapter; acquisition failures, broken dependencies and invalid descriptions never qualify. A legacy
-   answer supplies choices alone and never destination compatibility, export policy or encoding: an undeclared type
-   keeps its own legacy policy, and a declared wrapper's fallback reaches only bands its evidence lifecycle currently
-   vouches for as scalar. CCDC's measures and Slice's structured selection are translated into the names they export
+   answer supplies choices alone and never destination compatibility, export policy or encoding: an undeclared type's
+   export sends no policy, so Earth Engine's own default applies, and a declared wrapper's fallback reaches only bands
+   its evidence lifecycle currently vouches for as scalar. CCDC's measures and Slice's structured selection are translated into the names they export
    and checked against the answer. Task keeps its independent, authorized resolution through shared contracts and
    runtime adapters; it neither imports the GUI API nor trusts a browser description
    ([Retrieve integration](gui-source-runtime.md#retrieve-integration)).

@@ -647,7 +647,9 @@ describe.each([
     ['a LandTrendr', () => LANDTRENDR, 'dur', 'sample'],
     ['a LandTrendr', () => LANDTRENDR, 'mag', 'mean'],
     ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'flag', 'sample'],
-    ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'change_probability', 'sample']
+    ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'change_probability', 'sample'],
+    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'confidence', 'sample'],
+    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'detection_count', 'sample']
 ])('retrieving from Masking over %s', (_source, source, band, policy) => {
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
@@ -660,6 +662,22 @@ describe.each([
         expect(submitted).toHaveLength(1)
         expect(submitted[0].params.image.bands).toEqual({selection: [band]})
         expect(submitted[0].params.image.pyramidingPolicy).toEqual({[band]: policy})
+        expect(geeReads).toEqual([])
+    })
+})
+
+describe('retrieving from Masking over a Change Alerts recipe', () => {
+    it('exports to Drive with no pyramiding policy, reading nothing', async () => {
+        const masked = maskingOver(CHANGE_ALERTS)
+
+        await open({recipes: [masked, CHANGE_ALERTS], id: masked.id})
+        await click('confirmation_date')
+        await click('process.retrieve.form.destination.DRIVE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: ['confirmation_date']})
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
         expect(geeReads).toEqual([])
     })
 })
@@ -955,6 +973,25 @@ const BAYTS_ALERTS = {
         date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
         options: {orbits: ['ASCENDING', 'DESCENDING']},
         baytsAlertsOptions: {previousAlertsAsset: {type: 'ASSET', id: 'users/x/previous-alerts'}}
+    }
+}
+
+// Monitoring a segments asset, so that nothing it reads has to be loaded or observed.
+const CHANGE_ALERTS = {
+    id: 'change-alerts-1',
+    type: 'CHANGE_ALERTS',
+    model: {
+        reference: {type: 'ASSET', id: 'users/x/segments'},
+        date: {
+            monitoringEnd: '2024-01-01',
+            monitoringDuration: 2,
+            monitoringDurationUnit: 'months',
+            calibrationDuration: 3,
+            calibrationDurationUnit: 'months'
+        },
+        sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: ['SR']},
+        changeAlertsOptions: {}
     }
 }
 

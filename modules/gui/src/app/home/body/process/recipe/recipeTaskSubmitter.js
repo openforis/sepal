@@ -22,9 +22,6 @@ export const pyramidingPolicies = {
         return policy
     },
 
-    //  For alert recipes - use sample for all bands
-    sample: {'.default': 'sample'},
-
     //  Earth Engine's own default, stated. Only ever a fallback: subordinate to a declared policy and applied to
     //  verified scalar bands alone - it says nothing about whether averaging suits a band.
     mean: {'.default': 'mean'}
@@ -152,7 +149,6 @@ const earthEnginePolicies = (selected, fallbackPyramidingPolicy) => {
 export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) => {
     const {
         dataSetType,
-        pyramidingPolicy,
         imageOutputDescription,
         observedBands,
         fallbackPyramidingPolicy,
@@ -160,10 +156,10 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
         visualizationBands
     } = config
 
-    // Two authorities for one decision, which is the defect this contract removes. Refused rather than
-    // resolved by precedence, so a half-finished migration cannot silently keep exporting the old policy.
-    if ([imageOutputDescription, observedBands, pyramidingPolicy].filter(authority => authority).length > 1) {
-        throw new Error(`Recipe ${recipe.id} configures more than one of a resolved image output, observed source bands and a legacy pyramiding policy; only one may decide export requirements`)
+    // Two authorities for one decision. Refused rather than resolved by precedence, so neither can silently
+    // decide what the other describes.
+    if (imageOutputDescription && observedBands) {
+        throw new Error(`Recipe ${recipe.id} configures both a resolved image output and observed source bands; only one may decide export requirements`)
     }
     if (hasOwn(config, 'fallbackPyramidingPolicy') && !imageOutputDescription && !observedBands) {
         throw new Error(`Recipe ${recipe.id} configures fallback pyramiding policy without physical facts to apply it to`)
@@ -228,17 +224,9 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
         properties: recipeProperties
     }
     
-    // Add pyramiding policy if specified
-    if (resolvedRequirements) {
-        if (resolvedRequirements.pyramidingPolicy) {
-            image.pyramidingPolicy = resolvedRequirements.pyramidingPolicy
-        }
-    } else if (pyramidingPolicy) {
-        if (typeof pyramidingPolicy === 'function') {
-            image.pyramidingPolicy = pyramidingPolicy(bands)
-        } else {
-            image.pyramidingPolicy = pyramidingPolicy
-        }
+    // Only physical facts decide a policy. Without them none is sent, and Earth Engine's own default applies.
+    if (resolvedRequirements?.pyramidingPolicy) {
+        image.pyramidingPolicy = resolvedRequirements.pyramidingPolicy
     }
     
     if (destination === 'DRIVE') {

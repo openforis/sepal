@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr and BAYTS Alerts through their real registrations, shared declarations, the common read and the generic Retrieve submission.
-// Only the task API and notifications are replaced.
+// Alerts, LandTrendr, BAYTS Alerts and Change Alerts through their real registrations, shared declarations, the common
+// read and the generic Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -34,6 +34,7 @@ const {default: phenology} = await import('./phenology/phenology')
 const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {default: landTrendr} = await import('./landTrendr/landTrendr')
 const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
+const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -50,6 +51,8 @@ const {recipeVisualizations} = await import('./visualizations')
 const {visualizationOptions: landTrendrVisualizationOptions} = await import('./landTrendr/visualizations')
 const {groupedBandPresentation: baytsAlertsRetrieveGroups} = await import('./baytsAlerts/bands')
 const {visualizationOptions: baytsAlertsVisualizationOptions} = await import('./baytsAlerts/visualizations')
+const {groupedBandPresentation: changeAlertsRetrieveGroups} = await import('./changeAlerts/bands')
+const {visualizationOptions: changeAlertsVisualizationOptions} = await import('./changeAlerts/visualizations')
 const {renderableVisualizations} = await import('./visualizationMatching')
 
 addRecipeType(regression())
@@ -62,6 +65,7 @@ addRecipeType(phenology())
 addRecipeType(pyeoAlerts())
 addRecipeType(landTrendr())
 addRecipeType(baytsAlerts())
+addRecipeType(changeAlerts())
 
 beforeEach(() => {
     submitted.length = 0
@@ -543,6 +547,120 @@ describe('a BAYTS alerts recipe', () => {
     })
 })
 
+describe('a Change Alerts recipe', () => {
+    const CHANGES = [
+        'last_stable_date', 'first_detection_date', 'confirmation_date', 'last_detection_date', 'confidence', 'difference',
+        'detection_count', 'monitoring_observation_count', 'calibration_observation_count'
+    ]
+
+    it('is described with its changes in the order execution builds them, while the CCDC it monitors is not even loaded', () => {
+        const {output} = read(changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    // What a recipe still being configured provides is known; whether it can run is not, and nothing here says it can:
+    // no style is offered, and execution refuses a missing period.
+    it('is described with the same changes before a period or a reference is chosen, offering no style', () => {
+        const recipe = changeAlertsOf({reference: {}, date: {...PERIOD, monitoringEnd: undefined}})
+        const {output} = read(recipe)
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
+        expect(recipeVisualizations(recipe, output.availableBands)).toEqual([])
+    })
+
+    it('is presented with whole counts and fractional dates and measures, and offers its change styles', () => {
+        const recipe = changeAlertsOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual({
+            last_stable_date: {precision: 'float'},
+            first_detection_date: {precision: 'float'},
+            confirmation_date: {precision: 'float'},
+            last_detection_date: {precision: 'float'},
+            confidence: {precision: 'float'},
+            difference: {precision: 'float'},
+            detection_count: {precision: 'int'},
+            monitoring_observation_count: {precision: 'int'},
+            calibration_observation_count: {precision: 'int'}
+        })
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands[0])).toEqual([
+            'confidence', 'difference', 'detection_count',
+            'last_stable_date', 'first_detection_date', 'confirmation_date', 'last_detection_date',
+            'monitoring_observation_count', 'calibration_observation_count'
+        ])
+    })
+
+    it('is offered for retrieval in its change, date and observation groups', () => {
+        expect(changeAlertsRetrieveGroups().map(group => group.map(({value}) => value))).toEqual([
+            ['confidence', 'difference', 'detection_count'],
+            ['last_stable_date', 'first_detection_date', 'confirmation_date', 'last_detection_date'],
+            ['monitoring_observation_count', 'calibration_observation_count']
+        ])
+    })
+
+    it('exports the bands selected in the order execution builds them, all sampled', () => {
+        retrieve(read(changeAlertsOf()), 'GEE', undefined, {bands: ['calibration_observation_count', 'confidence', 'last_stable_date']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands, image.pyramidingPolicy])).toEqual([[
+            {selection: ['last_stable_date', 'confidence', 'calibration_observation_count']},
+            {last_stable_date: 'sample', confidence: 'sample', calibration_observation_count: 'sample'}
+        ]])
+    })
+
+    it('is neither previewed nor exported while the CCDC it monitors is found missing', () => {
+        const recipe = changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}})
+        const {output: {description}} = read(recipe)
+        const missing = {status: 'READY', description, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}
+        const answer = readRetrieveOutput({
+            state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
+            recipeId: recipe.id,
+            heldFor: () => missing
+        })
+
+        retrieve(answer, 'GEE')
+
+        expect(answer.output.bands.map(({name}) => name)).toEqual(CHANGES)
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
+    })
+
+    // The mosaics a layer can show instead are another product, still answered by its legacy entry.
+    describe.each([
+        ['monitoring', 'latest'],
+        ['monitoring', 'median'],
+        ['calibration', 'latest'],
+        ['calibration', 'median']
+    ])('%s %s mosaic', (period, mosaicType) => {
+        const layerConfig = {visualizationType: period, mosaicType}
+
+        it('shows as before, with the optical styles and the arguments execution takes', () => {
+            const recipe = changeAlertsOf()
+            const {product, output} = layerRead(recipe, layerConfig)
+
+            expect(product).toEqual({name: 'COLLECTION_MOSAIC', parameters: {period, mosaicType}})
+            expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+            expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['red', 'green', 'blue']))
+            expect(output.bands.map(({name}) => name)).not.toContain('confidence')
+            const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
+            expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(['red', 'green', 'blue'])
+            expect(productArgs(recipe, layerConfig)).toEqual({visualizationType: period, mosaicType})
+        })
+
+        // There is no mosaic without a period to build it around, while the changes are still described.
+        it('offers nothing to show before a period is chosen', () => {
+            const recipe = changeAlertsOf({date: {...PERIOD, monitoringEnd: undefined}})
+
+            expect(layerRead(recipe, layerConfig).output).toMatchObject({status: 'READY', bands: []})
+            expect(canPreview(layerRead(recipe, layerConfig).output)).toBe(false)
+            expect(layerRead(recipe, {visualizationType: 'changes'}).output.bands.map(({name}) => name)).toEqual(CHANGES)
+        })
+    })
+})
+
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
     ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
@@ -553,7 +671,8 @@ describe.each([
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
     ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
     ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
-    ['a BAYTS alerts recipe', recipe => baytsAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined]
+    ['a BAYTS alerts recipe', recipe => baytsAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined],
+    ['a Change Alerts recipe', recipe => changeAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -711,6 +830,28 @@ const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historica
     }
 })
 
+const PERIOD = {
+    monitoringEnd: '2024-01-01',
+    monitoringDuration: 2,
+    monitoringDurationUnit: 'months',
+    calibrationDuration: 3,
+    calibrationDurationUnit: 'months'
+}
+
+// Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded.
+const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD} = {}) => ({
+    id: ID,
+    type: 'CHANGE_ALERTS',
+    title: 'Alerts',
+    model: {
+        reference,
+        date,
+        sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: ['SR']},
+        changeAlertsOptions: {minConfidence: 5, numberOfObservations: 3, minNumberOfChanges: 3}
+    }
+})
+
 const landTrendrOf = ({classification} = {}) => ({
     id: ID,
     type: 'LANDTRENDR',
@@ -730,6 +871,18 @@ const read = recipe => readRetrieveOutput({
     recipeId: recipe.id,
     heldFor: () => null
 })
+
+// The read a layer makes of the product its config names, with nothing but the recipe itself loaded.
+const layerRead = (recipe, layerConfig) => {
+    const product = layerProduct(recipe, layerConfig)
+    const output = readRecipeOutput({
+        recipe,
+        product,
+        graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+        heldFor: () => null
+    })
+    return {product, output}
+}
 
 const retrieve = ({recipe, output, pending}, destination, task, selection = {useAllBands: true}) => submitRetrieve({
     recipe,

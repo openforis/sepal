@@ -33,8 +33,8 @@ start operations. The service adapts the GUI environment to the shared resolver 
   completed closure and a private session-invalidation signal.
 - Recipe actions remain pure; consumers pass command inputs explicitly rather than reading back state they just
   wrote.
-- Each Retrieve export has exactly one authority for its requirements: a resolved description, the evidence a
-  declared wrapper's lifecycle currently vouches for, or an undeclared type's own legacy policy.
+- Each Retrieve export has at most one authority for its requirements: a resolved description, or the evidence a
+  declared wrapper's lifecycle currently vouches for. An undeclared type's export has none and sends no policy.
 - Browser descriptions are interactive evidence. They authorize task policy only for an explicitly reviewed
   declaration whose policy is stable across dependency-version drift.
 - Graph work and Earth Engine requests occur only for subscribed operations, never merely because Redux changed.
@@ -394,7 +394,7 @@ one rule (`retrieveOutput.js`) from one read:
 | Answer | Physical facts | Earth Engine policy | Destinations |
 | --- | --- | --- | --- |
 | `DESCRIBED` | the description | per band as declared; the type's fallback for a verified scalar band that declares none | Drive and SEPAL take verified scalars; Earth Engine needs a policy for every band |
-| `LEGACY`, from a type answering for itself | none | the type's own legacy policy, over the resolved names | not restricted |
+| `LEGACY`, from a type answering for itself | none | none sent; Earth Engine's own default applies | not restricted |
 | `LEGACY`, from a declared wrapper over an undeclared source | what its evidence lifecycle currently vouches for | the wrapper's fallback, for verified scalars only | as for a description |
 
 A legacy answer gains no physical authority from its shape. The dimensionality a helper's answer carries serves
@@ -427,9 +427,9 @@ under the credential epoch it was acquired under. Nothing is published before th
 values under `ui` before Apply runs, and no request is built from `ui`.
 
 A recipe type supplies its generic image export as a task configuration (`retrieveTask`: `dataSetType`,
-`includeTimeRange`, and either its own `pyramidingPolicy` or a `fallbackPyramidingPolicy`), or a `submitTask` of its
-own. The generic submitter takes explicit Retrieve options and exactly one export authority -
-`imageOutputDescription`, `observedBands` or a legacy `pyramidingPolicy` - and refuses more than one. There is no
+`includeTimeRange` and a `fallbackPyramidingPolicy`), or a `submitTask` of its own. A type states no policy of its own:
+policies come from physical facts alone. The generic submitter takes explicit Retrieve options and at most one export
+authority - `imageOutputDescription` or `observedBands` - and refuses both. There is no
 image-customization callback: a request states its final selection before policies are derived. The styles attached
 are those the recipe offers over the answer's bands, restricted to the exported names.
 
@@ -866,6 +866,14 @@ Earth Engine does not resolve descriptions at all: Preview and its other endpoin
 they execute - a cycle through `recipeRef`, a failed read through the operation's recipe scope - so it inherits
 neither the scoping nor a new check.
 
+Nor does a sound closure make a recipe executable. A declaration says which bands a configuration provides, and a
+recipe still being configured can be described before it states what it needs to run: Change Alerts without a
+monitoring period or a reference is described with its nine change bands. Nothing validates such requirements yet.
+The recipe's own layer and Retrieve wait for it to be initialized, its change styles are offered only once it states
+a period, and execution refuses it with its own error. A wrapper over it - Masking over an unfinished Change Alerts -
+has none of those gates: it is offered the bands, a style a user defines over them can request a preview, and an
+export is accepted and fails in Earth Engine. That exposure is accepted until requirements are validated.
+
 **One legacy seam.** A type with no provider is answered in one GUI module (`recipe/legacyOutput.js`) from its
 registered helpers. The seam relocates that answer; it does not change it. What the helper returns passes through
 unchanged - band names and the `dataType` hints beside them - marked as a legacy answer. Those hints are
@@ -875,7 +883,7 @@ window, and no later deletion recovers that.
 
 A legacy answer is never resolved evidence and never export authority. Retrieve keeps the two apart: a described
 answer supplies its choices, destination compatibility, band names and policies; a legacy answer supplies choices
-alone, beside the type's own legacy policy ([Retrieve integration](#retrieve-integration)). A type earns the stricter
+alone, and no policy ([Retrieve integration](#retrieve-integration)). A type earns the stricter
 treatment when it declares its output, not before.
 
 The seam answers whole closures, not root types: an answer is legacy when every diagnostic is an undeclared output
@@ -1046,7 +1054,7 @@ Retrieve tests own request translation, authority, failure handling and stale su
 registrations and the real read where a mock could hide wiring. They prove that:
 
 - a masked CCDC keeps `sample`, and a declared scalar with no policy takes the type's fallback only when verified;
-- an undeclared type's own policy applies to the resolved names with no destination restriction, and "all bands"
+- an undeclared type exports the resolved names with no policy and no destination restriction, and "all bands"
   names what the type supplies;
 - unknown, unsound or uncompleted dependencies block, whichever the answer's authority;
 - evidence whose basis the session has moved past - a source edit or a credential replacement - authorizes nothing,

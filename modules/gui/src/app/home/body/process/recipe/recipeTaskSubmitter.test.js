@@ -292,13 +292,13 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
         expect(state.submitted).toHaveLength(0)
     })
 
-    // Two authorities for one decision is the defect this milestone removes, so their coexistence is a
-    // configuration mistake rather than a precedence question to answer silently.
-    it('rejects a resolved description alongside a legacy policy', () => {
+    // Two authorities for one decision, so their coexistence is a configuration mistake rather than a precedence
+    // question to answer silently.
+    it('rejects a resolved description alongside observed source bands', () => {
         expect(() => submitRecipe(outerRecipe(['class']), {
             imageOutputDescription: resolved({bands: [band('class', 'mode')]}),
-            pyramidingPolicy: {'.default': 'sample'}
-        })).toThrow(/policy/)
+            observedBands: [band('class')]
+        })).toThrow(/observed source bands/)
         expect(state.submitted).toHaveLength(0)
     })
 
@@ -550,21 +550,7 @@ describe('submitRetrieveRecipeTask without a resolved image output', () => {
         expect(state.events).toEqual([])
     })
 
-    it('still derives a legacy function policy from the selected bands', () => {
-        const submitted = submit({id: 'SYNTHETIC'}, {
-            pyramidingPolicy: bands => Object.fromEntries(bands.map(name => [name, 'mean']))
-        })
-
-        expect(imageOf(submitted).pyramidingPolicy).toEqual({'band-1': 'mean'})
-    })
-
-    it('still passes a legacy object policy through unchanged', () => {
-        const submitted = submit({id: 'SYNTHETIC'}, {pyramidingPolicy: {'.default': 'sample'}})
-
-        expect(imageOf(submitted).pyramidingPolicy).toEqual({'.default': 'sample'})
-    })
-
-    it('still omits the policy entirely when neither source is configured', () => {
+    it('sends no policy, leaving Earth Engine\'s own default to apply', () => {
         const submitted = submit({id: 'SYNTHETIC'})
 
         expect(submitted).toHaveLength(1)

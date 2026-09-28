@@ -2,8 +2,7 @@ import {vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: id => id}))
 
-const {getAvailableBands} = await import('./bands')
-const {getPreSetVisualizations} = await import('./visualizations')
+const {mapProducts} = await import('./bands')
 
 // What the GUI adds to the shared projection: which helper describes the mosaic that projection names. Which
 // model it produces for a period and mosaic type is the shared module's own concern, tested there.
@@ -26,8 +25,8 @@ describe('the bands a Change Alerts mosaic mode offers', () => {
 
     const RADAR = {dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}
 
-    const offeredBands = (sources, visualizationType, mosaicType, corrections) =>
-        Object.keys(getAvailableBands(alertsRecipe(sources, corrections), visualizationType, mosaicType))
+    const offeredBands = (sources, period, mosaicType, corrections) =>
+        Object.keys(mapProducts.bands(alertsRecipe(sources, corrections), {name: 'COLLECTION_MOSAIC', parameters: {period, mosaicType}}))
 
     // Metadata bands are offered only for a composite that is not a median, and the projection's always is.
     it('are the optical mosaic\'s, composed the way that mosaic is composed', () => {
@@ -56,28 +55,5 @@ describe('the bands a Change Alerts mosaic mode offers', () => {
 
         expect(bands).toContain('VV')
         expect(bands).not.toContain('VV_med')
-    })
-})
-
-// A recipe still being configured states no monitoring end, and another recipe consuming its output reaches
-// the registered helpers with no mode at all. Execution must fail loudly on that model; a consumer asking
-// what this recipe offers must not.
-describe('a Change Alerts recipe that states no period yet', () => {
-    const undated = {
-        model: {
-            sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
-            options: {corrections: []},
-            date: {
-                monitoringDuration: 2,
-                monitoringDurationUnit: 'months',
-                calibrationDuration: 3,
-                calibrationDurationUnit: 'months'
-            }
-        }
-    }
-
-    it('offers no bands and no presets, rather than failing', () => {
-        expect(getAvailableBands(undated)).toEqual({})
-        expect(getPreSetVisualizations(undated)).toEqual([])
     })
 })
