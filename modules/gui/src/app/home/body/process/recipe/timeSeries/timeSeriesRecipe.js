@@ -76,7 +76,7 @@ const submitRetrieveRecipeTask = recipe => {
             image: {
                 ...recipe.ui.retrieveOptions,
                 recipe,
-                indicator: recipe.ui.retrieveOptions.bands
+                indicators: recipe.ui.retrieveOptions.bands
             },
             taskInfo: getTaskInfo({
                 recipe,

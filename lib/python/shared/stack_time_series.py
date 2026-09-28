@@ -18,7 +18,7 @@ chunk_file_pattern = re.compile('chunk-(.*)')
 nodata_value = 0
 
 
-def stack_time_series(directory, band=None):
+def stack_time_series(directory, band=None, sits_dir=None):
     chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
@@ -32,7 +32,7 @@ def stack_time_series(directory, band=None):
     create_stack(directory, dates)
     create_dates_csv(directory, dates)
     if band:
-        create_sits_files(directory, tiles, band)
+        create_sits_files(sits_dir or join(directory, 'sits'), tiles, band)
     print('    Done.')
 
 
@@ -233,11 +233,13 @@ def create_dates_csv(directory, dates):
             f.write(d + '\n')
 
 
-def create_sits_files(directory, tiles, band):
+def create_sits_files(sits_dir, tiles, band):
     # one GeoTIFF per tile per date, named to match a sits local_cube
     # parse_info of c("X1", "tile", "band", "date"). sits requires the band
     # token in the file name to be upper case for raw (non-results) cubes.
-    sits_dir = join(directory, 'sits')
+    # sits_dir may be shared across multiple bands (e.g. multiple indicators
+    # from the same recipe run), so they can be ingested as one multi-band
+    # cube without a separate merge step.
     create_tile_dir(sits_dir)
     band = band.replace('_', '-').upper()
     for tile in tiles:
@@ -271,11 +273,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('directories', nargs='+')
     parser.add_argument('--band', help='Indicator name, used to also emit sits-compatible per-date GeoTIFFs')
+    parser.add_argument(
+        '--sits-dir',
+        help='Where to write sits-compatible GeoTIFFs (default: <directory>/sits). '
+             'May be shared across multiple invocations for different bands.'
+    )
     args = parser.parse_args()
 
     for d in args.directories:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(abspath(d), args.band)
+            stack_time_series(abspath(d), args.band, args.sits_dir)
         else:
             print('Not found: {}'.format(d))
