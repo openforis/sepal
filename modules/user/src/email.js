@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 
 import {sepalHost} from './config.js'
-import {invitationContent, passwordResetContent} from './emailTemplates.js'
+import {invitationContent, passwordResetContent, sshKeyAddedContent} from './emailTemplates.js'
 
 const FROM = 'user'
 
@@ -9,7 +9,7 @@ const FROM = 'user'
 // renders/sends them. We send to the user's email directly (matches the Java SMTP gateway).
 const email$ = new Subject()
 
-// These are all mandatory transactional emails (invite, password reset). They must be delivered
+// These are all mandatory emails (invite, password reset, security notices). They must be delivered
 // regardless of the recipient's email-notification preference, so force delivery (the email module
 // otherwise filters `email.sendToAddress` recipients by that preference and silently drops them).
 const send = (to, subject, content) =>
@@ -24,4 +24,7 @@ const sendInvite = (user, token) =>
 const sendPasswordReset = (user, token) =>
     send(user.email, 'Sepal Password Reset', passwordResetContent(user, resetLink(token)))
 
-export {email$, sendInvite, sendPasswordReset}
+const sendSshKeyAdded = (user, key) =>
+    send(user.email, 'SEPAL: SSH key added', sshKeyAddedContent(user, key))
+
+export {email$, sendInvite, sendPasswordReset, sendSshKeyAdded}

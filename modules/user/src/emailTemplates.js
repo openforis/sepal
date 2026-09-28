@@ -30,4 +30,28 @@ const passwordResetContent = (user, passwordResetLink) => `<h2>Hello ${user.name
 
 ${DOCS_FOOTER}`
 
-export {invitationContent, passwordResetContent}
+const sshKeyAddedContent = (user, key) => `<h2>Hello ${escapeHtml(user.name)},</h2>
+
+<p>
+    An SSH key was added to your SEPAL account:
+</p>
+<ul>
+    <li>Name: ${escapeHtml(key.name)}</li>
+    <li>Type: ${escapeHtml(key.type)}</li>
+    <li>Fingerprint: ${escapeHtml(key.fingerprint)}</li>
+    <li>Added: ${escapeHtml(key.creationTime)}</li>
+</ul>
+<p>
+    If you did not add this key, delete it under SSH keys in your SEPAL account and change your password.
+</p>
+
+${DOCS_FOOTER}`
+
+const escapeHtml = text => String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('\'', '&#39;')
+
+export {invitationContent, passwordResetContent, sshKeyAddedContent}

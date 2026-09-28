@@ -5,7 +5,7 @@ jest.unstable_mockModule('./config.js', () => ({
     sepalHost: 'sepal.example.org'
 }))
 
-const {email$, sendInvite, sendPasswordReset} = await import('./email.js')
+const {email$, sendInvite, sendPasswordReset, sendSshKeyAdded} = await import('./email.js')
 
 const user = {username: 'lookap28', name: 'Luca', email: 'lookap+28@gmail.com'}
 
@@ -29,4 +29,14 @@ test('sendPasswordReset forces email delivery, bypassing the notification prefer
 test('sendInvite forces email delivery', () => {
     const msg = capture(() => sendInvite(user, 'tok'))
     expect(msg.forceEmailNotificationEnabled).toBe(true)
+})
+
+test('sendSshKeyAdded force-delivers a security notice to the user', () => {
+    const key = {id: 1, name: 'Laptop', type: 'ssh-ed25519', fingerprint: 'SHA256:x', creationTime: '2026-09-28T10:00:00.000Z'}
+
+    const msg = capture(() => sendSshKeyAdded(user, key))
+
+    expect(msg.to).toBe(user.email)
+    expect(msg.subject).toBe('SEPAL: SSH key added')
+    expect(msg.forceEmailNotificationEnabled, 'a security notice must not be opted out of').toBe(true)
 })
