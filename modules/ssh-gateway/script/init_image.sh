@@ -29,10 +29,7 @@ sed -e '/PrintMotd / s/^#*/#/' -i /etc/ssh/sshd_config
 sed -e '/PrintLastLog / s/^#*/#/' -i /etc/ssh/sshd_config
 
 # sshpiperd (sepal-router) owns port 22 and authenticates users; this sshd serves the menu behind it, reached only
-# through sshpiperd, which always logs in with the user's SEPAL key.
-# Make sure SSH connections to gateway doesn't time out
-# Setup SSH authentication
-# Act as a gateway for users in correct user group
+# through sshpiperd, which always logs in with the user's SEPAL key. Keep-alives stop idle menu connections timing out.
 printf '%s\n' \
     'ListenAddress 127.0.0.1' \
     'Port 2222' \

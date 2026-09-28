@@ -13,7 +13,7 @@ import (
 // A user's authorized keys are the SEPAL key plus at most 20 of their own.
 const maxAuthorizedKeysSize = 64 * 1024
 
-// userModule asks the user module the same questions the gateway's OpenSSH asked it before sshpiper took over.
+// userModule checks SSH credentials with the user module, which only accepts ACTIVE users.
 type userModule struct {
 	baseURL string
 	client  *http.Client
