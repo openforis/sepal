@@ -19,15 +19,22 @@
 
 .stats {
     position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    gap: .25rem 1.5rem;
+    display: grid;
+    /* Fractions of the same width in every strip, so the columns line up across sessions: cpu, gpu,
+       ram, net, cost, keep alive, stops at. */
+    grid-template-columns: 2.5fr 2.5fr 2.5fr 4.5fr 3fr 12fr 5fr;
+    column-gap: .75rem;
     font-size: .9rem;
 }
 
 .stat {
     display: flex;
     flex-direction: column;
+}
+
+.numeric {
+    align-items: flex-end;
+    font-variant-numeric: tabular-nums;
 }
 
 .label {

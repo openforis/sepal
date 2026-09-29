@@ -1,5 +1,5 @@
-// What the session list says about one instance, as data: which usage metrics it has to show,
-// whether the sampler reached a verdict, and what is running on it.
+// What the session list says about one instance, as data: which usage metrics it has to show and
+// what is running on it.
 //
 // Kept in its own module with no imports, in the sessionExpiryRules style, so it can be tested
 // directly. Labels and number formatting stay in the component — this decides only WHAT is worth
@@ -27,14 +27,6 @@ export const usageMetrics = session => {
             : [{key: 'net', bytesPerS: usage.netBytesPerS}]
     ]
 }
-
-// verdictOf — 'busy' | 'unused', or null when the sampler has not reached a verdict for this
-// session (too new, or below the sampling coverage floor). 'unused' is the word that tells a user
-// their instance is about to be stopped, so it is never guessed from missing data.
-export const verdictOf = session =>
-    ['busy', 'unused'].includes(session?.verdict)
-        ? session.verdict
-        : null
 
 // runningItems — what the instance is running: the apps, by the label the user opened them under.
 //

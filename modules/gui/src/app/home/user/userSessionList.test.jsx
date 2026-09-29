@@ -32,6 +32,9 @@ import {UserSessionList} from './userSessionList'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+const MINUTE = 60 * 1000
+const HOUR = 60 * MINUTE
+
 // TranslationProvider resolves the locale through localStorage.
 setLanguage('en')
 
@@ -43,7 +46,6 @@ const session = overrides => ({
     costSinceCreation: 0.04,
     apps: [],
     terminals: 0,
-    verdict: 'unused',
     usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: null, netBytesPerS: 1234},
     expiry: {state: 'NONE', timeoutTime: '2026-08-17T09:22:26.000Z', notifiedTime: null, closeTime: null},
     ...overrides
@@ -112,20 +114,39 @@ describe('the session list', () => {
     // Each value under its own label, in the expansion under the row rather than in its description.
     const stats = container => [...container.querySelectorAll('.expansion > div > div')]
         .map(stat => [...stat.children].map(({textContent}) => textContent))
+    const stat = (container, label) => stats(container).find(([statLabel]) => statLabel === label)[1]
 
-    it('reports the sampled usage, the verdict and the cost so far under the row', () => {
+    const COLUMNS = ['CPU', 'GPU', 'RAM', 'NET', 'Cost', 'Keep alive until', 'Stops at']
+
+    it('reports the sampled usage and the cost so far under the row', () => {
         expect(stats(render([session({expiry: null})]))).toEqual([
             ['CPU', '12%'],
+            ['GPU', '—'],
             ['RAM', '35%'],
             ['NET', '1.23 kB/s'],
-            ['Activity', 'unused'],
-            ['Cost', '$0.04']
+            ['Cost', '$0.04'],
+            ['Keep alive until', '—'],
+            ['Stops at', '—']
         ])
     })
 
-    it('says so when there is no usage sample', () => {
-        expect(stats(render([session({usage: null, verdict: 'unknown', expiry: null})])))
-            .toEqual([['Usage', 'No data'], ['Cost', '$0.04']])
+    // The strips line up from one session to the next only if none of them drops a column.
+    it('keeps every column, with a dash for what a session has no value for', () => {
+        const bare = session({usage: null, expiry: null})
+        expect(stats(render([bare]))).toEqual([
+            ...COLUMNS.slice(0, 4).map(label => [label, '—']),
+            ['Cost', '$0.04'],
+            ['Keep alive until', '—'],
+            ['Stops at', '—']
+        ])
+    })
+
+    it('reports the GPU of a GPU instance', () => {
+        const gpu = session({
+            instanceType: {name: 'g5.xlarge', tag: 'g4', cpuCount: 4, gpuCount: 1, ramGiB: 16, hourlyCost: 1.123},
+            usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: 80, netBytesPerS: 1234}
+        })
+        expect(stat(render([gpu]), 'GPU')).toBe('80%')
     })
 
     it('names the apps on the row', () => {
@@ -191,10 +212,18 @@ describe('the session list', () => {
     })
 
     it('shows the deadline as a time and a distance', () => {
-        // 09:22 UTC, and a relative distance moment computes against the real clock.
-        const [label, value] = stats(render([session()])).at(-1)
-        expect(label).toBe('Keep alive until')
-        expect(value).toMatch(/^\d{1,2}:\d{2} (AM|PM) \((in a|in \d+|a|\d+).* (minutes?|hours?|days?|months?|years?)( ago)?\)$/)
+        const future = session({
+            expiry: {state: 'NONE', timeoutTime: new Date(Date.now() + 2 * HOUR).toISOString(), notifiedTime: null, closeTime: null}
+        })
+        expect(stat(render([future]), 'Keep alive until')).toMatch(/^\d{1,2}:\d{2} (AM|PM) \((in a|in \d+|a|\d+).* (minutes?|hours?|days?|months?|years?)( ago)?\)$/)
+    })
+
+    // "2 minutes ago" would read as a keep-alive still running; the instance is up for stopping.
+    it('says the deadline has expired once it has passed', () => {
+        const passed = session({
+            expiry: {state: 'NONE', timeoutTime: new Date(Date.now() - 2 * MINUTE).toISOString(), notifiedTime: null, closeTime: null}
+        })
+        expect(stat(render([passed]), 'Keep alive until')).toMatch(/^\d{1,2}:\d{2} (AM|PM) \(expired\)$/)
     })
 
     // Stopping takes as long as the worker takes to answer, and the row only leaves the list on that
@@ -222,9 +251,7 @@ describe('the session list', () => {
                 closeTime: '2026-08-17T10:23:00.000Z'
             }
         })
-        const [label, value] = stats(render([notified])).at(-1)
-        expect(label).toBe('Stops at')
-        expect(value).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/)
+        expect(stat(render([notified]), 'Stops at')).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/)
     })
 
     it('shows no close time in notify mode, where nothing will close the session', () => {
@@ -236,6 +263,6 @@ describe('the session list', () => {
                 closeTime: null
             }
         })
-        expect(stats(render([notified])).map(([label]) => label)).not.toContain('Stops at')
+        expect(stat(render([notified]), 'Stops at')).toBe('—')
     })
 })

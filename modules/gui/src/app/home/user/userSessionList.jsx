@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import moment from 'moment'
 import React from 'react'
 
@@ -16,7 +17,10 @@ import {Notifications} from '~/widget/notifications'
 
 import {InstanceSpecsTag} from '../instanceSpecs'
 import styles from './userSessionList.module.css'
-import {instanceTypeLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
+import {instanceTypeLabel, runningItems, usageMetrics} from './userSessionSummary'
+
+// A GPU column on every strip, whether or not the instance has one, so the columns line up.
+const USAGE_METRICS = ['cpu', 'gpu', 'ram', 'net']
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -72,97 +76,83 @@ class _UserSessionList extends React.Component {
     }
 
     // The row says who the instance is and what runs on it; what it is doing and when it expires sit
-    // underneath as a strip of labelled values, so neither has to be read out of a sentence.
+    // underneath as a strip of labelled values, so neither has to be read out of a sentence. Every
+    // strip has the same columns, with a dash for what a session has no value for, so the values line
+    // up from one session to the next.
     renderStats(session) {
         return (
             <div className={styles.stats}>
                 {this.renderUsage(session)}
-                {this.renderVerdict(session)}
                 {this.renderCost(session)}
                 {this.renderDeadline(session)}
+                {this.renderClose(session)}
             </div>
         )
     }
 
     renderUsage(session) {
-        const metrics = usageMetrics(session)
-        return metrics
-            ? metrics.map(metric => this.renderMetric(metric))
-            : this.renderStat({
-                key: 'usage',
-                label: msg('user.userSession.usage.label'),
-                value: msg('user.userSession.usage.none')
+        const metrics = _.keyBy(usageMetrics(session), 'key')
+        return USAGE_METRICS.map(key =>
+            this.renderStat({
+                key,
+                label: msg(`user.userSession.usage.${key}`),
+                value: metrics[key] ? this.formatMetric(metrics[key]) : null,
+                numeric: true
             })
+        )
     }
 
-    renderMetric({key, pct, bytesPerS}) {
-        return this.renderStat({
-            key,
-            label: msg(`user.userSession.usage.${key}`),
-            value: key === 'net'
-                ? format.fileSize(bytesPerS, {unit: 'B/s'})
-                : `${Math.round(pct)}%`
-        })
-    }
-
-    // The verdict is the one the busy ratchet acts on, so "unused" here is the reason the instance
-    // will be stopped, not a second opinion.
-    renderVerdict(session) {
-        const verdict = verdictOf(session)
-        return verdict
-            ? this.renderStat({
-                key: 'verdict',
-                label: msg('user.userSession.verdict.label'),
-                value: msg(`user.userSession.verdict.${verdict}`),
-                warning: verdict === 'unused'
-            })
-            : null
+    formatMetric({key, pct, bytesPerS}) {
+        return key === 'net'
+            ? format.fileSize(bytesPerS, {unit: 'B/s'})
+            : `${Math.round(pct)}%`
     }
 
     renderCost(session) {
         return this.renderStat({
             key: 'cost',
             label: msg('user.report.sessions.cost'),
-            value: format.dollars(session.costSinceCreation)
+            value: format.dollars(session.costSinceCreation),
+            numeric: true
         })
     }
 
-    // The stored deadline, absolute and relative. Under enforcement a notified session also has a
-    // close time; in notify mode closeTime is null, where a countdown to a close that will not
-    // happen would be a lie.
+    // The stored deadline, absolute and relative. Once passed, the instance is up for stopping, and
+    // "expired" says so where "3 minutes ago" would read as a keep-alive still running.
     renderDeadline(session) {
-        const {timeoutTime, closeTime} = session.expiry || {}
-        if (!timeoutTime) {
-            return null
-        }
-        const deadline = moment(timeoutTime)
-        return (
-            <React.Fragment>
-                {this.renderStat({
-                    key: 'deadline',
-                    label: msg('user.userSession.deadline.label'),
-                    value: msg('user.userSession.deadline.value', {
-                        time: deadline.format('LT'),
-                        relative: deadline.fromNow()
-                    })
-                })}
-                {closeTime
-                    ? this.renderStat({
-                        key: 'close',
-                        label: msg('user.userSession.deadline.stopping'),
-                        value: moment(closeTime).format('LT'),
-                        warning: true
-                    })
-                    : null}
-            </React.Fragment>
-        )
+        const {timeoutTime} = session.expiry || {}
+        const deadline = timeoutTime ? moment(timeoutTime) : null
+        const expired = deadline?.isSameOrBefore(moment())
+        return this.renderStat({
+            key: 'deadline',
+            label: msg('user.userSession.deadline.label'),
+            value: deadline
+                ? expired
+                    ? msg('user.userSession.deadline.expired', {time: deadline.format('LT')})
+                    : msg('user.userSession.deadline.value', {time: deadline.format('LT'), relative: deadline.fromNow()})
+                : null,
+            warning: expired
+        })
     }
 
-    renderStat({key, label, value, warning}) {
+    // Under enforcement a notified session also has a close time; in notify mode closeTime is null,
+    // where a countdown to a close that will not happen would be a lie.
+    renderClose(session) {
+        const {closeTime} = session.expiry || {}
+        return this.renderStat({
+            key: 'close',
+            label: msg('user.userSession.deadline.stopping'),
+            value: closeTime ? moment(closeTime).format('LT') : null,
+            warning: !!closeTime
+        })
+    }
+
+    renderStat({key, label, value, numeric, warning}) {
+        const className = [styles.stat, numeric ? styles.numeric : null, warning ? styles.warning : null]
         return (
-            <div key={key} className={[styles.stat, warning ? styles.warning : null].join(' ')}>
+            <div key={key} className={className.join(' ')}>
                 <div className={styles.label}>{label}</div>
-                <div>{value}</div>
+                <div>{value ?? '—'}</div>
             </div>
         )
     }

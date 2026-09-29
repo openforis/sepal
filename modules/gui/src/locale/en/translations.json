@@ -6259,6 +6259,7 @@
         "tooltip": "Copy SSH login: {login}"
       },
       "deadline": {
+        "expired": "{time} (expired)",
         "label": "Keep alive until",
         "stopping": "Stops at",
         "value": "{time} ({relative})"
@@ -6266,15 +6267,8 @@
       "usage": {
         "cpu": "CPU",
         "gpu": "GPU",
-        "label": "Usage",
         "net": "NET",
-        "none": "No data",
         "ram": "RAM"
-      },
-      "verdict": {
-        "busy": "in use",
-        "label": "Activity",
-        "unused": "unused"
       }
     }
   },

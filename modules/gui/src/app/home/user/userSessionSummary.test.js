@@ -1,12 +1,11 @@
 import {describe, expect, it} from 'vitest'
 
-import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
+import {instanceLabel, runningItems, usageMetrics} from './userSessionSummary'
 
 const session = ({gpuCount = 0, ...overrides} = {}) => ({
     instanceType: {name: 't3a.small', tag: 't1', gpuCount, hourlyCost: 0.02},
     apps: [],
     terminals: 0,
-    verdict: 'unknown',
     usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: null, netBytesPerS: 1234},
     ...overrides
 })
@@ -20,8 +19,7 @@ describe('usageMetrics', () => {
         ])
     })
 
-    // A GPU reading on a CPU instance is meaningless, and a permanent "GPU 0%" on every session
-    // trains the eye to skip the line the verdict lives on.
+    // A GPU reading on a CPU instance is meaningless; the list shows a dash there, not "0%".
     it('reports gpu between cpu and ram, but only on GPU instances', () => {
         const gpu = session({gpuCount: 1, usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: 80, netBytesPerS: 1234}})
         expect(usageMetrics(gpu).map(({key}) => key)).toEqual(['cpu', 'gpu', 'ram', 'net'])
@@ -44,20 +42,6 @@ describe('usageMetrics', () => {
     it('has nothing to report without a usage sample', () => {
         expect(usageMetrics(session({usage: null}))).toBeNull()
         expect(usageMetrics(session({usage: {cpuPct: null, ramPct: null}}))).toBeNull()
-    })
-})
-
-describe('verdictOf', () => {
-    it('names a verdict the sampler reached', () => {
-        expect(verdictOf(session({verdict: 'unused'}))).toBe('unused')
-        expect(verdictOf(session({verdict: 'busy'}))).toBe('busy')
-    })
-
-    // 'unused' is what tells a user their instance is about to be stopped — a session the sampler
-    // has not reached yet must say nothing rather than guess.
-    it('says nothing when the sampler has not reached the session', () => {
-        expect(verdictOf(session({verdict: 'unknown'}))).toBeNull()
-        expect(verdictOf(session({verdict: undefined}))).toBeNull()
     })
 })
 
