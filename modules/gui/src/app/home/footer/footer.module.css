@@ -9,6 +9,7 @@
     align-items: center;
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 1px solid hsla(0, 0%, 100%, .1);
+    padding: 0 1rem; /* clear the rounded corners */
     z-index: 2;  /* stay over the menu */
 }
 
