@@ -48,6 +48,12 @@ Earth Engine is asked.
 - **Execution ignores requests.** An unknown band name returns `count` rather than being refused, unlike migrated
   types that honour `outputBands`.
 
+## Potential features
+
+- **Scene cloud cover.** Time Series offers no control for `sources.cloudPercentageThreshold`, the percentage of cloud
+  an optical scene may have to be included; a recipe that states none includes every scene. Expose it: new recipes save 75%
+  explicitly, a recipe that states none keeps including every scene and shows 100%, and a saved value is kept.
+
 ## Verification
 
 - `modules/gee/verify/timeSeriesOutputBands.mjs` - on live Earth Engine, with optical and radar sources: the catalogue

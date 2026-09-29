@@ -13,6 +13,7 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 - [Stack](stack.md)
 - [Planet Mosaic](planet-mosaic.md)
 - [BAYTS Historical](bayts-historical.md)
+- [BAYTS Alerts](bayts-alerts.md)
 - [Time Series](time-series.md)
 
 Shared architecture, design proposals and the cross-recipe roadmap belong in

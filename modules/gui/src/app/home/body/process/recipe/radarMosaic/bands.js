@@ -19,7 +19,7 @@ const BAND_TYPES = {
 export const radarBandPresentation = name =>
     ({dataType: BAND_TYPES[name] || typeFloat})
 
-// A table of the given declared bands, presented, for a product that shows a radar mosaic and is not yet declared.
+// A table of the given declared bands, presented, for a product that shows a radar mosaic.
 export const radarBandTable = bands =>
     Object.fromEntries(bands.map(({name}) => [name, radarBandPresentation(name)]))
 

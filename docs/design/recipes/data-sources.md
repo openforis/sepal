@@ -110,7 +110,10 @@ where a family still needs observation.
      no band. Its Earth Engine catalogue answers from that declaration without reading its reference. Masking over
      BAYTS Alerts exports every alert band with `sample` where its fallback applied `mean`, and Task resolves BAYTS
      Alerts as a declared root and requires its dependencies to be valid. Its first and last radar observations are
-     still answered by its legacy entry: their `{position}` parameter and delegation to Radar Mosaic are pending.
+     the declared `RADAR_OBSERVATION` map product, taking `{position: 'first' | 'last'}` and delegating to Radar
+     Mosaic's point-in-time declaration over the same radar options; a monitoring period that cannot place the
+     position is refused rather than described as another mosaic, so BAYTS Alerts has no legacy band entry left
+     ([BAYTS Alerts](../../recipes/bayts-alerts.md)).
      Change Alerts' canonical changes are declared as `CHANGE_ALERT_BANDS` in its shared type:
      `last_stable_date`, `first_detection_date`, `confirmation_date`, `last_detection_date`, `confidence`,
      `difference`, `detection_count`, `monitoring_observation_count` and `calibration_observation_count`, all scalar
@@ -131,8 +134,9 @@ where a family still needs observation.
      a point in time asked for nothing builds its six bands and no harmonics. Construction bands - `angle`,
      `quality`, `unixTimeDays`, per-image harmonic terms - are not public, though explicit requests for them still
      build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
-     consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observations and Change
-     Alerts' radar mosaics take their names from this schema while their products remain undeclared;
+     consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observation is described
+     by this declaration, and Change Alerts' radar mosaics take their names from it while that product remains
+     undeclared;
    - Planet Mosaic has migrated ([Planet Mosaic](../../recipes/planet-mosaic.md)). Its shared type declares one
      schema from the configuration alone, the same on every branch: `blue`, `green`, `red`, `nir`, then `ndvi`,
      `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, all scalar and averaged. Indexes are encoded at ten thousand per unit,

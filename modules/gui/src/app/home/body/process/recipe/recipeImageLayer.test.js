@@ -43,11 +43,12 @@ vi.mock('~/translate', () => ({msg: key => key}))
 const availableBandsByType = vi.hoisted(() => ({}))
 
 // What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation,
-// CCDC's, LandTrendr's and Change Alerts' own map products, and Radar Mosaic's presentation and presets.
+// CCDC's, LandTrendr's, Change Alerts' and BAYTS Alerts' own map products, and Radar Mosaic's presentation and presets.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     const {mapProducts} = await import('./ccdc/bands')
     const landTrendr = await import('./landTrendr/bands')
     const changeAlerts = await import('./changeAlerts/bands')
+    const baytsAlerts = await import('./baytsAlerts/bands')
     const radarMosaic = await import('./radarMosaic/bands')
     const {getPreSetVisualizations} = await import('./radarMosaic/visualizations')
     const registeredByType = {
@@ -55,6 +56,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
         CCDC: {mapProducts},
         LANDTRENDR: {mapProducts: landTrendr.mapProducts, bandPresentation: landTrendr.bandPresentation},
         CHANGE_ALERTS: {mapProducts: changeAlerts.mapProducts, bandPresentation: changeAlerts.bandPresentation},
+        BAYTS_ALERTS: {mapProducts: baytsAlerts.mapProducts, bandPresentation: baytsAlerts.bandPresentation},
         RADAR_MOSAIC: {bandPresentation: radarMosaic.bandPresentation, getPreSetVisualizations}
     }
     return {
@@ -710,6 +712,66 @@ describe('acquiring what the layer shows', () => {
         })
     })
 
+    // The position is the product's, not the records': the other one is described again from the recipe, while what was
+    // acquired about its dependencies still holds.
+    describe('a BAYTS Alerts radar observation whose reference the session does not hold', () => {
+        const VV = {id: 'vv', type: 'continuous', bands: ['VV'], min: [-20], max: [0]}
+        const observation = (position, visParams = VV) => ({visualizationType: position, visParams})
+        const shownAt = position => shown({recipe: {...baytsAlerts(), ...ownStyles([])}, layerConfig: observation(position)})
+
+        it('only completes the dependencies, then requests its preview with the arguments its editor reads it by', () => {
+            const {instance, runtime, settle} = shownAt('first')
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+            expect(instance.maybeCreateLayer()).toBe(null)
+
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+
+            expect(state.constructed[0].previewRequest).toEqual({
+                recipe: _.omit(instance.props.recipe, ['ui', 'layers']),
+                ...productArgs(instance.props.recipe, instance.props.layerConfig),
+                visParams: VV
+            })
+            expect(productArgs(instance.props.recipe, instance.props.layerConfig))
+                .toEqual({visualizationType: 'first', previouslyConfirmed: 'exclude', minConfidence: 'high'})
+        })
+
+        it('rebuilds the preview for the other position, reusing what it acquired', () => {
+            const {instance, runtime, settle, setLayerConfig} = shownAt('first')
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+
+            setLayerConfig(observation('last'))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+            expect(state.constructed.map(({previewRequest: {visualizationType}}) => visualizationType)).toEqual(['first', 'last'])
+            expect(_.omit(state.constructed[1].previewRequest, ['recipe', 'visParams']))
+                .toEqual(productArgs(instance.props.recipe, instance.props.layerConfig))
+        })
+
+        it('rebuilds the preview on a restyle without acquiring anything again', () => {
+            const {instance, runtime, settle, setLayerConfig} = shownAt('last')
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+            const restyled = {...VV, max: [5]}
+
+            setLayerConfig(observation('last', restyled))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(runtime.operations).toHaveLength(1)
+            expect(state.constructed.map(({visParams}) => visParams)).toEqual([VV, restyled])
+        })
+
+        it('is withheld when its reference cannot be read', () => {
+            const {instance, runtime, settle} = shownAt('first')
+
+            settle(runtime.operations[0], unreadable(instance.props.recipe))
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
+    })
+
     it('withholds masking whose unread mask was deleted, keeping its selection', () => {
         const {instance, runtime, settle, updates} = shown({
             recipe: masking({mask: {type: 'RECIPE_REF', id: 'deleted-mask'}, styles: [BLUE_STYLE]}),
@@ -771,6 +833,17 @@ const landTrendr = ({aoi}) => ({
         sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'},
         options: {corrections: ['SR']},
         landTrendrOptions: {}
+    }
+})
+
+const baytsAlerts = () => ({
+    id: 'bayts-alerts-1',
+    type: 'BAYTS_ALERTS',
+    model: {
+        reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'},
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+        options: {orbits: ['ASCENDING', 'DESCENDING']},
+        baytsAlertsOptions: {}
     }
 })
 

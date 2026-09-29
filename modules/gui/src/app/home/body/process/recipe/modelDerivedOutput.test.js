@@ -1,9 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr, BAYTS Historical, BAYTS Alerts, Change Alerts, Radar Mosaic, Planet Mosaic and Time Series through
-// their real registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
-// notifications are replaced.
+// Alerts, LandTrendr, BAYTS Historical, BAYTS Alerts and its radar observation, Change Alerts, Radar Mosaic, Planet
+// Mosaic and Time Series through their real registrations, shared declarations, the common read and the generic
+// Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -547,28 +547,102 @@ describe('a BAYTS alerts recipe', () => {
             {change_probability: 'sample', flag: 'sample', confirmation_date: 'sample'}
         ]])
     })
+})
 
-    // The radar observations a layer can show instead are another product, still answered by its legacy entry.
-    it.each(['first', 'last'])('shows its %s radar observation as before, with the radar styles and the arguments execution takes', position => {
+// The radar observation a layer can show instead of the alerts: a point-in-time Radar Mosaic around the first or last
+// date of the monitoring period, described from the recipe alone.
+describe('a BAYTS alerts radar observation', () => {
+    const layerRead = (recipe, layerConfig, loadedRecipes = {[recipe.id]: recipe}) => readRecipeOutput({
+        recipe,
+        product: layerProduct(recipe, layerConfig),
+        graph: buildMapDependencyGraph({recipe, loadedRecipes}),
+        heldFor: () => null
+    })
+
+    it.each(['first', 'last'])('is described at its %s position as Radar Mosaic declares a point in time, acquiring nothing', position => {
+        const output = layerRead(baytsAlertsOf(), {visualizationType: position})
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED', acquisition: null})
+        expect(output.description.output.product).toEqual({name: 'RADAR_OBSERVATION', parameters: {position}})
+        expect(output.bands).toEqual(RADAR_OBSERVATION_BANDS)
+        expect(canPreview(output)).toBe(true)
+    })
+
+    it.each(['first', 'last'])('is presented at its %s position as a radar mosaic, with the radar styles and the arguments execution takes', position => {
         const recipe = baytsAlertsOf()
         const layerConfig = {visualizationType: position}
-        const product = layerProduct(recipe, layerConfig)
+        const output = layerRead(recipe, layerConfig)
 
-        const output = readRecipeOutput({
-            recipe,
-            product,
-            graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
-            heldFor: () => null
-        })
-
-        expect(product).toEqual({name: 'RADAR_OBSERVATION', parameters: {position}})
-        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
-        expect(output.bands.map(({name}) => name)).toEqual(RADAR_POINT_IN_TIME)
         expect(displayTypes(output)).toMatchObject({orbit: {precision: 'int'}, VV: {precision: 'float'}})
         const styles = baytsAlertsVisualizationOptions(recipe, position).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(styles).not.toHaveLength(0)
         expect(renderableVisualizations(styles, output.availableBands)).toEqual(styles)
         expect(productArgs(recipe, layerConfig)).toEqual({visualizationType: position, previouslyConfirmed: 'exclude', minConfidence: 'high'})
+    })
+
+    it('cannot be previewed at a position it does not know, and is never answered otherwise', () => {
+        const recipe = baytsAlertsOf()
+        const output = readRecipeOutput({
+            recipe,
+            product: {name: 'RADAR_OBSERVATION', parameters: {position: 'middle'}},
+            graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+            heldFor: () => null
+        })
+
+        expect(output).toMatchObject({
+            status: 'INVALID',
+            authority: null,
+            bands: [],
+            diagnostics: [expect.objectContaining({code: 'INVALID_PRODUCT_PARAMETERS', path: ['parameters', 'position']})]
+        })
+        expect(canPreview(output)).toBe(false)
+    })
+
+    // A recipe whose monitoring period has no end yet: the radar observation cannot be placed, the alerts still describe.
+    it('cannot be previewed before its monitoring period ends, while its alerts are described', () => {
+        const recipe = {...baytsAlertsOf(), model: {...baytsAlertsOf().model, date: {monitoringDuration: 2, monitoringDurationUnit: 'months'}}}
+
+        const output = layerRead(recipe, {visualizationType: 'last'})
+
+        expect(output).toMatchObject({
+            status: 'INVALID',
+            diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']})]
+        })
+        expect(canPreview(output)).toBe(false)
+        expect(layerRead(recipe, {visualizationType: 'alerts'}).bands.map(({name}) => name)).toContain('flag')
+    })
+
+    it.each([
+        ['that is not loaded, until its dependencies are completed', {reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}, 'DEPENDENCIES'],
+        ['that is selected without an id', {reference: {type: 'RECIPE_REF'}}, null],
+        ['that is itself', {reference: {type: 'RECIPE_REF', id: ID}}, null]
+    ])('is described but not previewed over a reference %s', (_case, model, acquiring) => {
+        const recipe = {...baytsAlertsOf(), model: {...baytsAlertsOf().model, ...model}}
+
+        const output = layerRead(recipe, {visualizationType: 'first'})
+
+        expect(output.bands).toEqual(RADAR_OBSERVATION_BANDS)
+        expect(output.acquisition?.kind ?? null).toBe(acquiring)
+        expect(canPreview(output)).toBe(false)
+    })
+
+    // Nothing diagnoses a recipe that has chosen no reference yet, so the read permits a preview once the product's dates
+    // are met, which Earth Engine would fail; recorded in the recipe notes rather than decided here.
+    it('is not held back from preview by its reference while none is chosen at all', () => {
+        const recipe = {...baytsAlertsOf(), model: {...baytsAlertsOf().model, reference: undefined}}
+
+        const output = layerRead(recipe, {visualizationType: 'first'})
+
+        expect(output.dependencyValidity).toEqual({status: 'VALID', diagnostics: []})
+        expect(canPreview(output)).toBe(true)
+    })
+
+    // Retrieve reads the canonical output whatever a layer shows.
+    it('is not what its recipe exports', () => {
+        const {output} = read(baytsAlertsOf())
+
+        expect(output.description.output.product).toBeUndefined()
+        expect(output.bands.map(({name}) => name)).toEqual(['non_forest_probability', 'change_probability', 'flag', 'flag_orbit', 'first_detection_date', 'confirmation_date'])
     })
 })
 
@@ -1123,6 +1197,11 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
 })
 
 const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
+
+// A point-in-time Radar Mosaic's bands, as the radar observation a BAYTS alerts layer shows is described.
+const RADAR_OBSERVATION_BANDS = [
+    ['VV', 'mean'], ['VH', 'mean'], ['ratio_VV_VH', 'mean'], ['orbit', 'mode'], ['dayOfYear', 'sample'], ['daysFromTarget', 'sample']
+].map(([name, pyramidingPolicy]) => ({name, dataType: {arrayDimensions: 0}, pyramidingPolicy}))
 const RADAR_TIME_SCAN = [
     'VV_min', 'VV_max', 'VV_mean', 'VV_std', 'VV_med', 'VH_min', 'VH_max', 'VH_mean', 'VH_std', 'VH_med',
     'ratio_VV_med_VH_med', 'VV_cv', 'VH_cv', 'NDCV', 'orbit',

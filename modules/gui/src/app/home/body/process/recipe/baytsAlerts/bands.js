@@ -1,5 +1,6 @@
 import {ALERT_BANDS} from '#sepal/recipe/bayts/alertBands'
 import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {RADAR_OBSERVATION} from '#sepal/recipe/type/baytsAlerts'
 import {POINT_IN_TIME, RADAR_MOSAIC_BANDS} from '#sepal/recipe/type/radarMosaic'
 import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
@@ -14,14 +15,19 @@ const alertBands = () =>
         ALERT_BANDS.map(name => [name, {dataType: ALERT_BAND_TYPES[name] || typeFloat}])
     )
 
-export const bandPresentation = (_recipe, {name} = {}) =>
-    name === IMAGE_OUTPUT ? alertBands() : {}
+// The radar observation is a point-in-time radar mosaic, and is shown as one.
+export const bandPresentation = (_recipe, {name} = {}) => {
+    switch (name) {
+        case IMAGE_OUTPUT: return alertBands()
+        case RADAR_OBSERVATION: return radarBandTable(RADAR_MOSAIC_BANDS[POINT_IN_TIME])
+        default: return {}
+    }
+}
 
 const POSITIONS = ['first', 'last']
 
-// The alerts are the output; a layer may instead show the first or last radar observation they were detected in,
-// which has not yet been declared and is answered here: the point-in-time Radar Mosaic Earth Engine builds around
-// that date, named by its shared schema.
+// The alerts are the output; a layer may instead show the radar observation at the first or last date of the
+// monitoring period.
 export const mapProducts = {
     defaults: {visualizationType: 'alerts', previouslyConfirmed: 'exclude', minConfidence: 'high'},
     productOf: ({visualizationType}) => {
@@ -29,11 +35,9 @@ export const mapProducts = {
             return {name: IMAGE_OUTPUT}
         }
         return POSITIONS.includes(visualizationType)
-            ? {name: 'RADAR_OBSERVATION', parameters: {position: visualizationType}}
+            ? {name: RADAR_OBSERVATION, parameters: {position: visualizationType}}
             : null
-    },
-    bands: (_recipe, {name}) =>
-        name === 'RADAR_OBSERVATION' ? radarBandTable(RADAR_MOSAIC_BANDS[POINT_IN_TIME]) : undefined
+    }
 }
 
 // The groups Retrieve offers the alert bands in.

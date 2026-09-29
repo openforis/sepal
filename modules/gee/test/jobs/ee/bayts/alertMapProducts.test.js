@@ -11,7 +11,7 @@ const WITNESS = join(dirname(fileURLToPath(import.meta.url)), 'alertMapProducts.
 const CASE_TIMEOUT_MS = 15000
 const CHILD_TIMEOUT_MS = 60000
 
-it('reports the delegate\'s bands for BAYTS radar map modes', () => {
+it('shows the radar mosaic BAYTS radar map modes build, masked as execution masks it', () => {
     const {status, signal, error, stdout, stderr} = spawnSync(
         process.execPath,
         [

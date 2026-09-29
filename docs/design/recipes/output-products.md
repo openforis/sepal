@@ -960,7 +960,7 @@ matches execution. The execution comparison is a research gate below.
 | --- | --- | --- | --- | --- |
 | Asset | selected Earth Engine image | asset source presets | copied `assetDetails`, runtime metadata | observed; scalar, array or mixed |
 | Band Math | configured input and calculated bands under configured names | rewritten input presets | shared declaration from configuration; dimensionality observed from its running image | observed; scalar, array or mixed |
-| BAYTS Alerts | alert result | first/last radar map products | shared declaration; radar views by reused Radar helpers | scalar |
+| BAYTS Alerts | alert result | first/last radar observation map product, delegating to Radar Mosaic | shared declaration | scalar |
 | BAYTS Historical | orbit-selected historical metrics | `BAYTS_HISTORICAL_STATS` | shared declaration from its orbits | scalar |
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |

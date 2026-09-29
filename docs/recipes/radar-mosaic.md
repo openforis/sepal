@@ -31,9 +31,9 @@ the order selected. Execution computes harmonics only for the polarisations a se
 asked for nothing computes none. Bands used to construct the output - `angle`, `quality`, `unixTimeDays` and the
 per-image harmonic terms - are not declared, and an explicit producer request for one still builds.
 
-The GUI sets cursor precision and ranges and groups the bands for Retrieve. That is presentation only. BAYTS' first
-and last radar observations and Change Alerts' radar mosaics take their names from this declaration while their own
-products are undeclared. A Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are
+The GUI sets cursor precision and ranges and groups the bands for Retrieve. That is presentation only. BAYTS' radar
+observation is a declared product delegating to this declaration; Change Alerts' radar mosaics take their names from it
+while their own product is undeclared. A Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are
 a separate contract (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 
 ## Open issues
