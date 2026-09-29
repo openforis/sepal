@@ -3,27 +3,31 @@
 // Schema. Its catalogue answers the configured output names, in configured order, however it is asked. Its running
 // image holds exactly those bands when asked for nothing and for an empty selection, and a subset out of order comes
 // back in the order asked. Described through the shared resolver from an observation of that running image, it is
-// READY with every verified scalar averaged. The Earth Engine operations Band Math applies decide dimensionality: a
-// cast keeps an array an array, an expression over an array yields one, and reducers either refuse arrays, keep them
-// or count them. Two output bands named alike are refused by the declaration before anything is observed, while Earth
-// Engine itself would build them with the second renamed; a recipe with no output bands describes none, while Earth
-// Engine refuses to build it.
+// READY with every verified scalar averaged. Over a CCDC recipe's array bands - an expression over its coefficients
+// cast to float, and its segment starts passed through - the observed output keeps both arrays, each sampled. The
+// Earth Engine operations Band Math applies, checked on their own as supporting evidence, decide that
+// dimensionality: a cast keeps an array an array, an expression over an array yields one, and reducers either refuse
+// arrays, keep them or count them. Two output bands named alike are refused by the declaration before anything is
+// observed, while Earth Engine itself would build them with the second renamed; a recipe with no output bands
+// describes none, while Earth Engine refuses to build it.
 //
 // Pixels. One value is compared: a doubled elevation, cast to int16, at a point.
 //
-// Any unexpected error fails the run. Read-only: the recipes are held in memory over public assets, nothing is saved
-// and no asset is written. Authenticates with the service account:
+// Any unexpected error fails the run. Read-only: the recipes are held in memory over public assets and read through a
+// RecipeScope of this run's own, nothing is saved and no asset is written; over CCDC only band types are evaluated.
+// Authenticates with the service account:
 //
 //   docker exec -w /usr/local/src/sepal/modules/gee gee node verify/bandMathOutputBands.mjs
 
 import _ from 'lodash'
-import {firstValueFrom, switchMap, timeout} from 'rxjs'
+import {firstValueFrom, of, switchMap, timeout} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import {imageBandEvidence$, typedBands} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
+import {RecipeScope, withRecipeScope} from '#sepal/ee/recipeScope'
 import {readImageOutput} from '#sepal/recipe/output/readImageOutput'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -71,6 +75,43 @@ const DUPLICATED = bandMath([
 ])
 
 const EMPTY = bandMath([])
+
+// Segments over a small area and two years, whose coefficients are one array per segment of one value per term.
+const CCDC = {
+    id: 'ccdc-verify',
+    type: 'CCDC',
+    model: {
+        aoi: {type: 'POLYGON', path: [[-60.10, -3.18], [-60.10, -3.04], [-60.00, -3.04], [-60.00, -3.18]]},
+        dates: {startDate: '2020-01-01', endDate: '2022-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 75, breakpointBands: ['ndvi']},
+        options: {corrections: [], cloudDetection: ['QA'], cloudMasking: 'MODERATE'},
+        ccdcOptions: {dateFormat: 1, minObservations: 4, chiSquareProbability: 0.9, minNumOfYearsScaler: 1.33, lambda: 20, maxIterations: 10000}
+    }
+}
+
+const OVER_ARRAYS = {
+    id: 'band-math-arrays-verify',
+    type: 'BAND_MATH',
+    model: {
+        inputImagery: {images: [
+            {imageId: 'i-3', name: 'i3', type: 'RECIPE_REF', id: CCDC.id,
+                includedBands: [{id: 's1', name: 'ndvi_coefs'}, {id: 's2', name: 'tStart'}]}
+        ]},
+        calculations: {calculations: [
+            {imageId: 'c-4', name: 'c4', type: 'EXPRESSION', expression: 'i3.ndvi_coefs * 2', dataType: 'float',
+                includedBands: [{id: 's1', name: 'ndvi_coefs'}]}
+        ]},
+        outputBands: {outputImages: [
+            {imageId: 'c-4', outputBands: [{id: 's1', name: 'ndvi_coefs', defaultOutputName: 'coefs2'}]},
+            {imageId: 'i-3', outputBands: [{id: 's2', name: 'tStart', defaultOutputName: 'tStart'}]}
+        ]}
+    }
+}
+
+const inScope = fn => {
+    const scope = new RecipeScope(id => of({[CCDC.id]: CCDC}[id]))
+    return withRecipeScope(scope, fn).finally(() => scope.close())
+}
 
 const callbackPromise = fn =>
     new Promise((resolve, reject) => fn((result, error) => error ? reject(new Error(error)) : resolve(result)))
@@ -127,8 +168,8 @@ const expectRefusal = async (name, recipe, reason) => {
 }
 
 // The description the shared resolver gives from what observing the running image establishes.
-const describedFrom = (recipe, observed) => readImageOutput({
-    graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([[recipe.id, recipe]])}),
+const describedFrom = (recipe, observed, records = []) => readImageOutput({
+    graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([recipe, ...records].map(record => [record.id, record]))}),
     declarationFor: ({type}) => recipeType(type)?.imageOutput,
     observationFor: ({type, id}) => type === 'RECIPE_REF' && id === recipe.id && observed
         ? {bands: observed.map(({name, arrayDimensions}) => ({name, dataType: {arrayDimensions}}))}
@@ -149,6 +190,23 @@ const expectDescribed = async name => {
         report(false, name, {ms: Date.now() - start, error: error.message})
     }
 }
+
+const expectDescribedArrays = name => inScope(async () => {
+    const start = Date.now()
+    try {
+        const observed = await firstValueFrom(imageBandEvidence$(OVER_ARRAYS).pipe(timeout(READ_TIMEOUT_MS)))
+        const {status, description} = describedFrom(OVER_ARRAYS, observed, [CCDC])
+        const expected = [
+            {name: 'coefs2', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'},
+            {name: 'tStart', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}
+        ]
+        report(status === 'READY' && _.isEqual(description.output.bands, expected), name, {
+            ms: Date.now() - start, observed, bands: description?.output.bands
+        })
+    } catch (error) {
+        report(false, name, {ms: Date.now() - start, error: error.message})
+    }
+})
 
 const expectDimensions = async (name, image, expected) => {
     try {
@@ -184,6 +242,7 @@ const main = async () => {
     await expectBuilt('running image, empty selection', CONFIGURED, {selection: []}, configured)
     await expectBuilt('subset out of order', CONFIGURED, withOutputBands({selection: ['mean', 'dem2']}), ['mean', 'dem2'])
     await expectDescribed('described from its observed running image')
+    await expectDescribedArrays('over CCDC arrays: a cast expression and a passed-through band stay arrays, sampled')
 
     const array = ee.Image([1, 2, 3]).toArray().rename('a')
     const scalar = ee.Image(5).rename('s')

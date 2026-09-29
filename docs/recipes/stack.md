@@ -30,15 +30,14 @@ dimensionality gets no policy it was not given, and an encoding its input does n
 | an input whose type declares no output | the legacy entry's mapped names, exporting no policy |
 | a mapped band its input's description does not hold | refused, `MISSING_INPUT_BAND` |
 
-Asked for no bands or an empty selection, Earth Engine builds every mapped band; a selection returns the bands
-selected, in model order, and ignores a name the mapping does not give. The catalogue answers the mapped names
-without building anything.
+Each input is asked for its mapped bands as the physical bands it should return (`withOutputBands`), so an input
+whose own selection means something else - CCDC's names the measures to fit - still returns those bands. Asked for no
+bands or an empty selection, Earth Engine builds every mapped band; a selection returns the bands selected, in model
+order, and ignores a name the mapping does not give. The catalogue answers the mapped names without building
+anything.
 
 ## Open issues
 
-- **An input whose selection means something else is read wrongly.** Stack asks each input for its mapped bands as a
-  bare `selection`, which CCDC reads as the measures to fit, so a Stack over CCDC's bands fails. See
-  [Band Math](band-math.md#open-issues), which reads its inputs the same way.
 - **A selection can leave nothing to clip to.** An input none of whose bands is selected contributes an empty image,
   whose empty geometry becomes the clip region when every other selected input is unbounded - a global asset - and
   Earth Engine refuses it. A selection naming no mapped band fails the same way.
@@ -50,11 +49,13 @@ without building anything.
 ## Verification
 
 - `modules/gee/verify/stackOutputBands.mjs` - on live Earth Engine: the catalogue, the running image asked for nothing,
-  an empty selection and a selection, the description from its assets' band evidence, one asset stacked twice, and a
+  an empty selection and a selection, the description from its assets' band evidence, one asset stacked twice, CCDC's
+  coefficients and segment starts renamed beside an asset, built and described with the same dimensions, and a
   repeated name, an unheld band and an unmapped input as the declaration and Earth Engine each answer them, and one
   pixel value.
 - `lib/js/shared/test/recipe/output/type/stack.test.js` - the declaration's outcomes.
 - `modules/gee/test/jobs/ee/stack/stackBands.test.js` - the catalogue, whatever is selected.
+- `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/stack/stackOutput.test.js` - Retrieve's policies and destinations,
   Masking over Stack, and a Stack over an input that declares no output.
 - `modules/task/src/tasks/imageAssetExport.test.js` - encoding recorded under renamed names, and exports over an

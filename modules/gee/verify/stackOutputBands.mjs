@@ -4,25 +4,29 @@
 // running image holds exactly those bands when asked for nothing and for an empty selection; a selection comes back in
 // model order. Described through the shared resolver from its assets' own band evidence, each output band takes its
 // input band's dimensionality, and a verified scalar its asset states no policy for is averaged. One asset stacked
-// twice is described and built under the distinct names its mapping gives. A mapping the declaration refuses before
+// twice is described and built under the distinct names its mapping gives. Over a CCDC recipe beside an asset, the
+// coefficients and segment starts it maps are built under their new names as the arrays they are described as, each
+// sampled, beside an averaged scalar. A mapping the declaration refuses before
 // reading anything is shown beside what Earth Engine does with it: two output bands named alike are built with the
 // second renamed, a band the input does not hold is refused, and an input with no mapping is named when built.
 //
 // Pixels. One value is compared: a renamed elevation against its source at a point.
 //
-// Any unexpected error fails the run. Read-only: the recipes are held in memory over public assets, nothing is saved
-// and no asset is written. Authenticates with the service account:
+// Any unexpected error fails the run. Read-only: the recipes are held in memory over public assets and read through a
+// RecipeScope of this run's own, nothing is saved and no asset is written; over CCDC only band types are evaluated.
+// Authenticates with the service account:
 //
 //   docker exec -w /usr/local/src/sepal/modules/gee gee node verify/stackOutputBands.mjs
 
 import _ from 'lodash'
-import {firstValueFrom, forkJoin, switchMap, timeout} from 'rxjs'
+import {firstValueFrom, forkJoin, of, switchMap, timeout} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import {assetBandEvidence$, typedBands} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
+import {RecipeScope, withRecipeScope} from '#sepal/ee/recipeScope'
 import {readImageOutput} from '#sepal/recipe/output/readImageOutput'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -68,6 +72,29 @@ const MISSING_BAND = stack(TWO_ASSETS, [
 ])
 
 const UNMAPPED = stack(TWO_ASSETS, [mapping('s-1', [['elevation', 'dem']])])
+
+// Segments over a small area and two years, whose coefficients are one array per segment of one value per term.
+const CCDC = {
+    id: 'ccdc-verify',
+    type: 'CCDC',
+    model: {
+        aoi: {type: 'POLYGON', path: [[-60.10, -3.18], [-60.10, -3.04], [-60.00, -3.04], [-60.00, -3.18]]},
+        dates: {startDate: '2020-01-01', endDate: '2022-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 75, breakpointBands: ['ndvi']},
+        options: {corrections: [], cloudDetection: ['QA'], cloudMasking: 'MODERATE'},
+        ccdcOptions: {dateFormat: 1, minObservations: 4, chiSquareProbability: 0.9, minNumOfYearsScaler: 1.33, lambda: 20, maxIterations: 10000}
+    }
+}
+
+const OVER_CCDC = stack([{imageId: 's-4', type: 'RECIPE_REF', id: CCDC.id}, {imageId: 's-1', ...DEM}], [
+    mapping('s-4', [['ndvi_coefs', 'coefs'], ['tStart', 'start']]),
+    mapping('s-1', [['elevation', 'dem']])
+])
+
+const inScope = fn => {
+    const scope = new RecipeScope(id => of({[CCDC.id]: CCDC}[id]))
+    return withRecipeScope(scope, fn).finally(() => scope.close())
+}
 
 const callbackPromise = fn =>
     new Promise((resolve, reject) => fn((result, error) => error ? reject(new Error(error)) : resolve(result)))
@@ -130,8 +157,12 @@ const assetEvidence = async recipe => {
     return Object.fromEntries(ids.map((id, index) => [id, bands[index]]))
 }
 
-const describedFrom = (recipe, evidence = {}) => readImageOutput({
-    graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([[recipe.id, recipe]])}),
+// A CCDC input is observed as the observation lifecycle reads it: by the names it can be asked for.
+const describedFrom = (recipe, evidence = {}, ccdcBands) => readImageOutput({
+    graph: buildRecipeDependencyGraph({
+        rootRecipe: recipe,
+        recipesById: new Map([recipe, ...(ccdcBands ? [CCDC] : [])].map(record => [record.id, record]))
+    }),
     declarationFor: ({type}) => recipeType(type)?.imageOutput,
     observationFor: ({type, id}) => type === 'ASSET' && evidence[id]
         ? {
@@ -142,7 +173,9 @@ const describedFrom = (recipe, evidence = {}) => readImageOutput({
             })),
             evidence: []
         }
-        : undefined
+        : type === 'RECIPE_REF' && id === CCDC.id && ccdcBands
+            ? {bands: ccdcBands.map(name => ({name}))}
+            : undefined
 })
 
 const expectDescribed = async (name, recipe) => {
@@ -172,6 +205,32 @@ const expectDeclarationRefuses = async (name, recipe, code, {readsInputs}) => {
         report(false, name, {error: error.message})
     }
 }
+
+const expectOverCcdc = name => inScope(async () => {
+    const start = Date.now()
+    try {
+        const typed = await built(OVER_CCDC)
+        const {status, description} = describedFrom(
+            OVER_CCDC,
+            await assetEvidence(stack([{imageId: 's-1', ...DEM}], [])),
+            await firstValueFrom(ImageFactory(CCDC).getBands$())
+        )
+        const expected = [
+            {name: 'coefs', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'},
+            {name: 'start', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'},
+            {name: 'dem', dataType: {arrayDimensions: 0}, pyramidingPolicy: 'mean'}
+        ]
+        report(
+            status === 'READY'
+                && _.isEqual(description.output.bands, expected)
+                && _.isEqual(typed, expected.map(({name, dataType: {arrayDimensions}}) => ({name, arrayDimensions}))),
+            name,
+            {ms: Date.now() - start, built: typed, status, described: description?.output.bands}
+        )
+    } catch (error) {
+        report(false, name, {ms: Date.now() - start, error: error.message})
+    }
+})
 
 const expectPixel = async name => {
     try {
@@ -204,6 +263,7 @@ const main = async () => {
 
     await expectDescribed('one asset stacked twice, described', REPEATED)
     await expectBuilt('one asset stacked twice, built', REPEATED, undefined, ['elevation', 'elevation_1'])
+    await expectOverCcdc('over CCDC arrays beside an asset: renamed, built and described alike')
 
     await expectDeclarationRefuses('two output bands named alike are refused before reading', DUPLICATED, 'DUPLICATE_BAND_NAME', {readsInputs: false})
     await expectBuilt('two output bands named alike, as Earth Engine builds them', DUPLICATED, undefined, ['x', 'x_1', 'extent'])

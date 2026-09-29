@@ -37,16 +37,13 @@ for a band passed through from an input.
 | running image not yet observed, or its observation failed | nothing offered: needs evidence, or unavailable |
 | running image carrying other names, or another order | refused, `CONFLICTING_OBSERVATION` |
 
-Asked for no bands or an empty selection, Earth Engine builds every configured output band; a selection returns
-exactly the bands selected, in the order selected. The catalogue answers the configured names without building
-anything.
+Each input is asked for the bands it includes as the physical bands it should return (`withOutputBands`), so an
+input whose own selection means something else - CCDC's names the measures to fit - still returns those bands. Asked
+for no bands or an empty selection, Earth Engine builds every configured output band; a selection returns exactly
+the bands selected, in the order selected. The catalogue answers the configured names without building anything.
 
 ## Open issues
 
-- **An input whose selection means something else is read wrongly.** Band Math asks each input for its included bands
-  as a bare `selection`. CCDC reads a selection as the measures to fit, so Band Math over CCDC's `ndvi_coefs` fails;
-  asked with `outputBands` beside the selection (`withOutputBands`), as exports ask, CCDC builds those bands. Stack
-  reads its inputs the same way.
 - **A recipe with no output bands cannot run.** Execution selects `.*` from an empty image, which Earth Engine refuses.
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.
@@ -60,10 +57,12 @@ anything.
 ## Verification
 
 - `modules/gee/verify/bandMathOutputBands.mjs` - on live Earth Engine: the catalogue, the running image asked for
-  nothing, an empty selection and a subset out of order, the description from an observed running image, the
-  dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
+  nothing, an empty selection and a subset out of order, the description from an observed running image, an
+  expression cast over CCDC's coefficients and its segment starts passed through, observed as arrays and sampled,
+  the dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
   declaration and Earth Engine each answer them, and one pixel value.
 - `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes.
 - `modules/gee/test/jobs/ee/bandMath/bandMathBands.test.js` - the catalogue, whatever is selected.
+- `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathOutput.test.js` - the common read, Retrieve's
   policies and destinations, and Masking over Band Math.
