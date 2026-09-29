@@ -143,7 +143,17 @@ where a family still needs observation.
      image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics take their bands
      from this declaration while that product remains undeclared. The Planet choices temporal recipes offer are a
      separate presentation vocabulary, unchanged, and a Planet collection's measures remain CCDC's;
-   - BAYTS Historical and Time Series; collection-internal bands wait for
+   - BAYTS Historical is next, with two separately reviewable changes in order: physical-output projection, then
+     the declaration. The projection must honor a nonempty `outputBands` exactly, in request order; otherwise it
+     selects the complete public output. Unknown requested names or missing requested speckle bands then fail rather
+     than silently returning a different schema. A subset not requiring a missing band may still succeed. Bare
+     producer `selection` retains its existing semantics. The declaration will use stored orbit order and, per orbit,
+     `VV_mean`, `VV_std`, `VH_mean`, `VH_std`, `orbit`, `VV_speckle`, `VH_speckle`, with `_asc` or `_desc` suffixes:
+     all scalar, `mode` for orbit numbers, `mean` for the rest, no encoding. Missing, empty, malformed or unknown orbit
+     choices are refused, as are duplicates; neither is silently normalized. Both orbit bands use integer cursor
+     precision. The existing all-band, Earth Engine-only Retrieve and historical-statistics capability remain.
+     This migration does not correct wrong-pass pixels; the immediately following packet below does;
+   - Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition);
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
      the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
@@ -186,6 +196,23 @@ because they appear in that image. Each family states its default-selection beha
 explicit requests. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands
 independently of the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band
 presentation, not a migration state.
+
+#### Priority correction after BAYTS Historical
+
+Correct BAYTS Historical's orbit override immediately after its declaration migration, before moving on to Time
+Series. The producer puts the override in top-level `options`, while Radar Mosaic reads `model.options`. Live audit
+probes showed both-pass histories assigning ascending statistics to descending bands, and a descending-only region
+assigning descending statistics to ascending bands. BAYTS Alerts can then mask monitoring observations against the
+wrong relative orbit. Suffixes currently do not establish pass-specific pixels.
+
+Keep this a separate execution packet: correcting the override can change historical pixels and subsequent alerts;
+existing exported assets are not rewritten. Decide the no-imagery-pass behavior before implementation: explicit
+failure versus the requested pass's bands present but fully masked. Do not silently omit a pass's bands under the
+fixed output contract. Include empty speckle-statistics behavior in that decision; the preceding output projection
+only turns missing requested bands into refusals and does not repair their calculation. Preserve `historicalStatsSource`
+and `BAYTS_HISTORICAL_STATS` as separate capability contracts. Verify combined-pass results against freshly computed
+single-pass results, with usable samples and coverage of absent passes and multitemporal speckle filtering. Label the
+pre-fix wrong-pass reproduction as a defect witness, not correctness evidence.
 
 #### Contract reviews before the remaining migrations
 
