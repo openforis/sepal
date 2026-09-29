@@ -15,6 +15,14 @@ const DEFAULT_ENDPOINT = 'shiny' // GUI default (api/apps.js requestSession$/wai
 const toClientStatus = workerStatus =>
     workerStatus === 'ACTIVE' ? 'STARTED' : 'STARTING'
 
+const errorBody = async response => {
+    try {
+        return JSON.parse(await response.text())
+    } catch {
+        return null
+    }
+}
+
 const isEndpoint = endpoint =>
     Object.prototype.hasOwnProperty.call(PORT_BY_ENDPOINT, endpoint)
 
@@ -166,6 +174,8 @@ const createSandboxSessionManager = ({
         if (!response.ok) {
             const error = new Error(`worker ${method} ${path} → ${response.status}`)
             error.statusCode = response.status
+            // What the worker said about it: a launch AWS refused carries a code the GUI explains.
+            error.body = await errorBody(response)
             throw error
         }
         const text = await response.text()

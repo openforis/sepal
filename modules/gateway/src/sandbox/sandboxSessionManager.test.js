@@ -686,6 +686,18 @@ describe('releaseApp', () => {
         expect(manager._cache.get('bob')).toBeUndefined()
     })
 
+    // The worker's classified launch failure travels with the error, for the start route to pass on.
+    it('carries what the worker said about a failed launch', async () => {
+        const fetch = jest.fn(async () => ({
+            ok: false,
+            status: 503,
+            text: async () => JSON.stringify({code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'})
+        }))
+        const manager = createManager({fetch})
+        await expect(manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo'}))
+            .rejects.toMatchObject({statusCode: 503, body: {code: 'INSTANCE_UNAVAILABLE'}})
+    })
+
     it('propagates a non-404 worker error and keeps the cache entry', async () => {
         const fetch = jest.fn(async () => errorResponse(500))
         const manager = createManager({fetch})

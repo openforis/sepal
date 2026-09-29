@@ -35,9 +35,15 @@ const sandboxStartRoute = sandboxSessionManager => {
                 {username, endpoint, appPath, appLabel, sessionId, instanceType, clientId, reassert})
             res.json(result)
         } catch (error) {
-            const statusCode = error.statusCode && error.statusCode < 500 ? error.statusCode : 500
+            // A launch AWS refused (no capacity, type not offered, account quota) keeps the worker's
+            // 503 and code, so the GUI can say why instead of reporting a generic failure.
+            const launchFailure = error.statusCode === 503 && error.body?.code
+            const statusCode = launchFailure || (error.statusCode && error.statusCode < 500) ? error.statusCode : 500
             log.error(`Failed to start sandbox session for ${username} (${endpoint}, ${appPath ?? 'no app'})`, error)
-            res.status(statusCode).json({error: 'Failed to start sandbox session'})
+            res.status(statusCode).json({
+                error: 'Failed to start sandbox session',
+                ...launchFailure ? {code: error.body.code} : {}
+            })
         }
     }
 

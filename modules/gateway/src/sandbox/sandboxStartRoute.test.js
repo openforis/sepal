@@ -73,6 +73,26 @@ describe('sandboxStartRoute', () => {
         expect(res.statusCode).toBe(500)
     })
 
+    test('a launch AWS refused keeps the worker\'s 503 and code', async () => {
+        const error = Object.assign(new Error('worker POST → 503'), {statusCode: 503, body: {code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'}})
+        const mgr = {startApp: jest.fn().mockRejectedValue(error)}
+        const {handler} = sandboxStartRoute(mgr)
+        const res = mockRes()
+        await handler(reqWithUser('POST', {endpoint: 'rstudio'}), res)
+        expect(res.statusCode).toBe(503)
+        expect(res.body).toEqual({error: 'Failed to start sandbox session', code: 'INSTANCE_UNAVAILABLE'})
+    })
+
+    test('an unclassified worker 503 stays a plain 500', async () => {
+        const error = Object.assign(new Error('worker POST → 503'), {statusCode: 503, body: null})
+        const mgr = {startApp: jest.fn().mockRejectedValue(error)}
+        const {handler} = sandboxStartRoute(mgr)
+        const res = mockRes()
+        await handler(reqWithUser('POST', {endpoint: 'rstudio'}), res)
+        expect(res.statusCode).toBe(500)
+        expect(res.body).toEqual({error: 'Failed to start sandbox session'})
+    })
+
     test('POST forwards appPath/appLabel/sessionId/instanceType to startApp', async () => {
         const mgr = {startApp: jest.fn().mockResolvedValue({id: 's-1', status: 'STARTING'})}
         const {handler} = sandboxStartRoute(mgr)
