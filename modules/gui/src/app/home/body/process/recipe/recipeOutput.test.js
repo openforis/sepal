@@ -21,8 +21,8 @@ vi.mock('../recipeTypeRegistry', async () => {
                 blue: {dataType: {precision: 'int', min: -10000, max: 10000}, tooltip: 'Blue'}
             })
         },
-        BAYTS_HISTORICAL: {
-            getAvailableBands: () => ({class: {dataType: {precision: 'int'}, label: 'Class'}})
+        TIME_SERIES: {
+            getAvailableBands: () => ({count: {dataType: {precision: 'int'}, label: 'Count'}})
         },
         MASKING: {
             getAvailableBands: () => registered.maskingEvidence === 'UNAVAILABLE'
@@ -97,18 +97,18 @@ describe('an answer from the session alone', () => {
 
 describe('a legacy answer', () => {
     it('passes an undeclared type\'s helper through as names, its data type as display only', () => {
-        const recipe = baytsHistorical()
+        const recipe = timeSeries()
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe])})
 
-        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', bands: [{name: 'class'}], acquisition: null})
-        expect(read.availableBands).toEqual({class: {label: 'Class', display: {precision: 'int'}}})
+        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', bands: [{name: 'count'}], acquisition: null})
+        expect(read.availableBands).toEqual({count: {label: 'Count', display: {precision: 'int'}}})
     })
 
     it('answers a declared wrapper over an undeclared source from the wrapper\'s own helper', () => {
-        const recipe = masking({primary: 'bayts-historical-1'})
+        const recipe = masking({primary: 'time-series-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, baytsHistorical()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, timeSeries()])})
 
         expect(read).toMatchObject({status: 'READY', authority: 'LEGACY'})
         expect(read.availableBands).toEqual({class: {dataType: {arrayDimensions: 0}}})
@@ -116,9 +116,9 @@ describe('a legacy answer', () => {
 
     it('is never taken from evidence that could not be had', () => {
         registered.maskingEvidence = 'UNAVAILABLE'
-        const recipe = masking({primary: 'bayts-historical-1'})
+        const recipe = masking({primary: 'time-series-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, baytsHistorical()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, timeSeries()])})
         registered.maskingEvidence = 'OBSERVED'
 
         expect(read).toMatchObject({status: 'UNAVAILABLE', authority: null, bands: [], acquisition: null})
@@ -129,7 +129,7 @@ describe('a map product', () => {
     it('is named from the layer config, and an unknown value is no product at all', () => {
         expect(layerProduct(ccdc(), {visualizationType: 'COUNT'})).toEqual({name: 'COUNT'})
         expect(layerProduct(ccdc(), {visualizationType: 'SEGMENTS'})).toBeNull()
-        expect(layerProduct(baytsHistorical(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
+        expect(layerProduct(timeSeries(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
     })
 
     // A layer whose form has not yet written its defaults shows the same product it will show once it has, and
@@ -274,7 +274,7 @@ describe('a retained description', () => {
 describe('whether a retained terminal is about the records held now', () => {
     it('holds while every record it read that the session also holds is unchanged', () => {
         const recipe = masking({primary: 'mosaic-1'})
-        const basis = [recipe, mosaic(), baytsHistorical()].map(record => ({id: record.id, content: recipeContent(record)}))
+        const basis = [recipe, mosaic(), timeSeries()].map(record => ({id: record.id, content: recipeContent(record)}))
 
         expect(compatibleBasis(basis, graphOf([{...recipe, title: 'Renamed', revision: 9}, mosaic()]))).toBe(true)
     })
@@ -310,7 +310,7 @@ const masking = ({primary, mask}) => ({
     }
 })
 
-const baytsHistorical = () => ({id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}})
+const timeSeries = () => ({id: 'time-series-1', type: 'TIME_SERIES', model: {}})
 
 const ccdc = (model = {}) => ({id: 'ccdc-1', type: 'CCDC', model})
 

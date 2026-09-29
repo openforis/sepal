@@ -17,9 +17,9 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, Band Math, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change,
-LandTrendr, Masking, Optical Mosaic, Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack
-and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+Only Asset, Band Math, BAYTS Alerts, BAYTS Historical, CCDC, CCDC Slice, Change Alerts, Class Change, Classification,
+Index Change, LandTrendr, Masking, Optical Mosaic, Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression,
+Remapping, Stack and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -143,16 +143,19 @@ where a family still needs observation.
      image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics take their bands
      from this declaration while that product remains undeclared. The Planet choices temporal recipes offer are a
      separate presentation vocabulary, unchanged, and a Planet collection's measures remain CCDC's;
-   - BAYTS Historical is next, with two separately reviewable changes in order: physical-output projection, then
-     the declaration. The projection must honor a nonempty `outputBands` exactly, in request order; otherwise it
-     selects the complete public output. Unknown requested names or missing requested speckle bands then fail rather
-     than silently returning a different schema. A subset not requiring a missing band may still succeed. Bare
-     producer `selection` retains its existing semantics. The declaration will use stored orbit order and, per orbit,
-     `VV_mean`, `VV_std`, `VH_mean`, `VH_std`, `orbit`, `VV_speckle`, `VH_speckle`, with `_asc` or `_desc` suffixes:
-     all scalar, `mode` for orbit numbers, `mean` for the rest, no encoding. Missing, empty, malformed or unknown orbit
-     choices are refused, as are duplicates; neither is silently normalized. Both orbit bands use integer cursor
-     precision. The existing all-band, Earth Engine-only Retrieve and historical-statistics capability remain.
-     This migration does not correct wrong-pass pixels; the immediately following packet below does;
+   - BAYTS Historical has migrated ([BAYTS Historical](../../recipes/bayts-historical.md)), in two separately
+     reviewable changes. Its producer first honours physical-output requests: a nonempty `outputBands` gets exactly
+     those names, in request order, and any other request the complete declared output; a bare `selection` keeps
+     its existing meaning, which requests no bands here. An unknown name, or speckle statistics a pass without imagery
+     never supplied, then fails the request instead of returning a different schema, while a subset needing none of
+     them still runs. Its shared type then declares, in stored orbit order and per orbit, `VV_mean`, `VV_std`,
+     `VH_mean`, `VH_std`, `orbit`, `VV_speckle` and `VH_speckle` with `_asc` or `_desc` suffixes - the order execution
+     builds - all scalar, `mode` for the orbit numbers and `mean` for the rest, with no encoding, so new exports,
+     Masking's and Stack's included, change at coarser pyramid levels only for orbits. Missing, empty, malformed or
+     unknown orbit choices and repeated passes are refused before anything is read, never normalized. Both orbit
+     bands show as whole numbers. Its Earth Engine catalogue answers the declaration without building anything.
+     Retrieve still exports all bands to Earth Engine only, and `historicalStatsSource` remains the separate
+     capability BAYTS Alerts reads. Wrong-pass pixels are not corrected; the packet below does that;
    - Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition);
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
@@ -199,7 +202,7 @@ presentation, not a migration state.
 
 #### Priority correction after BAYTS Historical
 
-Correct BAYTS Historical's orbit override immediately after its declaration migration, before moving on to Time
+Correct BAYTS Historical's orbit override next, now that its declaration has migrated, before moving on to Time
 Series. The producer puts the override in top-level `options`, while Radar Mosaic reads `model.options`. Live audit
 probes showed both-pass histories assigning ascending statistics to descending bands, and a descending-only region
 assigning descending statistics to ascending bands. BAYTS Alerts can then mask monitoring observations against the

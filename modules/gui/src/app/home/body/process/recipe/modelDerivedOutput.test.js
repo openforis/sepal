@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr, BAYTS Alerts, Change Alerts, Radar Mosaic and Planet Mosaic through their real registrations, shared
-// declarations, the common read and the generic Retrieve submission. Only the task API and notifications are replaced.
+// Alerts, LandTrendr, BAYTS Historical, BAYTS Alerts, Change Alerts, Radar Mosaic and Planet Mosaic through their real
+// registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
+// notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -33,6 +34,7 @@ const {default: remapping} = await import('./remapping/remapping')
 const {default: phenology} = await import('./phenology/phenology')
 const {default: pyeoAlerts} = await import('./pyeoAlerts/pyeoAlerts')
 const {default: landTrendr} = await import('./landTrendr/landTrendr')
+const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
 const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
 const {default: radarMosaic} = await import('./radarMosaic/radarMosaic')
@@ -46,6 +48,7 @@ const {retrieveTask: remappingTask} = await import('./remapping/remappingRecipe'
 const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe')
 const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {retrieveTask: landTrendrTask} = await import('./landTrendr/landTrendrRecipe')
+const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {retrieveTask: radarMosaicTask} = await import('./radarMosaic/radarMosaicRecipe')
 const {retrieveTask: planetMosaicTask} = await import('./planetMosaic/planetMosaicRecipe')
 const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
@@ -70,6 +73,7 @@ addRecipeType(remapping())
 addRecipeType(phenology())
 addRecipeType(pyeoAlerts())
 addRecipeType(landTrendr())
+addRecipeType(baytsHistorical())
 addRecipeType(baytsAlerts())
 addRecipeType(changeAlerts())
 addRecipeType(radarMosaic())
@@ -499,6 +503,17 @@ describe('a BAYTS alerts recipe', () => {
         expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
     })
 
+    // Its alerts do not depend on the historical recipe's bands, which BAYTS Alerts reads by name when it runs.
+    it('is described with the same alerts over a historical recipe the session holds', () => {
+        const historical = baytsHistoricalOf({id: 'bayts-historical-1'})
+        const alerts = baytsAlertsOf({reference: {type: 'RECIPE_REF', id: historical.id}})
+
+        const {output} = readAll([alerts, historical])
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
+    })
+
     it('is presented with whole flags and orbits, fractional probabilities and dates, and offers its alert styles', () => {
         const recipe = baytsAlertsOf()
         const {output} = read(recipe)
@@ -695,6 +710,58 @@ describe('a Change Alerts recipe', () => {
         const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(['red', 'green', 'blue'])
         expect(renderableVisualizations(styles, output.availableBands)).toContainEqual(expect.objectContaining({bands: ['kndvi'], min: [0], max: [10000]}))
+    })
+})
+
+describe('a BAYTS Historical', () => {
+    it('is described with each pass\'s statistics in the order its model stores the passes, while the recipe its AOI comes from is not even loaded', () => {
+        const {output} = read(baytsHistoricalOf({orbits: ['DESCENDING', 'ASCENDING'], aoi: {type: 'RECIPE', id: 'aoi-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual([...historicalPass('desc'), ...historicalPass('asc')])
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with whole orbits for both passes, and offers the styles of the passes it has', () => {
+        const recipe = baytsHistoricalOf({orbits: ['ASCENDING']})
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual(Object.fromEntries(historicalPass('asc').map(name =>
+            [name, {precision: name.startsWith('orbit_') ? 'int' : 'float'}])))
+        expect(displayTypes(read(baytsHistoricalOf({orbits: ['DESCENDING']})).output).orbit_desc).toEqual({precision: 'int'})
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands))
+            .toEqual([['VV_mean_asc', 'VH_mean_asc', 'VV_std_asc']])
+    })
+
+    it('exports all its bands in the order execution builds them, keeping the most common orbit', () => {
+        retrieve(read(baytsHistoricalOf({orbits: ['DESCENDING', 'ASCENDING']})), 'GEE', baytsHistoricalTask)
+
+        const [{params: {image}}] = submitted
+        expect(image.bands.selection).toEqual([...historicalPass('desc'), ...historicalPass('asc')])
+        expect(image.pyramidingPolicy).toEqual(Object.fromEntries(image.bands.selection.map(name =>
+            [name, name.startsWith('orbit_') ? 'mode' : 'mean'])))
+    })
+
+    it('can be neither previewed nor exported with orbits that name no bands', () => {
+        const answer = read(baytsHistoricalOf({orbits: ['ASCENDING', 'ASCENDING']}))
+
+        retrieve(answer, 'GEE', baytsHistoricalTask)
+
+        expect(answer.output).toMatchObject({status: 'INVALID', bands: []})
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
+    })
+
+    // Reading itself as its own AOI: its bands are still known, and none of them may be run.
+    it('is neither previewed nor exported over dependencies known to be broken', () => {
+        const answer = read(baytsHistoricalOf({aoi: {type: 'RECIPE', id: ID}}))
+
+        retrieve(answer, 'GEE', baytsHistoricalTask)
+
+        expect(answer.output.bands).not.toHaveLength(0)
+        expect(answer.output.dependencyValidity.status).toBe('INVALID')
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
     })
 })
 
@@ -1035,6 +1102,21 @@ const radarMosaicOf = ({dates = TIME_SCAN_DATES, aoi = AOI} = {}) => ({
     model: {aoi, dates, options: {orbits: ['ASCENDING', 'DESCENDING']}}
 })
 
+const historicalPass = suffix => ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle']
+    .map(statistic => `${statistic}_${suffix}`)
+
+// An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
+const baytsHistoricalOf = ({id = ID, orbits = ['ASCENDING', 'DESCENDING'], aoi = AOI} = {}) => ({
+    id,
+    type: 'BAYTS_HISTORICAL',
+    title: 'Historical',
+    model: {
+        aoi,
+        dates: {fromDate: '2023-01-01', toDate: '2024-01-01'},
+        options: {orbits, spatialSpeckleFilter: 'LEE', multitemporalSpeckleFilter: 'NONE'}
+    }
+})
+
 const PLANET_BANDS = ['blue', 'green', 'red', 'nir', 'ndvi', 'ndwi', 'evi', 'evi2', 'savi', 'kndvi']
 
 // An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
@@ -1066,6 +1148,13 @@ const landTrendrOf = ({classification} = {}) => ({
 // The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
 const read = recipe => readRetrieveOutput({
     state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
+    recipeId: recipe.id,
+    heldFor: () => null
+})
+
+// The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained.
+const readAll = ([recipe, ...others]) => readRetrieveOutput({
+    state: {process: {loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
     recipeId: recipe.id,
     heldFor: () => null
 })

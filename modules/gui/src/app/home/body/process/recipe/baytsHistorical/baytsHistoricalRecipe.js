@@ -1,7 +1,5 @@
 import moment from 'moment'
 
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
@@ -27,23 +25,6 @@ export const defaultModel = {
         minAngle: 30.88,
         maxAngle: 45.35,
         minObservations: 20,
-    }
-}
-
-export const RecipeActions = id => {
-    const actionBuilder = recipeActionBuilder(id)
-
-    const setAll = (name, values, otherProps) =>
-        actionBuilder(name, otherProps)
-            .setAll(values)
-            .build()
-
-    return {
-        setBands(bands) {
-            return setAll('SET_BANDS', {
-                'ui.bands.selection': bands
-            }, {bands})
-        },
     }
 }
 

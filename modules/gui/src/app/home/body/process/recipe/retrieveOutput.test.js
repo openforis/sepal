@@ -28,12 +28,11 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
-const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
+const {default: timeSeries} = await import('./timeSeries/timeSeries')
+const {getAvailableBands: timeSeriesBands} = await import('./timeSeries/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(baytsHistorical())
+addRecipeType(timeSeries())
 
 beforeEach(() => {
     submitted.length = 0
@@ -42,21 +41,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies with no policy, leaving Earth Engine\'s own default to apply', () => {
-        retrieve(read([BAYTS_HISTORICAL]), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
+        retrieve(read([TIME_SERIES]), {destination: 'GEE', bands: ['count']})
 
-        expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['VV_mean_asc']}])
+        expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['count']}])
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([BAYTS_HISTORICAL])
+        const {recipe, output, pending} = read([TIME_SERIES])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['VV_mean_asc'], destination: 'DRIVE', task: baytsHistoricalTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['count'], destination: 'DRIVE'}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
-    it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([BAYTS_HISTORICAL]), {destination: 'GEE', bands: ['VV_mean_asc', 'VV_mean_desc']}, baytsHistoricalTask)
+    it('names a saved band it does not supply, and exports nothing', () => {
+        retrieve(read([TIME_SERIES]), {destination: 'GEE', bands: ['count', 'observations']})
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -65,9 +64,9 @@ describe('a recipe type declaring no output', () => {
 
 describe('"all bands" of a recipe type declaring no output', () => {
     it('exports every band the type supplies', () => {
-        retrieve(read([BAYTS_HISTORICAL]), {destination: 'GEE', useAllBands: true}, baytsHistoricalTask)
+        retrieve(read([TIME_SERIES]), {destination: 'GEE', useAllBands: true})
 
-        expect(submitted[0].params.image.bands.selection).toEqual(Object.keys(baytsHistoricalBands(BAYTS_HISTORICAL)))
+        expect(submitted[0].params.image.bands.selection).toEqual(Object.keys(timeSeriesBands(TIME_SERIES)))
     })
 })
 
@@ -77,7 +76,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('is still being resolved until its dependencies are completed', () => {
         const {recipe, output, pending} = read([OVER_UNLOADED_AOI])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['VV_mean_asc'], destination: 'GEE', task: baytsHistoricalTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['count'], destination: 'GEE'}).status)
             .toBe('RESOLVING')
     })
 
@@ -85,7 +84,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([OVER_UNLOADED_AOI], terminal), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
+        retrieve(read([OVER_UNLOADED_AOI], terminal), {destination: 'GEE', bands: ['count']})
 
         expect(submitted).toEqual([])
     })
@@ -93,26 +92,23 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([OVER_UNLOADED_AOI], completed), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
+        retrieve(read([OVER_UNLOADED_AOI], completed), {destination: 'GEE', bands: ['count']})
 
         expect(submitted).toHaveLength(1)
     })
 })
 
-// Ascending orbits only, so it supplies no descending band.
-const BAYTS_HISTORICAL = {
-    id: 'bayts-historical-1',
-    type: 'BAYTS_HISTORICAL',
-    title: 'Historical',
-    model: {
-        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        options: {orbits: ['ASCENDING']}
-    }
+// A type with no Retrieve panel of its own, so nothing here names a task; its legacy entry supplies `count`.
+const TIME_SERIES = {
+    id: 'time-series-1',
+    type: 'TIME_SERIES',
+    title: 'Observations',
+    model: {dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}
 }
 
 const OVER_UNLOADED_AOI = {
-    ...BAYTS_HISTORICAL,
-    model: {...BAYTS_HISTORICAL.model, aoi: {type: 'RECIPE', id: 'aoi-recipe-1'}}
+    ...TIME_SERIES,
+    model: {...TIME_SERIES.model, aoi: {type: 'RECIPE', id: 'aoi-recipe-1'}}
 }
 
 // The read a panel would make of the first recipe, with the others loaded beside it, retaining `held` if given.

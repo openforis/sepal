@@ -693,7 +693,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers what its source was observed to hold, and exports a scalar band under the fallback', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
+        await open({recipes: [MASKED_TIME_SERIES, TIME_SERIES], id: MASKED_TIME_SERIES.id})
         await click('class')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -706,7 +706,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('exports no band observed as an array, for which it has no policy', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
+        await open({recipes: [MASKED_TIME_SERIES, TIME_SERIES], id: MASKED_TIME_SERIES.id})
         await click('probability')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -717,7 +717,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers nothing until its source has been observed', async () => {
         answering()
 
-        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
+        await open({recipes: [MASKED_TIME_SERIES, TIME_SERIES], id: MASKED_TIME_SERIES.id})
 
         expect(offers('class')).toBe(false)
     })
@@ -728,17 +728,17 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
 // pairing it with the session as it now stands must not authorize an export.
 describe('evidence observed of a source before it changed', () => {
     const SCALAR = [{name: 'class', arrayDimensions: 0}]
-    const savedDrive = {...MASKED_BAYTS_HISTORICAL, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+    const savedDrive = {...MASKED_TIME_SERIES, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
 
     const openObserved = async () => {
         observed.answer = () => SCALAR
-        await open({recipes: [savedDrive, BAYTS_HISTORICAL], id: savedDrive.id})
+        await open({recipes: [savedDrive, TIME_SERIES], id: savedDrive.id})
         expect(offers('class')).toBe(true)
     }
 
     it.each([
-        ['its source is edited, keeping its id', () => editRecipe(BAYTS_HISTORICAL.id, {
-            model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}
+        ['its source is edited, keeping its id', () => editRecipe(TIME_SERIES.id, {
+            model: {...TIME_SERIES.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}
         })],
         ['the credentials it was read under are replaced', () => replaceCredentials()]
     ])('authorizes nothing once %s, until the source is observed again', async (_case, change) => {
@@ -759,8 +759,8 @@ describe('evidence observed of a source before it changed', () => {
     // A click can land after the session changed and before the lifecycle has rendered that change, so whether the
     // evidence is still current is decided when Apply is clicked, not when the lifecycle next reacts.
     it.each([
-        ['its source is edited, keeping its id', () => editAction(BAYTS_HISTORICAL.id, {
-            model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}
+        ['its source is edited, keeping its id', () => editAction(TIME_SERIES.id, {
+            model: {...TIME_SERIES.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}
         })],
         ['the credentials it was read under are replaced', () => credentialsAction()]
     ])('authorizes nothing when applied as %s, before the lifecycle has reacted', async (_case, change) => {
@@ -780,7 +780,7 @@ describe('evidence observed of a source before it changed', () => {
         await openObserved()
         const answer = answering()
 
-        await editRecipe(BAYTS_HISTORICAL.id, {model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}})
+        await editRecipe(TIME_SERIES.id, {model: {...TIME_SERIES.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}})
         await answer.arrive([{name: 'class', arrayDimensions: 1}])
         await click('process.retrieve.apply')
 
@@ -852,19 +852,19 @@ const MASKED_ASSET = {
 }
 
 // A recipe type that declares no output, over nothing, and a Masking over it.
-const BAYTS_HISTORICAL = {
-    id: 'bayts-historical-1',
-    type: 'BAYTS_HISTORICAL',
-    model: {options: {orbits: ['ASCENDING', 'DESCENDING']}}
+const TIME_SERIES = {
+    id: 'time-series-1',
+    type: 'TIME_SERIES',
+    model: {dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}
 }
 
-const MASKED_BAYTS_HISTORICAL = {
-    id: 'masked-bayts-historical-1',
+const MASKED_TIME_SERIES = {
+    id: 'masked-time-series-1',
     type: 'MASKING',
-    title: 'Masked historical statistics',
+    title: 'Masked observation counts',
     model: {
-        imageToMask: {type: 'RECIPE_REF', id: BAYTS_HISTORICAL.id},
-        imageMask: {type: 'RECIPE_REF', id: BAYTS_HISTORICAL.id}
+        imageToMask: {type: 'RECIPE_REF', id: TIME_SERIES.id},
+        imageMask: {type: 'RECIPE_REF', id: TIME_SERIES.id}
     },
     ui: {}
 }

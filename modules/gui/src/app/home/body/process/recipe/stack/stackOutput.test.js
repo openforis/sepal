@@ -74,7 +74,7 @@ describe('a Stack over an input that declares no output', () => {
         retrieve(OVER_UNDECLARED, stackTask, 'GEE')
 
         expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
-        expect(output.bands.map(({name}) => name)).toEqual(['vv'])
+        expect(output.bands.map(({name}) => name)).toEqual(['observations'])
         expect(submitted).toHaveLength(1)
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
@@ -96,7 +96,7 @@ const ASSET_BANDS = {
     [SEGMENTS.id]: [{name: 'coefs', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'}]
 }
 
-const HISTORICAL = {id: 'historical-1', type: 'BAYTS_HISTORICAL', model: {options: {orbits: ['ASCENDING']}}}
+const TIME_SERIES = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
 
 const stackOf = (id, images, bandNames) => ({id, type: 'STACK', title: 'Stacked', model: {inputImagery: {images}, bandNames: {bandNames}}})
 
@@ -118,16 +118,16 @@ const MASKING = {
 }
 
 const OVER_UNDECLARED = stackOf('stack-2',
-    [{imageId: 'i-1', type: 'RECIPE_REF', id: HISTORICAL.id}],
-    [mapping('i-1', [['VV_mean_asc', 'vv']])]
+    [{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}],
+    [mapping('i-1', [['count', 'observations']])]
 )
 
 const DUPLICATED_OVER_UNDECLARED = stackOf('stack-3',
-    [{imageId: 'i-1', type: 'RECIPE_REF', id: HISTORICAL.id}, {imageId: 'i-2', ...DEM}],
-    [mapping('i-1', [['VV_mean_asc', 'x']]), mapping('i-2', [['elevation', 'x']])]
+    [{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}, {imageId: 'i-2', ...DEM}],
+    [mapping('i-1', [['count', 'x']]), mapping('i-2', [['elevation', 'x']])]
 )
 
-const RECORDS = Object.fromEntries([OVER_ASSETS, MASKING, OVER_UNDECLARED, DUPLICATED_OVER_UNDECLARED, HISTORICAL]
+const RECORDS = Object.fromEntries([OVER_ASSETS, MASKING, OVER_UNDECLARED, DUPLICATED_OVER_UNDECLARED, TIME_SERIES]
     .map(record => [record.id, record]))
 
 // A recipe's read as the session holds it, with what its acquisition would retain once the assets it stacks are

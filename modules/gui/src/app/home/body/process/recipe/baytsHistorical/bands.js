@@ -1,35 +1,18 @@
-import _ from 'lodash'
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {baytsHistoricalBandNames, baytsHistoricalRefusals} from '#sepal/recipe/type/baytsHistorical'
 
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
 
-export const getAvailableBands = recipe => {
-    const orbitBandPostfixes = {
-        ASCENDING: 'asc',
-        DESCENDING: 'desc',
-    }
-    const orbits = recipe.model.options.orbits
-    const bandNames = orbits
-        .map(orbit => Object.keys(bands)
-            .filter(band => band.endsWith(`_${orbitBandPostfixes[orbit]}`))
-        )
-        .flat()
-    return _.pick(bands, bandNames)
-}
+// The bands its orbits name, or none where the declaration refuses them.
+export const declaredBandNames = recipe =>
+    baytsHistoricalRefusals(recipe.model).length ? [] : baytsHistoricalBandNames(recipe.model)
 
-const bands = {
-    VV_mean_asc: {dataType: typeFloat},
-    VV_std_asc: {dataType: typeFloat},
-    VV_speckle_asc: {dataType: typeFloat},
-    VH_mean_asc: {dataType: typeFloat},
-    VH_std_asc: {dataType: typeFloat},
-    VH_speckle_asc: {dataType: typeFloat},
-    orbit_asc: {dataType: typeFloat},
-    VV_mean_desc: {dataType: typeFloat},
-    VV_std_desc: {dataType: typeFloat},
-    VV_speckle_desc: {dataType: typeFloat},
-    VH_mean_desc: {dataType: typeFloat},
-    VH_std_desc: {dataType: typeFloat},
-    VH_speckle_desc: {dataType: typeFloat},
-    orbit_desc: {dataType: typeInt},
-}
+// How a band is shown; which bands exist is the declaration's to say. An orbit is a relative orbit number.
+const presentation = name =>
+    ({dataType: name.startsWith('orbit_') ? typeInt : typeFloat})
+
+export const bandPresentation = (recipe, {name} = {}) =>
+    name === IMAGE_OUTPUT
+        ? Object.fromEntries(declaredBandNames(recipe).map(band => [band, presentation(band)]))
+        : {}
