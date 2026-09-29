@@ -2,10 +2,12 @@ import {useState} from 'react'
 import {useLocation} from 'react-router'
 
 import {LanguageSelector} from '~/app/landing/languageSelector'
+import {ThemeSelector} from '~/app/landing/themeSelector'
 import {useSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser, loadUser$} from '~/user'
 import {Button} from '~/widget/button'
+import {Layout} from '~/widget/layout'
 
 import {Credentials} from './credentials'
 import {Feature} from './feature'
@@ -35,7 +37,10 @@ export const Landing = () => {
             <Tagline className={styles.tagline}/>
             <Title className={styles.title}/>
             <div className={styles.language}>
-                <LanguageSelector/>
+                <Layout type='vertical' spacing='tight' alignment='right'>
+                    <ThemeSelector/>
+                    <LanguageSelector/>
+                </Layout>
             </div>
             <div className={styles.features}>
                 <Feature name='process' icon='globe'/>

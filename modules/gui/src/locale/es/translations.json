@@ -5508,5 +5508,12 @@
       "newTab": "Nueva_pestaña"
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "system": "Sistema",
+    "systemTooltip": "Seguir la configuración del sistema operativo"
+  }
 }

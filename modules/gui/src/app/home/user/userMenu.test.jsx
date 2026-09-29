@@ -14,7 +14,9 @@ vi.mock('~/widget/buttonSelect', () => ({
             <div className='label'>{label}</div>
             {options.map(({key, value, group, label, icon, iconType, disabled, onSelect}) =>
                 group
-                    ? <hr key={key} className='option separator'/>
+                    ? label
+                        ? <div key={key} className='option group'>{label}</div>
+                        : <hr key={key} className='option separator'/>
                     : <button key={value} className='option' data-icon={icon} data-icon-type={iconType} disabled={disabled}
                         onClick={() => onSelect()}>{label}</button>
             )}
@@ -23,6 +25,7 @@ vi.mock('~/widget/buttonSelect', () => ({
 
 import {of} from 'rxjs'
 
+import {themeManager} from '~/theme'
 import {setLanguage, TranslationProvider} from '~/translate'
 import {logout$} from '~/user'
 
@@ -51,14 +54,19 @@ describe('the user menu', () => {
         return container
     }
 
-    beforeEach(() => mounted = [])
+    beforeEach(() => {
+        mounted = []
+        themeManager.setPreference('dark')
+    })
     afterEach(() => mounted.forEach(unmount => unmount()))
 
-    it('is labelled with the username and offers user details, password, Google account and SSH keys, then logout', () => {
+    it('is labelled with the username and offers user details, password, Google account, SSH keys and theme, then logout', () => {
         const container = render()
 
         expect(container.querySelector('.label').textContent).toBe('alice')
-        expect(optionLabels(container)).toEqual(['User details', 'Password', 'Google account', 'SSH keys', '—', 'Logout'])
+        expect(optionLabels(container)).toEqual([
+            'User details', 'Password', 'Google account', 'SSH keys', 'Theme', 'Dark', 'Light', 'System', '—', 'Logout'
+        ])
     })
 
     it('logs the user out from its last entry', () => {
@@ -80,6 +88,10 @@ describe('the user menu', () => {
             ['Password', 'key', undefined],
             ['Google account', 'google', 'brands'],
             ['SSH keys', 'terminal', undefined],
+            ['Theme', undefined, undefined],
+            ['Dark', 'circle-dot', 'regular'],
+            ['Light', 'circle', 'regular'],
+            ['System', 'circle', 'regular'],
             ['—', undefined, undefined],
             ['Logout', 'sign-out-alt', undefined]
         ])
@@ -120,6 +132,26 @@ describe('the user menu', () => {
         const select = render({hint: true}).querySelector('.select')
 
         expect(select.dataset.hint).toBe('true')
+    })
+
+    describe('theme', () => {
+        it('marks the active theme', () => {
+            themeManager.setPreference('system')
+            const container = render()
+
+            expect(option(container, 'System').dataset.icon).toBe('circle-dot')
+            expect(option(container, 'Dark').dataset.icon).toBe('circle')
+        })
+
+        it('switches the theme and marks the new choice', () => {
+            const container = render()
+
+            act(() => option(container, 'Light').click())
+
+            expect(themeManager.preference).toBe('light')
+            expect(option(container, 'Light').dataset.icon).toBe('circle-dot')
+            expect(option(container, 'Dark').dataset.icon).toBe('circle')
+        })
     })
 })
 

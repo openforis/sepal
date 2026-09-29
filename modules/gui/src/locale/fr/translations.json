@@ -5508,5 +5508,12 @@
       "newTab": "Nouvel_onglet"
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "Thème",
+    "dark": "Sombre",
+    "light": "Clair",
+    "system": "Système",
+    "systemTooltip": "Suivre le réglage du système d'exploitation"
+  }
 }
