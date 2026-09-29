@@ -18,8 +18,8 @@ on that basis.
 ### Output-declaration migration
 
 Only Asset, Band Math, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change,
-LandTrendr, Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping and Unsupervised
-Classification declare an `IMAGE_OUTPUT` provider.
+LandTrendr, Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack and
+Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -47,8 +47,8 @@ unfiltered mosaics or aggregate geometry. Encoding comes from the asset's own me
 compositing are unchanged, so collection-wide geometry can still make ASSET_BOUNDS drawing, preview and export
 expensive. See [band discovery without image construction](output-products.md#band-discovery-without-image-construction).
 
-Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic and Stack, whose band readers
-construct their output, and the generic typed `/bands` path, which bypasses cheaper
+Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, whose band reader constructs
+its output, and the generic typed `/bands` path, which bypasses cheaper
 catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
 Known schemas belong in declarations and referenced schemas in provider reads; extend bounded acquisition only
 where a family still needs observation.
@@ -135,8 +135,17 @@ where a family still needs observation.
      Alerts' radar mosaics take their names from this schema while their products remain undeclared;
    - Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition);
-   - Stack, through the existing `inputs()` access for name-based selection and renaming. Review the correspondence
-     between output and input bands before implementation; its capability preservation still waits for
+   - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
+     the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
+     band takes that input band's dimensionality, pyramiding policy and encoding under its new name, from the input's
+     current description rather than the snapshot copied at selection; a verified scalar its input states no policy
+     for is averaged, while an array or a band of unknown dimensionality gets no policy it was not given. A mapping
+     is checked before any input is read: an image without one, a blank name or a final name already taken is
+     refused, and a band the input does not hold is refused once it is read. Over an input that declares no output,
+     Stack is answered by its legacy entry, derived from the same mapping and sending no policy, until every type
+     declares one. Its Earth Engine catalogue answers the mapped names without building the image. New exports
+     therefore sample arrays, take their sources' policies - `mode` for a classification - and record their
+     encoding, and Masking over Stack exports those policies; capability preservation still waits for
      [capability projection](output-products.md#transformation-effects-and-capability-projection);
    - Band Math has migrated ([Band Math](../../recipes/band-math.md)). Its declaration names its configured output
      bands in configured order under their final names, and refuses two alike before anything is read. Its running
@@ -163,12 +172,9 @@ presentation, not a migration state.
 
 #### Contract reviews before the remaining migrations
 
-Review Stack's band correspondence before implementing its migration. These reviews can proceed alongside other
-independent family migrations; they must not wait until only the difficult families remain.
+These reviews can proceed alongside independent family migrations; they must not wait until only the difficult
+families remain.
 
-- **Stack:** establish which input band each selected or renamed output corresponds to. That relationship is the
-  basis for later presentation and capability inheritance; copied source snapshots are not its authority. This
-  review does not bring forward the deferred shared picker or capability-projection implementation.
 - **Map products needing more than configuration:** extend provider access, acquisition identity and retained-answer
   validation together when a product actually needs referenced records or observations. Today's configuration-only
   products can reuse dependency-validity acquisitions across parameter changes; do not carry that assumption into

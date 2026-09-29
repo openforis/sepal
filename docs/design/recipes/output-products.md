@@ -971,7 +971,7 @@ matches execution. The execution comparison is a research gate below.
 | Regression | regression image | none identified | shared declaration | scalar |
 | Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
 | Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
-| Stack | selected and renamed input bands | mapped source presets | copied input snapshots and output mapping | inherited composition; may be mixed |
+| Stack | selected and renamed input bands | mapped source presets | shared declaration from its mapping over its inputs' current descriptions | inherited composition; may be mixed |
 | Time Series | no generic image export established | scalar count map product and chart series | fixed count plus collection helpers | count scalar |
 | Unsupervised Classification | cluster class image | cluster value semantics | shared declaration; model-derived range as presentation | scalar |
 
@@ -1097,8 +1097,8 @@ The comparison also found useful stable declarations rather than only defects:
 - Regression and Unsupervised Classification each have one fixed scalar output band.
 - PyEO Alerts has one fixed change-report vocabulary, which is the band list its algorithm assembles.
 - Masking's EE `getBands$()` delegates to the primary image exactly as the shared preserving transformation states.
-- Stack's execution selects and renames by the persisted name mapping in input order. Its physical types must be
-  inherited from the selected source bands rather than recovered from output names.
+- Stack's execution selects and renames by the persisted name mapping in input order, and its declaration takes
+  each output band's physical facts from the input band it is mapped from.
 - Band Math's output names come from its configuration. An explicit cast sets only a band's element type, never
   whether it is an array, so dimensionality is observed for every output band.
 

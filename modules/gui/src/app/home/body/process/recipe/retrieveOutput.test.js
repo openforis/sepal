@@ -28,14 +28,11 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: stack} = await import('./stack/stack')
 const {default: baytsHistorical} = await import('./baytsHistorical/baytsHistorical')
-const {retrieveTask: stackTask} = await import('./stack/stackRecipe')
 const {retrieveTask: baytsHistoricalTask} = await import('./baytsHistorical/baytsHistoricalRecipe')
 const {getAvailableBands: baytsHistoricalBands} = await import('./baytsHistorical/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(stack())
 addRecipeType(baytsHistorical())
 
 beforeEach(() => {
@@ -45,21 +42,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies with no policy, leaving Earth Engine\'s own default to apply', () => {
-        retrieve(read([STACK, SOURCE]), {destination: 'GEE', bands: ['red_1']}, stackTask)
+        retrieve(read([BAYTS_HISTORICAL]), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
 
-        expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['red_1']}])
+        expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['VV_mean_asc']}])
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([STACK, SOURCE])
+        const {recipe, output, pending} = read([BAYTS_HISTORICAL])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['red_1'], destination: 'DRIVE', task: stackTask}))
+        expect(retrieveDecision({recipe, output, pending, names: ['VV_mean_asc'], destination: 'DRIVE', task: baytsHistoricalTask}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it no longer supplies, and exports nothing', () => {
-        retrieve(read([STACK, SOURCE]), {destination: 'GEE', bands: ['red_1', 'nir_1']}, stackTask)
+        retrieve(read([BAYTS_HISTORICAL]), {destination: 'GEE', bands: ['VV_mean_asc', 'VV_mean_desc']}, baytsHistoricalTask)
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -74,13 +71,13 @@ describe('"all bands" of a recipe type declaring no output', () => {
     })
 })
 
-// The session has not loaded the image the stack is built from, so whether its dependencies are sound is what the
-// panel's acquisition completes.
+// The session has not loaded the recipe the area of interest is taken from, so whether its dependencies are sound is
+// what the panel's acquisition completes.
 describe('a recipe type declaring no output, over a dependency the session has not loaded', () => {
     it('is still being resolved until its dependencies are completed', () => {
-        const {recipe, output, pending} = read([STACK])
+        const {recipe, output, pending} = read([OVER_UNLOADED_AOI])
 
-        expect(retrieveDecision({recipe, output, pending, names: ['red_1'], destination: 'GEE', task: stackTask}).status)
+        expect(retrieveDecision({recipe, output, pending, names: ['VV_mean_asc'], destination: 'GEE', task: baytsHistoricalTask}).status)
             .toBe('RESOLVING')
     })
 
@@ -88,7 +85,7 @@ describe('a recipe type declaring no output, over a dependency the session has n
         ['found unsound', {status: 'COMPLETE', error: null, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}],
         ['not completed', {status: 'UNAVAILABLE', error: new Error('Unreachable'), dependencyValidity: null}]
     ])('exports nothing once they are %s', (_case, terminal) => {
-        retrieve(read([STACK], terminal), {destination: 'GEE', bands: ['red_1']}, stackTask)
+        retrieve(read([OVER_UNLOADED_AOI], terminal), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
 
         expect(submitted).toEqual([])
     })
@@ -96,31 +93,13 @@ describe('a recipe type declaring no output, over a dependency the session has n
     it('exports once they are known to be sound', () => {
         const completed = {status: 'COMPLETE', error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 
-        retrieve(read([STACK], completed), {destination: 'GEE', bands: ['red_1']}, stackTask)
+        retrieve(read([OVER_UNLOADED_AOI], completed), {destination: 'GEE', bands: ['VV_mean_asc']}, baytsHistoricalTask)
 
         expect(submitted).toHaveLength(1)
     })
 })
 
-const SOURCE = {
-    id: 'mosaic-1',
-    type: 'MOSAIC',
-    model: {
-        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100},
-        compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
-    }
-}
-
-const STACK = {
-    id: 'stack-1',
-    type: 'STACK',
-    title: 'Stack',
-    model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: SOURCE.id}]},
-        bandNames: {bandNames: [{imageId: 'image-1', bands: [{originalName: 'red', outputName: 'red_1'}]}]}
-    }
-}
-
+// Ascending orbits only, so it supplies no descending band.
 const BAYTS_HISTORICAL = {
     id: 'bayts-historical-1',
     type: 'BAYTS_HISTORICAL',
@@ -129,6 +108,11 @@ const BAYTS_HISTORICAL = {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
         options: {orbits: ['ASCENDING']}
     }
+}
+
+const OVER_UNLOADED_AOI = {
+    ...BAYTS_HISTORICAL,
+    model: {...BAYTS_HISTORICAL.model, aoi: {type: 'RECIPE', id: 'aoi-recipe-1'}}
 }
 
 // The read a panel would make of the first recipe, with the others loaded beside it, retaining `held` if given.

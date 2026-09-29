@@ -236,6 +236,50 @@ describe('exporting a Band Math recipe', () => {
     })
 })
 
+// A Stack's bands are its inputs' bands under the names its mapping gives them, so what is recorded for a band is keyed
+// by that name.
+describe('exporting a Stack', () => {
+    const stack = (images, bandNames) => ({id: 'stack-1', type: 'STACK', model: {inputImagery: {images}, bandNames: {bandNames}}})
+    const mapping = (imageId, pairs) => ({
+        imageId,
+        bands: pairs.map(([originalName, outputName], index) => ({id: `${imageId}-${index}`, originalName, outputName}))
+    })
+    const HISTORICAL = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}
+
+    it('records each band\'s encoding under the name it is renamed to', async () => {
+        const mosaic = landsatMosaic()
+        state.catalogue = {[mosaic.id]: mosaic}
+        const recipe = stack(
+            [{imageId: 'i-1', type: 'RECIPE_REF', id: mosaic.id}],
+            [mapping('i-1', [['red', 'r'], ['thermal', 'heat']])]
+        )
+
+        const {bandEncoding} = await submit({recipe, bands: ['r', 'heat']})
+
+        expect(bandEncoding).toEqual({r: REFLECTANCE, heat: THERMAL})
+    })
+
+    it('exports over an input that declares no output as before, stating that nothing is known about its values', async () => {
+        state.catalogue = {[HISTORICAL.id]: HISTORICAL}
+        const recipe = stack([{imageId: 'i-1', type: 'RECIPE_REF', id: HISTORICAL.id}], [mapping('i-1', [['VV_mean_asc', 'vv']])])
+
+        const {bandEncoding} = await submit({recipe, bands: ['vv']})
+
+        expect(bandEncoding).toEqual({})
+    })
+
+    it('fails the export for two output bands named alike, beside an input that declares no output', async () => {
+        state.catalogue = {[HISTORICAL.id]: HISTORICAL}
+        const recipe = stack(
+            [{imageId: 'i-1', type: 'RECIPE_REF', id: HISTORICAL.id}, {imageId: 'i-2', type: 'RECIPE_REF', id: HISTORICAL.id}],
+            [mapping('i-1', [['VV_mean_asc', 'x']]), mapping('i-2', [['VV_std_asc', 'x']])]
+        )
+
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
 describe('exporting a recipe type that declares no output', () => {
     it('exports as before, stating that nothing is known about its values', async () => {
         const recipe = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}

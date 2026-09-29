@@ -1,23 +1,6 @@
-import _ from 'lodash'
+import {stackOutputNames} from '#sepal/recipe/type/stack'
 
-export const getAvailableBands = recipe => {
-    const bands = {}
-    recipe.model.bandNames.bandNames
-        .map(({bands}) => bands
-            .map(({outputName}) => {
-                return outputName
-            })
-        )
-        .flat()
-        .forEach(band => bands[band] = {label: band})
-    return bands
-}
-
-export const getGroupedBandOptions = recipe => {
-    const availableBands = getAvailableBands(recipe)
-    return [
-        Object
-            .keys(availableBands)
-            .map(band => ({value: band, ...availableBands[band]}))
-    ]
-}
+// The legacy answer for a Stack over an input that declares no output, which the declaration cannot describe: the
+// names its mapping gives, in the order execution builds them. It goes once every recipe type declares its output.
+export const getAvailableBands = recipe =>
+    Object.fromEntries(stackOutputNames(recipe.model).map(name => [name, {label: name}]))
