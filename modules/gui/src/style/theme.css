@@ -349,7 +349,7 @@ html[data-theme=light] {
     /* text roles */
     --text-label-color: hsl(40, 5%, 36%);
     --text-label-hover-color: hsl(40, 10%, 12%);
-    --text-placeholder-color: hsl(40, 4%, 58%);
+    --text-placeholder-color: hsl(40, 4%, 52%);
     --text-disabled-color: hsl(40, 4%, 64%);
     --text-progress-color: hsl(40, 5%, 36%);
     --tab-text-color: hsl(210, 6%, 44%);

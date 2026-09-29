@@ -55,8 +55,9 @@ class _PreviewMap extends React.Component {
     createMap(element) {
         const {map} = this.state
         if (!map) {
-            const {mapsContext: {createSepalMap}} = this.props
+            const {mapsContext: {createSepalMap, followTheme}} = this.props
             const map = createSepalMap({element, options: PREVIEW_MAP_OPTIONS})
+            this.themeSubscription = followTheme(map.getGoogle().googleMap)
             this.setState({map})
         }
     }
@@ -68,6 +69,10 @@ class _PreviewMap extends React.Component {
         if (map && bounds && !_.isEqual(bounds, prevBounds)) {
             map.fitBounds(bounds)
         }
+    }
+
+    componentWillUnmount() {
+        this.themeSubscription?.unsubscribe()
     }
 }
 
