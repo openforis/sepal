@@ -13,7 +13,8 @@ import styles from './usageStatistics.module.css'
 export const USAGE_DAYS = 30
 
 // Resource usage per instance type over the last USAGE_DAYS days: the given user's (admin), or the
-// current user's own when no username is given.
+// current user's own when no username is given. Types go by their tag ("t1"), as everywhere else a
+// user picks one; a type without a tag by its name.
 class _UsageStatistics extends React.Component {
     state = {usage: null, failed: false}
 
@@ -58,7 +59,7 @@ class _UsageStatistics extends React.Component {
                     </tr>
                 </thead>
                 <tbody>
-                    {byInstanceType.map(row => this.renderRow(row.name, row, hasGpu))}
+                    {byInstanceType.map(row => this.renderRow(row.tag ?? row.name, row, hasGpu))}
                     {byInstanceType.length > 1
                         ? this.renderRow(msg('user.userDetails.form.usage.overall'), overall, hasGpu, styles.total)
                         : null}

@@ -23,6 +23,7 @@ const generateUserUsageReport = async (
     const byInstanceType = rows.map(row => ({
         instanceType: row.instanceType,
         name: instanceTypeById[row.instanceType]?.name ?? row.instanceType,
+        tag: instanceTypeById[row.instanceType]?.tag ?? null,
         ...asReportRow(row),
         cost: cost(row.hours, instanceTypeById[row.instanceType]?.hourlyCost),
     }))

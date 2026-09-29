@@ -30,8 +30,8 @@ const usage = {
     days: 30,
     overall: {hours: 12, cost: 3.2, cpu: metric(20, 90), ram: metric(40, 60), gpu: null, netBytesPerS: 1000},
     byInstanceType: [
-        {name: 't1', hours: 10, cost: 0.2, cpu: metric(12.4, 96), ram: metric(35, 50), gpu: null, netBytesPerS: 1000},
-        {name: 'm4', hours: 2, cost: null, cpu: metric(50, 80), ram: metric(60, 70), gpu: null, netBytesPerS: null}
+        {name: 't3a.small', tag: 't1', hours: 10, cost: 0.2, cpu: metric(12.4, 96), ram: metric(35, 50), gpu: null, netBytesPerS: 1000},
+        {name: 'm3.medium', tag: null, hours: 2, cost: null, cpu: metric(50, 80), ram: metric(60, 70), gpu: null, netBytesPerS: null}
     ]
 }
 
@@ -75,13 +75,14 @@ describe('the usage statistics', () => {
         expect(api.sessions.usage$).not.toHaveBeenCalled()
     })
 
+    // By tag, as the user picks a type everywhere else; an untagged type by its name.
     it('lists each instance type with its cost, then all instances together', () => {
         const rows = [...render().querySelectorAll('tbody tr')]
             .map(row => [...row.querySelectorAll('td')].map(({textContent}) => textContent))
 
         expect(rows).toEqual([
             ['t1', '10', '$0.20', '12% / 96%', '35% / 50%', '1.00 kB/s'],
-            ['m4', '2', '—', '50% / 80%', '60% / 70%', '—'],
+            ['m3.medium', '2', '—', '50% / 80%', '60% / 70%', '—'],
             ['All instances', '12', '$3.20', '20% / 90%', '40% / 60%', '1.00 kB/s']
         ])
     })
