@@ -1,26 +1,37 @@
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {
+    PLANET_MOSAIC_INDEXES,
+    PLANET_MOSAIC_SPECTRAL_BANDS,
+    planetMosaicBands
+} from '#sepal/recipe/type/planetMosaic'
+
 const int10000 = {precision: 'int', min: -10000, max: 10000}
 
-export const getAvailableBands = () => ({
-    blue: {dataType: int10000},
-    green: {dataType: int10000},
-    red: {dataType: int10000},
-    nir: {dataType: int10000},
-    ndvi: {dataType: int10000},
-    ndwi: {dataType: int10000},
-    evi: {dataType: int10000},
-    evi2: {dataType: int10000},
-    savi: {dataType: int10000},
-})
+// How a Planet band is shown; which bands exist is the declaration's to say.
+export const planetBandPresentation = () =>
+    ({dataType: int10000})
 
-export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
-    const availableBands = getAvailableBands(recipe, select)
-    return bandGroups
-        .map(bands => bands.filter(band => availableBands[band]))
-        .filter(bands => bands.length)
-        .map(bands => bands.map(band => ({value: band, label: band, ...availableBands[band]})))
-}
+// A table of the given declared bands, presented, for a product that shows a Planet mosaic and is not yet declared.
+export const planetBandTable = bands =>
+    Object.fromEntries(bands.map(({name}) => [name, planetBandPresentation()]))
 
-const bandGroups = [
+export const bandPresentation = (recipe, {name} = {}) =>
+    name === IMAGE_OUTPUT ? planetBandTable(planetMosaicBands(recipe.model)) : {}
+
+// The groups Retrieve offers the bands in.
+export const groupedBandPresentation = () =>
+    toOptions([PLANET_MOSAIC_SPECTRAL_BANDS, PLANET_MOSAIC_INDEXES])
+
+// The Planet bands temporal recipes offer as choices, and the presets CCDC offers over them. A choice list kept as it
+// always was, not the Planet collection's schema: the collection also computes kndvi, and PSB.SD-only Daily imagery
+// carries more bands, as shared CCDC declares its measures (lib/js/shared/src/recipe/type/ccdc.js).
+export const TEMPORAL_PLANET_BANDS = [
     ['blue', 'green', 'red', 'nir'],
     ['ndvi', 'ndwi', 'evi', 'evi2', 'savi']
 ]
+
+export const temporalPlanetBandOptions = () =>
+    toOptions(TEMPORAL_PLANET_BANDS)
+
+const toOptions = groups =>
+    groups.map(group => group.map(band => ({value: band, label: band, ...planetBandPresentation()})))

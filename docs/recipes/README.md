@@ -11,6 +11,7 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 - [Radar Mosaic](radar-mosaic.md)
 - [Band Math](band-math.md)
 - [Stack](stack.md)
+- [Planet Mosaic](planet-mosaic.md)
 
 Shared architecture, design proposals and the cross-recipe roadmap belong in
 [`docs/design/recipes/`](../design/recipes/data-sources.md). Recipe notes link to those contracts rather than

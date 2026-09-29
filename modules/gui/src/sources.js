@@ -2,7 +2,7 @@ import {RADAR_MEASURES} from '#sepal/recipe/radar/collectionMeasures'
 import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getAvailableBands as getAvailablePlanetBands, getGroupedBandOptions as getGroupedPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {TEMPORAL_PLANET_BANDS, temporalPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {toSources as toPlanetSources} from '~/app/home/body/process/recipe/planetMosaic/sources'
 import {
     getDataSetOptions as radarDataSetOptions,
@@ -53,9 +53,7 @@ export const getAvailableBands = ({
         ))
         : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
             ? RADAR_MEASURES
-            : Object.keys(getAvailablePlanetBands(
-                toPlanetRecipe(),
-                ['indexes', 'dataSetBands']))
+            : TEMPORAL_PLANET_BANDS.flat()
     const classificationBands = getClassificationBands(classifierType, classificationLegend, include)
     return [...dataSetBands, ...classificationBands]
 }
@@ -85,10 +83,7 @@ export const groupedBandOptions = ({
         groupedRadarMeasureOptions()
 
     const getPlanetOptions = () =>
-        getGroupedPlanetBandOptions(
-            toPlanetRecipe(),
-            ['indexes', 'dataSetBands']
-        )
+        temporalPlanetBandOptions()
 
     const classificationOptions =
         getClassificationOptions(classifierType, classificationLegend, include)
@@ -126,11 +121,6 @@ const toOpticalRecipe = ({dataSetIds, corrections}) =>
             corrections,
             compose: 'MEDIAN'
         }
-    }})
-
-const toPlanetRecipe = () =>
-    ({model: {
-        type: 'PLANET_MOSAIC'
     }})
 
 const getClassificationBands = (classifierType, classificationLegend, include) => classifierType && classificationLegend

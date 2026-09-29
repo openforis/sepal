@@ -236,6 +236,41 @@ describe('exporting a Band Math recipe', () => {
     })
 })
 
+describe('exporting a Planet Mosaic', () => {
+    const planet = ({source = 'BASEMAPS', histogramMatching = 'DISABLED'} = {}) => ({
+        id: 'planet-1',
+        type: 'PLANET_MOSAIC',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            dates: {fromDate: '2024-01-01', toDate: '2024-04-01'},
+            sources: {source, assets: ['users/x/planet']},
+            options: {histogramMatching}
+        }
+    })
+
+    it('records its indexes stored per ten thousand, and leaves its spectral bands\' scaling unknown', async () => {
+        const {bandEncoding} = await submit({recipe: planet(), bands: ['red', 'kndvi']})
+
+        expect(bandEncoding).toEqual({kndvi: REFLECTANCE})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('records histogram-matched Daily spectral bands stored per ten thousand too', async () => {
+        const {bandEncoding} = await submit({recipe: planet({source: 'DAILY', histogramMatching: 'ENABLED'}), bands: ['red', 'ndvi']})
+
+        expect(bandEncoding).toEqual({red: REFLECTANCE, ndvi: REFLECTANCE})
+    })
+
+    it('records the same through a Masking over it', async () => {
+        const matched = planet({source: 'DAILY', histogramMatching: 'ENABLED'})
+        state.catalogue = {[matched.id]: matched}
+
+        const {bandEncoding} = await submit({recipe: masking({primary: {type: 'RECIPE_REF', id: matched.id}}), bands: ['nir', 'evi']})
+
+        expect(bandEncoding).toEqual({nir: REFLECTANCE, evi: REFLECTANCE})
+    })
+})
+
 // A Stack's bands are its inputs' bands under the names its mapping gives them, so what is recorded for a band is keyed
 // by that name.
 describe('exporting a Stack', () => {

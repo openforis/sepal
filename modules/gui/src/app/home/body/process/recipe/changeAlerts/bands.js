@@ -2,9 +2,10 @@ import {hasMonitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {mosaicRecipe} from '#sepal/recipe/changeAlerts/mosaicRecipe'
 import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
 import {CHANGE_ALERT_BANDS} from '#sepal/recipe/type/changeAlerts'
+import {planetMosaicBands} from '#sepal/recipe/type/planetMosaic'
 import {radarMosaicBands} from '#sepal/recipe/type/radarMosaic'
 import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
-import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {planetBandTable} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
@@ -56,12 +57,12 @@ export const groupedBandPresentation = () => {
     ]
 }
 
-// Which helper describes a mosaic, keyed by the recipe type its projection names. A radar mosaic is named by its
-// shared declaration and presented by Radar Mosaic.
+// Which helper describes a mosaic, keyed by the recipe type its projection names. A radar or Planet mosaic is named by
+// its shared declaration and presented by its own recipe type.
 const MOSAIC_BANDS = {
     MOSAIC: opticalBands,
     RADAR_MOSAIC: mosaic => radarBandTable(radarMosaicBands(mosaic.model)),
-    PLANET_MOSAIC: planetBands
+    PLANET_MOSAIC: mosaic => planetBandTable(planetMosaicBands(mosaic.model))
 }
 
 // A mosaic mode draws the mosaic Earth Engine builds around the monitoring dates, so the bands offered are read from

@@ -972,7 +972,7 @@ matches execution. The execution comparison is a research gate below.
 | Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
 | Optical Mosaic | selected composite | internal optical collection | dataset/intersection/index/compose helpers | scalar |
 | Phenology | seasonality metrics and month composites | internal source collection | shared declaration | scalar |
-| Planet Mosaic | selected composite | internal Planet collection | fixed GUI vocabulary | scalar |
+| Planet Mosaic | selected composite | internal Planet collection | shared declaration from configuration | scalar |
 | PyEO Alerts | alert result | internal classified monitoring collection | shared declaration | scalar |
 | Radar Mosaic | point-in-time or time-scan composite | internal radar collection | shared declaration by configuration | scalar |
 | Regression | regression image | none identified | shared declaration | scalar |
@@ -1056,8 +1056,10 @@ temporal-composer contract is declared:
   this is corrected deliberately.
 - Empty and unknown legacy data-set selections fall through to Planet, while mixed Sentinel-1 and Landsat selections
   can be classified as Optical. That permissive classifier is not a safe extension boundary.
-- Planet Daily combines four-band and eight-band members. Its GUI vocabulary is fixed, but the underlying collection
-  is heterogeneous until a selection, filter or explicit missing-band policy establishes a homogeneous product.
+- Planet Daily combines four-band and eight-band members. Planet Mosaic declares the bands common to both, but the
+  underlying collection is heterogeneous until a selection, filter or explicit missing-band policy establishes a
+  homogeneous product. Its composite without histogram matching establishes none, so Earth Engine refuses mixed
+  members.
 - Optical common-band order follows the first selected data set and collection merge order follows input order.
   Neither order may be canonicalized away until execution consequences are understood.
 - CCDC proves that GUI `noImageOutput` and GUI `getAvailableBands()` are not output contracts: the former only

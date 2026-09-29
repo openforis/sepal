@@ -23,3 +23,23 @@ describe('the measures of a Sentinel-1 collection', () => {
         ])
     })
 })
+
+// What a temporal consumer offers over a Planet collection: the choices it has always offered, which Planet Mosaic's
+// kndvi does not extend.
+describe('the choices over a Planet collection', () => {
+    const int10000 = {precision: 'int', min: -10000, max: 10000}
+    const option = value => ({value, label: value, dataType: int10000})
+
+    it('are its spectral bands and five indexes', () => {
+        expect(getAvailableBands({dataSets: ['DAILY']}))
+            .toEqual(['blue', 'green', 'red', 'nir', 'ndvi', 'ndwi', 'evi', 'evi2', 'savi'])
+    })
+
+    it('are offered with the spectral bands before the indexes', () => {
+        expect(groupedBandOptions({dataSets: ['NICFI']})).toEqual([
+            ['blue', 'green', 'red', 'nir'].map(option),
+            ['ndvi', 'ndwi', 'evi', 'evi2', 'savi'].map(option),
+            []
+        ])
+    })
+})

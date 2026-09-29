@@ -18,8 +18,8 @@ on that basis.
 ### Output-declaration migration
 
 Only Asset, Band Math, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change,
-LandTrendr, Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack and
-Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+LandTrendr, Masking, Optical Mosaic, Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack
+and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -47,9 +47,8 @@ unfiltered mosaics or aggregate geometry. Encoding comes from the asset's own me
 compositing are unchanged, so collection-wide geometry can still make ASSET_BOUNDS drawing, preview and export
 expensive. See [band discovery without image construction](output-products.md#band-discovery-without-image-construction).
 
-Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, whose band reader constructs
-its output, and the generic typed `/bands` path, which bypasses cheaper
-catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
+Apply the same strategy as the remaining recipe families migrate. Audit the generic typed `/bands` path, which
+bypasses cheaper catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
 Known schemas belong in declarations and referenced schemas in provider reads; extend bounded acquisition only
 where a family still needs observation.
 
@@ -133,7 +132,18 @@ where a family still needs observation.
      build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
      consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observations and Change
      Alerts' radar mosaics take their names from this schema while their products remain undeclared;
-   - Planet Mosaic, BAYTS Historical and Time Series; collection-internal bands wait for
+   - Planet Mosaic has migrated ([Planet Mosaic](../../recipes/planet-mosaic.md)). Its shared type declares one
+     schema from the configuration alone, the same on every branch: `blue`, `green`, `red`, `nir`, then `ndvi`,
+     `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, all scalar and averaged. Indexes are encoded at ten thousand per unit,
+     as are the spectral bands of Daily with histogram matching, which maps them onto a reference at that scale; other
+     spectral bands keep their assets' unstated scaling. What Daily without matching builds beyond that for an empty
+     request - its working bands, and PSB.SD imagery's other bands - is not public, though explicit requests for them
+     still build, and a branch Earth Engine cannot run, such as that composite over four-band and eight-band imagery
+     together, describes the same bands. Its Earth Engine catalogue answers the declaration without building the
+     image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics take their bands
+     from this declaration while that product remains undeclared. The Planet choices temporal recipes offer are a
+     separate presentation vocabulary, unchanged, and a Planet collection's measures remain CCDC's;
+   - BAYTS Historical and Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition);
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
      the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output

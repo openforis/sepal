@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr, BAYTS Alerts, Change Alerts and Radar Mosaic through their real registrations, shared declarations,
-// the common read and the generic Retrieve submission. Only the task API and notifications are replaced.
+// Alerts, LandTrendr, BAYTS Alerts, Change Alerts, Radar Mosaic and Planet Mosaic through their real registrations, shared
+// declarations, the common read and the generic Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
@@ -36,6 +36,7 @@ const {default: landTrendr} = await import('./landTrendr/landTrendr')
 const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
 const {default: radarMosaic} = await import('./radarMosaic/radarMosaic')
+const {default: planetMosaic} = await import('./planetMosaic/planetMosaic')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -46,6 +47,7 @@ const {retrieveTask: phenologyTask} = await import('./phenology/phenologyRecipe'
 const {retrieveTask: pyeoAlertsTask} = await import('./pyeoAlerts/pyeoAlertsRecipe')
 const {retrieveTask: landTrendrTask} = await import('./landTrendr/landTrendrRecipe')
 const {retrieveTask: radarMosaicTask} = await import('./radarMosaic/radarMosaicRecipe')
+const {retrieveTask: planetMosaicTask} = await import('./planetMosaic/planetMosaicRecipe')
 const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
@@ -56,6 +58,7 @@ const {visualizationOptions: baytsAlertsVisualizationOptions} = await import('./
 const {groupedBandPresentation: changeAlertsRetrieveGroups} = await import('./changeAlerts/bands')
 const {visualizationOptions: changeAlertsVisualizationOptions} = await import('./changeAlerts/visualizations')
 const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
+const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./planetMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
 
 addRecipeType(regression())
@@ -70,6 +73,7 @@ addRecipeType(landTrendr())
 addRecipeType(baytsAlerts())
 addRecipeType(changeAlerts())
 addRecipeType(radarMosaic())
+addRecipeType(planetMosaic())
 
 beforeEach(() => {
     submitted.length = 0
@@ -678,6 +682,58 @@ describe('a Change Alerts recipe', () => {
         const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(style)
     })
+
+    it.each([
+        ['monitoring', 'latest'],
+        ['calibration', 'median']
+    ])('shows the Planet %s %s mosaic as Planet Mosaic declares it, kndvi included, with its styles', (period, mosaicType) => {
+        const recipe = changeAlertsOf({sources: PLANET_SOURCES})
+        const {output} = layerRead(recipe, {visualizationType: period, mosaicType})
+
+        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output.bands.map(({name}) => name)).toEqual(PLANET_BANDS)
+        const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
+        expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(['red', 'green', 'blue'])
+        expect(renderableVisualizations(styles, output.availableBands)).toContainEqual(expect.objectContaining({bands: ['kndvi'], min: [0], max: [10000]}))
+    })
+})
+
+describe('a Planet Mosaic', () => {
+    it('is described with its spectral bands and indexes, while the recipe its AOI comes from is not even loaded', () => {
+        const {output} = read(planetMosaicOf({aoi: {type: 'RECIPE', id: 'aoi-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands.map(({name}) => name)).toEqual(PLANET_BANDS)
+        expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    it('is presented with whole numbers stored per ten thousand, and offers its combination and index styles', () => {
+        const recipe = planetMosaicOf()
+        const {output} = read(recipe)
+
+        expect(displayTypes(output)).toEqual(Object.fromEntries(PLANET_BANDS.map(name =>
+            [name, {precision: 'int', min: -10000, max: 10000}])))
+        expect(recipeVisualizations(recipe, output.availableBands).map(({bands}) => bands)).toEqual([
+            ['red', 'green', 'blue'], ['nir', 'red', 'green'], ['ndvi'], ['ndwi'], ['evi'], ['evi2'], ['savi'], ['kndvi']
+        ])
+        expect(recipeVisualizations(recipe, output.availableBands)).toContainEqual(expect.objectContaining({bands: ['kndvi'], min: [0], max: [10000]}))
+    })
+
+    it('offers every band for retrieval, its spectral bands then its indexes', () => {
+        const groups = planetMosaicRetrieveGroups().map(group => group.map(({value}) => value))
+
+        expect(groups).toEqual([['blue', 'green', 'red', 'nir'], ['ndvi', 'ndwi', 'evi', 'evi2', 'savi', 'kndvi']])
+        expect(groups.flat()).toEqual(read(planetMosaicOf()).output.bands.map(({name}) => name))
+    })
+
+    it('exports the bands selected in the order execution builds them, all averaged', () => {
+        retrieve(read(planetMosaicOf()), 'GEE', planetMosaicTask, {bands: ['kndvi', 'red', 'ndvi']})
+
+        expect(submitted.map(({params: {image}}) => [image.bands.selection, image.pyramidingPolicy])).toEqual([[
+            ['red', 'ndvi', 'kndvi'],
+            {red: 'mean', ndvi: 'mean', kndvi: 'mean'}
+        ]])
+    })
 })
 
 describe('a Radar Mosaic', () => {
@@ -778,7 +834,8 @@ describe.each([
     ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
     ['a BAYTS alerts recipe', recipe => baytsAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined],
     ['a Change Alerts recipe', recipe => changeAlertsOf(recipe && {reference: {type: 'RECIPE_REF', id: recipe}}), undefined],
-    ['a Radar Mosaic', recipe => radarMosaicOf(recipe && {aoi: {type: 'RECIPE', id: recipe}}), radarMosaicTask]
+    ['a Radar Mosaic', recipe => radarMosaicOf(recipe && {aoi: {type: 'RECIPE', id: recipe}}), radarMosaicTask],
+    ['a Planet Mosaic', recipe => planetMosaicOf(recipe && {aoi: {type: 'RECIPE', id: recipe}}), planetMosaicTask]
 ])('%s', (_type, withSource, task) => {
     it('exports to Drive with no pyramiding policy', () => {
         retrieve(read(withSource(undefined)), 'DRIVE', task)
@@ -946,6 +1003,7 @@ const PERIOD = {
 
 const OPTICAL_SOURCES = {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}}
 const RADAR_SOURCES = {band: 'VV', dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}
+const PLANET_SOURCES = {band: 'ndvi', dataSetType: 'PLANET', dataSets: {PLANET: ['DAILY']}, assets: ['users/x/daily']}
 
 // Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded.
 const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD, sources = OPTICAL_SOURCES} = {}) => ({
@@ -975,6 +1033,21 @@ const radarMosaicOf = ({dates = TIME_SCAN_DATES, aoi = AOI} = {}) => ({
     type: 'RADAR_MOSAIC',
     title: 'Radar',
     model: {aoi, dates, options: {orbits: ['ASCENDING', 'DESCENDING']}}
+})
+
+const PLANET_BANDS = ['blue', 'green', 'red', 'nir', 'ndvi', 'ndwi', 'evi', 'evi2', 'savi', 'kndvi']
+
+// An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
+const planetMosaicOf = ({aoi = AOI} = {}) => ({
+    id: ID,
+    type: 'PLANET_MOSAIC',
+    title: 'Planet',
+    model: {
+        aoi,
+        dates: {fromDate: '2024-01-01', toDate: '2024-04-01'},
+        sources: {source: 'BASEMAPS', assets: ['users/x/basemaps']},
+        options: {histogramMatching: 'DISABLED', cloudThreshold: 0.15, shadowThreshold: 0.4, cloudBuffer: 0}
+    }
 })
 
 const landTrendrOf = ({classification} = {}) => ({

@@ -5,7 +5,7 @@ import {ccdcMeasures} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {TEMPORAL_PLANET_BANDS} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
@@ -158,7 +158,7 @@ const allPlanetMosaicVisualizations = recipe => {
             }
         }
     }
-    const baseVisualizations = recipeVisualizations(planetMosaicRecipe, planetBands(planetMosaicRecipe))
+    const baseVisualizations = recipeVisualizations(planetMosaicRecipe, namedBands(TEMPORAL_PLANET_BANDS.flat()))
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
