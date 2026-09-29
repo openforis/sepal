@@ -1,4 +1,5 @@
-// What the sessions panel does around its list: starting a new session through the instance picker. The
+// What the sessions panel does around its list: starting a new session through the instance picker, and
+// stopping them all. The
 // panel, list and picker reach the store and the DOM in ways a unit test cannot serve, so they are
 // passthroughs; the HOCs are replaced by the props they would inject.
 
@@ -11,11 +12,19 @@ vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/subscription', () => ({withSubscriptions: () => component => component}))
 vi.mock('~/widget/activation/activatable', () => ({withActivatable: () => component => component}))
 vi.mock('~/store', () => ({select: () => null}))
-vi.mock('~/user', () => ({startCurrentUserSession$: vi.fn()}))
+vi.mock('~/user', () => ({startCurrentUserSession$: vi.fn(), stopCurrentUserSession$: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 vi.mock('~/widget/sessionMonitor', () => ({refreshSessions: vi.fn()}))
 vi.mock('./userSessionList', () => ({UserSessionList: () => <div className='list'/>}))
 vi.mock('./userSession', () => ({UserSession: () => <div className='session-editor'/>}))
+// Confirms at once; what it would ask is on the element, for the confirmation tests to read.
+vi.mock('~/widget/modalConfirmationButton', () => ({
+    ModalConfirmationButton: ({label, message, disabled, busy, onConfirm, children}) =>
+        <div className='stop-all' data-disabled={String(disabled)} data-busy={String(busy)}>
+            <button onClick={onConfirm}>{label}</button>
+            <div className='confirmation'>{message}{children}</div>
+        </div>
+}))
 vi.mock('../body/apps/instancePicker', () => ({
     InstancePicker: ({app, onConfirm, onCancel}) =>
         <div className='picker' data-app={String(app)}>
@@ -31,13 +40,13 @@ vi.mock('~/widget/panel/panel', () => {
     Buttons.Main = ({children}) => <div>{children}</div>
     Buttons.Extra = ({children}) => <div>{children}</div>
     Buttons.Close = ({onClick}) => <button className='close' onClick={onClick}/>
-    Buttons.Add = ({onClick, busy}) => <button className='add' data-busy={String(busy)} onClick={onClick}/>
+    Buttons.Add = ({label, onClick, busy}) => <button className='add' data-busy={String(busy)} onClick={onClick}>{label}</button>
     Panel.Buttons = Buttons
     return {Panel}
 })
 
 import {setLanguage, TranslationProvider} from '~/translate'
-import {startCurrentUserSession$} from '~/user'
+import {startCurrentUserSession$, stopCurrentUserSession$} from '~/user'
 import {Notifications} from '~/widget/notifications'
 
 import {UserSessions} from './userSessions'
@@ -49,11 +58,12 @@ setLanguage('en')
 describe('the sessions panel', () => {
     let mounted
 
-    const render = ({starting = false, selectedSessionId} = {}) => {
+    const render = ({starting = false, stopping = false, selectedSessionId, sessions = []} = {}) => {
         // connect() is mocked away, so the stream prop it would inject subscribes directly.
-        const stream = (_name, stream$, onNext, onError) => {
+        const active = {START_USER_SESSION: starting, STOP_ALL_USER_SESSIONS: stopping}
+        const stream = (name, stream$, onNext, onError) => {
             stream$?.subscribe({next: onNext, error: onError})
-            return {active: starting}
+            return {active: active[name]}
         }
         const subscriptions = []
         const container = document.createElement('div')
@@ -64,6 +74,7 @@ describe('the sessions panel', () => {
                 <UserSessions
                     stream={stream}
                     selectedSessionId={selectedSessionId}
+                    sessions={sessions}
                     activatable={{deactivate: vi.fn()}}
                     addSubscription={subscription => subscriptions.push(subscription)}/>
             </TranslationProvider>
@@ -79,6 +90,7 @@ describe('the sessions panel', () => {
     beforeEach(() => {
         mounted = []
         vi.mocked(startCurrentUserSession$).mockReset()
+        vi.mocked(stopCurrentUserSession$).mockReset()
         vi.mocked(Notifications.error).mockReset()
     })
     afterEach(() => mounted.forEach(unmount => unmount()))
@@ -143,5 +155,59 @@ describe('the sessions panel', () => {
         const container = render({starting: true})
 
         expect(container.querySelector('.add').dataset.busy).toBe('true')
+    })
+
+    it('offers to start a session', () => {
+        expect(render().querySelector('.add').textContent).toBe('Start')
+    })
+
+    describe('stop all', () => {
+        const humbleRobin = {id: 's1', name: 'humble-robin', instanceType: {tag: 't1'}, apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}]}
+        const lunarOwl = {id: 's2', name: 'lunar-owl', instanceType: {tag: 'm2'}, apps: []}
+
+        const stopAll = container => act(() => container.querySelector('.stop-all button').click())
+
+        it('stops every session', () => {
+            vi.mocked(stopCurrentUserSession$).mockReturnValue(of(null))
+            const container = render({sessions: [humbleRobin, lunarOwl]})
+
+            stopAll(container)
+
+            expect(vi.mocked(stopCurrentUserSession$).mock.calls).toEqual([[humbleRobin], [lunarOwl]])
+            expect(Notifications.error).not.toHaveBeenCalled()
+        })
+
+        // The confirmation is the last thing between a user and instances they cannot get back.
+        it('asks first, naming each instance and what runs on it', () => {
+            const confirmation = render({sessions: [humbleRobin, lunarOwl]}).querySelector('.confirmation')
+
+            expect(confirmation.textContent).toContain('You are stopping all your instances (2).')
+            expect([...confirmation.querySelectorAll('li')].map(({textContent}) => textContent))
+                .toEqual(['humble-robin — Jupyter', 'lunar-owl'])
+        })
+
+        it('keeps stopping the others when one fails, and says so once', () => {
+            const error = new Error('gone')
+            vi.mocked(stopCurrentUserSession$)
+                .mockReturnValueOnce(throwError(() => error))
+                .mockReturnValueOnce(of(null))
+            const container = render({sessions: [humbleRobin, lunarOwl]})
+
+            stopAll(container)
+
+            expect(stopCurrentUserSession$).toHaveBeenCalledWith(lunarOwl)
+            expect(Notifications.error).toHaveBeenCalledTimes(1)
+            expect(Notifications.error).toHaveBeenCalledWith({message: 'Could not stop all sessions.', error})
+        })
+
+        it('is disabled when there is nothing to stop', () => {
+            expect(render().querySelector('.stop-all').dataset.disabled).toBe('true')
+        })
+
+        it('is busy while the sessions are being stopped', () => {
+            const container = render({sessions: [humbleRobin], stopping: true})
+
+            expect(container.querySelector('.stop-all').dataset.busy).toBe('true')
+        })
     })
 })

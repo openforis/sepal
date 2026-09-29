@@ -1,13 +1,14 @@
 import React from 'react'
-import {interval} from 'rxjs'
+import {catchError, forkJoin, interval, map, of} from 'rxjs'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {startCurrentUserSession$} from '~/user'
+import {startCurrentUserSession$, stopCurrentUserSession$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
+import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {refreshSessions} from '~/widget/sessionMonitor'
@@ -16,9 +17,11 @@ import {InstancePicker} from '../body/apps/instancePicker'
 import {UserSession} from './userSession'
 import {UserSessionList} from './userSessionList'
 import styles from './userSessions.module.css'
+import {instanceTypeLabel, runningItems} from './userSessionSummary'
 
 const mapStateToProps = () => ({
-    selectedSessionId: select('ui.selectedSessionId')
+    selectedSessionId: select('ui.selectedSessionId'),
+    sessions: select('user.currentUserReport.sessions')
 })
 
 // The report's costSinceCreation and timeoutHours are derived from elapsed time, so they
@@ -36,6 +39,7 @@ class _UserSessions extends React.Component {
         this.pickInstance = this.pickInstance.bind(this)
         this.cancelPicking = this.cancelPicking.bind(this)
         this.startSession = this.startSession.bind(this)
+        this.stopAllSessions = this.stopAllSessions.bind(this)
     }
 
     componentDidMount() {
@@ -77,12 +81,49 @@ class _UserSessions extends React.Component {
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
+                            label={msg('user.userSession.start.label')}
                             busy={stream('START_USER_SESSION').active}
                             onClick={this.pickInstance}
                         />
+                        {this.renderStopAll()}
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
+        )
+    }
+
+    renderStopAll() {
+        const {sessions, stream} = this.props
+        const count = sessions?.length ?? 0
+        return (
+            <ModalConfirmationButton
+                look='cancel'
+                icon='trash'
+                label={msg('user.userSession.stopAll.label')}
+                confirmLabel={msg('user.userSession.stopAll.label')}
+                message={msg('user.userSession.stopAll.message', {count})}
+                busy={stream('STOP_ALL_USER_SESSIONS').active}
+                disabled={!count}
+                onConfirm={this.stopAllSessions}>
+                {this.renderStopAllList()}
+            </ModalConfirmationButton>
+        )
+    }
+
+    // Each instance by the name the list titles it with, and what closes with it.
+    renderStopAllList() {
+        const {sessions} = this.props
+        return (
+            <ul>
+                {(sessions || []).map(session => {
+                    const apps = runningItems(session).map(({label}) => label)
+                    return (
+                        <li key={session.id}>
+                            {[session.name || instanceTypeLabel(session), apps.join(', ')].filter(Boolean).join(' — ')}
+                        </li>
+                    )
+                })}
+            </ul>
         )
     }
 
@@ -101,6 +142,24 @@ class _UserSessions extends React.Component {
 
     cancelPicking() {
         this.setState({picking: false})
+    }
+
+    // One failed stop does not keep the others running: each is stopped on its own, and failures are
+    // reported once at the end. Stopped sessions leave the list as they go.
+    stopAllSessions() {
+        const {sessions, stream} = this.props
+        stream('STOP_ALL_USER_SESSIONS',
+            forkJoin(sessions.map(session =>
+                stopCurrentUserSession$(session).pipe(
+                    map(() => null),
+                    catchError(error => of(error))
+                )
+            )),
+            results => {
+                const [error] = results.filter(Boolean)
+                error && Notifications.error({message: msg('user.userSession.stopAll.error'), error})
+            }
+        )
     }
 
     // The picker offers no running instances without an app, so the pick is always a type. No
