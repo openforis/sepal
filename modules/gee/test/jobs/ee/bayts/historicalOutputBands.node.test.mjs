@@ -3,17 +3,19 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {firstValueFrom, of, throwError} from 'rxjs'
 
-// Which bands a BAYTS Historical returns, directly and through a Masking, through the REAL imageFactory, recipeRef,
-// masking, asset and BAYTS Historical implementations. The radar mosaic each pass is built from, recipe reads and
-// Earth Engine are substituted: an image here is its band names, a pass's radar mosaic holds the statistics it was
-// asked for, and its multitemporal speckle statistics are whatever a test says that pass supplied. Which bands real
-// imagery builds is the live verifier's (verify/baytsHistoricalOutputBands.mjs).
+// Which bands a BAYTS Historical returns, directly and through a Masking, and what each pass is built from, through
+// the REAL imageFactory, recipeRef, masking, asset and BAYTS Historical implementations. The radar mosaic each pass is
+// built from, whether a pass has scenes, recipe reads and Earth Engine are substituted: an image here is its band
+// names, a pass's radar mosaic holds the statistics it was asked for, and a refused image fails when its bands are
+// read. Pixels and masks - a pass without scenes masked, each pass holding its own imagery's statistics - are the
+// live verifier's (verify/baytsHistoricalOutputBands.mjs).
 //
 // Run by Node's own test runner rather than Jest, because imageFactory loads every implementation through
 // createRequire. Launched from a Jest bridge so it still runs in the ordinary gee gate.
 
 let catalogue = {}
-let speckleStatsByPass = {}
+let scenes = {}
+let radarMosaics = []
 
 const eeImage = bands => ({
     bands,
@@ -32,15 +34,14 @@ const eeImage = bands => ({
     updateMask: () => eeImage(bands),
     clip: () => eeImage(bands),
     float: () => eeImage(bands),
-    geometry: () => ({}),
-    get: property => property === 'speckleStatsCollection' ? speckleStatsByPass : undefined
+    geometry: () => ({})
 })
 
-// The speckle statistics a pass supplied: its polarisations, or none for a pass without imagery.
-const speckleStatsCollection = byPass => ({
-    filter: ({value: pass}) => speckleStatsCollection({[pass]: byPass[pass]}),
-    map: () => speckleStatsCollection(byPass),
-    mosaic: () => eeImage(Object.values(byPass).some(supplied => supplied) ? ['VV', 'VH'] : [])
+// An image Earth Engine refuses when evaluated, for the error it was built from.
+const refusedImage = error => ({
+    get bands() {
+        throw new Error(error)
+    }
 })
 
 mock.module('#sepal/ee/ee', {
@@ -48,19 +49,36 @@ mock.module('#sepal/ee/ee', {
         default: {
             getAsset$: () => of({type: 'Image'}),
             Image: Object.assign(
-                value => typeof value === 'string'
-                    ? eeImage(['mask'])
-                    : Array.isArray(value) ? eeImage(value.flatMap(image => image.bands)) : eeImage(['constant']),
-                {cat: (...images) => eeImage(images.flatMap(image => image.bands))}
+                value => Array.isArray(value)
+                    ? eeImage(value.flatMap(image => image.bands))
+                    : typeof value === 'string'
+                        ? value.startsWith('[error: ') ? refusedImage(value) : eeImage(['mask'])
+                        : typeof value === 'object' ? value : eeImage(['constant']),
+                {
+                    cat: (...images) => eeImage(images.flatMap(image => image.bands)),
+                    constant: values => eeImage(values.map((_value, i) => `constant_${i}`))
+                }
             ),
-            ImageCollection: byPass => speckleStatsCollection(byPass),
-            Filter: {eq: (property, value) => ({property, value})}
+            Geometry: Object.assign(() => ({}), {Polygon: () => ({})}),
+            Algorithms: {If: (condition, whenTrue, whenFalse) => condition ? whenTrue : whenFalse},
+            List: values => ({reduce: reducer => reducer(values)}),
+            Reducer: {anyNonZero: () => values => values.some(Boolean)}
         }
     }
 })
 
 mock.module('#sepal/ee/radar/mosaic', {
-    defaultExport: (_recipe, {selection}) => ({getImage$: () => of(eeImage(selection))})
+    defaultExport: (recipe, {selection}) => {
+        radarMosaics.push(recipe)
+        return {getImage$: () => of(eeImage(selection))}
+    }
+})
+
+mock.module('#sepal/ee/radar/collection', {
+    namedExports: {
+        hasImagery: ({orbits: [orbitPass]}) => scenes[orbitPass],
+        createCollection: () => assert.fail('No radar collection is built here')
+    }
 })
 
 const {RecipeScope, withRecipeScope} = await import('#sepal/ee/recipeScope')
@@ -76,13 +94,13 @@ const inOperation = (name, fn) => it(name, async () => {
     }
 })
 
-const historical = ({orbits = ['DESCENDING', 'ASCENDING'], multitemporalSpeckleFilter = 'NONE'} = {}) => ({
+const historical = ({orbits = ['DESCENDING', 'ASCENDING']} = {}) => ({
     id: 'historical-1',
     type: 'BAYTS_HISTORICAL',
     model: {
         aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
         dates: {fromDate: '2023-01-01', toDate: '2024-01-01'},
-        options: {orbits, spatialSpeckleFilter: 'LEE', multitemporalSpeckleFilter}
+        options: {orbits, orbitNumbers: 'DOMINANT', spatialSpeckleFilter: 'LEE', multitemporalSpeckleFilter: 'NONE'}
     }
 })
 
@@ -99,7 +117,8 @@ const bands = async (recipe, args) => (await firstValueFrom(imageFactory(recipe,
 
 beforeEach(() => {
     catalogue = {'historical-1': historical()}
-    speckleStatsByPass = {}
+    scenes = {DESCENDING: true, ASCENDING: true}
+    radarMosaics = []
 })
 
 describe('a BAYTS Historical asked for no output bands', () => {
@@ -125,23 +144,50 @@ describe('a BAYTS Historical asked for output bands', () => {
     })
 })
 
-// Multitemporal speckle statistics come from each pass's own imagery, so a pass without any supplies none.
-describe('a BAYTS Historical whose pass supplied no speckle statistics', () => {
-    const filtered = historical({multitemporalSpeckleFilter: 'QUEGAN'})
+describe('a BAYTS Historical of both passes', () => {
+    inOperation('builds each pass from the recipe with that pass alone as its orbits', async () => {
+        const recipe = historical()
 
+        await bands(recipe)
+
+        assert.deepEqual(radarMosaics, ['DESCENDING', 'ASCENDING'].map(orbitPass => ({
+            ...recipe,
+            type: 'RADAR_MOSAIC',
+            model: {...recipe.model, options: {...recipe.model.options, orbits: [orbitPass]}}
+        })))
+    })
+})
+
+describe('a BAYTS Historical with a pass without scenes', () => {
     beforeEach(() => {
-        speckleStatsByPass = {DESCENDING: true, ASCENDING: false}
+        scenes = {DESCENDING: true, ASCENDING: false}
     })
 
-    inOperation('refuses its complete output', async () => {
-        await assert.rejects(bands(filtered), /'VV_speckle_asc' did not match/)
+    inOperation('returns every pass\'s statistics', async () => {
+        assert.deepEqual(await bands(historical()), [...passBands('desc'), ...passBands('asc')])
     })
 
-    inOperation('refuses a request naming those statistics', async () => {
-        await assert.rejects(bands(filtered, withOutputBands({selection: ['VV_mean_asc', 'VH_speckle_asc']})), /'VH_speckle_asc' did not match/)
+    inOperation('returns the pass with scenes alone, when asked for it', async () => {
+        const request = [...passBands('desc')].reverse()
+        assert.deepEqual(await bands(historical(), withOutputBands({selection: request})), request)
     })
 
-    inOperation('returns a request that needs none of them', async () => {
-        assert.deepEqual(await bands(filtered, withOutputBands({selection: ['VV_speckle_desc', 'VV_mean_asc']})), ['VV_speckle_desc', 'VV_mean_asc'])
+    inOperation('returns the pass without scenes alone, when asked for it', async () => {
+        const request = [...passBands('asc')].reverse()
+        assert.deepEqual(await bands(historical(), withOutputBands({selection: request})), request)
+    })
+})
+
+describe('a BAYTS Historical with no pass with scenes', () => {
+    beforeEach(() => {
+        scenes = {DESCENDING: false, ASCENDING: false}
+    })
+
+    inOperation('refuses its complete output as having no images', async () => {
+        await assert.rejects(bands(historical()), /All images have been filtered out/)
+    })
+
+    inOperation('refuses a pass asked for as having no images', async () => {
+        await assert.rejects(bands(historical(), withOutputBands({selection: passBands('desc')})), /All images have been filtered out/)
     })
 })

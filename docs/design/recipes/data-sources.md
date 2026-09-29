@@ -146,16 +146,16 @@ where a family still needs observation.
    - BAYTS Historical has migrated ([BAYTS Historical](../../recipes/bayts-historical.md)), in two separately
      reviewable changes. Its producer first honours physical-output requests: a nonempty `outputBands` gets exactly
      those names, in request order, and any other request the complete declared output; a bare `selection` keeps
-     its existing meaning, which requests no bands here. An unknown name, or speckle statistics a pass without imagery
-     never supplied, then fails the request instead of returning a different schema, while a subset needing none of
-     them still runs. Its shared type then declares, in stored orbit order and per orbit, `VV_mean`, `VV_std`,
+     its existing meaning, which requests no bands here. An unknown name then fails the request instead of returning
+     a different schema. Its shared type then declares, in stored orbit order and per orbit, `VV_mean`, `VV_std`,
      `VH_mean`, `VH_std`, `orbit`, `VV_speckle` and `VH_speckle` with `_asc` or `_desc` suffixes - the order execution
      builds - all scalar, `mode` for the orbit numbers and `mean` for the rest, with no encoding, so new exports,
      Masking's and Stack's included, change at coarser pyramid levels only for orbits. Missing, empty, malformed or
      unknown orbit choices and repeated passes are refused before anything is read, never normalized. Both orbit
      bands show as whole numbers. Its Earth Engine catalogue answers the declaration without building anything.
      Retrieve still exports all bands to Earth Engine only, and `historicalStatsSource` remains the separate
-     capability BAYTS Alerts reads. Wrong-pass pixels are not corrected; the packet below does that;
+     capability BAYTS Alerts reads. Each pass is built from that pass's imagery alone; a configured pass without
+     scenes in the period keeps its bands, fully masked, and a history none of whose passes has scenes is refused;
    - Time Series; collection-internal bands wait for
      [source planning](output-products.md#source-planning-and-collection-composition);
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
@@ -199,23 +199,6 @@ because they appear in that image. Each family states its default-selection beha
 explicit requests. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands
 independently of the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band
 presentation, not a migration state.
-
-#### Priority correction after BAYTS Historical
-
-Correct BAYTS Historical's orbit override next, now that its declaration has migrated, before moving on to Time
-Series. The producer puts the override in top-level `options`, while Radar Mosaic reads `model.options`. Live audit
-probes showed both-pass histories assigning ascending statistics to descending bands, and a descending-only region
-assigning descending statistics to ascending bands. BAYTS Alerts can then mask monitoring observations against the
-wrong relative orbit. Suffixes currently do not establish pass-specific pixels.
-
-Keep this a separate execution packet: correcting the override can change historical pixels and subsequent alerts;
-existing exported assets are not rewritten. Decide the no-imagery-pass behavior before implementation: explicit
-failure versus the requested pass's bands present but fully masked. Do not silently omit a pass's bands under the
-fixed output contract. Include empty speckle-statistics behavior in that decision; the preceding output projection
-only turns missing requested bands into refusals and does not repair their calculation. Preserve `historicalStatsSource`
-and `BAYTS_HISTORICAL_STATS` as separate capability contracts. Verify combined-pass results against freshly computed
-single-pass results, with usable samples and coverage of absent passes and multitemporal speckle filtering. Label the
-pre-fix wrong-pass reproduction as a defect witness, not correctness evidence.
 
 #### Contract reviews before the remaining migrations
 

@@ -41,9 +41,6 @@ a separate contract (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 - **Outlier removal never shortens the window.** `getDates` in `lib/js/ee/src/radar/mosaic.js` compares
   `outlierRemoval === 'NONE   '`, with trailing spaces, so a point in time always composites ±183 days around its
   target date and never the ±30 days intended without outlier removal. Correcting it changes pixels.
-- **BAYTS Historical composites both orbits for each orbit.** `lib/js/ee/src/bayts/baytsHistorical.js` builds each
-  single-orbit Radar Mosaic with its orbit under a top-level `options`, but the mosaic reads `model.options`, so
-  every run uses the recipe's orbits; only the speckle statistics are filtered by orbit.
 - **A time scan reduces work it discards.** `toTimeScan` selects `VV.*` and `VH.*`, which sweeps the per-image
   harmonic terms into the reduction whenever harmonics are computed; the final selection drops them.
 - **A recipe stating no dates fails with Earth Engine's own error**

@@ -36,38 +36,63 @@ a band the image does not hold fails the request. Any other request - none, an e
 which is not a request for bands here - gets every declared band in declared order. Retrieve exports all bands, to
 Earth Engine only.
 
+## Passes
+
+Each pass is built as a Radar Mosaic of the recipe with that pass alone as `model.options.orbits`, so its statistics,
+its `orbit` band and its multitemporal speckle statistics come from that pass's imagery only.
+
+Whether a pass has imagery is decided by its scenes: those execution's radar collection selects over the AOI in the
+period, before any processing. A configured pass without scenes keeps its seven bands, fully masked and clipped to
+the AOI; nothing is borrowed from the other pass and no value is substituted. A history none of whose configured
+passes has scenes is refused as having no images (`process.mosaic.error.noImages`), whatever is asked of it; asked
+only for a pass without scenes, a history whose other pass has scenes returns those bands masked. A pass with scenes
+whose processing leaves a pixel without a valid value - too few observations, say - has that pixel masked, as
+before. Multitemporal speckle statistics find a pass's relative orbits over its whole archive, so a pass without
+scenes in the period may still have them; they are not what decides.
+
 BAYTS Alerts reads a historical recipe's statistics by name, per pass (`.*_asc`, `.*_desc`), and which recipe or asset
 holds them through the separate `BAYTS_HISTORICAL_STATS` capability (`historicalStatsSource`); neither depends on this
-declaration. It asks for no bands, so it reads the complete output: over a historical recipe whose pass supplied no
-speckle statistics, BAYTS Alerts now fails for the missing band where it used to run without it.
+declaration. It asks for no bands, so it reads the complete output. A monitoring observation whose relative orbit
+differs from its pass's historical `orbit` is masked, so over a masked pass every observation of that pass is excluded
+and the alerts are those of the other pass alone; the alerts keep the pixels where any historical band is valid.
 
-## Open issues
+### Recomputed results
 
-- **A recipe of both passes holds one pass's statistics under both suffixes.** Each pass is built as a Radar Mosaic
-  whose orbit is set in a top-level `options`, while the mosaic reads `model.options`, so both passes are built from
-  the same imagery: in an area with both, the dominant orbit's, and in an area with one, that pass's. The suffixes name
-  bands; they do not establish which pass the pixels came from. BAYTS Alerts then masks the other pass's monitoring
-  observations against the wrong relative orbit. Only single-pass recipes are pass-correct. Its correction is the next
-  scheduled packet ([priority correction](../design/recipes/data-sources.md#priority-correction-after-bayts-historical)).
-- **Multitemporal filtering supplies no speckle statistics for a pass without imagery.** Its statistics collection
-  holds none for that pass. A request for the complete output, or for those bands, is refused for the missing band;
-  one needing none of them still runs. Nothing replaces the missing statistics.
-- **A single pass without imagery fails with an unhelpful message** ("If one image has no bands, the other must also
-  have no bands") rather than the radar mosaic's "all images have been filtered out".
+Histories computed from now on, and alerts computed over a historical recipe, can differ from earlier results for
+the same recipe. Before, every pass of a recipe of both was built from the imagery of both. In an area with both
+passes, with `orbitNumbers: 'DOMINANT'`, each suffix held the dominant orbit's statistics, and alerts masked the
+other pass's observations against that orbit - in effect monitoring one pass; with `ALL`, each suffix held
+statistics mixing both passes. Now each pass holds its own statistics and both passes are monitored.
+In an area with one pass, the other pass's bands used to repeat the available pass's statistics; they are now
+masked. Alerts there are unchanged where the monitoring period also has no observations of the missing pass. A pass
+absent during the history can be acquired later; its observations are then excluded from the alerts.
+
+Exported historical assets and alert assets are not rewritten, and alerts over a historical asset keep reading its
+statistics. Recovering from earlier results is one of two choices. Recomputing the history, and restarting the
+alerts from it, gives results consistent with the corrected statistics. Continuing earlier alerts
+(`previousAlertsAsset`) over a recomputed history keeps the flags already raised from the earlier statistics, while
+the new monitoring observations are tested against the corrected ones.
 
 ## Verification
 
-- `modules/gee/verify/baytsHistoricalOutputBands.mjs` - on live Earth Engine and real Sentinel-1 imagery: the catalogue
-  and the image built for no request, an empty selection and a bare selection, per pass, for both passes either way
-  round, and with speckle filtering off, QUEGAN and RABASAR; output bands out of order, directly and through Masking; an
-  unbuilt band refused; a pass without imagery refused for its missing speckle statistics while a request needing none
-  runs; each single pass's orbit among that pass's relative orbits. The wrong-pass defect is reproduced apart - both
-  passes of a recipe of both equal a freshly built ascending-only recipe, and its descending pass differs from a freshly
-  built descending-only one - and never counted as correctness.
+- `modules/gee/verify/baytsHistoricalOutputBands.mjs` - on live Earth Engine and real Sentinel-1 imagery, over small
+  areas whose scenes it establishes first: the catalogue and the image built for no request, an empty selection and a
+  bare selection, per pass, for both passes either way round, and with speckle filtering off, QUEGAN and RABASAR;
+  output bands out of order, directly and through Masking; an unbuilt band refused. Each pass of a recipe of both,
+  with LEE either way round, without spatial filtering, with QUEGAN, RABASAR and every orbit number, equals a freshly
+  built recipe of that pass alone, band for band, and holds one of that pass's relative orbits. In an area without
+  ascending scenes: the complete output, the descending pass alone and the ascending pass alone, in the order asked,
+  the ascending bands masked throughout the area, the descending ones equal to a descending-only recipe's, and the
+  image bounded; the ascending pass alone refused, as is a recipe of both where neither has scenes; too few
+  observations masked, not refused; BAYTS Alerts alerting as over a descending-only history. Over a monitoring period
+  ending on an ascending scene, with normalization off and on and continuing initial alerts, a valid ascending pass
+  changes BAYTS' alerts, and a masked one gives exactly the descending-only alerts. Alerts are compared pixel by pixel
+  on one grid, every band: no pixel whose mask differs and no difference where both are valid, with pixels valid in
+  both for every band.
 - `lib/js/shared/test/recipe/output/type/baytsHistorical.test.js` - the declaration, its refusals, the capability BAYTS
   Alerts reads, and Masking and Stack over it.
 - `modules/gee/test/jobs/ee/bayts/historicalOutputBands.node.test.mjs` - which bands a request returns, directly and
-  through Masking, including a pass that supplied no speckle statistics.
+  through Masking, with a pass without scenes and with none; the recipe each pass is built from.
 - `modules/gee/test/jobs/ee/bayts/historicalBands.test.js` - the catalogue, whatever is asked.
 - `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the common read, presentation, presets,
   Retrieve's order and policies, refused orbits, broken dependencies, and BAYTS Alerts over a historical recipe.
