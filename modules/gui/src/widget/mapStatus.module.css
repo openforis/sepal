@@ -10,8 +10,8 @@
 
 .status {
     pointer-events: all;
-    color: #ccc;
-    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--text-color);
+    background-color: var(--map-status-background-color);
     font-size: .9rem;
     font-family: var(--header-font-family);
     padding: .5rem 1rem;
@@ -32,5 +32,5 @@
 
 .error {
     margin-left: 0.5rem;
-    color: #e81351;
+    color: var(--invalid-color);
 }

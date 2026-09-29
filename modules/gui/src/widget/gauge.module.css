@@ -12,8 +12,8 @@
     position: relative;
     height: 1rem;
     width: 100%;
-    background-color: hsla(0, 0%, 0%, .3);
-    border: 1px solid #666;
+    background-color: var(--inset-shade-color);
+    border: 1px solid var(--gauge-border-color);
 }
 
 .bar::after {

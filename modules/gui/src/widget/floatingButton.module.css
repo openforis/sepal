@@ -6,7 +6,7 @@
     bottom: var(--bottom);
     z-index: 1;
     /* box-shadow: 0 0 1.5rem .3rem hsla(0, 0%, 0%, .6); */
-    box-shadow: 0 0 2rem .3rem black;
+    box-shadow: 0 0 2rem .3rem var(--shadow-color);
 }
 
 @media only screen and (max-width: 500px) {

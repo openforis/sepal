@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: hsl(0, 0%, 50%);
+    color: var(--text-muted-color);
     background-color: var(--look-default-background-color);
     border-style: dashed;
     outline: none;
@@ -12,7 +12,7 @@
 
 .dropZone:hover, .dragAccept {
     cursor: pointer;
-    color: hsl(0, 0%, 70%);
+    color: var(--text-label-color);
     background-color: var(--look-default-active-background-color);
 }
 

@@ -2,101 +2,101 @@
 
     /* default */
 
-    --look-default-color: hsla(0, 0%, 80%, 1);
+    --look-default-color: var(--look-default-text-color);
     --look-default-background-color: hsla(var(--look-default-h), var(--look-default-s), var(--look-default-l), var(--look-default-a));
-    --look-default-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 2%), var(--look-default-a));
+    --look-default-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-border-l-offset)), var(--look-default-a));
 
-    --look-default-hover-color: hsla(0, 0%, 100%, 1);
+    --look-default-hover-color: var(--look-default-text-hover-color);
     --look-default-hover-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-hover-background-l-offset)), var(--look-default-a));
     --look-default-hover-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-hover-border-l-offset)), var(--look-default-a));
 
-    --look-default-active-color: hsla(0, 0%, 100%, 1);
+    --look-default-active-color: var(--look-default-text-hover-color);
     --look-default-active-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-active-background-l-offset)), var(--look-default-a));
     --look-default-active-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-active-border-l-offset)), var(--look-default-a));
 
-    --look-default-dimmed-color: hsla(0, 0%, 50%, 1);
+    --look-default-dimmed-color: var(--look-default-text-dimmed-color);
 
     /* highlight */
 
-    --look-highlight-color: hsla(0, 0%, 100%, 1);
+    --look-highlight-color: var(--look-highlight-text-color);
     --look-highlight-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), var(--look-highlight-l), var(--look-highlight-a));
-    --look-highlight-border-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + 2%), var(--look-highlight-a));
+    --look-highlight-border-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + var(--look-border-l-offset)), var(--look-highlight-a));
 
-    --look-highlight-hover-color: hsla(0, 0%, 100%, 1);
+    --look-highlight-hover-color: var(--look-highlight-text-color);
     --look-highlight-hover-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + var(--look-hover-background-l-offset)), var(--look-highlight-a));
     --look-highlight-hover-border-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + var(--look-hover-border-l-offset)), var(--look-highlight-a));
 
-    --look-highlight-active-color: hsla(0, 0%, 100%, 1);
+    --look-highlight-active-color: var(--look-highlight-text-color);
     --look-highlight-active-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + var(--look-active-background-l-offset)), var(--look-highlight-a));
     --look-highlight-active-border-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + var(--look-active-border-l-offset)), var(--look-highlight-a));
 
     /* selected */
 
-    --look-selected-color: hsla(0, 0%, 100%, 1);
+    --look-selected-color: var(--look-selected-text-color);
     --look-selected-background-color: hsla(var(--look-selected-h), var(--look-selected-s), var(--look-selected-l), var(--look-selected-a));
-    --look-selected-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + 2%), var(--look-selected-a));
+    --look-selected-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + var(--look-border-l-offset)), var(--look-selected-a));
 
-    --look-selected-hover-color: hsla(0, 0%, 100%, 1);
+    --look-selected-hover-color: var(--look-selected-text-color);
     --look-selected-hover-background-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + var(--look-hover-background-l-offset)), var(--look-selected-a));
     --look-selected-hover-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + var(--look-hover-border-l-offset)), var(--look-selected-a));
 
-    --look-selected-active-color: hsla(0, 0%, 100%, 1);
+    --look-selected-active-color: var(--look-selected-text-color);
     --look-selected-active-background-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + var(--look-active-background-l-offset)), var(--look-selected-a));
     --look-selected-active-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + var(--look-active-border-l-offset)), var(--look-selected-a));
 
     /* transparent */
 
-    --look-transparent-color: hsla(0, 0%, 70%, 1);
+    --look-transparent-color: var(--look-transparent-text-color);
     --look-transparent-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), var(--look-transparent-l), var(--look-transparent-a));
-    --look-transparent-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + 2%), var(--look-transparent-a));
+    --look-transparent-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-border-l-offset)), var(--look-transparent-a));
 
-    --look-transparent-hover-color: hsla(0, 0%, 100%, 1);
-    --look-transparent-hover-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-hover-background-l-offset) + 2%), var(--look-transparent-a));
-    --look-transparent-hover-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-hover-border-l-offset) + 2%), var(--look-transparent-a));
+    --look-transparent-hover-color: var(--look-transparent-text-hover-color);
+    --look-transparent-hover-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-hover-background-l-offset) + var(--look-transparent-extra-l-offset)), var(--look-transparent-a));
+    --look-transparent-hover-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-hover-border-l-offset) + var(--look-transparent-extra-l-offset)), var(--look-transparent-a));
 
-    --look-transparent-active-color: hsla(0, 0%, 100%, 1);
-    --look-transparent-active-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-active-background-l-offset) + 2%), var(--look-transparent-a));
-    --look-transparent-active-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-active-border-l-offset) + 2%), var(--look-transparent-a));
+    --look-transparent-active-color: var(--look-transparent-text-hover-color);
+    --look-transparent-active-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-active-background-l-offset) + var(--look-transparent-extra-l-offset)), var(--look-transparent-a));
+    --look-transparent-active-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + var(--look-active-border-l-offset) + var(--look-transparent-extra-l-offset)), var(--look-transparent-a));
 
     /* add */
 
-    --look-add-color: hsla(0, 0%, 100%, 1);
+    --look-add-color: var(--text-on-accent-color);
     --look-add-background-color: hsla(var(--look-add-h), var(--look-add-s), var(--look-add-l), var(--look-add-a));
-    --look-add-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + 2%), var(--look-add-a));
+    --look-add-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + var(--look-border-l-offset)), var(--look-add-a));
 
-    --look-add-hover-color: hsla(0, 0%, 100%, 1);
+    --look-add-hover-color: var(--text-on-accent-color);
     --look-add-hover-background-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + var(--look-hover-background-l-offset)), var(--look-add-a));
     --look-add-hover-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + var(--look-hover-border-l-offset)), var(--look-add-a));
 
-    --look-add-active-color: hsla(0, 0%, 100%, 1);
+    --look-add-active-color: var(--text-on-accent-color);
     --look-add-active-background-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + var(--look-active-background-l-offset)), var(--look-add-a));
     --look-add-active-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + var(--look-active-border-l-offset)), var(--look-add-a));
 
     /* apply */
 
-    --look-apply-color: hsla(0, 0%, 100%, 1);
+    --look-apply-color: var(--text-on-accent-color);
     --look-apply-background-color: hsla(var(--look-apply-h), var(--look-apply-s), var(--look-apply-l), var(--look-apply-a));
-    --look-apply-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + 2%), var(--look-apply-a));
+    --look-apply-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + var(--look-border-l-offset)), var(--look-apply-a));
 
-    --look-apply-hover-color: hsla(0, 0%, 100%, 1);
+    --look-apply-hover-color: var(--text-on-accent-color);
     --look-apply-hover-background-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + var(--look-hover-background-l-offset)), var(--look-apply-a));
     --look-apply-hover-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + var(--look-hover-border-l-offset)), var(--look-apply-a));
 
-    --look-apply-active-color: hsla(0, 0%, 100%, 1);
+    --look-apply-active-color: var(--text-on-accent-color);
     --look-apply-active-background-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + var(--look-active-background-l-offset)), var(--look-apply-a));
     --look-apply-active-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + var(--look-active-border-l-offset)), var(--look-apply-a));
 
     /* cancel */
 
-    --look-cancel-color: hsla(0, 0%, 100%, 1);
+    --look-cancel-color: var(--text-on-accent-color);
     --look-cancel-background-color: hsla(var(--look-cancel-h), var(--look-cancel-s), var(--look-cancel-l), var(--look-cancel-a));
-    --look-cancel-border-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + 2%), var(--look-cancel-a));
+    --look-cancel-border-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + var(--look-border-l-offset)), var(--look-cancel-a));
 
-    --look-cancel-hover-color: hsla(0, 0%, 100%, 1);
+    --look-cancel-hover-color: var(--text-on-accent-color);
     --look-cancel-hover-background-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + var(--look-hover-background-l-offset)), var(--look-cancel-a));
     --look-cancel-hover-border-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + var(--look-hover-border-l-offset)), var(--look-cancel-a));
 
-    --look-cancel-active-color: hsla(0, 0%, 100%, 1);
+    --look-cancel-active-color: var(--text-on-accent-color);
     --look-cancel-active-background-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + var(--look-active-background-l-offset)), var(--look-cancel-a));
     --look-cancel-active-border-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + var(--look-active-border-l-offset)), var(--look-cancel-a));
 

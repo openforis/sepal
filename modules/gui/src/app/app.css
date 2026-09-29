@@ -1,55 +1,14 @@
 html {
     --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
-    --wireframe-color: rgba(100%, 100%, 100%, .15);
-    --section-wireframe-color: rgba(100%, 100%, 100%, .1);
     --wireframe: 1px solid var(--wireframe-color);
-
-    --selected-hue: 40;
-    --selected-sat: 60%;
 
     --button-border-radius: .2rem;
     --container-border-radius: .4rem;
     --section-border-radius: .3rem;
 
-    --panel-default-background-color: hsla(36, 8%, 15%, .95);
-    --panel-default-overlay-color: hsla(36, 8%, 15%, .7);
-
     --selected-panel-border-width: 1px;
     --selected-panel-border-color: var(--wireframe-color);
-
-    --link-default-color: #b0b0b0;
-    --link-hover-color: #ccc;
-    --link-selected-color: #fff;
-
-    --error-color: hsl(0, 80%, 40%);
-    --info-color: hsl(202, 80%, 40%);
-    --warning-color: hsl(39, 80%, 40%);
-    --success-color: hsl(90, 80%, 35%);
-
-    --section-process-color-h: 37;
-    --section-process-color-s: 27%;
-    --section-process-color-l: 39%;
-
-    --section-browse-color-h: 127;
-    --section-browse-color-s: 6%;
-    --section-browse-color-l: 30%;
-
-    --section-apps-color-h: 310;
-    --section-apps-color-s: 10%;
-    --section-apps-color-l: 23%;
-
-    --section-terminal-color-h: 221;
-    --section-terminal-color-s: 19%;
-    --section-terminal-color-l: 26%;
-
-    --section-tasks-color-h: 3;
-    --section-tasks-color-s: 20%;
-    --section-tasks-color-l: 23%;
-
-    --section-users-color-h: 124;
-    --section-users-color-s: 10%;
-    --section-users-color-l: 20%;
 
     --base-font-size: 14px;
     font-size: var(--base-font-size);
@@ -62,7 +21,7 @@ body, input, textarea, select, button, a, label {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: transparent;
-    color: #fff;
+    color: var(--text-strong-color);
 }
 
 :focus, :active, :focus:active {
@@ -108,7 +67,7 @@ sub {
 }
 
 .gm-style-cc * {
-    color: #fff !important;
+    color: var(--text-strong-color) !important;
     background-color: transparent !important;
 }
 

@@ -10,7 +10,7 @@
 }
 
 .modalWrapper {
-    --modal-background: hsla(0, 0%, 5%, .8);
+    --modal-background: var(--modal-backdrop-color);
     position: absolute;
     top: 0;
     bottom: 0;
@@ -34,7 +34,7 @@
     --content-padding-vertical: 1rem;
     --content-padding-horizontal: .8rem;
     --padding-panel-buttons: .5rem;
-    --header-color: #e8e8e8;
+    --header-color: var(--text-header-color);
     max-height: calc(100% - (2 * var(--toolbar-edge-margin) + var(--toolbar-button-size) + var(--margin-bottom)));
     width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);

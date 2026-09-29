@@ -7,7 +7,7 @@
 }
 
 .type-normal {
-    color: #ccc;
+    color: var(--text-color);
 }
 
 .type-error {

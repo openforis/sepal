@@ -1,6 +1,6 @@
 .options {
     z-index: 2;
-    border: 1px solid #333;
+    border: 1px solid var(--divider-color);
     scrollbar-width: none; /* Hides scrollbars in Firefox */
 }
 
@@ -18,13 +18,13 @@
 .sticky {
     position: sticky;
     top: 0;
-    background-color: #181818;
-    border-bottom: 1px solid hsl(0, 0%, 10%);
+    background-color: var(--list-header-background-color);
+    border-bottom: 1px solid var(--list-header-border-color);
     z-index: 1;
 }
 
 .options .separator {
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--divider-color);
 }
 
 li {

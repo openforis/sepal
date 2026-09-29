@@ -1,3 +1,362 @@
+/*
+    Every themeable color of the application. The unqualified block is the dark theme and the fallback
+    when no theme is set; the light block overrides it. Colors that are data (visualization palettes,
+    class and legend colors, map layer styles) stay where they are used.
+*/
+
+html {
+    /* text, strongest to faintest */
+    --text-strong-color: #fff;
+    --text-header-color: #e8e8e8;
+    --text-color: #ccc;
+    --text-soft-color: #bbb;
+    --text-secondary-color: #b0b0b0;
+    --text-dimmed-color: #a0a0a0;
+    --text-muted-color: #808080;
+    --text-faint-color: #707070;
+    --text-on-accent-color: #fff;
+
+    /* surfaces */
+    --page-background-color: rgba(17, 18, 21, 0.9);
+    --panel-default-background-color: hsla(36, 8%, 15%, .95);
+    --panel-default-overlay-color: hsla(36, 8%, 15%, .7);
+    --popover-background-color: #373737;
+    --well-background-color: black;
+    --scrim-color: hsla(0, 0%, 0%, .5);
+    --shadow-color: black;
+
+    /* lines */
+    --wireframe-color: rgba(100%, 100%, 100%, .15);
+    --section-wireframe-color: rgba(100%, 100%, 100%, .1);
+    --divider-color: #333;
+    --input-border-default-color: #606060;
+    --input-border-hover-color: #b0b0b0;
+    --input-border-focus-color: #a0a0a0;
+    --handle-idle-color: #808080;
+    --handle-active-color: #c0c0c0;
+
+    /* links */
+    --link-default-color: #b0b0b0;
+    --link-hover-color: #ccc;
+    --link-selected-color: #fff;
+
+    /* status */
+    --error-color: hsl(0, 80%, 40%);
+    --info-color: hsl(202, 80%, 40%);
+    --warning-color: hsl(39, 80%, 40%);
+    --success-color: hsl(90, 80%, 35%);
+
+    /* accent */
+    --selected-hue: 40;
+    --selected-sat: 60%;
+    --selected-accent-color: hsl(40, 60%, 40%);
+    --selected-text-color: hsl(40, 60%, 45%);
+    --selected-text-hover-color: hsl(40, 60%, 50%);
+
+    /* Sign of "more contrast against the surface" in relative lightness calculations. */
+    --contrast-direction: 1;
+
+    /* sections */
+    --section-process-color-h: 37;
+    --section-process-color-s: 27%;
+    --section-process-color-l: 39%;
+    --section-browse-color-h: 127;
+    --section-browse-color-s: 6%;
+    --section-browse-color-l: 30%;
+    --section-apps-color-h: 310;
+    --section-apps-color-s: 10%;
+    --section-apps-color-l: 23%;
+    --section-terminal-color-h: 221;
+    --section-terminal-color-s: 19%;
+    --section-terminal-color-l: 26%;
+    --section-tasks-color-h: 3;
+    --section-tasks-color-s: 20%;
+    --section-tasks-color-l: 23%;
+    --section-users-color-h: 124;
+    --section-users-color-s: 10%;
+    --section-users-color-l: 20%;
+
+    /* look: lightness offsets */
+    --look-hover-background-l-offset: +3%;
+    --look-hover-border-l-offset: +5%;
+    --look-active-background-l-offset: +1%;
+    --look-active-border-l-offset: +3%;
+    --look-border-l-offset: 2%;
+    --look-transparent-extra-l-offset: 2%;
+
+    /* look: variants */
+    --look-default-h: 40;
+    --look-default-s: 8%;
+    --look-default-l: 20%;
+    --look-default-a: .9;
+    --look-default-text-color: hsla(0, 0%, 80%, 1);
+    --look-default-text-hover-color: hsla(0, 0%, 100%, 1);
+    --look-default-text-dimmed-color: hsla(0, 0%, 50%, 1);
+
+    --look-highlight-h: 40;
+    --look-highlight-s: 60%;
+    --look-highlight-l: 26%;
+    --look-highlight-a: 1;
+    --look-highlight-text-color: hsla(0, 0%, 100%, 1);
+
+    --look-selected-h: 40;
+    --look-selected-s: 60%;
+    --look-selected-l: 20%;
+    --look-selected-a: 1;
+    --look-selected-text-color: hsla(0, 0%, 100%, 1);
+
+    --look-transparent-h: 40;
+    --look-transparent-s: 8%;
+    --look-transparent-l: 20%;
+    --look-transparent-a: .5;
+    --look-transparent-text-color: hsla(0, 0%, 70%, 1);
+    --look-transparent-text-hover-color: hsla(0, 0%, 100%, 1);
+
+    --look-cancel-h: 0;
+    --look-cancel-s: 45%;
+    --look-cancel-l: 33%;
+    --look-cancel-a: 1;
+
+    --look-add-h: 105;
+    --look-add-s: 50%;
+    --look-add-l: 25%;
+    --look-add-a: 1;
+
+    --look-apply-h: 222;
+    --look-apply-s: 44%;
+    --look-apply-l: 37%;
+    --look-apply-a: 1;
+
+    /* text roles */
+    --text-label-color: hsl(0, 0%, 70%);
+    --text-label-hover-color: #e0e0e0;
+    --text-placeholder-color: hsl(0, 0%, 45%);
+    --text-disabled-color: rgb(40%, 40%, 40%);
+    --text-progress-color: #ababab;
+    --tab-text-color: #8a949c;
+    --attention-color: #eebb00;
+    --invalid-color: #e81351;
+    --invalid-background-color: rgba(232, 19, 81, 0.1);
+
+    /* floating surfaces */
+    --floating-background-color: hsla(0, 0%, 0%, .9);
+    --floating-border-color: rgb(51, 51, 51);
+    --modal-backdrop-color: hsla(0, 0%, 5%, .8);
+    --hover-overlay-color: hsla(0, 0%, 0%, .7);
+    --subtle-shade-color: hsla(0, 0%, 0%, .05);
+    --inset-shade-color: hsla(0, 0%, 0%, .3);
+    --stripe-color: hsla(0, 0%, 0%, .1);
+    --press-fill-color: hsla(0, 0%, 100%, .1);
+    --focus-ring-color: hsla(0, 0%, 100%, .6);
+    --scrollbar-track-color: rgba(0, 0, 0, .5);
+    --list-header-background-color: #181818;
+    --list-header-border-color: hsl(0, 0%, 10%);
+    --map-status-background-color: rgba(0, 0, 0, 0.6);
+    --gauge-border-color: #666;
+    --slider-axis-color: hsl(0, 0%, 40%);
+    --busy-indicator-color: #c0c0c0;
+    --busy-indicator-blend-mode: screen;
+    --swatch-border-color: white;
+    --shadow-soft-color: rgba(0, 0, 0, .25);
+    --shadow-medium-color: hsla(0, 0%, 0%, .5);
+
+    /* progress */
+    --progress-track-color: rgba(255, 255, 255, 0.05);
+    --progress-border-color: #444;
+    --auto-dismiss-track-color: #303030;
+    --auto-dismiss-fill-color: #606060;
+
+    /* notifications */
+    --notification-background-hsl: 0, 0%, 0%;
+    --notification-error-color: hsl(0, 60%, 40%);
+    --notification-info-color: hsl(202, 60%, 40%);
+    --notification-warning-color: hsl(39, 60%, 40%);
+    --notification-success-color: hsl(90, 60%, 35%);
+
+    /* section bars */
+    --bar-border-color: hsla(0, 0%, 100%, .2);
+    --top-bar-background-color: hsla(0, 0%, 8%, .7);
+    --bottom-bar-background-color: hsla(0, 0%, 0%, .4);
+
+    /* season select */
+    --season-axis-color: rgb(222, 222, 222);
+    --season-handle-color: rgba(222, 222, 222, 0.32);
+    --season-flag-background-color: rgb(60, 60, 60);
+
+    /* tabs */
+    --tab-default-background-color: hsl(0, 0%, 11%);
+    --tab-selected-background-color: hsl(60, 2%, 16%);
+    --tab-default-background-color-transparent: hsla(0, 0%, 11%, 0);
+    --tab-selected-background-color-transparent: hsla(60, 2%, 16%, 0);
+    --tab-default-border-color: hsl(0, 0%, 30%);
+
+    /* code editor */
+    --code-completion-selected-background-color: hsla(40, 60%, 23%, 1);
+    --code-completion-section-background-color: #000000;
+}
+
+html[data-theme=light] {
+    --text-strong-color: hsl(40, 12%, 8%);
+    --text-header-color: hsl(40, 10%, 13%);
+    --text-color: hsl(40, 7%, 22%);
+    --text-soft-color: hsl(40, 5%, 30%);
+    --text-secondary-color: hsl(40, 5%, 33%);
+    --text-dimmed-color: hsl(40, 4%, 39%);
+    --text-muted-color: hsl(40, 4%, 45%);
+    --text-faint-color: hsl(40, 4%, 52%);
+    --text-on-accent-color: #fff;
+
+    --page-background-color: hsl(40, 12%, 93%);
+    --panel-default-background-color: hsla(40, 22%, 99%, .96);
+    --panel-default-overlay-color: hsla(40, 22%, 99%, .78);
+    --popover-background-color: hsl(40, 16%, 97%);
+    --well-background-color: hsl(40, 8%, 86%);
+    --scrim-color: hsla(40, 20%, 20%, .25);
+    --shadow-color: hsla(40, 25%, 15%, .22);
+
+    --wireframe-color: hsla(40, 12%, 12%, .13);
+    --section-wireframe-color: hsla(40, 12%, 12%, .08);
+    --divider-color: hsla(40, 12%, 12%, .12);
+    --input-border-default-color: hsl(40, 6%, 72%);
+    --input-border-hover-color: hsl(40, 6%, 45%);
+    --input-border-focus-color: hsl(38, 55%, 45%);
+    --handle-idle-color: hsl(40, 5%, 60%);
+    --handle-active-color: hsl(40, 8%, 35%);
+
+    --link-default-color: hsl(40, 5%, 33%);
+    --link-hover-color: hsl(40, 10%, 15%);
+    --link-selected-color: hsl(40, 12%, 8%);
+
+    --error-color: hsl(0, 70%, 42%);
+    --info-color: hsl(202, 80%, 36%);
+    --warning-color: hsl(35, 85%, 34%);
+    --success-color: hsl(95, 65%, 28%);
+
+    --selected-sat: 70%;
+    --selected-accent-color: hsl(38, 75%, 47%);
+    --selected-text-color: hsl(36, 75%, 32%);
+    --selected-text-hover-color: hsl(36, 80%, 26%);
+
+    --contrast-direction: -1;
+
+    --section-process-color-s: 34%;
+    --section-process-color-l: 50%;
+    --section-browse-color-s: 13%;
+    --section-browse-color-l: 45%;
+    --section-apps-color-s: 15%;
+    --section-apps-color-l: 44%;
+    --section-terminal-color-s: 24%;
+    --section-terminal-color-l: 46%;
+    --section-tasks-color-s: 30%;
+    --section-tasks-color-l: 47%;
+    --section-users-color-s: 15%;
+    --section-users-color-l: 40%;
+
+    --look-hover-background-l-offset: -4%;
+    --look-hover-border-l-offset: -9%;
+    --look-active-background-l-offset: -7%;
+    --look-active-border-l-offset: -12%;
+    --look-border-l-offset: -7%;
+    --look-transparent-extra-l-offset: -2%;
+
+    --look-default-s: 16%;
+    --look-default-l: 98%;
+    --look-default-a: .92;
+    --look-default-text-color: hsl(40, 7%, 22%);
+    --look-default-text-hover-color: hsl(40, 12%, 8%);
+    --look-default-text-dimmed-color: hsl(40, 4%, 52%);
+
+    --look-highlight-s: 70%;
+    --look-highlight-l: 85%;
+    --look-highlight-text-color: hsl(34, 65%, 18%);
+
+    --look-selected-s: 65%;
+    --look-selected-l: 79%;
+    --look-selected-text-color: hsl(34, 70%, 14%);
+
+    --look-transparent-s: 20%;
+    --look-transparent-l: 100%;
+    --look-transparent-a: .6;
+    --look-transparent-text-color: hsl(40, 6%, 28%);
+    --look-transparent-text-hover-color: hsl(40, 12%, 8%);
+
+    --look-cancel-s: 55%;
+    --look-cancel-l: 45%;
+
+    --look-add-s: 45%;
+    --look-add-l: 34%;
+
+    --look-apply-s: 50%;
+    --look-apply-l: 45%;
+
+    /* text roles */
+    --text-label-color: hsl(40, 5%, 36%);
+    --text-label-hover-color: hsl(40, 10%, 12%);
+    --text-placeholder-color: hsl(40, 4%, 58%);
+    --text-disabled-color: hsl(40, 4%, 64%);
+    --text-progress-color: hsl(40, 5%, 36%);
+    --tab-text-color: hsl(210, 6%, 44%);
+    --attention-color: hsl(44, 100%, 33%);
+    --invalid-color: hsl(343, 78%, 44%);
+    --invalid-background-color: hsla(343, 78%, 46%, .08);
+
+    /* floating surfaces */
+    --floating-background-color: hsla(40, 20%, 99%, .98);
+    --floating-border-color: hsla(40, 12%, 12%, .14);
+    --modal-backdrop-color: hsla(40, 12%, 25%, .35);
+    --hover-overlay-color: hsla(40, 20%, 97%, .75);
+    --subtle-shade-color: hsla(40, 20%, 20%, .035);
+    --inset-shade-color: hsla(40, 20%, 25%, .07);
+    --stripe-color: hsla(40, 20%, 25%, .04);
+    --press-fill-color: hsla(40, 20%, 10%, .08);
+    --focus-ring-color: hsla(38, 60%, 35%, .7);
+    --scrollbar-track-color: hsla(40, 15%, 30%, .1);
+    --list-header-background-color: hsl(40, 16%, 94%);
+    --list-header-border-color: hsla(40, 12%, 12%, .08);
+    --map-status-background-color: hsla(40, 20%, 98%, .82);
+    --gauge-border-color: hsl(40, 5%, 62%);
+    --slider-axis-color: hsl(40, 5%, 68%);
+    --busy-indicator-color: hsl(38, 45%, 40%);
+    --busy-indicator-blend-mode: multiply;
+    --swatch-border-color: hsla(40, 10%, 10%, .35);
+    --shadow-soft-color: hsla(40, 25%, 15%, .14);
+    --shadow-medium-color: hsla(40, 25%, 15%, .2);
+
+    /* progress */
+    --progress-track-color: hsla(40, 15%, 20%, .06);
+    --progress-border-color: hsla(40, 10%, 10%, .15);
+    --auto-dismiss-track-color: hsl(40, 10%, 90%);
+    --auto-dismiss-fill-color: hsl(40, 6%, 68%);
+
+    /* notifications */
+    --notification-background-hsl: 40, 22%, 99%;
+    --notification-error-color: hsl(0, 62%, 46%);
+    --notification-info-color: hsl(202, 70%, 40%);
+    --notification-warning-color: hsl(36, 80%, 42%);
+    --notification-success-color: hsl(95, 55%, 34%);
+
+    /* section bars */
+    --bar-border-color: hsla(40, 12%, 12%, .12);
+    --top-bar-background-color: hsla(40, 18%, 97%, .82);
+    --bottom-bar-background-color: hsla(40, 18%, 95%, .75);
+
+    /* season select */
+    --season-axis-color: hsl(40, 8%, 25%);
+    --season-handle-color: hsla(40, 8%, 25%, .35);
+    --season-flag-background-color: hsl(40, 14%, 96%);
+
+    /* tabs */
+    --tab-default-background-color: hsl(40, 10%, 88%);
+    --tab-selected-background-color: hsl(40, 22%, 98%);
+    --tab-default-background-color-transparent: hsla(40, 10%, 88%, 0);
+    --tab-selected-background-color-transparent: hsla(40, 22%, 98%, 0);
+    --tab-default-border-color: hsl(40, 6%, 72%);
+
+    /* code editor */
+    --code-completion-selected-background-color: hsl(40, 70%, 84%);
+    --code-completion-section-background-color: hsl(40, 16%, 94%);
+}
+
 html.themeSwitching,
 html.themeSwitching *,
 html.themeSwitching *::before,

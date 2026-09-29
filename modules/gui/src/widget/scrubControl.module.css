@@ -42,6 +42,6 @@
 
 /* app.css resets outline globally with !important, so a focus ring that renders has to outrank it. */
 .control:focus-visible {
-    outline: 1px solid hsla(0, 0%, 100%, .6) !important;
+    outline: 1px solid var(--focus-ring-color) !important;
     outline-offset: 1px;
 }
