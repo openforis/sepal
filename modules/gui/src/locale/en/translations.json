@@ -423,8 +423,7 @@
     "connectivityError": "You are currently unable to connect to the SEPAL server.",
     "versionMismatch": {
       "title": "SEPAL has been updated!",
-      "message": "Please reload your browser to make sure everything works as expected.",
-      "reloadNow": "Reload now"
+      "message": "Please save your work, then reload this page to apply the update."
     },
     "loginSession": {
       "switched": "You're now logged in as {username}"

@@ -393,8 +393,7 @@
     "connectivityError": "",
     "versionMismatch": {
       "title": "",
-      "message": "",
-      "reloadNow": ""
+      "message": ""
     },
     "loginSession": {
       "switched": ""
