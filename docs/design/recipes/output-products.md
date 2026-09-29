@@ -126,7 +126,10 @@ image an observation answers: the running image the producer builds when asked f
 of its pixels, or the catalogue the producer says it can be asked for, whose physical facts the provider then
 supplies from its own declarations. Shared resolution owns graph traversal, role
 validation, acquisition and its deduplication, cancellation, supersession, diagnostics and description validation;
-an answer that depended on anything unavailable is discarded. Declared roles and preservation effects stay data,
+an answer that depended on anything unavailable is discarded. A provider that finds its recipe cannot be described -
+its configuration contradicts itself, or what it read contradicts its configuration - refuses with stated diagnoses
+instead of a candidate. A refusal is definitive: it is kept beside evidence still missing, and it never states what
+only evidence settles. Declared roles and preservation effects stay data,
 because capability resolution reads them without resolving anything. A consumer cannot tell how a description was
 acquired.
 
