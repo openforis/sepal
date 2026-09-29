@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-// Alerts, LandTrendr, BAYTS Historical, BAYTS Alerts, Change Alerts, Radar Mosaic and Planet Mosaic through their real
-// registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
+// Alerts, LandTrendr, BAYTS Historical, BAYTS Alerts, Change Alerts, Radar Mosaic, Planet Mosaic and Time Series through
+// their real registrations, shared declarations, the common read and the generic Retrieve submission. Only the task API and
 // notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -39,6 +39,7 @@ const {default: baytsAlerts} = await import('./baytsAlerts/baytsAlerts')
 const {default: changeAlerts} = await import('./changeAlerts/changeAlerts')
 const {default: radarMosaic} = await import('./radarMosaic/radarMosaic')
 const {default: planetMosaic} = await import('./planetMosaic/planetMosaic')
+const {default: timeSeries} = await import('./timeSeries/timeSeries')
 const {retrieveTask: regressionTask} = await import('./regression/regressionRecipe')
 const {retrieveTask: clusteringTask} = await import('./unsupervisedClassification/unsupervisedClassificationRecipe')
 const {retrieveTask: indexChangeTask} = await import('./indexChange/indexChangeRecipe')
@@ -78,6 +79,7 @@ addRecipeType(baytsAlerts())
 addRecipeType(changeAlerts())
 addRecipeType(radarMosaic())
 addRecipeType(planetMosaic())
+addRecipeType(timeSeries())
 
 beforeEach(() => {
     submitted.length = 0
@@ -765,6 +767,40 @@ describe('a BAYTS Historical', () => {
     })
 })
 
+// A time series has no generic Retrieve: its own panel downloads a measure of its collection, never this image.
+describe('a Time Series', () => {
+    it('is described with its count alone while the recipe its AOI comes from is not even loaded', () => {
+        const {output} = read(timeSeriesOf({aoi: {type: 'RECIPE', id: 'aoi-1'}}))
+
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+        expect(output.bands).toEqual([{name: 'count', dataType: {arrayDimensions: 0}, pyramidingPolicy: 'mean'}])
+    })
+
+    it('is presented with its label and whole counts, and its preset style renders over it', () => {
+        const recipe = timeSeriesOf()
+        const {output} = read(recipe)
+        const styles = recipeVisualizations(recipe, output.availableBands)
+
+        expect(output.presentation.count.label).toBe('process.timeSeries.bands.count')
+        expect(displayTypes(output)).toEqual({count: {precision: 'int'}})
+        expect(renderableVisualizations(styles, output.availableBands))
+            .toEqual([expect.objectContaining({type: 'continuous', bands: ['count'], min: [0], max: [100]})])
+    })
+
+    it('shows its image on the map, whatever its layer saved', () => {
+        expect(layerProduct(timeSeriesOf(), {visualizationType: 'COUNT'})).toEqual({name: 'IMAGE_OUTPUT'})
+    })
+
+    // Reading itself as its own AOI: its count is still known, and cannot be shown.
+    it('is not previewed over dependencies known to be broken', () => {
+        const {output} = read(timeSeriesOf({aoi: {type: 'RECIPE', id: ID}}))
+
+        expect(output.bands.map(({name}) => name)).toEqual(['count'])
+        expect(output.dependencyValidity.status).toBe('INVALID')
+        expect(canPreview(output)).toBe(false)
+    })
+})
+
 describe('a Planet Mosaic', () => {
     it('is described with its spectral bands and indexes, while the recipe its AOI comes from is not even loaded', () => {
         const {output} = read(planetMosaicOf({aoi: {type: 'RECIPE', id: 'aoi-1'}}))
@@ -1100,6 +1136,19 @@ const radarMosaicOf = ({dates = TIME_SCAN_DATES, aoi = AOI} = {}) => ({
     type: 'RADAR_MOSAIC',
     title: 'Radar',
     model: {aoi, dates, options: {orbits: ['ASCENDING', 'DESCENDING']}}
+})
+
+// An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
+const timeSeriesOf = ({aoi = AOI} = {}) => ({
+    id: ID,
+    type: 'TIME_SERIES',
+    title: 'Observations',
+    model: {
+        aoi,
+        dates: {startDate: '2023-01-01', endDate: '2024-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: []}
+    }
 })
 
 const historicalPass = suffix => ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle']

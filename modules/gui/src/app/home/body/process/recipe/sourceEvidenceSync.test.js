@@ -1,6 +1,7 @@
 import {of, Subject, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 // Observing the source a recipe inherits its schema from: what is asked, when it is asked again, and what
 // is done with the answer.
 //
@@ -16,6 +17,12 @@ vi.mock('~/compose', () => ({
 
 const bands$ = vi.fn()
 const assetMetadata$ = vi.fn()
+
+// A recipe type that declares no output, added to the real registry for these tests.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
+    return withUndeclaredType(await importOriginal())
+})
 
 vi.mock('~/apiRegistry', () => ({
     default: {gee: {bands$: (...args) => bands$(...args), assetMetadata$: (...args) => assetMetadata$(...args)}}
@@ -222,8 +229,8 @@ describe('observing a wrapper around another wrapper', () => {
 
     it('still observes the immediate source\'s running image when what it wraps declares no output', () => {
         bands$.mockReturnValue(of([{name: 'count', arrayDimensions: 0}]))
-        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('time-series-1')}}
-        const records = {inner, 'time-series-1': {id: 'time-series-1', type: 'TIME_SERIES', model: {}}}
+        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('undeclared-1')}}
+        const records = {inner, 'undeclared-1': {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}}
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadRecipe$: id => of(records[id])

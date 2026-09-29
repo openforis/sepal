@@ -17,9 +17,10 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, Band Math, BAYTS Alerts, BAYTS Historical, CCDC, CCDC Slice, Change Alerts, Class Change, Classification,
-Index Change, LandTrendr, Masking, Optical Mosaic, Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression,
-Remapping, Stack and Unsupervised Classification declare an `IMAGE_OUTPUT` provider.
+Every recipe type with an image declares an `IMAGE_OUTPUT` provider: Asset, Band Math, BAYTS Alerts, BAYTS Historical,
+CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change, LandTrendr, Masking, Optical Mosaic,
+Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack, Time Series and Unsupervised
+Classification. Sampling Design, which has no image, is the only type without one.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -156,8 +157,12 @@ where a family still needs observation.
      Retrieve still exports all bands to Earth Engine only, and `historicalStatsSource` remains the separate
      capability BAYTS Alerts reads. Each pass is built from that pass's imagery alone; a configured pass without
      scenes in the period keeps its bands, fully masked, and a history none of whose passes has scenes is refused;
-   - Time Series; collection-internal bands wait for
-     [source planning](output-products.md#source-planning-and-collection-composition);
+   - Time Series has migrated ([Time Series](../../recipes/time-series.md)). Its shared type declares one scalar
+     `count`, averaged, with no encoding, whatever its sources, and its Earth Engine catalogue answers it without
+     building the collection. Its map keeps reading `IMAGE_OUTPUT`. Its chart and its SEPAL export are measures of
+     its collection, not bands of this image, and keep their own contracts; collection-internal bands wait for
+     [source planning](output-products.md#source-planning-and-collection-composition). `noImageOutput` still keeps
+     it out of source pickers. Execution builds its count whatever is asked for;
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
      the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
      band takes that input band's dimensionality, pyramiding policy and encoding under its new name, from the input's
@@ -182,7 +187,9 @@ where a family still needs observation.
 4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
    product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
    runtime. Delete the legacy adapter, `noImageOutput` and the registered band authorities; retain the common
-   consumer API. In this packet, also require established dimensionality for every band in a READY description:
+   consumer API. `noImageOutput` decides input eligibility today - it keeps CCDC, Time Series and Sampling Design
+   out of source pickers, CCDC apart from Masking's segments source, though CCDC and Time Series declare images - so
+   its removal needs an explicit eligibility rule that keeps those choices. In this packet, also require established dimensionality for every band in a READY description:
    `dataType.arrayDimensions` is a nonnegative integer (0 for scalar, positive for array), supplied by declaration,
    inheritance or observation. Pending or unsuccessful evidence must not produce a READY answer with unknown
    dimensionality. Tighten description validation and verify the rule for direct and wrapped outputs in GUI and

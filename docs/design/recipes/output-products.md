@@ -979,7 +979,7 @@ matches execution. The execution comparison is a research gate below.
 | Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
 | Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
 | Stack | selected and renamed input bands | mapped source presets | shared declaration from its mapping over its inputs' current descriptions | inherited composition; may be mixed |
-| Time Series | no generic image export established | scalar count map product and chart series | fixed count plus collection helpers | count scalar |
+| Time Series | observation count image | chart series and SEPAL collection export | shared declaration | scalar |
 | Unsupervised Classification | cluster class image | cluster value semantics | shared declaration; model-derived range as presentation | scalar |
 
 ## Detailed findings

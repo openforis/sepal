@@ -1,12 +1,18 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Retrieve over recipe types that declare no output, through their real registrations: the session's records, the
-// shared graph, the common read and its legacy seam, the decision and the generic submitter. A legacy answer names
+import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
+// Retrieve over a recipe type that declares no output, added to the shared and GUI registries for these tests: the
+// session's records, the shared graph, the common read and its legacy seam, the decision and the generic submitter. A legacy answer names
 // the bands a type supplies and nothing more - it sends no policy, so Earth Engine's own default applies, it restricts
 // no destination, and it never stands in for dependencies not known to be sound. Only the task API and notifications
 // are replaced; the terminal a Retrieve panel's acquisition would retain is supplied where a scenario needs one.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
+// A recipe type that declares no output, added to the real registry for these tests.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
+    return withUndeclaredType(await importOriginal())
+})
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
@@ -28,11 +34,11 @@ vi.mock('~/apiRegistry', () => ({
 }))
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
-const {default: timeSeries} = await import('./timeSeries/timeSeries')
-const {getAvailableBands: timeSeriesBands} = await import('./timeSeries/bands')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
 
-addRecipeType(timeSeries())
+const LEGACY_BANDS = {count: {dataType: {precision: 'int'}, label: 'Count'}}
+
+addRecipeType({id: UNDECLARED_TYPE, getAvailableBands: () => LEGACY_BANDS, getPreSetVisualizations: () => []})
 
 beforeEach(() => {
     submitted.length = 0
@@ -41,21 +47,21 @@ beforeEach(() => {
 
 describe('a recipe type declaring no output', () => {
     it('exports the bands it supplies with no policy, leaving Earth Engine\'s own default to apply', () => {
-        retrieve(read([TIME_SERIES]), {destination: 'GEE', bands: ['count']})
+        retrieve(read([UNDECLARED]), {destination: 'GEE', bands: ['count']})
 
         expect(submitted.map(({params: {image}}) => image.bands)).toEqual([{selection: ['count']}])
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
     })
 
     it('restricts no destination, stating no physical fact about its bands', () => {
-        const {recipe, output, pending} = read([TIME_SERIES])
+        const {recipe, output, pending} = read([UNDECLARED])
 
         expect(retrieveDecision({recipe, output, pending, names: ['count'], destination: 'DRIVE'}))
             .toEqual(expect.objectContaining({status: 'RETRIEVABLE', destinations: {GEE: true, DRIVE: true, SEPAL: true}}))
     })
 
     it('names a saved band it does not supply, and exports nothing', () => {
-        retrieve(read([TIME_SERIES]), {destination: 'GEE', bands: ['count', 'observations']})
+        retrieve(read([UNDECLARED]), {destination: 'GEE', bands: ['count', 'observations']})
 
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
@@ -64,9 +70,9 @@ describe('a recipe type declaring no output', () => {
 
 describe('"all bands" of a recipe type declaring no output', () => {
     it('exports every band the type supplies', () => {
-        retrieve(read([TIME_SERIES]), {destination: 'GEE', useAllBands: true})
+        retrieve(read([UNDECLARED]), {destination: 'GEE', useAllBands: true})
 
-        expect(submitted[0].params.image.bands.selection).toEqual(Object.keys(timeSeriesBands(TIME_SERIES)))
+        expect(submitted[0].params.image.bands.selection).toEqual(Object.keys(LEGACY_BANDS))
     })
 })
 
@@ -99,16 +105,16 @@ describe('a recipe type declaring no output, over a dependency the session has n
 })
 
 // A type with no Retrieve panel of its own, so nothing here names a task; its legacy entry supplies `count`.
-const TIME_SERIES = {
-    id: 'time-series-1',
-    type: 'TIME_SERIES',
+const UNDECLARED = {
+    id: 'undeclared-1',
+    type: UNDECLARED_TYPE,
     title: 'Observations',
     model: {dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}
 }
 
 const OVER_UNLOADED_AOI = {
-    ...TIME_SERIES,
-    model: {...TIME_SERIES.model, aoi: {type: 'RECIPE', id: 'aoi-recipe-1'}}
+    ...UNDECLARED,
+    model: {...UNDECLARED.model, aoi: {type: 'RECIPE', id: 'aoi-recipe-1'}}
 }
 
 // The read a panel would make of the first recipe, with the others loaded beside it, retaining `held` if given.

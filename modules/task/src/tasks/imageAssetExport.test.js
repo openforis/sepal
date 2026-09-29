@@ -1,6 +1,8 @@
 import {jest} from '@jest/globals'
 import {lastValueFrom, of, throwError} from 'rxjs'
 
+import {UNDECLARED_TYPE, withUndeclaredType} from '#sepal/testSupport/recipe/undeclaredRecipeType'
+
 // Recipe reads, image construction, Earth Engine evaluation and the exporter are substituted. Resolution,
 // declarations and the band evidence expressions are the real ones. What the export establishes is the facts it
 // hands the exporter; how those are stored as metadata belongs to the exporter and is covered with it.
@@ -293,6 +295,33 @@ describe('exporting a BAYTS Historical', () => {
     })
 })
 
+describe('exporting a Time Series', () => {
+    const timeSeries = model => ({id: 'time-series-1', type: 'TIME_SERIES', model})
+    const configured = {
+        aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+        dates: {startDate: '2023-01-01', endDate: '2024-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: []}
+    }
+
+    it('records that nothing is known about its count, reading no other recipe', async () => {
+        const recipe = timeSeries(configured)
+
+        const {bandEncoding, image} = await submit({recipe, bands: ['count']})
+
+        expect(image).toEqual({builtFrom: recipe.id})
+        expect(bandEncoding).toEqual({})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('fails the export when the recipe its area of interest comes from cannot be read', async () => {
+        const recipe = timeSeries({...configured, aoi: {type: 'RECIPE', id: 'unreadable'}})
+
+        await expect(submit({recipe, bands: ['count']})).rejects.toThrow()
+        expect(state.exported).toEqual([])
+    })
+})
+
 // A Stack's bands are its inputs' bands under the names its mapping gives them, so what is recorded for a band is keyed
 // by that name.
 describe('exporting a Stack', () => {
@@ -301,7 +330,7 @@ describe('exporting a Stack', () => {
         imageId,
         bands: pairs.map(([originalName, outputName], index) => ({id: `${imageId}-${index}`, originalName, outputName}))
     })
-    const TIME_SERIES = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
+    const UNDECLARED_SOURCE = {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}
 
     it('records each band\'s encoding under the name it is renamed to', async () => {
         const mosaic = landsatMosaic()
@@ -317,8 +346,8 @@ describe('exporting a Stack', () => {
     })
 
     it('exports over an input that declares no output as before, stating that nothing is known about its values', async () => {
-        state.catalogue = {[TIME_SERIES.id]: TIME_SERIES}
-        const recipe = stack([{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}], [mapping('i-1', [['count', 'observations']])])
+        state.catalogue = {[UNDECLARED_SOURCE.id]: UNDECLARED_SOURCE}
+        const recipe = stack([{imageId: 'i-1', type: 'RECIPE_REF', id: UNDECLARED_SOURCE.id}], [mapping('i-1', [['count', 'observations']])])
 
         const {bandEncoding} = await submit({recipe, bands: ['observations']})
 
@@ -326,9 +355,9 @@ describe('exporting a Stack', () => {
     })
 
     it('fails the export for two output bands named alike, beside an input that declares no output', async () => {
-        state.catalogue = {[TIME_SERIES.id]: TIME_SERIES}
+        state.catalogue = {[UNDECLARED_SOURCE.id]: UNDECLARED_SOURCE}
         const recipe = stack(
-            [{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}, {imageId: 'i-2', type: 'RECIPE_REF', id: TIME_SERIES.id}],
+            [{imageId: 'i-1', type: 'RECIPE_REF', id: UNDECLARED_SOURCE.id}, {imageId: 'i-2', type: 'RECIPE_REF', id: UNDECLARED_SOURCE.id}],
             [mapping('i-1', [['count', 'x']]), mapping('i-2', [['count', 'x']])]
         )
 
@@ -339,7 +368,7 @@ describe('exporting a Stack', () => {
 
 describe('exporting a recipe type that declares no output', () => {
     it('exports as before, stating that nothing is known about its values', async () => {
-        const recipe = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
+        const recipe = {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}
 
         const {bandEncoding, image} = await submit({recipe, bands: ['count']})
 
@@ -349,9 +378,9 @@ describe('exporting a recipe type that declares no output', () => {
     })
 
     it('exports a recipe preserving such a type as unknown rather than failing', async () => {
-        const timeSeries = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
-        const recipe = masking({primary: {type: 'RECIPE_REF', id: timeSeries.id}})
-        state.catalogue = {[timeSeries.id]: timeSeries}
+        const undeclared = {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: undeclared.id}})
+        state.catalogue = {[undeclared.id]: undeclared}
 
         const {bandEncoding} = await submit({recipe, bands: ['count']})
 
@@ -403,8 +432,8 @@ describe('a recipe whose dependencies are not structurally sound', () => {
     })
 
     it('fails the export rather than record unknown encoding for a source that declares no output', async () => {
-        state.catalogue = {'time-series-1': {id: 'time-series-1', type: 'TIME_SERIES', model: {}}}
-        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'time-series-1'}, mask: selfMask})
+        state.catalogue = {'undeclared-1': {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'undeclared-1'}, mask: selfMask})
 
         await expect(submit({recipe, bands: ['count']})).rejects.toThrow(/CYCLIC_DEPENDENCY/)
         expect(state.exported).toEqual([])
@@ -476,6 +505,10 @@ const collection = ({bands, properties}) => ({
         throw new Error('mosaicked the whole collection')
     }
 })
+
+// A recipe type that declares no output, added to the real registry for these tests.
+const registry = await import('#sepal/recipe/recipeTypeRegistry')
+jest.unstable_mockModule('#sepal/recipe/recipeTypeRegistry', () => withUndeclaredType(registry))
 
 jest.unstable_mockModule('#sepal/ee/ee', () => ({
     default: {

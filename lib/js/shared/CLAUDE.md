@@ -41,6 +41,9 @@ and test-support modules are exempt.
 - `testSupport/db/faultyConnection.js` — `failingDb(db, {when, error})` fails the first statement matching
   `when(sql, params)` in each decorated callback, leaving real MySQL and the production transaction handling
   in place.
+- `testSupport/recipe/undeclaredRecipeType.js` — `withUndeclaredType(registry)` adds `UNDECLARED_TYPE`, a recipe
+  type that declares no image output and depends on its AOI, to the real recipe-type registry's exports, for a test
+  of what still happens to such a type. Mock `#sepal/recipe/recipeTypeRegistry` with it.
 
 ## Constraints
 

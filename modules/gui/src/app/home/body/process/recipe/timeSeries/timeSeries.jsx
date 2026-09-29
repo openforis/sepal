@@ -11,7 +11,7 @@ import {Notifications} from '~/widget/notifications'
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
 import {defaultModel, RecipeActions} from './timeSeriesRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -85,11 +85,13 @@ export default () => ({
     components: {
         recipe: TimeSeries
     },
+    // Keeps a time series out of other recipes' source pickers. It says nothing of its image: that is declared, and
+    // its map shows it.
     noImageOutput: true,
     getDateRange: recipe => [
         moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
         moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
     ],
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

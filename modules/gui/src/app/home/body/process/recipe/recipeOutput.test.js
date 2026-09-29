@@ -1,11 +1,12 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
+import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 
 // The synchronous read, over graphs the real builder produces and the real shared declarations: Optical Mosaic
-// describes from its model, Masking preserves its primary input, CCDC observes what it can be asked for, and
-// Band Math declares nothing. Only the GUI registry is replaced, by the entries each type registers: legacy
-// helpers, map products and band presentation.
+// describes from its model, Masking preserves its primary input, CCDC observes what it can be asked for, and a type
+// added to the shared registry for these tests declares nothing. Only the GUI registry is replaced, by the entries
+// each type registers: legacy helpers, map products and band presentation.
 //
 // Statuses, authorities and codes are literals, so a production rename cannot pass unnoticed.
 
@@ -13,15 +14,22 @@ const registered = vi.hoisted(() => ({maskingEvidence: 'OBSERVED'}))
 
 vi.mock('~/translate', () => ({msg: key => key}))
 
+// A recipe type that declares no output, added to the real registry for these tests.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
+    return withUndeclaredType(await importOriginal())
+})
+
 vi.mock('../recipeTypeRegistry', async () => {
     const {bandPresentation: ccdcPresentation, mapProducts: ccdcProducts} = await import('./ccdc/bands')
+    const {UNDECLARED_TYPE} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
     return {getRecipeType: type => ({
         MOSAIC: {
             bandPresentation: () => ({
                 blue: {dataType: {precision: 'int', min: -10000, max: 10000}, tooltip: 'Blue'}
             })
         },
-        TIME_SERIES: {
+        [UNDECLARED_TYPE]: {
             getAvailableBands: () => ({count: {dataType: {precision: 'int'}, label: 'Count'}})
         },
         MASKING: {
@@ -97,7 +105,7 @@ describe('an answer from the session alone', () => {
 
 describe('a legacy answer', () => {
     it('passes an undeclared type\'s helper through as names, its data type as display only', () => {
-        const recipe = timeSeries()
+        const recipe = undeclared()
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe])})
 
@@ -106,9 +114,9 @@ describe('a legacy answer', () => {
     })
 
     it('answers a declared wrapper over an undeclared source from the wrapper\'s own helper', () => {
-        const recipe = masking({primary: 'time-series-1'})
+        const recipe = masking({primary: 'undeclared-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, timeSeries()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, undeclared()])})
 
         expect(read).toMatchObject({status: 'READY', authority: 'LEGACY'})
         expect(read.availableBands).toEqual({class: {dataType: {arrayDimensions: 0}}})
@@ -116,9 +124,9 @@ describe('a legacy answer', () => {
 
     it('is never taken from evidence that could not be had', () => {
         registered.maskingEvidence = 'UNAVAILABLE'
-        const recipe = masking({primary: 'time-series-1'})
+        const recipe = masking({primary: 'undeclared-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, timeSeries()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, undeclared()])})
         registered.maskingEvidence = 'OBSERVED'
 
         expect(read).toMatchObject({status: 'UNAVAILABLE', authority: null, bands: [], acquisition: null})
@@ -129,7 +137,7 @@ describe('a map product', () => {
     it('is named from the layer config, and an unknown value is no product at all', () => {
         expect(layerProduct(ccdc(), {visualizationType: 'COUNT'})).toEqual({name: 'COUNT'})
         expect(layerProduct(ccdc(), {visualizationType: 'SEGMENTS'})).toBeNull()
-        expect(layerProduct(timeSeries(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
+        expect(layerProduct(undeclared(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
     })
 
     // A layer whose form has not yet written its defaults shows the same product it will show once it has, and
@@ -274,7 +282,7 @@ describe('a retained description', () => {
 describe('whether a retained terminal is about the records held now', () => {
     it('holds while every record it read that the session also holds is unchanged', () => {
         const recipe = masking({primary: 'mosaic-1'})
-        const basis = [recipe, mosaic(), timeSeries()].map(record => ({id: record.id, content: recipeContent(record)}))
+        const basis = [recipe, mosaic(), undeclared()].map(record => ({id: record.id, content: recipeContent(record)}))
 
         expect(compatibleBasis(basis, graphOf([{...recipe, title: 'Renamed', revision: 9}, mosaic()]))).toBe(true)
     })
@@ -310,7 +318,7 @@ const masking = ({primary, mask}) => ({
     }
 })
 
-const timeSeries = () => ({id: 'time-series-1', type: 'TIME_SERIES', model: {}})
+const undeclared = () => ({id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}})
 
 const ccdc = (model = {}) => ({id: 'ccdc-1', type: 'CCDC', model})
 

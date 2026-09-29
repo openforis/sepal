@@ -1,11 +1,18 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 // Stack and Masking over it through their real registrations, shared declarations, the common read and the generic
 // Retrieve submission. What an acquisition would retain is resolved by the shared resolver from observations of the
 // assets stacked; only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
+// A recipe type that declares no output, added to the real registry for these tests.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
+    return withUndeclaredType(await importOriginal())
+})
+
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
@@ -96,7 +103,7 @@ const ASSET_BANDS = {
     [SEGMENTS.id]: [{name: 'coefs', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'}]
 }
 
-const TIME_SERIES = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
+const UNDECLARED = {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}
 
 const stackOf = (id, images, bandNames) => ({id, type: 'STACK', title: 'Stacked', model: {inputImagery: {images}, bandNames: {bandNames}}})
 
@@ -118,16 +125,16 @@ const MASKING = {
 }
 
 const OVER_UNDECLARED = stackOf('stack-2',
-    [{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}],
+    [{imageId: 'i-1', type: 'RECIPE_REF', id: UNDECLARED.id}],
     [mapping('i-1', [['count', 'observations']])]
 )
 
 const DUPLICATED_OVER_UNDECLARED = stackOf('stack-3',
-    [{imageId: 'i-1', type: 'RECIPE_REF', id: TIME_SERIES.id}, {imageId: 'i-2', ...DEM}],
+    [{imageId: 'i-1', type: 'RECIPE_REF', id: UNDECLARED.id}, {imageId: 'i-2', ...DEM}],
     [mapping('i-1', [['count', 'x']]), mapping('i-2', [['elevation', 'x']])]
 )
 
-const RECORDS = Object.fromEntries([OVER_ASSETS, MASKING, OVER_UNDECLARED, DUPLICATED_OVER_UNDECLARED, TIME_SERIES]
+const RECORDS = Object.fromEntries([OVER_ASSETS, MASKING, OVER_UNDECLARED, DUPLICATED_OVER_UNDECLARED, UNDECLARED]
     .map(record => [record.id, record]))
 
 // A recipe's read as the session holds it, with what its acquisition would retain once the assets it stacks are

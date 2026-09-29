@@ -1,5 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
+
 import {createRecipeImageOutputObserver} from './imageOutputObserver'
 
 // The GUI binding, exercised directly. Only the Earth Engine boundary is replaced: the shared graph builder,
@@ -17,6 +19,12 @@ const state = vi.hoisted(() => ({
     subscribed: [],
     torndown: []
 }))
+
+// A recipe type that declares no output, added to the real registry for these tests.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
+    return withUndeclaredType(await importOriginal())
+})
 
 vi.mock('~/apiRegistry', async () => {
     const {Observable} = await import('rxjs')
@@ -276,14 +284,14 @@ describe('classifying what the session cannot answer', () => {
     // The coexistence boundary for the Retrieve migration: falling back is allowed only when a recipe type
     // has declared no output, never because a migrated recipe is invalid or its evidence is pending.
     it('reports a registered but unmigrated recipe type as invalid, observing nothing', () => {
-        const root = {id: 'time-series-1', type: 'TIME_SERIES', model: {}}
+        const root = {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
         expect(state.calls).toEqual([])
         expect(latest(states)).toEqual(envelope({
             status: 'INVALID',
-            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['time-series-1']}]
+            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['undeclared-1']}]
         }))
     })
 })
