@@ -70,7 +70,7 @@ class _UserSessions extends React.Component {
                 <Panel.Header
                     icon='server'
                     title={msg('user.report.sessions.title')}
-                    label={msg('user.report.sessions.active', {count: sessions?.length ?? 0})}/>
+                    label={sessions?.length ? msg('user.report.sessions.active', {count: sessions.length}) : null}/>
                 <Panel.Content>
                     <UserSessionList stoppingAll={stream('STOP_ALL_USER_SESSIONS').active}/>
                 </Panel.Content>

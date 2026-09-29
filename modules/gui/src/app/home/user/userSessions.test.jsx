@@ -110,6 +110,10 @@ describe('the sessions panel', () => {
         expect(container.querySelector('h1 .label').textContent).toBe('2 active')
     })
 
+    it('shows no count when no session is active', () => {
+        expect(render().querySelector('h1 .label').textContent).toBe('')
+    })
+
     it('shows the selected session for editing instead of the list', () => {
         const container = render({selectedSessionId: 's1'})
 
