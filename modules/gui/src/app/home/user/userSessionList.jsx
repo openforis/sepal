@@ -37,9 +37,10 @@ class _UserSessionList extends React.Component {
         )
     }
 
+    // While Stop all runs, every session is on its way out, so none of them can be used either.
     isStoppingSession(session) {
-        const {stream} = this.props
-        return stream('STOP_USER_SESSION_' + session.id).active
+        const {stoppingAll, stream} = this.props
+        return stoppingAll || stream('STOP_USER_SESSION_' + session.id).active
     }
 
     selectSession(session) {

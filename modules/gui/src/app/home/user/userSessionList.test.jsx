@@ -56,14 +56,14 @@ describe('the session list', () => {
 
     // connect() is mocked away, so the stream prop it would inject is stubbed here: a name is
     // active while its session is being stopped, nothing else is.
-    const render = (sessions, {stopping = []} = {}) => {
+    const render = (sessions, {stopping = [], stoppingAll = false} = {}) => {
         const stream = name => ({active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)})
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <UserSessionList sessions={sessions} stream={stream}/>
+                <UserSessionList sessions={sessions} stoppingAll={stoppingAll} stream={stream}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -233,6 +233,13 @@ describe('the session list', () => {
         const row = container.querySelector('.session')
         expect(row.dataset.editDisabled).toBe('true')
         expect(row.dataset.removePending).toBe('true')
+    })
+
+    it('disables every session while they are all being stopped', () => {
+        const container = render([session({id: 's1'}), session({id: 's2'})], {stoppingAll: true})
+        const rows = [...container.querySelectorAll('.session')]
+        expect(rows.map(({dataset}) => [dataset.editDisabled, dataset.copyDisabled, dataset.removePending]))
+            .toEqual([['true', 'true', 'true'], ['true', 'true', 'true']])
     })
 
     it('leaves the other sessions active while one is being stopped', () => {

@@ -71,7 +71,7 @@ class _UserSessions extends React.Component {
                     title={msg('user.report.sessions.title')}
                     label={msg('user.report.sessions.active', {count: sessions?.length ?? 0})}/>
                 <Panel.Content>
-                    <UserSessionList/>
+                    <UserSessionList stoppingAll={stream('STOP_ALL_USER_SESSIONS').active}/>
                 </Panel.Content>
                 <Panel.Buttons>
                     <Panel.Buttons.Main>

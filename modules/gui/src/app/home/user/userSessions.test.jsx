@@ -15,7 +15,9 @@ vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/user', () => ({startCurrentUserSession$: vi.fn(), stopCurrentUserSession$: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 vi.mock('~/widget/sessionMonitor', () => ({refreshSessions: vi.fn()}))
-vi.mock('./userSessionList', () => ({UserSessionList: () => <div className='list'/>}))
+vi.mock('./userSessionList', () => ({
+    UserSessionList: ({stoppingAll}) => <div className='list' data-stopping-all={String(stoppingAll)}/>
+}))
 vi.mock('./userSession', () => ({UserSession: () => <div className='session-editor'/>}))
 // Confirms at once; what it would ask is on the element, for the confirmation tests to read.
 vi.mock('~/widget/modalConfirmationButton', () => ({
@@ -214,6 +216,13 @@ describe('the sessions panel', () => {
             const container = render({sessions: [humbleRobin], stopping: true})
 
             expect(container.querySelector('.stop-all').dataset.busy).toBe('true')
+        })
+
+        // Nothing on an instance that is on its way out may be used.
+        it('tells the list, so no session can be used meanwhile', () => {
+            const container = render({sessions: [humbleRobin], stopping: true})
+
+            expect(container.querySelector('.list').dataset.stoppingAll).toBe('true')
         })
     })
 })
