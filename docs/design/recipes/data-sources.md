@@ -159,7 +159,14 @@ where a family still needs observation.
 4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
    product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
    runtime. Delete the legacy adapter, `noImageOutput` and the registered band authorities; retain the common
-   consumer API. Labels, tooltips, groups and display ranges remain GUI presentation.
+   consumer API. In this packet, also require established dimensionality for every band in a READY description:
+   `dataType.arrayDimensions` is a nonnegative integer (0 for scalar, positive for array), supplied by declaration,
+   inheritance or observation. Pending or unsuccessful evidence must not produce a READY answer with unknown
+   dimensionality. Tighten description validation and verify the rule for direct and wrapped outputs in GUI and
+   Task, then remove the visualization picker and editor's temporary allowance for unknown dimensionality.
+   Empty outputs remain valid; internal catalogue observations may still contain names alone if the provider
+   establishes dimensionality before publishing the description. Encoding, units and meaning can remain unknown.
+   Labels, tooltips, groups and display ranges remain GUI presentation.
 
 Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
 helper. Verification distinguishes the public bands available to request, the image built with no selection, and
@@ -283,11 +290,40 @@ Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 
 its origin has not been investigated, and whether it is a regression is not established. Investigate the error
 presentation separately.
 
+**Geometry reads during incomplete input editing.** A Stack remove-all/add-again sequence exposed a geometry request
+with no first input, causing `imageFactory` to read `.type` from undefined. The unguarded first-input access predates
+the output migration. Band Math, Remapping, Classification, Regression and Unsupervised Classification have similar
+geometry access patterns; their browser behavior has not been reproduced. Investigate as a bounded shared follow-up
+after the declaration migrations, provided valid configured recipes recover; a persistent failure with valid inputs
+or a migration regression should be addressed sooner. Reproduce the empty-to-populated transition, withhold geometry
+requests for incomplete input configurations, and prevent superseded responses from updating the map. At the execution
+boundary, reject missing or malformed image references with a stated diagnosis rather than a TypeError. A factory
+guard improves diagnostics but does not replace request-lifecycle handling. Keep this separate from schema availability
+and align it with the execution-requirements contract; it need not implement the whole requirements system.
+
 **CCDC breakpoint selection while switching data sets.** The Sources panel clears selected breakpoint bands
 when the data-set selection becomes empty: `Form.Buttons` prunes against the empty options even while disabled.
 Preserve the selection through that incomplete editing state, then reconcile against the next configured
 data sets. Switching Landsat 8 → none → Sentinel-2 must retain NDVI; a band unsupported by the new data sets
 should be removed once their options are established. Applying with no data sets must remain blocked.
+
+**Stack generated band names and explicit overrides.** A separate naming packet, not part of the output-declaration
+migration. Stack currently stores generated names and user overrides together as `outputName`: removing the first of
+two classifications leaves the remaining automatic names suffixed with `_1`. Separate generated defaults from optional
+overrides, showing the effective default as the input placeholder. Clearing an override returns to automatic naming;
+an empty override is valid when its effective name is valid. Recompute defaults when the input configuration changes,
+not on panel opening or evidence refresh. Reserve explicit names first, then allocate unique defaults in Stack order.
+Two explicit names that collide must fail validation rather than being silently renamed. Preserve overrides by image
+and band identity across input edits. Use one shared effective-name rule for description, execution and GUI consumers.
+
+Existing saved names have no provenance: preserve them as explicit names rather than guessing whether a suffix was
+generated; clearing one opts it into automatic naming. Recomputed defaults change the output schema. Keep Stack-owned
+styles and selections attached to the same source-band identity where possible, and never silently rebind them to a
+different source that acquires the old name. Downstream name-based references require the existing missing-band
+handling; do not rewrite dependent recipes automatically. Band Math already distinguishes defaults and overrides,
+but its removal handlers do not consistently recompute defaults, so reuse the concept rather than copying its logic.
+Acceptance covers adding two same-named sources, deleting the first, reordering inputs, preserving explicit overrides,
+clearing an override, duplicate validation, saved-model compatibility and references affected by an automatic rename.
 
 **Default colors for large categorical legends.** Replace the shared default-color overflow behavior, which
 assigns the last of 20 palette colors to every further entry. Class Change can need many more colors: seven
@@ -296,6 +332,12 @@ to distribute default colors across the complete legend instead of adding a reci
 Use entry position and total count, not category values, and account for Class Change's one-based codes skipping
 the first color. Preserve saved and user-edited colors. Check categorical distinguishability at larger counts;
 interpolation avoids a repeated final color but does not guarantee that every category is easy to distinguish.
+
+**Asset-layer visualization selection.** A standalone asset map layer (`assetImageLayer.jsx`) keeps a saved selection
+its asset no longer offers even when other styles are available, so it draws nothing, while recipe layers replace such
+a selection with the first candidate ([selection behavior](visualizations.md#selection-behavior)). Apply the same rule
+through the asset layer's own evidence lifecycle: reconcile only against a successful, current metadata read, keep the
+selection while a read is pending or failed or offers nothing, and never delete a user style.
 
 ## Scope and constraints
 

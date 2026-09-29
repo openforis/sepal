@@ -111,6 +111,13 @@ A declaration states how a product is derived. A resolved description is the res
 runtime evidence. A declaration can provide useful guarantees before exact band names are known; a description owns
 the final ordered bands.
 
+During migration, a description may omit a band's dimensionality. The target at the
+[mandatory-declaration step](data-sources.md) is stricter: every band in a READY description has an established
+`dataType.arrayDimensions` (0 for scalar, a positive integer for array). Declaration, inheritance or observation
+must establish it; waiting for or failing to obtain that evidence must not publish an unknown-dimensionality READY
+answer. A names-only catalogue observation remains useful internally when the provider supplies the physical shape.
+An empty output is still valid. This requirement does not make encoding, units or semantic meaning mandatory.
+
 A recipe type's image-output provider answers one consumer-facing question: which bands does this configured recipe
 provide, and what is established about them? The type owns how that answer is obtained:
 

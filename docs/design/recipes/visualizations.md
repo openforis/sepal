@@ -177,6 +177,9 @@ offer visualizations whose complete referenced-band set is scalar. Positively ob
 definitive; unknown dimensionality remains an evidence gap during migration and must not be relabelled as scalar.
 The visualization editor applies the same physical filter to its band choices. Known array bands are excluded,
 and Add visualization is disabled when no eligible band remains. This does not remove bands from Retrieve.
+The temporary allowance for unknown dimensionality ends at the
+[mandatory-declaration step](data-sources.md), when every READY band must have established scalar or array shape.
+That step tightens description validation and removes the allowance from both visualization matching and the editor.
 
 No positional remapping is allowed. Reordering an upstream image must not change a saved style's meaning.
 
