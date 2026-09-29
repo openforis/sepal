@@ -4,11 +4,11 @@ import React from 'react'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {THEME_PREFERENCES, themeManager} from '~/theme'
+import {withThemePreference} from '~/themeHooks'
 import {msg} from '~/translate'
 import {logout$} from '~/user'
 import {withActivators} from '~/widget/activation/activator'
 import {ButtonSelect} from '~/widget/buttonSelect'
-import {withThemePreference} from '~/withThemePreference'
 
 class _UserMenuButton extends React.Component {
     render() {

@@ -2,7 +2,7 @@ import {importLibrary, setOptions} from '@googlemaps/js-api-loader'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {BehaviorSubject, debounceTime, distinctUntilChanged, filter, forkJoin, from, map, merge, of, Subject, switchMap, zip} from 'rxjs'
+import {BehaviorSubject, debounceTime, distinctUntilChanged, filter, forkJoin, from, map, merge, of, skip, Subject, switchMap, zip} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
@@ -11,6 +11,7 @@ import {withContext} from '~/context'
 import {getLogger} from '~/log'
 import {withSubscriptions} from '~/subscription'
 import {mapTag, mapViewTag} from '~/tag'
+import {themeManager} from '~/theme'
 import {uuid} from '~/uuid'
 
 import {SepalMap} from './sepalMap'
@@ -25,6 +26,10 @@ const GOOGLE_MAPS_LIBRARIES = ['core', 'geocoding', 'marker', 'places']
 const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
+const STYLED_MAP_TYPE_OPTIONS = {
+    name: 'map',
+    maxZoom: MAX_ZOOM
+}
 
 const Context = React.createContext()
 
@@ -43,6 +48,7 @@ class _Maps extends React.Component {
         super(props)
         this.createGoogleMap = this.createGoogleMap.bind(this)
         this.createSepalMap = this.createSepalMap.bind(this)
+        this.followTheme = this.followTheme.bind(this)
         this.createMapContext = this.createMapContext.bind(this)
         this.initialize()
     }
@@ -97,18 +103,11 @@ class _Maps extends React.Component {
         this.setState({error})
     }
 
-    getStyleOptions(style = 'sepalStyle') {
+    getStyleOptions(style = 'sepalStyle', theme = themeManager.theme) {
         // https://developers.google.com/maps/documentation/javascript/style-reference
         switch (style) {
             case 'sepalStyle':
-                return [
-                    {stylers: [{visibility: 'simplified'}]},
-                    {stylers: [{color: '#131314'}]},
-                    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-                    {featureType: 'poi', stylers: [{visibility: 'off'}]},
-                    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-                    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-                ]
+                return theme === 'light' ? LIGHT_BASE_STYLE : DARK_BASE_STYLE
             case 'overlayStyle':
                 return [
                     {stylers: [{visibility: 'off'}]}
@@ -141,18 +140,23 @@ class _Maps extends React.Component {
         }
 
         const googleMap = new google.maps.Map(mapElement, mapOptions)
-
-        const styledMapTypeStyles = this.getStyleOptions(style)
-        const styledMapTypeOptions = {
-            name: 'map',
-            maxZoom: MAX_ZOOM
-        }
-        const styledMapType = new google.maps.StyledMapType(styledMapTypeStyles, styledMapTypeOptions)
-
-        googleMap.mapTypes.set('style', styledMapType)
-        googleMap.setMapTypeId('style')
-
+        this.applyStyle(googleMap, style, themeManager.theme)
         return googleMap
+    }
+
+    // The caller owns the returned subscription: it ends with the map, not with this component.
+    followTheme(googleMap, style = 'sepalStyle') {
+        return themeManager.theme$.pipe(
+            skip(1)
+        ).subscribe(
+            theme => this.applyStyle(googleMap, style, theme)
+        )
+    }
+
+    applyStyle(googleMap, style, theme) {
+        const {google: {google}} = this.state
+        googleMap.mapTypes.set('style', new google.maps.StyledMapType(this.getStyleOptions(style, theme), STYLED_MAP_TYPE_OPTIONS))
+        googleMap.setMapTypeId('style')
     }
 
     createSepalMap({element, options, style, renderingEnabled$, renderingStatus$}) {
@@ -242,6 +246,7 @@ class _Maps extends React.Component {
             <Context.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
+                followTheme: this.followTheme,
                 createMapContext: this.createMapContext
             }}>
                 {children(initialized, error)}
@@ -271,6 +276,24 @@ export const Maps = compose(
     connect(),
     withSubscriptions()
 )
+
+const DARK_BASE_STYLE = [
+    {stylers: [{visibility: 'simplified'}]},
+    {stylers: [{color: '#131314'}]},
+    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+    {featureType: 'poi', stylers: [{visibility: 'off'}]},
+    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+]
+
+const LIGHT_BASE_STYLE = [
+    {stylers: [{visibility: 'simplified'}]},
+    {stylers: [{color: '#e9e6df'}]},
+    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+    {featureType: 'poi', stylers: [{visibility: 'off'}]},
+    {featureType: 'water', stylers: [{color: '#cdd5da'}]},
+    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}]}
+]
 
 Maps.propTypes = {
     children: PropTypes.any.isRequired,

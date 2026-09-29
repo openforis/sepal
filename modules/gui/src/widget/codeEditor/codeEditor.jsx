@@ -2,11 +2,13 @@ import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, co
 import {defaultKeymap, history, historyKeymap} from '@codemirror/commands'
 import {javascript} from '@codemirror/lang-javascript'
 import {forEachDiagnostic, linter, lintKeymap} from '@codemirror/lint'
-import {EditorState} from '@codemirror/state'
+import {Compartment, EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {skip} from 'rxjs'
 
+import {themeManager} from '~/theme'
 import {msg} from '~/translate'
 
 import {Icon} from '../icon'
@@ -17,6 +19,7 @@ import {theme} from './theme'
 
 export class CodeEditor extends React.Component {
     state = {show: false, completing: false}
+    themeCompartment = new Compartment()
 
     constructor(props) {
         super(props)
@@ -66,6 +69,7 @@ export class CodeEditor extends React.Component {
     }
 
     componentWillUnmount() {
+        this.themeSubscription?.unsubscribe()
         this.view.destroy()
     }
 
@@ -116,7 +120,7 @@ export class CodeEditor extends React.Component {
                 history(),
                 EditorView.lineWrapping,
                 closeBrackets(),
-                theme(),
+                this.themeCompartment.of(theme(themeManager.theme)),
                 javascript(),
                 autocompletion({
                     override: [autoComplete],
@@ -130,6 +134,9 @@ export class CodeEditor extends React.Component {
             parent: editorElement,
             state: state
         })
+        this.themeSubscription = themeManager.theme$.pipe(skip(1)).subscribe(
+            themeName => this.view.dispatch({effects: this.themeCompartment.reconfigure(theme(themeName))})
+        )
 
         if (autoFocus) {
             this.view.focus()

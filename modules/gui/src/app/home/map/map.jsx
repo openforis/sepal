@@ -232,7 +232,7 @@ export class _Map extends React.Component {
     }
 
     createMap(id, element, isOverlay, callback) {
-        const {mapsContext: {createSepalMap}} = this.props
+        const {mapsContext: {createSepalMap, followTheme}} = this.props
         const area = this.getArea(id)
         log.debug(() => `Adding ${mapTag(this.state.mapId, id)} to ${areaTag(area)}`)
 
@@ -287,7 +287,8 @@ export class _Map extends React.Component {
         const subscriptions = [
             this.scrollWheelEnabled$.subscribe(
                 enabled => googleMap.setOptions({scrollwheel: enabled})
-            )
+            ),
+            followTheme(googleMap, style)
         ]
 
         callback({map, listeners, subscriptions})

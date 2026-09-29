@@ -1,8 +1,8 @@
 import {THEME_PREFERENCES, themeManager} from '~/theme'
+import {useThemePreference} from '~/themeHooks'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
-import {useThemePreference} from '~/withThemePreference'
 
 const ICONS = {dark: 'moon', light: 'sun', system: 'circle-half-stroke'}
 

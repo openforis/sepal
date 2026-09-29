@@ -1,3 +1,5 @@
+import {Subscription} from 'rxjs'
+
 import {_Map} from './map'
 
 const createPane = initialPath => ({
@@ -176,7 +178,7 @@ describe('polygon drawing', () => {
         const layers = {...previousLayers, areas: {...previousLayers.areas, right: {id: 'right'}}}
         const map = new _Map({
             layers,
-            mapsContext: {createSepalMap: () => pane},
+            mapsContext: {createSepalMap: () => pane, followTheme: () => new Subscription()},
             user: {manualMapRenderingEnabled: false}
         })
         map.scrollWheelEnabled$ = {
