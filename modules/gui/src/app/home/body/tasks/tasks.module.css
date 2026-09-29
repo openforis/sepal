@@ -20,7 +20,7 @@
 }
 
 .statusDescription {
-    color: #999;
+    color: var(--text-quiet-color);
     height: 5rem;
     overflow-y: auto;
 }

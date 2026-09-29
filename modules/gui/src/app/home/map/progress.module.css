@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     height: var(--height);
-    background-color: black;
+    background-color: var(--map-progress-track-color);
 }
 
 .progress::before {
@@ -20,7 +20,7 @@
 }
 
 .progress.active::before {
-    background-color: hsla(0, 0%, 50%, 1);
+    background-color: var(--map-progress-color);
 }
 
 @keyframes progress {

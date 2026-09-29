@@ -193,6 +193,63 @@ html {
     /* code editor */
     --code-completion-selected-background-color: hsla(40, 60%, 23%, 1);
     --code-completion-section-background-color: #000000;
+
+    /* home chrome */
+    --footer-background-color: rgba(28, 28, 28, 0.99);
+    --disabled-overlay-color: hsla(0, 0%, 0%, .5);
+    --row-expansion-shade-color: hsla(0, 0%, 0%, .15);
+
+    /* map chrome */
+    --map-background-color: #131314;
+    --panel-strong-background-color: hsla(40, 8%, 12%, 0.95);
+    --panel-strong-hover-background-color: hsla(40, 8%, 15%, 0.95);
+    --map-chip-background-color: hsla(0, 0%, 0%, .35);
+    --shadow-faint-color: rgba(0, 0, 0, 0.17);
+    --map-focus-ring-color: hsla(0, 0%, 100%, .7);
+    --map-scale-color: #888;
+    --map-progress-track-color: black;
+    --map-progress-color: hsla(0, 0%, 50%, 1);
+    --crop-shade-color: hsla(0, 0%, 10%, .75);
+
+    /* sections */
+    --text-caption-color: #aaa;
+    --text-quiet-color: #999;
+    --subform-border-color: #ccc;
+    --graph-tooltip-background-color: rgba(0, 0, 0, 0.8);
+    --scene-card-background-color: hsl(37, 8%, 20%);
+    --table-border-color: rgba(255, 255, 255, .35);
+    --row-stripe-color: hsla(0, 0%, 100%, .03);
+    --loading-background-color: hsla(0, 0%, 0%, 0.5);
+
+    /* landing */
+    --landing-text-color: #white;
+    --landing-secondary-text-color: #c7cacc;
+    --landing-card-color: rgba(187, 192, 195, 0.05);
+    --landing-veil-color: rgba(1, 1, 1, 0.65);
+
+    /* toolbars */
+    --recipe-toolbar-default-s: 27%;
+    --recipe-toolbar-default-l: 25%;
+    --recipe-toolbar-highlight-s: 8%;
+    --recipe-toolbar-highlight-l: 15%;
+    --recipe-toolbar-disabled-s: 10%;
+    --recipe-toolbar-disabled-l: 20%;
+    --map-toolbar-default-s: 27%;
+    --map-toolbar-default-l: 20%;
+    --map-toolbar-highlight-s: 27%;
+    --map-toolbar-highlight-l: 40%;
+    --map-toolbar-disabled-s: 5%;
+    --map-toolbar-disabled-l: 15%;
+    --panel-tab-default-s: 6%;
+    --panel-tab-default-l: 11%;
+    --panel-tab-selected-s: 8%;
+    --panel-tab-selected-l: 15%;
+
+    /* elevation */
+    --elevation-shadow: none;
+
+    /* terminal */
+    --terminal-background-color: transparent;
 }
 
 html[data-theme=light] {
@@ -260,7 +317,7 @@ html[data-theme=light] {
     --look-transparent-extra-l-offset: -2%;
 
     --look-default-s: 16%;
-    --look-default-l: 98%;
+    --look-default-l: 96%;
     --look-default-a: .92;
     --look-default-text-color: hsl(40, 7%, 22%);
     --look-default-text-hover-color: hsl(40, 12%, 8%);
@@ -275,8 +332,8 @@ html[data-theme=light] {
     --look-selected-text-color: hsl(34, 70%, 14%);
 
     --look-transparent-s: 20%;
-    --look-transparent-l: 100%;
-    --look-transparent-a: .6;
+    --look-transparent-l: 97%;
+    --look-transparent-a: .8;
     --look-transparent-text-color: hsl(40, 6%, 28%);
     --look-transparent-text-hover-color: hsl(40, 12%, 8%);
 
@@ -355,6 +412,63 @@ html[data-theme=light] {
     /* code editor */
     --code-completion-selected-background-color: hsl(40, 70%, 84%);
     --code-completion-section-background-color: hsl(40, 16%, 94%);
+
+    /* home chrome */
+    --footer-background-color: hsla(40, 16%, 95%, .99);
+    --disabled-overlay-color: hsla(40, 20%, 97%, .55);
+    --row-expansion-shade-color: hsla(40, 20%, 25%, .05);
+
+    /* map chrome */
+    --map-background-color: #e9e6df;
+    --panel-strong-background-color: hsla(40, 22%, 99%, .96);
+    --panel-strong-hover-background-color: hsla(40, 18%, 94%, .96);
+    --map-chip-background-color: hsla(40, 22%, 98%, .82);
+    --shadow-faint-color: hsla(40, 25%, 15%, .12);
+    --map-focus-ring-color: hsla(38, 60%, 35%, .8);
+    --map-scale-color: hsl(40, 5%, 42%);
+    --map-progress-track-color: hsl(40, 8%, 86%);
+    --map-progress-color: hsl(38, 30%, 52%);
+    --crop-shade-color: hsla(40, 20%, 97%, .78);
+
+    /* sections */
+    --text-caption-color: hsl(40, 5%, 38%);
+    --text-quiet-color: hsl(40, 4%, 42%);
+    --subform-border-color: hsl(40, 6%, 72%);
+    --graph-tooltip-background-color: hsla(40, 22%, 99%, .95);
+    --scene-card-background-color: hsl(40, 18%, 97%);
+    --table-border-color: hsla(40, 10%, 10%, .3);
+    --row-stripe-color: hsla(40, 20%, 20%, .03);
+    --loading-background-color: hsla(40, 20%, 97%, .8);
+
+    /* landing */
+    --landing-text-color: hsl(40, 12%, 10%);
+    --landing-secondary-text-color: hsl(40, 6%, 26%);
+    --landing-card-color: hsla(40, 25%, 98%, .72);
+    --landing-veil-color: hsla(40, 22%, 95%, .58);
+
+    /* toolbars */
+    --recipe-toolbar-default-s: 28%;
+    --recipe-toolbar-default-l: 85%;
+    --recipe-toolbar-highlight-s: 22%;
+    --recipe-toolbar-highlight-l: 99%;
+    --recipe-toolbar-disabled-s: 14%;
+    --recipe-toolbar-disabled-l: 91%;
+    --map-toolbar-default-s: 22%;
+    --map-toolbar-default-l: 90%;
+    --map-toolbar-highlight-s: 38%;
+    --map-toolbar-highlight-l: 76%;
+    --map-toolbar-disabled-s: 8%;
+    --map-toolbar-disabled-l: 93%;
+    --panel-tab-default-s: 12%;
+    --panel-tab-default-l: 90%;
+    --panel-tab-selected-s: 22%;
+    --panel-tab-selected-l: 99%;
+
+    /* elevation */
+    --elevation-shadow: 0 1px 2px hsla(40, 25%, 15%, .07), 0 6px 20px hsla(40, 25%, 15%, .09);
+
+    /* terminal */
+    --terminal-background-color: hsla(40, 22%, 99%, .88);
 }
 
 html.themeSwitching,

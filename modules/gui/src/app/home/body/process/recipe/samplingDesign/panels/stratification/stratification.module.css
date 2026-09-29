@@ -23,7 +23,7 @@
 
 .slow {
     /* margin-left: 1rem; */
-    color: #707070;
+    color: var(--text-faint-color);
 }
 
 .overall {

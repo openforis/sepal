@@ -5,7 +5,7 @@
     flex-shrink: 0;
     flex-direction: column;
     justify-content: space-between;
-    background-color: hsl(37, 8%, 20%);
+    background-color: var(--scene-card-background-color);
     border: 1px solid var(--wireframe-color);
     /* [HACK] Prevents Firefox from stretching a single selected scene to fill available space */
     max-height: calc(var(--thumbnail-size) + 5.5rem);
@@ -22,7 +22,7 @@
     position: relative;
     height: calc(var(--thumbnail-size));
     width: calc(var(--thumbnail-size) - 2px);
-    background-color: black;
+    background-color: var(--well-background-color);
 }
 
 .icon {
@@ -49,8 +49,8 @@
 
 .details {
     font-size: .8rem;
-    color: #ccc;
-    background-color: hsl(37, 8%, 20%);
+    color: var(--text-color);
+    background-color: var(--scene-card-background-color);
     padding: .3rem .5rem;
     border-width: 1px 0 0 0;
 }
@@ -63,7 +63,7 @@
 }
 
 .details svg {
-    color: #ccc !important;
+    color: var(--text-color) !important;
     margin-right: .4rem;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .bar {
-    --axis-color: hsl(0, 0%, 40%);
+    --axis-color: var(--slider-axis-color);
     --half-height: .25rem;
     --bar-width: .5rem;
     position: relative;

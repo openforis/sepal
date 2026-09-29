@@ -40,6 +40,7 @@
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
+    box-shadow: var(--elevation-shadow);
     pointer-events: all;
     z-index: 2;
     overflow: hidden;

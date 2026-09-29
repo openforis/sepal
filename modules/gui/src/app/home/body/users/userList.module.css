@@ -124,11 +124,11 @@
 .username {
     display: flex;
     gap: .5rem;
-    color: #808080;
+    color: var(--text-muted-color);
 }
 
 .admin {
-    color: white;
+    color: var(--text-strong-color);
 }
 
 .sorted {
@@ -145,7 +145,7 @@
 }
 
 .user:nth-child(even) {
-    background-color: hsla(0, 0%, 100%, .03);
+    background-color: var(--row-stripe-color);
 }
 
 .users > .clickable:hover {

@@ -1,6 +1,7 @@
 .options {
     z-index: 2;
     border: 1px solid var(--divider-color);
+    box-shadow: var(--elevation-shadow);
     scrollbar-width: none; /* Hides scrollbars in Firefox */
 }
 
