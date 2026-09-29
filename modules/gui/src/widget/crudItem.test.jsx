@@ -11,7 +11,9 @@ vi.mock('~/widget/tooltip', () => ({
     }
 }))
 
+import {CopyButton} from './copyButton'
 import {CrudItem} from './crudItem'
+import {RemoveButton} from './removeButton'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -77,33 +79,40 @@ describe('CrudItem remove confirmation', () => {
     })
 })
 
-// A line for whatever belongs WITH the timestamp rather than in a column of its own — a running
-// cost, a size, a count. The timestamp block is a right-aligned column, so it lands under the
-// relative time.
-describe('CrudItem timestamp footnote (opt-in)', () => {
-    const timestampBlock = container => container.querySelector('[class*="timestamp"]')
-    const timestampLines = container =>
-        [...timestampBlock(container).children].map(({textContent}) => textContent)
+describe('CrudItem copy action', () => {
+    const buttonsOf = props => {
+        const element = CrudItem({title: 'Instance', ...props})
+        const item = new element.type(element.props)
+        return item.renderButtons().props.children.filter(Boolean)
+    }
 
-    it('renders nothing extra by default', () => {
+    it('offers the value between edit and remove', () => {
+        const buttons = buttonsOf({copyValue: 'alice+humble-robin@ssh.sepal.io', onEdit: vi.fn(), onRemove: vi.fn()})
+        expect(buttons.map(({type}) => type)).toEqual([expect.anything(), CopyButton, RemoveButton])
+        expect(buttons[1].props.value).toBe('alice+humble-robin@ssh.sepal.io')
+    })
+
+    it('stays in place, disabled, when there is nothing to copy', () => {
+        const [copy] = buttonsOf({copyValue: null, copyDisabled: true})
+        expect(copy.type).toBe(CopyButton)
+        expect(copy.props.disabled).toBe(true)
+    })
+
+    it('offers no copy action by default', () => {
+        expect(buttonsOf({})).toEqual([])
+    })
+})
+
+describe('CrudItem timestamp', () => {
+    it('shows the time relative to now, with the full timestamp in a tooltip', () => {
         const container = mount({title: 'My label', timestamp: '2026-08-17T07:17:29.000Z'})
-        expect(timestampLines(container)).toHaveLength(2) // absolute and relative
+        const timestamp = container.querySelector('[class*="timestamp"]')
+        expect(timestamp.textContent).toMatch(/ ago$/)
+        expect(tooltipProps.map(({msg}) => msg)).toContainEqual(expect.stringMatching(/^2026-08-1[67] \d{2}:\d{2}:29$/))
     })
 
-    it('renders the footnote under the timestamps', () => {
-        const container = mount({
-            title: 'My label',
-            timestamp: '2026-08-17T07:17:29.000Z',
-            timestampFootnote: '$0.04'
-        })
-        expect(timestampLines(container).at(-1)).toBe('$0.04')
-    })
-
-    // Without a timestamp there is no block to hang it under, and a footnote floating on its own
-    // would read as a column — which is the layout it exists to avoid.
-    it('needs a timestamp to hang under', () => {
-        const container = mount({title: 'My label', timestampFootnote: '$0.04'})
-        expect(timestampBlock(container)).toBeNull()
-        expect(container.textContent).not.toContain('$0.04')
+    it('shows no timestamp when there is none', () => {
+        const container = mount({title: 'My label'})
+        expect(container.querySelector('[class*="timestamp"]')).toBeNull()
     })
 })

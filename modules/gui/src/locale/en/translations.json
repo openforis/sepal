@@ -6255,19 +6255,25 @@
         "success": "Session has been updated.",
         "tooltip": "Edit session."
       },
+      "sshLogin": {
+        "tooltip": "Copy SSH login: {login}"
+      },
       "deadline": {
-        "stopping": "stops at {time}",
-        "until": "Keep-alive until {time} ({relative})"
+        "label": "Keep alive until",
+        "stopping": "Stops at",
+        "value": "{time} ({relative})"
       },
       "usage": {
         "cpu": "CPU",
         "gpu": "GPU",
+        "label": "Usage",
         "net": "NET",
-        "none": "No usage data",
+        "none": "No data",
         "ram": "RAM"
       },
       "verdict": {
         "busy": "in use",
+        "label": "Activity",
         "unused": "unused"
       }
     }

@@ -16,7 +16,7 @@ import {Notifications} from '~/widget/notifications'
 
 import {InstanceSpecsTag} from '../instanceSpecs'
 import styles from './userSessionList.module.css'
-import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
+import {instanceTypeLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -50,37 +50,81 @@ class _UserSessionList extends React.Component {
         )
     }
 
-    // The number is the instance's 1-based position in this list — the same one the SSH menu prints
-    // and the expiry notification quotes, because the report is ordered by creation time.
-    renderTitle(session, index) {
+    // The name is the one the expiry notification, the email and its management page use.
+    renderTitle(session) {
+        const {name, instanceType} = session
         return (
             <div className={styles.title}>
-                <span>{instanceLabel(session, index)}</span>
-                /
-                <InstanceSpecsTag instanceType={session.instanceType} compact/>
+                {name ? <span>{name}</span> : null}
+                <div className={styles.type}>
+                    <span>{instanceTypeLabel(session)}</span>
+                    <InstanceSpecsTag instanceType={instanceType} compact/>
+                </div>
             </div>
         )
     }
 
-    renderMetric({key, pct, bytesPerS}) {
-        const label = msg(`user.userSession.usage.${key}`)
-        return key === 'net'
-            ? `${label} ${format.fileSize(bytesPerS, {unit: 'B/s'})}`
-            : `${label} ${Math.round(pct)}%`
+    renderDescription(session) {
+        const apps = runningItems(session)
+        return apps.length
+            ? apps.map(({label}) => label).join(' · ')
+            : null
     }
 
-    // What the instance is doing, and what the sampler makes of it. The verdict is the one the busy
-    // ratchet acts on, so "unused" here is the reason the instance will be stopped, not a
-    // second opinion.
+    // The row says who the instance is and what runs on it; what it is doing and when it expires sit
+    // underneath as a strip of labelled values, so neither has to be read out of a sentence.
+    renderStats(session) {
+        return (
+            <div className={styles.stats}>
+                {this.renderUsage(session)}
+                {this.renderVerdict(session)}
+                {this.renderCost(session)}
+                {this.renderDeadline(session)}
+            </div>
+        )
+    }
+
     renderUsage(session) {
         const metrics = usageMetrics(session)
+        return metrics
+            ? metrics.map(metric => this.renderMetric(metric))
+            : this.renderStat({
+                key: 'usage',
+                label: msg('user.userSession.usage.label'),
+                value: msg('user.userSession.usage.none')
+            })
+    }
+
+    renderMetric({key, pct, bytesPerS}) {
+        return this.renderStat({
+            key,
+            label: msg(`user.userSession.usage.${key}`),
+            value: key === 'net'
+                ? format.fileSize(bytesPerS, {unit: 'B/s'})
+                : `${Math.round(pct)}%`
+        })
+    }
+
+    // The verdict is the one the busy ratchet acts on, so "unused" here is the reason the instance
+    // will be stopped, not a second opinion.
+    renderVerdict(session) {
         const verdict = verdictOf(session)
-        const usage = metrics
-            ? metrics.map(metric => this.renderMetric(metric)).join(' · ')
-            : msg('user.userSession.usage.none')
-        return [usage, verdict && msg(`user.userSession.verdict.${verdict}`)]
-            .filter(Boolean)
-            .join(' — ')
+        return verdict
+            ? this.renderStat({
+                key: 'verdict',
+                label: msg('user.userSession.verdict.label'),
+                value: msg(`user.userSession.verdict.${verdict}`),
+                warning: verdict === 'unused'
+            })
+            : null
+    }
+
+    renderCost(session) {
+        return this.renderStat({
+            key: 'cost',
+            label: msg('user.report.sessions.cost'),
+            value: format.dollars(session.costSinceCreation)
+        })
     }
 
     // The stored deadline, absolute and relative. Under enforcement a notified session also has a
@@ -92,32 +136,34 @@ class _UserSessionList extends React.Component {
             return null
         }
         const deadline = moment(timeoutTime)
-        return [
-            msg('user.userSession.deadline.until', {
-                time: deadline.format('LT'),
-                relative: deadline.fromNow()
-            }),
-            closeTime && msg('user.userSession.deadline.stopping', {
-                time: moment(closeTime).format('LT')
-            })
-        ].filter(Boolean).join(' — ')
-    }
-
-    renderDescription(session) {
-        const deadline = this.renderDeadline(session)
-        const apps = runningItems(session)
         return (
             <React.Fragment>
-                <div>{this.renderUsage(session)}</div>
-                {deadline ? <div>{deadline}</div> : null}
-                {apps.length
-                    ? (
-                        <ul className={styles.apps}>
-                            {apps.map(({key, label}) => <li key={key}>{label}</li>)}
-                        </ul>
-                    )
+                {this.renderStat({
+                    key: 'deadline',
+                    label: msg('user.userSession.deadline.label'),
+                    value: msg('user.userSession.deadline.value', {
+                        time: deadline.format('LT'),
+                        relative: deadline.fromNow()
+                    })
+                })}
+                {closeTime
+                    ? this.renderStat({
+                        key: 'close',
+                        label: msg('user.userSession.deadline.stopping'),
+                        value: moment(closeTime).format('LT'),
+                        warning: true
+                    })
                     : null}
             </React.Fragment>
+        )
+    }
+
+    renderStat({key, label, value, warning}) {
+        return (
+            <div key={key} className={[styles.stat, warning ? styles.warning : null].join(' ')}>
+                <div className={styles.label}>{label}</div>
+                <div>{value}</div>
+            </div>
         )
     }
 
@@ -138,26 +184,32 @@ class _UserSessionList extends React.Component {
 
     // The confirmation names the instance being lost, by the same two-word name the list, the SSH
     // menu and the expiry notification use. An instance predating names has none, and falls back to
-    // the list label, which is never empty.
-    renderRemoveMessage(session, index) {
+    // its type, as the list titles it.
+    renderRemoveMessage(session) {
         const running = runningItems(session).length
         return msg(
             running ? 'user.userSession.stop.messageWithRunning' : 'user.userSession.stop.message',
-            {name: session.name || instanceLabel(session, index)}
+            {name: session.name || instanceTypeLabel(session)}
         )
     }
 
-    renderSession(session, index) {
+    renderSession(session) {
         return (
-            <ListItem key={session.id}>
+            <ListItem
+                key={session.id}
+                expansion={this.renderStats(session)}
+                expansionClassName={styles.expansion}
+                expanded>
                 <CrudItem
-                    title={this.renderTitle(session, index)}
+                    title={this.renderTitle(session)}
                     description={this.renderDescription(session)}
                     timestamp={session.creationTime}
-                    timestampFootnote={format.dollars(session.costSinceCreation)}
                     editTooltip={msg('user.userSession.update.tooltip')}
                     editDisabled={this.isStoppingSession(session)}
-                    removeMessage={this.renderRemoveMessage(session, index)}
+                    copyValue={session.sshLogin}
+                    copyTooltip={msg('user.userSession.sshLogin.tooltip', {login: session.sshLogin})}
+                    copyDisabled={!session.sshLogin || this.isStoppingSession(session)}
+                    removeMessage={this.renderRemoveMessage(session)}
                     removeContent={this.renderRunning(session)}
                     removeTooltip={msg('user.userSession.stop.tooltip')}
                     removePending={this.isStoppingSession(session)}
@@ -171,7 +223,7 @@ class _UserSessionList extends React.Component {
     renderSessions(sessions) {
         return (
             <Layout spacing='tight' type='vertical'>
-                {sessions.map((session, index) => this.renderSession(session, index))}
+                {sessions.map(session => this.renderSession(session))}
             </Layout>
         )
     }

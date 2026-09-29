@@ -11,15 +11,17 @@ vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/action-builder', () => ({actionBuilder: () => ({set: () => ({dispatch: () => {}})})}))
 vi.mock('~/user', () => ({stopCurrentUserSession$: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => <div>{children}</div>}))
+vi.mock('~/widget/listItem', () => ({
+    ListItem: ({children, expansion}) => <div>{children}<div className='expansion'>{expansion}</div></div>
+}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({title, description, timestampFootnote, removeMessage, editDisabled, removePending}) =>
-        <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}>
+    CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled}) =>
+        <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}
+            data-copy-value={copyValue ?? ''} data-copy-disabled={copyDisabled}>
             <div className='title'>{title}</div>
             <div className='description'>{description}</div>
-            <div className='footnote'>{timestampFootnote}</div>
             <div className='remove-message'>{removeMessage}</div>
         </div>
 }))
@@ -36,6 +38,7 @@ setLanguage('en')
 const session = overrides => ({
     id: 's1',
     instanceType: {name: 't3a.small', tag: 't1', cpuCount: 1, gpuCount: 0, ramGiB: 2, hourlyCost: 0.0204},
+    sshLogin: 'alice+humble-robin@ssh.sepal.io',
     creationTime: '2026-08-17T07:17:29.000Z',
     costSinceCreation: 0.04,
     apps: [],
@@ -71,24 +74,30 @@ describe('the session list', () => {
     beforeEach(() => mounted = [])
     afterEach(() => mounted.forEach(unmount => unmount()))
 
-    // The number leads (it is what the SSH menu accepts), then the instance's own name, then its
-    // type — the same name the expiry notification, the email and its management page show.
-    it('numbers each instance and names it', () => {
-        const labels = [...render([
+    // Titled by the name the expiry notification, the email and its management page show — no list
+    // number, which is the SSH menu's business.
+    it('titles each instance by its name', () => {
+        const titles = render([
             session({id: 's1', name: 'humble-robin'}),
             session({id: 's2', name: 'lunar-owl'}),
-        ]).querySelectorAll('.title > div > span:first-child')].map(({textContent}) => textContent)
-        expect(labels).toEqual(['1: humble-robin - t1', '2: lunar-owl - t1'])
+        ]).querySelectorAll('.title > div')
+        expect([...titles].map(({firstChild}) => firstChild.textContent)).toEqual(['humble-robin', 'lunar-owl'])
     })
 
-    it('falls back to number and type for a session with no name', () => {
-        const label = render([session({id: 's1', name: null})]).querySelector('.title > div > span:first-child')
-        expect(label.textContent).toBe('1: t1')
+    it('puts the type on the line below the name', () => {
+        const [, type] = render([session({name: 'humble-robin'})]).querySelector('.title > div').children
+        expect(type.firstChild.textContent).toBe('t1')
     })
 
-    // One pill on the title line after the label: capacity first, then what it costs, separated the
+    it('titles a session with no name by its type alone', () => {
+        const title = render([session({name: null})]).querySelector('.title > div')
+        expect(title.children).toHaveLength(1)
+        expect(title.firstChild.firstChild.textContent).toBe('t1')
+    })
+
+    // One pill under the label, in the title: capacity first, then what it costs, separated the
     // way the usage line separates its metrics.
-    it('sizes and prices the instance in a pill on the title line', () => {
+    it('sizes and prices the instance in a pill under its label', () => {
         const pill = render([session()]).querySelector('.title .pill')
         expect(pill.textContent).toBe('1 CPU · 2 GB · $0.02/h')
     })
@@ -100,28 +109,31 @@ describe('the session list', () => {
         expect(render([gpu]).querySelector('.title .pill').textContent).toBe('4 CPU · 1 GPU · 16 GB · $1.12/h')
     })
 
-    // Under the relative start time, not in a column of its own.
-    it('puts the cost so far in the timestamp footnote', () => {
-        const container = render([session()])
-        expect(container.querySelector('.footnote').textContent).toBe('$0.04')
-    })
+    // Each value under its own label, in the expansion under the row rather than in its description.
+    const stats = container => [...container.querySelectorAll('.expansion > div > div')]
+        .map(stat => [...stat.children].map(({textContent}) => textContent))
 
-    it('reports the sampled usage and the verdict', () => {
-        expect(render([session()]).textContent).toContain('CPU 12% · RAM 35% · NET 1.23 kB/s — unused')
+    it('reports the sampled usage, the verdict and the cost so far under the row', () => {
+        expect(stats(render([session({expiry: null})]))).toEqual([
+            ['CPU', '12%'],
+            ['RAM', '35%'],
+            ['NET', '1.23 kB/s'],
+            ['Activity', 'unused'],
+            ['Cost', '$0.04']
+        ])
     })
 
     it('says so when there is no usage sample', () => {
-        expect(render([session({usage: null, verdict: 'unknown'})]).textContent)
-            .toContain('No usage data')
+        expect(stats(render([session({usage: null, verdict: 'unknown', expiry: null})])))
+            .toEqual([['Usage', 'No data'], ['Cost', '$0.04']])
     })
 
-    it('lists the apps as bullets', () => {
+    it('names the apps on the row', () => {
         const running = session({
             apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}, {path: '/sandbox/shiny/foo', label: null}]
         })
-        const container = render([running])
-        expect([...container.querySelectorAll('li')].map(({textContent}) => textContent))
-            .toEqual(['Jupyter', '/sandbox/shiny/foo'])
+        expect(render([running]).querySelector('.description').textContent)
+            .toBe('Jupyter · /sandbox/shiny/foo')
     })
 
     it('says nothing about terminal sessions, whatever the count', () => {
@@ -136,14 +148,25 @@ describe('the session list', () => {
 
     it('shows nothing at all for a session running only terminals', () => {
         const container = render([session({terminals: 1})])
-        expect(container.querySelectorAll('li')).toHaveLength(0)
+        expect(container.querySelector('.description').textContent).toBe('')
         expect(container.textContent).not.toContain('Terminal sessions')
     })
 
-    it('lists nothing when nothing is running', () => {
-        const container = render([session()])
-        expect(container.querySelectorAll('li')).toHaveLength(0)
-        expect(container.textContent).not.toContain('Terminal sessions')
+    // The report builds the login: the gateway's address is configuration the GUI does not have.
+    it('copies the SSH login the report gives for the instance', () => {
+        const row = render([session({sshLogin: 'alice+humble-robin@ssh.sepal.io'})]).querySelector('.session')
+        expect(row.dataset.copyValue).toBe('alice+humble-robin@ssh.sepal.io')
+        expect(row.dataset.copyDisabled).toBe('false')
+    })
+
+    it('has no SSH login to copy when the report gives none', () => {
+        const row = render([session({sshLogin: null})]).querySelector('.session')
+        expect(row.dataset.copyDisabled).toBe('true')
+    })
+
+    it('disables copying the SSH login while the session is being stopped', () => {
+        const row = render([session({id: 's1'})], {stopping: ['s1']}).querySelector('.session')
+        expect(row.dataset.copyDisabled).toBe('true')
     })
 
     // The confirmation is the last thing between a user and an instance they cannot get back, so it
@@ -161,16 +184,17 @@ describe('the session list', () => {
         expect(message).toContain('will be closed')
     })
 
-    it('falls back to the list label when confirming a session with no name', () => {
+    it('falls back to the type when confirming a session with no name', () => {
         const container = render([session({name: null})])
         expect(container.querySelector('.remove-message').textContent)
-            .toBe('You are stopping session 1: t1.')
+            .toBe('You are stopping session t1.')
     })
 
     it('shows the deadline as a time and a distance', () => {
         // 09:22 UTC, and a relative distance moment computes against the real clock.
-        const text = render([session()]).textContent
-        expect(text).toMatch(/Keep-alive until \d{1,2}:\d{2} (AM|PM) \((in a|in \d+|a|\d+).* (minutes?|hours?|days?|months?|years?)( ago)?\)/)
+        const [label, value] = stats(render([session()])).at(-1)
+        expect(label).toBe('Keep alive until')
+        expect(value).toMatch(/^\d{1,2}:\d{2} (AM|PM) \((in a|in \d+|a|\d+).* (minutes?|hours?|days?|months?|years?)( ago)?\)$/)
     })
 
     // Stopping takes as long as the worker takes to answer, and the row only leaves the list on that
@@ -198,6 +222,20 @@ describe('the session list', () => {
                 closeTime: '2026-08-17T10:23:00.000Z'
             }
         })
-        expect(render([notified]).textContent).toMatch(/stops at \d{1,2}:\d{2} (AM|PM)/)
+        const [label, value] = stats(render([notified])).at(-1)
+        expect(label).toBe('Stops at')
+        expect(value).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/)
+    })
+
+    it('shows no close time in notify mode, where nothing will close the session', () => {
+        const notified = session({
+            expiry: {
+                state: 'NOTIFIED',
+                timeoutTime: '2026-08-17T09:22:26.000Z',
+                notifiedTime: '2026-08-17T09:23:00.000Z',
+                closeTime: null
+            }
+        })
+        expect(stats(render([notified])).map(([label]) => label)).not.toContain('Stops at')
     })
 })

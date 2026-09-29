@@ -74,8 +74,7 @@ const sessionApps = session =>
 // is what the typed filter matches, and it says everything.
 export const buildPickerOptions = ({sessions, instanceTypes, requirements, runningLabel = 'Running instances', newLabel = 'New instance without SSD', newSsdLabel = 'New instance with SSD', appCountLabel = count => `${count} app${count === 1 ? '' : 's'}`}) => {
     const runningOptions = (sessions || []).map((session, index) => {
-        // index + 1 IS sessionNumber(sessions, session.id) — same list, same order — and the label
-        // is the session list's, so both name a running instance the same way.
+        // index + 1 IS sessionNumber(sessions, session.id) — same list, same order.
         const title = instanceLabel(session, index)
         const apps = sessionApps(session)
         return {
