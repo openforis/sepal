@@ -1,3 +1,9 @@
 .panel {
     width: 40rem;
+    /* height: 30rem; */
+}
+
+/* The drop zone keeps its height; the key text area gives way instead. */
+.fileSelect {
+    flex-shrink: 0;
 }

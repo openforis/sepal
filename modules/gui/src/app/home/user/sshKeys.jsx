@@ -36,7 +36,7 @@ class _SshKeys extends React.Component {
                 <Panel.Header icon='terminal' title={msg('user.sshKeys.title')}/>
                 <Panel.Content scrollable>
                     <Layout type='vertical'>
-                        {this.renderHowTo()}
+                        {this.renderIntro()}
                         {this.renderKeys()}
                     </Layout>
                 </Panel.Content>
@@ -75,14 +75,10 @@ class _SshKeys extends React.Component {
         )
     }
 
-    renderHowTo() {
+    renderIntro() {
         return (
             <Message type='info' icon='comment' iconSize='2x'>
-                <Layout type='vertical' spacing='none'>
-                    <div>{msg('user.sshKeys.howTo.title')}</div>
-                    <div>{msg('user.sshKeys.howTo.generate', {command: 'ssh-keygen -t ed25519'})}</div>
-                    <div>{msg('user.sshKeys.howTo.add', {publicKeyFile: '~/.ssh/id_ed25519.pub'})}</div>
-                </Layout>
+                {msg('user.sshKeys.intro')}
             </Message>
         )
     }

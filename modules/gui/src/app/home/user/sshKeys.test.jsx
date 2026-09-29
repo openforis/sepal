@@ -96,15 +96,14 @@ describe('the SSH keys panel', () => {
         ])
     })
 
-    it('says there are no keys, and how to make one', () => {
+    it('says there are no keys, and what keys are for', () => {
         givenKeys([])
 
         const container = render()
 
-        const instructions = container.querySelector('.message.info').textContent
         expect(container.querySelector('.no-data').textContent).toBe('You have no SSH keys.')
-        expect(instructions).toContain('ssh-keygen -t ed25519')
-        expect(instructions).toContain('~/.ssh/id_ed25519.pub')
+        expect(container.querySelector('.message.info').textContent)
+            .toBe('SSH keys allow you to login into a session without having to type your password.')
     })
 
     // The SSH entry point has its own address and port, which the web address does not tell.

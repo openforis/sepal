@@ -6054,31 +6054,36 @@
         "error": {
           "DUPLICATE_KEY": "You have already added this key.",
           "failed": "Failed to add the SSH key.",
-          "INVALID_KEY": "This is not a public key. Paste the single line of a .pub file.",
+          "INVALID_KEY": "This is not a public key. Choose a .pub file, or paste its single line.",
           "KEY_TOO_WEAK": "RSA keys must be at least 2048 bits.",
+          "PRIVATE_KEY": "This is a private key: never share it. Use the .pub file next to it.",
           "TOO_MANY_KEYS": "You have reached the maximum of 20 keys.",
           "UNSUPPORTED_TYPE": "This key type is not supported. Use an ed25519, ECDSA or RSA key."
         },
         "form": {
+          "file": {
+            "dropOrClick": "Drop your .pub file here, or click to select it",
+            "label": "Public key file",
+            "notPub": "Only .pub files can be added. The file without .pub is your private key: never share it.",
+            "tooLarge": "This file is too large to be a public key."
+          },
           "name": {
             "label": "Name",
             "placeholder": "Defaults to the key's comment"
           },
           "publicKey": {
             "label": "Public key",
-            "placeholder": "ssh-ed25519 AAAA… you@laptop",
-            "required": "Paste a public key"
+            "placeholder": "Or paste it here: ssh-ed25519 AAAA… you@laptop",
+            "privateKeyHidden": "•••••• private key hidden ••••••",
+            "required": "Choose a .pub file, or paste a public key"
           }
         },
+        "howTo": "Create a key, if you have none, then drop or select the public key file. Alternatively, paste its contents below.",
         "label": "Add",
         "success": "SSH key added.",
         "title": "Add SSH key"
       },
-      "howTo": {
-        "add": "2) Add the contents of {publicKeyFile} here",
-        "generate": "1) Create a key with {command}",
-        "title": "To add a key:"
-      },
+      "intro": "SSH keys allow you to login into a session without having to type your password.",
       "label": "SSH keys",
       "load": {
         "error": "Failed to load your SSH keys."

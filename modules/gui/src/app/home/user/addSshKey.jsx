@@ -9,14 +9,17 @@ import {withActivators} from '~/widget/activation/activator'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
+import {Widget} from '~/widget/widget'
 
 import styles from './addSshKey.module.css'
+import {hidePrivateKey, publicKeyField} from './publicKey'
+import {SshKeyFileSelect} from './sshKeyFileSelect'
 
 const fields = {
-    publicKey: new Form.Field()
-        .notBlank('user.sshKeys.add.form.publicKey.required'),
+    publicKey: publicKeyField(),
     name: new Form.Field()
 }
 
@@ -77,13 +80,23 @@ class _AddSshKey extends React.Component {
     renderForm() {
         const {inputs: {publicKey, name}} = this.props
         return (
-            <Layout>
+            <Layout type='vertical'>
+                {this.renderHowTo()}
+                <Widget className={styles.fileSelect} label={msg('user.sshKeys.add.form.file.label')}>
+                    <SshKeyFileSelect
+                        onLoad={key => publicKey.set(hidePrivateKey(key))}
+                        onError={message => publicKey.setInvalid(message)}
+                    />
+                </Widget>
                 <Form.Input
                     label={msg('user.sshKeys.add.form.publicKey.label')}
                     placeholder={msg('user.sshKeys.add.form.publicKey.placeholder')}
                     textArea
+                    minRows={5}
+                    maxRows={5}
                     autoFocus
                     input={publicKey}
+                    onChange={value => publicKey.set(hidePrivateKey(value))}
                 />
                 <Form.Input
                     label={msg('user.sshKeys.add.form.name.label')}
@@ -91,6 +104,14 @@ class _AddSshKey extends React.Component {
                     input={name}
                 />
             </Layout>
+        )
+    }
+
+    renderHowTo() {
+        return (
+            <Message type='info' icon='comment' iconSize='2x'>
+                {msg('user.sshKeys.add.howTo')}
+            </Message>
         )
     }
 }
