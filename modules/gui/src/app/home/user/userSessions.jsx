@@ -60,7 +60,7 @@ class _UserSessions extends React.Component {
     }
 
     renderSessions() {
-        const {stream, activatable: {deactivate}} = this.props
+        const {sessions, stream, activatable: {deactivate}} = this.props
         return (
             <Panel
                 className={styles.panel}
@@ -68,7 +68,8 @@ class _UserSessions extends React.Component {
                 onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='server'
-                    title={msg('user.report.sessions.title')}/>
+                    title={msg('user.report.sessions.title')}
+                    label={msg('user.report.sessions.active', {count: sessions?.length ?? 0})}/>
                 <Panel.Content>
                     <UserSessionList/>
                 </Panel.Content>

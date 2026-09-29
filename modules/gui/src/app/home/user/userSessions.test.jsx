@@ -34,7 +34,7 @@ vi.mock('../body/apps/instancePicker', () => ({
 }))
 vi.mock('~/widget/panel/panel', () => {
     const Panel = ({children}) => <div>{children}</div>
-    Panel.Header = ({title}) => <h1>{title}</h1>
+    Panel.Header = ({title, label}) => <h1>{title}<span className='label'>{label}</span></h1>
     Panel.Content = ({children}) => <div>{children}</div>
     const Buttons = ({children}) => <div>{children}</div>
     Buttons.Main = ({children}) => <div>{children}</div>
@@ -98,8 +98,14 @@ describe('the sessions panel', () => {
     it('lists the sessions', () => {
         const container = render()
 
-        expect(container.querySelector('h1').textContent).toBe('Sessions')
+        expect(container.querySelector('h1').firstChild.textContent).toBe('Sessions')
         expect(container.querySelector('.list')).not.toBeNull()
+    })
+
+    it('counts the active sessions in the header', () => {
+        const container = render({sessions: [{id: 's1', apps: []}, {id: 's2', apps: []}]})
+
+        expect(container.querySelector('h1 .label').textContent).toBe('2 active')
     })
 
     it('shows the selected session for editing instead of the list', () => {

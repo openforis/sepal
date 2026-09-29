@@ -5994,6 +5994,7 @@
         "used%": "Used"
       },
       "sessions": {
+        "active": "{count} active",
         "cost": "Cost",
         "hourlyCost": "Hourly cost",
         "instanceDescription": "Instance description",
