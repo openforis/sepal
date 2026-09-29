@@ -26,12 +26,12 @@ export const visualizationsWithAvailableBands = (visualizations, availableBands)
 // A filter, never a deletion. The style stays in the recipe and the band stays exportable; only the offer to
 // draw it is withheld. Dimensionality has to be positively observed: a band whose type nothing reported is
 // left a candidate rather than being relabelled scalar or array.
-export const renderableVisualizations = (visualizations, availableBands = {}) => {
-    const names = Object.keys(availableBands)
-    const isArrayValued = band => availableBands[band]?.dataType?.arrayDimensions > 0
-    return visualizationsWithAvailableBands(visualizations, names)
-        .filter(({bands}) => !bands.some(isArrayValued))
-}
+export const renderableVisualizations = (visualizations, availableBands = {}) =>
+    visualizationsWithAvailableBands(visualizations, renderableBandNames(availableBands))
+
+export const renderableBandNames = (availableBands = {}) =>
+    Object.keys(availableBands)
+        .filter(name => !(availableBands[name]?.dataType?.arrayDimensions > 0))
 
 // Keeping the identity a set of visualizations is already known by.
 //

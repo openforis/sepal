@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
-import {renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
+import {renderableBandNames, renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
 import {inheritedVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {asFunctionalComponent} from '~/classComponent'
@@ -187,7 +187,7 @@ class _VisualizationSelector extends React.Component {
     // once they are known.
     editorContext() {
         const {recipe, source, areaLayerConfig} = this.props
-        const bands = Object.keys(this.availableBands() || {})
+        const bands = renderableBandNames(this.availableBands() || {})
         return bands.length
             ? {recipe, imageLayerSourceId: source.id, bands, productArgs: productArgs(recipe, areaLayerConfig)}
             : null

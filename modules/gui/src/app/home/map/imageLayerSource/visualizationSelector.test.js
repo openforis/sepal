@@ -273,8 +273,30 @@ describe('opening the visualization editor', () => {
         }])
     })
 
-    it('cannot be opened while no band is known', () => {
-        const {addButton} = editing({availableBands: {}})
+    it.each([undefined, null, {}])('cannot be opened while no band is known (%j)', availableBands => {
+        const {addButton} = editing({availableBands})
+
+        expect(addButton.props.disabled).toBe(true)
+    })
+
+    it('opens with scalar and unknown bands in output order, excluding known arrays', () => {
+        const {addButton, activated} = editing({availableBands: {
+            coefs: {dataType: {arrayDimensions: 2}},
+            value: {dataType: {arrayDimensions: 0}},
+            start: {dataType: {arrayDimensions: 1}},
+            unknown: {}
+        }})
+
+        addButton.props.onClick()
+
+        expect(activated[0].bands).toEqual(['value', 'unknown'])
+    })
+
+    it('cannot be opened when every band is array-valued', () => {
+        const {addButton} = editing({availableBands: {
+            coefs: {dataType: {arrayDimensions: 2}},
+            start: {dataType: {arrayDimensions: 1}}
+        }})
 
         expect(addButton.props.disabled).toBe(true)
     })

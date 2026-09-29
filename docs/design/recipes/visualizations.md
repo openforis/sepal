@@ -175,6 +175,8 @@ is insufficient evidence.
 A visualization referring to both scalar and array bands is not directly applicable. A mixed output may still
 offer visualizations whose complete referenced-band set is scalar. Positively observed array dimensionality is
 definitive; unknown dimensionality remains an evidence gap during migration and must not be relabelled as scalar.
+The visualization editor applies the same physical filter to its band choices. Known array bands are excluded,
+and Add visualization is disabled when no eligible band remains. This does not remove bands from Retrieve.
 
 No positional remapping is allowed. Reordering an upstream image must not change a saved style's meaning.
 
