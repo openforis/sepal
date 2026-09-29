@@ -67,6 +67,10 @@ program
             .default(DEFAULT_SEPAL_HTTPS_PORT)
     )
     .addOption(
+        new Option('--sepal-ssh-host <string>', 'Public address of the SSH gateway, for the ssh login shown to users (optional)')
+            .env('SEPAL_SSH_HOST')
+    )
+    .addOption(
         new Option('--sepal-host-data-dir <path>', 'Host path to /data (mounted into sandbox containers)')
             .env('SEPAL_HOST_DATA_DIR')
     )
@@ -350,6 +354,7 @@ const {
     sepalHttpsPort,
     sepalHostDataDir,
     sepalHostProjectDir,
+    sepalSshHost,
     workerPort,
     usageSamplingIntervalSeconds,
     usageSampleRetentionDays,
@@ -436,6 +441,7 @@ export {
     sepalHostDataDir,
     sepalHostProjectDir,
     sepalHttpsPort,
+    sepalSshHost,
     sepalUser,
     sessionExpiryMode,
     sessionExpirySecret,

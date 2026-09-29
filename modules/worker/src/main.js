@@ -211,7 +211,7 @@ const main = async () => {
             config, defaultDaemonHost: hostingService.defaultDaemonHost}),
     })
 
-    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens})
+    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens, sshHost: config.sepalSshHost})
     const tasksApi = createTasksApi({taskManager})
 
     await initMessageQueue(amqpUri, {

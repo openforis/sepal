@@ -534,6 +534,7 @@ test('generateReportSelf → full report map with session + instanceType', async
     expect(s).toEqual({
         id: 's1',
         name: instanceName('s1'),
+        sshLogin: `alice+${instanceName('s1')}`,
         path: 'sessions/session/s1',
         username: 'alice',
         status: 'ACTIVE',
@@ -654,6 +655,19 @@ const notifiedReport = () => ({
 test('every session in the report carries its derived name', () => {
     const map = api._internal.reportAsMap(notifiedReport(), 'alice', true)
     expect(map.sessions[0].name).toBe(instanceName(map.sessions[0].id))
+})
+
+// What goes after `ssh`: the user, the instance to route to, and the gateway's own address.
+test('every session carries the ssh login that reaches it', () => {
+    const withSshHost = createSessionsApi({sessionManager, clock: fixedClock, expiryPolicy, sshHost: 'ssh.sepal.io'})
+    const [session] = withSshHost._internal.reportAsMap(notifiedReport(), 'alice', true).sessions
+    expect(session.sshLogin).toBe(`alice+${session.name}@ssh.sepal.io`)
+})
+
+// The web address is not the gateway's, so without a configured one there is no host to give.
+test('the ssh login has no host when the gateway address is not configured', () => {
+    const [session] = api._internal.reportAsMap(notifiedReport(), 'alice', true).sessions
+    expect(session.sshLogin).toBe(`alice+${session.name}`)
 })
 
 test('serializes the expiry cycle state and the stored deadline', () => {

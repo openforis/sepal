@@ -10,7 +10,7 @@
 //   path    — self:  `sessions/session/{id}`
 //             admin: `sessions/{username}/session/{id}`
 //   report  — { sessions, instanceTypes }
-//   session (in report) — { id, path, username, status, host, timeoutHours, expiry{...},
+//   session (in report) — { id, name, sshLogin, path, username, status, host, timeoutHours, expiry{...},
 //                           instanceType{...}, creationTime (ISO 8601 UTC instant),
 //                           costSinceCreation, apps[], terminals, verdict, usage{...} }
 
@@ -136,7 +136,7 @@ const expiredPage = () => page(`
 <p>Either it was already used, or the instance has since been stopped or kept running some other
 way. Open SEPAL to check — your files are untouched either way.</p>`)
 
-const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null}) => {
+const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null, sshHost = null}) => {
     // hoursSince — ceil of the whole minutes since `date`, over 60. The minutes are FLOORED first,
     // so a 1h0m45s session is 60 min → 1h, not 2h.
     const hoursSince = date => {
@@ -174,13 +174,21 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
             : null,
     })
 
+    // sshLogin — `alice+humble-robin@ssh.sepal.io`, which the ssh-gateway routes straight to this
+    // instance's sandbox. The gateway has its own address, not the web one; where none is
+    // configured, only the part before the @ can be given.
+    const sshLogin = (username, name) =>
+        `${username}+${name}${sshHost ? `@${sshHost}` : ''}`
+
     const sessionAsMap = (session, instanceType, username, forCurrentUser) => {
+        const name = instanceName(session.id)
         return {
             id: session.id,
             // Derived, not stored (instanceName.js) — the GUI, the notification, the expiry mail
             // and the SSH menu all name this machine the same way because they all name it from
             // its id.
-            name: instanceName(session.id),
+            name,
+            sshLogin: sshLogin(username, name),
             path: sessionPath(session, username, forCurrentUser),
             username,
             status: sessionStatus(session),
