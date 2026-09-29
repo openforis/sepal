@@ -103,7 +103,7 @@ class _Maps extends React.Component {
         this.setState({error})
     }
 
-    getStyleOptions(style = 'sepalStyle', theme = themeManager.theme) {
+    getStyleOptions(style, theme) {
         // https://developers.google.com/maps/documentation/javascript/style-reference
         switch (style) {
             case 'sepalStyle':
@@ -133,7 +133,8 @@ class _Maps extends React.Component {
             streetViewControl: false,
             rotateControl: false,
             fullscreenControl: false,
-            backgroundColor: '#131314',
+            // Google only reads this at creation; a live theme switch restyles the tiles, not this.
+            backgroundColor: BACKGROUND_COLORS[themeManager.theme],
             gestureHandling: 'greedy',
             draggableCursor: 'pointer',
             ...options
@@ -276,6 +277,11 @@ export const Maps = compose(
     connect(),
     withSubscriptions()
 )
+
+const BACKGROUND_COLORS = {
+    dark: '#131314',
+    light: '#e9e6df'
+}
 
 const DARK_BASE_STYLE = [
     {stylers: [{visibility: 'simplified'}]},

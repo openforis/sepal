@@ -288,7 +288,8 @@ export class _Map extends React.Component {
             this.scrollWheelEnabled$.subscribe(
                 enabled => googleMap.setOptions({scrollwheel: enabled})
             ),
-            followTheme(googleMap, style)
+            // The overlay's style is the same in both themes, and its subscriptions outlive removeMap.
+            ...(isOverlay ? [] : [followTheme(googleMap, style)])
         ]
 
         callback({map, listeners, subscriptions})

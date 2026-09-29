@@ -81,6 +81,9 @@ export class CodeEditor extends React.Component {
     }
 
     setupEditor(editorElement) {
+        if (!editorElement) {
+            return
+        }
         const {autoComplete, lint, input, autoFocus} = this.props
 
         const updateListener = EditorView.updateListener.of(

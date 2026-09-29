@@ -247,3 +247,47 @@ describe('polygon drawing', () => {
         expect(peer.previewPath).toBeNull()
     })
 })
+
+describe('theme', () => {
+    it('leaves no theme subscription behind when the map is closed', () => {
+        const followed = []
+        const map = new _Map({
+            layers: {mode: 'grid', areas: {left: {id: 'left'}}},
+            mapsContext: {
+                createSepalMap: () => themedPane(),
+                followTheme: () => {
+                    const subscription = new Subscription()
+                    followed.push(subscription)
+                    return subscription
+                }
+            },
+            user: {manualMapRenderingEnabled: false}
+        })
+        map.scrollWheelEnabled$ = {subscribe: () => new Subscription()}
+        setStateSynchronously(map)
+        map.createMap('left', {}, false, entry => {
+            map.state.maps.left = {id: 'left', ...entry}
+        })
+        map.createMap('overlay-layer-id', {}, true, entry => {
+            map.state.overlay = entry
+        })
+
+        map.componentWillUnmount()
+
+        expect(followed.every(subscription => subscription.closed)).toBe(true)
+    })
+})
+
+const themedPane = () => {
+    const google = {maps: {core: {event: {removeListener() {}}}}}
+    const googleMap = {
+        addListener: () => ({}),
+        setOptions() {}
+    }
+    return {
+        getGoogle: () => ({google, googleMap}),
+        getView: () => ({}),
+        setView() {},
+        disableDrawingMode() {}
+    }
+}
