@@ -952,7 +952,7 @@ matches execution. The execution comparison is a research gate below.
 | Recipe | Canonical output | Additional products or capabilities | Current schema source | Initial shape knowledge |
 | --- | --- | --- | --- | --- |
 | Asset | selected Earth Engine image | asset source presets | copied `assetDetails`, runtime metadata | observed; scalar, array or mixed |
-| Band Math | expression outputs with configured names | rewritten input presets | output expression model and copied inputs | names known; physical type incomplete |
+| Band Math | configured input and calculated bands under configured names | rewritten input presets | shared declaration from configuration; dimensionality observed from its running image | observed; scalar, array or mixed |
 | BAYTS Alerts | alert result | first/last radar map products | shared declaration; radar views by reused Radar helpers | scalar |
 | BAYTS Historical | orbit-selected historical metrics | none identified | fixed vocabulary filtered by model orbits | scalar |
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
@@ -1099,8 +1099,8 @@ The comparison also found useful stable declarations rather than only defects:
 - Masking's EE `getBands$()` delegates to the primary image exactly as the shared preserving transformation states.
 - Stack's execution selects and renames by the persisted name mapping in input order. Its physical types must be
   inherited from the selected source bands rather than recovered from output names.
-- Band Math's output names and explicit casts come from its expression model, while calculations configured as
-  `auto` still require runtime physical evidence.
+- Band Math's output names come from its configuration. An explicit cast sets only a band's element type, never
+  whether it is an array, so dimensionality is observed for every output band.
 
 These are the first candidates for exact/model-derived declarations and transformation tests. They also show that
 the migration does not require one mechanism for every recipe: static, derived, inherited and observed outputs can

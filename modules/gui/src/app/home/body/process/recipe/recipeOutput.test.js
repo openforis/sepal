@@ -21,7 +21,7 @@ vi.mock('../recipeTypeRegistry', async () => {
                 blue: {dataType: {precision: 'int', min: -10000, max: 10000}, tooltip: 'Blue'}
             })
         },
-        BAND_MATH: {
+        BAYTS_HISTORICAL: {
             getAvailableBands: () => ({class: {dataType: {precision: 'int'}, label: 'Class'}})
         },
         MASKING: {
@@ -97,7 +97,7 @@ describe('an answer from the session alone', () => {
 
 describe('a legacy answer', () => {
     it('passes an undeclared type\'s helper through as names, its data type as display only', () => {
-        const recipe = bandMath()
+        const recipe = baytsHistorical()
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe])})
 
@@ -106,9 +106,9 @@ describe('a legacy answer', () => {
     })
 
     it('answers a declared wrapper over an undeclared source from the wrapper\'s own helper', () => {
-        const recipe = masking({primary: 'band-math-1'})
+        const recipe = masking({primary: 'bayts-historical-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, bandMath()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, baytsHistorical()])})
 
         expect(read).toMatchObject({status: 'READY', authority: 'LEGACY'})
         expect(read.availableBands).toEqual({class: {dataType: {arrayDimensions: 0}}})
@@ -116,9 +116,9 @@ describe('a legacy answer', () => {
 
     it('is never taken from evidence that could not be had', () => {
         registered.maskingEvidence = 'UNAVAILABLE'
-        const recipe = masking({primary: 'band-math-1'})
+        const recipe = masking({primary: 'bayts-historical-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, bandMath()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, baytsHistorical()])})
         registered.maskingEvidence = 'OBSERVED'
 
         expect(read).toMatchObject({status: 'UNAVAILABLE', authority: null, bands: [], acquisition: null})
@@ -129,7 +129,7 @@ describe('a map product', () => {
     it('is named from the layer config, and an unknown value is no product at all', () => {
         expect(layerProduct(ccdc(), {visualizationType: 'COUNT'})).toEqual({name: 'COUNT'})
         expect(layerProduct(ccdc(), {visualizationType: 'SEGMENTS'})).toBeNull()
-        expect(layerProduct(bandMath(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
+        expect(layerProduct(baytsHistorical(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
     })
 
     // A layer whose form has not yet written its defaults shows the same product it will show once it has, and
@@ -274,7 +274,7 @@ describe('a retained description', () => {
 describe('whether a retained terminal is about the records held now', () => {
     it('holds while every record it read that the session also holds is unchanged', () => {
         const recipe = masking({primary: 'mosaic-1'})
-        const basis = [recipe, mosaic(), bandMath()].map(record => ({id: record.id, content: recipeContent(record)}))
+        const basis = [recipe, mosaic(), baytsHistorical()].map(record => ({id: record.id, content: recipeContent(record)}))
 
         expect(compatibleBasis(basis, graphOf([{...recipe, title: 'Renamed', revision: 9}, mosaic()]))).toBe(true)
     })
@@ -310,7 +310,7 @@ const masking = ({primary, mask}) => ({
     }
 })
 
-const bandMath = () => ({id: 'band-math-1', type: 'BAND_MATH', model: {}})
+const baytsHistorical = () => ({id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}})
 
 const ccdc = (model = {}) => ({id: 'ccdc-1', type: 'CCDC', model})
 

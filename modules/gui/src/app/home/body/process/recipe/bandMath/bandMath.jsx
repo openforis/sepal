@@ -8,8 +8,7 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getDefaultModel, RecipeActions} from './bandMathRecipe'
-import {getAvailableBands} from './bands'
+import {getDefaultModel} from './bandMathRecipe'
 import {BandMathToolbar} from './panels/bandMathToolbar'
 import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
@@ -23,7 +22,6 @@ class _BandMath extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers
@@ -60,6 +58,5 @@ export default () => ({
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
     getPreSetVisualizations
 })

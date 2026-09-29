@@ -693,7 +693,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers what its source was observed to hold, and exports a scalar band under the fallback', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
+        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
         await click('class')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -706,7 +706,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('exports no band observed as an array, for which it has no policy', async () => {
         observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
+        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
         await click('probability')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -717,7 +717,7 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
     it('offers nothing until its source has been observed', async () => {
         answering()
 
-        await open({recipes: [MASKED_BAND_MATH, BAND_MATH], id: MASKED_BAND_MATH.id})
+        await open({recipes: [MASKED_BAYTS_HISTORICAL, BAYTS_HISTORICAL], id: MASKED_BAYTS_HISTORICAL.id})
 
         expect(offers('class')).toBe(false)
     })
@@ -728,17 +728,17 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
 // pairing it with the session as it now stands must not authorize an export.
 describe('evidence observed of a source before it changed', () => {
     const SCALAR = [{name: 'class', arrayDimensions: 0}]
-    const savedDrive = {...MASKED_BAND_MATH, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+    const savedDrive = {...MASKED_BAYTS_HISTORICAL, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
 
     const openObserved = async () => {
         observed.answer = () => SCALAR
-        await open({recipes: [savedDrive, BAND_MATH], id: savedDrive.id})
+        await open({recipes: [savedDrive, BAYTS_HISTORICAL], id: savedDrive.id})
         expect(offers('class')).toBe(true)
     }
 
     it.each([
-        ['its source is edited, keeping its id', () => editRecipe(BAND_MATH.id, {
-            model: {...BAND_MATH.model, outputBands: {outputImages: []}}
+        ['its source is edited, keeping its id', () => editRecipe(BAYTS_HISTORICAL.id, {
+            model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}
         })],
         ['the credentials it was read under are replaced', () => replaceCredentials()]
     ])('authorizes nothing once %s, until the source is observed again', async (_case, change) => {
@@ -759,8 +759,8 @@ describe('evidence observed of a source before it changed', () => {
     // A click can land after the session changed and before the lifecycle has rendered that change, so whether the
     // evidence is still current is decided when Apply is clicked, not when the lifecycle next reacts.
     it.each([
-        ['its source is edited, keeping its id', () => editAction(BAND_MATH.id, {
-            model: {...BAND_MATH.model, outputBands: {outputImages: []}}
+        ['its source is edited, keeping its id', () => editAction(BAYTS_HISTORICAL.id, {
+            model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}
         })],
         ['the credentials it was read under are replaced', () => credentialsAction()]
     ])('authorizes nothing when applied as %s, before the lifecycle has reacted', async (_case, change) => {
@@ -780,7 +780,7 @@ describe('evidence observed of a source before it changed', () => {
         await openObserved()
         const answer = answering()
 
-        await editRecipe(BAND_MATH.id, {model: {...BAND_MATH.model, outputBands: {outputImages: []}}})
+        await editRecipe(BAYTS_HISTORICAL.id, {model: {...BAYTS_HISTORICAL.model, options: {orbits: ['ASCENDING']}}})
         await answer.arrive([{name: 'class', arrayDimensions: 1}])
         await click('process.retrieve.apply')
 
@@ -852,19 +852,19 @@ const MASKED_ASSET = {
 }
 
 // A recipe type that declares no output, over nothing, and a Masking over it.
-const BAND_MATH = {
-    id: 'band-math-1',
-    type: 'BAND_MATH',
-    model: {inputImagery: {images: []}}
+const BAYTS_HISTORICAL = {
+    id: 'bayts-historical-1',
+    type: 'BAYTS_HISTORICAL',
+    model: {options: {orbits: ['ASCENDING', 'DESCENDING']}}
 }
 
-const MASKED_BAND_MATH = {
-    id: 'masked-remapping-1',
+const MASKED_BAYTS_HISTORICAL = {
+    id: 'masked-bayts-historical-1',
     type: 'MASKING',
-    title: 'Masked band math',
+    title: 'Masked historical statistics',
     model: {
-        imageToMask: {type: 'RECIPE_REF', id: BAND_MATH.id},
-        imageMask: {type: 'RECIPE_REF', id: BAND_MATH.id}
+        imageToMask: {type: 'RECIPE_REF', id: BAYTS_HISTORICAL.id},
+        imageMask: {type: 'RECIPE_REF', id: BAYTS_HISTORICAL.id}
     },
     ui: {}
 }

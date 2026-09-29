@@ -187,6 +187,55 @@ describe('exporting a masked CCDC', () => {
     })
 })
 
+// Band Math is described from the output bands it is configured with, and the dimensionality its running image is
+// observed to have - here, within the export itself.
+describe('exporting a Band Math recipe', () => {
+    const bandMath = ({outputNames = ['dem2', 'coefs']} = {}) => ({
+        id: 'band-math-1',
+        type: 'BAND_MATH',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', name: 'i1', type: 'ASSET', id: 'users/x/dem', includedBands: [{id: 'b1', name: 'elevation'}]}]},
+            calculations: {calculations: []},
+            outputBands: {outputImages: [{imageId: 'i-1', outputBands: outputNames.map((name, index) => ({id: `b${index}`, name: 'elevation', defaultOutputName: name}))}]}
+        }
+    })
+    const RUNNING_IMAGE = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs', arrayDimensions: 1}]
+
+    it('exports once its own running image is observed, recording that nothing is known about its values', async () => {
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = RUNNING_IMAGE
+
+        const {bandEncoding, image} = await submit({recipe, bands: ['dem2', 'coefs']})
+
+        expect(image).toMatchObject({builtFrom: recipe.id})
+        expect(bandEncoding).toEqual({})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('fails the export when its running image cannot be observed', async () => {
+        const recipe = bandMath()
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/unavailable output/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export when its running image contradicts its configured output', async () => {
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs_1', arrayDimensions: 1}]
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/invalid output \(CONFLICTING_OBSERVATION\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export for two output bands named alike, whatever its running image holds', async () => {
+        const recipe = bandMath({outputNames: ['x', 'x']})
+        state.recipeImages[recipe.id] = [{name: 'x', arrayDimensions: 0}, {name: 'x_1', arrayDimensions: 0}]
+
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
 describe('exporting a recipe type that declares no output', () => {
     it('exports as before, stating that nothing is known about its values', async () => {
         const recipe = {id: 'bayts-historical-1', type: 'BAYTS_HISTORICAL', model: {}}

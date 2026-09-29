@@ -9,11 +9,9 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-// import {RecipeActions} from '../bandMathRecipe'
 import styles from './bandMathToolbar.module.css'
 import {Calculations} from './calculations/calculations'
 import {InputImagery} from './inputImagery/inputImagery'
-// import {toBandNames} from './outputBands/bandNamesUpdate'
 import {OutputBands} from './outputBands/outputBands'
 import {Retrieve} from './retrieve/retrieve'
 

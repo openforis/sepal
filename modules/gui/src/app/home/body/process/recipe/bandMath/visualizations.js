@@ -35,7 +35,7 @@ const updateVisualizations = (recipe, image) => {
     }
 }
 
-// A band the user has not renamed is called by its default name, which is what getAvailableBands reports
+// A band the user has not renamed is called by its default name, which is what the declaration names
 // and what the output actually carries. Reading only `outputName` dropped every visualization over a band
 // nobody had renamed - which is most of them.
 //

@@ -17,9 +17,9 @@ on that basis.
 
 ### Output-declaration migration
 
-Only Asset, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change, LandTrendr,
-Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping and Unsupervised Classification
-declare an `IMAGE_OUTPUT` provider.
+Only Asset, Band Math, BAYTS Alerts, CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change,
+LandTrendr, Masking, Optical Mosaic, Phenology, PyEO Alerts, Radar Mosaic, Regression, Remapping and Unsupervised
+Classification declare an `IMAGE_OUTPUT` provider.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
   bands through the common read. A declared type is answered through its declaration there; any other is answered by
@@ -47,8 +47,8 @@ unfiltered mosaics or aggregate geometry. Encoding comes from the asset's own me
 compositing are unchanged, so collection-wide geometry can still make ASSET_BOUNDS drawing, preview and export
 expensive. See [band discovery without image construction](output-products.md#band-discovery-without-image-construction).
 
-Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic, Stack and Band Math, whose
-band readers construct their output, and the generic typed `/bands` path, which bypasses cheaper
+Apply the same strategy as the remaining recipe families migrate. Audit Planet Mosaic and Stack, whose band readers
+construct their output, and the generic typed `/bands` path, which bypasses cheaper
 catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
 Known schemas belong in declarations and referenced schemas in provider reads; extend bounded acquisition only
 where a family still needs observation.
@@ -138,8 +138,15 @@ where a family still needs observation.
    - Stack, through the existing `inputs()` access for name-based selection and renaming. Review the correspondence
      between output and input bands before implementation; its capability preservation still waits for
      [capability projection](output-products.md#transformation-effects-and-capability-projection);
-   - Band Math, which needs the provider outcome combining declared constraints with observation. That is a
-     provider-contract change, so design it early rather than last.
+   - Band Math has migrated ([Band Math](../../recipes/band-math.md)). Its declaration names its configured output
+     bands in configured order under their final names, and refuses two alike before anything is read. Its running
+     image is observed for dimensionality alone and must carry exactly those names, or the provider refuses it
+     (`CONFLICTING_OBSERVATION`); nothing is offered while that observation is pending. A verified scalar is averaged
+     at coarser pyramid levels, as Earth Engine's default always exported it, a verified array is sampled, and a band
+     whose dimensionality was not observed states neither; no encoding is stated. Arrays can therefore be exported
+     to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
+     Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
+     took its mode.
 4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
    product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
    runtime. Delete the legacy adapter, `noImageOutput` and the registered band authorities; retain the common
@@ -156,12 +163,9 @@ presentation, not a migration state.
 
 #### Contract reviews before the remaining migrations
 
-Review Band Math's provider outcome and Stack's band correspondence before implementing those migrations. These reviews can proceed alongside other independent family migrations;
-they must not wait until only the difficult families remain.
+Review Stack's band correspondence before implementing its migration. These reviews can proceed alongside other
+independent family migrations; they must not wait until only the difficult families remain.
 
-- **Band Math:** establish how configured output names and constraints combine with observed physical facts,
-  including pending and failed evidence. Derive the smallest provider extension from actual expressions and
-  consumers, rather than adding a general expression framework.
 - **Stack:** establish which input band each selected or renamed output corresponds to. That relationship is the
   basis for later presentation and capability inheritance; copied source snapshots are not its authority. This
   review does not bring forward the deferred shared picker or capability-projection implementation.
