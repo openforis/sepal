@@ -1,14 +1,9 @@
 import {createHostingService} from './index.js'
-import {AWS_INSTANCE_TYPES, LOCAL_INSTANCE_TYPES} from './instanceTypes.js'
+import {INSTANCE_TYPES} from './instanceTypes.js'
 
-test('createHostingService(local) selects LOCAL_INSTANCE_TYPES', () => {
-    const svc = createHostingService({hostingService: 'local'})
-    expect(svc.instanceTypes).toBe(LOCAL_INSTANCE_TYPES)
-})
-
-test('createHostingService(aws) selects AWS_INSTANCE_TYPES', () => {
-    const svc = createHostingService({hostingService: 'aws'})
-    expect(svc.instanceTypes).toBe(AWS_INSTANCE_TYPES)
+test.each(['local', 'aws'])('createHostingService(%s) offers the instance catalog', hostingService => {
+    const svc = createHostingService({hostingService})
+    expect(svc.instanceTypes).toBe(INSTANCE_TYPES)
 })
 
 test('createHostingService throws for unknown service name', () => {

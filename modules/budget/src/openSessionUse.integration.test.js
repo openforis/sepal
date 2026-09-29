@@ -126,6 +126,19 @@ describe('OpenSessionUseRepository', () => {
         })
     })
 
+    describe('usersWithOpenSessions', () => {
+        test('reports each user with an open session once', async () => {
+            await repository.openSession(aSession({sessionId: 'first'}))
+            await repository.openSession(aSession({sessionId: 'second'}))
+            await repository.openSession(aSession({sessionId: 'closed', username: 'bob'}))
+            await repository.closeSession({sessionId: 'closed', to: at('07-03')})
+
+            const users = await repository.usersWithOpenSessions()
+
+            expect(users).toEqual([USERNAME])
+        })
+    })
+
     describe('removeUser', () => {
         test('removes only that user\'s sessions', async () => {
             await repository.openSession(aSession({sessionId: 'owned'}))

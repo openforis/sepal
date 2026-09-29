@@ -1,8 +1,8 @@
 import {createPricing, STORAGE_COST_PER_GB_MONTH} from './pricing.js'
 
-// Distinct instance-type ids across the worker's AWS + LOCAL tables when this map was copied.
+// Instance-type ids in the worker's catalog when this map was copied.
 // Pins budget's copy only; drift in the worker's table needs a manual cross-check.
-const WORKER_INSTANCE_TYPE_COUNT = 62
+const WORKER_INSTANCE_TYPE_COUNT = 90
 
 describe('pricing', () => {
     test('storageCostPerGbMonth is 0.33 (EFS pricing)', () => {
@@ -26,7 +26,9 @@ describe('pricing', () => {
         const map = createPricing().hourlyCostByInstanceType()
         expect(map.T3aSmall).toBe(0.0204) // AWS + LOCAL, tagged t1, current gen
         expect(map.C7a12xlarge).toBe(2.64288) // AWS-only
-        expect(map.C7a16xlarge).toBe(3.52384) // AWS-only
+        expect(map.C7a16xlarge).toBe(3.52384) // AWS-only, legacy
+        expect(map.C8a16xlarge).toBe(3.70016) // AWS-only
+        expect(map.X2idn32xlarge).toBe(16.006) // AWS-only
         expect(map.M5a12xlarge).toBe(2.304) // AWS + LOCAL
         expect(map.G512xlarge).toBe(6.332) // last entry, GPU type
         expect(map.NoSuchType).toBeUndefined() // unknown types are absent → calculator prices at 0

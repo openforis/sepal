@@ -38,27 +38,47 @@ const totalCost = session => {
 }
 
 const renderInstanceTypesTable = info => {
+    const tagged = info.instanceTypes.filter(({tag}) => tag)
+    renderInstanceTypes('Available instance types without SSD', tagged.filter(({ssdGB}) => !ssdGB))
+    renderInstanceTypes('Available instance types with SSD', tagged.filter(({ssdGB}) => ssdGB), [
+        // Split in two so neither line is wider than the table's columns.
+        `${format('SSD storage is available under ', 'CYAN')}${format('/tmp', 'CYAN_INTENSE')}${format(' and', 'CYAN')}`,
+        format('will be cleared when the session is stopped', 'CYAN')
+    ])
+}
+
+const renderInstanceTypes = (title, instanceTypes, notes = []) => {
+    if (!instanceTypes.length) {
+        return
+    }
     const header = [
         th([
-            td({value: 'Available instance types', colSpan: 4, styles: ['BOLD', 'GREEN']})
+            td({value: title, colSpan: 6, styles: ['BOLD', 'GREEN']})
         ]),
+        ...notes.map(note =>
+            tr([
+                td({value: note, colSpan: 6})
+            ])
+        ),
         th([
             td({value: 'Type', styles: ['BOLD']}),
             td({value: 'CPU', styles: ['BOLD'], align: 'right'}),
             td({value: 'GB RAM', styles: ['BOLD'], align: 'right'}),
+            td({value: 'GB SSD', styles: ['BOLD'], align: 'right'}),
+            td({value: 'Perf.', styles: ['BOLD'], align: 'right'}),
             td({value: 'USD/h', styles: ['BOLD'], align: 'right'})
         ])
     ]
-    const rows = info.instanceTypes
-        .filter(({tag}) => tag)
-        .map(type =>
-            tr([
-                td({value: type.tag, styles: ['YELLOW_INTENSE']}),
-                td({value: type.cpuCount}),
-                td({value: type.ramGiB}),
-                td({value: type.hourlyCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}), align: 'right'})
-            ])
-        )
+    const rows = instanceTypes.map(type =>
+        tr([
+            td({value: type.tag, styles: ['YELLOW_INTENSE']}),
+            td({value: type.cpuCount}),
+            td({value: type.ramGiB}),
+            td({value: type.ssdGB || '-', align: 'right'}),
+            td({value: type.performance ? `${type.performance.toFixed(1)}x` : '-', align: 'right'}),
+            td({value: type.hourlyCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}), align: 'right'})
+        ])
+    )
     println(table([...header, ...rows]))
 }
 

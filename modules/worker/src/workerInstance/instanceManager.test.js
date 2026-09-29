@@ -18,7 +18,7 @@ const session = ({id, instanceId, host = 'host-1', creationTime = new Date('2024
 })
 
 const makeManager = provisioner =>
-    createInstanceManager({provider: {}, provisioner, instanceTypes: []})
+    createInstanceManager({provider: {attachScratchVolume: async () => null}, provisioner, instanceTypes: []})
 
 describe('removeOrphanedContainers', () => {
     const instance = id => ({id, type: 'T3aSmall', host: id, reservation: null})
@@ -137,6 +137,8 @@ describe('reprovisionInstance', () => {
             getInstance: jest.fn(async () => instance),
             release: jest.fn(async () => {}),
             terminate: jest.fn(async () => {}),
+            attachScratchVolume: jest.fn(async () => null),
+            deleteScratchVolume: jest.fn(async () => {}),
         }
         const manager = createInstanceManager({claims, provider, provisioner, instanceTypes: []})
 
@@ -148,6 +150,7 @@ describe('reprovisionInstance', () => {
 
         const successor = {...pendingSession, id: 's-2', username: 'bob'}
         const second = manager.reprovisionInstance(successor)
+        await new Promise(resolve => setImmediate(resolve))
         expect(provisioner.provisionInstance).toHaveBeenCalledTimes(2)
         expect(provisioner.provisionInstance.mock.calls[1][0].reservation.sessionId).toBe('s-2')
 

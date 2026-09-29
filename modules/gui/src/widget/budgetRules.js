@@ -16,9 +16,11 @@ export const isBudgetExceeded = (spending = {}) => {
         monthlyStorageBudget, monthlyStorageSpending,
         storageQuota, storageUsed
     } = spending
+    // Same thresholds as the budget module's verdict: a budget is spent once reached, a quota only
+    // once passed.
     return monthlyInstanceSpending >= monthlyInstanceBudget
         || monthlyStorageSpending >= monthlyStorageBudget
-        || storageUsed >= storageQuota
+        || storageUsed > storageQuota
 }
 
 export const projectStorageSpending = ({storageUsed, costPerGbMonth, monthlyStorageSpending}, fraction = fractionLeftOfMonth()) =>

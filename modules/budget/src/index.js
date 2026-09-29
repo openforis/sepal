@@ -4,7 +4,8 @@ import {BUDGET_PUBLISHERS} from './events.js'
 
 const log = getLogger('sepal.budget')
 
-const HOUR_MS = 60 * 60 * 1000
+const MINUTE_MS = 60 * 1000
+const HOUR_MS = 60 * MINUTE_MS
 
 const scheduleFixedDelay = (name, fn, intervalMs) => {
     const run = () =>
@@ -65,6 +66,11 @@ const createBudgetComponent = ({budgetManager, handlers, enforcement, reconciler
                 await publishSpendingReport()
             },
             HOUR_MS))
+
+        timers.push(scheduleFixedDelay(
+            'EnforceOpenSessionBudgets',
+            () => enforcement.publishOpenSessionVerdicts(),
+            MINUTE_MS))
 
         timers.push(scheduleFixedDelay(
             'ReconcileOpenSessions',

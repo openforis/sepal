@@ -534,6 +534,7 @@ test('generateReportSelf → full report map with session + instanceType', async
     expect(s).toEqual({
         id: 's1',
         name: instanceName('s1'),
+        sshLogin: `alice+${instanceName('s1')}`,
         path: 'sessions/session/s1',
         username: 'alice',
         status: 'ACTIVE',
@@ -541,7 +542,7 @@ test('generateReportSelf → full report map with session + instanceType', async
         timeoutHours: 0,
         instanceType: {
             id: 'T3aSmall', path: 'sessions/instance-type/T3aSmall', name: 't3a.small',
-            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, description: '1 CPU, 2 GB', hourlyCost: 0.02,
+            tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, ssdGB: 0, description: '1 CPU, 2 GB', hourlyCost: 0.02,
         },
         creationTime: '2026-07-01T10:00:00.000Z',
         // 2h since creation (clock 12:00, creation 10:00) → ceil(2) * 0.02 = 0.04
@@ -656,6 +657,19 @@ test('every session in the report carries its derived name', () => {
     expect(map.sessions[0].name).toBe(instanceName(map.sessions[0].id))
 })
 
+// What goes after `ssh`: the user, the instance to route to, and the gateway's own address.
+test('every session carries the ssh login that reaches it', () => {
+    const withSshHost = createSessionsApi({sessionManager, clock: fixedClock, expiryPolicy, sshHost: 'ssh.sepal.io'})
+    const [session] = withSshHost._internal.reportAsMap(notifiedReport(), 'alice', true).sessions
+    expect(session.sshLogin).toBe(`alice+${session.name}@ssh.sepal.io`)
+})
+
+// The web address is not the gateway's, so without a configured one there is no host to give.
+test('the ssh login has no host when the gateway address is not configured', () => {
+    const [session] = api._internal.reportAsMap(notifiedReport(), 'alice', true).sessions
+    expect(session.sshLogin).toBe(`alice+${session.name}`)
+})
+
 test('serializes the expiry cycle state and the stored deadline', () => {
     const map = api._internal.reportAsMap(notifiedReport(), 'alice', true)
     expect(map.sessions[0].expiry).toEqual({
@@ -691,23 +705,29 @@ test('timeoutHours counts down the stored deadline and never goes negative', () 
     expect(past.sessions[0].timeoutHours).toBe(0)
 })
 
-test('userUsage → admin path user (lowercased), default days 30, body passthrough', async () => {
+test('userUsageOther → admin path user (lowercased), default days 30, body passthrough', async () => {
     sessionManager.generateUserUsageReport.mockResolvedValue({days: 30, overall: null, byInstanceType: []})
     const c = ctx({params: {username: 'Bob'}})
-    await api.userUsage(c)
+    await api.userUsageOther(c)
     expect(sessionManager.generateUserUsageReport).toHaveBeenCalledWith({username: 'bob', days: 30})
     expect(c.body).toEqual({days: 30, overall: null, byInstanceType: []})
 })
 
+test('userUsageSelf → currentUser (lowercased), never a path param', async () => {
+    sessionManager.generateUserUsageReport.mockResolvedValue({days: 30, overall: null, byInstanceType: []})
+    await api.userUsageSelf(ctx({params: {username: 'bob'}}))
+    expect(sessionManager.generateUserUsageReport).toHaveBeenCalledWith({username: 'alice', days: 30})
+})
+
 test('userUsage → days parsed and clamped to 1..365', async () => {
     sessionManager.generateUserUsageReport.mockResolvedValue({})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '90'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '90'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 90})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '9999'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '9999'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 365})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '0'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '0'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 1})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: 'nope'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: 'nope'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 30})
 })
 
@@ -848,4 +868,12 @@ test('serializes gpuCount on instance types', () => {
     const report = {sessions: [], instanceTypes: [instanceType]}
     const map = api._internal.reportAsMap(report, 'bob', true)
     expect(map.instanceTypes[0].gpuCount).toBe(1)
+})
+
+test('serializes the local SSD capacity and relative performance of instance types', () => {
+    const instanceType = {id: 'R8idXlarge', name: 'r8id.xlarge', tag: 'r4d', cpuCount: 4,
+        ramGiB: 32, hourlyCost: 0.3696, description: '4 CPU, 32 GB', ssdGB: 237, performance: 4.3}
+    const report = {sessions: [], instanceTypes: [instanceType]}
+    const map = api._internal.reportAsMap(report, 'bob', true)
+    expect(map.instanceTypes[0]).toMatchObject({ssdGB: 237, performance: 4.3})
 })

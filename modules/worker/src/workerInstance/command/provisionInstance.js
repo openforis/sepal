@@ -15,13 +15,14 @@ const DEFAULT_DELAY_FN = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 // _delayFn is injectable so tests don't sleep through the real 17 minutes.
 
-const provisionInstance = async (instance, {provisioner, _delayFn = DEFAULT_DELAY_FN}) => {
+const provisionInstance = async (instance, {provider, provisioner, _delayFn = DEFAULT_DELAY_FN}) => {
     log.debug(`Provisioning ${instanceTag(instance)}...`)
 
     let lastError
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
-            await provisioner.provisionInstance(instance)
+            const tmpDevice = await provider.attachScratchVolume(instance)
+            await provisioner.provisionInstance(instance, {tmpDevice})
             emitInstanceProvisioned(instance)
             log.info(`Provisioned ${instanceTag(instance)} on attempt ${attempt + 1}`)
             return

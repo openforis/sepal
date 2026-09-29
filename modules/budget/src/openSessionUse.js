@@ -60,4 +60,13 @@ export class OpenSessionUseRepository {
             return rows.map(row => row.session_id)
         })
     }
+
+    usersWithOpenSessions() {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                'SELECT DISTINCT username FROM open_session_use WHERE to_time IS NULL'
+            )
+            return rows.map(row => row.username)
+        })
+    }
 }

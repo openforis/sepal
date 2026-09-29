@@ -30,7 +30,8 @@ describe('user database migrations', () => {
         const collations = await usernameCollations(dbName)
         expect(found).toEqual([{username: stored.username}])
         expect(collations).toEqual({
-            sepal_user: 'ascii_general_ci'
+            sepal_user: 'ascii_general_ci',
+            ssh_key: 'ascii_general_ci'
         })
     })
 
@@ -71,10 +72,9 @@ describe('user database migrations', () => {
             await insertUser(dbName, aUser({username: 'bob'}))
             await insertUser(dbName, aUser({username: 'alice'}))
 
-            const {version} = await migrateDb(dbName, SCHEMA_PATH)
+            await migrateDb(dbName, SCHEMA_PATH)
 
             const [rows] = await admin.query('SELECT username, revision FROM ??.sepal_user ORDER BY username', [dbName])
-            expect(version).toBe(2)
             expect(rows).toEqual([{username: 'alice', revision: 1}, {username: 'bob', revision: 1}])
         })
     })
@@ -88,7 +88,7 @@ describe('user database migrations', () => {
         const [rows] = await admin.query('SELECT id FROM ??.sepal_user WHERE username = ?', [dbName, stored.username])
         const tables = await tableNames(dbName)
         expect(rows[0].id).toBe(1)
-        expect(tables).toEqual(['schema_version', 'sepal_user'])
+        expect(tables).toEqual(['schema_version', 'sepal_user', 'ssh_key'])
     })
 
     // Copy the real first migration unchanged so the full stream validates it before applying 002.

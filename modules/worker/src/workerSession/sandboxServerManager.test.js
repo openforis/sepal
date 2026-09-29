@@ -32,19 +32,11 @@ describe('ensureServerStarted', () => {
         expect(control.startServer).toHaveBeenCalledWith(activeSession, 'jupyter')
     })
 
-    it('starts each pair only once', async () => {
+    it('starts an already started pair again, so a dead server can be revived', async () => {
         const control = {startServer: jest.fn(async () => {})}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
-        expect(control.startServer).toHaveBeenCalledTimes(1)
-    })
-
-    it('starts a different endpoint on the same session separately', async () => {
-        const control = {startServer: jest.fn(async () => {})}
-        const manager = createSandboxServerManager({repo: makeRepo(), control})
-        await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
-        await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
         expect(control.startServer).toHaveBeenCalledTimes(2)
     })
 
@@ -101,16 +93,5 @@ describe('ensureServerStarted', () => {
         const manager = createSandboxServerManager({repo: makeRepo(), control})
         await expect(manager.ensureServerStarted({username: 'alice', sessionId: 'nope', endpoint: 'shiny'}))
             .rejects.toThrow(/Non-existing session/)
-    })
-})
-
-describe('forget', () => {
-    it('drops a session so its endpoints are started again', async () => {
-        const control = {startServer: jest.fn(async () => {})}
-        const manager = createSandboxServerManager({repo: makeRepo(), control})
-        await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
-        manager.forget('sess-1')
-        await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
-        expect(control.startServer).toHaveBeenCalledTimes(2)
     })
 })

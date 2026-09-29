@@ -10,14 +10,16 @@ import {msg} from '~/translate'
 import {Combo} from '~/widget/combo'
 import {Panel} from '~/widget/panel/panel'
 
+import {InstanceSpecsTag} from '../../instanceSpecs'
 import {conflictingAssociations} from './appOpenPlan'
 import styles from './instancePicker.module.css'
 import {appRequirements, buildPickerOptions, defaultPickerValue, hasSuitableOption} from './instanceSuitability'
 
 // Modal picker shown before starting a sandbox app that has no live instance
 // association. Two combo sections: the user's running instances (unsuitable ones
-// disabled) and the suitable new instance types (cheapest first). Default: first
+// disabled) and the suitable new instance types (in catalog order). Default: first
 // suitable running instance, else the cheapest suitable type.
+// Without an app it picks the type of a new instance: no running instances, no requirements.
 class _InstancePicker extends React.Component {
     state = {
         report: null,
@@ -45,7 +47,7 @@ class _InstancePicker extends React.Component {
 
     pickerInputs(report) {
         const {app} = this.props
-        const sessions = report?.sessions || []
+        const sessions = app ? report?.sessions || [] : []
         return {
             sessions,
             instanceTypes: report?.instanceTypes || [],
@@ -53,10 +55,12 @@ class _InstancePicker extends React.Component {
             // The instances already hosting this app or a group-mate. conflictingAssociations is
             // the same function openPlan decides with, so the default the picker offers and the
             // plan that default produces cannot drift apart.
-            groupSessionIds: conflictingAssociations(app, appList(), sessions)
-                .map(({sessionId}) => sessionId),
+            groupSessionIds: app
+                ? conflictingAssociations(app, appList(), sessions).map(({sessionId}) => sessionId)
+                : [],
             runningLabel: msg('apps.instancePicker.runningSection'),
             newLabel: msg('apps.instancePicker.newSection'),
+            newSsdLabel: msg('apps.instancePicker.newSsdSection'),
             appCountLabel: count => msg('apps.count', {count})
         }
     }
@@ -75,15 +79,16 @@ class _InstancePicker extends React.Component {
         onConfirm(kind === 'session' ? {sessionId: id} : {instanceType: id})
     }
 
-    // Every option is a two-column row: what the instance IS on the left, what it provides and
-    // costs right-aligned, so the options can be compared straight down the column instead of
-    // across a separator. A running instance hosting apps lists them dimmed underneath.
-    renderOption({title, detail, apps}) {
+    // A new instance type's option is a two-column row: what the instance IS on the left, what it
+    // provides and costs right-aligned, so the options can be compared straight down the column
+    // instead of across a separator. A running instance shows its title only, and lists the apps it
+    // hosts dimmed underneath.
+    renderOption({title, instanceType, apps}) {
         return (
             <div className={styles.option}>
                 <div className={styles.instance}>
                     <div className={styles.title}>{title}</div>
-                    <div className={styles.detail}>{detail}</div>
+                    {instanceType ? <InstanceSpecsTag instanceType={instanceType}/> : null}
                 </div>
                 {apps?.length
                     ? (
@@ -118,11 +123,13 @@ class _InstancePicker extends React.Component {
             // tell the user why instead of showing an empty combo.
             return (
                 <div>
-                    {msg('apps.instancePicker.noSuitableInstance', {
-                        cpu: requirements.minCpuCount,
-                        gpu: requirements.minGpuCount ? ` / ${requirements.minGpuCount} GPU` : '',
-                        ram: requirements.minRamGiB
-                    })}
+                    {app
+                        ? msg('apps.instancePicker.noSuitableInstance', {
+                            cpu: requirements.minCpuCount,
+                            gpu: requirements.minGpuCount ? ` / ${requirements.minGpuCount} GPU` : '',
+                            ram: requirements.minRamGiB
+                        })
+                        : msg('apps.instancePicker.noInstanceType')}
                 </div>
             )
         }
@@ -145,7 +152,9 @@ class _InstancePicker extends React.Component {
             <Panel className={styles.panel} placement='modal' onBackdropClick={onCancel}>
                 <Panel.Header
                     icon='server'
-                    title={msg('apps.instancePicker.title', {app: app.label})}/>
+                    title={app
+                        ? msg('apps.instancePicker.title', {app: app.label})
+                        : msg('apps.instancePicker.newInstanceTitle')}/>
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
@@ -174,7 +183,7 @@ export const InstancePicker = compose(
 )
 
 InstancePicker.propTypes = {
-    app: PropTypes.object.isRequired,
+    app: PropTypes.object,
     onCancel: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired
 }

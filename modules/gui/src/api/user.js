@@ -1,4 +1,5 @@
 import {delete$, get$, post$} from '~/http-client'
+import {launchFailureRetry} from '~/instanceLaunchFailure'
 
 import {moduleWebSocket$} from './ws.js'
 
@@ -78,6 +79,19 @@ export default {
             body: {oldPassword, newPassword}
         }),
 
+    sshKeys$: () =>
+        get$('/api/user/current/ssh-keys'),
+
+    // A refused key answers 400 {code}; it arrives as a value so the form can say why.
+    addSshKey$: ({publicKey, name}) =>
+        post$('/api/user/current/ssh-keys', {
+            body: {publicKey, name},
+            validStatuses: [201, 400]
+        }),
+
+    removeSshKey$: id =>
+        delete$(`/api/user/current/ssh-keys/${id}`),
+
     getGoogleAccessRequestUrl$: destinationUrl =>
         get$('/api/user/google/access-request-url', {
             query: {destinationUrl}
@@ -100,6 +114,9 @@ export default {
                 hours: session.keepAlive
             }
         }),
+
+    startCurrentUserSession$: instanceTypeId =>
+        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`, {retry: launchFailureRetry}),
 
     stopCurrentUserSession$: session =>
         delete$(`/api/sessions/session/${session.id}`),

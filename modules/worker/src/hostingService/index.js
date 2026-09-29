@@ -1,13 +1,13 @@
 import {createDockerInstanceProvisioner} from '../workerInstance/dockerInstanceProvisioner.js'
 import {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} from '../workerInstance/sandboxSessionApiKey.js'
 import {createAwsInstanceProvider} from './aws/awsInstanceProvider.js'
-import {AWS_INSTANCE_TYPES, LOCAL_INSTANCE_TYPES} from './instanceTypes.js'
+import {INSTANCE_TYPES} from './instanceTypes.js'
 import {createLocalInstanceProvider, LOCAL_HOST} from './local/localInstanceProvider.js'
 
 const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
     const {hostingService} = config
 
-    let instanceTypes
+    const instanceTypes = INSTANCE_TYPES
     let instanceProvider
     // extraHosts — passed to the Docker provisioner's HostConfig.ExtraHosts.
     let extraHosts = []
@@ -16,12 +16,10 @@ const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
     // (e.g. reconstructed from worker_session rows, which only persist the host alias).
     let defaultDaemonHost = null
     if (hostingService === 'aws') {
-        instanceTypes = AWS_INSTANCE_TYPES
         // The catalog is passed in so the provider can translate between the catalog ids the rest
         // of the worker uses and the EC2 instance-type names AWS expects.
         instanceProvider = createAwsInstanceProvider(config, {instanceTypes})
     } else if (hostingService === 'local') {
-        instanceTypes = LOCAL_INSTANCE_TYPES
         // Local provider uses the first instance type with a truthy tag.
         const localInstanceType = instanceTypes.find(t => t.tag)
         instanceProvider = createLocalInstanceProvider(localInstanceType)

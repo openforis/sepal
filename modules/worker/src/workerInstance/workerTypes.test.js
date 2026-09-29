@@ -8,8 +8,6 @@ import {jest} from '@jest/globals'
 
 jest.unstable_mockModule('node:fs', () => ({
     default: {
-        mkdirSync: jest.fn(),
-        chmodSync: jest.fn(),
         readFileSync: jest.fn(() => 'ssh-rsa PUBLIC-KEY\n'),
     },
 }))
@@ -58,7 +56,7 @@ describe('createWorkerType TASK_EXECUTOR dev mounts', () => {
 
             expect(Object.keys(taskVolumes(workerType))).toEqual([
                 '/host/data/sepal/home/admin',
-                '/host/data/sepal/home/admin/tmp/3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
+                'sepal-tmp.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
             ])
         }
     )
@@ -71,7 +69,7 @@ describe('createWorkerType TASK_EXECUTOR dev mounts', () => {
 
         expect(Object.keys(taskVolumes(workerType))).toEqual([
             '/host/data/sepal/home/admin',
-            '/host/data/sepal/home/admin/tmp/3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
+            'sepal-tmp.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
         ])
     })
 })

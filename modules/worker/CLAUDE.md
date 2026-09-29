@@ -37,10 +37,11 @@ budget tracking, and gateway route migration.
     servers (`rstudio` | `shiny` | `jupyter`) on the session's instance, 204 once its port is
     listening. The sandbox image starts only `sshd` at boot (`autostart=false` on the other three),
     so the provision wait command covers port 22 alone and the terminal no longer waits for
-    Jupyter. `sandboxServerManager` memoizes started `(sessionId, endpoint)` pairs IN MEMORY and
-    shares one in-flight start between concurrent callers; nothing is persisted because nothing
-    needs to survive a restart — `/script/sandbox-server.sh` exits 0 immediately for a server that
-    is already listening. **Servers are never stopped**; they live until the container does.
+    Jupyter. `sandboxServerManager` shares one in-flight start between concurrent callers but
+    remembers nothing: every call execs `/script/sandbox-server.sh`, which exits 0 immediately
+    for a server that is already listening. The gateway memoizes started pairs and forgets one
+    when its proxy gets a refused connection, so the next call revives a server supervisord gave
+    up on (FATAL). **Servers are never stopped**; they live until the container does.
   - The session ws protocol (`/session/ws`) handles `clientDown` by dissociating every
     association owned by that client (its tabs died with it), one event per app.
   - `POST /sessions/session/:sessionId/extend` — the Usage-panel keepAlive slider, body/query
@@ -134,6 +135,58 @@ on every file save. Four mechanisms carry instance management across it:
   row. `ExpireSessions` needs no head start: a deadline that passed during an outage earns a
   notification and the full grace, never a close. The former 2-minute grace, measured from process
   start, was what let a crash loop starve every closing sweep.
+
+## Session /tmp
+A worker container's `/tmp`, `/var/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
+removed with the instance's containers on provision and undeploy, so every session starts with an
+empty one. The provisioner creates it and sets its mode 1777 from a throwaway `{image}.prepare-tmp`
+container; both mounts are `nocopy`, since Docker would otherwise fill the empty volume with what the
+image's build left in `/tmp`. On the shared local daemon the orphan sweep also
+removes volumes no live instance claims.
+
+On AWS the volume lives on local disk, never on EFS:
+- **Types with local NVMe SSDs:** `sepal-scratch.service` in the worker AMI formats them at every
+  boot (RAID 0 when there are several) and mounts them over `/var/lib/docker/volumes` before Docker
+  starts, so the plain volume lands on them.
+- **Other types** get a blank 100 GiB gp3 EBS volume per session (`hostingService/aws/scratchVolumes.js`).
+  `provisionInstance` has the provider attach it as `/dev/xvdg` (idempotent across retries), and the
+  provisioner formats it as XFS with the host's `mkfs.xfs`, from a throwaway privileged container
+  of the worker image chrooted into the host (`{image}.format-tmp.{instanceId}`), then creates the
+  tmp volume on the device (`local` driver, `type=xfs`) before preparing it as above. Docker mounts it with the first container and unmounts it with the last, so
+  `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
+  Volumes are tagged `Type=WorkerScratch` from creation and marked delete-on-termination once
+  attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need
+  `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
+
+## Stopped-instance pool (AWS)
+`STOPPED_POOL_SIZE` (default 0 = off) keeps that many stopped worker instances whose disk has already
+been read from the AMI snapshot. A stopped instance costs only its EBS storage and can be started as
+any instance type, so one type-agnostic pool serves every request. EC2 tag `State=pooled` marks
+members; only `stopped` ones are candidates.
+
+- `requestInstance` order: running idle instance of the type → oldest ready pooled instance
+  (`ModifyInstanceAttribute` → `StartInstances` → tag reserved) → cold launch. A
+  failed pooled start (capacity, incompatible type) leaves it in the pool and cold-launches. It is
+  tagged only once started: nothing but the pool may leave a worker stopped.
+  The request emits `InstancePendingProvisioning` itself, as for an idle instance; a pooled start is
+  never tagged `Starting=true`, since the started-instance poll would provision it a second time.
+- `SizeIdlePool` recycles: surplus idle instances fill the pool (oldest first) instead of being
+  terminated. It pools or terminates a surplus instance only under an `instance_claim` (session id
+  `pool-cycle`), the election a request runs before reserving, so it never takes an instance a
+  request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
+  rest. User data runs on the first boot only, so a pooled instance does not power off when started.
+- `sweep` terminates pooled instances of another version, pooled instances still running an hour
+  after their start (failed warm-up or stop), and stopped instances outside the pool — every other
+  query sees only pending/running instances, so those would otherwise bill for their disk forever.
+- Recycled instances only carry the blocks their sessions read; warm-ups are fully read.
+
+## Worker AMI version (AWS)
+`WORKER_AMI_VERSION` (default `SEPAL_VERSION`) names the build the worker AMI was made from. The worker
+finds the AMI by that `Version` tag, tags its instances with it, and runs the `sandbox` and `task`
+images of that tag, the ones baked into the AMI, so the provisioner never pulls. A deploy reuses the
+AMI while its content hash (`hosting-services/aws/sepal/worker-ami/worker_ami.py`) is unchanged, so
+this is often an older build than the one deployed, and can move back when a change is reverted.
+Instances of any other version are therefore stale, newer ones included, and are recycled.
 
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first

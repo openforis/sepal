@@ -109,7 +109,7 @@ describe('T+notificationVisibleMinutes — email', () => {
         const sendEmail = jest.fn()
         await run(repo, {sendEmail})
         const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain('Keep it running or terminate it')
+        expect(content).toContain('Manage your instance')
     })
 
     // Without SEPAL_ENDPOINT there is no absolute URL worth putting in a mail. The mail still goes

@@ -1,0 +1,12 @@
+[Unit]
+Description=Mount the local SSDs holding the sessions' /tmp
+RequiresMountsFor=/var/lib/docker
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/sepal-scratch
+
+[Install]
+WantedBy=docker.service

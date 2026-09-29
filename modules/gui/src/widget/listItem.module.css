@@ -79,7 +79,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: hsla(0, 0%, 0%, .3);
+    background-color: var(--expansion-shade, hsla(0, 0%, 0%, .3));
     border-radius: var(--border-radius);
     border-top-left-radius: 0;
     border-top-right-radius: 0;

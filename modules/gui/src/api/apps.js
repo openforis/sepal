@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import {delete$, get$, post$} from '~/http-client'
+import {launchFailureRetry} from '~/instanceLaunchFailure'
 
 import {getClientId} from './ws'
 
@@ -16,7 +17,8 @@ export default {
     // association's owner is refreshed but no deadline moves, because nobody opened anything.
     requestSession$: ({endpoint, appPath, appLabel, sessionId, instanceType, reassert}) =>
         post$('/api/sandbox/start', {
-            query: _.omitBy({endpoint: endpoint ? endpoint : 'shiny', appPath, appLabel, sessionId, instanceType, clientId: getClientId(), reassert: reassert ? 'true' : undefined}, _.isUndefined)
+            query: _.omitBy({endpoint: endpoint ? endpoint : 'shiny', appPath, appLabel, sessionId, instanceType, clientId: getClientId(), reassert: reassert ? 'true' : undefined}, _.isUndefined),
+            retry: launchFailureRetry
         }),
 
     // Start the endpoint's server (rstudio/shiny/jupyter) on the session's instance; completes once

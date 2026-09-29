@@ -1,0 +1,49 @@
+.title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.type {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* Lines the strip up with the row's text above it, instead of the expansion's default inset. The
+   strip is read-only detail of the row, not a nested form, so it is shaded only lightly. */
+.expansion {
+    --expansion-shade: hsla(0, 0%, 0%, .15);
+    padding: .5rem;
+}
+
+.stats {
+    position: relative;
+    display: grid;
+    /* Fractions of the same width in every strip, so the columns line up across sessions: cpu, gpu,
+       ram, net, cost, keep alive, stops at. */
+    grid-template-columns: 2.5fr 2.5fr 2.5fr 4.5fr 3fr 12fr 5fr;
+    column-gap: .75rem;
+    font-size: .9rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.numeric {
+    align-items: flex-end;
+    font-variant-numeric: tabular-nums;
+}
+
+.label {
+    font-size: .7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #808080;
+}
+
+.warning > :last-child {
+    color: var(--warning-color);
+}

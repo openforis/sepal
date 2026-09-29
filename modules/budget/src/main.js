@@ -45,7 +45,7 @@ const main = async () => {
         budgetCommands: budgetManager.commands,
     })
 
-    const enforcement = createEnforcement({budgetManager, userClient, events: budgetEvents})
+    const enforcement = createEnforcement({budgetManager, userClient, openSessionUse, events: budgetEvents})
     const reconciler = createReconciler({workerClient, openSessionUse, clock: () => new Date()})
 
     // A seed failure must not crash boot: the hourly reconciler heals open_session_use once the

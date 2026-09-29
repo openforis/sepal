@@ -187,8 +187,12 @@
     margin-left: .5rem;
 }
 
-.button>.contents>span {
+.button>.contents>span.label {
     flex-grow: 1;
+}
+
+.button>.contents>span.icon {
+    flex-grow: 0;
 }
 
 /* labelStyle: smallcaps */

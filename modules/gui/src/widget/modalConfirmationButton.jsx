@@ -42,7 +42,7 @@ class _ModalConfirmationButton extends React.Component {
     }
 
     render() {
-        const {busy, chromeless, air, disabled, icon, iconType, label, shape, size, tooltip, tooltipPlacement, width} = this.props
+        const {busy, chromeless, air, disabled, icon, iconType, label, look, shape, size, tooltip, tooltipPlacement, width} = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
@@ -52,6 +52,7 @@ class _ModalConfirmationButton extends React.Component {
                     icon={icon}
                     iconType={iconType}
                     label={label}
+                    look={look}
                     shape={shape}
                     size={size}
                     width={width}
@@ -105,6 +106,7 @@ ModalConfirmationButton.propTypes = {
     icon: PropTypes.any,
     iconType: PropTypes.any,
     label: PropTypes.any,
+    look: PropTypes.string,
     shape: PropTypes.any,
     size: PropTypes.any,
     skipConfirmation: PropTypes.any,

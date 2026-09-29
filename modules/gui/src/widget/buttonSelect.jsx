@@ -59,18 +59,25 @@ class _ButtonSelect extends React.Component {
     }
 
     renderSingleButton() {
-        const {noChevron, disabled, chromeless, shape, look, icon, labelStyle, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+        const {noChevron, disabled, chromeless, shape, look, size, air, additionalClassName, icon, iconType, labelStyle, hint,
+            tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <Button
                 ref={this.input}
                 chromeless={chromeless}
                 shape={shape}
                 look={look}
+                size={size}
+                air={air}
+                additionalClassName={additionalClassName}
                 icon={icon}
+                iconType={iconType}
                 label={this.getLabel()}
                 labelStyle={labelStyle}
+                hint={hint}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                tooltipDisabled={this.isTooltipDisabled()}
                 width={width}
                 disabled={disabled}
                 tail={
@@ -102,6 +109,7 @@ class _ButtonSelect extends React.Component {
                     labelStyle={labelStyle}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
+                    tooltipDisabled={this.isTooltipDisabled()}
                     width={width}
                     disabled={disabled}
                     onClick={this.onClick}
@@ -113,11 +121,19 @@ class _ButtonSelect extends React.Component {
                     icon={this.getChevronIcon()}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
+                    tooltipDisabled={this.isTooltipDisabled()}
                     disabled={disabled}
                     onClick={this.toggleOptions}
                 />
             </ButtonGroup>
         )
+    }
+
+    // The tooltip would otherwise sit on top of the options it describes.
+    isTooltipDisabled() {
+        const {tooltipDisabled} = this.props
+        const {showOptions} = this.state
+        return tooltipDisabled || showOptions
     }
 
     onClick(e) {
@@ -268,11 +284,15 @@ export const ButtonSelect = compose(
 
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
+    additionalClassName: PropTypes.string,
+    air: PropTypes.string,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    hint: PropTypes.any,
     hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
     icon: PropTypes.string,
+    iconType: PropTypes.string,
     input: PropTypes.any,
     label: PropTypes.any,
     labelStyle: PropTypes.any,
@@ -282,7 +302,9 @@ ButtonSelect.propTypes = {
     optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     shape: PropTypes.string,
+    size: PropTypes.string,
     tooltip: PropTypes.any,
+    tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
     onClick: PropTypes.func,

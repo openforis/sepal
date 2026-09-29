@@ -78,7 +78,10 @@
       "instance": "Instance",
       "placeholder": "Select an instance...",
       "runningSection": "Running instances",
-      "newSection": "New instance",
+      "newSection": "New instance without SSD",
+      "newSsdSection": "New instance with SSD",
+      "newInstanceTitle": "Start new instance",
+      "noInstanceType": "No instance type is available. Contact your administrator.",
       "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
@@ -422,8 +425,7 @@
     "connectivityError": "You are currently unable to connect to the SEPAL server.",
     "versionMismatch": {
       "title": "SEPAL has been updated!",
-      "message": "Please reload your browser to make sure everything works as expected.",
-      "reloadNow": "Reload now"
+      "message": "Please save your work, then reload this page to apply the update."
     },
     "loginSession": {
       "switched": "You're now logged in as {username}"
@@ -435,7 +437,7 @@
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
       "help": "Open SEPAL documentation in a new tab/window",
-      "logout": "Logout from SEPAL",
+      "logout": "Logout",
       "process": "Process",
       "tasks": "Tasks",
       "terminal": "Terminal",
@@ -444,7 +446,7 @@
         "profile": "Manage user profile",
         "report": {
           "budgetExceeded": "Exceeded",
-          "tooltip": "Show user report"
+          "tooltip": "Show usage and sessions"
         }
       },
       "users": "Users"
@@ -1001,6 +1003,9 @@
       "label": "Google Satellite",
       "description": "Google hi-res satellite imagery"
     }
+  },
+  "instanceLaunch": {
+    "unavailable": "Amazon Web Services (AWS) cannot provide this instance type in SEPAL's region right now: it has run out of capacity for it, or does not offer it there. This is outside SEPAL's control. Pick another instance type, or try again later."
   },
   "notifications": {
     "error": {
@@ -5992,6 +5997,7 @@
         "used%": "Used"
       },
       "sessions": {
+        "active": "{count} active",
         "cost": "Cost",
         "hourlyCost": "Hourly cost",
         "instanceDescription": "Instance description",
@@ -6000,7 +6006,7 @@
         "time": "Date/time started",
         "title": "Sessions"
       },
-      "title": "User report",
+      "title": "Usage",
       "usage": "Using {percentage}% of allocated quota",
       "updateQuota": "Request additional resources"
     },
@@ -6048,6 +6054,53 @@
         "label": "Accept",
         "error": "Could not update user"
       }
+    },
+    "sshKeys": {
+      "add": {
+        "error": {
+          "DUPLICATE_KEY": "You have already added this key.",
+          "failed": "Failed to add the SSH key.",
+          "INVALID_KEY": "This is not a public key. Choose a .pub file, or paste its single line.",
+          "KEY_TOO_WEAK": "RSA keys must be at least 2048 bits.",
+          "PRIVATE_KEY": "This is a private key: never share it. Use the .pub file next to it.",
+          "TOO_MANY_KEYS": "You have reached the maximum of 20 keys.",
+          "UNSUPPORTED_TYPE": "This key type is not supported. Use an ed25519, ECDSA or RSA key."
+        },
+        "form": {
+          "file": {
+            "dropOrClick": "Drop your .pub file here, or click to select it",
+            "label": "Public key file",
+            "notPub": "Only .pub files can be added. The file without .pub is your private key: never share it.",
+            "tooLarge": "This file is too large to be a public key."
+          },
+          "name": {
+            "label": "Name",
+            "placeholder": "Defaults to the key's comment"
+          },
+          "publicKey": {
+            "label": "Public key",
+            "placeholder": "Or paste it here: ssh-ed25519 AAAA… you@laptop",
+            "privateKeyHidden": "•••••• private key hidden ••••••",
+            "required": "Choose a .pub file, or paste a public key"
+          }
+        },
+        "howTo": "Create a key, if you have none, then drop or select the public key file. Alternatively, paste its contents below.",
+        "label": "Add",
+        "success": "SSH key added.",
+        "title": "Add SSH key"
+      },
+      "intro": "SSH keys allow you to login into a session without having to type your password.",
+      "label": "SSH keys",
+      "load": {
+        "error": "Failed to load your SSH keys."
+      },
+      "none": "You have no SSH keys.",
+      "remove": {
+        "error": "Failed to remove the SSH key.",
+        "message": "Remove the SSH key {name}? It will no longer let you log in.",
+        "tooltip": "Remove this key"
+      },
+      "title": "SSH keys"
     },
     "userDetails": {
       "form": {
@@ -6114,7 +6167,10 @@
         },
         "usage": {
           "label": "Resource usage — last {days} days",
+          "avgMax": "{metric} (avg/max)",
+          "cost": "Cost",
           "hours": "Hours",
+          "instanceType": "Instance type",
           "network": "Network",
           "overall": "All instances",
           "noData": "No usage data recorded yet",
@@ -6169,6 +6225,10 @@
           "label": "Instance name"
         }
       },
+      "start": {
+        "error": "Could not start session.",
+        "label": "Start"
+      },
       "stop": {
         "error": "Could not stop session.",
         "label": "Stop",
@@ -6189,6 +6249,11 @@
         "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"
       },
+      "stopAll": {
+        "error": "Could not stop all sessions.",
+        "label": "Stop all",
+        "message": "You are stopping all your instances ({count}). Everything running on them will be closed."
+      },
       "suspend": {
         "error": "Could not suspend session.",
         "label": "Suspend",
@@ -6200,25 +6265,20 @@
         "success": "Session has been updated.",
         "tooltip": "Edit session."
       },
-      "deadline": {
-        "stopping": "stops at {time}",
-        "until": "Keep-alive until {time} ({relative})"
+      "sshLogin": {
+        "tooltip": "Copy SSH login: {login}"
       },
-      "specs": {
-        "cpu": "{count} CPU",
-        "gpu": "{count} GPU",
-        "ram": "{gb} GB"
+      "deadline": {
+        "expired": "{time} (expired)",
+        "label": "Keep alive until",
+        "stopping": "Stops at",
+        "value": "{time} ({relative})"
       },
       "usage": {
         "cpu": "CPU",
         "gpu": "GPU",
         "net": "NET",
-        "none": "No usage data",
         "ram": "RAM"
-      },
-      "verdict": {
-        "busy": "in use",
-        "unused": "unused"
       }
     }
   },

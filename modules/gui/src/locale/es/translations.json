@@ -393,8 +393,7 @@
     "connectivityError": "",
     "versionMismatch": {
       "title": "¡SEPAL ha sido actualizado!",
-      "message": "",
-      "reloadNow": "Recargar ahora"
+      "message": ""
     },
     "loginSession": {
       "switched": ""

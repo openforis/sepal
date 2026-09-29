@@ -393,8 +393,7 @@
     "connectivityError": "Vous ne pouvez actuellement pas vous connecter au serveur SEPAL.",
     "versionMismatch": {
       "title": "",
-      "message": "",
-      "reloadNow": ""
+      "message": ""
     },
     "loginSession": {
       "switched": ""

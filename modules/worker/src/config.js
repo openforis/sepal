@@ -11,6 +11,23 @@ const DEFAULT_DOCKER_PORT = 2375
 const DEFAULT_RABBITMQ_PORT = 5672
 const DEFAULT_WORKER_PORT = 8080
 
+// EC2 accepts 100-300 MiB/s; anything else fails every RunInstances, so refuse it at boot instead.
+const parseVolumeInitializationRate = value => {
+    const rate = parseInt(value)
+    if (rate !== 0 && !(rate >= 100 && rate <= 300)) {
+        throw new Error(`VOLUME_INITIALIZATION_RATE must be 0 or 100-300 MiB/s, got: ${value}`)
+    }
+    return rate
+}
+
+const parseStoppedPoolSize = value => {
+    const size = Number(value)
+    if (!Number.isInteger(size) || size < 0) {
+        throw new Error(`STOPPED_POOL_SIZE must be a non-negative integer, got: ${value}`)
+    }
+    return size
+}
+
 const program = new Command()
 
 program
@@ -32,8 +49,8 @@ program
 
     // ─── SEPAL creds / host ─────────────────────────────────────────────────
     .addOption(
-        new Option('--sepal-version <string>', 'Deployed SEPAL version (e.g. 1.23.4)')
-            .env('SEPAL_VERSION')
+        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox and task images were made from (e.g. 1937)')
+            .env('WORKER_AMI_VERSION')
     )
     .addOption(
         new Option('--sepal-user <string>', 'SEPAL service username for inter-service calls')
@@ -48,6 +65,10 @@ program
             .env('SEPAL_HTTPS_PORT')
             .argParser(v => parseInt(v))
             .default(DEFAULT_SEPAL_HTTPS_PORT)
+    )
+    .addOption(
+        new Option('--sepal-ssh-host <string>', 'Public address of the SSH gateway, for the ssh login shown to users (optional)')
+            .env('SEPAL_SSH_HOST')
     )
     .addOption(
         new Option('--sepal-host-data-dir <path>', 'Host path to /data (mounted into sandbox containers)')
@@ -303,18 +324,37 @@ program
         new Option('--environment <string>', 'AWS environment tag value (e.g. production) [aws only]')
             .env('ENVIRONMENT')
     )
+    .addOption(
+        new Option('--volume-initialization-rate <MiB/s>', 'EBS volume initialization rate for launched workers, 100-300; 0 = lazy loading [aws only]')
+            .env('VOLUME_INITIALIZATION_RATE')
+            .argParser(parseVolumeInitializationRate)
+            .default(0)
+    )
+    .addOption(
+        new Option('--stopped-pool-size <number>', 'Stopped, disk-warm workers kept ready to start as any instance type; 0 = no pool [aws only]')
+            .env('STOPPED_POOL_SIZE')
+            .argParser(parseStoppedPoolSize)
+            .default(0)
+    )
+    .addOption(
+        new Option('--prewarm-idle-volumes <boolean>', 'Idle-pool workers read their whole Docker volume at first boot [aws only]')
+            .env('PREWARM_IDLE_VOLUMES')
+            .argParser(v => v === 'true')
+            .default(false)
+    )
 
     .parse()
 
 const {
     port,
     hostingService,
-    sepalVersion,
+    workerAmiVersion,
     sepalUser,
     sepalHost,
     sepalHttpsPort,
     sepalHostDataDir,
     sepalHostProjectDir,
+    sepalSshHost,
     workerPort,
     usageSamplingIntervalSeconds,
     usageSampleRetentionDays,
@@ -356,6 +396,9 @@ const {
     secretKey,
     syslogAddress,
     environment,
+    volumeInitializationRate,
+    prewarmIdleVolumes,
+    stoppedPoolSize,
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -388,6 +431,7 @@ export {
     notificationVisibleMinutes,
     openExtensionMinutes,
     port,
+    prewarmIdleVolumes,
     rabbitmqHost,
     rabbitmqPort,
     region,
@@ -397,17 +441,20 @@ export {
     sepalHostDataDir,
     sepalHostProjectDir,
     sepalHttpsPort,
+    sepalSshHost,
     sepalUser,
-    sepalVersion,
     sessionExpiryMode,
     sessionExpirySecret,
     sessionGraceMinutes,
     startupLeaseMinutes,
+    stoppedPoolSize,
     syslogAddress,
     taskExtensionMinutes,
     unknownBusyGraceTicks,
     usageHourlyRetentionDays,
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
+    volumeInitializationRate,
+    workerAmiVersion,
     workerPort,
 }

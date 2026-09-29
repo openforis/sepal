@@ -3,8 +3,12 @@
 //   2. Claim them in order until one INSERT wins; a lost race moves to the next candidate rather
 //      than launching, so an available idle instance is always used.
 //   3. Won → tag the reservation, wait for the address, emit InstancePendingProvisioning.
-//   4. Every candidate taken → launchReserved, record the claim, then wait for the address.
-//   5. On any exception → emit FailedToRequestInstance, rethrow.
+//   4. Every candidate taken → start the oldest ready POOLED (stopped) instance as the requested
+//      type: claim it, startPooled, wait for the address, emit InstancePendingProvisioning. A
+//      failed start releases the claim.
+//   5. No pooled instance, or its start failed → launchReserved, record the claim, then wait for
+//      the address.
+//   6. On any exception → emit FailedToRequestInstance, rethrow.
 
 import {getLogger} from '#sepal/log'
 
@@ -55,10 +59,41 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
             }
         }
 
-        return await launchInstance({instanceType, reservation}, {claims, provider})
+        return await startPooledInstance({instanceType, reservation}, {claims, provider})
+            ?? await launchInstance({instanceType, reservation}, {claims, provider})
 
     } catch (err) {
         emitFailedToRequestInstance(workerType, instanceType, err)
+        throw err
+    }
+}
+
+// startPooledInstance — resolves null when there is no pooled instance to start, or its start failed.
+// Only one candidate is tried: capacity and type-compatibility failures belong to the requested
+// type, not to the instance, so the next one would fail the same way.
+const startPooledInstance = async ({instanceType, reservation}, {claims, provider}) => {
+    const [candidate] = [...await provider.pooledInstances({ready: true})]
+        .sort((a, b) => launchedAt(a) - launchedAt(b))
+    if (!candidate || !await claims.claim(candidate.id, reservation.sessionId)) {
+        return null
+    }
+    let started
+    try {
+        started = await provider.startPooled(candidate, instanceType, reservation)
+    } catch (err) {
+        log.warn(`Failed to start pooled ${instanceTag(candidate)} as ${instanceType}, launching instead: ${err.message}`)
+        await claims.release(candidate.id)
+        return null
+    }
+    try {
+        // Provisioned from here, like a reserved idle instance: the started-instance poll would
+        // cost up to its interval. Its Docker check rides out the rest of the boot.
+        const ready = reserve(await provider.awaitHost(started), reservation)
+        emitInstancePendingProvisioning(ready)
+        log.info(`Started pooled ${instanceTag(ready)} for ${userTag(reservation.username)} (${reservation.workerType})`)
+        return ready
+    } catch (err) {
+        await claims.release(candidate.id)
         throw err
     }
 }

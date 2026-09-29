@@ -1,25 +1,18 @@
 import {jest} from '@jest/globals'
 
-// Mock node:fs so tempDir and pubKeyPath reads don't touch the real filesystem.
-const mockMkdirSync = jest.fn()
-const mockChmodSync = jest.fn()
+// Mock node:fs so pubKeyPath reads don't touch the real filesystem.
 const mockReadFileSync = jest.fn(() => 'ssh-rsa AAAAB3NzaC1yc2E test-key\n')
 
 jest.unstable_mockModule('node:fs', () => ({
     default: {
-        mkdirSync: mockMkdirSync,
-        chmodSync: mockChmodSync,
         readFileSync: mockReadFileSync,
     },
-    mkdirSync: mockMkdirSync,
-    chmodSync: mockChmodSync,
     readFileSync: mockReadFileSync,
 }))
 
 // Import the modules AFTER mocking (ESM: dynamic import after jest.unstable_mockModule).
 const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
 const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
-const {tempDir} = await import('./workerTypes.js')
 const {instanceName} = await import('../instanceName.js')
 
 // Provisioning refuses without a key, so this stands in for the session lookup wherever the key
@@ -27,7 +20,7 @@ const {instanceName} = await import('../instanceName.js')
 const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
 
 const CONFIG = {
-    sepalVersion: '5.1.0',
+    workerAmiVersion: '5.1.0',
     sepalHost: 'sepal.example.com',
     sepalHttpsPort: 443,
     sepalHostDataDir: '/data',
@@ -51,6 +44,7 @@ const CONFIG_WITH_SYSLOG = {
 const INSTANCE_TYPE_T3A = {
     id: 'T3aSmall',
     name: 't3a.small',
+    tag: 't1',
     cpuCount: 1,
     ramGiB: 2,
     hourlyCost: 0.0204,
@@ -80,8 +74,12 @@ const makeInstance = (overrides = {}) => ({
     ...overrides,
 })
 
+// A helper container (formatting, preparing the tmp volume) ran to completion with this exit code.
+const dockerWaitExit = code => ({ok: true, status: 200, text: async () => JSON.stringify({StatusCode: code})})
+
 const setupFetchMock = ({captureCreate} = {}) => {
     globalThis.fetch = jest.fn(async (url, opts) => {
+        if (url.endsWith('/wait')) return dockerWaitExit(0)
         if (captureCreate && url.includes('/containers/create')) {
             captureCreate(JSON.parse(opts.body))
         }
@@ -103,8 +101,6 @@ describe('buildContainerBody — SANDBOX', () => {
 
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa AAAAB3NzaC1yc2E test-key\n')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
         setupFetchMock({captureCreate: body => { capturedBody = body }})
     })
 
@@ -167,9 +163,13 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.HostConfig.Binds).toContain('/data/sepal/home/alice:/home/sepal-user')
     })
 
-    test('HostConfig.Binds includes /tmp from userTmp', async () => {
+    test('HostConfig.Binds mounts the instance\'s tmp volume at /tmp, /var/tmp and ~/tmp, without the image\'s /tmp', async () => {
         await runProvision()
-        expect(capturedBody.HostConfig.Binds.some(b => b.endsWith(':/tmp'))).toBe(true)
+        expect(capturedBody.HostConfig.Binds).toEqual(expect.arrayContaining([
+            'sepal-tmp.inst-abc123:/tmp:nocopy',
+            'sepal-tmp.inst-abc123:/var/tmp:nocopy',
+            'sepal-tmp.inst-abc123:/home/sepal-user/tmp:nocopy',
+        ]))
     })
 
     test('HostConfig.Tmpfs has /ram entry with size', async () => {
@@ -242,7 +242,22 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.NetworkingConfig.EndpointsConfig.sepal).toBeDefined()
     })
 
-    // The shell prompt inside the sandbox is "{hostname}:{dir}$", so the hostname is what a user
+    test('Env names the instance type by its tag', async () => {
+        await runProvision()
+        expect(capturedBody.Env).toContain('SEPAL_INSTANCE_TYPE=t1')
+    })
+
+    test('Env names an untagged instance type by its name', async () => {
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+        })
+        await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
+        expect(capturedBody.Env).toContain('SEPAL_INSTANCE_TYPE=g5.xlarge')
+    })
+
+    // The shell prompt inside the sandbox starts with the hostname, so the hostname is what a user
     // reads to tell one open terminal from another — it has to be the same two-word name every
     // other surface calls this instance, not the container id Docker would otherwise assign.
     test('Hostname is the instance\'s two-word name', async () => {
@@ -274,8 +289,6 @@ describe('buildContainerBody — TASK_EXECUTOR', () => {
 
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
         setupFetchMock({captureCreate: body => { capturedBody = body }})
     })
 
@@ -345,10 +358,9 @@ describe('provisionInstance sequence', () => {
     beforeEach(() => {
         calls.length = 0
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
 
         globalThis.fetch = jest.fn(async (url, opts) => {
+            if (url.endsWith('/wait')) return dockerWaitExit(0)
             calls.push({url, method: opts?.method ?? 'GET'})
             if (url.includes('/containers/json')) {
                 return {ok: true, status: 200, text: async () => '[]'}
@@ -371,26 +383,119 @@ describe('provisionInstance sequence', () => {
         })
         await provisioner.provisionInstance(makeInstance())
         const paths = calls.map(c => `${c.method} ${new URL(c.url).pathname}`)
+        const at = pattern => paths.findIndex(path => pattern.test(path))
         expect(paths[0]).toMatch(/GET.*containers\/json/)
-        expect(paths[1]).toMatch(/GET.*containers\/json/)
-        expect(paths[2]).toMatch(/POST.*containers\/create/)
-        expect(paths[3]).toMatch(/POST.*containers.*\/start/)
-        expect(paths[4]).toMatch(/POST.*exec/)
-        expect(paths[5]).toMatch(/POST.*exec.*\/start/)
+        expect(at(/DELETE.*volumes\/sepal-tmp\.inst-abc123$/)).toBeLessThan(at(/POST.*volumes\/create$/))
+        expect(at(/POST.*volumes\/create$/)).toBeLessThan(at(/POST.*containers\/sandbox\.alice\..*\/start$/))
+        expect(at(/POST.*containers\/sandbox\.alice\..*\/start$/)).toBeLessThan(at(/POST.*exec$/))
+        expect(at(/POST.*exec$/)).toBeLessThan(at(/POST.*exec\/.*\/start$/))
+    })
+})
+
+describe('provisionInstance on a scratch device', () => {
+    const recordingFetch = ({formatExitCode = 0} = {}) => {
+        const requests = []
+        globalThis.fetch = jest.fn(async (url, opts = {}) => {
+            const {pathname, searchParams} = new URL(url)
+            requests.push({method: opts.method ?? 'GET', pathname, name: searchParams.get('name'), body: opts.body && JSON.parse(opts.body)})
+            if (pathname.endsWith('/containers/json')) {
+                return {ok: true, status: 200, text: async () => '[]'}
+            }
+            if (pathname.endsWith('/wait')) {
+                return {ok: true, status: 200, text: async () => JSON.stringify({StatusCode: formatExitCode})}
+            }
+            if (pathname.endsWith('/logs')) {
+                return {ok: true, status: 200, text: async () => 'mkfs.xfs: no such device'}
+            }
+            if (pathname.includes('/exec') && !pathname.endsWith('/start')) {
+                return {ok: true, status: 201, text: async () => JSON.stringify({Id: 'exec-1'})}
+            }
+            return {ok: true, status: 200, text: async () => '{}'}
+        })
+        return requests
+    }
+
+    const makeProvisioner = () => createDockerInstanceProvisioner({
+        config: CONFIG,
+        instanceTypes: INSTANCE_TYPES,
+        sandboxSessionApiKey: SESSION_API_KEY,
+    })
+
+    const formatName = 'sandbox.format-tmp.inst-abc123'
+
+    test('formats the device, then puts the tmp volume on it before creating the container', async () => {
+        const requests = recordingFetch()
+
+        await makeProvisioner().provisionInstance(makeInstance(), {tmpDevice: '/dev/xvdg'})
+
+        const format = requests.find(r => r.pathname.endsWith('/containers/create') && r.name === formatName)
+        expect(format.body).toMatchObject({
+            Image: 'registry.example.com/openforis/sandbox:5.1.0',
+            User: 'root',
+            HostConfig: {Privileged: true, Binds: ['/:/host']},
+        })
+        expect(format.body.Entrypoint.slice(0, 2)).toEqual(['chroot', '/host'])
+        expect(format.body.Entrypoint.at(-1)).toBe('/dev/xvdg')
+        const volume = requests.find(r => r.pathname.endsWith('/volumes/create'))
+        expect(volume.body).toEqual({
+            Name: 'sepal-tmp.inst-abc123',
+            Driver: 'local',
+            DriverOpts: {type: 'xfs', device: '/dev/xvdg', o: 'noatime'},
+        })
+        const steps = requests.map(r => r.pathname.endsWith('/containers/create') ? `create ${r.name}` : `${r.method} ${r.pathname.split('/').slice(-2).join('/')}`)
+        expect(steps).toEqual(expect.arrayContaining([`POST ${formatName}/wait`, `DELETE containers/${formatName}`, 'POST volumes/create']))
+        expect(steps.indexOf(`POST ${formatName}/wait`)).toBeLessThan(steps.indexOf('POST volumes/create'))
+        expect(steps.indexOf(`DELETE containers/${formatName}`)).toBeGreaterThan(steps.indexOf(`POST ${formatName}/wait`))
+        expect(steps.indexOf('POST volumes/create')).toBeLessThan(steps.findIndex(step => step.startsWith('create sandbox.alice.')))
+    })
+
+    test('fails, removing the format container, when the device cannot be formatted', async () => {
+        const requests = recordingFetch({formatExitCode: 1})
+
+        await expect(makeProvisioner().provisionInstance(makeInstance(), {tmpDevice: '/dev/xvdg'}))
+            .rejects.toThrow(/format-tmp failed .* \(exit 1\): mkfs.xfs: no such device/)
+
+        expect(requests.some(r => r.method === 'DELETE' && r.pathname.endsWith(`/containers/${formatName}`))).toBe(true)
+        expect(requests.some(r => r.pathname.endsWith('/volumes/create'))).toBe(false)
+    })
+
+    test('without a device, creates a plain tmp volume', async () => {
+        const requests = recordingFetch()
+
+        await makeProvisioner().provisionInstance(makeInstance())
+
+        expect(requests.some(r => r.name === formatName)).toBe(false)
+        const volume = requests.find(r => r.pathname.endsWith('/volumes/create'))
+        expect(volume.body).toEqual({Name: 'sepal-tmp.inst-abc123', Driver: 'local', DriverOpts: {}})
+    })
+
+    // The session's containers mount it nocopy, so nothing else sets the empty volume's mode.
+    test.each([['/dev/xvdg'], [null]])('makes the tmp volume world-writable before creating the container (device: %s)', async tmpDevice => {
+        const requests = recordingFetch()
+
+        await makeProvisioner().provisionInstance(makeInstance(), {tmpDevice})
+
+        const createdAt = name => requests.findIndex(r => r.pathname.endsWith('/containers/create') && r.name?.startsWith(name))
+        const prepare = requests[createdAt('sandbox.prepare-tmp.inst-abc123')]
+        expect(prepare.body).toMatchObject({
+            User: 'root',
+            Entrypoint: ['chmod', '1777', '/tmp-volume'],
+            HostConfig: {Binds: ['sepal-tmp.inst-abc123:/tmp-volume:nocopy']},
+        })
+        expect(createdAt('sandbox.prepare-tmp.')).toBeLessThan(createdAt('sandbox.alice.'))
     })
 })
 
 describe('provisionInstance deletes .worker containers only', () => {
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
     })
 
     test('deletes .worker container but not other containers', async () => {
         const deletedIds = []
 
         globalThis.fetch = jest.fn(async (url, opts) => {
+            if (url.endsWith('/wait')) return dockerWaitExit(0)
             const method = opts?.method ?? 'GET'
             if (url.includes('/containers/json')) {
                 return {
@@ -427,8 +532,6 @@ describe('provisionInstance deletes .worker containers only', () => {
 describe('undeploy', () => {
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
     })
 
     test('calls GET containers/json then DELETE for .worker containers', async () => {
@@ -498,7 +601,51 @@ describe('undeploy', () => {
         expect(deletedIds).toEqual(['mine'])
     })
 
-    test('undeploy does nothing when no .worker containers exist', async () => {
+    test('deletes the instance\'s tmp volume once its containers are gone', async () => {
+        const deletions = []
+
+        globalThis.fetch = jest.fn(async (url, opts) => {
+            const method = opts?.method ?? 'GET'
+            if (url.includes('/containers/json')) {
+                return {
+                    ok: true, status: 200,
+                    text: async () => JSON.stringify([{Id: 'w-001', Names: ['/sandbox.alice.lofty-reef.inst-abc123']}]),
+                }
+            }
+            if (method === 'DELETE') {
+                deletions.push(new URL(url).pathname.split('/').slice(-2).join('/'))
+            }
+            return {ok: true, status: 204, text: async () => ''}
+        })
+
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+        })
+        await provisioner.undeploy(makeInstance())
+
+        expect(deletions).toEqual(['containers/w-001', 'volumes/sepal-tmp.inst-abc123'])
+    })
+
+    test('succeeds when the instance has no tmp volume', async () => {
+        globalThis.fetch = jest.fn(async url => {
+            if (url.includes('/containers/json')) {
+                return {ok: true, status: 200, text: async () => '[]'}
+            }
+            return {ok: false, status: 404, text: async () => '{"message":"no such volume"}'}
+        })
+
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+        })
+
+        await expect(provisioner.undeploy(makeInstance())).resolves.toBeUndefined()
+    })
+
+    test('undeploy deletes no container when no .worker containers exist', async () => {
         let deleteCallCount = 0
 
         globalThis.fetch = jest.fn(async (url, opts) => {
@@ -506,7 +653,7 @@ describe('undeploy', () => {
             if (url.includes('/containers/json')) {
                 return {ok: true, status: 200, text: async () => JSON.stringify([])}
             }
-            if (method === 'DELETE') {
+            if (method === 'DELETE' && url.includes('/containers/')) {
                 deleteCallCount++
                 return {ok: true, status: 204, text: async () => ''}
             }
@@ -527,8 +674,6 @@ describe('undeploy', () => {
 describe('instanceStatus', () => {
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
     })
 
     const probe = () => createDockerInstanceProvisioner({
@@ -595,8 +740,6 @@ describe('instanceStatus', () => {
 describe('apiKey retry', () => {
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
     })
 
     test('apiKey is passed to SANDBOX Env when non-null', async () => {
@@ -636,41 +779,6 @@ describe('apiKey retry', () => {
 
         await expect(provisioner.provisionInstance(makeInstance())).rejects.toThrow(/api key/)
         expect(created).toBe(false)
-    })
-})
-
-describe('tempDir', () => {
-    beforeEach(() => {
-        mockMkdirSync.mockReset()
-        mockChmodSync.mockReset()
-    })
-
-    test('calls mkdirSync with /data/home/{username}/tmp/{instanceId} and recursive:true', () => {
-        const instance = {id: 'inst-123', reservation: {username: 'alice'}}
-        const config = {sepalHostDataDir: '/data'}
-        tempDir(instance, config)
-        expect(mockMkdirSync).toHaveBeenCalledWith('/data/home/alice/tmp/inst-123', {recursive: true})
-    })
-
-    test('calls chmodSync with localTmp and 0o1777', () => {
-        const instance = {id: 'inst-123', reservation: {username: 'alice'}}
-        const config = {sepalHostDataDir: '/data'}
-        tempDir(instance, config)
-        expect(mockChmodSync).toHaveBeenCalledWith('/data/home/alice/tmp/inst-123', 0o1777)
-    })
-
-    test('returns {sepalHostDataDir}/sepal/home/{username}/tmp/{instanceId}', () => {
-        const instance = {id: 'inst-123', reservation: {username: 'alice'}}
-        const config = {sepalHostDataDir: '/host-data'}
-        const result = tempDir(instance, config)
-        expect(result).toBe('/host-data/sepal/home/alice/tmp/inst-123')
-    })
-
-    test('localTmp is always under /data/home (hardcoded prefix, not sepalHostDataDir)', () => {
-        const instance = {id: 'i-999', reservation: {username: 'bob'}}
-        const config = {sepalHostDataDir: '/some/other/path'}
-        tempDir(instance, config)
-        expect(mockMkdirSync).toHaveBeenCalledWith('/data/home/bob/tmp/i-999', {recursive: true})
     })
 })
 
@@ -738,13 +846,12 @@ describe('createApiKeyRetryWrapper', () => {
 describe('waitUntilDockerIsAvailable', () => {
     beforeEach(() => {
         mockReadFileSync.mockReturnValue('ssh-rsa test')
-        mockMkdirSync.mockReturnValue(undefined)
-        mockChmodSync.mockReturnValue(undefined)
     })
 
     test('succeeds after transient errors then success', async () => {
         let callCount = 0
         globalThis.fetch = jest.fn(async (url, opts) => {
+            if (url.endsWith('/wait')) return dockerWaitExit(0)
             if (url.includes('/containers/json')) {
                 callCount++
                 if (callCount < 3) throw new Error('ECONNREFUSED')
@@ -772,24 +879,35 @@ const ORPHAN_CONFIG = {
     dockerPort: 2375,
     dockerEntryPoint: 'v1.41',
     dockerRegistryHost: 'registry',
-    sepalVersion: 'test',
+    workerAmiVersion: 'test',
     syslogAddress: null,
 }
 
 const NOW_S = Math.floor(Date.now() / 1000)
 const OLD = NOW_S - 3600      // well past the grace period
 const YOUNG = NOW_S - 60      // within the grace period
+const isoDate = seconds => new Date(seconds * 1000).toISOString()
 
-// makeFetch — GET containers/json returns `containers`; every other call records + succeeds.
-const makeFetch = containers => {
+// makeFetch — GET containers/json returns `containers`, GET volumes returns `volumes`; every other
+// call records + succeeds.
+const makeFetch = (containers, volumes = []) => {
     const requests = []
     const fetch = jest.fn(async (url, init = {}) => {
-        requests.push({url, method: init.method ?? 'GET'})
-        const body = url.includes('containers/json') ? JSON.stringify(containers) : ''
+        const method = init.method ?? 'GET'
+        requests.push({url, method})
+        const body = url.includes('containers/json')
+            ? JSON.stringify(containers)
+            : method === 'GET' && new URL(url).pathname.endsWith('/volumes')
+                ? JSON.stringify({Volumes: volumes})
+                : ''
         return {ok: true, status: 200, text: async () => body}
     })
     return {fetch, requests}
 }
+
+const deletedVolumeNames = requests => requests
+    .filter(({method, url}) => method === 'DELETE' && url.includes('/volumes/'))
+    .map(({url}) => url.match(/volumes\/([^/?]+)/)[1])
 
 const makeProvisioner = ({defaultDaemonHost = 'daemon-host'} = {}) =>
     createDockerInstanceProvisioner({
@@ -800,7 +918,7 @@ const makeProvisioner = ({defaultDaemonHost = 'daemon-host'} = {}) =>
     })
 
 const deletedContainerIds = requests => requests
-    .filter(({method}) => method === 'DELETE')
+    .filter(({method, url}) => method === 'DELETE' && url.includes('/containers/'))
     .map(({url}) => url.match(/containers\/([^/?]+)/)[1])
 
 describe('removeOrphanedContainers', () => {
@@ -887,6 +1005,37 @@ describe('removeOrphanedContainers', () => {
         await makeProvisioner().removeOrphanedContainers([])
 
         expect(deletedContainerIds(requests)).toEqual([])
+    })
+
+    it('deletes tmp volumes of no live instance, once past the grace period', async () => {
+        const {fetch, requests} = makeFetch([], [
+            {Name: 'sepal-tmp.aaa', CreatedAt: isoDate(OLD)},
+            {Name: 'sepal-tmp.bbb', CreatedAt: isoDate(OLD)},
+            {Name: 'sepal-tmp.ccc', CreatedAt: isoDate(YOUNG)},
+            {Name: 'other-sepal-tmp.ddd', CreatedAt: isoDate(OLD)},
+        ])
+        global.fetch = fetch
+
+        const removed = await makeProvisioner().removeOrphanedContainers(['aaa'])
+
+        expect(deletedVolumeNames(requests)).toEqual(['sepal-tmp.bbb'])
+        expect(removed).toEqual(['sepal-tmp.bbb'])
+    })
+
+    it('deletes an orphaned container before its tmp volume', async () => {
+        const {fetch, requests} = makeFetch(
+            [{Id: 'c-orphan', Names: ['/sandbox.admin.lofty-reef.bbb'], Created: OLD}],
+            [{Name: 'sepal-tmp.bbb', CreatedAt: isoDate(OLD)}],
+        )
+        global.fetch = fetch
+
+        await makeProvisioner().removeOrphanedContainers([])
+
+        const deletions = requests.filter(({method}) => method === 'DELETE').map(({url}) => new URL(url).pathname)
+        expect(deletions).toEqual([
+            expect.stringMatching(/containers\/c-orphan$/),
+            expect.stringMatching(/volumes\/sepal-tmp\.bbb$/),
+        ])
     })
 
     it('is a no-op without a defaultDaemonHost (dedicated-host hosting, e.g. AWS)', async () => {

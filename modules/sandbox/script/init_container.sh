@@ -57,8 +57,10 @@ printf '%s\n' \
 cp /etc/environment /etc/R/Renviron.site
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
+# SSH logins get their environment from here, not from the container's.
 printf '%s\n' \
     "SEPAL_HOST=$SEPAL_HOST" \
+    "SEPAL_INSTANCE_TYPE=$SEPAL_INSTANCE_TYPE" \
     >> /etc/environment
 
 userHome=/home/$sandbox_user

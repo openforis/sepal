@@ -296,3 +296,60 @@ describe('instance names', () => {
         subscription.unsubscribe()
     })
 })
+
+describe('instance types table', () => {
+    const printed = () => println.mock.calls.flat().map(t => `${t}`).join('\n')
+    const rowOf = tag => printed().split('\n').find(line => line.includes(` ${tag} `))
+
+    it('shows local SSD capacity and performance relative to t1', async () => {
+        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+            {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204},
+            {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
+        ]}))
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).toContain('GB SSD')
+        expect(rowOf('r4d')).toMatch(/237.*4\.3x.*0\.37/)
+        expect(rowOf('t1')).toMatch(/-.*1\.0x.*0\.02/)
+        subscription.unsubscribe()
+    })
+
+    it('lists instance types with SSD in a table of their own', async () => {
+        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+            {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204},
+            {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
+        ]}))
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        const lines = printed().split('\n')
+        const index = text => lines.findIndex(line => line.includes(text))
+        expect(index('without SSD')).toBeLessThan(index(' t1 '))
+        expect(index(' t1 ')).toBeLessThan(index('with SSD'))
+        expect(index('with SSD')).toBeLessThan(index(' r4d '))
+        expect(index('with SSD')).toBeLessThan(index('SSD storage is available under /tmp'))
+        expect(index('SSD storage is available under /tmp')).toBeLessThan(lines.findLastIndex(line => line.includes(' Type ')))
+        subscription.unsubscribe()
+    })
+
+    it('fits the SSD explanation within the width of the table', async () => {
+        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+            {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
+        ]}))
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        const ssdTable = println.mock.calls.flat().map(t => `${t}`).find(text => text.includes('with SSD'))
+        const widths = ssdTable.trim().split('\n').map(line => line.length)
+        expect(new Set(widths).size).toBe(1)
+        subscription.unsubscribe()
+    })
+
+    it('explains the SSD storage only when there are instance types with SSD', async () => {
+        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+            {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204}
+        ]}))
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).not.toContain('SSD storage')
+        subscription.unsubscribe()
+    })
+})

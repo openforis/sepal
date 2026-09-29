@@ -32,7 +32,8 @@ const makeRouter = () => {
 const makeApi = () => ({
     generateReportSelf: jest.fn(),
     generateReportOther: jest.fn(),
-    userUsage: jest.fn(),
+    userUsageSelf: jest.fn(),
+    userUsageOther: jest.fn(),
     mostRecentlyClosedByUser: jest.fn(),
     mostRecentlyClosed: jest.fn(),
     activeSessions: jest.fn(),
@@ -72,7 +73,8 @@ beforeEach(() => {
 const expected = [
     ['get', '/sessions/report', requireAuth, 'generateReportSelf'],
     ['get', '/sessions/:username/report', requireAdmin, 'generateReportOther'],
-    ['get', '/sessions/:username/usage', requireAdmin, 'userUsage'],
+    ['get', '/sessions/usage', requireAuth, 'userUsageSelf'],
+    ['get', '/sessions/:username/usage', requireAdmin, 'userUsageOther'],
     ['get', '/sessions/mostRecentlyClosedByUser', requireAdmin, 'mostRecentlyClosedByUser'],
     ['get', '/sessions/mostRecentlyClosed', requireAdmin, 'mostRecentlyClosed'],
     ['get', '/sessions/active', requireAuth, 'activeSessions'],
@@ -95,8 +97,8 @@ const expected = [
     ['post', '/sessions/api-key-authenticate', requireAdmin, 'apiKeyAuthenticate'],
 ]
 
-test('registers exactly 25 routes', () => {
-    expect(router.routes).toHaveLength(25)
+test('registers exactly 26 routes', () => {
+    expect(router.routes).toHaveLength(26)
 })
 
 // The email links are clicked from a mail client, typically on a phone with no SEPAL session, so
@@ -146,6 +148,8 @@ test('literal routes registered before :username wildcards (same method)', () =>
         .toBeLessThan(gets.indexOf('/sessions/:username/report'))
     // /sessions/open is likewise a literal and must precede the :username wildcard
     expect(gets.indexOf('/sessions/open'))
+        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
+    expect(gets.indexOf('/sessions/usage'))
         .toBeLessThan(gets.indexOf('/sessions/:username/report'))
 })
 

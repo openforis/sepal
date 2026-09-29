@@ -8,12 +8,14 @@ import {amqpUri, googleOauthCallbackBaseUrl, googleOauthClientId, googleOauthCli
 import {saveCredentials} from './credentials.js'
 import {hashPassword} from './crypto.js'
 import {initializeDb} from './db.js'
-import {email$} from './email.js'
+import {email$, sendSshKeyAdded} from './email.js'
 import {publishUserUpdated, userLocked$, userUpdated$} from './events.js'
 import {GoogleOAuth} from './googleOAuth.js'
 import {GoogleService} from './googleService.js'
 import {provision} from './provisioning.js'
 import {createRoutes, wsRoutes} from './routes.js'
+import {SshKeyApi} from './sshKeyApi.js'
+import {SshKeyRepository} from './sshKeyRepository.js'
 import {UserApi} from './userApi.js'
 import {createEnsureProvisioned} from './userProvisioning.js'
 import {UserRepository} from './userRepository.js'
@@ -44,6 +46,11 @@ const main = async () => {
         readSecret: name => process.env[name]
     })
     const userApi = new UserApi({repository, googleService, googleOAuth, ensureProvisioned})
+    const sshKeyApi = new SshKeyApi({
+        userRepository: repository,
+        sshKeyRepository: new SshKeyRepository(db),
+        notifyKeyAdded: sendSshKeyAdded
+    })
 
     // bootstrap only fills genuinely-missing system admins (fresh install, where it derives
     // uid = gid = id); on existing installs every user already has real uid/gid + credentials.
@@ -55,7 +62,7 @@ const main = async () => {
             {key: 'email.sendToAddress', publish$: email$}
         ]
     })
-    await server.start({port, routes: createRoutes(userApi), wsRoutes})
+    await server.start({port, routes: createRoutes({userApi, sshKeyApi}), wsRoutes})
     log.info('Initialized')
 }
 

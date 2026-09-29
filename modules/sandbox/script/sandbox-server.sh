@@ -26,8 +26,9 @@ if [ "$action" != "start" ]; then
     exit 2
 fi
 
-# Already-running is success, not an error: the worker calls this whenever it has forgotten
-# whether the server is up, and a restart must not cost the user a failed app launch.
+# Already-running is success, not an error: the gateway re-ensures whenever it has forgotten
+# whether the server is up, and a restart must not cost the user a failed app launch. A FATAL
+# program (supervisord gave up on its restarts) is started afresh.
 supervisorctl -c "$CONFIG" start "$program" 2>&1 | grep -v 'already started'
 
 for i in $(seq "$TIMEOUT" -1 0); do

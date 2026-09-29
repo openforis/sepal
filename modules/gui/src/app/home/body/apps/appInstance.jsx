@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
 import {get$} from '~/http-client'
+import {launchFailureMessage} from '~/instanceLaunchFailure'
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
@@ -312,7 +313,9 @@ class _AppInstance extends React.Component {
         const {app: {id, label, alt}, tab: {busy}} = this.props
         log.error('Failed to load app', error)
         this.setState({appState: FAILED})
-        Notifications.error({message: msg('apps.run.error', {label: label || alt})})
+        const failure = msg('apps.run.error', {label: label || alt})
+        const launchFailure = launchFailureMessage(error)
+        Notifications.error(launchFailure ? {title: failure, message: launchFailure} : {message: failure})
         busy.set(id, false)
     }
 }

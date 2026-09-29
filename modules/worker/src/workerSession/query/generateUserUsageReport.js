@@ -5,6 +5,10 @@
 // was measured) — computed per type by the repository, re-weighted here for the overall
 // row. A metric with zero weight (never measured — realistically only GPU) is null;
 // no rows at all → overall: null.
+//
+// cost prices the hours shown at the type's hourly rate. An hour counts once any sample fell in it,
+// so a partial hour is priced in full: an estimate for comparing types, not the billed spending. A
+// retired type has no rate and no cost; overall sums the types that have one.
 
 import {round2} from '../../round.js'
 import {DAY_MS} from '../../time.js'
@@ -14,8 +18,15 @@ const generateUserUsageReport = async (
 ) => {
     const fromTime = new Date(clock().getTime() - days * DAY_MS)
     const rows = await usageRepo.userUsageRollup(username, fromTime)
-    const nameById = Object.fromEntries(
-        instanceManager.getInstanceTypes().map(({id, name}) => [id, name]))
+    const instanceTypeById = Object.fromEntries(
+        instanceManager.getInstanceTypes().map(instanceType => [instanceType.id, instanceType]))
+    const byInstanceType = rows.map(row => ({
+        instanceType: row.instanceType,
+        name: instanceTypeById[row.instanceType]?.name ?? row.instanceType,
+        tag: instanceTypeById[row.instanceType]?.tag ?? null,
+        ...asReportRow(row),
+        cost: cost(row.hours, instanceTypeById[row.instanceType]?.hourlyCost),
+    }))
     const overall = rows.length
         ? asReportRow(rows.reduce((acc, row) => ({
             hours: acc.hours + row.hours,
@@ -31,14 +42,16 @@ const generateUserUsageReport = async (
         : null
     return {
         days,
-        overall,
-        byInstanceType: rows.map(row => ({
-            instanceType: row.instanceType,
-            name: nameById[row.instanceType] ?? row.instanceType,
-            ...asReportRow(row),
-        })),
+        overall: overall && {
+            ...overall,
+            cost: round2(byInstanceType.reduce((sum, {cost}) => sum + (cost ?? 0), 0)),
+        },
+        byInstanceType,
     }
 }
+
+const cost = (hours, hourlyCost) =>
+    hourlyCost == null ? null : round2(hours * hourlyCost)
 
 const asReportRow = ({hours, cpuWeight, cpuSum, cpuMax, ramWeight, ramSum, ramMax, gpuWeight, gpuSum, gpuMax, netWeight, netSum}) => ({
     hours,

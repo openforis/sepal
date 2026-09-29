@@ -26,7 +26,7 @@ import {instanceFromSession} from './workerInstance/instanceFromSession.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
-import {emitWorkerSessionClosed, workerSessionEvents} from './workerSession/events.js'
+import {emitWorkerSessionClosed} from './workerSession/events.js'
 import {createExpiryMetrics} from './workerSession/expiryMetrics.js'
 import {createExpiryTokens} from './workerSession/expiryToken.js'
 import {createGoogleOAuthGateway} from './workerSession/googleOAuthGateway.js'
@@ -86,13 +86,15 @@ const main = async () => {
         provisioner: instanceProvisioner,
         instanceTypes,
         openSessionInstances,
+        stoppedPoolSize: config.stoppedPoolSize,
     })
 
     // The locked-users set starts EMPTY on every worker restart and only catches up on the budget
-    // module's hourly cycle, so it is the FALLBACK gate, not the authoritative one: requestSession
-    // asks budgetClient for a live verdict and only falls back to this set when budget is
-    // unreachable. The set is still what closes an over-budget user's running sessions, driven by
-    // the budget.UserBudgetExceeded subscriber below.
+    // module's cycles (every minute for users with open sessions, hourly for the rest), so it is
+    // the FALLBACK gate, not the authoritative one: requestSession asks budgetClient for a live
+    // verdict and only falls back to this set when budget is unreachable. The set is still what
+    // closes an over-budget user's running sessions, driven by the budget.UserBudgetExceeded
+    // subscriber below.
     // closeUserSessions is bound to the raw command here rather than to sessionManager, which would
     // be a construction cycle (sessionManager depends on lockedUsers).
     const lockedUsers = createLockedUsers({
@@ -208,9 +210,8 @@ const main = async () => {
         control: createDockerSandboxServerControl({
             config, defaultDaemonHost: hostingService.defaultDaemonHost}),
     })
-    workerSessionEvents.on('WorkerSessionClosed', ({sessionId}) => sandboxServers.forget(sessionId))
 
-    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens})
+    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens, sshHost: config.sepalSshHost})
     const tasksApi = createTasksApi({taskManager})
 
     await initMessageQueue(amqpUri, {

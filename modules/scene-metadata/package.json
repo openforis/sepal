@@ -11,8 +11,8 @@
     "license": "ISC",
     "dependencies": {
         "commander": "^15.0.0",
-        "csv-parse": "^7.0.2",
-        "csv-stringify": "^6.8.3",
+        "csv-parse": "^7.0.3",
+        "csv-stringify": "^6.9.0",
         "date-fns": "^4.4.0",
         "log4js": "^6.9.1",
         "mysql2": "^3.24.4",
@@ -27,6 +27,6 @@
     },
     "type": "module",
     "devDependencies": {
-        "jest": "^30.5.1"
+        "jest": "^30.5.2"
     }
 }

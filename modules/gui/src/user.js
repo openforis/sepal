@@ -217,6 +217,12 @@ export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
         switchMap(() => api.user.invalidateOtherSessions$())
     )
 
+export const sshKeys$ = () => api.user.sshKeys$()
+
+export const addSshKey$ = key => api.user.addSshKey$(key)
+
+export const removeSshKey$ = id => api.user.removeSshKey$(id)
+
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
         tap(() =>
@@ -227,6 +233,10 @@ export const updateCurrentUserSession$ = session =>
                 .dispatch()
         )
     )
+
+// No store update: the worker pushes the new session through the session websocket.
+export const startCurrentUserSession$ = instanceTypeId =>
+    api.user.startCurrentUserSession$(instanceTypeId)
 
 export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(

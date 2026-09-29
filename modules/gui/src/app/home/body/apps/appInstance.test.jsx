@@ -2,25 +2,25 @@
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
-import {of} from 'rxjs'
+import {of, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 // Jupyter apps are fetched and written into the frame, where voila's frontend still has to start and render the
 // widgets. The frame must stay out of sight meanwhile, leaving the app's launch status visible beneath it.
 
-const server = vi.hoisted(() => ({page: ''}))
+const server = vi.hoisted(() => ({page: '', launchError: null, notifications: []}))
 
 vi.mock('~/compose', () => ({compose: Component => Component}))
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
 vi.mock('~/widget/tabs/tabContext', () => ({withTab: () => Component => Component}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: notification => server.notifications.push(notification)}}))
 vi.mock('~/widget/sectionLayout', () => ({
     ContentPadding: ({className, children}) => <div className={className}>{children}</div>
 }))
 vi.mock('~/apiRegistry', () => ({default: {apps: {reportInteraction$: () => of()}}}))
-vi.mock('~/apps', () => ({runApp$: () => of({})}))
+vi.mock('~/apps', () => ({runApp$: () => server.launchError ? throwError(() => server.launchError) : of({})}))
 vi.mock('~/http-client', () => ({get$: () => of(server.page)}))
 
 const {AppInstance} = await import('./appInstance')
@@ -74,6 +74,26 @@ describe('launching an app served from its own URL', () => {
     })
 })
 
+describe('failing to launch an app', () => {
+    // No capacity for the type in SEPAL's region, or not offered there: nothing SEPAL can fix, and
+    // the user can pick another type or wait.
+    it('blames AWS when it cannot provide the instance type', () => {
+        server.launchError = {status: 503, response: {code: 'INSTANCE_UNAVAILABLE'}}
+        launch(rstudioApp())
+        advance(SESSION_START_MS)
+
+        expect(server.notifications).toEqual([{title: 'apps.run.error', message: 'instanceLaunch.unavailable'}])
+    })
+
+    it('reports any other failure generically', () => {
+        server.launchError = {status: 500, response: null}
+        launch(rstudioApp())
+        advance(SESSION_START_MS)
+
+        expect(server.notifications).toEqual([{message: 'apps.run.error'}])
+    })
+})
+
 let container
 let root
 let subscriptions
@@ -81,6 +101,8 @@ let tabBusy
 
 beforeEach(() => {
     vi.useFakeTimers()
+    server.launchError = null
+    server.notifications = []
     subscriptions = []
     tabBusy = {}
     container = document.createElement('div')

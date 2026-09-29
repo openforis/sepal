@@ -38,9 +38,10 @@ describe('isSuitableInstanceType', () => {
 })
 
 describe('suitableInstanceTypes', () => {
-    it('keeps only tagged suitable types, cheapest first', () => {
+    it('keeps only tagged suitable types, in catalog order', () => {
         expect(suitableInstanceTypes(TYPES, {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}).map(({id}) => id))
-            .toEqual(['T3aSmall', 'M6aXlarge', 'G5Xlarge'])
+            .toEqual(['M6aXlarge', 'T3aSmall', 'G5Xlarge'])
+        expect(cheapestSuitableInstanceType(TYPES, {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}).id).toBe('T3aSmall')
         expect(cheapestSuitableInstanceType(TYPES, {minRamGiB: 8, minCpuCount: 2, minGpuCount: 0}).id).toBe('M6aXlarge')
         expect(cheapestSuitableInstanceType(TYPES, {minRamGiB: 1024, minCpuCount: 0, minGpuCount: 0})).toBe(null)
     })
@@ -82,16 +83,17 @@ describe('buildPickerOptions', () => {
         const [option] = options[0].options
         expect(option.label).toBe('1: t1 — 2 apps')
         expect(option.apps).toEqual(['Foo', '/sandbox/jupyter/bar.ipynb'])
-        expect(option.searchableText).toBe('1: t1 — 1 CPU, 2 GB, 0.02 USD/h Foo /sandbox/jupyter/bar.ipynb')
+        expect(option.searchableText).toBe('1: t1 Foo /sandbox/jupyter/bar.ipynb')
     })
 
-    // The row is two columns: the picker puts the title left and right-aligns the detail, so the
-    // two must stay separate strings — joined only for the closed combo input's one-liner.
-    it('splits each option into the instance and its specs', () => {
+    // A new type's row is two columns: the picker puts the title left and right-aligns the specs
+    // pill built from the instance type. A running instance's row has no specs.
+    it('gives only new instance types the specs of their type', () => {
         const sessions = [{id: 's-1', instanceType: T3, apps: [{path: '/sandbox/shiny/foo', label: 'Foo'}]}]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: t1', detail: '1 CPU, 2 GB, 0.02 USD/h'})
-        expect(options[1].options[1]).toMatchObject({title: 'm4', detail: '4 CPU, 16 GB, 0.19 USD/h'})
+        expect(options[0].options[0].title).toBe('1: t1')
+        expect(options[0].options[0]).not.toHaveProperty('instanceType')
+        expect(options[1].options[0]).toMatchObject({title: 'm4', instanceType: M6})
     })
 
     it('prefixes running instances with their 1-based report position, disabled ones included', () => {
@@ -102,8 +104,8 @@ describe('buildPickerOptions', () => {
         expect(options[1].options.map(({label}) => label)).toEqual(['m4', 'g4'])
         // the filter still matches what the right-hand column says
         expect(options[1].options.map(({searchableText}) => searchableText)).toEqual([
-            'm4 — 4 CPU, 16 GB, 0.19 USD/h',
-            'g4 — 4 CPU, 1 GPU, 16 GB, 1.12 USD/h'
+            'm4 — 4 CPU · 16 GB · $0.19/h',
+            'g4 — 4 CPU · 1 GPU · 16 GB · $1.12/h'
         ])
     })
 
@@ -118,16 +120,37 @@ describe('buildPickerOptions', () => {
         expect(withoutApps.label).toBe('2: m4')
     })
 
+    it('names a running instance the way the session list does', () => {
+        const options = buildPickerOptions({sessions: [{...session('s-1', T3), name: 'humble-robin'}], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
+        expect(options[0].options[0]).toMatchObject({title: '1: humble-robin - t1', label: '1: humble-robin - t1'})
+        expect(options[0].options[0].searchableText).toContain('humble-robin')
+    })
+
     // Legacy types are not offered as new instances, but a session can still be running on one.
     it('falls back to the AWS name for a running untagged type', () => {
         const options = buildPickerOptions({sessions: [session('s-1', LEGACY)], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: t2.small', detail: '1 CPU, 2 GB, 0.03 USD/h'})
+        expect(options[0].options[0]).toMatchObject({title: '1: t2.small'})
     })
 
     it('omits the running section when no instance is running', () => {
         const options = buildPickerOptions({sessions: [], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
         expect(options).toHaveLength(1)
-        expect(options[0].options.map(({value}) => value)).toEqual(['type:T3aSmall', 'type:M6aXlarge', 'type:G5Xlarge'])
+        expect(options[0].options.map(({value}) => value)).toEqual(['type:M6aXlarge', 'type:T3aSmall', 'type:G5Xlarge'])
+    })
+
+    it('lists new instance types with local SSD in a section of their own', () => {
+        const M6D = {id: 'M6idXlarge', name: 'm6id.xlarge', tag: 'm4d', cpuCount: 4, ramGiB: 16, hourlyCost: 0.2646, gpuCount: 0, ssdGB: 237}
+        const options = buildPickerOptions({sessions: [], instanceTypes: [M6, M6D, T3], requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
+        expect(options.map(({label, options}) => [label, options.map(({title}) => title)])).toEqual([
+            ['New instance without SSD', ['m4', 't1']],
+            ['New instance with SSD', ['m4d']]
+        ])
+    })
+
+    it('omits a new-instance section none of whose types is suitable', () => {
+        const M6D = {id: 'M6idXlarge', name: 'm6id.xlarge', tag: 'm4d', cpuCount: 4, ramGiB: 16, hourlyCost: 0.2646, gpuCount: 0, ssdGB: 237}
+        const onlySsd = buildPickerOptions({sessions: [], instanceTypes: [M6D], requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
+        expect(onlySsd.map(({label}) => label)).toEqual(['New instance with SSD'])
     })
 })
 
