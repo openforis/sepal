@@ -1,4 +1,5 @@
 import './reset.css'
+import '../style/theme.css'
 import './app.css'
 import '../style/look.css'
 import '../style/look.module.css'
@@ -12,10 +13,13 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {isPathInLocation} from '~/route'
 import {selectFrom} from '~/stateUtils'
+import {themeManager} from '~/theme'
 import {loadUser$, startLoggedOff$} from '~/user'
 import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
 import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
+
+themeManager.apply()
 
 const mapStateToProps = state => ({
     initialized: selectFrom(state, 'user.initialized'),

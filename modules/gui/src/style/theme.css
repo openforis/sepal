@@ -1,0 +1,6 @@
+html.themeSwitching,
+html.themeSwitching *,
+html.themeSwitching *::before,
+html.themeSwitching *::after {
+    transition: none !important;
+}

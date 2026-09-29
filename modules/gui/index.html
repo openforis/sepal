@@ -22,6 +22,19 @@
     <meta name="format-detection" content="telephone=no">
 
     <script>
+        (function () {
+            var preference = 'dark'
+            try {
+                var stored = localStorage.getItem('sepal:theme')
+                if (stored === 'light' || stored === 'system') preference = stored
+            } catch (e) {}
+            var theme = preference === 'system'
+                ? (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+                : preference
+            document.documentElement.setAttribute('data-theme', theme)
+        })()
+    </script>
+    <script>
         window.googleAnalyticsId = '${GOOGLE_ANALYTICS_ID}'
         window.googleMapsApiKey = '${GOOGLE_MAPS_API_KEY}'
         window.googleRecaptchaSiteKey = '${GOOGLE_RECAPTCHA_SITE_KEY}'
@@ -58,6 +71,16 @@
         html {
             background-color: rgba(17, 18, 21, 0.9);
             color: #fff
+        }
+
+        html[data-theme=light] {
+            background-color: hsl(40, 12%, 93%);
+            color: hsl(40, 10%, 12%)
+        }
+
+        html[data-theme=light] .app-loader span {
+            border-color: rgba(0, 0, 0, 0.06);
+            border-left-color: #B09582;
         }
 
         body {
