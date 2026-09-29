@@ -204,6 +204,9 @@ class _List extends React.Component {
                     air={air}
                     icon={option.icon}
                     iconType={option.iconType}
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     label={option.render ? option.render() : option.label}
                     width='max'
                     alignment={alignment}
@@ -239,6 +242,9 @@ class _List extends React.Component {
                     dimmed={option.dimmed}
                     icon={option.icon}
                     iconType={option.iconType}
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     label={option.render ? null : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
