@@ -1,10 +1,8 @@
-import {hasMonitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
-import {mosaicRecipe} from '#sepal/recipe/changeAlerts/mosaicRecipe'
 import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
-import {CHANGE_ALERT_BANDS} from '#sepal/recipe/type/changeAlerts'
+import {CHANGE_ALERT_BANDS, COLLECTION_MOSAIC} from '#sepal/recipe/type/changeAlerts'
 import {planetMosaicBands} from '#sepal/recipe/type/planetMosaic'
-import {radarMosaicBands} from '#sepal/recipe/type/radarMosaic'
-import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
+import {POINT_IN_TIME, RADAR_MOSAIC_BANDS, TIME_SCAN} from '#sepal/recipe/type/radarMosaic'
+import {bandPresentation as opticalBandPresentation} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {planetBandTable} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
@@ -24,14 +22,25 @@ const changeBands = () =>
         CHANGE_ALERT_BANDS.map(({name}) => [name, {dataType: CHANGE_BAND_TYPES[name] || typeFloat}])
     )
 
-export const bandPresentation = (_recipe, {name} = {}) =>
-    name === IMAGE_OUTPUT ? changeBands() : {}
+// A collection mosaic is shown as the mosaic its sources build: optical, radar - either configuration - or Planet.
+export const bandPresentation = (recipe, {name} = {}) => {
+    switch (name) {
+        case IMAGE_OUTPUT: return changeBands()
+        case COLLECTION_MOSAIC: return MOSAIC_PRESENTATION[recipe.model?.sources?.dataSetType]?.() || {}
+        default: return {}
+    }
+}
+
+const MOSAIC_PRESENTATION = {
+    OPTICAL: () => opticalBandPresentation(),
+    RADAR: () => radarBandTable([...RADAR_MOSAIC_BANDS[POINT_IN_TIME], ...RADAR_MOSAIC_BANDS[TIME_SCAN]]),
+    PLANET: () => planetBandTable(planetMosaicBands({}))
+}
 
 const PERIODS = ['monitoring', 'calibration']
 const MOSAIC_TYPES = ['latest', 'median']
 
-// The changes are the output; a layer may instead show the mosaic a period is compared on, which has not yet been
-// declared and is answered here.
+// The changes are the output; a layer may instead show the mosaic a period is compared on.
 export const mapProducts = {
     defaults: {visualizationType: 'changes', mosaicType: 'latest'},
     productOf: ({visualizationType, mosaicType}) => {
@@ -39,11 +48,9 @@ export const mapProducts = {
             return {name: IMAGE_OUTPUT}
         }
         return PERIODS.includes(visualizationType) && MOSAIC_TYPES.includes(mosaicType)
-            ? {name: 'COLLECTION_MOSAIC', parameters: {period: visualizationType, mosaicType}}
+            ? {name: COLLECTION_MOSAIC, parameters: {period: visualizationType, mosaicType}}
             : null
-    },
-    bands: (recipe, {name, parameters}) =>
-        name === 'COLLECTION_MOSAIC' ? mosaicBands(recipe, parameters) : undefined
+    }
 }
 
 // The groups Retrieve offers the change bands in.
@@ -55,24 +62,4 @@ export const groupedBandPresentation = () => {
         ['last_stable_date', 'first_detection_date', 'confirmation_date', 'last_detection_date'].map(toOption),
         ['monitoring_observation_count', 'calibration_observation_count'].map(toOption)
     ]
-}
-
-// Which helper describes a mosaic, keyed by the recipe type its projection names. A radar or Planet mosaic is named by
-// its shared declaration and presented by its own recipe type.
-const MOSAIC_BANDS = {
-    MOSAIC: opticalBands,
-    RADAR_MOSAIC: mosaic => radarBandTable(radarMosaicBands(mosaic.model)),
-    PLANET_MOSAIC: mosaic => planetBandTable(planetMosaicBands(mosaic.model))
-}
-
-// A mosaic mode draws the mosaic Earth Engine builds around the monitoring dates, so the bands offered are read from
-// the same projection the executor builds it from. A recipe that states no period yet, or a data-set type no mosaic is
-// defined for, has no such mosaic.
-const mosaicBands = (recipe, {period, mosaicType}) => {
-    if (!hasMonitoringDates(recipe.model)) {
-        return {}
-    }
-    const mosaic = mosaicRecipe({model: recipe.model, period, mosaicType})
-    const bands = mosaic && MOSAIC_BANDS[mosaic.type]
-    return bands ? bands(mosaic) : {}
 }

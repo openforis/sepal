@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-import {hasMonitoringDates, monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {periodDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {mosaicRecipe} from '#sepal/recipe/changeAlerts/mosaicRecipe'
 import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {visualizationOptions as planetVisualizationOptions} from '~/app/home/body/process/recipe/planetMosaic/visualizations'
@@ -38,21 +38,23 @@ export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
 }
 
 // A mosaic mode presents the mosaic Earth Engine builds around the monitoring dates, so its options come
-// from the same projection the executor builds it from. Only the layer form of an initialized recipe asks
-// for a mosaic mode, and an initialized recipe states its dates.
+// from the same projection the executor builds it from. The layer form asks only for a mosaic its read describes,
+// which the projection can build.
 const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
     const mosaic = mosaicRecipe({model: recipe.model, period: visualizationType, mosaicType})
     const visualizations = mosaic && MOSAIC_VISUALIZATIONS[mosaic.type]
     return visualizations ? visualizations(mosaic) : []
 }
 
-// The change bands are presented over the period they cover, so a recipe stating none yet is presented with
-// nothing rather than failing for whoever consumes its output.
+// The change bands are presented over the period they cover, so a recipe whose period cannot be computed - not stated
+// yet, or stated in terms no date follows from - is presented with nothing rather than failing for whoever consumes its
+// output.
 const getChangeVisualizations = recipe => {
-    if (!hasMonitoringDates(recipe.model)) {
+    const {dates} = periodDates(recipe.model)
+    if (!dates) {
         return []
     }
-    const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
+    const {monitoringEnd, calibrationStart} = dates
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
     const toOptions = visualizations => visualizations

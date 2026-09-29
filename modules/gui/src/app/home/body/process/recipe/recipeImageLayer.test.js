@@ -772,6 +772,79 @@ describe('acquiring what the layer shows', () => {
         })
     })
 
+    // The period and mosaic type are the product's, not the records': another view is described again from the recipe,
+    // while what was acquired about its dependencies still holds until a record changes.
+    describe('a Change Alerts collection mosaic whose CCDC the session does not hold', () => {
+        const RGB = {id: 'rgb', type: 'rgb', bands: ['red', 'green', 'blue'], min: [0, 0, 0], max: [2000, 2000, 2000]}
+        const view = (period, mosaicType, visParams = RGB) => ({visualizationType: period, mosaicType, visParams})
+        const shownAs = (period, mosaicType) => shown({recipe: {...changeAlerts(), ...ownStyles([])}, layerConfig: view(period, mosaicType)})
+
+        it('only completes the dependencies, then requests its preview with the arguments its editor reads it by', () => {
+            const {instance, runtime, settle} = shownAs('monitoring', 'latest')
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+            expect(instance.maybeCreateLayer()).toBe(null)
+
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+
+            expect(state.constructed[0].previewRequest).toEqual({
+                recipe: _.omit(instance.props.recipe, ['ui', 'layers']),
+                visualizationType: 'monitoring',
+                mosaicType: 'latest',
+                visParams: RGB
+            })
+        })
+
+        it('rebuilds the preview for another period and mosaic type, reusing what it acquired', () => {
+            const {instance, runtime, settle, setLayerConfig} = shownAs('monitoring', 'latest')
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+
+            setLayerConfig(view('calibration', 'median'))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES'])
+            expect(state.constructed.map(({previewRequest: {visualizationType, mosaicType}}) => ({visualizationType, mosaicType})))
+                .toEqual([{visualizationType: 'monitoring', mosaicType: 'latest'}, {visualizationType: 'calibration', mosaicType: 'median'}])
+        })
+
+        it('rebuilds the preview on a restyle without acquiring anything again', () => {
+            const {instance, runtime, settle, setLayerConfig} = shownAs('calibration', 'latest')
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+            const restyled = {...RGB, max: [3000, 3000, 3000]}
+
+            setLayerConfig(view('calibration', 'latest', restyled))
+
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(runtime.operations).toHaveLength(1)
+            expect(state.constructed.map(({visParams}) => visParams)).toEqual([RGB, restyled])
+        })
+
+        it('draws nothing from what it acquired once its record changes, until acquired again', () => {
+            const {instance, runtime, settle, setRecipe} = shownAs('monitoring', 'median')
+            settle(runtime.operations[0], completed(instance.props.recipe))
+            instance.maybeCreateLayer()
+            const edited = {...instance.props.recipe, model: {...instance.props.recipe.model, options: {corrections: []}}}
+
+            setRecipe(edited)
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(runtime.operations.map(({kind}) => kind)).toEqual(['DEPENDENCIES', 'DEPENDENCIES'])
+            settle(runtime.operations[1], completed(edited))
+            expect(instance.maybeCreateLayer()).not.toBe(null)
+            expect(state.constructed).toHaveLength(2)
+        })
+
+        it('is withheld when its CCDC cannot be read', () => {
+            const {instance, runtime, settle} = shownAs('monitoring', 'latest')
+
+            settle(runtime.operations[0], unreadable(instance.props.recipe))
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
+    })
+
     it('withholds masking whose unread mask was deleted, keeping its selection', () => {
         const {instance, runtime, settle, updates} = shown({
             recipe: masking({mask: {type: 'RECIPE_REF', id: 'deleted-mask'}, styles: [BLUE_STYLE]}),
@@ -844,6 +917,21 @@ const baytsAlerts = () => ({
         date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
         options: {orbits: ['ASCENDING', 'DESCENDING']},
         baytsAlertsOptions: {}
+    }
+})
+
+const changeAlerts = () => ({
+    id: 'change-alerts-1',
+    type: 'CHANGE_ALERTS',
+    model: {
+        reference: {type: 'RECIPE_REF', id: 'ccdc-1'},
+        date: {
+            monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months',
+            calibrationDuration: 3, calibrationDurationUnit: 'months'
+        },
+        sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: ['SR']},
+        changeAlertsOptions: {}
     }
 })
 

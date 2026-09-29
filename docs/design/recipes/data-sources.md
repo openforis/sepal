@@ -122,8 +122,12 @@ where a family still needs observation.
      executable ([being described is not being executable](gui-source-runtime.md#reading-a-recipes-own-output)). Its Earth Engine
      catalogue answers from that declaration without resolving segments or computing a geometry. Masking over Change
      Alerts exports every change band with `sample` where its fallback applied `mean`. Its monitoring and calibration
-     mosaics are still answered by its legacy entry: their `{period, mosaicType}` parameters and delegation to the
-     configured Optical, Radar or Planet Mosaic are pending;
+     mosaics are the declared `COLLECTION_MOSAIC` map product, taking `{period: 'monitoring' | 'calibration',
+     mosaicType: 'latest' | 'median'}` and delegating to the Optical, Radar or Planet Mosaic declaration its own
+     sources name, over the recipe one shared projection builds for both description and execution. A period or
+     source that cannot build it is refused, and the reference is never read to describe it, so Change Alerts has no
+     legacy band entry left ([Change Alerts](../../recipes/change-alerts.md)). Its period's dates, like BAYTS' target,
+     come from one shared calendar that keeps years below 100 literal;
    - Radar Mosaic has migrated ([Radar Mosaic](../../recipes/radar-mosaic.md)). Its shared type declares each
      configuration: a stated target date makes a point in time - `VV`, `VH`, `ratio_VV_VH`, `orbit`, `dayOfYear`
      and `daysFromTarget` - and anything else a time scan of 25 bands, its 15 statistics then `_phase`, `_amp`,
@@ -135,8 +139,7 @@ where a family still needs observation.
      `quality`, `unixTimeDays`, per-image harmonic terms - are not public, though explicit requests for them still
      build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
      consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observation is described
-     by this declaration, and Change Alerts' radar mosaics take their names from it while that product remains
-     undeclared;
+     by this declaration, as are Change Alerts' radar mosaics;
    - Planet Mosaic has migrated ([Planet Mosaic](../../recipes/planet-mosaic.md)). Its shared type declares one
      schema from the configuration alone, the same on every branch: `blue`, `green`, `red`, `nir`, then `ndvi`,
      `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, all scalar and averaged. Indexes are encoded at ten thousand per unit,
@@ -145,8 +148,8 @@ where a family still needs observation.
      request - its working bands, and PSB.SD imagery's other bands - is not public, though explicit requests for them
      still build, and a branch Earth Engine cannot run, such as that composite over four-band and eight-band imagery
      together, describes the same bands. Its Earth Engine catalogue answers the declaration without building the
-     image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics take their bands
-     from this declaration while that product remains undeclared. The Planet choices temporal recipes offer are a
+     image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics are described by
+     this declaration. The Planet choices temporal recipes offer are a
      separate presentation vocabulary, unchanged, and a Planet collection's measures remain CCDC's;
    - BAYTS Historical has migrated ([BAYTS Historical](../../recipes/bayts-historical.md)), in two separately
      reviewable changes. Its producer first honours physical-output requests: a nonempty `outputBands` gets exactly

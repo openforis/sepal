@@ -41,8 +41,8 @@ eight-band imagery together, fails when run and describes the same bands.
 
 Temporal recipes over a Planet collection - CCDC, Time Series, Phenology, Change Alerts' charts - offer their own
 choices: the spectral bands and `ndvi`, `ndwi`, `evi`, `evi2` and `savi` (`TEMPORAL_PLANET_BANDS` in
-`modules/gui/src/app/home/body/process/recipe/planetMosaic/bands.js`). Change Alerts' Planet mosaics offer the declared
-bands of the Planet Mosaic they project.
+`modules/gui/src/app/home/body/process/recipe/planetMosaic/bands.js`). Change Alerts' Planet collection mosaic is a
+declared product delegating to this declaration.
 
 ## Open issues
 

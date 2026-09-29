@@ -12,6 +12,7 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
+import {READY} from '../recipeOutput'
 import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
 import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
@@ -88,13 +89,12 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     renderVisualizationSelector() {
-        const {layerConfig: {visualizationType, mosaicType}, recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
-        const options = visualizationOptions(recipe, visualizationType, mosaicType)
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
-                presetOptions={options}
+                presetOptions={this.presetOptions()}
                 availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
@@ -128,14 +128,23 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     visualizations() {
-        const {currentRecipe, recipe, source, layerConfig: {visualizationType, mosaicType}, imageOutput} = this.props
+        const {currentRecipe, recipe, source, imageOutput} = this.props
         return layerVisualizations({
             currentRecipe,
             recipe,
             sourceId: source.id,
-            presets: presetVisualizations(visualizationOptions(recipe, visualizationType, mosaicType)),
+            presets: presetVisualizations(this.presetOptions()),
             availableBands: imageOutput.availableBands
         })
+    }
+
+    // A mosaic's presets are built from the dates and sources it is built from, so only a mosaic the read describes
+    // offers any. The changes offer theirs whatever the recipe states.
+    presetOptions() {
+        const {recipe, layerConfig: {visualizationType, mosaicType}, imageOutput} = this.props
+        return visualizationType === 'changes' || imageOutput.status === READY
+            ? visualizationOptions(recipe, visualizationType, mosaicType)
+            : []
     }
 
     selectVisualization(visParams) {

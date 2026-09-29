@@ -727,7 +727,8 @@ describe('a Change Alerts recipe', () => {
         expect(submitted).toEqual([])
     })
 
-    // The mosaics a layer can show instead are another product, still answered by its legacy entry.
+    // The mosaics a layer can show instead are another product, described as the mosaic Change Alerts' own model
+    // builds: in the order execution builds it, with that mosaic type's own shapes, encodings and policies.
     describe.each([
         ['monitoring', 'latest'],
         ['monitoring', 'median'],
@@ -736,25 +737,33 @@ describe('a Change Alerts recipe', () => {
     ])('%s %s mosaic', (period, mosaicType) => {
         const layerConfig = {visualizationType: period, mosaicType}
 
-        it('shows as before, with the optical styles and the arguments execution takes', () => {
+        it('is described as the optical mosaic, presented and styled as one, from the arguments execution takes', () => {
             const recipe = changeAlertsOf()
             const {product, output} = layerRead(recipe, layerConfig)
 
             expect(product).toEqual({name: 'COLLECTION_MOSAIC', parameters: {period, mosaicType}})
-            expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
-            expect(output.bands.map(({name}) => name)).toEqual(expect.arrayContaining(['red', 'green', 'blue']))
-            expect(output.bands.map(({name}) => name)).not.toContain('confidence')
+            expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
+            expect(output.description.output.product).toEqual(product)
+            expect(output.bands.map(({name}) => name)).toEqual(OPTICAL_MOSAIC_BANDS)
+            expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+            expect(output.availableBands.ndvi.encoding).toEqual({scale: 0.0001, offset: 0, unit: '1'})
+            expect(displayTypes(output).red).toEqual({precision: 'int', min: -32768, max: 32767})
             const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
             expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(['red', 'green', 'blue'])
             expect(productArgs(recipe, layerConfig)).toEqual({visualizationType: period, mosaicType})
         })
 
         // There is no mosaic without a period to build it around, while the changes are still described.
-        it('offers nothing to show before a period is chosen', () => {
+        it('is refused before a period is chosen, and cannot be previewed', () => {
             const recipe = changeAlertsOf({date: {...PERIOD, monitoringEnd: undefined}})
+            const {output} = layerRead(recipe, layerConfig)
 
-            expect(layerRead(recipe, layerConfig).output).toMatchObject({status: 'READY', bands: []})
-            expect(canPreview(layerRead(recipe, layerConfig).output)).toBe(false)
+            expect(output).toMatchObject({
+                status: 'INVALID',
+                bands: [],
+                diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']})]
+            })
+            expect(canPreview(output)).toBe(false)
             expect(layerRead(recipe, {visualizationType: 'changes'}).output.bands.map(({name}) => name)).toEqual(CHANGES)
         })
     })
@@ -763,13 +772,15 @@ describe('a Change Alerts recipe', () => {
     it.each([
         ['monitoring', 'latest', RADAR_POINT_IN_TIME, ['VV', 'VH', 'ratio_VV_VH']],
         ['calibration', 'median', RADAR_TIME_SCAN, ['VV_med', 'VH_med', 'VV_std']]
-    ])('shows the radar %s %s mosaic as Radar Mosaic declares it, with its styles', (period, mosaicType, bands, style) => {
+    ])('shows the radar %s %s mosaic as Radar Mosaic declares it, with whole orbits and its styles', (period, mosaicType, bands, style) => {
         const recipe = changeAlertsOf({sources: RADAR_SOURCES})
         const layerConfig = {visualizationType: period, mosaicType}
         const {output} = layerRead(recipe, layerConfig)
 
-        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(bands)
+        expect(output.bands.find(({name}) => name === 'orbit').pyramidingPolicy).toBe('mode')
+        expect(displayTypes(output).orbit).toEqual({precision: 'int'})
         const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(style)
     })
@@ -781,11 +792,30 @@ describe('a Change Alerts recipe', () => {
         const recipe = changeAlertsOf({sources: PLANET_SOURCES})
         const {output} = layerRead(recipe, {visualizationType: period, mosaicType})
 
-        expect(output).toMatchObject({status: 'READY', authority: 'LEGACY'})
+        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(PLANET_BANDS)
         const styles = changeAlertsVisualizationOptions(recipe, period, mosaicType).flatMap(({options}) => options).map(({visParams}) => visParams)
         expect(renderableVisualizations(styles, output.availableBands).map(({bands}) => bands)).toContainEqual(['red', 'green', 'blue'])
         expect(renderableVisualizations(styles, output.availableBands)).toContainEqual(expect.objectContaining({bands: ['kndvi'], min: [0], max: [10000]}))
+    })
+
+    it('refuses a Planet mosaic with no Planet collection to build it from, and cannot preview it', () => {
+        const recipe = changeAlertsOf({sources: {...PLANET_SOURCES, dataSets: {}}})
+        const {output} = layerRead(recipe, {visualizationType: 'monitoring', mosaicType: 'latest'})
+
+        expect(output).toMatchObject({
+            status: 'INVALID',
+            diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'sources', 'dataSets', 'PLANET']})]
+        })
+        expect(canPreview(output)).toBe(false)
+    })
+
+    // Retrieve reads the canonical output whatever a layer shows.
+    it('is not what its recipe exports', () => {
+        const {output} = read(changeAlertsOf())
+
+        expect(output.description.output.product).toBeUndefined()
+        expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
     })
 })
 
@@ -1246,6 +1276,14 @@ const baytsHistoricalOf = ({id = ID, orbits = ['ASCENDING', 'DESCENDING'], aoi =
 })
 
 const PLANET_BANDS = ['blue', 'green', 'red', 'nir', 'ndvi', 'ndwi', 'evi', 'evi2', 'savi', 'kndvi']
+
+// A median Landsat 8 surface-reflectance mosaic, as Optical Mosaic declares it and execution builds it.
+const OPTICAL_MOSAIC_BANDS = [
+    'aerosol', 'blue', 'green', 'red', 'nir', 'swir1', 'swir2', 'thermal',
+    'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth',
+    'ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'mvi', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi',
+    'bui', 'kndvi'
+]
 
 // An AOI drawn on the map unless told otherwise, so that nothing it reads has to be loaded.
 const planetMosaicOf = ({aoi = AOI} = {}) => ({

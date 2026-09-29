@@ -32,9 +32,9 @@ asked for nothing computes none. Bands used to construct the output - `angle`, `
 per-image harmonic terms - are not declared, and an explicit producer request for one still builds.
 
 The GUI sets cursor precision and ranges and groups the bands for Retrieve. That is presentation only. BAYTS' radar
-observation is a declared product delegating to this declaration; Change Alerts' radar mosaics take their names from it
-while their own product is undeclared. A Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are
-a separate contract (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
+observation and Change Alerts' radar collection mosaics are declared products delegating to this declaration. A
+Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are a separate contract
+(`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 
 ## Open issues
 

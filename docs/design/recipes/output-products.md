@@ -315,11 +315,10 @@ products beside its canonical output, and a product declares its parameters. Pro
 recipe type, because nothing compares them across types and a shared vocabulary would invite exactly the
 matching-by-name that product compatibility refuses.
 
-A product whose image is another recipe's declares that, rather than restating bands. Change Alerts' mosaic modes
-and BAYTS' radar modes delegate every accessor to the mosaic they build, so the bands reported are the mosaic's, but
-only because each accessor is delegated by hand: one that restates a band list instead reports bands the image does
-not carry. Naming the product and declaring it delegating removes that class of disagreement by construction rather
-than by remembering to keep every accessor in step.
+A product whose image is another recipe's declares that, rather than restating bands: LandTrendr's annual mosaic,
+BAYTS' radar observation and Change Alerts' collection mosaic are described by the declaration of the mosaic they
+build, from a projection execution builds the same mosaic from, so the bands described are the image's by
+construction.
 
 | Type | Canonical output | Map products | Parameters |
 | --- | --- | --- | --- |
@@ -341,12 +340,13 @@ Export stays canonical: the GUI's export submission refuses a description naming
   given as `undefined` is omitted, as it is on the wire. A product declaring none takes none. Its identity carries the
   normalized parameters: `{name, parameters}`, or `{name}` for a product taking none.
 - **Delegation.** A product whose image is another type's declares `delegatesTo` that type, or a list of distinct types
-  it chooses among, and hands `delegate` a recipe it builds. That recipe is described by the delegate type's canonical
-  declaration, on the same terms as the product: a read of an observation or a source is refused, and a recipe of a type
-  it does not list, or a type whose declaration is missing or reads its role, is `UNSUPPORTED_DELEGATE`. The built
-  recipe is no graph node and has no identity: its answer is the product's candidate, validated once under the product's
-  own recipe. The registry checks each `delegatesTo` once all types are registered - the type exists and declares an
-  output without a role - without running any provider; a list must be nonempty, of non-blank names, each once.
+  it chooses among - Change Alerts' collection mosaic lists `MOSAIC`, `RADAR_MOSAIC` and `PLANET_MOSAIC` - and hands
+  `delegate` a recipe it builds. That recipe is described by the delegate type's canonical declaration, on the same
+  terms as the product: a read of an observation or a source is refused, and a recipe of a type it does not list, or a
+  type whose declaration is missing or reads its role, is `UNSUPPORTED_DELEGATE`. The built recipe is no graph node and
+  has no identity: its answer is the product's candidate, validated once under the product's own recipe. The registry
+  checks each `delegatesTo` once all types are registered - the type exists and declares an output without a role -
+  without running any provider; a list must be nonempty, of non-blank names, each once.
 
 CCDC's `COUNT` takes no parameters. LandTrendr's `ANNUAL_MOSAIC` takes `{year}` - any integer, the recipe's `endYear`
 when omitted or null - and delegates to Optical Mosaic over the calendar-year median mosaic that execution builds from
@@ -964,7 +964,7 @@ matches execution. The execution comparison is a research gate below.
 | BAYTS Historical | orbit-selected historical metrics | `BAYTS_HISTORICAL_STATS` | shared declaration from its orbits | scalar |
 | CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
 | CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
-| Change Alerts | scalar alert result | monitoring/calibration collection mosaics | shared declaration; mosaics by fabricated family recipes | scalar |
+| Change Alerts | scalar alert result | monitoring/calibration collection mosaic map product, delegating to the Optical, Radar or Planet Mosaic its sources name | shared declaration | scalar |
 | Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
 | Classification | class, optional class probability, regression and per-class probabilities | classification categories | shared declaration from classifier and legend | scalar |
 | Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
@@ -999,15 +999,14 @@ Callers must not ask for an unqualified union.
 
 ### Reuse currently depends on fabricated recipe models
 
-The generic GUI source helper and Change Alerts construct partial recipe objects to call Optical, Radar or Planet
-helpers. Those objects encode undocumented assumptions about another recipe's persisted model. Adapter and composer
-commands remove both the fake model and the legacy branch switch from consumers.
+The generic GUI source helper constructs partial recipe objects to call Optical, Radar or Planet helpers. Those
+objects encode undocumented assumptions about another recipe's persisted model. Adapter and composer commands remove
+both the fake model and the legacy branch switch from consumers.
 
-Earth Engine contains related delegation: Change Alerts constructs Optical, Radar or Planet mosaics around monitoring
-dates. Reusing an execution module is reasonable; treating the ephemeral adapter as if it were a persisted recipe
-contract is not. Product, adapter and composer APIs should make the required model projection explicit and test it in
-one place, as LandTrendr's annual mosaic does: one shared function builds the Optical Mosaic both described and
-executed.
+Reusing an execution module is reasonable; treating the ephemeral adapter as if it were a persisted recipe contract
+is not. Product, adapter and composer APIs should make the required model projection explicit and test it in one
+place, as LandTrendr's annual mosaic and Change Alerts' collection mosaic do: one shared function builds the mosaic
+both described and executed.
 
 ### Copied descriptions are persisted as configuration
 
