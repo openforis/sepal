@@ -19,8 +19,8 @@ const deps = rows => {
         deps: {
             usageRepo: {userUsageRollup: async (...args) => (calls.push(args), rows)},
             instanceManager: {getInstanceTypes: () => [
-                {id: 'T3aSmall', name: 't3a.small'},
-                {id: 'G5Xlarge', name: 'g5.xlarge'},
+                {id: 'T3aSmall', name: 't3a.small', hourlyCost: 0.0204},
+                {id: 'G5Xlarge', name: 'g5.xlarge', hourlyCost: 1.123},
             ]},
             clock: () => NOW,
         },
@@ -38,6 +38,7 @@ test('window is days back from now; per-type rows carry weighted averages and ma
         ram: {avg: 10, max: 40},
         gpu: null,
         netBytesPerS: 1000,
+        cost: 0.04,
     }])
 })
 
@@ -58,6 +59,20 @@ test('overall re-weights across types; gpu present only where measured', async (
     expect(overall.gpu).toEqual({avg: 70, max: 100})    // 700/10 — GPU hours only
     expect(overall.netBytesPerS).toBe(1000)             // (90000+10000)/100
     expect(report.byInstanceType[1].gpu).toEqual({avg: 70, max: 100})
+})
+
+test('each type is priced at its hourly rate, and overall sums them', async () => {
+    const {deps: d} = deps([row({hours: 10}), row({instanceType: 'G5Xlarge', hours: 3})])
+    const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
+    expect(report.byInstanceType.map(({cost}) => cost)).toEqual([0.2, 3.37])
+    expect(report.overall.cost).toBe(3.57)
+})
+
+test('a retired type has no cost and adds none to overall', async () => {
+    const {deps: d} = deps([row({hours: 10}), row({instanceType: 'Retired9000', hours: 5})])
+    const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
+    expect(report.byInstanceType[1].cost).toBeNull()
+    expect(report.overall.cost).toBe(0.2)
 })
 
 test('no data → overall null, empty byInstanceType', async () => {

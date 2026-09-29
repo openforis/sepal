@@ -255,10 +255,10 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         ctx.body = await buildReport(username, forCurrentUser)
     }
 
-    // ── per-user usage report (admin; phase-4 upgrade-decision support) ─────────
+    // ── per-user usage report (self: Usage panel; admin: user details) ──────────
     const DEFAULT_USAGE_DAYS = 30
-    const userUsage = async ctx => {
-        const {username} = pathUser(ctx)
+    const userUsage = resolve => async ctx => {
+        const {username} = resolve(ctx)
         const parsed = parseInt(ctx.query.days)
         const days = Number.isFinite(parsed)
             ? Math.min(365, Math.max(1, parsed))
@@ -552,7 +552,8 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         // report
         generateReportSelf: generateReport(selfUser),
         generateReportOther: generateReport(pathUser),
-        userUsage,
+        userUsageSelf: userUsage(selfUser),
+        userUsageOther: userUsage(pathUser),
         userSessions,
         mostRecentlyClosedByUser,
         mostRecentlyClosed,

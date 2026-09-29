@@ -41,9 +41,12 @@ const registerSessionRoutes = (router, api) => router
     .get('/sessions/open', requireAdmin, api.openSessions)
     // GET /sessions/app-sessions — literal, BEFORE the :username wildcard routes.
     .get('/sessions/app-sessions', requireAuth, api.appSessions)
+    // GET /sessions/usage — the current user's own aggregate resource usage, for the Usage panel.
+    // Literal, BEFORE the :username wildcard routes.
+    .get('/sessions/usage', requireAuth, api.userUsageSelf)
     .get('/sessions/:username/report', requireAdmin, api.generateReportOther)
     // GET /sessions/:username/usage (admin) — aggregate resource usage for the user-details form.
-    .get('/sessions/:username/usage', requireAdmin, api.userUsage)
+    .get('/sessions/:username/usage', requireAdmin, api.userUsageOther)
 
     // ── POST request session ──────────────────────────────────────────────────
     .post('/sessions/instance-type/:instanceType', requireAuth, api.requestSessionSelf)

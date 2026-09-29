@@ -691,23 +691,29 @@ test('timeoutHours counts down the stored deadline and never goes negative', () 
     expect(past.sessions[0].timeoutHours).toBe(0)
 })
 
-test('userUsage → admin path user (lowercased), default days 30, body passthrough', async () => {
+test('userUsageOther → admin path user (lowercased), default days 30, body passthrough', async () => {
     sessionManager.generateUserUsageReport.mockResolvedValue({days: 30, overall: null, byInstanceType: []})
     const c = ctx({params: {username: 'Bob'}})
-    await api.userUsage(c)
+    await api.userUsageOther(c)
     expect(sessionManager.generateUserUsageReport).toHaveBeenCalledWith({username: 'bob', days: 30})
     expect(c.body).toEqual({days: 30, overall: null, byInstanceType: []})
 })
 
+test('userUsageSelf → currentUser (lowercased), never a path param', async () => {
+    sessionManager.generateUserUsageReport.mockResolvedValue({days: 30, overall: null, byInstanceType: []})
+    await api.userUsageSelf(ctx({params: {username: 'bob'}}))
+    expect(sessionManager.generateUserUsageReport).toHaveBeenCalledWith({username: 'alice', days: 30})
+})
+
 test('userUsage → days parsed and clamped to 1..365', async () => {
     sessionManager.generateUserUsageReport.mockResolvedValue({})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '90'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '90'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 90})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '9999'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '9999'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 365})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: '0'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '0'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 1})
-    await api.userUsage(ctx({params: {username: 'bob'}, query: {days: 'nope'}}))
+    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: 'nope'}}))
     expect(sessionManager.generateUserUsageReport).toHaveBeenLastCalledWith({username: 'bob', days: 30})
 })
 
