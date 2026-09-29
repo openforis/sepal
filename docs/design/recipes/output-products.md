@@ -340,13 +340,13 @@ Export stays canonical: the GUI's export submission refuses a description naming
   path; a refusal is `INVALID_PRODUCT_PARAMETERS` at `['parameters', ...path]`, and nothing is described. A parameter
   given as `undefined` is omitted, as it is on the wire. A product declaring none takes none. Its identity carries the
   normalized parameters: `{name, parameters}`, or `{name}` for a product taking none.
-- **Delegation.** A product whose image is another type's declares `delegatesTo` that type and hands `delegate` a
-  recipe it builds. That recipe is described by the delegate type's canonical declaration, on the same terms as the
-  product: a read of an observation or a source is refused, and a recipe of another type, or a type whose declaration
-  is missing or reads its role, is `UNSUPPORTED_DELEGATE`. The built recipe is no graph node and has no identity: its
-  answer is the product's candidate, validated once under the product's own recipe. The registry checks each
-  `delegatesTo` once all types are registered - the type exists and declares an output without a role - without
-  running any provider.
+- **Delegation.** A product whose image is another type's declares `delegatesTo` that type, or a list of distinct types
+  it chooses among, and hands `delegate` a recipe it builds. That recipe is described by the delegate type's canonical
+  declaration, on the same terms as the product: a read of an observation or a source is refused, and a recipe of a type
+  it does not list, or a type whose declaration is missing or reads its role, is `UNSUPPORTED_DELEGATE`. The built
+  recipe is no graph node and has no identity: its answer is the product's candidate, validated once under the product's
+  own recipe. The registry checks each `delegatesTo` once all types are registered - the type exists and declares an
+  output without a role - without running any provider; a list must be nonempty, of non-blank names, each once.
 
 CCDC's `COUNT` takes no parameters. LandTrendr's `ANNUAL_MOSAIC` takes `{year}` - any integer, the recipe's `endYear`
 when omitted or null - and delegates to Optical Mosaic over the calendar-year median mosaic that execution builds from
