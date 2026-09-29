@@ -234,6 +234,10 @@ export const updateCurrentUserSession$ = session =>
         )
     )
 
+// No store update: the worker pushes the new session through the session websocket.
+export const startCurrentUserSession$ = instanceTypeId =>
+    api.user.startCurrentUserSession$(instanceTypeId)
+
 export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(
         tap(() =>

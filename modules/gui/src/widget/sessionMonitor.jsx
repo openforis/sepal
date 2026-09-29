@@ -12,8 +12,8 @@ let sessionWs = null
 
 // refreshSessions — ask the worker for a fresh session report. The report's costSinceCreation and
 // timeoutHours are derived from elapsed time, so they drift between event-driven pushes
-// with nothing to announce it; the Usage panel ticks this while it is open (see
-// app/home/user/usage.jsx) and the usage button fires one on open.
+// with nothing to announce it; the sessions panel ticks this while it is open (see
+// app/home/user/userSessions.jsx) and the usage menu fires one on open.
 export const refreshSessions = () =>
     sessionWs && sessionWs.upstream$.next({refresh: true})
 

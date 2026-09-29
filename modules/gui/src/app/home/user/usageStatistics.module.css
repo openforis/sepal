@@ -22,7 +22,26 @@
     opacity: .6;
 }
 
-.table tr:last-child td {
+/* On the rows, not the cells: the header cells' opacity would dim the line. */
+.table thead tr {
+    border-bottom: 1px solid var(--wireframe-color);
+}
+
+.table tr.total {
+    border-top: 1px solid var(--wireframe-color);
+}
+
+.table th,
+.table tr:has(+ tr.total) td {
+    padding-bottom: .75rem;
+}
+
+.table tbody tr:first-child td,
+.table tr.total td {
+    padding-top: .75rem;
+}
+
+.table tr.total td {
     font-weight: bold;
 }
 

@@ -19,6 +19,7 @@ import {appRequirements, buildPickerOptions, defaultPickerValue, hasSuitableOpti
 // association. Two combo sections: the user's running instances (unsuitable ones
 // disabled) and the suitable new instance types (in catalog order). Default: first
 // suitable running instance, else the cheapest suitable type.
+// Without an app it picks the type of a new instance: no running instances, no requirements.
 class _InstancePicker extends React.Component {
     state = {
         report: null,
@@ -46,7 +47,7 @@ class _InstancePicker extends React.Component {
 
     pickerInputs(report) {
         const {app} = this.props
-        const sessions = report?.sessions || []
+        const sessions = app ? report?.sessions || [] : []
         return {
             sessions,
             instanceTypes: report?.instanceTypes || [],
@@ -54,8 +55,9 @@ class _InstancePicker extends React.Component {
             // The instances already hosting this app or a group-mate. conflictingAssociations is
             // the same function openPlan decides with, so the default the picker offers and the
             // plan that default produces cannot drift apart.
-            groupSessionIds: conflictingAssociations(app, appList(), sessions)
-                .map(({sessionId}) => sessionId),
+            groupSessionIds: app
+                ? conflictingAssociations(app, appList(), sessions).map(({sessionId}) => sessionId)
+                : [],
             runningLabel: msg('apps.instancePicker.runningSection'),
             newLabel: msg('apps.instancePicker.newSection'),
             newSsdLabel: msg('apps.instancePicker.newSsdSection'),
@@ -121,11 +123,13 @@ class _InstancePicker extends React.Component {
             // tell the user why instead of showing an empty combo.
             return (
                 <div>
-                    {msg('apps.instancePicker.noSuitableInstance', {
-                        cpu: requirements.minCpuCount,
-                        gpu: requirements.minGpuCount ? ` / ${requirements.minGpuCount} GPU` : '',
-                        ram: requirements.minRamGiB
-                    })}
+                    {app
+                        ? msg('apps.instancePicker.noSuitableInstance', {
+                            cpu: requirements.minCpuCount,
+                            gpu: requirements.minGpuCount ? ` / ${requirements.minGpuCount} GPU` : '',
+                            ram: requirements.minRamGiB
+                        })
+                        : msg('apps.instancePicker.noInstanceType')}
                 </div>
             )
         }
@@ -148,7 +152,9 @@ class _InstancePicker extends React.Component {
             <Panel className={styles.panel} placement='modal' onBackdropClick={onCancel}>
                 <Panel.Header
                     icon='server'
-                    title={msg('apps.instancePicker.title', {app: app.label})}/>
+                    title={app
+                        ? msg('apps.instancePicker.title', {app: app.label})
+                        : msg('apps.instancePicker.newInstanceTitle')}/>
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
@@ -177,7 +183,7 @@ export const InstancePicker = compose(
 )
 
 InstancePicker.propTypes = {
-    app: PropTypes.object.isRequired,
+    app: PropTypes.object,
     onCancel: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired
 }

@@ -5,6 +5,9 @@ import {moduleWebSocket$} from './ws.js'
 export default {
     ws: () => moduleWebSocket$('worker/session'),
 
+    usage$: (days = 30) =>
+        get$('/api/sessions/usage', {query: {days}}),
+
     userUsage$: (username, days = 30) =>
         get$(`/api/sessions/${username}/usage`, {query: {days}}),
 

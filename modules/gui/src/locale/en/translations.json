@@ -80,6 +80,8 @@
       "runningSection": "Running instances",
       "newSection": "New instance without SSD",
       "newSsdSection": "New instance with SSD",
+      "newInstanceTitle": "Start new instance",
+      "noInstanceType": "No instance type is available. Contact your administrator.",
       "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
@@ -444,7 +446,7 @@
         "profile": "Manage user profile",
         "report": {
           "budgetExceeded": "Exceeded",
-          "tooltip": "Show user report"
+          "tooltip": "Show usage and sessions"
         }
       },
       "users": "Users"
@@ -6000,7 +6002,7 @@
         "time": "Date/time started",
         "title": "Sessions"
       },
-      "title": "User report",
+      "title": "Usage",
       "usage": "Using {percentage}% of allocated quota",
       "updateQuota": "Request additional resources"
     },
@@ -6161,7 +6163,10 @@
         },
         "usage": {
           "label": "Resource usage — last {days} days",
+          "avgMax": "{metric} (avg/max)",
+          "cost": "Cost",
           "hours": "Hours",
+          "instanceType": "Instance type",
           "network": "Network",
           "overall": "All instances",
           "noData": "No usage data recorded yet",
@@ -6215,6 +6220,9 @@
         "name": {
           "label": "Instance name"
         }
+      },
+      "start": {
+        "error": "Could not start session."
       },
       "stop": {
         "error": "Could not stop session.",

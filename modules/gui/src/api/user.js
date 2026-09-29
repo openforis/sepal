@@ -114,6 +114,9 @@ export default {
             }
         }),
 
+    startCurrentUserSession$: instanceTypeId =>
+        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`),
+
     stopCurrentUserSession$: session =>
         delete$(`/api/sessions/session/${session.id}`),
 
