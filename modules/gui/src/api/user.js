@@ -1,4 +1,5 @@
 import {delete$, get$, post$} from '~/http-client'
+import {launchFailureRetry} from '~/instanceLaunchFailure'
 
 import {moduleWebSocket$} from './ws.js'
 
@@ -115,7 +116,7 @@ export default {
         }),
 
     startCurrentUserSession$: instanceTypeId =>
-        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`),
+        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`, {retry: launchFailureRetry}),
 
     stopCurrentUserSession$: session =>
         delete$(`/api/sessions/session/${session.id}`),

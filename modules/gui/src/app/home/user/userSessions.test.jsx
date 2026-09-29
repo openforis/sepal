@@ -159,6 +159,22 @@ describe('the sessions panel', () => {
         expect(Notifications.error).toHaveBeenCalledWith({message: 'Could not start session.', error})
     })
 
+    // No capacity for the type in SEPAL's region, or not offered there: nothing SEPAL can fix, and
+    // the user can pick another type or wait.
+    it('blames AWS when it cannot provide the instance type', () => {
+        vi.mocked(startCurrentUserSession$).mockReturnValue(throwError(() =>
+            ({status: 503, response: {code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'}})))
+        const container = render()
+        act(() => container.querySelector('.add').click())
+
+        act(() => container.querySelector('.pick').click())
+
+        expect(Notifications.error).toHaveBeenCalledWith({
+            title: 'Could not start session.',
+            message: expect.stringMatching(/^Amazon Web Services \(AWS\) cannot provide this instance type/)
+        })
+    })
+
     it('marks the add button busy while a session is being started', () => {
         const container = render({starting: true})
 

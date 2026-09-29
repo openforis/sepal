@@ -1004,6 +1004,9 @@
       "description": "Google hi-res satellite imagery"
     }
   },
+  "instanceLaunch": {
+    "unavailable": "Amazon Web Services (AWS) cannot provide this instance type in SEPAL's region right now: it has run out of capacity for it, or does not offer it there. This is outside SEPAL's control. Pick another instance type, or try again later."
+  },
   "notifications": {
     "error": {
       "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",

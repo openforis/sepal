@@ -3,6 +3,7 @@ import {catchError, forkJoin, interval, map, of} from 'rxjs'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {launchFailureMessage} from '~/instanceLaunchFailure'
 import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -171,7 +172,12 @@ class _UserSessions extends React.Component {
         stream('START_USER_SESSION',
             startCurrentUserSession$(instanceType),
             null,
-            error => Notifications.error({message: msg('user.userSession.start.error'), error})
+            error => {
+                const launchFailure = launchFailureMessage(error)
+                Notifications.error(launchFailure
+                    ? {title: msg('user.userSession.start.error'), message: launchFailure}
+                    : {message: msg('user.userSession.start.error'), error})
+            }
         )
     }
 }
