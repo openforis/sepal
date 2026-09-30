@@ -51,23 +51,18 @@
 
 	encode gzip
 
-	# control/maintenance.on exists -> maintenance page (503) for everything, with its assets under /_maintenance/.
+	# /config/maintenance.on exists -> maintenance page (503) for everything.
 	# Checked per request, so creating or removing the file takes effect without a restart.
 	@maintenance file {
-		root /control
+		root /config
 		try_files /maintenance.on
 	}
 	handle @maintenance {
-		root * /srv/maintenance
-		handle_path /_maintenance/* {
-			file_server
-		}
-		handle {
-			header Cache-Control "no-cache, no-store, must-revalidate"
-			rewrite * /index.html
-			file_server {
-				status 503
-			}
+		root * /usr/share/caddy
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		rewrite * /maintenance.html
+		file_server {
+			status 503
 		}
 	}
 

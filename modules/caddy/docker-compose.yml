@@ -19,7 +19,6 @@ services:
     volumes:
       - "${SEPAL_DATA_DIR}/caddy/data:/data"
       - "${SEPAL_DATA_DIR}/caddy/config:/config"
-      - "${SEPAL_DATA_DIR}/caddy/control:/control:ro"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
