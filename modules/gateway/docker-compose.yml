@@ -5,10 +5,12 @@ services:
       service: logger
     image: "redis:6"
     container_name: gateway-redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # Holds sessions and the authoritative user records: evicting a key logs users out or breaks
+    # authentication.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/gateway-redis:/data"
-      - "${SEPAL_PROJECT_DIR}/modules/gateway/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

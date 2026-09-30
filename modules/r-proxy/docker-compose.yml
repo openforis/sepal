@@ -5,10 +5,12 @@ services:
       service: logger
     image: "redis:6"
     container_name: r-proxy-redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # Holds the BullMQ CRAN build queue (~23k keys, ~25MB for a full sync). Deliberately uncapped: this
+    # runs on the operations host, which has no monit, so a cap could stall a sandbox image build with
+    # nothing to alert on.
+    command: ["redis-server", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/r-proxy-redis:/data"
-      - "./modules/r-proxy/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

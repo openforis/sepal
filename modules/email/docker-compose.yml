@@ -5,10 +5,12 @@ services:
       service: logger
     image: "redis:6"
     container_name: email-redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # Holds the BullMQ mail queue and per-address notification preferences: evicting a key drops
+    # outbound mail.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/email-redis:/data"
-      - "${SEPAL_PROJECT_DIR}/modules/email/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

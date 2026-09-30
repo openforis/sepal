@@ -5,10 +5,12 @@ services:
       service: logger
     image: "redis:6"
     container_name: scene-metadata-redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # Holds the per-collection import watermarks: losing one silently re-imports an entire scene
+    # collection.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/scene-metadata-redis:/data"
-      - "${SEPAL_PROJECT_DIR}/modules/scene-metadata/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s

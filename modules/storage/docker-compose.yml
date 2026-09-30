@@ -5,11 +5,13 @@ services:
       service: logger
     image: "redis:6"
     container_name: storage-redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # Holds per-user storage accounting and session flags: evicting a key yields wrong quotas with no
+    # indication anything was lost.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction"]
     volumes:
       # Keeps the pre-rename directory name so existing deployments carry their data over.
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
-      - "./modules/storage/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 60s
