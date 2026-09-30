@@ -1,7 +1,9 @@
 import {createRequire} from 'module'
+import {defer} from 'rxjs'
 
 import * as config from '#gee/config'
-import ee from '#sepal/ee/ee'
+import {createEEContext} from '#gee/jobs/eeRequestContext'
+import {inEEContext} from '#sepal/ee/eeContext'
 import {inRecipeScope} from '#sepal/ee/recipeScope'
 import Job from '#sepal/worker/job'
 
@@ -42,15 +44,14 @@ const job = ({
     worker$,
     finalize$
 }) => {
-    // Every task of a request runs inside the request's own recipe operation, which the configure
-    // task ahead of them put on the shared state.
-    const workerWithWorkloadTag$ = (...args) => {
-        const tag = `sepal-work-${jobName
-            .toLowerCase()
-            .replace(/[^a-z0-9_-]/g, '_')
-            .substring(0, 63)}`
-        ee.data.setDefaultWorkloadTag(tag)
-        return inRecipeScope(args[0]?.state?.recipeScope, worker$(...args))
+    // Every task of a request makes its Earth Engine calls as the request's user, and runs inside the request's
+    // own recipe operation, which the configure task ahead of them put on the shared state.
+    const workerInContext$ = (...args) => {
+        const [{credentials, initArgs: {eeEndpoint} = {}, requestId, state} = {}] = args
+        return defer(() => inEEContext(
+            createEEContext({requestId, credentials, jobName, endpoint: eeEndpoint}),
+            defer(() => inRecipeScope(state?.recipeScope, worker$(...args)))
+        ))
     }
     return Job({
         jobName,
@@ -64,7 +65,7 @@ const job = ({
         before,
         services,
         args,
-        worker$: workerWithWorkloadTag$,
+        worker$: workerInContext$,
         finalize$
     })
 }
