@@ -7,7 +7,7 @@ import {inEEContext} from '#sepal/ee/eeContext'
 import {inRecipeScope} from '#sepal/ee/recipeScope'
 import Job from '#sepal/worker/job'
 
-// authenticate <-> job form a cycle; load it lazily (at job() call time) to break it.
+// runtime <-> job form a cycle; load it lazily (at job() call time) to break it.
 const require = createRequire(import.meta.url)
 
 const getSepalUser = ctx => {
@@ -35,7 +35,7 @@ const job = ({
     minIdleCount,
     maxIdleMilliseconds,
     ctx,
-    before = [require('#gee/jobs/ee/authenticate').default],
+    before = [require('#gee/jobs/ee/runtime').default],
     services,
     args = ctx => ({
         requestArgs: {...ctx.request.query, ...ctx.request.body},
