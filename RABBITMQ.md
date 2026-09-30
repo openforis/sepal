@@ -192,7 +192,8 @@ a lost delivery or a consumer restart self-corrects within the hour.
 ## `email.*` — outgoing email
 
 Both consumed by **email**, which queues and sends via SMTP
-([messageHandler.js](modules/email/src/messageHandler.js)).
+([messageHandler.js](modules/email/src/messageHandler.js)). `from` is the publishing module's name, sent as
+`sepal-<from>@$SMTP_FROM_DOMAIN`; a value containing `@` is used verbatim, and none falls back to `no-reply@`.
 
 ### `email.sendToAddress` — `{from, to, cc, bcc, subject, content, contentType, forceEmailNotificationEnabled}`
 Send to explicit address(es); at least one of `to`/`cc`/`bcc` required.
