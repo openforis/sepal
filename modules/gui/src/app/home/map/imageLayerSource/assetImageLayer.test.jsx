@@ -166,7 +166,7 @@ describe('an asset replaced while its Map Layers layer stays open', () => {
 const assetId = 'projects/test/assets/slice'
 const metadata = (bandNames, presetBands = bandNames) => ({
     type: 'Image', id: assetId, bandNames,
-    bands: bandNames.map(id => ({id, data_type: {precision: 'float'}})),
+    bands: bandNames.map(id => ({id, data_type: {type: 'PixelType', precision: 'float'}})),
     properties: Object.fromEntries(presetBands.flatMap((band, i) => [
         [`visualization_${i}_type`, 'continuous'],
         [`visualization_${i}_bands`, band],

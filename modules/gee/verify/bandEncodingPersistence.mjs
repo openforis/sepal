@@ -2,7 +2,7 @@
 // than one property holds.
 //
 // The representation, the property writer and the reader are production's own: encodingProperties() splits and
-// names the parts, replaceAssetProperties$ writes the collection's, and assetBandEvidence/encodingFromProperties
+// names the parts, replaceAssetProperties$ writes the collection's, and assetEvidence$/encodingFromProperties
 // read them back in one evaluation. Only the image and the region are fixtures, because nothing here depends on
 // pixels.
 //
@@ -12,9 +12,8 @@
 import {firstValueFrom} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
-import {assetBandEvidence} from '#sepal/ee/bandEvidence'
+import {assetEvidence$} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
-import ImageFactory from '#sepal/ee/imageFactory'
 import {
     bandsWithEncoding,
     clearedEncodingProperties,
@@ -182,19 +181,14 @@ const rewrite = async () => {
 const read = async () => {
     const assetId = process.env.EE_ENC_ASSET
     assert(assetId, 'EE_ENC_ASSET is required')
-    const image = await firstValueFrom(ImageFactory({type: 'ASSET', id: assetId}).getImage$())
-    const evidence = await callbackPromise(callback =>
-        assetBandEvidence(image, {encodingProperties: encodingPropertyKeys()}).evaluate((result, error) =>
-            callback(result, error)
-        )
-    )
-    const encoding = encodingFromProperties(evidence.encoding)
+    const evidence = await firstValueFrom(assetEvidence$(assetId))
+    const encoding = encodingFromProperties(evidence.encodingProperties)
     return {
         status: 'DONE',
         assetId,
         bands: evidence.bands.map(({name}) => name),
-        propertiesRead: partNames(evidence.encoding),
-        storedVersion: JSON.parse(evidence.encoding[Object.keys(evidence.encoding).find(key => key === 'sepal_band_encoding')] || 'null')?.version,
+        propertiesRead: partNames(evidence.encodingProperties),
+        storedVersion: JSON.parse(evidence.encodingProperties[Object.keys(evidence.encodingProperties).find(key => key === 'sepal_band_encoding')] || 'null')?.version,
         encodedBands: Object.keys(encoding).length,
         encoding
     }
@@ -232,17 +226,12 @@ const summarize = properties => Object.fromEntries(
 
 const partNames = properties => Object.keys(properties).filter(key => key.startsWith('sepal_band_encoding')).sort()
 
-// Read back the way production reads an asset: through the image factory, which mosaics a collection and copies
-// its properties onto the image it returns, then the bands and every encoding property in one evaluation, joined
-// band by band by bandsWithEncoding - the association a consumer actually sees.
+// Read back the way production reads an asset: a collection's first image for its bands and the collection's own
+// properties for its encoding, in one evaluation, joined band by band by bandsWithEncoding - the association a
+// consumer actually sees.
 const compareReadback = async (assetId, expected) => {
-    const image = await firstValueFrom(ImageFactory({type: 'ASSET', id: assetId}).getImage$())
-    const evidence = await callbackPromise(callback =>
-        assetBandEvidence(image, {encodingProperties: encodingPropertyKeys()}).evaluate((result, error) =>
-            callback(result, error)
-        )
-    )
-    const described = bandsWithEncoding(evidence.bands, evidence.encoding)
+    const evidence = await firstValueFrom(assetEvidence$(assetId))
+    const described = bandsWithEncoding(evidence.bands, evidence.encodingProperties)
     const expectedNames = Object.keys(expected)
     const actualNames = described.map(({name}) => name)
     const mismatched = described.filter(({name, encoding}) =>

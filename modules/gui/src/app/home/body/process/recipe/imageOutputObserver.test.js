@@ -3,7 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {createRecipeImageOutputObserver} from './imageOutputObserver'
 
 // The GUI binding, exercised directly. Only the Earth Engine boundary is replaced: the shared graph builder,
-// registry, CCDC and MASKING declarations, resolver and observer all really run, because what is under test
+// registry, CCDC, MASKING and SAMPLING_DESIGN declarations, resolver and observer all really run, because what is under test
 // is whether this adapter connects them correctly.
 //
 // Nothing is rendered, and there is no Redux store.
@@ -273,17 +273,16 @@ describe('classifying what the session cannot answer', () => {
         }))
     })
 
-    // The coexistence boundary for the Retrieve migration: falling back is allowed only when a recipe type
-    // has declared no output, never because a migrated recipe is invalid or its evidence is pending.
-    it('reports a registered but unmigrated recipe type as invalid, observing nothing', () => {
-        const root = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
+    // A recipe producing no image is refused as one, whatever evidence could be read.
+    it('reports a recipe with no image output as invalid, observing nothing', () => {
+        const root = {id: 'design-1', type: 'SAMPLING_DESIGN', model: {}}
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
         expect(state.calls).toEqual([])
         expect(latest(states)).toEqual(envelope({
             status: 'INVALID',
-            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['radar-1']}]
+            diagnostics: [{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['design-1']}]
         }))
     })
 })

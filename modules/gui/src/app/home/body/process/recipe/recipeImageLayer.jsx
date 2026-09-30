@@ -14,9 +14,13 @@ import {withTab} from '~/widget/tabs/tabContext'
 
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
+import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {findVisualization, MATCHED, renderableVisualizations, selectionState, UNSELECTED} from './visualizationMatching'
-import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
+import {OutputAcquisition} from './outputAcquisition'
+import {recipeContent} from './recipeContent'
+import {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} from './recipeOutput'
+import {MATCHED, selectionState} from './visualizationMatching'
+import {layerSelection, layerVisualizations} from './visualizations'
 
 // The graph is derived HERE rather than in the component, because an edit to a watched dependency has to
 // change these props for the layer to hear about it at all. Reading `process.loadedRecipes` whole is what
@@ -38,14 +42,24 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
     }
 }
 
-// Recipe types whose own image layer form reconciles layerConfig.visParams
-// (selecting a valid visualization when the available bands change). The
-// generic reconciliation below has to stand down for those, or the two writers
-// overwrite each other on every render and React aborts the update loop.
+// Recipe types whose own image layer form reconciles layerConfig.visParams, by the same rule (layerSelection) over the
+// presets of the mode it shows. The generic reconciliation below offers the type's presets whatever the mode, so it
+// has to stand down for those, or the two writers overwrite each other on every render and React aborts the update
+// loop.
 export const SELF_MANAGED_VISUALIZATIONS = ['BAYTS_ALERTS', 'CHANGE_ALERTS', 'LANDTRENDR']
 
+// What the layer shows is read, not looked up: the product its config names, answered from the records the session
+// holds, and - where that is not enough - from what this layer acquired and retains while it is mounted
+// (recipeOutput.js, outputAcquisition.js). Its form, its selector and its visualization editor are given that
+// read, so nothing below asks a second authority which bands exist.
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
+    mounted = false
+    acquisition = new OutputAcquisition({
+        sourceRuntime: this.props.sourceRuntime,
+        currentGraph: () => this.props.dependencyGraph,
+        onChange: () => this.mounted && this.forceUpdate()
+    })
 
     render() {
         const {recipe} = this.props
@@ -60,13 +74,15 @@ class _RecipeImageLayer extends React.Component {
 
     renderRecipeLayer() {
         const {currentRecipe, recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
-        const layer = this.maybeCreateLayer()
+        const imageOutput = this.imageOutput()
+        const layer = this.maybeCreateLayer(imageOutput)
         const props = {
             currentRecipe,
             recipe,
             source,
             layer,
             layerConfig,
+            imageOutput,
             map,
             boundsChanged$,
             dragging$,
@@ -76,47 +92,59 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        this.reconcileVisualization()
+        this.mounted = true
+        this.update()
     }
 
     componentDidUpdate() {
-        this.reconcileVisualization()
+        this.update()
     }
 
-    // Reconcile the saved selection with the current candidates. It reads current props, so mount and update ask
-    // the same question - a restored selection can already be invalid on the first render, and that is the same
-    // invalidity a later band change produces.
-    //
-    // An unavailable selection is never replaced. It is the user's saved intent; that its bands are missing is a
-    // fact about the source right now, and writing the second over the first destroys a choice the next source
-    // change would have restored. An absent selection is filled in, while a matching candidate may refresh the
-    // saved definition. What an unavailable selection would present is suppressed where it is rendered.
-    reconcileVisualization() {
+    componentWillUnmount() {
+        this.mounted = false
+        this.acquisition.stop()
+    }
+
+    update() {
+        const {recipe} = this.props
+        if (!recipe) {
+            return this.acquisition.stop()
+        }
+        const imageOutput = this.imageOutput()
+        this.acquisition.update(imageOutput.acquisition, recipe)
+        this.reconcileVisualization(imageOutput)
+    }
+
+    imageOutput() {
+        const {recipe, layerConfig, dependencyGraph} = this.props
+        return readRecipeOutput({
+            recipe,
+            product: layerProduct(recipe, layerConfig),
+            graph: dependencyGraph,
+            heldFor: key => this.acquisition.heldFor(key)
+        })
+    }
+
+    // Reconcile the saved selection with the current candidates (layerSelection). It reads current props, so mount and
+    // update ask the same question - a restored selection can already be invalid on the first render, and that is the
+    // same invalidity a later band change produces.
+    reconcileVisualization(imageOutput = this.imageOutput()) {
         const {recipe, layerConfig} = this.props
         if (!recipe || this.selfManagedVisualizations()) {
             return
         }
         const visParams = layerConfig && layerConfig.visParams
-        const visualizations = this.toAllVis()
-        switch (selectionState({visualizations, visParams})) {
-            case UNSELECTED:
-                this.selectVisualization(visualizations[0])
-                break
-            case MATCHED: {
-                // Matching is by id, so an edited visualization still matches the selection naming it. Rewriting
-                // the selection is how that edit reaches the preview.
-                const matched = findVisualization(visualizations, visParams)
-                if (!_.isEqual(matched, visParams)) {
-                    this.selectVisualization(matched)
-                }
-                break
-            }
-            // NO_CANDIDATES and STALE. Nothing is drawn, so nothing is held: MapAreaLayout has already been given
-            // null and taken the layer off the map, which cancels it for good through its replaying cancel
-            // subject. Keeping the reference would let createLayer hand that cancelled instance back whenever
-            // watchedProps happen to match - and watchedProps do not see the styles that make a selection valid.
-            default:
-                this.layer = null
+        const visualizations = this.toAllVis(imageOutput)
+        // Nothing is drawn for a selection no candidate matches, so nothing is held: MapAreaLayout has already been
+        // given null and taken the layer off the map, which cancels it for good through its replaying cancel subject.
+        // Keeping the reference would let createLayer hand that cancelled instance back whenever watchedProps happen
+        // to match - and watchedProps do not see the styles that make a selection valid.
+        if (selectionState({visualizations, visParams}) !== MATCHED) {
+            this.layer = null
+        }
+        const selection = layerSelection({recipe, imageOutput, visualizations, visParams})
+        if (selection) {
+            this.selectVisualization(selection)
         }
     }
 
@@ -125,15 +153,15 @@ class _RecipeImageLayer extends React.Component {
         return recipe && SELF_MANAGED_VISUALIZATIONS.includes(recipe.type)
     }
 
-    toAllVis() {
+    toAllVis({availableBands}) {
         const {currentRecipe, recipe, sourceId} = this.props
-        // Source-scoped user styles are held to the same rule the presets are: the bands they name must
-        // exist, and must be ones a renderer can draw.
-        const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe) || {}
-        return [
-            ...renderableVisualizations(getUserDefinedVisualizations(currentRecipe, sourceId), availableBands),
-            ...getAllVisualizations(recipe),
-        ]
+        return layerVisualizations({
+            currentRecipe,
+            recipe,
+            sourceId,
+            presets: getRecipeType(recipe.type)?.getPreSetVisualizations(recipe) || [],
+            availableBands
+        })
     }
 
     // Only a selection that matches a current candidate gets a layer. MapAreaLayout mounts whatever is returned
@@ -141,62 +169,58 @@ class _RecipeImageLayer extends React.Component {
     // here reaches the map before this component can say anything more about it - and a preview for bands that
     // are gone is one Earth Engine rejects. Returning null takes the image off the map, and with it the Palette,
     // Legend or Values that described it.
-    maybeCreateLayer() {
-        const {recipe, layerConfig, map} = this.props
+    //
+    // Nothing is drawn but a description over dependencies known to be sound, whoever manages the selection: a
+    // preview executes every dependency, read or not, and one Earth Engine would reject - bands that do not exist,
+    // a dependency that is gone - is withheld rather than requested. While the answer is being acquired it is
+    // withheld too. The saved selection is left alone - only what it would present is withheld.
+    //
+    // Whatever is withheld is also let go. MapAreaLayout takes a withheld layer off the map, which cancels it for
+    // good, and the same watched props once the answer returns must build a new one rather than hand that one back.
+    maybeCreateLayer(imageOutput = this.imageOutput()) {
+        const layer = this.drawableLayer(imageOutput)
+        if (!layer) {
+            this.layer = null
+        }
+        return layer
+    }
+
+    drawableLayer(imageOutput) {
+        const {layerConfig, map, recipe} = this.props
         if (!map || !recipe.ui.initialized || !layerConfig || !layerConfig.visParams) {
             return null
         }
-        // Nothing to draw is nothing to draw, whoever manages the selection: a recipe whose source could not
-        // be resolved reports no bands, and a preview of bands that do not exist is one Earth Engine rejects.
-        // The saved selection is left alone - only what it would present is withheld.
-        if (!this.hasAvailableBands()) {
+        if (!canPreview(imageOutput)) {
             return null
         }
         if (this.selfManagedVisualizations()) {
-            return this.createLayer()
+            return this.createLayer(imageOutput)
         }
-        return selectionState({visualizations: this.toAllVis(), visParams: layerConfig.visParams}) === MATCHED
-            ? this.createLayer()
+        return selectionState({visualizations: this.toAllVis(imageOutput), visParams: layerConfig.visParams}) === MATCHED
+            ? this.createLayer(imageOutput)
             : null
     }
 
-    hasAvailableBands() {
-        const {recipe} = this.props
-        return Object.keys(getRecipeType(recipe.type).getAvailableBands(recipe) || {}).length > 0
-    }
-
-    createLayer() {
+    createLayer(imageOutput) {
         const {recipe, dependencyGraph, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
-        // The graph already starts with the root, so it is the complete watched list. Its diagnostics are
-        // carried but deliberately unread: reporting a missing dependency is a separate change.
-        const recipes = dependencyGraph.recipes
-        const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
-        const dataTypes = _.mapValues(availableBands, 'dataType')
         const {watchedProps: prevWatchedProps} = this.layer || {}
         const previewRequest = {
             recipe: _.omit(recipe, ['ui', 'layers']),
-            ...layerConfig
+            ...productArgs(recipe, layerConfig),
+            visParams: layerConfig.visParams
         }
-        // Runtime evidence is part of what the layer was built from: a source read again can produce the
-        // same schema over different pixels, and the layer must be replaced rather than kept.
-        //
-        // The revision is not. It is the server acknowledging a save, and the map's own layout is saved
-        // inside the recipe - so restyling an area that shows something else advances it while the
-        // computation and the visualization stay exactly where they were. Whether a recipe has moved on is
-        // read from its content and its evidence; the revision answers a different question, for
-        // sourceEvidenceSync, about which record is behind what is published.
+        // The graph already starts with the root, so it is the complete watched list. The preview depends on
+        // what every record computes and on how it is visualized; what is acquired about the output depends on
+        // the first alone, so restyling rebuilds the preview and acquires nothing.
         const watchedProps = {
-            recipes: recipes.map(r => ({
-                ..._.omit(r, ['ui', 'layers', 'title', 'revision']),
-                sourceEvidence: r.ui?.sourceEvidence
-            })),
+            recipes: dependencyGraph.recipes.map(recipeContent),
             layerConfig
         }
         if (!_.isEqual(watchedProps, prevWatchedProps)) {
             this.layer = new EarthEngineImageLayer({
                 previewRequest,
                 watchedProps,
-                dataTypes,
+                dataTypes: displayTypes(imageOutput),
                 visParams: layerConfig.visParams,
                 map,
                 busy,
@@ -218,6 +242,7 @@ class _RecipeImageLayer extends React.Component {
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
+    withSourceRuntime(),
     withMapArea(),
     withTab(),
     withSubscriptions()

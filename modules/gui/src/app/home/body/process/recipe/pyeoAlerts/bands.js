@@ -1,4 +1,5 @@
-export const getAvailableBands = () => ({
+// Which bands a configured recipe has is its declaration's to say; this is how they are shown.
+export const bandPresentation = () => ({
     available_image_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Available image count'},
     occluded_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Occluded image count'},
     total_changes: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Total changes'},
@@ -19,11 +20,6 @@ export const getAvailableBands = () => ({
     binary_decision_from_to_map: {dataType: {precision: 'int', min: 0, max: 1}, label: 'Binary from-to decision'}
 })
 
-export const getGroupedBandOptions = () => {
-    const bands = getAvailableBands()
-    return [
-        Object
-            .keys(bands)
-            .map(band => ({value: band, ...bands[band]}))
-    ]
-}
+export const groupedBandPresentation = () => [
+    Object.entries(bandPresentation()).map(([value, entry]) => ({value, ...entry}))
+]

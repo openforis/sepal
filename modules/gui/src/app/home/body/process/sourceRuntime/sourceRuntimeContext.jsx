@@ -7,8 +7,8 @@ import {createReduxSourceEnvironment} from './reduxSourceEnvironment'
 import {createSourceRuntime} from './sourceRuntime'
 
 // One source runtime per Process instance, wrapping Process inside its retained Section rather than a recipe,
-// panel, tab or map layer. Section keeps Process mounted once activated, so a detached Retrieve preflight
-// survives panel closure and route navigation. Scoped no wider than that: Browse, Terminal and Tasks have no
+// panel, tab or map layer. Section keeps Process mounted once activated, so what an open panel or mounted layer
+// owns survives route navigation. Scoped no wider than that: Browse, Terminal and Tasks have no
 // source-resolution concern, and Process teardown is what should end the runtime.
 //
 // The context value is created once and never replaced, so a catalogue change cannot rerender a consumer. The

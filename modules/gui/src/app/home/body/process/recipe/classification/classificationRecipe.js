@@ -2,7 +2,6 @@ import _ from 'lodash'
 
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
@@ -55,15 +54,6 @@ export const RecipeActions = id => {
             .set(prop, value)
             .build()
     return {
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CLASSIFICATION_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
         setEETableColumns(columns) {
             return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
         },
@@ -156,17 +146,9 @@ export const RecipeActions = id => {
     }
 }
 
-export const supportRegression = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(classifierType)
-
-export const supportProbability = classifierType =>
-    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
-
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.classBased,
-        includeTimeRange: false
-    })
+export const retrieveTask = {
+    includeTimeRange: false
+}
 
 export const hasTrainingData = recipe => {
     const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')

@@ -7,7 +7,8 @@ import {selectFrom} from '~/stateUtils'
 
 import {withRecipe} from '../../../../recipeContext'
 import {MosaicRetrievePanel} from '../../../mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '../../ccdcRecipe'
+import {submitRetrieveTask} from '../../ccdcRecipe'
+import {ccdcMeasureSelection} from '../../retrieveSelection'
 
 const mapRecipeToProps = recipe =>
     ({
@@ -27,11 +28,13 @@ class _Retrieve extends React.Component {
                 defaultAssetType='ImageCollection'
                 defaultTileSize={0.5}
                 toEE
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+                selection={ccdcMeasureSelection}
+                submitTask={submitRetrieveTask}
             />
         )
     }
 
+    // Labels and groups for the measures the collection helper knows; the output decides which are offered.
     bandOptions() {
         const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
@@ -39,11 +42,6 @@ class _Retrieve extends React.Component {
             corrections,
             classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
         })
-    }
-
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }
 

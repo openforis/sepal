@@ -2,7 +2,6 @@ import _ from 'lodash'
 
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {uuid} from '~/uuid'
 
 export const getDefaultModel = () => ({
@@ -12,15 +11,6 @@ export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
     return {
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_REMAPPING_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
         removeInputImage(imageToRemove) {
             removeImageLayerSource({sourceId: imageToRemove.id, recipeId: id})
             actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
@@ -31,11 +21,9 @@ export const RecipeActions = id => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.classBased,
-        includeTimeRange: false
-    })
+export const retrieveTask = {
+    includeTimeRange: false
+}
 
 export const bandsAvailableToAdd = (bands, includedBands) =>
     (Object.keys(bands || {}))

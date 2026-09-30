@@ -4,12 +4,12 @@ import moment from 'moment'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
-import {renderableVisualizations} from '../visualizationMatching'
-import {availableBandsOf, chartSourceReference, dateFormatOf, materializedTemplates, segmentDatesOf, selectedOutputBands} from './sliceEvidence'
+import {visualizationsWithAvailableBands} from '../visualizationMatching'
+import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf, segmentDatesOf} from './sliceEvidence'
 
 export const defaultModel = {
     date: {
@@ -44,15 +44,6 @@ export const RecipeActions = id => {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
                 .dispatch()
-        },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
         }
     }
 }
@@ -64,11 +55,12 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
 
 // Everything this recipe offers over its own output: the source's templates that survive the operation, plus
 // the break-date preset it derives itself. One list, so what the layer form offers is exactly what the
-// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale.
+// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale. Matched by
+// name: which of them can be drawn is the layer's filter to decide, over the bands the slice's description holds.
 export const preSetVisualizations = (recipe, resolved) =>
-    renderableVisualizations(
+    visualizationsWithAvailableBands(
         [...materializedTemplates(recipe, resolved), ...additionalVisualizations(recipe, resolved)],
-        availableBandsOf(recipe, resolved)
+        outputBandsOf(recipe, resolved)
     )
 
 const additionalVisualizations = (recipe, resolved) => {
@@ -112,19 +104,8 @@ const additionalVisualizations = (recipe, resolved) => {
     ]
 }
 
-// The selection is base bands and measures; the export is the band names those resolve to. The shared
-// submitter is handed them as its band selection - it filters the exported visualizations by them - while
-// the image also carries the base bands the slice operation needs.
-export const submitRetrieveRecipeTask = recipe => {
-    const retrieveOptions = recipe.ui.retrieveOptions
-    const bands = selectedOutputBands(recipe, retrieveOptions)
-
-    return submitTask(recipe, {
-        retrieveOptions: {...retrieveOptions, bands},
-        filterVisualizations: true,
-        customizeImage: image => ({
-            ...image,
-            bands: {selection: bands, baseBands: retrieveOptions.baseBands}
-        })
-    })
+// Every band a slice derives is scalar and declares no policy; the generic export sends Earth Engine's own default
+// for each, as it always has, and nothing for a band that is not verified scalar.
+export const retrieveTask = {
+    fallbackPyramidingPolicy: pyramidingPolicies.mean
 }

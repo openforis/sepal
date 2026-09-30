@@ -12,21 +12,31 @@ const recipe = {
     }
 }
 
-const bandsOf = visualizationType => visualizationOptions(recipe, visualizationType)
+// A layer's read, as far as the styles depend on it: what it described, and which product that was.
+const CHANGES = {description: {output: {}}}
+const ANNUAL_MOSAIC = {description: {output: {product: {name: 'ANNUAL_MOSAIC', parameters: {year: 2020}}}}}
+const NOTHING_DESCRIBED = {description: null}
+
+const bandsOf = read => visualizationOptions(recipe, read)
     .flatMap(({options}) => options)
     .map(({value}) => value)
 
-it('offers the change bands in changes mode', () => {
-    expect(bandsOf('changes')).toEqual(['mag', 'yod', 'dur', 'preval', 'postval', 'rmse', 'sig'])
+it('offers the change bands for the changes', () => {
+    expect(bandsOf(CHANGES)).toEqual(['mag', 'yod', 'dur', 'preval', 'postval', 'rmse', 'sig'])
 })
 
-it('offers the optical mosaic band combinations in mosaics mode', () => {
-    expect(bandsOf('mosaics')).toContain('ndvi')
+it('offers the optical mosaic band combinations for the annual mosaic', () => {
+    expect(bandsOf(ANNUAL_MOSAIC)).toContain('ndvi')
+    expect(bandsOf(ANNUAL_MOSAIC)).not.toContain('yod')
+})
+
+it('offers nothing while nothing is described', () => {
+    expect(bandsOf(NOTHING_DESCRIBED)).toEqual([])
 })
 
 it('no longer offers the start and end RGB composites', () => {
-    expect(bandsOf('changes')).not.toContain('startRed, startGreen, startBlue')
-    expect(bandsOf('changes')).not.toContain('endRed, endGreen, endBlue')
+    expect(bandsOf(CHANGES)).not.toContain('startRed, startGreen, startBlue')
+    expect(bandsOf(CHANGES)).not.toContain('endRed, endGreen, endBlue')
 })
 
 it('presets used for retrieval cover only the change bands', () => {

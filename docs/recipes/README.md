@@ -6,6 +6,16 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 
 - [Sampling Design](sampling-design.md)
 - [PyEO Alerts](pyeo-alerts.md)
+- [Class Change](class-change.md)
+- [Phenology](phenology.md)
+- [Radar Mosaic](radar-mosaic.md)
+- [Band Math](band-math.md)
+- [Stack](stack.md)
+- [Planet Mosaic](planet-mosaic.md)
+- [BAYTS Historical](bayts-historical.md)
+- [BAYTS Alerts](bayts-alerts.md)
+- [Time Series](time-series.md)
+- [Change Alerts](change-alerts.md)
 
 Shared architecture, design proposals and the cross-recipe roadmap belong in
 [`docs/design/recipes/`](../design/recipes/data-sources.md). Recipe notes link to those contracts rather than

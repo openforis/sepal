@@ -11,7 +11,7 @@ import {msg} from '~/translate'
 
 import {describeSegmentsAsset$} from '../ccdc/segmentsAsset'
 import {defaultModel} from './assetRecipe'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {AssetToolbar} from './panels/assetToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -63,8 +63,9 @@ export default () => ({
     components: {
         recipe: Asset
     },
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations,
     // An asset mosaic over a CCDC segments asset is that asset. Its metadata is read now rather than
     // answered from the copy taken when it was selected, which an asset update leaves behind.

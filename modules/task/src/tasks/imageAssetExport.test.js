@@ -114,6 +114,7 @@ describe('encoding recorded for a recipe over a filtered collection asset', () =
         const source = assetRecipe()
         state.catalogue = {[source.id]: source}
         state.assets['users/x/collection'] = {
+            type: 'ImageCollection',
             bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}],
             properties: {
                 sepal_band_encoding: JSON.stringify({version: 1, bands: {red: REFLECTANCE, nir: REFLECTANCE}})
@@ -186,25 +187,194 @@ describe('exporting a masked CCDC', () => {
     })
 })
 
-describe('exporting a recipe type that declares no output', () => {
-    it('exports as before, stating that nothing is known about its values', async () => {
-        const recipe = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
+// Band Math is described from the output bands it is configured with, and the dimensionality its running image is
+// observed to have - here, within the export itself.
+describe('exporting a Band Math recipe', () => {
+    const bandMath = ({outputNames = ['dem2', 'coefs']} = {}) => ({
+        id: 'band-math-1',
+        type: 'BAND_MATH',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', name: 'i1', type: 'ASSET', id: 'users/x/dem', includedBands: [{id: 'b1', name: 'elevation'}]}]},
+            calculations: {calculations: []},
+            outputBands: {outputImages: [{imageId: 'i-1', outputBands: outputNames.map((name, index) => ({id: `b${index}`, name: 'elevation', defaultOutputName: name}))}]}
+        }
+    })
+    const RUNNING_IMAGE = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs', arrayDimensions: 1}]
 
-        const {bandEncoding, image} = await submit({recipe, bands: ['VV']})
+    it('exports once its own running image is observed, recording that nothing is known about its values', async () => {
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = RUNNING_IMAGE
+
+        const {bandEncoding, image} = await submit({recipe, bands: ['dem2', 'coefs']})
+
+        expect(image).toMatchObject({builtFrom: recipe.id})
+        expect(bandEncoding).toEqual({})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('fails the export when its running image cannot be observed', async () => {
+        const recipe = bandMath()
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/unavailable output/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export when its running image contradicts its configured output', async () => {
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs_1', arrayDimensions: 1}]
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/invalid output \(CONFLICTING_OBSERVATION\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export for two output bands named alike, whatever its running image holds', async () => {
+        const recipe = bandMath({outputNames: ['x', 'x']})
+        state.recipeImages[recipe.id] = [{name: 'x', arrayDimensions: 0}, {name: 'x_1', arrayDimensions: 0}]
+
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
+describe('exporting a Planet Mosaic', () => {
+    const planet = ({source = 'BASEMAPS', histogramMatching = 'DISABLED'} = {}) => ({
+        id: 'planet-1',
+        type: 'PLANET_MOSAIC',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            dates: {fromDate: '2024-01-01', toDate: '2024-04-01'},
+            sources: {source, assets: ['users/x/planet']},
+            options: {histogramMatching}
+        }
+    })
+
+    it('records its indexes stored per ten thousand, and leaves its spectral bands\' scaling unknown', async () => {
+        const {bandEncoding} = await submit({recipe: planet(), bands: ['red', 'kndvi']})
+
+        expect(bandEncoding).toEqual({kndvi: REFLECTANCE})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('records histogram-matched Daily spectral bands stored per ten thousand too', async () => {
+        const {bandEncoding} = await submit({recipe: planet({source: 'DAILY', histogramMatching: 'ENABLED'}), bands: ['red', 'ndvi']})
+
+        expect(bandEncoding).toEqual({red: REFLECTANCE, ndvi: REFLECTANCE})
+    })
+
+    it('records the same through a Masking over it', async () => {
+        const matched = planet({source: 'DAILY', histogramMatching: 'ENABLED'})
+        state.catalogue = {[matched.id]: matched}
+
+        const {bandEncoding} = await submit({recipe: masking({primary: {type: 'RECIPE_REF', id: matched.id}}), bands: ['nir', 'evi']})
+
+        expect(bandEncoding).toEqual({nir: REFLECTANCE, evi: REFLECTANCE})
+    })
+})
+
+describe('exporting a BAYTS Historical', () => {
+    const historical = orbits => ({
+        id: 'historical-1',
+        type: 'BAYTS_HISTORICAL',
+        model: {aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, dates: {}, options: {orbits}}
+    })
+
+    it('records that nothing is known about its values, reading no other recipe', async () => {
+        const {bandEncoding, image} = await submit({recipe: historical(['ASCENDING']), bands: ['VV_mean_asc', 'orbit_asc']})
+
+        expect(image).toEqual({builtFrom: 'historical-1'})
+        expect(bandEncoding).toEqual({})
+        expect(state.recipeReads).toEqual([])
+    })
+
+    it('fails the export for orbits that name no bands, before anything is exported', async () => {
+        await expect(submit({recipe: historical(['ASCENDING', 'ASCENDING']), bands: ['VV_mean_asc']}))
+            .rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
+describe('exporting a Time Series', () => {
+    const timeSeries = model => ({id: 'time-series-1', type: 'TIME_SERIES', model})
+    const configured = {
+        aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+        dates: {startDate: '2023-01-01', endDate: '2024-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: []}
+    }
+
+    it('records that nothing is known about its count, reading no other recipe', async () => {
+        const recipe = timeSeries(configured)
+
+        const {bandEncoding, image} = await submit({recipe, bands: ['count']})
 
         expect(image).toEqual({builtFrom: recipe.id})
         expect(bandEncoding).toEqual({})
         expect(state.recipeReads).toEqual([])
     })
 
-    it('exports a recipe preserving such a type as unknown rather than failing', async () => {
-        const radar = {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}
-        const recipe = masking({primary: {type: 'RECIPE_REF', id: radar.id}})
-        state.catalogue = {[radar.id]: radar}
+    it('fails the export when the recipe its area of interest comes from cannot be read', async () => {
+        const recipe = timeSeries({...configured, aoi: {type: 'RECIPE', id: 'unreadable'}})
 
-        const {bandEncoding} = await submit({recipe, bands: ['VV']})
+        await expect(submit({recipe, bands: ['count']})).rejects.toThrow()
+        expect(state.exported).toEqual([])
+    })
+})
 
-        expect(bandEncoding).toEqual({})
+// A Stack's bands are its inputs' bands under the names its mapping gives them, so what is recorded for a band is keyed
+// by that name.
+describe('exporting a Stack', () => {
+    const stack = (images, bandNames) => ({id: 'stack-1', type: 'STACK', model: {inputImagery: {images}, bandNames: {bandNames}}})
+    const mapping = (imageId, pairs) => ({
+        imageId,
+        bands: pairs.map(([originalName, outputName], index) => ({id: `${imageId}-${index}`, originalName, outputName}))
+    })
+    const DESIGN = {id: 'design-1', type: 'SAMPLING_DESIGN', model: {aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [0, 0]]}}}
+
+    it('records each band\'s encoding under the name it is renamed to', async () => {
+        const mosaic = landsatMosaic()
+        state.catalogue = {[mosaic.id]: mosaic}
+        const recipe = stack(
+            [{imageId: 'i-1', type: 'RECIPE_REF', id: mosaic.id}],
+            [mapping('i-1', [['red', 'r'], ['thermal', 'heat']])]
+        )
+
+        const {bandEncoding} = await submit({recipe, bands: ['r', 'heat']})
+
+        expect(bandEncoding).toEqual({r: REFLECTANCE, heat: THERMAL})
+    })
+
+    it('fails the export for two output bands named alike, before reading an input with no image output', async () => {
+        state.catalogue = {[DESIGN.id]: DESIGN}
+        const recipe = stack(
+            [{imageId: 'i-1', type: 'RECIPE_REF', id: DESIGN.id}, {imageId: 'i-2', type: 'RECIPE_REF', id: DESIGN.id}],
+            [mapping('i-1', [['class', 'x']]), mapping('i-2', [['class', 'x']])]
+        )
+
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
+// A Sampling Design draws samples, which its own tasks export as a table. Read as an image it has none, so an image
+// export of it, or of a recipe over it, fails before anything is built.
+describe('exporting a recipe that produces no image', () => {
+    const DESIGN = {
+        id: 'design-1',
+        type: 'SAMPLING_DESIGN',
+        model: {aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [0, 0]]}}
+    }
+
+    it('fails the export, naming the design as having no image output', async () => {
+        await expect(submit({recipe: DESIGN, bands: ['class']})).rejects.toThrow(/recipe design-1: invalid output \(NON_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export of a Masking over one', async () => {
+        state.catalogue = {[DESIGN.id]: DESIGN}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: DESIGN.id}})
+
+        await expect(submit({recipe, bands: ['class']})).rejects.toThrow(/invalid output \(NON_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
     })
 })
 
@@ -213,6 +383,15 @@ describe('an output that cannot be described', () => {
         const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}})
 
         await expect(submit({recipe, bands: ['red']})).rejects.toThrow()
+        expect(state.exported).toEqual([])
+    })
+
+    // Missing evidence is never taken for a scalar: an asset reported without a band's dimensionality is not described.
+    it('fails the export when an asset it reads does not report a band\'s dimensionality', async () => {
+        state.assets['users/x/unreported'] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir'}], properties: {}}
+        const recipe = masking({primary: {type: 'ASSET', id: 'users/x/unreported'}})
+
+        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/invalid output \(INCOMPLETE_IMAGE_OUTPUT\)/)
         expect(state.exported).toEqual([])
     })
 
@@ -238,6 +417,30 @@ describe('an output that cannot be described', () => {
     })
 })
 
+// Describing a recipe reads only the dependencies its providers need, and Masking's description never reads its
+// mask. Whether the recipe may run is asked of every dependency, before anything is described.
+describe('a recipe whose dependencies are not structurally sound', () => {
+    const selfMask = {type: 'RECIPE_REF', id: 'masking-1'}
+
+    it('fails the export naming the cycle, though its output could be described', async () => {
+        state.catalogue = {'mosaic-1': landsatMosaic()}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'mosaic-1'}, mask: selfMask})
+
+        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/cannot run.*CYCLIC_DEPENDENCY/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails with the unreadable dependency as the cause, naming the cycle already found', async () => {
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}, mask: selfMask})
+
+        const error = await submit({recipe, bands: ['red']}).then(() => null, error => error)
+
+        expect(error.message).toMatch(/CYCLIC_DEPENDENCY/)
+        expect(error.cause.message).toBe('Recipe could not be read: unreadable')
+        expect(state.exported).toEqual([])
+    })
+})
+
 const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     id: 'mosaic-1',
     type: 'MOSAIC',
@@ -247,10 +450,10 @@ const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     }
 })
 
-const masking = ({primary}) => ({
+const masking = ({primary, mask = {type: 'ASSET', id: 'users/x/mask'}}) => ({
     id: 'masking-1',
     type: 'MASKING',
-    model: {imageToMask: primary, imageMask: {type: 'ASSET', id: 'users/x/mask'}}
+    model: {imageToMask: primary, imageMask: mask}
 })
 
 const state = {}
@@ -283,8 +486,24 @@ const assetImage = ({bands, properties}) => ({
     toDictionary: keys => Object.fromEntries(keys.filter(key => key in properties).map(key => [key, properties[key]]))
 })
 
+// An asset is read directly: an image, or a collection's first image with the collection's own properties. A
+// collection refuses to be mosaicked, which is a read of every member.
+const collection = ({bands, properties}) => ({
+    merge: () => ({first: () => assetImage({bands, properties: {}})}),
+    limit: () => ({size: () => 1}),
+    toDictionary: assetImage({bands: [], properties}).toDictionary,
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    }
+})
+
 jest.unstable_mockModule('#sepal/ee/ee', () => ({
     default: {
+        getAsset$: id => state.assets[id]
+            ? of({type: state.assets[id].type || 'Image'})
+            : throwError(() => new Error(`Asset could not be read: ${id}`)),
+        Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
+        ImageCollection: id => collection(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
         Dictionary: values => values,
         PixelType: band => ({dimensions: () => band.arrayDimensions}),
         getInfo$: value => of(value)
@@ -301,9 +520,7 @@ jest.unstable_mockModule('#sepal/ee/recipe', () => ({
 jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
     default: source => source.type === 'ASSET'
         ? {
-            getImage$: () => state.assets[source.id]
-                ? of(assetImage(state.assets[source.id]))
-                : throwError(() => new Error(`Asset could not be read: ${source.id}`))
+            getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
         }
         : {
             getImage$: () => of(recipeImage(source.id)),

@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {defaultModel} from './baytsHistoricalRecipe'
 import {BaytsHistoricalToolbar} from './panels/baytsHistoricalToolbar'
 import {getPreSetVisualizations} from './visualizations'
@@ -58,8 +58,9 @@ export default () => ({
     components: {
         recipe: BaytsHistorical
     },
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations,
     beta: true
 })

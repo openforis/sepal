@@ -22,7 +22,7 @@ class _Retrieve extends React.Component {
     render() {
         return (
             <MosaicRetrievePanel
-                bandOptions={this.bandOptions()}
+                requestOptions={this.requestOptions()}
                 defaultScale={30}
                 defaultTileSize={2}
                 defaultShardSize={256}
@@ -35,7 +35,9 @@ class _Retrieve extends React.Component {
         )
     }
 
-    bandOptions() {
+    // The indicator a time series is downloaded for is a measure of its collection, not a band of an image this
+    // recipe outputs, so the options are the whole truth of what may be asked for.
+    requestOptions() {
         const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
             dataSets: toDataSetIds(dataSets),

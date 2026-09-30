@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
@@ -60,7 +61,7 @@ class _SelectRecipe extends React.Component {
         return (
             <RecipeInput
                 input={recipe}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 allowOwnRecipe
                 autoFocus
                 onLoading={() => this.setState({recipe: null})}

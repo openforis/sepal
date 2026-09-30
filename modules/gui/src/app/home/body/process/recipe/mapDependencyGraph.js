@@ -6,14 +6,13 @@ import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 // the shared traversal, which takes a Map. Nothing is loaded here: a dependency that is not already in memory
 // is reported by the graph rather than fetched, because a map layer must not turn a render into a request.
 //
-// The graph is returned whole rather than reduced to a recipe list, but its diagnostics are INERT: nothing
-// reads them, and nothing here may surface them or let them block rendering.
+// The graph is returned whole rather than reduced to a recipe list. Its diagnostics describe what the session
+// holds, and are read only as that (recipeOutput.js).
 //
 // MISSING_SOURCE in particular says only that a referenced recipe is not in `loadedRecipes` right now. That
 // is a fact about what the session happens to have loaded, not about what exists: a perfectly healthy
-// dependency the user has not opened produces it. Reporting it as a broken recipe would turn ordinary lazy
-// loading into an error, and blocking the layer on it would stop maps rendering for recipes that are fine.
-// Saying whether a dependency is genuinely gone needs a resolver that can ask storage, which this is not.
+// dependency the user has not opened produces it. It means evidence still to acquire, never a broken recipe;
+// saying whether a dependency is genuinely gone needs an operation that can ask storage, which this is not.
 
 // Cached by IDENTITY, because the caller is a Redux selector: it runs on every dispatched action, not only on
 // recipe edits, and rebuilding the catalogue and rewalking the graph for an unrelated action is pure waste.

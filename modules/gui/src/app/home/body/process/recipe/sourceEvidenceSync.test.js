@@ -43,6 +43,11 @@ const maskingRecipe = ({primary, sourceEvidence} = {}) => ({
 
 const ccdcRecipe = (id, presets = CCDC_PRESETS) => ({id, type: 'CCDC', model: {presets}})
 
+// The evidence the lifecycle published, apart from its marks that it is reading again.
+const published = writes => writes
+    .filter(({path}) => path === 'ui.sourceEvidence')
+    .map(({value}) => value)
+
 const sync = ({
     recipe,
     loadedRecipes = {},
@@ -55,12 +60,13 @@ const sync = ({
 }) => {
     const dispatched = []
     const recipeActionBuilder = () => ({
+        writes: [],
         set(path, value) {
-            this.written = {path, value}
+            this.writes.push({path, value})
             return this
         },
         dispatch() {
-            dispatched.push(this.written)
+            dispatched.push(...this.writes)
         }
     })
     const component = new SourceEvidenceSync({
@@ -80,7 +86,7 @@ const sync = ({
         component.props = {...component.props, ...props}
         component.componentDidUpdate()
     }
-    return {component, dispatched, rerender, evidence: () => dispatched.map(({value}) => value)}
+    return {component, dispatched, rerender, evidence: () => published(dispatched)}
 }
 
 beforeEach(() => {
@@ -211,10 +217,10 @@ describe('observing a wrapper around another wrapper', () => {
         expect(evidence()[0].bands).toEqual([{name: 'red', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}])
     })
 
-    it('still observes the immediate source\'s running image when what it wraps declares no output', () => {
-        bands$.mockReturnValue(of([{name: 'VV', arrayDimensions: 0}]))
-        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('radar-1')}}
-        const records = {inner, 'radar-1': {id: 'radar-1', type: 'RADAR_MOSAIC', model: {}}}
+    // What it wraps is not described some other way: a recipe with no image output leaves nothing to observe.
+    it('is recorded as unavailable when what the wrapper wraps produces no image, reading nothing', () => {
+        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('design-1')}}
+        const records = {inner, 'design-1': {id: 'design-1', type: 'SAMPLING_DESIGN', model: {}}}
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadRecipe$: id => of(records[id])
@@ -222,9 +228,8 @@ describe('observing a wrapper around another wrapper', () => {
 
         component.componentDidMount()
 
-        expect(bands$).toHaveBeenCalledTimes(1)
-        expect(bands$).toHaveBeenCalledWith({recipe: inner, includeDataTypes: true})
-        expect(evidence()[0].bands).toEqual([{name: 'VV', dataType: {arrayDimensions: 0}}])
+        expect(bands$).not.toHaveBeenCalled()
+        expect(evidence()[0].status).toBe('UNAVAILABLE')
     })
 
     // The shared graph is the authority on cycles, and a graph that cannot run has no evidence to give.
@@ -740,6 +745,55 @@ describe('a cycle deeper in the chain', () => {
         })
 
         expect(evidence()[1].status).toBe('OBSERVED')
+    })
+})
+
+// Loading continues past a cycle to a branch still missing, and that read can fail. The records read before the
+// failure are still what a repair would change, so the failure keeps them as its basis.
+describe('a cycle deeper in the chain beside a dependency that cannot be read', () => {
+    const outer = {id: 'outer', type: 'MASKING', model: {imageToMask: recipeSelection('inner'), imageMask: recipeSelection('gone')}}
+    const cyclic = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('inner')}}
+    const repaired = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
+
+    const failing = () => {
+        const loads = []
+        const loadRecipe$ = id => {
+            loads.push(id)
+            return id === 'gone' ? throwError(() => new Error('no such recipe')) : of(ccdcRecipe(id))
+        }
+        return {loads, loadRecipe$}
+    }
+
+    it('is observed again once a recipe it had read is repaired', () => {
+        bands$.mockReturnValue(of(['red']))
+        const {loadRecipe$} = failing()
+        const {component, rerender, evidence} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('outer')}),
+            loadedRecipes: {outer, inner: cyclic},
+            loadRecipe$
+        })
+        component.componentDidMount()
+        expect(evidence()[0].status).toBe('UNAVAILABLE')
+
+        rerender({
+            loadedRecipes: {outer, inner: repaired, 'source-1': ccdcRecipe('source-1')},
+            loadRecipe$: id => of(ccdcRecipe(id))
+        })
+
+        expect(evidence()[1].status).toBe('OBSERVED')
+    })
+
+    it('does not read again merely because the attempt failed', () => {
+        const {loads, loadRecipe$} = failing()
+        const {component, rerender} = sync({
+            recipe: maskingRecipe({primary: recipeSelection('outer')}),
+            loadedRecipes: {outer, inner: cyclic},
+            loadRecipe$
+        })
+        component.componentDidMount()
+        rerender({})
+
+        expect(loads.filter(id => id === 'gone')).toHaveLength(1)
     })
 })
 

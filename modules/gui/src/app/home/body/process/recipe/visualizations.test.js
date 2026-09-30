@@ -6,14 +6,11 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('../recipeTypeRegistry', () => ({
     getRecipeType: type => (type === 'BAND_MATH'
-        ? {
-            getAvailableBands: () => ({ratio: {}, VV: {}, VH: {}}),
-            getPreSetVisualizations: recipe => recipe.model.presets || []
-        }
+        ? {getPreSetVisualizations: recipe => recipe.model.presets || []}
         : undefined)
 }))
 
-const {getAllVisualizations, getUserDefinedVisualizations, outputOwnedVisualizations, sourceVisualizations} =
+const {getUserDefinedVisualizations, outputOwnedVisualizations, recipeVisualizations, recipeVisualizationsNaming, sourceVisualizations} =
     await import('./visualizations')
 
 const RATIO = {id: 'v-ratio', bands: ['ratio'], type: 'continuous', userDefined: true}
@@ -80,16 +77,40 @@ describe('what a source offers as a whole', () => {
 })
 
 // The recipe's own candidate list is a different question: there its styles ARE its own, and what it offers
-// is filtered by what it can draw.
+// is filtered by the bands the caller says it has.
 describe('a recipe showing its own output', () => {
+    const BANDS = Object.fromEntries(['ratio', 'VV', 'VH'].map(name => [name, {dataType: {arrayDimensions: 0}}]))
+
     it('keeps its styles editable', () => {
-        expect(getAllVisualizations(bandMath({own: [RATIO]}))[0].userDefined).toBe(true)
+        expect(recipeVisualizations(bandMath({own: [RATIO]}), BANDS)[0].userDefined).toBe(true)
     })
 
     it('withholds a style naming a band it does not have', () => {
         const recipe = bandMath({presets: [{id: 'p-gone', bands: ['ratio_VV_VH'], type: 'continuous'}]})
 
-        expect(getAllVisualizations(recipe)).toEqual([])
+        expect(recipeVisualizations(recipe, BANDS)).toEqual([])
+    })
+
+    it('offers nothing while no bands are known', () => {
+        expect(recipeVisualizations(bandMath({own: [RATIO], presets: [PRESET]}), undefined)).toEqual([])
+    })
+})
+
+// A workflow copying styles from a source it observed, or deriving templates from a catalogue, matches them by name
+// alone: what can be drawn is decided where they are drawn, so a style over array bands is carried on, and withheld
+// only there.
+describe('the styles a recipe offers for bands named by a workflow', () => {
+    const ARRAY_STYLE = {id: 'p-coefs', bands: ['VV'], type: 'continuous'}
+
+    it('keeps a style over bands the workflow names, whatever their shape', () => {
+        const recipe = bandMath({presets: [ARRAY_STYLE]})
+
+        expect(recipeVisualizationsNaming(recipe, ['VV'])).toEqual([ARRAY_STYLE])
+        expect(recipeVisualizations(recipe, {VV: {dataType: {arrayDimensions: 1}}})).toEqual([])
+    })
+
+    it('withholds a style naming a band the workflow does not name', () => {
+        expect(recipeVisualizationsNaming(bandMath({presets: [PRESET]}), ['VV'])).toEqual([])
     })
 })
 

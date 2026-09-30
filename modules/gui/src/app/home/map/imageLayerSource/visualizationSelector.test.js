@@ -20,16 +20,13 @@ vi.mock('~/translate', () => ({
     msg: key => (Array.isArray(key) ? key.join('.') : key)
 }))
 
-// A layer form that names no bands leaves the recipe being shown to say what it has.
-vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
-    getRecipeType: () => ({getAvailableBands: recipe => recipe.availableBands})
-}))
-
 const {VisualizationSelector} = await import('./visualizationSelector')
 const {PresentationToggle} = await import('./presentationToggle')
 
 const PRESET = {bands: ['ndvi'], type: 'continuous'}
 const USER_DEFINED = {id: 'u1', bands: ['evi'], type: 'continuous', userDefined: true}
+
+const SCALAR = {dataType: {arrayDimensions: 0}}
 
 const presetOptions = [{
     label: 'Presets',
@@ -42,6 +39,7 @@ const comboOf = ({selectedVisParams, userDefinedVisualizations = [USER_DEFINED]}
         recipe: {id: 'recipe-1'},
         userDefinedVisualizations,
         presetOptions,
+        availableBands: {ndvi: SCALAR, evi: SCALAR},
         selectedVisParams
     }).render()
 
@@ -119,18 +117,17 @@ const bandMath = (own = [SOURCE_STYLE]) => ({
     layers: {userDefinedVisualizations: {'this-recipe': own}}
 })
 
-const bandMathWithBands = names => ({
-    ...bandMath(),
-    availableBands: Object.fromEntries(names.map(name => [name, {}]))
-})
+// The bands the layer's read holds: those its styles name, all scalar.
+const DESCRIBED_BANDS = {ratio: SCALAR, VV: SCALAR, VH: SCALAR}
 
 const inheritingProps = ({
     sourceRecipe = bandMath(),
     userDefinedVisualizations = [],
-    availableBands,
+    availableBands = DESCRIBED_BANDS,
     selectedVisParams
 } = {}) => ({
     source: {id: 'band-math-1', sourceConfig: {recipeId: 'band-math-1'}},
+    recipe: {id: 'masking-1', type: 'MASKING'},
     recipeId: 'masking-1',
     sourceRecipe,
     userDefinedVisualizations,
@@ -212,12 +209,12 @@ describe('a style deleted on the source after the layer was rendered', () => {
 // The renderer rejects a style over a band that is gone, and one over an array band has no single value per
 // pixel to colour. Offering either puts a choice in the list the map cannot honour.
 describe('a style the renderer could not draw', () => {
-    const ARRAY_BANDS = {ratio: {dataType: {arrayDimensions: 1}}, VV: {}, VH: {}}
+    const ARRAY_BANDS = {ratio: {dataType: {arrayDimensions: 1}}, VV: SCALAR, VH: SCALAR}
 
     it('is withheld when its band is missing, whoever owns it', () => {
         const combo = inheriting({
             userDefinedVisualizations: [{id: 'v-gone', bands: ['absent'], userDefined: true}],
-            availableBands: {VV: {}, VH: {}}
+            availableBands: {VV: SCALAR, VH: SCALAR}
         }).render()
 
         expect(renderedGroups(combo).some(([label]) => label === INHERITED)).toBe(false)
@@ -237,11 +234,83 @@ describe('a style the renderer could not draw', () => {
         expect(sourceRecipe.layers.userDefinedVisualizations['this-recipe']).toEqual([SOURCE_STYLE])
     })
 
-    // Band Math's layer form supplies no band list of its own, so the recipe being shown answers for it.
-    it('is withheld even when the layer names no bands itself', () => {
-        const combo = inheriting({sourceRecipe: bandMathWithBands(['VV'])}).render()
+    // Unknown is not scalar: a band whose dimensionality nothing established cannot be drawn.
+    it('is withheld when its band\'s dimensionality is not established', () => {
+        const combo = inheriting({availableBands: {ratio: {}, VV: SCALAR, VH: SCALAR}}).render()
 
         expect(renderedGroups(combo).some(([label]) => label === INHERITED)).toBe(false)
+    })
+
+    it('is withheld when the layer gives no band answer at all', () => {
+        const combo = new VisualizationSelector({...inheritingProps(), availableBands: undefined}).render()
+
+        expect(renderedGroups(combo).some(([label]) => label === INHERITED)).toBe(false)
+    })
+})
+
+// The editor asks nothing about bands itself. It opens on what this layer's answer holds and the arguments naming
+// the product the layer shows, captured together - so it can only open once those bands are known.
+describe('opening the visualization editor', () => {
+    const COUNT_LAYER = {visualizationType: 'COUNT', visParams: {id: 'v-count', bands: ['count']}}
+
+    const editing = ({availableBands, areaLayerConfig = COUNT_LAYER}) => {
+        const activated = []
+        const selector = new VisualizationSelector({
+            ...inheritingProps(),
+            availableBands,
+            recipe: RECIPE,
+            areaLayerConfig,
+            activator: {activatables: {
+                visParams: {activate: props => activated.push(props)},
+                mapAreaMenu: {deactivate: () => {}}
+            }}
+        })
+        const addButton = selector.render().props.labelButtons.find(({key}) => key === 'add')
+        return {addButton, activated}
+    }
+
+    const RECIPE = {id: 'ccdc-1', type: 'CCDC'}
+
+    it('captures the recipe, the bands this layer\u2019s answer holds and the product it shows', () => {
+        const {addButton, activated} = editing({availableBands: {count: SCALAR}})
+
+        addButton.props.onClick()
+
+        expect(activated).toEqual([{
+            recipe: RECIPE,
+            imageLayerSourceId: 'band-math-1',
+            bands: ['count'],
+            productArgs: {visualizationType: 'COUNT'}
+        }])
+    })
+
+    it.each([undefined, null, {}])('cannot be opened while no band is known (%j)', availableBands => {
+        const {addButton} = editing({availableBands})
+
+        expect(addButton.props.disabled).toBe(true)
+    })
+
+    it('opens with its scalar bands in output order, excluding arrays and bands of unknown dimensionality', () => {
+        const {addButton, activated} = editing({availableBands: {
+            coefs: {dataType: {arrayDimensions: 2}},
+            value: {dataType: {arrayDimensions: 0}},
+            start: {dataType: {arrayDimensions: 1}},
+            unknown: {},
+            other: {dataType: {arrayDimensions: 0}}
+        }})
+
+        addButton.props.onClick()
+
+        expect(activated[0].bands).toEqual(['value', 'other'])
+    })
+
+    it('cannot be opened when every band is array-valued', () => {
+        const {addButton} = editing({availableBands: {
+            coefs: {dataType: {arrayDimensions: 2}},
+            start: {dataType: {arrayDimensions: 1}}
+        }})
+
+        expect(addButton.props.disabled).toBe(true)
     })
 })
 
@@ -285,10 +354,12 @@ describe('a layer showing the recipe it belongs to', () => {
     it('offers no inherited styles', () => {
         const combo = new VisualizationSelector({
             source: {id: 'this-recipe', sourceConfig: {recipeId: 'masking-1'}},
+            recipe: {id: 'masking-1', type: 'MASKING'},
             recipeId: 'masking-1',
             sourceRecipe: {id: 'masking-1', layers: {userDefinedVisualizations: {'this-recipe': [LOCAL_STYLE]}}},
             userDefinedVisualizations: [LOCAL_STYLE],
-            presetOptions: []
+            presetOptions: [],
+            availableBands: DESCRIBED_BANDS
         }).render()
 
         expect(renderedGroups(combo)).toEqual([[OWN, ['v-local']]])

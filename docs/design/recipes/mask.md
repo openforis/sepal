@@ -159,10 +159,9 @@ Three kinds of information have different owners:
 - The Mask and Fill model owns the operation and its inputs.
 
 Output bands also carry export requirements. Apply mask preserves those requirements from the primary image because
-it does not change band representation. The current Masking Retrieve path instead hard-codes a change-image policy:
-CCDC array bands therefore receive `mean` rather than their required `sample` policy, and Earth Engine rejects the
-export when array shapes differ. Fix this through the resolved output description, not a CCDC check in Masking or a
-global `sample` fallback.
+it does not change band representation. Masking Retrieve takes them from the resolved output description, so a masked
+CCDC keeps `sample`; Masking's own `changeBased('change')` fallback reaches only bands verified scalar that state no
+policy - never through a CCDC check in Masking or a global `sample` fallback.
 
 Band names and visualizations copied when an upstream recipe was selected can become stale if that recipe changes.
 Opening or consuming the wrapper must refresh them or detect the mismatch; stale snapshots must not silently
@@ -246,9 +245,9 @@ capability checks without introducing another resolver.
 - Change Alerts can replace the selected wrapper ID with its terminal source ID in persisted `model.reference`,
   causing a Masking recipe around CCDC to execute the unmasked source. The migrated path must keep the execution
   reference and obtain CCDC semantics separately.
-- Masking Retrieve hard-codes `changeBased('change')` pyramiding. A masked CCDC output has no `change` band, so its
-  array bands fall back to `mean` and Earth Engine rejects differing array shapes. CCDC's native exporter correctly
-  uses `sample`; the migrated output description must preserve that per-band requirement through Apply mask.
+- Masking Retrieve must preserve CCDC's per-band `sample` through Apply mask. Its `changeBased('change')` fallback
+  would give array bands `mean`, which Earth Engine rejects for differing array shapes, so it applies to verified
+  scalar bands alone.
 - Recipe and asset wrappers must keep the selected outer execution reference. Asset-backed capabilities require
   verified metadata evidence; a terminal asset ID or arbitrary property is not sufficient.
 - Masking's `model.imageToMask.bands` and `visualizations` were a snapshot taken when the input panel loaded a

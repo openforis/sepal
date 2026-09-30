@@ -9,7 +9,6 @@ import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -29,8 +28,7 @@ class _TimeSeriesImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
-        const availableBands = getAvailableBands(recipe)
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const preSetOptions = getPreSetVisualizations(recipe)
             .filter(({bands}) => availableBands[bands[0]])
             .map(visParams => {
@@ -46,6 +44,7 @@ class _TimeSeriesImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -72,6 +71,7 @@ export const TimeSeriesImageLayer = compose(
 TimeSeriesImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

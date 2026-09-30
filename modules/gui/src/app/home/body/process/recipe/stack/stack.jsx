@@ -8,7 +8,6 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
 import {StackToolbar} from './panels/stackToolbar'
 import {getDefaultModel, RecipeActions} from './stackRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -57,9 +56,9 @@ export default () => ({
     components: {
         recipe: Stack
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
     getPreSetVisualizations
 })

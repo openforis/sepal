@@ -27,7 +27,11 @@ compositions; the latter is not supported by the classification selector.
 
 The baseline pixels come from the selected Classification, not from rebuilding imagery using PyEO's baseline
 dates. Monitoring images are constructed from PyEO's own datasets, processing options and monitoring dates.
-The result is a change-report image containing counts, change dates, repeatability and decision bands.
+The result is a change-report image containing counts, change dates, repeatability and decision bands. PyEO declares
+its 18 scalar report bands in the order the algorithm assembles them, with or without the index-drop gate, all
+exported with `sample` pyramiding and no encoding (`PYEO_ALERTS_BANDS`, see the
+[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)). Asked for no bands it
+returns the whole report; a selection returns exactly the bands selected, in the order selected.
 
 ## Classification selection and panel defaults
 

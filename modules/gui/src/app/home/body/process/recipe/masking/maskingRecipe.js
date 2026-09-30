@@ -1,5 +1,4 @@
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {submitObservedRetrieve} from '~/app/home/body/process/recipe/observedRetrieve'
 import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 export const defaultModel = {}
@@ -18,14 +17,6 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_MASKING_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .dispatch()
-        },
     }
 }
 
@@ -35,12 +26,9 @@ export const hasError = recipe => {
     return imageToMask && imageToMask.errorBand && imageMask && imageMask.errorBand
 }
 
-export const submitMaskingRetrieve = ({recipe, retrieveOptions, resolveImageOutput$}) => {
-    RecipeActions(recipe.id).retrieve(retrieveOptions)
-    return submitObservedRetrieve({
-        recipe,
-        retrieveOptions,
-        resolveImageOutput$,
-        fallbackPyramidingPolicy: pyramidingPolicies.changeBased('change')
-    })
+// Masking has no policy of its own: its output's policies are its source's. The fallback applies only where its
+// source states none, to bands verified scalar - from the description, or, over a source that declares nothing,
+// from the evidence its lifecycle currently vouches for.
+export const retrieveTask = {
+    fallbackPyramidingPolicy: pyramidingPolicies.changeBased('change')
 }

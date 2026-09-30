@@ -6,14 +6,371 @@ shared model. User-facing documentation belongs in the separate `sepal-doc` repo
 
 ## Current delivery focus
 
-The shared [band-encoding contract](#band-encoding) describes recipe outputs and exported assets, with the optical
-mosaic as its first producer through the image asset export and asset read. Adopting it in further producers,
-destinations and physical-value presentation is separate work, as are recipe-specific algorithm improvements.
+Make the shared output declaration the single band authority for every recipe type. The work after it —
+requirement validation, capability projection and visualization applicability — needs a description for every
+source, and falls back to per-type helpers wherever one is missing.
 
 Consumer migrations should adopt the shared contracts, preserve existing behavior and fix regressions they
 introduce. Existing limitations unrelated to those contracts belong in recipe developer notes, not as implicit
 requirements of a migration. [PyEO Alerts](../../recipes/pyeo-alerts.md) records its deferred index-handling work
 on that basis.
+
+### Output-declaration migration
+
+Every recipe type with an image declares an `IMAGE_OUTPUT` provider: Asset, Band Math, BAYTS Alerts, BAYTS Historical,
+CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change, LandTrendr, Masking, Optical Mosaic,
+Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack, Time Series and Unsupervised
+Classification. Sampling Design, which has no image, declares `NO_IMAGE_OUTPUT`; registration refuses a type that
+states neither.
+
+- Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
+  bands through the common read, which answers every type through its declaration. Retrieve panels take only labels
+  and groups from a type's `bands.js`.
+
+`getAvailableBands()` answers several [different questions](output-products.md#problem). A migration splits them
+between their owners rather than wrapping the helper in a provider, which would carry its mixed meanings into the
+shared contract:
+
+- the configured recipe's output bands: the type's `IMAGE_OUTPUT` provider;
+- bands shown by one map mode: a named map product, never an unqualified union with the canonical output;
+- labels, tooltips, groups and display ranges: GUI band presentation;
+- presets: product presets under [visualization ownership](visualizations.md).
+
+Every type is to declare its image output; not declaring one is a migration state, not a supported answer. The
+migration cannot land at once, so its order is chosen to keep that state in one place, removable by deletion alone,
+and short-lived. Rework — rebuilding a consumer because a decision it depended on came later — is worse than a
+temporary answer, because it cannot be deleted.
+
+**Bounded Asset band and metadata acquisition.** Raw collection schema reads use the first image; configured Asset
+recipes apply their filters first to support heterogeneous collections. GEE and Task share these reads, without
+unfiltered mosaics or aggregate geometry. Encoding comes from the asset's own metadata. Execution extent and
+compositing are unchanged, so collection-wide geometry can still make ASSET_BOUNDS drawing, preview and export
+expensive. See [band discovery without image construction](output-products.md#band-discovery-without-image-construction).
+
+Apply the same strategy as the remaining recipe families migrate. Audit the generic typed `/bands` path, which
+bypasses cheaper catalogues. Establish which observations are necessary; do not assume every constructed graph is equally costly.
+Known schemas belong in declarations and referenced schemas in provider reads; extend bounded acquisition only
+where a family still needs observation.
+
+1. **The consumer API**, settled before any consumer switches:
+   - *Map-product identity.* A map layer names the product it displays and supplies that product's declared
+     parameters; the absence of a mode is not an identity
+     ([map-product identity](output-products.md#map-product-identity)). Only types with map modes depend on it:
+     LandTrendr, BAYTS Alerts, Change Alerts and CCDC's `count`.
+   - *Reading a recipe's own output.* Consumers read bands synchronously, so the read is synchronous and total. It
+     answers with a status (resolved, needs observation, unavailable or invalid) and never acquires. Descriptions
+     are dependency-scoped, so a provider that needs nothing from a missing source still answers, and structural
+     soundness of the whole closure is reported separately
+     ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). It reads the records
+     the session holds, through the graph a map layer already derives, so Masking over an Optical Mosaic the
+     session has loaded is answered at once. A terminal its acquisition owner retains answers the rest, while it
+     is still about those records. Consumers never assemble dependency catalogues themselves.
+   - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
+     covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
+     Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
+2. **One read, then switch the consumers once.** Map layers, preset filtering and Retrieve read through the same
+   boundary for every type and do not branch on how a type describes its output. Types without a provider were
+   answered there by an unverified legacy seam until every type declared its output (step 4), which removed it.
+3. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
+   matters less than their independence:
+   - model-derived outputs: Regression, Unsupervised Classification, Index Change, Class Change, Classification,
+     Remapping, Phenology and PyEO Alerts have migrated: each
+     declares its scalar bands in execution order with their pyramiding policies, and Earth Engine's catalogue and
+     optional-band conditions come from the declaration. Index Change declares `error` and `confidence` only when
+     both images name an error band, and `change` only when its legend has entries. Class Change always declares
+     `transition` and `confidence`; confidence is measured from both images' probability bands and is masked where
+     either image holds none, while the transition is still computed. Classification declares `class` (mode), then
+     `class_probability` for classifiers that support probabilities, `regression` for those that support
+     regression, and one `probability_<value>` per legend entry in the legend's stored order (all mean); an export
+     returns its selected bands in the order requested, which Retrieve makes the output's order. Without legend entries its schema is unchanged, but Earth
+     Engine cannot build `class_probability`, so a probability-capable classifier's default output fails while a
+     request for `class` alone still runs; that requirement is left to requirement validation. Remapping declares
+     `class` (mode) only when its legend has entries, and otherwise no bands, which is what execution builds.
+     Masking over either inherits these policies, so its `class` is exported with `mode` where its fallback
+     applied `mean`. [Phenology](../../recipes/phenology.md) declares its 23 metrics and 12 months (mean); a month
+     without observations is a masked band rather than a missing one, and an empty selection returns every declared
+     band. [PyEO Alerts](../../recipes/pyeo-alerts.md) declares its 18 report bands (sample). Masking now describes
+     Phenology from its declaration instead of observing its running image, which offered no bands, and exports PyEO
+     with `sample` where its fallback applied `mean`;
+   - map-product types: LandTrendr, BAYTS Alerts and Change Alerts. CCDC's `COUNT` is declared as a
+     configuration-only map product
+     ([declared products](output-products.md#map-product-identity)): one scalar `count`, never exported, whose
+     layer acquires only its dependencies' validity. LandTrendr's canonical change result is declared: `yod`, `mag`,
+     `dur`, `preval`, `postval`, `rmse` and `sig`, all scalar, with `sample` for `yod` and `dur` and `mean` for the
+     rest, and no encoding. Masking over LandTrendr inherits those policies, so it exports `yod` and `dur` with
+     `sample` where its fallback applied `mean`, and Task's asset export resolves LandTrendr as a declared root and
+     requires its dependencies to be valid. Its annual mosaic is a declared map product taking `{year}` and
+     delegating to Optical Mosaic, so LandTrendr has no legacy band entry left. BAYTS Alerts' canonical alerts are
+     declared from the shared `ALERT_BANDS`: `non_forest_probability`, `change_probability`, `flag`, `flag_orbit`,
+     `first_detection_date` and `confirmation_date`, all scalar and `sample`, with no encoding, whether a run starts
+     from its own initial alerts or continues a previous run's; the layer's confidence filters mask pixels and change
+     no band. Its Earth Engine catalogue answers from that declaration without reading its reference. Masking over
+     BAYTS Alerts exports every alert band with `sample` where its fallback applied `mean`, and Task resolves BAYTS
+     Alerts as a declared root and requires its dependencies to be valid. Its first and last radar observations are
+     the declared `RADAR_OBSERVATION` map product, taking `{position: 'first' | 'last'}` and delegating to Radar
+     Mosaic's point-in-time declaration over the same radar options; a monitoring period that cannot place the
+     position is refused rather than described as another mosaic, so BAYTS Alerts has no legacy band entry left
+     ([BAYTS Alerts](../../recipes/bayts-alerts.md)).
+     Change Alerts' canonical changes are declared as `CHANGE_ALERT_BANDS` in its shared type:
+     `last_stable_date`, `first_detection_date`, `confirmation_date`, `last_detection_date`, `confidence`,
+     `difference`, `detection_count`, `monitoring_observation_count` and `calibration_observation_count`, all scalar
+     and `sample`, with no encoding. Source type, confidence settings and observations decide masks and values, never bands, and
+     the schema is known before a period or a reference is chosen; being described does not make such a recipe
+     executable ([being described is not being executable](gui-source-runtime.md#reading-a-recipes-own-output)). Its Earth Engine
+     catalogue answers from that declaration without resolving segments or computing a geometry. Masking over Change
+     Alerts exports every change band with `sample` where its fallback applied `mean`. Its monitoring and calibration
+     mosaics are the declared `COLLECTION_MOSAIC` map product, taking `{period: 'monitoring' | 'calibration',
+     mosaicType: 'latest' | 'median'}` and delegating to the Optical, Radar or Planet Mosaic declaration its own
+     sources name, over the recipe one shared projection builds for both description and execution. A period or
+     source that cannot build it is refused, and the reference is never read to describe it, so Change Alerts has no
+     legacy band entry left ([Change Alerts](../../recipes/change-alerts.md)). Its period's dates, like BAYTS' target,
+     come from one shared calendar that keeps years below 100 literal;
+   - Radar Mosaic has migrated ([Radar Mosaic](../../recipes/radar-mosaic.md)). Its shared type declares each
+     configuration: a stated target date makes a point in time - `VV`, `VH`, `ratio_VV_VH`, `orbit`, `dayOfYear`
+     and `daysFromTarget` - and anything else a time scan of 25 bands, its 15 statistics then `_phase`, `_amp`,
+     `_res`, `_const` and `_t` for each polarisation. All are scalar with no encoding; `orbit` keeps its mode,
+     `dayOfYear`, `daysFromTarget` and the phases are sampled and the rest averaged, which changes the coarse pyramid
+     levels of newly exported assets, Masking's included, and no full-resolution pixel. Earth Engine's catalogue
+     answers the declared bands whatever is selected, while execution computes only the harmonics a selection needs;
+     a point in time asked for nothing builds its six bands and no harmonics. Construction bands - `angle`,
+     `quality`, `unixTimeDays`, per-image harmonic terms - are not public, though explicit requests for them still
+     build, so Masking over a point in time now offers six bands. A Sentinel-1 collection's measures for temporal
+     consumers are a separate contract (`recipe/radar/collectionMeasures.js`). BAYTS' radar observation is described
+     by this declaration, as are Change Alerts' radar mosaics;
+   - Planet Mosaic has migrated ([Planet Mosaic](../../recipes/planet-mosaic.md)). Its shared type declares one
+     schema from the configuration alone, the same on every branch: `blue`, `green`, `red`, `nir`, then `ndvi`,
+     `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, all scalar and averaged. Indexes are encoded at ten thousand per unit,
+     as are the spectral bands of Daily with histogram matching, which maps them onto a reference at that scale; other
+     spectral bands keep their assets' unstated scaling. What Daily without matching builds beyond that for an empty
+     request - its working bands, and PSB.SD imagery's other bands - is not public, though explicit requests for them
+     still build, and a branch Earth Engine cannot run, such as that composite over four-band and eight-band imagery
+     together, describes the same bands. Its Earth Engine catalogue answers the declaration without building the
+     image. Retrieve, Masking and Stack therefore offer `kndvi`, and Change Alerts' Planet mosaics are described by
+     this declaration. The Planet choices temporal recipes offer are a
+     separate presentation vocabulary, unchanged, and a Planet collection's measures remain CCDC's;
+   - BAYTS Historical has migrated ([BAYTS Historical](../../recipes/bayts-historical.md)), in two separately
+     reviewable changes. Its producer first honours physical-output requests: a nonempty `outputBands` gets exactly
+     those names, in request order, and any other request the complete declared output; a bare `selection` keeps
+     its existing meaning, which requests no bands here. An unknown name then fails the request instead of returning
+     a different schema. Its shared type then declares, in stored orbit order and per orbit, `VV_mean`, `VV_std`,
+     `VH_mean`, `VH_std`, `orbit`, `VV_speckle` and `VH_speckle` with `_asc` or `_desc` suffixes - the order execution
+     builds - all scalar, `mode` for the orbit numbers and `mean` for the rest, with no encoding, so new exports,
+     Masking's and Stack's included, change at coarser pyramid levels only for orbits. Missing, empty, malformed or
+     unknown orbit choices and repeated passes are refused before anything is read, never normalized. Both orbit
+     bands show as whole numbers. Its Earth Engine catalogue answers the declaration without building anything.
+     Retrieve still exports all bands to Earth Engine only, and `historicalStatsSource` remains the separate
+     capability BAYTS Alerts reads. Each pass is built from that pass's imagery alone; a configured pass without
+     scenes in the period keeps its bands, fully masked, and a history none of whose passes has scenes is refused;
+   - Time Series has migrated ([Time Series](../../recipes/time-series.md)). Its shared type declares one scalar
+     `count`, averaged, with no encoding, whatever its sources, and its Earth Engine catalogue answers it without
+     building the collection. Its map keeps reading `IMAGE_OUTPUT`. Its chart and its SEPAL export are measures of
+     its collection, not bands of this image, and keep their own contracts; collection-internal bands wait for
+     [source planning](output-products.md#source-planning-and-collection-composition). Its GUI registration states
+     it is no image source, which keeps it out of source pickers. Execution builds its count whatever is asked for;
+   - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
+     the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
+     band takes that input band's dimensionality, pyramiding policy and encoding under its new name, from the input's
+     current description rather than the snapshot copied at selection; a scalar its input states no policy for is
+     averaged, while an array gets no policy it was not given. A mapping
+     is checked before any input is read: an image without one, a blank name or a final name already taken is
+     refused, and a band the input does not hold is refused once it is read, as is an input with no image output.
+     Its Earth Engine catalogue answers the mapped names without building the image. New exports
+     therefore sample arrays, take their sources' policies - `mode` for a classification - and record their
+     encoding, and Masking over Stack exports those policies; capability preservation still waits for
+     [capability projection](output-products.md#transformation-effects-and-capability-projection);
+   - Band Math has migrated ([Band Math](../../recipes/band-math.md)). Its declaration names its configured output
+     bands in configured order under their final names, and refuses two alike before anything is read. Its running
+     image is observed for dimensionality alone and must carry exactly those names, or the provider refuses it
+     (`CONFLICTING_OBSERVATION`); nothing is offered while that observation is pending. A verified scalar is averaged
+     at coarser pyramid levels, as Earth Engine's default always exported it, a verified array is sampled, and a band
+     whose dimensionality was not observed is refused; no encoding is stated. Arrays can therefore be exported
+     to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
+     Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
+     took its mode.
+4. **Make the declaration mandatory.** `imageOutput` is required, as `directSources` is. Sampling Design, which
+   produces no image, declares `imageOutput: NO_IMAGE_OUTPUT`; read as an image it is refused as `NON_IMAGE_OUTPUT`,
+   which is definitive, located at the design through any wrapper, and stops a generic image export. A type stating
+   neither fails at registration. The legacy adapter, Retrieve's legacy and evidence authorities, and the registered
+   band authorities are deleted; the common consumer API remains. Input eligibility is stated apart from output: every
+   GUI registration states `imageSource: true | false`, refused at registration without it, and the pickers offering
+   recipes as images - input imagery, a map layer's source, an area of interest - offer only image sources. CCDC, Time
+   Series and Sampling Design are not, though CCDC and Time Series declare images, and Masking's image to mask still
+   takes a source of segments, CCDC included. Eligibility for those pickers is not proof that a recipe executes.
+   Every band of a READY description has established dimensionality: `dataType.arrayDimensions` is a nonnegative
+   integer (0 for scalar, positive for array), supplied by declaration, inheritance or observation. A band without
+   it is refused as `INCOMPLETE_IMAGE_OUTPUT` at `['bands', i, 'dataType']`, so an asset or a running image observed
+   without it is never described, in the GUI or in Task; Band Math and Stack no longer state a band of unknown shape.
+   A provider asking only which bands it can be asked for - CCDC - still observes names alone and establishes their
+   shape from its declaration. The map renderer and the visualization editor offer only established scalars. Empty
+   outputs remain valid; encoding, units and meaning can remain unknown. Labels, tooltips, groups and display ranges
+   remain GUI presentation.
+
+Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
+helper. Verification distinguishes the public bands available to request, the image built with no selection, and
+the output of an explicit selection ([declaration and description](output-products.md#declaration-and-description)).
+A default image need not contain every available band, and internal working bands do not become public merely
+because they appear in that image. Each family states its default-selection behavior and verifies both default and
+explicit requests. A family is done when its `bands.js` and Earth Engine `getBands$()` no longer define bands
+independently of the declaration. What remains of `bands.js` — labels, groups and display ranges — is GUI band
+presentation, not a migration state.
+
+#### Contract reviews before the remaining migrations
+
+These reviews can proceed alongside independent family migrations; they must not wait until only the difficult
+families remain.
+
+- **Map products needing more than configuration:** extend provider access, acquisition identity and retained-answer
+  validation together when a product actually needs referenced records or observations. Today's configuration-only
+  products can reuse dependency-validity acquisitions across parameter changes; do not carry that assumption into
+  a more demanding product without establishing what makes its answer current.
+- **Execution requirements:** review the minimum shared result contract before implementing shared live descriptions.
+  A description being `READY` and a closure being `VALID` do not establish that the recipe can execute. Requirements
+  must be evaluated through wrappers and at execution boundaries, with their evidence and freshness explicit; they
+  must not become empty schemas or independent panel guards. This brings forward contract review, while requirement
+  validation remains a separate implementation packet below.
+
+#### Preparation packets
+
+Before implementation, inventory every band-helper call site, including direct imports in Retrieve and specialized
+map layers. For each, name its product and parameters, read contract, evidence source, acquisition owner and
+lifetime, pending/failure behavior, and legacy behavior that must be preserved. Include execution boundaries whose
+refusal currently depends on an unavailable description. Review the inventory and plan before changing code.
+
+Deliver steps 1–2 as three separately reviewable packets:
+
+1. **Dependency-scoped descriptions and structural dependency checks.** The resolver and observer fail a
+   description only on what its providers read, detect cycles on the path of provider reads, and withhold a
+   recipe's own observation when any structural diagnosis lies below it. The complete closure answers
+   `dependencyValidity` separately, and Retrieve and Task's asset export of a declared root require it to be
+   `VALID`. A known
+   schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
+   After a failed closure, `SourceEvidenceSync` re-observes when a record it read changes; restoring only the
+   recipe it could not read does not.
+2. **Common GUI read API and display consumers.** Map layers read the product they name through the common read,
+   and retain what they acquire through the runtime's one-shot operations for as long as they are mounted
+   ([who acquires](gui-source-runtime.md#reading-a-recipes-own-output)). Their forms, the visualization selector and
+   the visualization editor are given that read. The editor's requests carry the product the layer shows.
+   Map preview requires `VALID` dependencies.
+   - Input workflows and Sampling Design filter the presets they copy against the names they observed.
+   - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
+     [live source evidence](gui-source-runtime.md#live-source-evidence).
+3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
+   acquisition while open. Its description is the one export authority: choices, destination compatibility and
+   policies come from it, and acquisition failures, broken dependencies, invalid descriptions and a recipe with no
+   image output block. CCDC's measures and Slice's structured selection are translated into the names they export
+   and checked against the answer. Task keeps its independent, authorized resolution through shared contracts and
+   runtime adapters; it neither imports the GUI API nor trusts a browser description
+   ([Retrieve integration](gui-source-runtime.md#retrieve-integration)).
+
+Acceptance: a later recipe migration adds its declaration and removes its legacy entry without requiring another
+consumer rewrite. Each packet identifies and removes the paths it supersedes. Use targeted tests while iterating;
+reserve the full GUI suite for the final readiness check.
+
+### Following work
+
+In order, each independently mergeable:
+
+1. **Shared live output descriptions**, immediately after the output declarations are mandatory and the legacy
+   adapter is removed, with the execution-requirements contract reviewed first. Cached description readiness and
+   structural validity must retain their separate meanings rather than implying execution readiness.
+   The source runtime owns reusable descriptions and in-flight acquisitions; map layers and Retrieve subscribe to
+   the same current answer rather than acquiring independently on every panel opening.
+   Reuse the common read and acquisition contracts, with no recipe-specific caches.
+   - One source-version registry tracks local draft changes, recipe revisions, credential context and observed
+     asset versions. Relevant changes invalidate dependent answers immediately and trigger background refresh;
+     superseded responses cannot publish. Closing one consumer must not cancel work another still needs.
+   - Recipe revision refreshes and asset-version checks establish freshness. Prioritize assets used by active
+     consumers and share checks across dependents. SEPAL operations can invalidate immediately; polling must cover
+     external changes. Establish what collection versions reveal about member and metadata changes before relying
+     on them. Polling intervals and acceptable evidence age belong to this packet's contract review.
+   - Retrieve opens without a new acquisition when a current answer is held. Otherwise it waits for refresh, and
+     Apply rechecks currency before accepting the answer. Refresh failures never authorize stale options.
+   - Websocket recipe revision events can follow as a latency optimization; revision refresh on reconnect covers
+     missed events, and correctness must not depend on notification delivery.
+   This implements the interactive description-sharing part of
+   [source freshness](source-freshness.md). Persisted calculation freshness and coherent task execution remain
+   separate, later milestones. Acceptance: visualization and Retrieve share one acquisition for the same question,
+   and dependency or credential changes withdraw its authority for both until a current answer is available.
+2. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+   behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
+   boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
+   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
+3. **Declarative dependency evaluation**, starting with the
+   [Band Math chain](#later-follow-up-band-math-dependencies).
+4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
+   whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
+   product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
+   Include band-presentation inheritance: producers supply labels and optional descriptions through GUI
+   presentation, and wrappers that preserve a band's meaning, such as Masking, preserve that presentation.
+   Masking Retrieve currently falls back to raw names such as LandTrendr's `yod`. Resolve presentation through
+   the source relationship, including Stack's reviewed selection and renaming correspondence, rather than adding
+   producer-specific cases to Masking; transformations that change a band's meaning supply their own presentation.
+   Translation stays in the GUI, and presentation never decides
+   which bands exist or their physical or export properties.
+   Keep semantic facts separate from consumer decisions: a band may state that it represents an observation date,
+   while CCDC owns whether that quantity is suitable for fitting. Scalar or integer shape alone does not establish
+   an appropriate pyramiding policy.
+5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
+6. **Caller-authorized closure reads and coherent execution**
+   ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
+7. **Source planning and the temporal collection composer**, following the
+   [research plan](output-products.md#research-plan).
+
+Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
+is a separate small packet.
+
+Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
+its origin has not been investigated, and whether it is a regression is not established. Investigate the error
+presentation separately.
+
+**Geometry reads during incomplete input editing.** A Stack remove-all/add-again sequence exposed a geometry request
+with no first input, causing `imageFactory` to read `.type` from undefined. The unguarded first-input access predates
+the output migration. Band Math, Remapping, Classification, Regression and Unsupervised Classification have similar
+geometry access patterns; their browser behavior has not been reproduced. Investigate as a bounded shared follow-up
+after the declaration migrations, provided valid configured recipes recover; a persistent failure with valid inputs
+or a migration regression should be addressed sooner. Reproduce the empty-to-populated transition, withhold geometry
+requests for incomplete input configurations, and prevent superseded responses from updating the map. At the execution
+boundary, reject missing or malformed image references with a stated diagnosis rather than a TypeError. A factory
+guard improves diagnostics but does not replace request-lifecycle handling. Keep this separate from schema availability
+and align it with the execution-requirements contract; it need not implement the whole requirements system.
+
+**CCDC breakpoint selection while switching data sets.** The Sources panel clears selected breakpoint bands
+when the data-set selection becomes empty: `Form.Buttons` prunes against the empty options even while disabled.
+Preserve the selection through that incomplete editing state, then reconcile against the next configured
+data sets. Switching Landsat 8 → none → Sentinel-2 must retain NDVI; a band unsupported by the new data sets
+should be removed once their options are established. Applying with no data sets must remain blocked.
+
+**Stack generated band names and explicit overrides.** A separate naming packet, not part of the output-declaration
+migration. Stack currently stores generated names and user overrides together as `outputName`: removing the first of
+two classifications leaves the remaining automatic names suffixed with `_1`. Separate generated defaults from optional
+overrides, showing the effective default as the input placeholder. Clearing an override returns to automatic naming;
+an empty override is valid when its effective name is valid. Recompute defaults when the input configuration changes,
+not on panel opening or evidence refresh. Reserve explicit names first, then allocate unique defaults in Stack order.
+Two explicit names that collide must fail validation rather than being silently renamed. Preserve overrides by image
+and band identity across input edits. Use one shared effective-name rule for description, execution and GUI consumers.
+
+Existing saved names have no provenance: preserve them as explicit names rather than guessing whether a suffix was
+generated; clearing one opts it into automatic naming. Recomputed defaults change the output schema. Keep Stack-owned
+styles and selections attached to the same source-band identity where possible, and never silently rebind them to a
+different source that acquires the old name. Downstream name-based references require the existing missing-band
+handling; do not rewrite dependent recipes automatically. Band Math already distinguishes defaults and overrides,
+but its removal handlers do not consistently recompute defaults, so reuse the concept rather than copying its logic.
+Acceptance covers adding two same-named sources, deleting the first, reordering inputs, preserving explicit overrides,
+clearing an override, duplicate validation, saved-model compatibility and references affected by an automatic rename.
+
+**Default colors for large categorical legends.** Replace the shared default-color overflow behavior, which
+assigns the last of 20 palette colors to every further entry. Class Change can need many more colors: seven
+source classes yield 49 transitions. Reuse the palette application's `pickColors(count, colors)` interpolation
+to distribute default colors across the complete legend instead of adding a recipe-specific color generator.
+Use entry position and total count, not category values, and account for Class Change's one-based codes skipping
+the first color. Preserve saved and user-edited colors. Check categorical distinguishability at larger counts;
+interpolation avoids a repeated final color but does not guarantee that every category is easy to distinguish.
+
+**Asset-layer visualization selection.** A standalone asset map layer (`assetImageLayer.jsx`) keeps a saved selection
+its asset no longer offers even when other styles are available, so it draws nothing, while recipe layers replace such
+a selection with the first candidate ([selection behavior](visualizations.md#selection-behavior)). Apply the same rule
+through the asset layer's own evidence lifecycle: reconcile only against a successful, current metadata read, keep the
+selection while a read is pending or failed or offers nothing, and never delete a user style.
 
 ## Scope and constraints
 
@@ -202,8 +559,8 @@ work must start explicitly after dispatch through runtime or command boundaries,
 `actionBuilder.sideEffect()`. When a migrated path already uses a reducer-side effect, remove it when behavior and
 ordering can be preserved within that packet; unrelated uses remain separate cleanup work.
 
-Known scientific or execution defects are corrected on `master` before the new contracts describe the affected
-behavior. Contract versions identify deliberate durable contract evolution; they do not preserve old bugs as
+Known scientific or execution defects are corrected on the integration branch before the new contracts describe the
+affected behavior. Contract versions identify deliberate durable contract evolution; they do not preserve old bugs as
 supported algorithms. Existing assets produced by defective code receive no source-resolution workaround and may
 need to be recreated when correctness matters. This does not prohibit backward-compatible readers for established
 asset formats: preserving CCDC metadata and Slice usability is format compatibility, not preservation of a defective
@@ -277,9 +634,8 @@ prerequisite only for the work that depends on it.
 
 The shared `IMAGE_OUTPUT` contract describes outer execution identity, ordered bands, per-band export requirements
 and evidence. The browser's one-shot runtime completes a bounded dependency closure, resolves providers and observes
-bands through existing execution APIs where a provider asks for them. Masking Retrieve consumes that
-description for band choices, selection, destination compatibility and pyramiding policy, submitting the selected
-names, with an explicit coexistence boundary for unmigrated recipes.
+bands through existing execution APIs where a provider asks for them. Retrieve consumes that description for band
+choices, selection, destination compatibility and pyramiding policy, submitting the selected names.
 
 Remaining work:
 
@@ -392,12 +748,13 @@ No update-time or temporary content-hash bridge is involved.
   digest remains optional until a concrete integrity or provenance requirement needs exact byte identity.
 - Extend the session catalogue and product-scoped fingerprints established by Sampling Design with remote
   invalidation and coherent execution support.
-- Add one source-version registry for recipe revision events, local draft generations and Earth Engine asset
-  `system:version` evidence. Build generic versioned derived resources above it so image-output descriptions,
-  visualization applicability and Sampling Design stratum areas and per-stratum probabilities share invalidation,
-  in-flight deduplication and replay rather than creating recipe-specific caches.
-- Add websocket revision events and, if justified, patch transport. Both remain latency and transport
-  optimizations; correctness established in step 5 never depends on them.
+- Extend the source-version registry and shared resources introduced by shared live output descriptions
+  ([following work](#following-work)) to visualization applicability and Sampling Design stratum areas and
+  per-stratum probabilities. Reuse their invalidation, in-flight deduplication and replay rather than creating
+  another registry or recipe-specific caches.
+- Extend remote invalidation to these resources; add websocket revision events if not already provided and,
+  if justified, patch transport. Both remain latency and transport optimizations; correctness established in
+  step 5 never depends on them.
 - Progressively migrate recipe types to explicit AOI and image product projections, reducing the conservative
   whole-source recalculation that unmigrated providers fall back to.
 
@@ -537,13 +894,13 @@ which keeps a value Earth Engine would reject from failing the whole write; a pr
 exceeds it is still dropped there.
 
 **Export authority.** The task resolves the output description itself, from the recipe it exports: it completes the
-recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and
-the exported image come from the same records. The export names its bands, the image returned has exactly those
-bands, and encoding is written for them; an export naming none builds the producer's default image, which the
-available bands do not describe, and records no encoding. Where the only thing resolution reports is an undeclared
-output — the exported recipe's own, or that of a recipe it depends on — the export proceeds as before with unknown
-encoding. A failed read, an incomplete closure or an invalid description fails the export rather than being
-recorded as unknown.
+recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and the
+exported image come from the same records. The export names its bands, the image returned has exactly those bands, and
+encoding is written for them; an export naming none builds the producer's default image, which the available bands do
+not describe, and records no encoding. A recipe with no image output - the exported recipe, or one it reads as an
+image - fails the export before anything is built. So does a failed read, an incomplete closure or an invalid
+description, rather than being recorded as unknown, and a closure whose dependencies are not structurally sound, even
+where the description reads none of the broken part.
 
 An image collection keeps its existing tiles unless it is replaced, so its encoding must describe those too.
 Resuming compares the persisted and proposed encodings as facts:
@@ -625,6 +982,15 @@ General physical-unit legends, charts and pixel inspection remain deferred beyon
 encoding knowledge: producers supply ready-to-use descriptions and visualizations. Share encoding declarations
 between execution and preset conversion where that removes duplicated assumptions without changing pixel values
 or reinterpreting saved ranges.
+
+**Input-aware Index Change defaults.** Derive the default difference visualization from resolved input-band
+semantics and trustworthy ranges, accounting for encoding and units. The current preset uses copied input ranges,
+whose input-form fallback is -10,000 to 10,000. For two probability bands bounded by [0, 1], such as Dynamic World
+tree probabilities, the difference is bounded by [-1, 1]. In general, `to - from` has bounds
+`[toMin - fromMax, toMax - fromMin]` when both ranges are known and expressed in compatible units. Distinguish
+semantic bounds from a chosen display stretch; encoding alone establishes neither. Keep this as presentation
+work, without changing pixel arithmetic, and preserve user-edited or saved styles. Define a fallback for unknown
+ranges when the richer input-band contract is designed.
 
 The narrow radar RGB preset correction need not wait: its ratio range must match the existing x1000 encoding,
 not the x100 used for VV/VH. Verify matching ranges and unchanged pixel encoding without broadening this into

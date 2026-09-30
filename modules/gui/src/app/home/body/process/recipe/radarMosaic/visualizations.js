@@ -1,33 +1,42 @@
+import {POINT_IN_TIME, radarMosaicConfiguration, TIME_SCAN} from '#sepal/recipe/type/radarMosaic'
 import {normalize} from '~/app/home/map/visParams/visParams'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
+// The presets of each configuration: its band combinations and, for a point in time, its date metadata.
+export const getPreSetVisualizations = recipe =>
+    configurationVisualizations(radarMosaicConfiguration(recipe.model))
 
-export const getPreSetVisualizations = recipe => {
-    const availableBands = getAvailableBands(recipe)
-    return Object.values(visualizations).flat()
-        .filter(({bands}) => bands.every(band => availableBands[band]))
-}
+export const visualizationOptions = recipe =>
+    configurationOptions(radarMosaicConfiguration(recipe.model))
 
-export const visualizationOptions = recipe => {
+// A point-in-time composite another recipe draws around a date of its own - BAYTS' first and last radar
+// observations - and the templates CCDC takes for its radar measures.
+export const pointInTimeVisualizations = () =>
+    configurationVisualizations(POINT_IN_TIME)
+
+export const pointInTimeOptions = () =>
+    configurationOptions(POINT_IN_TIME)
+
+const configurationVisualizations = configuration =>
+    configuration === TIME_SCAN
+        ? visualizations.TIME_SCAN
+        : [...visualizations.POINT_IN_TIME, ...visualizations.METADATA]
+
+const configurationOptions = configuration => {
     const visParamsToOption = visParams => ({
         value: visParams.bands.join(','),
         label: visParams.bands.join(', '),
         visParams
     })
-    const type = selectFrom(recipe, 'model.dates.fromDate')
-        ? 'TIME_SCAN'
-        : 'POINT_IN_TIME'
     const bandCombinationOptions = {
         label: msg('process.mosaic.bands.combinations'),
-        options: visualizations[type].map(visParamsToOption),
+        options: visualizations[configuration].map(visParamsToOption),
     }
     const metadataOptions = {
         label: msg('process.mosaic.bands.metadata'),
         options: visualizations.METADATA.map(visParamsToOption)
     }
-    return type === 'TIME_SCAN'
+    return configuration === TIME_SCAN
         ? [bandCombinationOptions]
         : [bandCombinationOptions, metadataOptions]
 }

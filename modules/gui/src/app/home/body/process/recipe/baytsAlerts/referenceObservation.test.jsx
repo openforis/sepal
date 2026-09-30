@@ -6,6 +6,7 @@ import {of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 
@@ -292,9 +293,11 @@ const sync = ({selection, options = {}}) => {
     root = createRoot(container)
     act(() => root.render(
         <Provider store={store}>
-            <Recipe id={ALERTS}>
-                <SourceEvidenceSync observation={baytsAlertsObservation}/>
-            </Recipe>
+            <SourceRuntimeProvider>
+                <Recipe id={ALERTS}>
+                    <SourceEvidenceSync observation={baytsAlertsObservation}/>
+                </Recipe>
+            </SourceRuntimeProvider>
         </Provider>
     ))
 }

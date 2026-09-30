@@ -1,11 +1,10 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
-import {outputOwnedVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
+import {renderableBandNames, renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
+import {inheritedVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -31,9 +30,11 @@ const mapStateToProps = (state, {source}) => {
     }
 }
 
-const mapRecipeToProps = (recipe, {source}) => ({
+// The layer this selector styles is the one its area shows, and that layer's config names the product it shows.
+const mapRecipeToProps = (recipe, {source, mapArea}) => ({
     recipeId: recipe.id,
-    userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
+    userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || [],
+    areaLayerConfig: selectFrom(recipe, ['layers.areas', mapArea?.area, 'imageLayer', 'layerConfig']) || {}
 })
 
 class _VisualizationSelector extends React.Component {
@@ -51,6 +52,7 @@ class _VisualizationSelector extends React.Component {
             : undefined
         )
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
+        const editorContext = this.editorContext()
         return (
             <Combo
                 label={msg('map.visualizationSelector.label')}
@@ -62,7 +64,8 @@ class _VisualizationSelector extends React.Component {
                         size='small'
                         icon='plus'
                         tooltip={msg('map.visualizationSelector.add.tooltip')}
-                        onClick={() => this.addVisParams()}
+                        disabled={!editorContext}
+                        onClick={() => this.addVisParams(editorContext)}
                     />,
                     <Button
                         key='edit'
@@ -71,8 +74,8 @@ class _VisualizationSelector extends React.Component {
                         size='small'
                         icon={editMode}
                         tooltip={msg(`map.visualizationSelector.${editMode}.tooltip`)}
-                        disabled={!selectedOption}
-                        onClick={() => this.editVisParams(selectedOption.visParams, editMode)}
+                        disabled={!selectedOption || !editorContext}
+                        onClick={() => this.editVisParams(editorContext, selectedOption.visParams, editMode)}
                     />,
                     <RemoveButton
                         key='remove'
@@ -118,7 +121,7 @@ class _VisualizationSelector extends React.Component {
         const availableBands = this.availableBands()
         const filter = options => options.flatMap(option => option.options
             ? [{...option, options: filter(option.options)}]
-            : !availableBands || renderableVisualizations([option.visParams], availableBands).length
+            : renderableVisualizations([option.visParams], availableBands).length
                 ? [option]
                 : [])
         return filter(this.props.presetOptions)
@@ -126,22 +129,10 @@ class _VisualizationSelector extends React.Component {
 
     // The styles the recipe being shown owns for its output. They are offered here and edited there: this
     // recipe holds no copy, so an edit or a deletion upstream reaches it, and the clone button is what makes
-    // one of them into a style of its own. The recipe's own layer is excluded - there its styles are already
-    // the editable ones above.
-    //
-    // A style this recipe already holds under the same identity is left to the local one. Copies made by
-    // earlier versions share their upstream identity, and offering both puts two options with one value in
-    // the list: whichever resolves first wins the selection, and the wrong one decides whether the style can
-    // be edited. The saved copy is what a selection has been naming, so it keeps the identity; nothing is
-    // deleted, and a style with no local copy is inherited as before.
+    // one of them into a style of its own.
     inheritedVisualizations() {
         const {sourceRecipe, recipeId, userDefinedVisualizations} = this.props
-        if (!sourceRecipe || sourceRecipe.id === recipeId) {
-            return []
-        }
-        const localIds = new Set(userDefinedVisualizations.map(({id}) => id))
-        return outputOwnedVisualizations(sourceRecipe)
-            .filter(({id}) => !localIds.has(id))
+        return inheritedVisualizations({sourceRecipe, recipeId, userDefinedVisualizations})
     }
 
     // One rule for every group. A style naming a band that is gone, or one an array band cannot render, is
@@ -149,31 +140,17 @@ class _VisualizationSelector extends React.Component {
     // puts a choice in the list the map cannot honour. Withheld, never deleted: it is offered again when the
     // band returns.
     toOptions(visualizations) {
-        const availableBands = this.availableBands()
-        const offered = availableBands
-            ? renderableVisualizations(visualizations, availableBands)
-            : visualizations
-        return offered.map(visParams => ({
+        return renderableVisualizations(visualizations, this.availableBands()).map(visParams => ({
             value: visParams.id,
             label: visParams.bands.join(', '),
             visParams
         }))
     }
 
-    // What the layer can draw. A caller that knows gives the band descriptions; one that gives only names
-    // says nothing about dimensionality, and one that gives nothing leaves the recipe being shown to answer.
-    // Unknown stays unknown - filtering against an empty schema would withhold everything.
+    // What the layer can draw, as the layer that owns the answer gives it: band descriptions whose dimensionality decides
+    // what can be drawn. Nothing given is nothing to draw.
     availableBands() {
-        const {availableBands, sourceRecipe} = this.props
-        if (_.isArray(availableBands)) {
-            return Object.fromEntries(availableBands.map(band => [band, {}]))
-        }
-        if (_.isPlainObject(availableBands)) {
-            return availableBands
-        }
-        return sourceRecipe
-            ? getRecipeType(sourceRecipe.type)?.getAvailableBands(sourceRecipe)
-            : undefined
+        return this.props.availableBands || {}
     }
 
     flattenOptions(options) {
@@ -196,17 +173,26 @@ class _VisualizationSelector extends React.Component {
         mapAreaMenu.deactivate()
     }
 
-    addVisParams() {
-        const {recipe, source} = this.props
-        this.openVisParams({recipe, imageLayerSourceId: source.id})
+    // What the editor works from, captured together when it opens: the recipe, the bands this layer's answer holds
+    // and the arguments naming the product it shows. The editor asks nothing about bands itself, so it opens only
+    // once they are known.
+    editorContext() {
+        const {recipe, source, areaLayerConfig} = this.props
+        const bands = renderableBandNames(this.availableBands())
+        return bands.length
+            ? {recipe, imageLayerSourceId: source.id, bands, productArgs: productArgs(recipe, areaLayerConfig)}
+            : null
     }
 
-    editVisParams(visParamsToEdit, editMode) {
-        const {recipe, source} = this.props
+    addVisParams(editorContext) {
+        this.openVisParams(editorContext)
+    }
+
+    editVisParams(editorContext, visParamsToEdit, editMode) {
         const visParams = editMode === 'clone'
             ? {...visParamsToEdit, id: uuid()}
             : visParamsToEdit
-        this.openVisParams({recipe, imageLayerSourceId: source.id, visParams})
+        this.openVisParams({...editorContext, visParams})
     }
 
     removeVisParams(visParams) {
@@ -239,7 +225,7 @@ export const VisualizationSelector = compose(
 
 VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,
-    availableBands: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+    availableBands: PropTypes.object,
     presetOptions: PropTypes.array,
     labelButtons: PropTypes.array,
     recipe: PropTypes.object

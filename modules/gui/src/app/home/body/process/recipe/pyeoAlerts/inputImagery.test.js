@@ -157,6 +157,14 @@ describe('imagery that cannot be resolved at all', () => {
         await expect(read(recipeSelection(MASKED))).rejects.toThrow()
     })
 
+    // Loading goes on past the cycle to the branch still missing. When that read fails, the failure is the
+    // answer, carrying the loader's own cause.
+    it('fails with the unreadable recipe when the wrappers close on themselves beside it', async () => {
+        recipes[MASKED].model.imageToMask = recipeSelection(MASKED)
+        recipes[MASKED].model.imageMask = recipeSelection('deleted-1')
+
+        await expect(read(recipeSelection(MASKED))).rejects.toThrow('No such recipe: deleted-1')
+    })
 })
 
 const toDates = ({start, end}) => [start, end].map(value =>

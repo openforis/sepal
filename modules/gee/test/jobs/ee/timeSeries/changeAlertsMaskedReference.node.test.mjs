@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {firstValueFrom, of, throwError} from 'rxjs'
+import {defer, firstValueFrom, of, throwError} from 'rxjs'
 
 // What Change Alerts actually runs when its reference is a Masking recipe over CCDC, exercised through its
 // own image operation and the real pixel-chart job, over the REAL imageFactory, recipeRef, masking and ccdc.
@@ -22,6 +22,7 @@ let maskApplications = []
 let collectionRequests = []
 let selections = []
 let assets = {}
+let assetsRead = []
 
 // An image is identified by what it came from and what has been applied to it. Selecting and clipping are
 // how every source is read and are not what these tests are about, so they leave the identity alone; a mask
@@ -47,7 +48,11 @@ const eeImage = (source, masks = []) => ({
 mock.module('#sepal/ee/ee', {
     exports: {
         default: {
-            getAsset$: id => of({type: 'Image', properties: {}, ...assets[id]}),
+            // Read when subscribed, as Earth Engine's own request is, never when built.
+            getAsset$: id => defer(() => {
+                assetsRead.push(id)
+                return of({type: 'Image', properties: {}, ...assets[id]})
+            }),
             getInfo$: value => of(value),
             Image: image => (image && typeof image === 'object' ? image : eeImage(image)),
             ImageCollection: id => eeImage(id),
@@ -76,7 +81,6 @@ mock.module('#gee/jobs/job', {exports: {job: ({worker$}) => worker$}})
 // Alerts makes into it: which image, and which representation it says the dates are in.
 mock.module('#sepal/ee/timeSeries/changeAlertsAlgorithm', {
     exports: {
-        CHANGE_BANDS: [],
         analyzeChanges: ({segmentsImage, dateFormat}) => {
             alertAlgebra.push({segmentsImage, dateFormat})
             return eeImage('alerts')
@@ -104,6 +108,7 @@ const inOperation = (name, fn) => it(name, async () => {
 })
 
 const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts')
+const {CHANGE_ALERT_BANDS} = await import('#sepal/recipe/type/changeAlerts')
 const {default: loadSegments$} = await import('#gee/jobs/ee/ccdc/loadSegments')
 
 const MASK_ASSET = 'users/x/mask'
@@ -212,6 +217,7 @@ beforeEach(() => {
     }
     alertAlgebra = []
     assets = {[SEGMENTS_ASSET]: {properties: {dateFormat: 2}}}
+    assetsRead = []
     selections = []
     loaded = []
     maskApplications = []
@@ -311,6 +317,35 @@ describe('what the alert algorithm is handed', () => {
             segmentsImage: {source: 'segments', masks: []},
             dateFormat: ccdcRecipe.model.ccdcOptions.dateFormat
         })
+    })
+})
+
+// What a consumer is told before anything has been chosen or read: the declared bands, from no recipe, asset or
+// collection, and no geometry. Only the image needs the period, and it refuses one that is incomplete before reading
+// anything either.
+describe('the change bands Change Alerts says it provides', () => {
+    const DECLARED = CHANGE_ALERT_BANDS.map(({name}) => name)
+
+    for (const [label, reference] of [
+        ['a Masking recipe over CCDC', MASKED_REFERENCE],
+        ['a segments asset', {type: 'ASSET', id: SEGMENTS_ASSET}],
+        ['no reference yet', {}]
+    ]) {
+        inOperation(`are the declared ones, reading nothing, over ${label}`, async () => {
+            const bands = await firstValueFrom(changeAlerts(alertsOver(reference)).getBands$())
+
+            assert.deepEqual(bands, DECLARED)
+            assert.deepEqual({recipesLoaded: recipesLoaded(), assetsRead, collectionRequests}, {recipesLoaded: [], assetsRead: [], collectionRequests: []})
+        })
+    }
+
+    inOperation('are the declared ones for a recipe that states no period, whose image is refused', async () => {
+        const undated = alertsOver(MASKED_REFERENCE)
+        delete undated.model.date.monitoringEnd
+
+        assert.deepEqual(await firstValueFrom(changeAlerts(undated).getBands$()), DECLARED)
+        await assert.rejects(firstValueFrom(changeAlerts(undated).getImage$()), /states no complete monitoring period/)
+        assert.deepEqual({recipesLoaded: recipesLoaded(), collectionRequests, alertAlgebra}, {recipesLoaded: [], collectionRequests: [], alertAlgebra: []})
     })
 })
 

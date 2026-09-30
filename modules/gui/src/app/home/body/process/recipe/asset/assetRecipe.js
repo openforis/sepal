@@ -2,7 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -61,19 +61,10 @@ export const RecipeActions = id => {
                 .del(['model.mask.constraintsEntries', {id: constraintsEntryId}])
                 .dispatch()
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_ASSET_RECIPE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        dataSetType: 'RADAR'
-    })
+export const retrieveTask = {
+    dataSetType: 'RADAR',
+    fallbackPyramidingPolicy: pyramidingPolicies.mean
+}

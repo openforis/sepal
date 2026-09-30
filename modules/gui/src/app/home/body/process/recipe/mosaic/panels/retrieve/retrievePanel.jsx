@@ -1,18 +1,23 @@
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {of} from 'rxjs'
 
 import {
-    physicalDestinationCompatibility,
-    VALID_SELECTION
-} from '#sepal/recipe/output/physicalDestinationCompatibility'
+    isUnresolved,
+    MISSING_SELECTION,
+    physicalRequest,
+    reconciledChoices,
+    RESOLVING,
+    RETRIEVABLE,
+    retrieveDecision,
+    submitRetrieve
+} from '~/app/home/body/process/recipe/retrieveOutput'
+import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {isEqual} from '~/hash'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
@@ -74,13 +79,20 @@ const fields = {
     crsTransform: new Form.Field()
 }
 
-const DECLARED_CHOICES = 'DECLARED_CHOICES'
+const REQUEST_CHOICES = 'REQUEST_CHOICES'
 const LOADING_CHOICES = 'LOADING_CHOICES'
 const UNRESOLVED_CHOICES = 'UNRESOLVED_CHOICES'
 const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
 
 // A resolution that answers almost at once would otherwise replace the opening view before it could be read.
 const MINIMUM_LOADING_MS = 500
+
+// A selection of the physical bands the output holds, offered and named as they are.
+const physicalSelection = {
+    request: physicalRequest,
+    choices: output => output.bands.map(({name}) => name),
+    unavailable: missingBandNames => missingBandNames
+}
 
 const constraints = {
     fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
@@ -107,15 +119,11 @@ class _MosaicRetrievePanel extends React.Component {
             more: false,
             destinationValidationPending: this.requiresDestinationValidation(props),
             destinationReconciliation: null,
-            imageOutputResolutionKey: props.imageOutputResolution?.key,
-            imageOutputTerminal: null,
-            initialLoadingDone: false
+            initialLoadingDone: !this.isResolving()
         }
-        this.imageOutputOperation = null
         this.minimumLoadingElapsed = false
         this.initialLoadingTimer = null
         this.mounted = false
-        this.onBandsChange = this.onBandsChange.bind(this)
         this.onDestinationChange = this.onDestinationChange.bind(this)
         this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
@@ -126,7 +134,7 @@ class _MosaicRetrievePanel extends React.Component {
         const invalid = this.isInitialLoading()
             || destinationValidationPending
             || Boolean(destinationReconciliation)
-            || this.resolvedOutputBlocksSubmission()
+            || this.blocksSubmission()
             || form.isInvalid()
         return (
             <RecipeFormPanel
@@ -265,7 +273,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     renderDestination() {
         const {toSepal, toEE, toDrive, inputs: {destination}} = this.props
-        const compatibility = this.getPhysicalDestinationCompatibility()
+        const destinations = this.destinations()
         const destinationOptions = [
             {
                 value: 'GEE',
@@ -286,7 +294,7 @@ class _MosaicRetrievePanel extends React.Component {
             .filter(({value}) => toDrive || value !== 'DRIVE')
             .map(option => ({
                 ...option,
-                ...(compatibility && compatibility.destinations[option.value] === false
+                ...(destinations && destinations[option.value] === false
                     ? {disabled: true}
                     : {})
             }))
@@ -401,14 +409,14 @@ class _MosaicRetrievePanel extends React.Component {
         const options = choices
             .filter(group => group.length)
             .map(group => ({options: group}))
-        return status === DECLARED_CHOICES
-            ? this.renderDeclaredBandOptions(options)
+        return status === REQUEST_CHOICES
+            ? this.renderRequestOptions(options)
             : this.renderResolvedBandOptions(options)
     }
 
-    // What a recipe type supplies is the whole truth here, so the control is free to drop a selected name its
-    // options no longer carry.
-    renderDeclaredBandOptions(options) {
+    // A request that is not about the recipe's output: what the recipe type supplies is the whole truth here, so
+    // the control is free to drop a selected name its options no longer carry.
+    renderRequestOptions(options) {
         const {single, inputs: {bands}} = this.props
         return (
             <Form.Buttons
@@ -421,9 +429,9 @@ class _MosaicRetrievePanel extends React.Component {
         )
     }
 
-    // The control is given the selection rather than the form field, because a name the catalogue does not
-    // hold has to SURVIVE: it is what the warning names and what blocks retrieval, and dropping it would
-    // submit a different export than the one the user saved. Only an edit of the selection removes it.
+    // The control is given the selection rather than the form field: the selection is reconciled with the output
+    // here (reconcileBands), and a control dropping names by its own options would be a second authority. What is
+    // still named as unavailable is what no saved choice can remove - a CCDC breakpoint band, for one.
     renderResolvedBandOptions(options) {
         const {single, inputs: {bands}} = this.props
         const missing = this.missingSelection()
@@ -434,7 +442,7 @@ class _MosaicRetrievePanel extends React.Component {
                     selected={bands.value}
                     multiple={!single}
                     options={options}
-                    onChange={this.onBandsChange}
+                    onChange={selected => bands.set(selected)}
                     framed
                 />
                 {missing.length
@@ -510,25 +518,26 @@ class _MosaicRetrievePanel extends React.Component {
             const recipeName = this.getRecipeName()
             filenamePrefix.set(recipeName)
         }
-        this.startImageOutputResolution()
-        this.startMinimumLoading()
+        if (!this.state.initialLoadingDone) {
+            this.startMinimumLoading()
+        }
         this.update()
+        this.reconcileBands()
+        this.reconcileDestination()
     }
 
     componentDidUpdate(prevProps) {
-        if (!isEqual(prevProps.imageOutputResolution?.key, this.props.imageOutputResolution?.key)) {
-            this.startImageOutputResolution()
-        }
         if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
             this.setDestinationValidationPending(this.requiresDestinationValidation())
         }
         this.update()
+        this.settleInitialLoading()
+        this.reconcileBands()
         this.reconcileDestination()
     }
 
     componentWillUnmount() {
         this.mounted = false
-        this.stopImageOutputResolution()
         clearTimeout(this.initialLoadingTimer)
         this.initialLoadingTimer = null
     }
@@ -538,19 +547,19 @@ class _MosaicRetrievePanel extends React.Component {
             this.initialLoadingTimer = null
             this.minimumLoadingElapsed = true
             if (this.mounted) {
-                this.settleInitialLoading(this.getImageOutputTerminal())
+                this.settleInitialLoading()
             }
         }, MINIMUM_LOADING_MS)
     }
 
     update() {
         const {toEE, toSepal, inputs: {destination, assetType}} = this.props
-        const compatibility = this.getPhysicalDestinationCompatibility()
+        const destinations = this.destinations()
         if (!destination.value) {
-            if (toEE && isGoogleAccount() && compatibility?.destinations.GEE !== false) {
+            if (toEE && isGoogleAccount() && destinations?.GEE !== false) {
                 this.setDestinationValidationPending(true)
                 destination.set('GEE')
-            } else if (toSepal && compatibility?.destinations.SEPAL !== false) {
+            } else if (toSepal && destinations?.SEPAL !== false) {
                 this.setDestinationValidationPending(true)
                 destination.set('SEPAL')
             }
@@ -561,213 +570,150 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
+    // A request about the recipe's output is decided again, from the session as it stands at this moment, by the
+    // submission itself - never from what this panel last rendered. The project remembers the destination only
+    // once the retrieval was accepted.
     retrieve(values) {
-        const {onRetrieve} = this.props
-        const terminal = this.getImageOutputTerminal()
-        if (this.props.imageOutputResolution && (!terminal || this.resolvedOutputBlocksSubmission())) {
+        const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
+        if (requestOptions) {
+            this.rememberDestination(values)
+            return onRetrieve(values)
+        }
+        const read = readRetrieveOutput()
+        if (!read) {
             return
         }
+        const {recipe, output, pending} = read
+        const request = selection.request({recipe, output, retrieveOptions: this.withAllBands(values)})
+        if (submitRetrieve({recipe, output, pending, request, task, submitTask})) {
+            this.rememberDestination(values)
+        }
+    }
+
+    rememberDestination({assetId, workspacePath}) {
         const project = this.findProject()
         if (project) {
-            const {assetId, workspacePath} = values
             updateProject({
                 ...project,
                 defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
                 defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
             })
         }
-        onRetrieve && (terminal
-            ? onRetrieve(values, {resolveImageOutput$: () => of(terminal)})
-            : onRetrieve(values))
     }
 
-    startImageOutputResolution() {
-        this.stopImageOutputResolution()
-        const contract = this.props.imageOutputResolution
-        if (!contract) {
-            if (this.state.imageOutputTerminal || this.state.imageOutputResolutionKey !== undefined) {
-                this.setState({
-                    destinationReconciliation: null,
-                    imageOutputResolutionKey: undefined,
-                    imageOutputTerminal: null
-                })
-            }
+    // The opening view stands until the read has answered AND it has been up long enough to read. A failure is
+    // shown as soon as it arrives, and once the panel is open a later read never hides it again. A read that
+    // answers on the first render never shows it at all.
+    settleInitialLoading() {
+        if (this.state.initialLoadingDone || this.isResolving()) {
             return
         }
-
-        const operation = {key: contract.key, sawTerminal: false, subscription: null}
-        this.imageOutputOperation = operation
-        if (!isEqual(this.state.imageOutputResolutionKey, contract.key) || this.state.imageOutputTerminal) {
-            this.setState({
-                destinationReconciliation: null,
-                imageOutputResolutionKey: contract.key,
-                imageOutputTerminal: null
-            })
-        }
-
-        const publishTerminal = terminal => {
-            if (this.mounted
-                && this.imageOutputOperation === operation
-                && ['READY', 'UNAVAILABLE', 'INVALID'].includes(terminal?.status)
-            ) {
-                operation.sawTerminal = true
-                this.setState({imageOutputTerminal: terminal}, () => {
-                    this.reconcileDestination()
-                    this.settleInitialLoading(terminal)
-                })
-            }
-        }
-
-        try {
-            const subscription = contract.state$.subscribe({
-                next: publishTerminal,
-                error: () => publishTerminal({
-                    status: 'UNAVAILABLE',
-                    description: null,
-                    diagnostics: [],
-                    error: null
-                }),
-                complete: () => {
-                    if (!operation.sawTerminal) {
-                        publishTerminal({
-                            status: 'UNAVAILABLE',
-                            description: null,
-                            diagnostics: [],
-                            error: null
-                        })
-                    }
-                }
-            })
-            operation.subscription = subscription
-            if (this.imageOutputOperation !== operation) {
-                subscription.unsubscribe()
-            }
-        } catch (_error) {
-            publishTerminal({
-                status: 'UNAVAILABLE',
-                description: null,
-                diagnostics: [],
-                error: null
-            })
-        }
-    }
-
-    stopImageOutputResolution() {
-        const operation = this.imageOutputOperation
-        this.imageOutputOperation = null
-        operation?.subscription?.unsubscribe()
-    }
-
-    // The opening view stands until the resolution has answered AND it has been up long enough to read. A
-    // failure is shown as soon as it arrives, and once the panel is open a later resolution never hides it
-    // again.
-    settleInitialLoading(terminal) {
-        if (this.state.initialLoadingDone || !terminal) {
-            return
-        }
-        if (terminal.status !== 'READY' || this.minimumLoadingElapsed) {
+        if (this.isUnresolved() || this.minimumLoadingElapsed) {
             this.setState({initialLoadingDone: true})
         }
     }
 
     isInitialLoading() {
-        return Boolean(this.props.imageOutputResolution) && !this.state.initialLoadingDone
+        return !this.state.initialLoadingDone
     }
 
-    getImageOutputTerminal() {
-        const {imageOutputResolution} = this.props
-        const {imageOutputResolutionKey, imageOutputTerminal} = this.state
-        return imageOutputResolution && isEqual(imageOutputResolution.key, imageOutputResolutionKey)
-            ? imageOutputTerminal
-            : null
-    }
-
-    // Where this panel owns an output resolution, that resolution is the only authority for what may be
-    // selected, so the choices offered and the description validated and submitted cannot disagree. The
-    // options a recipe type supplies then carry presentation alone, matched by name; they neither add a band
-    // nor withhold one. A panel with no resolution keeps offering exactly what its type supplies.
-    bandChoices() {
-        const {bandOptions, imageOutputResolution} = this.props
-        if (!imageOutputResolution) {
-            return {status: DECLARED_CHOICES, choices: bandOptions}
-        }
-        const terminal = this.getImageOutputTerminal()
-        if (!terminal) {
-            return {status: LOADING_CHOICES}
-        }
-        if (terminal.status !== 'READY') {
-            return {status: UNRESOLVED_CHOICES}
-        }
-        const presentation = new Map((bandOptions || []).flat().map(option => [option.value, option]))
-        return {
-            status: RESOLVED_CHOICES,
-            choices: [terminal.description.output.bands.map(({name}) =>
-                ({label: name, ...presentation.get(name), value: name})
-            )]
-        }
-    }
-
-    getPhysicalDestinationCompatibility() {
-        const terminal = this.getImageOutputTerminal()
-        if (terminal?.status !== 'READY' || !terminal.description?.output?.bands) {
+    // What may be retrieved as the form stands, decided by the one rule the submission decides by. None for a
+    // request that is not about the recipe's output.
+    decision() {
+        const {requestOptions, retrieveOutput, task} = this.props
+        if (requestOptions || !retrieveOutput) {
             return null
         }
-        const {allBands, inputs: {bands, useAllBands}} = this.props
-        return physicalDestinationCompatibility({
-            bands: terminal.description.output.bands,
-            selectedBandNames: bands.value,
-            useAllBands: allBands ? true : useAllBands.value
-        })
+        const {output, pending} = retrieveOutput
+        const {names, retrieveOptions: {destination}} = this.request()
+        return retrieveDecision({output, pending, names, destination, task})
+    }
+
+    request() {
+        const {retrieveOutput: {recipe, output}, selection = physicalSelection} = this.props
+        return selection.request({recipe, output, retrieveOptions: this.formOptions()})
+    }
+
+    formOptions() {
+        const {inputs: {bands, useAllBands, destination}} = this.props
+        return this.withAllBands({bands: bands.value, useAllBands: useAllBands.value, destination: destination.value})
+    }
+
+    // A panel retrieving all bands says so whatever its form holds.
+    withAllBands(retrieveOptions) {
+        return this.props.allBands ? {...retrieveOptions, useAllBands: true} : retrieveOptions
+    }
+
+    isResolving() {
+        return this.decision()?.status === RESOLVING
+    }
+
+    isUnresolved() {
+        const decision = this.decision()
+        return Boolean(decision) && isUnresolved(decision)
+    }
+
+    // What the output lets the user choose from, grouped as the recipe type presents it. A choice the presentation
+    // does not know is still offered, after the groups it does know: presentation decorates the output and never
+    // withholds any of it.
+    bandChoices() {
+        const {bandOptions, requestOptions, retrieveOutput, selection = physicalSelection} = this.props
+        if (requestOptions) {
+            return {status: REQUEST_CHOICES, choices: requestOptions}
+        }
+        if (this.isResolving()) {
+            return {status: LOADING_CHOICES}
+        }
+        if (this.isUnresolved()) {
+            return {status: UNRESOLVED_CHOICES}
+        }
+        return {
+            status: RESOLVED_CHOICES,
+            choices: presentedChoices(selection.choices(retrieveOutput.output), bandOptions)
+        }
+    }
+
+    destinations() {
+        return this.decision()?.destinations || null
     }
 
     isDestinationControlDisabled() {
-        return Boolean(this.props.imageOutputResolution)
-            && this.getImageOutputTerminal()?.status !== 'READY'
+        return this.isResolving() || this.isUnresolved()
     }
 
-    resolvedOutputBlocksSubmission() {
-        if (!this.props.imageOutputResolution) {
-            return false
-        }
-        const terminal = this.getImageOutputTerminal()
-        const compatibility = this.getPhysicalDestinationCompatibility()
-        const destination = this.props.inputs.destination.value
-        return terminal?.status !== 'READY'
-            || compatibility?.selectionStatus !== VALID_SELECTION
-            || compatibility.destinations[destination] === false
+    blocksSubmission() {
+        const decision = this.decision()
+        return Boolean(decision) && decision.status !== RETRIEVABLE
     }
 
-    // Read from the selection that is actually held, against the catalogue as it stands now - so restoring a
-    // band restores the selection with it, and a resolution of something else cannot make a missing band
-    // look present. Retrieval is already blocked by destination compatibility, which reads the same names.
+    // Named in the terms of the selection, against the output as it stands now. Retrieval is blocked by the same
+    // decision, which reads the same names.
     missingSelection() {
-        const available = this.availableBandNames()
-        return available
-            ? (this.props.inputs.bands.value || []).filter(name => !available.has(name))
+        const decision = this.decision()
+        const {selection = physicalSelection} = this.props
+        return decision?.reason === MISSING_SELECTION
+            ? selection.unavailable(decision.missingBandNames, this.formOptions())
             : []
     }
 
-    availableBandNames() {
-        const terminal = this.getImageOutputTerminal()
-        return terminal?.status === 'READY'
-            ? new Set(terminal.description.output.bands.map(({name}) => name))
-            : null
-    }
-
-    // The control offers only bands the catalogue holds, so a selected name it does not hold has no button to
-    // clear it with. Editing the selection is the correction: the edit is kept and the unavailable names go
-    // with it - after they have been named, and after they have blocked retrieval, never in silence.
-    onBandsChange(selection) {
-        const {inputs: {bands}} = this.props
-        const available = this.availableBandNames()
-        bands.set(available ? selection.filter(name => available.has(name)) : selection)
+    // Once the output has answered, a saved choice it no longer offers goes from the selection, and the rest stay.
+    reconcileBands() {
+        const decision = this.decision()
+        if (!decision) {
+            return
+        }
+        const {inputs: {bands}, retrieveOutput, selection = physicalSelection} = this.props
+        const kept = reconciledChoices({decision, saved: bands.value, offered: selection.choices(retrieveOutput.output)})
+        if (kept) {
+            bands.set(kept)
+        }
     }
 
     reconcileDestination() {
-        const compatibility = this.getPhysicalDestinationCompatibility()
+        const destinations = this.destinations()
         const {destination} = this.props.inputs
         const reconciliation = this.state.destinationReconciliation
-        if (!compatibility || compatibility.destinations[destination.value] !== false) {
+        if (!destinations || destinations[destination.value] !== false) {
             if (reconciliation) {
                 this.setState({destinationReconciliation: null})
             }
@@ -776,7 +722,7 @@ class _MosaicRetrievePanel extends React.Component {
 
         const replacement = this.props.toEE
             && isGoogleAccount()
-            && compatibility.destinations.GEE
+            && destinations.GEE
             ? 'GEE'
             : null
         if (destination.value === replacement
@@ -823,6 +769,7 @@ class _MosaicRetrievePanel extends React.Component {
 export const MosaicRetrievePanel = compose(
     _MosaicRetrievePanel,
     connect(mapStateToProps),
+    withRetrieveOutput({isImageOutput: ({requestOptions}) => !requestOptions}),
     recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
     asFunctionalComponent({
         scaleTicks: [10, 15, 20, 30, 60, 100],
@@ -834,25 +781,46 @@ export const MosaicRetrievePanel = compose(
     })
 )
 
+// A panel retrieves the recipe's image output unless it is given `requestOptions`: a request about something else,
+// whose options are the whole truth and which `onRetrieve` submits. Otherwise `bandOptions` only presents what the
+// output holds, `selection` translates what is chosen into the bands it exports (physical names by default),
+// `task` configures the generic image export, and `submitTask` replaces it where the recipe has its own.
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
     defaultScale: PropTypes.number.isRequired,
     defaultShardSize: PropTypes.number.isRequired,
     defaultTileSize: PropTypes.number.isRequired,
-    onRetrieve: PropTypes.func.isRequired,
     allBands: PropTypes.any,
     allowTiling: PropTypes.any,
     bandOptions: PropTypes.array,
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
+    requestOptions: PropTypes.array,
     scaleTicks: PropTypes.array,
+    selection: PropTypes.shape({
+        request: PropTypes.func.isRequired,
+        choices: PropTypes.func.isRequired,
+        unavailable: PropTypes.func.isRequired
+    }),
     single: PropTypes.any,
+    submitTask: PropTypes.func,
+    task: PropTypes.object,
+    toDrive: PropTypes.any,
     toEE: PropTypes.any,
     toSepal: PropTypes.any,
-    toDrive: PropTypes.any,
-    imageOutputResolution: PropTypes.shape({
-        key: PropTypes.any,
-        state$: PropTypes.shape({subscribe: PropTypes.func.isRequired}).isRequired
-    })
+    onRetrieve: PropTypes.func
+}
+
+const presentedChoices = (values, presentationGroups = []) => {
+    const offered = new Set(values)
+    const presented = new Set()
+    const groups = presentationGroups.map(group => group
+        .filter(option => offered.has(option.value) && !presented.has(option.value))
+        .map(option => (presented.add(option.value), option))
+    )
+    const unpresented = values
+        .filter(value => !presented.has(value))
+        .map(value => ({value, label: value}))
+    return [...groups, unpresented].filter(group => group.length)
 }

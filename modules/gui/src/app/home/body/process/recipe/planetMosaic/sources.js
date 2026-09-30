@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {PLANET_SOURCES} from '#sepal/recipe/type/planetMosaic'
 import {msg} from '~/translate'
 
 export const getDataSetOptions = () => {
@@ -10,9 +11,7 @@ export const getDataSetOptions = () => {
     ]
 }
 
-const DATA_SET_IDS = ['NICFI', 'BASEMAPS', 'DAILY']
-
 export const toSources = dataSetIds =>
-    _.intersection(dataSetIds, DATA_SET_IDS).length
-        ? {PLANET: dataSetIds.filter(dataSetId => DATA_SET_IDS.includes(dataSetId))}
+    _.intersection(dataSetIds, PLANET_SOURCES).length
+        ? {PLANET: dataSetIds.filter(dataSetId => PLANET_SOURCES.includes(dataSetId))}
         : {}

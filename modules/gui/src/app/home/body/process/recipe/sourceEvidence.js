@@ -8,10 +8,10 @@ import {withKnownIdentities} from './visualizationMatching'
 
 // Current evidence about the source a recipe inherits its schema from, held in runtime state.
 //
-// A recipe that declares it preserves an input's band mapping and values has that input's CURRENT bands and
-// presets, not the ones copied into its model when the input was selected. This reads what the sync
-// component observed; it is the only reader, so consumers keep asking `getAvailableBands(recipe)` and get a
-// current answer wherever one exists.
+// A recipe that declares it preserves an input's band mapping and values has that input's CURRENT presets, not the
+// ones copied into its model when the input was selected; its bands are its declaration's to describe. This reads
+// what the sync component observed, and is the only reader: the types that inherit answer from it through their own
+// helpers.
 //
 // Runtime only. `recipe.ui` is stripped before persisting, so nothing here is written into a saved recipe,
 // no saved recipe is rewritten, and a session that never observes simply has no evidence.
@@ -48,31 +48,17 @@ export const currentSourceEvidence = recipe => {
         : null
 }
 
-// What a consumer should present, and how much it is worth.
-//
-// An observation that FAILED withholds everything. The source could not be reached, and answering with the
-// bands a saved recipe remembers would present as current a schema nothing has verified - which is the
-// stale render this mechanism exists to prevent. Nothing is drawn and nothing is exportable, which is the
-// controlled state.
-//
-// Not having observed yet is a different thing, and the copied snapshot remains the answer for it: no worse
-// than what every consumer read before this existed, and it keeps a Masking layer opened inside another
-// recipe's map - where nothing is observing - rendering as it always has.
+// The presets a consumer offers from what its source offers. An observation that FAILED offers none: presenting the
+// styles a saved recipe remembers would present as current what nothing has verified. Not having observed yet is
+// different, and the copied snapshot remains the answer for it, which keeps a Masking layer opened inside another
+// recipe's map - where nothing is observing - offering what it always has.
 export const sourceEvidenceOr = (recipe, snapshot) => {
     const evidence = currentSourceEvidence(recipe)
     if (evidence?.status === UNAVAILABLE) {
-        return {bands: [], visualizations: [], availability: UNAVAILABLE}
+        return {visualizations: []}
     }
     if (evidence?.status === OBSERVED) {
-        return {
-            bands: evidence.bands,
-            visualizations: withKnownIdentities(evidence.visualizations, snapshot?.visualizations),
-            availability: OBSERVED
-        }
+        return {visualizations: withKnownIdentities(evidence.visualizations, snapshot?.visualizations)}
     }
-    return {
-        bands: (snapshot?.bands || []).map(name => ({name})),
-        visualizations: snapshot?.visualizations || [],
-        availability: UNOBSERVED
-    }
+    return {visualizations: snapshot?.visualizations || []}
 }

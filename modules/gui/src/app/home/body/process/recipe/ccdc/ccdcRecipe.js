@@ -1,13 +1,16 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {ccdcMeasures} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {TEMPORAL_PLANET_BANDS} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+import {pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
-import {getAllVisualizations as recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
 import {selectFrom} from '~/stateUtils'
@@ -82,16 +85,6 @@ export const RecipeActions = id => {
                 .build()
                 .dispatch()
         },
-
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
         setClassification({classificationLegend, classifierType} = {}) {
             actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
                 .set('ui.classification', {classificationLegend, classifierType})
@@ -102,7 +95,7 @@ export const RecipeActions = id => {
 
 export const getAllVisualizations = recipe => {
     return !_.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
-        ? allRadarMosaicVisualizations(recipe)
+        ? allRadarMosaicVisualizations()
         : Object.keys(selectFrom(recipe, ['model.sources.dataSets'])).find(source => ['LANDSAT', 'SENTINEL_2'].includes(source))
             ? allOpticalMosaicVisualizations(recipe)
             : allPlanetMosaicVisualizations(recipe)
@@ -116,7 +109,8 @@ const allOpticalMosaicVisualizations = recipe => {
             compositeOptions: selectFrom(recipe, 'model.options')
         }
     }
-    const baseVisualizations = recipeVisualizations(opticalMosaicRecipe)
+    // Templates for the measures this CCDC fits, which its declaration derives from the same optical model.
+    const baseVisualizations = recipeVisualizationsNaming(opticalMosaicRecipe, ccdcMeasures({model: recipe.model}))
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
@@ -130,15 +124,9 @@ const allOpticalMosaicVisualizations = recipe => {
 }
 
 const RADAR_BAND_SCALE = 100
-const allRadarMosaicVisualizations = recipe => {
-    const radarMosaicRecipe = {
-        type: 'RADAR_MOSAIC',
-        model: {
-            options: selectFrom(recipe, 'model.options')
-        }
-    }
+const allRadarMosaicVisualizations = () => {
     return [
-        ...recipeVisualizations(radarMosaicRecipe)
+        ...pointInTimeVisualizations()
             .map(visParams => ({
                 ...visParams,
                 min: visParams.min.map(min => min * RADAR_BAND_SCALE),
@@ -170,7 +158,7 @@ const allPlanetMosaicVisualizations = recipe => {
             }
         }
     }
-    const baseVisualizations = recipeVisualizations(planetMosaicRecipe)
+    const baseVisualizations = recipeVisualizationsNaming(planetMosaicRecipe, TEMPORAL_PLANET_BANDS.flat())
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
@@ -191,9 +179,13 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
         recipe, latLng, bands
     })
 
-const submitRetrieveRecipeTask = recipe => {
+// CCDC's own export: the measures asked for, fitted with the breakpoint bands and exported with every band they
+// produce, under `sample` throughout (modules/task/src/tasks/ccdcAssetExport.js). The templates attached are all
+// CCDC offers; the task keeps those whose bands the export derives - `red`, `red_intercept`, `red_phase_1` - which
+// no filter over the stored `red_coefs` could decide.
+export const submitRetrieveTask = ({recipe, retrieveOptions}) => {
     const name = recipe.title || recipe.placeholder
-    const bands = recipe.ui.retrieveOptions.bands
+    const bands = retrieveOptions.bands
     const destination = 'GEE'
     const taskTitle = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
@@ -215,7 +207,7 @@ const submitRetrieveRecipeTask = recipe => {
             title: taskTitle,
             description: name,
             image: {
-                ...recipe.ui.retrieveOptions,
+                ...retrieveOptions,
                 recipe: _.omit(recipe, ['ui']),
                 bands,
                 visualizations,
@@ -224,7 +216,7 @@ const submitRetrieveRecipeTask = recipe => {
             taskInfo: getTaskInfo({
                 recipe,
                 destination,
-                retrieveOptions: recipe.ui.retrieveOptions
+                retrieveOptions
             })
         }
     }

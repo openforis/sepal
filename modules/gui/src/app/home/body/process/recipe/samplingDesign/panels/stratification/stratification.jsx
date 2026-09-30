@@ -4,8 +4,9 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -223,7 +224,7 @@ class _Stratification extends React.Component {
             <RecipeInput
                 label={msg('process.samplingDesign.panel.stratification.form.stratification.label')}
                 input={recipeId}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 labelButtons={[this.renderType()]}
                 autoFocus
                 onChange={this.onImageChanged}
@@ -570,7 +571,7 @@ class _Stratification extends React.Component {
                 recipeId: recipe.id
             },
         })
-        this.onImageLoaded(bands, getAllVisualizations(recipe))
+        this.onImageLoaded(bands, recipeVisualizationsNaming(recipe, bands))
     }
 
     onImageLoaded(bands, visualizations) {

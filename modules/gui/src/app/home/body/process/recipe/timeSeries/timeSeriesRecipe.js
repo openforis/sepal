@@ -62,7 +62,7 @@ export const RecipeActions = id => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
+export const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const destination = 'SEPAL'
     const taskTitle = msg(['process.retrieve.form.task.SEPAL'], {name})

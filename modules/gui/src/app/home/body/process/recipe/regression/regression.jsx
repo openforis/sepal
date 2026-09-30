@@ -8,9 +8,9 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {RegressionToolbar} from './panels/regressionToolbar'
-import {getDefaultModel, RecipeActions} from './regressionRecipe'
+import {getDefaultModel} from './regressionRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -25,7 +25,6 @@ class _Regression extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers
@@ -58,9 +57,10 @@ export default () => ({
     components: {
         recipe: Regression
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

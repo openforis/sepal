@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {getDefaultModel, RecipeActions} from './classificationRecipe'
 import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {ClassificationToolbar} from './panels/classificationToolbar'
@@ -90,9 +90,10 @@ export default () => ({
     components: {
         recipe: Classification
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

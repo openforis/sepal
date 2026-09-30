@@ -1,11 +1,13 @@
-import {Observable, Subscriber, Subscription} from 'rxjs'
+import {map, Observable, Subscriber, Subscription} from 'rxjs'
 
 import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
+import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
 import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
+import {recipeContent} from '../recipe/recipeContent'
 import {createLoadRecipesById$} from './recipeClosureLoader'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
@@ -21,15 +23,20 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // public cancellation. The stream never errors - a failed observation, a broken environment and an unexpected
 // throw all become a terminal UNAVAILABLE carrying the original error - so no consumer has to defend the error
 // channel to stay correct.
+//
+// A terminal answers two questions about the one closure this operation completed: what the recipe's output is,
+// from what its providers read, and whether its dependencies are structurally sound, from the whole closure.
+// `dependencyValidity` is null where the operation ended before its closure said anything. `basis` is the content
+// of every record that closure read, so a caller holding the answer can tell whether it is still about the
+// records it now has.
+//
+// `completeDependencies$` is the same operation stopped after its closure: validity without describing, for a
+// caller whose bands are already known and must not be failed by a description it never needed.
+//
+// `identity$` is for a caller whose answer outlives the operation that produced it: an opaque token on
+// subscription and a fresh one on each credential change, completing when the owning scope ends.
 
 const PENDING = 'PENDING'
-
-const loadingState = () => ({
-    status: 'LOADING',
-    description: null,
-    diagnostics: [],
-    error: null
-})
 
 export const createSourceRuntime = ({
     environment$,
@@ -37,14 +44,15 @@ export const createSourceRuntime = ({
     completeClosure$ = completeRecipeClosure$,
     loadRecipesById$ = createLoadRecipesById$(),
     closureLimits = DEFAULT_RECIPE_CLOSURE_LIMITS
-}) => ({
-    resolveImageOutput$: ({recipe}) => new Observable(subscriber => {
+}) => {
+    const operation$ = ({recipe, describes}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
         // from inside a subscriber reacting to it, both re-enter here while setup is still running; without this
         // the operation would be publishing before it owned the work it was publishing about.
         let settled = false
         let observer = null
         let captured = null
+        let closureOutcome = null
         let loadingPublished = false
         const work = new Subscription()
 
@@ -60,22 +68,25 @@ export const createSourceRuntime = ({
                 return
             }
             settled = true
-            subscriber.next(envelope)
+            subscriber.next({
+                ...envelope,
+                dependencyValidity: closureOutcome ? dependencyValidity(closureOutcome) : null,
+                basis: closureOutcome ? basisOf(closureOutcome.graph) : []
+            })
             release()
             subscriber.complete()
         }
 
-        const unavailable = error => terminate({
-            status: 'UNAVAILABLE',
-            description: null,
-            diagnostics: [],
-            error
-        })
+        const unavailable = error => terminate(describes
+            ? {status: 'UNAVAILABLE', description: null, diagnostics: [], error}
+            : {status: 'UNAVAILABLE', error})
 
         const publishLoading = () => {
             if (!settled && !loadingPublished) {
                 loadingPublished = true
-                subscriber.next(loadingState())
+                subscriber.next(describes
+                    ? {status: 'LOADING', description: null, diagnostics: [], error: null}
+                    : {status: 'LOADING', error: null})
             }
         }
 
@@ -116,7 +127,13 @@ export const createSourceRuntime = ({
                         if (state.status === 'LOADING') {
                             publishLoading()
                         } else if (state.status === 'COMPLETE') {
-                            observe(state.graph)
+                            closureOutcome = state
+                            describes
+                                ? observe(state.graph)
+                                : terminate({status: 'COMPLETE', error: null})
+                        } else if (state.status === 'FAILED') {
+                            // What the failed closure had established, for the failure it is about to deliver.
+                            closureOutcome = state
                         } else {
                             unavailable(new Error(`Source runtime: unexpected closure state ${state.status}`))
                         }
@@ -164,4 +181,13 @@ export const createSourceRuntime = ({
             release()
         }
     })
-})
+
+    return {
+        resolveImageOutput$: ({recipe}) => operation$({recipe, describes: true}),
+        completeDependencies$: ({recipe}) => operation$({recipe, describes: false}),
+        // Every environment emission after the first is a credential change; a catalogue change emits nothing.
+        identity$: () => environment$.pipe(map(() => ({})))
+    }
+}
+
+const basisOf = graph => graph.recipes.map(record => ({id: record.id, content: recipeContent(record)}))

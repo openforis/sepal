@@ -80,15 +80,6 @@ const changeAlertsRecipe = {
     }
 }
 
-const radarMosaicRecipe = (id, dates) => ({
-    id,
-    type: 'RADAR_MOSAIC',
-    model: {aoi: AOI, dates, options: RADAR_OPTIONS}
-})
-
-const radarTimeScan = radarMosaicRecipe('radar-time-scan', {fromDate: '2021-01-01', toDate: '2022-01-01'})
-const radarPointInTime = radarMosaicRecipe('radar-point-in-time', {targetDate: '2021-03-01'})
-
 // The historical statistics BAYTS alerts are detected against, held in memory like the CCDC reference rather
 // than read from a saved asset, so the fixture needs nothing the caller had to create first.
 const baytsHistoricalRecipe = {
@@ -119,31 +110,22 @@ const baytsAlertsRecipe = {
 const CATALOGUE = {
     [ccdcRecipe.id]: ccdcRecipe,
     [changeAlertsRecipe.id]: changeAlertsRecipe,
-    [radarTimeScan.id]: radarTimeScan,
-    [radarPointInTime.id]: radarPointInTime,
     [baytsHistoricalRecipe.id]: baytsHistoricalRecipe,
     [baytsAlertsRecipe.id]: baytsAlertsRecipe
 }
 
 const FIXTURES = [
     {
+        // A map product: a count of the observations segmentation would fit, which runs no segmentation. It is asked
+        // for as a map layer asks, never as an export, which is not something a map product is.
+        name: 'CCDC count map product',
+        recipe: ccdcRecipe,
+        args: {visualizationType: 'COUNT'},
+        mapProduct: true
+    },
+    {
         name: 'Change Alerts change product',
         recipe: changeAlertsRecipe
-    },
-    {
-        name: 'Radar Mosaic time scan',
-        recipe: radarTimeScan
-    },
-    {
-        name: 'Radar Mosaic time scan, harmonic-dependent selection',
-        recipe: radarTimeScan,
-        args: {selection: ['VV_phase']}
-    },
-    {
-        // Which bands an unrequested point-in-time composite should carry is a recorded product decision, so
-        // what it builds beyond the declared list is reported, not judged.
-        name: 'Radar Mosaic point in time',
-        recipe: radarPointInTime
     },
     {
         name: 'BAYTS Alerts alert product',
@@ -219,12 +201,13 @@ const reorderedSubset = declared => declared.filter((_band, index) => index % 2 
 
 // A fixture with no arguments passes none, rather than an empty object: a producer's own defaults are part of
 // what it builds, and several apply only to an absent argument.
-const check = async ({name, recipe, args}) => {
+const check = async ({name, recipe, args, mapProduct}) => {
+    const request = selection => mapProduct ? {selection} : withOutputBands({selection})
     try {
         const declared = await firstValueFrom(imageFactory(recipe, args).getBands$())
-        const asDeclared = await bandNamesOf(recipe, {...args, ...withOutputBands({selection: declared})})
+        const asDeclared = await bandNamesOf(recipe, {...args, ...request(declared)})
         const subset = reorderedSubset(declared)
-        const asSubset = await bandNamesOf(recipe, {...args, ...withOutputBands({selection: subset})})
+        const asSubset = await bandNamesOf(recipe, {...args, ...request(subset)})
         const asAsked = await bandNamesOf(recipe, args)
         const missing = missingFrom(declared, asDeclared)
         const disagrees = missing.length

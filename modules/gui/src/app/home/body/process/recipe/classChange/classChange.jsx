@@ -9,7 +9,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {defaultModel} from './classChangeRecipe'
 import {ClassChangeToolbar} from './panels/classChangeToolbar'
 import {getPreSetVisualizations} from './visualizations'
@@ -61,7 +61,8 @@ export default () => ({
     components: {
         recipe: ClassChange
     },
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

@@ -1,11 +1,16 @@
+import {RADAR_MEASURES} from '#sepal/recipe/radar/collectionMeasures'
+import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getAvailableBands as getAvailablePlanetBands, getGroupedBandOptions as getGroupedPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {TEMPORAL_PLANET_BANDS, temporalPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {toSources as toPlanetSources} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getAvailableBands as getAvailableRadarBands, getGroupedBandOptions as getGroupedRadarBandOptions} from '~/app/home/body/process/recipe/radarMosaic/bands'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet, toSources as toRadarSources} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {
+    getDataSetOptions as radarDataSetOptions,
+    groupedMeasureOptions as groupedRadarMeasureOptions,
+    isRadarDataSet,
+    toSources as toRadarSources
+} from '~/app/home/body/process/recipe/radarMosaic/sources'
 
-import {supportProbability, supportRegression} from './app/home/body/process/recipe/classification/classificationRecipe'
 import {msg} from './translate'
 
 export const groupedDataSetOptions = ({dataSetIds, startDate, endDate}) => {
@@ -41,21 +46,14 @@ export const getAvailableBands = ({
     } = {}
 }) => {
     const dataSetIds = dataSets || (dataSetId ? [dataSetId] : [])
-    const dataSetBands = Object.keys(
-        dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
-            ? getAvailableOpticalBands(
-                toOpticalRecipe({dataSetIds, corrections}),
-                ['indexes', 'dataSetBands']
-            )
-            : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
-                ? getAvailableRadarBands(
-                    toRadarRecipe(),
-                    ['indexes', 'dataSetBands']
-                )
-                : getAvailablePlanetBands(
-                    toPlanetRecipe(),
-                    ['indexes', 'dataSetBands'])
-    )
+    const dataSetBands = dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
+        ? Object.keys(getAvailableOpticalBands(
+            toOpticalRecipe({dataSetIds, corrections}),
+            ['indexes', 'dataSetBands']
+        ))
+        : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
+            ? RADAR_MEASURES
+            : TEMPORAL_PLANET_BANDS.flat()
     const classificationBands = getClassificationBands(classifierType, classificationLegend, include)
     return [...dataSetBands, ...classificationBands]
 }
@@ -82,16 +80,10 @@ export const groupedBandOptions = ({
         )
 
     const getRadarOptions = () =>
-        getGroupedRadarBandOptions(
-            toRadarRecipe(),
-            ['indexes', 'dataSetBands']
-        )
+        groupedRadarMeasureOptions()
 
     const getPlanetOptions = () =>
-        getGroupedPlanetBandOptions(
-            toPlanetRecipe(),
-            ['indexes', 'dataSetBands']
-        )
+        temporalPlanetBandOptions()
 
     const classificationOptions =
         getClassificationOptions(classifierType, classificationLegend, include)
@@ -129,18 +121,6 @@ const toOpticalRecipe = ({dataSetIds, corrections}) =>
             corrections,
             compose: 'MEDIAN'
         }
-    }})
-
-const toRadarRecipe = () =>
-    ({model: {
-        type: 'RADAR_MOSAIC',
-        dates: {
-            targetDate: '9999-01-01'
-        }
-    }})
-const toPlanetRecipe = () =>
-    ({model: {
-        type: 'PLANET_MOSAIC'
     }})
 
 const getClassificationBands = (classifierType, classificationLegend, include) => classifierType && classificationLegend

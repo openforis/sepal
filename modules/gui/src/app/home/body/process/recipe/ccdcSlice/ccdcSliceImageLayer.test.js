@@ -51,7 +51,8 @@ const sliceShowing = (templates, segmentBands = ['tStart', 'tBreak']) => ({
 const offeredBy = recipe => new CCDCSliceImageLayer({
     recipe,
     source: {id: 'this-recipe'},
-    layerConfig: {}
+    layerConfig: {},
+    imageOutput: {availableBands: {}}
 }).renderImageLayerForm().props.presetOptions[0].options
 
 const offered = templates => offeredBy(sliceShowing(templates))

@@ -13,7 +13,7 @@ import {sourceKeyOf} from '../sourceEvidence'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {defaultModel, preSetVisualizations, RecipeActions} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {availableBandsOf, selectedSource} from './sliceEvidence'
+import {selectedSource} from './sliceEvidence'
 import {resolveEvidence$, sliceObservation} from './sliceObservation'
 
 const mapRecipeToProps = recipe => ({
@@ -63,11 +63,11 @@ export default () => ({
     components: {
         recipe: CcdcSlice
     },
+    imageSource: true,
     getDateRange(recipe) {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
     resolveEvidence$,
-    getAvailableBands: (recipe, evidence) => availableBandsOf(recipe, evidence?.segments),
     getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments)
 })

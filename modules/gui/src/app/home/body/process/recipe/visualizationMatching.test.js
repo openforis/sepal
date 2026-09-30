@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     findVisualization,
+    reconciledSelection,
     renderableVisualizations,
     selectionState,
     visualizationsWithAvailableBands,
@@ -69,6 +70,23 @@ describe('selectionState', () => {
     })
 })
 
+describe('reconciledSelection', () => {
+    const first = preset(['ndvi'])
+    const second = userDefined('v2', ['evi'])
+
+    it.each([
+        ['nothing while nothing is offered, keeping the saved selection', [], {bands: ['gone']}, undefined],
+        ['nothing for a selection naming a candidate as it is', [first, second], second, undefined],
+        ['the first candidate when nothing is selected', [first, second], undefined, first],
+        ['the first candidate for a selection no candidate matches', [first, second],
+            {id: 'gone', bands: ['evi']}, first],
+        ['the candidate\'s current definition for a selection naming an edited one', [first, second],
+            {id: 'v2', bands: ['ndvi']}, second]
+    ])('writes %s', (_name, visualizations, visParams, expected) => {
+        expect(reconciledSelection({visualizations, visParams})).toBe(expected)
+    })
+})
+
 describe('visualizationsWithAvailableBands', () => {
     it('drops a visualization naming a band that no longer exists', () => {
         const valid = userDefined('valid', ['ndvi'])
@@ -115,13 +133,13 @@ describe('renderable visualizations', () => {
         expect(renderableVisualizations([{id: 'a', bands: ['removed']}], bands)).toEqual([])
     })
 
-    // Never observed is not the same as scalar, and guessing either way would be inventing evidence.
-    it('keeps a style over a band whose type was never observed', () => {
-        expect(renderableVisualizations([{id: 'a', bands: ['unknown']}], bands).map(({id}) => id)).toEqual(['a'])
+    // Unknown is not scalar: only a band established as one can be drawn.
+    it('drops a style over a band whose dimensionality is not established', () => {
+        expect(renderableVisualizations([{id: 'a', bands: ['unknown']}], bands)).toEqual([])
     })
 
-    it('keeps everything when nothing is known about any band', () => {
-        expect(renderableVisualizations([{id: 'a', bands: ['ndvi']}], {ndvi: {}}).map(({id}) => id)).toEqual(['a'])
+    it('offers nothing when nothing is established about any band', () => {
+        expect(renderableVisualizations([{id: 'a', bands: ['ndvi']}], {ndvi: {}})).toEqual([])
     })
 })
 

@@ -1,16 +1,28 @@
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
-import {Observable, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
+// The Retrieve panel at its boundary: given its recipe's output read - as the panel's owner reads it for each render,
+// and again for a submission - it decides which destinations and whether Apply are available, and submits through
+// the task it is given. The read's acquisition is its owner's and is not under test here.
 
 const capture = vi.hoisted(() => ({
     destinationButtons: null,
     googleAccount: true,
     onApply: null,
-    panelButtons: null
+    panelButtons: null,
+    read: null,
+    rerender: null
 }))
+
+vi.mock('~/app/home/body/process/recipe/withRetrieveOutput', () => ({
+    withRetrieveOutput: ({isImageOutput = () => true} = {}) => Component => props => isImageOutput(props)
+        ? <Component {...props} retrieveOutput={capture.read} readRetrieveOutput={() => capture.read}/>
+        : <Component {...props}/>
+}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 
 vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     RecipeFormPanel: ({children, onApply}) => {
@@ -60,16 +72,52 @@ const band = (name, arrayDimensions, pyramidingPolicy) => ({
     ...(pyramidingPolicy && {pyramidingPolicy})
 })
 
+const RECIPE = {id: 'recipe-1', type: 'SYNTHETIC', model: {}}
+
 const description = bands => ({
-    executionReference: {type: 'RECIPE_REF', id: 'recipe-1'},
+    executionReference: {type: 'RECIPE_REF', id: RECIPE.id},
     output: {bands}
 })
 
-const ready = bands => ({
-    status: 'READY',
-    description: description(bands),
-    diagnostics: [],
-    error: null
+// A described answer, as the common read gives one.
+const ready = (bands, dependencyValidity = {status: 'VALID', diagnostics: []}) => ({
+    recipe: RECIPE,
+    pending: false,
+    output: {
+        status: 'READY',
+        authority: 'DESCRIBED',
+        description: description(bands),
+        bands,
+        presentation: {},
+        availableBands: {},
+        dependencyValidity,
+        diagnostics: [],
+        error: null,
+        acquisition: null
+    }
+})
+
+const failed = status => ({
+    recipe: RECIPE,
+    pending: false,
+    output: {
+        status,
+        authority: null,
+        description: null,
+        bands: [],
+        presentation: {},
+        availableBands: {},
+        dependencyValidity: null,
+        diagnostics: [],
+        error: new Error('private transport detail'),
+        acquisition: {kind: 'DESCRIBE', key: {}}
+    }
+})
+
+const resolving = () => ({
+    recipe: RECIPE,
+    pending: true,
+    output: {...failed('NEEDS_EVIDENCE').output, error: null}
 })
 
 const input = (name, value) => {
@@ -100,24 +148,7 @@ const inputs = ({bands = [], destination = 'DRIVE', useAllBands = false} = {}) =
     crsTransform: input('crsTransform', '')
 })
 
-const trackedResolution = () => {
-    const subject = new Subject()
-    const state = {subscriptions: 0, teardowns: 0}
-    return {
-        state,
-        next: value => act(() => subject.next(value)),
-        state$: new Observable(subscriber => {
-            state.subscriptions++
-            const subscription = subject.subscribe(subscriber)
-            return () => {
-                state.teardowns++
-                subscription.unsubscribe()
-            }
-        })
-    }
-}
-
-const baseProps = ({formInputs, imageOutputResolution, onRetrieve = vi.fn(), ...overrides} = {}) => ({
+const baseProps = ({formInputs, submitTask = vi.fn(), ...overrides} = {}) => ({
     allBands: false,
     allowTiling: false,
     bandOptions: [[
@@ -133,7 +164,9 @@ const baseProps = ({formInputs, imageOutputResolution, onRetrieve = vi.fn(), ...
     defaultTileSize: 2,
     form: {isInvalid: () => false},
     inputs: formInputs || inputs(),
-    onRetrieve,
+    submitTask,
+    // Every declared type's migration fallback, for its verified scalar bands.
+    task: {fallbackPyramidingPolicy: {'.default': 'mean'}},
     projectId: null,
     projects: [],
     recipePlaceholder: 'recipe',
@@ -143,7 +176,6 @@ const baseProps = ({formInputs, imageOutputResolution, onRetrieve = vi.fn(), ...
     toDrive: true,
     toEE: true,
     toSepal: true,
-    ...(imageOutputResolution && {imageOutputResolution}),
     ...overrides
 })
 
@@ -156,16 +188,15 @@ const mount = initialProps => {
         props = next || props
         act(() => root.render(<MosaicRetrievePanel {...props}/>))
     }
+    capture.rerender = () => render()
     render()
     return {container, render, root}
 }
 
-const outputOperation = (key = {id: 'recipe-1'}) => {
-    const resolution = trackedResolution()
-    return {
-        resolution,
-        contract: {key, state$: resolution.state$}
-    }
+// The read answering, as the panel's owner re-renders it when its acquisition settles.
+const answer = read => {
+    capture.read = read
+    act(() => capture.rerender())
 }
 
 const option = value => capture.destinationButtons?.options.find(option => option.value === value)
@@ -185,6 +216,8 @@ const passMinimum = () => act(() => vi.advanceTimersByTime(MINIMUM_LOADING_MS + 
 
 beforeEach(() => {
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+    capture.read = resolving()
+    capture.rerender = null
     capture.destinationButtons = null
     capture.googleAccount = true
     capture.onApply = null
@@ -198,10 +231,9 @@ afterEach(() => {
 
 describe('resolved image-output destination compatibility', () => {
     it('keeps all-array destinations visible but disables Drive and SEPAL for an empty manual selection', () => {
-        const {contract, resolution} = outputOperation()
-        mount(baseProps({formInputs: inputs({bands: []}), imageOutputResolution: contract}))
+        mount(baseProps({formInputs: inputs({bands: []})}))
 
-        resolution.next(ready([band('first', 1, 'sample'), band('second', 2, 'sample')]))
+        answer(ready([band('first', 1, 'sample'), band('second', 2, 'sample')]))
         passMinimum()
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
@@ -211,50 +243,45 @@ describe('resolved image-output destination compatibility', () => {
     })
 
     it('keeps Drive and SEPAL available for an empty manual selection when a verified scalar exists', () => {
-        const {contract, resolution} = outputOperation()
-        mount(baseProps({formInputs: inputs({bands: []}), imageOutputResolution: contract}))
+        mount(baseProps({formInputs: inputs({bands: []})}))
 
-        resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
     })
 
     it('permits every configured destination for a scalar-only manual selection', () => {
-        const {contract, resolution} = outputOperation()
-        mount(baseProps({formInputs: inputs({bands: ['scalar']}), imageOutputResolution: contract}))
+        mount(baseProps({formInputs: inputs({bands: ['scalar']})}))
 
-        resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
     })
 
     it('switches a selected scalar-renderer destination to GEE when an array band is added', () => {
-        const operation = outputOperation()
         const scalarInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
-        const mounted = mount(baseProps({formInputs: scalarInputs, imageOutputResolution: operation.contract}))
-        operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        const mounted = mount(baseProps({formInputs: scalarInputs}))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
         expect(scalarInputs.destination.set).not.toHaveBeenCalled()
 
         const mixedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
-        mounted.render(baseProps({formInputs: mixedInputs, imageOutputResolution: operation.contract}))
+        mounted.render(baseProps({formInputs: mixedInputs}))
 
         expect(mixedInputs.destination.set).toHaveBeenCalledWith('GEE')
         expect(capture.panelButtons.invalid).toBe(true)
     })
 
     it('clears an invalid non-GEE destination when GEE is unavailable', () => {
-        const operation = outputOperation()
         const formInputs = inputs({bands: ['array'], destination: 'DRIVE'})
         const mounted = mount(baseProps({
             formInputs,
-            imageOutputResolution: operation.contract,
             toEE: false
         }))
 
-        operation.resolution.next(ready([band('array', 1, 'sample')]))
+        answer(ready([band('array', 1, 'sample')]))
         passMinimum()
 
         expect(formInputs.destination.set).toHaveBeenCalledWith(null)
@@ -262,35 +289,31 @@ describe('resolved image-output destination compatibility', () => {
         const clearedInputs = inputs({bands: ['array'], destination: null})
         mounted.render(baseProps({
             formInputs: clearedInputs,
-            imageOutputResolution: operation.contract,
             toEE: false
         }))
         expect(clearedInputs.destination.set).not.toHaveBeenCalled()
     })
 
     it('re-enables non-GEE destinations after removing arrays without switching away from GEE', () => {
-        const operation = outputOperation()
         const mixedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
-        const mounted = mount(baseProps({formInputs: mixedInputs, imageOutputResolution: operation.contract}))
-        operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        const mounted = mount(baseProps({formInputs: mixedInputs}))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
         expect(mixedInputs.destination.set).toHaveBeenCalledWith('GEE')
 
         const scalarInputs = inputs({bands: ['scalar'], destination: 'GEE'})
-        mounted.render(baseProps({formInputs: scalarInputs, imageOutputResolution: operation.contract}))
+        mounted.render(baseProps({formInputs: scalarInputs}))
 
         expectEnabled('DRIVE', 'SEPAL')
         expect(scalarInputs.destination.set).not.toHaveBeenCalled()
     })
 
     it('permits only GEE when useAllBands covers a mixed schema', () => {
-        const operation = outputOperation()
         mount(baseProps({
-            formInputs: inputs({bands: ['scalar'], useAllBands: true}),
-            imageOutputResolution: operation.contract
+            formInputs: inputs({bands: ['scalar'], useAllBands: true})
         }))
 
-        operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
 
         expectEnabled('GEE')
@@ -299,13 +322,9 @@ describe('resolved image-output destination compatibility', () => {
 
     it('applies the allBands prop to a synchronously resolved schema during mount', () => {
         const formInputs = inputs({bands: [], destination: 'DRIVE', useAllBands: false})
-        const terminal = ready([band('array', 1, 'sample'), band('scalar', 0)])
+        capture.read = ready([band('array', 1, 'sample'), band('scalar', 0)])
 
-        mount(baseProps({
-            allBands: true,
-            formInputs,
-            imageOutputResolution: {key: {id: 'recipe-1'}, state$: of(terminal)}
-        }))
+        mount(baseProps({allBands: true, formInputs}))
         passMinimum()
 
         expect(formInputs.useAllBands.set).toHaveBeenCalledWith(true)
@@ -315,13 +334,11 @@ describe('resolved image-output destination compatibility', () => {
     })
 
     it('permits all configured destinations when useAllBands covers only verified scalars', () => {
-        const operation = outputOperation()
         mount(baseProps({
-            formInputs: inputs({bands: [], useAllBands: true}),
-            imageOutputResolution: operation.contract
+            formInputs: inputs({bands: [], useAllBands: true})
         }))
 
-        operation.resolution.next(ready([band('first', 0), band('second', 0)]))
+        answer(ready([band('first', 0), band('second', 0)]))
         passMinimum()
 
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
@@ -330,26 +347,23 @@ describe('resolved image-output destination compatibility', () => {
     it.each([
         ['unknown dimensionality', [band('unknown', undefined, 'sample')], ['unknown']],
         ['a selected band absent from the description', [band('scalar', 0)], ['missing']]
-    ])('fails closed for %s', (_name, outputBands, selectedBands) => {
-        const operation = outputOperation()
+    ])('fails closed for %s, blocking Apply without clearing the destination', (_name, outputBands, selectedBands) => {
         mount(baseProps({
-            formInputs: inputs({bands: selectedBands}),
-            imageOutputResolution: operation.contract
+            formInputs: inputs({bands: selectedBands})
         }))
 
-        operation.resolution.next(ready(outputBands))
+        answer(ready(outputBands))
         passMinimum()
 
-        expectDisabled('GEE', 'DRIVE', 'SEPAL')
         expect(capture.panelButtons.invalid).toBe(true)
+        expect(capture.destinationButtons.value).not.toBe(null)
     })
 })
 
 describe('resolution and submission lifecycle', () => {
     it('withholds the destination control without changing its selection until scalar output resolves', () => {
-        const operation = outputOperation()
         const formInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
-        mount(baseProps({formInputs, imageOutputResolution: operation.contract}))
+        mount(baseProps({formInputs}))
 
         expect(capture.destinationButtons).toBe(null)
         expect(capture.panelButtons.invalid).toBe(true)
@@ -361,7 +375,7 @@ describe('resolution and submission lifecycle', () => {
 
         expect(capture.destinationButtons).toBe(null)
 
-        operation.resolution.next(ready([band('scalar', 0)]))
+        answer(ready([band('scalar', 0)]))
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
         expect(formInputs.destination.value).toBe('DRIVE')
@@ -371,17 +385,11 @@ describe('resolution and submission lifecycle', () => {
     it.each(['UNAVAILABLE', 'INVALID'])(
         'disables Apply and destination after %s without rendering the raw error',
         status => {
-            const operation = outputOperation()
-            const {container} = mount(baseProps({imageOutputResolution: operation.contract}))
+            const {container} = mount(baseProps())
 
             expect(capture.panelButtons.invalid).toBe(true)
             expect(capture.destinationButtons).toBe(null)
-            operation.resolution.next({
-                status,
-                description: null,
-                diagnostics: [],
-                error: new Error('private transport detail')
-            })
+            answer(failed(status))
             // Shown as soon as it arrives - the opening minimum is never waited out here.
             expect(capture.panelButtons.invalid).toBe(true)
             expect(capture.destinationButtons.disabled).toBe(true)
@@ -389,116 +397,97 @@ describe('resolution and submission lifecycle', () => {
         }
     )
 
+    // A description is what the recipe's providers read; whether it can run depends on the whole closure.
+    it.each([
+        ['unsound', {status: 'INVALID', diagnostics: [{code: 'CYCLIC_DEPENDENCY'}]}],
+        ['of unknown soundness', null]
+    ])('disables Apply and destination for a description whose dependencies are %s', (_name, dependencyValidity) => {
+        const submitTask = vi.fn()
+        mount(baseProps({submitTask}))
+
+        answer(ready([band('scalar', 0)], dependencyValidity))
+
+        expect(capture.panelButtons.invalid).toBe(true)
+        expect(capture.destinationButtons.disabled).toBe(true)
+        expect(submitTask).not.toHaveBeenCalled()
+    })
+
     it('prevents Apply from racing a stale destination during reconciliation', () => {
-        const onRetrieve = vi.fn()
-        const operation = outputOperation()
+        const submitTask = vi.fn()
         const formInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
-        const mounted = mount(baseProps({formInputs, imageOutputResolution: operation.contract, onRetrieve}))
-        operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+        const mounted = mount(baseProps({formInputs, submitTask}))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
 
         const changedInputs = inputs({bands: ['scalar', 'array'], destination: 'DRIVE'})
-        mounted.render(baseProps({formInputs: changedInputs, imageOutputResolution: operation.contract, onRetrieve}))
-        mounted.render(baseProps({formInputs: changedInputs, imageOutputResolution: operation.contract, onRetrieve}))
+        mounted.render(baseProps({formInputs: changedInputs, submitTask}))
+        mounted.render(baseProps({formInputs: changedInputs, submitTask}))
         if (!capture.panelButtons.invalid) {
-            capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
+            capture.onApply({bands: ['scalar', 'array'], destination: 'DRIVE', fileDimensionsMultiple: 10, shardSize: 256})
         }
 
         expect(changedInputs.destination.set).toHaveBeenCalledWith('GEE')
         expect(changedInputs.destination.set).toHaveBeenCalledTimes(1)
-        expect(onRetrieve).not.toHaveBeenCalled()
+        expect(submitTask).not.toHaveBeenCalled()
     })
 
-    it('does not observe the source again when only band selection changes', () => {
-        const operation = outputOperation()
-        const mounted = mount(baseProps({
-            formInputs: inputs({bands: ['scalar']}),
-            imageOutputResolution: operation.contract
-        }))
-        operation.resolution.next(ready([band('array', 1, 'sample'), band('scalar', 0)]))
+    it('submits the selection decided on, for the recipe the read holds', () => {
+        const submitTask = vi.fn()
+        mount(baseProps({formInputs: inputs({bands: ['scalar'], destination: 'DRIVE'}), submitTask}))
+        answer(ready([band('array', 1, 'sample'), band('scalar', 0)]))
         passMinimum()
 
-        mounted.render(baseProps({
-            formInputs: inputs({bands: ['scalar', 'array']}),
-            imageOutputResolution: operation.contract
-        }))
-        mounted.render(baseProps({
-            formInputs: inputs({bands: ['scalar']}),
-            imageOutputResolution: operation.contract
-        }))
+        capture.onApply({bands: ['scalar'], destination: 'DRIVE', fileDimensionsMultiple: 10, shardSize: 256})
 
-        expect(operation.resolution.state.subscriptions).toBe(1)
-    })
-
-    it('passes Apply a cached resolver that reuses the terminal snapshot after panel teardown', () => {
-        const onRetrieve = vi.fn()
-        const operation = outputOperation()
-        const mounted = mount(baseProps({
-            formInputs: inputs({bands: ['scalar'], destination: 'DRIVE'}),
-            imageOutputResolution: operation.contract,
-            onRetrieve
-        }))
-        const terminal = ready([band('scalar', 0)])
-        operation.resolution.next(terminal)
-        passMinimum()
-
-        capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
-
-        expect(onRetrieve).toHaveBeenCalledTimes(1)
-        const resolutionContext = onRetrieve.mock.calls[0]?.[1]
-        expect(resolutionContext?.resolveImageOutput$).toEqual(expect.any(Function))
-        act(() => mounted.root.unmount())
-        roots.splice(roots.indexOf(mounted.root), 1)
-        const cached = []
-        const error = vi.fn()
-        const complete = vi.fn()
-        let subscribing = true
-        resolutionContext?.resolveImageOutput$({recipe: {id: 'ignored'}}).subscribe({
-            next: value => {
-                expect(subscribing).toBe(true)
-                cached.push(value)
-            },
-            error,
-            complete: () => {
-                expect(subscribing).toBe(true)
-                complete()
-            }
+        expect(submitTask).toHaveBeenCalledTimes(1)
+        expect(submitTask.mock.calls[0][0]).toEqual({
+            recipe: RECIPE,
+            retrieveOptions: expect.objectContaining({bands: ['scalar'], destination: 'DRIVE', fileDimensions: 2560})
         })
-        subscribing = false
-        expect(cached).toEqual([terminal])
-        expect(error).not.toHaveBeenCalled()
-        expect(complete).toHaveBeenCalledOnce()
-        expect(operation.resolution.state.subscriptions).toBe(1)
     })
 
-    it('cancels stale recipe resolution, replaces it, and tears down panel-owned work on unmount', () => {
-        const first = outputOperation({id: 'first'})
-        const second = outputOperation({id: 'second'})
+    // Apply decides from the session as it stands when applied, not from the render it was clicked in: a read that
+    // has since become unanswered - the recipe edited, credentials replaced - submits nothing.
+    it('submits nothing when the session has moved past the render Apply was clicked in', () => {
+        const submitTask = vi.fn()
+        mount(baseProps({formInputs: inputs({bands: ['scalar'], destination: 'DRIVE'}), submitTask}))
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+        expect(capture.panelButtons.invalid).toBe(false)
+
+        capture.read = resolving()
+        capture.onApply({bands: ['scalar'], destination: 'DRIVE', fileDimensionsMultiple: 10, shardSize: 256})
+
+        expect(submitTask).not.toHaveBeenCalled()
+    })
+
+    it('withholds its choices again, keeping the selection, when the read is acquired anew', () => {
         const formInputs = inputs({bands: ['scalar'], destination: 'DRIVE'})
-        const mounted = mount(baseProps({formInputs, imageOutputResolution: first.contract}))
-        expect(first.resolution.state.subscriptions).toBe(1)
-        first.resolution.next(ready([band('scalar', 0)]))
+        mount(baseProps({formInputs}))
+        answer(ready([band('scalar', 0)]))
         passMinimum()
         expect(capture.destinationButtons.disabled).not.toBe(true)
 
-        mounted.render(baseProps({formInputs, imageOutputResolution: second.contract}))
+        answer(resolving())
 
-        expect(first.resolution.state.teardowns).toBe(1)
-        expect(second.resolution.state.subscriptions).toBe(1)
         expect(capture.destinationButtons.disabled).toBe(true)
+        expect(capture.panelButtons.invalid).toBe(true)
         expect(formInputs.destination.set).not.toHaveBeenCalled()
-        second.resolution.next(ready([band('scalar', 0)]))
+        expect(formInputs.bands.set).not.toHaveBeenCalled()
+
+        answer(ready([band('scalar', 0)]))
+
         expect(capture.destinationButtons.disabled).not.toBe(true)
-        act(() => mounted.root.unmount())
-        roots.splice(roots.indexOf(mounted.root), 1)
-        expect(second.resolution.state.teardowns).toBe(1)
     })
 
-    it('preserves the existing destination and Apply behavior when no resolution contract is supplied', () => {
+    it('reads nothing for a request that is not about the output, submitting it as the recipe type does', () => {
         const onRetrieve = vi.fn()
+        const submitTask = vi.fn()
         mount(baseProps({
             formInputs: inputs({bands: ['anything'], destination: 'DRIVE'}),
-            onRetrieve
+            requestOptions: [[{value: 'anything', label: 'anything'}]],
+            onRetrieve,
+            submitTask
         }))
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
@@ -506,6 +495,6 @@ describe('resolution and submission lifecycle', () => {
         expect(capture.panelButtons.invalid).toBe(false)
         capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
         expect(onRetrieve).toHaveBeenCalledTimes(1)
-        expect(onRetrieve.mock.calls[0]).toHaveLength(1)
+        expect(submitTask).not.toHaveBeenCalled()
     })
 })

@@ -33,7 +33,8 @@ start operations. The service adapts the GUI environment to the shared resolver 
   completed closure and a private session-invalidation signal.
 - Recipe actions remain pure; consumers pass command inputs explicitly rather than reading back state they just
   wrote.
-- Retrieve has exactly one output authority: a resolved description or an explicitly permitted fallback policy.
+- Each Retrieve export has one authority for its requirements: its resolved description. Nothing is exported
+  without one.
 - Browser descriptions are interactive evidence. They authorize task policy only for an explicitly reviewed
   declaration whose policy is stable across dependency-version drift.
 - Graph work and Earth Engine requests occur only for subscribed operations, never merely because Redux changed.
@@ -83,12 +84,18 @@ spans a graph and has session-level cache and authorization concerns. `Section` 
 activated, so a detached operation survives panel and route navigation without scoping the runtime over Terminal,
 Browse, Tasks or other Home services that have no source-resolution concern.
 
-The context exposes one stable service object. Initially it needs only the operation already supported by the
-shared contracts:
+The context exposes one stable service object:
 
 ```js
-sourceRuntime.resolveImageOutput$({recipe}) // returns a cold Observable
+sourceRuntime.resolveImageOutput$({recipe})   // cold, one-shot: describe the canonical output
+sourceRuntime.completeDependencies$({recipe}) // cold, one-shot: the same operation stopped after its closure
+sourceRuntime.identity$()                     // credential epochs for a caller whose answer outlives an operation
 ```
+
+`completeDependencies$` shares the operation's environment capture, closure completion, limits, failure handling and
+identity invalidation; its terminal is `{status: COMPLETE | UNAVAILABLE, error, dependencyValidity, basis}`, and it
+neither consults a declaration nor observes. `identity$` emits an opaque token on subscription and a fresh one on each
+credential-container change, and completes when the owning scope ends; it never exposes credential values.
 
 `resolveImageOutput$` is deliberately distinct from the pure synchronous `resolveImageOutput` in the shared
 library: the GUI operation observes runtime evidence asynchronously.
@@ -104,10 +111,22 @@ The returned Observable has this contract:
 - it completes immediately after the terminal envelope;
 - it never uses the Observable error channel: observation and unexpected runtime failures emit `UNAVAILABLE` with
   the original error, while resolution diagnostics decide between `UNAVAILABLE` and `INVALID`;
+- every terminal carries `dependencyValidity` beside its status: whether the closure this operation completed is
+  structurally sound, `null` when the operation ended before its closure said anything;
+- every terminal carries `basis`: the content of each record that closure read, empty when it read none, so a caller
+  retaining the answer can tell whether it is still about the records it now holds;
 - unsubscription is the only cancellation mechanism.
 
-`LOADING` is optional. A graph with definitive diagnostics can resolve synchronously without starting an
-observation. Future authorized loading remains part of `LOADING`; it does not require a public zero-duration
+The status answers what the recipe's providers read to describe it; `dependencyValidity` answers for the whole
+closure, including dependencies no provider read. Both concern the same operation and graph, and neither stands in
+for the other. `dependencyValidity` is `VALID`, `UNAVAILABLE` or `INVALID` with the complete graph diagnostics
+(`#sepal/recipe/source/dependencyValidity`). It is one condition execution requires - every reference resolves
+and none closes a cycle - not a claim that the recipe can execute: it says nothing about assets, configuration
+or Earth Engine. A closure that failed is never `VALID`, even when what it had read holds no diagnosis; a
+definitive diagnosis found before the failure makes it `INVALID`, and anything less is `UNAVAILABLE`.
+
+`LOADING` is optional. A description whose providers read a definitive diagnosis resolves synchronously without
+starting an observation. Future authorized loading remains part of `LOADING`; it does not require a public zero-duration
 `PENDING` state. The committed shared observer may retain `PENDING` internally without exposing it from this
 one-shot boundary.
 
@@ -281,8 +300,8 @@ design decision.
 
 Process owns the provider: it wraps Process at its exported boundary, not a recipe, panel, tab or map layer, and
 not Body, Home or App. One retained Process instance has one GUI source runtime. `Section` keeps Process mounted
-once activated, and that retention is intentionally what lets a detached Retrieve preflight survive panel closure
-and route navigation while still receiving credential invalidation. Process teardown closes the runtime. Browse,
+once activated, and that retention is intentionally what keeps the operations an open panel or mounted layer owns
+receiving credential invalidation across route navigation. Process teardown closes the runtime. Browse,
 Terminal, Tasks and other Home services stay outside it, having no source-resolution concern.
 
 The context value must remain referentially stable for the provider's lifetime. In particular, it must not contain:
@@ -337,12 +356,14 @@ environment sink or environment-publication effect is required.
 
 ### Performance invariants
 
-- With no active operation or watcher, Redux actions perform no source-runtime work.
+- With no active operation, watcher or retained answer, Redux actions perform no source-runtime work. A lifetime
+  owner holding an answer keeps one credential subscription, compared by reference on each Redux action.
 - An active operation performs only constant-time environment selection and session comparison on a Redux change;
   dependency requests are driven by that operation, not by Redux updates.
 - No catalogue object is cloned merely to update the runtime.
 - Graph construction and Earth Engine observation happen only when an operation is subscribed or a future live
-  watcher is active.
+  watcher is active. The synchronous read runs over the graph a map layer's connected props already build, cached
+  by identity; it is not runtime work.
 - The shared resolver retains its per-operation dependency and observation deduplication.
 - Independent subscriptions deliberately do not share one-shot work. Future live watching owns caching and
   multicasting explicitly.
@@ -350,34 +371,76 @@ environment sink or environment-publication effect is required.
 
 ## Retrieve integration
 
-Retrieve remains a consumer of source resolution rather than a method on the source runtime.
+Retrieve is a consumer of the common read, not a method on the source runtime.
 
-The Masking flow should be:
+A Retrieve panel whose request is about its recipe's image output reads `IMAGE_OUTPUT` through the common read
+([reading a recipe's own output](#reading-a-recipes-own-output)), over the session graph a map layer builds, and owns
+one `OutputAcquisition` for as long as it is open (`withRetrieveOutput.jsx`); it never borrows a map layer's owner.
+What it offers, which destinations it enables, whether Apply is enabled and what a submission sends are decided by
+one rule (`retrieveOutput.js`) from one read:
 
-1. The panel has the current outer recipe and receives the stable source runtime from context.
-2. The recipe action dispatches only its ordinary Redux update for the submitted Retrieve options.
-3. The Retrieve orchestrator receives:
+- A read still being acquired is pending. Choices are withheld, the destination selector is disabled as one control
+  without changing its value, and Apply is disabled. The saved selection is untouched.
+- An answer that is not `READY`, or whose `dependencyValidity` is not `VALID`, blocks. Acquisition failures, invalid
+  descriptions, a recipe with no image output and broken dependencies never become a fallback.
+- A selection is translated into the physical names it exports, its request, in the output's order. Once the answer
+  is known, the form drops a saved choice it no longer offers (`reconciledChoices`), keeping the rest and choosing
+  nothing in its place; a pending or failed read changes nothing. A requested name the answer still does not hold -
+  one no saved choice accounts for - is named to the user and blocks. An option a structured selection cannot
+  translate blocks as well, rather than being read as another.
+- The description's physical facts decide destinations and policies, by the one evaluation submission validates with
+  (`exportRequirements`): each band's declared Earth Engine policy, or the type's fallback for a verified scalar band
+  that declares none; Drive and SEPAL take verified scalars, and Earth Engine needs a policy for every band.
 
-```js
-submitObservedRetrieve({
-    recipe,
-    retrieveOptions,
-    taskConfig,
-    fallbackPyramidingPolicy,
-    resolveImageOutput$
-})
-```
+Encoding is never sent: Task establishes it from the description it resolves itself.
 
-4. The orchestrator starts `resolveImageOutput$({recipe})`, then submits with the resolved description, takes an
-   explicitly allowed migration fallback, or blocks with a safe notification.
-5. It never reads the updated recipe back from Redux. `retrieveOptions` remains explicit even though the action
-   just persisted the same value; removing that apparent duplication would reintroduce a timing dependency.
+**Requests.** A panel selecting physical names exports them; "all bands" names every band the answer holds.
 
-The source runtime does not know about Retrieve options, task destinations, legacy pyramiding policy, analytics or
-notifications. Conversely, Masking does not receive the catalogue and does not inspect the primary recipe's type.
+- CCDC selects measures. It offers the measures its described catalogue holds (`measuresFor`), and checks a choice by
+  the bands CCDC's own rule exports for it: the measures with the configured breakpoint bands, each with every band
+  it produces (`fittedMeasures`, `ccdcOutputBands`). A configured breakpoint band the collection no longer carries
+  is named and blocks. CCDC's own export receives the measures, and every template CCDC offers is attached for it to
+  keep by the bands it derives - `red`, `red_intercept`, `red_phase_1` - which no filter over stored names could
+  decide.
+- CCDC Slice selects base bands and measures, with segment bands beside them. Its controls are read from the names
+  the answer holds by the slice's own naming rule - a name is a measure of base band `b` when it is `b` with that
+  measure's suffix, and a name that is also such a measure is a base band too when it has measures of its own - so
+  whatever the output holds can be chosen, and an older description of the source can neither add nor withhold one. Every combination asked for is checked, and an unknown measure is refused. The export sends
+  only the names; Earth Engine derives the base bands the slice operation needs from them.
+- Time Series is not an image-output request. Its indicator is a collection measure, its options are the whole
+  truth, and it reads and acquires nothing.
 
-Masking's adapter is the first migration adapter, not the template for permanent per-recipe orchestration. Keep it
-minimal, and use the next migrated recipe to decide whether the repeated command wiring warrants a shared factory.
+Labels, tooltips and groups are presentation. They decorate the choices the answer allows and never withhold one: a
+choice the presentation does not know is offered after the groups it does.
+
+**Submission.** At Apply the panel reads again from the store it is rendered under - the recipe, the answer, and the
+evidence facts - and submits only if the same rule allows the submitted selection; a render the session has since
+moved past decides nothing. A retained terminal answers only for the content of the records it was acquired for,
+under the credential epoch it was acquired under. Nothing is published before the decision. The form persists its
+values under `ui` before Apply runs, and no request is built from `ui`.
+
+A recipe type supplies its generic image export as a task configuration (`retrieveTask`: `dataSetType`,
+`includeTimeRange` and a `fallbackPyramidingPolicy`), or a `submitTask` of its own. A type states no policy of its own:
+policies come from physical facts alone. The generic submitter takes explicit Retrieve options and at most one export
+authority - `imageOutputDescription` or `observedBands` - and refuses both. There is no
+image-customization callback: a request states its final selection before policies are derived. The styles attached
+are those the recipe offers over the answer's bands, restricted to the exported names.
+
+Optical Mosaic, Asset and CCDC Slice declare no policy for scalar bands, and fall back to `mean`, Earth Engine's own
+default and what their exports have always used. It stays subordinate to declared policies and applies to verified
+scalars alone; it does not establish that averaging suits every scalar band. Masking falls back to
+`changeBased('change')`.
+
+**Evidence currency.** Evidence describes the source as it was read, from particular records, assets and credentials:
+its basis. `SourceEvidenceSync` decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
+still holds - whether to read again, and whether an answer may still be published. The credential container is judged
+by an opaque generation numbered by its identity; nothing compares, retains or publishes what it contains. The rule
+compares a selection by identity, so that reapplying a source panel is a change. Retrieve reads no evidence: what it
+authorizes is the description its own acquisition retains, keyed by the records it read and renewed when credentials
+change, so a source edited under the same id, or credentials replaced, authorize nothing described before.
+
+A submission's freshness is the session's. Dependency records the runtime loaded without writing them to the
+session cannot be compared, and a persisted dependency changed after Apply is Task's to detect.
 
 ### Browser evidence and task authority
 
@@ -388,12 +451,13 @@ storage. Browser preflight and Task can therefore resolve different dependency v
 closure is complete. Automatic saving narrows that interval but does not remove it: saving is asynchronous and
 Retrieve does not await dependency persistence.
 
-This limits what a browser description may authorize. A recipe declaration may join the observed Retrieve path
-only when the export requirement for a given band name is invariant across every dependency version Task could
-load. CCDC qualifies for the initial cohort because every observed CCDC band requires `sample`, independent of its
-model and band name. Masking qualifies only when its source qualifies, because it preserves that declared
-requirement. A transformation whose policy depends on dependency model values does not qualify and must wait for
-coherent server resolution.
+This limits what a browser description may authorize. A recipe declaration may authorize Retrieve's policies only
+when the export requirement for a given band name is invariant across every dependency version Task could load.
+CCDC qualifies because every observed CCDC band requires `sample`, independent of its model and band name. Masking
+qualifies only when its source qualifies, because it preserves that declared requirement. Optical Mosaic reads no
+recipe, an Asset recipe's requirement follows its observed asset, and a slice's bands are scalar whatever it slices.
+A transformation whose policy depends on dependency model values does not qualify and must wait for coherent server
+resolution.
 
 This is a bounded coexistence rule, not a claim that the browser graph is the execution graph. A changed persisted
 dependency can still produce a different schema and make Task fail. Selected-band validation catches disagreement
@@ -401,80 +465,30 @@ between the current selection and the browser description; it cannot detect late
 policy-stability gate prevents the more dangerous case where the same band name is submitted with a policy derived
 from a different dependency version.
 
-An incomplete closure is not resolved evidence. The runtime first attempts to complete the closure through its
-authenticated recipe loader. `MISSING_SOURCE` after that attempt must block the initial Masking activation: the
-missing source could be CCDC, and applying Masking's legacy `mean` fallback would reproduce the array-pyramiding
-defect this path is intended to prevent. Fallback may remain only for a separately reviewed coexistence gap whose
-legacy policy is independently known to be safe. Earth Engine does not report an asset's persisted policy, but
-verified physical array dimensionality is enough to derive `sample` without recognizing CCDC:
-every array-valued band receives `sample`, while a scalar band's physical schema resolves without inventing a
-policy. A mixed asset therefore retains its complete observed schema. The selected operation decides whether the
-remaining policy gap matters: Earth Engine asset export requires a policy for every selected band, while Drive and
-SEPAL require selected bands to be scalar and do not consume pyramiding policy. Fallback must never be described as
+An incomplete closure is not resolved evidence. The panel's acquisition completes it through the runtime's
+authenticated recipe loader, and Retrieve submits only over a `dependencyValidity` of `VALID`. `MISSING_SOURCE` after
+that attempt blocks: the missing source could be CCDC, and a fallback of `mean` would reproduce the array-pyramiding
+defect the physical facts exist to prevent. Earth Engine does not report an asset's persisted policy, but verified
+physical array dimensionality is enough to derive `sample` without recognizing CCDC: every array-valued band receives
+`sample`, while a scalar band's physical schema resolves without inventing a policy. The selected destination decides
+whether the remaining gap matters: Earth Engine asset export requires a policy for every selected band, while Drive
+and SEPAL require selected bands to be scalar and do not consume pyramiding policy. A fallback is never described as
 resolved output. Caller-authorized loading and coherent bundles eventually remove the remaining catalogue gaps.
 
-`taskConfig` contains ordinary configuration used on both paths. It must reject `pyramidingPolicy`,
-`imageOutputDescription` and `customizeImage`. `submitObservedRetrieve` performs this validation; the generic
-submitter must continue accepting these options from unmigrated callers during coexistence. The orchestrator alone
-adds one output authority:
+When the selection contains any array-valued band, or "all bands" includes one, only `GEE` is valid. The panel
+disables Drive and SEPAL; if the user has no linked Google account, the form has no valid destination and remains
+blocked. The decision and the generic submitter both reject an incompatible destination, so stale form state and
+other callers cannot bypass the rule. Array bands are never dropped or flattened to satisfy a destination. After an
+answer, only incompatible destinations are disabled and an incompatible selected value is reconciled once. An
+explicitly empty selection still shows which destinations the output allows. Asset-destination ID validation is
+independent: resolution neither waits for it nor uses its completion as a rerender trigger.
 
-```js
-{imageOutputDescription}
-```
+A panel opens on a loading view only when its first read is still being acquired. The view is held for a minimum so a
+near-instant answer cannot make it flicker past; the minimum overlaps the acquisition, and a failure is shown at once.
+A panel already open withholds its choices while a later read is acquired but is never hidden behind that view again.
 
-or, only for an explicitly permitted migration gap:
-
-```js
-{pyramidingPolicy: fallbackPyramidingPolicy}
-```
-
-`customizeImage` is also excluded because the generic submitter runs it after deriving the resolved policy. Existing
-customizers can replace the selected bands, remove the policy or return a different image configuration, producing
-a policy for one schema and submitting another. A migrated recipe must express its final selection through
-`retrieveOptions` or another structured input that is applied before policy derivation and validated against the
-description. Do not grant an unrestricted callback authority over an already-resolved image.
-
-The resolved description also controls destination compatibility. When the explicit selection contains any
-array-valued band, or an empty selection includes one by meaning all bands, only `GEE` is valid. The Retrieve panel
-must remove or disable Drive and SEPAL before submission; if the user has no linked Google account, the form has no
-valid destination and remains blocked. The orchestrator or generic submitter still rejects an incompatible explicit
-destination so stale form state and non-panel callers cannot bypass the rule. It must not silently drop array bands
-or flatten them merely to satisfy a destination.
-
-Resolution may take several seconds, especially when a panel has just mounted and must observe asset band types.
-While the output is unresolved, disable the destination selector as one control and disable Apply, but preserve its
-current value. Do not disable individual options during this state: the form widget can clear a selected disabled
-option before compatibility is known. After `READY`, enable the selector, disable only incompatible destinations
-and reconcile an incompatible selected value once. `UNAVAILABLE` and `INVALID` leave the selector and Apply
-disabled. Asset-destination ID validation is independent work; source resolution must neither wait for it nor use
-its completion as a rerender trigger.
-
-Extend the generic task submitter compatibly rather than changing all existing callers:
-
-```js
-export const submitRetrieveRecipeTask = (recipe, {
-    retrieveOptions = recipe.ui.retrieveOptions,
-    ...taskConfig
-} = {}) => {
-    // Existing task construction, using `retrieveOptions` throughout.
-}
-```
-
-The selected local `retrieveOptions` must supply all four existing uses: destination, bands, properties spread into
-the submitted image and `getTaskInfo({retrieveOptions})`. Mixing explicit and recipe-stored options could submit a
-task whose destination, bands and output path disagree.
-
-The orchestrator owns the one-shot subscription until it completes. Closing the action panel or navigating away
-from Process does not cancel preflight, and a later global notification is acceptable. An Earth Engine credential
-change instead terminates old-identity work as `UNAVAILABLE`. Completion and unsubscription release the
-operation without a second manual teardown path.
-
-Transport errors are sanitized through the shared user-error mechanism before notification; raw errors and
-diagnostics remain available to logging. The source runtime owns neither mechanism nor presentation. Reconsider a
-shared operation-notification helper only when another consumer demonstrates duplicated policy.
-
-This flow uses neither an action-builder side effect nor an ambient singleton-store read. Recipe actions remain
-pure Redux updates, and the only store access is the injected lazy environment adapter described above.
+Refusals are reported through the shared safe message; raw errors and diagnostics go to logging. The source runtime
+owns neither mechanism nor presentation.
 
 ## Roadmap evolution
 
@@ -486,7 +500,7 @@ ordered names for their declarations; asset observations additionally retain ver
 shared contract can derive `sample` without a recipe-type branch. It does not persist descriptions or loaded
 closure records. The completed operation-local graph supplies interactive evidence only; it is not presented as a
 coherent execution catalogue. Closure members that cannot be loaded remain controlled `UNAVAILABLE` results and
-block the initial Masking activation.
+block Retrieve.
 
 ### Temporary browser closure loading
 
@@ -498,10 +512,21 @@ completeRecipeClosure$({rootRecipe, seedRecipesById, loadRecipesById$})
 loadRecipesById$({ids})
 ```
 
-`completeRecipeClosure$` repeatedly builds the shared dependency graph. If it has any definitive diagnostic, such
-as a cycle or malformed direct-source declaration, the operation stops without loading unrelated records. If its
-only diagnostics are `MISSING_SOURCE`, their dependency-path tails identify one deduplicated frontier of known
-recipe IDs. The loader fetches that frontier and rebuilds the graph. The current `loadRecipesById$` adapter fans a
+`completeRecipeClosure$` repeatedly builds the shared dependency graph. While the graph reports `MISSING_SOURCE`,
+the dependency-path tails of those diagnostics identify one deduplicated frontier of known recipe IDs; the loader
+fetches that frontier and rebuilds the graph. Loading continues past a definitive diagnostic such as a cycle or a
+malformed direct-source declaration: that says nothing about whether another branch can be read, and a
+description reading only that other branch needs it. The operation completes once nothing is missing.
+
+A failure - a loader error, a malformed response or an exceeded limit - is the operation's outcome. It is
+delivered on the error channel exactly as raised, never annotated, since a loader's error can be shared, and is
+preceded by a `FAILED` notification carrying the graph as it stood when the operation stopped and the records it
+was built from. That one operation-local context is what a caller needs to keep a cycle it had already found, or
+to know which records a repair would change. Continuing to load means a graph that also has a definitive
+diagnostic can end in a loader failure rather than completing with the diagnostic: the one-shot runtime then
+reports `UNAVAILABLE` carrying the loader error, with `dependencyValidity` `INVALID` from the definitive
+diagnostic; `SourceEvidenceSync` and PyEO's imagery read report the loader failure; Task fails the export naming
+both. The current `loadRecipesById$` adapter fans a
 frontier out over the existing authenticated `api.recipe.load$(id)` operation with bounded concurrency.
 Consequently, the temporary implementation needs at most one logical request batch per discovered graph depth; it
 does not pretend that the browser knows transitive IDs before reading their parents.
@@ -541,7 +566,15 @@ recipe loader. It observes the immediate source's bands and follows declared inh
 records for visualizations, including styles owned by the source and intermediate wrappers rather than their
 copied presets. Its operation basis compares persisted dependency inputs by value, retaining runtime
 `ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
-asset listing `updateTime` and Earth Engine identity. Panel drafts and dirty state do not renew observations
+asset listing `updateTime` and Earth Engine identity. The basis covers every record the closure read, whether the
+closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
+record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
+The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
+without observing. Removing it needs two things:
+
+- every execution consumer checks dependency validity, as map layers and Retrieve do;
+- a decision on whether Change Alerts and BAYTS may propose defaults from a source whose unread dependencies are
+  broken. Their capability walkers already stop on a cycle or an unresolved record. Panel drafts and dirty state do not renew observations
 or invalidate pending answers. The full model remains part of the comparison: computation changes must
 invalidate even when the resulting band description is identical. The same comparison controls re-observation
 and whether a pending answer may publish.
@@ -567,10 +600,13 @@ imagery's closure, excluding the Classification's unrelated training-data edges,
 of optional defaults. The panel owns immediate legend/band presentation, staged options/dates, Apply and Cancel.
 An unavailable defaults capability does not mean the imagery cannot execute.
 
-Evidence stays in runtime state for synchronous map, layer-form, Retrieve and export consumers. Open drafts are
-not overwritten by persisted dependency reloads. Failed observations offer no bands or visualizations; saved
-snapshots remain the fallback only where nothing has been observed. A shared live `watchSource$` would make this
-evidence available without an open consuming recipe and allow that fallback to retire.
+Evidence stays in runtime state. It is the presets and templates its consumers offer, capability evidence, and the
+identity of the source as it was read, which a consumer's acquisitions and layers are keyed by through its record;
+bands are read through the common read ([reading a recipe's own output](#reading-a-recipes-own-output)), never from
+evidence. Open drafts are not overwritten by persisted dependency reloads. Failed observations offer no
+visualizations, and are no answer rather than an empty one. Saved presets remain the fallback only where nothing has
+been observed. A shared live `watchSource$` would make this evidence available without an open consuming recipe and
+allow that fallback to retire.
 
 ### Asset map-layer refresh
 
@@ -648,6 +684,224 @@ browser cache state and browser-planned source commands are never treated as the
 boundary discovers and binds commands from the authorized bundle, or validates a server-built frozen plan, under an
 explicit supported contract version.
 
+### Reading a recipe's own output
+
+Step 1 of the [output-declaration migration](data-sources.md#output-declaration-migration). Every consumer of a
+recipe's own output bands reads them synchronously: map layers from `render` and from mount and update
+reconciliation, preset filtering from a plain function, the visualization selector from its option builders.
+Nothing awaits, and the one async precedent in the GUI is the non-recipe asset layer, which holds metadata in
+component state and reconciles when it arrives.
+
+A read that returned a promise would therefore rewrite every consumer before any type had migrated. The read is
+instead synchronous and total: it answers with a status beside the description, and a consumer that cannot yet be
+answered is told so rather than given a weaker answer that looks like an answer.
+
+**The read.** `readRecipeOutput({recipe, product, graph, heldFor})` (`recipe/recipeOutput.js`) answers which bands a
+configured recipe provides for one named product. It never starts work, and consumers do not assemble its context: a
+map layer's connected props already derive the session graph over `process.loadedRecipes` (`mapDependencyGraph.js`),
+cached by identity, and retained answers come from the layer's own acquisition owner.
+
+| Field | Meaning |
+|---|---|
+| `status` | `READY`, `NEEDS_EVIDENCE`, `UNAVAILABLE` or `INVALID` |
+| `authority` | `DESCRIBED` for a `READY` answer, resolved through the type's declaration with physical band facts; otherwise `null` |
+| `bands`, `presentation`, `availableBands` | physical bands; display decoration by band name; the two joined in the shape selectors and preset filters read |
+| `dependencyValidity` | the closure's structural soundness, or `null` while unknown |
+| `acquisition` | `{kind, key}` of the work that would settle the answer, or `null` |
+
+The session graph answers first. A record it lacks is ordinary lazy loading, never a deletion: a read that reaches
+one, or an observation nobody holds, is `NEEDS_EVIDENCE`. A definitive diagnosis on the read path is `INVALID`
+whatever else is missing - a recipe with no image output (`NON_IMAGE_OUTPUT`) among them. A legitimately empty output
+is `READY` with no bands, distinct from pending, from failure and from having no image output. Validity is computed from
+the session graph when it holds every record its closure references, and is otherwise unknown. The classification is
+the shared `readImageOutput`, and the observer settles from its status too, so the two cannot drift. The observer adds
+only what its completed closure knows: a record still needed there is one that could not be had.
+
+**Retained answers.** Where the session cannot settle an answer, the owner acquires one of two runtime operations. They
+share environment capture, closure completion, limits, failure handling and identity invalidation:
+
+- `resolveImageOutput$` describes the canonical output over a completed closure. It serves an `IMAGE_OUTPUT` answer
+  that needs a record or an observation, or whose closure is incomplete.
+- `completeDependencies$` completes the closure and reports its validity, describing nothing. It serves a map product
+  whose bands are already known, which must not be failed by describing another product.
+
+Every terminal carries `basis`, the content of each record its closure read. A retained terminal answers only while
+the records the session holds are the ones it read, compared by the content projection the preview uses
+(`recipeContent`), and only under the credential epoch it was started under. Records the operation loaded without
+writing them to Redux cannot be compared. A change to one is seen when the layer's content changes for another
+reason or the layer remounts, as for preview.
+
+One snapshot answers:
+
+- A retained description answers description and validity together. Once it arrives it replaces the session's
+  preliminary choices, and a failed closure withdraws them.
+- A dependencies-only terminal answers validity beside a map-product answer. Such an answer reads nothing
+  but the root recipe and its runtime evidence, so the terminal's basis proves it read that same root.
+- An observation that failed over a sound closure leaves `dependencyValidity` `VALID` and the description
+  `UNAVAILABLE`.
+
+**Who acquires.** Each consumer that can need evidence has an owner whose lifetime covers it:
+
+| Consumer | Owner | Lifetime and invalidation |
+|---|---|---|
+| A recipe's map layer, on its own or another recipe's map | the `RecipeImageLayer` instance (`outputAcquisition.js`) | while mounted; keyed by the content of every record the session graph holds and the kind of work |
+| Its layer form, visualization selector and visualization editor | none of their own: they are given the layer's read | - |
+| Masking, CCDC Slice, Change Alerts and BAYTS source evidence | `SourceEvidenceSync` | while the recipe is open; its basis |
+| A Retrieve panel over its recipe's image output | the panel instance (`withRetrieveOutput.jsx`), with its own `OutputAcquisition` | while open; as for a map layer |
+| Input workflows copying bands and presets at selection, and Sampling Design | their selection workflow | the selection; presets are filtered against the names that workflow observed |
+
+Visualization settings belong to the preview's key, not the acquisition key, so restyling a layer rebuilds its preview
+and acquires nothing.
+
+A credential change drops what the layer holds and acquires exactly once again. The owner claims each slot before
+subscribing, so a terminal delivered synchronously, or a change handler re-entering the owner, finds the state it was
+started under. A credential change produces two notifications; the operation's `SOURCE_IDENTITY_CHANGED` terminal is
+never retained and starts nothing, and the epoch change starts the one replacement, whichever arrives first.
+`identity$` gives a lifetime owner those epochs without reading credentials, and is subscribed only while something is
+held or in flight. The runtime scope ending drops what is held and stops the owner for good.
+
+While an answer needs evidence the consumer shows what it shows for a recipe with no bands: no layer, no options, and
+the saved selection untouched. A snapshot copied into the model is not offered for a declared product while its answer
+is acquired. Once the recipe is set up and the answer could be drawn from, the layer keeps a selection matching a
+candidate and otherwise selects the first candidate its picker offers
+([selection behavior](visualizations.md#selection-behavior)). BAYTS Alerts, Change Alerts and LandTrendr apply the same
+rule in their own forms, over the presets of the mode shown, once their mode, filter and year are settled.
+
+**Products and presentation.** A layer names the product it shows from its type's vocabulary (`mapProducts.productOf`)
+over its effective layer config: the type's defaults beneath what the layer saved. The description, the preview and
+the editor all read the product from that one config, so none of them depends on the layer form having written its
+defaults yet. A value the type does not know is no product at all, answered `INVALID` rather than as the canonical
+output, and a type without map products shows `IMAGE_OUTPUT`. CCDC's layer shows `COUNT`, and LandTrendr's its change
+map or its `ANNUAL_MOSAIC` of the layer's `year`. Change Alerts and BAYTS Alerts name their mosaic and radar modes,
+and each keeps the configuration guard its layer had.
+
+LandTrendr's layer form keeps its `year` within the recipe's fitted period, `startYear` to `endYear`, whichever mode
+it shows: a year inside is kept, one past either end becomes that end, and none becomes `endYear`. Its picker offers
+that period alone. It reconciles on mount and whenever the recipe's dates or the layer config change, in each map
+area on its own, writing only the year and only when it changes, so the style is kept; a style is chosen once the
+year agrees. The preview and the editor therefore concern the reconciled year, and an editor opened on the previous
+one closes. A stored value that is not a year is left for the user to replace, and its product is `INVALID`. The
+product itself accepts any integer year; this is the layer's choice.
+
+A product its type declares (`mapProducts` in the shared type, [map-product
+identity](output-products.md#map-product-identity)) is described through the shared read, from the root's
+configuration alone, and acquires only `DEPENDENCIES`. Its description carries `output.product` with the parameters it
+normalized, which the resolver attaches, and whatever it refuses - parameters it does not take or values it refuses,
+bands its declaration gets wrong, a provider failure - is `INVALID`, as is a product its type does not declare
+(`UNDECLARED_PRODUCT`). The acquisition key does not name the product, so another year of LandTrendr's annual mosaic
+is described again from the recipe while the dependencies terminal already held still answers validity.
+
+On the wire, the preview, the band choices, the histogram and the distinct values all carry the same product
+arguments: the effective layer config without its visualization (`productArgs`). Every
+request about a layer's image therefore concerns the product the layer shows. The Earth Engine handlers pass those
+arguments to the image factory and select the requested band last.
+
+Presentation decorates the bands an answer holds and never decides which exist: labels, tooltips, and `display`
+precision and range, which the cursor rounds by.
+
+- A declared type registers its presentation beside its declaration. Optical Mosaic decorates from its table of every
+  band a mosaic can hold, and an Asset recipe from the band list saved when its asset was selected, matched by name.
+- Presets are candidate styles, never pre-filtered by a type's configuration: a style removed upstream cannot be
+  restored by the resolved bands that decide where it applies. CCDC's templates follow the measures CCDC fits, which
+  its declaration derives from the same optical collection. Slice's templates are bound to what its operation
+  produces - template binding over its segment evidence, by the derivation its declaration uses.
+- Physical `dataType` in a description stays `{arrayDimensions}` alone.
+
+The visualization editor asks nothing about bands itself. Its selector opens it only once the layer's answer holds
+scalar bands, capturing the recipe, those bands and the product arguments together, and the editor requests histograms
+and distinct values with that context alone.
+
+- If its area stops showing that layer or that product while it is open, the editor closes without saving.
+- A change to the recipe's content does not close it: every request it makes stays coherent with the snapshot it
+  holds, and a style it saves is judged against the layer's current read like any other.
+
+**Dependency-scoped descriptions.** A description depends only on what its providers read, so only what they
+read can fail it. The graph builder holds each structural diagnosis where it belongs - on every edge whose target
+is absent, not only the first the traversal reached; on the edge whose target closes a cycle; and under the recipe
+whose own model produced it - while `graph.diagnostics` stays the complete, deduplicated account. Resolution
+surfaces a diagnosis when a provider reaches it: reading an edge to an absent recipe reports that edge, a role
+whose own field is malformed reports that field rather than a missing role, and a recipe whose own model cannot be
+read fails before its provider is consulted. Every registered type states its output, so an unsupported type is the
+only one without a provider, and it is diagnosed as that.
+
+Cycles are detected on the path of provider reads. Which edge the graph marks as closing a cycle depends on the
+order it walked in, so a description whose reads form no cycle is never failed by that mark; a read of a recipe
+still being described is the cycle, is diagnosed on that edge and is not followed, which also bounds the
+recursion. The graph's cycle diagnostics remain evidence for dependency validity and for the observation check
+below.
+
+Asking for a recipe's own observation answers for more than itself: observing its running image, or the catalogue
+it says it can be asked for, may consult any part of what it depends on. As a conservative policy, covering both
+`RUNNING_IMAGE` and `AVAILABLE_BANDS`, every structural diagnosis reachable from that recipe - found by which
+recipe or edge owns it, not by the path the graph recorded - is reported and nothing is requested. The observer
+applies the same rule through discovery, so a doomed request never reaches Earth Engine.
+
+Being described is not being executable. A recipe whose closure carries a structural diagnosis can be described
+when no provider reads it; whether its dependencies are sound is answered from the complete closure by
+`dependencyValidity`, and what a known-bad state blocks stays owned by
+[legacy policy](source-resolution.md#legacy-policy). Three execution boundaries require `dependencyValidity` to be
+`VALID`:
+
+- Retrieve of a recipe's image output.
+- Task's asset export of a recipe. Task resolves every root, and refuses one with no image output before exporting.
+- Map preview. A layer draws only a `READY` answer with bands over dependencies known to be sound, and is withheld -
+  pending, not failed - while they are unknown.
+
+Earth Engine does not resolve descriptions at all: Preview and its other endpoints build images lazily and refuse what
+they execute - a cycle through `recipeRef`, a failed read through the operation's recipe scope - so it inherits
+neither the scoping nor a new check.
+
+Nor does a sound closure make a recipe executable. A declaration says which bands a configuration provides, and a
+recipe still being configured can be described before it states what it needs to run: Change Alerts without a
+monitoring period or a reference is described with its nine change bands. Nothing validates such requirements yet.
+The recipe's own layer and Retrieve wait for it to be initialized, its change styles are offered only once it states
+a period, and execution refuses it with its own error. A wrapper over it - Masking over an unfinished Change Alerts -
+has none of those gates: it is offered the bands, a style a user defines over them can request a preview, and an
+export is accepted and fails in Earth Engine. That exposure is accepted until requirements are validated.
+
+**Mandatory output contracts.** Every registered type states its output, as it states its sources: an image output
+provider, or `NO_IMAGE_OUTPUT` for a type whose recipes produce no image - Sampling Design, whose samples its own tasks
+export. Registration refuses a type that states neither, so no read, GUI or Task, meets an output nobody declared, and
+consumers never branch on whether a type is declared. A recipe with no image output read as an image is `INVALID`
+(`NON_IMAGE_OUTPUT`), located at that recipe, through any wrapper that reads it and whatever else the read is waiting
+for; it is not an image with no bands. Retrieve panels import a type's `bands.js` only for presentation - labels and
+groups - which decorates what the read answers. Task resolves shared declarations independently through its
+authorized runtime adapters; the common GUI read is not a backend dependency or execution authority.
+
+**One meaning per registration.** A recipe type registers, beside its declaration:
+
+```js
+mapProducts: {defaults, productOf(layerConfig)}   // which product a layer config names
+bandPresentation(recipe, product)                 // display decoration of the bands a product's description holds
+getPreSetVisualizations(recipe, evidence)
+```
+
+`evidence` is a resolved description the caller already holds, so a caller that has just observed need not wait for
+the same answer to reach runtime state; a caller without one is answered from the evidence the recipe carries. It
+is never a map mode: which product a layer shows is named, not passed positionally to a question about bands - see
+[map-product identity](output-products.md#map-product-identity). The mode and band-group second arguments that the
+LandTrendr, BAYTS, Change Alerts and mosaic modules pass among themselves stay type-local and never reach the
+registered seam; product identity replaces the mode meaning, and the band-group projection remains a type's own
+presentation concern.
+
+**Walk-through.**
+
+- **Optical Mosaic** resolves synchronously from its model, and its presentation keeps the cursor's rounding.
+- **Asset recipe:** its declaration needs its own image and its asset observed, so its layer acquires them and draws
+  once they arrive.
+- **CCDC:** its layer shows `COUNT`, described from its declaration, and needs only its dependencies completed;
+  counting reads neither the segments nor their catalogue. Where its canonical output is read, through Masking or
+  Slice, it needs its available bands observed.
+- **Masking** inherits its source's answer, and so its status:
+  - over an Optical Mosaic the session holds, it is `READY` at once;
+  - over an asset, it needs evidence;
+  - over a Regression or Unsupervised Classification the session holds, it is `READY` at once, with the policy each
+    declares;
+  - over a Sampling Design, it is `INVALID`: the design produces no image.
+- **Classification**, **Regression**, **Unsupervised Classification** and **Remapping** resolve synchronously from
+  their declarations, reading none of their sources; only whether those dependencies are sound still needs the
+  closure completed.
+
 ## Alternatives not selected
 
 ### Passing `loadedRecipes` through recipe components
@@ -720,6 +974,8 @@ prove only runtime-owned behavior:
 - while output resolution is pending, the destination selector is disabled as a whole without clearing its value;
   after `READY`, only incompatible destinations are disabled and reconciliation occurs once;
 - synchronous invalid resolution emits no `LOADING`, emits one terminal state and completes;
+- a terminal reports `dependencyValidity` from the same closure as its description, never `VALID` for a closure
+  that failed, and Retrieve blocks a description whose dependencies are not known to be sound;
 - a synchronous exception during graph construction or observer setup becomes terminal `UNAVAILABLE`, retains the
   error and completes without using the Observable error channel;
 - the one-shot public API never emits `PENDING`;
@@ -732,21 +988,49 @@ prove only runtime-owned behavior:
 - cancelling one overlapping operation does not affect another;
 - completion and unsubscription each tear down their own observations;
 - replacing the Earth Engine credential container emits `UNAVAILABLE` with code `SOURCE_IDENTITY_CHANGED`, completes
-  and prevents an unresolved old-identity operation from submitting or taking a migration fallback;
+  and prevents an unresolved old-identity operation from answering anything a submission could use;
 - closing the owning runtime scope emits `UNAVAILABLE` with error code `SOURCE_RUNTIME_UNAVAILABLE` to detached
-  unresolved operations, prevents submission and releases the environment subscription;
+  unresolved operations, answers nothing a submission could use and releases the environment subscription;
 - the context value and consumer render count remain stable across unrelated catalogue changes;
-- with no active operation or watcher, Redux changes invoke no source-runtime selector, graph work or observation;
+- with no active operation, watcher or retained answer, Redux changes invoke no source-runtime selector, graph work or
+  observation;
 - active environment selection is constant-time and does not build a graph;
 - no reducer side effect or ambient singleton-store read is used by the command path.
 
-Retrieve tests separately own fallback classification, safe errors, selected-band conversion and task submission.
-They must prove that one explicit `retrieveOptions` value controls destination, bands, submitted image options and
-task info even when `recipe.ui.retrieveOptions` is stale, and that `taskConfig` rejects `pyramidingPolicy`,
-`imageOutputDescription` and `customizeImage`. The initial activation also proves that direct and transitively
-masked CCDC retain `sample`, including a Masking recipe whose primary input is an observed CCDC Segments asset and
-whose mask is a recipe. The consumer contains no CCDC or Masking type branch, scalar asset policy remains
-unresolved, array-band selection permits only GEE, and `MISSING_SOURCE` blocks rather than taking the legacy policy.
+The read and its lifetime owner prove, over graphs the real builder produces and the real declarations:
+
+- a model-derived output, and a wrapper over one the session holds, is answered at once with no acquisition;
+- a record the session lacks needs evidence rather than failing, and a definitive diagnosis on the read path outranks it;
+- a map product needs only its dependencies completed, keeps its bands when one cannot be read, and never has its
+  canonical output described;
+- an unknown product is refused rather than answered as another;
+- a recipe with no image output is refused as one, directly and through a wrapper, beside a record still to be
+  loaded too; an observation that failed over a sound closure keeps that closure `VALID`;
+- restyling a layer rebuilds its preview and acquires nothing;
+- a retained terminal about records the session has since replaced is refused;
+- a credential change drops what is held and acquires exactly once, in either notification order and after
+  settlement; the runtime scope ending stops the owner for good;
+- a preview is withheld until dependencies are known to be sound, with the saved selection kept;
+- Optical Mosaic's cursor rounding survives its declared bands;
+- the visualization editor opens only on known bands, carries the layer's product arguments in its histogram and
+  distinct-value requests - which the Earth Engine handlers pass to the image factory, selecting the requested band
+  last - and closes when its area shows another layer or product.
+
+Retrieve tests own request translation, authority, failure handling and stale submission, through real
+registrations and the real read where a mock could hide wiring. They prove that:
+
+- a masked CCDC keeps `sample`, and a declared scalar with no policy takes the type's fallback only when verified;
+- a description exports the names selected with the policies it declares, "all bands" names every band it holds,
+  and a saved band it no longer holds exports nothing;
+- unknown, unsound or uncompleted dependencies block;
+- a description of a source that has since changed - edited under the same id, or read under credentials since
+  replaced - authorizes nothing, including when Apply lands before anything has reacted, until it is described again,
+  and an array it has become is refused by a destination that cannot hold one;
+- a recipe with no image output is neither previewed nor retrieved, alone or through a wrapper;
+- CCDC checks a choice by the bands its rule exports, breakpoint bands included, submits measures and attaches every
+  template; Slice offers what its output holds, keeps every requested combination and refuses an unknown measure;
+- Apply decides from the session as it stands, not from the render it was clicked in.
+
 Use a focused panel-boundary witness for destination availability; do not mount complete recipe panels to test
 behavior that can be asserted below that boundary.
 

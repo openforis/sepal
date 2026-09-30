@@ -10,7 +10,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
-import {getAvailableBands} from './bands'
+import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './baytsAlertsRecipe'
 import {BaytsAlertsToolbar} from './panels/baytsAlertsToolbar'
 import {baytsAlertsObservation} from './referenceObservation'
@@ -57,13 +57,15 @@ export default () => ({
     components: {
         recipe: BaytsAlerts
     },
+    imageSource: true,
     getDateRange(recipe) {
         const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
         const monitoringStart = moment(monitoringEnd)
             .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
         return [monitoringStart, monitoringEnd]
     },
-    getAvailableBands,
+    mapProducts,
+    bandPresentation,
     getPreSetVisualizations,
     beta: true
 })

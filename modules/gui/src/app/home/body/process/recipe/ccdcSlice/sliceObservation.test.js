@@ -84,6 +84,11 @@ const assetMosaic = () => ({
     }
 })
 
+// The evidence the lifecycle published, apart from its marks that it is reading again.
+const published = writes => writes
+    .filter(({path}) => path === 'ui.sourceEvidence')
+    .map(({value}) => value)
+
 const sync = ({
     recipe,
     loadedRecipes = {},
@@ -94,12 +99,13 @@ const sync = ({
 }) => {
     const dispatched = []
     const recipeActionBuilder = () => ({
+        writes: [],
         set(path, value) {
-            this.written = {path, value}
+            this.writes.push({path, value})
             return this
         },
         dispatch() {
-            dispatched.push(this.written)
+            dispatched.push(...this.writes)
         }
     })
     const component = new SourceEvidenceSync({
@@ -119,7 +125,7 @@ const sync = ({
         component.props = {...component.props, ...props}
         component.componentDidUpdate()
     }
-    return {component, rerender, evidence: () => dispatched.map(({value}) => value)}
+    return {component, rerender, evidence: () => published(dispatched)}
 }
 
 beforeEach(() => assetMetadata$.mockReset())

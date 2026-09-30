@@ -2,6 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {classTransitions} from '#sepal/recipe/type/classChange'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -53,18 +54,12 @@ class _Legend extends React.Component {
             return
         }
 
-        const entries = fromImage.legendEntries
-            .map(({label: fromLabel}) =>
-                toImage.legendEntries.map(({label: toLabel}) => {
-                    return `${fromLabel} -> ${toLabel}`
-                })
-            )
-            .flat()
-            .map((label, i) => ({
+        const entries = classTransitions(fromImage.legendEntries, toImage.legendEntries)
+            .map(({value, from, to}) => ({
                 id: uuid(),
-                value: i + 1,
-                color: defaultColor(i + 1),
-                label
+                value,
+                color: defaultColor(value),
+                label: `${from.label} -> ${to.label}`
             }))
         const actionBuilder = recipeActionBuilder(recipeId)
         actionBuilder('UPDATE_LEGEND', {fromImage, toImage, entries})

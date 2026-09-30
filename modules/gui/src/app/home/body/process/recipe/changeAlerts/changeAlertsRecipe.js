@@ -4,11 +4,6 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-import {selectFrom} from '~/stateUtils'
-
-import {segmentVisualizations} from './referenceEvidence'
-import {visualizationOptions} from './visualizations'
 
 export const defaultModel = {
     reference: {},
@@ -66,15 +61,6 @@ export const RecipeActions = id => {
                 .set('ui.chartPixel', latLng)
                 .dispatch()
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CHANGE_ALERTS_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
@@ -97,22 +83,3 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
         bands
     })
 }
-
-export const getAllVisualizations = recipe => {
-    const changesVisualizations = visualizationOptions(recipe, 'changes')
-        .map(option => option.options ? option.options : option)
-        .flat()
-        .map(({visParams}) => visParams)
-    return recipe.ui.initialized
-        ? [
-            ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-            ...changesVisualizations,
-            ...segmentVisualizations(recipe)
-        ]
-        : []
-}
-
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.sample
-    })
