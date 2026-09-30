@@ -35,6 +35,7 @@ vi.mock('~/apiRegistry', () => ({
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
+const {canPreview} = await import('./recipeOutput')
 
 const LEGACY_BANDS = {count: {dataType: {precision: 'int'}, label: 'Count'}}
 
@@ -101,6 +102,36 @@ describe('a recipe type declaring no output, over a dependency the session has n
         retrieve(read([OVER_UNLOADED_AOI], completed), {destination: 'GEE', bands: ['count']})
 
         expect(submitted).toHaveLength(1)
+    })
+})
+
+// A Sampling Design's samples are exported by its own tasks. Read as an image it has none, which no evidence changes:
+// nothing is previewed or retrieved, over it or over a recipe that reads it.
+describe('a recipe producing no image', () => {
+    const DESIGN = {id: 'design-1', type: 'SAMPLING_DESIGN', model: {aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [0, 0]]}}}
+    const MASKED = {id: 'masking-1', type: 'MASKING', model: {imageToMask: {type: 'RECIPE_REF', id: DESIGN.id}}}
+
+    it('is read as having no image output, and is neither previewed nor retrieved', () => {
+        const answer = read([DESIGN])
+
+        retrieve(answer, {destination: 'GEE', bands: ['class']})
+
+        expect(answer.output).toMatchObject({
+            status: 'INVALID',
+            diagnostics: [{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: [DESIGN.id]}]
+        })
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
+        expect(notified).toHaveLength(1)
+    })
+
+    it('refuses a Masking over one, located at the design', () => {
+        const answer = read([MASKED, DESIGN])
+
+        retrieve(answer, {destination: 'GEE', bands: ['class']})
+
+        expect(answer.output.diagnostics).toEqual([{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: [MASKED.id, DESIGN.id]}])
+        expect(submitted).toEqual([])
     })
 })
 

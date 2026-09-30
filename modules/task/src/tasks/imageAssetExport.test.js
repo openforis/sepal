@@ -388,6 +388,29 @@ describe('exporting a recipe type that declares no output', () => {
     })
 })
 
+// A Sampling Design draws samples, which its own tasks export as a table. Read as an image it has none, so an image
+// export of it, or of a recipe over it, fails before anything is built.
+describe('exporting a recipe that produces no image', () => {
+    const DESIGN = {
+        id: 'design-1',
+        type: 'SAMPLING_DESIGN',
+        model: {aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [0, 0]]}}
+    }
+
+    it('fails the export, naming the design as having no image output', async () => {
+        await expect(submit({recipe: DESIGN, bands: ['class']})).rejects.toThrow(/recipe design-1: invalid output \(NON_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export of a Masking over one', async () => {
+        state.catalogue = {[DESIGN.id]: DESIGN}
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: DESIGN.id}})
+
+        await expect(submit({recipe, bands: ['class']})).rejects.toThrow(/invalid output \(NON_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
+    })
+})
+
 describe('an output that cannot be described', () => {
     it('fails the export when a recipe it depends on cannot be read', async () => {
         const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}})

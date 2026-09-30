@@ -15,6 +15,15 @@ The Earth Engine library has no test runner of its own; its tests live in the mo
 tests through the `sepal` CLI from the dev-env container: a raw `jest` invocation falsely fails every suite
 that imports the Earth Engine wrapper.
 
+## Output
+
+A design's output is its samples, which its own tasks export as a table (`samplingDesign.GEE` and
+`samplingDesign.SEPAL`). It produces no image, and its shared type says so: `imageOutput: NO_IMAGE_OUTPUT`
+(`lib/js/shared/src/recipe/type/samplingDesign.js`). Read as an image - its own IMAGE_OUTPUT, or through a Masking or
+Stack that reads it - it is refused as `NON_IMAGE_OUTPUT`, located at the design, whatever else the read is waiting
+for; nothing is previewed or retrieved, and a generic image export fails before anything is built. That is not an
+image with no bands, which describes and exports as one.
+
 ## The two grids
 
 Sampling Design uses two explicitly named grids, and conflating them is the mistake the design exists to
