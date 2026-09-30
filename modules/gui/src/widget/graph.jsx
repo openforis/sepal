@@ -218,7 +218,7 @@ const GRAPH_COLORS = {
     },
     light: {
         foreground: '#2b2926',
-        highlightBackground: 'hsla(40, 22%, 99%, 1)',
+        highlightBackground: 'hsla(39, 40%, 95%, 1)',
         rangeSelectorPlot: '#ddd7cb',
         rangeSelectorStroke: 'hsla(40, 12%, 12%, .2)'
     }

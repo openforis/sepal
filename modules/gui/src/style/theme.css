@@ -263,10 +263,10 @@ html[data-theme=light] {
     --text-faint-color: hsl(40, 4%, 52%);
     --text-on-accent-color: #fff;
 
-    --page-background-color: hsl(40, 12%, 93%);
-    --panel-default-background-color: hsla(40, 22%, 99%, .96);
-    --panel-default-overlay-color: hsla(40, 22%, 99%, .78);
-    --popover-background-color: hsl(40, 16%, 97%);
+    --page-background-color: hsl(38, 16%, 91%);
+    --panel-default-background-color: hsla(39, 40%, 95%, .96);
+    --panel-default-overlay-color: hsla(39, 40%, 95%, .8);
+    --popover-background-color: hsl(39, 40%, 96.5%);
     --well-background-color: hsl(40, 8%, 86%);
     --scrim-color: hsla(40, 20%, 20%, .25);
     --shadow-color: hsla(40, 25%, 15%, .22);
@@ -316,24 +316,24 @@ html[data-theme=light] {
     --look-border-l-offset: -7%;
     --look-transparent-extra-l-offset: -2%;
 
-    --look-default-s: 16%;
-    --look-default-l: 96%;
+    --look-default-s: 33%;
+    --look-default-l: 98.5%;
     --look-default-a: .92;
     --look-default-text-color: hsl(40, 7%, 22%);
     --look-default-text-hover-color: hsl(40, 12%, 8%);
     --look-default-text-dimmed-color: hsl(40, 4%, 52%);
 
-    --look-highlight-s: 70%;
-    --look-highlight-l: 85%;
+    --look-highlight-s: 88%;
+    --look-highlight-l: 82%;
     --look-highlight-text-color: hsl(34, 65%, 18%);
 
-    --look-selected-s: 65%;
-    --look-selected-l: 79%;
+    --look-selected-s: 82%;
+    --look-selected-l: 76%;
     --look-selected-text-color: hsl(34, 70%, 14%);
 
-    --look-transparent-s: 20%;
-    --look-transparent-l: 97%;
-    --look-transparent-a: .8;
+    --look-transparent-s: 33%;
+    --look-transparent-l: 98.5%;
+    --look-transparent-a: .7;
     --look-transparent-text-color: hsl(40, 6%, 28%);
     --look-transparent-text-hover-color: hsl(40, 12%, 8%);
 
@@ -358,19 +358,19 @@ html[data-theme=light] {
     --invalid-background-color: hsla(343, 78%, 46%, .08);
 
     /* floating surfaces */
-    --floating-background-color: hsla(40, 20%, 99%, .98);
+    --floating-background-color: hsla(39, 40%, 96.5%, .98);
     --floating-border-color: hsla(40, 12%, 12%, .14);
     --modal-backdrop-color: hsla(40, 12%, 25%, .35);
-    --hover-overlay-color: hsla(40, 20%, 97%, .75);
+    --hover-overlay-color: hsla(39, 40%, 95%, .75);
     --subtle-shade-color: hsla(40, 20%, 20%, .035);
     --inset-shade-color: hsla(40, 20%, 25%, .07);
     --stripe-color: hsla(40, 20%, 25%, .04);
     --press-fill-color: hsla(40, 20%, 10%, .08);
     --focus-ring-color: hsla(38, 60%, 35%, .7);
     --scrollbar-track-color: hsla(40, 15%, 30%, .1);
-    --list-header-background-color: hsl(40, 16%, 94%);
+    --list-header-background-color: hsl(38, 24%, 92%);
     --list-header-border-color: hsla(40, 12%, 12%, .08);
-    --map-status-background-color: hsla(40, 20%, 98%, .82);
+    --map-status-background-color: hsla(39, 40%, 95%, .85);
     --gauge-border-color: hsl(40, 5%, 62%);
     --slider-axis-color: hsl(40, 5%, 68%);
     --busy-indicator-color: hsl(38, 45%, 40%);
@@ -386,7 +386,7 @@ html[data-theme=light] {
     --auto-dismiss-fill-color: hsl(40, 6%, 68%);
 
     /* notifications */
-    --notification-background-hsl: 40, 22%, 99%;
+    --notification-background-hsl: 39, 40%, 96.5%;
     --notification-error-color: hsl(0, 62%, 46%);
     --notification-info-color: hsl(202, 70%, 40%);
     --notification-warning-color: hsl(36, 80%, 42%);
@@ -394,63 +394,63 @@ html[data-theme=light] {
 
     /* section bars */
     --bar-border-color: hsla(40, 12%, 12%, .12);
-    --top-bar-background-color: hsla(40, 18%, 97%, .82);
-    --bottom-bar-background-color: hsla(40, 18%, 95%, .75);
+    --top-bar-background-color: hsla(38, 26%, 95%, .85);
+    --bottom-bar-background-color: hsla(38, 24%, 93%, .78);
 
     /* season select */
     --season-axis-color: hsl(40, 8%, 25%);
     --season-handle-color: hsla(40, 8%, 25%, .35);
-    --season-flag-background-color: hsl(40, 14%, 96%);
+    --season-flag-background-color: hsl(39, 40%, 96.5%);
 
     /* tabs */
-    --tab-default-background-color: hsl(40, 10%, 88%);
-    --tab-selected-background-color: hsl(40, 22%, 98%);
-    --tab-default-background-color-transparent: hsla(40, 10%, 88%, 0);
-    --tab-selected-background-color-transparent: hsla(40, 22%, 98%, 0);
+    --tab-default-background-color: hsl(38, 14%, 87%);
+    --tab-selected-background-color: hsl(39, 40%, 95%);
+    --tab-default-background-color-transparent: hsla(38, 14%, 87%, 0);
+    --tab-selected-background-color-transparent: hsla(39, 40%, 95%, 0);
     --tab-default-border-color: hsl(40, 6%, 72%);
 
     /* code editor */
-    --code-completion-selected-background-color: hsl(40, 70%, 84%);
-    --code-completion-section-background-color: hsl(40, 16%, 94%);
+    --code-completion-selected-background-color: hsl(40, 88%, 82%);
+    --code-completion-section-background-color: hsl(38, 24%, 92%);
 
     /* home chrome */
-    --footer-background-color: hsla(40, 16%, 95%, .99);
+    --footer-background-color: hsla(38, 24%, 93%, .99);
     --disabled-overlay-color: hsla(40, 20%, 97%, .55);
     --row-expansion-shade-color: hsla(40, 20%, 25%, .05);
 
     /* map chrome */
     --map-background-color: #e9e6df;
-    --panel-strong-background-color: hsla(40, 22%, 99%, .96);
-    --panel-strong-hover-background-color: hsla(40, 18%, 94%, .96);
-    --map-chip-background-color: hsla(40, 22%, 98%, .82);
+    --panel-strong-background-color: hsla(39, 40%, 95%, .96);
+    --panel-strong-hover-background-color: hsla(38, 26%, 91.5%, .96);
+    --map-chip-background-color: hsla(39, 40%, 95%, .85);
     --shadow-faint-color: hsla(40, 25%, 15%, .12);
     --map-focus-ring-color: hsla(38, 60%, 35%, .8);
     --map-scale-color: hsl(40, 5%, 42%);
     --map-progress-track-color: hsl(40, 8%, 86%);
     --map-progress-color: hsl(38, 30%, 52%);
-    --crop-shade-color: hsla(40, 20%, 97%, .78);
+    --crop-shade-color: hsla(39, 40%, 95%, .78);
 
     /* sections */
     --text-caption-color: hsl(40, 5%, 38%);
     --text-quiet-color: hsl(40, 4%, 42%);
     --subform-border-color: hsl(40, 6%, 72%);
-    --graph-tooltip-background-color: hsla(40, 22%, 99%, .95);
-    --scene-card-background-color: hsl(40, 18%, 97%);
+    --graph-tooltip-background-color: hsla(39, 40%, 95%, .95);
+    --scene-card-background-color: hsl(39, 40%, 96.5%);
     --table-border-color: hsla(40, 10%, 10%, .3);
     --row-stripe-color: hsla(40, 20%, 20%, .03);
-    --loading-background-color: hsla(40, 20%, 97%, .8);
+    --loading-background-color: hsla(39, 40%, 95%, .85);
 
     /* landing */
     --landing-text-color: hsl(40, 12%, 10%);
     --landing-secondary-text-color: hsl(40, 6%, 26%);
-    --landing-card-color: hsla(40, 25%, 98%, .72);
+    --landing-card-color: hsla(39, 40%, 95%, .74);
     --landing-veil-color: hsla(40, 22%, 95%, .58);
 
     /* toolbars */
     --recipe-toolbar-default-s: 28%;
     --recipe-toolbar-default-l: 85%;
-    --recipe-toolbar-highlight-s: 22%;
-    --recipe-toolbar-highlight-l: 99%;
+    --recipe-toolbar-highlight-s: 40%;
+    --recipe-toolbar-highlight-l: 95%;
     --recipe-toolbar-disabled-s: 14%;
     --recipe-toolbar-disabled-l: 91%;
     --map-toolbar-default-s: 22%;
@@ -459,16 +459,16 @@ html[data-theme=light] {
     --map-toolbar-highlight-l: 76%;
     --map-toolbar-disabled-s: 8%;
     --map-toolbar-disabled-l: 93%;
-    --panel-tab-default-s: 12%;
-    --panel-tab-default-l: 90%;
-    --panel-tab-selected-s: 22%;
-    --panel-tab-selected-l: 99%;
+    --panel-tab-default-s: 16%;
+    --panel-tab-default-l: 89%;
+    --panel-tab-selected-s: 40%;
+    --panel-tab-selected-l: 95%;
 
     /* elevation */
     --elevation-shadow: 0 1px 2px hsla(40, 25%, 15%, .07), 0 6px 20px hsla(40, 25%, 15%, .09);
 
     /* terminal */
-    --terminal-background-color: hsla(40, 22%, 99%, .88);
+    --terminal-background-color: hsla(39, 40%, 95%, .9);
 }
 
 html.themeSwitching,

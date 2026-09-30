@@ -142,11 +142,11 @@ const PALETTES = {
     },
     light: {
         settings: {
-            background: 'hsla(40, 20%, 99%, .95)',
+            background: 'hsla(39, 40%, 96.5%, .95)',
             foreground: '#24292e',
             caret: '#24292e',
             selection: '#d9d2c3',
-            gutterBackground: 'hsl(40, 14%, 95%)',
+            gutterBackground: 'hsl(38, 24%, 92%)',
             gutterForeground: 'hsl(40, 5%, 55%)',
             lineHighlight: 'hsla(40, 40%, 85%, .45)',
             dark: false

@@ -52,7 +52,7 @@ describe('Graph chrome colors', () => {
         render()
 
         const options = charts.at(-1)
-        expect(options.highlightSeriesBackgroundColor).toBe('hsla(40, 22%, 99%, 1)')
+        expect(options.highlightSeriesBackgroundColor).toBe('hsla(39, 40%, 95%, 1)')
         expect(options.series.observations.color).toBe('#2b2926')
         expect(options.series.fitted.color).toBe('#FF0000')
     })

@@ -297,7 +297,7 @@ const LIGHT_BASE_STYLE = [
     {stylers: [{color: '#e9e6df'}]},
     {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
     {featureType: 'poi', stylers: [{visibility: 'off'}]},
-    {featureType: 'water', stylers: [{color: '#cdd5da'}]},
+    {featureType: 'water', stylers: [{color: '#d6dce0'}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}]}
 ]
 
