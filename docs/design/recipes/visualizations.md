@@ -173,13 +173,18 @@ capability. A subset or rename supplies an explicit input-to-output band mapping
 is insufficient evidence.
 
 A visualization referring to both scalar and array bands is not directly applicable. A mixed output may still
-offer visualizations whose complete referenced-band set is scalar. Positively observed array dimensionality is
-definitive; unknown dimensionality remains an evidence gap during migration and must not be relabelled as scalar.
-The visualization editor applies the same physical filter to its band choices. Known array bands are excluded,
-and Add visualization is disabled when no eligible band remains. This does not remove bands from Retrieve.
-The temporary allowance for unknown dimensionality ends at the
-[mandatory-declaration step](data-sources.md), when every READY band must have established scalar or array shape.
-That step tightens description validation and removes the allowance from both visualization matching and the editor.
+offer visualizations whose complete referenced-band set is scalar. Every band of a READY description has established
+dimensionality, so a renderer draws only bands established as scalar; a band whose dimensionality is unknown - an
+asset band whose metadata states no PixelType, say - is not relabelled scalar and is not drawn. The visualization
+editor applies the same physical filter to its band choices: only scalar bands are offered, and Add visualization is
+disabled when none remains. This does not remove bands from Retrieve. Workflows that copy presets from a source they
+observed, or derive templates from a catalogue, match them by name alone (`recipeVisualizationsNaming`), so a template
+over array bands - a CCDC template a Slice will later make drawable - is carried on and withheld only where it would
+be drawn.
+
+An asset map layer reads each band's shape from the asset's Earth Engine metadata: a PixelType states `dimensions`
+only for an array, so one without it is a scalar, while a band with no PixelType, or dimensions that are no count,
+establishes nothing.
 
 No positional remapping is allowed. Reordering an upstream image must not change a saved style's meaning.
 

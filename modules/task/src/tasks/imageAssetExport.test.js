@@ -386,6 +386,15 @@ describe('an output that cannot be described', () => {
         expect(state.exported).toEqual([])
     })
 
+    // Missing evidence is never taken for a scalar: an asset reported without a band's dimensionality is not described.
+    it('fails the export when an asset it reads does not report a band\'s dimensionality', async () => {
+        state.assets['users/x/unreported'] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir'}], properties: {}}
+        const recipe = masking({primary: {type: 'ASSET', id: 'users/x/unreported'}})
+
+        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/invalid output \(INCOMPLETE_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
+    })
+
     it('fails the export when the evidence it depends on cannot be read', async () => {
         const recipe = masking({primary: {type: 'ASSET', id: 'users/x/unreachable'}})
 

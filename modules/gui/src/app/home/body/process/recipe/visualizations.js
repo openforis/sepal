@@ -2,7 +2,7 @@ import {selectFrom} from '~/stateUtils'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {canPreview} from './recipeOutput'
-import {reconciledSelection, renderableVisualizations} from './visualizationMatching'
+import {reconciledSelection, renderableVisualizations, visualizationsWithAvailableBands} from './visualizationMatching'
 
 export const getUserDefinedVisualizations = (recipe, sourceId) =>
     Object.values(
@@ -42,9 +42,14 @@ export const recipeVisualizations = (recipe, availableBands) =>
         ...(getRecipeType(recipe.type)?.getPreSetVisualizations(recipe) || [])
     ], availableBands || {})
 
-// Observed band names, in the shape the filter reads: each known to exist, nothing known about its dimensionality.
-export const namedBands = names =>
-    Object.fromEntries((names || []).map(name => [name, {}]))
+// What a recipe offers for its own output that names only the given bands, matched by name alone: what a workflow
+// copying presets from a source it observed, or deriving templates from a catalogue, carries on to where the styles
+// are drawn - and where the renderer's own filter decides what can be.
+export const recipeVisualizationsNaming = (recipe, bandNames) =>
+    visualizationsWithAvailableBands([
+        ...getUserDefinedVisualizations(recipe, OUTPUT_LAYER_ID),
+        ...(getRecipeType(recipe.type)?.getPreSetVisualizations(recipe) || [])
+    ], bandNames || [])
 
 // What a map layer's picker offers, in its order and under its filter: the styles the recipe holding the layer keeps
 // for it, the styles the recipe it shows owns for its output, then the presets its form offers. The picker and the

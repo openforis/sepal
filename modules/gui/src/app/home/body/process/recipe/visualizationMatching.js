@@ -24,14 +24,14 @@ export const visualizationsWithAvailableBands = (visualizations, availableBands)
 // takes ALL candidates rather than presets alone.
 //
 // A filter, never a deletion. The style stays in the recipe and the band stays exportable; only the offer to
-// draw it is withheld. Dimensionality has to be positively observed: a band whose type nothing reported is
-// left a candidate rather than being relabelled scalar or array.
+// draw it is withheld. Only an established scalar can be drawn: a band whose dimensionality is unknown is not
+// relabelled scalar, and is no more a candidate than an array.
 export const renderableVisualizations = (visualizations, availableBands = {}) =>
     visualizationsWithAvailableBands(visualizations, renderableBandNames(availableBands))
 
 export const renderableBandNames = (availableBands = {}) =>
     Object.keys(availableBands)
-        .filter(name => !(availableBands[name]?.dataType?.arrayDimensions > 0))
+        .filter(name => availableBands[name]?.dataType?.arrayDimensions === 0)
 
 // Keeping the identity a set of visualizations is already known by.
 //

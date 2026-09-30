@@ -808,8 +808,8 @@ precision and range, which the cursor rounds by.
 - Physical `dataType` in a description stays `{arrayDimensions}` alone.
 
 The visualization editor asks nothing about bands itself. Its selector opens it only once the layer's answer holds
-bands, capturing the recipe, those bands and the product arguments together, and the editor requests histograms and
-distinct values with that context alone.
+scalar bands, capturing the recipe, those bands and the product arguments together, and the editor requests histograms
+and distinct values with that context alone.
 
 - If its area stops showing that layer or that product while it is open, the editor closes without saving.
 - A change to the recipe's content does not close it: every request it makes stays coherent with the snapshot it

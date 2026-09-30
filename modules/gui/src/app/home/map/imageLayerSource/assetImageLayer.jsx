@@ -21,6 +21,7 @@ import {CursorValueContext} from '../cursorValue'
 import {EarthEngineImageLayer} from '../layer/earthEngineImageLayer'
 import {withMapArea} from '../mapAreaContext'
 import {MapAreaLayout} from '../mapAreaLayout'
+import {assetAvailableBands} from './assetBands'
 import {toVisualizations} from './assetVisualizationParser'
 import {VisualizationSelector} from './visualizationSelector'
 
@@ -171,11 +172,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     availableBands() {
-        const metadata = this.currentMetadata()
-        return Object.fromEntries((metadata?.bandNames || []).map(name => {
-            const band = metadata.bands?.find(({id}) => id === name)
-            return [name, {dataType: {...band?.data_type, arrayDimensions: band?.data_type?.dimensions}}]
-        }))
+        return assetAvailableBands(this.currentMetadata())
     }
 
     allVisualizations() {

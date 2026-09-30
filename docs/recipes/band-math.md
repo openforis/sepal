@@ -26,9 +26,9 @@ Whether a band is an array is not configured. A cast sets only the element type 
 expression over an array band yields one; `max`, `min`, `first` and `last` keep arrays, `count` and
 `countDistinctNonNull` return scalars, and the other reducers refuse arrays. So the running image is observed, for
 its dimensionality alone, and must carry exactly the configured names in order. Until it has been observed nothing is
-offered. A verified scalar is averaged at coarser pyramid levels, as Earth Engine's default always exported it; a
-verified array is sampled; a band whose dimensionality was not observed states neither. No encoding is stated, even
-for a band passed through from an input.
+offered. A scalar is averaged at coarser pyramid levels, as Earth Engine's default always exported it, and an array
+is sampled; a running image that does not report a band's dimensionality is refused as `INCOMPLETE_IMAGE_OUTPUT`. No
+encoding is stated, even for a band passed through from an input.
 
 | Configuration or evidence | Answer |
 | --- | --- |
@@ -36,6 +36,7 @@ for a band passed through from an input.
 | two final names alike | refused, `DUPLICATE_BAND_NAME`, observing nothing |
 | running image not yet observed, or its observation failed | nothing offered: needs evidence, or unavailable |
 | running image carrying other names, or another order | refused, `CONFLICTING_OBSERVATION` |
+| running image not reporting a band's dimensionality | refused, `INCOMPLETE_IMAGE_OUTPUT` |
 
 Each input is asked for the bands it includes as the physical bands it should return (`withOutputBands`), so an
 input whose own selection means something else - CCDC's names the measures to fit - still returns those bands. Asked

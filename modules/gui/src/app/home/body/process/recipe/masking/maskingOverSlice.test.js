@@ -38,12 +38,11 @@ const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
 const {maskingObservation} = await import('./maskingSourceEvidence')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {resolveEvidence$} = await import('../ccdcSlice/sliceObservation')
-const {availableBandsOf, materializedTemplates} = await import('../ccdcSlice/sliceEvidence')
+const {materializedTemplates} = await import('../ccdcSlice/sliceEvidence')
 
 registry.CCDC = {describeSegments$, getPreSetVisualizations: () => []}
 registry.CCDC_SLICE = {
     resolveEvidence$,
-    getAvailableBands: (recipe, evidence) => availableBandsOf(recipe, evidence?.segments),
     getPreSetVisualizations: (recipe, evidence) => materializedTemplates(recipe, evidence?.segments)
 }
 

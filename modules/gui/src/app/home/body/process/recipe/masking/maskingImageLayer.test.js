@@ -37,13 +37,15 @@ const recipeOf = ({bands, visualizations}) => ({
     model: {imageToMask: {bands, visualizations}}
 })
 
+// The layer's read states each band a scalar: the band-name rule is what is under test here. That segments are arrays,
+// and never drawn, is maskingSourceEvidence.test.js's.
 const selectorOf = ({bands, visualizations, visParams}) => {
     const layerConfig = visParams ? {visParams} : {}
     const instance = new MaskingImageLayer({
         recipe: recipeOf({bands, visualizations}),
         source: {id: 'source-1'},
         layerConfig,
-        imageOutput: {availableBands: Object.fromEntries(bands.map(name => [name, {}]))}
+        imageOutput: {availableBands: Object.fromEntries(bands.map(name => [name, {dataType: {arrayDimensions: 0}}]))}
     })
     return {selector: instance.renderImageLayerForm(), layerConfig}
 }

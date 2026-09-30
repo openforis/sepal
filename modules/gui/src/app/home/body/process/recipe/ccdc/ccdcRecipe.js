@@ -10,7 +10,7 @@ import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
-import {namedBands, recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
 import {selectFrom} from '~/stateUtils'
@@ -110,7 +110,7 @@ const allOpticalMosaicVisualizations = recipe => {
         }
     }
     // Templates for the measures this CCDC fits, which its declaration derives from the same optical model.
-    const baseVisualizations = recipeVisualizations(opticalMosaicRecipe, namedBands(ccdcMeasures({model: recipe.model})))
+    const baseVisualizations = recipeVisualizationsNaming(opticalMosaicRecipe, ccdcMeasures({model: recipe.model}))
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
@@ -158,7 +158,7 @@ const allPlanetMosaicVisualizations = recipe => {
             }
         }
     }
-    const baseVisualizations = recipeVisualizations(planetMosaicRecipe, namedBands(TEMPORAL_PLANET_BANDS.flat()))
+    const baseVisualizations = recipeVisualizationsNaming(planetMosaicRecipe, TEMPORAL_PLANET_BANDS.flat())
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')

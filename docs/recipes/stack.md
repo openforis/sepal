@@ -19,9 +19,9 @@ Declared in `lib/js/shared/src/recipe/type/stack.js` (see the
 corresponds to one band of one input (`stackBandCorrespondence`): the input images in model order, and within each
 the bands its mapping names, in the mapping's order. Selecting and renaming change neither values nor representation,
 so an output band takes its input band's dimensionality, pyramiding policy and encoding under its new name, from the
-input's current description. A verified scalar its input states no policy for - an asset's, typically - is averaged
-at coarser pyramid levels, as Earth Engine's default always exported it; an array or a band of unknown
-dimensionality gets no policy it was not given, and an encoding its input does not state stays unknown.
+input's current description. A scalar its input states no policy for - an asset's, typically - is averaged at
+coarser pyramid levels, as Earth Engine's default always exported it; an array gets no policy it was not given, and
+an encoding its input does not state stays unknown.
 
 | Configuration or inputs | Answer |
 | --- | --- |

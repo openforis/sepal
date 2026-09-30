@@ -170,8 +170,8 @@ where a family still needs observation.
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
      the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
      band takes that input band's dimensionality, pyramiding policy and encoding under its new name, from the input's
-     current description rather than the snapshot copied at selection; a verified scalar its input states no policy
-     for is averaged, while an array or a band of unknown dimensionality gets no policy it was not given. A mapping
+     current description rather than the snapshot copied at selection; a scalar its input states no policy for is
+     averaged, while an array gets no policy it was not given. A mapping
      is checked before any input is read: an image without one, a blank name or a final name already taken is
      refused, and a band the input does not hold is refused once it is read, as is an input with no image output.
      Its Earth Engine catalogue answers the mapped names without building the image. New exports
@@ -183,7 +183,7 @@ where a family still needs observation.
      image is observed for dimensionality alone and must carry exactly those names, or the provider refuses it
      (`CONFLICTING_OBSERVATION`); nothing is offered while that observation is pending. A verified scalar is averaged
      at coarser pyramid levels, as Earth Engine's default always exported it, a verified array is sampled, and a band
-     whose dimensionality was not observed states neither; no encoding is stated. Arrays can therefore be exported
+     whose dimensionality was not observed is refused; no encoding is stated. Arrays can therefore be exported
      to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
      Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
      took its mode.
@@ -196,14 +196,14 @@ where a family still needs observation.
    recipes as images - input imagery, a map layer's source, an area of interest - offer only image sources. CCDC, Time
    Series and Sampling Design are not, though CCDC and Time Series declare images, and Masking's image to mask still
    takes a source of segments, CCDC included. Eligibility for those pickers is not proof that a recipe executes.
-   In this packet, also require established dimensionality for every band in a READY description:
-   `dataType.arrayDimensions` is a nonnegative integer (0 for scalar, positive for array), supplied by declaration,
-   inheritance or observation. Pending or unsuccessful evidence must not produce a READY answer with unknown
-   dimensionality. Tighten description validation and verify the rule for direct and wrapped outputs in GUI and
-   Task, then remove the visualization picker and editor's temporary allowance for unknown dimensionality.
-   Empty outputs remain valid; internal catalogue observations may still contain names alone if the provider
-   establishes dimensionality before publishing the description. Encoding, units and meaning can remain unknown.
-   Labels, tooltips, groups and display ranges remain GUI presentation.
+   Every band of a READY description has established dimensionality: `dataType.arrayDimensions` is a nonnegative
+   integer (0 for scalar, positive for array), supplied by declaration, inheritance or observation. A band without
+   it is refused as `INCOMPLETE_IMAGE_OUTPUT` at `['bands', i, 'dataType']`, so an asset or a running image observed
+   without it is never described, in the GUI or in Task; Band Math and Stack no longer state a band of unknown shape.
+   A provider asking only which bands it can be asked for - CCDC - still observes names alone and establishes their
+   shape from its declaration. The map renderer and the visualization editor offer only established scalars. Empty
+   outputs remain valid; encoding, units and meaning can remain unknown. Labels, tooltips, groups and display ranges
+   remain GUI presentation.
 
 Each family is one packet, verified against the image its real `getImage$()` returns rather than against another
 helper. Verification distinguishes the public bands available to request, the image built with no selection, and

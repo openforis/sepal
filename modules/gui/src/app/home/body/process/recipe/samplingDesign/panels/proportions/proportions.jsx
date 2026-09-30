@@ -5,7 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
-import {namedBands, recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -407,7 +407,7 @@ class _Proportions extends React.Component {
                 recipeId: recipe.id
             },
         })
-        this.onImageLoaded(bands, recipeVisualizations(recipe, namedBands(bands)))
+        this.onImageLoaded(bands, recipeVisualizationsNaming(recipe, bands))
     }
 
     onImageLoaded(bands, visualizations) {

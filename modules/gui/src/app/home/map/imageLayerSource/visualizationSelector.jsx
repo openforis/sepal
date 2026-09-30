@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -122,7 +121,7 @@ class _VisualizationSelector extends React.Component {
         const availableBands = this.availableBands()
         const filter = options => options.flatMap(option => option.options
             ? [{...option, options: filter(option.options)}]
-            : !availableBands || renderableVisualizations([option.visParams], availableBands).length
+            : renderableVisualizations([option.visParams], availableBands).length
                 ? [option]
                 : [])
         return filter(this.props.presetOptions)
@@ -141,25 +140,17 @@ class _VisualizationSelector extends React.Component {
     // puts a choice in the list the map cannot honour. Withheld, never deleted: it is offered again when the
     // band returns.
     toOptions(visualizations) {
-        const availableBands = this.availableBands()
-        const offered = availableBands
-            ? renderableVisualizations(visualizations, availableBands)
-            : visualizations
-        return offered.map(visParams => ({
+        return renderableVisualizations(visualizations, this.availableBands()).map(visParams => ({
             value: visParams.id,
             label: visParams.bands.join(', '),
             visParams
         }))
     }
 
-    // What the layer can draw, as the layer that owns the answer gives it: band descriptions, or names alone, which
-    // say nothing about dimensionality. A caller that gives nothing leaves it unknown, and unknown stays unknown -
-    // filtering against an empty schema would withhold everything.
+    // What the layer can draw, as the layer that owns the answer gives it: band descriptions whose dimensionality decides
+    // what can be drawn. Nothing given is nothing to draw.
     availableBands() {
-        const {availableBands} = this.props
-        return _.isArray(availableBands)
-            ? Object.fromEntries(availableBands.map(band => [band, {}]))
-            : availableBands
+        return this.props.availableBands || {}
     }
 
     flattenOptions(options) {
@@ -187,7 +178,7 @@ class _VisualizationSelector extends React.Component {
     // once they are known.
     editorContext() {
         const {recipe, source, areaLayerConfig} = this.props
-        const bands = renderableBandNames(this.availableBands() || {})
+        const bands = renderableBandNames(this.availableBands())
         return bands.length
             ? {recipe, imageLayerSourceId: source.id, bands, productArgs: productArgs(recipe, areaLayerConfig)}
             : null
@@ -234,7 +225,7 @@ export const VisualizationSelector = compose(
 
 VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,
-    availableBands: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+    availableBands: PropTypes.object,
     presetOptions: PropTypes.array,
     labelButtons: PropTypes.array,
     recipe: PropTypes.object

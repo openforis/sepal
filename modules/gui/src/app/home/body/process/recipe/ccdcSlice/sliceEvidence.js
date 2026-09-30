@@ -3,7 +3,7 @@ import {selectFrom} from '~/stateUtils'
 
 import {inOrderOf} from '../retrieveOutput'
 import {OBSERVED, sourceKeyOf, UNAVAILABLE, UNOBSERVED} from '../sourceEvidence'
-import {renderableVisualizations} from '../visualizationMatching'
+import {visualizationsWithAvailableBands} from '../visualizationMatching'
 import {OUTPUT_LAYER_ID} from '../visualizations'
 
 // What a CCDC Slice recipe knows about the segments it slices, and what it derives from that.
@@ -67,15 +67,12 @@ export const outputBandsOf = (recipe, resolved) => {
     return description ? sliceOutputBands(description.bands || [], recipe.model) : []
 }
 
-export const availableBandsOf = (recipe, resolved) =>
-    Object.fromEntries(outputBandsOf(recipe, resolved).map(name => [name, {}]))
-
 // The source's templates materialized against what this operation actually produces: one naming a band this
 // slice does not make - a harmonic it was not asked for, a measure the source never fitted - is not offered.
 // Nothing is deleted from the source; a template not applicable to this slice may be to another.
 export const materializedTemplates = (recipe, resolved) => {
     const {description} = segmentDescription(recipe, resolved)
-    return renderableVisualizations(description?.visualizations || [], availableBandsOf(recipe, resolved))
+    return visualizationsWithAvailableBands(description?.visualizations || [], outputBandsOf(recipe, resolved))
 }
 
 const MEASURE_SUFFIXES = {

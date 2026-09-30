@@ -133,13 +133,13 @@ describe('renderable visualizations', () => {
         expect(renderableVisualizations([{id: 'a', bands: ['removed']}], bands)).toEqual([])
     })
 
-    // Never observed is not the same as scalar, and guessing either way would be inventing evidence.
-    it('keeps a style over a band whose type was never observed', () => {
-        expect(renderableVisualizations([{id: 'a', bands: ['unknown']}], bands).map(({id}) => id)).toEqual(['a'])
+    // Unknown is not scalar: only a band established as one can be drawn.
+    it('drops a style over a band whose dimensionality is not established', () => {
+        expect(renderableVisualizations([{id: 'a', bands: ['unknown']}], bands)).toEqual([])
     })
 
-    it('keeps everything when nothing is known about any band', () => {
-        expect(renderableVisualizations([{id: 'a', bands: ['ndvi']}], {ndvi: {}}).map(({id}) => id)).toEqual(['a'])
+    it('offers nothing when nothing is established about any band', () => {
+        expect(renderableVisualizations([{id: 'a', bands: ['ndvi']}], {ndvi: {}})).toEqual([])
     })
 })
 

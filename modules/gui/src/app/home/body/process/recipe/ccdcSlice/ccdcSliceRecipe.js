@@ -8,8 +8,8 @@ import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmi
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
-import {renderableVisualizations} from '../visualizationMatching'
-import {availableBandsOf, chartSourceReference, dateFormatOf, materializedTemplates, segmentDatesOf} from './sliceEvidence'
+import {visualizationsWithAvailableBands} from '../visualizationMatching'
+import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf, segmentDatesOf} from './sliceEvidence'
 
 export const defaultModel = {
     date: {
@@ -55,11 +55,12 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
 
 // Everything this recipe offers over its own output: the source's templates that survive the operation, plus
 // the break-date preset it derives itself. One list, so what the layer form offers is exactly what the
-// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale.
+// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale. Matched by
+// name: which of them can be drawn is the layer's filter to decide, over the bands the slice's description holds.
 export const preSetVisualizations = (recipe, resolved) =>
-    renderableVisualizations(
+    visualizationsWithAvailableBands(
         [...materializedTemplates(recipe, resolved), ...additionalVisualizations(recipe, resolved)],
-        availableBandsOf(recipe, resolved)
+        outputBandsOf(recipe, resolved)
     )
 
 const additionalVisualizations = (recipe, resolved) => {

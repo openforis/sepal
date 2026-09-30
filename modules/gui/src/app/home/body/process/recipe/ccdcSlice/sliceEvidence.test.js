@@ -3,7 +3,6 @@ import {describe, expect, it} from 'vitest'
 import {sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 
 import {
-    availableBandsOf,
     baseBandsOf,
     chartSourceReference,
     dateFormatOf,
@@ -72,7 +71,7 @@ describe('a slice whose source has been observed', () => {
     })
 
     it('offers every derived band, all scalar', () => {
-        expect(Object.keys(availableBandsOf(recipe))).toContain('ndvi_phase_2')
+        expect(outputBandsOf(recipe)).toContain('ndvi_phase_2')
     })
 
     // A template is offered only where this slice produces every band it names. `nbr` was never fitted by
