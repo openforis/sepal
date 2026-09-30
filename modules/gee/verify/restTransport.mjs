@@ -43,11 +43,12 @@ const as = async (context, call$) => {
 }
 
 const main = async () => {
+    const client = new EERestClient({ee, http: {get$, postJson$, delete$}, limiter$: eeLimiter$, serviceAccountToken$})
     const runtime = new EERestRuntime({
         ee,
         serviceAccountToken$,
         projectId: googleProjectId,
-        createTransport: () => new EERestClient({ee, http: {get$, postJson$, delete$}, limiter$: eeLimiter$, serviceAccountToken$})
+        createTransport: () => client
     })
     await lastValueFrom(runtime.ready$(), {defaultValue: null})
 
@@ -75,7 +76,7 @@ const main = async () => {
     })
 
     await check('lists the SEPAL project root', async () =>
-        `${(await as(SERVICE_ACCOUNT, ee.listAssets$(`projects/${googleProjectId}/assets`))).length} assets`
+        `${(await as(SERVICE_ACCOUNT, client.listAssetsPage$(`projects/${googleProjectId}/assets`))).assets.length} assets`
     )
 
     await check('lists operations', async () =>
