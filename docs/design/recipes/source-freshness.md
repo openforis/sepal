@@ -30,6 +30,75 @@ There is no temporary browser content-hash bridge, no `update_time` freshness ru
 provider that later swaps its evidence. `update_time` remains display and audit metadata only. Websocket revision
 events and patch transport remain optional latency and transport improvements that correctness never requires.
 
+## Shared output description delivery
+
+Packet 1 is implemented; packets 2 and 3 are later work whose contracts still need review, as does the broader
+persisted-result and coherent-execution design below. Use **description loading** and **description refresh** for
+this work; acquisition also names a satellite observation in this application.
+
+### Packet 1: shared watches and loading
+
+The Process-scoped source runtime owns watches for every active recipe output question. A question is a recipe ID
+and its normalized product identity; canonical output and named products remain distinct. Watching is separate from
+loading: a configuration-only description can be answered locally and still registers interest in its dependencies.
+Map layers and Retrieve watch through the runtime (`sourceRuntime/outputRegistry.js`); neither owns loading.
+
+The API is `watchOutput$({recipeId, product})`, a reference-counted notification stream;
+`heldFor(key)`, a pure synchronous lookup; and `retryOutput({recipeId, product})`, an explicit retry of a failed
+current answer. Watches with equal existing work keys share one operation. Reads, renders and additional subscribers
+do not themselves retry failures. The one-shot runtime operations and common read remain available.
+
+- A locally answered watch starts no network work. A loading watch has no terminal; a settled watch holds READY,
+  INVALID or UNAVAILABLE. Rejection of a terminal's basis must leave a settled failure with a defined recovery path,
+  never LOADING with no operation running. Preserve protection against repeatedly loading a refused basis.
+- Relevant content changes withdraw old authority immediately. Results must match the current work key, credential
+  epoch and compatible basis. `heldFor` checks currency synchronously, including expiry and credentials, before a
+  timer or component update has reacted. Apply uses the same current read.
+- Closing one consumer cannot cancel shared work another still needs. Cancel and discard unfinished work when its
+  last claimant leaves, counting claims across all questions sharing it.
+- Retain settled READY and INVALID entries for a configurable **60 seconds** after their last release. Retain at
+  most **32 unclaimed entries**, configurable, evicting the least recently released first. Active entries are not
+  evicted. Pure lookups do not extend retention. Unclaimed entries perform no loading or monitoring; reopening
+  recomputes the current question and validates reuse rather than restarting an old snapshot.
+- Hold UNAVAILABLE while claimed, so failure is visible rather than indefinitely pending; discard it at zero claims.
+  Retry on explicit request, relevant key/credential change, or reopening after the failed entry became unclaimed.
+  INVALID clears on a relevant key change or eviction. No stale successful answer authorizes preview or export.
+- Credential changes clear retained entries and restart only claimed work, once. Runtime teardown reports
+  `SOURCE_RUNTIME_UNAVAILABLE`, stops all watches and work, and cannot start a retry loop.
+
+Packet 1 preserves current conservative content keys, `ui.sourceEvidence` and external freshness behavior. A
+refused basis is held as an `UNAVAILABLE` answer with code `SOURCE_BASIS_CHANGED`, recovered like any failure. The
+tests cover local answers, sharing, both consumer-close orders, same-tick edit and credential change followed by a
+read, late results, basis refusal, failure recovery, expiry before timer cleanup, the retention cap and product
+switches ([verification](gui-source-runtime.md#verification)). Existing scalar/array restrictions, export policies
+and named-product export refusal are unchanged.
+
+### Later packets: identities and freshness
+
+**Packet 2** reviews recipe revision freshness and observation sharing. Observation identity must account for the
+submitted root content and the dependency context; neither session content alone nor persisted revisions alone
+establishes every request's identity. Invalidate affected references, not all entries through a global generation.
+Remote refresh must preserve open drafts. The existing discrepancy between browser dependency drafts and persisted
+dependencies read by execution is documented, not solved or legitimized by description sharing.
+
+**Packet 3** reviews asset freshness, preview redraw signaling and removal of source evidence from content keys.
+A detected asset-version change invalidates immediately, but unchanged metadata need not establish unchanged
+contents. Collection `{updateTime, system:version, size}` can miss changes: membership can change while count and
+newest version remain the same. Age-based refresh must bound reuse where change evidence is incomplete. Public
+collections can receive historical corrections and backfills, so filtering by date does not justify refreshing only
+on reopen. Polling intervals and evidence-age limits remain undecided; the approved 60-second retention grace is
+not a freshness guarantee. No mutation probe is required for packet 1.
+
+Description recomputation, structural dependency checks and pixel redraw have separate triggers. Source evidence
+may stop acting as a pixel-change signal only after every affected consumer has a replacement. GUI presets and
+prefill still consume that evidence and must update without causing another band-metadata request.
+
+Schema availability and structural validity do not prove executability. Missing dates, training data or required
+references can prevent execution even with READY and VALID results, including through wrappers. Document this
+boundary now; implement requirements validation separately, with no unused resource slot or new panel guards.
+Task continues resolving independently. Separately review its acceptance of browser-supplied band selections and
+pyramiding policies, including whether policies should be derived or validated against its own description.
+
 ## Catalogue boundary
 
 The pure source contract is storage-agnostic. The first catalogue-backed consumer decides whether Redux or a plain

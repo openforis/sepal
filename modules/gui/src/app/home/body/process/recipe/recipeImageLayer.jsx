@@ -16,7 +16,7 @@ import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
 import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {OutputAcquisition} from './outputAcquisition'
+import {OutputWatch} from './outputWatch'
 import {recipeContent} from './recipeContent'
 import {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} from './recipeOutput'
 import {MATCHED, selectionState} from './visualizationMatching'
@@ -49,15 +49,15 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
 export const SELF_MANAGED_VISUALIZATIONS = ['BAYTS_ALERTS', 'CHANGE_ALERTS', 'LANDTRENDR']
 
 // What the layer shows is read, not looked up: the product its config names, answered from the records the session
-// holds, and - where that is not enough - from what this layer acquired and retains while it is mounted
-// (recipeOutput.js, outputAcquisition.js). Its form, its selector and its visualization editor are given that
-// read, so nothing below asks a second authority which bands exist.
+// holds, and - where that is not enough - from what the source runtime holds for it. The layer watches that question
+// while it is mounted, and the runtime loads what the read names, shared with every other consumer asking the same
+// (recipeOutput.js, outputWatch.js). Its form, its selector and its visualization editor are given that read, so
+// nothing below asks a second authority which bands exist.
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
     mounted = false
-    acquisition = new OutputAcquisition({
+    watch = new OutputWatch({
         sourceRuntime: this.props.sourceRuntime,
-        currentGraph: () => this.props.dependencyGraph,
         onChange: () => this.mounted && this.forceUpdate()
     })
 
@@ -102,26 +102,25 @@ class _RecipeImageLayer extends React.Component {
 
     componentWillUnmount() {
         this.mounted = false
-        this.acquisition.stop()
+        this.watch.stop()
     }
 
     update() {
-        const {recipe} = this.props
+        const {recipe, layerConfig} = this.props
         if (!recipe) {
-            return this.acquisition.stop()
+            return this.watch.stop()
         }
-        const imageOutput = this.imageOutput()
-        this.acquisition.update(imageOutput.acquisition, recipe)
-        this.reconcileVisualization(imageOutput)
+        this.watch.update({recipeId: recipe.id, product: layerProduct(recipe, layerConfig)})
+        this.reconcileVisualization()
     }
 
     imageOutput() {
-        const {recipe, layerConfig, dependencyGraph} = this.props
+        const {recipe, layerConfig, dependencyGraph, sourceRuntime} = this.props
         return readRecipeOutput({
             recipe,
             product: layerProduct(recipe, layerConfig),
             graph: dependencyGraph,
-            heldFor: key => this.acquisition.heldFor(key)
+            heldFor: key => sourceRuntime.heldFor(key)
         })
     }
 
@@ -172,7 +171,7 @@ class _RecipeImageLayer extends React.Component {
     //
     // Nothing is drawn but a description over dependencies known to be sound, whoever manages the selection: a
     // preview executes every dependency, read or not, and one Earth Engine would reject - bands that do not exist,
-    // a dependency that is gone - is withheld rather than requested. While the answer is being acquired it is
+    // a dependency that is gone - is withheld rather than requested. While the answer is being loaded it is
     // withheld too. The saved selection is left alone - only what it would present is withheld.
     //
     // Whatever is withheld is also let go. MapAreaLayout takes a withheld layer off the map, which cancels it for
@@ -210,8 +209,8 @@ class _RecipeImageLayer extends React.Component {
             visParams: layerConfig.visParams
         }
         // The graph already starts with the root, so it is the complete watched list. The preview depends on
-        // what every record computes and on how it is visualized; what is acquired about the output depends on
-        // the first alone, so restyling rebuilds the preview and acquires nothing.
+        // what every record computes and on how it is visualized; what is loaded about the output depends on
+        // the first alone, so restyling rebuilds the preview and loads nothing.
         const watchedProps = {
             recipes: dependencyGraph.recipes.map(recipeContent),
             layerConfig

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {Observable} from 'rxjs'
+import {Observable, Subject} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -85,7 +85,8 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 
 const {RecipeImageLayer} = await import('./recipeImageLayer')
 const {recipeContent} = await import('./recipeContent')
-const {productArgs} = await import('./recipeOutput')
+const {compatibleBasis, outputLoading, productArgs} = await import('./recipeOutput')
+const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {visualizations: radarPresets} = await import('./radarMosaic/visualizations')
 
 beforeEach(() => {
@@ -105,6 +106,8 @@ const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
 // cleared one. The two are different questions to ask the reconciler, so the builder keeps them apart.
 const build = ({recipe, visParams, previousLayer, mode = {}}) => {
     const updates = []
+    let current = recipe
+    const runtime = runtimeOf(() => ({[current.id]: current}))
     const instance = new RecipeImageLayer({
         currentRecipe: recipe,
         recipe,
@@ -112,6 +115,7 @@ const build = ({recipe, visParams, previousLayer, mode = {}}) => {
         source: {id: 'this-recipe'},
         layerConfig: visParams === undefined ? mode : {...mode, visParams},
         dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []},
+        sourceRuntime: runtime.sourceRuntime,
         map: {},
         mapArea: {updateLayerConfig: layerConfig => updates.push(layerConfig)},
         tab: {busy: {set: () => {}}},
@@ -125,11 +129,15 @@ const build = ({recipe, visParams, previousLayer, mode = {}}) => {
     const didUpdate = () => instance.componentDidUpdate(instance.props)
     // React replaces props before it calls the lifecycle; without a renderer this is the equivalent. The
     // dependency graph is derived from the same records, so it moves with them as the selector's does.
-    const setRecipe = recipe => instance.props = {
-        ...instance.props,
-        recipe,
-        currentRecipe: recipe,
-        dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
+    const setRecipe = recipe => {
+        current = recipe
+        runtime.sessionChanged()
+        instance.props = {
+            ...instance.props,
+            recipe,
+            currentRecipe: recipe,
+            dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
+        }
     }
     const setLayerConfig = layerConfig => instance.props = {...instance.props, layerConfig}
     return {instance, updates, didUpdate, setRecipe, setLayerConfig}
@@ -822,6 +830,15 @@ describe('acquiring what the layer shows', () => {
                 .toEqual([{visualizationType: 'monitoring', mosaicType: 'latest'}, {visualizationType: 'calibration', mosaicType: 'median'}])
         })
 
+        it('keeps loading its dependencies when another period is shown before they are known', () => {
+            const {runtime, setLayerConfig} = shownAs('monitoring', 'latest')
+
+            setLayerConfig(view('calibration', 'median'))
+
+            expect(runtime.operations).toHaveLength(1)
+            expect(runtime.operations[0].torndown).toBe(false)
+        })
+
         it('rebuilds the preview on a restyle without acquiring anything again', () => {
             const {instance, runtime, settle, setLayerConfig} = shownAs('calibration', 'latest')
             settle(runtime.operations[0], completed(instance.props.recipe))
@@ -973,32 +990,43 @@ const unreadable = recipe => ({
     basis: basisOf(recipe)
 })
 
-const runtimeOf = () => {
+// The runtime's real output registry, over a session holding the records the layer's props hold. Its operations are
+// the test's to settle, and credentials are replaced as Redux would replace them.
+const runtimeOf = catalogue => {
     const operations = []
-    const listeners = new Set()
-    const operation = kind => () => new Observable(subscriber => {
-        const entry = {kind, subscriber}
-        operations.push(entry)
+    const changes = new Subject()
+    let credentials = {}
+    const registry = new OutputRegistry({
+        session: () => ({catalogue: catalogue(), credentials, closed: false}),
+        sessionChanges$: changes,
+        acquisitionOf: outputLoading,
+        operationOf: ({kind}) => new Observable(subscriber => {
+            const operation = {kind, subscriber, torndown: false}
+            operations.push(operation)
+            return () => operation.torndown = true
+        }),
+        isCompatible: compatibleBasis
     })
     return {
         operations,
         sourceRuntime: {
-            resolveImageOutput$: operation('DESCRIBE'),
-            completeDependencies$: operation('DEPENDENCIES'),
-            identity$: () => new Observable(subscriber => {
-                listeners.add(subscriber)
-                subscriber.next({})
-                return () => listeners.delete(subscriber)
-            })
+            watchOutput$: question => registry.watchOutput$(question),
+            heldFor: key => registry.heldFor(key),
+            retryOutput: question => registry.retryOutput(question)
         },
-        changeCredentials: () => [...listeners].forEach(listener => listener.next({}))
+        sessionChanged: () => changes.next(),
+        changeCredentials: () => {
+            credentials = {}
+            changes.next()
+        }
     }
 }
 
 // A mounted layer over the records the real graph builder links. Re-rendering is React's; here the lifecycle is
 // called as React would call it. The map merges what the layer writes into its config, as the store does.
 const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => {
-    const runtime = runtimeOf()
+    let catalogue = Object.fromEntries([recipe, ...records].map(record => [record.id, record]))
+    const runtime = runtimeOf(() => catalogue)
     const updates = []
     const graphOf = recipe => buildRecipeDependencyGraph({
         rootRecipe: recipe,
@@ -1035,7 +1063,10 @@ const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => 
         instance.props = {...instance.props, layerConfig: next}
         rerender()
     }
+    // The store changes first and the runtime hears it inside the dispatch, before React re-renders the layer.
     const setRecipe = next => {
+        catalogue = {...catalogue, [next.id]: next}
+        runtime.sessionChanged()
         instance.props = {...instance.props, recipe: next, currentRecipe: next, dependencyGraph: graphOf(next)}
         rerender()
     }

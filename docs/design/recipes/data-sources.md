@@ -63,11 +63,11 @@ where a family still needs observation.
      soundness of the whole closure is reported separately
      ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). It reads the records
      the session holds, through the graph a map layer already derives, so Masking over an Optical Mosaic the
-     session has loaded is answered at once. A terminal its acquisition owner retains answers the rest, while it
-     is still about those records. Consumers never assemble dependency catalogues themselves.
-   - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
-     covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
-     Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
+     session has loaded is answered at once. A terminal the source runtime holds answers the rest, while it is
+     still about those records. Consumers never assemble dependency catalogues themselves.
+   - *Loading ownership.* Every consumer that can need observation watches its question while it is open, and the
+     source runtime loads and holds the answer for every consumer watching it; a synchronous getter never starts
+     work. Migrating a working consumer must not leave it permanently empty because nothing loads its answer.
 2. **One read, then switch the consumers once.** Map layers, preset filtering and Retrieve read through the same
    boundary for every type and do not branch on how a type describes its output. Types without a provider were
    answered there by an unverified legacy seam until every type declared its output (step 4), which removed it.
@@ -270,27 +270,26 @@ reserve the full GUI suite for the final readiness check.
 
 In order, each independently mergeable:
 
-1. **Shared live output descriptions**, immediately after the output declarations are mandatory and the legacy
-   adapter is removed, with the execution-requirements contract reviewed first. Cached description readiness and
-   structural validity must retain their separate meanings rather than implying execution readiness.
-   The source runtime owns reusable descriptions and in-flight acquisitions; map layers and Retrieve subscribe to
-   the same current answer rather than acquiring independently on every panel opening.
-   Reuse the common read and acquisition contracts, with no recipe-specific caches.
-   - One source-version registry tracks local draft changes, recipe revisions, credential context and observed
-     asset versions. Relevant changes invalidate dependent answers immediately and trigger background refresh;
-     superseded responses cannot publish. Closing one consumer must not cancel work another still needs.
-   - Recipe revision refreshes and asset-version checks establish freshness. Prioritize assets used by active
-     consumers and share checks across dependents. SEPAL operations can invalidate immediately; polling must cover
-     external changes. Establish what collection versions reveal about member and metadata changes before relying
-     on them. Polling intervals and acceptable evidence age belong to this packet's contract review.
-   - Retrieve opens without a new acquisition when a current answer is held. Otherwise it waits for refresh, and
-     Apply rechecks currency before accepting the answer. Refresh failures never authorize stale options.
-   - Websocket recipe revision events can follow as a latency optimization; revision refresh on reconnect covers
-     missed events, and correctness must not depend on notification delivery.
-   This implements the interactive description-sharing part of
-   [source freshness](source-freshness.md). Persisted calculation freshness and coherent task execution remain
-   separate, later milestones. Acceptance: visualization and Retrieve share one acquisition for the same question,
-   and dependency or credential changes withdraw its authority for both until a current answer is available.
+1. **Shared live output descriptions.** The declaration migration is complete. Implement this work in three
+   separately reviewed packets, following the [delivery contract](source-freshness.md#shared-output-description-delivery):
+   - **Packet 1, implemented:** runtime-owned watches for every active map/Retrieve question, including
+     descriptions answered locally without loading. Equal work is shared across consumers, with reference counting,
+     cancellation, held failures and bounded retention. Existing conservative local content and credential
+     invalidation, source evidence and the common read are preserved. No external freshness claim is added.
+   - **Packet 2, contract review pending:** recipe revision freshness and shared observations. Establish observation
+     identity from the submitted root and its dependency context; preserve open drafts. Invalidation follows affected
+     references rather than a global version generation.
+   - **Packet 3, contract review pending:** asset freshness, independent preview redraw signaling and retirement of
+     source evidence as a change signal. Unchanged collection metadata is not proof of unchanged contents. Review
+     age-based refresh, polling scope and intervals before implementation, including public collections.
+   Description loading and refresh are distinct from satellite acquisitions. Reuse the existing runtime and pure
+   read contracts, with no recipe-specific caches. Schema, structural validity and execution requirements remain
+   separate; no unused requirements resource or readiness framework is introduced here. A reused description does
+   not establish unchanged pixels. Task remains independent, and named map products cannot authorize exports.
+   Acceptance: map and Retrieve share work for the same question, closing one preserves the other's work, and Apply
+   rejects outdated authority before component effects run. Refresh failure never authorizes stale options.
+   Persisted calculation freshness and coherent execution remain later milestones. Websocket revision events are
+   optional latency improvements; correctness must not depend on notification delivery.
 2. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
    boundary so saved, stale and directly submitted models fail with a stated diagnosis. See

@@ -7,10 +7,11 @@ import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {IMAGE_OUTPUT} from './layerProduct'
+import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {recipeContent} from './recipeContent'
 
 // Which bands a configured recipe provides for one product, answered synchronously from what the session holds
-// and what an acquisition owner has retained. It never starts work; it says what work would settle the answer.
+// and what the source runtime holds for it. It never starts work; it says what work would settle the answer.
 //
 //   status     READY | NEEDS_EVIDENCE | UNAVAILABLE | INVALID
 //   authority  DESCRIBED for a READY answer, resolved through the type's declaration; null otherwise
@@ -19,12 +20,13 @@ import {recipeContent} from './recipeContent'
 //                       only for bands the answer holds, never deciding which exist
 //   availableBands      the two joined by name, in the shape selectors and presets filter against
 //   dependencyValidity  whether the whole closure is structurally sound; null while unknown
-//   acquisition         {kind, key} the answer still needs, or null
+//   acquisition         {kind, key} of the description loading the answer still needs, or null
 //
 // The session's loaded records are read first. A record it lacks is ordinary lazy loading, never a deletion. Where
-// that answer needs a record or an observation, or its closure is incomplete so its validity is unknown, the owner
-// acquires: DESCRIBE runs the one-shot description of the canonical output, DEPENDENCIES only completes the closure,
-// for a map product whose bands are already known and must not be failed by describing another.
+// that answer needs a record or an observation, or its closure is incomplete so its validity is unknown, the runtime
+// loads what the key names for whoever watches the question (sourceRuntime/outputRegistry.js): DESCRIBE runs the
+// one-shot description of the canonical output, DEPENDENCIES only completes the closure, for a map product whose bands
+// are already known and must not be failed by describing another.
 //
 // An answer comes from one snapshot. A retained DESCRIBE terminal answers description and validity together. A
 // DEPENDENCIES terminal answers validity beside a map-product answer, which reads nothing but the root recipe -
@@ -49,6 +51,18 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null})
         ...(held ? heldAnswer({recipe, product, session, kind, terminal: held}) : session),
         acquisition
     }
+}
+
+// What a watched question needs loaded, from the same graph and read its consumers render from: the acquisition with
+// the recipe and graph it names, or null when the session answers on its own or holds no such recipe.
+export const outputLoading = ({recipeId, product, catalogue}) => {
+    const recipe = catalogue[recipeId]
+    if (!recipe) {
+        return null
+    }
+    const graph = buildMapDependencyGraph({recipe, loadedRecipes: catalogue})
+    const {acquisition} = readRecipeOutput({recipe, product, graph})
+    return acquisition && {acquisition, recipe, graph}
 }
 
 // Drawn only from a description over dependencies known to be sound. A failed description withholds the preview

@@ -12,9 +12,9 @@ import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitte
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
 //
-// The read is the common one (recipeOutput.js), over the records the session holds and what the panel's own
-// acquisition owner retains. Its description is the one authority: choices, destinations, policies and names all
-// come from it, and nothing else is retrieved.
+// The read is the common one (recipeOutput.js), over the records the session holds and what the source runtime holds
+// for the question the panel watches. Its description is the one authority: choices, destinations, policies and names
+// all come from it, and nothing else is retrieved.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -34,8 +34,8 @@ export const UNRECOGNIZED_SELECTION = 'UNRECOGNIZED_SELECTION'
 export const UNVERIFIED_SELECTION = 'UNVERIFIED_SELECTION'
 export const INCOMPATIBLE_DESTINATION = 'INCOMPATIBLE_DESTINATION'
 
-// The recipe, its output read, and whether that read is still being acquired, from one state of the session.
-// `pending` is an answer whose acquisition is not yet retained - acquiring, or about to be.
+// The recipe, its output read, and whether that read is still being loaded, from one state of the session.
+// `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
 export const readRetrieveOutput = ({state, recipeId, heldFor}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
@@ -146,7 +146,7 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>
     ({status, reason, missingBandNames, destinations})
 
-// Dependencies not known to be sound are no answer, whichever of the two is missing; a read still being acquired
+// Dependencies not known to be sound are no answer, whichever of the two is missing; a read still being loaded
 // is not yet one.
 const unresolvedOutput = ({status, dependencyValidity}, pending) => {
     if (status === READY && dependencyValidity?.status === VALID) {

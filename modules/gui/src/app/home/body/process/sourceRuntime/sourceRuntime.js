@@ -1,4 +1,4 @@
-import {map, Observable, Subscriber, Subscription} from 'rxjs'
+import {NEVER, Observable, Subscriber, Subscription} from 'rxjs'
 
 import {
     completeRecipeClosure$,
@@ -8,6 +8,8 @@ import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
 import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
 import {recipeContent} from '../recipe/recipeContent'
+import {compatibleBasis, DESCRIBE, outputLoading} from '../recipe/recipeOutput'
+import {DEFAULT_OUTPUT_RETENTION, OutputRegistry} from './outputRegistry'
 import {createLoadRecipesById$} from './recipeClosureLoader'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
@@ -33,17 +35,23 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // `completeDependencies$` is the same operation stopped after its closure: validity without describing, for a
 // caller whose bands are already known and must not be failed by a description it never needed.
 //
-// `identity$` is for a caller whose answer outlives the operation that produced it: an opaque token on
-// subscription and a fresh one on each credential change, completing when the owning scope ends.
+// `watchOutput$`, `heldFor` and `retryOutput` are for consumers with a lifetime of their own - map layers and Retrieve
+// panels. They watch an output question for as long as they are open and read what the runtime holds for it; the
+// runtime shares the loading their reads name between them (outputRegistry.js). `session` and `sessionChanges$` are
+// what the watches read the session from; without them nothing is ever watched.
 
 const PENDING = 'PENDING'
 
 export const createSourceRuntime = ({
     environment$,
+    session = () => NO_SESSION,
+    sessionChanges$ = NEVER,
     createObserver = createRecipeImageOutputObserver,
     completeClosure$ = completeRecipeClosure$,
     loadRecipesById$ = createLoadRecipesById$(),
-    closureLimits = DEFAULT_RECIPE_CLOSURE_LIMITS
+    closureLimits = DEFAULT_RECIPE_CLOSURE_LIMITS,
+    retention = DEFAULT_OUTPUT_RETENTION,
+    clock
 }) => {
     const operation$ = ({recipe, describes}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
@@ -182,12 +190,30 @@ export const createSourceRuntime = ({
         }
     })
 
+    const resolveImageOutput$ = ({recipe}) => operation$({recipe, describes: true})
+    const completeDependencies$ = ({recipe}) => operation$({recipe, describes: false})
+    const outputs = new OutputRegistry({
+        session,
+        sessionChanges$,
+        acquisitionOf: outputLoading,
+        operationOf: ({kind, recipe}) => kind === DESCRIBE
+            ? resolveImageOutput$({recipe})
+            : completeDependencies$({recipe}),
+        isCompatible: compatibleBasis,
+        retention,
+        ...(clock && {clock})
+    })
+
     return {
-        resolveImageOutput$: ({recipe}) => operation$({recipe, describes: true}),
-        completeDependencies$: ({recipe}) => operation$({recipe, describes: false}),
-        // Every environment emission after the first is a credential change; a catalogue change emits nothing.
-        identity$: () => environment$.pipe(map(() => ({})))
+        resolveImageOutput$,
+        completeDependencies$,
+        watchOutput$: question => outputs.watchOutput$(question),
+        heldFor: key => outputs.heldFor(key),
+        retryOutput: question => outputs.retryOutput(question),
+        close: () => outputs.close()
     }
 }
+
+const NO_SESSION = Object.freeze({catalogue: {}, credentials: null, closed: false})
 
 const basisOf = graph => graph.recipes.map(record => ({id: record.id, content: recipeContent(record)}))

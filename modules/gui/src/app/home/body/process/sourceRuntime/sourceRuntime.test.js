@@ -640,34 +640,6 @@ describe('what an operation read', () => {
     })
 })
 
-describe('credential epochs', () => {
-    it('gives a token on subscription and a different one on each credential change', () => {
-        const env = environmentOf()
-        const runtime = createSourceRuntime({environment$: env.environment$})
-        const epochs = []
-        runtime.identity$().subscribe(epoch => epochs.push(epoch))
-
-        env.change(environment({earthEngineGeneration: 2}))
-
-        expect(epochs).toHaveLength(2)
-        expect(epochs[1]).not.toBe(epochs[0])
-    })
-
-    it('completes when the owning runtime scope closes, and releases the environment when left', () => {
-        const env = environmentOf()
-        const runtime = createSourceRuntime({environment$: env.environment$})
-        let completed = false
-        const left = runtime.identity$().subscribe()
-        runtime.identity$().subscribe({complete: () => completed = true})
-
-        left.unsubscribe()
-        expect(env.liveCount()).toBe(1)
-        env.close()
-
-        expect(completed).toBe(true)
-    })
-})
-
 describe('runtime invalidation', () => {
     const closureInFlight = (id = 'nested-1') => {
         const env = environmentOf()

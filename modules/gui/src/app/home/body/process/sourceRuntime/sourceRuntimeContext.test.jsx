@@ -47,6 +47,8 @@ vi.mock('~/store', () => ({
     }
 }))
 
+const {buildMapDependencyGraph} = await import('../recipe/mapDependencyGraph')
+const {readRecipeOutput} = await import('../recipe/recipeOutput')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {createSourceRuntime} = await import('./sourceRuntime')
 const {SourceRuntimeProvider, useSourceRuntime, withSourceRuntime} = await import('./sourceRuntimeContext')
@@ -82,8 +84,34 @@ beforeEach(() => {
 
 const runtimeFor = store => {
     const environment = createReduxSourceEnvironment({store})
-    return {environment, runtime: createSourceRuntime({environment$: environment.environment$})}
+    const runtime = createSourceRuntime({
+        environment$: environment.environment$,
+        session: environment.session,
+        sessionChanges$: environment.sessionChanges$
+    })
+    return {environment, runtime}
 }
+
+// What a map layer or Retrieve renders from: the common read over the graph the store's records give.
+const readOutput = (store, runtime, recipeId) => {
+    const loadedRecipes = store.getState().process.loadedRecipes
+    const recipe = loadedRecipes[recipeId]
+    return readRecipeOutput({
+        recipe,
+        product: {name: 'IMAGE_OUTPUT'},
+        graph: buildMapDependencyGraph({recipe, loadedRecipes}),
+        heldFor: key => runtime.heldFor(key)
+    })
+}
+
+const emitBands = (key, bandNames) => {
+    const subscriber = state.subscribers.get(key)
+    subscriber?.next(bandNames)
+    subscriber?.complete()
+}
+
+const replaceCredentials = store =>
+    store.dispatch({type: 'SET', state: {...store.getState(), user: {currentUser: {googleTokens: {accessToken: 'fresh'}}}}})
 
 describe('the lazy Redux adapter', () => {
     it('subscribes to the store only when an operation subscribes', () => {
@@ -163,21 +191,6 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: {...current, user: {currentUser: {googleTokens: current.user.currentUser.googleTokens}}}})
 
         expect(states.map(({status}) => status)).toEqual(['LOADING'])
-    })
-
-    it('gives a new credential epoch for a replaced credential container and none for a catalogue change', () => {
-        const store = storeWith()
-        const {runtime} = runtimeFor(store)
-        const epochs = []
-        runtime.identity$().subscribe(epoch => epochs.push(epoch))
-
-        const current = store.getState()
-        store.dispatch({type: 'SET', state: withLoaded(current, [ccdc()])})
-        expect(epochs).toHaveLength(1)
-        store.dispatch({type: 'SET', state: {...store.getState(), user: {currentUser: {googleTokens: {accessToken: 'fresh'}}}}})
-
-        expect(epochs).toHaveLength(2)
-        expect(JSON.stringify(epochs)).not.toContain('fresh')
     })
 
     it('never copies credential material into an emitted envelope', () => {
@@ -296,6 +309,96 @@ describe('the environment snapshot', () => {
     })
 })
 
+describe('the session a watch reads', () => {
+    it('is read without subscribing, with a credential token that changes only with the container', () => {
+        const store = storeWith()
+        const subscribe = vi.spyOn(store, 'subscribe')
+        const {session} = createReduxSourceEnvironment({store})
+        const before = session()
+
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [ccdc()])})
+        const cataloguedOnly = session()
+        replaceCredentials(store)
+        const replaced = session()
+
+        expect(subscribe).not.toHaveBeenCalled()
+        expect(cataloguedOnly.catalogue).toBe(store.getState().process.loadedRecipes)
+        expect(cataloguedOnly.credentials).toBe(before.credentials)
+        expect(replaced.credentials).not.toBe(before.credentials)
+        expect(JSON.stringify([before, cataloguedOnly, replaced])).not.toMatch(/secret-token|fresh|accessToken/)
+    })
+
+    it('reports every store change while listened to, and completes when the scope ends', () => {
+        const store = storeWith()
+        const environment = createReduxSourceEnvironment({store})
+        let changes = 0
+        let completed = false
+        const listening = environment.sessionChanges$.subscribe({next: () => changes++, complete: () => completed = true})
+
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [ccdc()])})
+        replaceCredentials(store)
+        environment.close()
+
+        expect([changes, completed, listening.closed]).toEqual([2, true, true])
+    })
+})
+
+describe('watching output over the store', () => {
+    const MASKED = masking({primary: {type: 'RECIPE_REF', id: 'ccdc-1'}})
+
+    const watchedTwice = () => {
+        const store = storeWith()
+        const {runtime} = runtimeFor(store)
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [ccdc(), MASKED])})
+        const watches = [0, 1].map(() => runtime.watchOutput$({recipeId: MASKED.id, product: {name: 'IMAGE_OUTPUT'}}).subscribe())
+        return {store, runtime, watches}
+    }
+
+    it('makes one Earth Engine request for a map layer and Retrieve asking the same question', () => {
+        const {store, runtime} = watchedTwice()
+
+        emitBands('RECIPE_REF:ccdc-1', ['tStart', 'ndvi_coefs'])
+
+        expect(state.bandsCalls).toHaveLength(1)
+        expect(readOutput(store, runtime, MASKED.id).status).toBe('READY')
+    })
+
+    it.each([
+        ['an edit', store => store.dispatch({
+            type: 'SET',
+            state: withLoaded(store.getState(), [ccdc(), {...MASKED, model: {...MASKED.model, imageMask: {type: 'ASSET', id: 'users/x/other'}}}])
+        })],
+        ['replaced credentials', replaceCredentials]
+    ])('withdraws the answer in the dispatch that makes %s, and loads it once again', (_change, change) => {
+        const {store, runtime} = watchedTwice()
+        emitBands('RECIPE_REF:ccdc-1', ['tStart', 'ndvi_coefs'])
+
+        change(store)
+
+        expect(readOutput(store, runtime, MASKED.id).status).toBe('NEEDS_EVIDENCE')
+        expect(state.bandsCalls).toHaveLength(2)
+    })
+
+    it('loads an edited question again when a store subscriber ahead of the runtime watches another in that dispatch', () => {
+        const store = storeWith()
+        const {runtime} = runtimeFor(store)
+        const [a, b] = [ccdc('a'), ccdc('b')]
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [a, b])})
+        const editedA = {...a, model: {edited: true}}
+        store.subscribe(() => {
+            if (store.getState().process.loadedRecipes.a === editedA) {
+                runtime.watchOutput$({recipeId: 'b', product: {name: 'IMAGE_OUTPUT'}}).subscribe()
+            }
+        })
+        runtime.watchOutput$({recipeId: 'a', product: {name: 'IMAGE_OUTPUT'}}).subscribe()
+        emitBands('RECIPE_REF:a', ['tStart', 'ndvi_coefs'])
+
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [editedA, b])})
+
+        expect(state.bandsCalls.map(({recipe}) => recipe.id)).toEqual(['a', 'b', 'a'])
+    })
+})
+
 describe('the provider', () => {
     const roots = []
 
@@ -403,6 +506,32 @@ describe('the provider', () => {
         sourceRuntime?.resolveImageOutput$({recipe: ccdc()}).subscribe(published => later.push(published))
         expect(later.map(({status}) => status)).toEqual(['UNAVAILABLE'])
         expect(state.bandsCalls).toEqual([])
+    })
+
+    it('stops every output watch on unmount, answering unavailable and loading nothing again', () => {
+        let sourceRuntime = null
+        const Consumer = () => {
+            sourceRuntime = useSourceRuntime()
+            return null
+        }
+        const {store, root} = mount(<Consumer/>)
+        const recipe = masking({primary: {type: 'RECIPE_REF', id: 'ccdc-1'}})
+        store.dispatch({type: 'SET', state: withLoaded(store.getState(), [ccdc(), recipe])})
+        const question = {recipeId: recipe.id, product: {name: 'IMAGE_OUTPUT'}}
+        let completed = false
+        sourceRuntime.watchOutput$(question).subscribe({complete: () => completed = true})
+
+        act(() => root.unmount())
+        let reopened = false
+        sourceRuntime.watchOutput$(question).subscribe({complete: () => reopened = true})
+
+        expect([completed, reopened]).toEqual([true, true])
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.bandsCalls).toHaveLength(1)
+        expect(readOutput(store, sourceRuntime, recipe.id)).toMatchObject({
+            status: 'UNAVAILABLE',
+            error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'})
+        })
     })
 
     it('creates no store subscription merely by existing', () => {

@@ -2,8 +2,8 @@ import {Observable} from 'rxjs'
 
 // The only Redux adapter in the source runtime.
 //
-// Lazy by construction: nothing subscribes to the store until an operation subscribes to `environment$`. With no
-// active operation, a Redux action does no source-runtime work at all.
+// Lazy by construction: nothing subscribes to the store until an operation subscribes to `environment$` or a watch
+// to `sessionChanges$`. With neither active, a Redux action does no source-runtime work at all.
 //
 // On subscription it synchronously reads one atomic environment. Redux invokes store subscribers synchronously
 // during dispatch, so an operation subscribed immediately after a dispatch sees that dispatch's catalogue without
@@ -21,8 +21,33 @@ import {Observable} from 'rxjs'
 const CATALOGUE_PATH = ['process', 'loadedRecipes']
 const CREDENTIALS_PATH = ['user', 'currentUser', 'googleTokens']
 
+const EMPTY_CATALOGUE = Object.freeze({})
+const NO_CREDENTIALS = Object.freeze({})
+const CLOSED_SESSION = Object.freeze({catalogue: EMPTY_CATALOGUE, credentials: NO_CREDENTIALS, closed: true})
+
 const at = (state, path) =>
     path.reduce((value, key) => value?.[key], state)
+
+// One opaque token per credential container, compared by identity. The container is a WeakMap key and nothing
+// else, so no credential value is read, retained or published.
+const CREDENTIAL_TOKENS = new WeakMap()
+
+const credentialToken = container => {
+    if (!container || typeof container !== 'object') {
+        return NO_CREDENTIALS
+    }
+    if (!CREDENTIAL_TOKENS.has(container)) {
+        CREDENTIAL_TOKENS.set(container, Object.freeze({}))
+    }
+    return CREDENTIAL_TOKENS.get(container)
+}
+
+// One `getState()`, so catalogue and credentials come from the same state.
+const sessionOf = state => ({
+    catalogue: at(state, CATALOGUE_PATH) || EMPTY_CATALOGUE,
+    credentials: credentialToken(at(state, CREDENTIALS_PATH)),
+    closed: false
+})
 
 export const createReduxSourceEnvironment = ({store}) => {
     let closed = false
@@ -75,6 +100,23 @@ export const createReduxSourceEnvironment = ({store}) => {
             subscriber.next(initial)
             return () => {
                 credentials = null
+                closeListeners.delete(onClose)
+                unsubscribeStore()
+            }
+        }),
+        // The session as the store holds it now, for a watch deciding what its question is and whether an answer is
+        // still about the credentials in effect. Reading subscribes to nothing.
+        session: () => closed ? CLOSED_SESSION : sessionOf(store.getState()),
+        // Notifies after every store change, and completes when the scope ends.
+        sessionChanges$: new Observable(subscriber => {
+            if (closed) {
+                subscriber.complete()
+                return
+            }
+            const unsubscribeStore = store.subscribe(() => subscriber.next())
+            const onClose = () => subscriber.complete()
+            closeListeners.add(onClose)
+            return () => {
                 closeListeners.delete(onClose)
                 unsubscribeStore()
             }

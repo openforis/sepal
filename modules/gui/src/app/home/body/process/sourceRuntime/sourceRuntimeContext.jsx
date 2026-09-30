@@ -21,9 +21,17 @@ export const SourceRuntimeProvider = ({children}) => {
     const store = useStore()
     const [runtime] = React.useState(() => {
         const environment = createReduxSourceEnvironment({store})
+        const sourceRuntime = createSourceRuntime({
+            environment$: environment.environment$,
+            session: environment.session,
+            sessionChanges$: environment.sessionChanges$
+        })
         return {
-            sourceRuntime: createSourceRuntime({environment$: environment.environment$}),
-            close: environment.close
+            sourceRuntime,
+            close: () => {
+                sourceRuntime.close()
+                environment.close()
+            }
         }
     })
 
