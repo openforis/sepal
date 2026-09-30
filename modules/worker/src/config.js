@@ -28,6 +28,15 @@ const parseStoppedPoolSize = value => {
     return size
 }
 
+// Compose passes an unset ${VAR} to the container as an empty string, which commander takes as a value:
+// the default is skipped and the parser gets '' (parseInt('') is NaN, and an empty secret is a known key).
+const ignoreEmptyEnv = command => {
+    command.options
+        .filter(({envVar}) => envVar && process.env[envVar] === '')
+        .forEach(({envVar}) => delete process.env[envVar])
+    return command
+}
+
 const program = new Command()
 
 program
@@ -343,7 +352,7 @@ program
             .default(false)
     )
 
-    .parse()
+ignoreEmptyEnv(program).parse()
 
 const {
     port,
