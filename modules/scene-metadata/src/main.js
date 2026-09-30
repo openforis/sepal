@@ -1,5 +1,3 @@
-import {concatMap, defer} from 'rxjs'
-
 import logConfig from '#config/log.json' with {type: 'json'}
 import {configureServer, getLogger} from '#sepal/log'
 
@@ -25,18 +23,17 @@ const main = async () => {
     const redis = await initializeRedis()
     const {db, created} = await initializeDb()
     const clock = () => new Date()
-    const sceneRepository = new SceneRepository(db, clock)
-    const sceneIngestor = new SceneIngestor(db)
+    // Serves the live table while a rebuild runs: it is empty only until a first ingest publishes,
+    // and waiting for that would hold the healthcheck down for the whole CSV load.
+    await startHttpServer(createRoutes(new DataApi(new SceneRepository(db, clock))))
     const ingestion = new IngestionCoordinator({
-        redis, sceneIngestor, clock, minHoursPublished, updateIntervalMinutes,
+        redis, sceneIngestor: new SceneIngestor(db), clock, minHoursPublished, updateIntervalMinutes,
         sources: [
             {download$: downloadLandsat$, load$: loadLandsat$, update$: updateLandsat$},
             {download$: downloadSentinel2$, load$: loadSentinel2$, update$: updateSentinel2$}
         ]
     })
-    return ingestion.start$(created).pipe(
-        concatMap(() => defer(() => startHttpServer(createRoutes(new DataApi(sceneRepository)))))
-    ).subscribe({error: fail})
+    ingestion.start$(created).subscribe({error: fail})
 }
 
 const fail = error => {
