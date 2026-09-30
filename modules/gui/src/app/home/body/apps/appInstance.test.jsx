@@ -62,6 +62,20 @@ describe('launching a voila app', () => {
 
         expect(isInert(appFrame())).toBe(false)
     })
+
+    it('shows launch activity until the app is shown', () => {
+        server.page = voilaPage(loadingWidget())
+        launch(voilaApp())
+        advance(SESSION_START_MS + A_WHILE_MS)
+
+        expect(launchActivity()).not.toBeNull()
+
+        startFrontend(appFrame().contentWindow)
+        renderWidgets(appFrame().contentWindow)
+        advance(A_MOMENT_MS)
+
+        expect(launchActivity()).toBeNull()
+    })
 })
 
 describe('launching an app served from its own URL', () => {
@@ -91,6 +105,14 @@ describe('failing to launch an app', () => {
         advance(SESSION_START_MS)
 
         expect(server.notifications).toEqual([{message: 'apps.run.error'}])
+    })
+
+    it('stops the launch activity', () => {
+        server.launchError = {status: 500, response: null}
+        launch(rstudioApp())
+        advance(SESSION_START_MS)
+
+        expect(launchActivity()).toBeNull()
     })
 })
 
@@ -128,6 +150,8 @@ const launch = app => act(() => root.render(
 const advance = ms => act(() => vi.advanceTimersByTime(ms))
 
 const appFrame = () => container.querySelector('iframe')
+
+const launchActivity = () => container.querySelector('[aria-busy=true]')
 
 const isShown = frame => {
     const style = window.getComputedStyle(frame)

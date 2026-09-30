@@ -220,6 +220,7 @@ html {
     --table-border-color: rgba(255, 255, 255, .35);
     --row-stripe-color: hsla(0, 0%, 100%, .03);
     --loading-background-color: hsla(0, 0%, 0%, 0.5);
+    --loading-sheen-color: hsla(0, 0%, 100%, .07);
 
     /* landing */
     --landing-text-color: #white;
@@ -439,6 +440,7 @@ html[data-theme=light] {
     --table-border-color: hsla(40, 10%, 10%, .3);
     --row-stripe-color: hsla(40, 20%, 20%, .03);
     --loading-background-color: hsla(39, 40%, 95%, .85);
+    --loading-sheen-color: hsla(39, 60%, 70%, .15);
 
     /* landing */
     --landing-text-color: hsl(40, 12%, 10%);

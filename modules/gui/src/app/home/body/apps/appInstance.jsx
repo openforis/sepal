@@ -58,13 +58,17 @@ class _AppInstance extends React.Component {
 
     render() {
         const {app: {label, alt}} = this.props
+        const {appState} = this.state
+        const launching = ![READY, FAILED].includes(appState)
         return (
             <ContentPadding
                 menuPadding
                 className={styles.appInstance}>
                 <div className={styles.content}>
                     <div className={styles.backdrop}>
-                        <div className={styles.loading}>
+                        <div
+                            className={[styles.loading, launching ? styles.launching : null].join(' ')}
+                            aria-busy={launching}>
                             <div className={styles.appName}>{label || alt}</div>
                             <div className={styles.appStatus}>{this.renderStatus()}</div>
                         </div>
