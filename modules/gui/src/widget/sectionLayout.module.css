@@ -1,9 +1,8 @@
 .bar {
-    --bar-border-color:hsla(0, 0%, 100%, .2);
     padding: 0 .5rem;
     background-color: var(--bar-background-color);
     border: 0 solid var(--bar-border-color);
-    color: #ccc;
+    color: var(--text-color);
     font-size: .9rem;
     display: flex;
     flex-direction: row;
@@ -13,7 +12,7 @@
 }
 
 .bar.top {
-    --bar-background-color:hsla(0, 0%, 8%, .7);
+    --bar-background-color: var(--top-bar-background-color);
     height: var(--top-bar-height);
     border-bottom-width: 1px;
 }
@@ -21,7 +20,7 @@
 .bar.top .label {
     font-size: .9rem;
     font-weight: bold;
-    color: #bbb;
+    color: var(--text-soft-color);
     text-transform: uppercase;
     letter-spacing: .1rem;
     margin: 0 1rem 0 .3rem;
@@ -29,7 +28,7 @@
 }
 
 .bar.bottom {
-    --bar-background-color:hsla(0, 0%, 0%, .4);
+    --bar-background-color: var(--bottom-bar-background-color);
     min-height: var(--bottom-bar-height);
     border-top-width: 1px;
     border-bottom-width: 1px;

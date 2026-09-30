@@ -1,14 +1,14 @@
 
 .footer {
-    --look-default-color: #a0a0a0;
+    --look-default-color: var(--text-dimmed-color);
     --highlight-color: #c8c8c8;
     height: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(28, 28, 28, 0.99);
-    border-top: 1px solid hsla(0, 0%, 100%, .1);
+    background-color: var(--footer-background-color);
+    border-top: 1px solid var(--section-wireframe-color);
     padding: 0 1rem; /* clear the rounded corners */
     z-index: 2;  /* stay over the menu */
 }

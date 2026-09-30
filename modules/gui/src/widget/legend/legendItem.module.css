@@ -10,5 +10,5 @@
 
 .value {
     margin-left: .5rem;
-    color: #808080;
+    color: var(--text-muted-color);
 }

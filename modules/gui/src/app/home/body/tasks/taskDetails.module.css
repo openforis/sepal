@@ -35,7 +35,7 @@
 /* Unlabeled, muted secondary status/failure text below the status row (Google Account panel pattern). */
 .description {
     width: 100%;
-    color: #a0a0a0;
+    color: var(--text-dimmed-color);
     font-size: .9rem;
     line-height: 1.5rem;
     white-space: pre-line;

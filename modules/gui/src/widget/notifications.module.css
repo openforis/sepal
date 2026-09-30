@@ -25,15 +25,15 @@
 }
 
 .notification {
-    --error-color: hsl(0, 60%, 40%);
-    --info-color: hsl(202, 60%, 40%);
-    --warning-color: hsl(39, 60%, 40%);
-    --success-color: hsl(90, 60%, 35%);
+    --error-color: var(--notification-error-color);
+    --info-color: var(--notification-info-color);
+    --warning-color: var(--notification-warning-color);
+    --success-color: var(--notification-success-color);
     --background-opacity: .85;
     position: relative;
     width: 20rem;
     pointer-events: all;
-    background-color: hsla(0, 0%, 0%, var(--background-opacity));
+    background-color: hsla(var(--notification-background-hsl), var(--background-opacity));
     border-style: solid;
     border-width: .5rem .1rem .1rem .1rem;
     border-color: var(--color);
@@ -110,13 +110,13 @@
 .notification .dismiss {
     text-align: center;
     font-size: .8rem;
-    color: gray;
+    color: var(--text-muted-color);
 }
 
 .notification .autoDismiss {
     position: relative;
     height: 1px;
-    background-color: #303030;
+    background-color: var(--auto-dismiss-track-color);
 }
 
 .notification .autoDismiss::before {
@@ -126,7 +126,7 @@
     right: 0;
     bottom: 0;
     top: 0;
-    background-color: #606060;
+    background-color: var(--auto-dismiss-fill-color);
     animation: autoDismiss var(--auto-dismiss-timeout-s) linear;
 }
 
@@ -145,7 +145,7 @@
 }
 
 .notification .message {
-    color: #ccc;
+    color: var(--text-color);
 }
 
 .notification .messageLine:not(:first-child) {
@@ -153,12 +153,12 @@
 }
 
 .notification .error {
-    color: #ccc;
+    color: var(--text-color);
     font-size: .9rem;
 }
 
 .notification .content {
-    color: #ccc;
+    color: var(--text-color);
     padding: .5rem 0;
 }
 

@@ -1,7 +1,7 @@
 .filler {
     --height: 0;
     --itemHeight: 0;
-    --stripeColor: hsla(0, 0%, 0%, .1);
+    --stripeColor: var(--stripe-color);
     width: 100%;
     height: calc(1px * var(--height));
     background-image: repeating-linear-gradient(

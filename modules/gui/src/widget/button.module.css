@@ -257,12 +257,12 @@
 @keyframes fill {
     0% {
         top: 80%;
-        background-color: hsla(0, 0%, 100%, .1);
+        background-color: var(--press-fill-color);
     }
 
     99% {
         top: 0;
-        background-color: hsla(0, 0%, 100%, .1);
+        background-color: var(--press-fill-color);
     }
 
     100% {
@@ -298,8 +298,8 @@
     height: 1px;
     z-index: 2;
     /* make sure busy spinner is above the overlay */
-    background-color: #c0c0c0;
-    mix-blend-mode: screen;
+    background-color: var(--busy-indicator-color);
+    mix-blend-mode: var(--busy-indicator-blend-mode);
     animation: busy 600ms linear infinite alternate;
 }
 

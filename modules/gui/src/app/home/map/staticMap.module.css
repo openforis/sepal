@@ -27,5 +27,5 @@
     left: var(--attribution-mask-size);
     right: var(--attribution-mask-size);
     height: var(--map-overlay-height);
-    background-color: hsla(0, 0%, 0%, .4);
+    background-color: var(--bottom-bar-background-color);
 }

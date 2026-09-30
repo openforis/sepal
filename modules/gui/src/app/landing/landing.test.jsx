@@ -22,6 +22,7 @@ vi.mock('./feature', () => ({Feature: () => null}))
 vi.mock('./tagline', () => ({Tagline: () => null}))
 vi.mock('./title', () => ({Title: () => null}))
 vi.mock('~/app/landing/languageSelector', () => ({LanguageSelector: () => null}))
+vi.mock('~/app/landing/themeSelector', () => ({ThemeSelector: () => null}))
 vi.mock('~/widget/button', () => ({Button: () => null}))
 vi.mock('~/translate', () => ({msg: key => key}))
 

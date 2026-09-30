@@ -1,10 +1,5 @@
 .tab {
-    --tab-default-background-color: hsl(0, 0%, 11%);
-    --tab-selected-background-color: hsl(60, 2%, 16%);
-    --tab-default-background-color-transparent: hsla(0, 0%, 11%, 0);
-    --tab-selected-background-color-transparent: hsla(60, 2%, 16%, 0);
-    --tab-default-border-color: hsl(0, 0%, 30%);
-    --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
+    --tab-selected-border-color: var(--selected-accent-color);
     --border-top-right-radius: .5rem;
     --tab-spacing: .3rem;
     --tab-min-width: 8.5rem;
@@ -124,14 +119,14 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
     padding-left: .5rem;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
-    color: #8a949c;
+    color: var(--tab-text-color);
     white-space: nowrap;
     user-select: none;
     pointer-events: none;
 }
 
 .tab.selected .prefix {
-    color: #e8e8e8;
+    color: var(--text-header-color);
 }
 
 .tab .title {
@@ -142,11 +137,11 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
 .tab .title input {
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
-    color: #8a949c;
+    color: var(--tab-text-color);
 }
 
 .tab.selected .title input {
-    color: #e8e8e8;
+    color: var(--text-header-color);
 }
 
 /*Fade-out overflow */

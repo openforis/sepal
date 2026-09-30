@@ -4,7 +4,7 @@
 
 .container input.fakePlaceholder::placeholder {
     font-style: inherit;
-    color: #fff;
+    color: var(--text-strong-color);
 }
 
 .popup {
@@ -14,7 +14,7 @@
     padding: .75rem;
     margin: 0;
     border-radius: .5rem;
-    box-shadow: 0 0 1rem 1rem rgba(0, 0, 0, .25);
+    box-shadow: 0 0 1rem 1rem var(--shadow-soft-color);
 }
 
 .placement-above {

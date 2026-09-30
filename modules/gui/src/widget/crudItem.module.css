@@ -52,7 +52,7 @@
     font-weight: 800;
     line-height: 1.5rem;
     text-transform: uppercase;
-    color: #808080;
+    color: var(--text-muted-color);
     white-space: nowrap;
 }
 
@@ -89,7 +89,7 @@
 
 .highlight {
     font-weight: bolder;
-    color: #eebb00;
+    color: var(--attention-color);
     background-color: transparent;
 }
 

@@ -5,6 +5,7 @@ import React from 'react'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
+import {withTheme} from '~/themeHooks'
 
 import styles from './graph.module.css'
 
@@ -44,14 +45,14 @@ class _Graph extends React.Component {
     }
 
     update(prevProps = {}) {
-        const {data, highlights, dimensions} = this.props
-        const {dimensions: prevDimentions} = prevProps
+        const {data, highlights, dimensions, theme} = this.props
+        const {dimensions: prevDimentions, theme: prevTheme} = prevProps
         const options = this.getOptions(this.props)
         const updatedData = data
         const newState = {data: updatedData, options}
         this.setState(newState)
         const underlayCallback = createUnderlayCallback(highlights)
-        if (!this.graph || !_.isEqual(dimensions, prevDimentions)) {
+        if (!this.graph || !_.isEqual(dimensions, prevDimentions) || theme !== prevTheme) {
             this.graph = new Dygraph(this.graphRef.current, data, {...options, underlayCallback})
         } else {
             this.graph.updateOptions({file: [...updatedData], underlayCallback})
@@ -59,7 +60,7 @@ class _Graph extends React.Component {
     }
 
     getOptions(props) {
-        return _.pick(props, [
+        return resolveGraphColors(props.theme, _.pick(props, [
             'animatedZooms',
             'annotationClickHandler',
             'annotationDblClickHandler',
@@ -176,7 +177,7 @@ class _Graph extends React.Component {
             'yLabelWidth',
             'yRangePad',
             'zoomCallback',
-        ])
+        ]))
     }
 }
 
@@ -202,11 +203,42 @@ const createUnderlayCallback = highlights =>
 const CALLBACKS = ['clickCallback', 'drawCallback', 'drawHighlightPointCallback', 'drawPointCallback',
     'highlightCallback', 'pointClickCallback', 'underlayCallback', 'unhighlightCallback', 'zoomCallback']
 
+// Chart chrome is drawn on canvas, where CSS custom properties do not reach, so it is named with
+// graphColor() and resolved here for the active theme. Series colors that are data stay literal.
+export const graphColor = name => `${GRAPH_COLOR_PREFIX}${name}`
+
+const GRAPH_COLOR_PREFIX = 'graph-color:'
+
+const GRAPH_COLORS = {
+    dark: {
+        foreground: '#FFFFFF',
+        highlightBackground: 'hsla(0, 0%, 0%, 1)',
+        rangeSelectorPlot: '#1B1B1C',
+        rangeSelectorStroke: 'rgba(100%, 100%, 100%, .15)'
+    },
+    light: {
+        foreground: '#2b2926',
+        highlightBackground: 'hsla(39, 40%, 95%, 1)',
+        rangeSelectorPlot: '#ddd7cb',
+        rangeSelectorStroke: 'hsla(40, 12%, 12%, .2)'
+    }
+}
+
+const resolveGraphColors = (theme, options) => {
+    const colors = GRAPH_COLORS[theme] || GRAPH_COLORS.dark
+    return _.cloneDeepWith(options, value =>
+        typeof value === 'string' && value.startsWith(GRAPH_COLOR_PREFIX)
+            ? colors[value.slice(GRAPH_COLOR_PREFIX.length)]
+            : undefined
+    )
+}
+
 export const Graph = compose(
     _Graph,
     asFunctionalComponent({
         color: '#FFB300'
-    })
+    }),
+    withTheme()
 )
 
 Graph.propTypes = {

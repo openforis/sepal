@@ -43,7 +43,7 @@
 }
 
 .cropArea {
-    background-color: hsla(0, 0%, 10%, .75);
+    background-color: var(--crop-shade-color);
     display: flex;
 }
 
@@ -66,7 +66,7 @@
     padding: 0.2rem;
     cursor: ew-resize;
     margin: -.7rem .15rem 0 .15rem;
-    color: rgb(40%, 40%, 40%);
+    color: var(--text-disabled-color);
 }
 
 .handle::after {

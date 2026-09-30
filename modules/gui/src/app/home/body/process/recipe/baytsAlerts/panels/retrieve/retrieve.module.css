@@ -8,9 +8,9 @@
 }
 
 .scaleChange div {
-    color: hsl(var(--selected-hue), var(--selected-sat), 45%);
+    color: var(--selected-text-color);
 }
 
 .scaleChange div:hover {
-    color: hsl(var(--selected-hue), var(--selected-sat), 50%);
+    color: var(--selected-text-hover-color);
 }

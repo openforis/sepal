@@ -1,17 +1,17 @@
 .mapToolbar {
     --look-default-h: 196;
-    --look-default-s: 27%;
-    --look-default-l: 20%;
+    --look-default-s: var(--map-toolbar-default-s);
+    --look-default-l: var(--map-toolbar-default-l);
     --look-default-a: .9;
 
     --look-highlight-h: 196;
-    --look-highlight-s: 27%;
-    --look-highlight-l: 40%;
+    --look-highlight-s: var(--map-toolbar-highlight-s);
+    --look-highlight-l: var(--map-toolbar-highlight-l);
     --look-highlight-a: .95;
 
     --look-disabled-h: 196;
-    --look-disabled-s: 5%;
-    --look-disabled-l: 15%;
+    --look-disabled-s: var(--map-toolbar-disabled-s);
+    --look-disabled-l: var(--map-toolbar-disabled-l);
     --look-disabled-a: .9;
 
     margin-right: 6rem;

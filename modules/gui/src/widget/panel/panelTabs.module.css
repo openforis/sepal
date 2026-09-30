@@ -11,15 +11,15 @@
 
 .tab.tab {
     --look-default-h: 36;
-    --look-default-s: 6%;
-    --look-default-l: 11%;
+    --look-default-s: var(--panel-tab-default-s);
+    --look-default-l: var(--panel-tab-default-l);
     --look-default-a: 1;
     --look-default-border-color: var(--section-wireframe-color);
     --look-default-hover-border-color: var(--section-wireframe-color);
     --look-default-active-border-color: var(--section-wireframe-color);
     --look-selected-h: 36;
-    --look-selected-s: 8%;
-    --look-selected-l: 15%;
+    --look-selected-s: var(--panel-tab-selected-s);
+    --look-selected-l: var(--panel-tab-selected-l);
     --look-selected-a: .95;
     --look-selected-border-color: var(--section-wireframe-color);
     --look-selected-hover-border-color: var(--section-wireframe-color);
@@ -51,5 +51,5 @@
     bottom: 0;
     right: 0;
     width: 3px;
-    background-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
+    background-color: var(--selected-accent-color);
 }

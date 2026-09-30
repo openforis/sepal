@@ -1,5 +1,5 @@
 .details:hover {
-    border: 1px solid #ccc;
+    border: 1px solid var(--subform-border-color);
     cursor: pointer;
 }
 

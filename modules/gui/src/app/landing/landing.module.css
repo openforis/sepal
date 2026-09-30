@@ -1,7 +1,7 @@
 .container {
-    --primary-text-color: #white;
-    --secondary-text-color: #c7cacc;
-    --backdrop-color: rgba(187, 192, 195, 0.05);
+    --primary-text-color: var(--landing-text-color);
+    --secondary-text-color: var(--landing-secondary-text-color);
+    --backdrop-color: var(--landing-card-color);
 
     height: 100%;
     display: flex;

@@ -4,6 +4,6 @@
 }
 
 .options {
-    --background-color: hsla(0, 0%, 0%, .9);
+    --background-color: var(--floating-background-color);
     background-color: var(--background-color);
 }

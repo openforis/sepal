@@ -6,7 +6,7 @@
     display: grid;
     grid-template-columns: auto auto 1fr;
     grid-gap: 1rem;
-    color: #ccc;
+    color: var(--text-color);
 }
 
 .color {
@@ -54,7 +54,7 @@
 }
 
 .count {
-    color: #ccc;
+    color: var(--text-color);
     font-size: 0.9rem;;
 }
 

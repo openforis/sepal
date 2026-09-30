@@ -48,5 +48,5 @@
     align-items: center;
     font-style: italic;
     font-size: .9rem;
-    color: #ccc;
+    color: var(--text-color);
 }

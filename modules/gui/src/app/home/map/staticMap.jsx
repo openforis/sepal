@@ -41,10 +41,11 @@ class _StaticMap extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createGoogleMap}, addSubscription} = this.props
+        const {mapsContext: {createGoogleMap, followTheme}, addSubscription} = this.props
         const map = createGoogleMap(this.map.current)
         addSubscription(
-            merge(this.randomize$, timer(1000)).subscribe(() => this.setRandomView(map))
+            merge(this.randomize$, timer(1000)).subscribe(() => this.setRandomView(map)),
+            followTheme(map)
         )
     }
 }
