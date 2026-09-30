@@ -1,5 +1,9 @@
 import {Observable} from 'rxjs'
 
+import {actionBuilder} from '~/action-builder'
+
+import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
+
 // The only Redux adapter in the source runtime.
 //
 // Lazy by construction: nothing subscribes to the store until an operation subscribes to `environment$` or a watch
@@ -20,10 +24,19 @@ import {Observable} from 'rxjs'
 
 const CATALOGUE_PATH = ['process', 'loadedRecipes']
 const CREDENTIALS_PATH = ['user', 'currentUser', 'googleTokens']
+const TABS_PATH = ['process', 'tabs']
+const LISTING_PATH = ['process', 'recipes']
+const LISTING_STATE_PATH = ['process', 'recipeListing']
+const SAVES_PATH = ['process', 'saveStates']
 
 const EMPTY_CATALOGUE = Object.freeze({})
 const NO_CREDENTIALS = Object.freeze({})
-const CLOSED_SESSION = Object.freeze({catalogue: EMPTY_CATALOGUE, credentials: NO_CREDENTIALS, closed: true})
+const NOTHING = Object.freeze({})
+const NONE = Object.freeze([])
+const CLOSED_SESSION = Object.freeze({
+    catalogue: EMPTY_CATALOGUE, credentials: NO_CREDENTIALS, listing: NONE, listingState: NOTHING, tabs: NONE,
+    saves: NOTHING, closed: true
+})
 
 const at = (state, path) =>
     path.reduce((value, key) => value?.[key], state)
@@ -42,10 +55,22 @@ const credentialToken = container => {
     return CREDENTIAL_TOKENS.get(container)
 }
 
-// One `getState()`, so catalogue and credentials come from the same state.
+// One `getState()`, so everything comes from the same state. Each part is passed by reference, so a reader can tell
+// what changed by identity:
+//
+//   catalogue     the records the session holds, drafts of open recipes among them
+//   credentials   an opaque token standing for the credential container
+//   listing       the recipe listing: which recipes storage holds, at which revision (recipeListing.js)
+//   listingState  how current the listing is
+//   tabs          the open recipes, whose records are drafts
+//   saves         what each open recipe's saves have made persistent (saveCoordinator.js)
 const sessionOf = state => ({
     catalogue: at(state, CATALOGUE_PATH) || EMPTY_CATALOGUE,
     credentials: credentialToken(at(state, CREDENTIALS_PATH)),
+    listing: at(state, LISTING_PATH) || NONE,
+    listingState: at(state, LISTING_STATE_PATH) || NOTHING,
+    tabs: at(state, TABS_PATH) || NONE,
+    saves: at(state, SAVES_PATH) || NOTHING,
     closed: false
 })
 
@@ -121,6 +146,44 @@ export const createReduxSourceEnvironment = ({store}) => {
                 unsubscribeStore()
             }
         }),
+        // A record the runtime read from storage replaces the session's cached copy only when that copy is present, not
+        // a draft and older, judged as the record arrives (recipeCache.js). The runtime retains no cache entry, so one
+        // that is absent stays absent and the record stays the runtime's own. Returns whether it was replaced.
+        replaceCachedRecipe: record => {
+            if (closed) {
+                return false
+            }
+            const state = store.getState()
+            const open = (at(state, TABS_PATH) || []).some(({id}) => id === record.id)
+            const cached = at(state, [...CATALOGUE_PATH, record.id])
+            const saveState = at(state, [...SAVES_PATH, record.id])
+            if (cacheAcceptance({record, cached, open, saveState}) !== REPLACE) {
+                return false
+            }
+            store.dispatch(actionBuilder('REFRESH_CACHED_RECIPE', {recipeId: record.id})
+                .set(['process.loadedRecipes', record.id], initializeRecipe(record))
+                .build())
+            return true
+        },
+        // Applies update({recipes, listingState, saves}) → {recipes?, listingState?} to the listing as it stands now.
+        updateRecipeListing: update => {
+            if (closed) {
+                return
+            }
+            const state = store.getState()
+            const {recipes, listingState} = update({
+                recipes: at(state, LISTING_PATH) || [],
+                listingState: at(state, LISTING_STATE_PATH) || {},
+                saves: at(state, SAVES_PATH) || {}
+            })
+            if (!recipes && !listingState) {
+                return
+            }
+            const action = actionBuilder('UPDATE_RECIPE_LISTING')
+            recipes && action.set('process.recipes', recipes)
+            listingState && action.set('process.recipeListing', listingState)
+            store.dispatch(action.build())
+        },
         close: () => {
             closed = true
             // Copied before iterating: completing a subscriber runs its teardown, which mutates the set.

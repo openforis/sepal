@@ -20,6 +20,7 @@ const submitted = vi.hoisted(() => [])
 const geeReads = vi.hoisted(() => [])
 // What Earth Engine answers for a band request, where the scenario needs one observed.
 const observed = vi.hoisted(() => ({answer: null}))
+const listed = vi.hoisted(() => ({recipes: []}))
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
@@ -37,7 +38,11 @@ vi.mock('~/apiRegistry', () => ({default: {
             return of({bandNames: [], properties: {}})
         }
     },
-    recipe: {load$: id => throwError(() => new Error(`Unexpected recipe load: ${id}`))},
+    recipe: {
+        load$: id => throwError(() => new Error(`Unexpected recipe load: ${id}`)),
+        // Storage lists what the session lists: nothing is saved elsewhere while a panel is open here.
+        loadAll$: () => of(listed.recipes)
+    },
     tasks: {
         submit$: task => {
             submitted.push(task)
@@ -471,13 +476,11 @@ describe('what makes the panel resolve again', () => {
         expect(geeReads).toHaveLength(reads)
     })
 
-    it('withholds them the moment the model changes, blocks retrieval and asks again', async () => {
+    it('withholds them the moment its source\'s model changes, blocks retrieval and asks again', async () => {
         const reads = await resolved()
         const answer = answering()
 
-        await editRecipe(MASKED_CCDC.id, {
-            model: {...MASKED_CCDC.model, imageMask: {type: 'RECIPE_REF', id: CCDC.id, revised: true}}
-        })
+        await editRecipe(CCDC.id, {model: {...CCDC.model, revised: true}})
 
         expect(offers('red_coefs')).toBe(false)
         expect(geeReads.length).toBeGreaterThan(reads)
@@ -1021,6 +1024,7 @@ const open = async (args = {}) => {
 
 const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retrieve} = {}) => {
     const [, ...sources] = recipes
+    listed.recipes = sources.map(({id, type}) => ({id, name: id, type}))
     store = createStore(
         (state = {
             dimensions: {width: 1024, height: 768},

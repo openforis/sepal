@@ -55,6 +55,9 @@ const {retrieveTask: planetMosaicTask} = await import('./planetMosaic/planetMosa
 const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
+
+// Storage listed just now: a Retrieve is authorized by it (recipeListing.js).
+const CURRENT_LISTING = {checkedAt: Date.now()}
 const {recipeVisualizations} = await import('./visualizations')
 const {visualizationOptions: landTrendrVisualizationOptions} = await import('./landTrendr/visualizations')
 const {groupedBandPresentation: baytsAlertsRetrieveGroups} = await import('./baytsAlerts/bands')
@@ -715,7 +718,7 @@ describe('a Change Alerts recipe', () => {
         const {output: {description}} = read(recipe)
         const missing = {status: 'READY', description, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}
         const answer = readRetrieveOutput({
-            state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
+            state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: {[recipe.id]: recipe}}},
             recipeId: recipe.id,
             heldFor: () => missing
         })
@@ -1313,14 +1316,14 @@ const landTrendrOf = ({classification} = {}) => ({
 
 // The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
 const read = recipe => readRetrieveOutput({
-    state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
+    state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: {[recipe.id]: recipe}}},
     recipeId: recipe.id,
     heldFor: () => null
 })
 
 // The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained.
 const readAll = ([recipe, ...others]) => readRetrieveOutput({
-    state: {process: {loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
+    state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
     recipeId: recipe.id,
     heldFor: () => null
 })

@@ -276,9 +276,11 @@ In order, each independently mergeable:
      descriptions answered locally without loading. Equal work is shared across consumers, with reference counting,
      cancellation, held failures and bounded retention. Existing conservative local content and credential
      invalidation, source evidence and the common read are preserved. No external freshness claim is added.
-   - **Packet 2, contract review pending:** recipe revision freshness and shared observations. Establish observation
-     identity from the submitted root and its dependency context; preserve open drafts. Invalidation follows affected
-     references rather than a global version generation.
+   - **Packet 2, implemented:** recipe revision freshness and shared observations. Answers keep evidence of the
+     records they read and are withdrawn when a newer revision or a withdrawn listing supersedes it; the listing is
+     refreshed while outputs are watched; drafts are never replaced, and Retrieve waits for or refuses a dependency
+     draft storage does not hold. Band observations are shared by what Earth Engine evaluates
+     ([contract](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)).
    - **Packet 3, contract review pending:** asset freshness, independent preview redraw signaling and retirement of
      source evidence as a change signal. Unchanged collection metadata is not proof of unchanged contents. Review
      age-based refresh, polling scope and intervals before implementation, including public collections.
@@ -647,8 +649,9 @@ Remaining work:
 
 ### 2. Stabilize Apply mask
 
-Masking declares identity band mapping and preserved values at valid pixels. Its live evidence comes from the
-selected primary source; copied bands and presets are only an unobserved compatibility fallback.
+Masking declares identity band mapping and preserved values at valid pixels. Its bands are its description, and
+its live evidence - the presets it inherits - comes from the selected primary source; copied presets are only an
+unobserved compatibility fallback.
 
 Remaining work:
 
@@ -798,6 +801,9 @@ shared source-observation lifecycle rather than adding another watcher, cache or
 
 Acceptance scenarios, without closing or reopening the recipe:
 
+- Deliberately removing an input band from the local selection removes its direct pass-through output, including
+  saved recipes whose copied input and output band IDs differ (see the [known bug](../../recipes/band-math.md#open-issues)).
+  Unaffected calculations remain executable. This is distinct from preserving an expression that needs the removed band.
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
   preserving the expression and output configuration. Restoring the band restores validity automatically.
   Exercise the same rule for a local input-selection change and for a change to the external source's bands.

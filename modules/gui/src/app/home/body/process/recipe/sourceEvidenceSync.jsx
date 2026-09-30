@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {filter, map, of, Subject, switchMap, take, takeUntil, tap} from 'rxjs'
@@ -12,6 +11,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {getLogger} from '~/log'
 
+import {isDraft} from '../draftAgreement'
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
 import {createLoadRecipesById$} from '../sourceRuntime/recipeClosureLoader'
@@ -27,8 +27,8 @@ let observations = 0
 // Keeps a recipe's evidence about its source current while the recipe is open.
 //
 // The lifecycle is shared; what is observed is not. A recipe mounts this with an `observation` that names
-// the source it depends on and says how to read evidence about it - Masking reads the bands and presets it
-// inherits, CCDC Slice reads the segment description it transforms - and this component owns everything
+// the source it depends on and says how to read evidence about it - Masking reads the presets it inherits, CCDC
+// Slice reads the segment description it transforms - and this component owns everything
 // around that call: when to read, what the reading was based on, whether an answer may still be published,
 // and what happens when it cannot be had. Nothing here knows what a source is for.
 //
@@ -46,8 +46,8 @@ let observations = 0
 // (sourceEvidenceBasis.js).
 
 const mapStateToProps = state => {
-    const {catalogue, openRecipeIds, assetVersions} = evidenceSession(state)
-    return {earthEngineGeneration: earthEngineGeneration(state), catalogue, openRecipeIds, assetVersions}
+    const {catalogue, openRecipeIds, saves, assetVersions} = evidenceSession(state)
+    return {earthEngineGeneration: earthEngineGeneration(state), catalogue, openRecipeIds, saves, assetVersions}
 }
 
 const mapRecipeToProps = recipe => ({recipe})
@@ -131,12 +131,13 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     sessionSnapshot() {
-        const {loadedRecipes, catalogue, assetVersions, openRecipeIds} = this.props
+        const {loadedRecipes, catalogue, assetVersions, openRecipeIds, saves} = this.props
         return {
             loadedRecipes: loadedRecipes || {},
             catalogue: catalogue || [],
             assetVersions: assetVersions || [],
-            openRecipeIds: openRecipeIds || []
+            openRecipeIds: openRecipeIds || [],
+            saves: saves || {}
         }
     }
 
@@ -317,9 +318,9 @@ const lastObserved = recipe => {
 }
 
 const isBehind = (session, id) => {
-    // A recipe open for editing is a draft, not a copy of what is persisted. The cache boundary refuses to
-    // overwrite one; not asking for it in the first place saves a read that could only be discarded.
-    if (session.openRecipeIds.includes(id)) {
+    // A draft - open, or closed with its saves unsettled - is not a copy of what is persisted. The cache boundary
+    // refuses to overwrite one; not asking for it in the first place saves a read that could only be discarded.
+    if (isDraft({open: session.openRecipeIds.includes(id), saveState: session.saves[id]})) {
         return false
     }
     const record = session.loadedRecipes[id]
@@ -329,15 +330,6 @@ const isBehind = (session, id) => {
     return Number.isInteger(record?.revision) && Number.isInteger(published)
         && record.revision < published
 }
-
-// Observed band descriptions as evidence carries them: a name, with dimensionality and encoding where reported.
-export const observedBands = bands => (bands || []).map(band => _.isString(band)
-    ? {name: band}
-    : {
-        name: band.name,
-        ...(Number.isInteger(band.arrayDimensions) && {dataType: {arrayDimensions: band.arrayDimensions}}),
-        ...(band.encoding && {encoding: band.encoding})
-    })
 
 export const SourceEvidenceSync = compose(
     _SourceEvidenceSync,

@@ -32,7 +32,7 @@ events and patch transport remain optional latency and transport improvements th
 
 ## Shared output description delivery
 
-Packet 1 is implemented; packets 2 and 3 are later work whose contracts still need review, as does the broader
+Packets 1 and 2 are implemented; packet 3 is later work whose contract still needs review, as does the broader
 persisted-result and coherent-execution design below. Use **description loading** and **description refresh** for
 this work; acquisition also names a satellite observation in this application.
 
@@ -73,13 +73,78 @@ read, late results, basis refusal, failure recovery, expiry before timer cleanup
 switches ([verification](gui-source-runtime.md#verification)). Existing scalar/array restrictions, export policies
 and named-product export refusal are unchanged.
 
-### Later packets: identities and freshness
+### Packet 2: recipe revisions and shared observations
 
-**Packet 2** reviews recipe revision freshness and observation sharing. Observation identity must account for the
-submitted root content and the dependency context; neither session content alone nor persisted revisions alone
-establishes every request's identity. Invalidate affected references, not all entries through a global generation.
-Remote refresh must preserve open drafts. The existing discrepancy between browser dependency drafts and persisted
-dependencies read by execution is documented, not solved or legitimized by description sharing.
+Revision evidence is the best this session has, not what Earth Engine read: `/bands` reports no dependency
+manifest, and storage can move between the listing, the browser's load and Earth Engine's own load. Answers are
+withdrawn when evidence arrives that supersedes what they were read from; a change no evidence reports remains a
+deferred execution race.
+
+- **Evidence.** Each work keeps a ledger of the records it read (`sourceRuntime/recordCurrency.js`): the session's,
+  from when it was created, and every record its closure seeds or loads privately, as it arrives. A record is a draft
+  while it is open, and while its saves are unsettled even after its tab closes: closing a tab does not make storage
+  hold it. The newest revision known is the newest the listing, an acknowledged save or a cached copy that is not a
+  draft says, so an acknowledgement supersedes what was observed before it, in its own dispatch. A draft is
+  recorded at the newest revision known, with whether it agrees with storage; a record that could not be read, at
+  the revision known when it failed. An entry is superseded by a newer known revision, or when a recipe listed when
+  it was read is listed no longer. Unlisted is not deleted: the work is loaded again, which establishes availability,
+  and a recipe that was never listed says nothing by staying unlisted.
+- **Withdrawal.** A session change that supersedes an entry discards the work whether it has settled or not; its late
+  terminal installs nothing and its questions load again, and only those. `heldFor` checks the ledger when it is
+  asked, so Apply in the dispatch that brings the evidence finds nothing current, and an answer retained while
+  unwatched is not reused. A record arriving older than a revision already known is loaded again once; storage
+  answering the same revision again is held as `SOURCE_REVISION_BEHIND` rather than loaded again.
+- **Cached records.** A closed record the session caches is read again before anything is answered from it when the
+  listing knows a newer revision or has withdrawn its recipe (`REFRESH`, shared, held and retried like any work). The
+  runtime retains no cache entry: a response replaces only a copy that is present, not a draft and older when it
+  arrives, and otherwise stays private (`recipeCache.js`, the rule `recipeAccess` uses too). A draft - open, or closed
+  with its saves unsettled - is never replaced by any read of storage, and source evidence does not ask for one.
+- **Save evidence.** The save coordinator publishes what each recipe's saves have made persistent
+  (`process.saveStates`): SAVED, SAVING, FAILED, CONFLICT or UNRESOLVED, with the model persisted at the acknowledged
+  revision. That model is always the draft's own model object: the one a coherent load writes into the session (on
+  its own path, so the store gives it a change identifier), the one a save sent, whether acknowledged or recovered by
+  a load showing what was sent, or the equal model autosave found replacing it. The store copies what it publishes
+  but keeps the change identifier (`~/hash`), so the copy agrees with the draft it was taken from without comparing
+  content. An acknowledgement with an edit queued behind it publishes SAVING, never SAVED, and an
+  acknowledged revision is written onto a draft only while the draft is the content acknowledged. After 60 seconds a
+  wait is reported unconfirmed, measured from the oldest content not yet acknowledged; nothing is cancelled, retried
+  or given up because of it, and a later acknowledgement ends it. A draft agrees with storage only when its model is
+  the persisted one, nothing is queued and no newer revision is listed (`draftAgreement.js`).
+- **Listing refresh.** The recipe listing is the revision evidence (`recipeListing.js`, `listingRefresh.js`). One
+  request at a time. An output watch opening, or a Retrieve mounting, refreshes a listing older than 60 seconds at
+  once, as does the browser becoming visible or reconnecting; opening a recipe counts through the watches its layers
+  open, and nothing else in Process triggers a refresh. While anything is watched, a refresh starts 30 seconds before
+  Retrieve's 5-minute authority lapses - headroom, not a guarantee that a slow refresh never blocks - and the lapse is
+  published if it comes. Evidence dates from when its request started. A failure is kept until a success; an explicit
+  retry refreshes a failed listing, and the same bounded interval schedules another attempt after a failure, before
+  the first success too. Reads and Apply start nothing. Every listing response is merged, the session's first and those
+  answering a move or project removal included: revisions only advance and an entry's fields stay with its newest
+  revision; an id changed here after the request started, with a save outstanding, or whose saves moved on while the
+  request was in flight keeps what this session did with it; locally set fields are kept; and ids the listing stopped
+  listing are recorded as withdrawn. Refreshes, moves and project removals can overlap and answer in any order: a
+  response whose request started before evidence already merged changes no membership and no withdrawal, only
+  bringing entries up to newer revisions, and local-change markers are kept for every response still to come. The full listing is used; its size is logged at debug level.
+- **Retrieve.** Authorized only while the listing is under 5 minutes old and every dependency draft agrees with
+  storage. A save in flight is waited for; an expired or failed listing, and a save unconfirmed, refused, conflicting,
+  unresolved, never made, or behind a newer stored revision, each block under its own code
+  (`REVISIONS_EXPIRED`, `REVISIONS_UNAVAILABLE`, `SAVE_UNCONFIRMED`, `SAVE_FAILED`, `SAVE_CONFLICT`,
+  `SAVE_UNRESOLVED`, `UNSAVED`, `REMOTE_NEWER`). Being open is no reason to block.
+- **Shared observations.** `observeBands$` goes through one registry (`sourceRuntime/observationRegistry.js`). An
+  observation is identified by what is asked of which reference, the recipe exactly as sent less what Earth Engine
+  never reads, the evidence about every record Earth Engine reads for it itself, the assets it reads, and the
+  credentials. Equal requests share one request while in flight. An answer is kept only over complete evidence -
+  every dependency at a known revision, none a draft that disagrees with storage, whose references may differ from
+  the persisted ones - and only if nothing superseded that evidence while it was asked for. Kept answers are reused
+  for at most 5 minutes after they were observed and 60 seconds after last use, at most 64 of them, and only while
+  nothing known supersedes their evidence - all decided when reuse is asked for, with timers only cleaning up. These
+  bound reuse, not the freshness of a description already held. Failures are never kept.
+
+The browser describes dependency drafts while Earth Engine executes persisted dependencies. Sharing does not hide or
+resolve that: an incomplete observation is never reused, and Retrieve waits for or refuses a draft that storage does
+not hold. Recipe descriptions still name `ui.sourceEvidence` in their content key (packet 3). Masking's evidence
+reads presets only; its bands are its description's.
+
+### Later packets
 
 **Packet 3** reviews asset freshness, preview redraw signaling and removal of source evidence from content keys.
 A detected asset-version change invalidates immediately, but unchanged metadata need not establish unchanged

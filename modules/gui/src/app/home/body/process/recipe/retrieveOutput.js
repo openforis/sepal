@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {physicalDestinationCompatibility} from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {getLogger} from '~/log'
@@ -5,8 +7,11 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
+import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
+import {CURRENT, EXPIRED, listingAuthority, WAITING} from '../recipeListing'
+import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {IMAGE_OUTPUT, INVALID, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
+import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
@@ -15,6 +20,13 @@ import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitte
 // The read is the common one (recipeOutput.js), over the records the session holds and what the source runtime holds
 // for the question the panel watches. Its description is the one authority: choices, destinations, policies and names
 // all come from it, and nothing else is retrieved.
+//
+// A description is evidence about the session's records, but an export executes what storage holds. So Retrieve is
+// authorized only while the recipe listing - this session's evidence of storage - is recent enough, and only while
+// every draft the output depends on - open, or closed with its saves unsettled - is what storage holds
+// (draftAgreement.js): a save still in flight is waited for, and anything else - a save unconfirmed past its bound, refused, conflicting or unresolved, a newer revision in
+// storage, or a draft never saved - blocks, named by its own code. The recipe itself is submitted as it is, so its own
+// draft needs no saving. Being open is no reason to block.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -34,18 +46,28 @@ export const UNRECOGNIZED_SELECTION = 'UNRECOGNIZED_SELECTION'
 export const UNVERIFIED_SELECTION = 'UNVERIFIED_SELECTION'
 export const INCOMPATIBLE_DESTINATION = 'INCOMPATIBLE_DESTINATION'
 
+export const REVISIONS_PENDING = 'REVISIONS_PENDING'
+export const REVISIONS_EXPIRED = 'REVISIONS_EXPIRED'
+export const REVISIONS_UNAVAILABLE = 'REVISIONS_UNAVAILABLE'
+
 // The recipe, its output read, and whether that read is still being loaded, from one state of the session.
 // `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
-export const readRetrieveOutput = ({state, recipeId, heldFor}) => {
+export const readRetrieveOutput = ({state, recipeId, heldFor, now = Date.now()}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
     if (!recipe) {
         return null
     }
     const graph = buildMapDependencyGraph({recipe, loadedRecipes})
-    const output = readRecipeOutput({recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor})
-    const pending = Boolean(output.acquisition) && !heldFor(output.acquisition.key)
-    return {recipe, graph, output, pending}
+    const output = readRecipeOutput({
+        recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor, currency: recordStalenessOfState(state)
+    })
+    const held = output.acquisition && heldFor(output.acquisition.key)
+    const pending = Boolean(output.acquisition) && !held
+    const gate = output.status === READY && authorityGate({state, recipe, graph, basis: held?.basis || [], now})
+    return gate
+        ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
+        : {recipe, graph, output, pending}
 }
 
 // A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
@@ -142,6 +164,48 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
         return false
     }
 }
+
+// Why the description may not authorize an export now, if it may not: {wait, code, recipeId}. A wait comes after
+// every block, so nothing that blocks is reported as pending.
+const authorityGate = ({state, recipe, graph, basis, now}) => {
+    const listing = listingAuthority({listingState: selectFrom(state, 'process.recipeListing'), now})
+    if (listing !== CURRENT) {
+        return listing === WAITING
+            ? {wait: true, code: REVISIONS_PENDING}
+            : {wait: false, code: listing === EXPIRED ? REVISIONS_EXPIRED : REVISIONS_UNAVAILABLE}
+    }
+    const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
+    const open = new Set((selectFrom(state, 'process.tabs') || []).map(({id}) => id))
+    const saves = selectFrom(state, 'process.saveStates') || {}
+    const listed = new Map((selectFrom(state, 'process.recipes') || []).map(({id, revision}) => [id, revision]))
+    const drafts = _.uniq([...graph.recipes.map(({id}) => id), ...basis.map(({id}) => id)])
+        .filter(id => id !== recipe.id && loadedRecipes[id] && isDraft({open: open.has(id), saveState: saves[id]}))
+        .map(id => ({
+            recipeId: id,
+            code: draftAgreement({
+                draft: loadedRecipes[id],
+                saveState: saves[id],
+                knownRevision: knownRevisionOf({listed: listed.get(id), saveState: saves[id]})
+            })
+        }))
+        .filter(({code}) => code !== AGREED)
+    const blocking = drafts.find(({code}) => code !== SAVE_PENDING)
+    return blocking
+        ? {wait: false, ...blocking}
+        : drafts.length ? {wait: true, ...drafts[0]} : null
+}
+
+// The description is withheld: waited for as one still being loaded, or blocked as one that could not be had.
+const withheld = (output, {wait, code, recipeId}) => ({
+    ...output,
+    status: wait ? NEEDS_EVIDENCE : UNAVAILABLE,
+    authority: null,
+    description: null,
+    bands: [],
+    presentation: {},
+    availableBands: {},
+    diagnostics: [{code, ...(recipeId && {recipeId})}]
+})
 
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>
     ({status, reason, missingBandNames, destinations})

@@ -1,4 +1,5 @@
-import {NEVER, Observable, Subscriber, Subscription} from 'rxjs'
+import _ from 'lodash'
+import {defer, NEVER, Observable, Subscriber, Subscription, tap} from 'rxjs'
 
 import {
     completeRecipeClosure$,
@@ -6,11 +7,15 @@ import {
 } from '#sepal/recipe/source/completeRecipeClosure'
 import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
-import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
+import {AGREED} from '../draftAgreement'
+import {createRecipeImageOutputObserver, observeImageBands$} from '../recipe/imageOutputObserver'
 import {recipeContent} from '../recipe/recipeContent'
-import {compatibleBasis, DESCRIBE, outputLoading} from '../recipe/recipeOutput'
+import {compatibleBasis, DEPENDENCIES, DESCRIBE, outputLoading, REFRESH} from '../recipe/recipeOutput'
+import {DEFAULT_LISTING_POLICY, ListingRefresh} from './listingRefresh'
+import {DEFAULT_OBSERVATION_RETENTION, ObservationRegistry} from './observationRegistry'
 import {DEFAULT_OUTPUT_RETENTION, OutputRegistry} from './outputRegistry'
 import {createLoadRecipesById$} from './recipeClosureLoader'
+import {PRIVATE, recordCurrency, SESSION} from './recordCurrency'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
 // The GUI source runtime.
@@ -39,6 +44,19 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // panels. They watch an output question for as long as they are open and read what the runtime holds for it; the
 // runtime shares the loading their reads name between them (outputRegistry.js). `session` and `sessionChanges$` are
 // what the watches read the session from; without them nothing is ever watched.
+//
+// A watch's work is told of every record its closure reads as the record is read - from the session or loaded here -
+// so evidence arriving later that supersedes one withdraws the work, finished or not (outputRegistry.js). A cached
+// record the listing has moved past is read again before a watch answers from it (`REFRESH`), and replaces the cached
+// copy only where one is present, closed and older.
+//
+// Band observations are shared between every description asking Earth Engine the same question, whichever output it
+// describes (observationRegistry.js), identified by what Earth Engine evaluates: the recipe as it is sent, the evidence
+// about every record Earth Engine reads for it itself, the assets it reads and the credentials.
+//
+// While anything is watched the runtime keeps the recipe listing - its evidence of recipe revisions - recent
+// (listingRefresh.js). A consumer opening a watch refreshes evidence older than a minute; `refreshRecipeListing` does
+// the same for one that opens without watching.
 
 const PENDING = 'PENDING'
 
@@ -47,13 +65,51 @@ export const createSourceRuntime = ({
     session = () => NO_SESSION,
     sessionChanges$ = NEVER,
     createObserver = createRecipeImageOutputObserver,
+    observeBands$ = observeImageBands$,
+    observationRetention = DEFAULT_OBSERVATION_RETENTION,
     completeClosure$ = completeRecipeClosure$,
     loadRecipesById$ = createLoadRecipesById$(),
     closureLimits = DEFAULT_RECIPE_CLOSURE_LIMITS,
     retention = DEFAULT_OUTPUT_RETENTION,
+    updateRecipeListing = () => {},
+    replaceCachedRecipe = () => false,
+    loadRecipeListing$,
+    wakeups$,
+    listingPolicy = DEFAULT_LISTING_POLICY,
     clock
 }) => {
-    const operation$ = ({recipe, describes}) => new Observable(subscriber => {
+    const observations = new ObservationRegistry({
+        observeBands$,
+        isCurrent: key => {
+            const current = session()
+            const currency = recordCurrency(current)
+            return key.credentials === credentialId(current.credentials)
+                && !key.dependencies.some(dependency => currency.superseded(dependency))
+        },
+        retention: observationRetention,
+        ...(clock && {clock})
+    })
+
+    // What identifies an observation of `request`, made while describing `graph`.
+    const observationOf = (request, graph) => {
+        const current = session()
+        const currency = recordCurrency(current)
+        const {records, assets, missing} = closureOf(request.reference, graph)
+        const dependencies = records.map(record => _.pick(currency.evidence(record, PRIVATE), EVIDENCE))
+        return {
+            key: {
+                observes: request.observes ?? null,
+                reference: request.reference,
+                submitted: request.recipe ? _.omit(request.recipe, NOT_EXECUTED) : null,
+                dependencies,
+                assets,
+                credentials: credentialId(current.credentials)
+            },
+            complete: !missing && dependencies.every(({revision, agreement}) => revision !== null && agreement === AGREED)
+        }
+    }
+
+    const operation$ = ({recipe, describes, reads = NO_READS}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
         // from inside a subscriber reacting to it, both re-enter here while setup is still running; without this
         // the operation would be publishing before it owned the work it was publishing about.
@@ -99,7 +155,9 @@ export const createSourceRuntime = ({
         }
 
         const observe = graph => {
-            const currentObserver = createObserver()
+            const currentObserver = createObserver({
+                observeBands$: request => observations.observe$(request, observationOf(request, graph))
+            })
             observer = currentObserver
             const observation = new Subscriber({
                 next: state => {
@@ -122,8 +180,8 @@ export const createSourceRuntime = ({
         const completeClosure = ({catalogue}) => {
             const closure = completeClosure$({
                 rootRecipe: recipe,
-                seedRecipesById: new Map(Object.entries(catalogue || {})),
-                loadRecipesById$,
+                seedRecipesById: new ReportedSeeds(Object.entries(catalogue || {}), record => reads.read(record, SESSION)),
+                loadRecipesById$: reported(loadRecipesById$, reads),
                 limits: closureLimits
             })
             const closureSubscriber = new Subscriber({
@@ -190,16 +248,53 @@ export const createSourceRuntime = ({
         }
     })
 
-    const resolveImageOutput$ = ({recipe}) => operation$({recipe, describes: true})
-    const completeDependencies$ = ({recipe}) => operation$({recipe, describes: false})
+    const resolveImageOutput$ = ({recipe, reads}) => operation$({recipe, describes: true, reads})
+    const completeDependencies$ = ({recipe, reads}) => operation$({recipe, describes: false, reads})
+
+    // Reads the records again, as storage holds them now. What a recipe withdrawn from the listing needed was to be
+    // read, so reading it is enough; a copy the session caches is replaced where it is present, closed and older.
+    const refreshRecords$ = ({records}) => new Observable(subscriber => {
+        const settle = envelope => {
+            subscriber.next({error: null, diagnostics: [], dependencyValidity: null, basis: [], ...envelope})
+            subscriber.complete()
+        }
+        const request = loadRecipesById$({ids: records.map(({id}) => id), concurrency: closureLimits.requestConcurrency})
+            .subscribe({
+                next: loaded => {
+                    const readAgain = new Set(records.filter(({withdrawn}) => withdrawn).map(({id}) => id))
+                    updateRecipeListing(({listingState}) => ({
+                        listingState: {...listingState, withdrawn: (listingState.withdrawn || []).filter(id => !readAgain.has(id))}
+                    }))
+                    loaded.forEach(record => replaceCachedRecipe(record))
+                    settle({status: 'COMPLETE'})
+                },
+                error: error => settle({status: 'UNAVAILABLE', error})
+            })
+        return () => request.unsubscribe()
+    })
+
+    const listing = new ListingRefresh({
+        session,
+        sessionChanges$,
+        updateListing: updateRecipeListing,
+        ...(loadRecipeListing$ && {loadListing$: loadRecipeListing$}),
+        ...(wakeups$ && {wakeups$}),
+        policy: listingPolicy,
+        ...(clock && {clock})
+    })
+    const refreshRecipeListing = () => listing.refresh({maxAgeMs: listingPolicy.openMaxAgeMs})
     const outputs = new OutputRegistry({
         session,
         sessionChanges$,
         acquisitionOf: outputLoading,
-        operationOf: ({kind, recipe}) => kind === DESCRIBE
-            ? resolveImageOutput$({recipe})
-            : completeDependencies$({recipe}),
+        operationOf: ({kind, recipe, key, reads}) => ({
+            [DESCRIBE]: () => resolveImageOutput$({recipe, reads}),
+            [DEPENDENCIES]: () => completeDependencies$({recipe, reads}),
+            [REFRESH]: () => refreshRecords$(key)
+        })[kind](),
         isCompatible: compatibleBasis,
+        currencyOf: recordCurrency,
+        onActive: active => listing.watch(active),
         retention,
         ...(clock && {clock})
     })
@@ -207,13 +302,100 @@ export const createSourceRuntime = ({
     return {
         resolveImageOutput$,
         completeDependencies$,
-        watchOutput$: question => outputs.watchOutput$(question),
+        watchOutput$: question => defer(() => {
+            refreshRecipeListing()
+            return outputs.watchOutput$(question)
+        }),
         heldFor: key => outputs.heldFor(key),
-        retryOutput: question => outputs.retryOutput(question),
-        close: () => outputs.close()
+        // A retry reaches a listing that failed as well: authority waits on it as much as on the answer.
+        retryOutput: question => {
+            if (session().listingState?.failure) {
+                listing.refresh()
+            }
+            outputs.retryOutput(question)
+        },
+        refreshRecipeListing,
+        close: () => {
+            outputs.close()
+            listing.close()
+            observations.clear()
+        }
     }
 }
 
 const NO_SESSION = Object.freeze({catalogue: {}, credentials: null, closed: false})
+
+const NO_READS = Object.freeze({read: () => {}, unread: () => {}})
+
+// What Earth Engine never reads of a recipe it is sent.
+const NOT_EXECUTED = ['ui', 'layers', 'title', 'revision']
+
+const EVIDENCE = ['id', 'revision', 'listed', 'agreement']
+
+// Credential tokens are opaque and equal by value, so an observation names them by identity.
+const CREDENTIAL_IDS = new WeakMap()
+let credentialIds = 0
+
+const credentialId = token => {
+    if (!token || typeof token !== 'object') {
+        return 0
+    }
+    if (!CREDENTIAL_IDS.has(token)) {
+        CREDENTIAL_IDS.set(token, ++credentialIds)
+    }
+    return CREDENTIAL_IDS.get(token)
+}
+
+// The records and assets Earth Engine reads itself for the observed reference: everything its recipe reaches, but not
+// the recipe, which is sent. `missing` is a reference the graph does not hold.
+const closureOf = (reference, graph) => {
+    if (reference.type !== 'RECIPE_REF') {
+        return {records: [], assets: [reference.id], missing: false}
+    }
+    const byId = new Map(graph.recipes.map(record => [record.id, record]))
+    const reached = new Set([reference.id])
+    const assets = new Set()
+    let missing = false
+    const visit = id => graph.edges
+        .filter(({sourceRecipeId}) => sourceRecipeId === id)
+        .forEach(({reference: {type, id: target}}) => {
+            if (type !== 'RECIPE_REF') {
+                assets.add(target)
+            } else if (!reached.has(target)) {
+                reached.add(target)
+                byId.has(target) ? visit(target) : missing = true
+            }
+        })
+    visit(reference.id)
+    return {
+        records: [...reached].filter(id => id !== reference.id && byId.has(id)).sort().map(id => byId.get(id)),
+        assets: [...assets].sort(),
+        missing
+    }
+}
+
+// The session's records, reporting each one a closure takes.
+class ReportedSeeds extends Map {
+    #report
+
+    constructor(entries, report) {
+        super(entries)
+        this.#report = report
+    }
+
+    get(id) {
+        const record = super.get(id)
+        record && this.#report(record)
+        return record
+    }
+}
+
+// Loads, reporting every record as it arrives and every id that could not be read.
+const reported = (loadRecipesById$, reads) => request => loadRecipesById$(request).pipe(
+    tap({
+        next: records => records.forEach(record => reads.read(record, PRIVATE)),
+        error: () => request.ids.forEach(id => reads.unread(id, PRIVATE))
+    })
+)
 
 const basisOf = graph => graph.recipes.map(record => ({id: record.id, content: recipeContent(record)}))

@@ -118,37 +118,12 @@ const sync = ({recipe, loadedRecipes}) => {
 beforeEach(() => {
     bands$.mockReset()
     assetMetadata$.mockReset()
-    // CCDC answers with the names it says it can be asked for; an asset is read as the image it stores.
-    bands$.mockImplementation(({asset}) => of(asset
-        ? [
-            ...['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].map(name => ({name, arrayDimensions: 1})),
-            {name: 'ndvi_coefs', arrayDimensions: 2},
-            {name: 'ndvi_rmse', arrayDimensions: 1},
-            {name: 'ndvi_magnitude', arrayDimensions: 1}
-        ]
-        : [
-            'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
-            'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'
-        ]))
 })
 
 describe('masking a saved slice that has never been opened', () => {
     const open = () => sync({
         recipe: maskingOver('slice-1'),
         loadedRecipes: {'slice-1': savedSlice(), 'ccdc-1': ccdc()}
-    })
-
-    it('takes the scalar bands the slice declares over the segments of its CCDC', () => {
-        const {component, evidence} = open()
-
-        component.componentDidMount()
-
-        expect(bands$).not.toHaveBeenCalledWith(expect.objectContaining({
-            recipe: expect.objectContaining({id: 'slice-1'})
-        }))
-        const bands = evidence()[0].bands
-        expect(bands.map(({name}) => name)).toEqual(expect.arrayContaining(['ndvi', 'ndvi_phase_1', 'tStart']))
-        expect(bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
     })
 
     // The presets are the slice's, materialized against what the slice produces - which needs the CCDC
@@ -166,6 +141,7 @@ describe('masking a saved slice that has never been opened', () => {
 
         component.componentDidMount()
 
+        expect(bands$).not.toHaveBeenCalled()
         expect(assetMetadata$).not.toHaveBeenCalled()
     })
 })
@@ -184,7 +160,7 @@ describe('masking a slice whose own source is gone', () => {
 })
 
 describe('masking a slice with runtime source evidence', () => {
-    it('reads again when the source observation advances even with identical bands and templates', () => {
+    it('reads again when the source observation advances even with identical templates', () => {
         const source = {...savedSlice(), ui: {sourceEvidence: {
             sourceKey: 'RECIPE_REF:ccdc-1', status: 'OBSERVED', observation: 1,
             segments: {visualizations: [NDVI_TEMPLATE, HARMONIC_TEMPLATE]}
@@ -194,7 +170,7 @@ describe('masking a slice with runtime source evidence', () => {
             loadedRecipes: {[source.id]: source, 'ccdc-1': ccdc()}
         })
         component.componentDidMount()
-        expect(bands$).toHaveBeenCalledTimes(1)
+        expect(evidence()).toHaveLength(1)
 
         component.props = {...component.props, loadedRecipes: {
             ...component.props.loadedRecipes,
@@ -202,9 +178,7 @@ describe('masking a slice with runtime source evidence', () => {
         }}
         component.componentDidUpdate()
 
-        expect(bands$).toHaveBeenCalledTimes(2)
         expect(evidence()).toHaveLength(2)
-        expect(evidence()[1].bands).toEqual(evidence()[0].bands)
         expect(evidence()[1].visualizations).toEqual(evidence()[0].visualizations)
     })
 

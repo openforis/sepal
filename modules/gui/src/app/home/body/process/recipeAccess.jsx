@@ -10,7 +10,8 @@ import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {uuid} from '~/uuid'
 
-import {initializeRecipe, isRecipeOpen, recipePath} from './recipe'
+import {isRecipeOpen, recipePath} from './recipe'
+import {ABSENT, cacheAcceptance, DRAFT, initializeRecipe, KEEP, saveStatePath} from './recipeCache'
 
 let componentIdsByRecipeId = {}
 
@@ -90,16 +91,24 @@ export const recipeAccess = () =>
                 )
             }
 
-            // Whether the response may be written is decided when it ARRIVES, not when it was asked for. The
-            // recipe can be opened for editing while the read is in flight, and the draft the user is now
-            // working on is not something a dependency read may overwrite. The caller is handed that draft
-            // instead, so it goes on reading what the session is actually editing.
+            // Whether the response may be written is decided when it ARRIVES, not when it was asked for
+            // (recipeCache.js). The recipe can be opened for editing while the read is in flight, and a draft - open, or
+            // closed while its saves are unsettled - is not something a dependency read may overwrite; nor may an older response
+            // replace a newer copy. The caller is handed what the session holds instead, so it goes on reading
+            // what the session is actually using. This consumer asked for the recipe, so it retains what it adds.
             acceptReload(recipe) {
-                if (isRecipeOpen(recipe.id)) {
-                    return select(recipePath(recipe.id)) || recipe
+                const held = select(recipePath(recipe.id))
+                const saveState = select(saveStatePath(recipe.id))
+                switch (cacheAcceptance({record: recipe, cached: held, open: isRecipeOpen(recipe.id), saveState})) {
+                    case DRAFT:
+                        return held || recipe
+                    case KEEP:
+                        return held
+                    case ABSENT:
+                    default:
+                        this.cacheRecipe(recipe)
+                        return recipe
                 }
-                this.cacheRecipe(recipe)
-                return recipe
             }
 
             cacheRecipe(recipe) {

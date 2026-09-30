@@ -1,8 +1,9 @@
 // Runtime unavailability, as distinct from a source diagnostic.
 //
 // A source diagnostic says something about a recipe. These say something about the environment the operation was
-// running in: the linked Earth Engine credentials were replaced, the scope that owned the runtime ended, or the
-// records an operation read were not the ones the session held when it was asked.
+// running in: the linked Earth Engine credentials were replaced, the scope that owned the runtime ended, the records an
+// operation read were not the ones the session held when it was asked, or storage answered with a revision older than
+// one this session already knows of.
 // Carrying them as errors rather than diagnostics keeps them outside a consumer's diagnostic-based migration
 // fallback, which reads diagnostics and would otherwise have to recognise and exclude them.
 //
@@ -11,6 +12,7 @@
 export const SOURCE_IDENTITY_CHANGED = 'SOURCE_IDENTITY_CHANGED'
 export const SOURCE_RUNTIME_UNAVAILABLE = 'SOURCE_RUNTIME_UNAVAILABLE'
 export const SOURCE_BASIS_CHANGED = 'SOURCE_BASIS_CHANGED'
+export const SOURCE_REVISION_BEHIND = 'SOURCE_REVISION_BEHIND'
 
 export const sourceRuntimeError = code =>
     Object.assign(new Error(`Source runtime: ${code}`), {code})

@@ -1,9 +1,6 @@
 import {map} from 'rxjs'
 
-import {
-    createImageOutputObserver,
-    settledImageOutput$ as settledOutput$
-} from '#sepal/recipe/output/observeImageOutput'
+import {createImageOutputObserver} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -21,17 +18,18 @@ import api from '~/apiRegistry'
 // looking one up. Without data types /bands answers from what the recipe says it can be asked for, and with
 // them from the image it builds when asked for nothing - the two questions `observes` distinguishes. A
 // producer that answers the first supplies its own physical facts, so only names come back.
-const acquisition = {
-    observeBands$: ({reference, recipe, observes}) => reference.type === ASSET
-        ? api.gee.bands$({asset: reference.id, includeDataTypes: true})
-        : observes === AVAILABLE_BANDS
-            ? api.gee.bands$({recipe}).pipe(map(bandNames => bandNames.map(name => ({name}))))
-            : api.gee.bands$({recipe, includeDataTypes: true}),
-    declarationFor: recipe => recipeType(recipe.type)?.imageOutput
-}
+export const observeImageBands$ = ({reference, recipe, observes}) => reference.type === ASSET
+    ? api.gee.bands$({asset: reference.id, includeDataTypes: true})
+    : observes === AVAILABLE_BANDS
+        ? api.gee.bands$({recipe}).pipe(map(bandNames => bandNames.map(name => ({name}))))
+        : api.gee.bands$({recipe, includeDataTypes: true})
 
-export const createRecipeImageOutputObserver = () => {
-    const observer = createImageOutputObserver(acquisition)
+const declarationFor = recipe => recipeType(recipe.type)?.imageOutput
+
+// `observeBands$` is what a request goes through: Earth Engine itself unless a caller shares requests
+// (sourceRuntime/observationRegistry.js).
+export const createRecipeImageOutputObserver = ({observeBands$ = observeImageBands$} = {}) => {
+    const observer = createImageOutputObserver({observeBands$, declarationFor})
 
     return {
         state$: observer.state$,
@@ -44,5 +42,3 @@ export const createRecipeImageOutputObserver = () => {
         cancel: observer.cancel
     }
 }
-
-export const settledImageOutput$ = graph => settledOutput$({graph, ...acquisition})

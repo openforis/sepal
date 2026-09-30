@@ -6,6 +6,8 @@ import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
 
 import {getRecipeType} from '../recipeTypeRegistry'
+import {recordCurrency} from '../sourceRuntime/recordCurrency'
+import {SOURCE_REVISION_BEHIND} from '../sourceRuntime/sourceRuntimeError'
 import {IMAGE_OUTPUT} from './layerProduct'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {recipeContent} from './recipeContent'
@@ -28,6 +30,10 @@ import {recipeContent} from './recipeContent'
 // one-shot description of the canonical output, DEPENDENCIES only completes the closure, for a map product whose bands
 // are already known and must not be failed by describing another.
 //
+// A record the session caches is read from only while it is current (sourceRuntime/recordCurrency.js). One that is
+// behind what the recipe listing says, or whose recipe the listing stopped listing, is read again first: REFRESH names
+// those records, and nothing is answered until the session holds them as they are. A draft is never refreshed.
+//
 // An answer comes from one snapshot. A retained DESCRIBE terminal answers description and validity together. A
 // DEPENDENCIES terminal answers validity beside a map-product answer, which reads nothing but the root recipe -
 // including its runtime evidence - so the terminal's basis proves it read that same root.
@@ -40,9 +46,14 @@ export const INVALID = 'INVALID'
 export const DESCRIBED = 'DESCRIBED'
 export const DESCRIBE = 'DESCRIBE'
 export const DEPENDENCIES = 'DEPENDENCIES'
+export const REFRESH = 'REFRESH'
 export const UNKNOWN_PRODUCT = 'UNKNOWN_PRODUCT'
 
-export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null}) => {
+export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, currency = null}) => {
+    const refresh = currency && refreshing({graph, currency, heldFor})
+    if (refresh) {
+        return refresh
+    }
     const session = sessionAnswer({recipe, product, graph})
     const kind = session.acquisition
     const acquisition = kind ? {kind, key: acquisitionKey(kind, graph)} : null
@@ -54,15 +65,17 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null})
 }
 
 // What a watched question needs loaded, from the same graph and read its consumers render from: the acquisition with
-// the recipe and graph it names, or null when the session answers on its own or holds no such recipe.
-export const outputLoading = ({recipeId, product, catalogue}) => {
+// the recipe, graph and session records it names, or null when the session answers on its own or holds no such
+// recipe.
+export const outputLoading = ({recipeId, product, catalogue, session}) => {
     const recipe = catalogue[recipeId]
     if (!recipe) {
         return null
     }
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: catalogue})
-    const {acquisition} = readRecipeOutput({recipe, product, graph})
-    return acquisition && {acquisition, recipe, graph}
+    const {acquisition} = readRecipeOutput({recipe, product, graph, currency: session && recordCurrency(session)})
+    // Refreshing reads storage, not the session's records, which are what it replaces.
+    return acquisition && {acquisition, recipe, graph, records: acquisition.kind === REFRESH ? [] : graph.recipes}
 }
 
 // Drawn only from a description over dependencies known to be sound. A failed description withholds the preview
@@ -84,6 +97,31 @@ export const acquisitionKey = (kind, graph) =>
 export const compatibleBasis = (basis = [], graph) => {
     const current = new Map(graph.recipes.map(record => [record.id, record]))
     return basis.every(({id, content}) => !current.has(id) || _.isEqual(content, recipeContent(current.get(id))))
+}
+
+// Records to read again before anything is answered: until they are, the answer needs them; if reading them failed,
+// it is that failure; once they are read, a recipe that stopped being listed is known to be there still, while one
+// storage still holds only an older revision of is no answer at all.
+const refreshing = ({graph, currency, heldFor}) => {
+    const records = graph.recipes.map(record => currency.staleness(record)).filter(Boolean)
+    if (!records.length) {
+        return null
+    }
+    const acquisition = {kind: REFRESH, key: {kind: REFRESH, records}}
+    const held = heldFor(acquisition.key)
+    if (!held) {
+        return {...answer({status: NEEDS_EVIDENCE}), acquisition}
+    }
+    if (held.status !== 'COMPLETE') {
+        return {...answer({status: UNAVAILABLE, diagnostics: held.diagnostics || [], error: held.error || null}), acquisition}
+    }
+    const behind = records.filter(({withdrawn}) => !withdrawn)
+    return behind.length
+        ? {
+            ...answer({status: UNAVAILABLE, diagnostics: behind.map(({id}) => ({code: SOURCE_REVISION_BEHIND, recipeId: id}))}),
+            acquisition
+        }
+        : null
 }
 
 const sessionAnswer = ({recipe, product, graph}) => {

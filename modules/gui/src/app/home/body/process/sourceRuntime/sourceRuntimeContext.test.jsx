@@ -10,7 +10,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 //
 // Only the Earth Engine bands API is replaced.
 
-const state = vi.hoisted(() => ({bandsCalls: [], subscribers: new Map(), torndown: []}))
+const state = vi.hoisted(() => ({bandsCalls: [], subscribers: new Map(), torndown: [], listings: []}))
 
 vi.mock('~/apiRegistry', async () => {
     const {Observable} = await import('rxjs')
@@ -25,6 +25,12 @@ vi.mock('~/apiRegistry', async () => {
                         return () => state.torndown.push(key)
                     })
                 }
+            },
+            // Listings are answered only when a test says so.
+            recipe: {
+                loadAll$: () => new Observable(subscriber => {
+                    state.listings.push(subscriber)
+                })
             }
         }
     }
@@ -52,6 +58,7 @@ const {readRecipeOutput} = await import('../recipe/recipeOutput')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {createSourceRuntime} = await import('./sourceRuntime')
 const {SourceRuntimeProvider, useSourceRuntime, withSourceRuntime} = await import('./sourceRuntimeContext')
+const {listingRequest, mergedListing, touchedListing} = await import('../recipeListing')
 
 const ccdc = (id = 'ccdc-1') => ({id, type: 'CCDC', model: {}})
 
@@ -66,8 +73,13 @@ const initialState = () => ({
     user: {currentUser: {googleTokens: {accessToken: 'secret-token'}}}
 })
 
-const reducer = (current = initialState(), action) =>
-    action.state ? action.state : current
+// As the application's reducer: an action carrying its own reduction applies it.
+const reducer = (current = initialState(), action) => {
+    if ('reduce' in action) {
+        return action.reduce(current)
+    }
+    return action.state ? action.state : current
+}
 
 const withLoaded = (current, recipes) => ({
     ...current,
@@ -80,6 +92,7 @@ beforeEach(() => {
     state.bandsCalls = []
     state.subscribers = new Map()
     state.torndown = []
+    state.listings = []
 })
 
 const runtimeFor = store => {
@@ -87,7 +100,8 @@ const runtimeFor = store => {
     const runtime = createSourceRuntime({
         environment$: environment.environment$,
         session: environment.session,
-        sessionChanges$: environment.sessionChanges$
+        sessionChanges$: environment.sessionChanges$,
+        updateRecipeListing: environment.updateRecipeListing
     })
     return {environment, runtime}
 }
@@ -309,6 +323,173 @@ describe('the environment snapshot', () => {
     })
 })
 
+// The runtime retains no cache entry; it only replaces one that is present, closed and older when its record arrives.
+describe('a record the runtime read from storage', () => {
+    const cachedAt = revision => ({...ccdc(), revision, model: {read: revision}})
+
+    const holding = (records, {open = []} = {}) => {
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...withLoaded(store.getState(), records),
+            process: {...withLoaded(store.getState(), records).process, tabs: open.map(id => ({id}))}
+        }})
+        return {store, environment: createReduxSourceEnvironment({store})}
+    }
+
+    const held = store => store.getState().process.loadedRecipes['ccdc-1']
+
+    it('replaces an older copy the session caches', () => {
+        const {store, environment} = holding([cachedAt(4)])
+
+        environment.replaceCachedRecipe(cachedAt(5))
+
+        expect(held(store)).toMatchObject({revision: 5, model: {read: 5}})
+    })
+
+    it('never replaces a newer copy with an older read that arrives after it', () => {
+        const {store, environment} = holding([cachedAt(6)])
+
+        environment.replaceCachedRecipe(cachedAt(5))
+
+        expect(held(store)).toMatchObject({revision: 6, model: {read: 6}})
+    })
+
+    it('never replaces a draft', () => {
+        const {store, environment} = holding([cachedAt(4)], {open: ['ccdc-1']})
+
+        environment.replaceCachedRecipe(cachedAt(5))
+
+        expect(held(store)).toMatchObject({revision: 4})
+    })
+
+    it('keeps it private when the session no longer holds that recipe', () => {
+        const {store, environment} = holding([])
+
+        environment.replaceCachedRecipe(cachedAt(5))
+
+        expect(held(store)).toBeUndefined()
+    })
+})
+
+// A refresh reports storage as it was when asked. What this session did to its listing meanwhile - here the way
+// recipe.jsx records a create and a delete - survives the response.
+describe('the recipe listing a runtime refreshes', () => {
+    const listed = (id, revision) => ({id, name: id, type: 'CCDC', revision})
+
+    it('keeps a create and a delete made here while its refresh was in flight', () => {
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...withLoaded(store.getState(), [ccdc('a')]),
+            process: {...withLoaded(store.getState(), [ccdc('a')]).process, recipes: [listed('a', 1), listed('gone', 1)]}
+        }})
+        const {runtime} = runtimeFor(store)
+        runtime.watchOutput$({recipeId: 'a', product: {name: 'IMAGE_OUTPUT'}}).subscribe()
+        const [refresh] = state.listings
+
+        store.dispatch(localChange(process => ({
+            recipes: [...process.recipes.filter(({id}) => id !== 'gone'), listed('new', 1)],
+            recipeListing: touchedListing(process.recipeListing, ['new', 'gone'])
+        })))
+        refresh.next([listed('a', 2), listed('gone', 1)])
+        refresh.complete()
+
+        expect(store.getState().process.recipes).toEqual([listed('a', 2), listed('new', 1)])
+    })
+})
+
+describe('the recipe listing while outputs are watched', () => {
+    afterEach(() => vi.useRealTimers())
+
+    it('is refreshed before Retrieve\'s authority lapses, and not once nothing is watched', () => {
+        vi.useFakeTimers()
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...withLoaded(store.getState(), [ccdc('a')]),
+            process: {...withLoaded(store.getState(), [ccdc('a')]).process, recipeListing: {checkedAt: Date.now()}}
+        }})
+        const {runtime} = runtimeFor(store)
+        const watch = runtime.watchOutput$({recipeId: 'a', product: {name: 'IMAGE_OUTPUT'}}).subscribe()
+
+        vi.advanceTimersByTime(270000)
+        const whileWatched = state.listings.length
+        state.listings[0]?.error(new Error('unreachable'))
+        watch.unsubscribe()
+        vi.advanceTimersByTime(600000)
+
+        expect(whileWatched).toBe(1)
+        expect(state.listings).toHaveLength(1)
+    })
+})
+
+// A move's listing - merged as recipe.jsx merges it - settles while the runtime's own refresh is still in flight.
+describe('listings answering in any order', () => {
+    const listed = (id, revision) => ({id, name: id, type: 'CCDC', revision})
+
+    it('never bring back a recipe deleted here, whichever answers last', () => {
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...withLoaded(store.getState(), [ccdc('a')]),
+            process: {...withLoaded(store.getState(), [ccdc('a')]).process, recipes: [listed('a', 1), listed('gone', 1)]}
+        }})
+        const {runtime} = runtimeFor(store)
+        runtime.watchOutput$({recipeId: 'a', product: {name: 'IMAGE_OUTPUT'}}).subscribe()
+        const [refresh] = state.listings
+
+        store.dispatch(localChange(process => ({
+            recipes: process.recipes.filter(({id}) => id !== 'gone'),
+            recipeListing: touchedListing(process.recipeListing, ['gone'])
+        })))
+        const move = listingRequest({listingState: store.getState().process.recipeListing, now: Date.now() + 1})
+        store.dispatch(localChange(process => {
+            const {recipes, listingState} = mergedListing({
+                recipes: process.recipes, listingState: process.recipeListing, response: [listed('a', 1)], ...move,
+                now: Date.now() + 2
+            })
+            return {recipes, recipeListing: touchedListing(listingState, ['a'])}
+        }))
+        refresh.next([listed('a', 1), listed('gone', 1)])
+        refresh.complete()
+
+        expect(store.getState().process.recipes.map(({id}) => id)).toEqual(['a'])
+    })
+})
+
+// A closed recipe whose saves have not settled still holds its edit, and no read of storage replaces it.
+describe('a closed draft', () => {
+    it.each(['SAVING', 'FAILED', 'CONFLICT', 'UNRESOLVED'])('is not replaced by a newer record while its save is %s', status => {
+        const draft = {...ccdc(), revision: 4, model: {read: 'unsaved edit'}}
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...initialState(),
+            process: {loadedRecipes: {[draft.id]: draft}, tabs: [], saveStates: {[draft.id]: {status, revision: 4, model: {read: 4}}}}
+        }})
+        const environment = createReduxSourceEnvironment({store})
+
+        environment.replaceCachedRecipe({...ccdc(), revision: 5, model: {read: 'persisted elsewhere'}})
+
+        expect(store.getState().process.loadedRecipes[draft.id]).toBe(draft)
+    })
+
+    it('is replaced once its save has settled', () => {
+        const draft = {...ccdc(), revision: 4, model: {read: 4}}
+        const store = storeWith()
+        store.dispatch({type: 'SET', state: {
+            ...initialState(),
+            process: {loadedRecipes: {[draft.id]: draft}, tabs: [], saveStates: {[draft.id]: {status: 'SAVED', revision: 4, model: draft.model}}}
+        }})
+        const environment = createReduxSourceEnvironment({store})
+
+        environment.replaceCachedRecipe({...ccdc(), revision: 5, model: {read: 5}})
+
+        expect(store.getState().process.loadedRecipes[draft.id].revision).toBe(5)
+    })
+})
+
+const localChange = change => ({
+    type: 'LOCAL_LISTING_CHANGE',
+    reduce: current => ({...current, process: {...current.process, ...change(current.process)}})
+})
+
 describe('the session a watch reads', () => {
     it('is read without subscribing, with a credential token that changes only with the container', () => {
         const store = storeWith()
@@ -364,9 +545,9 @@ describe('watching output over the store', () => {
     })
 
     it.each([
-        ['an edit', store => store.dispatch({
+        ['an edit to its source', store => store.dispatch({
             type: 'SET',
-            state: withLoaded(store.getState(), [ccdc(), {...MASKED, model: {...MASKED.model, imageMask: {type: 'ASSET', id: 'users/x/other'}}}])
+            state: withLoaded(store.getState(), [{...ccdc(), model: {revised: true}}, MASKED])
         })],
         ['replaced credentials', replaceCredentials]
     ])('withdraws the answer in the dispatch that makes %s, and loads it once again', (_change, change) => {

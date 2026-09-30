@@ -45,6 +45,13 @@ the bands selected, in the order selected. The catalogue answers the configured 
 
 ## Open issues
 
+- **Removing an input band can leave its direct output behind.** The synchronization removes output bands by the
+  input band's internal ID. In a saved recipe where the input and its pass-through output have different IDs,
+  removing the input selection leaves the output configured. Execution then selects a missing band while building
+  the complete output, so even a visualization of an unaffected calculation fails. Removing the stale entry from
+  Output bands restores execution. The origin of the differing IDs is not established. This predates the shared
+  observation and recipe-revision freshness work; handle it in the
+  [Band Math dependency follow-up](../design/recipes/data-sources.md#later-follow-up-band-math-dependencies).
 - **A recipe with no output bands cannot run.** Execution selects `.*` from an empty image, which Earth Engine refuses.
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.

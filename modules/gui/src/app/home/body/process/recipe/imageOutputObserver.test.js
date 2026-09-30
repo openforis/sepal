@@ -231,6 +231,22 @@ describe('observing MASKING over an asset', () => {
         }))
     })
 
+    it('carries the encoding the asset states', () => {
+        const {root, loadedRecipes} = maskedAsset()
+        const {observer, states} = observerOver()
+        observer.observe({recipe: root, loadedRecipes})
+        const reflectance = {scale: 0.0001, offset: 0, unit: '1'}
+        emit('ASSET:users/x/primary', [
+            {name: 'red', arrayDimensions: 0, encoding: reflectance},
+            {name: 'qa', arrayDimensions: 0}
+        ])
+
+        expect(latest(states).description.output.bands).toEqual([
+            {name: 'red', dataType: {arrayDimensions: 0}, encoding: reflectance},
+            {name: 'qa', dataType: {arrayDimensions: 0}}
+        ])
+    })
+
     it('consults no copied recipe, provenance, or visualization metadata', () => {
         const primary = {
             type: 'ASSET',

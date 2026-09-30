@@ -14,9 +14,10 @@ import {declaredSelections} from './sourceEvidence'
 export const evidenceSession = state => ({
     loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {},
     catalogue: selectFrom(state, 'process.recipes') || [],
-    // A recipe with a tab is being edited. Its cached record is a draft, and no dependency read may replace it with
-    // what happens to be persisted.
+    // A recipe with a tab is being edited, and one closed while its saves are unsettled still holds its edit. Its cached
+    // record is a draft, and no dependency read may replace it with what happens to be persisted (draftAgreement.js).
     openRecipeIds: (selectFrom(state, 'process.tabs') || []).map(({id}) => id),
+    saves: selectFrom(state, 'process.saveStates') || {},
     assetVersions: [...(selectFrom(state, 'assets.user') || []), ...(selectFrom(state, 'assets.other') || [])],
     earthEngineGeneration: earthEngineGeneration(state)
 })

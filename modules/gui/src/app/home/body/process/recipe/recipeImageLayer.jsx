@@ -14,6 +14,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
+import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {OutputWatch} from './outputWatch'
@@ -38,7 +39,8 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
         recipe,
         dependencyGraph: recipe
             ? buildMapDependencyGraph({recipe, loadedRecipes})
-            : null
+            : null,
+        recordStaleness: recordStalenessOfState(state)
     }
 }
 
@@ -115,12 +117,13 @@ class _RecipeImageLayer extends React.Component {
     }
 
     imageOutput() {
-        const {recipe, layerConfig, dependencyGraph, sourceRuntime} = this.props
+        const {recipe, layerConfig, dependencyGraph, recordStaleness, sourceRuntime} = this.props
         return readRecipeOutput({
             recipe,
             product: layerProduct(recipe, layerConfig),
             graph: dependencyGraph,
-            heldFor: key => sourceRuntime.heldFor(key)
+            heldFor: key => sourceRuntime.heldFor(key),
+            currency: recordStaleness
         })
     }
 
