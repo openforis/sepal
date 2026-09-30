@@ -1,47 +1,25 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
-import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 
 // The synchronous read, over graphs the real builder produces and the real shared declarations: Optical Mosaic
-// describes from its model, Masking preserves its primary input, CCDC observes what it can be asked for, and a type
-// added to the shared registry for these tests declares nothing. Only the GUI registry is replaced, by the entries
-// each type registers: legacy helpers, map products and band presentation.
+// describes from its model, Masking preserves its primary input, CCDC observes what it can be asked for, and a
+// Sampling Design produces no image. Only the GUI registry is replaced, by the entries each type registers: map
+// products and band presentation.
 //
 // Statuses, authorities and codes are literals, so a production rename cannot pass unnoticed.
 
-const registered = vi.hoisted(() => ({maskingEvidence: 'OBSERVED'}))
-
 vi.mock('~/translate', () => ({msg: key => key}))
-
-// A recipe type that declares no output, added to the real registry for these tests.
-vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
-    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
-    return withUndeclaredType(await importOriginal())
-})
 
 vi.mock('../recipeTypeRegistry', async () => {
     const {bandPresentation: ccdcPresentation, mapProducts: ccdcProducts} = await import('./ccdc/bands')
-    const {UNDECLARED_TYPE} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
     return {getRecipeType: type => ({
         MOSAIC: {
             bandPresentation: () => ({
                 blue: {dataType: {precision: 'int', min: -10000, max: 10000}, tooltip: 'Blue'}
             })
         },
-        [UNDECLARED_TYPE]: {
-            getAvailableBands: () => ({count: {dataType: {precision: 'int'}, label: 'Count'}})
-        },
-        MASKING: {
-            getAvailableBands: () => registered.maskingEvidence === 'UNAVAILABLE'
-                ? null
-                : {class: {dataType: {arrayDimensions: 0}}}
-        },
-        // A legacy entry left beside the declaration, which a declared product must never be answered from.
-        CCDC: {
-            mapProducts: {...ccdcProducts, bands: () => ({legacy_count: {dataType: {precision: 'int'}}})},
-            bandPresentation: ccdcPresentation
-        }
+        CCDC: {mapProducts: ccdcProducts, bandPresentation: ccdcPresentation}
     })[type]}
 })
 
@@ -103,33 +81,34 @@ describe('an answer from the session alone', () => {
     })
 })
 
-describe('a legacy answer', () => {
-    it('passes an undeclared type\'s helper through as names, its data type as display only', () => {
-        const recipe = undeclared()
+// Read as an image, a recipe with no image output is refused as one, directly or through a wrapper, and no record
+// still to be loaded would change that.
+describe('a recipe with no image output', () => {
+    it('is invalid, and cannot be previewed', () => {
+        const recipe = design()
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe])})
 
-        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', bands: [{name: 'count'}], acquisition: null})
-        expect(read.availableBands).toEqual({count: {label: 'Count', display: {precision: 'int'}}})
+        expect(read).toMatchObject({status: 'INVALID', authority: null, bands: [], acquisition: null})
+        expect(read.diagnostics).toEqual([{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['design-1']}])
+        expect(canPreview(read)).toBe(false)
     })
 
-    it('answers a declared wrapper over an undeclared source from the wrapper\'s own helper', () => {
-        const recipe = masking({primary: 'undeclared-1'})
+    it('makes a wrapper over it invalid, located at the recipe that has none', () => {
+        const recipe = masking({primary: 'design-1'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, undeclared()])})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, design()])})
 
-        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY'})
-        expect(read.availableBands).toEqual({class: {dataType: {arrayDimensions: 0}}})
+        expect(read.status).toBe('INVALID')
+        expect(read.diagnostics).toEqual([{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['masked-1', 'design-1']}])
     })
 
-    it('is never taken from evidence that could not be had', () => {
-        registered.maskingEvidence = 'UNAVAILABLE'
-        const recipe = masking({primary: 'undeclared-1'})
+    it('makes a wrapper over it invalid at once, acquiring nothing for a dependency not held', () => {
+        const recipe = masking({primary: 'design-1', mask: 'unloaded'})
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, undeclared()])})
-        registered.maskingEvidence = 'OBSERVED'
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe, design()])})
 
-        expect(read).toMatchObject({status: 'UNAVAILABLE', authority: null, bands: [], acquisition: null})
+        expect(read).toMatchObject({status: 'INVALID', acquisition: null})
     })
 })
 
@@ -137,7 +116,7 @@ describe('a map product', () => {
     it('is named from the layer config, and an unknown value is no product at all', () => {
         expect(layerProduct(ccdc(), {visualizationType: 'COUNT'})).toEqual({name: 'COUNT'})
         expect(layerProduct(ccdc(), {visualizationType: 'SEGMENTS'})).toBeNull()
-        expect(layerProduct(undeclared(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
+        expect(layerProduct(design(), {visualizationType: 'anything'})).toEqual({name: 'IMAGE_OUTPUT'})
     })
 
     // A layer whose form has not yet written its defaults shows the same product it will show once it has, and
@@ -180,8 +159,8 @@ describe('a map product', () => {
         })
     })
 
-    // Its declaration is the answer: what it refuses is invalid, never answered by the legacy entry beside it.
-    it('refuses parameters it does not take, without falling back to a legacy answer', () => {
+    // Its declaration is the answer: what it refuses is invalid.
+    it('refuses parameters it does not take', () => {
         const recipe = ccdc()
 
         const read = readRecipeOutput({recipe, product: {name: 'COUNT', parameters: {year: 2020}}, graph: graphOf([recipe])})
@@ -190,12 +169,13 @@ describe('a map product', () => {
         expect(read.diagnostics).toEqual([expect.objectContaining({code: 'INVALID_PRODUCT_PARAMETERS'})])
     })
 
-    it('answers a product the type does not declare from its legacy entry', () => {
+    it('refuses a product the type does not declare', () => {
         const recipe = ccdc()
 
         const read = readRecipeOutput({recipe, product: {name: 'SEGMENTS'}, graph: graphOf([recipe])})
 
-        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', bands: [{name: 'legacy_count'}]})
+        expect(read).toMatchObject({status: 'INVALID', authority: null, bands: []})
+        expect(read.diagnostics).toEqual([expect.objectContaining({code: 'UNDECLARED_PRODUCT', product: 'SEGMENTS'})])
     })
 
     it('keeps its bands when a dependency cannot be read, withholding the preview for that reason alone', () => {
@@ -256,14 +236,15 @@ describe('a retained description', () => {
         expect(canPreview(read)).toBe(false)
     })
 
-    it('becomes a legacy answer when all it found was an output nothing declares', () => {
+    it('stays invalid when what it found was a source with no image output', () => {
         const recipe = masking({primary: 'unloaded'})
-        const undeclared = {status: 'INVALID', description: null, error: null, dependencyValidity: SOUND,
-            diagnostics: [{code: 'UNDECLARED_OUTPUT', path: [], recipePath: ['masked-1', 'unloaded']}]}
+        const nonImage = {status: 'INVALID', description: null, error: null, dependencyValidity: SOUND,
+            diagnostics: [{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['masked-1', 'unloaded']}]}
 
-        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe]), heldFor: () => undeclared})
+        const read = readRecipeOutput({recipe, product: OUTPUT, graph: graphOf([recipe]), heldFor: () => nonImage})
 
-        expect(read).toMatchObject({status: 'READY', authority: 'LEGACY', dependencyValidity: SOUND})
+        expect(read).toMatchObject({status: 'INVALID', authority: null, bands: [], dependencyValidity: SOUND})
+        expect(read.diagnostics).toEqual(nonImage.diagnostics)
     })
 
     it('is asked for by the key of the work it answered', () => {
@@ -282,7 +263,7 @@ describe('a retained description', () => {
 describe('whether a retained terminal is about the records held now', () => {
     it('holds while every record it read that the session also holds is unchanged', () => {
         const recipe = masking({primary: 'mosaic-1'})
-        const basis = [recipe, mosaic(), undeclared()].map(record => ({id: record.id, content: recipeContent(record)}))
+        const basis = [recipe, mosaic(), design()].map(record => ({id: record.id, content: recipeContent(record)}))
 
         expect(compatibleBasis(basis, graphOf([{...recipe, title: 'Renamed', revision: 9}, mosaic()]))).toBe(true)
     })
@@ -318,7 +299,7 @@ const masking = ({primary, mask}) => ({
     }
 })
 
-const undeclared = () => ({id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}})
+const design = () => ({id: 'design-1', type: 'SAMPLING_DESIGN', model: {}})
 
 const ccdc = (model = {}) => ({id: 'ccdc-1', type: 'CCDC', model})
 

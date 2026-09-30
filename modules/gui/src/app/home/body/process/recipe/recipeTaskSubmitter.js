@@ -150,19 +150,14 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
     const {
         dataSetType,
         imageOutputDescription,
-        observedBands,
         fallbackPyramidingPolicy,
         includeTimeRange = true,
         visualizationBands
     } = config
 
-    // Two authorities for one decision. Refused rather than resolved by precedence, so neither can silently
-    // decide what the other describes.
-    if (imageOutputDescription && observedBands) {
-        throw new Error(`Recipe ${recipe.id} configures both a resolved image output and observed source bands; only one may decide export requirements`)
-    }
-    if (hasOwn(config, 'fallbackPyramidingPolicy') && !imageOutputDescription && !observedBands) {
-        throw new Error(`Recipe ${recipe.id} configures fallback pyramiding policy without physical facts to apply it to`)
+    // The description is what decides export requirements; nothing is exported without one.
+    if (!imageOutputDescription) {
+        throw new Error(`Recipe ${recipe.id} has no image output description to decide its export requirements`)
     }
 
     const name = recipe.title || recipe.placeholder
@@ -171,14 +166,8 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
     const bands = retrieveOptions.bands
     const operation = `image.${destination}`
     const selection = {destination, bands, useAllBands: retrieveOptions.useAllBands, fallbackPyramidingPolicy}
-    const resolvedRequirements = imageOutputDescription
-        ? describedRequirements(recipe, imageOutputDescription, selection)
-        : observedBands
-            ? physicalRequirements(observedBands, selection)
-            : undefined
-    const effectiveRetrieveOptions = resolvedRequirements
-        ? {...retrieveOptions, bands: resolvedRequirements.selectedBandNames}
-        : retrieveOptions
+    const resolvedRequirements = describedRequirements(recipe, imageOutputDescription, selection)
+    const effectiveRetrieveOptions = {...retrieveOptions, bands: resolvedRequirements.selectedBandNames}
     const effectiveBands = effectiveRetrieveOptions.bands || []
 
     const visualizations = recipeVisualizations(recipe, visualizationBands)
@@ -225,7 +214,7 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
     }
     
     // Only physical facts decide a policy. Without them none is sent, and Earth Engine's own default applies.
-    if (resolvedRequirements?.pyramidingPolicy) {
+    if (resolvedRequirements.pyramidingPolicy) {
         image.pyramidingPolicy = resolvedRequirements.pyramidingPolicy
     }
     

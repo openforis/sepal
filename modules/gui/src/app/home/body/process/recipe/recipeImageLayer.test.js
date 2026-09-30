@@ -40,7 +40,23 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 
 vi.mock('~/translate', () => ({msg: key => key}))
 
-const availableBandsByType = vi.hoisted(() => ({}))
+// The bands the synthetic type's declaration describes, all scalar. Held outside its recipe, as runtime evidence would
+// be, so they can change while the recipe and its layer config stay the same.
+const synthetic = vi.hoisted(() => ({bands: []}))
+
+// A declared type for the generic cases, added to the real shared registry.
+vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
+    const registry = await importOriginal()
+    const {imageOutputProvider} = await import('#sepal/recipe/output/provider')
+    const declared = {
+        type: 'SYNTHETIC',
+        directSources: () => [],
+        imageOutput: imageOutputProvider({
+            describe: () => ({bands: synthetic.bands.map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []})
+        })
+    }
+    return {...registry, recipeType: type => type === declared.type ? declared : registry.recipeType(type)}
+})
 
 // What the declared types this suite shows register beside their declarations: Optical Mosaic's presentation,
 // CCDC's, LandTrendr's, Change Alerts' and BAYTS Alerts' own map products, and Radar Mosaic's presentation and presets.
@@ -61,7 +77,6 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     }
     return {
         getRecipeType: type => ({
-            getAvailableBands: () => availableBandsByType[type],
             getPreSetVisualizations: () => [],
             ...registeredByType[type]
         })
@@ -75,7 +90,7 @@ const {visualizations: radarPresets} = await import('./radarMosaic/visualization
 
 beforeEach(() => {
     state.constructed = []
-    availableBandsByType.SYNTHETIC = {ndvi: {}, evi: {}}
+    synthetic.bands = ['ndvi', 'evi']
 })
 
 const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
@@ -194,7 +209,6 @@ describe('the render-time guard', () => {
     // guard has to hold for it like any other type. Exempting it drew a preview for bands its source had
     // stopped producing.
     it('holds for a slice whose selected bands are gone', () => {
-        availableBandsByType.CCDC_SLICE = {nbr: {}}
         const {instance} = build({
             recipe: recipeOf({type: 'CCDC_SLICE', userDefined: [{id: 'v-nbr', bands: ['nbr']}]}),
             visParams: {id: 'v-ndvi', bands: ['ndvi']}
@@ -209,7 +223,7 @@ describe('the render-time guard', () => {
     // the type manages its own selection.
     describe('a recipe with no bands at all', () => {
         beforeEach(() => {
-            availableBandsByType.SYNTHETIC = {}
+            synthetic.bands = []
         })
 
         it('gets no layer', () => {
@@ -415,12 +429,12 @@ describe('visualization reconciliation', () => {
 
             // Only the available bands change: same recipe, same layer config, so watchedProps are identical
             // and a retained instance would be handed straight back.
-            availableBandsByType.SYNTHETIC = {}
+            synthetic.bands = []
             didUpdate()
             expect(instance.layer).toBe(null)
             expect(instance.maybeCreateLayer()).toBe(null)
 
-            availableBandsByType.SYNTHETIC = {ndvi: {}, evi: {}}
+            synthetic.bands = ['ndvi', 'evi']
             didUpdate()
 
             expect(instance.maybeCreateLayer()).not.toBe(first)

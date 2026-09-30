@@ -2,9 +2,8 @@ import {describe, expect, it} from 'vitest'
 
 import {currentSourceEvidence, declaredSelections, inheritedSourceKey, sourceEvidenceOr} from './sourceEvidence'
 
-// Which answer a consumer gets about a Masking recipe's bands and presets: what was observed of the source
-// it currently selects, or - only while nothing has been observed - the snapshot copied into the model when
-// the source was chosen.
+// Which presets a consumer gets for a Masking recipe: what was observed of the source it currently selects, or - only
+// while nothing has been observed - the snapshot copied into the model when the source was chosen.
 
 const SAVED_NDVI = {id: 'saved-ndvi', bands: ['ndvi'], type: 'continuous', palette: ['#000', '#fff']}
 
@@ -60,49 +59,26 @@ describe('the declared selections', () => {
 })
 
 describe('a recipe with evidence for the source it selects', () => {
-    const recipe = recipeOf({sourceEvidence: observation()})
+    it('offers the observed presets, not the copied ones', () => {
+        const observed = {bands: ['red'], type: 'continuous'}
 
-    it('reports the observed bands, not the copied ones', () => {
-        expect(evidenceOf(recipe).bands.map(({name}) => name)).toEqual(['red', 'nir'])
-    })
-
-    it('reports that the answer was observed', () => {
-        expect(evidenceOf(recipe).availability).toBe('OBSERVED')
+        expect(evidenceOf(recipeOf({sourceEvidence: observation({visualizations: [observed]})})).visualizations)
+            .toEqual([observed])
     })
 })
 
 describe('a recipe with nothing observed yet', () => {
-    const recipe = recipeOf()
-
-    it('falls back to the copied snapshot rather than reporting no bands', () => {
-        expect(evidenceOf(recipe).bands).toEqual([{name: 'red'}, {name: 'nir'}, {name: 'ndvi'}])
-        expect(evidenceOf(recipe).visualizations).toEqual([SAVED_NDVI])
-    })
-
-    it('says the source has not been observed', () => {
-        expect(evidenceOf(recipe).availability).toBe('UNOBSERVED')
-    })
-
-    it('claims no dimensionality it has not observed', () => {
-        expect(evidenceOf(recipe).bands.every(({dataType}) => dataType === undefined)).toBe(true)
+    it('falls back to the copied presets rather than offering none', () => {
+        expect(evidenceOf(recipeOf()).visualizations).toEqual([SAVED_NDVI])
     })
 })
 
-// A source that could not be reached is not a source whose saved bands are current. Presenting them would
-// assert a schema nothing verified; withholding takes the layer off the map and blocks export instead.
+// A source that could not be reached is not a source whose saved presets are current.
 describe('a source that could not be observed', () => {
-    const recipe = recipeOf({sourceEvidence: observation({status: 'UNAVAILABLE', bands: [], visualizations: []})})
+    it('offers no presets, rather than the ones the recipe remembers', () => {
+        const recipe = recipeOf({sourceEvidence: observation({status: 'UNAVAILABLE', bands: [], visualizations: []})})
 
-    it('offers no bands, rather than the ones the recipe remembers', () => {
-        expect(evidenceOf(recipe).bands).toEqual([])
-    })
-
-    it('offers no presets either', () => {
         expect(evidenceOf(recipe).visualizations).toEqual([])
-    })
-
-    it('says so, so a consumer can tell it apart from an unobserved source', () => {
-        expect(evidenceOf(recipe).availability).toBe('UNAVAILABLE')
     })
 })
 
@@ -163,30 +139,15 @@ describe('re-observing a source whose presets are unchanged', () => {
     })
 })
 
-// Dimensionality is carried, not acted on: what may be drawn is decided where candidates are built, and
-// what may be exported is a different question with a different answer.
-describe('a source with array-valued bands', () => {
-    const SEGMENTS = [
-        {name: 'ndvi_rmse', dataType: {arrayDimensions: 1}},
-        {name: 'changeProb', dataType: {arrayDimensions: 0}}
-    ]
-
-    it('reports each band with the dimensionality that was observed of it', () => {
-        const recipe = recipeOf({sourceEvidence: observation({bands: SEGMENTS, visualizations: []})})
-
-        expect(evidenceOf(recipe).bands).toEqual(SEGMENTS)
-    })
-})
-
 describe('a recipe whose selection has moved on from its evidence', () => {
     it('does not answer with the previous source evidence', () => {
         const recipe = recipeOf({
             primary: {...SNAPSHOT, id: 'ccdc-2', bands: ['swir'], visualizations: []},
-            sourceEvidence: observation()
+            sourceEvidence: observation({visualizations: [SAVED_NDVI]})
         })
 
         expect(currentSourceEvidence(recipe)).toBeNull()
-        expect(evidenceOf(recipe).bands).toEqual([{name: 'swir'}])
+        expect(evidenceOf(recipe).visualizations).toEqual([])
     })
 
     it('does not answer with it when the source changed from a recipe to an asset of the same id', () => {
@@ -204,6 +165,6 @@ describe('a recipe that inherits no schema', () => {
         const ccdc = {id: 'ccdc-1', type: 'CCDC', model: {}, ui: {sourceEvidence: observation()}}
 
         expect(currentSourceEvidence(ccdc)).toBeNull()
-        expect(sourceEvidenceOr(ccdc, undefined).bands).toEqual([])
+        expect(sourceEvidenceOr(ccdc, undefined).visualizations).toEqual([])
     })
 })

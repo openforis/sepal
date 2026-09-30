@@ -79,8 +79,7 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
             return readRetrieveOutput({
                 state: this.context.store.getState(),
                 recipeId: this.props.recipeId,
-                heldFor: key => this.acquisition.heldFor(key),
-                publishedEvidence: this.props.sourceRuntime.publishedEvidence
+                heldFor: key => this.acquisition.heldFor(key)
             })
         }
     }

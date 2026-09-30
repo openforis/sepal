@@ -43,7 +43,6 @@ vi.mock('../../recipeTypeRegistry', async () => {
 })
 
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
-const {PublishedEvidenceBases} = await import('../sourceEvidenceBasis')
 const {sliceObservation} = await import('./sliceObservation')
 
 const recipeSelection = id => ({type: 'RECIPE_REF', id})
@@ -110,7 +109,6 @@ const sync = ({
         }
     })
     const component = new SourceEvidenceSync({
-        sourceRuntime: {publishedEvidence: new PublishedEvidenceBases()},
         observation: sliceObservation,
         recipe,
         loadedRecipes,

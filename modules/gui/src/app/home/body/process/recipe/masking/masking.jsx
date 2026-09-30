@@ -9,7 +9,6 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
 import {defaultModel} from './maskingRecipe'
 import {maskingObservation} from './maskingSourceEvidence'
 import {MaskingToolbar} from './panels/maskingToolbar'
@@ -55,6 +54,5 @@ export default () => ({
     components: {
         recipe: Masking
     },
-    getAvailableBands,
     getPreSetVisualizations
 })

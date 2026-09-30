@@ -1,8 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
-// What Masking answers from the evidence it holds about its source. Its band helper is its legacy answer - read
-// where the source declares no output - and task submission filters exported styles against it; its presets are
-// what any consumer offers. The preset filter is given that band answer, as a consumer holding it would give it.
+// The presets Masking offers from the evidence it holds about its source, filtered against the bands its description
+// holds, as a consumer holding that description would filter them.
 //
 // `recipeVisualizations` reaches the presets through the registry, which only the running application populates.
 // It is mocked to Masking's own entry, so the filter's view is exercised without mounting the app.
@@ -12,11 +11,12 @@ vi.mock('../../recipeTypeRegistry', async () => {
     return {getRecipeType: () => ({getPreSetVisualizations})}
 })
 
-const {getAvailableBands} = await import('./bands')
 const {getPreSetVisualizations} = await import('./visualizations')
 const {recipeVisualizations} = await import('../visualizations')
 
-const offered = recipe => recipeVisualizations(recipe, getAvailableBands(recipe))
+// What a consumer offers, given the bands Masking's description holds.
+const offered = (recipe, bands) =>
+    recipeVisualizations(recipe, Object.fromEntries(bands.map(({name, dataType}) => [name, {dataType}])))
 
 const NDVI = {id: 'v-ndvi', bands: ['ndvi'], type: 'continuous'}
 const RED = {id: 'v-red', bands: ['red'], type: 'continuous'}
@@ -50,27 +50,16 @@ const observed = ({bands, visualizations}) => ({
 const dropped = observed({bands: scalar(['red', 'nir']), visualizations: [RED]})
 
 describe('a source that has dropped a band since the recipe was saved', () => {
-    const recipe = maskingRecipe({sourceEvidence: dropped})
-
-    it('no longer offers the removed band', () => {
-        expect(Object.keys(getAvailableBands(recipe))).toEqual(['red', 'nir'])
-    })
-
     it('no longer offers the preset that named it', () => {
-        expect(getPreSetVisualizations(recipe)).toEqual([RED])
+        expect(getPreSetVisualizations(maskingRecipe({sourceEvidence: dropped}))).toEqual([RED])
     })
 
-    it('keeps offering the removed band while nothing has been observed', () => {
-        expect(Object.keys(getAvailableBands(maskingRecipe()))).toEqual(['red', 'nir', 'ndvi'])
-    })
-
-    it('answers nothing - never an empty answer - once the source is known to be unavailable', () => {
+    it('offers no preset once the source is known to be unavailable', () => {
         const unavailable = maskingRecipe({
             sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'UNAVAILABLE', bands: [], visualizations: []}
         })
 
-        expect(getAvailableBands(unavailable)).toBeNull()
-        expect(offered(unavailable)).toEqual([])
+        expect(getPreSetVisualizations(unavailable)).toEqual([])
     })
 })
 
@@ -80,7 +69,7 @@ describe('a local style naming a band the source has dropped', () => {
     const recipe = maskingRecipe({sourceEvidence: dropped, userDefined: [LOCAL_NDVI]})
 
     it('is not offered as a candidate', () => {
-        expect(offered(recipe).map(({id}) => id)).toEqual(['v-red'])
+        expect(offered(recipe, dropped.bands).map(({id}) => id)).toEqual(['v-red'])
     })
 
     it('is still saved on the recipe, unchanged', () => {
@@ -88,12 +77,13 @@ describe('a local style naming a band the source has dropped', () => {
     })
 
     it('becomes a candidate again when the source has the band again', () => {
+        const bands = scalar(['red', 'nir', 'ndvi'])
         const restored = maskingRecipe({
-            sourceEvidence: observed({bands: scalar(['red', 'nir', 'ndvi']), visualizations: [NDVI, RED]}),
+            sourceEvidence: observed({bands, visualizations: [NDVI, RED]}),
             userDefined: [LOCAL_NDVI]
         })
 
-        expect(offered(restored).map(({id}) => id)).toEqual(['local-1', 'v-ndvi', 'v-red'])
+        expect(offered(restored, bands).map(({id}) => id)).toEqual(['local-1', 'v-ndvi', 'v-red'])
     })
 })
 
@@ -131,11 +121,11 @@ describe('a masked CCDC Segments asset', () => {
     const asArrays = SEGMENT_BANDS.map(name => ({name, dataType: {arrayDimensions: 1}}))
 
     it('offers no direct visualization, because every band is an array', () => {
-        expect(offered(maskedSegments(asArrays))).toEqual([])
+        expect(offered(maskedSegments(asArrays), asArrays)).toEqual([])
     })
 
     it('does not offer the residual band merely because its name is present', () => {
-        expect(offered(maskedSegments(asArrays)).map(({id}) => id)).not.toContain('v-rmse')
+        expect(offered(maskedSegments(asArrays), asArrays).map(({id}) => id)).not.toContain('v-rmse')
     })
 
     it('still reports both templates as the source\u2019s presets, which is what they are', () => {
@@ -154,23 +144,17 @@ describe('a masked CCDC Segments asset', () => {
         const local = {id: 'local-rmse', bands: ['ndvi_rmse'], type: 'continuous'}
         recipe.layers.userDefinedVisualizations = {'this-recipe': [local]}
 
-        expect(offered(recipe)).toEqual([])
+        expect(offered(recipe, asArrays)).toEqual([])
         expect(recipe.layers.userDefinedVisualizations['this-recipe']).toEqual([local])
     })
 
     it('offers a local style over a scalar band', () => {
-        const recipe = maskedSegments([
-            ...asArrays,
-            {name: 'changeProb', dataType: {arrayDimensions: 0}}
-        ])
+        const bands = [...asArrays, {name: 'changeProb', dataType: {arrayDimensions: 0}}]
+        const recipe = maskedSegments(bands)
         recipe.layers.userDefinedVisualizations = {
             'this-recipe': [{id: 'local-change', bands: ['changeProb'], type: 'continuous'}]
         }
 
-        expect(offered(recipe).map(({id}) => id)).toEqual(['local-change'])
-    })
-
-    it('keeps the array bands exportable', () => {
-        expect(Object.keys(getAvailableBands(maskedSegments(asArrays)))).toEqual(SEGMENT_BANDS)
+        expect(offered(recipe, bands).map(({id}) => id)).toEqual(['local-change'])
     })
 })

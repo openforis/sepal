@@ -15,7 +15,6 @@ import {getLogger} from '~/log'
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
 import {createLoadRecipesById$} from '../sourceRuntime/recipeClosureLoader'
-import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {declaredSelections, OBSERVED, sourceKeyOf, UNAVAILABLE} from './sourceEvidence'
 import {assetVersion, earthEngineGeneration, evidenceSession, outdatedBasis, publishedRevision} from './sourceEvidenceBasis'
 
@@ -43,9 +42,8 @@ let observations = 0
 // those records is what would make it answerable again.
 //
 // The same basis decides both questions: whether to look again, and whether an answer may still be
-// published. A source the answer was read from that has since become something else fails both. The basis of what
-// it publishes is retained with its source runtime before the evidence is dispatched, so a consumer can ask the same
-// question of the session as it stands (sourceEvidenceBasis.js).
+// published. A source the answer was read from that has since become something else fails both
+// (sourceEvidenceBasis.js).
 
 const mapStateToProps = state => {
     const {catalogue, openRecipeIds, assetVersions} = evidenceSession(state)
@@ -72,7 +70,6 @@ class _SourceEvidenceSync extends React.Component {
 
     componentWillUnmount() {
         this.cancel$.next()
-        this.props.sourceRuntime.publishedEvidence.release(this)
     }
 
     update() {
@@ -256,7 +253,7 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     publish(evidence, error) {
-        const {recipe, recipeActionBuilder, sourceRuntime} = this.props
+        const {recipe, recipeActionBuilder} = this.props
         const basis = this.basis
         if (!basis || this.outdated(basis)) {
             return
@@ -267,7 +264,6 @@ class _SourceEvidenceSync extends React.Component {
             ...evidence,
             ...retainedObservation(recipe, evidence)
         }
-        sourceRuntime.publishedEvidence.retain(this, published.observation, basis)
         this.applied(
             recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
                 .set('ui.sourceEvidence', published),
@@ -347,8 +343,7 @@ export const SourceEvidenceSync = compose(
     _SourceEvidenceSync,
     withRecipe(mapRecipeToProps),
     connect(mapStateToProps),
-    recipeAccess(),
-    withSourceRuntime()
+    recipeAccess()
 )
 
 SourceEvidenceSync.propTypes = {

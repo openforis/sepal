@@ -6,24 +6,15 @@ import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {DESCRIBED, IMAGE_OUTPUT, INVALID, LEGACY, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
+import {IMAGE_OUTPUT, INVALID, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
-import {OBSERVED, UNAVAILABLE as SOURCE_UNAVAILABLE, UNOBSERVED} from './sourceEvidence'
-import {currentSourceFacts} from './sourceEvidenceBasis'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
 //
 // The read is the common one (recipeOutput.js), over the records the session holds and what the panel's own
-// acquisition owner retains. Its authority decides where physical facts come from:
-//
-//   DESCRIBED  the description: choices, destinations, policies and names all from it
-//   LEGACY     a registered helper's names, which offer choices and nothing more: no policy is sent, so Earth
-//              Engine's own default applies, with no destination restriction and no physical claim. A declared
-//              wrapper over an undeclared source configures a fallback - migration configuration about someone
-//              else's bands - so it applies only to bands its evidence lifecycle vouches for as scalar, judged
-//              current against the same session as the read (currentSourceFacts), never to what the helper's
-//              answer says.
+// acquisition owner retains. Its description is the one authority: choices, destinations, policies and names all
+// come from it, and nothing else is retrieved.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -43,10 +34,9 @@ export const UNRECOGNIZED_SELECTION = 'UNRECOGNIZED_SELECTION'
 export const UNVERIFIED_SELECTION = 'UNVERIFIED_SELECTION'
 export const INCOMPATIBLE_DESTINATION = 'INCOMPATIBLE_DESTINATION'
 
-// The recipe, its output read, whether that read is still being acquired, and the physical facts its evidence
-// lifecycle vouches for, all from one state of the session. `pending` is an answer whose acquisition is not yet
-// retained - acquiring, or about to be.
-export const readRetrieveOutput = ({state, recipeId, heldFor, publishedEvidence}) => {
+// The recipe, its output read, and whether that read is still being acquired, from one state of the session.
+// `pending` is an answer whose acquisition is not yet retained - acquiring, or about to be.
+export const readRetrieveOutput = ({state, recipeId, heldFor}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
     if (!recipe) {
@@ -55,7 +45,7 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, publishedEvidence}
     const graph = buildMapDependencyGraph({recipe, loadedRecipes})
     const output = readRecipeOutput({recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor})
     const pending = Boolean(output.acquisition) && !heldFor(output.acquisition.key)
-    return {recipe, graph, output, pending, sourceFacts: currentSourceFacts(recipe, state, publishedEvidence)}
+    return {recipe, graph, output, pending}
 }
 
 // A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
@@ -80,31 +70,23 @@ export const inOrderOf = (offered, chosen) => {
     ]
 }
 
-export const retrieveDecision = ({output, pending, sourceFacts, names, unrecognized = [], destination, task = {}}) => {
+export const retrieveDecision = ({output, pending, names, unrecognized = [], destination, task = {}}) => {
     const unresolved = unresolvedOutput(output, pending)
     if (unresolved) {
         return unresolved
-    }
-    const facts = physicalFacts({output, sourceFacts, task})
-    if (facts.status !== OBSERVED) {
-        return facts.status === SOURCE_UNAVAILABLE
-            ? decision(BLOCKED, UNRESOLVED_OUTPUT)
-            : decision(RESOLVING)
     }
     if (unrecognized.length) {
         return decision(BLOCKED, UNRECOGNIZED_SELECTION, {missingBandNames: unrecognized})
     }
     if (!names.length) {
-        return decision(BLOCKED, NO_SELECTION, {destinations: facts.bands && emptySelectionDestinations(facts.bands)})
+        return decision(BLOCKED, NO_SELECTION, {destinations: emptySelectionDestinations(output.bands)})
     }
     const available = new Set(output.bands.map(({name}) => name))
     const missing = names.filter(name => !available.has(name))
     if (missing.length) {
         return decision(BLOCKED, MISSING_SELECTION, {missingBandNames: missing})
     }
-    const destinations = facts.bands
-        ? physicalDestinations(facts.bands, names, task.fallbackPyramidingPolicy)
-        : ALL_DESTINATIONS
+    const destinations = physicalDestinations(output.bands, names, task.fallbackPyramidingPolicy)
     if (!destinations) {
         return decision(BLOCKED, UNVERIFIED_SELECTION)
     }
@@ -134,10 +116,10 @@ export const reconciledChoices = ({decision, saved, offered}) => {
 // Decides from the read it is handed, which is the caller's to take at the moment of submission, and submits exactly
 // what it decided on. Nothing is published before the decision: a refused retrieval leaves no trace but its notice.
 // `submitTask` is the recipe's own task, where it has one; otherwise the generic image export.
-export const submitRetrieve = ({recipe, output, pending, sourceFacts, request, task = {}, submitTask}) => {
+export const submitRetrieve = ({recipe, output, pending, request, task = {}, submitTask}) => {
     const {names, unrecognized, retrieveOptions} = request
     const verdict = retrieveDecision({
-        output, pending, sourceFacts, names, unrecognized, destination: retrieveOptions.destination, task
+        output, pending, names, unrecognized, destination: retrieveOptions.destination, task
     })
     if (verdict.status !== RETRIEVABLE) {
         log.warn(`Retrieve refused for recipe ${recipe.id}:`, verdict)
@@ -149,7 +131,7 @@ export const submitRetrieve = ({recipe, output, pending, sourceFacts, request, t
             ? submitTask({recipe, retrieveOptions})
             : submitRetrieveRecipeTask(recipe, {
                 ...taskConfig(task),
-                ...exportAuthority({output, sourceFacts, task}),
+                ...exportAuthority({output, task}),
                 retrieveOptions,
                 visualizationBands: output.availableBands
             })
@@ -160,8 +142,6 @@ export const submitRetrieve = ({recipe, output, pending, sourceFacts, request, t
         return false
     }
 }
-
-const ALL_DESTINATIONS = {GEE: true, DRIVE: true, SEPAL: true}
 
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>
     ({status, reason, missingBandNames, destinations})
@@ -183,21 +163,6 @@ const unresolvedOutput = ({status, dependencyValidity}, pending) => {
         : decision(BLOCKED, status === READY ? UNSOUND_DEPENDENCIES : UNRESOLVED_OUTPUT)
 }
 
-// Where physical facts come from, and whether they can be had yet. `bands: null` is an answer that makes no physical
-// claim at all, which restricts nothing.
-const physicalFacts = ({output, sourceFacts = {status: UNOBSERVED}, task}) => {
-    if (output.authority === DESCRIBED) {
-        return {status: OBSERVED, bands: output.bands}
-    }
-    if (output.authority === LEGACY && isWrapperFallback(task)) {
-        return sourceFacts
-    }
-    return {status: OBSERVED, bands: null}
-}
-
-const isWrapperFallback = ({fallbackPyramidingPolicy}) =>
-    fallbackPyramidingPolicy !== undefined
-
 // The destinations these bands can be exported to, by the requirements submission itself validates; null when a
 // band's shape is unverified.
 const physicalDestinations = (physicalBands, names, fallbackPyramidingPolicy) =>
@@ -207,15 +172,8 @@ const physicalDestinations = (physicalBands, names, fallbackPyramidingPolicy) =>
 const emptySelectionDestinations = physicalBands =>
     physicalDestinationCompatibility({bands: physicalBands, selectedBandNames: [], useAllBands: false}).destinations
 
-const exportAuthority = ({output, sourceFacts, task: {fallbackPyramidingPolicy}}) => {
-    if (output.authority === DESCRIBED) {
-        return withFallback({imageOutputDescription: output.description}, fallbackPyramidingPolicy)
-    }
-    if (isWrapperFallback({fallbackPyramidingPolicy})) {
-        return withFallback({observedBands: sourceFacts.bands}, fallbackPyramidingPolicy)
-    }
-    return {}
-}
+const exportAuthority = ({output, task: {fallbackPyramidingPolicy}}) =>
+    withFallback({imageOutputDescription: output.description}, fallbackPyramidingPolicy)
 
 const withFallback = (authority, fallbackPyramidingPolicy) =>
     fallbackPyramidingPolicy === undefined ? authority : {...authority, fallbackPyramidingPolicy}

@@ -20,13 +20,12 @@ on that basis.
 Every recipe type with an image declares an `IMAGE_OUTPUT` provider: Asset, Band Math, BAYTS Alerts, BAYTS Historical,
 CCDC, CCDC Slice, Change Alerts, Class Change, Classification, Index Change, LandTrendr, Masking, Optical Mosaic,
 Phenology, Planet Mosaic, PyEO Alerts, Radar Mosaic, Regression, Remapping, Stack, Time Series and Unsupervised
-Classification. Sampling Design, which has no image, is the only type without one.
+Classification. Sampling Design, which has no image, declares `NO_IMAGE_OUTPUT`; registration refuses a type that
+states neither.
 
 - Map layers, their forms, the visualization selector and editor, and every Retrieve panel over an image output read
-  bands through the common read. A declared type is answered through its declaration there; any other is answered by
-  the legacy seam. Retrieve panels take only labels and groups from a type's `bands.js`.
-- Undeclared types keep independent GUI and Earth Engine band lists, which the
-  [execution comparison](output-products.md#early-execution-comparison-findings) has shown to drift.
+  bands through the common read, which answers every type through its declaration. Retrieve panels take only labels
+  and groups from a type's `bands.js`.
 
 `getAvailableBands()` answers several [different questions](output-products.md#problem). A migration splits them
 between their owners rather than wrapping the helper in a provider, which would carry its mixed meanings into the
@@ -69,11 +68,9 @@ where a family still needs observation.
    - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
      covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
      Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
-2. **One seam, then switch the consumers once.** Types without a provider are answered in one GUI module from their
-   registered helpers, as a distinct, unverified legacy answer — never as resolved evidence with physical facts or
-   export policy. Map layers, preset filtering and Retrieve read through the same boundary for every type and do
-   not branch on whether a type is declared. Retrieve's existing `UNDECLARED_OUTPUT` fallback is folded into that
-   seam. Map layers of mode-bearing types stay on the seam until their map products are declared.
+2. **One read, then switch the consumers once.** Map layers, preset filtering and Retrieve read through the same
+   boundary for every type and do not branch on how a type describes its output. Types without a provider were
+   answered there by an unverified legacy seam until every type declared its output (step 4), which removed it.
 3. **Migrate families.** Each removes its entry from the seam and nothing else is touched twice, so their order
    matters less than their independence:
    - model-derived outputs: Regression, Unsupervised Classification, Index Change, Class Change, Classification,
@@ -176,9 +173,8 @@ where a family still needs observation.
      current description rather than the snapshot copied at selection; a verified scalar its input states no policy
      for is averaged, while an array or a band of unknown dimensionality gets no policy it was not given. A mapping
      is checked before any input is read: an image without one, a blank name or a final name already taken is
-     refused, and a band the input does not hold is refused once it is read. Over an input that declares no output,
-     Stack is answered by its legacy entry, derived from the same mapping and sending no policy, until every type
-     declares one. Its Earth Engine catalogue answers the mapped names without building the image. New exports
+     refused, and a band the input does not hold is refused once it is read, as is an input with no image output.
+     Its Earth Engine catalogue answers the mapped names without building the image. New exports
      therefore sample arrays, take their sources' policies - `mode` for a classification - and record their
      encoding, and Masking over Stack exports those policies; capability preservation still waits for
      [capability projection](output-products.md#transformation-effects-and-capability-projection);
@@ -191,10 +187,11 @@ where a family still needs observation.
      to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
      Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
      took its mode.
-4. **Make the declaration mandatory.** `imageOutput` becomes required, as `directSources` is. A type without an image
-   product — Sampling Design — declares that explicitly. An undeclared type then fails at load rather than at
-   runtime. Delete the legacy adapter, `noImageOutput` and the registered band authorities; retain the common
-   consumer API. `noImageOutput` decides input eligibility today - it keeps CCDC, Time Series and Sampling Design
+4. **Make the declaration mandatory.** `imageOutput` is required, as `directSources` is. Sampling Design, which
+   produces no image, declares `imageOutput: NO_IMAGE_OUTPUT`; read as an image it is refused as `NON_IMAGE_OUTPUT`,
+   which is definitive, located at the design through any wrapper, and stops a generic image export. A type stating
+   neither fails at registration. The legacy adapter, Retrieve's legacy and evidence authorities, and the registered
+   band authorities are deleted; the common consumer API remains. `noImageOutput` decides input eligibility today - it keeps CCDC, Time Series and Sampling Design
    out of source pickers, CCDC apart from Masking's segments source, though CCDC and Time Series declare images - so
    its removal needs an explicit eligibility rule that keeps those choices. In this packet, also require established dimensionality for every band in a READY description:
    `dataType.arrayDimensions` is a nonnegative integer (0 for scalar, positive for array), supplied by declaration,
@@ -251,17 +248,13 @@ Deliver steps 1–2 as three separately reviewable packets:
    ([who acquires](gui-source-runtime.md#reading-a-recipes-own-output)). Their forms, the visualization selector and
    the visualization editor are given that read. The editor's requests carry the product the layer shows.
    Map preview requires `VALID` dependencies.
-   - Legacy answers stay unverified. Their display hints are presentation, as declared types' labels and cursor
-     precision are.
    - Input workflows and Sampling Design filter the presets they copy against the names they observed.
    - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
      [live source evidence](gui-source-runtime.md#live-source-evidence).
 3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
-   acquisition while open. Undeclared outputs, including declared wrappers over undeclared sources, are answered by
-   the legacy adapter; acquisition failures, broken dependencies and invalid descriptions never qualify. A legacy
-   answer supplies choices alone and never destination compatibility, export policy or encoding: an undeclared type's
-   export sends no policy, so Earth Engine's own default applies, and a declared wrapper's fallback reaches only bands
-   its evidence lifecycle currently vouches for as scalar. CCDC's measures and Slice's structured selection are translated into the names they export
+   acquisition while open. Its description is the one export authority: choices, destination compatibility and
+   policies come from it, and acquisition failures, broken dependencies, invalid descriptions and a recipe with no
+   image output block. CCDC's measures and Slice's structured selection are translated into the names they export
    and checked against the answer. Task keeps its independent, authorized resolution through shared contracts and
    runtime adapters; it neither imports the GUI API nor trusts a browser description
    ([Retrieve integration](gui-source-runtime.md#retrieve-integration)).
@@ -639,8 +632,7 @@ prerequisite only for the work that depends on it.
 The shared `IMAGE_OUTPUT` contract describes outer execution identity, ordered bands, per-band export requirements
 and evidence. The browser's one-shot runtime completes a bounded dependency closure, resolves providers and observes
 bands through existing execution APIs where a provider asks for them. Retrieve consumes that description for band
-choices, selection, destination compatibility and pyramiding policy, submitting the selected names; an unmigrated
-recipe is answered by the legacy adapter, which supplies choices alone.
+choices, selection, destination compatibility and pyramiding policy, submitting the selected names.
 
 Remaining work:
 
@@ -899,14 +891,13 @@ which keeps a value Earth Engine would reject from failing the whole write; a pr
 exceeds it is still dropped there.
 
 **Export authority.** The task resolves the output description itself, from the recipe it exports: it completes the
-recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and
-the exported image come from the same records. The export names its bands, the image returned has exactly those
-bands, and encoding is written for them; an export naming none builds the producer's default image, which the
-available bands do not describe, and records no encoding. Where the only thing resolution reports is an undeclared
-output — the exported recipe's own, or that of a recipe it depends on — the export proceeds as before with unknown
-encoding. A failed read, an incomplete closure or an invalid description fails the export rather than being
-recorded as unknown, and so does a closure whose dependencies are not structurally sound, even where the
-description reads none of the broken part.
+recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and the
+exported image come from the same records. The export names its bands, the image returned has exactly those bands, and
+encoding is written for them; an export naming none builds the producer's default image, which the available bands do
+not describe, and records no encoding. A recipe with no image output - the exported recipe, or one it reads as an
+image - fails the export before anything is built. So does a failed read, an incomplete closure or an invalid
+description, rather than being recorded as unknown, and a closure whose dependencies are not structurally sound, even
+where the description reads none of the broken part.
 
 An image collection keeps its existing tiles unless it is replaced, so its encoding must describe those too.
 Resuming compares the persisted and proposed encodings as facts:

@@ -75,7 +75,7 @@ describe('retrieving a Band Math recipe', () => {
 })
 
 describe('retrieving a Masking recipe over Band Math', () => {
-    // Band Math states its own policies, so the fallback Masking keeps for undeclared sources no longer reaches them.
+    // Band Math states its own policies, so Masking's fallback for scalars without one never reaches them.
     it('exports Band Math\'s policies, a scalar named change averaged like any other', () => {
         retrieve(MASKING, maskingTask, 'GEE')
 

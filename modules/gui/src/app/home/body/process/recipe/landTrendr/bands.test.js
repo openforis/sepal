@@ -33,11 +33,6 @@ it('presents the annual mosaic as an optical mosaic', () => {
     expect(bandPresentation(recipe, ANNUAL_MOSAIC)).toEqual(opticalBandPresentation())
 })
 
-// Both products are declared, so no band answer is left in the legacy entry.
-it('answers no bands itself', () => {
-    expect(mapProducts.bands).toBeUndefined()
-})
-
 it('offers only the change bands for retrieval', () => {
     const bands = groupedBandPresentation().flat().map(({value}) => value)
     expect(bands).toEqual(CHANGE_BANDS)

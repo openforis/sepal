@@ -1,6 +1,5 @@
-import {forkJoin, map, of, switchMap} from 'rxjs'
+import {forkJoin, map, of} from 'rxjs'
 
-import {isUndeclaredOutputOnly} from '#sepal/recipe/output/diagnostic'
 import {INHERITED, inheritedSchemaSource} from '#sepal/recipe/output/inheritedSchemaSource'
 import {READY} from '#sepal/recipe/output/observeImageOutput'
 import {ASSET} from '#sepal/recipe/source/reference'
@@ -37,20 +36,17 @@ export const maskingObservation = {
     }
 }
 
-const bands$ = ({kind, id, record}, graph) =>
+const bands$ = ({kind, id}, graph) =>
     kind === ASSET
         ? api.gee.bands$({asset: id, includeDataTypes: true}).pipe(map(observedBands))
-        : resolvedBands$(graph, record)
+        : resolvedBands$(graph)
 
-// Only a source whose type has not declared its output is still observed through its running image. A failed
-// acquisition or an invalid declaration is not a reason to describe the source some other way.
-const resolvedBands$ = (graph, record) => settledImageOutput$(graph).pipe(
-    switchMap(({status, description, diagnostics, error}) => {
+// A source that cannot be described is not described some other way: a failed acquisition, an invalid declaration
+// or a source with no image output fails the observation.
+const resolvedBands$ = graph => settledImageOutput$(graph).pipe(
+    map(({status, description, diagnostics, error}) => {
         if (status === READY) {
-            return of(description.output.bands)
-        }
-        if (isUndeclaredOutputOnly(diagnostics)) {
-            return api.gee.bands$({recipe: record, includeDataTypes: true}).pipe(map(observedBands))
+            return description.output.bands
         }
         throw error || new Error(`Source output not resolved: ${diagnostics.map(({code}) => code).join(', ')}`)
     })

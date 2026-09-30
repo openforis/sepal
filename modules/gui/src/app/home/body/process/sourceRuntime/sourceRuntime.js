@@ -8,7 +8,6 @@ import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
 import {createRecipeImageOutputObserver} from '../recipe/imageOutputObserver'
 import {recipeContent} from '../recipe/recipeContent'
-import {PublishedEvidenceBases} from '../recipe/sourceEvidenceBasis'
 import {createLoadRecipesById$} from './recipeClosureLoader'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
@@ -36,9 +35,6 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // `identity$` is for a caller whose answer outlives the operation that produced it: an opaque token on
 // subscription and a fresh one on each credential change, completing when the owning scope ends.
-//
-// `publishedEvidence` holds, for this scope, the basis of the source evidence each open recipe's evidence lifecycle
-// last published, so a consumer authorizing from that evidence can judge it against the session as it stands.
 
 const PENDING = 'PENDING'
 
@@ -190,8 +186,7 @@ export const createSourceRuntime = ({
         resolveImageOutput$: ({recipe}) => operation$({recipe, describes: true}),
         completeDependencies$: ({recipe}) => operation$({recipe, describes: false}),
         // Every environment emission after the first is a credential change; a catalogue change emits nothing.
-        identity$: () => environment$.pipe(map(() => ({}))),
-        publishedEvidence: new PublishedEvidenceBases()
+        identity$: () => environment$.pipe(map(() => ({})))
     }
 }
 

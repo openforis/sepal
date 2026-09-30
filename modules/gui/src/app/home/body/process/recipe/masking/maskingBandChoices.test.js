@@ -2,10 +2,10 @@ import _ from 'lodash'
 import {of, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// The bands Masking's evidence answers once the shared evidence lifecycle has acquired them: its legacy answer,
-// read where the source declares no output, and the answer task submission filters exported styles against.
-// Declarations, resolution, the output observer and the lifecycle are real; only the Earth Engine bands API and
-// the GUI recipe-type registry are substituted. Evidence that could not be had is no answer at all.
+// The bands the shared evidence lifecycle establishes about the source Masking preserves: the evidence its layer and
+// acquisitions are keyed by, so a source read again with other bands is a different source. Declarations,
+// resolution, the output observer and the lifecycle are real; only the Earth Engine bands API and the GUI recipe-type
+// registry are substituted. Evidence that could not be had is no answer at all.
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -25,14 +25,12 @@ vi.mock('../../recipeTypeRegistry', () => ({
 
 const {ccdcMeasures, ccdcOutputBands} = await import('#sepal/recipe/type/ccdc')
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
-const {PublishedEvidenceBases} = await import('../sourceEvidenceBasis')
 const {maskingObservation} = await import('./maskingSourceEvidence')
-const {getAvailableBands} = await import('./bands')
 
 const REFLECTANCE = {scale: 0.0001, offset: 0, unit: '1'}
 
 describe('Masking over an optical mosaic', () => {
-    it('offers a generated index alongside ordinary and tasseled-cap bands, without observing the mosaic', () => {
+    it('establishes a generated index alongside ordinary and tasseled-cap bands, without observing the mosaic', () => {
         const {component, current} = sync({recipe: masking('masked-1', 'mosaic-1'), records: [mosaic()]})
 
         component.componentDidMount()
@@ -46,10 +44,10 @@ describe('Masking over an optical mosaic', () => {
 
         component.componentDidMount()
 
-        expect(getAvailableBands(current()).nbr).toEqual({dataType: {arrayDimensions: 0}, encoding: REFLECTANCE})
+        expect(evidenceBands(current()).nbr).toEqual({dataType: {arrayDimensions: 0}, encoding: REFLECTANCE})
     })
 
-    it('offers the same choices and band facts through a nested Masking', () => {
+    it('establishes the same bands and facts through a nested Masking', () => {
         const direct = sync({recipe: masking('masked-1', 'mosaic-1'), records: [mosaic()]})
         const nested = sync({
             recipe: masking('masked-2', 'masked-1'),
@@ -59,11 +57,11 @@ describe('Masking over an optical mosaic', () => {
         direct.component.componentDidMount()
         nested.component.componentDidMount()
 
-        expect(getAvailableBands(nested.current())).toEqual(getAvailableBands(direct.current()))
+        expect(evidenceBands(nested.current())).toEqual(evidenceBands(direct.current()))
         expect(bandChoices(nested.current())).toContain('nbr')
     })
 
-    it('updates the choices when the mosaic\'s contributing data sets change', () => {
+    it('updates the bands when the mosaic\'s contributing data sets change', () => {
         const landsat = mosaic()
         const {component, rerender, current} = sync({recipe: masking('masked-1', 'mosaic-1'), records: [landsat]})
         component.componentDidMount()
@@ -79,7 +77,7 @@ describe('Masking over an optical mosaic', () => {
 })
 
 // A collection asset is read as its first image, while the Asset recipe over it filters before compositing. What
-// Masking offers is the recipe's own configured output, not what reading the asset shows.
+// Masking's source establishes is the recipe's own configured output, not what reading the asset shows.
 describe('Masking over an Asset recipe that filters its collection', () => {
     const assetRecipe = () => ({
         id: 'asset-1',
@@ -96,14 +94,14 @@ describe('Masking over an Asset recipe that filters its collection', () => {
         : [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}]
     ))
 
-    it('offers the band the filter leaves, which the asset\'s own reading omits', () => {
+    it('establishes the band the filter leaves, which the asset\'s own reading omits', () => {
         observing()
         const {component, current} = sync({recipe: masking('masked-1', 'asset-1'), records: [assetRecipe()]})
 
         component.componentDidMount()
 
         expect(bandChoices(current())).toEqual(['red', 'nir'])
-        expect(getAvailableBands(current())).toEqual({
+        expect(evidenceBands(current())).toEqual({
             red: {dataType: {arrayDimensions: 0}, encoding: REFLECTANCE},
             nir: {dataType: {arrayDimensions: 0}}
         })
@@ -119,7 +117,7 @@ describe('Masking over an Asset recipe that filters its collection', () => {
             .toEqual(['asset-1', 'users/x/collection'])
     })
 
-    it('offers nothing when the recipe\'s own image cannot be observed', () => {
+    it('establishes nothing when the recipe\'s own image cannot be observed', () => {
         bands$.mockImplementation(({asset}) => asset
             ? of([{name: 'red', arrayDimensions: 0, encoding: REFLECTANCE}])
             : throwError(() => new Error('Earth Engine unavailable')))
@@ -128,7 +126,7 @@ describe('Masking over an Asset recipe that filters its collection', () => {
         component.componentDidMount()
 
         expect(current().ui.sourceEvidence.status).toBe('UNAVAILABLE')
-        expect(getAvailableBands(current())).toBeNull()
+        expect(evidenceBands(current())).toBeNull()
     })
 })
 
@@ -145,7 +143,7 @@ describe('Masking over a directly selected asset', () => {
         component.componentDidMount()
 
         expect(bands$).toHaveBeenCalledWith({asset: 'users/x/image', includeDataTypes: true})
-        expect(getAvailableBands(current())).toEqual({
+        expect(evidenceBands(current())).toEqual({
             red: {dataType: {arrayDimensions: 0}, encoding: REFLECTANCE},
             qa: {dataType: {arrayDimensions: 0}}
         })
@@ -157,7 +155,7 @@ describe('a declared source that cannot be described', () => {
     it.each([
         ['its observation fails', () => throwError(() => new Error('Earth Engine unavailable'))],
         ['its declaration yields an invalid output', () => of(['red_coefs', 'red_coefs'])]
-    ])('offers nothing when %s, rather than observing it another way', (_case, observation) => {
+    ])('establishes nothing when %s, rather than observing it another way', (_case, observation) => {
         bands$.mockImplementation(observation)
         const {component, current} = sync({
             recipe: masking('masked-1', 'ccdc-1'),
@@ -168,7 +166,7 @@ describe('a declared source that cannot be described', () => {
 
         expect(bands$).toHaveBeenCalledTimes(1)
         expect(current().ui.sourceEvidence.status).toBe('UNAVAILABLE')
-        expect(getAvailableBands(current())).toBeNull()
+        expect(evidenceBands(current())).toBeNull()
     })
 })
 
@@ -184,11 +182,9 @@ describe('Masking over CCDC', () => {
                 .map(name => ({name, arrayDimensions: name.endsWith('_coefs') ? 2 : 1})))
             : of(ccdcOutputBands(ccdcMeasures({model: recipe.model, nativeBands}))))
 
-    it('offers a measure it can fit but does not break on, once evidence has replaced the saved list', () => {
+    it('establishes a measure it can fit but does not break on', () => {
         earthEngine()
         const {component, current} = sync({recipe: overCcdc(), records: [ccdc()]})
-
-        expect(bandChoices(current())).toContain('red_coefs')
 
         component.componentDidMount()
 
@@ -214,13 +210,13 @@ describe('Masking over CCDC', () => {
 
         component.componentDidMount()
 
-        expect(getAvailableBands(current()).red_coefs).toEqual({dataType: {arrayDimensions: 2}})
-        expect(getAvailableBands(current()).tStart).toEqual({dataType: {arrayDimensions: 1}})
+        expect(evidenceBands(current()).red_coefs).toEqual({dataType: {arrayDimensions: 2}})
+        expect(evidenceBands(current()).tStart).toEqual({dataType: {arrayDimensions: 1}})
     })
 
     // A breakpoint band the data sets no longer carry is saved intent, not availability: Sentinel-2 has no
     // thermal band, so segmentation has no input to fit and the measure cannot be offered.
-    it('offers no measure for a breakpoint band its data sets no longer carry', () => {
+    it('establishes no measure for a breakpoint band its data sets no longer carry', () => {
         earthEngine()
         const stale = _.set(_.cloneDeep(ccdc()), 'model.sources', {
             dataSets: {SENTINEL_2: ['SENTINEL_2']},
@@ -242,7 +238,7 @@ describe('Masking over CCDC', () => {
         breakpointBands: ['ndvi']
     })
 
-    it('offers the extra measures of eight-band Planet Daily imagery', () => {
+    it('establishes the extra measures of eight-band Planet Daily imagery', () => {
         earthEngine({nativeBands: ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']})
         const {component, current} = sync({recipe: overCcdc(), records: [dailyPlanet()]})
 
@@ -253,7 +249,7 @@ describe('Masking over CCDC', () => {
         ]))
     })
 
-    it('offers no eight-band measure for four-band Planet Daily imagery', () => {
+    it('establishes no eight-band measure for four-band Planet Daily imagery', () => {
         earthEngine({nativeBands: ['B1', 'B2', 'B3', 'B4']})
         const {component, current} = sync({recipe: overCcdc(), records: [dailyPlanet()]})
 
@@ -263,7 +259,7 @@ describe('Masking over CCDC', () => {
         expect(bandChoices(current())).not.toContain('redEdge_coefs')
     })
 
-    it('offers only the matched measures when Planet Daily imagery is histogram-matched', () => {
+    it('establishes only the matched measures when Planet Daily imagery is histogram-matched', () => {
         earthEngine({nativeBands: ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']})
         const matched = _.set(dailyPlanet(), 'model.options.histogramMatching', 'ENABLED')
         const {component, current} = sync({recipe: overCcdc(), records: [matched]})
@@ -274,7 +270,7 @@ describe('Masking over CCDC', () => {
         expect(bandChoices(current())).not.toContain('redEdge_coefs')
     })
 
-    it('refreshes the choices when the CCDC source configuration changes', () => {
+    it('refreshes the bands when the CCDC source configuration changes', () => {
         earthEngine()
         const landsat = ccdc()
         const {component, rerender, current} = sync({recipe: overCcdc(), records: [landsat]})
@@ -319,7 +315,18 @@ const mosaic = () => ({
     }
 })
 
-const bandChoices = recipe => Object.keys(getAvailableBands(recipe))
+// The bands the lifecycle published, by name, with the facts it established; null when the source could not be had.
+const evidenceBands = recipe => {
+    const evidence = recipe.ui?.sourceEvidence
+    return evidence?.status === 'UNAVAILABLE'
+        ? null
+        : Object.fromEntries((evidence?.bands || []).map(({name, dataType, encoding}) => [name, {
+            ...(dataType && {dataType}),
+            ...(encoding && {encoding})
+        }]))
+}
+
+const bandChoices = recipe => Object.keys(evidenceBands(recipe))
 
 // The lifecycle's dispatch applied to a recipe the test holds, so consumers read what was published.
 const sync = ({recipe, records}) => {
@@ -336,7 +343,6 @@ const sync = ({recipe, records}) => {
         }
     })
     const component = new SourceEvidenceSync({
-        sourceRuntime: {publishedEvidence: new PublishedEvidenceBases()},
         observation: maskingObservation,
         recipe,
         loadedRecipes: byId,

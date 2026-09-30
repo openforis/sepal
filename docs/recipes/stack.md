@@ -27,7 +27,7 @@ dimensionality gets no policy it was not given, and an encoding its input does n
 | --- | --- |
 | an image with no mapping, a blank name, or a final name already taken | refused before any input is read: `UNMAPPED_INPUT`, `INCOMPLETE_IMAGE_OUTPUT`, `DUPLICATE_BAND_NAME` |
 | an input not yet read | needs evidence |
-| an input whose type declares no output | the legacy entry's mapped names, exporting no policy |
+| an input with no image output, such as a Sampling Design | refused, `NON_IMAGE_OUTPUT`, located at that input |
 | a mapped band its input's description does not hold | refused, `MISSING_INPUT_BAND` |
 
 Each input is asked for its mapped bands as the physical bands it should return (`withOutputBands`), so an input
@@ -57,6 +57,6 @@ anything.
 - `modules/gee/test/jobs/ee/stack/stackBands.test.js` - the catalogue, whatever is selected.
 - `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/stack/stackOutput.test.js` - Retrieve's policies and destinations,
-  Masking over Stack, and a Stack over an input that declares no output.
-- `modules/task/src/tasks/imageAssetExport.test.js` - encoding recorded under renamed names, and exports over an
-  undeclared input.
+  Masking over Stack, and a Stack over an input with no image output.
+- `modules/task/src/tasks/imageAssetExport.test.js` - encoding recorded under renamed names, and the export refused
+  before an input with no image output is read.

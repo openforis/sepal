@@ -2,16 +2,13 @@ import _ from 'lodash'
 
 import {selectFrom} from '~/stateUtils'
 
-import {currentSourceEvidence, declaredSelections, inheritedSourceKey, OBSERVED, UNOBSERVED} from './sourceEvidence'
+import {declaredSelections} from './sourceEvidence'
 
 // When evidence about a source is still about the source as the session holds it now.
 //
 // Evidence is read from particular records, assets and credentials: its basis. The evidence lifecycle
-// (sourceEvidenceSync.jsx) records that basis, decides by this rule whether to read again and whether an answer may
-// still be published, and retains the basis of what it publishes with the source runtime it runs under
-// (PublishedEvidenceBases). A consumer that authorizes an export from evidence asks the same rule, of the session as
-// it stands at that moment - not of whether the lifecycle has yet reacted to a change, which happens only after the
-// change has been rendered.
+// (sourceEvidenceSync.jsx) records that basis, and decides by this rule whether to read again and whether an answer
+// may still be published.
 
 // The session a basis is judged against, read from the store the way the lifecycle reads it.
 export const evidenceSession = state => ({
@@ -44,52 +41,6 @@ export const outdatedBasis = (basis, {recipe, sourceKey, session}) =>
     || !sameSelections(declaredSelections(recipe), basis.selections)
     || basis.earthEngineGeneration !== session.earthEngineGeneration
     || basis.dependencies.some(dependency => dependencyChanged(dependency, session))
-
-// Physical facts about the inherited source that the evidence lifecycle vouches for right now: evidence it published
-// for the source this recipe names, read from what the session holds now. Anything else - a snapshot, evidence read
-// before the source or the credentials changed - is no observation, whatever the evidence says.
-//
-//   OBSERVED     `bands` as observed
-//   UNAVAILABLE  the current source could not be observed
-//   UNOBSERVED   nothing current yet
-export const currentSourceFacts = (recipe, state, publishedEvidence) => {
-    const evidence = currentSourceEvidence(recipe)
-    const basis = evidence && publishedEvidence.basisOf(evidence.observation)
-    const sourceKey = inheritedSourceKey(recipe)
-    if (!evidence || !basis || outdatedBasis(basis, {recipe, sourceKey, session: evidenceSession(state)})) {
-        return {status: UNOBSERVED, bands: []}
-    }
-    return evidence.status === OBSERVED
-        ? {status: OBSERVED, bands: evidence.bands || []}
-        : {status: evidence.status, bands: []}
-}
-
-// The bases of the evidence published under one source runtime, each retained by the lifecycle that published it and
-// found by the observation it published, which no other publication shares.
-//
-// Held here rather than in the store, which copies what it is given: the rule compares a selection by identity, so
-// that reapplying a source panel is a change, and a copy is never the selection it was read for. Each owner retains
-// one basis, the last it published, before that evidence is dispatched; stopping releases its own and nothing else.
-export class PublishedEvidenceBases {
-    #retained = new Map()
-
-    retain(owner, observation, basis) {
-        this.#retained.set(owner, {observation, basis})
-    }
-
-    release(owner) {
-        this.#retained.delete(owner)
-    }
-
-    basisOf(observation) {
-        for (const retained of this.#retained.values()) {
-            if (retained.observation === observation) {
-                return retained.basis
-            }
-        }
-        return null
-    }
-}
 
 export const assetVersion = ({assetVersions}, assetId) =>
     assetVersions.find(({id}) => id === assetId)?.updateTime

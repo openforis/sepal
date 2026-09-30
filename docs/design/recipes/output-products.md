@@ -12,8 +12,8 @@ would centralize several incompatible meanings without simplifying them.
 
 ## Problem
 
-Where a recipe type still registers a single `getAvailableBands()` beside its `getPreSetVisualizations()`, those
-names conceal several different questions:
+A single band helper registered beside `getPreSetVisualizations()`, as `getAvailableBands()` was, conceals several
+different questions:
 
 - which bands the recipe can export;
 - which bands one map-layer mode happens to display;
@@ -399,7 +399,7 @@ order, physical type or export policy.
 A Retrieve panel over its recipe's image output reads it through the common read, and that read is the only authority
 for what may be selected ([Retrieve integration](gui-source-runtime.md#retrieve-integration)). A described answer
 supplies the choices, the destination-compatibility check, the submitted band names and the policies, so those cannot
-describe different bands. A legacy answer supplies the choices alone. The band options a recipe type supplies are
+describe different bands. The band options a recipe type supplies are
 presentation - labels, tooltips and groups matched by name - and can neither add a choice nor withhold one; a choice
 they do not present is offered after the groups they do.
 

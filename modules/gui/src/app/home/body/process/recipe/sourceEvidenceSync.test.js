@@ -1,7 +1,6 @@
 import {of, Subject, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 // Observing the source a recipe inherits its schema from: what is asked, when it is asked again, and what
 // is done with the answer.
 //
@@ -18,12 +17,6 @@ vi.mock('~/compose', () => ({
 const bands$ = vi.fn()
 const assetMetadata$ = vi.fn()
 
-// A recipe type that declares no output, added to the real registry for these tests.
-vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
-    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
-    return withUndeclaredType(await importOriginal())
-})
-
 vi.mock('~/apiRegistry', () => ({
     default: {gee: {bands$: (...args) => bands$(...args), assetMetadata$: (...args) => assetMetadata$(...args)}}
 }))
@@ -35,7 +28,6 @@ vi.mock('../recipeTypeRegistry', () => ({
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
 const {SourceEvidenceSync} = await import('./sourceEvidenceSync')
-const {currentSourceFacts, earthEngineGeneration, PublishedEvidenceBases} = await import('./sourceEvidenceBasis')
 const {maskingObservation} = await import('./masking/maskingSourceEvidence')
 
 const CCDC_PRESETS = [{id: 'v-red', bands: ['red']}]
@@ -64,8 +56,7 @@ const sync = ({
     assetVersions = [],
     earthEngineGeneration = {},
     loadRecipe$ = id => of(ccdcRecipe(id)),
-    reloadRecipe$ = id => of(ccdcRecipe(id)),
-    publishedEvidence = new PublishedEvidenceBases()
+    reloadRecipe$ = id => of(ccdcRecipe(id))
 }) => {
     const dispatched = []
     const recipeActionBuilder = () => ({
@@ -79,7 +70,6 @@ const sync = ({
         }
     })
     const component = new SourceEvidenceSync({
-        sourceRuntime: {publishedEvidence},
         observation: maskingObservation,
         recipe,
         loadedRecipes,
@@ -227,10 +217,10 @@ describe('observing a wrapper around another wrapper', () => {
         expect(evidence()[0].bands).toEqual([{name: 'red', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}])
     })
 
-    it('still observes the immediate source\'s running image when what it wraps declares no output', () => {
-        bands$.mockReturnValue(of([{name: 'count', arrayDimensions: 0}]))
-        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('undeclared-1')}}
-        const records = {inner, 'undeclared-1': {id: 'undeclared-1', type: UNDECLARED_TYPE, model: {}}}
+    // What it wraps is not described some other way: a recipe with no image output leaves nothing to observe.
+    it('is recorded as unavailable when what the wrapper wraps produces no image, reading nothing', () => {
+        const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('design-1')}}
+        const records = {inner, 'design-1': {id: 'design-1', type: 'SAMPLING_DESIGN', model: {}}}
         const {component, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadRecipe$: id => of(records[id])
@@ -238,9 +228,8 @@ describe('observing a wrapper around another wrapper', () => {
 
         component.componentDidMount()
 
-        expect(bands$).toHaveBeenCalledTimes(1)
-        expect(bands$).toHaveBeenCalledWith({recipe: inner, includeDataTypes: true})
-        expect(evidence()[0].bands).toEqual([{name: 'count', dataType: {arrayDimensions: 0}}])
+        expect(bands$).not.toHaveBeenCalled()
+        expect(evidence()[0].status).toBe('UNAVAILABLE')
     })
 
     // The shared graph is the authority on cycles, and a graph that cannot run has no evidence to give.
@@ -506,66 +495,6 @@ describe('each answer published', () => {
         const [first, second] = evidence()
         expect(second.bands).toEqual(first.bands)
         expect(second).not.toEqual(first)
-    })
-})
-
-// What a consumer authorizes from is judged against the session by the basis the publishing lifecycle retained with its
-// runtime. Each lifecycle retains and releases its own: one stopping takes nothing from another publishing for the
-// same recipe, and a consumer reacting to a publication already finds its basis.
-describe('the basis of what a lifecycle publishes', () => {
-    const source = ccdcRecipe('source-1')
-    const recipe = maskingRecipe({primary: recipeSelection('source-1')})
-    const state = {user: {currentUser: {googleTokens: {}}}, process: {loadedRecipes: {'source-1': source}}}
-    const publishing = publishedEvidence => sync({
-        recipe,
-        loadedRecipes: state.process.loadedRecipes,
-        earthEngineGeneration: earthEngineGeneration(state),
-        publishedEvidence
-    })
-    const factsOf = (evidence, publishedEvidence) =>
-        currentSourceFacts({...recipe, ui: {sourceEvidence: evidence}}, state, publishedEvidence).status
-
-    it('is still the latest publisher\'s once another lifecycle of the recipe stops', () => {
-        bands$.mockReturnValue(of(['red']))
-        const publishedEvidence = new PublishedEvidenceBases()
-        const earlier = publishing(publishedEvidence)
-        const later = publishing(publishedEvidence)
-        earlier.component.componentDidMount()
-        later.component.componentDidMount()
-
-        earlier.component.componentWillUnmount()
-
-        expect(factsOf(later.evidence().at(-1), publishedEvidence)).toBe('OBSERVED')
-    })
-
-    it('is gone once the lifecycle that published it stops', () => {
-        bands$.mockReturnValue(of(['red']))
-        const publishedEvidence = new PublishedEvidenceBases()
-        const {component, evidence} = publishing(publishedEvidence)
-        component.componentDidMount()
-
-        component.componentWillUnmount()
-
-        expect(factsOf(evidence().at(-1), publishedEvidence)).toBe('UNOBSERVED')
-    })
-
-    it('is retained before the evidence it describes is published', () => {
-        bands$.mockReturnValue(of(['red']))
-        const publications = []
-        let evidenceOf = () => []
-        const publishedEvidence = new class extends PublishedEvidenceBases {
-            retain(...args) {
-                publications.push(evidenceOf().length)
-                super.retain(...args)
-            }
-        }()
-        const {component, evidence} = publishing(publishedEvidence)
-        evidenceOf = evidence
-
-        component.componentDidMount()
-
-        expect(publications).toEqual([0])
-        expect(evidence()).toHaveLength(1)
     })
 })
 

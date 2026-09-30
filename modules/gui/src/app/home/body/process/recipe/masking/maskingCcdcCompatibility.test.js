@@ -29,7 +29,6 @@ vi.mock('~/widget/form', () => {
 })
 
 const {modelToValues, valuesToModel} = await import('./panels/inputImage/inputImage')
-const {getAvailableBands} = await import('./bands')
 const {getPreSetVisualizations} = await import('./visualizations')
 
 // The real asset's physical bands, trimmed to two measures.
@@ -85,10 +84,6 @@ const maskingRecipe = (visualizations = [MEASURE_TEMPLATE, HARMONIC_TEMPLATE, RM
 })
 
 describe('what a CCDC asset leaves in the Masking model', () => {
-    it('stores the physical band names, not the logical CCDC ones', () => {
-        expect(Object.keys(getAvailableBands(maskingRecipe()))).toEqual(PHYSICAL_BANDS)
-    })
-
     it('stores every copied template whatever bands it names', () => {
         expect(getPreSetVisualizations(maskingRecipe()).map(({id}) => id))
             .toEqual(['v-measure', 'v-harmonic', 'v-rmse'])

@@ -4,27 +4,10 @@ import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 
-// The one module that answers from registered band helpers: what a recipe type without a declared output says it
-// provides, and what a map product not yet declared shows. Only the read (recipeOutput.js) consults it, so a type
-// that declares its output leaves this seam by removing its entry, and nothing that reads bands changes.
-//
-// A helper's answer passes through unchanged - band names and the display hints beside them - and is never
-// physical evidence. Its `dataType` is display precision, except where a helper answering from observed evidence
-// states dimensionality; which is which is the read's to separate.
+// Which product a map layer shows, named from its layer config in the vocabulary its type's map products register, and
+// the arguments every request about the layer's image carries to name it.
 
 export {IMAGE_OUTPUT}
-
-// A table of band name to helper entry; null when the evidence the helper answers from could not be had, which is
-// never an empty answer; undefined when the type has no such product.
-export const legacyBands = (recipe, product) => {
-    const {mapProducts, getAvailableBands} = getRecipeType(recipe.type) || {}
-    if (mapProducts) {
-        return mapProducts.bands?.(recipe, product)
-    }
-    return product.name === IMAGE_OUTPUT && getAvailableBands
-        ? getAvailableBands(recipe)
-        : undefined
-}
 
 // The layer config a layer's product is read from: its type's defaults beneath what the layer saved. The product
 // that is described, previewed and edited is decided from this one config, so it never depends on whether the

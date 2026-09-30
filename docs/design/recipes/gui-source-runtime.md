@@ -33,8 +33,8 @@ start operations. The service adapts the GUI environment to the shared resolver 
   completed closure and a private session-invalidation signal.
 - Recipe actions remain pure; consumers pass command inputs explicitly rather than reading back state they just
   wrote.
-- Each Retrieve export has at most one authority for its requirements: a resolved description, or the evidence a
-  declared wrapper's lifecycle currently vouches for. An undeclared type's export has none and sends no policy.
+- Each Retrieve export has one authority for its requirements: its resolved description. Nothing is exported
+  without one.
 - Browser descriptions are interactive evidence. They authorize task policy only for an explicitly reviewed
   declaration whose policy is stable across dependency-version drift.
 - Graph work and Earth Engine requests occur only for subscribed operations, never merely because Redux changed.
@@ -381,25 +381,18 @@ one rule (`retrieveOutput.js`) from one read:
 
 - A read still being acquired is pending. Choices are withheld, the destination selector is disabled as one control
   without changing its value, and Apply is disabled. The saved selection is untouched.
-- An answer that is not `READY`, or whose `dependencyValidity` is not `VALID`, blocks; a legacy answer is no
-  exception. Acquisition failures, invalid descriptions and broken dependencies never become a fallback.
+- An answer that is not `READY`, or whose `dependencyValidity` is not `VALID`, blocks. Acquisition failures, invalid
+  descriptions, a recipe with no image output and broken dependencies never become a fallback.
 - A selection is translated into the physical names it exports, its request, in the output's order. Once the answer
   is known, the form drops a saved choice it no longer offers (`reconciledChoices`), keeping the rest and choosing
   nothing in its place; a pending or failed read changes nothing. A requested name the answer still does not hold -
   one no saved choice accounts for - is named to the user and blocks. An option a structured selection cannot
   translate blocks as well, rather than being read as another.
-- Physical facts decide destinations and policies, by the one evaluation submission validates with
-  (`exportRequirements`):
+- The description's physical facts decide destinations and policies, by the one evaluation submission validates with
+  (`exportRequirements`): each band's declared Earth Engine policy, or the type's fallback for a verified scalar band
+  that declares none; Drive and SEPAL take verified scalars, and Earth Engine needs a policy for every band.
 
-| Answer | Physical facts | Earth Engine policy | Destinations |
-| --- | --- | --- | --- |
-| `DESCRIBED` | the description | per band as declared; the type's fallback for a verified scalar band that declares none | Drive and SEPAL take verified scalars; Earth Engine needs a policy for every band |
-| `LEGACY`, from a type answering for itself | none | none sent; Earth Engine's own default applies | not restricted |
-| `LEGACY`, from a declared wrapper over an undeclared source | what its evidence lifecycle currently vouches for | the wrapper's fallback, for verified scalars only | as for a description |
-
-A legacy answer gains no physical authority from its shape. The dimensionality a helper's answer carries serves
-rendering; a wrapper's facts are read from the evidence lifecycle itself (`currentSourceFacts`) and only while that
-evidence is current. Encoding is never sent: Task establishes it for declared roots and leaves it unknown otherwise.
+Encoding is never sent: Task establishes it from the description it resolves itself.
 
 **Requests.** A panel selecting physical names exports them; "all bands" names every band the answer holds.
 
@@ -439,17 +432,12 @@ scalars alone; it does not establish that averaging suits every scalar band. Mas
 `changeBased('change')`.
 
 **Evidence currency.** Evidence describes the source as it was read, from particular records, assets and credentials:
-its basis. `SourceEvidenceSync` decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis still
-holds - whether to read again, and whether an answer may still be published. Retrieve asks the same rule of the
-session as it stands when it decides, including at Apply, so a source edited or credentials replaced before the
-lifecycle has even reacted authorize nothing from evidence read before. The credential container is judged by an
-opaque generation numbered by its identity; nothing compares, retains or publishes what it contains.
-
-The basis of what a lifecycle publishes is retained with the source runtime it runs under
-(`sourceRuntime.publishedEvidence`), before the evidence is dispatched, and found by the observation it published.
-Each lifecycle retains and releases its own, so one stopping takes nothing from another publishing for the same
-recipe; the runtime's scope bounds them all. The basis stays out of the store, which copies what it is given: the rule
-compares a selection by identity, so that reapplying a source panel is a change.
+its basis. `SourceEvidenceSync` decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
+still holds - whether to read again, and whether an answer may still be published. The credential container is judged
+by an opaque generation numbered by its identity; nothing compares, retains or publishes what it contains. The rule
+compares a selection by identity, so that reapplying a source panel is a change. Retrieve reads no evidence: what it
+authorizes is the description its own acquisition retains, keyed by the records it read and renewed when credentials
+change, so a source edited under the same id, or credentials replaced, authorize nothing described before.
 
 A submission's freshness is the session's. Dependency records the runtime loaded without writing them to the
 session cannot be compared, and a persisted dependency changed after Apply is Task's to detect.
@@ -582,10 +570,8 @@ asset listing `updateTime` and Earth Engine identity. The basis covers every rec
 closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
 record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
 The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
-without observing. Over the source's closure that check is the conservative observation rule for Masking's
-undeclared-source fallback, which observes the source's running image. Removing it needs three things:
+without observing. Removing it needs two things:
 
-- that fallback applies the rule itself;
 - every execution consumer checks dependency validity, as map layers and Retrieve do;
 - a decision on whether Change Alerts and BAYTS may propose defaults from a source whose unread dependencies are
   broken. Their capability walkers already stop on a cycle or an unresolved record. Panel drafts and dirty state do not renew observations
@@ -614,12 +600,11 @@ imagery's closure, excluding the Classification's unrelated training-data edges,
 of optional defaults. The panel owns immediate legend/band presentation, staged options/dates, Apply and Cancel.
 An unavailable defaults capability does not mean the imagery cannot execute.
 
-Evidence stays in runtime state. It is Masking's legacy answer where its source declares no output, and while
-current the physical facts Masking's Retrieve fallback is authorized from; the presets and templates its consumers
-offer; and capability evidence;
-map layers read their bands through the common read instead ([reading a recipe's own output](#reading-a-recipes-own-output)).
-Open drafts are not overwritten by persisted dependency reloads. Failed observations offer no bands or
-visualizations, and are no answer rather than an empty one. Saved snapshots remain the fallback only where nothing has
+Evidence stays in runtime state. It is the presets and templates its consumers offer, capability evidence, and the
+identity of the source as it was read, which a consumer's acquisitions and layers are keyed by through its record;
+bands are read through the common read ([reading a recipe's own output](#reading-a-recipes-own-output)), never from
+evidence. Open drafts are not overwritten by persisted dependency reloads. Failed observations offer no
+visualizations, and are no answer rather than an empty one. Saved presets remain the fallback only where nothing has
 been observed. A shared live `watchSource$` would make this evidence available without an open consuming recipe and
 allow that fallback to retire.
 
@@ -719,19 +704,18 @@ cached by identity, and retained answers come from the layer's own acquisition o
 | Field | Meaning |
 |---|---|
 | `status` | `READY`, `NEEDS_EVIDENCE`, `UNAVAILABLE` or `INVALID` |
-| `authority` | `DESCRIBED` through the type's declaration, with physical band facts; `LEGACY` from a registered helper, band names only |
+| `authority` | `DESCRIBED` for a `READY` answer, resolved through the type's declaration with physical band facts; otherwise `null` |
 | `bands`, `presentation`, `availableBands` | physical bands; display decoration by band name; the two joined in the shape selectors and preset filters read |
 | `dependencyValidity` | the closure's structural soundness, or `null` while unknown |
 | `acquisition` | `{kind, key}` of the work that would settle the answer, or `null` |
 
 The session graph answers first. A record it lacks is ordinary lazy loading, never a deletion: a read that reaches
 one, or an observation nobody holds, is `NEEDS_EVIDENCE`. A definitive diagnosis on the read path is `INVALID`
-whatever else is missing, and an output nothing declares, with nothing else wrong, is answered by the legacy seam. A
-legitimately empty output is `READY` with no bands, distinct from pending and from failure. Validity is computed from
+whatever else is missing - a recipe with no image output (`NON_IMAGE_OUTPUT`) among them. A legitimately empty output
+is `READY` with no bands, distinct from pending, from failure and from having no image output. Validity is computed from
 the session graph when it holds every record its closure references, and is otherwise unknown. The classification is
 the shared `readImageOutput`, and the observer settles from its status too, so the two cannot drift. The observer adds
-only what its completed closure knows: a record still needed there is one that could not be had. An output nothing
-declares settles nothing while another read still waits on an observation, which is requested first.
+only what its completed closure knows: a record still needed there is one that could not be had.
 
 **Retained answers.** Where the session cannot settle an answer, the owner acquires one of two runtime operations. They
 share environment capture, closure completion, limits, failure handling and identity invalidation:
@@ -739,7 +723,7 @@ share environment capture, closure completion, limits, failure handling and iden
 - `resolveImageOutput$` describes the canonical output over a completed closure. It serves an `IMAGE_OUTPUT` answer
   that needs a record or an observation, or whose closure is incomplete.
 - `completeDependencies$` completes the closure and reports its validity, describing nothing. It serves a map product
-  or legacy answer whose bands are already known, which must not be failed by describing another product.
+  whose bands are already known, which must not be failed by describing another product.
 
 Every terminal carries `basis`, the content of each record its closure read. A retained terminal answers only while
 the records the session holds are the ones it read, compared by the content projection the preview uses
@@ -751,7 +735,7 @@ One snapshot answers:
 
 - A retained description answers description and validity together. Once it arrives it replaces the session's
   preliminary choices, and a failed closure withdraws them.
-- A dependencies-only terminal answers validity beside a legacy or map-product answer. Such an answer reads nothing
+- A dependencies-only terminal answers validity beside a map-product answer. Such an answer reads nothing
   but the root recipe and its runtime evidence, so the terminal's basis proves it read that same root.
 - An observation that failed over a sound closure leaves `dependencyValidity` `VALID` and the description
   `UNAVAILABLE`.
@@ -799,13 +783,13 @@ year agrees. The preview and the editor therefore concern the reconciled year, a
 one closes. A stored value that is not a year is left for the user to replace, and its product is `INVALID`. The
 product itself accepts any integer year; this is the layer's choice.
 
-A product its type declares (`mapProducts` in the shared type, [map-product identity](output-products.md#map-product-identity))
-is described through the shared read, from the root's configuration alone, and acquires only `DEPENDENCIES`. Its
-description carries `output.product` with the parameters it normalized, which the resolver attaches, and whatever it
-refuses - parameters it does not take or values it refuses, bands its declaration gets wrong, a provider failure - is
-`INVALID`, never a legacy answer. Only a product its type does not declare is answered by the legacy seam, from
-`mapProducts.bands`. The acquisition key does not name the product, so another year of LandTrendr's annual mosaic is
-described again from the recipe while the dependencies terminal already held still answers validity.
+A product its type declares (`mapProducts` in the shared type, [map-product
+identity](output-products.md#map-product-identity)) is described through the shared read, from the root's
+configuration alone, and acquires only `DEPENDENCIES`. Its description carries `output.product` with the parameters it
+normalized, which the resolver attaches, and whatever it refuses - parameters it does not take or values it refuses,
+bands its declaration gets wrong, a provider failure - is `INVALID`, as is a product its type does not declare
+(`UNDECLARED_PRODUCT`). The acquisition key does not name the product, so another year of LandTrendr's annual mosaic
+is described again from the recipe while the dependencies terminal already held still answers validity.
 
 On the wire, the preview, the band choices, the histogram and the distinct values all carry the same product
 arguments: the effective layer config without its visualization (`productArgs`). Every
@@ -821,8 +805,6 @@ precision and range, which the cursor rounds by.
   restored by the resolved bands that decide where it applies. CCDC's templates follow the measures CCDC fits, which
   its declaration derives from the same optical collection. Slice's templates are bound to what its operation
   produces - template binding over its segment evidence, by the derivation its declaration uses.
-- A legacy answer's helper table is its presentation, and its `dataType` is display precision there, except the
-  dimensionality an evidence-backed helper states.
 - Physical `dataType` in a description stays `{arrayDimensions}` alone.
 
 The visualization editor asks nothing about bands itself. Its selector opens it only once the layer's answer holds
@@ -839,7 +821,8 @@ is absent, not only the first the traversal reached; on the edge whose target cl
 whose own model produced it - while `graph.diagnostics` stays the complete, deduplicated account. Resolution
 surfaces a diagnosis when a provider reaches it: reading an edge to an absent recipe reports that edge, a role
 whose own field is malformed reports that field rather than a missing role, and a recipe whose own model cannot be
-read fails before its provider is consulted, so an unsupported type is never taken for an undeclared output.
+read fails before its provider is consulted. Every registered type states its output, so an unsupported type is the
+only one without a provider, and it is diagnosed as that.
 
 Cycles are detected on the path of provider reads. Which edge the graph marks as closing a cycle depends on the
 order it walked in, so a description whose reads form no cycle is never failed by that mark; a read of a recipe
@@ -859,9 +842,8 @@ when no provider reads it; whether its dependencies are sound is answered from t
 [legacy policy](source-resolution.md#legacy-policy). Three execution boundaries require `dependencyValidity` to be
 `VALID`:
 
-- Retrieve of a recipe's image output, whether its answer is described or legacy.
-- Task's asset export of a recipe whose type declares its output. Task resolves only for declared roots, so the export
-  of a type that declares no output is not checked.
+- Retrieve of a recipe's image output.
+- Task's asset export of a recipe. Task resolves every root, and refuses one with no image output before exporting.
 - Map preview. A layer draws only a `READY` answer with bands over dependencies known to be sound, and is withheld -
   pending, not failed - while they are unknown.
 
@@ -877,35 +859,20 @@ a period, and execution refuses it with its own error. A wrapper over it - Maski
 has none of those gates: it is offered the bands, a style a user defines over them can request a preview, and an
 export is accepted and fails in Earth Engine. That exposure is accepted until requirements are validated.
 
-**One legacy seam.** A type with no provider is answered in one GUI module (`recipe/legacyOutput.js`) from its
-registered helpers. The seam relocates that answer; it does not change it. What the helper returns passes through
-unchanged - band names and the `dataType` hints beside them - marked as a legacy answer. Those hints are
-load-bearing. The cursor rounds by their precision, and renderable-visualization filtering reads the dimensionality an
-evidence-backed helper states. Withholding them would change what every undeclared type shows for the whole migration
-window, and no later deletion recovers that.
-
-A legacy answer is never resolved evidence and never export authority. Retrieve keeps the two apart: a described
-answer supplies its choices, destination compatibility, band names and policies; a legacy answer supplies choices
-alone, and no policy ([Retrieve integration](#retrieve-integration)). A type earns the stricter
-treatment when it declares its output, not before.
-
-The seam answers whole closures, not root types: an answer is legacy when every diagnostic is an undeclared output
-anywhere in the closure, so a declared wrapper over an undeclared source - Masking over Classification - is
-answered by the wrapper's own helper. Consumers therefore never branch on whether a type is declared. Acquisition
-failures, broken dependencies and invalid descriptions never become legacy answers. Task continues to resolve shared declarations independently
-through its authorized runtime adapters; the common GUI read is not a backend dependency or execution authority.
-
-The seam is the only reader of registered band helpers for availability. Retrieve panels import a type's
-`bands.js` only for presentation - labels and groups - which decorates what the read answers. When the last type
-declares its output, delete the legacy adapter and retain the common consumer API; consumers must not need another
-migration.
+**Mandatory output contracts.** Every registered type states its output, as it states its sources: an image output
+provider, or `NO_IMAGE_OUTPUT` for a type whose recipes produce no image - Sampling Design, whose samples its own tasks
+export. Registration refuses a type that states neither, so no read, GUI or Task, meets an output nobody declared, and
+consumers never branch on whether a type is declared. A recipe with no image output read as an image is `INVALID`
+(`NON_IMAGE_OUTPUT`), located at that recipe, through any wrapper that reads it and whatever else the read is waiting
+for; it is not an image with no bands. Retrieve panels import a type's `bands.js` only for presentation - labels and
+groups - which decorates what the read answers. Task resolves shared declarations independently through its
+authorized runtime adapters; the common GUI read is not a backend dependency or execution authority.
 
 **One meaning per registration.** A recipe type registers, beside its declaration:
 
 ```js
-getAvailableBands(recipe)                    // legacy answer: an undeclared type, or a declared wrapper over one
-mapProducts: {defaults, productOf(layerConfig), bands(recipe, product)}  // bands: undeclared products only
-bandPresentation(recipe, product)            // display decoration of a declared type's bands
+mapProducts: {defaults, productOf(layerConfig)}   // which product a layer config names
+bandPresentation(recipe, product)                 // display decoration of the bands a product's description holds
 getPreSetVisualizations(recipe, evidence)
 ```
 
@@ -930,14 +897,10 @@ presentation concern.
   - over an asset, it needs evidence;
   - over a Regression or Unsupervised Classification the session holds, it is `READY` at once, with the policy each
     declares;
-  - over a type that declares no output, such as Remapping, it is answered by Masking's own legacy helper, and never
-    from evidence that failed.
-- **Classification** will resolve synchronously once it declares a provider: its training recipe is an edge the
-  description never reads.
-- **Regression** and **Unsupervised Classification** resolve synchronously from their declarations, reading none of
-  their sources; only whether those dependencies are sound still needs the closure completed.
-- **Remapping** has no provider and is answered by the seam, with the names and hints its helper returns today,
-  until it declares one.
+  - over a Sampling Design, it is `INVALID`: the design produces no image.
+- **Classification**, **Regression**, **Unsupervised Classification** and **Remapping** resolve synchronously from
+  their declarations, reading none of their sources; only whether those dependencies are sound still needs the
+  closure completed.
 
 ## Alternatives not selected
 
@@ -1041,8 +1004,8 @@ The read and its lifetime owner prove, over graphs the real builder produces and
 - a map product needs only its dependencies completed, keeps its bands when one cannot be read, and never has its
   canonical output described;
 - an unknown product is refused rather than answered as another;
-- evidence that could not be had is never a legacy answer, and an observation that failed over a sound closure keeps
-  that closure `VALID`;
+- a recipe with no image output is refused as one, directly and through a wrapper, beside a record still to be
+  loaded too; an observation that failed over a sound closure keeps that closure `VALID`;
 - restyling a layer rebuilds its preview and acquires nothing;
 - a retained terminal about records the session has since replaced is refused;
 - a credential change drops what is held and acquires exactly once, in either notification order and after
@@ -1057,11 +1020,13 @@ Retrieve tests own request translation, authority, failure handling and stale su
 registrations and the real read where a mock could hide wiring. They prove that:
 
 - a masked CCDC keeps `sample`, and a declared scalar with no policy takes the type's fallback only when verified;
-- an undeclared type exports the resolved names with no policy and no destination restriction, and "all bands"
-  names what the type supplies;
-- unknown, unsound or uncompleted dependencies block, whichever the answer's authority;
-- evidence whose basis the session has moved past - a source edit or a credential replacement - authorizes nothing,
-  including when Apply lands before the lifecycle has reacted, until it is published again;
+- a description exports the names selected with the policies it declares, "all bands" names every band it holds,
+  and a saved band it no longer holds exports nothing;
+- unknown, unsound or uncompleted dependencies block;
+- a description of a source that has since changed - edited under the same id, or read under credentials since
+  replaced - authorizes nothing, including when Apply lands before anything has reacted, until it is described again,
+  and an array it has become is refused by a destination that cannot hold one;
+- a recipe with no image output is neither previewed nor retrieved, alone or through a wrapper;
 - CCDC checks a choice by the bands its rule exports, breakpoint bands included, submits measures and attaches every
   template; Slice offers what its output holds, keeps every requested combination and refuses an unknown measure;
 - Apply decides from the session as it stands, not from the render it was clicked in.

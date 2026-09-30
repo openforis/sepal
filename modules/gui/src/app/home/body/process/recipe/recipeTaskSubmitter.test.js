@@ -59,12 +59,17 @@ const recipe = () => ({
     ui: {retrieveOptions: {destination: 'GEE', bands: ['band-1']}}
 })
 
+// Submitted with the description a Retrieve read would give of the recipe's one band.
 const submit = (recipeType, config) => {
     state.submitted = []
     state.events = []
     state.recipeType = recipeType
     const submitted = recipe()
-    submitRetrieveRecipeTask(submitted, {retrieveOptions: submitted.ui.retrieveOptions, ...config})
+    submitRetrieveRecipeTask(submitted, {
+        retrieveOptions: submitted.ui.retrieveOptions,
+        imageOutputDescription: resolved({id: submitted.id, bands: [band('band-1', 'mean')]}),
+        ...config
+    })
     return state.submitted
 }
 
@@ -289,16 +294,6 @@ describe('submitRetrieveRecipeTask with a resolved image output', () => {
         expect(() => submitRecipe(outerRecipe(['count']), {
             imageOutputDescription: {...count, output: {...count.output, product: {name: 'COUNT'}}}
         })).toThrow(/map product COUNT/)
-        expect(state.submitted).toHaveLength(0)
-    })
-
-    // Two authorities for one decision, so their coexistence is a configuration mistake rather than a precedence
-    // question to answer silently.
-    it('rejects a resolved description alongside observed source bands', () => {
-        expect(() => submitRecipe(outerRecipe(['class']), {
-            imageOutputDescription: resolved({bands: [band('class', 'mode')]}),
-            observedBands: [band('class')]
-        })).toThrow(/observed source bands/)
         expect(state.submitted).toHaveLength(0)
     })
 
@@ -541,25 +536,21 @@ describe('submitRetrieveRecipeTask with resolved output and a migration fallback
     })
 })
 
+// The description decides what an export requires, so nothing is submitted without one - with or without a fallback
+// policy to apply to it.
 describe('submitRetrieveRecipeTask without a resolved image output', () => {
-    it('rejects migration fallback authority without a resolved description', () => {
-        expect(() => submit({id: 'SYNTHETIC'}, {
-            fallbackPyramidingPolicy: {'.default': 'mean'}
-        })).toThrow(/fallback|policy|description/i)
+    it.each([
+        ['alone', {}],
+        ['beside a fallback policy', {fallbackPyramidingPolicy: {'.default': 'mean'}}]
+    ])('is refused, submitting nothing, %s', (_case, config) => {
+        expect(() => submit({id: 'SYNTHETIC'}, {imageOutputDescription: undefined, ...config})).toThrow(/image output description/)
         expect(state.submitted).toEqual([])
         expect(state.events).toEqual([])
     })
-
-    it('sends no policy, leaving Earth Engine\'s own default to apply', () => {
-        const submitted = submit({id: 'SYNTHETIC'})
-
-        expect(submitted).toHaveLength(1)
-        expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
-    })
 })
 
-// Explicit Retrieve options. The observed path submits the options a command was given rather than whatever the
-// recipe happens to hold, so one value must control every task field - a stale stored value must not leak into
+// Explicit Retrieve options. The submitter sends the options a command was given rather than whatever the recipe
+// happens to hold, so one value must control every task field - a stale stored value must not leak into
 // any of them.
 describe('submitRetrieveRecipeTask with explicit retrieveOptions', () => {
     const staleRecipe = () => ({
@@ -574,7 +565,11 @@ describe('submitRetrieveRecipeTask with explicit retrieveOptions', () => {
     const explicit = {destination: 'GEE', bands: ['a', 'b'], scale: 30, assetId: 'users/me/out'}
 
     const submitExplicit = (config = {}) =>
-        submitRecipe(staleRecipe(), {retrieveOptions: explicit, ...config})
+        submitRecipe(staleRecipe(), {
+            retrieveOptions: explicit,
+            imageOutputDescription: resolved({id: 'recipe-1', bands: [band('a', 'mean'), band('b', 'mean')]}),
+            ...config
+        })
 
     it('controls the destination and operation', () => {
         const [task] = submitExplicit()

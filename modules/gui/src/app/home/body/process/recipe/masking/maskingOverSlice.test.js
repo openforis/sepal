@@ -35,7 +35,6 @@ const registry = vi.hoisted(() => ({}))
 vi.mock('../../recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
 
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
-const {PublishedEvidenceBases} = await import('../sourceEvidenceBasis')
 const {maskingObservation} = await import('./maskingSourceEvidence')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {resolveEvidence$} = await import('../ccdcSlice/sliceObservation')
@@ -102,7 +101,6 @@ const sync = ({recipe, loadedRecipes}) => {
         }
     })
     const component = new SourceEvidenceSync({
-        sourceRuntime: {publishedEvidence: new PublishedEvidenceBases()},
         observation: maskingObservation,
         recipe,
         loadedRecipes,

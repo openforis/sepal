@@ -583,9 +583,9 @@ class _MosaicRetrievePanel extends React.Component {
         if (!read) {
             return
         }
-        const {recipe, output, pending, sourceFacts} = read
+        const {recipe, output, pending} = read
         const request = selection.request({recipe, output, retrieveOptions: this.withAllBands(values)})
-        if (submitRetrieve({recipe, output, pending, sourceFacts, request, task, submitTask})) {
+        if (submitRetrieve({recipe, output, pending, request, task, submitTask})) {
             this.rememberDestination(values)
         }
     }
@@ -624,9 +624,9 @@ class _MosaicRetrievePanel extends React.Component {
         if (requestOptions || !retrieveOutput) {
             return null
         }
-        const {output, pending, sourceFacts} = retrieveOutput
+        const {output, pending} = retrieveOutput
         const {names, retrieveOptions: {destination}} = this.request()
-        return retrieveDecision({output, pending, sourceFacts, names, destination, task})
+        return retrieveDecision({output, pending, names, destination, task})
     }
 
     request() {

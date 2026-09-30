@@ -5,7 +5,6 @@ import {legacy_createStore as createStore} from 'redux'
 import {isObservable, of, ReplaySubject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {UNDECLARED_TYPE} from '#sepal/testSupport/recipe/undeclaredRecipeType'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
@@ -75,19 +74,12 @@ vi.mock('~/widget/activation/activatable', () => ({
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
     )
 }))
-// A recipe type that declares no output, added to the real registry for these tests.
-vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
-    const {withUndeclaredType} = await import('#sepal/testSupport/recipe/undeclaredRecipeType')
-    return withUndeclaredType(await importOriginal())
-})
-
 // The registry as production wires Masking's own entry.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
-    const {getAvailableBands} = await import('../../bands')
     const {getPreSetVisualizations} = await import('../../visualizations')
     return {
         getRecipeType: type => type === 'MASKING'
-            ? {id: 'MASKING', getAvailableBands, getPreSetVisualizations}
+            ? {id: 'MASKING', getPreSetVisualizations}
             : {id: type, getDateRange: () => [], getPreSetVisualizations: () => []}
     }
 })
@@ -694,13 +686,15 @@ describe('retrieving from Masking over a Change Alerts recipe', () => {
     })
 })
 
-// A source that declares no output is described by what the evidence lifecycle observed of it. Masking has no policy
-// of its own, so its fallback reaches only the bands that evidence currently vouches for as scalar.
-describe('retrieving from Masking over a recipe that declares no output', () => {
-    it('offers what its source was observed to hold, and exports a scalar band under the fallback', async () => {
-        observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
+// An Asset recipe is described by observing its own image and its asset. Masking has no policy of its own, so its
+// fallback reaches the scalars the description states none for, while an array is sampled.
+describe('retrieving from Masking over a recipe described by observation', () => {
+    const OBSERVED = [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
 
-        await open({recipes: [MASKED_UNDECLARED, UNDECLARED], id: MASKED_UNDECLARED.id})
+    it('offers what its source is described to hold, and exports a scalar band under the fallback', async () => {
+        observed.answer = () => OBSERVED
+
+        await open({recipes: [MASKED_ASSET, ASSET_RECIPE], id: MASKED_ASSET.id})
         await click('class')
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -710,46 +704,49 @@ describe('retrieving from Masking over a recipe that declares no output', () => 
         expect(submitted[0].params.image.pyramidingPolicy).toEqual({class: 'mean'})
     })
 
-    it('exports no band observed as an array, for which it has no policy', async () => {
-        observed.answer = () => [{name: 'class', arrayDimensions: 0}, {name: 'probability', arrayDimensions: 1}]
+    it('exports an array band to Earth Engine alone, sampled', async () => {
+        observed.answer = () => OBSERVED
 
-        await open({recipes: [MASKED_UNDECLARED, UNDECLARED], id: MASKED_UNDECLARED.id})
+        await open({recipes: [MASKED_ASSET, ASSET_RECIPE], id: MASKED_ASSET.id})
         await click('probability')
+
+        expect(buttons().find(button => button.textContent === 'process.retrieve.form.destination.DRIVE').disabled).toBe(true)
+
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
 
-        expect(submitted).toEqual([])
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({probability: 'sample'})
     })
 
-    it('offers nothing until its source has been observed', async () => {
+    it('offers nothing until its source has been described', async () => {
         answering()
 
-        await open({recipes: [MASKED_UNDECLARED, UNDECLARED], id: MASKED_UNDECLARED.id})
+        await open({recipes: [MASKED_ASSET, ASSET_RECIPE], id: MASKED_ASSET.id})
 
         expect(offers('class')).toBe(false)
     })
 })
 
-// Evidence is about the source as it was read. Once the lifecycle reads the source again - it changed, or the
-// credentials it was read under were replaced - what it published before no longer describes the current source, and
-// pairing it with the session as it now stands must not authorize an export.
-describe('evidence observed of a source before it changed', () => {
+// A description is about the source as it was read. Once the source changes under the same id, or the credentials
+// it was read under are replaced, what was described before no longer describes the current source, and pairing it
+// with the session as it now stands must not authorize an export.
+describe('a description of a source before it changed', () => {
     const SCALAR = [{name: 'class', arrayDimensions: 0}]
-    const savedDrive = {...MASKED_UNDECLARED, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+    const savedDrive = {...MASKED_ASSET, ui: {retrieve: {destination: 'DRIVE', bands: ['class']}}}
+    const edited = {model: {...ASSET_RECIPE.model, dates: {type: 'DATE_RANGE', fromDate: '2021-06-01', toDate: '2022-01-01'}}}
 
-    const openObserved = async () => {
+    const openDescribed = async () => {
         observed.answer = () => SCALAR
-        await open({recipes: [savedDrive, UNDECLARED], id: savedDrive.id})
+        await open({recipes: [savedDrive, ASSET_RECIPE], id: savedDrive.id})
         expect(offers('class')).toBe(true)
     }
 
     it.each([
-        ['its source is edited, keeping its id', () => editRecipe(UNDECLARED.id, {
-            model: {...UNDECLARED.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}
-        })],
+        ['its source is edited, keeping its id', () => editRecipe(ASSET_RECIPE.id, edited)],
         ['the credentials it was read under are replaced', () => replaceCredentials()]
-    ])('authorizes nothing once %s, until the source is observed again', async (_case, change) => {
-        await openObserved()
+    ])('authorizes nothing once %s, until the source is described again', async (_case, change) => {
+        await openDescribed()
         const answer = answering()
 
         await change()
@@ -763,15 +760,13 @@ describe('evidence observed of a source before it changed', () => {
         expect(submitted).toHaveLength(1)
     })
 
-    // A click can land after the session changed and before the lifecycle has rendered that change, so whether the
-    // evidence is still current is decided when Apply is clicked, not when the lifecycle next reacts.
+    // A click can land after the session changed and before anything has rendered that change, so whether the
+    // description is still current is decided when Apply is clicked.
     it.each([
-        ['its source is edited, keeping its id', () => editAction(UNDECLARED.id, {
-            model: {...UNDECLARED.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}
-        })],
+        ['its source is edited, keeping its id', () => editAction(ASSET_RECIPE.id, edited)],
         ['the credentials it was read under are replaced', () => credentialsAction()]
-    ])('authorizes nothing when applied as %s, before the lifecycle has reacted', async (_case, change) => {
-        await openObserved()
+    ])('authorizes nothing when applied as %s, before anything has reacted', async (_case, change) => {
+        await openDescribed()
         answering()
         const apply = buttons().find(button => button.textContent === 'process.retrieve.apply')
 
@@ -783,11 +778,11 @@ describe('evidence observed of a source before it changed', () => {
         expect(submitted).toEqual([])
     })
 
-    it('exports nothing the source has since become that its policy cannot cover', async () => {
-        await openObserved()
+    it('exports nothing the source has since become that its destination cannot hold', async () => {
+        await openDescribed()
         const answer = answering()
 
-        await editRecipe(UNDECLARED.id, {model: {...UNDECLARED.model, dates: {startDate: '2020-06-01', endDate: '2021-01-01'}}})
+        await editRecipe(ASSET_RECIPE.id, edited)
         await answer.arrive([{name: 'class', arrayDimensions: 1}])
         await click('process.retrieve.apply')
 
@@ -854,24 +849,6 @@ const MASKED_ASSET = {
     model: {
         imageToMask: {type: 'RECIPE_REF', id: ASSET_RECIPE.id},
         imageMask: {type: 'RECIPE_REF', id: ASSET_RECIPE.id}
-    },
-    ui: {}
-}
-
-// A recipe type that declares no output, over nothing, and a Masking over it.
-const UNDECLARED = {
-    id: 'undeclared-1',
-    type: UNDECLARED_TYPE,
-    model: {dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}
-}
-
-const MASKED_UNDECLARED = {
-    id: 'masked-undeclared-1',
-    type: 'MASKING',
-    title: 'Masked observation counts',
-    model: {
-        imageToMask: {type: 'RECIPE_REF', id: UNDECLARED.id},
-        imageMask: {type: 'RECIPE_REF', id: UNDECLARED.id}
     },
     ui: {}
 }

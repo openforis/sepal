@@ -9,7 +9,6 @@ import {msg} from '~/translate'
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
 import {calculationCache} from './sampling/calculationCache'
 import {getDefaultModel} from './sampling/defaultModel'
@@ -82,6 +81,5 @@ export default () => ({
     },
     noImageOutput: true,
     getDateRange: () => undefined,
-    getAvailableBands,
     getPreSetVisualizations
 })

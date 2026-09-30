@@ -1,9 +1,8 @@
-import {catchError, defer, filter, map, of, switchMap, take, tap, throwError} from 'rxjs'
+import {catchError, defer, filter, map, switchMap, take, tap, throwError} from 'rxjs'
 
 import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {loadRecipe$} from '#sepal/ee/recipe'
-import {isUndeclaredOutputOnly} from '#sepal/recipe/output/diagnostic'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
@@ -15,24 +14,19 @@ import {dependencyValidity, INVALID as INVALID_DEPENDENCIES, VALID} from '#sepal
 import {createLoadRecipesById$} from '#sepal/recipe/source/recipeClosureLoader'
 import {ASSET} from '#sepal/recipe/source/reference'
 
-// Resolved from the recipe being exported, never accepted from the submitter. An undeclared output is unknown; a
-// failed read, an incomplete closure or a malformed declaration fails the export.
+// Resolved from the recipe being exported, never accepted from the submitter. A failed read, an incomplete closure, a
+// malformed declaration or a recipe producing no image fails the export.
 //
 // The description reads only the dependencies its providers need, so it cannot stand for whether the recipe may
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
 // whether or not the description would have read the broken part.
 
 export const resolveImageOutput$ = recipe =>
-    recipeType(recipe.type)?.imageOutput
-        ? describe$(recipe)
-        : of(null)
+    describe$(recipe)
 
 // Only the bands the export names. An export naming none builds whatever its producer builds by default, which the
 // available bands do not describe.
 export const selectedBandEncoding = (description, selectedBandNames) => {
-    if (!description) {
-        return []
-    }
     const byName = new Map(description.output.bands.map(band => [band.name, band]))
     return (selectedBandNames || []).map(name => byName.get(name)).filter(band => band)
 }
@@ -47,9 +41,6 @@ const describe$ = recipe => closure$(recipe).pipe(
     map(({status, description, diagnostics, error}) => {
         if (status === READY) {
             return description
-        }
-        if (isUndeclaredOutputOnly(diagnostics)) {
-            return null
         }
         throw outputError(recipe, {status, diagnostics, error})
     })

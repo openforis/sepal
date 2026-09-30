@@ -606,9 +606,9 @@ class _Retrieve extends React.Component {
         if (!read) {
             return
         }
-        const {recipe, output, pending, sourceFacts} = read
+        const {recipe, output, pending} = read
         const request = sliceRequest({output, retrieveOptions: values})
-        if (submitRetrieve({recipe, output, pending, sourceFacts, request, task: retrieveTask})) {
+        if (submitRetrieve({recipe, output, pending, request, task: retrieveTask})) {
             const {assetId, workspacePath} = values
             const project = this.findProject()
             if (project) {
@@ -622,14 +622,14 @@ class _Retrieve extends React.Component {
     }
 
     decision() {
-        const {retrieveOutput: {output, pending, sourceFacts}, inputs} = this.props
+        const {retrieveOutput: {output, pending}, inputs} = this.props
         const {names, unrecognized} = sliceRequest({output, retrieveOptions: {
             baseBands: inputs.baseBands.value || [],
             bandTypes: inputs.bandTypes.value || [],
             segmentBands: inputs.segmentBands.value || []
         }})
         return retrieveDecision({
-            output, pending, sourceFacts, names, unrecognized, destination: inputs.destination.value, task: retrieveTask
+            output, pending, names, unrecognized, destination: inputs.destination.value, task: retrieveTask
         })
     }
 
