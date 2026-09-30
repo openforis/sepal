@@ -114,6 +114,17 @@ describe('a request built for the REST API is the one the client library sends',
         expect(sent(requests.moveAsset(ee, IMAGE_ASSET, destination))).toEqual(library)
     })
 
+    test('creating a folder', async () => {
+        const parent = `projects/${TEST_PROJECT}/assets`
+
+        const library = await libraryCall(
+            {url: `${API}/v1/${parent}?assetId=new-folder`, answer: {name: `${parent}/new-folder`, type: 'FOLDER'}},
+            callback => ee.data.createFolder(`${parent}/new-folder`, false, callback)
+        )
+
+        expect(sent(requests.createFolder(parent, 'new-folder'))).toEqual(library)
+    })
+
     test('listing operations', async () => {
         const library = await libraryCall(
             {url: `${API}/v1/projects/${TEST_PROJECT}/operations?pageSize=500`, answer: {operations: []}},
