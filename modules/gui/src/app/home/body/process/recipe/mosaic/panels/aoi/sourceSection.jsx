@@ -5,6 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -53,7 +54,7 @@ class _SourceSection extends React.Component {
                 label={msg('process.mosaic.panel.areaOfInterest.form.source.label')}
                 placeholder={msg('process.mosaic.panel.areaOfInterest.form.recipe.recipe.placeholder')}
                 input={recipeId}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 labelButtons={[this.renderSourceType()]}
                 autoFocus
             />

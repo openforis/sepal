@@ -90,6 +90,7 @@ export default () => ({
     components: {
         recipe: Classification
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },

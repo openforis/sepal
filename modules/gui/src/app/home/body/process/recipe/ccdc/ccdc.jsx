@@ -86,7 +86,7 @@ export default () => ({
     components: {
         recipe: CCDC
     },
-    noImageOutput: true,
+    imageSource: false,
     describeSegments$,
     getDateRange: recipe => dateRange(recipe.model.dates),
     mapProducts,

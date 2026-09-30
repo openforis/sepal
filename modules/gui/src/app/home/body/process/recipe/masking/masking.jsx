@@ -54,5 +54,6 @@ export default () => ({
     components: {
         recipe: Masking
     },
+    imageSource: true,
     getPreSetVisualizations
 })

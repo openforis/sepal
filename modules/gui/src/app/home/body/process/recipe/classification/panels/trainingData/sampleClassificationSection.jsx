@@ -4,6 +4,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -136,7 +137,7 @@ class _SampleClassificationSection extends React.Component {
             <RecipeInput
                 label={msg('process.classification.panel.trainingData.form.sampleClassification.recipeToSample.label')}
                 input={recipeIdToSample}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 // Sampling reads the selected recipe once and persists the points in the data set; only a
                 // RECIPE data set is a source execution resolves. Sampling this recipe's own current output
                 // is therefore a snapshot with a base case, not a cycle - see its recipe definition's

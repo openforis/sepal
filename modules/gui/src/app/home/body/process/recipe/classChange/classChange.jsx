@@ -61,6 +61,7 @@ export default () => ({
     components: {
         recipe: ClassChange
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

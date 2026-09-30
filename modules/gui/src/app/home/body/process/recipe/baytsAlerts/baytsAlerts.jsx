@@ -57,6 +57,7 @@ export default () => ({
     components: {
         recipe: BaytsAlerts
     },
+    imageSource: true,
     getDateRange(recipe) {
         const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
         const monitoringStart = moment(monitoringEnd)

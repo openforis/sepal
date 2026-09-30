@@ -55,6 +55,7 @@ export default () => ({
     components: {
         recipe: BandMath
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },

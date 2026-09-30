@@ -37,10 +37,10 @@ afterEach(() => vi.restoreAllMocks())
 
 // The providers each type registers in the GUI. Registering them here rather than importing the recipe
 // components keeps this about the capability, not about React.
-addRecipeType({id: 'CCDC', describeSegments$})
-addRecipeType({id: 'ASSET_MOSAIC', describeSegments$: ({recipe}) => describeSegmentsAsset$(recipe.model.assetDetails.assetId)})
-addRecipeType({id: 'MASKING'})
-addRecipeType({id: 'MOSAIC'})
+addRecipeType({id: 'CCDC', imageSource: false, describeSegments$})
+addRecipeType({id: 'ASSET_MOSAIC', imageSource: true, describeSegments$: ({recipe}) => describeSegmentsAsset$(recipe.model.assetDetails.assetId)})
+addRecipeType({id: 'MASKING', imageSource: true})
+addRecipeType({id: 'MOSAIC', imageSource: true})
 
 describe('describing the segments a source stands for', () => {
     it('asks the producer when it was selected directly', async () => {

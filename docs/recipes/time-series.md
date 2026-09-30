@@ -29,8 +29,8 @@ The collection's measures - what the chart plots and Retrieve downloads - are no
 reads its description: the chart asks for the observations of a collection band at a pixel, and Retrieve submits
 `timeseries.download`, exporting one indicator of the collection to SEPAL.
 
-The GUI registration's `noImageOutput` flag keeps a time series out of other recipes' source pickers, despite what
-its name suggests; declaring the image does not make it an input. Reached through the API or a saved model anyway,
+The GUI registration states a time series is no image source (`imageSource: false`), which keeps it out of other
+recipes' source pickers; declaring the image does not make it an input. Reached through the API or a saved model anyway,
 the count is exported with `mean`, directly and through Masking or Stack, and an image export checks the recipe's
 dependencies. That check validates no configuration: a model stating no AOI, sources or dates is not refused before
 Earth Engine is asked.

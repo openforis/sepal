@@ -63,6 +63,7 @@ export default () => ({
     components: {
         recipe: Asset
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations,

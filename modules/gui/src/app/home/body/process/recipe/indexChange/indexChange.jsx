@@ -61,6 +61,7 @@ export default () => ({
     components: {
         recipe: IndexChange
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

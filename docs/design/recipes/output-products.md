@@ -1061,10 +1061,9 @@ temporal-composer contract is declared:
   members.
 - Optical common-band order follows the first selected data set and collection merge order follows input order.
   Neither order may be canonicalized away until execution consequences are understood.
-- CCDC proves that GUI `noImageOutput` and GUI `getAvailableBands()` are not output contracts: the former only
-  removes CCDC from recipe-selection lists offering a generic image input, and the latter describes scalar `count`,
-  while the custom CCDC task exports the array-valued Segments product. `noImageOutput` controls no export path;
-  its name asserts an output fact it does not own.
+- CCDC shows that input eligibility is not an output contract: its GUI registration states it is no image source,
+  which only removes it from recipe-selection lists offering a generic image input, while it declares the
+  array-valued Segments product its custom task exports. Eligibility controls no export path.
 
 Do not encode these defects as compatibility profiles, legacy measurement contracts or accepted composer behavior. For
 each defect, reproduce the failure, define the intended behavior in a red regression test, fix it on the integration

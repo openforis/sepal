@@ -63,6 +63,7 @@ export default () => ({
     components: {
         recipe: CcdcSlice
     },
+    imageSource: true,
     getDateRange(recipe) {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]

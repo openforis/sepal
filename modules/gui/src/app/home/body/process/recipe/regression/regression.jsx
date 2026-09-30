@@ -57,6 +57,7 @@ export default () => ({
     components: {
         recipe: Regression
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },

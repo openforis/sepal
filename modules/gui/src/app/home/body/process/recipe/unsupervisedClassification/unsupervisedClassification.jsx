@@ -57,6 +57,7 @@ export default () => ({
     components: {
         recipe: UnsupervisedClassification
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },

@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
@@ -236,7 +237,7 @@ const RecipeSource = ({recipeId, typeButtons, onImageChanged, onImageLoading, on
     <RecipeInput
         label={msg('process.samplingDesign.panel.proportions.form.image.label')}
         input={recipeId}
-        filter={type => !type.noImageOutput}
+        filter={isImageSource}
         labelButtons={[typeButtons]}
         autoFocus
         onChange={onImageChanged}

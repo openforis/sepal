@@ -60,6 +60,7 @@ export default () => ({
     components: {
         recipe: PlanetMosaic
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

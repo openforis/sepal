@@ -56,6 +56,7 @@ export default () => ({
     components: {
         recipe: Stack
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },

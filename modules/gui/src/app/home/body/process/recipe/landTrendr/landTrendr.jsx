@@ -58,6 +58,7 @@ export default () => ({
     components: {
         recipe: LandTrendr
     },
+    imageSource: true,
     getDateRange,
     mapProducts,
     bandPresentation,

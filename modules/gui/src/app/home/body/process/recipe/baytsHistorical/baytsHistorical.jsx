@@ -58,6 +58,7 @@ export default () => ({
     components: {
         recipe: BaytsHistorical
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations,

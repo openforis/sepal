@@ -31,7 +31,7 @@ const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = 
 const {canPreview} = await import('./recipeOutput')
 
 // Registered in the GUI without a Retrieve panel of its own, so nothing here names a task.
-addRecipeType({id: 'RADAR_MOSAIC', getPreSetVisualizations: () => []})
+addRecipeType({id: 'RADAR_MOSAIC', imageSource: true, getPreSetVisualizations: () => []})
 
 beforeEach(() => {
     submitted.length = 0

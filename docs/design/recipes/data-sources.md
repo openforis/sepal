@@ -165,8 +165,8 @@ where a family still needs observation.
      `count`, averaged, with no encoding, whatever its sources, and its Earth Engine catalogue answers it without
      building the collection. Its map keeps reading `IMAGE_OUTPUT`. Its chart and its SEPAL export are measures of
      its collection, not bands of this image, and keep their own contracts; collection-internal bands wait for
-     [source planning](output-products.md#source-planning-and-collection-composition). `noImageOutput` still keeps
-     it out of source pickers. Execution builds its count whatever is asked for;
+     [source planning](output-products.md#source-planning-and-collection-composition). Its GUI registration states
+     it is no image source, which keeps it out of source pickers. Execution builds its count whatever is asked for;
    - Stack has migrated ([Stack](../../recipes/stack.md)). Each output band corresponds to one band of one input:
      the input images in model order, and within each the bands its mapping names. Through `inputs()`, an output
      band takes that input band's dimensionality, pyramiding policy and encoding under its new name, from the input's
@@ -191,9 +191,12 @@ where a family still needs observation.
    produces no image, declares `imageOutput: NO_IMAGE_OUTPUT`; read as an image it is refused as `NON_IMAGE_OUTPUT`,
    which is definitive, located at the design through any wrapper, and stops a generic image export. A type stating
    neither fails at registration. The legacy adapter, Retrieve's legacy and evidence authorities, and the registered
-   band authorities are deleted; the common consumer API remains. `noImageOutput` decides input eligibility today - it keeps CCDC, Time Series and Sampling Design
-   out of source pickers, CCDC apart from Masking's segments source, though CCDC and Time Series declare images - so
-   its removal needs an explicit eligibility rule that keeps those choices. In this packet, also require established dimensionality for every band in a READY description:
+   band authorities are deleted; the common consumer API remains. Input eligibility is stated apart from output: every
+   GUI registration states `imageSource: true | false`, refused at registration without it, and the pickers offering
+   recipes as images - input imagery, a map layer's source, an area of interest - offer only image sources. CCDC, Time
+   Series and Sampling Design are not, though CCDC and Time Series declare images, and Masking's image to mask still
+   takes a source of segments, CCDC included. Eligibility for those pickers is not proof that a recipe executes.
+   In this packet, also require established dimensionality for every band in a READY description:
    `dataType.arrayDimensions` is a nonnegative integer (0 for scalar, positive for array), supplied by declaration,
    inheritance or observation. Pending or unsuccessful evidence must not produce a READY answer with unknown
    dimensionality. Tighten description validation and verify the rule for direct and wrapped outputs in GUI and

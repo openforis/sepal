@@ -67,6 +67,7 @@ export default () => ({
     components: {
         recipe: OpticalMosaic
     },
+    imageSource: true,
     getDateRange: recipe => dateRange(recipe.model.dates),
     bandPresentation,
     getPreSetVisualizations

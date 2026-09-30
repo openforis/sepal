@@ -24,10 +24,11 @@ vi.mock('~/translate', () => ({msg: key => key}))
 // `~/user`, which reaches a panel that reads `Form.Field` while the barrel is still evaluating. Nothing
 // here renders one.
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
-// The legacy flag as the production definitions carry it: CCDC and the table recipe both declare they have
-// no canonical image output. What the segment declaration then says about CCDC is the real one.
+// Eligibility as the production registrations state it: neither CCDC nor the table recipe is offered as an image.
+// What the segment declaration then says about CCDC is the real one.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
-    getRecipeType: type => ({id: type, type, noImageOutput: ['TABLE_ONLY', 'CCDC'].includes(type)})
+    getRecipeType: type => ({id: type, type, imageSource: !['TABLE_ONLY', 'CCDC'].includes(type)}),
+    isImageSource: recipeType => recipeType.imageSource
 }))
 
 const {RecipeInput} = await import('./recipeInput')
@@ -58,7 +59,7 @@ describe('the recipe an input belongs to', () => {
     // Excluding the owner is on top of what the caller and the current project already leave out, not
     // instead of either: the table recipe is ruled ineligible and the one in another project is elsewhere.
     it('is not offered as its input, alongside what the caller and the project already exclude', async () => {
-        show({filter: type => !type.noImageOutput})
+        show({filter: type => type.imageSource})
 
         const options = await offered()
 
@@ -242,7 +243,7 @@ describe('a recipe that produces segments rather than an image', () => {
 
 // ALL widens which projects are offered. It is not a second answer to what the caller can use.
 it('excludes what the caller rules out in the ALL view too', async () => {
-    show({filter: type => !type.noImageOutput})
+    show({filter: type => type.imageSource})
 
     await showAll()
     const options = await offered()

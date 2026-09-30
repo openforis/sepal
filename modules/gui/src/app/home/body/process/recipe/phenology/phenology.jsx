@@ -57,6 +57,7 @@ export default () => ({
     components: {
         recipe: Phenology
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations,

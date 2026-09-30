@@ -58,6 +58,7 @@ export default () => ({
     components: {
         recipe: ChangeAlerts
     },
+    imageSource: true,
     // The monitoring period, as instants its callers can take the value of. A recipe that states no period
     // has no range to offer.
     getDateRange(recipe) {

@@ -79,7 +79,7 @@ export default () => ({
     components: {
         recipe: SamplingDesign
     },
-    noImageOutput: true,
+    imageSource: false,
     getDateRange: () => undefined,
     getPreSetVisualizations
 })

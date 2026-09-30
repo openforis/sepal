@@ -85,9 +85,9 @@ export default () => ({
     components: {
         recipe: TimeSeries
     },
+    imageSource: false,
     // Keeps a time series out of other recipes' source pickers. It says nothing of its image: that is declared, and
     // its map shows it.
-    noImageOutput: true,
     getDateRange: recipe => [
         moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
         moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')

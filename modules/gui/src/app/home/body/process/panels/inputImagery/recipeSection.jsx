@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {namedBands, recipeVisualizations, sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
@@ -10,7 +11,7 @@ export class RecipeSection extends React.Component {
         return (
             <RecipeInput
                 input={input}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 autoFocus
                 onLoading={onLoading}
                 onBandsLoaded={value => this.onRecipeLoaded(value)}

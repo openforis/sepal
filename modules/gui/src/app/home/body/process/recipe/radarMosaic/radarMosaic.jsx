@@ -60,6 +60,7 @@ export default () => ({
     components: {
         recipe: RadarMosaic
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

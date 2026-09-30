@@ -63,6 +63,7 @@ export default () => ({
     components: {
         recipe: PyeoAlerts
     },
+    imageSource: true,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

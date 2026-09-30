@@ -52,6 +52,7 @@ export default () => ({
     components: {
         recipe: Remapping
     },
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
