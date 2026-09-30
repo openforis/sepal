@@ -112,6 +112,25 @@ describe('ThemeManager', () => {
 
             expect(env.root.dataset.theme).toBe('light')
         })
+
+        it('shows the initial theme without animating', () => {
+            const env = environment({stored: 'light'})
+            const manager = new ThemeManager(env)
+
+            subscriptions.push(manager.apply())
+
+            expect(env.animations).toEqual([])
+        })
+
+        it('animates a switch from one theme to the other', () => {
+            const env = environment()
+            const manager = new ThemeManager(env)
+            subscriptions.push(manager.apply())
+
+            manager.setPreference('light')
+
+            expect(env.animations).toEqual([{from: 'dark', to: 'light'}])
+        })
     })
 })
 
@@ -119,11 +138,19 @@ const environment = ({stored, systemLight = false, storage = memoryStorage()} = 
     if (stored !== undefined) {
         storage.setItem('sepal:theme', stored)
     }
+    const root = document.createElement('div')
+    const animations = []
     return {
         storage,
         mediaQuery: fakeMediaQuery(systemLight),
-        root: document.createElement('div'),
-        events: new EventTarget()
+        root,
+        events: new EventTarget(),
+        animations,
+        animate: update => {
+            const from = root.dataset.theme
+            update()
+            animations.push({from, to: root.dataset.theme})
+        }
     }
 }
 

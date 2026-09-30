@@ -5,16 +5,19 @@ export const THEME_PREFERENCES = ['dark', 'light', 'system']
 const STORAGE_KEY = 'sepal:theme'
 const DEFAULT_PREFERENCE = 'dark'
 const LIGHT_SCHEME_QUERY = '(prefers-color-scheme: light)'
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
 export class ThemeManager {
     #storage
     #root
+    #animate
     #preference$
     #theme$
 
-    constructor({storage, mediaQuery, root, events} = defaultEnvironment()) {
+    constructor({storage, mediaQuery, root, events, animate = update => update()} = defaultEnvironment()) {
         this.#storage = storage
         this.#root = root
+        this.#animate = animate
         this.#preference$ = new BehaviorSubject(this.#readPreference())
         this.#theme$ = combineLatest([this.#preference$, systemTheme$(mediaQuery)]).pipe(
             map(([preference, systemTheme]) => preference === 'system' ? systemTheme : preference),
@@ -61,10 +64,14 @@ export class ThemeManager {
         let applied = false
         return this.#theme$.subscribe(theme => {
             if (applied) {
-                suppressTransitions(this.#root)
+                this.#animate(() => {
+                    suppressTransitions(this.#root)
+                    this.#root.dataset.theme = theme
+                })
+            } else {
+                this.#root.dataset.theme = theme
+                applied = true
             }
-            this.#root.dataset.theme = theme
-            applied = true
         })
     }
 
@@ -82,8 +89,21 @@ const defaultEnvironment = () => ({
     storage: safeLocalStorage(),
     mediaQuery: globalThis.matchMedia?.(LIGHT_SCHEME_QUERY),
     root: globalThis.document?.documentElement,
-    events: globalThis.window
+    events: globalThis.window,
+    animate: crossFade
 })
+
+// Cross-fades the whole page from the old theme to the new one, where the browser supports view transitions
+// and the user has not asked for reduced motion; elsewhere the theme changes at once.
+const crossFade = update => {
+    const document = globalThis.document
+    const reducedMotion = globalThis.matchMedia?.(REDUCED_MOTION_QUERY).matches
+    if (document?.startViewTransition && !reducedMotion) {
+        document.startViewTransition(update)
+    } else {
+        update()
+    }
+}
 
 const safeLocalStorage = () => {
     try {
