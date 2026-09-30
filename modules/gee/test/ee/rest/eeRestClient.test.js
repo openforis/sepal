@@ -201,9 +201,21 @@ const fakeHttp = answers => {
         const request = {method, url, headers, query, body}
         calls.push(request)
         const answer = answers.shift() ?? ok({})
-        const subscription = answer().subscribe(subscriber)
+        // "settled" marks that the answer resolved (error or complete) before teardown, distinguishing
+        // that from a subscriber torn down while the request was still in flight.
+        const subscription = answer().subscribe({
+            next: value => subscriber.next(value),
+            error: error => {
+                request.settled = true
+                subscriber.error(error)
+            },
+            complete: () => {
+                request.settled = true
+                subscriber.complete()
+            }
+        })
         return () => {
-            request.aborted = !subscriber.closed
+            request.aborted = !request.settled
             subscription.unsubscribe()
         }
     })
