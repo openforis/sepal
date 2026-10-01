@@ -31,7 +31,7 @@ share are ordinary modules, and `test/verify/` covers them over fakes.
 ## Key Architecture
 
 ### Entry Point
-`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with the `ROUND_ROBIN` strategy (any worker thread serves any user).
+`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with the `ROUND_ROBIN` strategy (any worker thread serves any user) over `GEE_INSTANCES` threads, half the cores by default.
 
 ### Import Maps
 - `#sepal/*` -> shared library

@@ -1,12 +1,16 @@
 import {Command, Option} from 'commander'
 import _ from 'lodash'
+import os from 'os'
 
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
-const DEFAULT_INSTANCES = 3
+const MIN_INSTANCES = 2
+// Any thread serves any user, so threads only buy CPU parallelism; half the cores leaves the rest to the other
+// modules on the host.
+const DEFAULT_INSTANCES = Math.max(MIN_INSTANCES, Math.floor(os.availableParallelism() / 2))
 const DEFAULT_RECIPE_ENDPOINT = 'http://recipe'
 const DEFAULT_EE_LIMITS = {
     user: {maxRate: 25, maxConcurrency: 10},
@@ -19,19 +23,20 @@ const fatalError = error => {
     process.exit(1)
 }
 
-// The limiter takes a missing limit for no limit at all, so anything but a positive integer is refused.
-const parseLimit = env => value => {
-    const limit = Number(value)
-    if (!Number.isInteger(limit) || limit <= 0) {
+// The limiter takes a missing limit for no limit at all, and a pool needs a thread: anything but a positive
+// integer is refused.
+const parsePositiveInteger = env => value => {
+    const number = Number(value)
+    if (!Number.isInteger(number) || number <= 0) {
         throw new Error(`${env} must be a positive integer, got: ${value}`)
     }
-    return limit
+    return number
 }
 
 const limitOption = (flag, env, defaultValue) => {
     const option = new Option(`${flag} <number>`)
         .env(env)
-        .argParser(parseLimit(env))
+        .argParser(parsePositiveInteger(env))
     return defaultValue === undefined
         ? option
         : option.default(defaultValue)
@@ -87,7 +92,7 @@ try {
         .addOption(
             new Option('--instances <number>')
                 .env('INSTANCES')
-                .argParser(v => parseInt(v))
+                .argParser(parsePositiveInteger('INSTANCES'))
                 .default(DEFAULT_INSTANCES)
         )
         .addOption(limitOption('--ee-limit-user-rate', 'EE_LIMIT_USER_RATE', DEFAULT_EE_LIMITS.user.maxRate))

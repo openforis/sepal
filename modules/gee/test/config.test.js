@@ -1,4 +1,5 @@
 import {execFile} from 'child_process'
+import os from 'os'
 import {dirname} from 'path'
 import {fileURLToPath} from 'url'
 import {promisify} from 'util'
@@ -33,6 +34,27 @@ describe('Earth Engine limits', () => {
         await expect(loadConfig({EE_LIMIT_USER_CONCURRENCY: value})).rejects.toMatchObject({
             code: 1,
             stdout: expect.stringContaining(`EE_LIMIT_USER_CONCURRENCY must be a positive integer, got: ${value}`)
+        })
+    })
+})
+
+describe('worker threads', () => {
+    test('are half the cores, at least two, when their variable is empty', async () => {
+        const {instances} = await loadConfig({INSTANCES: ''})
+
+        expect(instances).toBe(Math.max(2, Math.floor(os.availableParallelism() / 2)))
+    })
+
+    test('are read from their variable when it has a value', async () => {
+        const {instances} = await loadConfig({INSTANCES: '5'})
+
+        expect(instances).toBe(5)
+    })
+
+    test.each(['0', '-1', '1.5', 'many'])('refuse to start with %s', async value => {
+        await expect(loadConfig({INSTANCES: value})).rejects.toMatchObject({
+            code: 1,
+            stdout: expect.stringContaining(`INSTANCES must be a positive integer, got: ${value}`)
         })
     })
 })
