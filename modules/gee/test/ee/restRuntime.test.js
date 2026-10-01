@@ -59,6 +59,54 @@ test('a failed initialization is attempted again by the next request', async () 
     expect(attempts).toBe(2)
 })
 
+test('an initialization that never completes is abandoned after its timeout, and the next request initializes again', async () => {
+    const library = libraryWhoseFirstInitializationHangs()
+    const runtime = new EERestRuntime({
+        ee: library,
+        serviceAccountToken$: countingToken().token$,
+        projectId: TEST_PROJECT,
+        createTransport: () => 'installed transport',
+        initializationTimeoutMs: 10
+    })
+
+    await expect(firstValueFrom(runtime.ready$())).rejects.toThrow('Earth Engine initialization did not complete within 10 ms')
+    await firstValueFrom(runtime.ready$(), {defaultValue: null})
+
+    expect(library.transport).toBe('installed transport')
+})
+
+// Like the client library, an initialization requested while one is in progress waits for that one, until reset.
+const libraryWhoseFirstInitializationHangs = () => {
+    let initializing = false
+    let initializations = 0
+    const library = {
+        transport: null,
+        data: {
+            setAuthToken: () => {},
+            clearAuthToken: () => {},
+            setAuthTokenRefresher: () => {},
+            setParamAugmenter: () => {}
+        },
+        initialize: (_baseUrl, _tileUrl, success) => {
+            if (initializing) {
+                return
+            }
+            initializing = true
+            if (++initializations > 1) {
+                initializing = false
+                success()
+            }
+        },
+        reset: () => {
+            initializing = false
+        },
+        setTransport: transport => {
+            library.transport = transport
+        }
+    }
+    return library
+}
+
 const countingToken = () => {
     const token = {
         fetches: 0,
