@@ -2,7 +2,7 @@ import {firstValueFrom, lastValueFrom, Observable, of, throwError, toArray} from
 
 import ee from '#sepal/ee/ee'
 import {DEFAULT_EE_ENDPOINT, inEEContext} from '#sepal/ee/eeContext'
-import {EERestClient} from '#sepal/ee/rest/eeRestClient'
+import {EERestClient, exponentialBackoff} from '#sepal/ee/rest/eeRestClient'
 import {ERROR_CODES} from '#sepal/exception'
 
 import {initializeOfflineEE, TEST_PROJECT} from '../../support/eeOffline.js'
@@ -124,6 +124,34 @@ describe('failures', () => {
         expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).toEqual([42])
         expect(http.calls).toHaveLength(2)
         expect(delays).toEqual([1])
+    })
+
+    test('a call refused as over quota is retried on a budget of its own, whatever retries the call allows', async () => {
+        const tooManyRequests = failure(429, {message: 'Too many requests'})
+        const {client, delays} = setup({answers: [tooManyRequests, tooManyRequests, ok({result: 42})]})
+
+        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).toEqual([42])
+        expect(delays).toEqual([1, 2])
+    })
+
+    test('a call still refused as over quota after ten retries fails', async () => {
+        const {client, http} = setup({answers: Array(11).fill(failure(429, {message: 'Too many requests'}))})
+
+        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toThrow('Too many requests')
+        expect(http.calls).toHaveLength(11)
+    })
+
+    test('a call that allows no retries is not retried when Earth Engine is unavailable', async () => {
+        const {client, http} = setup({answers: [failure(503, {}), ok({result: 42})]})
+
+        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toThrow('Failed to probe')
+        expect(http.calls).toHaveLength(1)
+    })
+
+    test('a retry waits twice as long as the one before, up to 30 seconds', () => {
+        const withoutJitter = exponentialBackoff(() => 0.5)
+
+        expect([1, 2, 3, 7, 10].map(withoutJitter)).toEqual([500, 1000, 2000, 30000, 30000])
     })
 
     test('a request Earth Engine rejects is not retried, and fails with what Earth Engine said', async () => {
