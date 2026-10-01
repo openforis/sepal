@@ -6,6 +6,8 @@
         "channel-forward": "info",
         "channel-reverse": "info",
         "ee": "info",
+        "ee/batch": "info",
+        "ee/rest": "info",
         "factory": "info",
         "http/client": "info",
         "http/server": "info",
