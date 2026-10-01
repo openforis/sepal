@@ -5,8 +5,9 @@ export const getPreSetVisualizations = recipe => {
 }
 
 export const visualizationOptions = recipe => {
+    // Identified as the picker resolves a selection: by preset id, or by bands for a preset saved without one.
     const visParamsToOption = visParams => ({
-        value: visParams.bands.join(','),
+        value: visParams.id || visParams.bands.join(','),
         label: visParams.bands.join(', '),
         visParams
     })
