@@ -185,6 +185,17 @@ describe('failures', () => {
         expect(http.calls).toHaveLength(1)
     })
 
+    test('a service-account token that cannot be obtained is retried, then fails saying so', async () => {
+        const {client, http, delays} = setup({
+            serviceAccountToken$: () => throwError(() => new Error('invalid_grant: Invalid JWT Signature.'))
+        })
+
+        await expect(call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe', 1)))
+            .rejects.toThrow('Failed to probe: Could not obtain the service-account access token: invalid_grant: Invalid JWT Signature.')
+        expect(delays).toEqual([1])
+        expect(http.calls).toEqual([])
+    })
+
     test('abandoning a call aborts its request', () => {
         const {client, http} = setup({answers: [unanswered()]})
 
@@ -236,7 +247,7 @@ const bobWithoutGoogleAccount = () => ({
     projectId: TEST_PROJECT
 })
 
-const setup = ({answers = [], recordRequest} = {}) => {
+const setup = ({answers = [], recordRequest, serviceAccountToken$ = () => of({accessToken: 'service-account-token'})} = {}) => {
     const http = fakeHttp(answers)
     const limited = []
     const delays = []
@@ -248,7 +259,7 @@ const setup = ({answers = [], recordRequest} = {}) => {
             limited.push(request)
             return observable$
         },
-        serviceAccountToken$: () => of({accessToken: 'service-account-token'}),
+        serviceAccountToken$,
         recordRequest: recordRequest ?? (outcome => recorded.push(outcome)),
         delay$: retryCount => {
             delays.push(retryCount)
