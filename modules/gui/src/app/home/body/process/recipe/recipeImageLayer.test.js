@@ -148,6 +148,7 @@ const selections = updates => updates.map(({visParams}) => visParams)
 const styles = userDefined => recipeOf({userDefined})
 
 const VALID = {id: 'valid', bands: ['ndvi']}
+const ASSET_EDGE = {sourceRecipeId: 'recipe-1', reference: {type: 'ASSET', id: 'users/x/a'}, role: 'INPUT_IMAGE', path: []}
 const ALTERNATIVE = {id: 'alternative', bands: ['evi']}
 const STALE_SELECTION = {id: 'stale', bands: ['gone']}
 
@@ -266,33 +267,127 @@ describe('the render-time guard', () => {
     })
 })
 
-// A layer is built from what the recipe describes AND from the runtime evidence behind it. Reading a source
-// again can produce the same schema over different pixels, so the layer must be replaced rather than kept.
+// Runtime evidence about a source offers presets and prefill. What the pixels were read from is the pixel generation's
+// to say (see above), so publishing evidence again draws nothing again.
 describe('runtime evidence behind a layer', () => {
-    const observed = observation => ({
+    const observed = presets => ({
         ...recipeOf({userDefined: [VALID]}),
-        ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', observation}}
+        ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'OBSERVED', visualizations: presets}}
     })
 
-    it('replaces the layer when the source has been read again', () => {
-        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
+    it('keeps the layer when evidence about its source is published again', () => {
+        const {instance, setRecipe} = build({recipe: observed([]), visParams: VALID})
         const first = instance.maybeCreateLayer()
 
-        setRecipe(observed(2))
-        const second = instance.maybeCreateLayer()
-
-        expect(second).not.toBe(first)
-        expect(state.constructed).toHaveLength(2)
-    })
-
-    it('keeps the layer while nothing has been read again', () => {
-        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
-        const first = instance.maybeCreateLayer()
-
-        setRecipe(observed(1))
+        setRecipe(observed([ALTERNATIVE]))
 
         expect(instance.maybeCreateLayer()).toBe(first)
         expect(state.constructed).toHaveLength(1)
+    })
+})
+
+// What a preview's pixels were read from beyond its recipes: the assets it reads and explicit refreshes. The
+// description can stay exactly as it was while either changes the pixels.
+describe('what a layer draws from beyond its recipes', () => {
+    const readingAsset = () => {
+        const built = build({recipe: styles([VALID]), visParams: VALID})
+        const asset = evidence => built.instance.props = {
+            ...built.instance.props,
+            dependencyGraph: {...built.instance.props.dependencyGraph, edges: [ASSET_EDGE]},
+            ...evidence
+        }
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0}}})
+        return {...built, asset}
+    }
+
+    it('draws again when an asset it reads reports a new token, though its description is unchanged', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 1, changedAt: 1}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
+    })
+
+    it('keeps its drawing while the asset reports the same token, and when its first token is learned', () => {
+        const {instance, asset} = readingAsset()
+        asset({assetEvidence: {}})
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0, changedAt: null}}})
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 1, changedAt: null}}})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+    })
+
+    it('keeps a drawing made after an asset change when credentials are replaced and the asset is read again', () => {
+        const {instance, asset} = readingAsset()
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 1, changedAt: 1}}})
+        const drawn = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {}})
+        expect(instance.maybeCreateLayer()).toBe(drawn)
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 2, changedAt: null}}})
+
+        expect(instance.maybeCreateLayer()).toBe(drawn)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    it('draws again when it was explicitly refreshed', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({sourceRefreshes: {recipes: {'recipe-1': 1}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+    })
+
+    it('keeps its drawing while a record it computes is read again, when what is read is the same', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({recordStaleness: {staleness: ({id}) => id === 'recipe-1' ? {id, revision: 2} : null}})
+        expect(instance.imageOutput().status).toBe('NEEDS_EVIDENCE')
+        expect(instance.maybeCreateLayer()).toBe(first)
+        asset({recordStaleness: undefined})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    it('keeps its drawing when a check of an asset it reads cannot reach Earth Engine', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0, changedAt: null, failure: {kind: 'TRANSIENT', code: 'UNAVAILABLE'}}}})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+    })
+
+    it('keeps its drawing however long it is shown', () => {
+        vi.useFakeTimers()
+        try {
+            const {instance} = readingAsset()
+            const first = instance.maybeCreateLayer()
+
+            vi.advanceTimersByTime(7 * 24 * 60 * 60 * 1000)
+
+            expect(instance.maybeCreateLayer()).toBe(first)
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it('is withheld while an asset it reads is found missing, and drawn again once it is found', () => {
+        const {instance, asset} = readingAsset()
+        instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 1, failure: {kind: 'DEFINITIVE', code: 'NOT_FOUND'}}}})
+        expect(instance.maybeCreateLayer()).toBe(null)
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 2, failure: null}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(null)
     })
 })
 
@@ -693,21 +788,19 @@ describe('acquiring what the layer shows', () => {
             expect(state.constructed[1].visParams).toEqual(restyled)
         })
 
-        // The withheld layer was taken off the map and cancelled, so recovery must draw a new one.
-        it('is withheld when credentials change after it was drawn, then drawn anew once acquired again', () => {
+        // Credentials change how later requests authenticate, not the pixels already shown.
+        it('keeps its drawing when credentials change, while what it needs is acquired again and once it is', () => {
             const {instance, runtime, settle} = countLayer()
             settle(runtime.operations[0], completed(instance.props.recipe))
             const drawn = instance.maybeCreateLayer()
 
             runtime.changeCredentials()
-            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(instance.maybeCreateLayer()).toBe(drawn)
             expect(runtime.operations).toHaveLength(2)
             settle(runtime.operations[1], completed(instance.props.recipe))
-            const redrawn = instance.maybeCreateLayer()
 
-            expect(redrawn).not.toBe(null)
-            expect(redrawn).not.toBe(drawn)
-            expect(state.constructed).toHaveLength(2)
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            expect(state.constructed).toHaveLength(1)
         })
     })
 

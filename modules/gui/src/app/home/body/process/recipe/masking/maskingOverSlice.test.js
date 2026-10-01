@@ -105,7 +105,7 @@ const sync = ({recipe, loadedRecipes}) => {
         loadedRecipes,
         catalogue: [],
         openRecipeIds: [],
-        assetVersions: [],
+        assetEvidence: {},
         earthEngineGeneration: {},
         recipeActionBuilder,
         loadRecipe$: id => of(loadedRecipes[id]),
@@ -160,26 +160,29 @@ describe('masking a slice whose own source is gone', () => {
 })
 
 describe('masking a slice with runtime source evidence', () => {
-    it('reads again when the source observation advances even with identical templates', () => {
-        const source = {...savedSlice(), ui: {sourceEvidence: {
-            sourceKey: 'RECIPE_REF:ccdc-1', status: 'OBSERVED', observation: 1,
-            segments: {visualizations: [NDVI_TEMPLATE, HARMONIC_TEMPLATE]}
-        }}}
+    it('reads again when the source\'s evidence changes, and not when the same evidence is published again', () => {
+        const sliceEvidence = visualizations => ({
+            sourceKey: 'RECIPE_REF:ccdc-1', status: 'OBSERVED', segments: {visualizations}
+        })
+        const source = {...savedSlice(), ui: {sourceEvidence: sliceEvidence([NDVI_TEMPLATE, HARMONIC_TEMPLATE])}}
         const {component, evidence} = sync({
             recipe: maskingOver(source.id),
             loadedRecipes: {[source.id]: source, 'ccdc-1': ccdc()}
         })
         component.componentDidMount()
-        expect(evidence()).toHaveLength(1)
+        const publishes = evidence => {
+            component.props = {...component.props, loadedRecipes: {
+                ...component.props.loadedRecipes,
+                [source.id]: {...source, ui: {sourceEvidence: evidence}}
+            }}
+            component.componentDidUpdate()
+        }
 
-        component.props = {...component.props, loadedRecipes: {
-            ...component.props.loadedRecipes,
-            [source.id]: {...source, ui: {sourceEvidence: {...source.ui.sourceEvidence, observation: 2}}}
-        }}
-        component.componentDidUpdate()
+        publishes(sliceEvidence([NDVI_TEMPLATE, HARMONIC_TEMPLATE]))
+        expect(evidence()).toHaveLength(1)
+        publishes(sliceEvidence([NDVI_TEMPLATE]))
 
         expect(evidence()).toHaveLength(2)
-        expect(evidence()[1].visualizations).toEqual(evidence()[0].visualizations)
     })
 
     it('stops assigning saved template identities once their source provenance changes', () => {

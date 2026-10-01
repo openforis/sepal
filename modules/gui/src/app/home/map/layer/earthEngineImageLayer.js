@@ -26,8 +26,9 @@ export class EarthEngineImageLayer extends TileLayer {
         cursor$,
         minZoom,
         maxZoom,
+        onError
     }) {
-        super()
+        super({onError})
         this.map = map
         this.layerIndex = layerIndex
         this.busy = busy

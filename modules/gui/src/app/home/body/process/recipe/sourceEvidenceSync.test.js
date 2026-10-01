@@ -63,7 +63,9 @@ const sync = ({
     catalogue = [],
     openRecipeIds = [],
     saves = {},
-    assetVersions = [],
+    assetEvidence = {},
+    sourceRefreshes = {},
+    sourceRuntime,
     earthEngineGeneration = {},
     loadRecipe$ = id => of(ccdcRecipe(id)),
     reloadRecipe$ = id => of(ccdcRecipe(id))
@@ -86,7 +88,9 @@ const sync = ({
         catalogue,
         openRecipeIds,
         saves,
-        assetVersions,
+        assetEvidence,
+        sourceRefreshes,
+        sourceRuntime,
         earthEngineGeneration,
         recipeActionBuilder,
         loadRecipe$,
@@ -119,7 +123,6 @@ describe('observing a recipe source', () => {
         expect(bands$).not.toHaveBeenCalled()
         expect(evidence()).toEqual([{
             sourceKey: 'RECIPE_REF:source-1',
-            observation: expect.any(Number),
             status: 'OBSERVED',
             visualizations: CCDC_PRESETS
         }])
@@ -448,25 +451,6 @@ describe('an answer for a source that is no longer selected', () => {
         answer.next(['stale'])
 
         expect(dispatched.filter(({value}) => value.sourceKey === 'RECIPE_REF:source-1')).toEqual([])
-    })
-})
-
-describe('each answer published', () => {
-    it('distinguishes a renewed read even when the source offers the same presets', () => {
-        const source = ccdcRecipe('source-1')
-        const {component, rerender, evidence} = sync({
-            recipe: maskingRecipe({primary: recipeSelection('source-1')}),
-            loadedRecipes: {'source-1': source},
-            loadRecipe$: () => of(source)
-        })
-        component.componentDidMount()
-
-        rerender({loadedRecipes: {'source-1': {...source, revision: 2}}})
-
-        expect(evidence()).toHaveLength(2)
-        const [first, second] = evidence()
-        expect(second.visualizations).toEqual(first.visualizations)
-        expect(second).not.toEqual(first)
     })
 })
 
@@ -820,32 +804,85 @@ describe('a consumer with a missing mask', () => {
     })
 })
 
-// Earth Engine has no revision. The asset listing's update time is what says an asset has changed.
+// Earth Engine has no revision. The token the source runtime reads for an asset is what says it has changed.
 describe('an asset source', () => {
-    const observing = assetVersions => {
+    const observing = (assetEvidence, assetId = 'users/bob/image') => {
         assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
         return sync({
-            recipe: maskingRecipe({primary: {type: 'ASSET', id: 'users/bob/image'}}),
-            assetVersions
+            recipe: maskingRecipe({primary: {type: 'ASSET', id: assetId}}),
+            assetEvidence
         })
     }
 
-    it('is observed again when its listed update time advances', () => {
-        const {component, rerender} = observing([{id: 'users/bob/image', updateTime: '2026-01-01T00:00:00.000001Z'}])
+    it('is observed again when its token changes', () => {
+        const {component, rerender} = observing({['users/bob/image']: {version: '2026-01-01T00:00:00.000001Z', checkedAt: 0}})
         component.componentDidMount()
         rerender({})
 
-        rerender({assetVersions: [{id: 'users/bob/image', updateTime: '2026-01-01T00:00:00.000002Z'}]})
+        rerender({assetEvidence: {['users/bob/image']: {version: '2026-01-01T00:00:00.000002Z', checkedAt: 0}}})
 
         expect(read$).toHaveBeenCalledTimes(2)
     })
 
-    it('is not observed again when it has not been touched', () => {
-        const version = [{id: 'users/bob/image', updateTime: '2026-01-01T00:00:00.000001Z'}]
+    it('is not observed again when its first token is learned after it was read', () => {
+        const {component, rerender} = observing({})
+        component.componentDidMount()
+
+        rerender({assetEvidence: {'users/bob/image': {version: 'v1', checkedAt: 0}}})
+        rerender({})
+
+        expect(read$).toHaveBeenCalledTimes(1)
+    })
+
+    it('is observed again once it is explicitly refreshed, and once the recipe reading it is', () => {
+        const {component, rerender} = observing({'users/bob/image': {version: 'v1', checkedAt: 0}})
+        component.componentDidMount()
+
+        rerender({sourceRefreshes: {assets: {'users/bob/image': 1}}})
+        rerender({sourceRefreshes: {assets: {'users/bob/image': 1}, recipes: {'masked-1': 1}}})
+
+        expect(read$).toHaveBeenCalledTimes(3)
+    })
+
+    it('without a token is observed again once what was read from it is half an hour old, and not before', () => {
+        vi.useFakeTimers()
+        try {
+            const {component} = observing({'gs://bucket/image.tif': {version: null, unversioned: true, checkedAt: 0}}, 'gs://bucket/image.tif')
+            component.componentDidMount()
+
+            vi.advanceTimersByTime(30 * 60 * 1000 - 1)
+            expect(read$).toHaveBeenCalledTimes(1)
+            vi.advanceTimersByTime(1)
+
+            expect(read$).toHaveBeenCalledTimes(2)
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it('is claimed from the source runtime while it is read, and released once it is not', () => {
+        const claims = []
+        const sourceRuntime = {claimAssets: ids => {
+            const claim = {ids, released: false}
+            claims.push(claim)
+            return () => claim.released = true
+        }}
+        assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
+        const {component} = sync({recipe: maskingRecipe({primary: {type: 'ASSET', id: 'users/bob/image'}}), sourceRuntime})
+        component.componentDidMount()
+        expect(claims.filter(({released}) => !released).map(({ids}) => ids)).toEqual([['users/bob/image']])
+
+        component.componentWillUnmount()
+
+        expect(claims.every(({released}) => released)).toBe(true)
+    })
+
+    it('is not observed again while its token is the same', () => {
+        const version = {['users/bob/image']: {version: '2026-01-01T00:00:00.000001Z', checkedAt: 0}}
         const {component, rerender} = observing(version)
         component.componentDidMount()
 
-        rerender({assetVersions: [...version]})
+        rerender({assetEvidence: {...version}})
 
         expect(read$).toHaveBeenCalledTimes(1)
     })

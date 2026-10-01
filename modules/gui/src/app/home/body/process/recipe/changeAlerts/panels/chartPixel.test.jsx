@@ -53,11 +53,11 @@ afterEach(() => {
 
 describe('a description accepted for the source being charted', () => {
     it('discards the samples taken under the previous one and asks again', () => {
-        openChart(described({dateFormat: 1, observation: 1}))
+        openChart(described({dateFormat: 1}))
         expect(chart()).toMatchObject({dateFormat: 1, segments: ['current segments']})
 
         loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
-        observe({dateFormat: 2, observation: 2})
+        observe({dateFormat: 2})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
         expect(chart()).toMatchObject({dateFormat: 2, segments: ['resampled segments']})
@@ -67,9 +67,9 @@ describe('a description accepted for the source being charted', () => {
         const pending = new Subject()
         let cancelled = false
         loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
-        openChart(described({dateFormat: 1, observation: 1}))
+        openChart(described({dateFormat: 1}))
 
-        observe({dateFormat: 2, observation: 2})
+        observe({dateFormat: 2})
 
         expect(cancelled).toBe(true)
         act(() => {
@@ -80,16 +80,52 @@ describe('a description accepted for the source being charted', () => {
     })
 })
 
+describe('the samples charted', () => {
+    it('are kept when the same description is published again', () => {
+        openChart(described({dateFormat: 1}))
+
+        observe({dateFormat: 1})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+    })
+
+    it('are taken again once the asset charted reports a new token, though nothing described changed', () => {
+        openChart(overAsset({dateFormat: 1}))
+        tokens({[SEGMENTS_ASSET]: {version: 'v1'}})
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+
+        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        tokens({[SEGMENTS_ASSET]: {version: 'v2', changedAt: 1}})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
+        expect(chart()).toMatchObject({segments: ['resampled segments']})
+    })
+})
+
+const SEGMENTS_ASSET = 'users/x/segments'
+
+// What the source runtime knows of each asset, for the credentials in effect: none are linked here.
+const tokens = versions => act(() => actionBuilder('UPDATE_ASSET_EVIDENCE')
+    .set('process.assetEvidence', {
+        generation: 0,
+        assets: Object.fromEntries(Object.entries(versions).map(([id, {version, changedAt = null}]) => [id, {version, checkedAt: 0, changedAt}]))
+    })
+    .dispatch())
+
+const overAsset = evidence => {
+    const recipe = described({...evidence, source: `ASSET:${SEGMENTS_ASSET}`})
+    return {...recipe, model: {...recipe.model, reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
+}
+
 const chart = () => JSON.parse(container.querySelector('output').textContent)
 
 const observe = evidence => act(() => actionBuilder('OBSERVED')
     .set(['process.loadedRecipes', ALERTS, 'ui.sourceEvidence'], sourceEvidence(evidence))
     .dispatch())
 
-const sourceEvidence = ({dateFormat, observation}) => ({
-    sourceKey: SOURCE,
+const sourceEvidence = ({dateFormat, source = SOURCE}) => ({
+    sourceKey: source,
     status: 'OBSERVED',
-    observation,
     segments: {bands: ['ndvi_rmse'], baseBands: [{name: 'ndvi', measures: ['value']}], dateFormat}
 })
 

@@ -93,7 +93,7 @@ const sync = ({
     recipe,
     loadedRecipes = {},
     catalogue = [],
-    assetVersions = [],
+    assetEvidence = {},
     earthEngineGeneration = {},
     loadRecipe$ = id => of(loadedRecipes[id])
 }) => {
@@ -114,7 +114,7 @@ const sync = ({
         loadedRecipes,
         catalogue,
         openRecipeIds: [],
-        assetVersions,
+        assetEvidence,
         earthEngineGeneration,
         recipeActionBuilder,
         loadRecipe$,
@@ -230,14 +230,14 @@ describe('the templates an asset carries', () => {
         assetMetadata$.mockReturnValue(of(twoOverOneBand))
         const {component, rerender, evidence} = sync({
             recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'}),
-            assetVersions: [{id: 'users/x/segments', updateTime: '1'}]
+            assetEvidence: {['users/x/segments']: {version: '1', checkedAt: 0}}
         })
         component.componentDidMount()
         const published = evidence()[0]
 
         rerender({
             recipe: {...sliceOver({type: 'ASSET', id: 'users/x/segments'}), ui: {sourceEvidence: published}},
-            assetVersions: [{id: 'users/x/segments', updateTime: '2'}]
+            assetEvidence: {['users/x/segments']: {version: '2', checkedAt: 0}}
         })
 
         expect(evidence().at(-1).segments.visualizations.map(({id}) => id))
@@ -314,7 +314,7 @@ describe('identifying an asset\'s templates across a failed read', () => {
     const session = source => {
         const {component, rerender, evidence} = sync({
             recipe: sliceOver(source),
-            assetVersions: [{id: source.id, updateTime: '1'}]
+            assetEvidence: {[source.id]: {version: '1', checkedAt: 0}}
         })
         let version = 1
         const published = () => evidence().at(-1)
@@ -330,7 +330,7 @@ describe('identifying an asset\'s templates across a failed read', () => {
                         layers: {areas: {center: {imageLayer: {sourceId: 'this-recipe', layerConfig: {visParams: selected}}}}},
                         ui: {sourceEvidence: published()}
                     },
-                    assetVersions: [{id: nextSource.id, updateTime: `${++version}`}]
+                    assetEvidence: {[nextSource.id]: {version: `${++version}`, checkedAt: 0}}
                 })
             }
         }
@@ -477,11 +477,11 @@ describe('looking again', () => {
             .mockReturnValue(of({bandNames: ['nbr_coefs'], properties: {dateFormat: 1}}))
         const {component, rerender, evidence} = sync({
             recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'}),
-            assetVersions: [{id: 'users/x/segments', updateTime: '1'}]
+            assetEvidence: {['users/x/segments']: {version: '1', checkedAt: 0}}
         })
         component.componentDidMount()
 
-        rerender({assetVersions: [{id: 'users/x/segments', updateTime: '2'}]})
+        rerender({assetEvidence: {['users/x/segments']: {version: '2', checkedAt: 0}}})
 
         expect(evidence().at(-1).segments).toEqual(expect.objectContaining({
             bands: ['nbr_coefs'],

@@ -5,6 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {getAvailableBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -18,8 +19,9 @@ import {Panel} from '~/widget/panel/panel'
 import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {pixelGenerationOfState} from '../../pixelGeneration'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
-import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescriptionGeneration} from '../referenceEvidence'
+import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescription} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -30,9 +32,9 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: dateFormatOf(recipe),
-    // Samples are interpreted with the description they were taken under, so a newly accepted one
-    // supersedes them - and the description lives in ui, which recipe.model cannot see.
-    descriptionGeneration: segmentDescriptionGeneration(recipe),
+    // Samples are interpreted with the description they were taken under, so another one supersedes them - and the
+    // description lives in ui, which recipe.model cannot see.
+    description: segmentDescription(recipe).description,
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     band: selectFrom(recipe, 'model.sources.band'),
@@ -156,14 +158,14 @@ class _ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {band, stream, recipe, latLng, descriptionGeneration, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, description, pixels, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
             selectedBand.set(band)
 
         if (latLng && selectedBand.value && !_.isEqual(
-            [recipe.model, latLng, selectedBand.value, descriptionGeneration],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.descriptionGeneration])
+            [recipe.model, latLng, selectedBand.value, description, pixels],
+            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
@@ -219,8 +221,14 @@ class _ChartPixel extends React.Component {
     }
 }
 
+// What the chart's pixels were read from beyond the recipe (pixelGeneration.js).
+const mapStateToProps = (state, {recipeId}) => ({
+    pixels: pixelGenerationOfState(state, recipeId)
+})
+
 export const ChartPixel = compose(
     _ChartPixel,
+    connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

@@ -5,6 +5,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 
+import {assetEvidenceOfState} from '../sourceRuntime/assetEvidence'
 import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
@@ -18,10 +19,12 @@ import {readRetrieveOutput} from './retrieveOutput'
 //
 //   retrieveOutput      the read this render was made from: {recipe, output, pending}
 //   readRetrieveOutput  the read as the session stands at the moment it is called, for a submission to decide from
+//   refreshRetrieveOutput  an explicit refresh of the output and what it reads, for recovering from a failure
 //
 // Both read the store the panel is rendered under, rather than the props a render was given, so a submission cannot
-// decide from a render that the session has since moved past. The connected graph, staleness and saves only make a
-// change to any record it holds, to the listing or to a save re-render the panel.
+// decide from a render that the session has since moved past. The connected graph, staleness, saves and asset evidence
+// only make a change to any record it holds, to the listing, to a save or to what is known of an asset re-render the
+// panel.
 //
 // `isImageOutput` says whether the panel's request is about the recipe's image output at all; one that is not reads
 // and watches nothing.
@@ -32,7 +35,8 @@ const mapStateToProps = (state, {recipeId}) => {
     return {
         retrieveGraph: recipe ? buildMapDependencyGraph({recipe, loadedRecipes}) : null,
         retrieveStaleness: recordStalenessOfState(state),
-        retrieveSaves: selectFrom(state, 'process.saveStates')
+        retrieveSaves: selectFrom(state, 'process.saveStates'),
+        retrieveAssets: assetEvidenceOfState(state)
     }
 }
 
@@ -49,15 +53,16 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
         constructor(props) {
             super(props)
             this.read = this.read.bind(this)
+            this.refresh = this.refresh.bind(this)
         }
 
         render() {
             const {
                 retrieveGraph: _retrieveGraph, retrieveStaleness: _retrieveStaleness, retrieveSaves: _retrieveSaves,
-                sourceRuntime: _sourceRuntime, ...props
+                retrieveAssets: _retrieveAssets, sourceRuntime: _sourceRuntime, ...props
             } = this.props
             return isImageOutput(this.props)
-                ? <WrappedComponent {...props} retrieveOutput={this.read()} readRetrieveOutput={this.read}/>
+                ? <WrappedComponent {...props} retrieveOutput={this.read()} readRetrieveOutput={this.read} refreshRetrieveOutput={this.refresh}/>
                 : <WrappedComponent {...props}/>
         }
 
@@ -83,6 +88,11 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
             isImageOutput(this.props)
                 ? this.watch.update({recipeId, product: {name: IMAGE_OUTPUT}})
                 : this.watch.stop()
+        }
+
+        refresh() {
+            const {recipeId, sourceRuntime} = this.props
+            return sourceRuntime.refreshOutput({recipeId, product: {name: IMAGE_OUTPUT}})
         }
 
         read() {

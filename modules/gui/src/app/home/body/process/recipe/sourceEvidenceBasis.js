@@ -2,6 +2,7 @@ import _ from 'lodash'
 
 import {selectFrom} from '~/stateUtils'
 
+import {assetEvidenceOfState} from '../sourceRuntime/assetEvidence'
 import {declaredSelections} from './sourceEvidence'
 
 // When evidence about a source is still about the source as the session holds it now.
@@ -9,6 +10,10 @@ import {declaredSelections} from './sourceEvidence'
 // Evidence is read from particular records, assets and credentials: its basis. The evidence lifecycle
 // (sourceEvidenceSync.jsx) records that basis, and decides by this rule whether to read again and whether an answer
 // may still be published.
+//
+// An asset is judged by what the source runtime knows of it (assetEvidence.js): its token and how often it was
+// explicitly refreshed. Evidence read from a source without a token is read again once it is too old (`expiresAt`), and
+// all of it once the consuming recipe is refreshed.
 
 // The session a basis is judged against, read from the store the way the lifecycle reads it.
 export const evidenceSession = state => ({
@@ -18,9 +23,12 @@ export const evidenceSession = state => ({
     // record is a draft, and no dependency read may replace it with what happens to be persisted (draftAgreement.js).
     openRecipeIds: (selectFrom(state, 'process.tabs') || []).map(({id}) => id),
     saves: selectFrom(state, 'process.saveStates') || {},
-    assetVersions: [...(selectFrom(state, 'assets.user') || []), ...(selectFrom(state, 'assets.other') || [])],
+    assetEvidence: assetEvidenceOfState(state),
+    sourceRefreshes: selectFrom(state, 'process.sourceRefreshes') || NO_REFRESHES,
     earthEngineGeneration: earthEngineGeneration(state)
 })
+
+const NO_REFRESHES = Object.freeze({})
 
 // The credential container is replaced when Google credentials change, so its identity is an invalidation epoch. It is
 // numbered by identity, so nothing compares, retains or publishes what it contains.
@@ -41,10 +49,21 @@ export const outdatedBasis = (basis, {recipe, sourceKey, session}) =>
     basis.key !== sourceKey
     || !sameSelections(declaredSelections(recipe), basis.selections)
     || basis.earthEngineGeneration !== session.earthEngineGeneration
+    || basis.refreshed !== recipeRefreshes(session, recipe?.id)
+    || (Number.isFinite(basis.expiresAt) && session.now >= basis.expiresAt)
     || basis.dependencies.some(dependency => dependencyChanged(dependency, session))
 
-export const assetVersion = ({assetVersions}, assetId) =>
-    assetVersions.find(({id}) => id === assetId)?.updateTime
+// The token the session knows for an asset: undefined before any read answered, null for a source without one.
+export const assetVersion = ({assetEvidence = {}}, assetId) => {
+    const entry = assetEvidence[assetId]
+    return !entry || entry.checkedAt === null ? undefined : entry.version
+}
+
+export const isUnversionedAsset = ({assetEvidence = {}}, assetId) => Boolean(assetEvidence[assetId]?.unversioned)
+
+export const assetRefreshes = ({sourceRefreshes = {}}, assetId) => sourceRefreshes.assets?.[assetId] || 0
+
+export const recipeRefreshes = ({sourceRefreshes = {}}, recipeId) => sourceRefreshes.recipes?.[recipeId] || 0
 
 export const publishedRevision = ({catalogue}, id) =>
     catalogue.find(summary => summary.id === id)?.revision
@@ -52,9 +71,9 @@ export const publishedRevision = ({catalogue}, id) =>
 const GENERATIONS = new WeakMap()
 let generations = 0
 
-const dependencyChanged = ({id, assetId, used, seeded, version}, session) => {
+const dependencyChanged = ({id, assetId, used, seeded, version, refreshed}, session) => {
     if (assetId) {
-        return moved(version, assetVersion(session, assetId))
+        return moved(version, assetVersion(session, assetId)) || refreshed !== assetRefreshes(session, assetId)
     }
     const record = session.loadedRecipes[id]
     const observed = used !== undefined || seeded !== undefined

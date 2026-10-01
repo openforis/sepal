@@ -15,7 +15,15 @@ import createSliceType from './ccdcSlice'
 import {outputBandsOf} from './sliceEvidence'
 
 const assetMetadata$ = vi.hoisted(() => vi.fn())
-vi.mock('~/apiRegistry', () => ({default: {gee: {assetMetadata$}}}))
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: '1'}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {gee: {
+        assetMetadata$,
+        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: versions.current}))})
+    }}}
+})
 vi.mock('~/app/home/map/map', () => ({Map: ({children}) => children}))
 vi.mock('../aoi', () => ({Aoi: () => null}))
 vi.mock('../recipeImageLayerSource', () => ({initializeLayers: () => {}}))
@@ -28,7 +36,10 @@ let root
 const sliceType = createSliceType()
 addRecipeType(sliceType)
 
-beforeEach(() => assetMetadata$.mockReset())
+beforeEach(() => {
+    assetMetadata$.mockReset()
+    versions.current = '1'
+})
 afterEach(() => {
     if (root) {
         act(() => root.unmount())
@@ -54,6 +65,7 @@ describe('opening a saved Slice', () => {
         expect(outputBandsOf(currentRecipe())).toEqual([])
         assetMetadata$.mockReturnValue(of(segmentMetadata()))
 
+        versions.current = '2'
         act(() => actionBuilder('ASSET_UPDATED')
             .set('assets.user', [{id: ORIGINAL_ASSET.id, updateTime: '2'}])
             .dispatch())

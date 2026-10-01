@@ -24,6 +24,12 @@ const listed = vi.hoisted(() => ({recipes: []}))
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
+        assetVersions$: ({ids}) => ({
+            subscribe: ({next}) => {
+                next({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                return {unsubscribe: () => {}}
+            }
+        }),
         bands$: args => {
             geeReads.push(args)
             const answer = observed.answer?.(args)

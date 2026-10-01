@@ -9,6 +9,14 @@ import {Notifications} from '~/widget/notifications'
 
 import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
 import {CURRENT, EXPIRED, listingAuthority, WAITING} from '../recipeListing'
+import {
+    assetAuthority,
+    assetEvidenceOfState,
+    CURRENT as ASSET_CURRENT,
+    DEFAULT_ASSET_POLICY,
+    EXPIRED as ASSET_EXPIRED,
+    WAITING as ASSET_WAITING
+} from '../sourceRuntime/assetEvidence'
 import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
@@ -27,6 +35,13 @@ import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitte
 // (draftAgreement.js): a save still in flight is waited for, and anything else - a save unconfirmed past its bound, refused, conflicting or unresolved, a newer revision in
 // storage, or a draft never saved - blocks, named by its own code. The recipe itself is submitted as it is, so its own
 // draft needs no saving. Being open is no reason to block.
+//
+// Likewise for the assets the description was established from - those its closure read (assetEvidence.js): their
+// evidence must have been read within its authority, with nothing since found missing, failing or made stale by a
+// mutation. A read in flight is waited for; evidence expired or failed blocks, naming the asset. A source without a
+// token reports no change, so a description read from one authorizes nothing once it is `unversionedMaxAgeMs` old,
+// until it is refreshed; the description and its drawing stay as they are. Assets that only supply pixels establish
+// nothing an export is authorized by, and execution resolves its own inputs.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -49,6 +64,9 @@ export const INCOMPATIBLE_DESTINATION = 'INCOMPATIBLE_DESTINATION'
 export const REVISIONS_PENDING = 'REVISIONS_PENDING'
 export const REVISIONS_EXPIRED = 'REVISIONS_EXPIRED'
 export const REVISIONS_UNAVAILABLE = 'REVISIONS_UNAVAILABLE'
+export const ASSETS_PENDING = 'ASSETS_PENDING'
+export const ASSETS_EXPIRED = 'ASSETS_EXPIRED'
+export const ASSETS_UNAVAILABLE = 'ASSETS_UNAVAILABLE'
 
 // The recipe, its output read, and whether that read is still being loaded, from one state of the session.
 // `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
@@ -60,11 +78,15 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, now = Date.now()})
     }
     const graph = buildMapDependencyGraph({recipe, loadedRecipes})
     const output = readRecipeOutput({
-        recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor, currency: recordStalenessOfState(state)
+        recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor, currency: recordStalenessOfState(state),
+        assetEvidence: assetEvidenceOfState(state)
     })
     const held = output.acquisition && heldFor(output.acquisition.key)
     const pending = Boolean(output.acquisition) && !held
-    const gate = output.status === READY && authorityGate({state, recipe, graph, basis: held?.basis || [], now})
+    const gate = output.status === READY
+        && authorityGate({
+            state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null, now
+        })
     return gate
         ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
         : {recipe, graph, output, pending}
@@ -167,7 +189,7 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
 
 // Why the description may not authorize an export now, if it may not: {wait, code, recipeId}. A wait comes after
 // every block, so nothing that blocks is reported as pending.
-const authorityGate = ({state, recipe, graph, basis, now}) => {
+const authorityGate = ({state, recipe, graph, basis, assets, observedAt, now}) => {
     const listing = listingAuthority({listingState: selectFrom(state, 'process.recipeListing'), now})
     if (listing !== CURRENT) {
         return listing === WAITING
@@ -189,14 +211,27 @@ const authorityGate = ({state, recipe, graph, basis, now}) => {
             })
         }))
         .filter(({code}) => code !== AGREED)
-    const blocking = drafts.find(({code}) => code !== SAVE_PENDING)
-    return blocking
-        ? {wait: false, ...blocking}
-        : drafts.length ? {wait: true, ...drafts[0]} : null
+        .map(draft => ({...draft, wait: draft.code === SAVE_PENDING}))
+    const evidence = assetEvidenceOfState(state)
+    const unversionedTooOld = assetId => evidence[assetId]?.unversioned && observedAt !== null
+        && now - observedAt >= DEFAULT_ASSET_POLICY.unversionedMaxAgeMs
+    const unauthorized = assets
+        .map(assetId => ({
+            assetId,
+            authority: unversionedTooOld(assetId) ? ASSET_EXPIRED : assetAuthority(evidence[assetId], {now})
+        }))
+        .filter(({authority}) => authority !== ASSET_CURRENT)
+        .map(({assetId, authority}) => ({
+            assetId,
+            wait: authority === ASSET_WAITING,
+            code: authority === ASSET_WAITING ? ASSETS_PENDING : authority === ASSET_EXPIRED ? ASSETS_EXPIRED : ASSETS_UNAVAILABLE
+        }))
+    const reasons = [...drafts, ...unauthorized]
+    return reasons.find(({wait}) => !wait) || reasons[0] || null
 }
 
 // The description is withheld: waited for as one still being loaded, or blocked as one that could not be had.
-const withheld = (output, {wait, code, recipeId}) => ({
+const withheld = (output, {wait, code, recipeId, assetId}) => ({
     ...output,
     status: wait ? NEEDS_EVIDENCE : UNAVAILABLE,
     authority: null,
@@ -204,7 +239,7 @@ const withheld = (output, {wait, code, recipeId}) => ({
     bands: [],
     presentation: {},
     availableBands: {},
-    diagnostics: [{code, ...(recipeId && {recipeId})}]
+    diagnostics: [{code, ...(recipeId && {recipeId}), ...(assetId && {assetId})}]
 })
 
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>

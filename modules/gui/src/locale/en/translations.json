@@ -394,7 +394,9 @@
   "gee": {
     "asset": {
       "error": {
-        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
+        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}.",
+        "invalidIds": "At most {max} asset ids can be checked at once.",
+        "notFound": "Asset not found: {asset}"
       }
     },
     "classification": {
@@ -938,6 +940,15 @@
     },
     "interactionMode": {
       "chart": "Click the map to chart a pixel"
+    },
+    "layerSource": {
+      "refresh": {
+        "tooltip": "Refresh: read the sources this layer draws from again",
+        "failed": "Unable to refresh the layer sources"
+      },
+      "checking": "Checking asset…",
+      "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+      "failing": "Earth Engine could not be reached. The drawing may be out of date."
     }
   },
   "featureLayerSources": {
@@ -981,7 +992,6 @@
   "imageLayerSources": {
     "Asset": {
       "refresh": {
-        "tooltip": "Refresh asset",
         "failed": "Unable to refresh asset"
       },
       "label": "EE Asset",
@@ -4959,6 +4969,13 @@
       "tooltip": "Retrieve recipe",
       "error": {
         "imageOutput": "Unable to determine the export requirements for this recipe. Please try again, and check that the recipes it depends on are available."
+      },
+      "assets": {
+        "checking": "Checking asset…",
+        "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+        "failing": "Asset {asset} could not be checked. Earth Engine could not be reached.",
+        "expired": "The assets this recipe reads have not been checked recently.",
+        "retry": "Refresh"
       }
     },
     "saveRecipe": {

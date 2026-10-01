@@ -12,6 +12,8 @@ import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {googleProjectId} from '~/user'
 
+import {assetsMutated} from './assetMutations'
+
 const log = getLogger('assets')
 
 const MAX_RECENT_ASSETS = 20
@@ -158,6 +160,7 @@ class _Assets extends React.Component {
         const {tree} = this.props
         this.setAssetTree(AssetTree.createFolder(tree, path))
         this.userAssets.upstream$.next({createFolder: path})
+        assetsMutated([path])
     }
 
     updateAsset({asset}) {

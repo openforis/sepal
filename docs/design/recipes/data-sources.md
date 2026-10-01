@@ -281,9 +281,12 @@ In order, each independently mergeable:
      refreshed while outputs are watched; drafts are never replaced, and Retrieve waits for or refuses a dependency
      draft storage does not hold. Band observations are shared by what Earth Engine evaluates
      ([contract](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)).
-   - **Packet 3, contract review pending:** asset freshness, independent preview redraw signaling and retirement of
-     source evidence as a change signal. Unchanged collection metadata is not proof of unchanged contents. Review
-     age-based refresh, polling scope and intervals before implementation, including public collections.
+   - **Packet 3, implemented:** asset evidence for every active consumer - a metadata `updateTime` token, polled while
+     visible, invalidated by this session's mutations and by failures naming an asset - withdraws descriptions and
+     export authority it supersedes, and redraws only what an asset change, an input change or an explicit Refresh
+     requires; elapsed time, unchanged checks, replaced credentials and transient failures keep existing drawings.
+     Source evidence is no longer a change signal
+     ([contract](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)).
    Description loading and refresh are distinct from satellite acquisitions. Reuse the existing runtime and pure
    read contracts, with no recipe-specific caches. Schema, structural validity and execution requirements remain
    separate; no unused requirements resource or readiness framework is introduced here. A reused description does
@@ -292,13 +295,16 @@ In order, each independently mergeable:
    rejects outdated authority before component effects run. Refresh failure never authorizes stale options.
    Persisted calculation freshness and coherent execution remain later milestones. Websocket revision events are
    optional latency improvements; correctness must not depend on notification delivery.
-2. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+2. **Task-driven asset invalidation**, the next integration: exports report the assets they changed, through the
+   user-assets service, to the asset evidence of every session showing them
+   ([route proposed, pending review](#task-driven-asset-invalidation)).
+3. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
    boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
    [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
-3. **Declarative dependency evaluation**, starting with the
+4. **Declarative dependency evaluation**, starting with the
    [Band Math chain](#later-follow-up-band-math-dependencies).
-4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
+5. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
    Include band-presentation inheritance: producers supply labels and optional descriptions through GUI
@@ -311,10 +317,10 @@ In order, each independently mergeable:
    Keep semantic facts separate from consumer decisions: a band may state that it represents an observation date,
    while CCDC owns whether that quantity is suitable for fitting. Scalar or integer shape alone does not establish
    an appropriate pyramiding policy.
-5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
-6. **Caller-authorized closure reads and coherent execution**
+6. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
+7. **Caller-authorized closure reads and coherent execution**
    ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
-7. **Source planning and the temporal collection composer**, following the
+8. **Source planning and the temporal collection composer**, following the
    [research plan](output-products.md#research-plan).
 
 Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
@@ -970,7 +976,9 @@ band's multiplier. Other producers, export destinations, charts and legends adop
 
 ### Task-driven asset invalidation
 
-Connect task completion to the shared asset-freshness design in a separate packet.
+Promoted to the next integration after packet 3 ([following work](#following-work)); the cross-service route is
+proposed and awaits review before implementation. Asset evidence already takes known mutations from the session
+(`assets.mutation`), with follow-up reads for Earth Engine's propagation delay.
 
 - Exporters report actual affected asset IDs to shared asset invalidation, without knowing which recipes or
   layers consume them. Invalidate when a destination may have changed and recheck after success, failure or

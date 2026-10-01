@@ -10,6 +10,7 @@ import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {assetsMutated} from '~/widget/assetMutations'
 import {AssetReloadButton} from '~/widget/assetReloadButton'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
@@ -207,6 +208,7 @@ class _AssetBrowser extends React.Component {
             } else {
                 this.setState({tree: AssetTree.createFolder(tree, path)})
                 this.create(path)
+                assetsMutated([path])
                 return true
             }
         }
@@ -216,6 +218,7 @@ class _AssetBrowser extends React.Component {
     removePaths(paths) {
         this.setState(({tree}) => ({tree: AssetTree.setRemoving(tree, paths)}))
         this.remove(paths)
+        assetsMutated(paths)
     }
 
     removeSelected() {

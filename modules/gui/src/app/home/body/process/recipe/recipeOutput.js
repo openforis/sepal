@@ -4,8 +4,10 @@ import {NEEDS_EVIDENCE, readImageOutput, READY} from '#sepal/recipe/output/readI
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
+import {RECIPE_REF} from '#sepal/recipe/source/reference'
 
 import {getRecipeType} from '../recipeTypeRegistry'
+import {isDefinitiveFailure} from '../sourceRuntime/assetEvidence'
 import {recordCurrency} from '../sourceRuntime/recordCurrency'
 import {SOURCE_REVISION_BEHIND} from '../sourceRuntime/sourceRuntimeError'
 import {IMAGE_OUTPUT} from './layerProduct'
@@ -23,6 +25,8 @@ import {recipeContent} from './recipeContent'
 //   availableBands      the two joined by name, in the shape selectors and presets filter against
 //   dependencyValidity  whether the whole closure is structurally sound; null while unknown
 //   acquisition         {kind, key} of the description loading the answer still needs, or null
+//   assets              every asset the answer reads: those its session graph reaches, and those the held terminal's
+//                       closure read
 //
 // The session's loaded records are read first. A record it lacks is ordinary lazy loading, never a deletion. Where
 // that answer needs a record or an observation, or its closure is incomplete so its validity is unknown, the runtime
@@ -37,6 +41,10 @@ import {recipeContent} from './recipeContent'
 // An answer comes from one snapshot. A retained DESCRIBE terminal answers description and validity together. A
 // DEPENDENCIES terminal answers validity beside a map-product answer, which reads nothing but the root recipe -
 // including its runtime evidence - so the terminal's basis proves it read that same root.
+//
+// An asset the answer reads that a read found missing, or unreadable under these credentials (assetEvidence.js), makes
+// it UNAVAILABLE, naming the asset - an answer described from configuration alone included, since its pixels are
+// still read from it. The assets read are those the session graph reaches and those the held terminal's closure read.
 
 export {IMAGE_OUTPUT, layerProduct, productArgs} from './layerProduct'
 export {NEEDS_EVIDENCE, READY} from '#sepal/recipe/output/readImageOutput'
@@ -48,21 +56,32 @@ export const DESCRIBE = 'DESCRIBE'
 export const DEPENDENCIES = 'DEPENDENCIES'
 export const REFRESH = 'REFRESH'
 export const UNKNOWN_PRODUCT = 'UNKNOWN_PRODUCT'
+export const ASSET_UNAVAILABLE = 'ASSET_UNAVAILABLE'
 
-export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, currency = null}) => {
+export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, currency = null, assetEvidence = {}}) => {
     const refresh = currency && refreshing({graph, currency, heldFor})
     if (refresh) {
-        return refresh
+        return {...refresh, assets: graphAssets(graph)}
     }
     const session = sessionAnswer({recipe, product, graph})
     const kind = session.acquisition
     const acquisition = kind ? {kind, key: acquisitionKey(kind, graph)} : null
     const held = acquisition && heldFor(acquisition.key)
+    const assets = _.uniq([...graphAssets(graph), ...(held?.assets || [])]).sort()
+    const missing = assets.find(id => isDefinitiveFailure(assetEvidence[id]))
+    if (missing) {
+        return {...answer({status: UNAVAILABLE, diagnostics: [{code: ASSET_UNAVAILABLE, assetId: missing}]}), acquisition, assets}
+    }
     return {
         ...(held ? heldAnswer({recipe, product, session, kind, terminal: held}) : session),
-        acquisition
+        acquisition,
+        assets
     }
 }
+
+// The assets the session graph reaches.
+export const graphAssets = graph =>
+    _.uniq(graph.edges.filter(({reference: {type}}) => type !== RECIPE_REF).map(({reference: {id}}) => id)).sort()
 
 // What a watched question needs loaded, from the same graph and read its consumers render from: the acquisition with
 // the recipe, graph and session records it names, or null when the session answers on its own or holds no such

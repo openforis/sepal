@@ -48,6 +48,15 @@ export default {
             }
         }),
 
+    // Each asset's change token, read from its metadata alone (modules/gee/src/jobs/ee/asset/versions.js).
+    assetVersions$: ({ids}) =>
+        postJson$('/api/gee/assetVersions', {
+            body: {ids},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {
             body: {asset, recipe},

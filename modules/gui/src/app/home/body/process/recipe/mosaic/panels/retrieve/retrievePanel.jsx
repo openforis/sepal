@@ -82,6 +82,12 @@ const fields = {
 const REQUEST_CHOICES = 'REQUEST_CHOICES'
 const LOADING_CHOICES = 'LOADING_CHOICES'
 const UNRESOLVED_CHOICES = 'UNRESOLVED_CHOICES'
+
+const ASSET_MESSAGES = {
+    ASSET_UNAVAILABLE: 'process.retrieve.assets.unavailable',
+    ASSETS_UNAVAILABLE: 'process.retrieve.assets.failing',
+    ASSETS_EXPIRED: 'process.retrieve.assets.expired'
+}
 const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
 
 // A resolution that answers almost at once would otherwise replace the opening view before it could be read.
@@ -401,7 +407,7 @@ class _MosaicRetrievePanel extends React.Component {
             return null
         }
         if (status === UNRESOLVED_CHOICES) {
-            return this.renderBandsMessage(msg('process.retrieve.error.imageOutput'), 'triangle-exclamation')
+            return this.renderUnresolved()
         }
         if (!choices?.length) {
             return null
@@ -455,6 +461,29 @@ class _MosaicRetrievePanel extends React.Component {
                     )
                     : null}
             </Layout>
+        )
+    }
+
+    // Why the output could not be established, naming an asset where one is the reason, with a way to try again.
+    renderUnresolved() {
+        const {retrieveOutput, refreshRetrieveOutput} = this.props
+        const diagnostic = retrieveOutput?.output?.diagnostics?.find(({assetId}) => assetId)
+        const text = diagnostic
+            ? msg(ASSET_MESSAGES[diagnostic.code] || 'process.retrieve.assets.unavailable', {asset: diagnostic.assetId})
+            : msg('process.retrieve.error.imageOutput')
+        return (
+            <Widget label={msg('process.retrieve.form.bands.label')} framed>
+                <Layout spacing='compact'>
+                    <Message type='info' icon='triangle-exclamation' text={text}/>
+                    {refreshRetrieveOutput
+                        ? <Button
+                            icon='rotate'
+                            label={msg('process.retrieve.assets.retry')}
+                            onClick={() => refreshRetrieveOutput()}
+                        />
+                        : null}
+                </Layout>
+            </Widget>
         )
     }
 

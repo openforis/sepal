@@ -33,14 +33,6 @@ export const segmentDescription = recipe => {
 export const hasSegmentDescription = recipe =>
     !!segmentDescription(recipe).description
 
-// An O(1) identity for the description being presented: it changes when another observation is accepted for
-// the selected source, and that is when anything derived from the previous one has to be discarded.
-export const segmentDescriptionGeneration = recipe => {
-    const evidence = recipe?.ui?.sourceEvidence
-    const key = sourceKeyOf(selectedReference(recipe))
-    return key && evidence?.sourceKey === key ? evidence.observation ?? null : null
-}
-
 export const segmentBandsOf = recipe =>
     segmentDescription(recipe).description?.bands || []
 

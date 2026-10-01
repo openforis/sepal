@@ -24,6 +24,12 @@ vi.mock('~/apiRegistry', async () => {
     return {
         default: {
             gee: {
+                assetVersions$: ({ids}) => ({
+                    subscribe: ({next}) => {
+                        next({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                        return {unsubscribe: () => {}}
+                    }
+                }),
                 bands$: params => {
                     state.bandsCalls.push(params)
                     const key = params.asset ? `ASSET:${params.asset}` : `RECIPE_REF:${params.recipe?.id}`
@@ -169,9 +175,13 @@ const observing = ({environment$, recipe, createObserver}) => {
     }
 }
 
+// When a description's closure was read: a time once it was, null otherwise.
+const READ_AT = {asymmetricMatch: value => value === null || Number.isFinite(value), toString: () => 'READ_AT'}
+
 const envelope = ({
-    status, description = null, diagnostics = [], error = null, dependencyValidity = null, basis = expect.any(Array)
-}) => ({status, description, diagnostics, error, dependencyValidity, basis})
+    status, description = null, diagnostics = [], error = null, dependencyValidity = null, basis = expect.any(Array),
+    assets = expect.any(Array), observedAt = READ_AT
+}) => ({status, description, diagnostics, error, dependencyValidity, basis, assets, observedAt})
 
 const completing = ({environment$, recipe}) => {
     const runtime = createSourceRuntime({environment$})
@@ -558,7 +568,9 @@ describe('completing dependencies without describing', () => {
                 basis: [
                     {id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})},
                     {id: 'ccdc-1', content: expect.objectContaining({type: 'CCDC'})}
-                ]
+                ],
+                assets: expect.any(Array),
+                observedAt: null
             }
         ])
         expect(state.bandsCalls).toEqual([])
@@ -578,7 +590,9 @@ describe('completing dependencies without describing', () => {
             status: 'UNAVAILABLE',
             error: failure,
             dependencyValidity: expect.objectContaining({status: 'INVALID'}),
-            basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}]
+            basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}],
+            assets: expect.any(Array),
+            observedAt: null
         })
         expect(state.bandsCalls).toEqual([])
     })
@@ -595,7 +609,9 @@ describe('completing dependencies without describing', () => {
             status: 'UNAVAILABLE',
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             dependencyValidity: null,
-            basis: []
+            basis: [],
+            assets: [],
+            observedAt: null
         })
         expect(state.recipeTorndown).toEqual(['ccdc-1'])
     })
@@ -622,11 +638,10 @@ describe('what an operation read', () => {
                 content: {
                     id: 'masked-1',
                     type: 'MASKING',
-                    model: recipe.model,
-                    sourceEvidence: {sourceKey: 'RECIPE_REF:ccdc-1'}
+                    model: recipe.model
                 }
             },
-            {id: 'ccdc-1', content: {...ccdc(), sourceEvidence: undefined}}
+            {id: 'ccdc-1', content: ccdc()}
         ])
     })
 

@@ -13,10 +13,18 @@ import {initStore} from '~/store'
 // Mounts the real lifecycle and observation against a Redux store; remote reads and presentation are faked.
 const assetMetadata$ = vi.fn()
 const loadRecipe$ = vi.fn()
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {assetMetadata$: (...args) => assetMetadata$(...args)},
-    recipe: {load$: (...args) => loadRecipe$(...args)}
-}}))
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: 0}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            assetMetadata$: (...args) => assetMetadata$(...args),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
+        },
+        recipe: {load$: (...args) => loadRecipe$(...args)}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
@@ -313,12 +321,11 @@ const settled = () => act(async () => {})
 
 const assetStates = properties => assetMetadata$.mockReturnValue(of(assetMetadata(properties)))
 
-let assetVersion = 0
 const reExport = () => act(async () => store.dispatch({
     type: 'ASSET_RE_EXPORTED',
     reduce: state => ({
         ...state,
-        assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++assetVersion}`}], other: []}
+        assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++versions.current}`}], other: []}
     })
 }))
 

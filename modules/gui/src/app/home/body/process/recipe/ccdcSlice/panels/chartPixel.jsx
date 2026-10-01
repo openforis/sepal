@@ -4,6 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
@@ -17,6 +18,7 @@ import {withRecipe} from '../../../recipeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {pixelGenerationOfState} from '../../pixelGeneration'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import {baseBandsOf, dateFormatOf} from '../sliceEvidence'
 import styles from './chartPixel.module.css'
@@ -30,9 +32,6 @@ const mapRecipeToProps = recipe => ({
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: dateFormatOf(recipe),
     baseBands: baseBandsOf(recipe),
-    // Which observation of the source the chart's segments belong to. A later one means the pixels may
-    // have moved, which no comparison of what the source DESCRIBES would show.
-    observation: selectFrom(recipe, 'ui.sourceEvidence.observation'),
     dateType: selectFrom(recipe, 'model.date.dateType'),
     date: selectFrom(recipe, 'model.date.date'),
     startDate: selectFrom(recipe, 'model.date.startDate'),
@@ -159,7 +158,7 @@ class _ChartPixel extends React.Component {
     }
 
     updateChart(prevProps) {
-        const {baseBands, observation, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {baseBands, pixels, stream, recipe, latLng, inputs: {selectedBand}} = this.props
         const band = resolveChartBand(selectedBand.value, baseBands.map(({name}) => name))
 
         if (!latLng || !band || band !== selectedBand.value) {
@@ -170,12 +169,11 @@ class _ChartPixel extends React.Component {
             return
         }
 
-        // Reloaded when what is asked changes AND when the source has been read again: runtime evidence can
-        // move without the model moving, and a chart drawn before that goes on plotting the pixels and the
-        // date representation the source no longer has.
+        // Reloaded when what is asked changes AND when the pixels may have moved without the model moving: a chart
+        // drawn before that goes on plotting pixels the source no longer has.
         if (!prevProps || !_.isEqual(
-            [recipe.model, observation, latLng, band],
-            [prevProps.recipe.model, prevProps.observation, prevProps.latLng, prevProps.inputs.selectedBand.value])
+            [recipe.model, pixels, latLng, band],
+            [prevProps.recipe.model, prevProps.pixels, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
             this.clearData()
             stream('LOAD_CCDC_SEGMENTS',
@@ -206,8 +204,15 @@ class _ChartPixel extends React.Component {
     }
 }
 
+// What the chart's pixels were read from beyond the recipe: a change means they may have moved, which no comparison of
+// what the source DESCRIBES would show (pixelGeneration.js).
+const mapStateToProps = (state, {recipeId}) => ({
+    pixels: pixelGenerationOfState(state, recipeId)
+})
+
 export const ChartPixel = compose(
     _ChartPixel,
+    connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

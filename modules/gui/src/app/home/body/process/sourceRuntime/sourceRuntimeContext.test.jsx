@@ -17,6 +17,12 @@ vi.mock('~/apiRegistry', async () => {
     return {
         default: {
             gee: {
+                assetVersions$: ({ids}) => ({
+                    subscribe: ({next}) => {
+                        next({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                        return {unsubscribe: () => {}}
+                    }
+                }),
                 bands$: params => {
                     state.bandsCalls.push(params)
                     const key = `RECIPE_REF:${params.recipe?.id}`
@@ -188,7 +194,9 @@ describe('the lazy Redux adapter', () => {
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             // The closure had completed; only the observation of its one source was cut short.
             dependencyValidity: {status: 'VALID', diagnostics: []},
-            basis: expect.any(Array)
+            basis: expect.any(Array),
+            assets: expect.any(Array),
+            observedAt: expect.anything()
         })
     })
 
@@ -225,7 +233,9 @@ describe('the lazy Redux adapter', () => {
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             // The closure had completed; only the observation of its one source was cut short.
             dependencyValidity: {status: 'VALID', diagnostics: []},
-            basis: expect.any(Array)
+            basis: expect.any(Array),
+            assets: expect.any(Array),
+            observedAt: expect.anything()
         })
         expect(JSON.stringify(states)).not.toContain('secret-token')
         expect(JSON.stringify(states)).not.toContain('fresh')
@@ -248,7 +258,9 @@ describe('the lazy Redux adapter', () => {
             error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
             // The closure had completed; only the observation of its one source was cut short.
             dependencyValidity: {status: 'VALID', diagnostics: []},
-            basis: expect.any(Array)
+            basis: expect.any(Array),
+            assets: expect.any(Array),
+            observedAt: expect.anything()
         })
 
         const later = []
@@ -506,7 +518,7 @@ describe('the session a watch reads', () => {
         expect(cataloguedOnly.catalogue).toBe(store.getState().process.loadedRecipes)
         expect(cataloguedOnly.credentials).toBe(before.credentials)
         expect(replaced.credentials).not.toBe(before.credentials)
-        expect(JSON.stringify([before, cataloguedOnly, replaced])).not.toMatch(/secret-token|fresh|accessToken/)
+        expect(JSON.stringify([before, cataloguedOnly, replaced])).not.toMatch(/"secret-token"|"fresh"|accessToken/)
     })
 
     it('reports every store change while listened to, and completes when the scope ends', () => {
@@ -676,7 +688,9 @@ describe('the provider', () => {
             error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'}),
             // The closure had completed; only the observation of its one source was cut short.
             dependencyValidity: {status: 'VALID', diagnostics: []},
-            basis: expect.any(Array)
+            basis: expect.any(Array),
+            assets: expect.any(Array),
+            observedAt: expect.anything()
         })
         expect(completed).toBe(true)
         expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])

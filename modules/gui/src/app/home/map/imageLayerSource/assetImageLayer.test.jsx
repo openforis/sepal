@@ -9,6 +9,7 @@ import {actionBuilder} from '~/action-builder'
 import {getImageLayerSource} from '~/app/home/body/process/imageLayerSourceRegistry'
 import {registerImageLayerSources} from '~/app/home/body/process/imageLayerSources'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
@@ -18,22 +19,30 @@ import {TabContext} from '~/widget/tabs/tabContext'
 import {MapAreaContext} from '../mapAreaContext'
 import {toVisualizations} from './assetVisualizationParser'
 
-const {assetMetadata$, preview$} = vi.hoisted(() => ({assetMetadata$: vi.fn(), preview$: vi.fn()}))
-vi.mock('~/apiRegistry', () => ({default: {gee: {assetMetadata$, preview$}}}))
+const {assetMetadata$, preview$, assetVersions$} = vi.hoisted(() => ({
+    assetMetadata$: vi.fn(), preview$: vi.fn(), assetVersions$: vi.fn()
+}))
+vi.mock('~/apiRegistry', () => ({default: {
+    gee: {assetMetadata$, preview$, assetVersions$},
+    recipe: {loadAll$: () => NEVER, load$: () => NEVER}
+}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-// Only map/menu placement and unrelated overlays are omitted. The layer, selector, Combo, Redux,
-// MapAreaLayout and EarthEngineImageLayer request/cancellation path are real.
+// Only map/menu placement and unrelated overlays are omitted. The layer, selector, Combo, Redux, the source runtime that
+// keeps the asset's evidence, MapAreaLayout and EarthEngineImageLayer request/cancellation path are real.
 vi.mock('~/widget/split/splitOverlay', () => ({SplitOverlay: ({children}) => children}))
 vi.mock('../mapAreaMenu', () => ({MapAreaMenu: ({form}) => form}))
 vi.mock('../featureLayers', () => ({FeatureLayers: () => null}))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-let root, container, store, remoteMetadata, activePreviews
+let root, container, store, remoteMetadata, remoteVersion, activePreviews
 
 beforeEach(() => {
     vi.spyOn(Notifications, 'error').mockImplementation(() => {})
     assetMetadata$.mockReset().mockImplementation(() => of(remoteMetadata))
+    remoteVersion = 'original'
+    // The token Earth Engine reports for the asset now, answered at once.
+    assetVersions$.mockReset().mockImplementation(({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: remoteVersion}))}))
     activePreviews = 0
     preview$.mockReset().mockImplementation(() => defer(() => {
         activePreviews++
@@ -163,6 +172,50 @@ describe('an asset replaced while its Map Layers layer stays open', () => {
     })
 })
 
+describe('a check of the asset', () => {
+    it('finding it missing withholds the layer and names the asset, and finding it again draws it again', async () => {
+        remoteMetadata = metadata(['red'])
+        const selected = openLayer()
+        expect(activePreviews).toBe(1)
+
+        assetVersions$.mockImplementationOnce(({ids}) => of({assets: ids.map(id => ({id, failure: {kind: 'DEFINITIVE', code: 'NOT_FOUND'}}))}))
+        await catalogue([])
+
+        expect(activePreviews).toBe(0)
+        expect(labelWarnings()).toBe(1)
+        expect(selection()).toEqual(selected)
+        await catalogue([{id: assetId, type: 'Image', updateTime: 'original'}])
+
+        expect(activePreviews).toBe(1)
+        expect(labelWarnings()).toBe(0)
+    })
+
+    it('under replaced credentials reads its metadata again and keeps what is drawn, though drawn after a change', async () => {
+        remoteMetadata = metadata(['red'])
+        openLayer()
+        await signalAssetChange('changed')
+        expect(preview$).toHaveBeenCalledTimes(2)
+
+        await act(async () => actionBuilder('CREDENTIALS').set('user.currentUser.googleTokens', {accessToken: 'renewed'}).dispatch())
+
+        expect(assetMetadata$).toHaveBeenCalledTimes(3)
+        expect(preview$).toHaveBeenCalledTimes(2)
+        expect(activePreviews).toBe(1)
+    })
+
+    it('that cannot reach Earth Engine keeps what is drawn and says so', async () => {
+        remoteMetadata = metadata(['red'])
+        openLayer()
+
+        assetVersions$.mockImplementationOnce(() => throwError(() => new Error('Service unavailable')))
+        await catalogue([{id: assetId, type: 'Image', updateTime: 'unreachable'}])
+
+        expect(activePreviews).toBe(1)
+        expect(preview$).toHaveBeenCalledTimes(1)
+        expect(labelWarnings()).toBe(1)
+    })
+})
+
 const assetId = 'projects/test/assets/slice'
 const metadata = (bandNames, presetBands = bandNames) => ({
     type: 'Image', id: assetId, bandNames,
@@ -178,9 +231,18 @@ const metadata = (bandNames, presetBands = bandNames) => ({
 const selection = () => store.getState().process.loadedRecipes.map.layers.areas.main.imageLayer.layerConfig.visParams
 const previewBands = () => preview$.mock.calls.map(([{visParams}]) => visParams.bands)
 
-const signalAssetChange = updateTime => act(async () => actionBuilder('LOAD_ASSETS')
-    .set('assets.user', [{id: assetId, type: 'Image', updateTime}])
-    .dispatch())
+// The asset changes, and the asset catalogue lists its new updateTime.
+const signalAssetChange = updateTime => act(async () => {
+    remoteVersion = updateTime
+    actionBuilder('LOAD_ASSETS')
+        .set('assets.user', [{id: assetId, type: 'Image', updateTime}])
+        .dispatch()
+})
+
+const catalogue = assets => act(async () => actionBuilder('LOAD_ASSETS').set('assets.user', assets).dispatch())
+
+// Problems with the sources are shown on the selector's label, with what they are in a tooltip.
+const labelWarnings = () => container.querySelectorAll('[data-icon="triangle-exclamation"]').length
 
 const refreshButton = () => container.querySelector('[data-icon="rotate"]').closest('button')
 
@@ -235,16 +297,18 @@ const openLayer = ({custom, selectedBand = 'red'} = {}) => {
     }
     act(() => root.render(
         <Provider store={store}>
-            <PortalContainer/>
-            <EventShield>
-                <Recipe id='map'>
-                    <TabContext id='map' busyIn$={new Subject()} busyOut$={new Subject()}>
-                        <MapAreaContext mapArea={mapArea}>
-                            <SelectedLayer map={map}/>
-                        </MapAreaContext>
-                    </TabContext>
-                </Recipe>
-            </EventShield>
+            <SourceRuntimeProvider>
+                <PortalContainer/>
+                <EventShield>
+                    <Recipe id='map'>
+                        <TabContext id='map' busyIn$={new Subject()} busyOut$={new Subject()}>
+                            <MapAreaContext mapArea={mapArea}>
+                                <SelectedLayer map={map}/>
+                            </MapAreaContext>
+                        </TabContext>
+                    </Recipe>
+                </EventShield>
+            </SourceRuntimeProvider>
         </Provider>
     ))
     return selected

@@ -32,8 +32,7 @@ events and patch transport remain optional latency and transport improvements th
 
 ## Shared output description delivery
 
-Packets 1 and 2 are implemented; packet 3 is later work whose contract still needs review, as does the broader
-persisted-result and coherent-execution design below. Use **description loading** and **description refresh** for
+Packets 1 to 3 are implemented; the broader persisted-result and coherent-execution design below still needs review. Use **description loading** and **description refresh** for
 this work; acquisition also names a satellite observation in this application.
 
 ### Packet 1: shared watches and loading
@@ -141,22 +140,100 @@ deferred execution race.
 
 The browser describes dependency drafts while Earth Engine executes persisted dependencies. Sharing does not hide or
 resolve that: an incomplete observation is never reused, and Retrieve waits for or refuses a draft that storage does
-not hold. Recipe descriptions still name `ui.sourceEvidence` in their content key (packet 3). Masking's evidence
-reads presets only; its bands are its description's.
+not hold. Masking's evidence reads presets only; its bands are its description's.
 
-### Later packets
+### Packet 3: asset freshness and redraw signaling
 
-**Packet 3** reviews asset freshness, preview redraw signaling and removal of source evidence from content keys.
-A detected asset-version change invalidates immediately, but unchanged metadata need not establish unchanged
-contents. Collection `{updateTime, system:version, size}` can miss changes: membership can change while count and
-newest version remain the same. Age-based refresh must bound reuse where change evidence is incomplete. Public
-collections can receive historical corrections and backfills, so filtering by date does not justify refreshing only
-on reopen. Polling intervals and evidence-age limits remain undecided; the approved 60-second retention grace is
-not a freshness guarantee. No mutation probe is required for packet 1.
+What this session knows of the Earth Engine assets its consumers read decides whether a description is still about
+them, whether Retrieve may be authorized by it, and whether a preview must be drawn again. Description recomputation,
+structural dependency checks and pixel redraw keep separate triggers: an asset change never re-runs the dependency
+closure check, which reads recipes, not assets.
 
-Description recomputation, structural dependency checks and pixel redraw have separate triggers. Source evidence
-may stop acting as a pixel-change signal only after every affected consumer has a replacement. GUI presets and
-prefill still consume that evidence and must update without causing another band-metadata request.
+- **Evidence.** The source runtime holds, for the credentials it was read under, what is known of each asset an active
+  consumer reads (`process.assetEvidence`; `sourceRuntime/assetEvidence.js`). An asset's token is its metadata
+  `updateTime` exactly as the Cloud API reports it, read without any evaluation (`POST /api/gee/assetVersions`, at
+  most 50 ids, four at a time). Tokens are opaque and compared for equality only; a matching token is evidence, not
+  proof. A Cloud GeoTIFF (`gs://`) or an asset whose metadata carries no token is unversioned: it is answered
+  without a request and never fails merely for lacking a token. A missing asset and one these credentials may not
+  read are definitive failures, anything else transient; neither says anything beyond these credentials.
+- **Interest.** A watched output claims every asset its session graph reaches - an output described from configuration
+  alone included, since its pixels are still read from them - and every asset its work's closure read, records
+  loaded only for that work included (`assetInterest.js`). Evidence observers and direct asset layers claim their
+  own. `ASSET_BOUNDS` names no asset of its own; the owner's sources are tracked. Releasing the last claim stops
+  polling at once; the evidence is kept 60 seconds for a consumer reopening, then forgotten.
+- **Polling.** Claiming an asset, or the page becoming visible or reconnecting, reads evidence older than 60 seconds.
+  While claimed and the page is visible, evidence is read again 30 seconds before its 5-minute authority lapses - every
+  4.5 minutes - and the lapse itself is published. Nothing is polled while the page is hidden. Reads are batched across
+  consumers, and a failure is retried on the same interval, from a trigger or on an explicit refresh
+  (`assetRefresh.js`). Only the latest request issued for an asset is accepted, whatever order answers arrive in, and
+  nothing read under replaced credentials is: replacing them cancels every read in flight, keeps evidence per
+  credentials and reads every claimed asset once. Closing the runtime settles every read awaited and publishes nothing
+  after. A new
+  catalogue `updateTime`, or an asset gone from the asset catalogue, reads that asset at once.
+- **Known mutations.** An asset this session created, deleted or renamed, with the folder or collection holding it
+  (`assets.mutation`, written by the asset browser; `widget/assetMutations.js`), is stale at once: it authorizes
+  nothing until a read answers differently. It is read at once and again 3, 10 and 30 seconds later while nothing
+  different has been answered, since Earth Engine takes seconds to report a change, and then what was read stands. No
+  token is ever made up. Releasing the last claim on an asset ends its follow-up reads; claiming it again while its
+  evidence is still stale resumes them from the read due by then.
+- **Failures.** A description, preview or metadata read that failed naming an asset it read, or asking for bands an
+  image does not hold, reads that asset - or, for missing bands, every asset it read - again, at most once per 5 minutes
+  unless its token changes meanwhile (`assetFailure.js`). An expression error, an invalid configuration or any other
+  failure reads nothing. A changed token withdraws the failed answer with the rest, so it recovers by itself; an
+  unchanged one leaves the failure held, recoverable by an explicit refresh. The read is only a check: what it answers
+  decides whether the asset is missing, not the failure's wording.
+- **Description currency.** A describing work records the assets its closure read, with the token known then, beside
+  its recipe ledger (`sourceCurrency.js`). A different token, a token change seen after it was read, a definitive
+  failure or an explicit refresh of the asset or of the output withdraws it in the dispatch that reports it, and
+  observation keys carry the same tokens and refreshes, so nothing kept is reused. An explicit refresh of an output is
+  identified by its recipe as well as its count, so one recipe's refresh never reuses what another's observed; outputs
+  never refreshed still share observations. Nothing is observed again for
+  age alone. An asset found missing makes every answer reading it UNAVAILABLE (`ASSET_UNAVAILABLE`), including one
+  described from configuration alone.
+- **Retrieve.** Authorized, in addition, only while the evidence of every asset the held description's closure read
+  is under 5 minutes old and neither failing nor stale. A source without a token reports no change, so a description
+  read from one authorizes nothing once it was read 30 minutes ago, until it is refreshed. A read in flight is waited
+  for (`ASSETS_PENDING`); expired or failed evidence blocks (`ASSETS_EXPIRED`, `ASSETS_UNAVAILABLE`), naming the asset,
+  and Apply decides from the same read. Assets supplying only pixels establish nothing an export is authorized by. Task resolves its own inputs;
+  nothing here claims its pixels match, or validates browser-supplied policies.
+- **Drawings.** A drawing stays until there is a reason to change its content: a change to a record it computes, to
+  how it is visualized, or to an asset it reads - a token differing from one read before, not the first token
+  learned (`recipe/pixelGeneration.js`) - or an explicit refresh. Nothing redraws for elapsed time, for a check or
+  observation that found nothing changed, for replaced credentials - which change how later requests authenticate,
+  not the pixels shown - or for a check, metadata read or description that failed for now: the drawing is kept while
+  its answer is read again or cannot be had, as long as nothing it was drawn from changed. A drawing kept authorizes
+  nothing; band choices, editors and Retrieve follow the read. An asset found missing withholds it. A change no source
+  reports - a public collection the recipe types read implicitly being reprocessed, a fixed implementation asset, a
+  rewritten Cloud GeoTIFF - stays unseen until an explicit refresh. Pixel charts over segments follow the same rule.
+- **Explicit refresh.** Recipe and direct asset layers offer Refresh in the visualization selector, and Retrieve offers
+  it when blocked. It reads the metadata of every asset the question reads, then observes again, reads presentation
+  evidence again and draws again, unchanged tokens notwithstanding (`process.sourceRefreshes`). A refresh in progress
+  for the same question or asset is joined. `retryOutput` still only retries a failed answer.
+- **Presentation.** The selector says "Checking asset…" while a failed or stale asset is read again, names an asset
+  found missing - whose previews are withheld - and warns of one that could not be checked: its drawing is kept, the
+  visualization editor with its histograms and value legends is withheld, and cursor values, which read the drawn
+  tiles, continue. Retrieve names the asset and offers Refresh. A read reporting the same token again restores
+  authority without drawing again.
+- **Credentials.** Replaced credentials clear the asset evidence and the runtime's work as before, so nothing read
+  under the old ones authorizes anything; the session cannot tell a renewed token from another account, since both
+  replace the credential container. Logout and account-switch cleanup are the application's and unchanged.
+- **Evidence observers.** Presets, templates and prefill are read again when an asset's token changes, on an explicit
+  refresh, on a credential change, and 30 minutes after a read from an unversioned source, none of which redraws
+  anything (`sourceEvidenceSync.jsx`);
+  a token first learned after a read is no change. `ui.sourceEvidence` is presentation evidence only: it is in no
+  content, work, basis or preview key and carries no counter, and an observer over another recipe reads again when that
+  recipe's evidence content changes.
+
+A live probe on 2026-10-01 (a disposable collection in one user project, one-pixel images) observed the collection's
+own `updateTime` advance within 1.5 to 5.2 seconds for each of: a member added, a member deleted (not the newest, the
+newest and the last), a member deleted and recreated under its id with other bands and pixels, a member's properties
+edited and the collection's properties edited. A member's property edit gave the collection exactly the member's new
+`updateTime`. Not exercised: export with overwrite, copy, move or rename through the API, ACL changes, rewritten
+GeoTIFFs, ingestion into the public catalogue - whose members can carry the collection's own version - and anything
+beyond one project. These are untested, not known failures. Within the propagation delay a read can still see the old
+token; the mutation follow-ups and polling cover it.
+
+### Execution boundary
 
 Schema availability and structural validity do not prove executability. Missing dates, training data or required
 references can prevent execution even with READY and VALID results, including through wrappers. Document this
@@ -480,31 +557,22 @@ source selection invalidates every older request before its response is consider
 Earth Engine asset IDs are stable while their metadata, schema, pixels and permissions can change. Cache entries
 are scoped to the linked account. Account link, unlink or replacement invalidates affected entries immediately.
 
-Use asset `system:version`, normalized as an opaque string, as the preferred change token when available. Treat it
-as invalidation evidence, not an immutable execution version. `updateTime` remains weaker fallback and display
-evidence. An older source reference without a usable version remains valid but is re-observed rather than retained
-as a reliably versioned cache entry. ImageCollection refresh follows the consumer's declared policy. The collection
-asset's metadata alone is insufficient until live verification proves that relevant membership changes always
-advance the collection's version.
+An asset's change token is its metadata `updateTime`, opaque and at full precision, for the whole asset - a
+collection's included: the live probe saw a collection's own `updateTime` advance for every membership, schema and
+property change it made ([packet 3](#packet-3-asset-freshness-and-redraw-signaling)), so no token is constructed from
+a collection's members, size or newest member. It is invalidation evidence, not an immutable execution version, and a
+matching token is not proof of unchanged contents. A source without a token is unversioned: what was read from it is
+bounded in what it may authorize, never in what is drawn.
 
-The bounded Map Layers fix revalidates an active asset layer through the existing metadata endpoint when its
-catalogue `updateTime` changes, and offers a per-asset explicit refresh independent of catalogue progress. It also
-revalidates when the layer becomes active. Each accepted read renews the preview even if metadata is identical;
-metadata equality does not prove pixel equality. Last-read preset identities are reconciled without replacing saved
-user intent. Pending or failed refreshes withhold rendering, and cancellation plus a current-request check prevent
-superseded answers from being installed. This is shared asset-layer behavior, not a recipe-specific observer or a
-new polling loop.
-
-Follow-up: move metadata ownership into the shared source runtime/catalogue so active consumers share observations
-and in-flight reads. Revalidation on active use, catalogue invalidation and explicit refresh must enter that same
-owner; persistent layer snapshots are identity seeds, never proof of freshness. Preserve account scoping, pending
-and failure state, cancellation and unchanged preset identities when consolidating. Do not build parallel caches in
-asset selectors, recipes or map layers.
+The source runtime owns asset metadata evidence: map layers, Retrieve and evidence observers share its reads, its
+in-flight requests and its account scoping, and nothing keeps a parallel cache. Direct asset layers read their bands
+and presets through it; persistent layer snapshots are identity seeds, never proof of freshness, and unchanged preset
+identities are kept without replacing saved user intent.
 
 Tasks should report the **actual affected asset IDs** after destination changes, including collection destinations
-and written members where relevant. The shared owner invalidates those assets and revalidates active consumers;
-tasks do not identify recipes, layers or panels to refresh. Task wiring, background refresh policy and preview-failure
-retries are separate from the bounded Map Layers fix.
+and written members where relevant, partial writes of a failed or cancelled export included. The shared owner
+invalidates those assets and revalidates active consumers; tasks do not identify recipes, layers or panels to refresh
+([task-driven asset invalidation](data-sources.md#task-driven-asset-invalidation)).
 
 Background validation while a recipe is open should detect:
 

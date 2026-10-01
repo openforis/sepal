@@ -10,6 +10,11 @@ const log = getLogger('layer')
 export class Layer {
     cancel$ = new ReplaySubject(1)
 
+    // onError(error)  told of a failure to add the layer, beside the notification, for whoever can act on its cause
+    constructor({onError} = {}) {
+        this.onError = onError
+    }
+
     addToMap$ = () => {
         throw new Error('Layer.addToMap$ needs to be implemented by subclass')
     }
@@ -36,6 +41,7 @@ export class Layer {
             },
             error: error => {
                 log.warn('Cannot add layer', error)
+                this.onError?.(error)
                 Notifications.error({
                     message: msg('map.layer.error'),
                     error: toUserErrorMessage(error),

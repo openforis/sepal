@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {defer, NEVER, Observable, Subscriber, Subscription, tap} from 'rxjs'
+import {defer, finalize, NEVER, Observable, Subscriber, Subscription, tap} from 'rxjs'
 
 import {
     completeRecipeClosure$,
@@ -9,13 +9,19 @@ import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
 import {AGREED} from '../draftAgreement'
 import {createRecipeImageOutputObserver, observeImageBands$} from '../recipe/imageOutputObserver'
+import {buildMapDependencyGraph} from '../recipe/mapDependencyGraph'
 import {recipeContent} from '../recipe/recipeContent'
-import {compatibleBasis, DEPENDENCIES, DESCRIBE, outputLoading, REFRESH} from '../recipe/recipeOutput'
+import {compatibleBasis, DEPENDENCIES, DESCRIBE, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
+import {DEFAULT_ASSET_POLICY, isDefinitiveFailure} from './assetEvidence'
+import {assetsFailedBy} from './assetFailure'
+import {AssetInterest} from './assetInterest'
+import {AssetRefresh} from './assetRefresh'
 import {DEFAULT_LISTING_POLICY, ListingRefresh} from './listingRefresh'
 import {DEFAULT_OBSERVATION_RETENTION, ObservationRegistry} from './observationRegistry'
 import {DEFAULT_OUTPUT_RETENTION, OutputRegistry} from './outputRegistry'
 import {createLoadRecipesById$} from './recipeClosureLoader'
-import {PRIVATE, recordCurrency, SESSION} from './recordCurrency'
+import {PRIVATE, SESSION} from './recordCurrency'
+import {sourceCurrency} from './sourceCurrency'
 import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError} from './sourceRuntimeError'
 
 // The GUI source runtime.
@@ -52,11 +58,28 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // Band observations are shared between every description asking Earth Engine the same question, whichever output it
 // describes (observationRegistry.js), identified by what Earth Engine evaluates: the recipe as it is sent, the evidence
-// about every record Earth Engine reads for it itself, the assets it reads and the credentials.
+// about every record Earth Engine reads for it itself, the assets it reads with their tokens, and the credentials.
+//
+// A terminal names the assets its closure read (`assets`) and when it read them (`observedAt`), so what authorizes an
+// export can be held to their evidence.
 //
 // While anything is watched the runtime keeps the recipe listing - its evidence of recipe revisions - recent
 // (listingRefresh.js). A consumer opening a watch refreshes evidence older than a minute; `refreshRecipeListing` does
 // the same for one that opens without watching.
+//
+// It keeps the evidence about every asset a watched question reads recent too (assetRefresh.js), whether or not the
+// question's answer needs loading (assetInterest.js). A consumer reading assets without watching an output claims them
+// with `claimAssets`. `invalidateAssets` tells it of a mutation this session made, and `reportFailure` of an
+// operation that failed over an asset; both read the assets they name again.
+//
+// A description that fails over an asset - one Earth Engine could not find or read, or one whose bands are not those
+// described - has that asset read again (assetFailure.js), at most once per interval while its token is unchanged; a
+// changed token withdraws the failure with the rest, so it recovers by itself. Other failures read nothing again.
+//
+// `refreshOutput` is an explicit refresh of a question, successful answers included: the metadata of every asset it
+// reads is read at once, then what was observed for it is observed again and its presentation evidence read again,
+// unchanged tokens notwithstanding, and its preview is drawn again. `refreshAsset` does the same for one asset and
+// everything reading it. A refresh already running for the same question or asset is joined.
 
 const PENDING = 'PENDING'
 
@@ -74,26 +97,34 @@ export const createSourceRuntime = ({
     updateRecipeListing = () => {},
     replaceCachedRecipe = () => false,
     loadRecipeListing$,
+    updateAssetEvidence = () => {},
+    refreshSources = () => {},
+    loadAssetVersions$,
     wakeups$,
+    visible,
     listingPolicy = DEFAULT_LISTING_POLICY,
+    assetPolicy = DEFAULT_ASSET_POLICY,
     clock
 }) => {
+    const currencyOf = current => sourceCurrency(current)
+    const now = () => clock ? clock.now() : Date.now()
     const observations = new ObservationRegistry({
         observeBands$,
         isCurrent: key => {
             const current = session()
-            const currency = recordCurrency(current)
+            const currency = currencyOf(current)
             return key.credentials === credentialId(current.credentials)
                 && !key.dependencies.some(dependency => currency.superseded(dependency))
+                && key.assets.every(asset => observedAssetCurrent(asset, current.assetEvidence, current.sourceRefreshes))
         },
         retention: observationRetention,
         ...(clock && {clock})
     })
 
-    // What identifies an observation of `request`, made while describing `graph`.
-    const observationOf = (request, graph) => {
+    // What identifies an observation of `request`, made while describing `graph` for `rootId`.
+    const observationOf = (request, graph, rootId) => {
         const current = session()
-        const currency = recordCurrency(current)
+        const currency = currencyOf(current)
         const {records, assets, missing} = closureOf(request.reference, graph)
         const dependencies = records.map(record => _.pick(currency.evidence(record, PRIVATE), EVIDENCE))
         return {
@@ -102,7 +133,8 @@ export const createSourceRuntime = ({
                 reference: request.reference,
                 submitted: request.recipe ? _.omit(request.recipe, NOT_EXECUTED) : null,
                 dependencies,
-                assets,
+                assets: assets.map(id => observedAsset(id, current.assetEvidence, current.sourceRefreshes)),
+                refreshed: explicitRefresh(current.sourceRefreshes, rootId),
                 credentials: credentialId(current.credentials)
             },
             complete: !missing && dependencies.every(({revision, agreement}) => revision !== null && agreement === AGREED)
@@ -117,6 +149,7 @@ export const createSourceRuntime = ({
         let observer = null
         let captured = null
         let closureOutcome = null
+        let observedAt = null
         let loadingPublished = false
         const work = new Subscription()
 
@@ -135,7 +168,9 @@ export const createSourceRuntime = ({
             subscriber.next({
                 ...envelope,
                 dependencyValidity: closureOutcome ? dependencyValidity(closureOutcome) : null,
-                basis: closureOutcome ? basisOf(closureOutcome.graph) : []
+                basis: closureOutcome ? basisOf(closureOutcome.graph) : [],
+                assets: closureOutcome ? graphAssets(closureOutcome.graph) : [],
+                observedAt
             })
             release()
             subscriber.complete()
@@ -156,7 +191,7 @@ export const createSourceRuntime = ({
 
         const observe = graph => {
             const currentObserver = createObserver({
-                observeBands$: request => observations.observe$(request, observationOf(request, graph))
+                observeBands$: request => observations.observe$(request, observationOf(request, graph, recipe.id))
             })
             observer = currentObserver
             const observation = new Subscriber({
@@ -194,9 +229,13 @@ export const createSourceRuntime = ({
                             publishLoading()
                         } else if (state.status === 'COMPLETE') {
                             closureOutcome = state
-                            describes
-                                ? observe(state.graph)
-                                : terminate({status: 'COMPLETE', error: null})
+                            if (describes) {
+                                observedAt = now()
+                                reads.assets(graphAssets(state.graph))
+                                observe(state.graph)
+                            } else {
+                                terminate({status: 'COMPLETE', error: null})
+                            }
                         } else if (state.status === 'FAILED') {
                             // What the failed closure had established, for the failure it is about to deliver.
                             closureOutcome = state
@@ -283,17 +322,46 @@ export const createSourceRuntime = ({
         ...(clock && {clock})
     })
     const refreshRecipeListing = () => listing.refresh({maxAgeMs: listingPolicy.openMaxAgeMs})
+    const assets = new AssetRefresh({
+        session,
+        sessionChanges$,
+        updateEvidence: updateAssetEvidence,
+        ...(loadAssetVersions$ && {loadVersions$: loadAssetVersions$}),
+        ...(wakeups$ && {wakeups$}),
+        ...(visible && {visible}),
+        policy: assetPolicy,
+        ...(clock && {clock})
+    })
+    const reportAssetFailure = ids => ids.length ? assets.reportFailure(ids) : Promise.resolve()
+
+    // Refreshes in progress, by what they refresh, so a second request joins the first. One settling after close
+    // publishes nothing.
+    let closed = false
+    const refreshing = new Map()
+    const joined = (key, refresh) => {
+        if (!refreshing.has(key)) {
+            refreshing.set(key, refresh().finally(() => refreshing.delete(key)))
+        }
+        return refreshing.get(key)
+    }
+    const interest = new AssetInterest({
+        claim: ids => assets.claim(ids),
+        assetsOf: question => [...sessionAssetsOf(session().catalogue, question.recipeId), ...outputs.assetsRead(question)],
+        sessionChanges$
+    })
     const outputs = new OutputRegistry({
         session,
         sessionChanges$,
         acquisitionOf: outputLoading,
         operationOf: ({kind, recipe, key, reads}) => ({
-            [DESCRIBE]: () => resolveImageOutput$({recipe, reads}),
+            [DESCRIBE]: () => resolveImageOutput$({recipe, reads}).pipe(
+                tap(terminal => terminal.status === 'UNAVAILABLE' && reportAssetFailure(assetsFailedBy(terminal.error, terminal.assets)))
+            ),
             [DEPENDENCIES]: () => completeDependencies$({recipe, reads}),
             [REFRESH]: () => refreshRecords$(key)
         })[kind](),
         isCompatible: compatibleBasis,
-        currencyOf: recordCurrency,
+        currencyOf,
         onActive: active => listing.watch(active),
         retention,
         ...(clock && {clock})
@@ -304,7 +372,11 @@ export const createSourceRuntime = ({
         completeDependencies$,
         watchOutput$: question => defer(() => {
             refreshRecipeListing()
-            return outputs.watchOutput$(question)
+            const reads = interest.watch(question)
+            return outputs.watchOutput$(question).pipe(
+                tap(() => reads.update()),
+                finalize(() => reads.release())
+            )
         }),
         heldFor: key => outputs.heldFor(key),
         // A retry reaches a listing that failed as well: authority waits on it as much as on the answer.
@@ -315,9 +387,24 @@ export const createSourceRuntime = ({
             outputs.retryOutput(question)
         },
         refreshRecipeListing,
+        refreshOutput: question => joined(`output:${question.recipeId}:${JSON.stringify(question.product)}`, () => {
+            const ids = [...sessionAssetsOf(session().catalogue, question.recipeId), ...outputs.assetsRead(question)]
+            return assets.refresh(ids, {force: true})
+                .then(() => closed || refreshSources({recipes: [question.recipeId]}))
+        }),
+        refreshAsset: id => joined(`asset:${id}`, () =>
+            assets.refresh([id], {force: true}).then(() => closed || refreshSources({assets: [id]}))
+        ),
+        claimAssets: ids => assets.claim(ids),
+        invalidateAssets: ids => assets.invalidate(ids),
+        // A failure of something drawn or read from these assets, which may be about any of them (assetFailure.js).
+        reportFailure: ({error, assets: read}) => reportAssetFailure(assetsFailedBy(error, read)),
         close: () => {
+            closed = true
             outputs.close()
             listing.close()
+            interest.close()
+            assets.close()
             observations.clear()
         }
     }
@@ -325,7 +412,7 @@ export const createSourceRuntime = ({
 
 const NO_SESSION = Object.freeze({catalogue: {}, credentials: null, closed: false})
 
-const NO_READS = Object.freeze({read: () => {}, unread: () => {}})
+const NO_READS = Object.freeze({read: () => {}, unread: () => {}, assets: () => {}})
 
 // What Earth Engine never reads of a recipe it is sent.
 const NOT_EXECUTED = ['ui', 'layers', 'title', 'revision']
@@ -397,5 +484,51 @@ const reported = (loadRecipesById$, reads) => request => loadRecipesById$(reques
         error: () => request.ids.forEach(id => reads.unread(id, PRIVATE))
     })
 )
+
+// The assets the session graph of a recipe reaches, computed once per catalogue.
+const SESSION_ASSETS = new WeakMap()
+
+const sessionAssetsOf = (catalogue, recipeId) => {
+    const recipe = catalogue?.[recipeId]
+    if (!recipe) {
+        return NONE
+    }
+    if (!SESSION_ASSETS.has(catalogue)) {
+        SESSION_ASSETS.set(catalogue, new Map())
+    }
+    const known = SESSION_ASSETS.get(catalogue)
+    if (!known.has(recipeId)) {
+        known.set(recipeId, graphAssets(buildMapDependencyGraph({recipe, loadedRecipes: catalogue})))
+    }
+    return known.get(recipeId)
+}
+
+const NONE = Object.freeze([])
+
+// Which explicit refresh of its question an observation was made after, if any. Counts are kept per recipe, so the
+// recipe is part of it: the first refresh of one recipe is not the first refresh of another.
+const explicitRefresh = (refreshes, rootId) => {
+    const count = refreshes?.recipes?.[rootId] || 0
+    return count ? {recipeId: rootId, count} : null
+}
+
+// An asset as an observation was made of it: the token known then, if any, and how often it had been refreshed.
+const observedAsset = (id, evidence = {}, refreshes = {}) => {
+    const entry = evidence[id]
+    return {id, version: entry?.version ?? null, unversioned: Boolean(entry?.unversioned), refreshed: refreshes.assets?.[id] || 0}
+}
+
+// Whether a kept observation is still about the asset: not found missing since, and not read at another token. One made
+// before any token was known is not reused once one is; one of a source without a token is bounded by its age alone.
+const observedAssetCurrent = ({id, version, unversioned, refreshed}, evidence = {}, refreshes = {}) => {
+    const entry = evidence[id]
+    if (refreshed !== (refreshes.assets?.[id] || 0) || isDefinitiveFailure(entry)) {
+        return false
+    }
+    if (!entry || entry.checkedAt === null) {
+        return true
+    }
+    return unversioned ? entry.unversioned : version !== null && entry.version === version
+}
 
 const basisOf = graph => graph.recipes.map(record => ({id: record.id, content: recipeContent(record)}))

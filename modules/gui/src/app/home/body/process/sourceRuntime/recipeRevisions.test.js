@@ -6,7 +6,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // completion, observer, common read and Retrieve read; storage and Earth Engine are counting fakes that answer only
 // when a test says so. Each change reaches the runtime the way it reaches it in the application: as a dispatch.
 
-const fake = vi.hoisted(() => ({loads: [], bands: [], listings: [], stored: {}}))
+const fake = vi.hoisted(() => ({loads: [], bands: [], listings: [], stored: {}, versions: {}, versionReads: []}))
 
 vi.mock('~/apiRegistry', () => ({default: {
     recipe: {
@@ -20,6 +20,12 @@ vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: request => new Observable(subscriber => {
             fake.bands.push({request, subscriber})
+        }),
+        // Every asset's token as the test holds it, answered at once.
+        assetVersions$: ({ids}) => new Observable(subscriber => {
+            fake.versionReads.push(ids)
+            subscriber.next({assets: ids.map(id => ({id, type: 'IMAGE', version: fake.versions[id] || 'v1'}))})
+            subscriber.complete()
         })
     }
 }}))
@@ -48,6 +54,8 @@ beforeEach(() => {
     fake.bands = []
     fake.listings = []
     fake.stored = {}
+    fake.versions = {}
+    fake.versionReads = []
 })
 
 describe('a dependency loaded privately', () => {
@@ -566,7 +574,8 @@ const sessionHolding = (records, {listing = [], open = [], saves = {}} = {}) => 
         session: environment.session,
         sessionChanges$: environment.sessionChanges$,
         updateRecipeListing: environment.updateRecipeListing,
-        replaceCachedRecipe: environment.replaceCachedRecipe
+        replaceCachedRecipe: environment.replaceCachedRecipe,
+        updateAssetEvidence: environment.updateAssetEvidence
     })
     const dispatch = change => store.dispatch({
         type: 'CHANGE',

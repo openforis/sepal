@@ -109,6 +109,43 @@ it('withholds both CCDC requests when its band provider reports no available ban
     expect(container.querySelector('output')).toBeNull()
 })
 
+describe('a Slice chart over segments read from an asset', () => {
+    const overAsset = () => {
+        const recipe = recipeWithBands('CCDC_SLICE', ['ndvi'], 'segments')
+        return {
+            ...recipe,
+            model: {...recipe.model, source: {type: 'ASSET', id: SEGMENTS_ASSET}},
+            ui: {...recipe.ui, sourceEvidence: {...recipe.ui.sourceEvidence, sourceKey: `ASSET:${SEGMENTS_ASSET}`}}
+        }
+    }
+
+    it('keeps its samples when the asset\'s first token is learned', () => {
+        openChart(overAsset(), 'ndvi')
+
+        tokens({version: 'v1', changedAt: null})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+    })
+
+    it('takes its samples again once the asset reports a new token, though nothing described changed', () => {
+        openChart(overAsset(), 'ndvi')
+        tokens({version: 'v1', changedAt: null})
+
+        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        tokens({version: 'v2', changedAt: 1})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
+        expect(chart()).toMatchObject({segments: ['resampled segments']})
+    })
+})
+
+const SEGMENTS_ASSET = 'users/x/segments'
+
+// What the source runtime knows of the segments asset, for the credentials in effect: none are linked here.
+const tokens = ({version, changedAt}) => act(() => actionBuilder('UPDATE_ASSET_EVIDENCE')
+    .set('process.assetEvidence', {generation: 0, assets: {[SEGMENTS_ASSET]: {version, checkedAt: 0, changedAt}}})
+    .dispatch())
+
 const chart = () => JSON.parse(container.querySelector('output').textContent)
 
 const openChart = (recipe, selectedBand) => {

@@ -1,7 +1,8 @@
 import _ from 'lodash'
-import {EMPTY, filter, fromEvent, merge, NEVER} from 'rxjs'
+import {NEVER} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {browserWakeups$} from '~/browserWakeups'
 import {getLogger} from '~/log'
 
 import {
@@ -193,10 +194,3 @@ export class ListingRefresh {
 }
 
 const scheduleBasis = listingState => ({checkedAt: listingState?.checkedAt, failedAt: listingState?.failure?.at})
-
-const browserWakeups$ = () => typeof document === 'undefined' || typeof window === 'undefined'
-    ? EMPTY
-    : merge(
-        fromEvent(document, 'visibilitychange').pipe(filter(() => document.visibilityState === 'visible')),
-        fromEvent(window, 'online')
-    )

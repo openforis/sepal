@@ -39,6 +39,9 @@ import {
 // terminal changes nothing, and its questions load again. A record that arrives already superseded is loaded again
 // once; storage answering the same old revision again is held as a failure rather than loaded for ever.
 //
+// Work describing an output also records the assets its closure read, with the token known as they were read
+// (sourceCurrency.js), and is withdrawn the same way when one changes or is found missing.
+//
 // `heldFor` is a pure lookup. It checks currency when it is asked - the key, the credentials in the session now, the
 // ledger against what the session knows now and the retention deadline - so an answer is withdrawn before any timer
 // or component has reacted to a change.
@@ -64,10 +67,12 @@ const CLOSED = Object.freeze(unavailable(sourceRuntimeError(SOURCE_RUNTIME_UNAVA
 const NO_CURRENCY = Object.freeze({
     evidence: ({id}) => ({id}),
     unread: id => ({id}),
+    assetEvidence: id => ({asset: id}),
+    refreshEvidence: id => ({refreshOf: id}),
     superseded: () => false
 })
 
-const SESSION_PARTS = ['catalogue', 'listing', 'listingState', 'tabs', 'saves']
+const SESSION_PARTS = ['catalogue', 'listing', 'listingState', 'tabs', 'saves', 'assetEvidence', 'sourceRefreshes']
 
 export class OutputRegistry {
     #session
@@ -94,7 +99,7 @@ export class OutputRegistry {
     //                                               `records` are the session records the work reads, the graph's if absent
     // operationOf({kind, recipe})                 → the runtime operation for that kind of work
     // isCompatible(basis, graph)                  whether a terminal read the records its key names
-    // currencyOf(session)                         → what the session knows of each record (recordCurrency.js)
+    // currencyOf(session)                         → what the session knows of each source read (sourceCurrency.js)
     // onActive(active)                            told when the first question is watched and when the last is not
     constructor({
         session, sessionChanges$, acquisitionOf, operationOf, isCompatible, currencyOf = () => NO_CURRENCY,
@@ -143,6 +148,12 @@ export class OutputRegistry {
         const claimants = this.#discard(failed)
         const changed = claimants.flatMap(question => this.#refresh(question))
         this.#notify(_.uniq([...claimants, ...changed]))
+    }
+
+    // The assets the work answering the question read, records loaded only for it included.
+    assetsRead({recipeId, product}) {
+        const work = this.#questionFor({recipeId, product})?.work
+        return work ? work.ledger.filter(({asset}) => asset).map(({asset}) => asset) : []
     }
 
     close() {
@@ -269,7 +280,8 @@ export class OutputRegistry {
     #load(work, recipe) {
         const reads = {
             read: (record, origin) => this.#read(work, record, origin),
-            unread: (id, origin) => this.#record(work, this.#currency().unread(id, origin))
+            unread: (id, origin) => this.#record(work, this.#currency().unread(id, origin)),
+            assets: ids => this.#readAssets(work, ids)
         }
         work.operation.start(
             this.#operationOf({kind: work.key.kind, recipe, key: work.key, reads}),
@@ -283,6 +295,12 @@ export class OutputRegistry {
         if (this.#record(work, entry) && currency.superseded(entry)) {
             this.#arrivedSuperseded(work, entry, currency)
         }
+    }
+
+    #readAssets(work, ids) {
+        const currency = this.#currency()
+        const now = this.#clock.now()
+        ids.forEach(id => this.#record(work, currency.assetEvidence(id, now)))
     }
 
     #record(work, entry) {
@@ -430,7 +448,10 @@ export class OutputRegistry {
             key,
             graph,
             rootId,
-            ledger: records.filter(({id}) => id !== rootId).map(record => currency.evidence(record, SESSION)),
+            ledger: [
+                currency.refreshEvidence(rootId),
+                ...records.filter(({id}) => id !== rootId).map(record => currency.evidence(record, SESSION))
+            ],
             credentials: this.#credentials,
             claims: new Set(),
             operation: new TerminalOperation(),

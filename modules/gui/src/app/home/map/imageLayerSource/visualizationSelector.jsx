@@ -16,6 +16,7 @@ import {Button} from '~/widget/button'
 import {Combo} from '~/widget/combo'
 import {RemoveButton} from '~/widget/removeButton'
 
+import {RefreshSourcesButton, withLayerSourceStatus} from '../layerSourceStatus'
 import {withMapArea} from '../mapAreaContext'
 import {PresentationToggle} from './presentationToggle'
 
@@ -53,9 +54,13 @@ class _VisualizationSelector extends React.Component {
         )
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         const editorContext = this.editorContext()
+        const {layerSourceStatus: status} = this.props
         return (
             <Combo
                 label={msg('map.visualizationSelector.label')}
+                busyMessage={status?.checking ? msg('map.layerSource.checking') : undefined}
+                errorMessage={status?.unavailable ? msg('map.layerSource.unavailable', {asset: status.unavailable}) : undefined}
+                warningMessage={status?.failing ? msg('map.layerSource.failing') : undefined}
                 labelButtons={[
                     <Button
                         key='add'
@@ -86,6 +91,9 @@ class _VisualizationSelector extends React.Component {
                         disabled={!selectedOption || editMode === 'clone'}
                         onRemove={() => this.removeVisParams(selectedOption.visParams)}
                     />,
+                    ...(status?.refresh
+                        ? [<RefreshSourcesButton key='refreshSources' refreshing={status.refreshing} onRefresh={status.refresh}/>]
+                        : []),
                     ...labelButtons
                 ]}
                 buttons={selectedOption
@@ -175,9 +183,13 @@ class _VisualizationSelector extends React.Component {
 
     // What the editor works from, captured together when it opens: the recipe, the bands this layer's answer holds
     // and the arguments naming the product it shows. The editor asks nothing about bands itself, so it opens only
-    // once they are known.
+    // once they are known - and not while the sources they were described from are unavailable or cannot be reached,
+    // since its histograms and values would be read from bands nothing currently vouches for.
     editorContext() {
-        const {recipe, source, areaLayerConfig} = this.props
+        const {recipe, source, areaLayerConfig, layerSourceStatus: status} = this.props
+        if (status?.unavailable || status?.failing) {
+            return null
+        }
         const bands = renderableBandNames(this.availableBands())
         return bands.length
             ? {recipe, imageLayerSourceId: source.id, bands, productArgs: productArgs(recipe, areaLayerConfig)}
@@ -218,6 +230,7 @@ export const VisualizationSelector = compose(
         mapAreaMenu: ({mapArea: {area}}) => `mapAreaMenu-${area}`
     }),
     withMapArea(),
+    withLayerSourceStatus(),
     asFunctionalComponent({
         presetOptions: []
     })

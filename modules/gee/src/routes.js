@@ -6,6 +6,7 @@ import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
 import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
 import renameAsset$ from '#gee/jobs/ee/asset/rename'
+import assetVersions$ from '#gee/jobs/ee/asset/versions'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
@@ -45,6 +46,7 @@ export default router =>
         .post('/image/distinctBandValues', stream(ctx => distinctBandValues$(ctx)))
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
         .post('/assetMetadata', stream(ctx => assetMetadata$(ctx)))
+        .post('/assetVersions', stream(ctx => assetVersions$(ctx)))
         .get('/projects', stream(ctx => projects$(ctx)))
         .get('/asset/descendants', stream(ctx => listAssets$(ctx)))
         .post('/asset/createFolder', stream(ctx => createFolder$(ctx)))

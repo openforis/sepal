@@ -20,10 +20,18 @@ import {initStore} from '~/store'
 
 const assetMetadata$ = vi.fn()
 const loadRecipe$ = vi.fn()
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {assetMetadata$: (...args) => assetMetadata$(...args)},
-    recipe: {load$: (...args) => loadRecipe$(...args)}
-}}))
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: 0}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            assetMetadata$: (...args) => assetMetadata$(...args),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
+        },
+        recipe: {load$: (...args) => loadRecipe$(...args)}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
 const notifyError = vi.fn()
 vi.mock('~/widget/notifications', () => ({Notifications: {error: (...args) => notifyError(...args)}}))
@@ -220,12 +228,11 @@ const assetStates = properties =>
     assetMetadata$.mockReturnValue(of({bandNames: ['VV_stdDev'], properties}))
 
 // The asset store's version is what tells the evidence lifecycle an asset has moved on.
-let assetVersion = 0
 const reExport = () => act(async () => store.dispatch({
     type: 'ASSET_RE_EXPORTED',
     reduce: state => ({
         ...state,
-        assets: {user: [{id: STATS_ASSET, updateTime: `v${++assetVersion}`}], other: []}
+        assets: {user: [{id: STATS_ASSET, updateTime: `v${++versions.current}`}], other: []}
     })
 }))
 

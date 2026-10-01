@@ -447,8 +447,9 @@ still holds - whether to read again, and whether an answer may still be publishe
 by an opaque generation numbered by its identity; nothing compares, retains or publishes what it contains. The rule
 compares a selection by identity, so that reapplying a source panel is a change. Retrieve reads no evidence: what it
 authorizes is the description the source runtime holds for its watched question, current only for the records its
-loading key names and the credentials the session holds, so a source edited under the same id, or credentials
-replaced, authorize nothing described before.
+loading key names, the evidence of the assets its closure read and the credentials the session holds, so a source
+edited under the same id, an asset changed, missing or unchecked, or credentials replaced, authorize nothing described
+before. A blocked Retrieve names the asset and offers Refresh.
 
 A submission's freshness is the session's. Dependency records the runtime loaded without writing them to the
 session cannot be compared, and a persisted dependency changed after Apply is Task's to detect.
@@ -506,11 +507,11 @@ owns neither mechanism nor presentation.
 ### Shared output watches
 
 Map layers and Retrieve watch their output questions through the runtime, which shares their description loading
-([shared loading](#reading-a-recipes-own-output)). Source-evidence behavior and the existing external freshness
-limitations are unchanged. Recipe revisions are followed and band observations shared across questions
-([packet 2](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)); asset refresh, independent redraw
-signaling and retirement of the evidence change signal follow in packet 3, whose contract still needs review.
-Description sharing does not establish execution readiness, and Task remains independent.
+([shared loading](#reading-a-recipes-own-output)). Recipe revisions are followed and band observations shared across
+questions ([packet 2](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)); asset evidence, redraw
+signaling independent of descriptions, explicit Refresh and the retirement of source evidence as a change signal
+follow ([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)). Description sharing does not
+establish execution readiness, and Task remains independent.
 
 ### Runtime image output
 
@@ -587,7 +588,10 @@ loader. For Masking it follows declared inheritance over the resolved records fo
 owned by the source and intermediate wrappers rather than their copied presets, and asks Earth Engine nothing about
 bands. Its operation basis compares persisted dependency inputs by value, retaining runtime
 `ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
-asset listing `updateTime` and Earth Engine identity. The basis covers every record the closure read, whether the
+each asset's token and explicit refreshes as the source runtime knows them
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)), and Earth Engine identity. A token
+first learned after a read is no change. The assets it reads are claimed from the runtime while it is mounted. The
+basis covers every record the closure read, whether the
 closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
 record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
 The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
@@ -611,8 +615,10 @@ against the last successful observation, so unchanged recovery does not overwrit
 BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
 responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
 
-Accepted observations have a generation as well as a payload: charts and previews may need to discard prior
-results after re-observation even when the described bands are identical. Slice and Change Alerts reconcile
+Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
+charts and previews must discard what they drew is the pixel generation's to say
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)), and an observer over another recipe
+reads again when that recipe's evidence content changes. Slice and Change Alerts reconcile
 preset identities against the selected source and restored saved-layer styles. A different source cannot inherit
 those identities merely because its first response arrives late.
 
@@ -631,11 +637,13 @@ allow that fallback to retire.
 
 ### Asset map-layer refresh
 
-Asset map layers read metadata on activation, a changed catalogue `updateTime`, or explicit Refresh asset. A
-successful observation renews the preview even if the metadata is identical, retains unchanged preset identities
-and withholds missing-band or array styles without deleting saved selections. Failed reads are reported and
-superseded responses cannot publish. This does not detect every external asset change: task-reported invalidation
-and shared versioned metadata ownership remain future work in [source freshness](source-freshness.md#asset-freshness).
+Asset map layers claim their asset from the source runtime and read its metadata on activation, when its token
+changes, on explicit Refresh and when credentials change. A preview is drawn again only when the asset is seen to
+change or is refreshed; unchanged metadata, a failed check or read and replaced credentials keep what is drawn. They
+retain unchanged preset identities and withhold missing-band or array styles without deleting saved selections. An
+asset found missing is withheld and named. Failed reads are reported and superseded responses cannot publish. A
+change no token reports stays unseen until Refresh
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)).
 
 ### Fill operations
 

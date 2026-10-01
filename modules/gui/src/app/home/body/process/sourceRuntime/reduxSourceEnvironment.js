@@ -2,7 +2,9 @@ import {Observable} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 
+import {earthEngineGeneration} from '../recipe/sourceEvidenceBasis'
 import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
+import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
 
 // The only Redux adapter in the source runtime.
 //
@@ -28,6 +30,10 @@ const TABS_PATH = ['process', 'tabs']
 const LISTING_PATH = ['process', 'recipes']
 const LISTING_STATE_PATH = ['process', 'recipeListing']
 const SAVES_PATH = ['process', 'saveStates']
+const SOURCE_REFRESHES_PATH = ['process', 'sourceRefreshes']
+const USER_ASSETS_PATH = ['assets', 'user']
+const OTHER_ASSETS_PATH = ['assets', 'other']
+const ASSET_MUTATION_PATH = ['assets', 'mutation']
 
 const EMPTY_CATALOGUE = Object.freeze({})
 const NO_CREDENTIALS = Object.freeze({})
@@ -35,7 +41,8 @@ const NOTHING = Object.freeze({})
 const NONE = Object.freeze([])
 const CLOSED_SESSION = Object.freeze({
     catalogue: EMPTY_CATALOGUE, credentials: NO_CREDENTIALS, listing: NONE, listingState: NOTHING, tabs: NONE,
-    saves: NOTHING, closed: true
+    saves: NOTHING, assetEvidence: NOTHING, assetCatalogue: NOTHING, assetMutation: null, sourceRefreshes: NOTHING,
+    closed: true
 })
 
 const at = (state, path) =>
@@ -64,6 +71,10 @@ const credentialToken = container => {
 //   listingState  how current the listing is
 //   tabs          the open recipes, whose records are drafts
 //   saves         what each open recipe's saves have made persistent (saveCoordinator.js)
+//   assetEvidence what is known of each asset read, for the credentials in effect (assetEvidence.js)
+//   assetCatalogue  each asset the user's asset catalogue lists, by id: its updateTime there
+//   assetMutation   the latest assets this session created, deleted or renamed: {ids, at} (widget/assets.jsx)
+//   sourceRefreshes how often each recipe and asset was explicitly refreshed: {recipes: {id: n}, assets: {id: n}}
 const sessionOf = state => ({
     catalogue: at(state, CATALOGUE_PATH) || EMPTY_CATALOGUE,
     credentials: credentialToken(at(state, CREDENTIALS_PATH)),
@@ -71,8 +82,26 @@ const sessionOf = state => ({
     listingState: at(state, LISTING_STATE_PATH) || NOTHING,
     tabs: at(state, TABS_PATH) || NONE,
     saves: at(state, SAVES_PATH) || NOTHING,
+    assetEvidence: assetEvidenceOfState(state),
+    assetCatalogue: assetCatalogueOf(at(state, USER_ASSETS_PATH), at(state, OTHER_ASSETS_PATH)),
+    assetMutation: at(state, ASSET_MUTATION_PATH) || null,
+    sourceRefreshes: at(state, SOURCE_REFRESHES_PATH) || NOTHING,
     closed: false
 })
+
+// Rebuilt only when either listing is replaced, so an unrelated change keeps its identity.
+let catalogued = null
+
+const assetCatalogueOf = (user = NONE, other = NONE) => {
+    if (catalogued?.user !== user || catalogued?.other !== other) {
+        catalogued = {
+            user,
+            other,
+            assets: Object.freeze(Object.fromEntries([...other, ...user].map(({id, updateTime}) => [id, updateTime])))
+        }
+    }
+    return catalogued.assets
+}
 
 export const createReduxSourceEnvironment = ({store}) => {
     let closed = false
@@ -183,6 +212,35 @@ export const createReduxSourceEnvironment = ({store}) => {
             recipes && action.set('process.recipes', recipes)
             listingState && action.set('process.recipeListing', listingState)
             store.dispatch(action.build())
+        },
+        // Applies update(assets) → assets to the asset evidence held for the credentials in effect.
+        updateAssetEvidence: update => {
+            if (closed) {
+                return
+            }
+            const state = store.getState()
+            const assets = assetEvidenceOfState(state)
+            const updated = update(assets)
+            if (updated === assets) {
+                return
+            }
+            store.dispatch(actionBuilder('UPDATE_ASSET_EVIDENCE')
+                .set(ASSET_EVIDENCE_PATH, {generation: earthEngineGeneration(state), assets: updated})
+                .build())
+        },
+        // Counts an explicit refresh of these recipes and assets: what was read from them is read again.
+        refreshSources: ({recipes = [], assets = []}) => {
+            if (closed || (!recipes.length && !assets.length)) {
+                return
+            }
+            const refreshes = at(store.getState(), SOURCE_REFRESHES_PATH) || {}
+            const counted = (counts = {}, ids) => ({...counts, ...Object.fromEntries(ids.map(id => [id, (counts[id] || 0) + 1]))})
+            store.dispatch(actionBuilder('REFRESH_SOURCES')
+                .set('process.sourceRefreshes', {
+                    recipes: counted(refreshes.recipes, recipes),
+                    assets: counted(refreshes.assets, assets)
+                })
+                .build())
         },
         close: () => {
             closed = true

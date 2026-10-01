@@ -14,15 +14,24 @@ import {getLogger} from '~/log'
 import {isDraft} from '../draftAgreement'
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
+import {DEFAULT_ASSET_POLICY} from '../sourceRuntime/assetEvidence'
 import {createLoadRecipesById$} from '../sourceRuntime/recipeClosureLoader'
+import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {declaredSelections, OBSERVED, sourceKeyOf, UNAVAILABLE} from './sourceEvidence'
-import {assetVersion, earthEngineGeneration, evidenceSession, outdatedBasis, publishedRevision} from './sourceEvidenceBasis'
+import {
+    assetRefreshes,
+    assetVersion,
+    earthEngineGeneration,
+    evidenceSession,
+    isUnversionedAsset,
+    outdatedBasis,
+    publishedRevision,
+    recipeRefreshes
+} from './sourceEvidenceBasis'
 
 const log = getLogger('sourceEvidence')
 
 const EMPTY_GRAPH = {recipes: [], edges: [], diagnostics: []}
-
-let observations = 0
 
 // Keeps a recipe's evidence about its source current while the recipe is open.
 //
@@ -44,10 +53,14 @@ let observations = 0
 // The same basis decides both questions: whether to look again, and whether an answer may still be
 // published. A source the answer was read from that has since become something else fails both
 // (sourceEvidenceBasis.js).
+//
+// The assets it reads are claimed from the source runtime for as long as it is mounted, which keeps what is known of
+// them recent: a new token, an explicit refresh of an asset or of this recipe, and the age of evidence read from a
+// source without a token each read it again - presets, segments and prefill included - without any band request.
 
 const mapStateToProps = state => {
-    const {catalogue, openRecipeIds, saves, assetVersions} = evidenceSession(state)
-    return {earthEngineGeneration: earthEngineGeneration(state), catalogue, openRecipeIds, saves, assetVersions}
+    const {catalogue, openRecipeIds, saves, assetEvidence, sourceRefreshes} = evidenceSession(state)
+    return {earthEngineGeneration: earthEngineGeneration(state), catalogue, openRecipeIds, saves, assetEvidence, sourceRefreshes}
 }
 
 const mapRecipeToProps = recipe => ({recipe})
@@ -70,6 +83,41 @@ class _SourceEvidenceSync extends React.Component {
 
     componentWillUnmount() {
         this.cancel$.next()
+        this.release?.()
+        clearTimeout(this.expiry)
+    }
+
+    // The assets the basis names are claimed before those it no longer names are released.
+    claim(basis) {
+        const {sourceRuntime} = this.props
+        const ids = basis.dependencies.filter(({assetId}) => assetId).map(({assetId}) => assetId)
+        const previous = this.release
+        this.release = ids.length ? sourceRuntime?.claimAssets(ids) : null
+        previous?.()
+    }
+
+    // A token first learned after the basis was taken is no change: the evidence was read from what it describes, so
+    // the basis takes it, and the next token that differs is one.
+    adoptFirstVersions() {
+        const session = this.sessionSnapshot()
+        const unknown = dependency => dependency.assetId && dependency.version === undefined
+            && assetVersion(session, dependency.assetId) !== undefined
+        if (this.basis?.dependencies.some(unknown)) {
+            this.basis = {
+                ...this.basis,
+                dependencies: this.basis.dependencies.map(dependency => unknown(dependency)
+                    ? {...dependency, version: assetVersion(session, dependency.assetId)}
+                    : dependency)
+            }
+        }
+    }
+
+    // Evidence read from a source without a token is read again once it is too old.
+    expireAt(basis) {
+        clearTimeout(this.expiry)
+        if (Number.isFinite(basis.expiresAt)) {
+            this.expiry = setTimeout(() => this.update(), Math.max(0, basis.expiresAt - Date.now()))
+        }
     }
 
     update() {
@@ -77,6 +125,7 @@ class _SourceEvidenceSync extends React.Component {
             this.basis = null
             return this.cancel$.next()
         }
+        this.adoptFirstVersions()
         if (this.basis && !this.outdated(this.basis)) {
             return
         }
@@ -103,6 +152,7 @@ class _SourceEvidenceSync extends React.Component {
         // Kept whatever the outcome: a failure that cleared it would be retried by the next render, turning
         // one unreachable source into a request per render.
         this.basis = this.startingBasis(session)
+        this.claim(this.basis)
         stream('OBSERVE_SOURCE_EVIDENCE',
             this.observe$(session).pipe(takeUntil(this.cancel$)),
             evidence => this.publish({status: OBSERVED, ...evidence}),
@@ -120,6 +170,8 @@ class _SourceEvidenceSync extends React.Component {
                 // Recorded before anything is decided about the graph. A graph that cannot run was still
                 // read from records, and those records are what a repair would change.
                 this.basis = this.resolvedBasis(graph, recipesById, session)
+                this.claim(this.basis)
+                this.expireAt(this.basis)
                 // COMPLETE carries either no diagnostics or definitive ones - a cycle, a malformed
                 // declaration. There is no answer to give about a graph that cannot run.
                 if (graph.diagnostics.length) {
@@ -131,13 +183,15 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     sessionSnapshot() {
-        const {loadedRecipes, catalogue, assetVersions, openRecipeIds, saves} = this.props
+        const {loadedRecipes, catalogue, assetEvidence, sourceRefreshes, openRecipeIds, saves} = this.props
         return {
             loadedRecipes: loadedRecipes || {},
             catalogue: catalogue || [],
-            assetVersions: assetVersions || [],
+            assetEvidence: assetEvidence || {},
+            sourceRefreshes: sourceRefreshes || {},
             openRecipeIds: openRecipeIds || [],
-            saves: saves || {}
+            saves: saves || {},
+            now: Date.now()
         }
     }
 
@@ -168,6 +222,7 @@ class _SourceEvidenceSync extends React.Component {
                 .filter(edge => edge.reference.type === ASSET)
                 .map(edge => edge.reference.id)
         ])
+        const unversioned = [...assetIds].some(assetId => isUnversionedAsset(session, assetId))
         return {
             ...this.operationState(),
             dependencies: [
@@ -175,22 +230,24 @@ class _SourceEvidenceSync extends React.Component {
                     .filter(({id}) => id !== recipe.id)
                     .map(({id}) => this.dependency({id, used: recipesById.get(id)}, session)),
                 ...[...assetIds].map(assetId => this.dependency({assetId}, session))
-            ]
+            ],
+            ...(unversioned && {expiresAt: session.now + DEFAULT_ASSET_POLICY.unversionedMaxAgeMs})
         }
     }
 
     operationState() {
-        const {recipe, earthEngineGeneration} = this.props
+        const {recipe, earthEngineGeneration, sourceRefreshes} = this.props
         return {
             key: this.sourceKey(),
             selections: declaredSelections(recipe),
-            earthEngineGeneration
+            earthEngineGeneration,
+            refreshed: recipeRefreshes({sourceRefreshes}, recipe?.id)
         }
     }
 
     dependency({id, assetId, used}, session) {
         return assetId
-            ? {assetId, version: assetVersion(session, assetId)}
+            ? {assetId, version: assetVersion(session, assetId), refreshed: assetRefreshes(session, assetId)}
             : {id, used, seeded: session.loadedRecipes[id], version: publishedRevision(session, id)}
     }
 
@@ -261,7 +318,6 @@ class _SourceEvidenceSync extends React.Component {
         }
         const published = {
             sourceKey: basis.key,
-            observation: ++observations,
             ...evidence,
             ...retainedObservation(recipe, evidence)
         }
@@ -335,6 +391,7 @@ export const SourceEvidenceSync = compose(
     _SourceEvidenceSync,
     withRecipe(mapRecipeToProps),
     connect(mapStateToProps),
+    withSourceRuntime(),
     recipeAccess()
 )
 

@@ -26,7 +26,9 @@ export const SourceRuntimeProvider = ({children}) => {
             session: environment.session,
             sessionChanges$: environment.sessionChanges$,
             updateRecipeListing: environment.updateRecipeListing,
-            replaceCachedRecipe: environment.replaceCachedRecipe
+            replaceCachedRecipe: environment.replaceCachedRecipe,
+            updateAssetEvidence: environment.updateAssetEvidence,
+            refreshSources: environment.refreshSources
         })
         return {
             sourceRuntime,
