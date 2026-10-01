@@ -170,12 +170,12 @@ describe('failures', () => {
         expect(delays).toEqual([1, 2])
     })
 
-    test('an expired user token is a missing Google account, and is not retried', async () => {
+    test('an expired user token is a missing Google account, reported as a client error rather than a lost SEPAL session, and is not retried', async () => {
         const {client, http} = setup({answers: [failure(401, {message: 'Request had invalid authentication credentials.'})]})
 
         await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).rejects.toMatchObject({
             errorCode: ERROR_CODES.MISSING_GOOGLE_TOKENS,
-            statusCode: 401,
+            statusCode: 400,
             userMessage: {
                 message: 'Earth Engine: Request had invalid authentication credentials.',
                 key: 'gee.error.earthEngineException',
