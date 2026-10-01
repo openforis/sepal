@@ -31,7 +31,7 @@ share are ordinary modules, and `test/verify/` covers them over fakes.
 ## Key Architecture
 
 ### Entry Point
-`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with `STICKY` strategy (jobs stick to the same worker).
+`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with the `ROUND_ROBIN` strategy (any worker thread serves any user).
 
 ### Import Maps
 - `#sepal/*` -> shared library
@@ -70,6 +70,6 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 ## Earth Engine requests
 
 The `EE runtime` job (default `before` of every job) initializes Earth Engine once per worker thread and installs
-the REST transport; each task runs in its request's Earth Engine context (`jobs/eeRequestContext.js`), so any
+the REST transport; each task runs in its request's Earth Engine context (wrapped in `jobs/job.js`, built by `jobs/eeRequestContext.js`), so any
 thread serves any user. Calls pass the `EERestLimiter` tiers user → project → global, configured with
 `EE_LIMIT_*` (`src/config.js`). `verify/restTransport.mjs` checks the transport against live Earth Engine.
