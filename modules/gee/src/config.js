@@ -19,13 +19,31 @@ const fatalError = error => {
     process.exit(1)
 }
 
+// The limiter takes a missing limit for no limit at all, so anything but a positive integer is refused.
+const parseLimit = env => value => {
+    const limit = Number(value)
+    if (!Number.isInteger(limit) || limit <= 0) {
+        throw new Error(`${env} must be a positive integer, got: ${value}`)
+    }
+    return limit
+}
+
 const limitOption = (flag, env, defaultValue) => {
     const option = new Option(`${flag} <number>`)
         .env(env)
-        .argParser(v => parseInt(v))
+        .argParser(parseLimit(env))
     return defaultValue === undefined
         ? option
         : option.default(defaultValue)
+}
+
+// Compose passes an unset ${VAR} to the container as an empty string, which commander takes as a value:
+// the default is skipped and the parser gets ''.
+const ignoreEmptyEnv = command => {
+    command.options
+        .filter(({envVar}) => envVar && process.env[envVar] === '')
+        .forEach(({envVar}) => delete process.env[envVar])
+    return command
 }
 
 const program = new Command()
@@ -80,7 +98,7 @@ try {
         .addOption(limitOption('--ee-limit-sepal-project-concurrency', 'EE_LIMIT_SEPAL_PROJECT_CONCURRENCY'))
         .addOption(limitOption('--ee-limit-global-rate', 'EE_LIMIT_GLOBAL_RATE', DEFAULT_EE_LIMITS.global.maxRate))
         .addOption(limitOption('--ee-limit-global-concurrency', 'EE_LIMIT_GLOBAL_CONCURRENCY', DEFAULT_EE_LIMITS.global.maxConcurrency))
-        .parse()
+    ignoreEmptyEnv(program).parse()
 } catch (error) {
     fatalError(error)
 }
