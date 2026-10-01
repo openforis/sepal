@@ -42,4 +42,19 @@ Consuming modules use two import maps:
 - **`eeLimiterService.js`**: Rate limiting for EE API calls to avoid quota issues.
 - **`recipeRef.js`**: Handles references between recipes (one recipe can reference another as input).
 - **ESM**: Native ESM (`"type": "module"`). Most processing modules `export default` a single function; import them with a default import (`import mosaic from './optical/mosaic.js'`). Relative imports include the `.js` extension. `imageFactory.js` keeps lazy, synchronous module loading via `createRequire` (a `load()` helper unwraps `.default`) to defer loading and break circular dependencies.
-- **No tests**: This library does not have its own test suite.
+- **Tests**: this library's tests live in `modules/gee/test/ee/`.
+
+## Transports and request context
+
+Every Earth Engine request goes through the extensions in `extensions/utils.js`, which hand each single request
+to a transport. `task` uses the default `LibraryTransport`: the client library's own, with its global
+credentials, correct only for one user per process. `gee` installs `EERestClient` (`rest/`) through
+`EERestRuntime`: the library, initialized once as the service account, only builds requests, and each request is
+sent as the `EEContext` (`eeContext.js`) it is subscribed in.
+
+- Under the REST transport an Earth Engine call made outside `inEEContext` fails; it never falls back to the
+  service account.
+- Never share an observable between requests. A value shared across requests is a plain value or a Promise, so
+  each subscriber resumes in its own async context. Work started on unsubscription (cleanup) captures the context
+  when the work it cleans up starts, and runs inside it.
+- Serialize expressions only with `ee.Serializer.encodeCloudApi`: a `null` constant is a value.
