@@ -66,3 +66,10 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 - **Scheduler**: Named "GoogleEarthEngine", configurable instances via `--instances` CLI flag.
 - **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--port`, `--instances`.
 - **Recipe reads**: referenced recipes are read from the `recipe` module as the user the gateway authenticated on the request, installed per job by `src/jobs/configure.js`. There is no service-credential fallback.
+
+## Earth Engine requests
+
+The `EE runtime` job (default `before` of every job) initializes Earth Engine once per worker thread and installs
+the REST transport; each task runs in its request's Earth Engine context (`jobs/eeRequestContext.js`), so any
+thread serves any user. Calls pass the `EERestLimiter` tiers user → project → global, configured with
+`EE_LIMIT_*` (`src/config.js`). `verify/restTransport.mjs` checks the transport against live Earth Engine.
