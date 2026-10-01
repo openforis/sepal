@@ -3,6 +3,7 @@ import {createRequire} from 'module'
 import {googleProjectId} from '#gee/config'
 import {job} from '#gee/jobs/job'
 import {eeLimiter$, eeLimiterService} from '#gee/jobs/service/eeLimiter'
+import {eeRequestMetricService, recordEERequest} from '#gee/jobs/service/eeRequestMetric'
 import {serviceAccountToken$, serviceAccountTokenService} from '#gee/jobs/service/serviceAccountToken'
 import ee from '#sepal/ee/ee'
 import {EERestClient} from '#sepal/ee/rest/eeRestClient'
@@ -20,7 +21,8 @@ const runtime = new EERestRuntime({
         ee,
         http: {get$, postJson$, delete$},
         limiter$: eeLimiter$,
-        serviceAccountToken$
+        serviceAccountToken$,
+        recordRequest: recordEERequest
     })
 })
 
@@ -32,6 +34,6 @@ const worker$ = () =>
 export default job({
     jobName: 'EE runtime',
     before: [require('#gee/jobs/configure').default],
-    services: [eeLimiterService, serviceAccountTokenService],
+    services: [eeLimiterService, serviceAccountTokenService, eeRequestMetricService],
     worker$
 })

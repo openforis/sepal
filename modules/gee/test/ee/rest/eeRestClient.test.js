@@ -159,6 +159,32 @@ describe('failures', () => {
     })
 })
 
+describe('what is counted', () => {
+    test('every request sent, as who it was made as and the class of its answer', async () => {
+        const {client, recorded} = setup({answers: [failure(429, {message: 'Too many requests'}), ok({result: 42})]})
+
+        await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
+        await call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe'))
+
+        expect(recorded).toEqual([
+            {auth: 'user', status: '429'},
+            {auth: 'user', status: '2xx'},
+            {auth: 'serviceAccount', status: '2xx'}
+        ])
+    })
+
+    test('a request that cannot be counted still answers', async () => {
+        const {client} = setup({
+            answers: [ok({result: 42})],
+            recordRequest: () => {
+                throw new Error('metrics unavailable')
+            }
+        })
+
+        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).toEqual([42])
+    })
+})
+
 const alice = () => ({
     requestId: 'request-1',
     username: 'alice',
@@ -175,10 +201,11 @@ const bobWithoutGoogleAccount = () => ({
     projectId: TEST_PROJECT
 })
 
-const setup = ({answers = []} = {}) => {
+const setup = ({answers = [], recordRequest} = {}) => {
     const http = fakeHttp(answers)
     const limited = []
     const delays = []
+    const recorded = []
     const client = new EERestClient({
         ee,
         http,
@@ -187,12 +214,13 @@ const setup = ({answers = []} = {}) => {
             return observable$
         },
         serviceAccountToken$: () => of({accessToken: 'service-account-token'}),
+        recordRequest: recordRequest ?? (outcome => recorded.push(outcome)),
         delay$: retryCount => {
             delays.push(retryCount)
             return of(0)
         }
     })
-    return {client, http, limited, delays}
+    return {client, http, limited, delays, recorded}
 }
 
 const fakeHttp = answers => {
