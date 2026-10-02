@@ -19,6 +19,7 @@ import {withLayers} from '../withLayers'
 import {assetDisplayLabel} from './assetLabel'
 import styles from './imageLayerSources.module.css'
 import {removeArea} from './layerAreas'
+import {isEditableLayerSource} from './layerSourceEdit'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -27,8 +28,8 @@ export class _ImageLayerSources extends React.Component {
             <Scrollable direction='y'>
                 <Padding noHorizontal>
                     <Layout type='vertical' spacing='tight'>
-                        {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
-                        {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
+                        {standardImageLayerSources.map(source => this.renderSource({source, userAdded: false}))}
+                        {additionalImageLayerSources.map(source => this.renderSource({source, userAdded: true}))}
                         {additionalFeatureLayerSources.map(source => this.renderFeatureSource(source))}
                     </Layout>
                 </Padding>
@@ -37,19 +38,22 @@ export class _ImageLayerSources extends React.Component {
     }
 
     renderFeatureSource(source) {
-        const {recipeId} = this.props
+        const {recipeId, onEdit} = this.props
         const {sourceConfig: {label, asset} = {}} = source
-        // Feature sources render last, aren't draggable (no drag$), and only support removal. Match the image
-        // source rows: keep the short source type on the first line and let the user-facing asset name wrap on
-        // the second line without displacing the remove action.
+        // Feature sources render last and aren't draggable (no drag$). Match the image source rows: keep the short
+        // source type on the first line and let the user-facing asset name wrap on the second line without
+        // displacing the actions.
         return source && source.id
             ? (
                 <ListItem key={source.id}>
                     <div className={styles.featureSource}>
                         <CrudItem
+                            buttonSpacing='tight'
                             title={msg(`featureLayerSources.${source.type}.type`)}
                             description={assetDisplayLabel({label, asset})}
+                            editTooltip={msg('map.layout.layer.edit.tooltip')}
                             removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                            onEdit={isEditableLayerSource(source) ? () => onEdit(source) : null}
                             onRemove={() => removeFeatureLayerSource({sourceId: source.id, recipeId})}
                         />
                     </div>
@@ -58,8 +62,8 @@ export class _ImageLayerSources extends React.Component {
             : null
     }
 
-    renderSource({source, removable}) {
-        const {drag$, recipe} = this.props
+    renderSource({source, userAdded}) {
+        const {drag$, recipe, onEdit} = this.props
         const {description} = getImageLayerSource({recipe, source})
         return source && source.id
             ? (
@@ -71,15 +75,18 @@ export class _ImageLayerSources extends React.Component {
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}>
-                    <div className={removable ? styles.removableImageSource : styles.imageSource}>
+                    <ActionsWithoutDrag className={userAdded ? styles.removableImageSource : styles.imageSource}>
                         <CrudItem
                             key={source.id}
+                            buttonSpacing='tight'
                             title={msg(`imageLayerSources.${source.type}.label`)}
                             description={description}
+                            editTooltip={msg('map.layout.layer.edit.tooltip')}
                             removeTooltip={msg('map.layout.layer.remove.tooltip')}
-                            onRemove={removable ? () => this.removeSource(source.id) : null}
+                            onEdit={userAdded && isEditableLayerSource(source) ? () => onEdit(source) : null}
+                            onRemove={userAdded ? () => this.removeSource(source.id) : null}
                         />
-                    </div>
+                    </ActionsWithoutDrag>
                 </ListItem>
             )
             : null
@@ -103,6 +110,32 @@ export class _ImageLayerSources extends React.Component {
         //     .del(['layers.additionalImageLayerSources', {id: sourceId}])
         //     .set('layers.areas', removeAreaBySource(areas, sourceId))
         //     .dispatch()
+    }
+}
+
+// A row is dragged by a pan gesture its list item recognizes from pointer events on the whole row. A pointer pressed
+// on one of the row's buttons is kept from the row, so pressing Edit or Remove never starts a drag. Only pointer
+// events are stopped: React and the buttons handle mouse and click events as before.
+class ActionsWithoutDrag extends React.Component {
+    element = React.createRef()
+
+    render() {
+        const {className, children} = this.props
+        return <div ref={this.element} className={className}>{children}</div>
+    }
+
+    componentDidMount() {
+        this.element.current.addEventListener('pointerdown', stopOnButton)
+    }
+
+    componentWillUnmount() {
+        this.element.current?.removeEventListener('pointerdown', stopOnButton)
+    }
+}
+
+const stopOnButton = e => {
+    if (e.target.closest('button')) {
+        e.stopPropagation()
     }
 }
 
@@ -146,5 +179,6 @@ export const ImageLayerSources = compose(
 )
 
 ImageLayerSources.propTypes = {
-    drag$: PropTypes.object
+    drag$: PropTypes.object,
+    onEdit: PropTypes.func
 }

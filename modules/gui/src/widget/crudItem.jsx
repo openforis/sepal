@@ -170,8 +170,9 @@ class _CrudItem extends React.Component {
     }
 
     renderButtons() {
+        const {buttonSpacing} = this.props
         return (
-            <ButtonGroup layout='horizontal-nowrap' className={styles.inline}>
+            <ButtonGroup layout='horizontal-nowrap' spacing={buttonSpacing} className={styles.inline}>
                 {this.renderInlineComponents()}
                 {this.renderInfoButton()}
                 {this.renderEditButton()}
@@ -303,6 +304,7 @@ class _CrudItem extends React.Component {
 export const CrudItem = compose(
     _CrudItem,
     asFunctionalComponent({
+        buttonSpacing: 'compact',
         highlightDescription: true,
         highlightTitle: true,
         tooltipPlacement: 'left'
@@ -310,6 +312,7 @@ export const CrudItem = compose(
 )
 
 CrudItem.propTypes = {
+    buttonSpacing: PropTypes.string,
     children: PropTypes.any,
     className: PropTypes.string,
     content: PropTypes.any,

@@ -47,6 +47,7 @@ class _MapLayoutPanel extends React.Component {
     constructor(props) {
         super(props)
         this.setMode = this.setMode.bind(this)
+        this.editSource = this.editSource.bind(this)
     }
 
     render() {
@@ -138,7 +139,7 @@ class _MapLayoutPanel extends React.Component {
                 {isChromiumBasedBrowser() && isHighDensityDisplay() ? this.renderWarning() : null}
                 <div className={styles.content}>
                     <Areas sourceDrag$={this.sourceDrag$}/>
-                    <ImageLayerSources drag$={this.sourceDrag$}/>
+                    <ImageLayerSources drag$={this.sourceDrag$} onEdit={this.editSource}/>
                 </div>
             </Layout>
         )
@@ -164,6 +165,13 @@ class _MapLayoutPanel extends React.Component {
     selectPlanet() {
         const {activator: {activatables: {selectPlanet}}} = this.props
         selectPlanet.activate()
+    }
+
+    // A source is edited in the form that added it; a table was added as an asset.
+    editSource(source) {
+        const {activator: {activatables: {selectRecipe, selectAsset, selectPlanet}}} = this.props
+        const form = {Recipe: selectRecipe, Asset: selectAsset, EETableAsset: selectAsset, Planet: selectPlanet}[source.type]
+        form?.activate({source})
     }
 
     addImageLayerSource() {

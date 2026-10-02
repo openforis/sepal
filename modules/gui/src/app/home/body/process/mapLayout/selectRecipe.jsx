@@ -11,12 +11,14 @@ import {withForm} from '~/widget/form/form'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 
+import {updateLayerSource, withSourceValues} from './layerSourceEdit'
 import styles from './selectRecipe.module.css'
 
 const fields = {
     recipe: new Form.Field().notBlank()
 }
 
+// Opened with a `source` to edit, the form changes which recipe that source references, never the recipe itself.
 class _SelectRecipe extends React.Component {
     state = {
         recipe: null
@@ -25,17 +27,20 @@ class _SelectRecipe extends React.Component {
     constructor(props) {
         super(props)
         this.add = this.add.bind(this)
+        this.apply = this.apply.bind(this)
+        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
     }
 
     render() {
-        const {recipe} = this.state
-        const {activatable: {deactivate}} = this.props
+        const {activatable: {deactivate, source}} = this.props
         return (
             <Panel
                 className={styles.panel}
                 placement='modal'
                 onBackdropClick={deactivate}>
-                <Panel.Header title={msg('map.layout.addImageLayerSource.types.Recipe.description')}/>
+                <Panel.Header title={source
+                    ? msg('map.layout.editImageLayerSource.types.Recipe.description')
+                    : msg('map.layout.addImageLayerSource.types.Recipe.description')}/>
                 <Panel.Content scrollable={false}>
                     {this.renderContent()}
                 </Panel.Content>
@@ -45,15 +50,19 @@ class _SelectRecipe extends React.Component {
                             keybinding='Escape'
                             onClick={deactivate}
                         />
-                        <Panel.Buttons.Add
-                            keybinding='Enter'
-                            onClick={this.add}
-                            disabled={!recipe}
-                        />
+                        {this.renderConfirmButton()}
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
         )
+    }
+
+    renderConfirmButton() {
+        const {activatable: {source}} = this.props
+        const {recipe} = this.state
+        return source
+            ? <Panel.Buttons.Apply keybinding='Enter' onClick={this.apply} disabled={!recipe}/>
+            : <Panel.Buttons.Add keybinding='Enter' onClick={this.add} disabled={!recipe}/>
     }
 
     renderContent() {
@@ -65,9 +74,17 @@ class _SelectRecipe extends React.Component {
                 allowOwnRecipe
                 autoFocus
                 onLoading={() => this.setState({recipe: null})}
-                onRecipeLoaded={({recipe}) => this.setState({recipe})}
+                onRecipeLoaded={this.onRecipeLoaded}
             />
         )
+    }
+
+    onRecipeLoaded({recipe}) {
+        const {activatable: {source}} = this.props
+        if (recipe.id === source?.sourceConfig.recipeId) {
+            this.sourceRecipeType = recipe.type
+        }
+        this.setState({recipe})
     }
 
     add() {
@@ -84,7 +101,26 @@ class _SelectRecipe extends React.Component {
             .dispatch()
         deactivate()
     }
+
+    // An area's settings for a recipe layer belong to the recipe's type, so another type's recipe starts from its
+    // own defaults; a recipe of the same type keeps them, for its layer to reconcile.
+    apply() {
+        const {recipe} = this.state
+        const {recipeId, activatable: {deactivate, source}} = this.props
+        const sameType = recipe.type === this.sourceRecipeType
+        updateLayerSource({
+            recipeId,
+            sourceId: source.id,
+            sourceConfig: {...source.sourceConfig, recipeId: recipe.id},
+            reconcileLayerConfig: layerConfig => sameType ? layerConfig : undefined
+        })
+        deactivate()
+    }
 }
+
+const sourceValues = source => ({
+    recipe: source.sourceConfig.recipeId
+})
 
 const policy = () => ({
     _: 'allow'
@@ -93,6 +129,7 @@ const policy = () => ({
 export const SelectRecipe = compose(
     _SelectRecipe,
     withForm({fields}),
+    withSourceValues(sourceValues),
     withRecipe(),
     withActivatable({id: 'selectRecipe', policy, alwaysAllow: true})
 )
