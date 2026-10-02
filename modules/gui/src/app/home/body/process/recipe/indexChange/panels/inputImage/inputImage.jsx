@@ -2,15 +2,14 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {RecipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {msg} from '~/translate'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
 
 export const fields = {
     section: new Form.Field()
@@ -38,55 +37,49 @@ export class InputImage extends React.Component {
     constructor(props) {
         super(props)
         this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
+        this.clearSource = this.clearSource.bind(this)
     }
 
     render() {
+        const {title} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement="bottom-right"
                 onApply={this.updateImageLayerSources}>
-                {this.renderSections()}
+                <Panel.Header icon='image' title={title}/>
+                <Panel.Content>
+                    {this.renderImageForm()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {title, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection section={inputs.section}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.indexChange.panel.inputImage.recipe.title'),
-                title: msg('process.indexChange.panel.inputImage.recipe.title'),
-                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.indexChange.panel.inputImage.asset.title'),
-                title: msg('process.indexChange.panel.inputImage.asset.title'),
-                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-            }
-        ]
+    renderImageForm() {
+        const {inputs} = this.props
+        const recipe = inputs.section.value === 'RECIPE_REF'
         return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon="image"
-                label={title}
-                onChange={() => {
-                    inputs.bands.set(undefined)
-                    inputs.band.set(undefined)
-                    inputs.recipe.set(undefined)
-                    inputs.asset.set(undefined)
-                    inputs.metadata.set(undefined)
-                    inputs.visualizations.set(undefined)
-                }}
+            <ImageForm
+                {...this.props}
+                inputComponent={recipe ? RecipeSection : AssetSection}
+                input={recipe ? inputs.recipe : inputs.asset}
+                labelButtons={[
+                    <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
+                ]}
             />
         )
+    }
+
+    // A source of the other type starts over: nothing selected or read for the previous one carries across.
+    clearSource() {
+        const {inputs} = this.props
+        inputs.bands.set(undefined)
+        inputs.band.set(undefined)
+        inputs.recipe.set(undefined)
+        inputs.asset.set(undefined)
+        inputs.metadata.set(undefined)
+        inputs.visualizations.set(undefined)
     }
 
     updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
@@ -129,7 +122,7 @@ export class InputImage extends React.Component {
 
 export const modelToValues = model => {
     const values = {
-        section: model.type || 'SELECTION',
+        section: model.type || 'ASSET',
         bands: model.bands,
         band: model.band,
         errorBand: model.errorBand,

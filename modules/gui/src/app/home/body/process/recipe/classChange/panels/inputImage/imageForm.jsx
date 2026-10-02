@@ -13,7 +13,7 @@ export class ImageForm extends Component {
     state = {entries: [], loadedRecipe: null}
 
     render() {
-        const {input, inputComponent, inputs: {band, bands, legendEntries}} = this.props
+        const {input, inputComponent, labelButtons, inputs: {band, bands, legendEntries}} = this.props
         const {loadedRecipe} = this.state
         const bandOptions = (Object.keys(bands.value) || [])
             .map(bandName => ({
@@ -25,6 +25,7 @@ export class ImageForm extends Component {
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
+                        labelButtons,
                         onLoading: () => {
                             bands.set({})
                         },
@@ -100,5 +101,6 @@ export class ImageForm extends Component {
 ImageForm.propTypes = {
     children: PropTypes.any,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    labelButtons: PropTypes.array
 }

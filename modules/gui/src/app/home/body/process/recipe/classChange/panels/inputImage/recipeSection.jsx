@@ -3,13 +3,16 @@ import React from 'react'
 
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, labelButtons, onLoading} = this.props
         return (
             <RecipeInput
+                label={msg('process.classChange.panel.inputImage.image.label')}
+                labelButtons={labelButtons}
                 input={input}
                 filter={isImageSource}
                 autoFocus
@@ -47,5 +50,6 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
     recipes: PropTypes.array
 }

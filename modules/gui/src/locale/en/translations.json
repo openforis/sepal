@@ -2496,17 +2496,11 @@
             },
             "sampleClassification": {
               "typeToSample": {
-                "label": "Image source",
-                "ASSET": "EE Asset",
-                "RECIPE": "Recipe"
+                "label": "Image source"
               },
               "assetToSample": {
-                "label": "EE asset ID of classification",
                 "placeholder": "Enter an asset ID...",
                 "required": "You must enter an asset ID"
-              },
-              "recipeToSample": {
-                "label": "Recipe to sample"
               },
               "sampleScale": {
                 "label": "Scale to sample in",
@@ -3077,8 +3071,7 @@
         "inputImage": {
           "asset": {
             "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3094,15 +3087,15 @@
             "label": "Legend",
             "tooLong": "The legend is too long. It cannot contain more than {max} entries."
           },
-          "recipe": {
-            "title": "Saved SEPAL Recipe"
-          },
           "to": {
             "button": {
               "label": "TO",
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3141,9 +3134,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3160,8 +3151,7 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
           },
           "to": {
             "button": {
@@ -3169,6 +3159,9 @@
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3337,9 +3330,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "imageMask": {
             "button": {
@@ -3357,8 +3348,10 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
+          },
+          "image": {
+            "label": "Image"
           }
         }
       },
@@ -5751,6 +5744,10 @@
         "noMeasures": "none",
         "noMeasure": "The selected source has no band with both coefficients and RMSE."
       }
+    },
+    "sourceType": {
+      "ASSET": "Asset",
+      "RECIPE": "Recipe"
     }
   },
   "sources": {

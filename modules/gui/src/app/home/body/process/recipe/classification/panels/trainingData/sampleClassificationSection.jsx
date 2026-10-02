@@ -5,6 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -25,7 +26,6 @@ class _SampleClassificationSection extends React.Component {
             <Layout>
                 {this.renderSamplesPerClass()}
                 {this.renderSampleScale()}
-                {this.renderTypeToSample()}
                 {typeToSample.value === 'ASSET' && this.renderAssetToSample()}
                 {typeToSample.value === 'RECIPE' && this.renderRecipeToSample()}
                 {this.renderValueColumnInput()}
@@ -86,23 +86,15 @@ class _SampleClassificationSection extends React.Component {
 
     renderTypeToSample() {
         const {inputs: {typeToSample}} = this.props
-        return (
-            <Form.Buttons
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
-                input={typeToSample}
-                options={[
-                    {value: 'ASSET', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.ASSET')},
-                    {value: 'RECIPE', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.RECIPE')},
-                ]}
-            />
-        )
+        return <SourceTypeButtons key='typeToSample' input={typeToSample}/>
     }
 
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
         return (
             <Form.AssetCombo
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
+                labelButtons={[this.renderTypeToSample()]}
                 autoFocus
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
@@ -135,7 +127,8 @@ class _SampleClassificationSection extends React.Component {
         const {inputs: {recipeIdToSample}} = this.props
         return (
             <RecipeInput
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.recipeToSample.label')}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
+                labelButtons={[this.renderTypeToSample()]}
                 input={recipeIdToSample}
                 filter={isImageSource}
                 // Sampling reads the selected recipe once and persists the points in the data set; only a

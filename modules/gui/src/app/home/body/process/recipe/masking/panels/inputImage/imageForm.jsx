@@ -11,13 +11,14 @@ export class ImageForm extends Component {
     state = {errorBandCleared: true}
 
     render() {
-        const {input, inputComponent, filter, inputs: {bands}} = this.props
+        const {input, inputComponent, filter, labelButtons, inputs: {bands}} = this.props
         return (
             <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
                         filter,
+                        labelButtons,
                         onLoading: () => {
                             bands.set(undefined)
                         },
@@ -76,5 +77,6 @@ ImageForm.propTypes = {
     filter: PropTypes.func,
     input: PropTypes.object,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    labelButtons: PropTypes.array
 }

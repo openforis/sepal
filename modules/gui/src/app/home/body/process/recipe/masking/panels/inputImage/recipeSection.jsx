@@ -4,6 +4,7 @@ import React from 'react'
 import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
 import {sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'
 
 // Masking preserves what it masks, so a source of segments stays one through it, whether or not it is offered as an
@@ -17,9 +18,11 @@ export const maskImage = type =>
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, filter, onLoading} = this.props
+        const {input, filter, labelButtons, onLoading} = this.props
         return (
             <RecipeInput
+                label={msg('process.masking.panel.inputImage.image.label')}
+                labelButtons={labelButtons}
                 input={input}
                 filter={filter}
                 autoFocus
@@ -41,5 +44,6 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
-    filter: PropTypes.func
+    filter: PropTypes.func,
+    labelButtons: PropTypes.array
 }
