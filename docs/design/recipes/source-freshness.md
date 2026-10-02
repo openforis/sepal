@@ -859,7 +859,10 @@ AOI evidence is derived by AOI kind:
   available;
 - a recipe reference resolves the AOI geometry product exposed by that recipe, including relevant transitive recipe
   and asset evidence;
-- `ASSET_BOUNDS` binds to the concrete source product whose bounds it adopts.
+- `ASSET_BOUNDS` binds to the concrete source product whose bounds it adopts;
+- a GeoID uses its id and buffer: its geometry is immutable under the GeoID service's contract, so the
+  GeoID is its own fingerprint and is never polled. Looking it up can still fail during execution; that is an
+  availability failure, not a change.
 
 For a recipe AOI, Sampling Design never decides which fields of the referenced recipe affect geometry. The recipe's
 product provider owns that projection. A changed recipe revision says only that the AOI may have changed; after

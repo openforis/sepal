@@ -32,6 +32,30 @@ const config = ({deployEnvironment, sepalHostProjectDir}) => ({
 
 const taskVolumes = workerType => workerType.images[0].volumes
 
+const taskEnvironment = workerType => workerType.images[0].environment
+
+// The task executor resolves GeoID areas of interest itself, so a deployment's GeoID endpoint has to reach it.
+// Without one the executor falls back to its own default.
+describe('createWorkerType TASK_EXECUTOR GeoID endpoint', () => {
+    it('hands the configured GeoID endpoint to the task executor', () => {
+        const workerType = createWorkerType(TASK_EXECUTOR, instance, {
+            ...config({deployEnvironment: 'PRODUCTION'}),
+            geoIdEndpoint: 'https://geoid.example.org/geoid'
+        })
+
+        expect(taskEnvironment(workerType).GEOID_ENDPOINT).toBe('https://geoid.example.org/geoid')
+    })
+
+    it.each(['', undefined])('hands none over when the configured endpoint is %j', geoIdEndpoint => {
+        const workerType = createWorkerType(TASK_EXECUTOR, instance, {
+            ...config({deployEnvironment: 'PRODUCTION'}),
+            geoIdEndpoint
+        })
+
+        expect(taskEnvironment(workerType)).not.toHaveProperty('GEOID_ENDPOINT')
+    })
+})
+
 describe('createWorkerType TASK_EXECUTOR dev mounts', () => {
     it('adds hot-reload mounts in DEV when sepalHostProjectDir is configured', () => {
         const workerType = createWorkerType(TASK_EXECUTOR, instance, config({

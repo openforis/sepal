@@ -113,6 +113,14 @@ export default {
             }
         }),
 
+    aoiGeoId$: ({id, bufferMeters}) =>
+        postJson$('/api/gee/aoi/geoId', {
+            body: {id, bufferMeters},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     aoiGeometry$: ({aoi, color, fillColor, width}) =>
         postJson$('/api/gee/aoi/geometry', {
             body: {aoi, color, fillColor, width},

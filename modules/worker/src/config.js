@@ -225,6 +225,10 @@ program
         new Option('--sepal-endpoint <url>', 'Public SEPAL base URL, for links in outbound email')
             .env('SEPAL_ENDPOINT')
     )
+    .addOption(
+        new Option('--geoid-endpoint <url>', 'GeoID service base URL handed to task executors (their default if unset)')
+            .env('GEOID_ENDPOINT')
+    )
 
     // ─── Docker ─────────────────────────────────────────────────────────────
     .addOption(
@@ -377,6 +381,7 @@ const {
     busyNetworkThresholdKbps,
     sessionExpirySecret,
     sepalEndpoint,
+    geoidEndpoint: geoIdEndpoint,
     dockerPort,
     dockerEntryPoint,
     dockerRegistryHost,
@@ -419,6 +424,7 @@ export {
     dockerRegistryHost,
     emailExtensionMinutes,
     environment,
+    geoIdEndpoint,
     googleEarthEngineAccount,
     googleEarthEnginePrivateKey,
     googleOAuthEndpoint,

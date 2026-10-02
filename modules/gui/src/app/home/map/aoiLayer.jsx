@@ -100,7 +100,8 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
         )
         case 'POLYGON':
         case 'ASSET':
-        case 'RECIPE': return (
+        case 'RECIPE':
+        case 'GEOID': return (
             <AoiGeometryLayer
                 id={id}
                 map={map}

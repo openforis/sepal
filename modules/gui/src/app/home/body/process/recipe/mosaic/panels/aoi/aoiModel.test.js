@@ -33,3 +33,30 @@ describe('aoi asset/recipe source mapping', () => {
         expect(() => valuesToModel({section: 'SOURCE', assetId: 'a1'})).toThrow()
     })
 })
+
+describe('aoi GeoID mapping', () => {
+    const GEOID = '40df4325-744f-8fae-8e46-049080be5554'
+
+    it('stores the canonical GeoID read from the pasted text, never the text', () => {
+        expect(valuesToModel({section: 'GEOID', geoId: `https://data.apps.fao.org/geoid/${GEOID.toUpperCase()}`, bufferMeters: ''}))
+            .toEqual({type: 'GEOID', id: GEOID})
+    })
+
+    it('stores a buffer in metres when there is one', () => {
+        expect(valuesToModel({section: 'GEOID', geoId: GEOID, bufferMeters: '1000'}))
+            .toEqual({type: 'GEOID', id: GEOID, bufferMeters: 1000})
+    })
+
+    // Zero is a boundary used as it is, not "no buffer given": it must not turn into the geometry's default.
+    it('keeps an explicit zero buffer through saving and reopening', () => {
+        const model = valuesToModel({section: 'GEOID', geoId: GEOID, bufferMeters: '0'})
+
+        expect(model).toEqual({type: 'GEOID', id: GEOID, bufferMeters: 0})
+        expect(modelToValues(model)).toEqual({section: 'GEOID', geoId: GEOID, bufferMeters: 0})
+    })
+
+    it('opens a saved GeoID without a buffer with an empty buffer, meaning the geometry\'s default', () => {
+        expect(modelToValues({type: 'GEOID', id: GEOID}))
+            .toEqual({section: 'GEOID', geoId: GEOID, bufferMeters: ''})
+    })
+})

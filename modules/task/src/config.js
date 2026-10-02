@@ -2,6 +2,7 @@ import {program} from 'commander'
 import fs from 'fs'
 import _ from 'lodash'
 
+import {DEFAULT_GEOID_ENDPOINT} from '#sepal/geoId/httpGeoIdAdapter'
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('config')
@@ -12,6 +13,7 @@ program
     .option('--gee-email <value>')
     .option('--gee-key <value>')
     .option('--gee-key-path <value>')
+    .option('--geoid-endpoint <value>')
     .option('--google-project-id <value>')
     .option('--google-region <value>')
     .option('--sepal-host <value>')
@@ -26,6 +28,7 @@ const {
     geeEmail,
     geeKey,
     geeKeyPath,
+    geoidEndpoint,
     googleProjectId,
     googleRegion,
     sepalHost,
@@ -52,9 +55,13 @@ const serviceAccountCredentials = {
         : readFile(geeKeyPath)
 }
 
+// start.sh always passes the option, empty when the deployment sets no GeoID endpoint.
+const geoIdEndpoint = geoidEndpoint || DEFAULT_GEOID_ENDPOINT
+
 log.info('Configuration loaded')
 
 export {
+    geoIdEndpoint,
     googleProjectId,
     googleRegion,
     homeDir,

@@ -129,6 +129,7 @@ const createTaskExecutorWorkerType = (instance, config, apiKey) => {
                     EE_PRIVATE_KEY: eePrivateKey,
                     SEPAL_ENDPOINT: sepalEndpoint,
                     SEPAL_API_KEY: apiKey ?? '',
+                    ...(config.geoIdEndpoint ? {GEOID_ENDPOINT: config.geoIdEndpoint} : {}),
                     USERNAME: USER_HOME_NAME,
                     NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment === 'DEV' ? 0 : 1,
                     DEPLOY_ENVIRONMENT: config.deployEnvironment,

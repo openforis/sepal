@@ -64,5 +64,5 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 
 - **Authentication per-request**: Each GEE call authenticates using the user's Google OAuth tokens from the `sepal-user` header. Falls back to service account.
 - **Scheduler**: Named "GoogleEarthEngine", configurable instances via `--instances` CLI flag.
-- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--port`, `--instances`.
+- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--geoid-endpoint` (GeoID service, defaulting to FAO's), `--port`, `--instances`.
 - **Recipe reads**: referenced recipes are read from the `recipe` module as the user the gateway authenticated on the request, installed per job by `src/jobs/configure.js`. There is no service-credential fallback.

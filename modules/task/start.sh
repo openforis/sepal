@@ -31,6 +31,7 @@ then
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-api-key "$SEPAL_API_KEY" \
+    --geoid-endpoint "$GEOID_ENDPOINT" \
     --home-dir $HOME_DIR \
     --username $USERNAME
 else
@@ -44,6 +45,7 @@ else
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-api-key "$SEPAL_API_KEY" \
+    --geoid-endpoint "$GEOID_ENDPOINT" \
     --home-dir $HOME_DIR \
     --username $USERNAME
 fi

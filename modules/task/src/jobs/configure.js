@@ -2,6 +2,7 @@ import {EMPTY, tap} from 'rxjs'
 
 import {configure} from '#sepal/context'
 import {RecipeScope} from '#sepal/ee/recipeScope'
+import {HttpGeoIdAdapter} from '#sepal/geoId/httpGeoIdAdapter'
 import {swallow} from '#sepal/rxjs'
 import {job} from '#task/jobs/job'
 import {contextService, getCurrentContext$} from '#task/jobs/service/context'
@@ -13,7 +14,11 @@ const worker$ = ({state}) => {
     return getCurrentContext$().pipe(
         tap(({config}) => {
             configure(config)
-            state.recipeScope = new RecipeScope(createRecipeReader(config))
+            const geoIds = new HttpGeoIdAdapter({endpoint: config.geoIdEndpoint})
+            state.recipeScope = new RecipeScope(
+                createRecipeReader(config),
+                {geoIdFeature$: geoId => geoIds.feature$(geoId)}
+            )
         }),
         swallow()
     )

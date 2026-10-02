@@ -10,3 +10,8 @@
     color: gray;
     font-size: .9rem;
 }
+
+.warning {
+    color: var(--warning-color);
+    font-size: .9rem;
+}

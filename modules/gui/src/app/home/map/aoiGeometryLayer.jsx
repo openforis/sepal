@@ -9,7 +9,7 @@ import {withTab} from '~/widget/tabs/tabContext'
 import {EarthEngineTableLayer} from './layer/earthEngineTableLayer'
 
 // A geometry aoi is renderable once it carries what the server's toGeometry$ needs: a referenced id
-// (ASSET/RECIPE) or a drawn path (POLYGON).
+// (ASSET/RECIPE/GEOID) or a drawn path (POLYGON).
 export const hasAoiGeometry = aoi => !!(aoi?.id || aoi?.path?.length)
 
 class _AoiGeometryLayer extends React.Component {

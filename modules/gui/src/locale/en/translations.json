@@ -409,6 +409,18 @@
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
     },
+    "geoId": {
+      "error": {
+        "invalidBuffer": "The buffer must be a whole number of metres, at least {min, number}, for this GeoID.",
+        "invalidGeometry": "The geometry of GeoID {geoId} from the GeoID service ({host}) could not be used.",
+        "notFound": "GeoID {geoId} is not registered with the GeoID service ({host}).",
+        "rateLimited": "The GeoID service ({host}) is limiting requests. Try again later.",
+        "rejected": "The GeoID service ({host}) refused the request (HTTP {status}).",
+        "serviceError": "The GeoID service ({host}) reported an error (HTTP {status}). Try again later.",
+        "unreachable": "SEPAL could not reach the GeoID service ({host}). Try again later.",
+        "unusableResponse": "The GeoID service ({host}) returned a response SEPAL could not use."
+      }
+    },
     "image": {
       "error": {
         "notAnImage": "Not an image",
@@ -3498,6 +3510,30 @@
                 "required": "A row must be selected"
               },
               "title": "Select from Fusion Table"
+            },
+            "geoId": {
+              "about": "About GeoID",
+              "checking": "Checking GeoID...",
+              "label": "GeoID",
+              "lookUp": "Look up a GeoID",
+              "multiple": "More than one GeoID found. An area of interest uses a single GeoID.",
+              "none": "No GeoID found. Paste a GeoID, or a link containing one.",
+              "notChecked": "Not checked: {error}",
+              "placeholder": "Paste a GeoID or a link containing one",
+              "title": "From GeoID",
+              "tooltip": "A GeoID is a permanent identifier for a location – a point or a boundary – registered with the Open Foris GeoID service. Paste a GeoID, or a link containing one."
+            },
+            "bufferMeters": {
+              "defaultPlaceholder": "Default",
+              "invalid": "A whole number of metres, at least {min, number}",
+              "label": "Buffer (m)",
+              "square": "m = {size, number} m × {size, number} m square",
+              "tooltip": {
+                "point": "This GeoID is a single location. The area of interest is the square reaching this distance from it in each direction.",
+                "polygon": "This GeoID is a boundary. The area of interest extends this distance beyond it; 0 keeps the boundary as it is.",
+                "unknown": "How far to extend the area of interest beyond the geometry of the GeoID. Leave empty for its default: a 250 m square around a point, the boundary itself for a polygon."
+              },
+              "unit": "m"
             },
             "polygon": {
               "description": "Draw a polygon on the map.",

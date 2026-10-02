@@ -19,6 +19,7 @@ services:
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      GEOID_ENDPOINT: "${GEOID_ENDPOINT:-https://data.apps.fao.org/geoid}"
       INSTANCES: "40"
     networks:
       - sepal
