@@ -13,10 +13,10 @@ import {NEEDS_EVIDENCE, SUPPORTED} from './sourceRequirements'
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 
 // Segments a slicer can cut at a date and evaluate a measure from, judged from the description an observation accepts:
-// for an asset, its metadata as Earth Engine answers for it and the band evidence read beside it.
+// for an asset, its metadata as /assetMetadata answers for it.
 
 describe('segments read from an asset', () => {
-    it('suit when its bands have the layout the slicer reads, though its metadata states no band an array', () => {
+    it('suit when its bands have the layout the slicer reads', () => {
         expect(assetSuitability(VALID)).toEqual({status: SUPPORTED, measures: ['ndvi']})
     })
 
@@ -52,7 +52,7 @@ describe('segments read from an asset', () => {
         })
     })
 
-    it('are refused as unestablished, not as incompatible, when the band evidence states no shape', () => {
+    it('are refused as unestablished, not as incompatible, when the metadata states no rank', () => {
         const unstated = VALID.map(({name}) => band(name, undefined))
 
         expect(assetSuitability(unstated).diagnostic).toMatchObject({
@@ -123,14 +123,23 @@ const VALID = [
     band('ndvi_coefs', 2), band('ndvi_rmse', 1), band('ndvi_magnitude', 1)
 ]
 
-// An image asset as Earth Engine answers for it: its metadata states every band's precision and grid but no array
-// dimensionality, which only the band evidence carries.
+// An image asset as /assetMetadata states it: each band's grid as `dimensions`, its array rank on its type - none for a
+// scalar, and unknown where none was established.
 const describedAsset = (assetId, bands) => typedSegmentsAssetDescription({
     type: 'Image',
     bandNames: bands.map(({name}) => name),
-    bands: bands.map(({name}) => ({id: name, crs: 'EPSG:4326', dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double'}})),
+    bands: bands.map(({name, arrayDimensions}) => ({
+        id: name,
+        crs: 'EPSG:4326',
+        dimensions: [5015, 3093],
+        data_type: {
+            type: 'PixelType',
+            precision: 'double',
+            ...(arrayDimensions === undefined ? {dimensions: null} : arrayDimensions && {dimensions: arrayDimensions})
+        }
+    })),
     properties: {dateFormat: 1}
-}, {assetId, bandEvidence: bands})
+}, {assetId})
 
 const assetSuitability = (bands, monitoredMeasure) => SLICEABLE_MEASURE_SEGMENTS.evaluate({
     assetId: ASSET,

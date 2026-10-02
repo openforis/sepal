@@ -297,10 +297,14 @@ In order, each independently mergeable:
    optional latency improvements; correctness must not depend on notification delivery.
 2. **Configured-source requirement validation.** Check whether a particular recipe or asset meets a consumer's
    requirements, using its configuration and available evidence. Change Alerts REF is implemented
-   ([contract](source-resolution.md#change-alerts-ref)); CCDC Slice, BAYTS and the remaining consumers follow. A
-   reference-API review comes first: Masking, CCDC Slice and BAYTS against the declarative boundary, evidence-dependent
-   suitability for a recipe shown outside its editor (unchecked today), and sharing the typed band read
+   ([contract](source-resolution.md#change-alerts-ref)); CCDC Slice, BAYTS and the remaining consumers follow. The
+   reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
+   from metadata alone (done); shared segment-evidence readers and selection by role; evidence owned by the source
+   runtime, so a recipe shown outside its editor is checked too (unchecked today), with prefill behaviour kept; then
+   CCDC Slice, and BAYTS with a requirement derived from what its execution reads
    ([findings](#configured-source-suitability-findings)).
+   A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
+   recipe-specific input-layer bookkeeping with shared derivation.
    One shared
    `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
@@ -1001,7 +1005,7 @@ unless stated otherwise; they are not claims of end-to-end reproduction.
 | Wrappers bypass direct type exclusions | Masking over CCDC remains eligible wherever Masking is offered, including its own mask field, despite CCDC's direct exclusion. | Audit each consumer's actual shape requirement before introducing scalar-image validation; do not assume every image consumer requires scalars. |
 | Classification-only inputs rely on GUI filters | Execution callers assume classifier/training methods exist; wrong types can fail with missing-method errors. | Define the requirement and execution diagnosis without incidentally admitting Masking over Classification. |
 | Selected-source errors are poorly presented | Evidence failures can disable actions without marking SRC/REF; unavailable or no-longer-offered selections can appear blank or disappear from input lists while remaining in the model. | Preserve and display the selected reference, mark its owning section, and explain the specific failure. Never clear it as a side effect of validation. |
-| Asset metadata omits array dimensionality | `/assetMetadata` answers an image asset from its asset record through the Earth Engine client's legacy conversion, which keeps each band's precision and range but drops its array dimensionality (`dimensionsCount`); its band `dimensions` is the grid. `assetAvailableBands` reads a band with no stated dimensions as a scalar, so an image asset's array bands look like scalars to the asset map layer. A collection's metadata is evaluated from its first image and does state them. Observed on a real CCDC asset. | Change Alerts REF reads `/bands` band evidence instead. Audit the `assetAvailableBands` consumers (the asset image layer's style selector, renderable-style filter and cursor display types) separately. |
+| Asset metadata omitted array dimensionality (resolved) | The Earth Engine client's legacy conversion keeps a band's precision and range but drops the rank the Cloud API states (`dimensionsCount`), so an image asset's array bands read as scalars to `assetAvailableBands`: the asset layer offered them for styling and kept styles over them. `/assetMetadata` now converts the Cloud record itself and states each band's rank as `data_type.dimensions`, none for a scalar; a band with no type states none, and a rank that is no count, or a band the record does not match, stays unknown. Collections and Cloud GeoTIFFs already stated it. | Change Alerts REF reads its reference from metadata alone. Cursor display types read precision only and were unaffected. |
 | Picker and translation gaps | `RecipeInput` bypasses its filter for an unknown GUI type. Required-message keys reported missing include CCDC Slice SRC, Change Alerts REF and Classification training data; the AOI key also needs checking. | Add focused picker and message coverage when these paths are changed. |
 
 Contract constraints for the first packet:
@@ -1023,15 +1027,32 @@ CCDC Slice, BAYTS, scalar-image and classification-input requirements are subseq
 must not broaden their behavior while adapting shared discovery code. Execution parity for asset segment leaves
 and the ASSET/inline branches of `loadSegments` remains to be designed, rather than claimed by GUI validation.
 
-For the reference-API review: Change Alerts' observation reads an asset's band evidence beside its metadata as a
-request of its own, not shared through the source runtime's band observations, so a layer and the observation reading
-the same asset ask twice. A preview of a recipe whose editor is not open is held only by what its held records refuse:
-with no evidence owner, a source only evidence could judge is not checked, and its preview requests are made as before.
+For the runtime-owned evidence packet: a preview of a recipe whose editor is not open is held only by what its held
+records refuse: with no evidence owner, a source only evidence could judge is not checked, and its preview requests are
+made as before.
 
 Source-error presentation acceptance includes a visibly invalid owning SRC/REF section, an explanation naming
 the affected source, a retained selection that can be repaired, and visible progress on Refresh. The missing
 Refresh feedback was observed manually after deleting a temporary asset; the unavailable message and export
 blocking worked. Broader Retrieve diagnostic presentation and Refresh feedback remain separate follow-ups.
+
+### Declared reference layer sources
+
+Follow-up to the reference-API review; not part of the current suitability migrations.
+Recipe specifications explicitly opt source roles into becoming map-layout layer sources. Shared code derives
+those sources from the current references, so recipes do not each add and maintain them in input-panel handlers.
+Not every dependency is suitable for display; the declaration decides which ones are exposed.
+
+- Keep derived sources separate from sources explicitly added through the layout. Dropping an input reference
+  removes its derived source, never a user-added source that happens to reference the same asset or recipe.
+- Give derived sources stable identities tied to their role and, for multiple inputs, their input entry. Replacing
+  a reference should preserve area assignments and compatible settings through the existing reconciliation rules.
+- Treat Remove on a derived source as a persisted hide choice, so the source does not immediately reappear.
+  Define when that choice resets (for example, when the reference changes) before implementation.
+- Edit derived sources through their owning input panel. Layout-added sources remain independently editable.
+  Ownership should be explicit rather than inferred from source-ID conventions.
+- Specify cleanup of area assignments when a derived source disappears, and compatibility for existing saved
+  layouts, before migrating input panels. Keep derivation in the GUI; this declaration does not change execution.
 
 ### Task-driven asset invalidation
 

@@ -1,8 +1,9 @@
 import _ from 'lodash'
-import {forkJoin, map} from 'rxjs'
+import {map} from 'rxjs'
 
 import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
+import {assetAvailableBands} from '~/app/home/map/imageLayerSource/assetBands'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {uuid} from '~/uuid'
 
@@ -15,11 +16,9 @@ import {uuid} from '~/uuid'
 // segments is left to each consumer's own requirement.
 //
 // Read for a requirement over its segments, it also carries the asset's typed bands (`typedBands`: the asset, and each
-// band with the array dimensionality Earth Engine evaluates for it, undefined where none was established). They come
-// from the band evidence read (/bands with data types, lib/js/ee/src/bandEvidence.js), never from the metadata here:
-// an image asset's metadata is its asset record, whose band types keep precision and range but not array
-// dimensionality, so an array band there reads exactly like a scalar. They are reported, not validated: no other field
-// depends on them, and a consumer's requirement judges them (segmentRequirements.js).
+// band with the array rank its metadata states, undefined where none was established - assetBands.js). They are
+// reported, not validated: no other field depends on them, and a consumer's requirement judges them
+// (segmentRequirements.js).
 //
 // Two different things come out of the same metadata and must not be confused. Band names are the only input
 // to the structural fields. The visualization properties are presentation templates and contribute to none of
@@ -31,23 +30,12 @@ export const describeSegmentsAsset$ = assetId =>
         map(segmentsAssetDescription)
     )
 
-// The asset's metadata and its typed bands, read together: {metadata, segments}.
-export const describeTypedSegmentsAsset$ = assetId =>
-    forkJoin({
-        metadata: api.gee.assetMetadata$({asset: assetId}),
-        bandEvidence: api.gee.bands$({asset: assetId, includeDataTypes: true})
-    }).pipe(
-        map(({metadata, bandEvidence}) => ({metadata, segments: typedSegmentsAssetDescription(metadata, {assetId, bandEvidence})}))
-    )
-
-export const typedSegmentsAssetDescription = (metadata, {assetId, bandEvidence}) => ({
+export const typedSegmentsAssetDescription = (metadata, {assetId}) => ({
     ...segmentsAssetDescription(metadata),
     typedBands: {
         assetId,
-        bands: bandEvidence.map(({name, arrayDimensions}) => ({
-            name,
-            arrayDimensions: Number.isInteger(arrayDimensions) && arrayDimensions >= 0 ? arrayDimensions : undefined
-        }))
+        bands: Object.entries(assetAvailableBands(metadata))
+            .map(([name, {dataType: {arrayDimensions}}]) => ({name, arrayDimensions}))
     }
 })
 

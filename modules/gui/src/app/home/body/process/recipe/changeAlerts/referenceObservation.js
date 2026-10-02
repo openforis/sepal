@@ -1,9 +1,10 @@
 import _ from 'lodash'
 import {map, throwError} from 'rxjs'
 
+import api from '~/apiRegistry'
 import {selectFrom} from '~/stateUtils'
 
-import {describeTypedSegmentsAsset$} from '../ccdc/segmentsAsset'
+import {typedSegmentsAssetDescription} from '../ccdc/segmentsAsset'
 import {describeProducer$, resolveSegmentProducer, segmentsAssetOf} from '../segmentCapability'
 import {withKnownIdentities} from '../visualizationMatching'
 import {segmentVisualizations, selectedReference} from './referenceEvidence'
@@ -59,9 +60,9 @@ const assetDateFormat = (recipe, {sourceKey, segments}, previous) => {
 const observeProducer$ = (producer, context) => {
     const segmentsAsset = segmentsAssetOf(producer)
     return segmentsAsset
-        ? describeTypedSegmentsAsset$(segmentsAsset).pipe(
-            map(({metadata, segments}) => ({
-                segments,
+        ? api.gee.assetMetadata$({asset: segmentsAsset}).pipe(
+            map(metadata => ({
+                segments: typedSegmentsAssetDescription(metadata, {assetId: segmentsAsset}),
                 monitoring: {
                     sources: parsed(metadata.properties?.recipe_sources),
                     options: parsed(metadata.properties?.recipe_options)

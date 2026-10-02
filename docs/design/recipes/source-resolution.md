@@ -442,12 +442,12 @@ decides when the answer can be trusted and what it does to the UI.
   an observed incompatibility and never reported as a scalar. The rule does not establish how many coefficients an
   array holds, and an image collection's bands are its first member's. Its diagnoses read as a summary naming a few
   representative problems, with every problem in their details.
-- **Evidence.** An image asset's metadata (`/assetMetadata`) is its asset record, whose band types keep precision and
-  range but drop array dimensionality: every band there reads like a scalar. The observation therefore reads the
-  asset's band evidence (`/bands` with data types, the dimensionality evaluated from the image) beside its metadata,
-  and the segment description carries it as `typedBands`, reported and not validated; CCDC Slice's acceptance is
-  unchanged. Version polling stays a metadata read. An asset just picked is judged once that evidence is read, not
-  from the picker's metadata.
+- **Evidence.** The observation reads the asset's metadata (`/assetMetadata`), which states each band's array rank:
+  for an image asset, the gee adapter restores the rank the Cloud record states (`dimensionsCount`) that the Earth
+  Engine client's legacy conversion drops; a band whose rank was not established stays unknown, never a scalar. The
+  segment description carries the ranks as `typedBands`, reported and not validated; CCDC Slice's acceptance is
+  unchanged. Version polling stays a separate metadata read. An asset just picked is judged once the observation reads
+  it, not from the picker's metadata.
 - **Capability.** The GUI side of `CCDC_SEGMENTS` (`SEGMENTS`, `segmentCapability.js`) says which asset establishes it
   (the one the segments are read from) and where an accepted observation holds the segment description (`segments`,
   as every segment consumer publishes it).

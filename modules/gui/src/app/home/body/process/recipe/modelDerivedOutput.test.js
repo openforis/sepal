@@ -1234,8 +1234,7 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
     ...(reference.type === 'ASSET' && {ui: {sourceEvidence: segmentsObserved(reference, sources.band)}})
 })
 
-// An image asset's segments as the observation reads them: metadata stating no band an array, and band evidence that
-// does.
+// An image asset's segments as the observation reads them from its metadata: each band's grid, and its array rank.
 const segmentsObserved = (reference, band) => {
     const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
     return {
@@ -1244,9 +1243,9 @@ const segmentsObserved = (reference, band) => {
         segments: typedSegmentsAssetDescription({
             type: 'Image',
             bandNames: bands.map(([name]) => name),
-            bands: bands.map(([id]) => ({id, data_type: {type: 'PixelType', precision: 'double'}})),
+            bands: bands.map(([id, dimensions]) => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double', dimensions}})),
             properties: {dateFormat: 1}
-        }, {assetId: reference.id, bandEvidence: bands.map(([name, arrayDimensions]) => ({name, arrayDimensions}))})
+        }, {assetId: reference.id})
     }
 }
 

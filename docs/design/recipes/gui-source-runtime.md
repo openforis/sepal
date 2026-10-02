@@ -625,8 +625,7 @@ An observation can supply `applyAccepted` assignments, written in the same actio
 `reportUnavailable` callback for an accepted failure. Configuration policy compares source identity and payload
 against the last successful observation, so unchanged recovery does not overwrite user edits. Change Alerts and
 BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
-responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response, and
-reads the asset's band evidence beside it for the dimensionality the metadata does not carry.
+responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
 
 Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
 charts and previews must discard what they drew is the pixel generation's to say

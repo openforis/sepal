@@ -19,7 +19,6 @@ const fake = vi.hoisted(() => ({
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
-    // An asset's metadata and its band evidence are read alike: held, failing or answered together.
     const read$ = (asset, answer) => {
         if (fake.heldMetadata) {
             return new Observable(subscriber => {
@@ -37,11 +36,11 @@ vi.mock('~/apiRegistry', async () => {
         gee: {
             assetMetadata$: ({asset}) => {
                 fake.calls.push(['assetMetadata', asset])
-                return read$(asset, ({metadata}) => metadata)
+                return read$(asset, metadata => metadata)
             },
-            bands$: ({asset, includeDataTypes}) => {
+            bands$: ({asset}) => {
                 fake.calls.push(['bands', asset])
-                return read$(asset, ({bandEvidence}) => includeDataTypes ? bandEvidence : bandEvidence.map(({name}) => name))
+                return throwError(() => new Error('Unexpected band request'))
             },
             loadCCDCSegments$: ({recipe}) => {
                 fake.segmentRequests.push(recipe)
@@ -153,6 +152,14 @@ describe('a reference that supplies the segments Change Alerts reads', () => {
 
         expect(referenceStatus()).toBe(null)
         expect(decision()).toBe('RETRIEVABLE')
+    })
+
+    it('is judged from its asset\'s metadata alone, with no band request', async () => {
+        await editor({selection: ref('asset-mosaic-1')})
+
+        expect(decision()).toBe('RETRIEVABLE')
+        expect(fake.calls.filter(([name]) => name === 'bands')).toEqual([])
+        expect(metadataReads()).toBe(1)
     })
 })
 
@@ -501,18 +508,15 @@ const LISTING = [
     ...RECORDS.map(({id, name, type}) => ({id, name, type, revision: 1}))
 ]
 
-// An image asset as Earth Engine answers for it. Its metadata is the asset record, whose band types state no array
-// dimensionality - every band there reads like a scalar, and `dimensions` is the band's grid - while its band evidence
-// carries the dimensionality evaluated from the image itself.
+// An image asset as /assetMetadata answers for it: each band's grid as `dimensions`, its array rank on its type.
 function segmentsAsset(bands, properties = {dateFormat: 1}) {
     return {
-        metadata: {
-            type: 'Image',
-            bandNames: bands.map(([name]) => name),
-            bands: bands.map(([id]) => ({id, crs: 'EPSG:4326', dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double'}})),
-            properties
-        },
-        bandEvidence: bands.map(([name, arrayDimensions]) => ({name, arrayDimensions}))
+        type: 'Image',
+        bandNames: bands.map(([name]) => name),
+        bands: bands.map(([id, rank]) => ({
+            id, crs: 'EPSG:4326', dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double', ...(rank && {dimensions: rank})}
+        })),
+        properties
     }
 }
 

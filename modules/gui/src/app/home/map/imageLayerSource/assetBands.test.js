@@ -26,6 +26,7 @@ describe('the bands an asset layer draws', () => {
         ['negative dimensions', {type: 'PixelType', precision: 'int', dimensions: -1}],
         ['fractional dimensions', {type: 'PixelType', precision: 'int', dimensions: 1.5}],
         ['dimensions given as text', {type: 'PixelType', precision: 'int', dimensions: '1'}],
+        ['dimensions stated as unknown', {type: 'PixelType', precision: 'int', dimensions: null}],
         ['a data type that is no PixelType', {precision: 'int'}],
         ['no data type at all', undefined]
     ])('establishes nothing from %s, and does not draw the band', (_case, dataType) => {
@@ -33,6 +34,24 @@ describe('the bands an asset layer draws', () => {
 
         expect(bands.band.dataType.arrayDimensions).toBeUndefined()
         expect(renderableBandNames(bands)).toEqual([])
+    })
+
+    // As /assetMetadata states an image asset: each band's grid as `dimensions`, its array rank on its type.
+    it('draws only the scalars of an image asset, whatever grid its bands state', () => {
+        const band = (id, dataType) => ({
+            id, crs: 'EPSG:4326', crs_transform: [0.00025, 0, -74, 0, -0.00025, 5], dimensions: [5015, 3093], data_type: dataType
+        })
+        const bands = assetAvailableBands({
+            bandNames: ['elevation', 'tStart', 'ndvi_coefs'],
+            bands: [
+                band('elevation', {type: 'PixelType', precision: 'int', min: -32768, max: 32767}),
+                band('tStart', {type: 'PixelType', precision: 'double', dimensions: 1}),
+                band('ndvi_coefs', {type: 'PixelType', precision: 'double', dimensions: 2})
+            ]
+        })
+
+        expect(Object.values(bands).map(({dataType}) => dataType.arrayDimensions)).toEqual([0, 1, 2])
+        expect(renderableBandNames(bands)).toEqual(['elevation'])
     })
 
     it('offers the bands the metadata names, in its order', () => {

@@ -25,8 +25,8 @@ export const SEGMENT_TIME_BANDS = ['tStart', 'tEnd']
 // valid CCDC segments.
 //
 // Segments read from an asset - selected directly, or named by an asset-backed recipe - are judged from the
-// dimensionality Earth Engine evaluated for that asset's bands (`typedBands`, ccdc/segmentsAsset.js). A recipe computing
-// its segments guarantees the layout by its own declaration, so only the measure is asked of it, from its own
+// dimensionality reported in the asset metadata for that asset's bands (`typedBands`, ccdc/segmentsAsset.js). A recipe
+// computing its segments guarantees the layout by its own declaration, so only the measure is asked of it, from its own
 // description. Dimensionality says nothing of how many coefficients an array holds, and an image collection's bands are
 // its first member's. A band whose dimensionality was not established is reported as such, never as a scalar.
 //

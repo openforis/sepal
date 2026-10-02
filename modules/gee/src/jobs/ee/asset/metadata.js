@@ -97,7 +97,7 @@ const worker$ = ({
         )
     }
 
-    return ee.getAsset$(asset, 0).pipe(
+    return assetRecord$(asset).pipe(
         switchMap(asset => {
             const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
             if (isAllowedType) {
@@ -119,6 +119,48 @@ const worker$ = ({
         map(addBandNames),
         catchError(handleError$)
     )
+}
+
+// An asset as ee.data.getAsset describes it, read through the same Cloud API call and converted by the same legacy
+// conversion, with each band's array dimensionality kept. That conversion keeps a band's precision and range but drops
+// the rank the Cloud API states (`dataType.dimensionsCount`), so an array band would read exactly like a scalar; its
+// band `dimensions` is the grid's. A Cloud GeoTIFF is evaluated as an image, whose band types already state their rank.
+const assetRecord$ = asset => asset.startsWith('gs://')
+    ? ee.getAsset$(asset, 0)
+    : ee.$({
+        description: `get asset (${asset})`,
+        operation: (resolve, reject) => {
+            const call = new ee.apiclient.Call((record, error) => error ? reject(error) : resolve(record))
+            call.handle(call.assets().get(ee.rpc_convert.assetIdToAssetName(asset), {prettyPrint: false}))
+        },
+        maxRetries: 0
+    }).pipe(
+        map(withArrayDimensions)
+    )
+
+const withArrayDimensions = record => {
+    const converted = ee.rpc_convert.assetToLegacyResult(record)
+    if (!converted.bands) {
+        return converted
+    }
+    const recordBands = new Map((record.bands || []).map(band => [band.id, band]))
+    return {...converted, bands: converted.bands.map(band => withArrayDimension(band, recordBands.get(band.id)))}
+}
+
+// The rank the legacy form states as `data_type.dimensions`, as an evaluated image's band types do: a scalar, rank zero
+// or none, states none. A band with no type states nothing either way, and one whose rank is no count, or that the
+// record does not name, says so rather than read as a scalar.
+const withArrayDimension = (band, recordBand) => {
+    if (!band.data_type) {
+        return band
+    }
+    if (!recordBand) {
+        return {...band, data_type: {...band.data_type, dimensions: null}}
+    }
+    const rank = recordBand.dataType?.dimensionsCount
+    return rank === null || rank === undefined || rank === 0
+        ? band
+        : {...band, data_type: {...band.data_type, dimensions: rank}}
 }
 
 export default job({

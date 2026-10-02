@@ -172,6 +172,19 @@ describe('an asset replaced while its Map Layers layer stays open', () => {
     })
 })
 
+describe('an image asset with array bands', () => {
+    it('offers and draws no style over an array band, the user\'s own included', async () => {
+        remoteMetadata = metadata(['red', 'ndvi_coefs'])
+        remoteMetadata.bands.find(({id}) => id === 'ndvi_coefs').data_type.dimensions = 2
+        const custom = {id: 'custom', type: 'continuous', bands: ['ndvi_coefs'], min: [0], max: [1], userDefined: true}
+
+        openLayer({custom})
+
+        expect(preview$).not.toHaveBeenCalled()
+        expect(await offeredBands()).toEqual(['red'])
+    })
+})
+
 describe('a check of the asset', () => {
     it('finding it missing withholds the layer and names the asset, and finding it again draws it again', async () => {
         remoteMetadata = metadata(['red'])
@@ -219,7 +232,11 @@ describe('a check of the asset', () => {
 const assetId = 'projects/test/assets/slice'
 const metadata = (bandNames, presetBands = bandNames) => ({
     type: 'Image', id: assetId, bandNames,
-    bands: bandNames.map(id => ({id, data_type: {type: 'PixelType', precision: 'float'}})),
+    // As /assetMetadata states an image asset's bands: each with its grid, and its array rank on its type.
+    bands: bandNames.map(id => ({
+        id, crs: 'EPSG:4326', crs_transform: [0.00025, 0, -74, 0, -0.00025, 5], dimensions: [5015, 3093],
+        data_type: {type: 'PixelType', precision: 'float'}
+    })),
     properties: Object.fromEntries(presetBands.flatMap((band, i) => [
         [`visualization_${i}_type`, 'continuous'],
         [`visualization_${i}_bands`, band],
