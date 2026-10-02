@@ -83,15 +83,13 @@ class _SelectAsset extends React.Component {
                     onLoading={this.onLoading}
                     onLoaded={this.onLoaded}
                 />
-                {loadedAsset
-                    ? (
-                        <Form.Input
-                            input={label}
-                            label={msg('map.layout.addImageLayerSource.types.Asset.form.label.label')}
-                            placeholder={msg('map.layout.addImageLayerSource.types.Asset.form.label.placeholder')}
-                        />
-                    )
-                    : null}
+                {/* Rendered from the start, so the panel keeps its size when the asset's metadata arrives. */}
+                <Form.Input
+                    input={label}
+                    label={msg('map.layout.addImageLayerSource.types.Asset.form.label.label')}
+                    placeholder={msg('map.layout.addImageLayerSource.types.Asset.form.label.placeholder')}
+                    disabled={!loadedAsset}
+                />
             </Layout>
         )
     }
