@@ -1,5 +1,4 @@
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
-import {directSourceEdges} from '#sepal/recipe/source/directSources'
 import {selectFrom} from '~/stateUtils'
 
 import {getRecipeType} from '../recipeTypeRegistry'
@@ -10,7 +9,7 @@ import {
     isDefinitiveFailure,
     WAITING as ASSET_WAITING
 } from '../sourceRuntime/assetEvidence'
-import {OBSERVED, sourceKeyOf} from './sourceEvidence'
+import {OBSERVED, selectedSourceOf, sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 
 // Whether the sources a recipe selects meet what its type declares it needs of them, as the session stands: pure and
@@ -122,7 +121,7 @@ const PROVIDER_REFUSALS = [MISSING_SOURCE, NOT_A_PRODUCER, UNFILLED_ROLE, CYCLIC
 
 const readSourceRequirement = ({state, recipe, declaration, evidenceOwner, now}) => {
     const read = (acquisition, verdict, facts) => ({declaration, selected, acquisition, verdict, ...facts})
-    const selected = selectedSource(recipe, declaration.role)
+    const selected = selectedSourceOf(recipe, declaration.role)
     if (!selected) {
         return read(CHECKED, unsupported({code: MISSING_SOURCE}))
     }
@@ -162,9 +161,6 @@ const readSourceRequirement = ({state, recipe, declaration, evidenceOwner, now})
 }
 
 const NEEDS = Object.freeze({status: NEEDS_EVIDENCE})
-
-const selectedSource = (recipe, role) =>
-    directSourceEdges(recipe).edges.find(edge => edge.role === role)?.reference || null
 
 const discoveryDiagnostic = ({status, chain, at}, selected) => ({
     code: DISCOVERY_CODES[status] || NOT_A_PRODUCER,

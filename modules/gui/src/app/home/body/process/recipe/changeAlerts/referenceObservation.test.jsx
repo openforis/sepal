@@ -5,6 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {firstValueFrom, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
@@ -43,7 +44,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
 const {changeAlertsObservation} = await import('./referenceObservation')
-const {baseBandsOf} = await import('./referenceEvidence')
+const {baseBandsOf} = await import('../segmentEvidence')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -76,7 +77,7 @@ describe('selecting a recipe as the reference', () => {
         sync({selection})
 
         expect(reference()).toEqual(selection)
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['red', 'nir'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red', 'nir'])
     })
 
     it('does not reset the monitoring configuration the user has chosen', () => {
@@ -105,7 +106,7 @@ describe('the producer of a selected recipe', () => {
 
         expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
         expect(alertsRecipe().model.options).toEqual({corrections: []})
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['sentinel_1'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['sentinel_1'])
     })
 
     it('is the asset a wrapper leads to, whose exported configuration seeds monitoring', async () => {
@@ -120,7 +121,7 @@ describe('the producer of a selected recipe', () => {
 
         expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
         expect(alertsRecipe().model.options).toEqual({corrections: ['SPECKLE']})
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['red'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red'])
         expect(reference()).toEqual({type: 'RECIPE_REF', id: WRAPPED_ASSET})
     })
 })
@@ -270,7 +271,7 @@ describe('selecting a segments asset as the reference', () => {
         assetMetadata$
             .mockReturnValueOnce(of(assetMetadata({recipe_sources: JSON.stringify(exported)})))
             .mockReturnValue(of(assetMetadata({recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['NIR']}})})))
-        const recipe = {model: {reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
+        const recipe = {type: 'CHANGE_ALERTS', model: {reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
 
         const evidence = await firstValueFrom(changeAlertsObservation.observe$({
             recipe, graph: {recipes: [], edges: []}, recipesById: new Map()

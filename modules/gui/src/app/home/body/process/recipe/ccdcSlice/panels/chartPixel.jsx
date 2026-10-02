@@ -3,6 +3,7 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -19,8 +20,9 @@ import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelGenerationOfState} from '../../pixelGeneration'
+import {baseBandsOf} from '../../segmentEvidence'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
-import {baseBandsOf, dateFormatOf} from '../sliceEvidence'
+import {dateFormatOf} from '../sliceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -31,7 +33,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: dateFormatOf(recipe),
-    baseBands: baseBandsOf(recipe),
+    baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
     dateType: selectFrom(recipe, 'model.date.dateType'),
     date: selectFrom(recipe, 'model.date.date'),
     startDate: selectFrom(recipe, 'model.date.startDate'),

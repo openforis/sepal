@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
@@ -10,7 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {segmentDatesOf} from '../../referenceEvidence'
+import {segmentDatesOf} from '../../../segmentEvidence'
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -32,8 +33,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    segmentsStartDate: segmentDatesOf(recipe).startDate,
-    segmentsEndDate: segmentDatesOf(recipe).endDate
+    segmentsStartDate: segmentDatesOf(recipe, PRIMARY_IMAGE).startDate,
+    segmentsEndDate: segmentDatesOf(recipe, PRIMARY_IMAGE).endDate
 })
 
 class _Date extends React.Component {

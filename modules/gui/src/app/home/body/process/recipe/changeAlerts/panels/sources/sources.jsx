@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {RecipeActions} from '~/app/home/body/process/recipe/changeAlerts/changeAlertsRecipe'
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
@@ -17,7 +18,8 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {baseBandsOf, segmentBandsOf} from '../../referenceEvidence'
+import {baseBandsOf} from '../../../segmentEvidence'
+import {segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
 const fields = {
@@ -45,7 +47,7 @@ const mapStateToProps = () => {
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
     bands: segmentBandsOf(recipe),
-    baseBands: baseBandsOf(recipe),
+    baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
     corrections: selectFrom(recipe, 'model.options.corrections')
 })
 

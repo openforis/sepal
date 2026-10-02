@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -9,16 +10,15 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {sourceKeyOf} from '../sourceEvidence'
+import {selectedSourceOf, sourceKeyOf} from '../sourceEvidence'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {defaultModel, preSetVisualizations, RecipeActions} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {selectedSource} from './sliceEvidence'
 import {resolveEvidence$, sliceObservation} from './sliceObservation'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),
-    sourceKey: sourceKeyOf(selectedSource(recipe)),
+    sourceKey: sourceKeyOf(selectedSourceOf(recipe, PRIMARY_IMAGE)),
     savedLayers: selectFrom(recipe, 'layers'),
     savedLayerSource: selectFrom(recipe, 'ui.savedLayerSource')
 })

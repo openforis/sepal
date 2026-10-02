@@ -40,6 +40,14 @@ export const inheritedSourceKey = recipe =>
 export const declaredSelections = recipe =>
     directSourceEdges(recipe).edges.map(({path}) => _.get(recipe, path))
 
+// The edge a recipe's type declares for the source selected in a role, and the reference on it: null where the role is
+// unfilled or holds nothing the declaration reads as a reference.
+export const sourceEdgeOf = (recipe, role) =>
+    directSourceEdges(recipe).edges.find(edge => edge.role === role) || null
+
+export const selectedSourceOf = (recipe, role) =>
+    sourceEdgeOf(recipe, role)?.reference || null
+
 export const currentSourceEvidence = recipe => {
     const evidence = recipe?.ui?.sourceEvidence
     const key = inheritedSourceKey(recipe)

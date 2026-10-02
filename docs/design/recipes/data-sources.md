@@ -299,9 +299,9 @@ In order, each independently mergeable:
    requirements, using its configuration and available evidence. Change Alerts REF is implemented
    ([contract](source-resolution.md#change-alerts-ref)); CCDC Slice, BAYTS and the remaining consumers follow. The
    reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
-   from metadata alone (done); shared segment-evidence readers and selection by role; evidence owned by the source
-   runtime, so a recipe shown outside its editor is checked too (unchecked today), with prefill behaviour kept; then
-   CCDC Slice, and BAYTS with a requirement derived from what its execution reads
+   from metadata alone (done); shared segment-evidence readers and selection by role (done); evidence owned by the
+   source runtime, so a recipe shown outside its editor is checked too (unchecked today), with prefill behaviour kept;
+   then CCDC Slice, and BAYTS with a requirement derived from what its execution reads
    ([findings](#configured-source-suitability-findings)).
    A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
    recipe-specific input-layer bookkeeping with shared derivation.

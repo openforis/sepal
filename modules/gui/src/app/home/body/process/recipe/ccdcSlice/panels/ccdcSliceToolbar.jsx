@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -10,8 +11,8 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {baseBandsOf} from '../../segmentEvidence'
 import {RecipeActions} from '../ccdcSliceRecipe'
-import {baseBandsOf} from '../sliceEvidence'
 import styles from './ccdcSliceToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {Date} from './date/date'
@@ -21,7 +22,7 @@ import {Source} from './source/source'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    hasBaseBands: baseBandsOf(recipe).length > 0
+    hasBaseBands: baseBandsOf(recipe, PRIMARY_IMAGE).length > 0
 })
 
 class _CcdcSliceToolbar extends React.Component {

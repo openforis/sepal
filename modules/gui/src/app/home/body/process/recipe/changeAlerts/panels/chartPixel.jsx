@@ -4,6 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {getAvailableBands} from '~/sources'
@@ -22,9 +23,10 @@ import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelGenerationOfState} from '../../pixelGeneration'
+import {baseBandsOf, dateFormatOf, segmentDescription} from '../../segmentEvidence'
 import {PIXEL_SEGMENTS, requestGate} from '../../sourceRequirements'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
-import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescription} from '../referenceEvidence'
+import {segmentBandsOf} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -34,15 +36,15 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: dateFormatOf(recipe),
+    dateFormat: dateFormatOf(recipe, PRIMARY_IMAGE),
     // Samples are interpreted with the description they were taken under, so another one supersedes them - and the
     // description lives in ui, which recipe.model cannot see.
-    description: segmentDescription(recipe).description,
+    description: segmentDescription(recipe, PRIMARY_IMAGE).description,
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     band: selectFrom(recipe, 'model.sources.band'),
     bands: segmentBandsOf(recipe),
-    baseBands: baseBandsOf(recipe),
+    baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
     extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
@@ -8,8 +9,9 @@ import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmi
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
+import {segmentDatesOf} from '../segmentEvidence'
 import {visualizationsWithAvailableBands} from '../visualizationMatching'
-import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf, segmentDatesOf} from './sliceEvidence'
+import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf} from './sliceEvidence'
 
 export const defaultModel = {
     date: {
@@ -68,7 +70,7 @@ const additionalVisualizations = (recipe, resolved) => {
     const date = selectFrom(recipe, 'model.date.date')
     const startDate = selectFrom(recipe, 'model.date.startDate')
     const endDate = selectFrom(recipe, 'model.date.endDate')
-    const {endDate: segmentsEndDate} = segmentDatesOf(recipe, resolved)
+    const {endDate: segmentsEndDate} = segmentDatesOf(recipe, PRIMARY_IMAGE, resolved)
     const dateFormat = dateFormatOf(recipe, resolved)
     const dataTypesByDateFormat = ['number', 'fractionalYears', 'number']
 

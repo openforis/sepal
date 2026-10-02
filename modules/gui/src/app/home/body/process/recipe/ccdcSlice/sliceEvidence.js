@@ -1,69 +1,27 @@
-import {SEGMENT_BANDS, sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
+import {PRIMARY_IMAGE, SEGMENT_BANDS, sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 import {selectFrom} from '~/stateUtils'
 
 import {inOrderOf} from '../retrieveOutput'
-import {OBSERVED, sourceKeyOf, UNAVAILABLE, UNOBSERVED} from '../sourceEvidence'
+import {dateFormatOf as describedDateFormat, segmentDescription} from '../segmentEvidence'
+import {OBSERVED, selectedSourceOf, sourceKeyOf} from '../sourceEvidence'
 import {visualizationsWithAvailableBands} from '../visualizationMatching'
 import {OUTPUT_LAYER_ID} from '../visualizations'
 
-// What a CCDC Slice recipe knows about the segments it slices, and what it derives from that.
-//
-// The segment description is the source's, held in runtime state by the shared evidence lifecycle. Slice
-// derives its own output from that description together with its date mode and options - which decide both
-// which bands the operation produces and which of the source's templates describe them.
-//
-// A recipe saved by an older GUI carries a copy of the description beside its source reference. That copy is
-// the fallback while nothing has been observed, and never the answer once something has: evidence that could
-// not be had leaves the recipe with nothing rather than with a description of the source as it once was.
+// What a CCDC Slice recipe derives from the segments it slices, read from the source it selects
+// (segmentEvidence.js) together with its date mode and options - which decide both which bands the operation
+// produces and which of the source's templates describe them. `resolved` is a description the caller already holds.
 
-export const selectedSource = recipe => {
-    const {type, id} = selectFrom(recipe, 'model.source') || {}
-    return type && id ? {type, id} : null
-}
-
-export const segmentDescription = (recipe, resolved) => {
-    if (resolved) {
-        return {status: OBSERVED, description: resolved}
-    }
-    const evidence = recipe?.ui?.sourceEvidence
-    const key = sourceKeyOf(selectedSource(recipe))
-    if (key && evidence?.sourceKey === key) {
-        return evidence.status === OBSERVED
-            ? {status: OBSERVED, description: evidence.segments}
-            : {status: UNAVAILABLE, description: null}
-    }
-    const copied = selectFrom(recipe, 'model.source') || {}
-    return copied.bands || copied.baseBands
-        ? {status: UNOBSERVED, description: copiedDescription(copied)}
-        : {status: UNOBSERVED, description: null}
-}
-
-// The date representation Slice interprets segment times in. For an asset source it is what the user
-// configured, which wins over anything read from metadata - the metadata prefilled it, and the user may have
-// corrected it. For a recipe source it is the source's. A recipe saved by an older GUI may carry only the
-// copy; nothing configured or described at all means the legacy default, Julian days, which the image
-// implementation has always assumed.
+// The date representation Slice interprets segment times in (segmentEvidence.js). Nothing configured or described at
+// all means the legacy default, Julian days, which the image implementation has always assumed.
 export const dateFormatOf = (recipe, resolved) => {
-    const {type, dateFormat: configured} = selectFrom(recipe, 'model.source') || {}
-    if (type === 'ASSET' && isSet(configured)) {
-        return configured
-    }
-    const described = segmentDescription(recipe, resolved).description?.dateFormat
-    return isSet(described) ? described : (isSet(configured) ? configured : 0)
-}
-
-export const baseBandsOf = (recipe, resolved) =>
-    segmentDescription(recipe, resolved).description?.baseBands || []
-
-export const segmentDatesOf = (recipe, resolved) => {
-    const {description} = segmentDescription(recipe, resolved)
-    return {startDate: description?.startDate, endDate: description?.endDate}
+    const dateFormat = describedDateFormat(recipe, PRIMARY_IMAGE, resolved)
+    return isSet(dateFormat) ? dateFormat : 0
 }
 
 // The bands the selected operation produces - the same derivation the image implementation performs, so
 // what is offered is what is exported. Interpolating with no harmonics produces no harmonic bands.
 export const outputBandsOf = (recipe, resolved) => {
-    const {description} = segmentDescription(recipe, resolved)
+    const {description} = segmentDescription(recipe, PRIMARY_IMAGE, resolved)
     return description ? sliceOutputBands(description.bands || [], recipe.model) : []
 }
 
@@ -71,7 +29,7 @@ export const outputBandsOf = (recipe, resolved) => {
 // slice does not make - a harmonic it was not asked for, a measure the source never fitted - is not offered.
 // Nothing is deleted from the source; a template not applicable to this slice may be to another.
 export const materializedTemplates = (recipe, resolved) => {
-    const {description} = segmentDescription(recipe, resolved)
+    const {description} = segmentDescription(recipe, PRIMARY_IMAGE, resolved)
     return visualizationsWithAvailableBands(description?.visualizations || [], outputBandsOf(recipe, resolved))
 }
 
@@ -146,7 +104,7 @@ export const knownTemplates = recipe => {
     if (!observed) {
         return savedLayerTemplates(recipe)
     }
-    return observed.sourceKey === sourceKeyOf(selectedSource(recipe))
+    return observed.sourceKey === sourceKeyOf(selectedSourceOf(recipe, PRIMARY_IMAGE))
         ? observed.segments?.visualizations || []
         : []
 }
@@ -155,7 +113,7 @@ export const knownTemplates = recipe => {
 // Unopened dependency records have no marker; their model and layers still come from the same saved record.
 const savedLayerTemplates = recipe => {
     const savedLayerSource = selectFrom(recipe, 'ui.savedLayerSource')
-    if (savedLayerSource !== undefined && savedLayerSource !== sourceKeyOf(selectedSource(recipe))) {
+    if (savedLayerSource !== undefined && savedLayerSource !== sourceKeyOf(selectedSourceOf(recipe, PRIMARY_IMAGE))) {
         return []
     }
     return Object.values(selectFrom(recipe, 'layers.areas') || {})
@@ -168,18 +126,3 @@ const savedLayerTemplates = recipe => {
 const measureBand = (name, measure) => `${name}${MEASURE_SUFFIXES[measure]}`
 
 const isSet = value => value !== undefined && value !== null
-
-// A copy an older GUI saved spelled the measures of a base band `bandTypes`. Normalized here, at the one
-// boundary a legacy shape enters, so every consumer reads one shape.
-const copiedDescription = ({bands, baseBands, segmentBands, dateFormat, startDate, endDate, visualizations}) => ({
-    bands: bands || [],
-    baseBands: (baseBands || []).map(({name, measures, bandTypes}) => ({
-        name,
-        measures: measures || bandTypes || []
-    })),
-    segmentBands: segmentBands || [],
-    dateFormat,
-    startDate,
-    endDate,
-    visualizations: visualizations || []
-})

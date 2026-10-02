@@ -1,25 +1,27 @@
 import _ from 'lodash'
 import {map, throwError} from 'rxjs'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import api from '~/apiRegistry'
 import {selectFrom} from '~/stateUtils'
 
 import {typedSegmentsAssetDescription} from '../ccdc/segmentsAsset'
 import {describeProducer$, resolveSegmentProducer, segmentsAssetOf} from '../segmentCapability'
+import {selectedSourceOf} from '../sourceEvidence'
 import {withKnownIdentities} from '../visualizationMatching'
-import {segmentVisualizations, selectedReference} from './referenceEvidence'
+import {segmentVisualizations} from './referenceEvidence'
 
 // Monitoring settings belong to Change Alerts; the segment description belongs to the producer.
 // Both are read from the same producer record or asset response.
 
 export const changeAlertsObservation = {
-    sourceReference: selectedReference,
+    sourceReference: recipe => selectedSourceOf(recipe, PRIMARY_IMAGE),
     applyAccepted: ({recipe, evidence, previous}) => [
         ...monitoringSettings(evidence, previous),
         ...assetDateFormat(recipe, evidence, previous)
     ],
     observe$: ({recipe, graph, recipesById}) => {
-        const producer = resolveSegmentProducer(selectedReference(recipe), recipesById)
+        const producer = resolveSegmentProducer(selectedSourceOf(recipe, PRIMARY_IMAGE), recipesById)
         if (producer.error) {
             return throwError(() => producer.error)
         }

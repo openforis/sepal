@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -8,7 +9,7 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {baseBandsOf} from '../../sliceEvidence'
+import {baseBandsOf} from '../../../segmentEvidence'
 import styles from './options.module.css'
 
 const EXTRAPOLATE_MAX_DAYS = 800
@@ -28,7 +29,7 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({
     dateType: selectFrom(recipe, 'model.date.dateType'),
-    baseBands: baseBandsOf(recipe)
+    baseBands: baseBandsOf(recipe, PRIMARY_IMAGE)
 })
 
 class _Options extends React.Component {

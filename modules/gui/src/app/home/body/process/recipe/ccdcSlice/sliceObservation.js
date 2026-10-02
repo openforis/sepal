@@ -1,8 +1,11 @@
 import {map} from 'rxjs'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
+
 import {describeSegmentSource$} from '../segmentCapability'
+import {selectedSourceOf} from '../sourceEvidence'
 import {withKnownIdentities} from '../visualizationMatching'
-import {knownTemplates, selectedSource} from './sliceEvidence'
+import {knownTemplates} from './sliceEvidence'
 
 // What CCDC Slice observes about the source it slices: the description of the segments that source
 // produces. Read by the shared evidence lifecycle, which decides when.
@@ -11,7 +14,7 @@ import {knownTemplates, selectedSource} from './sliceEvidence'
 // those segments, and whether the selection stands for one at all, is the capability's to answer.
 
 export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
-    describeSegmentSource$(selectedSource(recipe), {graph, recipesById}).pipe(
+    describeSegmentSource$(selectedSourceOf(recipe, PRIMARY_IMAGE), {graph, recipesById}).pipe(
         map(segments => ({
             segments: {
                 ...segments,
@@ -24,6 +27,6 @@ export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
     )
 
 export const sliceObservation = {
-    sourceReference: selectedSource,
+    sourceReference: recipe => selectedSourceOf(recipe, PRIMARY_IMAGE),
     observe$: resolveEvidence$
 }
