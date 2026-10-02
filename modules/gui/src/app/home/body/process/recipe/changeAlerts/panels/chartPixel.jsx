@@ -13,13 +13,16 @@ import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
+import {Message} from '~/widget/message'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
+import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelGenerationOfState} from '../../pixelGeneration'
+import {PIXEL_SEGMENTS, requestGate} from '../../sourceRequirements'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
 import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescription} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
@@ -134,6 +137,9 @@ class _ChartPixel extends React.Component {
                 color: '#FF0000'
             }
         ]
+        const {segmentsGate} = this.props
+        if (!segments && segmentsGate && !segmentsGate.wait)
+            return <Message type='info' text={msg('process.source.status.withheld', {section: msg(segmentsGate.section)})}/>
         const loading = !segments
         if (loading)
             return this.renderSpinner()
@@ -157,31 +163,27 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js), and
+    // requested when it comes to; segments already charted stay while it is checked again.
     componentDidUpdate(prevProps) {
-        const {band, stream, recipe, latLng, description, pixels, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, description, pixels, segmentsGate, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
             selectedBand.set(band)
 
-        if (latLng && selectedBand.value && !_.isEqual(
+        if (!latLng || !selectedBand.value) {
+            return
+        }
+        if (!_.isEqual(
             [recipe.model, latLng, selectedBand.value, description, pixels],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
-            stream('LOAD_CCDC_SEGMENTS',
-                loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
-                    takeUntil(this.cancel$)
-                ),
-                segments => this.setState({segments}),
-                error => {
-                    this.close()
-                    Notifications.error({
-                        message: msg('process.ccdc.chartPixel.loadFailed'),
-                        error: toUserErrorMessage(error)
-                    })
-                }
-            )
+            this.segmentsHeld = Boolean(segmentsGate)
+            if (!this.segmentsHeld) {
+                this.loadSegments()
+            }
             stream('LOAD_CCDC_OBSERVATIONS',
                 loadCCDCObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
                     takeUntil(this.cancel$)
@@ -195,7 +197,27 @@ class _ChartPixel extends React.Component {
                     })
                 }
             )
+        } else if (this.segmentsHeld && !segmentsGate) {
+            this.segmentsHeld = false
+            this.loadSegments()
         }
+    }
+
+    loadSegments() {
+        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        stream('LOAD_CCDC_SEGMENTS',
+            loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+                takeUntil(this.cancel$)
+            ),
+            segments => this.setState({segments}),
+            error => {
+                this.close()
+                Notifications.error({
+                    message: msg('process.ccdc.chartPixel.loadFailed'),
+                    error: toUserErrorMessage(error)
+                })
+            }
+        )
     }
 
     bandOptions() {
@@ -221,14 +243,18 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What the chart's pixels were read from beyond the recipe (pixelGeneration.js).
-const mapStateToProps = (state, {recipeId}) => ({
-    pixels: pixelGenerationOfState(state, recipeId)
+// What the chart's pixels were read from beyond the recipe (pixelGeneration.js), and whether its segments may be read.
+const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => ({
+    pixels: pixelGenerationOfState(state, recipeId),
+    segmentsGate: requestGate({
+        state, recipe, operation: PIXEL_SEGMENTS, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), now: Date.now()
+    })
 })
 
 export const ChartPixel = compose(
     _ChartPixel,
     connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

@@ -572,7 +572,8 @@ identities are kept without replacing saved user intent.
 Tasks should report the **actual affected asset IDs** after destination changes, including collection destinations
 and written members where relevant, partial writes of a failed or cancelled export included. The shared owner
 invalidates those assets and revalidates active consumers; tasks do not identify recipes, layers or panels to refresh
-([task-driven asset invalidation](data-sources.md#task-driven-asset-invalidation)).
+([task-driven asset invalidation](data-sources.md#task-driven-asset-invalidation)). This integration is deferred
+until the task rewrite lands; its lifecycle and notification paths must be audited again before implementation.
 
 Background validation while a recipe is open should detect:
 

@@ -88,6 +88,15 @@ const ASSET_MESSAGES = {
     ASSETS_UNAVAILABLE: 'process.retrieve.assets.failing',
     ASSETS_EXPIRED: 'process.retrieve.assets.expired'
 }
+// A source the recipe selected that does not meet its requirement, named by the section it is selected in.
+const SOURCE_MESSAGES = {
+    SOURCE_MISSING: 'process.retrieve.source.missing',
+    SOURCE_PENDING: 'process.retrieve.source.checking',
+    SOURCE_UNCHECKED: 'process.retrieve.source.checking',
+    SOURCE_UNAVAILABLE: 'process.retrieve.source.unavailable',
+    SOURCE_EXPIRED: 'process.retrieve.source.expired',
+    SOURCE_UNSUITABLE: 'process.retrieve.source.unsuitable'
+}
 const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
 
 // A resolution that answers almost at once would otherwise replace the opening view before it could be read.
@@ -467,10 +476,14 @@ class _MosaicRetrievePanel extends React.Component {
     // Why the output could not be established, naming an asset where one is the reason, with a way to try again.
     renderUnresolved() {
         const {retrieveOutput, refreshRetrieveOutput} = this.props
-        const diagnostic = retrieveOutput?.output?.diagnostics?.find(({assetId}) => assetId)
-        const text = diagnostic
-            ? msg(ASSET_MESSAGES[diagnostic.code] || 'process.retrieve.assets.unavailable', {asset: diagnostic.assetId})
-            : msg('process.retrieve.error.imageOutput')
+        const diagnostics = retrieveOutput?.output?.diagnostics || []
+        const diagnostic = diagnostics.find(({assetId}) => assetId)
+        const source = diagnostics.find(({code}) => SOURCE_MESSAGES[code])
+        const text = source
+            ? msg(SOURCE_MESSAGES[source.code], {section: msg(source.section)})
+            : diagnostic
+                ? msg(ASSET_MESSAGES[diagnostic.code] || 'process.retrieve.assets.unavailable', {asset: diagnostic.assetId})
+                : msg('process.retrieve.error.imageOutput')
         return (
             <Widget label={msg('process.retrieve.form.bands.label')} framed>
                 <Layout spacing='compact'>

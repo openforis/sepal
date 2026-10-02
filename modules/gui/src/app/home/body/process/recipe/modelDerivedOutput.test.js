@@ -67,6 +67,9 @@ const {visualizationOptions: changeAlertsVisualizationOptions} = await import('.
 const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
 const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./planetMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
+const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
+const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
+const {EvidenceOwners} = await import('../sourceRuntime/evidenceOwners')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -656,7 +659,7 @@ describe('a Change Alerts recipe', () => {
     ]
 
     it('is described with its changes in the order execution builds them, while the CCDC it monitors is not even loaded', () => {
-        const {output} = read(changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}}))
+        const output = described(changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}}))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
@@ -667,7 +670,7 @@ describe('a Change Alerts recipe', () => {
     // no style is offered, and execution refuses a missing period.
     it('is described with the same changes before a period or a reference is chosen, offering no style', () => {
         const recipe = changeAlertsOf({reference: {}, date: {...PERIOD, monitoringEnd: undefined}})
-        const {output} = read(recipe)
+        const output = described(recipe)
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
@@ -676,7 +679,7 @@ describe('a Change Alerts recipe', () => {
 
     it('is presented with whole counts and fractional dates and measures, and offers its change styles', () => {
         const recipe = changeAlertsOf()
-        const {output} = read(recipe)
+        const output = described(recipe)
 
         expect(displayTypes(output)).toEqual({
             last_stable_date: {precision: 'float'},
@@ -715,7 +718,7 @@ describe('a Change Alerts recipe', () => {
 
     it('is neither previewed nor exported while the CCDC it monitors is found missing', () => {
         const recipe = changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}})
-        const {output: {description}} = read(recipe)
+        const {description} = described(recipe)
         const missing = {status: 'READY', description, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}
         const answer = readRetrieveOutput({
             state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: {[recipe.id]: recipe}}},
@@ -1215,7 +1218,8 @@ const OPTICAL_SOURCES = {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSA
 const RADAR_SOURCES = {band: 'VV', dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}
 const PLANET_SOURCES = {band: 'ndvi', dataSetType: 'PLANET', dataSets: {PLANET: ['DAILY']}, assets: ['users/x/daily']}
 
-// Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded.
+// Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded. Its editor observed that
+// asset and found segments for the monitored band, as its evidence lifecycle publishes them (`ui.sourceEvidence`).
 const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD, sources = OPTICAL_SOURCES} = {}) => ({
     id: ID,
     type: 'CHANGE_ALERTS',
@@ -1226,8 +1230,25 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
         sources,
         options: {corrections: ['SR']},
         changeAlertsOptions: {minConfidence: 5, numberOfObservations: 3, minNumberOfChanges: 3}
-    }
+    },
+    ...(reference.type === 'ASSET' && {ui: {sourceEvidence: segmentsObserved(reference, sources.band)}})
 })
+
+// An image asset's segments as the observation reads them: metadata stating no band an array, and band evidence that
+// does.
+const segmentsObserved = (reference, band) => {
+    const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
+    return {
+        status: 'OBSERVED',
+        sourceKey: sourceKeyOf(reference),
+        segments: typedSegmentsAssetDescription({
+            type: 'Image',
+            bandNames: bands.map(([name]) => name),
+            bands: bands.map(([id]) => ({id, data_type: {type: 'PixelType', precision: 'double'}})),
+            properties: {dateFormat: 1}
+        }, {assetId: reference.id, bandEvidence: bands.map(([name, arrayDimensions]) => ({name, arrayDimensions}))})
+    }
+}
 
 const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
 
@@ -1315,16 +1336,47 @@ const landTrendrOf = ({classification} = {}) => ({
 })
 
 // The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
-const read = recipe => readRetrieveOutput({
-    state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: {[recipe.id]: recipe}}},
-    recipeId: recipe.id,
-    heldFor: () => null
-})
+const read = recipe => readAll([recipe])
 
-// The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained.
-const readAll = ([recipe, ...others]) => readRetrieveOutput({
-    state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
-    recipeId: recipe.id,
+// The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
+// recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read
+// from was just checked.
+const readAll = ([recipe, ...others]) => {
+    const owners = new EvidenceOwners()
+    const records = [recipe, ...others].map(record => observedNow(record, owners))
+    return readRetrieveOutput({
+        state: {process: {
+            recipeListing: CURRENT_LISTING,
+            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            assetEvidence: {generation: 0, assets: Object.fromEntries(records.flatMap(checkedAssets))}
+        }},
+        recipeId: recipe.id,
+        heldFor: () => null,
+        evidenceOwnerOf: id => owners.ownerOf(id)
+    })
+}
+
+const observedNow = (record, owners) => {
+    const evidence = record.ui?.sourceEvidence
+    if (!evidence) {
+        return record
+    }
+    const observationId = owners.register(record.id).observe({
+        key: evidence.sourceKey, selections: declaredSelections(record), earthEngineGeneration: 0, refreshed: 0, dependencies: []
+    })
+    return {...record, ui: {...record.ui, sourceEvidence: {...evidence, observationId}}}
+}
+
+const checkedAssets = record => {
+    const assetId = record.ui?.sourceEvidence?.segments?.typedBands?.assetId
+    return assetId ? [[assetId, {version: 'v1', checkedAt: Date.now(), changedAt: null, failure: null}]] : []
+}
+
+// What the recipe's output is described as, whatever its sources are found to be.
+const described = recipe => readRecipeOutput({
+    recipe,
+    product: {name: 'IMAGE_OUTPUT'},
+    graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
     heldFor: () => null
 })
 

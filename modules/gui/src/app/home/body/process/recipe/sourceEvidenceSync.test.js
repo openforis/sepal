@@ -33,6 +33,7 @@ const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations:
 
 const {SourceEvidenceSync} = await import('./sourceEvidenceSync')
 const {maskingObservation} = await import('./masking/maskingSourceEvidence')
+const {EvidenceOwners} = await import('../sourceRuntime/evidenceOwners')
 
 const observation = {
     ...maskingObservation,
@@ -862,11 +863,15 @@ describe('an asset source', () => {
 
     it('is claimed from the source runtime while it is read, and released once it is not', () => {
         const claims = []
-        const sourceRuntime = {claimAssets: ids => {
-            const claim = {ids, released: false}
-            claims.push(claim)
-            return () => claim.released = true
-        }}
+        const owners = new EvidenceOwners()
+        const sourceRuntime = {
+            claimAssets: ids => {
+                const claim = {ids, released: false}
+                claims.push(claim)
+                return () => claim.released = true
+            },
+            registerEvidenceOwner: recipeId => owners.register(recipeId)
+        }
         assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
         const {component} = sync({recipe: maskingRecipe({primary: {type: 'ASSET', id: 'users/bob/image'}}), sourceRuntime})
         component.componentDidMount()

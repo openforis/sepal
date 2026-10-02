@@ -105,8 +105,9 @@ class _RecipeInput extends React.Component {
     }
 
     getOptions() {
-        const groups = _.groupBy(this.offeredRecipes(), 'projectId')
-        return this.orderedProjects(Object.keys(groups))
+        const offered = this.offeredRecipes()
+        const groups = _.groupBy(offered, 'projectId')
+        return [...this.unofferedSelection(offered), ...this.orderedProjects(Object.keys(groups))
             .map(({id, project}) => ({
                 // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
                 // rather than by name: groups sharing a heading would otherwise be one group, and leaving
@@ -115,7 +116,23 @@ class _RecipeInput extends React.Component {
                 label: project ? project.name : msg('process.project.noProjectOption'),
                 filterOptions: isMatchingGroup => !isMatchingGroup,
                 options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
-            }))
+            }))]
+    }
+
+    // The selection made, offered or not, for a caller that keeps showing it - one no longer listed, or no longer
+    // passing the filter, is still what the recipe holds. Why it is not offered is the caller's to say: a filter may
+    // state an eligibility rule rather than a requirement, so nothing here calls it unsuitable.
+    unofferedSelection(offered) {
+        const {input, keepSelection, recipes} = this.props
+        if (!keepSelection || !input.value || offered.some(({id}) => id === input.value)) {
+            return []
+        }
+        const listed = (recipes || []).find(({id}) => id === input.value)
+        return [{
+            key: 'selection',
+            label: msg('widget.recipeInput.selection'),
+            options: [{value: input.value, label: listed?.name || msg('widget.recipeInput.unlisted')}]
+        }]
     }
 
     // ALL widens which projects are offered, never what the caller can use.
@@ -205,6 +222,8 @@ RecipeInput.propTypes = {
     busyMessage: PropTypes.any,
     errorMessage: PropTypes.any,
     filter: PropTypes.func,
+    // Keep showing the selection when it is not offered, for a caller that says what is wrong with it.
+    keepSelection: PropTypes.bool,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
     placeholder: PropTypes.string,

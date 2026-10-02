@@ -69,6 +69,13 @@ on changing does.
 
 ## Open issues
 
+- **Reference suitability is not explained.** The picker admits Masking over a non-segment producer, and the
+  configured capability walk rejects it without marking REF. The asset check tests for any bands rather than
+  proving segment structure. These are the first proposed cases for
+  [configured-source suitability](../design/recipes/data-sources.md#configured-source-suitability-findings).
+- **Reference form saves a date format for recipe references.** `valuesToModel` in `panels/reference/reference.jsx`
+  tests `type`, while the form's selection is `section`. Review the intended recipe-reference representation before
+  correcting this separately; it is not part of source suitability.
 - **Execution builds a mosaic for a mode the GUI would not name.** Any `visualizationType` other than `changes` and
   `monitoring` is built as the calibration mosaic, and any `mosaicType` other than `latest` as the median.
 - **A layer config saving `mosaicType: undefined` names no product**, while execution would build a median. A layer

@@ -14,6 +14,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../changeAlertsRecipe'
 import {hasSegmentDescription} from '../referenceEvidence'
 import styles from './changeAlertsToolbar.module.css'
@@ -37,7 +38,7 @@ class _ChangeAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, describedSource, sources} = this.props
+        const {recipeId, initialized, describedSource, sources, sourceProblems} = this.props
         const dataSets = Object.keys(sources.dataSets)
         return (
             <PanelWizard
@@ -81,7 +82,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='reference'
                         label={msg('process.changeAlerts.panel.reference.button')}
-                        tooltip={msg('process.changeAlerts.panel.reference.tooltip')}
+                        tooltip={sourceProblems.reference || msg('process.changeAlerts.panel.reference.tooltip')}
+                        error={!!sourceProblems.reference}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
@@ -118,6 +120,7 @@ const OpticalOptions = createCompositeOptions({
 
 export const ChangeAlertsToolbar = compose(
     _ChangeAlertsToolbar,
+    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )
     

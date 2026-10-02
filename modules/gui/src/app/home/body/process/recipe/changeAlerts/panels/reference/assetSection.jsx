@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
-import {segmentsAssetDescription} from '../../../ccdc/segmentsAsset'
+import {SelectedSourceStatus} from '../../../selectedSource'
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
@@ -33,6 +33,7 @@ class _AssetSection extends React.Component {
                     allowedTypes={['Image', 'ImageCollection']}
                     onLoaded={this.onLoaded}
                 />
+                <SelectedSourceStatus section='reference' type='ASSET' id={asset.value}/>
                 <Form.Buttons
                     label={msg('process.ccdc.panel.dates.form.dateFormat.label')}
                     input={dateFormat}
@@ -57,20 +58,12 @@ class _AssetSection extends React.Component {
         )
     }
 
-    // The asset is described by the shared segments adapter, and only the date representation is kept: it
-    // is configuration the user may correct, prefilled from the asset. The description itself is the
-    // source's and is read when it is needed.
+    // Only the date representation is kept: it is configuration the user may correct, prefilled from the asset. Whether
+    // the asset suits the reference is judged once its typed bands are read (SelectedSourceStatus): the metadata read
+    // here cannot say which of its bands are arrays.
     onLoaded({metadata}) {
-        const {inputs: {asset, dateFormat}} = this.props
-        const described = segmentsAssetDescription({
-            bandNames: metadata.bands.map(({id}) => id),
-            properties: metadata.properties
-        })
-        if (described.bands.length) {
-            dateFormat.set(described.dateFormat)
-        } else {
-            asset.setInvalid(msg('process.changeAlerts.panel.reference.asset.notCcdc'))
-        }
+        const {inputs: {dateFormat}} = this.props
+        dateFormat.set(metadata.properties?.dateFormat)
     }
 }
 

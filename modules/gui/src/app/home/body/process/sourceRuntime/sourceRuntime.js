@@ -16,6 +16,7 @@ import {DEFAULT_ASSET_POLICY, isDefinitiveFailure} from './assetEvidence'
 import {assetsFailedBy} from './assetFailure'
 import {AssetInterest} from './assetInterest'
 import {AssetRefresh} from './assetRefresh'
+import {EvidenceOwners} from './evidenceOwners'
 import {DEFAULT_LISTING_POLICY, ListingRefresh} from './listingRefresh'
 import {DEFAULT_OBSERVATION_RETENTION, ObservationRegistry} from './observationRegistry'
 import {DEFAULT_OUTPUT_RETENTION, OutputRegistry} from './outputRegistry'
@@ -80,6 +81,10 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // reads is read at once, then what was observed for it is observed again and its presentation evidence read again,
 // unchanged tokens notwithstanding, and its preview is drawn again. `refreshAsset` does the same for one asset and
 // everything reading it. A refresh already running for the same question or asset is joined.
+//
+// The evidence owners mounted for recipes (sourceEvidenceSync.jsx) register with it, so a synchronous read can judge
+// their published evidence against the basis it was read on (`evidenceOwnerOf`, evidenceOwners.js). That is access to
+// the existing owner only: no loading, and nothing retained beyond it.
 
 const PENDING = 'PENDING'
 
@@ -338,6 +343,7 @@ export const createSourceRuntime = ({
     // publishes nothing.
     let closed = false
     const refreshing = new Map()
+    const evidenceOwners = new EvidenceOwners()
     const joined = (key, refresh) => {
         if (!refreshing.has(key)) {
             refreshing.set(key, refresh().finally(() => refreshing.delete(key)))
@@ -396,6 +402,8 @@ export const createSourceRuntime = ({
             assets.refresh([id], {force: true}).then(() => closed || refreshSources({assets: [id]}))
         ),
         claimAssets: ids => assets.claim(ids),
+        registerEvidenceOwner: recipeId => evidenceOwners.register(recipeId),
+        evidenceOwnerOf: recipeId => evidenceOwners.ownerOf(recipeId),
         invalidateAssets: ids => assets.invalidate(ids),
         // A failure of something drawn or read from these assets, which may be about any of them (assetFailure.js).
         reportFailure: ({error, assets: read}) => reportAssetFailure(assetsFailedBy(error, read)),
@@ -406,6 +414,7 @@ export const createSourceRuntime = ({
             interest.close()
             assets.close()
             observations.clear()
+            evidenceOwners.close()
         }
     }
 }

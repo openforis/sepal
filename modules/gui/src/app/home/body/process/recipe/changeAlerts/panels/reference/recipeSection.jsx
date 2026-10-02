@@ -5,7 +5,10 @@ import {Subject} from 'rxjs'
 import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {compose} from '~/compose'
+import {Layout} from '~/widget/layout'
 import {RecipeInput} from '~/widget/recipeInput'
+
+import {SelectedSourceStatus} from '../../../selectedSource'
 
 class _RecipeSection extends React.Component {
     constructor(props) {
@@ -16,12 +19,16 @@ class _RecipeSection extends React.Component {
     render() {
         const {inputs: {recipe}} = this.props
         return (
-            <RecipeInput
-                filter={type => mayProvideSegments(type.id)}
-                input={recipe}
-                autoFocus
-                errorMessage
-            />
+            <Layout>
+                <RecipeInput
+                    filter={type => mayProvideSegments(type.id)}
+                    input={recipe}
+                    autoFocus
+                    keepSelection
+                    errorMessage
+                />
+                <SelectedSourceStatus section='reference' type='RECIPE_REF' id={recipe.value}/>
+            </Layout>
         )
     }
 }

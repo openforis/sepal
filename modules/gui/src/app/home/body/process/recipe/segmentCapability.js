@@ -18,6 +18,16 @@ import {NOT_A_SOURCE, resolveProvider, UNRESOLVED, UNSUPPORTED} from './sourcePr
 
 export const UNRESOLVED_SEGMENT_SOURCE = 'UNRESOLVED_SEGMENT_SOURCE'
 
+// The capability as a requirement over it reads it (sourceRequirements.js, segmentRequirements.js): which asset
+// establishes it - the one the segments are read from, if any - and where the evidence lifecycle's accepted observation
+// holds the segment description (`segments`, as every segment consumer publishes it).
+export const SEGMENTS = {
+    capability: CCDC_SEGMENTS,
+    label: 'process.source.capability.ccdcSegments',
+    evidenceAsset: provider => segmentsAssetOf(provider),
+    evidenceOf: observed => observed?.segments
+}
+
 export class SegmentSourceError extends Error {
     constructor(code, message) {
         super(message)

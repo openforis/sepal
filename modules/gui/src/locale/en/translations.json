@@ -1770,8 +1770,7 @@
         "reference": {
           "asset": {
             "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
+            "title": "Earth Engine CCDC Asset"
           },
           "button": "REF",
           "form": {
@@ -1780,6 +1779,9 @@
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "required": "Select a recipe"
             }
           },
           "recipe": {
@@ -4976,6 +4978,13 @@
         "failing": "Asset {asset} could not be checked. Earth Engine could not be reached.",
         "expired": "The assets this recipe reads have not been checked recently.",
         "retry": "Refresh"
+      },
+      "source": {
+        "missing": "No source is selected under {section}.",
+        "checking": "Checking the source selected under {section}…",
+        "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
+        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again.",
+        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why."
       }
     },
     "saveRecipe": {
@@ -5657,6 +5666,38 @@
         "easeGrid2Global": "Global (EPSG:6933)",
         "easeGrid2North": "North polar (EPSG:6931)",
         "easeGrid2South": "South polar (EPSG:6932)"
+      }
+    },
+    "source": {
+      "status": {
+        "checking": "Checking the selected source…",
+        "unavailable": "The selected source is missing or unavailable. Refresh, or choose another source.",
+        "assetUnavailable": "Asset {asset} could not be checked. Refresh, or choose another source.",
+        "assetMissing": "Asset {asset} is missing or unavailable. Refresh, or choose another source.",
+        "expired": "The selected source has not been checked recently. Refresh to check it again.",
+        "refresh": "Refresh",
+        "missing": "No source is selected.",
+        "notAProducer": "{way}{source} provides no {capability}.",
+        "unfilledRole": "{way}{source} does not select the image it stands for.",
+        "cyclic": "The selected source refers back to itself.",
+        "unsuitable": "The selected source cannot provide {capability}.",
+        "showDetails": "Show all {count} problems",
+        "hideDetails": "Hide problems",
+        "withheld": "Not loaded: the source selected in {section} cannot be used yet."
+      },
+      "capability": {
+        "ccdcSegments": "CCDC segments"
+      },
+      "segments": {
+        "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
+        "missingBand": "{band} is missing",
+        "scalarBand": "{band} is not an array, where {expected}-dimensional arrays are needed",
+        "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "andMore": "{items} and {count} more",
+        "measureAbsent": "The selected source has no segments for band {measure}. It has segments for: {measures}.",
+        "noMeasures": "none",
+        "noMeasure": "The selected source has no band with both coefficients and RMSE."
       }
     }
   },
@@ -6587,7 +6628,9 @@
       },
       "ownRecipe": {
         "invalid": "A recipe cannot be used as its own input"
-      }
+      },
+      "selection": "Selected",
+      "unlisted": "Unavailable recipe"
     },
     "safetyButton": {
       "label": "Proceed"

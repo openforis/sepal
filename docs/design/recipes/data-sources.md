@@ -295,16 +295,21 @@ In order, each independently mergeable:
    rejects outdated authority before component effects run. Refresh failure never authorizes stale options.
    Persisted calculation freshness and coherent execution remain later milestones. Websocket revision events are
    optional latency improvements; correctness must not depend on notification delivery.
-2. **Task-driven asset invalidation**, the next integration: exports report the assets they changed, through the
-   user-assets service, to the asset evidence of every session showing them
-   ([route proposed, pending review](#task-driven-asset-invalidation)).
-3. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+2. **Configured-source requirement validation.** Check whether a particular recipe or asset meets a consumer's
+   requirements, using its configuration and available evidence. Change Alerts REF is implemented
+   ([contract](source-resolution.md#change-alerts-ref)); CCDC Slice, BAYTS and the remaining consumers follow. A
+   reference-API review comes first: Masking, CCDC Slice and BAYTS against the declarative boundary, evidence-dependent
+   suitability for a recipe shown outside its editor (unchecked today), and sharing the typed band read
+   ([findings](#configured-source-suitability-findings)).
+   One shared
+   `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
    boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
-   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
-4. **Declarative dependency evaluation**, starting with the
+   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery) and the
+   [configured-source suitability findings](#configured-source-suitability-findings).
+3. **Declarative dependency evaluation**, starting with the
    [Band Math chain](#later-follow-up-band-math-dependencies).
-5. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
+4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
    Include band-presentation inheritance: producers supply labels and optional descriptions through GUI
@@ -317,11 +322,16 @@ In order, each independently mergeable:
    Keep semantic facts separate from consumer decisions: a band may state that it represents an observation date,
    while CCDC owns whether that quantity is suitable for fitting. Scalar or integer shape alone does not establish
    an appropriate pyramiding policy.
-6. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
-7. **Caller-authorized closure reads and coherent execution**
+5. **Sampling Design derived-result freshness** ([milestone 5](#5-add-sampling-design-derived-result-freshness)).
+6. **Caller-authorized closure reads and coherent execution**
    ([milestone 7](#7-complete-coherent-execution-and-live-freshness-infrastructure)).
-8. **Source planning and the temporal collection composer**, following the
+7. **Source planning and the temporal collection composer**, following the
    [research plan](output-products.md#research-plan).
+
+**Deferred until the task rewrite lands:** [task-driven asset invalidation](#task-driven-asset-invalidation).
+Re-audit the new task lifecycle and notification paths before choosing the integration route or scheduling it.
+Keep Task changes out of the next requirement-validation packet; its Task execution-boundary integration must
+be reviewed against the rewritten service.
 
 Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
 is a separate small packet.
@@ -394,7 +404,7 @@ same recipe. Failed reads can be retried. Authorized batch/closure endpoints and
 not implemented. Browser resolution completes a selected root's closure through the existing authenticated
 per-recipe read and the shared batch-shaped traversal. Retrieve preflight retains those records locally; the live
 evidence lifecycle uses the session's reference-counted loader. Neither makes browser evidence the execution graph.
-Recipe Fill and instance-level capability discovery still require their own acquisition and validation contracts.
+Recipe Fill and configured-source capability discovery still require their own acquisition and validation contracts.
 
 Activate output descriptions and capabilities one runtime boundary or consumer family at a time. Each milestone
 must correct an existing defect or deliver a usable generic contract without requiring the rest of the architecture
@@ -974,10 +984,61 @@ band's multiplier. Other producers, export destinations, charts and legends adop
   role combinations and response contract, and land this as a dedicated cross-module commit rather than as part
   of Recipe source resolution.
 
+### Configured-source suitability findings
+
+Change Alerts REF is the first consumer, now implemented ([contract](source-resolution.md#change-alerts-ref)): its
+configured chain, asset structure, missing reference and selected-source presentation follow the constraints below.
+The findings do not authorize a migration of every picker or execution boundary. The capability-chain
+cases were reproduced through shared rules, without Earth Engine. Other findings come from code inspection,
+unless stated otherwise; they are not claims of end-to-end reproduction.
+
+| Gap | Current behavior | Follow-up |
+| --- | --- | --- |
+| Type candidacy differs from configured capability | Masking is a candidate for segments and BAYTS statistics even when its primary source is an optical mosaic; the configured provider walk rejects it. An unfilled preserving role is malformed, and Stack does not currently preserve these capabilities. | Start with a diagnosis for Change Alerts REF that names where the configured chain stopped. Keep deliberate picker eligibility separate from suitability. |
+| Wrapper support differs between consumers | CCDC Slice excludes Masking in its picker, while its evidence and execution paths can follow Masking to CCDC. | Review admitting suitable wrappers in a later CCDC Slice packet. |
+| Asset segment inference is not validation | Change Alerts tests whether an asset has any bands. `ccdc/segmentsAsset.js` also derives a base band from a lone `x_rmse` or a derived `x_intercept`; non-empty `baseBands` does not prove CCDC segments. | Define the consumer's minimum structural evidence, including required measures, segment bands and dimensions, before rejecting or accepting assets under a shared rule. |
+| Historical-statistics validation is incomplete | BAYTS's GUI walk can reject the configured source with a load-failure toast; its asset check establishes only that bands exist, and execution uses the reference image without a capability check. | Add a REF diagnosis and review the execution contract separately. |
+| Wrappers bypass direct type exclusions | Masking over CCDC remains eligible wherever Masking is offered, including its own mask field, despite CCDC's direct exclusion. | Audit each consumer's actual shape requirement before introducing scalar-image validation; do not assume every image consumer requires scalars. |
+| Classification-only inputs rely on GUI filters | Execution callers assume classifier/training methods exist; wrong types can fail with missing-method errors. | Define the requirement and execution diagnosis without incidentally admitting Masking over Classification. |
+| Selected-source errors are poorly presented | Evidence failures can disable actions without marking SRC/REF; unavailable or no-longer-offered selections can appear blank or disappear from input lists while remaining in the model. | Preserve and display the selected reference, mark its owning section, and explain the specific failure. Never clear it as a side effect of validation. |
+| Asset metadata omits array dimensionality | `/assetMetadata` answers an image asset from its asset record through the Earth Engine client's legacy conversion, which keeps each band's precision and range but drops its array dimensionality (`dimensionsCount`); its band `dimensions` is the grid. `assetAvailableBands` reads a band with no stated dimensions as a scalar, so an image asset's array bands look like scalars to the asset map layer. A collection's metadata is evaluated from its first image and does state them. Observed on a real CCDC asset. | Change Alerts REF reads `/bands` band evidence instead. Audit the `assetAvailableBands` consumers (the asset image layer's style selector, renderable-style filter and cursor display types) separately. |
+| Picker and translation gaps | `RecipeInput` bypasses its filter for an unknown GUI type. Required-message keys reported missing include CCDC Slice SRC, Change Alerts REF and Classification training data; the AOI key also needs checking. | Add focused picker and message coverage when these paths are changed. |
+
+Contract constraints for the first packet:
+
+- Provider discovery must remain possible before its evidence is loaded. A producing declaration identifies where
+  to obtain evidence; it does not by itself validate the contents of an asset-backed recipe. Bare assets and
+  asset-backed recipes must use the same capability rule and explicitly current evidence.
+- Keep output schema, structural validity, suitability and complete execution requirements distinct. An unsuitable
+  source is not a transport failure. After an attempted load fails, the combined UI state must settle to unavailable,
+  not remain indefinitely checking or label the source unsuitable.
+- Absence from the recipe listing triggers an availability check; it does not prove deletion. Preserve new recipes
+  and open or unsettled drafts. Use missing-or-unavailable wording unless deletion is established separately.
+- Retain the selected reference, provider path and offending role/path in structured diagnostics. The GUI owns
+  translated wording and titles. A pure read must not dispatch or start another loading path.
+- Reuse source-runtime and evidence-lifecycle ownership. Changing shared `lib/js/ee` code can affect Task even
+  without editing `modules/task`; execution changes need a boundary review while Task is being rewritten.
+
+CCDC Slice, BAYTS, scalar-image and classification-input requirements are subsequent packets. The first packet
+must not broaden their behavior while adapting shared discovery code. Execution parity for asset segment leaves
+and the ASSET/inline branches of `loadSegments` remains to be designed, rather than claimed by GUI validation.
+
+For the reference-API review: Change Alerts' observation reads an asset's band evidence beside its metadata as a
+request of its own, not shared through the source runtime's band observations, so a layer and the observation reading
+the same asset ask twice. A preview of a recipe whose editor is not open is held only by what its held records refuse:
+with no evidence owner, a source only evidence could judge is not checked, and its preview requests are made as before.
+
+Source-error presentation acceptance includes a visibly invalid owning SRC/REF section, an explanation naming
+the affected source, a retained selection that can be repaired, and visible progress on Refresh. The missing
+Refresh feedback was observed manually after deleting a temporary asset; the unavailable message and export
+blocking worked. Broader Retrieve diagnostic presentation and Refresh feedback remain separate follow-ups.
+
 ### Task-driven asset invalidation
 
-Promoted to the next integration after packet 3 ([following work](#following-work)); the cross-service route is
-proposed and awaits review before implementation. Asset evidence already takes known mutations from the session
+Deferred while the task functionality is being rewritten. Once the rewrite lands, audit its destination changes,
+completion, failure and cancellation paths and its notification transport before proposing implementation.
+The route through user-assets remains a proposal, not an approved integration contract.
+Asset evidence already takes known mutations from the session
 (`assets.mutation`), with follow-up reads for Earth Engine's propagation delay.
 
 - Exporters report actual affected asset IDs to shared asset invalidation, without knowing which recipes or

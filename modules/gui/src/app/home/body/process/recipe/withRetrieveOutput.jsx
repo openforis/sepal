@@ -100,7 +100,8 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
             return readRetrieveOutput({
                 state: this.context.store.getState(),
                 recipeId,
-                heldFor: key => sourceRuntime.heldFor(key)
+                heldFor: key => sourceRuntime.heldFor(key),
+                evidenceOwnerOf: id => sourceRuntime.evidenceOwnerOf(id)
             })
         }
     }

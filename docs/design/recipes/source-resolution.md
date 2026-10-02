@@ -280,9 +280,12 @@ The current shared contracts include:
 
 The generic `providerStep(record, capability)` reads the capability's declaration key and returns `PRODUCES`,
 `PRESERVES`, `UNSUPPORTED` or `MALFORMED`. A preserving step follows only the input filling its declared role.
-The GUI's `resolveProvider` walks already-resolved records; execution's segment resolver loads records through the
-operation's reader. Both use that same step. A possible provider is not verified asset content or a guarantee of
-compatibility with every operation. Instance-level discovery and richer evidence requirements remain future work.
+The shared `discoverProvider(selected, records, capability)` walks records already held and returns the provider
+with the way there (`chain`: each record followed and the role it was followed through) or where the walk stopped
+(`at`); the GUI's `resolveProvider` adapts it for callers that treat every stop as a failure. Execution's segment
+resolver loads records through the operation's reader. Both use that same step. A possible provider is not verified
+asset content or a guarantee of compatibility with every operation: discovery says where to look, and a consumer's
+requirement decides from evidence about what is there ([Change Alerts REF](#change-alerts-ref)).
 
 ### Current segment consumer contract
 
@@ -394,6 +397,82 @@ preflight of a known root, not for searching all saved recipes or establishing e
 discovery across saved recipes requires the caller-authorized storage and session-catalogue boundary described
 below. Asset capability discovery uses authorization-scoped metadata evidence and bounded inspection; an arbitrary
 asset property is not proof of compatibility.
+
+Selector integration is a later step after validation of a selected source. Recipe listings carry basic metadata,
+not the configured dependency chain, and asset listings do not establish band structure. Opening a picker must not
+load every recipe closure or issue an Earth Engine metadata request for every candidate.
+
+- Use cheap candidacy rules first, retaining deliberate input-eligibility restrictions. These can rule out impossible
+  types but cannot prove a particular source suitable.
+- Refine candidates using current records and evidence already held by the shared runtime. Known unsuitable
+  candidates may be excluded or disabled with a reason; unknown or temporarily unavailable candidates must not be
+  treated as unsuitable merely because they have not been checked.
+- Perform bounded validation when a candidate is selected, sharing the existing loading and evidence paths.
+  Any later inspection of visible or searched candidates needs an explicit request budget and cancellation policy.
+- Always retain the current selection visibly, with its diagnosis, even if it no longer qualifies for new selection.
+- If efficient discovery needs richer recipe summaries or an index, design its authorization and dependency/version
+  invalidation separately. Such summaries narrow candidates; final validation still checks current evidence.
+
+Keep candidate discovery separate from suitability validation so a future storage implementation can query recipe
+configuration and dependency relationships directly, for example with PostgreSQL JSONB. Do not make discovery
+depend on loading the entire catalogue into the browser or duplicate capability rules in storage-specific queries.
+Validation consumes supplied records and evidence regardless of how candidates were found; session drafts remain
+part of final validation. This is a compatibility direction, not a scheduled database migration or a reason to add
+a speculative storage abstraction to the current packet.
+
+### Change Alerts REF
+
+Change Alerts is the first consumer to validate its configured source. A recipe declares what it needs; shared code
+decides when the answer can be trusted and what it does to the UI.
+
+- **Declaration.** Change Alerts' type declares `sourceRequirements: [referenceRequirement]`: the selection by the
+  role its source edge already has (`PRIMARY_IMAGE`), the section it is selected in (REF), the requirement
+  (`SLICEABLE_MEASURE_SEGMENTS`), its parameters - the monitored measure - and the requests that need it met: the
+  alerts (`IMAGE_OUTPUT`) and the segment chart (`PIXEL_SEGMENTS`). The monitoring and calibration mosaics are built
+  around the geometry of the reference's segment source: execution resolves its provider chain for them, so they are
+  refused where that chain is (`providerOperations`), but not held by what the requirement judges of the segments.
+- **Requirement** (`segmentRequirements.js`). `SLICEABLE_MEASURE_SEGMENTS` is a named requirement over the segment
+  capability, taken from Change Alerts' slicer and applied only where declared - not a definition of valid CCDC
+  segments: `tStart` and `tEnd`, a measure's `<measure>_coefs` paired with its `<measure>_rmse`, and every band shaped
+  as the slicer masks it - a `_coefs` band as a two-dimensional array, any other as a one-dimensional one. Segments
+  read from an asset - selected directly or named by an asset-backed recipe - are judged from the dimensionality Earth
+  Engine evaluates for that asset's bands; a recipe computing its segments guarantees the layout by declaration, so
+  only the measure is asked of it. With no measure selected, one complete measure makes the source suitable; that is
+  not execution readiness. A band whose dimensionality was not established is insufficient evidence, kept apart from
+  an observed incompatibility and never reported as a scalar. The rule does not establish how many coefficients an
+  array holds, and an image collection's bands are its first member's. Its diagnoses read as a summary naming a few
+  representative problems, with every problem in their details.
+- **Evidence.** An image asset's metadata (`/assetMetadata`) is its asset record, whose band types keep precision and
+  range but drop array dimensionality: every band there reads like a scalar. The observation therefore reads the
+  asset's band evidence (`/bands` with data types, the dimensionality evaluated from the image) beside its metadata,
+  and the segment description carries it as `typedBands`, reported and not validated; CCDC Slice's acceptance is
+  unchanged. Version polling stays a metadata read. An asset just picked is judged once that evidence is read, not
+  from the picker's metadata.
+- **Capability.** The GUI side of `CCDC_SEGMENTS` (`SEGMENTS`, `segmentCapability.js`) says which asset establishes it
+  (the one the segments are read from) and where an accepted observation holds the segment description (`segments`,
+  as every segment consumer publishes it).
+- **Trust** (`sourceRequirements.js`). Shared for every declaration: the selection by role, missing selections,
+  `discoverProvider` and its generic diagnoses (not a producer, unfilled role, cyclic), and whether the evidence owner's
+  answer counts - its live basis from the source runtime ([evidence owners](gui-source-runtime.md#evidence-owners))
+  passing the owner's own rule for that selection, the evidence published by the observation that basis belongs to,
+  and the asset that establishes the capability authorized by its asset evidence; a mask or AOI failing says nothing
+  about it. The owner observes one source; a selection it does not observe is unchecked. A chain that cannot lead to the
+  capability is refused from the held records alone, owner or not. A failed read settles to unavailable; nothing
+  reading the source is unchecked, never waited on. Each read answers its verdict (`SUPPORTED`, `UNSUPPORTED`,
+  `NEEDS_EVIDENCE`) apart from the state of its evidence (`UNCHECKED`, `CHECKING`, `CHECKED`, `UNAVAILABLE`,
+  `EXPIRED`).
+- **UI and authority.** Shared presentation (`selectedSourceStatus.js`, `selectedSource.jsx`) marks the declared
+  section and explains the problem under the retained selection - matched by type and id - with Refresh. Retrieve
+  decides from the same read at submission: it waits while the source is being checked and otherwise blocks, naming
+  the section; dependencies already known to be unsound refuse it for that instead. A new preview or segment-chart
+  request is held by the same read (`requestGate`) while the requirement is not known to be met, keeping what is
+  already drawn; a source found missing or unsuitable also withdraws the drawing. A recipe whose editor is not open -
+  a layer in another recipe's map - is still refused where its held records refuse the source, but has no evidence
+  owner: a source only evidence could judge is not checked there, and its requests are made as before. Absence from
+  the listing is never called deletion.
+
+CCDC Slice, BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves,
+remain separate packets.
 
 ## Source description
 

@@ -105,6 +105,10 @@ additive offsets or unequal band factors do not. Band names alone cannot establi
 
 These are existing limitations or design ideas, not work required to complete the source-resolution migration.
 
+- **Classification-input ancestry.** `loadClassificationInputs$` in `lib/js/ee/src/pyeo/pyeoAlerts.js` uses
+  `loadRecipe$` directly before building the classification's input image, rather than following that read through
+  `recipeRef`. Audit cycle detection on this path separately. The main classification read already uses `recipeRef`;
+  the concern is limited to the input-loading path and has not been reproduced end to end.
 - **Uniform index acquisition.** Use a provided index when its meaning and encoding are known; otherwise
   calculate it from suitable spectral bands, for either a recipe or asset. Preserve the selected image and its
   masks. This would replace the recipe/asset branch and its wrapped-asset limitation. Shared output and encoding

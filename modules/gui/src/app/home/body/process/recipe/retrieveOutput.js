@@ -21,6 +21,7 @@ import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCu
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
+import {sourceRequirementGate} from './sourceRequirements'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
@@ -42,6 +43,11 @@ import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitte
 // token reports no change, so a description read from one authorizes nothing once it is `unversionedMaxAgeMs` old,
 // until it is refreshed; the description and its drawing stay as they are. Assets that only supply pixels establish
 // nothing an export is authorized by, and execution resolves its own inputs.
+//
+// A recipe whose type declares requirements of the sources it selects (`sourceRequirements`, sourceRequirements.js) is
+// authorized only while each is known to be met, decided from the same state and from the recipe's evidence owner as
+// the source runtime gives access to it (`evidenceOwnerOf`): while one is being checked it is waited for, and otherwise
+// it blocks, naming the section the source is selected in. Dependencies already known to be unsound refuse it for that.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -70,7 +76,7 @@ export const ASSETS_UNAVAILABLE = 'ASSETS_UNAVAILABLE'
 
 // The recipe, its output read, and whether that read is still being loaded, from one state of the session.
 // `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
-export const readRetrieveOutput = ({state, recipeId, heldFor, now = Date.now()}) => {
+export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, now = Date.now()}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
     if (!recipe) {
@@ -85,7 +91,8 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, now = Date.now()})
     const pending = Boolean(output.acquisition) && !held
     const gate = output.status === READY
         && authorityGate({
-            state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null, now
+            state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null,
+            dependencyValidity: output.dependencyValidity, evidenceOwnerOf, now
         })
     return gate
         ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
@@ -189,7 +196,7 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
 
 // Why the description may not authorize an export now, if it may not: {wait, code, recipeId}. A wait comes after
 // every block, so nothing that blocks is reported as pending.
-const authorityGate = ({state, recipe, graph, basis, assets, observedAt, now}) => {
+const authorityGate = ({state, recipe, graph, basis, assets, observedAt, dependencyValidity, evidenceOwnerOf, now}) => {
     const listing = listingAuthority({listingState: selectFrom(state, 'process.recipeListing'), now})
     if (listing !== CURRENT) {
         return listing === WAITING
@@ -226,12 +233,16 @@ const authorityGate = ({state, recipe, graph, basis, assets, observedAt, now}) =
             wait: authority === ASSET_WAITING,
             code: authority === ASSET_WAITING ? ASSETS_PENDING : authority === ASSET_EXPIRED ? ASSETS_EXPIRED : ASSETS_UNAVAILABLE
         }))
-    const reasons = [...drafts, ...unauthorized]
+    // Dependencies known to be unsound already refuse it, with what it describes (unresolvedOutput).
+    const requirement = dependencyValidity && dependencyValidity.status !== VALID
+        ? null
+        : sourceRequirementGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, now})
+    const reasons = [...drafts, ...unauthorized, ...(requirement ? [requirement] : [])]
     return reasons.find(({wait}) => !wait) || reasons[0] || null
 }
 
 // The description is withheld: waited for as one still being loaded, or blocked as one that could not be had.
-const withheld = (output, {wait, code, recipeId, assetId}) => ({
+const withheld = (output, {wait, code, recipeId, assetId, section}) => ({
     ...output,
     status: wait ? NEEDS_EVIDENCE : UNAVAILABLE,
     authority: null,
@@ -239,7 +250,7 @@ const withheld = (output, {wait, code, recipeId, assetId}) => ({
     bands: [],
     presentation: {},
     availableBands: {},
-    diagnostics: [{code, ...(recipeId && {recipeId}), ...(assetId && {assetId})}]
+    diagnostics: [{code, ...(recipeId && {recipeId}), ...(assetId && {assetId}), ...(section && {section})}]
 })
 
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>

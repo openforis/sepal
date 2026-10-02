@@ -251,6 +251,31 @@ it('excludes what the caller rules out in the ALL view too', async () => {
     expect(options).toEqual(['Another recipe', 'In another project'])
 })
 
+// A filter can state an eligibility rule rather than a requirement, so a selection it excludes is shown under its own
+// heading, never called unsuitable here; the caller says what, if anything, is wrong with it.
+describe('a selection the input does not offer', () => {
+    it('is shown by its listed name to a caller keeping it, without offering anything else the filter excludes', async () => {
+        show({value: 'table', filter: type => type.imageSource, keepSelection: true})
+
+        const options = await offered()
+
+        expect(options).toEqual(['A table recipe', 'Another recipe'])
+        expect(headings()).toEqual(['widget.recipeInput.selection', 'Project one'])
+    })
+
+    it('is shown as unlisted when the listing no longer names it', async () => {
+        show({value: 'deleted-1', keepSelection: true})
+
+        expect(await offered()).toContain('widget.recipeInput.unlisted')
+    })
+
+    it('is not shown to a caller that does not keep it', async () => {
+        show({value: 'table', filter: type => type.imageSource})
+
+        expect(await offered()).toEqual(['Another recipe'])
+    })
+})
+
 describe('the headings of the projects on offer', () => {
     it('leave none of a name behind when the view they belong to is left', async () => {
         show({
@@ -335,13 +360,14 @@ const bandsRequested = {
     onBandsLoaded: ({recipe, bandNames}) => loaded.push({id: recipe.id, bandNames})
 }
 
-const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecipe, filter, requests}) => {
+const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecipe, filter, keepSelection, requests}) => {
     form = theForm
     return (
         <RecipeInput
             input={recipe}
             allowOwnRecipe={allowOwnRecipe}
             filter={filter}
+            keepSelection={keepSelection}
             allowClear
             onChange={id => selected.push(id)}
             onLoading={id => loading.push(id)}
@@ -351,7 +377,7 @@ const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecip
 })
 
 const show = ({
-    value, allowOwnRecipe, filter, requests = bandsRequested,
+    value, allowOwnRecipe, filter, keepSelection, requests = bandsRequested,
     recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS
 } = {}) => {
     const initialState = {
@@ -378,6 +404,7 @@ const show = ({
                         values={value === undefined ? {} : {recipe: value}}
                         allowOwnRecipe={allowOwnRecipe}
                         filter={filter}
+                        keepSelection={keepSelection}
                         requests={requests}
                     />
                 </Recipe>

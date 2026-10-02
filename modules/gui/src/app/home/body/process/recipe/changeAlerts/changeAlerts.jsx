@@ -15,6 +15,7 @@ import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
+import {referenceRequirement} from './referenceRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -70,5 +71,6 @@ export default () => ({
     },
     mapProducts,
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: [referenceRequirement]
 })

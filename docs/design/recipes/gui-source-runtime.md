@@ -2,7 +2,7 @@
 
 Current browser source-resolution boundaries and their proposed extensions. The implemented one-shot
 `resolveImageOutput$` operation and the separate live `SourceEvidenceSync` lifecycle reuse pure shared contracts.
-The unified `watchSource$`, instance-level `querySources$`, versioned resource cache and coherent execution bundles
+The unified `watchSource$`, configured-source `querySources$`, versioned resource cache and coherent execution bundles
 remain design proposals. Components should not own dependency traversal or cache policy.
 
 ## Purpose
@@ -594,6 +594,18 @@ first learned after a read is no change. The assets it reads are claimed from th
 basis covers every record the closure read, whether the
 closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
 record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
+
+#### Evidence owners
+
+The lifecycle registers with the source runtime as the owner of its recipe's evidence (`evidenceOwners.js`), which
+gives synchronous reads its live basis without copying it into Redux, where it would lose the identities its rule
+compares. Each observation is numbered; the evidence it publishes carries that number, so a reader counts evidence only
+for the observation the live basis belongs to. `ui.sourceEvidenceObservation` notifies consumers that an observation
+started. A registration is its owner's alone: releasing it leaves a replacement's in place, and nothing reported after
+release or runtime teardown is kept. Observation identities are unique across runtimes, since published evidence can
+outlive the runtime that numbered it. This is access to the existing owner, with no loading or retention of its own;
+source requirements read it ([Change Alerts REF](source-resolution.md#change-alerts-ref)).
+
 The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
 without observing. Removing it needs two things:
 
@@ -613,7 +625,8 @@ An observation can supply `applyAccepted` assignments, written in the same actio
 `reportUnavailable` callback for an accepted failure. Configuration policy compares source identity and payload
 against the last successful observation, so unchanged recovery does not overwrite user edits. Change Alerts and
 BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
-responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
+responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response, and
+reads the asset's band evidence beside it for the dimensionality the metadata does not carry.
 
 Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
 charts and previews must discard what they drew is the pixel generation's to say
@@ -657,7 +670,9 @@ another recipe as a source.
 The implemented producer-step rule supports `CCDC_SEGMENTS`, `BAYTS_HISTORICAL_STATS` and
 `OPTICAL_COLLECTION_DEFAULTS`. Change Alerts and BAYTS selectors query type-level candidacy, so they can offer a
 Masking recipe whose particular input does not satisfy their requirement. Slice and the classification pickers
-still have type filters. None of these is instance-level capability discovery.
+still have type filters. None of these is configured-source capability discovery. Change Alerts validates its
+selected reference once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref)); its picker still
+offers type-level candidates.
 
 The proposed discovery query accepts an operation-specific requirement containing only the structural, adapter or
 capability constraints that operation needs, plus cardinality and saved selections. Validation distinguishes a

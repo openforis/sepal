@@ -57,6 +57,12 @@ const EMPTY_GRAPH = {recipes: [], edges: [], diagnostics: []}
 // The assets it reads are claimed from the source runtime for as long as it is mounted, which keeps what is known of
 // them recent: a new token, an explicit refresh of an asset or of this recipe, and the age of evidence read from a
 // source without a token each read it again - presets, segments and prefill included - without any band request.
+//
+// It registers with the source runtime as the owner of the recipe's evidence (evidenceOwners.js), which makes its live
+// basis readable synchronously: a reader judges the evidence by this same rule before this component reacts to a
+// change, and can tell evidence being read from evidence nothing is reading. Each observation is numbered, and its
+// evidence is published under that number (`observationId`), so a newer basis never vouches for older evidence.
+// `ui.sourceEvidenceObservation` tells consumers that an observation started; its evidence tells them it settled.
 
 const mapStateToProps = state => {
     const {catalogue, openRecipeIds, saves, assetEvidence, sourceRefreshes} = evidenceSession(state)
@@ -74,6 +80,8 @@ class _SourceEvidenceSync extends React.Component {
     }
 
     componentDidMount() {
+        const {recipe, sourceRuntime} = this.props
+        this.registration = sourceRuntime?.registerEvidenceOwner(recipe.id)
         this.update()
     }
 
@@ -84,6 +92,7 @@ class _SourceEvidenceSync extends React.Component {
     componentWillUnmount() {
         this.cancel$.next()
         this.release?.()
+        this.registration?.release()
         clearTimeout(this.expiry)
     }
 
@@ -109,6 +118,7 @@ class _SourceEvidenceSync extends React.Component {
                     ? {...dependency, version: assetVersion(session, dependency.assetId)}
                     : dependency)
             }
+            this.registration?.update(this.observationId, this.basis)
         }
     }
 
@@ -153,6 +163,8 @@ class _SourceEvidenceSync extends React.Component {
         // one unreachable source into a request per render.
         this.basis = this.startingBasis(session)
         this.claim(this.basis)
+        this.observationId = this.registration?.observe(this.basis)
+        this.notify({observationId: this.observationId})
         stream('OBSERVE_SOURCE_EVIDENCE',
             this.observe$(session).pipe(takeUntil(this.cancel$)),
             evidence => this.publish({status: OBSERVED, ...evidence}),
@@ -170,6 +182,7 @@ class _SourceEvidenceSync extends React.Component {
                 // Recorded before anything is decided about the graph. A graph that cannot run was still
                 // read from records, and those records are what a repair would change.
                 this.basis = this.resolvedBasis(graph, recipesById, session)
+                this.registration?.update(this.observationId, this.basis)
                 this.claim(this.basis)
                 this.expireAt(this.basis)
                 // COMPLETE carries either no diagnostics or definitive ones - a cycle, a malformed
@@ -316,10 +329,12 @@ class _SourceEvidenceSync extends React.Component {
         if (!basis || this.outdated(basis)) {
             return
         }
+        const observationId = this.observationId
         const published = {
             sourceKey: basis.key,
             ...evidence,
-            ...retainedObservation(recipe, evidence)
+            ...retainedObservation(recipe, evidence),
+            ...(observationId !== undefined && {observationId})
         }
         this.applied(
             recipeActionBuilder('SET_SOURCE_EVIDENCE', {sourceKey: basis.key})
@@ -327,6 +342,13 @@ class _SourceEvidenceSync extends React.Component {
             published
         ).dispatch()
         this.reported(published, error)
+    }
+
+    notify(observation) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('SOURCE_EVIDENCE_OBSERVATION')
+            .set('ui.sourceEvidenceObservation', observation)
+            .dispatch()
     }
 
     // Withholding an answer is the whole of what this does about a failure. Whether that is visible is the

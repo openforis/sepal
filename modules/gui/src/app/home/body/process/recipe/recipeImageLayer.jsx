@@ -36,6 +36,7 @@ import {
     READY,
     UNAVAILABLE
 } from './recipeOutput'
+import {requestGate} from './sourceRequirements'
 import {sourceStatus} from './sourceStatus'
 import {MATCHED, selectionState} from './visualizationMatching'
 import {layerSelection, layerVisualizations} from './visualizations'
@@ -48,7 +49,7 @@ import {layerSelection, layerVisualizations} from './visualizations'
 // A selector runs on every dispatched action, not only on recipe edits, so the adapter caches the graph by the
 // identity of `loadedRecipes` and of the root recipe. Unrelated actions reuse it; any recipe edit produces new
 // objects and recomputes.
-const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
+const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}, layerConfig, sourceRuntime}) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes')
     return {
@@ -56,6 +57,15 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
         recipe,
         dependencyGraph: recipe
             ? buildMapDependencyGraph({recipe, loadedRecipes})
+            : null,
+        sourceGate: recipe
+            ? requestGate({
+                state,
+                recipe,
+                operation: layerProduct(recipe, layerConfig)?.name,
+                evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
+                now: Date.now()
+            })
             : null,
         recordStaleness: recordStalenessOfState(state),
         assetEvidence: assetEvidenceOfState(state),
@@ -226,8 +236,10 @@ class _RecipeImageLayer extends React.Component {
     // Nothing is drawn but a description over dependencies known to be sound, whoever manages the selection: a
     // preview executes every dependency, read or not, and one Earth Engine would reject - bands that do not exist,
     // a dependency that is gone - is withheld rather than requested. While the answer is being loaded nothing new is
-    // drawn, but a drawing already shown is kept as long as nothing it was drawn from has changed (preserved). The saved
-    // selection is left alone - only what it would present is withheld.
+    // drawn, but a drawing already shown is kept as long as nothing it was drawn from has changed (preserved). The same
+    // holds while a source the product requires is not known to suit it (requestGate, sourceRequirements.js), and a
+    // source found unsuitable takes the drawing away. The saved selection is left alone - only what it would present is
+    // withheld.
     //
     // Whatever is withheld is also let go. MapAreaLayout takes a withheld layer off the map, which cancels it for
     // good, and the same watched props once the answer returns must build a new one rather than hand that one back.
@@ -247,6 +259,10 @@ class _RecipeImageLayer extends React.Component {
         if (!canPreview(imageOutput)) {
             return this.preserved(imageOutput)
         }
+        const {sourceGate} = this.props
+        if (sourceGate) {
+            return sourceGate.withdraw ? null : this.drawn(imageOutput)
+        }
         if (this.selfManagedVisualizations()) {
             return this.createLayer(imageOutput)
         }
@@ -260,7 +276,12 @@ class _RecipeImageLayer extends React.Component {
     // change how later requests authenticate, not the pixels already shown. What it may authorize is the read's to say,
     // not the drawing's.
     preserved(imageOutput) {
-        return this.layer && isTransient(imageOutput) && sameDrawing(this.layer.watchedProps, this.drawingOf(imageOutput))
+        return isTransient(imageOutput) ? this.drawn(imageOutput) : null
+    }
+
+    // The drawing shown, if it was drawn from what would be drawn now.
+    drawn(imageOutput) {
+        return this.layer && sameDrawing(this.layer.watchedProps, this.drawingOf(imageOutput))
             ? this.layer
             : null
     }

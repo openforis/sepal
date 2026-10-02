@@ -20,6 +20,8 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {
         gee: {
             assetMetadata$: (...args) => assetMetadata$(...args),
+            // The band evidence read beside the metadata; what it establishes is judged elsewhere.
+            bands$: () => of([]),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
         },
         recipe: {load$: (...args) => loadRecipe$(...args)}
