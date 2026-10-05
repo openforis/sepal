@@ -65,13 +65,15 @@ class _SelectRecipe extends React.Component {
             : <Panel.Buttons.Add keybinding='Enter' onClick={this.add} disabled={!recipe}/>
     }
 
+    // A saved source can reference a recipe in any project, so editing keeps showing it while only one is offered.
     renderContent() {
-        const {inputs: {recipe}} = this.props
+        const {inputs: {recipe}, activatable: {source}} = this.props
         return (
             <RecipeInput
                 input={recipe}
                 filter={isImageSource}
                 allowOwnRecipe
+                keepSelection={!!source}
                 autoFocus
                 onLoading={() => this.setState({recipe: null})}
                 onRecipeLoaded={this.onRecipeLoaded}
