@@ -102,6 +102,16 @@ assert_json "without caching, a conda app still gets the Lustre PROJ/GDAL paths"
     "d['env']['PROJ_DATA'] == '$venv_path/share/proj' and d['env']['GDAL_DATA'] == '$venv_path/share/gdal'"
 teardown
 
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; touch "$app_path/sepal_environment.yml"; sync_launcher
+cache_venv=true; create_kernel_json
+assert_json "with caching, argv runs the launcher with the app name" \
+    "d['argv'] == ['/bin/bash', '/usr/local/share/jupyter/kernels/sepal-app-kernel', 'testapp', '-f', '{connection_file}']"
+# The launcher resolves the prefix at run time; a generated PROJ/GDAL path would pin it to Lustre.
+assert_json "with caching, env carries no Lustre-pinned PROJ/GDAL paths" \
+    "d['env'] == {'PYTHONNOUSERSITE': '1'}"
+teardown
+
 # I7: a persistently failing pack must not re-read and re-compress a multi-GB tree every pass.
 # monitorApps walks apps serially, so a stuck repack stalls every other app too.
 setup; cache_venv=true
@@ -119,6 +129,15 @@ chmod 644 "$current_venv_path/bin/blob"; sleep 1; touch "$current_venv_path/.ins
 third=$(pack_venv 2>&1)
 if [[ $third == *"Packing venv"* && -f $kernel_path/venv.tar.zst ]]; then ok "a rebuilt venv clears the back-off"
 else bad "a rebuilt venv clears the back-off" "$third"; fi
+teardown
+
+# I5: if the launcher is not installed, kernel.json must not name it. That is the spec's own
+# "kernel fails to start / every flagged app" row, and it was the only unguarded one.
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; rm -f "$LAUNCHER_SRC"; sync_launcher >/dev/null 2>&1
+cache_venv=true; create_kernel_json >/dev/null 2>&1
+assert_json "a missing launcher leaves argv on the venv python" \
+    "d['argv'][0] == '$venv_path/bin/python3'"
 teardown
 
 setup; rm -f "$LAUNCHER_SRC"
