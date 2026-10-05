@@ -67,5 +67,56 @@ if [[ -z $(find "$current_kernels" -name 'sepal-app-kernel.tmp.*') ]]; then
     ok "no staging file is left behind"
 else bad "no staging file is left behind" "found a .tmp.* file"; fi; teardown
 
+# --- create_kernel_json ------------------------------------------------------------------
+# Asserts on the parsed document, not on text, so formatting changes do not break the tests.
+assert_json() {   # assert_json <name> <python expression over d>
+    if python3 -c "
+import json, sys
+d = json.load(open('$kernel_path/kernel.json'))
+sys.exit(0 if ($2) else 1)"; then ok "$1"
+    else bad "$1" "$(tr -d '\n' < "$kernel_path/kernel.json")"; fi
+}
+
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"
+cache_venv=false; create_kernel_json
+assert_json "without caching, argv runs the venv python directly" \
+    "d['argv'][0] == '$venv_path/bin/python3' and d['argv'][1] == '-m'"
+assert_json "without caching and without a conda env, env is only PYTHONNOUSERSITE" \
+    "d['env'] == {'PYTHONNOUSERSITE': '1'}"
+teardown
+
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; touch "$app_path/sepal_environment.yml"
+cache_venv=false; create_kernel_json
+assert_json "without caching, a conda app still gets the Lustre PROJ/GDAL paths" \
+    "d['env']['PROJ_DATA'] == '$venv_path/share/proj' and d['env']['GDAL_DATA'] == '$venv_path/share/gdal'"
+teardown
+
+# I7: a persistently failing pack must not re-read and re-compress a multi-GB tree every pass.
+# monitorApps walks apps serially, so a stuck repack stalls every other app too.
+setup; cache_venv=true
+chmod 000 "$current_venv_path/bin/blob"
+pack_venv >/dev/null 2>&1
+second=$(pack_venv 2>&1)
+chmod 644 "$current_venv_path/bin/blob"
+if [[ $second != *"Packing venv"* ]]; then ok "a failed pack backs off instead of retrying every pass"
+else bad "a failed pack backs off instead of retrying every pass" "retried: $second"; fi
+teardown
+
+setup; cache_venv=true
+chmod 000 "$current_venv_path/bin/blob"; pack_venv >/dev/null 2>&1
+chmod 644 "$current_venv_path/bin/blob"; sleep 1; touch "$current_venv_path/.installed"
+third=$(pack_venv 2>&1)
+if [[ $third == *"Packing venv"* && -f $kernel_path/venv.tar.zst ]]; then ok "a rebuilt venv clears the back-off"
+else bad "a rebuilt venv clears the back-off" "$third"; fi
+teardown
+
+setup; rm -f "$LAUNCHER_SRC"
+msg=$(sync_launcher 2>&1)
+if [[ $msg == *launcher* ]]; then ok "a failed launcher install is logged"
+else bad "a failed launcher install is logged" "silent: '$msg'"; fi
+teardown
+
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

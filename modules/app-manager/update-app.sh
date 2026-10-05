@@ -104,25 +104,36 @@ function sync_launcher {
     cmp -s "$src" "$dst" && return 0
     # install writes in place and bash reads scripts incrementally, so replacing the live
     # launcher directly can hand a concurrent kernel start a half-written file.
-    install -m 0755 "$src" "$dst.tmp.$$" && mv -f "$dst.tmp.$$" "$dst"
+    if install -m 0755 "$src" "$dst.tmp.$$" && mv -f "$dst.tmp.$$" "$dst"; then
+        echo "Installed kernel launcher: $dst"
+    else
+        # Silence here would be dangerous: create_kernel_json would still name the launcher.
+        echo "Failed to install kernel launcher from $src"
+        rm -f "$dst.tmp.$$"
+    fi
     return 0
 }
 
 function pack_venv {
     local out="$kernel_path/venv.tar.zst"
-    if [[ "$cache_venv" != true ]]; then rm -f "$out"; return 0; fi
+    if [[ "$cache_venv" != true ]]; then rm -f "$out" "$out.failed"; return 0; fi
     if [[ -f "$out" && "$out" -nt "$current_venv_path/.installed" ]]; then return 0; fi
+    # A failed pack deletes the archive, so without a marker the next pass re-reads and
+    # re-compresses the whole tree. monitorApps walks apps serially, so that would stall every
+    # other app for as long as the cause persists. Back off until the venv itself changes.
+    if [[ -f "$out.failed" && "$out.failed" -nt "$current_venv_path/.installed" ]]; then return 0; fi
     echo "Packing venv: $out"
     # pipefail in a subshell: without it a failing tar still lets zstd exit 0, publishing an
     # archive that extracts cleanly but holds a partial environment.
     if ( set -o pipefail
          tar -C "$kernel_path" -cf - venv | zstd -q -3 -T0 -o "$out.tmp" ); then
-        mv -f "$out.tmp" "$out"
+        mv -f "$out.tmp" "$out" && rm -f "$out.failed"
     else
         # Never leave the previous archive published against a rebuilt venv: it would silently
         # run old dependencies, which is worse than falling back to Lustre.
-        echo "Packing failed; removing any stale archive"
+        echo "Packing failed; dropping any stale archive and backing off until the venv changes"
         rm -f "$out.tmp" "$out"
+        touch "$out.failed"
     fi
     return 0
 }

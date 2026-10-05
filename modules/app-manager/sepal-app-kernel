@@ -24,7 +24,11 @@ case $app in */*|*..*) cacheable=no ;; esac
 if [[ $cacheable == yes && -f $tarball && -f $lustre/.installed && $tarball -nt $lustre/.installed ]]
 then
     cache="$root/$app/$(stat -c %Y "$tarball")"
-    if mkdir -p "$root/$app" 2>/dev/null; then
+    if ! command -v zstd >/dev/null 2>&1; then
+        # Not declared in the sandbox image, only present transitively. A silent fall-back here
+        # would look exactly like the feature being disabled.
+        echo "sepal-app-kernel: zstd not found, $app will run from $lustre" >&2
+    elif mkdir -p "$root/$app" 2>/dev/null; then
         # One sandbox serves one user session, so this lock arbitrates one user against
         # themselves: the same app in two tabs, or Voila and a notebook on one kernelspec.
         # The lock file sits outside the cache dir so no cleanup can remove it from a waiter.
@@ -53,12 +57,18 @@ then
         fi
         # Superseded generations are deliberately kept: a kernel still running from an older
         # copy resolves lazy imports and data files by path, so deleting one breaks a live app.
-        [[ -d $cache ]] && venv="$cache/venv"
+        [[ -d $cache && -x $cache/venv/bin/python3 ]] && venv="$cache/venv"
     fi
 fi
 
+# Last line of defence: never exec an interpreter that is not there.
+[[ -x $venv/bin/python3 ]] || venv=$lustre
+
 export PYTHONNOUSERSITE=1
-export PROJ_LIB="$venv/share/proj" PROJ_DATA="$venv/share/proj" GDAL_DATA="$venv/share/gdal"
+# Only for environments that actually carry the data, matching what create_kernel_json emits for
+# the uncached path. A pip venv has neither, and a bogus path overrides the system default.
+[[ -d $venv/share/proj ]] && export PROJ_LIB="$venv/share/proj" PROJ_DATA="$venv/share/proj"
+[[ -d $venv/share/gdal ]] && export GDAL_DATA="$venv/share/gdal"
 # libgdal has its build prefix compiled in; without this the copy finds no drivers.
 [[ -d $venv/lib/gdalplugins ]] && export GDAL_DRIVER_PATH="$venv/lib/gdalplugins"
 

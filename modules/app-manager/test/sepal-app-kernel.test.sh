@@ -5,17 +5,24 @@ set -u
 LAUNCHER=$(cd "$(dirname "$0")/.." && pwd)/sepal-app-kernel
 pass=0; fail=0
 
+stub() {   # a fake interpreter that reports its own prefix and the geo env it was given
+    printf '#!/bin/bash\n'
+    printf 'echo "PREFIX=$(cd "$(dirname "$0")/.." && pwd)"\n'
+    printf 'echo "PROJ_DATA=${PROJ_DATA:-unset}"\n'
+    printf 'echo "GDAL_DATA=${GDAL_DATA:-unset}"\n'
+}
+
 setup() {                      # setup <with-tarball: yes|no>
     WORK=$(mktemp -d)
     export SEPAL_KERNELS_DIR="$WORK/kernels" SEPAL_CACHE_ROOT="$WORK/tmp"
     local v="$SEPAL_KERNELS_DIR/venv-testapp/venv"
     mkdir -p "$v/bin" "$SEPAL_CACHE_ROOT"
-    printf '#!/bin/bash\necho "PREFIX=$(cd "$(dirname "$0")/.." && pwd)"\n' > "$v/bin/python3"
+    stub > "$v/bin/python3"
     chmod +x "$v/bin/python3"
     touch "$v/.installed"
     if [[ $1 == yes ]]; then
         local s="$WORK/src"; mkdir -p "$s/venv/bin"
-        printf '#!/bin/bash\necho "PREFIX=$(cd "$(dirname "$0")/.." && pwd)"\n' > "$s/venv/bin/python3"
+        stub > "$s/venv/bin/python3"
         chmod +x "$s/venv/bin/python3"
         tar -C "$s" -cf - venv | zstd -q -3 -o "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"
         touch "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"   # newer than .installed
@@ -51,9 +58,12 @@ check "an archive with a corrupt tail falls back" lustre; teardown
 setup yes
 # Give the traversal name a real archive, so the launcher would act on it if unguarded.
 # Its cache would land at $SEPAL_CACHE_ROOT/../escape, i.e. $WORK/escape — outside the root.
-mkdir -p "$SEPAL_KERNELS_DIR/venv-../escape"
+mkdir -p "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin"
 cp "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst" "$SEPAL_KERNELS_DIR/venv-../escape/venv.tar.zst"
-touch "$SEPAL_KERNELS_DIR/venv-../escape/venv" 2>/dev/null
+stub > "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin/python3"
+chmod +x "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin/python3"
+touch "$SEPAL_KERNELS_DIR/venv-../escape/venv/.installed"
+touch "$SEPAL_KERNELS_DIR/venv-../escape/venv.tar.zst"
 bash "$LAUNCHER" ../escape >/dev/null 2>&1
 if [[ ! -e $WORK/escape ]]; then echo "ok   - a name with .. does not escape the cache root"; pass=$((pass+1))
 else echo "FAIL - a name with .. created $WORK/escape"; fail=$((fail+1)); fi
@@ -100,6 +110,54 @@ sleep 1; touch "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"
 bash "$LAUNCHER" testapp >/dev/null 2>&1
 if [[ -d $old ]]; then echo "ok   - the previous generation survives"; pass=$((pass+1))
 else echo "FAIL - the previous generation was deleted"; fail=$((fail+1)); fi
+teardown
+
+# I2: a cache generation whose interpreter has gone (a tmp reaper, a half-finished delete) must
+# not be adopted — exec would die 127 with Lustre sitting right there.
+setup yes
+bash "$LAUNCHER" testapp >/dev/null 2>&1
+rm -f "$SEPAL_CACHE_ROOT"/testapp/*/venv/bin/python3
+check "a cache with no interpreter falls back" lustre
+teardown
+
+# I4: pin the lock itself. Hold it from outside and assert the launcher waited for it, rather
+# than racing two launchers and hoping for a losing interleaving.
+setup yes
+( flock -x 9; sleep 2 ) 9> "$SEPAL_CACHE_ROOT/.testapp.lock" &
+holder=$!
+sleep 0.3
+t0=$EPOCHREALTIME; bash "$LAUNCHER" testapp >/dev/null 2>&1; t1=$EPOCHREALTIME
+wait $holder
+waited=$(awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.0f", b-a}')
+if (( waited >= 1 )); then echo "ok   - the launcher waits on the lock"; pass=$((pass+1))
+else echo "FAIL - the launcher did not wait on the lock (${waited}s)"; fail=$((fail+1)); fi
+teardown
+
+# I6: create_kernel_json only ever set PROJ/GDAL for conda apps. A pip venv has no share/proj,
+# so exporting a path into it overrides the system defaults the app relied on.
+setup no
+got=$(bash "$LAUNCHER" testapp 2>/dev/null | sed -n 's/^PROJ_DATA=//p')
+if [[ $got == unset ]]; then echo "ok   - no PROJ_DATA is exported for a venv without share/proj"; pass=$((pass+1))
+else echo "FAIL - exported PROJ_DATA=$got for a venv with no share/proj"; fail=$((fail+1)); fi
+teardown
+
+setup no; mkdir -p "$SEPAL_KERNELS_DIR/venv-testapp/venv/share/proj"
+got=$(bash "$LAUNCHER" testapp 2>/dev/null | sed -n 's/^PROJ_DATA=//p')
+if [[ $got == "$SEPAL_KERNELS_DIR/venv-testapp/venv/share/proj" ]]; then
+    echo "ok   - PROJ_DATA is exported when share/proj exists"; pass=$((pass+1))
+else echo "FAIL - PROJ_DATA was $got"; fail=$((fail+1)); fi
+teardown
+
+# C1: zstd is not declared in any sandbox Dockerfile. It is present today (verified on a live
+# test sandbox), but if it ever goes the feature must say so rather than silently do nothing.
+setup yes
+mkdir -p "$WORK/nozstd"
+for t in bash tar stat df flock timeout mkdir rm mv find awk sed dirname cat chmod; do
+    ln -sf "$(command -v $t)" "$WORK/nozstd/$t" 2>/dev/null
+done
+err=$(PATH="$WORK/nozstd" bash "$LAUNCHER" testapp 2>&1 >/dev/null)
+if [[ $err == *"zstd"* ]]; then echo "ok   - a missing zstd is reported, not silent"; pass=$((pass+1))
+else echo "FAIL - no mention of zstd when it is absent: $err"; fail=$((fail+1)); fi
 teardown
 
 echo "$pass passed, $fail failed"
