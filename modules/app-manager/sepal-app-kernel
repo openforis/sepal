@@ -15,19 +15,46 @@ lustre="$kernels/venv-$app/venv"
 tarball="$kernels/venv-$app/venv.tar.zst"
 venv=$lustre
 
-if [[ -f $tarball ]]; then
+# The catalog is external input: a name with a path separator would escape the cache directory.
+cacheable=yes
+case $app in */*|*..*) cacheable=no ;; esac
+
+# Require an archive at least as new as the live environment. An older archive holds superseded
+# dependencies, and a missing .installed means the environment is still being built.
+if [[ $cacheable == yes && -f $tarball && -f $lustre/.installed && $tarball -nt $lustre/.installed ]]
+then
     cache="$root/$app/$(stat -c %Y "$tarball")"
     if mkdir -p "$root/$app" 2>/dev/null; then
-        rm -rf "$cache.tmp"
-        if mkdir -p "$cache.tmp" \
-           && zstd -q -dc -T0 "$tarball" | tar -C "$cache.tmp" -xf - \
-           && [[ -x $cache.tmp/venv/bin/python3 ]]; then
-            mv -T "$cache.tmp" "$cache"
-        else
-            rm -rf "$cache.tmp"
+        # One sandbox serves one user session, so this lock arbitrates one user against
+        # themselves: the same app in two tabs, or Voila and a notebook on one kernelspec.
+        # The lock file sits outside the cache dir so no cleanup can remove it from a waiter.
+        exec 9> "$root/.$app.lock"
+        if flock -w 300 9; then
+            if [[ ! -d $cache ]]; then
+                # Checked under the lock so two starts cannot both pass it. Unpacked is ~3.5x
+                # the archive; the margin keeps the user's own scratch intact.
+                need=$(( $(stat -c %s "$tarball") / 1048576 * 4 + 2048 ))
+                free=$(df -Pm "$root" | awk 'NR==2{print $4}')
+                if (( free >= need )); then
+                    rm -rf "$cache.tmp"
+                    # pipefail: without it a corrupt tail lets zstd fail while tar exits 0.
+                    if mkdir -p "$cache.tmp" \
+                       && timeout 600 bash -c 'set -o pipefail
+                            zstd -q -dc -T0 "$1" | tar -C "$2" -xf -' _ "$tarball" "$cache.tmp" \
+                       && [[ -x $cache.tmp/venv/bin/python3 ]]; then
+                        # -T replaces the target; a plain mv would nest it inside.
+                        mv -T "$cache.tmp" "$cache"
+                    else
+                        rm -rf "$cache.tmp"
+                    fi
+                fi
+            fi
+            exec 9>&-
         fi
+        # Superseded generations are deliberately kept: a kernel still running from an older
+        # copy resolves lazy imports and data files by path, so deleting one breaks a live app.
+        [[ -d $cache ]] && venv="$cache/venv"
     fi
-    [[ -d $cache ]] && venv="$cache/venv"
 fi
 
 export PYTHONNOUSERSITE=1
