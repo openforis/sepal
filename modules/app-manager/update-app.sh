@@ -10,6 +10,8 @@ branch=$4
 cache_venv=${5:-false}
 current_kernels=/usr/local/share/jupyter/current-kernels
 work_kernels=/usr/local/share/jupyter/kernels
+# What the sandbox calls current_kernels: worker mounts it at this path (workerTypes.js).
+current_kernels_in_sandbox=/usr/local/share/jupyter/kernels
 app_name=$(basename $app_path)
 kernel_path="$current_kernels/venv-$app_name"
 venv_path="$work_kernels/venv-$app_name/venv"
@@ -56,7 +58,31 @@ function create_kernel_json {
     local display_name=$(json_escape " (venv) $app_label")
     local proj_data=$(json_escape "$venv_path/share/proj")
     local gdal_data=$(json_escape "$venv_path/share/gdal")
+    local launcher=$(json_escape "$current_kernels_in_sandbox/sepal-app-kernel")
+    local app=$(json_escape "$app_name")
     {
+        # Gated on the launcher actually being installed: naming a launcher that is not there
+        # is the spec's "kernel fails to start, every flagged app" row.
+        if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
+            # The launcher picks the prefix at run time, so no PROJ/GDAL path may be baked in
+            # here: a generated one would pin the kernel to Lustre even when a copy is in use.
+            cat <<EOF
+{
+  "argv": [
+    "/bin/bash",
+    "$launcher",
+    "$app",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "$display_name",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+EOF
+        else
         cat <<EOF
 {
   "argv": [
@@ -88,6 +114,7 @@ EOF
         cat <<EOF
 }
 EOF
+        fi
     } > "$kernel_path/kernel.json.tmp"
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
