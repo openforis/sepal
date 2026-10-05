@@ -7,6 +7,7 @@ app_path=$1
 app_label=$2
 repository=$3
 branch=$4
+cache_venv=${5:-false}
 current_kernels=/usr/local/share/jupyter/current-kernels
 work_kernels=/usr/local/share/jupyter/kernels
 app_name=$(basename $app_path)
@@ -87,11 +88,58 @@ EOF
         cat <<EOF
 }
 EOF
-    } > "$kernel_path/kernel.json"
+    } > "$kernel_path/kernel.json.tmp"
+    if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
+        rm -f "$kernel_path/kernel.json.tmp"
+    else
+        mv -f "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"
+    fi
+    return 0
+}
+
+function sync_launcher {
+    # Resolved per call, not at load time, so the tests can point at a fixture.
+    local src=${LAUNCHER_SRC:-/etc/sepal/app-manager/sepal-app-kernel}
+    local dst="$current_kernels/sepal-app-kernel"
+    cmp -s "$src" "$dst" && return 0
+    # install writes in place and bash reads scripts incrementally, so replacing the live
+    # launcher directly can hand a concurrent kernel start a half-written file.
+    install -m 0755 "$src" "$dst.tmp.$$" && mv -f "$dst.tmp.$$" "$dst"
+    return 0
+}
+
+function pack_venv {
+    local out="$kernel_path/venv.tar.zst"
+    if [[ "$cache_venv" != true ]]; then rm -f "$out"; return 0; fi
+    if [[ -f "$out" && "$out" -nt "$current_venv_path/.installed" ]]; then return 0; fi
+    echo "Packing venv: $out"
+    # pipefail in a subshell: without it a failing tar still lets zstd exit 0, publishing an
+    # archive that extracts cleanly but holds a partial environment.
+    if ( set -o pipefail
+         tar -C "$kernel_path" -cf - venv | zstd -q -3 -T0 -o "$out.tmp" ); then
+        mv -f "$out.tmp" "$out"
+    else
+        # Never leave the previous archive published against a rebuilt venv: it would silently
+        # run old dependencies, which is worse than falling back to Lustre.
+        echo "Packing failed; removing any stale archive"
+        rm -f "$out.tmp" "$out"
+    fi
+    return 0
+}
+
+# Idempotent, and cheap when there is nothing to do: app-manager calls update-app for every app
+# on a 5 s loop, while update_venv only rebuilds when requirements change. Reconciling here is
+# what lets an app that never rebuilds still get its archive.
+function reconcile_artifacts {
+    sync_launcher
+    pack_venv
+    create_kernel_json
+    return 0
 }
 
 function update_kernel {
     update_venv
+    reconcile_artifacts >> "$venv_log_file" 2>&1
 }
 
 function update_venv {
@@ -136,11 +184,13 @@ function update_venv {
         echo "Removing old venv" >> "$venv_log_file"
         rm -rf "$work_kernels"/venv-to-remove >> "$venv_log_file"
         touch $current_venv_path/.installed >> "$venv_log_file"
-        create_kernel_json >> "$venv_log_file"
         echo "Completed venv update: $current_venv_path" >> "$venv_log_file"
     else
         echo "Requirements not modified since last build: $app_path"
     fi
 }
 
-update_app
+# Guarded so the reconciliation functions can be sourced by the tests.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    update_app
+fi
