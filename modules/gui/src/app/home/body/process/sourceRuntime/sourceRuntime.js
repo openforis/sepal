@@ -1,22 +1,25 @@
 import _ from 'lodash'
-import {defer, finalize, NEVER, Observable, Subscriber, Subscription, tap} from 'rxjs'
+import {defer, finalize, map, NEVER, Observable, Subscriber, Subscription, tap} from 'rxjs'
 
 import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
 import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
+import api from '~/apiRegistry'
 
 import {AGREED} from '../draftAgreement'
 import {createRecipeImageOutputObserver, observeImageBands$} from '../recipe/imageOutputObserver'
 import {buildMapDependencyGraph} from '../recipe/mapDependencyGraph'
 import {recipeContent} from '../recipe/recipeContent'
 import {compatibleBasis, DEPENDENCIES, DESCRIBE, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
+import {initializeRecipe} from '../recipeCache'
+import {getRecipeType} from '../recipeTypeRegistry'
 import {DEFAULT_ASSET_POLICY, isDefinitiveFailure} from './assetEvidence'
 import {assetsFailedBy} from './assetFailure'
 import {AssetInterest} from './assetInterest'
 import {AssetRefresh} from './assetRefresh'
-import {EvidenceOwners} from './evidenceOwners'
+import {EvidenceRegistry} from './evidenceRegistry'
 import {DEFAULT_LISTING_POLICY, ListingRefresh} from './listingRefresh'
 import {DEFAULT_OBSERVATION_RETENTION, ObservationRegistry} from './observationRegistry'
 import {DEFAULT_OUTPUT_RETENTION, OutputRegistry} from './outputRegistry'
@@ -82,9 +85,11 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // unchanged tokens notwithstanding, and its preview is drawn again. `refreshAsset` does the same for one asset and
 // everything reading it. A refresh already running for the same question or asset is joined.
 //
-// The evidence owners mounted for recipes (sourceEvidenceSync.jsx) register with it, so a synchronous read can judge
-// their published evidence against the basis it was read on (`evidenceOwnerOf`, evidenceOwners.js). That is access to
-// the existing owner only: no loading, and nothing retained beyond it.
+// It keeps the evidence a recipe's consumers need about its source current while they watch it (evidenceRegistry.js),
+// one observation shared between them: a watched output acquires what the type's declared requirements hold that
+// product to, `watchEvidence$` what a chart's operation needs or what an editor presents, and a synchronous read judges
+// the published evidence against the basis it was read on (`evidenceOwnerOf`). Without `evidenceSession` nothing is
+// observed.
 
 const PENDING = 'PENDING'
 
@@ -107,6 +112,9 @@ export const createSourceRuntime = ({
     loadAssetVersions$,
     wakeups$,
     visible,
+    evidenceSession = () => null,
+    recipeCacheClaimant = privateClaimant,
+    writeRecipe = () => false,
     listingPolicy = DEFAULT_LISTING_POLICY,
     assetPolicy = DEFAULT_ASSET_POLICY,
     clock
@@ -343,7 +351,16 @@ export const createSourceRuntime = ({
     // publishes nothing.
     let closed = false
     const refreshing = new Map()
-    const evidenceOwners = new EvidenceOwners()
+    const evidence = new EvidenceRegistry({
+        session: evidenceSession,
+        sessionChanges$,
+        claimRecords: recipeCacheClaimant,
+        claimAssets: ids => assets.claim(ids),
+        write: writeRecipe,
+        observationOf: recipe => getRecipeType(recipe.type)?.sourceObservation || null,
+        requirementsOf: recipe => getRecipeType(recipe.type)?.sourceRequirements || [],
+        ...(clock && {clock})
+    })
     const joined = (key, refresh) => {
         if (!refreshing.has(key)) {
             refreshing.set(key, refresh().finally(() => refreshing.delete(key)))
@@ -379,11 +396,16 @@ export const createSourceRuntime = ({
         watchOutput$: question => defer(() => {
             refreshRecipeListing()
             const reads = interest.watch(question)
+            const sourceEvidence = evidence.watch$({recipeId: question.recipeId, operation: question.product?.name}).subscribe()
             return outputs.watchOutput$(question).pipe(
                 tap(() => reads.update()),
-                finalize(() => reads.release())
+                finalize(() => {
+                    sourceEvidence.unsubscribe()
+                    reads.release()
+                })
             )
         }),
+        watchEvidence$: watch => evidence.watch$(watch),
         heldFor: key => outputs.heldFor(key),
         // A retry reaches a listing that failed as well: authority waits on it as much as on the answer.
         retryOutput: question => {
@@ -402,8 +424,7 @@ export const createSourceRuntime = ({
             assets.refresh([id], {force: true}).then(() => closed || refreshSources({assets: [id]}))
         ),
         claimAssets: ids => assets.claim(ids),
-        registerEvidenceOwner: recipeId => evidenceOwners.register(recipeId),
-        evidenceOwnerOf: recipeId => evidenceOwners.ownerOf(recipeId),
+        evidenceOwnerOf: recipeId => evidence.ownerOf(recipeId),
         invalidateAssets: ids => assets.invalidate(ids),
         // A failure of something drawn or read from these assets, which may be about any of them (assetFailure.js).
         reportFailure: ({error, assets: read}) => reportAssetFailure(assetsFailedBy(error, read)),
@@ -414,12 +435,19 @@ export const createSourceRuntime = ({
             interest.close()
             assets.close()
             observations.clear()
-            evidenceOwners.close()
+            evidence.close()
         }
     }
 }
 
 const NO_SESSION = Object.freeze({catalogue: {}, credentials: null, closed: false})
+
+// Records read for evidence without a session cache to claim them in.
+const privateClaimant = () => ({
+    load$: id => api.recipe.load$(id).pipe(map(initializeRecipe)),
+    reload$: id => api.recipe.load$(id).pipe(map(initializeRecipe)),
+    release: () => {}
+})
 
 const NO_READS = Object.freeze({read: () => {}, unread: () => {}, assets: () => {}})
 

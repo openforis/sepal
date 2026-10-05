@@ -3,6 +3,7 @@ import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {withLayerSourceStatus} from '~/app/home/map/layerSourceStatus'
 import {compose, composeHoC} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
@@ -37,11 +38,7 @@ class _SelectedSourceStatus extends React.Component {
         }
         return (
             <Layout spacing='compact'>
-                <Message
-                    type='info'
-                    icon={status.state === CHECKING_SOURCE ? 'spinner' : 'triangle-exclamation'}
-                    text={status.message}
-                />
+                <SourceStatusMessage status={status}/>
                 {status.details.length ? this.renderDetails(status.details) : null}
                 {status.refresh
                     ? <Button icon='rotate' label={msg('process.source.status.refresh')} onClick={this.refresh}/>
@@ -91,6 +88,22 @@ SelectedSourceStatus.propTypes = {
     id: PropTypes.string,
     type: PropTypes.string
 }
+
+// What a layer form shows of the requirement holding what its layer would draw (layerSourceStatus.jsx), as the
+// section that source is selected in would.
+export const LayerSourceRequirement = withLayerSourceStatus()(({layerSourceStatus}) =>
+    layerSourceStatus?.heldSource
+        ? <SourceStatusMessage status={layerSourceStatus.heldSource}/>
+        : null
+)
+
+// Checking is information; anything established about the source is a warning.
+const SourceStatusMessage = ({status: {state, message}}) =>
+    <Message
+        type={state === CHECKING_SOURCE ? 'info' : 'warning'}
+        icon={state === CHECKING_SOURCE ? 'spinner' : 'triangle-exclamation'}
+        text={message}
+    />
 
 // `sourceProblems`: {[sectionId]: message} for the sections whose selected source is unavailable or unsuitable, for a
 // toolbar to mark them. Needs the recipe's id, as a recipe-connected component has it.

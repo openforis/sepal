@@ -453,7 +453,7 @@ decides when the answer can be trusted and what it does to the UI.
   as every segment consumer publishes it).
 - **Trust** (`sourceRequirements.js`). Shared for every declaration: the selection by role, missing selections,
   `discoverProvider` and its generic diagnoses (not a producer, unfilled role, cyclic), and whether the evidence owner's
-  answer counts - its live basis from the source runtime ([evidence owners](gui-source-runtime.md#evidence-owners))
+  answer counts - its live basis from the source runtime ([evidence watches](gui-source-runtime.md#evidence-watches))
   passing the owner's own rule for that selection, the evidence published by the observation that basis belongs to,
   and the asset that establishes the capability authorized by its asset evidence; a mask or AOI failing says nothing
   about it. The owner observes one source; a selection it does not observe is unchecked. A chain that cannot lead to the
@@ -462,14 +462,18 @@ decides when the answer can be trusted and what it does to the UI.
   `NEEDS_EVIDENCE`) apart from the state of its evidence (`UNCHECKED`, `CHECKING`, `CHECKED`, `UNAVAILABLE`,
   `EXPIRED`).
 - **UI and authority.** Shared presentation (`selectedSourceStatus.js`, `selectedSource.jsx`) marks the declared
-  section and explains the problem under the retained selection - matched by type and id - with Refresh. Retrieve
+  section and explains the problem under the retained selection - matched by type and id - with Refresh: checking as
+  information, a problem established about the source as a warning. A layer whose product the requirement holds says
+  so in its area menu, wherever it is shown, naming the recipe and section with the section's diagnosis; a product the
+  requirement does not hold says nothing of it, and a selection not made holds what needs one. Retrieve
   decides from the same read at submission: it waits while the source is being checked and otherwise blocks, naming
   the section; dependencies already known to be unsound refuse it for that instead. A new preview or segment-chart
   request is held by the same read (`requestGate`) while the requirement is not known to be met, keeping what is
-  already drawn; a source found missing or unsuitable also withdraws the drawing. A recipe whose editor is not open -
-  a layer in another recipe's map - is still refused where its held records refuse the source, but has no evidence
-  owner: a source only evidence could judge is not checked there, and its requests are made as before. Absence from
-  the listing is never called deletion.
+  already drawn; a source found missing or unsuitable also withdraws the drawing. The consumer making the request
+  watches what its operation needs wherever the recipe is shown - its editor, or a layer in another recipe's map: the
+  whole evidence for an operation in `operations`, and for one only in `providerOperations` the records of a provider
+  chain the session does not hold, which hold the request while they are read and refuse it as unavailable if they
+  cannot be. Absence from the listing is never called deletion.
 
 CCDC Slice, BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves,
 remain separate packets.

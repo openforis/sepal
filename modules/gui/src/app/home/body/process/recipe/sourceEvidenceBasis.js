@@ -1,15 +1,17 @@
 import _ from 'lodash'
 
+import {ASSET} from '#sepal/recipe/source/reference'
 import {selectFrom} from '~/stateUtils'
 
-import {assetEvidenceOfState} from '../sourceRuntime/assetEvidence'
-import {declaredSelections} from './sourceEvidence'
+import {isDraft} from '../draftAgreement'
+import {assetEvidenceOfState, DEFAULT_ASSET_POLICY} from '../sourceRuntime/assetEvidence'
+import {declaredSelections, sourceKeyOf} from './sourceEvidence'
 
 // When evidence about a source is still about the source as the session holds it now.
 //
-// Evidence is read from particular records, assets and credentials: its basis. The evidence lifecycle
-// (sourceEvidenceSync.jsx) records that basis, and decides by this rule whether to read again and whether an answer
-// may still be published.
+// Evidence is read from particular records, assets and credentials: its basis, built here from what an operation read
+// and the session it started in. The evidence lifecycle (evidenceRegistry.js) records it, and decides by this rule
+// whether to read again and whether an answer may still be published.
 //
 // An asset is judged by what the source runtime knows of it (assetEvidence.js): its token and how often it was
 // explicitly refreshed. Evidence read from a source without a token is read again once it is too old (`expiresAt`), and
@@ -43,6 +45,56 @@ export const earthEngineGeneration = state => {
     return GENERATIONS.get(credentials)
 }
 
+// Before anything has been resolved, all that is known is the source the recipe names.
+export const startingBasis = ({reference, recipe, session}) => ({
+    ...operationState({reference, recipe, session}),
+    dependencies: [dependency(reference.type === ASSET ? {assetId: reference.id} : {id: reference.id}, session)]
+})
+
+// What an operation actually read: every record its closure resolved and, where `assets`, the asset it was rooted at
+// where the selection is one and every asset the resolved edges named. `used` is the record that went into the answer
+// and `seeded` the one the session held when the operation STARTED - both, because a record the operation refreshed is
+// briefly one and then the other, and neither is a change.
+export const resolvedBasis = ({reference, recipe, graph, recipesById, session, assets}) => {
+    const assetIds = assets
+        ? new Set([
+            ...(reference.type === ASSET ? [reference.id] : []),
+            ...graph.edges.filter(edge => edge.reference.type === ASSET).map(edge => edge.reference.id)
+        ])
+        : new Set()
+    const unversioned = [...assetIds].some(assetId => isUnversionedAsset(session, assetId))
+    return {
+        ...operationState({reference, recipe, session}),
+        dependencies: [
+            ...graph.recipes
+                .filter(({id}) => id !== recipe.id)
+                .map(({id}) => dependency({id, used: recipesById.get(id)}, session)),
+            ...[...assetIds].map(assetId => dependency({assetId}, session))
+        ],
+        ...(unversioned && {expiresAt: session.now + DEFAULT_ASSET_POLICY.unversionedMaxAgeMs})
+    }
+}
+
+// What the session holds, minus anything the catalogue has moved past: leaving a stale record in a closure's seed means
+// it never asks for it, and an observation reads the version it was already reading. An open recipe is never dropped -
+// that entry is a draft, not a copy of what is persisted.
+export const currentRecords = session =>
+    new Map(Object.entries(session.loadedRecipes).filter(([id]) => !isBehind(session, id)))
+
+export const isBehind = (session, id) => {
+    // A draft - open, or closed with its saves unsettled - is not a copy of what is persisted. The cache refuses to
+    // overwrite one; not asking for it in the first place saves a read that could only be discarded.
+    if (isDraft({open: session.openRecipeIds.includes(id), saveState: session.saves[id]})) {
+        return false
+    }
+    const record = session.loadedRecipes[id]
+    const published = publishedRevision(session, id)
+    // Strictly behind, never merely different. A record read after the catalogue listing is NEWER than the summary, and
+    // reloading it would fetch the same revision again on every update.
+    return Number.isInteger(record?.revision) && Number.isInteger(published)
+        && record.revision < published
+}
+
 // Only what was actually observed can be seen to change. A record or version that was unknown when the answer was
 // read says nothing about it now, and a record the session has released says only that.
 export const outdatedBasis = (basis, {recipe, sourceKey, session}) =>
@@ -70,6 +122,18 @@ export const publishedRevision = ({catalogue}, id) =>
 
 const GENERATIONS = new WeakMap()
 let generations = 0
+
+const operationState = ({reference, recipe, session}) => ({
+    key: sourceKeyOf(reference),
+    selections: declaredSelections(recipe),
+    earthEngineGeneration: session.earthEngineGeneration,
+    refreshed: recipeRefreshes(session, recipe.id)
+})
+
+const dependency = ({id, assetId, used}, session) =>
+    assetId
+        ? {assetId, version: assetVersion(session, assetId), refreshed: assetRefreshes(session, assetId)}
+        : {id, used, seeded: session.loadedRecipes[id], version: publishedRevision(session, id)}
 
 const dependencyChanged = ({id, assetId, used, seeded, version, refreshed}, session) => {
     if (assetId) {

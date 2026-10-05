@@ -36,6 +36,7 @@ import {
     READY,
     UNAVAILABLE
 } from './recipeOutput'
+import {heldSourceStatusOfState} from './selectedSourceStatus'
 import {requestGate} from './sourceRequirements'
 import {sourceStatus} from './sourceStatus'
 import {MATCHED, selectionState} from './visualizationMatching'
@@ -52,21 +53,23 @@ import {layerSelection, layerVisualizations} from './visualizations'
 const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}, layerConfig, sourceRuntime}) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes')
+    const sourceGate = recipe
+        ? requestGate({
+            state,
+            recipe,
+            operation: layerProduct(recipe, layerConfig)?.name,
+            evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
+            now: Date.now()
+        })
+        : null
     return {
         sourceId: id,
         recipe,
         dependencyGraph: recipe
             ? buildMapDependencyGraph({recipe, loadedRecipes})
             : null,
-        sourceGate: recipe
-            ? requestGate({
-                state,
-                recipe,
-                operation: layerProduct(recipe, layerConfig)?.name,
-                evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
-                now: Date.now()
-            })
-            : null,
+        sourceGate,
+        heldSource: heldSourceStatusOfState(state, recipe, sourceGate),
         recordStaleness: recordStalenessOfState(state),
         assetEvidence: assetEvidenceOfState(state),
         sourceRefreshes: selectFrom(state, 'process.sourceRefreshes') || NO_REFRESHES
@@ -140,8 +143,13 @@ class _RecipeImageLayer extends React.Component {
     }
 
     sourceStatus(imageOutput) {
-        const {assetEvidence} = this.props
-        return {...sourceStatus({output: imageOutput, assetEvidence}), refresh: this.refresh, refreshing: this.state.refreshing}
+        const {assetEvidence, heldSource} = this.props
+        return {
+            ...sourceStatus({output: imageOutput, assetEvidence}),
+            heldSource,
+            refresh: this.refresh,
+            refreshing: this.state.refreshing
+        }
     }
 
     componentDidMount() {

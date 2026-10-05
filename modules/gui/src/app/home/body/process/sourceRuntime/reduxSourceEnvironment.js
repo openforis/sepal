@@ -2,8 +2,9 @@ import {Observable} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 
-import {earthEngineGeneration} from '../recipe/sourceEvidenceBasis'
+import {earthEngineGeneration, evidenceSession} from '../recipe/sourceEvidenceBasis'
 import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
+import {RecipeCacheClaimant} from '../recipeCacheClaims'
 import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
 
 // The only Redux adapter in the source runtime.
@@ -192,6 +193,39 @@ export const createReduxSourceEnvironment = ({store}) => {
             store.dispatch(actionBuilder('REFRESH_CACHED_RECIPE', {recipeId: record.id})
                 .set(['process.loadedRecipes', record.id], initializeRecipe(record))
                 .build())
+            return true
+        },
+        // The session as the evidence lifecycle reads it (sourceEvidenceBasis.js), or null once the scope has ended.
+        evidenceSession: () => closed ? null : evidenceSession(store.getState()),
+        // A claimant on the session's recipe cache, sharing its reference counts with the components that hold entries
+        // (recipeCacheClaims.js). Once the scope has ended it writes and removes nothing.
+        recipeCacheClaimant: () => new RecipeCacheClaimant({
+            held: recipeId => at(store.getState(), [...CATALOGUE_PATH, recipeId]),
+            open: recipeId => (at(store.getState(), TABS_PATH) || []).some(({id}) => id === recipeId),
+            saveState: recipeId => at(store.getState(), [...SAVES_PATH, recipeId]),
+            write: recipe => closed || store.dispatch(actionBuilder('CACHE_RECIPE', recipe)
+                .set([...CATALOGUE_PATH, recipe.id], recipe)
+                .build()),
+            remove: recipeId => closed || store.dispatch(actionBuilder('REMOVE_CACHE_RECIPE', recipeId)
+                .del([...CATALOGUE_PATH, recipeId])
+                .build())
+        }),
+        // Writes [{path, value, merge?}] to a recipe the session holds, and `whenOpen` with them while it is open, in one
+        // action. A recipe the session no longer holds is not written, so nothing recreates an entry its owners released;
+        // a closed one is never configured. Returns whether it wrote.
+        writeRecipe: ({recipeId, type, writes, whenOpen = []}) => {
+            const state = store.getState()
+            if (closed || !at(state, [...CATALOGUE_PATH, recipeId])) {
+                return false
+            }
+            const open = (at(state, TABS_PATH) || []).some(({id}) => id === recipeId)
+            const assignments = [...writes, ...open ? whenOpen : []]
+            if (!assignments.length) {
+                return false
+            }
+            const action = actionBuilder(type, {recipeId}, ['process.loadedRecipes', recipeId])
+            assignments.forEach(({path, value, merge}) => merge ? action.assign(path, value) : action.set(path, value))
+            store.dispatch(action.build())
             return true
         },
         // Applies update({recipes, listingState, saves}) → {recipes?, listingState?} to the listing as it stands now.

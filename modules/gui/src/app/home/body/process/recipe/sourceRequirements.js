@@ -1,5 +1,4 @@
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
-import {selectFrom} from '~/stateUtils'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {
@@ -9,6 +8,7 @@ import {
     isDefinitiveFailure,
     WAITING as ASSET_WAITING
 } from '../sourceRuntime/assetEvidence'
+import {FAILED, PENDING} from '../sourceRuntime/evidenceRegistry'
 import {OBSERVED, selectedSourceOf, sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 
@@ -23,22 +23,23 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // pure rule over that capability's evidence, and `describe(diagnostic)` what its diagnoses mean, as {message, details}.
 // `operations` names the Earth Engine requests that need it met: an output product's name, or PIXEL_SEGMENTS for the
 // segments a pixel chart reads. `providerOperations` names those that only resolve the selection through its provider
-// chain, which are refused where that chain is and held by nothing else. A request for anything else is not held.
+// chain: they are refused where that chain is, and held only while its records are being read - nothing the requirement
+// judges of the capability's evidence is asked of them. A request for anything else is not held.
 //
 // Everything about whether evidence can be trusted is here. Each read answers its verdict (`SUPPORTED`, `UNSUPPORTED`,
 // `NEEDS_EVIDENCE`) apart from the state of the evidence that verdict needs:
 //
-//   UNCHECKED    nothing has taken up the selection as the session holds it now: no owner is mounted, the owner observes
-//                another source, or credentials, records, selections, refreshes or tokens moved past the basis its
-//                evidence was read on
+//   UNCHECKED    nothing has taken up the selection as the session holds it now: nothing watches the recipe's evidence,
+//                the observation reads another source or only its records, or credentials, records, selections,
+//                refreshes or tokens moved past the basis its evidence was read on
 //   CHECKING     the owner is reading it - its evidence is not yet the answer of the observation its live basis belongs
 //                to - or what was read awaits the authority of the asset that establishes it
 //   CHECKED      current evidence was read, or the verdict needs none
 //   UNAVAILABLE  the read failed, or the asset that establishes it is missing, unreadable or failing
 //   EXPIRED      that asset's metadata outlived its authority
 //
-// The owner is the recipe's evidence lifecycle (sourceEvidenceSync.jsx), which observes one source: its live basis comes
-// from the source runtime (`evidenceOwnerOf`, evidenceOwners.js), its accepted observation from the recipe
+// The owner is the observation the source runtime keeps the recipe's evidence current by while anything watches it
+// (`evidenceOwnerOf`, evidenceRegistry.js): its live basis from the runtime, its accepted evidence from the recipe
 // (`ui.sourceEvidence`). Evidence counts for a selection only while the live basis passes the owner's own rule
 // (sourceEvidenceBasis.js) for that selection against the session now - a basis taken for another source does not - and
 // was published by the observation that basis belongs to. Only the asset that establishes the capability (`evidenceAsset`) must be authorized (assetEvidence.js):
@@ -46,7 +47,8 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // failing says nothing about it.
 //
 // A selection whose configured chain cannot lead to the capability is refused from the held records alone, with no
-// owner; one not made at all is refused as missing.
+// owner; one not made at all is refused as missing. Where the session does not hold the chain's records, whether it can
+// lead there is known once the owner has read them (`providerChain`): checking while it reads them, unavailable if it could not.
 
 export const SUPPORTED = 'SUPPORTED'
 export const UNSUPPORTED = 'UNSUPPORTED'
@@ -74,7 +76,7 @@ export const SOURCE_UNSUITABLE = 'SOURCE_UNSUITABLE'
 // The operation of reading the segments at a pixel, as a segment chart does.
 export const PIXEL_SEGMENTS = 'PIXEL_SEGMENTS'
 
-// {declaration, selected, acquisition, verdict, assetId?, missing?} for each requirement the recipe's type declares.
+// {declaration, selected, acquisition, providerChain, verdict, assetId?, missing?} for each requirement the recipe's type declares.
 export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, now}) =>
     (getRecipeType(recipe.type)?.sourceRequirements || []).map(declaration =>
         readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})
@@ -87,30 +89,38 @@ export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf
     firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now}))
 
 // Whether a new Earth Engine request for an operation over the recipe may start now: null when it may, otherwise
-// {wait, withdraw, code, section}. While a requirement is not known to be met nothing new is requested, and what is
+// {wait, withdraw, code, section, read} - `read` the requirement's read behind it, as far as the operation is held to it. While a requirement is not known to be met nothing new is requested, and what is
 // already drawn stays - checking is no reason to change it. A source found missing or unsuitable also withdraws it.
-//
-// A recipe whose editor is not open - shown as a layer in another recipe's map - has no evidence owner, so nothing
-// would ever answer what only evidence can: that is not held, and its requests stay what they were without a
-// requirement. What the held records alone refuse - a missing selection, a chain that cannot lead to the capability -
-// is refused wherever it is shown. Whether the editor is open is the session's to say, so a layer drawn before the owner
-// mounts is held already.
-export const requestGate = ({state, recipe, operation, evidenceOwnerOf, now}) => {
-    const editing = (selectFrom(state, 'process.tabs') || []).some(({id}) => id === recipe.id)
-    return firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now})
-        .map(reason => ({...reason, withdraw: [SOURCE_MISSING, SOURCE_UNSUITABLE].includes(reason.code)}))
-        .filter(({withdraw}) => editing || withdraw))
-}
+// Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
+// so what is held is being read.
+export const requestGate = ({state, recipe, operation, evidenceOwnerOf, now}) =>
+    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now})
+        .map(reason => ({...reason, withdraw: [SOURCE_MISSING, SOURCE_UNSUITABLE].includes(reason.code)})))
 
 // An operation that needs the requirement met is answered by its whole read. One that only resolves the source through
-// its provider chain is refused only where that chain is: what the requirement judges of the segments is not its concern.
+// its provider chain is refused only where that chain is, and waits only for its records: what the requirement judges
+// of the segments is not its concern.
 const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, now}) =>
     readSourceRequirements({state, recipe, evidenceOwnerOf, now})
-        .filter(({declaration, verdict}) =>
-            declaration.operations?.includes(operation)
-            || (declaration.providerOperations?.includes(operation) && isProviderRefusal(verdict)))
-        .filter(({verdict}) => verdict.status !== SUPPORTED)
-        .map(read => ({...retrieveReason(read), section: read.declaration.section.label}))
+        .map(read => reasonFor(read, operation))
+        .filter(Boolean)
+        .map(reason => ({...reason, section: reason.declaration.section.label}))
+
+const reasonFor = (read, operation) => {
+    const {declaration, verdict, providerChain} = read
+    if (declaration.operations?.includes(operation)) {
+        return verdict.status === SUPPORTED ? null : reasonOf(read)
+    }
+    if (!declaration.providerOperations?.includes(operation)) {
+        return null
+    }
+    if (isProviderRefusal(verdict)) {
+        return reasonOf(read)
+    }
+    return providerChain === CHECKED ? null : reasonOf({...read, acquisition: providerChain, verdict: NEEDS})
+}
+
+const reasonOf = read => ({...retrieveReason(read), declaration: read.declaration, read})
 
 const firstReason = reasons => reasons.find(({wait}) => !wait) || reasons[0] || null
 
@@ -120,23 +130,26 @@ const isProviderRefusal = verdict =>
 const PROVIDER_REFUSALS = [MISSING_SOURCE, NOT_A_PRODUCER, UNFILLED_ROLE, CYCLIC_SOURCE]
 
 const readSourceRequirement = ({state, recipe, declaration, evidenceOwner, now}) => {
-    const read = (acquisition, verdict, facts) => ({declaration, selected, acquisition, verdict, ...facts})
     const selected = selectedSourceOf(recipe, declaration.role)
     if (!selected) {
-        return read(CHECKED, unsupported({code: MISSING_SOURCE}))
+        return {declaration, selected, acquisition: CHECKED, providerChain: CHECKED, verdict: unsupported({code: MISSING_SOURCE})}
     }
     const {capability} = declaration.requirement
     const session = {...evidenceSession(state), now}
     const discovery = discoverProvider(selected, new Map(Object.entries(session.loadedRecipes)), capability.capability)
     if (discovery.status !== FOUND && discovery.status !== UNRESOLVED) {
-        return read(CHECKED, unsupported(discoveryDiagnostic(discovery, selected)))
+        return {declaration, selected, acquisition: CHECKED, providerChain: CHECKED, verdict: unsupported(discoveryDiagnostic(discovery, selected))}
     }
-    const key = sourceKeyOf(selected)
-    if (!evidenceOwner || outdatedBasis(evidenceOwner.basis, {recipe, sourceKey: key, session})) {
+    const owner = evidenceOwner && !outdatedBasis(evidenceOwner.basis, {recipe, sourceKey: sourceKeyOf(selected), session})
+        ? evidenceOwner
+        : null
+    const providerChain = discovery.status === UNRESOLVED ? chainAcquisition(owner) : CHECKED
+    const read = (acquisition, verdict, facts) => ({declaration, selected, acquisition, providerChain, verdict, ...facts})
+    if (!owner?.observes) {
         return read(UNCHECKED, NEEDS)
     }
     const observed = recipe.ui?.sourceEvidence
-    if (observed?.observationId !== evidenceOwner.observationId) {
+    if (observed?.observationId !== owner.observationId) {
         return read(CHECKING, NEEDS)
     }
     const assetId = discovery.status === FOUND ? capability.evidenceAsset(discovery.provider) : null
@@ -161,6 +174,14 @@ const readSourceRequirement = ({state, recipe, declaration, evidenceOwner, now})
 }
 
 const NEEDS = Object.freeze({status: NEEDS_EVIDENCE})
+
+// Where the session does not hold the records the provider chain runs through, what the owner's reading of them says.
+const chainAcquisition = owner => {
+    if (owner?.records === PENDING) {
+        return CHECKING
+    }
+    return owner?.records === FAILED ? UNAVAILABLE : UNCHECKED
+}
 
 const discoveryDiagnostic = ({status, chain, at}, selected) => ({
     code: DISCOVERY_CODES[status] || NOT_A_PRODUCER,

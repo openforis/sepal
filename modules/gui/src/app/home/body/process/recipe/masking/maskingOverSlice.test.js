@@ -1,4 +1,4 @@
-import {of} from 'rxjs'
+import {of, Subject} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // A Masking recipe over a saved CCDC Slice. The Slice has never been opened, so it holds no runtime evidence
@@ -6,11 +6,6 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // has to be resolved as part of resolving Masking's dependencies, or Masking gets bands with no presets.
 //
 // The Slice's own resolution is the real one, reached through the registry the way production reaches it.
-
-vi.mock('~/compose', () => ({
-    compose: Component => Component,
-    composeHoC: () => Component => Component
-}))
 
 const bands$ = vi.fn()
 const assetMetadata$ = vi.fn()
@@ -34,7 +29,7 @@ vi.mock('../ccdc/ccdcRecipe', () => ({
 const registry = vi.hoisted(() => ({}))
 vi.mock('../../recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {EvidenceRegistry} = await import('../../sourceRuntime/evidenceRegistry')
 const {maskingObservation} = await import('./maskingSourceEvidence')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {resolveEvidence$} = await import('../ccdcSlice/sliceObservation')
@@ -82,37 +77,41 @@ const maskingOver = sourceId => ({
     model: {imageToMask: {type: 'RECIPE_REF', id: sourceId}}
 })
 
-// The evidence the lifecycle published, apart from its marks that it is reading again.
+// The evidence the lifecycle published, apart from its marks that it is reading again and the observation it was
+// published by.
 const published = writes => writes
     .filter(({path}) => path === 'ui.sourceEvidence')
-    .map(({value}) => value)
+    .map(({value: {observationId: _observationId, ...evidence}}) => evidence)
 
-const sync = ({recipe, loadedRecipes}) => {
+// The recipe's evidence watched as its editor watches it, over a session the test gives and replaces between updates.
+const sync = props => {
     const dispatched = []
-    const recipeActionBuilder = () => ({
-        writes: [],
-        set(path, value) {
-            this.writes.push({path, value})
-            return this
-        },
-        dispatch() {
-            dispatched.push(...this.writes)
+    const changes$ = new Subject()
+    let current = {catalogue: [], assetEvidence: {}, earthEngineGeneration: {}, ...props}
+    const load$ = id => current.loadRecipe$ ? current.loadRecipe$(id) : of(current.loadedRecipes[id])
+    const registry = new EvidenceRegistry({
+        session: () => ({
+            loadedRecipes: {...current.loadedRecipes, [current.recipe.id]: current.recipe},
+            catalogue: current.catalogue,
+            openRecipeIds: [],
+            saves: {},
+            assetEvidence: current.assetEvidence,
+            sourceRefreshes: {},
+            earthEngineGeneration: current.earthEngineGeneration
+        }),
+        sessionChanges$: changes$,
+        claimRecords: () => ({use: () => {}, load$, reload$: load$, release: () => {}}),
+        write: ({writes}) => {
+            dispatched.push(...writes)
+            return true
         }
     })
-    const component = new SourceEvidenceSync({
-        observation: maskingObservation,
-        recipe,
-        loadedRecipes,
-        catalogue: [],
-        openRecipeIds: [],
-        assetEvidence: {},
-        earthEngineGeneration: {},
-        recipeActionBuilder,
-        loadRecipe$: id => of(loadedRecipes[id]),
-        reloadRecipe$: id => of(loadedRecipes[id]),
-        stream: (_name, stream$, onNext, onError) => stream$.subscribe({next: onNext, error: onError})
-    })
-    return {component, evidence: () => published(dispatched)}
+    const watch = {start: () => registry.watch$({recipeId: current.recipe.id, observation: maskingObservation}).subscribe()}
+    const rerender = next => {
+        current = {...current, ...next}
+        changes$.next()
+    }
+    return {watch, rerender, evidence: () => published(dispatched)}
 }
 
 beforeEach(() => {
@@ -129,17 +128,17 @@ describe('masking a saved slice that has never been opened', () => {
     // The presets are the slice's, materialized against what the slice produces - which needs the CCDC
     // recipe behind it, resolved as part of this operation rather than by opening the slice.
     it('takes the presets the slice offers, resolved through its own source', () => {
-        const {component, evidence} = open()
+        const {watch, evidence} = open()
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].visualizations.map(({id}) => id)).toEqual(['t-ndvi', 't-harmonic'])
     })
 
     it('reads nothing from Earth Engine to describe a recipe-backed source', () => {
-        const {component} = open()
+        const {watch} = open()
 
-        component.componentDidMount()
+        watch.start()
 
         expect(bands$).not.toHaveBeenCalled()
         expect(assetMetadata$).not.toHaveBeenCalled()
@@ -148,12 +147,12 @@ describe('masking a saved slice that has never been opened', () => {
 
 describe('masking a slice whose own source is gone', () => {
     it('offers no presets rather than guessing at them', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingOver('slice-1'),
             loadedRecipes: {'slice-1': savedSlice()}
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].status).toBe('UNAVAILABLE')
     })
@@ -165,18 +164,13 @@ describe('masking a slice with runtime source evidence', () => {
             sourceKey: 'RECIPE_REF:ccdc-1', status: 'OBSERVED', segments: {visualizations}
         })
         const source = {...savedSlice(), ui: {sourceEvidence: sliceEvidence([NDVI_TEMPLATE, HARMONIC_TEMPLATE])}}
-        const {component, evidence} = sync({
-            recipe: maskingOver(source.id),
-            loadedRecipes: {[source.id]: source, 'ccdc-1': ccdc()}
-        })
-        component.componentDidMount()
-        const publishes = evidence => {
-            component.props = {...component.props, loadedRecipes: {
-                ...component.props.loadedRecipes,
-                [source.id]: {...source, ui: {sourceEvidence: evidence}}
-            }}
-            component.componentDidUpdate()
-        }
+        const loadedRecipes = {[source.id]: source, 'ccdc-1': ccdc()}
+        const {watch, rerender, evidence} = sync({recipe: maskingOver(source.id), loadedRecipes})
+        watch.start()
+        const publishes = evidence => rerender({loadedRecipes: {
+            ...loadedRecipes,
+            [source.id]: {...source, ui: {sourceEvidence: evidence}}
+        }})
 
         publishes(sliceEvidence([NDVI_TEMPLATE, HARMONIC_TEMPLATE]))
         expect(evidence()).toHaveLength(1)
@@ -199,17 +193,16 @@ describe('masking a slice with runtime source evidence', () => {
                 sourceId: 'this-recipe', layerConfig: {visParams: NDVI_TEMPLATE}
             }}}}
         }
-        const {component, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingOver(source.id),
             loadedRecipes: {[source.id]: source}
         })
-        component.componentDidMount()
+        watch.start()
         expect(evidence()[0].visualizations[0].id).toBe(NDVI_TEMPLATE.id)
 
-        component.props = {...component.props, loadedRecipes: {
+        rerender({loadedRecipes: {
             [source.id]: {...source, ui: {savedLayerSource: 'ASSET:users/test/previous'}}
-        }}
-        component.componentDidUpdate()
+        }})
 
         expect(evidence()).toHaveLength(2)
         expect(evidence()[1].visualizations[0].id).not.toBe(NDVI_TEMPLATE.id)

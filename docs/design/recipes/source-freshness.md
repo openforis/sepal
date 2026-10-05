@@ -219,7 +219,7 @@ closure check, which reads recipes, not assets.
   replace the credential container. Logout and account-switch cleanup are the application's and unchanged.
 - **Evidence observers.** Presets, templates and prefill are read again when an asset's token changes, on an explicit
   refresh, on a credential change, and 30 minutes after a read from an unversioned source, none of which redraws
-  anything (`sourceEvidenceSync.jsx`);
+  anything (`evidenceRegistry.js`);
   a token first learned after a read is no change. `ui.sourceEvidence` is presentation evidence only: it is in no
   content, work, basis or preview key and carries no counter, and an observer over another recipe reads again when that
   recipe's evidence content changes.

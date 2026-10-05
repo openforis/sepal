@@ -18,22 +18,37 @@ import {
 // What a recipe's source section says about the source selected in it (sourceRequirements.js): null when there is
 // nothing to say, otherwise {selected, state, message, details, refresh} - a short message, every problem behind it in
 // `details`, and `refresh` when reading the source again may help. Names come from the recipe listing and types from
-// their registered labels; what a requirement's own diagnoses say is the requirement's (`describe`). A source not selected yet is the form's to require, not something to report here
-// before anyone touched it.
+// their registered labels; what a requirement's own diagnoses say is the requirement's (`describe`). A source not
+// selected yet is the form's to require, not something for its section to report before anyone touched it.
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
 
 export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now()) => {
     const read = readsOf(state, recipeId, evidenceOwnerOf, now).find(({declaration}) => declaration.section.id === sectionId)
-    return read ? statusOf(read, recipeNames(state)) : null
+    return read ? sectionStatusOf(read, recipeNames(state)) : null
+}
+
+// What a consumer of an operation over a recipe, wherever the recipe is shown, says about the requirement holding that
+// operation (`requestGate`): null when none holds it, otherwise {state, message} - the recipe and the section its source
+// is selected in, with what that section says of it. A source not selected holds it as much as an unsuitable one.
+export const heldSourceStatusOfState = (state, recipe, gate) => {
+    if (!gate) {
+        return null
+    }
+    const names = recipeNames(state)
+    const status = statusOf(gate.read, names)
+    return status && {
+        state: status.state,
+        message: msg('process.source.status.held', {recipe: recordText(recipe, names), section: msg(gate.section), message: status.message})
+    }
 }
 
 // The sections whose selected source is unavailable or unsuitable, and why: {[sectionId]: message}.
 export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now()) => {
     const names = recipeNames(state)
     return Object.fromEntries(readsOf(state, recipeId, evidenceOwnerOf, now)
-        .map(read => [read.declaration.section.id, statusOf(read, names)])
+        .map(read => [read.declaration.section.id, sectionStatusOf(read, names)])
         .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE].includes(status?.state))
         .map(([section, {message}]) => [section, message]))
 }
@@ -43,9 +58,12 @@ const readsOf = (state, recipeId, evidenceOwnerOf, now) => {
     return recipe ? readSourceRequirements({state, recipe, evidenceOwnerOf, now}) : []
 }
 
+const sectionStatusOf = (read, names) =>
+    read.selected ? statusOf(read, names) : null
+
 const statusOf = (read, names) => {
     const {selected, acquisition, verdict, declaration, assetId, missing} = read
-    if (!selected || verdict.status === SUPPORTED) {
+    if (verdict.status === SUPPORTED) {
         return null
     }
     const status = (state, message, refresh, details = []) => ({selected, state, message, details, refresh})

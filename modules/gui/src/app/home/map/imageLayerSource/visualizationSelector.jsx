@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
+import {LayerSourceRequirement} from '~/app/home/body/process/recipe/selectedSource'
 import {renderableBandNames, renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
 import {inheritedVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -14,6 +15,7 @@ import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {Combo} from '~/widget/combo'
+import {Layout} from '~/widget/layout'
 import {RemoveButton} from '~/widget/removeButton'
 
 import {RefreshSourcesButton, withLayerSourceStatus} from '../layerSourceStatus'
@@ -55,7 +57,7 @@ class _VisualizationSelector extends React.Component {
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         const editorContext = this.editorContext()
         const {layerSourceStatus: status} = this.props
-        return (
+        const combo = (
             <Combo
                 label={msg('map.visualizationSelector.label')}
                 busyMessage={status?.checking ? msg('map.layerSource.checking') : undefined}
@@ -108,6 +110,15 @@ class _VisualizationSelector extends React.Component {
                 onChange={({visParams}) => this.selectVisParams(visParams)}
             />
         )
+        // Every recipe layer's form shows this selector, so it is where a layer says what holds it back.
+        return status?.heldSource
+            ? (
+                <Layout spacing='compact'>
+                    {combo}
+                    <LayerSourceRequirement/>
+                </Layout>
+            )
+            : combo
     }
 
     getOptions() {

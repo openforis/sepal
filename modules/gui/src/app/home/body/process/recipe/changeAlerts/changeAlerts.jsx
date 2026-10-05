@@ -72,5 +72,7 @@ export default () => ({
     mapProducts,
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: [referenceRequirement]
+    sourceRequirements: [referenceRequirement],
+    // What a layer, Retrieve or chart observes to check the reference it requires, wherever it is shown.
+    sourceObservation: changeAlertsObservation
 })

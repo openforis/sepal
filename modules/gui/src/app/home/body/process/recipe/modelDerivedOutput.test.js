@@ -69,7 +69,6 @@ const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./pl
 const {renderableVisualizations} = await import('./visualizationMatching')
 const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
 const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
-const {EvidenceOwners} = await import('../sourceRuntime/evidenceOwners')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -1341,7 +1340,7 @@ const read = recipe => readAll([recipe])
 // recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read
 // from was just checked.
 const readAll = ([recipe, ...others]) => {
-    const owners = new EvidenceOwners()
+    const owners = {}
     const records = [recipe, ...others].map(record => observedNow(record, owners))
     return readRetrieveOutput({
         state: {process: {
@@ -1351,7 +1350,7 @@ const readAll = ([recipe, ...others]) => {
         }},
         recipeId: recipe.id,
         heldFor: () => null,
-        evidenceOwnerOf: id => owners.ownerOf(id)
+        evidenceOwnerOf: id => owners[id] || null
     })
 }
 
@@ -1360,9 +1359,13 @@ const observedNow = (record, owners) => {
     if (!evidence) {
         return record
     }
-    const observationId = owners.register(record.id).observe({
-        key: evidence.sourceKey, selections: declaredSelections(record), earthEngineGeneration: 0, refreshed: 0, dependencies: []
-    })
+    const observationId = `observation-${record.id}`
+    owners[record.id] = {
+        observationId,
+        basis: {key: evidence.sourceKey, selections: declaredSelections(record), earthEngineGeneration: 0, refreshed: 0, dependencies: []},
+        observes: true,
+        records: 'COMPLETE'
+    }
     return {...record, ui: {...record.ui, sourceEvidence: {...evidence, observationId}}}
 }
 

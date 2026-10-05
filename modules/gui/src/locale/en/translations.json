@@ -5728,7 +5728,8 @@
         "unsuitable": "The selected source cannot provide {capability}.",
         "showDetails": "Show all {count} problems",
         "hideDetails": "Hide problems",
-        "withheld": "Not loaded: the source selected in {section} cannot be used yet."
+        "withheld": "Not loaded: the source selected in {section} cannot be used yet.",
+        "held": "{recipe}, {section}: {message}"
       },
       "capability": {
         "ccdcSegments": "CCDC segments"

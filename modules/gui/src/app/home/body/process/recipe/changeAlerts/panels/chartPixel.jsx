@@ -165,6 +165,12 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    // The chart watches the evidence its segments need, so they are checked wherever it is open.
+    componentDidMount() {
+        const {recipeId, sourceRuntime} = this.props
+        this.evidence = sourceRuntime?.watchEvidence$({recipeId, operation: PIXEL_SEGMENTS}).subscribe()
+    }
+
     // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js), and
     // requested when it comes to; segments already charted stay while it is checked again.
     componentDidUpdate(prevProps) {
@@ -242,6 +248,10 @@ class _ChartPixel extends React.Component {
         this.cancel$.next(true)
         this.setState({segments: undefined, observations: undefined})
         this.recipeActions.setChartPixel(null)
+    }
+
+    componentWillUnmount() {
+        this.evidence?.unsubscribe()
     }
 }
 

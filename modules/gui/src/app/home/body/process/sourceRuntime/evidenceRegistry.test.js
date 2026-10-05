@@ -1,28 +1,24 @@
 import {of, Subject, switchMap, throwError} from 'rxjs'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Observing the source a recipe inherits its schema from: what is asked, when it is asked again, and what
-// is done with the answer.
+// Keeping a recipe's evidence about its source current while it is watched: what is asked, when it is asked again,
+// and what is done with the answer.
 //
-// Masking's real observation is what is observed. Whatever it reads is behind `read$`, which stands for its request:
-// when the lifecycle observes, what it answers and when, or that it fails.
-//
-// `compose` is the identity here, so the export is the class and its lifecycle methods can be driven
-// directly. `stream` is the real contract's shape - a name, an observable, a next and an error callback -
-// reduced to a plain subscription, which is all this component uses it for. Props are replaced between
-// lifecycle calls the way React replaces them on a rerender.
-
-vi.mock('~/compose', () => ({
-    compose: Component => Component,
-    composeHoC: () => Component => Component
-}))
+// Masking's real observation is what is observed, watched as its editor watches it. Whatever it reads is behind
+// `read$`, which stands for its request: when the lifecycle observes, what it answers and when, or that it fails. The
+// session is the props a test gives, replaced between updates the way the store replaces its state, and what the
+// registry writes is recorded rather than applied.
 
 const bands$ = vi.fn()
 const assetMetadata$ = vi.fn()
 const read$ = vi.fn()
+const recipeLoad$ = vi.fn()
 
 vi.mock('~/apiRegistry', () => ({
-    default: {gee: {bands$: (...args) => bands$(...args), assetMetadata$: (...args) => assetMetadata$(...args)}}
+    default: {
+        gee: {bands$: (...args) => bands$(...args), assetMetadata$: (...args) => assetMetadata$(...args)},
+        recipe: {load$: (...args) => recipeLoad$(...args)}
+    }
 }))
 
 vi.mock('../recipeTypeRegistry', () => ({
@@ -31,9 +27,9 @@ vi.mock('../recipeTypeRegistry', () => ({
 
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
-const {SourceEvidenceSync} = await import('./sourceEvidenceSync')
-const {maskingObservation} = await import('./masking/maskingSourceEvidence')
-const {EvidenceOwners} = await import('../sourceRuntime/evidenceOwners')
+const {EvidenceRegistry} = await import('./evidenceRegistry')
+const {RecipeCacheClaimant} = await import('../recipeCacheClaims')
+const {maskingObservation} = await import('../recipe/masking/maskingSourceEvidence')
 
 const observation = {
     ...maskingObservation,
@@ -53,73 +49,95 @@ const maskingRecipe = ({primary, sourceEvidence} = {}) => ({
 
 const ccdcRecipe = (id, presets = CCDC_PRESETS) => ({id, type: 'CCDC', model: {presets}})
 
-// The evidence the lifecycle published, apart from its marks that it is reading again.
+// The evidence the lifecycle published, apart from its marks that it is reading again and the observation it was
+// published by.
 const published = writes => writes
     .filter(({path}) => path === 'ui.sourceEvidence')
-    .map(({value}) => value)
+    .map(({value: {observationId: _observationId, ...evidence}}) => evidence)
 
-const sync = ({
-    recipe,
-    loadedRecipes = {},
-    catalogue = [],
-    openRecipeIds = [],
-    saves = {},
-    assetEvidence = {},
-    sourceRefreshes = {},
-    sourceRuntime,
-    earthEngineGeneration = {},
-    loadRecipe$ = id => of(ccdcRecipe(id)),
-    reloadRecipe$ = id => of(ccdcRecipe(id))
-}) => {
+const sync = props => {
     const dispatched = []
-    const recipeActionBuilder = () => ({
-        writes: [],
-        set(path, value) {
-            this.writes.push({path, value})
-            return this
-        },
-        dispatch() {
-            dispatched.push(...this.writes)
+    const changes$ = new Subject()
+    let current = {
+        loadedRecipes: {},
+        catalogue: [],
+        openRecipeIds: [],
+        saves: {},
+        assetEvidence: {},
+        sourceRefreshes: {},
+        earthEngineGeneration: {},
+        loadRecipe$: id => of(ccdcRecipe(id)),
+        reloadRecipe$: id => of(ccdcRecipe(id)),
+        ...props
+    }
+    const registry = new EvidenceRegistry({
+        session: () => ({
+            loadedRecipes: {...current.loadedRecipes, [current.recipe.id]: current.recipe},
+            catalogue: current.catalogue,
+            openRecipeIds: current.openRecipeIds,
+            saves: current.saves,
+            assetEvidence: current.assetEvidence,
+            sourceRefreshes: current.sourceRefreshes,
+            earthEngineGeneration: current.earthEngineGeneration
+        }),
+        sessionChanges$: changes$,
+        claimRecords: () => current.sessionCache
+            ? new RecipeCacheClaimant(sessionCache)
+            : {use: () => {}, load$: id => current.loadRecipe$(id), reload$: id => current.reloadRecipe$(id), release: () => {}},
+        claimAssets: ids => current.claimAssets?.(ids) || (() => {}),
+        write: ({writes}) => {
+            dispatched.push(...writes)
+            current.onWrite?.()
+            return true
         }
     })
-    const component = new SourceEvidenceSync({
-        observation,
-        recipe,
-        loadedRecipes,
-        catalogue,
-        openRecipeIds,
-        saves,
-        assetEvidence,
-        sourceRefreshes,
-        sourceRuntime,
-        earthEngineGeneration,
-        recipeActionBuilder,
-        loadRecipe$,
-        reloadRecipe$,
-        stream: (_name, stream$, onNext, onError) => stream$.subscribe({next: onNext, error: onError})
-    })
-    const rerender = props => {
-        component.props = {...component.props, ...props}
-        component.componentDidUpdate()
+    let subscription = null
+    const watch = {
+        start: () => subscription = registry.watch$({recipeId: current.recipe.id, observation}).subscribe(),
+        stop: () => subscription.unsubscribe()
     }
-    return {component, dispatched, rerender, evidence: () => published(dispatched)}
+    const rerender = next => {
+        current = {...current, ...next}
+        changes$.next()
+    }
+    // With `sessionCache`, the watch claims `loadedRecipes` as the session's recipe cache, as components do.
+    const sessionCache = {
+        held: id => current.loadedRecipes[id],
+        open: id => current.openRecipeIds.includes(id),
+        saveState: id => current.saves[id],
+        write: record => rerender({loadedRecipes: {...current.loadedRecipes, [record.id]: record}}),
+        remove: id => {
+            const {[id]: _removed, ...rest} = current.loadedRecipes
+            rerender({loadedRecipes: rest})
+        }
+    }
+    return {
+        watch,
+        registry,
+        dispatched,
+        rerender,
+        evidence: () => published(dispatched),
+        cached: () => current.loadedRecipes,
+        cacheClaimant: () => new RecipeCacheClaimant(sessionCache)
+    }
 }
 
 beforeEach(() => {
     bands$.mockReset()
     assetMetadata$.mockReset()
+    recipeLoad$.mockReset()
     read$.mockReset()
     read$.mockReturnValue(of(null))
 })
 
 describe('observing a recipe source', () => {
     it('asks Earth Engine nothing, since the source\'s bands are Masking\'s description\'s', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(ccdcRecipe('source-1'))
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(bands$).not.toHaveBeenCalled()
         expect(evidence()).toEqual([{
@@ -130,12 +148,12 @@ describe('observing a recipe source', () => {
     })
 
     it('takes the presets from the source recipe, which Earth Engine knows nothing about', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(ccdcRecipe('source-1'))
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].visualizations).toEqual(CCDC_PRESETS)
     })
@@ -148,12 +166,12 @@ describe('a style added, edited and deleted on the source', () => {
     const RATIO = {id: 'v-ratio', bands: ['ratio'], type: 'continuous', userDefined: true}
 
     const editing = () => {
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {'source-1': withOwn([])},
             loadRecipe$: () => of(withOwn([]))
         })
-        component.componentDidMount()
+        watch.start()
         return {rerender, evidence, latest: () => evidence().at(-1).visualizations}
     }
 
@@ -208,9 +226,9 @@ describe('observing a wrapper around another wrapper', () => {
     }
 
     it('takes presets from the recipe that owns them, not the wrapper in between', () => {
-        const {component, evidence} = sync(nested())
+        const {watch, evidence} = sync(nested())
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].visualizations).toEqual(CCDC_PRESETS)
     })
@@ -226,12 +244,12 @@ describe('observing a wrapper around another wrapper', () => {
             model: {imageToMask: {...recipeSelection('source-1'), visualizations: [{id: 'stale', bands: ['gone']}]}}
         }, [{id: 'v-inner', bands: ['red'], type: 'continuous', userDefined: true}])
         const records = {inner, 'source-1': ccdcRecipe('source-1', CCDC_PRESETS)}
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadRecipe$: id => of(records[id])
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].visualizations).toEqual([
             {id: 'v-inner', bands: ['red'], type: 'continuous'},
@@ -241,12 +259,12 @@ describe('observing a wrapper around another wrapper', () => {
 
     it('reports a cyclic chain as unavailable rather than following it', () => {
         const looping = {id: 'looping', type: 'MASKING', model: {imageToMask: recipeSelection('looping')}}
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('looping')}),
             loadRecipe$: () => of(looping)
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].status).toBe('UNAVAILABLE')
         expect(read$).not.toHaveBeenCalled()
@@ -256,11 +274,11 @@ describe('observing a wrapper around another wrapper', () => {
 describe('observing an asset source', () => {
     it('reads its presentation through metadata, and never its schema', () => {
         assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: {type: 'ASSET', id: 'users/bob/image'}})
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(assetMetadata$).toHaveBeenCalledWith({asset: 'users/bob/image'})
         expect(bands$).not.toHaveBeenCalled()
@@ -287,8 +305,8 @@ describe('asking again', () => {
     }
 
     it('does not happen on an unrelated rerender', () => {
-        const {component, rerender} = observing()
-        component.componentDidMount()
+        const {watch, rerender} = observing()
+        watch.start()
 
         rerender({})
         rerender({})
@@ -296,14 +314,14 @@ describe('asking again', () => {
         expect(read$).toHaveBeenCalledTimes(1)
     })
 
-    it('does not happen because this component\'s own load reached the catalogue', () => {
+    it('does not happen because the watch\'s own load reached the catalogue', () => {
         const source = ccdcRecipe('source-1')
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {},
             loadRecipe$: () => of(source)
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({loadedRecipes: {'source-1': source}})
 
@@ -312,12 +330,12 @@ describe('asking again', () => {
 
     it('happens when that record is then edited', () => {
         const source = ccdcRecipe('source-1')
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {},
             loadRecipe$: () => of(source)
         })
-        component.componentDidMount()
+        watch.start()
         rerender({loadedRecipes: {'source-1': source}})
 
         rerender({loadedRecipes: {'source-1': ccdcRecipe('source-1', [{id: 'v-nir', bands: ['nir']}])}})
@@ -326,8 +344,8 @@ describe('asking again', () => {
     })
 
     it('happens when the source recipe is edited in the session', () => {
-        const {component, rerender} = observing()
-        component.componentDidMount()
+        const {watch, rerender} = observing()
+        watch.start()
 
         rerender({loadedRecipes: {'source-1': ccdcRecipe('source-1', [{id: 'v-nir', bands: ['nir']}])}})
 
@@ -335,8 +353,8 @@ describe('asking again', () => {
     })
 
     it('happens when the panel applies refreshed data over the same source', () => {
-        const {component, rerender} = observing()
-        component.componentDidMount()
+        const {watch, rerender} = observing()
+        watch.start()
 
         rerender({
             recipe: maskingRecipe({primary: {...recipeSelection('source-1'), bands: ['red', 'nir']}})
@@ -348,12 +366,12 @@ describe('asking again', () => {
     it('happens when a recipe deeper in the chain is edited', () => {
         const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
         const records = {inner, 'source-1': ccdcRecipe('source-1')}
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: records,
             loadRecipe$: id => of(records[id])
         })
-        component.componentDidMount()
+        watch.start()
         rerender({})
 
         rerender({
@@ -366,8 +384,8 @@ describe('asking again', () => {
     // A source edited in another session is never in this one's cache, so the catalogue revision is the only
     // thing that can say it changed.
     it('happens when the catalogue revision of a chain recipe advances', () => {
-        const {component, rerender} = observing({catalogue: [{id: 'source-1', revision: 3}]})
-        component.componentDidMount()
+        const {watch, rerender} = observing({catalogue: [{id: 'source-1', revision: 3}]})
+        watch.start()
         rerender({})
 
         rerender({catalogue: [{id: 'source-1', revision: 4}]})
@@ -376,8 +394,8 @@ describe('asking again', () => {
     })
 
     it('does not happen when an unrelated recipe advances', () => {
-        const {component, rerender} = observing({catalogue: [{id: 'source-1', revision: 3}]})
-        component.componentDidMount()
+        const {watch, rerender} = observing({catalogue: [{id: 'source-1', revision: 3}]})
+        watch.start()
         rerender({})
 
         rerender({catalogue: [{id: 'source-1', revision: 3}, {id: 'elsewhere', revision: 9}]})
@@ -386,8 +404,8 @@ describe('asking again', () => {
     })
 
     it('happens when the Earth Engine identity is replaced', () => {
-        const {component, rerender} = observing()
-        component.componentDidMount()
+        const {watch, rerender} = observing()
+        watch.start()
 
         rerender({earthEngineGeneration: {}})
 
@@ -395,8 +413,8 @@ describe('asking again', () => {
     })
 
     it('happens when the selection changes to another source', () => {
-        const {component, rerender} = observing()
-        component.componentDidMount()
+        const {watch, rerender} = observing()
+        watch.start()
 
         rerender({recipe: maskingRecipe({primary: recipeSelection('source-2')})})
 
@@ -406,13 +424,13 @@ describe('asking again', () => {
     it('does not happen merely because an earlier attempt failed', () => {
         read$.mockReturnValue(throwError(() => new Error('unreachable')))
         const source = ccdcRecipe('source-1')
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {'source-1': source},
             loadRecipe$: () => of(source)
         })
 
-        component.componentDidMount()
+        watch.start()
         rerender({})
 
         expect(read$).toHaveBeenCalledTimes(1)
@@ -424,12 +442,12 @@ describe('asking again', () => {
 describe('an observation that fails', () => {
     it('records the source as unavailable rather than leaving the recipe on its snapshot', () => {
         read$.mockReturnValue(throwError(() => new Error('unreachable')))
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(ccdcRecipe('source-1'))
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:source-1',
@@ -442,11 +460,11 @@ describe('an answer for a source that is no longer selected', () => {
     it('is not written', () => {
         const answer = new Subject()
         read$.mockReturnValue(answer)
-        const {component, dispatched, rerender} = sync({
+        const {watch, dispatched, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadRecipe$: () => of(ccdcRecipe('source-1'))
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({recipe: maskingRecipe({primary: recipeSelection('source-2')})})
         answer.next(['stale'])
@@ -455,11 +473,48 @@ describe('an answer for a source that is no longer selected', () => {
     })
 })
 
+// Everything the registry writes can notify the store again, synchronously, before the write returns.
+describe('an update the registry\'s own writes cause', () => {
+    const watching = extra => sync({
+        recipe: maskingRecipe({primary: recipeSelection('source-1')}),
+        loadedRecipes: {'source-1': ccdcRecipe('source-1')},
+        ...extra
+    })
+
+    it('starts no second observation, and the answer is published once', () => {
+        const harness = watching()
+        harness.rerender({onWrite: () => harness.rerender({})})
+
+        harness.watch.start()
+
+        expect(read$).toHaveBeenCalledTimes(1)
+        expect(harness.evidence()).toHaveLength(1)
+    })
+
+    it('brings back nothing released while it was publishing, however the store is notified', () => {
+        const answer = new Subject()
+        read$.mockReturnValue(answer)
+        const harness = watching()
+        harness.watch.start()
+        harness.rerender({onWrite: () => {
+            harness.watch.stop()
+            harness.rerender({})
+        }})
+
+        answer.next(null)
+        harness.rerender({onWrite: null})
+
+        expect(harness.evidence()).toHaveLength(1)
+        expect(harness.registry.ownerOf('masked-1')).toBe(null)
+        expect(read$).toHaveBeenCalledTimes(1)
+    })
+})
+
 describe('a recipe that needs no observation', () => {
     it('observes nothing when it inherits no schema', () => {
-        const {component, dispatched} = sync({recipe: {id: 'ccdc-1', type: 'CCDC', model: {}}})
+        const {watch, dispatched} = sync({recipe: {id: 'ccdc-1', type: 'CCDC', model: {}}})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(read$).not.toHaveBeenCalled()
         expect(assetMetadata$).not.toHaveBeenCalled()
@@ -467,9 +522,9 @@ describe('a recipe that needs no observation', () => {
     })
 
     it('observes nothing when no source is selected', () => {
-        const {component} = sync({recipe: maskingRecipe()})
+        const {watch} = sync({recipe: maskingRecipe()})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(read$).not.toHaveBeenCalled()
     })
@@ -498,35 +553,35 @@ describe('a dependency the catalogue has moved past', () => {
     }
 
     it('is read again rather than answered from the copy the session holds', () => {
-        const {component, reloadRecipe$} = observing()
+        const {watch, reloadRecipe$} = observing()
 
-        component.componentDidMount()
+        watch.start()
 
         expect(reloadRecipe$).toHaveBeenCalledWith('source-1')
     })
 
     it('publishes what the newer revision says, not what the stale copy said', () => {
-        const {component, evidence} = observing()
+        const {watch, evidence} = observing()
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].visualizations).toEqual([{id: 'v-new', bands: ['nir']}])
     })
 
     // An open recipe's cached entry is a draft. Whatever is persisted must not replace unsaved work.
     it('is left alone when it was closed with its save still outstanding', () => {
-        const {component, evidence, reloadRecipe$} = observing({saves: {'source-1': {status: 'SAVING'}}})
+        const {watch, evidence, reloadRecipe$} = observing({saves: {'source-1': {status: 'SAVING'}}})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(reloadRecipe$).not.toHaveBeenCalled()
         expect(evidence()[0].visualizations).toEqual([{id: 'v-old', bands: ['red']}])
     })
 
     it('is left alone when it is open for editing', () => {
-        const {component, evidence, reloadRecipe$} = observing({openRecipeIds: ['source-1']})
+        const {watch, evidence, reloadRecipe$} = observing({openRecipeIds: ['source-1']})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(reloadRecipe$).not.toHaveBeenCalled()
         expect(evidence()[0].visualizations).toEqual([{id: 'v-old', bands: ['red']}])
@@ -543,11 +598,11 @@ describe('a change while an observation is in flight', () => {
     it('keeps the pending read and publishes its answer after a UI-only edit', () => {
         const held = new Subject()
         read$.mockReturnValueOnce(held).mockReturnValue(of(['unexpected-restart']))
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: records
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({loadedRecipes: {
             ...records,
@@ -568,12 +623,12 @@ describe('a change while an observation is in flight', () => {
     const raced = () => {
         const held = new Subject()
         read$.mockReturnValueOnce(held).mockReturnValue(of(['red']))
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: records,
             loadRecipe$: id => of(records[id])
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({loadedRecipes: edited, loadRecipe$: id => of(edited[id])})
         held.next(['red'])
@@ -607,12 +662,12 @@ describe('a change while a dependency is still loading', () => {
 
     it('accepts the completed closure after a source panel changes only its draft', () => {
         const mask = new Subject()
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
             loadedRecipes: atStart,
             loadRecipe$: () => mask
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({loadedRecipes: {
             ...atStart,
@@ -632,12 +687,12 @@ describe('a change while a dependency is still loading', () => {
     // the mask arrive and let the closure complete.
     const raced = () => {
         const mask = new Subject()
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection(inner.id)}),
             loadedRecipes: atStart,
             loadRecipe$: id => (id === 'mask-1' ? mask : of(atStart[id]))
         })
-        component.componentDidMount()
+        watch.start()
 
         // The pending operation keeps the loader it started with; a later one reads the mask normally.
         rerender({
@@ -670,14 +725,14 @@ describe('a change while a dependency is still loading', () => {
 describe('a dependency newer than the catalogue summary', () => {
     it('is neither reloaded nor observed twice', () => {
         const reloadRecipe$ = vi.fn(() => of(ccdcRecipe('source-1')))
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('source-1')}),
             loadedRecipes: {'source-1': {...ccdcRecipe('source-1'), revision: 5}},
             catalogue: [{id: 'source-1', revision: 4}],
             reloadRecipe$
         })
 
-        component.componentDidMount()
+        watch.start()
         rerender({})
         rerender({})
 
@@ -687,17 +742,63 @@ describe('a dependency newer than the catalogue summary', () => {
 })
 
 // A broken graph was still read from records, and repairing one of them is what makes it answerable.
+// A component caches what it reads and the watch reads what is cached; both keep it while they need it.
+describe('a record the session already held when the watch read it', () => {
+    const inner = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
+    const watching = primary => {
+        const harness = sync({
+            recipe: maskingRecipe({primary}),
+            loadedRecipes: {inner, 'source-1': ccdcRecipe('source-1')},
+            sessionCache: true
+        })
+        const component = harness.cacheClaimant()
+        component.use('inner')
+        component.use('source-1')
+        return {...harness, component}
+    }
+
+    const releasing = []
+    afterEach(() => releasing.splice(0).forEach(({watch, component}) => {
+        component.release()
+        watch.stop()
+    }))
+
+    it.each([
+        ['the selected source', recipeSelection('source-1')],
+        ['a recipe deeper in the chain', recipeSelection('inner')]
+    ])('stays cached for the watch once the component that cached it leaves, as %s', (_case, primary) => {
+        const harness = watching(primary)
+        releasing.push(harness)
+        harness.watch.start()
+
+        harness.component.release()
+
+        expect(harness.cached()).toHaveProperty('source-1')
+        expect(recipeLoad$).not.toHaveBeenCalled()
+    })
+
+    it('is removed once the watch has gone too', () => {
+        const harness = watching(recipeSelection('inner'))
+        harness.watch.start()
+        harness.component.release()
+
+        harness.watch.stop()
+
+        expect(harness.cached()).toEqual({})
+    })
+})
+
 describe('a cycle deeper in the chain', () => {
     const cyclic = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('inner')}}
     const repaired = {id: 'inner', type: 'MASKING', model: {imageToMask: recipeSelection('source-1')}}
 
     it('is observed again once the deeper recipe is repaired', () => {
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: {inner: cyclic},
             loadRecipe$: id => of(id === 'inner' ? cyclic : ccdcRecipe(id))
         })
-        component.componentDidMount()
+        watch.start()
         expect(evidence()[0].status).toBe('UNAVAILABLE')
 
         rerender({
@@ -727,12 +828,12 @@ describe('a cycle deeper in the chain beside a dependency that cannot be read', 
 
     it('is observed again once a recipe it had read is repaired', () => {
         const {loadRecipe$} = failing()
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('outer')}),
             loadedRecipes: {outer, inner: cyclic},
             loadRecipe$
         })
-        component.componentDidMount()
+        watch.start()
         expect(evidence()[0].status).toBe('UNAVAILABLE')
 
         rerender({
@@ -745,12 +846,12 @@ describe('a cycle deeper in the chain beside a dependency that cannot be read', 
 
     it('does not read again merely because the attempt failed', () => {
         const {loads, loadRecipe$} = failing()
-        const {component, rerender} = sync({
+        const {watch, rerender} = sync({
             recipe: maskingRecipe({primary: recipeSelection('outer')}),
             loadedRecipes: {outer, inner: cyclic},
             loadRecipe$
         })
-        component.componentDidMount()
+        watch.start()
         rerender({})
 
         expect(loads.filter(id => id === 'gone')).toHaveLength(1)
@@ -765,14 +866,14 @@ describe('a selected source with a missing mask', () => {
     })
 
     it('is observed again after a missing one made the source unavailable', () => {
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: maskingRecipe({primary: recipeSelection('inner')}),
             loadedRecipes: {inner: withMask(recipeSelection('gone'))},
             loadRecipe$: id => (id === 'gone'
                 ? throwError(() => new Error('no such recipe'))
                 : of(ccdcRecipe(id)))
         })
-        component.componentDidMount()
+        watch.start()
         expect(evidence()[0].status).toBe('UNAVAILABLE')
 
         rerender({
@@ -786,7 +887,7 @@ describe('a selected source with a missing mask', () => {
 
 describe('a consumer with a missing mask', () => {
     it('still observes the selected source', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: {
                 ...maskingRecipe({primary: recipeSelection('source-1')}),
                 model: {imageToMask: recipeSelection('source-1'), imageMask: recipeSelection('gone')}
@@ -796,7 +897,7 @@ describe('a consumer with a missing mask', () => {
                 : of(ccdcRecipe(id))
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()).toEqual([expect.objectContaining({
             status: 'OBSERVED',
@@ -816,8 +917,8 @@ describe('an asset source', () => {
     }
 
     it('is observed again when its token changes', () => {
-        const {component, rerender} = observing({['users/bob/image']: {version: '2026-01-01T00:00:00.000001Z', checkedAt: 0}})
-        component.componentDidMount()
+        const {watch, rerender} = observing({['users/bob/image']: {version: '2026-01-01T00:00:00.000001Z', checkedAt: 0}})
+        watch.start()
         rerender({})
 
         rerender({assetEvidence: {['users/bob/image']: {version: '2026-01-01T00:00:00.000002Z', checkedAt: 0}}})
@@ -826,8 +927,8 @@ describe('an asset source', () => {
     })
 
     it('is not observed again when its first token is learned after it was read', () => {
-        const {component, rerender} = observing({})
-        component.componentDidMount()
+        const {watch, rerender} = observing({})
+        watch.start()
 
         rerender({assetEvidence: {'users/bob/image': {version: 'v1', checkedAt: 0}}})
         rerender({})
@@ -836,8 +937,8 @@ describe('an asset source', () => {
     })
 
     it('is observed again once it is explicitly refreshed, and once the recipe reading it is', () => {
-        const {component, rerender} = observing({'users/bob/image': {version: 'v1', checkedAt: 0}})
-        component.componentDidMount()
+        const {watch, rerender} = observing({'users/bob/image': {version: 'v1', checkedAt: 0}})
+        watch.start()
 
         rerender({sourceRefreshes: {assets: {'users/bob/image': 1}}})
         rerender({sourceRefreshes: {assets: {'users/bob/image': 1}, recipes: {'masked-1': 1}}})
@@ -848,8 +949,8 @@ describe('an asset source', () => {
     it('without a token is observed again once what was read from it is half an hour old, and not before', () => {
         vi.useFakeTimers()
         try {
-            const {component} = observing({'gs://bucket/image.tif': {version: null, unversioned: true, checkedAt: 0}}, 'gs://bucket/image.tif')
-            component.componentDidMount()
+            const {watch} = observing({'gs://bucket/image.tif': {version: null, unversioned: true, checkedAt: 0}}, 'gs://bucket/image.tif')
+            watch.start()
 
             vi.advanceTimersByTime(30 * 60 * 1000 - 1)
             expect(read$).toHaveBeenCalledTimes(1)
@@ -862,33 +963,70 @@ describe('an asset source', () => {
     })
 
     it('is claimed from the source runtime while it is read, and released once it is not', () => {
-        const claims = []
-        const owners = new EvidenceOwners()
-        const sourceRuntime = {
-            claimAssets: ids => {
-                const claim = {ids, released: false}
-                claims.push(claim)
-                return () => claim.released = true
-            },
-            registerEvidenceOwner: recipeId => owners.register(recipeId)
-        }
+        const claims = assetClaims()
         assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
-        const {component} = sync({recipe: maskingRecipe({primary: {type: 'ASSET', id: 'users/bob/image'}}), sourceRuntime})
-        component.componentDidMount()
-        expect(claims.filter(({released}) => !released).map(({ids}) => ids)).toEqual([['users/bob/image']])
+        const {watch} = sync({recipe: assetRecipe('users/bob/image'), claimAssets: claims.claim})
+        watch.start()
+        expect(claims.held()).toEqual([['users/bob/image']])
 
-        component.componentWillUnmount()
+        watch.stop()
 
-        expect(claims.every(({released}) => released)).toBe(true)
+        expect(claims.held()).toEqual([])
+    })
+
+    // Claiming can dispatch, and what that dispatch causes can end or replace the observation the claim was made for.
+    it('is released when the runtime closes while it is being claimed', () => {
+        const claims = assetClaims()
+        assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
+        const harness = sync({
+            recipe: assetRecipe('users/bob/image'),
+            claimAssets: ids => claims.claim(ids, () => harness.registry.close())
+        })
+
+        harness.watch.start()
+
+        expect(claims.made()).toEqual([['users/bob/image']])
+        expect(claims.held()).toEqual([])
+    })
+
+    it('is released when the selection moves on while it is being claimed, and the new selection held', () => {
+        const claims = assetClaims()
+        assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {}}))
+        const harness = sync({
+            recipe: assetRecipe('users/bob/image'),
+            claimAssets: ids => claims.claim(ids, () => claims.made().length === 1
+                && harness.rerender({recipe: assetRecipe('users/bob/other')}))
+        })
+
+        harness.watch.start()
+
+        expect(claims.held()).toEqual([['users/bob/other']])
     })
 
     it('is not observed again while its token is the same', () => {
         const version = {['users/bob/image']: {version: '2026-01-01T00:00:00.000001Z', checkedAt: 0}}
-        const {component, rerender} = observing(version)
-        component.componentDidMount()
+        const {watch, rerender} = observing(version)
+        watch.start()
 
         rerender({assetEvidence: {...version}})
 
         expect(read$).toHaveBeenCalledTimes(1)
     })
 })
+
+const assetRecipe = assetId => maskingRecipe({primary: {type: 'ASSET', id: assetId}})
+
+// Asset claims made through `claimAssets`, each running `whileClaiming` before it returns its release.
+const assetClaims = () => {
+    const claims = []
+    return {
+        claim: (ids, whileClaiming = () => {}) => {
+            const claim = {ids, released: false}
+            claims.push(claim)
+            whileClaiming()
+            return () => claim.released = true
+        },
+        made: () => claims.map(({ids}) => ids),
+        held: () => claims.filter(({released}) => !released).map(({ids}) => ids)
+    }
+}

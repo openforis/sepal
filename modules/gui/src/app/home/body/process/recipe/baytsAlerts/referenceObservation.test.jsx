@@ -289,7 +289,7 @@ const sync = ({selection, options = {}}) => {
             recipes: [],
             projects: [],
             // No open tab: autosave is triggered from there and is not what synchronization exercises.
-            tabs: []
+            tabs: [{id: ALERTS}]
         },
         assets: {user: [{id: STATS_ASSET, updateTime: 'v0'}], other: []}
     }

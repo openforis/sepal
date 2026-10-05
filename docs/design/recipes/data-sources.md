@@ -244,7 +244,7 @@ Deliver steps 1–2 as three separately reviewable packets:
    `dependencyValidity` separately, and Retrieve and Task's asset export of a declared root require it to be
    `VALID`. A known
    schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
-   After a failed closure, `SourceEvidenceSync` re-observes when a record it read changes; restoring only the
+   After a failed closure, the evidence registry re-observes when a record it read changes; restoring only the
    recipe it could not read does not.
 2. **Common GUI read API and display consumers.** Map layers read the product they name through the common read,
    and retain what they acquire through the runtime's one-shot operations for as long as they are mounted
@@ -252,7 +252,7 @@ Deliver steps 1–2 as three separately reviewable packets:
    the visualization editor are given that read. The editor's requests carry the product the layer shows.
    Map preview requires `VALID` dependencies.
    - Input workflows and Sampling Design filter the presets they copy against the names they observed.
-   - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
+   - The evidence registry's whole-graph check stays; what its removal needs is recorded with
      [live source evidence](gui-source-runtime.md#live-source-evidence).
 3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
    acquisition while open. Its description is the one export authority: choices, destination compatibility and
@@ -300,8 +300,8 @@ In order, each independently mergeable:
    ([contract](source-resolution.md#change-alerts-ref)); CCDC Slice, BAYTS and the remaining consumers follow. The
    reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
    from metadata alone (done); shared segment-evidence readers and selection by role (done); evidence owned by the
-   source runtime, so a recipe shown outside its editor is checked too (unchecked today), with prefill behaviour kept;
-   then CCDC Slice, and BAYTS with a requirement derived from what its execution reads
+   source runtime, so an operation a type declares requirements for is checked wherever the recipe is shown, with
+   prefill behaviour kept (done); then CCDC Slice, and BAYTS with a requirement derived from what its execution reads
    ([findings](#configured-source-suitability-findings)).
    A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
    recipe-specific input-layer bookkeeping with shared derivation.
@@ -339,6 +339,15 @@ be reviewed against the rewritten service.
 
 Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
 is a separate small packet.
+
+**Retained closed drafts after their save settles.** The recipe cache keeps a closed draft whose save has not settled
+past its last claimant (`recipeCacheClaims.js`), and nothing evicts it once the save settles: it stays cached until a
+claimant takes and releases it again. This retains an extra record, never loses unsaved work. Clean up separately,
+evicting an unclaimed closed draft when its save state settles.
+
+**Recipe-scoped modals, then opening a selected recipe.** Application-wide modals block tab navigation, so a
+source selector cannot open its selected recipe consistently everywhere it appears. Settle
+[recipe-scoped modals](#recipe-scoped-modals) first; [opening the selected recipe](#open-selected-recipe) follows.
 
 Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
 its origin has not been investigated, and whether it is a regression is not established. Investigate the error
@@ -1027,9 +1036,11 @@ CCDC Slice, BAYTS, scalar-image and classification-input requirements are subseq
 must not broaden their behavior while adapting shared discovery code. Execution parity for asset segment leaves
 and the ASSET/inline branches of `loadSegments` remains to be designed, rather than claimed by GUI validation.
 
-For the runtime-owned evidence packet: a preview of a recipe whose editor is not open is held only by what its held
-records refuse: with no evidence owner, a source only evidence could judge is not checked, and its preview requests are
-made as before.
+A recipe shown outside its editor is checked for every operation its type declares requirements for: the layer or
+chart requesting it watches the evidence the operation needs
+([evidence watches](gui-source-runtime.md#evidence-watches)), and a provider-only operation reads the records of a chain
+the session does not hold before it is allowed or refused. Presentation evidence of types without requirements is
+observed only by their editors.
 
 Source-error presentation acceptance includes a visibly invalid owning SRC/REF section, an explanation naming
 the affected source, a retained selection that can be repaired, and visible progress on Refresh. The missing
@@ -1053,6 +1064,34 @@ Not every dependency is suitable for display; the declaration decides which ones
   Ownership should be explicit rather than inferred from source-ID conventions.
 - Specify cleanup of area assignments when a derived source disappears, and compatibility for existing saved
   layouts, before migrating input panels. Keep derivation in the GUI; this declaration does not change execution.
+
+### Recipe-scoped modals
+
+Investigation, not yet scheduled; a prerequisite for [opening the selected recipe](#open-selected-recipe). Modals
+are application-wide today: while one is shown, neither recipe tabs nor application sections can be reached.
+Investigate modals that block interaction only within their own recipe, leaving recipe-tab and application-section
+navigation available.
+
+- Preserve pending form edits when leaving a tab or section with a modal open and returning to it. Nothing is
+  applied, cleared or reset by navigating away.
+- Define the backdrop's extent and what clicking it does, where focus goes on opening, on leaving and on returning,
+  which keyboard shortcuts reach the modal, its recipe and the rest of the application, and how a modal is
+  dismissed - including when its recipe's tab is closed.
+
+### Open selected recipe
+
+Revisit after [recipe-scoped modals](#recipe-scoped-modals) are settled. A recipe selector offers to open its
+selected recipe; it must behave the same everywhere the selector appears, not only outside modals.
+
+- Leave the originating form as it was: opening never applies, clears or changes the selection or pending edits,
+  and they are intact on returning to its tab.
+- Select the recipe's existing tab when it has one, including one opened while the recipe was being read, rather
+  than opening a second.
+- Protect unsaved drafts: an open draft, or a closed one whose saves have not settled, is never replaced by a cached
+  or freshly read copy. Otherwise open through the authoritative load that initializes save revisions.
+- Work for a selection in another project without the ALL view; report a failed load without changing the current
+  tab or selection; keep the action reachable and operable by keyboard, without a panel's own keybindings taking
+  its keys.
 
 ### Task-driven asset invalidation
 

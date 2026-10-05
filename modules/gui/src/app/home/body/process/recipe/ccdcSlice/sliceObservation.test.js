@@ -2,17 +2,12 @@ import {of, Subject, throwError} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // CCDC Slice observing the segments it slices, through the shared evidence lifecycle. The lifecycle's own
-// rules - basis, supersession, reload of a stale record - are proven in sourceEvidenceSync.test.js with
+// rules - basis, supersession, reload of a stale record - are proven in evidenceRegistry.test.js with
 // Masking; what is proven here is that Slice's observation drives them the same way: which provider answers
 // for each kind of source, and what makes it read again.
 //
 // The providers are the real ones, reached through the registry the way production reaches them. Only the
 // band vocabulary and Earth Engine are stood in for.
-
-vi.mock('~/compose', () => ({
-    compose: Component => Component,
-    composeHoC: () => Component => Component
-}))
 
 const assetMetadata$ = vi.fn()
 vi.mock('~/apiRegistry', () => ({
@@ -42,7 +37,7 @@ vi.mock('../../recipeTypeRegistry', async () => {
     }
 })
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {EvidenceRegistry} = await import('../../sourceRuntime/evidenceRegistry')
 const {sliceObservation} = await import('./sliceObservation')
 
 const recipeSelection = id => ({type: 'RECIPE_REF', id})
@@ -84,60 +79,53 @@ const assetMosaic = () => ({
     }
 })
 
-// The evidence the lifecycle published, apart from its marks that it is reading again.
+// The evidence the lifecycle published, apart from its marks that it is reading again and the observation it was
+// published by.
 const published = writes => writes
     .filter(({path}) => path === 'ui.sourceEvidence')
-    .map(({value}) => value)
+    .map(({value: {observationId: _observationId, ...evidence}}) => evidence)
 
-const sync = ({
-    recipe,
-    loadedRecipes = {},
-    catalogue = [],
-    assetEvidence = {},
-    earthEngineGeneration = {},
-    loadRecipe$ = id => of(loadedRecipes[id])
-}) => {
+// The recipe's evidence watched as its editor watches it, over a session the test gives and replaces between updates.
+const sync = props => {
     const dispatched = []
-    const recipeActionBuilder = () => ({
-        writes: [],
-        set(path, value) {
-            this.writes.push({path, value})
-            return this
-        },
-        dispatch() {
-            dispatched.push(...this.writes)
+    const changes$ = new Subject()
+    let current = {catalogue: [], assetEvidence: {}, earthEngineGeneration: {}, ...props}
+    const load$ = id => current.loadRecipe$ ? current.loadRecipe$(id) : of(current.loadedRecipes[id])
+    const registry = new EvidenceRegistry({
+        session: () => ({
+            loadedRecipes: {...current.loadedRecipes, [current.recipe.id]: current.recipe},
+            catalogue: current.catalogue,
+            openRecipeIds: [],
+            saves: {},
+            assetEvidence: current.assetEvidence,
+            sourceRefreshes: {},
+            earthEngineGeneration: current.earthEngineGeneration
+        }),
+        sessionChanges$: changes$,
+        claimRecords: () => ({use: () => {}, load$, reload$: load$, release: () => {}}),
+        write: ({writes}) => {
+            dispatched.push(...writes)
+            return true
         }
     })
-    const component = new SourceEvidenceSync({
-        observation: sliceObservation,
-        recipe,
-        loadedRecipes,
-        catalogue,
-        openRecipeIds: [],
-        assetEvidence,
-        earthEngineGeneration,
-        recipeActionBuilder,
-        loadRecipe$,
-        reloadRecipe$: loadRecipe$,
-        stream: (_name, stream$, onNext, onError) => stream$.subscribe({next: onNext, error: onError})
-    })
-    const rerender = props => {
-        component.props = {...component.props, ...props}
-        component.componentDidUpdate()
+    const watch = {start: () => registry.watch$({recipeId: current.recipe.id, observation: sliceObservation}).subscribe()}
+    const rerender = next => {
+        current = {...current, ...next}
+        changes$.next()
     }
-    return {component, rerender, evidence: () => published(dispatched)}
+    return {watch, rerender, evidence: () => published(dispatched)}
 }
 
 beforeEach(() => assetMetadata$.mockReset())
 
 describe('slicing a CCDC recipe', () => {
     it('publishes the description CCDC gives of its own segments', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: sliceOver(recipeSelection('ccdc-1')),
             loadedRecipes: {'ccdc-1': ccdc()}
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:ccdc-1',
@@ -153,12 +141,12 @@ describe('slicing a CCDC recipe', () => {
     // CCDC declares the Classification it fits, so the closure brings it in and CCDC's own provider finds
     // it. Slice never locates it.
     it('includes the bands of the Classification CCDC declares', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: sliceOver(recipeSelection('ccdc-1')),
             loadedRecipes: {'ccdc-1': ccdc({classification: 'classification-1'}), 'classification-1': classification()}
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].segments.baseBands.map(({name}) => name)).toEqual(['ndvi', 'regression'])
     })
@@ -168,12 +156,12 @@ describe('slicing a CCDC recipe', () => {
 describe('slicing an asset mosaic recipe', () => {
     it('reads the asset now rather than answering from the copy the recipe holds', () => {
         assetMetadata$.mockReturnValue(of({bandNames: ['nbr_coefs', 'tStart'], properties: {dateFormat: 2}}))
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: sliceOver(recipeSelection('asset-mosaic-1')),
             loadedRecipes: {'asset-mosaic-1': assetMosaic()}
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(assetMetadata$).toHaveBeenCalledWith({asset: 'users/x/segments'})
         expect(evidence()[0].segments).toEqual(expect.objectContaining({
@@ -189,9 +177,9 @@ describe('slicing a segments asset', () => {
             bandNames: ['nbr_coefs', 'nbr_rmse', 'nbr_magnitude', 'tStart'],
             properties: {dateFormat: 2}
         }))
-        const {component, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
+        const {watch, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(assetMetadata$).toHaveBeenCalledWith({asset: 'users/x/segments'})
         expect(evidence()[0].segments).toEqual(expect.objectContaining({
@@ -216,9 +204,9 @@ describe('the templates an asset carries', () => {
 
     it('are given distinct identities', () => {
         assetMetadata$.mockReturnValue(of(twoOverOneBand))
-        const {component, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
+        const {watch, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
 
-        component.componentDidMount()
+        watch.start()
 
         const [first, second] = evidence()[0].segments.visualizations
         expect(first.id).toBeDefined()
@@ -228,11 +216,11 @@ describe('the templates an asset carries', () => {
 
     it('keep the identities a previous read gave them', () => {
         assetMetadata$.mockReturnValue(of(twoOverOneBand))
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'}),
             assetEvidence: {['users/x/segments']: {version: '1', checkedAt: 0}}
         })
-        component.componentDidMount()
+        watch.start()
         const published = evidence()[0]
 
         rerender({
@@ -264,14 +252,14 @@ describe('a slice over an asset with nothing observed', () => {
     const savedStyle = () => {
         assetMetadata$.mockReturnValue(of(twoOverOneBand))
         const before = sync({recipe: sliceOver(ASSET)})
-        before.component.componentDidMount()
+        before.watch.start()
         const [, second] = before.evidence()[0].segments.visualizations
         return {...second, id: 'saved-style'}
     }
 
     const identitiesFrom = recipe => {
-        const {component, evidence} = sync({recipe})
-        component.componentDidMount()
+        const {watch, evidence} = sync({recipe})
+        watch.start()
         return evidence()[0].segments.visualizations.map(({id}) => id)
     }
 
@@ -312,13 +300,13 @@ describe('identifying an asset\'s templates across a failed read', () => {
     // The session as the recipe sees it: the evidence published last, and the style the layer was left
     // showing, are what the next render is given.
     const session = source => {
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: sliceOver(source),
             assetEvidence: {[source.id]: {version: '1', checkedAt: 0}}
         })
         let version = 1
         const published = () => evidence().at(-1)
-        component.componentDidMount()
+        watch.start()
         const selected = published().segments.visualizations[1]
         return {
             published,
@@ -366,12 +354,12 @@ describe('identifying an asset\'s templates across a failed read', () => {
 
 describe('a source that does not produce segments', () => {
     it('is recorded as unavailable', () => {
-        const {component, evidence} = sync({
+        const {watch, evidence} = sync({
             recipe: sliceOver(recipeSelection('mosaic-1')),
             loadedRecipes: {'mosaic-1': {id: 'mosaic-1', type: 'MOSAIC', model: {}}}
         })
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()).toEqual([expect.objectContaining({
             sourceKey: 'RECIPE_REF:mosaic-1',
@@ -381,9 +369,9 @@ describe('a source that does not produce segments', () => {
 
     it('is recorded as unavailable when its metadata cannot be read', () => {
         assetMetadata$.mockReturnValue(throwError(() => new Error('forbidden')))
-        const {component, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
+        const {watch, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'})})
 
-        component.componentDidMount()
+        watch.start()
 
         expect(evidence()[0].status).toBe('UNAVAILABLE')
     })
@@ -402,12 +390,12 @@ describe('looking again', () => {
 
     it('does not happen for a change to the slice\'s own date or options', () => {
         const selection = recipeSelection('ccdc-1')
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: sliceOver(selection),
             loadedRecipes: {'ccdc-1': ccdc()},
             catalogue: [{id: 'ccdc-1', revision: 3}]
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({recipe: sliceOver(selection, {date: {date: '2021-01-01'}, options: {harmonics: 1}})})
         rerender({})
@@ -416,8 +404,8 @@ describe('looking again', () => {
     })
 
     it('does not happen while nothing about the source has changed', () => {
-        const {component, rerender, evidence} = open()
-        component.componentDidMount()
+        const {watch, rerender, evidence} = open()
+        watch.start()
 
         rerender({})
         rerender({})
@@ -426,8 +414,8 @@ describe('looking again', () => {
     })
 
     it('happens when the CCDC recipe is edited in the session, and reports the new fit', () => {
-        const {component, rerender, evidence} = open()
-        component.componentDidMount()
+        const {watch, rerender, evidence} = open()
+        watch.start()
 
         rerender({loadedRecipes: {'ccdc-1': ccdc({fitted: ['NDVI', 'NBR']})}})
 
@@ -436,11 +424,11 @@ describe('looking again', () => {
 
     it('happens when the Classification the CCDC recipe declares is edited', () => {
         const source = ccdc({classification: 'classification-1'})
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: sliceOver(recipeSelection('ccdc-1')),
             loadedRecipes: {'ccdc-1': source, 'classification-1': classification()}
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({loadedRecipes: {'ccdc-1': source, 'classification-1': classification({entries: [{value: 9}]})}})
 
@@ -448,8 +436,8 @@ describe('looking again', () => {
     })
 
     it('happens when the source is replaced, and describes the replacement', () => {
-        const {component, rerender, evidence} = open()
-        component.componentDidMount()
+        const {watch, rerender, evidence} = open()
+        watch.start()
 
         rerender({
             recipe: sliceOver(recipeSelection('ccdc-2')),
@@ -463,8 +451,8 @@ describe('looking again', () => {
     })
 
     it('happens when the catalogue revision of the CCDC recipe advances', () => {
-        const {component, rerender, evidence} = open()
-        component.componentDidMount()
+        const {watch, rerender, evidence} = open()
+        watch.start()
 
         rerender({catalogue: [{id: 'ccdc-1', revision: 4}]})
 
@@ -475,11 +463,11 @@ describe('looking again', () => {
         assetMetadata$
             .mockReturnValueOnce(of({bandNames: ['ndvi_coefs'], properties: {dateFormat: 0}}))
             .mockReturnValue(of({bandNames: ['nbr_coefs'], properties: {dateFormat: 1}}))
-        const {component, rerender, evidence} = sync({
+        const {watch, rerender, evidence} = sync({
             recipe: sliceOver({type: 'ASSET', id: 'users/x/segments'}),
             assetEvidence: {['users/x/segments']: {version: '1', checkedAt: 0}}
         })
-        component.componentDidMount()
+        watch.start()
 
         rerender({assetEvidence: {['users/x/segments']: {version: '2', checkedAt: 0}}})
 
@@ -496,8 +484,8 @@ describe('an answer for a source no longer selected', () => {
     it('is not published', () => {
         const held = new Subject()
         assetMetadata$.mockReturnValueOnce(held).mockReturnValue(of({bandNames: ['nbr_coefs'], properties: {}}))
-        const {component, rerender, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/first'})})
-        component.componentDidMount()
+        const {watch, rerender, evidence} = sync({recipe: sliceOver({type: 'ASSET', id: 'users/x/first'})})
+        watch.start()
 
         rerender({recipe: sliceOver({type: 'ASSET', id: 'users/x/second'})})
         held.next({bandNames: ['ndvi_coefs'], properties: {}})

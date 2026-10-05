@@ -45,9 +45,9 @@ import {sourceRequirementGate} from './sourceRequirements'
 // nothing an export is authorized by, and execution resolves its own inputs.
 //
 // A recipe whose type declares requirements of the sources it selects (`sourceRequirements`, sourceRequirements.js) is
-// authorized only while each is known to be met, decided from the same state and from the recipe's evidence owner as
-// the source runtime gives access to it (`evidenceOwnerOf`): while one is being checked it is waited for, and otherwise
-// it blocks, naming the section the source is selected in. Dependencies already known to be unsound refuse it for that.
+// authorized only while each is known to be met, decided from the same state and from the observation the source
+// runtime keeps the recipe's evidence current by (`evidenceOwnerOf`), which the panel's own watch acquires: while one is
+// being checked it is waited for, and otherwise it blocks, naming the section the source is selected in. Dependencies already known to be unsound refuse it for that.
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose

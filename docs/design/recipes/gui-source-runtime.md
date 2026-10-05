@@ -1,7 +1,7 @@
 # GUI source runtime
 
 Current browser source-resolution boundaries and their proposed extensions. The implemented one-shot
-`resolveImageOutput$` operation and the separate live `SourceEvidenceSync` lifecycle reuse pure shared contracts.
+`resolveImageOutput$` operation and the live evidence registry (`evidenceRegistry.js`) reuse pure shared contracts.
 The unified `watchSource$`, configured-source `querySources$`, versioned resource cache and coherent execution bundles
 remain design proposals. Components should not own dependency traversal or cache policy.
 
@@ -442,7 +442,7 @@ scalars alone; it does not establish that averaging suits every scalar band. Mas
 `changeBased('change')`.
 
 **Evidence currency.** Evidence describes the source as it was read, from particular records, assets and credentials:
-its basis. `SourceEvidenceSync` decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
+its basis. The evidence registry decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
 still holds - whether to read again, and whether an answer may still be published. The credential container is judged
 by an opaque generation numbered by its identity; nothing compares, retains or publishes what it contains. The rule
 compares a selection by identity, so that reapplying a source panel is a change. Retrieve reads no evidence: what it
@@ -546,7 +546,7 @@ was built from. That one operation-local context is what a caller needs to keep 
 to know which records a repair would change. Continuing to load means a graph that also has a definitive
 diagnostic can end in a loader failure rather than completing with the diagnostic: the one-shot runtime then
 reports `UNAVAILABLE` carrying the loader error, with `dependencyValidity` `INVALID` from the definitive
-diagnostic; `SourceEvidenceSync` and PyEO's imagery read report the loader failure; Task fails the export naming
+diagnostic; the evidence registry and PyEO's imagery read report the loader failure; Task fails the export naming
 both. The current `loadRecipesById$` adapter fans a
 frontier out over the existing authenticated `api.recipe.load$(id)` operation with bounded concurrency.
 Consequently, the temporary implementation needs at most one logical request batch per discovered graph depth; it
@@ -581,30 +581,52 @@ state, applicability and final export filtering remain owned by their consumers.
 
 ### Live source evidence
 
-Current visualizations are inherited while the consuming recipe is open, but not yet through this runtime; a
-preserving consumer's bands are its own description, which the runtime loads for its watches.
-`SourceEvidenceSync` uses the shared closure-completion boundary with the session's reference-counted recipe
-loader. For Masking it follows declared inheritance over the resolved records for visualizations, including styles
+The runtime keeps a recipe's evidence about its source current while anything watches it (`evidenceRegistry.js`); a
+preserving consumer's bands are its own description, which the runtime loads for its output watches. The registry
+uses the shared closure-completion boundary, claiming every record it reads in the session's reference-counted recipe
+cache (`recipeCacheClaims.js`), as components do - those the session already held as well as those it loads - so a
+record stays while any watch or component uses it. A draft, open or closed with its saves unsettled, outlives its last
+claimant. For Masking it follows declared inheritance over the resolved records for visualizations, including styles
 owned by the source and intermediate wrappers rather than their copied presets, and asks Earth Engine nothing about
 bands. Its operation basis compares persisted dependency inputs by value, retaining runtime
 `ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
 each asset's token and explicit refreshes as the source runtime knows them
 ([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)), and Earth Engine identity. A token
-first learned after a read is no change. The assets it reads are claimed from the runtime while it is mounted. The
-basis covers every record the closure read, whether the
+first learned after a read is no change. The assets it reads are claimed from the runtime while the recipe is
+watched. The basis covers every record the closure read, whether the
 closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
 record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
 
-#### Evidence owners
+#### Evidence watches
 
-The lifecycle registers with the source runtime as the owner of its recipe's evidence (`evidenceOwners.js`), which
-gives synchronous reads its live basis without copying it into Redux, where it would lose the identities its rule
-compares. Each observation is numbered; the evidence it publishes carries that number, so a reader counts evidence only
-for the observation the live basis belongs to. `ui.sourceEvidenceObservation` notifies consumers that an observation
-started. A registration is its owner's alone: releasing it leaves a replacement's in place, and nothing reported after
-release or runtime teardown is kept. Observation identities are unique across runtimes, since published evidence can
-outlive the runtime that numbered it. This is access to the existing owner, with no loading or retention of its own;
-source requirements read it ([Change Alerts REF](source-resolution.md#change-alerts-ref)).
+One observation per recipe is shared by everything watching it, wherever the recipe is shown:
+
+| Watcher | Acquires | How |
+|---|---|---|
+| A map layer or Retrieve panel | what the type's `sourceRequirements` hold its product to | inside `watchOutput$`, with no wiring of its own |
+| A segment chart | what `PIXEL_SEGMENTS` needs | `watchEvidence$({recipeId, operation})` while open |
+| The recipe's editor | the observation it names, for what its panels present | `SourceEvidenceSync`, `watchEvidence$({recipeId, observation})` |
+
+An operation in a declaration's `operations` acquires the whole observation, read by the observation the type registers
+(`sourceObservation`) unless an editor names its own. One only in `providerOperations` acquires the records of the
+selected source's closure and nothing else: the provider chain is judged from them, no capability evidence is read, and
+no asset is claimed. A type without requirements is observed only by its editor, so Masking's presets and the evidence
+CCDC Slice and BAYTS read stay editor-only; Masking layers elsewhere keep the saved-snapshot fallback.
+
+The registry makes the live basis readable synchronously (`evidenceOwnerOf`) - `{observationId, basis, observes,
+records}` - without copying it into Redux, where it would lose the identities its rule compares. Each observation is
+identified uniquely across runtimes, since published evidence can outlive the runtime that numbered it; the evidence it
+publishes carries that identity, so a reader counts evidence only for the observation the live basis belongs to.
+`ui.sourceEvidenceObservation` notifies readers that an observation started and, for a records acquisition, that it
+settled. Checking is always an active acquisition: once the last watcher leaves, the work is cancelled, its asset and
+record claims are released, and readers see no owner. Source requirements read it
+([Change Alerts REF](source-resolution.md#change-alerts-ref)).
+
+Updates are synchronous with the store change that causes them. Claiming records or assets, marking an observation
+started, publishing and applying an editor's defaults can all dispatch again, so an observation's identity and its
+cancellation are installed before anything can dispatch, and every write is made only for the entry, observation and
+basis still current when it is made, and only to a recipe the session still holds; an evicted record is never written
+back. A claim that returns after its observation ended or was replaced is released at once.
 
 The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
 without observing. Removing it needs two things:
@@ -616,16 +638,23 @@ or invalidate pending answers. The full model remains part of the comparison: co
 invalidate even when the resulting band description is identical. The same comparison controls re-observation
 and whether a pending answer may publish.
 
-`SourceEvidenceSync` takes a per-recipe observation describing the selected source and how to read evidence about
-it. Masking, CCDC Slice, Change Alerts and BAYTS Alerts use this lifecycle. It completes the selected source's
-closure rather than the consumer's, so an unrelated incomplete consumer input cannot block acquisition of a
-replacement source. The selected source's own dependency failures still matter.
+An observation describes the selected source and how to read evidence about it. Masking, CCDC Slice, Change Alerts and
+BAYTS Alerts use this lifecycle. It completes the selected source's closure rather than the consumer's, so an
+unrelated incomplete consumer input cannot block acquisition of a replacement source. The selected source's own
+dependency failures still matter.
 
-An observation can supply `applyAccepted` assignments, written in the same action as accepted evidence, and a
-`reportUnavailable` callback for an accepted failure. Configuration policy compares source identity and payload
-against the last successful observation, so unchanged recovery does not overwrite user edits. Change Alerts and
-BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
-responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
+What only an open editor may do stays with the editor's watch. An observation can supply `applyAccepted` assignments,
+written in the same action as accepted evidence while an editor watches and the recipe is open, and a
+`reportUnavailable` callback for an accepted failure. Evidence obtained while only a map watched changes no
+configuration. Configuration policy compares source identity and payload against the last evidence that policy
+processed (`ui.sourceEvidenceApplied`, advanced in the same action whether or not it assigned anything), so unchanged
+recovery does not overwrite user edits, and an editor opened over evidence a map already obtained processes it once,
+as it would have on arrival. A failure no editor has seen is announced once when one attaches; the error stays in the
+runtime, not Redux. Change Alerts and BAYTS own their default-setting policies; the registry owns acceptance,
+cancellation and rejection of superseded responses. Change Alerts derives segment descriptions and monitoring
+settings from one asset-metadata response. CCDC Slice's editor records its saved-layer provenance
+(`ui.savedLayerSource`) before its watch starts; an outside-editor Slice watch must record it first, which the Slice
+migration has to provide.
 
 Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
 charts and previews must discard what they drew is the pixel generation's to say
@@ -644,8 +673,9 @@ identity of the source as it was read, which a consumer's acquisitions and layer
 bands are read through the common read ([reading a recipe's own output](#reading-a-recipes-own-output)), never from
 evidence. Open drafts are not overwritten by persisted dependency reloads. Failed observations offer no
 visualizations, and are no answer rather than an empty one. Saved presets remain the fallback only where nothing has
-been observed. A shared live `watchSource$` would make this evidence available without an open consuming recipe and
-allow that fallback to retire.
+been observed. Presentation evidence is observed outside an editor only where a declared requirement needs it; a
+shared live `watchSource$` would make the rest available without an open consuming recipe and allow that fallback to
+retire.
 
 ### Asset map-layer refresh
 
@@ -791,7 +821,7 @@ answers belong to the runtime (`sourceRuntime/outputRegistry.js`):
 |---|---|---|
 | A recipe's map layer, on its own or another recipe's map | the `RecipeImageLayer` instance, on the product its config names (`outputWatch.js`) | while mounted |
 | Its layer form, visualization selector and visualization editor | none of their own: they are given the layer's read | - |
-| Masking, CCDC Slice, Change Alerts and BAYTS source evidence | `SourceEvidenceSync`, outside the output watches | while the recipe is open; its basis |
+| Source evidence: Change Alerts' requirements, and Masking, CCDC Slice and BAYTS presentation | the output watches and charts needing it, and the editor (`evidenceRegistry.js`) | while any of them watches; its basis |
 | A Retrieve panel over its recipe's image output | the panel instance (`withRetrieveOutput.jsx`), on `IMAGE_OUTPUT` | while open |
 | Input workflows copying bands and presets at selection, and Sampling Design | their selection workflow | the selection; presets are filtered against the names that workflow observed |
 

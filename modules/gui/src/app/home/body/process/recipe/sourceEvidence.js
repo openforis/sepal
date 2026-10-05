@@ -10,7 +10,7 @@ import {withKnownIdentities} from './visualizationMatching'
 //
 // A recipe that declares it preserves an input's band mapping and values has that input's CURRENT presets, not the
 // ones copied into its model when the input was selected; its bands are its declaration's to describe. This reads
-// what the sync component observed, and is the only reader: the types that inherit answer from it through their own
+// what its editor's evidence watch observed (evidenceRegistry.js), and is the only reader: the types that inherit answer from it through their own
 // helpers.
 //
 // Runtime only. `recipe.ui` is stripped before persisting, so nothing here is written into a saved recipe,

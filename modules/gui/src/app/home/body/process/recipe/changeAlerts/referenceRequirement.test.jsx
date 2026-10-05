@@ -15,7 +15,8 @@ import {initStore} from '~/store'
 // mounted beside a Retrieve, over a real store and source runtime. Earth Engine and storage are faked.
 
 const fake = vi.hoisted(() => ({
-    assets: {}, failing: new Set(), heldMetadata: null, versions: {}, heldVersions: null, calls: [], segmentRequests: []
+    assets: {}, failing: new Set(), heldMetadata: null, versions: {}, heldVersions: null, calls: [], segmentRequests: [],
+    stored: {}, heldLoads: null, failingLoads: new Set()
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -61,7 +62,20 @@ vi.mock('~/apiRegistry', async () => {
             }
         },
         recipe: {
-            load$: id => throwError(() => new Error(`Recipe ${id} not found`)),
+            load$: id => {
+                fake.calls.push(['loadRecipe', id])
+                if (fake.failingLoads.has(id) || !fake.stored[id]) {
+                    return throwError(() => new Error(`Recipe ${id} not found`))
+                }
+                return fake.heldLoads
+                    ? new Observable(subscriber => {
+                        fake.heldLoads.push(() => {
+                            subscriber.next(fake.stored[id])
+                            subscriber.complete()
+                        })
+                    })
+                    : of(fake.stored[id])
+            },
             loadAll$: () => of(LISTING)
         }
     }}
@@ -100,6 +114,8 @@ const {
 const {assetsMutated} = await import('~/widget/assetMutations')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {referenceRequirement} = await import('./referenceRequirement')
+const {mapProducts} = await import('./bands')
+const {recipeAccess} = await import('../../recipeAccess')
 const {ChartPixel} = await import('./panels/chartPixel')
 const {requestGate} = await import('../sourceRequirements')
 const {actionBuilder} = await import('~/action-builder')
@@ -108,14 +124,16 @@ const {RecipeImageLayer} = await import('../recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 const {Subject} = await import('rxjs')
+const {LayerSourceRequirement, SelectedSourceStatus} = await import('../selectedSource')
 
-// Change Alerts' own layer form is replaced by one that reports the layer it is given to draw.
+// Change Alerts' own layer form is replaced by one that reports the layer it is given to draw, and shows what every
+// layer form shows of the requirement holding it.
 addRecipeImageLayer('CHANGE_ALERTS', ({layer}) => {
     previews.shown = layer
-    return null
+    return <LayerSourceRequirement/>
 })
 
-registry.CHANGE_ALERTS = {sourceRequirements: [referenceRequirement]}
+registry.CHANGE_ALERTS = {sourceRequirements: [referenceRequirement], sourceObservation: changeAlertsObservation, mapProducts}
 registry.CCDC = {describeSegments$}
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -135,6 +153,9 @@ beforeEach(() => {
     fake.versions = {}
     fake.heldVersions = null
     fake.calls = []
+    fake.stored = {}
+    fake.heldLoads = null
+    fake.failingLoads = new Set()
 })
 
 afterEach(async () => {
@@ -247,19 +268,267 @@ describe('Earth Engine requests for the mosaics a period is compared on', () => 
 
 describe('Earth Engine requests for alerts shown outside their editor', () => {
     it('are refused where the held records alone refuse the reference', async () => {
-        await editor({selection: ref('masking-mosaic'), owner: false})
-
-        await act(async () => store.dispatch(set(['process', 'tabs'], [])))
+        await onAnotherMap({selection: ref('masking-mosaic')})
 
         expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+        expect(previews.constructed).toEqual([])
     })
 
-    it('are not held where only evidence could answer: nothing there reads the reference', async () => {
-        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, owner: false})
+    it('are refused over a reference only its evidence shows to be unsuitable, and nothing is drawn', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([['ndvi_rmse', 1]])
 
-        await act(async () => store.dispatch(set(['process', 'tabs'], [])))
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+        expect(previews.constructed).toEqual([])
+    })
+
+    it('are held while the layer\'s own watch checks the reference, and made once it is known to suit', async () => {
+        fake.heldMetadata = []
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_PENDING', wait: true})
+        expect(previews.constructed).toEqual([])
+
+        await answerHeldReads()
 
         expect(gate('IMAGE_OUTPUT')).toBe(null)
+        expect(previews.constructed).toHaveLength(1)
+    })
+
+    it('change none of the alerts\' configuration', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 2, recipe_sources: JSON.stringify(EXPORTED_SOURCES)})
+        const before = alertsModel({type: 'ASSET', id: SEGMENTS_ASSET})
+
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('OBSERVED')
+        expect(alertsRecipe().model).toEqual(before)
+    })
+})
+
+// The monitoring and calibration mosaics resolve the reference through its provider chain alone.
+// What the map's area menu says of alerts withheld over their reference: the alerts, the section their reference is
+// selected in, and the diagnosis that section gives.
+describe('alerts shown on another map while their reference holds them', () => {
+    it('say why they are not drawn', async () => {
+        await onAnotherMap({selection: ref('masking-mosaic')})
+
+        expect(previews.constructed).toEqual([])
+        expect(layerMessages()).toEqual([{type: 'warning', text: expect.stringContaining('process.source.status.held')}])
+        expect(layerMessages()[0].text).toContain('CHANGE_ALERTS \'Alerts\'')
+        expect(layerMessages()[0].text).toContain('process.changeAlerts.panel.reference.button')
+        expect(layerMessages()[0].text).toContain('process.source.status.notAProducer')
+        expect(layerMessages()[0].text).toContain('Sentinel 2021')
+    })
+
+    it('say so when no reference is selected', async () => {
+        await onAnotherMap({selection: {}})
+
+        expect(layerMessages()).toEqual([{type: 'warning', text: expect.stringContaining('process.source.status.missing')}])
+    })
+
+    it('stop saying it, and are drawn, once a suitable reference is selected', async () => {
+        await onAnotherMap({selection: ref('masking-mosaic')})
+
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'reference'], ref('masking-ccdc'))))
+        await settled()
+
+        expect(layerMessages()).toEqual([])
+        expect(previews.constructed).toHaveLength(1)
+    })
+
+    it('say only that the reference is being checked while it is', async () => {
+        fake.heldMetadata = []
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        expect(layerMessages()).toEqual([{type: 'info', text: 'process.source.status.held ' + JSON.stringify({
+            recipe: 'CHANGE_ALERTS \'Alerts\'',
+            section: 'process.changeAlerts.panel.reference.button',
+            message: 'process.source.status.checking'
+        })}])
+
+        await answerHeldReads()
+
+        expect(layerMessages()).toEqual([])
+    })
+
+    // The mosaics resolve the reference through its provider chain alone, which an asset selected directly satisfies.
+    it('warn nothing for a product of theirs the requirement does not hold', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([['ndvi_rmse', 1]])
+        const MOSAIC = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
+
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [MOSAIC, CHANGES]})
+
+        expect(layerMessages()).toEqual([{type: 'warning', text: expect.stringContaining('process.source.status.held')}])
+        expect(gate('COLLECTION_MOSAIC')).toBe(null)
+    })
+})
+
+// REF says what it knows of the reference: checking as information, a problem established about it as a warning.
+describe('the reference section', () => {
+    it.each([
+        ['checking it', 'info', () => fake.heldMetadata = [], {type: 'ASSET', id: SEGMENTS_ASSET}],
+        ['unsuitable', 'warning', () => {}, ref('masking-mosaic')],
+        ['unavailable', 'warning', () => fake.failing.add(SEGMENTS_ASSET), {type: 'ASSET', id: SEGMENTS_ASSET}]
+    ])('shows a reference %s as %s', async (_case, type, arrange, selection) => {
+        arrange()
+
+        await editor({selection, section: true})
+
+        expect(sectionMessage()).toEqual(type)
+    })
+})
+
+describe('a mosaic of the period, shown with the editor closed', () => {
+    const MOSAIC = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
+
+    it('asks nothing of the segments it does not read', async () => {
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [MOSAIC]})
+
+        expect(gate('COLLECTION_MOSAIC')).toBe(null)
+        expect(metadataReads()).toBe(0)
+    })
+
+    it('is held while the records of a chain the session does not hold are read, and refused once they show it leads to no segments', async () => {
+        fake.stored = storedRecords(['masking-mosaic', 'mosaic-1'])
+        fake.heldLoads = []
+        await onAnotherMap({selection: ref('masking-mosaic'), unloaded: ['masking-mosaic', 'mosaic-1'], layers: [MOSAIC]})
+        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_PENDING', wait: true})
+
+        await answerHeldLoads()
+
+        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+        expect(previews.constructed).toEqual([])
+        expect(metadataReads()).toBe(0)
+    })
+
+    it('is refused as unavailable, not left waiting, when those records cannot be read', async () => {
+        fake.failingLoads = new Set(['masking-mosaic'])
+
+        await onAnotherMap({selection: ref('masking-mosaic'), unloaded: ['masking-mosaic', 'mosaic-1'], layers: [MOSAIC]})
+
+        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_UNAVAILABLE', wait: false})
+        expect(previews.constructed).toEqual([])
+    })
+})
+
+describe('the reference watched by several consumers', () => {
+    // An asset stating no date representation proposes none, so the selection is left as it is.
+    it('is read once for two layers and the editor', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {})
+
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [CHANGES, CHANGES_AGAIN], editor: true})
+
+        expect(metadataReads()).toBe(1)
+        expect(previews.constructed).toHaveLength(2)
+    })
+
+    it('stays watched while one of them closes, without being read again', async () => {
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [CHANGES, CHANGES_AGAIN]})
+        const owner = runtime.evidenceOwnerOf(ALERTS)
+
+        await show({layers: [CHANGES]})
+
+        expect(runtime.evidenceOwnerOf(ALERTS)).toBe(owner)
+        expect(metadataReads()).toBe(1)
+        expect(gate('IMAGE_OUTPUT')).toBe(null)
+    })
+
+    it('is let go with the last: its read is cancelled, and the records it loaded are released', async () => {
+        fake.stored = storedRecords(['asset-mosaic-1'])
+        await onAnotherMap({selection: ref('asset-mosaic-1'), unloaded: ['asset-mosaic-1']})
+        expect(loaded()).toContain('asset-mosaic-1')
+        const evidence = alertsRecipe().ui.sourceEvidence
+        fake.heldMetadata = []
+        await act(async () => replaceCredentials())
+        expect(fake.heldMetadata).toHaveLength(1)
+
+        await show({layers: [], held: true})
+        await answerHeldReads()
+
+        expect(runtime.evidenceOwnerOf(ALERTS)).toBe(null)
+        expect(alertsRecipe().ui.sourceEvidence).toBe(evidence)
+        expect(loaded()).not.toContain('asset-mosaic-1')
+    })
+})
+
+describe('the editor opened over evidence a map already obtained', () => {
+    const ASSET = {type: 'ASSET', id: SEGMENTS_ASSET}
+
+    beforeEach(() => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 2, recipe_sources: JSON.stringify(EXPORTED_SOURCES)})
+    })
+
+    it('applies the monitoring settings it proposes, without reading the reference again', async () => {
+        await onAnotherMap({selection: ref('asset-mosaic-1')})
+
+        await show({editor: true})
+
+        expect(alertsRecipe().model.sources.dataSets).toEqual(EXPORTED_SOURCES.dataSets)
+        expect(metadataReads()).toBe(1)
+    })
+
+    // Configured beside an asset selection, the representation is the selection's own; the editor seeds it as it would
+    // on the first answer it saw.
+    it('seeds the date representation of an asset it had no answer for', async () => {
+        await onAnotherMap({selection: ASSET})
+
+        await show({editor: true})
+
+        expect(alertsRecipe().model.reference.dateFormat).toBe(2)
+    })
+
+    it('leaves what the user edited since alone when it is opened again', async () => {
+        await onAnotherMap({selection: ASSET, editor: true})
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'nbr')))
+
+        await show({editor: false})
+        await show({editor: true})
+
+        expect(alertsRecipe().model.sources.band).toBe('nbr')
+    })
+
+    it('writes them once, however the store is notified while they are applied', async () => {
+        await onAnotherMap({selection: ref('asset-mosaic-1')})
+        const models = [alertsRecipe().model]
+        const unsubscribe = store.subscribe(() => {
+            const model = alertsRecipe()?.model
+            if (model !== models.at(-1)) {
+                models.push(model)
+                store.dispatch({type: 'UNRELATED'})
+            }
+        })
+
+        await show({editor: true})
+        unsubscribe()
+
+        expect(models).toHaveLength(2)
+        expect(models[1].sources.dataSets).toEqual(EXPORTED_SOURCES.dataSets)
+        expect(metadataReads()).toBe(1)
+    })
+})
+
+describe('evidence published for alerts the session no longer holds', () => {
+    it('does not bring their record back', async () => {
+        fake.heldMetadata = []
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes'], without(store.getState().process.loadedRecipes, ALERTS))))
+        await answerHeldReads()
+
+        expect(alertsRecipe()).toBeUndefined()
+    })
+})
+
+describe('a dependency the user closed while its save is still settling', () => {
+    it('is read as the draft it is, neither replaced nor let go by the watch', async () => {
+        const draft = {...RECORDS.find(({id}) => id === 'masking-ccdc'), name: 'Edited, not yet saved'}
+        fake.stored = storedRecords(['masking-ccdc'])
+        await onAnotherMap({selection: ref('masking-ccdc'), saving: {'masking-ccdc': draft}})
+
+        await show({layers: []})
+
+        expect(store.getState().process.loadedRecipes['masking-ccdc']).toBe(draft)
+        expect(fake.calls).not.toContainEqual(['loadRecipe', 'masking-ccdc'])
     })
 })
 
@@ -405,23 +674,25 @@ describe('Apply right after the session moves past what the reference was read o
         ['credentials are replaced', () => store.dispatch(set(['user', 'currentUser', 'googleTokens'], {accessToken: 'renewed'}))],
         ['a recipe the reference reads is edited', () => store.dispatch(set(['process', 'loadedRecipes', 'masking-ccdc', 'model', 'imageMask'], ref('mosaic-1')))],
         ['the asset it reads is changed by this session', () => assetsMutated([SEGMENTS_ASSET.split('/')])]
-    ])('is not authorized when %s, and is again once the reference is read anew', async (_case, change) => {
+    ])('authorizes nothing on what was read before %s, and is authorized once the reference is read anew', async (_case, change) => {
         const selection = _case.startsWith('a recipe') ? ref('masking-ccdc') : {type: 'ASSET', id: SEGMENTS_ASSET}
         fake.heldVersions = _case.startsWith('the asset') ? [] : null
         await editor({selection})
         answerVersions()
         await settled()
         expect(decision()).toBe('RETRIEVABLE')
+        const before = authorizedBy()
 
         act(() => {
             change()
-            expect(decisionAtApply()).not.toBe('RETRIEVABLE')
+            expect(authorizedBy()).not.toBe(before)
         })
 
         fake.versions[SEGMENTS_ASSET] = 'v2'
+        // A mutation's first follow-up read is scheduled on the clock, not as a promise.
         for (let follow = 0; follow < 5; follow++) {
             answerVersions()
-            await settled()
+            await act(async () => new Promise(resolve => setTimeout(resolve, 0)))
         }
         expect(decision()).toBe('RETRIEVABLE')
     })
@@ -469,12 +740,11 @@ describe('reading whether the reference suits', () => {
     })
 })
 
-describe('a Retrieve with nothing reading the reference', () => {
-    it('blocks as unchecked rather than waiting for an answer nothing will give', async () => {
+describe('a Retrieve whose recipe nothing else watches', () => {
+    it('has the reference read for it, and is authorized once it is known to suit', async () => {
         await editor({selection: ref('masking-ccdc'), owner: false})
 
-        expect(decision()).toBe('BLOCKED')
-        expect(retrieve.retrieveOutput.output.diagnostics[0].code).toBe('SOURCE_UNCHECKED')
+        expect(decision()).toBe('RETRIEVABLE')
     })
 })
 
@@ -531,31 +801,38 @@ const RuntimeProbe = compose(props => {
     return null
 }, withSourceRuntime())
 
-const editor = async ({selection, owner = true, chart = false, layer = false}) => {
-    const initialState = {
-        user: {currentUser: {googleTokens: {accessToken: 'token'}}},
-        process: {
-            loadedRecipes: {
-                [ALERTS]: {
-                    id: ALERTS, type: 'CHANGE_ALERTS', revision: 1,
-                    model: {
-                        reference: selection,
-                        sources: {band: 'ndvi', dataSets: {LANDSAT: ['NDVI']}},
-                        options: {corrections: []},
-                        date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
-                    },
-                    ui: {initialized: true}
-                },
-                ...Object.fromEntries(RECORDS.map(record => [record.id, record]))
-            },
-            recipes: LISTING,
-            recipeListing: {checkedAt: Date.now()},
-            projects: [],
-            tabs: [{id: ALERTS}]
+// The session as it stands when the alerts are shown: their record and the recipes they may read, less any the session
+// does not hold, and with any closed while a save of theirs is still settling - towards a revision the listing
+// already names.
+const sessionState = ({selection, tabs, unloaded = [], saving = {}}) => ({
+    user: {currentUser: {googleTokens: {accessToken: 'token'}}},
+    process: {
+        loadedRecipes: {
+            [ALERTS]: {id: ALERTS, type: 'CHANGE_ALERTS', revision: 1, model: alertsModel(selection), ui: {initialized: true}},
+            ...Object.fromEntries(RECORDS.filter(({id}) => !unloaded.includes(id)).map(record => [record.id, record])),
+            ...saving
         },
-        assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'T1'}], other: []},
-        dimensions: {width: 1024, height: 768}
+        recipes: LISTING.map(summary => saving[summary.id] ? {...summary, revision: 2} : summary),
+        recipeListing: {checkedAt: Date.now()},
+        saveStates: Object.fromEntries(Object.keys(saving).map(id => [id, {status: 'SAVING', revision: 2, model: saving[id].model}])),
+        projects: [],
+        tabs
+    },
+    assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'T1'}], other: []},
+    dimensions: {width: 1024, height: 768}
+})
+
+function alertsModel(selection) {
+    return {
+        reference: selection,
+        sources: {band: 'ndvi', dataSets: {LANDSAT: ['NDVI']}},
+        options: {corrections: []},
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
     }
+}
+
+const editor = async ({selection, owner = true, chart = false, layer = false, section = false}) => {
+    const initialState = sessionState({selection, tabs: [{id: ALERTS}]})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -568,6 +845,7 @@ const editor = async ({selection, owner = true, chart = false, layer = false}) =
                     {owner ? <SourceEvidenceSync observation={changeAlertsObservation}/> : null}
                     <RetrieveProbe/>
                     <RuntimeProbe/>
+                    {section ? <SelectedSourceStatus section='reference' type={selection.type} id={selection.id}/> : null}
                     {layer
                         ? (
                             <TabContext id={ALERTS} busyIn$={new Subject()}>
@@ -618,7 +896,82 @@ const replaceRuntime = async () => {
     ))
 }
 
+// The alerts shown in another recipe's map, their own editor closed unless asked for. `show` mounts what is shown now:
+// layers of the alerts, and the editor, whose tab is opened and closed with it. The record is held while layers are
+// shown, or while `held` - as a layer list naming them would.
+const HOST = 'host-1'
+let shown
+
+const onAnotherMap = async ({selection, layers = [CHANGES], editor = false, unloaded, saving}) => {
+    const initialState = sessionState({selection, tabs: [{id: HOST}], unloaded, saving})
+    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    initStore(store)
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    shown = {layers: [], editor: false}
+    await show({layers, editor})
+}
+
+const show = async next => {
+    shown = {...shown, ...next}
+    const tabs = [{id: HOST}, ...shown.editor ? [{id: ALERTS}] : []]
+    await act(async () => {
+        store.dispatch(set(['process', 'tabs'], tabs))
+        root.render(
+            <Provider store={store}>
+                <SourceRuntimeProvider>
+                    <RuntimeProbe/>
+                    {shown.layers.length || shown.held ? <LayerSources/> : null}
+                    <TabContext id={HOST} busyIn$={new Subject()}>
+                        {shown.layers.map((layerConfig, index) => (
+                            <RecipeImageLayer
+                                key={index}
+                                source={{id: `alerts-layer-${index}`, sourceConfig: {recipeId: ALERTS}}}
+                                layerConfig={layerConfig}
+                                map={{}}
+                            />
+                        ))}
+                    </TabContext>
+                    {shown.editor
+                        ? (
+                            <Recipe id={ALERTS}>
+                                <SourceEvidenceSync observation={changeAlertsObservation}/>
+                            </Recipe>
+                        )
+                        : null}
+                </SourceRuntimeProvider>
+            </Provider>
+        )
+    })
+    await settled()
+}
+
+// What holds the alerts' record while their layers are shown, as the map's layer sources do.
+const LayerSources = compose(({usingRecipe}) => {
+    usingRecipe(ALERTS)
+    return null
+}, recipeAccess())
+
+const CHANGES = {visualizationType: 'changes', mosaicType: 'latest', visParams: {type: 'continuous', bands: ['confidence']}}
+const CHANGES_AGAIN = {...CHANGES, visParams: {...CHANGES.visParams, min: [0]}}
+
+const EXPORTED_SOURCES = {dataSets: {LANDSAT: ['NDVI', 'NBR']}}
+
+const storedRecords = ids => Object.fromEntries(RECORDS.filter(({id}) => ids.includes(id)).map(record => [record.id, record]))
+
+const loaded = () => Object.keys(store.getState().process.loadedRecipes)
+
+const without = (object, key) => Object.fromEntries(Object.entries(object).filter(([id]) => id !== key))
+
 const settled = () => act(async () => {})
+
+const answerHeldLoads = async () => {
+    const held = fake.heldLoads
+    fake.heldLoads = null
+    act(() => held.forEach(answer => answer()))
+    await settled()
+}
 
 const answerHeldReads = async () => {
     const held = fake.heldMetadata
@@ -662,4 +1015,17 @@ const decision = () => decide(retrieve.retrieveOutput)
 // What a submission decides from, read from the store as it stands at that moment.
 const decisionAtApply = () => decide(retrieve.readRetrieveOutput())
 
+// The observation whose evidence a submission now would be authorized on, if any. Updates are synchronous with the
+// change, so an observation over records the session holds may already have read them anew.
+const authorizedBy = () => decisionAtApply() === 'RETRIEVABLE' ? alertsRecipe().ui.sourceEvidence.observationId : null
+
 const metadataReads = () => fake.calls.filter(([name]) => name === 'assetMetadata').length
+
+// The messages shown, by type and text.
+const messages = () => [...container.querySelectorAll('div')]
+    .filter(element => /type-/.test(element.className))
+    .map(element => ({type: element.className.match(/type-([a-z]+)/)[1], text: element.textContent}))
+
+const layerMessages = () => messages()
+
+const sectionMessage = () => messages()[0]?.type

@@ -72,7 +72,9 @@ const read = (assets = {[SEGMENTS]: current(), [MASK]: current()}) => {
             earthEngineGeneration: earthEngineGeneration(state),
             refreshed: 0,
             dependencies: []
-        }
+        },
+        observes: true,
+        records: 'COMPLETE'
     }
     return readSourceRequirements({state, recipe, evidenceOwnerOf: () => owner, now: NOW})
 }
