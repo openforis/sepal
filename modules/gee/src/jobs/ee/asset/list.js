@@ -3,6 +3,7 @@ import {catchError, map, merge, mergeMap, of, switchMap, toArray} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
+import {currentEEContext} from '#sepal/ee/eeContext'
 import * as http from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 import {fileName} from '#sepal/path'
@@ -17,7 +18,7 @@ const worker$ = ({
         throw Error('Requires a connected Google Account')
     }
 
-    const headers = {'x-goog-user-project': ee.data.getProject(), Authorization: `Bearer ${googleTokens.accessToken}`}
+    const headers = {'x-goog-user-project': currentEEContext().projectId, Authorization: `Bearer ${googleTokens.accessToken}`}
 
     const assets$ = parentId =>
         ee.listAssets$(parentId).pipe(
