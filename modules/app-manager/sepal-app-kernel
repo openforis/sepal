@@ -1,0 +1,39 @@
+#!/bin/bash
+# Kernel launcher for shared SEPAL apps. Runs the app environment from a copy on local disk when
+# app-manager has published an archive, otherwise straight from Lustre exactly as before.
+# Every failure path falls back to Lustre: a slow app beats a broken one.
+#
+# usage: sepal-app-kernel <app-name> [args passed to ipykernel_launcher]
+set -u
+app=$1; shift
+
+# Overridable only so the test harness can point at a fixture tree.
+kernels=${SEPAL_KERNELS_DIR:-/usr/local/share/jupyter/kernels}
+root=${SEPAL_CACHE_ROOT:-/tmp/sepal-kernels}
+
+lustre="$kernels/venv-$app/venv"
+tarball="$kernels/venv-$app/venv.tar.zst"
+venv=$lustre
+
+if [[ -f $tarball ]]; then
+    cache="$root/$app/$(stat -c %Y "$tarball")"
+    if mkdir -p "$root/$app" 2>/dev/null; then
+        rm -rf "$cache.tmp"
+        if mkdir -p "$cache.tmp" \
+           && zstd -q -dc -T0 "$tarball" | tar -C "$cache.tmp" -xf - \
+           && [[ -x $cache.tmp/venv/bin/python3 ]]; then
+            mv -T "$cache.tmp" "$cache"
+        else
+            rm -rf "$cache.tmp"
+        fi
+    fi
+    [[ -d $cache ]] && venv="$cache/venv"
+fi
+
+export PYTHONNOUSERSITE=1
+export PROJ_LIB="$venv/share/proj" PROJ_DATA="$venv/share/proj" GDAL_DATA="$venv/share/gdal"
+# libgdal has its build prefix compiled in; without this the copy finds no drivers.
+[[ -d $venv/lib/gdalplugins ]] && export GDAL_DRIVER_PATH="$venv/lib/gdalplugins"
+
+echo "sepal-app-kernel: $app running from $venv" >&2
+exec "$venv/bin/python3" -m ipykernel_launcher "$@"
