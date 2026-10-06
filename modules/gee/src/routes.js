@@ -33,6 +33,8 @@ import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations
 import taskDownloadCleanup$ from '#gee/jobs/task/downloadCleanup'
 import taskDownloadFiles$ from '#gee/jobs/task/downloadFiles'
 import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
+import taskExportCollectionPrepare$ from '#gee/jobs/task/exportCollectionPrepare'
+import taskExportCollectionTile$ from '#gee/jobs/task/exportCollectionTile'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
 import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
 import taskExportImageToSepal$ from '#gee/jobs/task/exportImageToSepal'
@@ -83,6 +85,8 @@ export default router =>
         .post('/task/operation/status', stream(ctx => taskOperationStatus$(ctx)))
         .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
         .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
+        .post('/task/export/collection/prepare', stream(ctx => taskExportCollectionPrepare$(ctx)))
+        .post('/task/export/collection/tile', stream(ctx => taskExportCollectionTile$(ctx)))
         .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
         .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
         .post('/task/export/image/sepal', stream(ctx => taskExportImageToSepal$(ctx)))

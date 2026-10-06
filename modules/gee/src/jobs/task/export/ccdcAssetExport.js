@@ -1,4 +1,4 @@
-import {forkJoin, switchMap} from 'rxjs'
+import {forkJoin, map, switchMap} from 'rxjs'
 
 import ccdc from '#sepal/ee/timeSeries/ccdc'
 import {formatProperties} from '#sepal/formatProperties'
@@ -6,17 +6,22 @@ import {formatProperties} from '#sepal/formatProperties'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 
-export const startCcdcAssetExport$ = ({image, description}) => {
+export const startCcdcAssetExport$ = params =>
+    ccdcAssetSource$(params).pipe(
+        switchMap(startImageToAssetExport$)
+    )
+
+export const ccdcAssetSource$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
     const segments = ccdc(recipe, {selection: bands})
     return forkJoin({
         segments: segments.getImage$(),
         geometry: segments.getGeometry$()
     }).pipe(
-        switchMap(({segments, geometry}) => {
+        map(({segments, geometry}) => {
             const formattedProperties = formatProperties({...properties, scale})
             const allBands = getAllBands(bands)
-            return startImageToAssetExport$({
+            return {
                 ...other,
                 description,
                 image: segments,
@@ -32,7 +37,7 @@ export const startCcdcAssetExport$ = ({image, description}) => {
                     surfaceReflectance: recipe.model.options.corrections?.includes('SR') && 1,
                     ...toVisualizationProperties(visualizations, {selection: allBands})
                 }
-            })
+            }
         })
     )
 }
