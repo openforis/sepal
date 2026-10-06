@@ -50,6 +50,20 @@ describe('who a call is made as', () => {
 })
 
 describe('what a call answers', () => {
+    test('nothing, once an image collection is created', async () => {
+        const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/c', type: 'IMAGE_COLLECTION'})]})
+
+        expect(await call(alice(), client.createImageCollection$('projects/alice-project/assets/c'))).toEqual([undefined])
+        expect(http.calls[0].method).toBe('POST')
+    })
+
+    test('nothing, once asset properties are set', async () => {
+        const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/i'})]})
+
+        expect(await call(alice(), client.setAssetProperties$('projects/alice-project/assets/i', {a: 1}))).toEqual([undefined])
+        expect(http.calls[0].method).toBe('PATCH')
+    })
+
     test('a computed value', async () => {
         const {client} = setup({answers: [ok({result: 42})]})
 
@@ -125,12 +139,6 @@ describe('what a call answers', () => {
             query: {assetId: 'folder'},
             body: {type: 'FOLDER'}
         })])
-    })
-
-    test('an error for what only the library transport does', async () => {
-        const {client} = setup()
-
-        await expect(call(alice(), client.setAssetProperties$('projects/alice-project/assets/image', {}))).rejects.toThrow('not supported')
     })
 })
 
@@ -311,7 +319,7 @@ const fakeHttp = answers => {
             subscription.unsubscribe()
         }
     })
-    return {calls, get$: respond('GET'), postJson$: respond('POST'), delete$: respond('DELETE')}
+    return {calls, get$: respond('GET'), postJson$: respond('POST'), patchJson$: respond('PATCH'), delete$: respond('DELETE')}
 }
 
 const ok = body => () => of({statusCode: 200, body})

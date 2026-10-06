@@ -8,7 +8,7 @@ import {serviceAccountToken$, serviceAccountTokenService} from '#gee/jobs/servic
 import ee from '#sepal/ee/ee'
 import {EERestClient} from '#sepal/ee/rest/eeRestClient'
 import {EERestRuntime} from '#sepal/ee/restRuntime'
-import {delete$, get$, postJson$} from '#sepal/httpClient'
+import {delete$, get$, patchJson$, postJson$} from '#sepal/httpClient'
 import {swallow} from '#sepal/rxjs'
 
 const require = createRequire(import.meta.url)
@@ -19,7 +19,7 @@ const runtime = new EERestRuntime({
     projectId: googleProjectId,
     createTransport: () => new EERestClient({
         ee,
-        http: {get$, postJson$, delete$},
+        http: {get$, postJson$, patchJson$, delete$},
         limiter$: eeLimiter$,
         serviceAccountToken$,
         recordRequest: recordEERequest
