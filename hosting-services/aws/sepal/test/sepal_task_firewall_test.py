@@ -26,13 +26,17 @@ class SepalTaskFirewallTest(unittest.TestCase):
             f.write(FAKE_IPTABLES)
         os.chmod(fake, os.stat(fake).st_mode | stat.S_IEXEC)
         self.log = os.path.join(self.tmp.name, 'calls')
+        self.resolv_conf = os.path.join(self.tmp.name, 'resolv.conf')
+        with open(self.resolv_conf, 'w') as f:
+            f.write('# Test resolv.conf\nnameserver 172.31.0.2\nnameserver 127.0.0.53\n')
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def run_script(self, check_status):
         env = {**os.environ, 'PATH': f'{self.tmp.name}:{os.environ["PATH"]}',
-               'IPTABLES_LOG': self.log, 'CHECK_STATUS': str(check_status)}
+               'IPTABLES_LOG': self.log, 'CHECK_STATUS': str(check_status),
+               'RESOLV_CONF': self.resolv_conf}
         subprocess.run(['sh', SCRIPT], check=True, env=env)
         with open(self.log) as f:
             return [line.split() for line in f.read().splitlines()]
@@ -60,6 +64,27 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
     def test_inserts_nothing_when_every_rule_is_present(self):
         self.assertEqual([], self.inserted(self.run_script(check_status=0)))
+
+    def test_allows_task_containers_to_reach_nameservers_from_resolv_conf(self):
+        calls = self.inserted(self.run_script(check_status=1))
+        dns_rules = [call for call in calls if 'DOCKER-USER' in call and '--dport' in call and '53' in call]
+        self.assertTrue(len(dns_rules) > 0, "DNS rules should be present")
+        # Should have rules for 172.31.0.2 but not for 127.0.0.53
+        ns_ips = {call[call.index('-d') + 1] for call in dns_rules}
+        self.assertIn('172.31.0.2', ns_ips)
+        self.assertNotIn('127.0.0.53', ns_ips)
+
+    def test_dns_rules_end_above_drop_rules(self):
+        calls = self.inserted(self.run_script(check_status=1))
+        docker_user_calls = [i for i, call in enumerate(calls) if 'DOCKER-USER' in call]
+        if docker_user_calls:
+            dns_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'RETURN' and '--dport' in calls[i]]
+            drop_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'DROP' and '--dport' not in calls[i]]
+            # Since -I inserts at position 1, later insertions appear first in the list
+            # DNS rules (inserted last) should have lower indices than DROP rules (inserted earlier)
+            if dns_rules_indices and drop_rules_indices:
+                self.assertTrue(max(dns_rules_indices) < min(drop_rules_indices),
+                                "DNS rules should be inserted after DROP rules to evaluate first")
 
 
 if __name__ == '__main__':
