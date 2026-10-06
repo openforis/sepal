@@ -122,6 +122,13 @@ describe('exporting a single image', () => {
         expect(submittedImage().sepal_band_encoding_3).toBe(removed)
     })
 
+    it('submits the default projection, pixel limit and shard size where the export names none', async () => {
+        await exportImage({bandEncoding: {}})
+
+        expect(state.submitted[0]).toMatchObject({crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
+        expect(state.submitted[0].crsTransform).toBeUndefined()
+    })
+
     it('deletes the existing asset before starting, when replacing', async () => {
         await exportImage({bandEncoding: {}, strategy: 'replace'})
 
@@ -134,7 +141,7 @@ describe('exporting a single image', () => {
         expect(state.submitted).toEqual([])
     })
 
-    it('is refused for an image collection, which a later release exports', async () => {
+    it('is refused for an image collection, which is exported tile by tile', async () => {
         await expect(lastValueFrom(inEEContext(USER, startImageToAssetExport$({
             image: sourceImage(), description: 'mosaic', assetId: ASSET, assetType: 'ImageCollection', region, scale: 30, properties: {}
         })))).rejects.toThrow(/ImageCollection/)

@@ -74,6 +74,14 @@ describe('exporting a new image collection', () => {
         expect(state.submitted).toMatchObject([{description: 'mosaic_1', assetId: `${COLLECTION}/1`}])
     })
 
+    it('starts a tile with the default projection, pixel limit and shard size, deleting nothing even when replacing', async () => {
+        await exportTile({bandEncoding: {}, strategy: 'replace'}, {tileIndex: 1, tileId: 'tile-1'})
+
+        expect(state.submitted[0]).toMatchObject({crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
+        expect(state.submitted[0].crsTransform).toBeUndefined()
+        expect(state.deleted).toEqual([])
+    })
+
     it('is refused for a user without a Google account, before anything is created', async () => {
         await expect(prepare({bandEncoding: {}, context: SERVICE_ACCOUNT})).rejects.toThrow(/service account/)
         await expect(exportTile({bandEncoding: {}, context: SERVICE_ACCOUNT}, {tileIndex: 0, tileId: 'tile-0'}))

@@ -28,10 +28,10 @@ export const startImageToAssetExport$ = ({
     dimensions,
     region,
     scale,
-    crs = 'EPSG:4326',
+    crs,
     crsTransform,
-    maxPixels = 1e13,
-    shardSize = 256,
+    maxPixels,
+    shardSize,
     properties,
     bandEncoding
 }) => defer(() => {
@@ -52,7 +52,7 @@ export const startImageToAssetExport$ = ({
                         createParentFolder$(assetId),
                         imageToAsset$({
                             image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs,
-                            crsTransform: crsTransform || undefined, maxPixels, shardSize, properties: exportProperties
+                            crsTransform, maxPixels, shardSize, properties: exportProperties
                         }).pipe(
                             map(eeTaskId => ({eeTaskId, assetId}))
                         )
@@ -105,10 +105,10 @@ export const startCollectionTileExport$ = ({
     dimensions,
     region,
     scale,
-    crs = 'EPSG:4326',
+    crs,
     crsTransform,
-    maxPixels = 1e13,
-    shardSize = 256,
+    maxPixels,
+    shardSize,
     tileSize,
     properties,
     bandEncoding
@@ -126,7 +126,7 @@ export const startCollectionTileExport$ = ({
                 region: collectionTiles(region, tileSize).filter(ee.Filter.eq('system:index', tileId)).geometry(),
                 scale,
                 crs,
-                crsTransform: crsTransform || undefined,
+                crsTransform,
                 maxPixels,
                 shardSize,
                 properties: statedProperties(assetId, properties, bandEncoding || {}, carried)
@@ -272,14 +272,19 @@ const representationError = (assetId, reason, cause) =>
         }
     })
 
+// The defaults of every asset export, a single image or a collection tile.
 const imageToAsset$ = ({
-    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, properties
+    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs = 'EPSG:4326', crsTransform,
+    maxPixels = 1e13, shardSize = 256, properties
 }) =>
     formatRegion$(region).pipe(
         switchMap(region => {
             const serverConfig = ee.batch.Export.convertToServerParams(
                 // Earth Engine modifies the pyramidingPolicy it is given.
-                _.cloneDeep({image: image.set(properties), description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}),
+                _.cloneDeep({
+                    image: image.set(properties), description, assetId, pyramidingPolicy, dimensions, region, scale, crs,
+                    crsTransform: crsTransform || undefined, maxPixels, shardSize
+                }),
                 ee.data.ExportDestination.ASSET,
                 ee.data.ExportType.IMAGE
             )
