@@ -69,7 +69,8 @@
         "run": [
             "logger",
             "rabbitmq",
-            "worker"
+            "worker",
+            "task-manager"
         ]
     },
     "gee": {
@@ -210,6 +211,18 @@
             "sandbox-base": "build"
         },
         "run": false
+    },
+    "task-manager": {
+        "lib": [
+            "shared"
+        ],
+        "build": {
+            "task": "build"
+        },
+        "run": [
+            "logger",
+            "mysql"
+        ]
     },
     "terminal": {
         "lib": [

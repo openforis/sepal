@@ -1,0 +1,15 @@
+services:
+  task-manager:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    volumes:  # To allow dynamic reloading in dev
+      # lib/shared
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/task-manager/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/task-manager/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # module
+      - ${SEPAL_PROJECT_DIR}/modules/task-manager:/usr/local/src/sepal/modules/task-manager
+    environment:
+      SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
