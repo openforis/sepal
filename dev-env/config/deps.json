@@ -204,8 +204,7 @@
     },
     "task": {
         "lib": [
-            "shared",
-            "ee"
+            "shared"
         ],
         "build": {
             "sandbox-base": "build"

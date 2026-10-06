@@ -10,20 +10,14 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google-cloud/storage": "^8.2.0",
-        "commander": "^15.0.0",
-        "fast-crc32c": "^2.0.0",
-        "googleapis": "^182.0.0",
         "lodash": "^4.18.1",
         "moment": "^2.31.0",
         "rxjs": "^7.8.2",
-        "sepal": "../../lib/js/shared",
-        "sepal-ee": "../../lib/js/ee"
+        "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
         "jest": "^30.5.2",
-        "jest-expect-message": "^1.1.3",
-        "serialize-error": "^13.0.2"
+        "jest-expect-message": "^1.1.3"
     },
     "jest": {
         "setupFilesAfterEnv": [
@@ -33,8 +27,6 @@
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
-        "#sepal/ee/*": "sepal-ee/src/*.js",
-        "#sepal/ee/*.json": "sepal-ee/src/*.json",
         "#task/*": "./src/*.js",
         "#task/*.json": "./src/*.json",
         "#config/*.json": "./config/*.json"

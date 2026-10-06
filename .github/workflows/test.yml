@@ -46,7 +46,7 @@ jobs:
           - module: modules/gee
             libs: lib/js/shared lib/js/ee
           - module: modules/task
-            libs: lib/js/shared lib/js/ee
+            libs: lib/js/shared
           - module: modules/budget
             libs: lib/js/shared
           - module: modules/gateway
