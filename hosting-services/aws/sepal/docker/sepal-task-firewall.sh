@@ -1,12 +1,16 @@
 #!/bin/sh
-# Keeps task containers (network sepal-task) away from the EC2 metadata service, from every private address
-# except their own network (the gateway), and from the host. Allows DNS queries through the host resolver.
-# Docker evaluates DOCKER-USER before its own rules and never flushes it; -I inserts at the top,
-# so rules inserted later are evaluated earlier (prepended to the chain).
+# Keeps task containers (network sepal-task, addresses 172.29.128.0/17) away from the EC2 metadata service, from
+# every private address except the gateway's HTTP port and the host's nameservers, and from the host itself.
+# The gateway has a pinned address outside that range, so its own traffic is never filtered here.
+# The SEPAL-TASK chain is rebuilt on every run, so changed rules replace the old ones. Docker evaluates
+# DOCKER-USER before its own rules and never flushes it.
 set -e
 
-SUBNET=172.29.0.0/16
-BLOCKED="127.0.0.0/8 100.64.0.0/10 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8 169.254.0.0/16"
+TASK_RANGE=172.29.128.0/17
+GATEWAY=172.29.0.2
+CHAIN=SEPAL-TASK
+BLOCKED="169.254.0.0/16 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 127.0.0.0/8"
+LEGACY_SUBNET=172.29.0.0/16
 
 ensure() {
     chain=$1
@@ -14,25 +18,47 @@ ensure() {
     iptables -C "$chain" "$@" 2>/dev/null || iptables -I "$chain" "$@"
 }
 
-iptables -N DOCKER-USER 2>/dev/null || true
+remove() {
+    while iptables -C "$@" 2>/dev/null; do
+        iptables -D "$@"
+    done
+}
 
+nameservers() {
+    resolv_file="${RESOLV_CONF:-/etc/resolv.conf}"
+    [ -f "$resolv_file" ] || return 0
+    grep "^nameserver" "$resolv_file" | while read -r _ ns; do
+        case "$ns" in
+            127.* | *:*) ;;
+            *) echo "$ns" ;;
+        esac
+    done
+}
+
+iptables -N DOCKER-USER 2>/dev/null || true
+iptables -N "$CHAIN" 2>/dev/null || true
+iptables -F "$CHAIN"
+
+iptables -A "$CHAIN" -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+iptables -A "$CHAIN" -d "$GATEWAY" -p tcp --dport 80 -j RETURN
+for ns in $(nameservers); do
+    iptables -A "$CHAIN" -d "$ns" -p udp --dport 53 -j RETURN
+    iptables -A "$CHAIN" -d "$ns" -p tcp --dport 53 -j RETURN
+done
 for destination in $BLOCKED; do
-    ensure DOCKER-USER -s "$SUBNET" -d "$destination" -j DROP
+    iptables -A "$CHAIN" -d "$destination" -j DROP
 done
 
-# Allow DNS queries to nameservers from resolv.conf (insert after drops so they're evaluated before)
-resolv_file="${RESOLV_CONF:-/etc/resolv.conf}"
-if [ -f "$resolv_file" ]; then
-    grep "^nameserver" "$resolv_file" | while read -r _ ns; do
-        # Skip loopback nameservers; only allow IPv4 (no colons)
-        case "$ns" in
-            127.* | ::*) continue ;;
-            *:*) continue ;;
-        esac
-        ensure DOCKER-USER -s "$SUBNET" -d "$ns" -p udp --dport 53 -j RETURN
-        ensure DOCKER-USER -s "$SUBNET" -d "$ns" -p tcp --dport 53 -j RETURN
-    done
-fi
+ensure DOCKER-USER -s "$TASK_RANGE" -j "$CHAIN"
+ensure INPUT -s "$TASK_RANGE" -j DROP
 
-ensure DOCKER-USER -s "$SUBNET" -d "$SUBNET" -j RETURN
-ensure INPUT -s "$SUBNET" -j DROP
+# Rules an earlier version of this script put directly in DOCKER-USER and INPUT, for the whole subnet.
+remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$LEGACY_SUBNET" -j RETURN
+for ns in $(nameservers); do
+    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$ns" -p udp --dport 53 -j RETURN
+    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$ns" -p tcp --dport 53 -j RETURN
+done
+for destination in $BLOCKED; do
+    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$destination" -j DROP
+done
+remove INPUT -s "$LEGACY_SUBNET" -j DROP

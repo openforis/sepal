@@ -266,6 +266,7 @@
         driver: bridge
         ipam_config:
           - subnet: 172.29.0.0/16
+            iprange: 172.29.128.0/17
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
