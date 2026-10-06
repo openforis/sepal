@@ -29,6 +29,15 @@ setup; cache_venv=true; pack_venv
 if [[ -f $kernel_path/venv.tar.zst ]]; then ok "an opted-in app gets an archive"
 else bad "an opted-in app gets an archive" "no venv.tar.zst"; fi; teardown
 
+setup; cache_venv=true
+printf 'interrupted pack' > "$kernel_path/venv.tar.zst.tmp"
+pack_venv
+if [[ -f $kernel_path/venv.tar.zst && ! -e $kernel_path/venv.tar.zst.failed ]] \
+   && zstd -tq "$kernel_path/venv.tar.zst"; then
+    ok "an interrupted pack is retried without rebuilding the venv"
+else bad "an interrupted pack is retried without rebuilding the venv" "no usable archive or packing backed off"; fi
+teardown
+
 setup; cache_venv=false; printf 'stale' > "$kernel_path/venv.tar.zst"; pack_venv
 if [[ ! -f $kernel_path/venv.tar.zst ]]; then ok "opting out deletes the archive"
 else bad "opting out deletes the archive" "venv.tar.zst survived"; fi; teardown

@@ -123,6 +123,8 @@ function pack_venv {
     # other app for as long as the cause persists. Back off until the venv itself changes.
     if [[ -f "$out.failed" && "$out.failed" -nt "$current_venv_path/.installed" ]]; then return 0; fi
     echo "Packing venv: $out"
+    # A killed pack can leave its staging file behind; zstd refuses to overwrite it.
+    rm -f "$out.tmp"
     # pipefail in a subshell: without it a failing tar still lets zstd exit 0, publishing an
     # archive that extracts cleanly but holds a partial environment.
     if ( set -o pipefail
