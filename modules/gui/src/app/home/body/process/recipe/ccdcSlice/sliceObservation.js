@@ -26,7 +26,10 @@ export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
         }))
     )
 
+// The styles a saved Slice restores are bound to the source they were made for (sliceEvidence.js), recorded wherever the
+// recipe is first observed (evidenceRegistry.js).
 export const sliceObservation = {
     sourceReference: recipe => selectedSourceOf(recipe, PRIMARY_IMAGE),
-    observe$: resolveEvidence$
+    observe$: resolveEvidence$,
+    savedLayerSource: true
 }

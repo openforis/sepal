@@ -50,6 +50,12 @@ const log = getLogger('sourceEvidence')
 // A selection being edited is observed the same way, before it is applied (`watchCandidate$`): over the recipe as it
 // would be with the edit applied, with its evidence held by the registry for the form that asked, never published.
 //
+// An observation declaring `savedLayerSource` has the source its recipe's saved layers were styled for recorded
+// (`ui.savedLayerSource`), whoever watches: the source selected when the recipe is first observed in the session, in
+// the action that marks that observation started. It is recorded once - never replaced - and only on a recipe the
+// session holds. The observation and its basis are taken from the recipe with it recorded, so recording it is no
+// reason to read again; a recipe whose own basis names this one reads it again once, as it would for any edit.
+//
 // What only the editor does: apply its observation's defaults (`applyAccepted`), in the action that publishes the
 // evidence they come from and only while the recipe is open, and announce a failure (`reportUnavailable`). Evidence
 // obtained while no editor watched is processed by the editor's policy once it attaches, against the last evidence that
@@ -274,7 +280,11 @@ export class EvidenceRegistry {
             || this.#outdated(entry, recipe, session)
     }
 
-    #observe(entry, {mode, observation}, recipe, session) {
+    #observe(entry, {mode, observation}, recipeNow, session) {
+        const provenance = this.#provenance(entry, observation, recipeNow)
+        const recipe = provenance.length
+            ? {...recipeNow, ui: {...recipeNow.ui, savedLayerSource: provenance[0].value}}
+            : recipeNow
         entry.work?.unsubscribe()
         this.#clock.clearTimeout(entry.expiry)
         const work = new Subscription()
@@ -294,7 +304,7 @@ export class EvidenceRegistry {
         }
         // From here on anything may dispatch, and an update it causes finds this observation in place.
         this.#claimAssetsOf(entry, observationId)
-        this.#notify(entry, observationId, {observationId})
+        this.#notify(entry, observationId, {observationId}, provenance)
         if (!this.#current(entry, observationId)) {
             return
         }
@@ -463,7 +473,7 @@ export class EvidenceRegistry {
         return [...entry.watchers].find(({observation}) => observation)?.observation || null
     }
 
-    #notify(entry, observationId, observation) {
+    #notify(entry, observationId, observation, provenance = []) {
         if (!this.#current(entry, observationId)) {
             return
         }
@@ -473,9 +483,17 @@ export class EvidenceRegistry {
         this.#write({
             recipeId: entry.recipeId,
             type: 'SOURCE_EVIDENCE_OBSERVATION',
-            writes: [{path: 'ui.sourceEvidenceObservation', value: observation}],
+            writes: [{path: 'ui.sourceEvidenceObservation', value: observation}, ...provenance],
             whenOpen: []
         })
+    }
+
+    // The saved layers' source, where the observation records it and the recipe has none yet. A selection being edited
+    // records nothing.
+    #provenance(entry, observation, recipe) {
+        return observation.savedLayerSource && !entry.candidate && recipe.ui?.savedLayerSource === undefined
+            ? [{path: 'ui.savedLayerSource', value: sourceKeyOf(observation.sourceReference(recipe))}]
+            : []
     }
 
     #stop(entry) {

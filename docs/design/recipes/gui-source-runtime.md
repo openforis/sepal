@@ -611,7 +611,8 @@ An operation in a declaration's `operations` acquires the whole observation, rea
 (`sourceObservation`) unless an editor names its own. One only in `providerOperations` acquires the records of the
 selected source's closure and nothing else: the provider chain is judged from them, no capability evidence is read, and
 no asset is claimed. A type without requirements is observed only by its editor, so Masking's presets and the evidence
-CCDC Slice and BAYTS read stay editor-only; Masking layers elsewhere keep the saved-snapshot fallback.
+BAYTS reads stay editor-only; Masking layers elsewhere keep the saved-snapshot fallback. CCDC Slice and Change Alerts
+declare requirements, so their layers, Retrieve and charts observe them wherever they are shown.
 
 The registry makes the live basis readable synchronously (`evidenceOwnerOf`) - `{observationId, basis, observes,
 records}` - without copying it into Redux, where it would lose the identities its rule compares. Each observation is
@@ -666,9 +667,15 @@ recovery does not overwrite user edits, and an editor opened over evidence a map
 as it would have on arrival. A failure no editor has seen is announced once when one attaches; the error stays in the
 runtime, not Redux. Change Alerts and BAYTS own their default-setting policies; the registry owns acceptance,
 cancellation and rejection of superseded responses. Change Alerts derives segment descriptions and monitoring
-settings from one asset-metadata response. CCDC Slice's editor records its saved-layer provenance
-(`ui.savedLayerSource`) before its watch starts; an outside-editor Slice watch must record it first, which the Slice
-migration has to provide.
+settings from one asset-metadata response.
+
+An observation may declare `savedLayerSource`, as CCDC Slice's does: the registry then records the source the recipe's
+saved layers were styled for (`ui.savedLayerSource`) when the recipe is first observed in the session, by whoever
+watches - editor, layer, Retrieve or chart - in the action marking that observation started. It is written once, never
+replaced, only to a recipe the session holds, and never for a selection being edited. The observation and its basis
+are taken from the recipe with it recorded, so an editor opened after a map observed the recipe records nothing and
+reads nothing again. A recipe whose closure includes the Slice record - Masking over Slice - compares that record's
+provenance, and reads again once if it observed the Slice before the Slice itself was first observed.
 
 Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
 charts and previews must discard what they drew is the pixel generation's to say
@@ -711,11 +718,11 @@ another recipe as a source.
 ### Capabilities and candidate discovery
 
 The implemented producer-step rule supports `CCDC_SEGMENTS`, `BAYTS_HISTORICAL_STATS` and
-`OPTICAL_COLLECTION_DEFAULTS`. Change Alerts and BAYTS selectors query type-level candidacy, so they can offer a
-Masking recipe whose particular input does not satisfy their requirement. Slice and the classification pickers
-still have type filters. None of these is configured-source capability discovery. Change Alerts validates its
-selected reference once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref)); its picker still
-offers type-level candidates.
+`OPTICAL_COLLECTION_DEFAULTS`. Change Alerts, CCDC Slice and BAYTS selectors query type-level candidacy, so they can
+offer a Masking recipe whose particular input does not satisfy their requirement. The classification pickers still
+have type filters. None of these is configured-source capability discovery. Change Alerts and CCDC Slice validate their
+selected source once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref),
+[CCDC Slice SRC](source-resolution.md#ccdc-slice-src)); their pickers still offer type-level candidates.
 
 The proposed discovery query accepts an operation-specific requirement containing only the structural, adapter or
 capability constraints that operation needs, plus cardinality and saved selections. Validation distinguishes a

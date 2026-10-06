@@ -40,7 +40,8 @@ SourceEvidenceSync.propTypes = {
     //     sourceReference: recipe => reference | null,
     //     observe$: ({recipe, graph, recipesById}) => Observable,
     //     applyAccepted?: ({recipe, evidence, previous}) => [{path, value, merge?}],
-    //     reportUnavailable?: ({recipe, error}) => void
+    //     reportUnavailable?: ({recipe, error}) => void,
+    //     savedLayerSource?: true - record the source the saved layers were styled for (evidenceRegistry.js)
     // }
     observation: PropTypes.object.isRequired
 }

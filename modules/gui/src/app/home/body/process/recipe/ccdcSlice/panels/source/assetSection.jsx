@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
@@ -23,12 +22,13 @@ class _AssetSection extends React.Component {
     }
 
     render() {
-        const {inputs: {asset, dateFormat}} = this.props
+        const {inputs: {asset, dateFormat}, labelButtons} = this.props
         return (
             <Layout>
                 <Form.AssetCombo
                     input={asset}
                     label={msg('process.ccdcSlice.panel.source.form.asset.label')}
+                    labelButtons={labelButtons}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
                     allowedTypes={['Image', 'ImageCollection']}
                     autoFocus
@@ -61,7 +61,8 @@ class _AssetSection extends React.Component {
     // The date representation is configuration, with the asset's own property as its starting point. It is
     // taken from the property when THIS asset is first selected - zero is a value, not an absence - and left
     // alone afterwards: the user may have corrected it, and a later read of the same asset is not a reason
-    // to undo that. A different asset starts over.
+    // to undo that. A different asset starts over. Whether the asset holds segments a slice can read is the
+    // requirements' to judge, from its typed bands (sourceRequirement.js).
     onLoaded({asset, metadata}) {
         const {inputs} = this.props
         const {loadedAsset} = this.state
@@ -69,26 +70,13 @@ class _AssetSection extends React.Component {
         if (asset !== inputs.asset.value) {
             return
         }
-        const {bands, properties: {dateFormat}} = metadata
-        const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
-            .map(postfix => bands
-                .map(assetBand => {
-                    return assetBand.id.match(`(.*)_${postfix}`)
-                })
-                .map(match => match && match[1])
-                .filter(band => band)
-            )
-        )
-        if (assetBands.length) {
-            const newlySelected = loadedAsset !== asset
-            const unconfigured = inputs.dateFormat.value === undefined || inputs.dateFormat.value === null
-            if (dateFormat !== undefined && dateFormat !== null && (newlySelected || unconfigured)) {
-                inputs.dateFormat.set(dateFormat)
-            }
-            this.setState({loadedAsset: asset})
-        } else {
-            inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.asset.notCcdc'))
+        const {dateFormat} = metadata.properties || {}
+        const newlySelected = loadedAsset !== asset
+        const unconfigured = inputs.dateFormat.value === undefined || inputs.dateFormat.value === null
+        if (dateFormat !== undefined && dateFormat !== null && (newlySelected || unconfigured)) {
+            inputs.dateFormat.set(dateFormat)
         }
+        this.setState({loadedAsset: asset})
     }
 }
 
@@ -98,5 +86,6 @@ export const AssetSection = compose(
 )
 
 AssetSection.propTypes = {
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array
 }

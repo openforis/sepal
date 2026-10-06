@@ -565,8 +565,61 @@ decides when the answer can be trusted and what it does to the UI.
   showing what it read and settles on saying it has no band to chart; it charts again once one returns. The consumer making a request
   watches what its operation needs wherever the recipe is shown. Absence from the listing is never called deletion.
 
-CCDC Slice, BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves,
-remain separate packets.
+BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves, remain
+separate packets. CCDC Slice follows the same contract ([below](#ccdc-slice-src)).
+
+### CCDC Slice SRC
+
+CCDC Slice declares two requirements over the source selected in SRC (`ccdcSlice/sourceRequirement.js`), by the role
+its source edge already has (`PRIMARY_IMAGE`), and registers its existing observation (`sliceObservation`) so layers,
+Retrieve and the chart check it outside the editor:
+
+| Requirement | Section | Gates | Required to apply |
+|---|---|---|---|
+| `ccdcSegments.sliceSource` | SRC | the slice, its layers and Retrieve (`IMAGE_OUTPUT`) | yes |
+| `ccdcSegments.chartable` | SRC | the segment chart (`PIXEL_SEGMENTS`) | no (`requiredForSelection: false`) |
+
+Each is derived from what reads it:
+
+- **The slice** (`lib/js/ee/src/timeSeries/ccdcSlice.js`, `temporalSegmentation.js`). Every mode - a date by segment
+  or by interpolation, or a range - finds segments from `tStart` and `tEnd`, treats every `_coefs` band as a
+  two-dimensional array and every other band as a one-dimensional one, and reads `tBreak`, `numObs` and `changeProb`.
+  It reads every measure the source holds, not only the ones asked for: an asset is sliced whole, since an asset read
+  takes no selection, and each `_coefs` band is read with its `_rmse` and `_magnitude` band, by name. A break's
+  confidence divides the `_magnitude` bands by the `_rmse` bands pairwise in stored order. So one complete measure
+  beside an incomplete one fails, as does a lone `_rmse` or `_magnitude` band; magnitudes stored in another order
+  than their errors would be paired wrongly without failing, and are refused as well. At least one measure. Change
+  Alerts' `ccdcSegments.sliceable`, which needs only `tStart`, `tEnd` and one measure with its RMSE, is unchanged.
+- **The chart.** The segment endpoint reduces whatever bands the source has at the pixel, and the graph reads the
+  segment bands and the one measure it plots, so incomplete extra measures do not fail it. It shares Change Alerts'
+  `ccdcSegments.chartable`. A source the chart can plot but the slice cannot is refused in SRC, holds back Retrieve
+  and leaves the chart available.
+- **Computed segments.** CCDC fits complete measures by its own declaration, so only that it fits one is asked of
+  it; Masking over CCDC is followed through its provider chain. Masking over anything else is refused from the held
+  records, naming where the chain stopped.
+
+Asset metadata does not establish how many coefficients an array holds (the slice pads them to eight), whether the
+configured or declared date representation is right (Slice falls back to Julian days where neither says), anything of
+an image collection beyond its first member, or whether a pixel has segments at all. A rank the metadata does not
+state is insufficient evidence, never incompatibility; an asset that cannot be read is unavailable, with Refresh.
+Options' break-analysis band naming a complete measure is not yet validated.
+
+- **Evidence.** The shared segment-asset description carries the asset's typed bands, from the metadata response it
+  already reads (`ccdc/segmentsAsset.js`). `resolveEvidence$` stays registered for Masking over Slice.
+- **Saved-layer provenance.** The observation declares `savedLayerSource`: the source registry records the source
+  the saved layers were styled for when the recipe is first observed, by whoever watches
+  ([evidence watches](gui-source-runtime.md#evidence-watches)).
+- **SRC.** The compact Asset/Recipe selector sits in the input's label row; changing the type clears the asset, the
+  recipe and the date representation, and a recipe with nothing selected starts on Recipe. The picker offers recipes
+  of types that may provide segments (`mayProvideSegments`) - Masking among them - and keeps a saved selection
+  selected. The asset picker no longer judges band suffixes; it prefills the date representation from the asset's
+  property when that asset is first selected, or when none is configured. SRC names its input (`input`), so a
+  candidate it refuses is that input's error and holds Apply back; the toolbar marks SRC through
+  `withSourceProblems`. Slice declares no cross-section advisory.
+- **Chart and actions.** The chart watches what `PIXEL_SEGMENTS` needs, offers the measures the chart requirement
+  establishes, holds new requests while the source is checked, withdraws what it drew once the source is refused,
+  and charts again once one suits. Chart and Retrieve actions use the shared
+  [availability](#operation-availability).
 
 ### Operation availability
 

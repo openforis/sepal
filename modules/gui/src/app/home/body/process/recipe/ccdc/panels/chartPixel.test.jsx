@@ -11,8 +11,7 @@ import * as sources from '~/sources'
 import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-import {ChartPixel as CcdcChartPixel} from '../../ccdc/panels/chartPixel'
-import {ChartPixel as SliceChartPixel} from './chartPixel'
+import {ChartPixel} from './chartPixel'
 
 const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
     loadCCDCSegments$: vi.fn(),
@@ -22,7 +21,7 @@ vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeri
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The graph renderer is the output boundary; the chart, form, selection widget and Redux are real.
-vi.mock('../../ccdc/ccdcGraph', () => ({
+vi.mock('../ccdcGraph', () => ({
     CCDCGraph: ({band, segments}) => <output aria-label='chart'>{JSON.stringify({band, segments})}</output>
 }))
 
@@ -42,10 +41,11 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe.each(['CCDC_SLICE', 'CCDC'])('%s chart requests', type => {
+// CCDC Slice's chart is held to its source's requirements, and covered with them (ccdcSlice/sourceRequirement.test.jsx).
+describe('CCDC chart requests', () => {
     it('replaces an optical selection before requesting radar data and rejects late optical results', () => {
-        const optical = recipeWithBands(type, ['ndvi'], 'optical')
-        const radar = recipeWithBands(type, ['VV', 'VH'], 'radar')
+        const optical = recipeWithBands(['ndvi'], 'optical')
+        const radar = recipeWithBands(['VV', 'VH'], 'radar')
         const pending = new Subject()
         let cancelled = false
         loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
@@ -62,30 +62,12 @@ describe.each(['CCDC_SLICE', 'CCDC'])('%s chart requests', type => {
 
         expect(loadCCDCSegments$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['VV']])
         expect(chart()).toEqual({band: 'VV', segments: ['current segments']})
-        if (type === 'CCDC') {
-            expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['VV']])
-        }
-    })
-})
-
-describe('a Slice whose source becomes unavailable', () => {
-    it('withholds requests and removes the chart when no bands are available', () => {
-        const optical = recipeWithBands('CCDC_SLICE', ['ndvi'], 'optical')
-        openChart(optical, 'ndvi')
-        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
-        expect(chart().band).toBe('ndvi')
-
-        act(() => actionBuilder('SOURCE_UNAVAILABLE')
-            .set(['process.loadedRecipes', optical.id], recipeWithBands('CCDC_SLICE', [], 'unavailable'))
-            .dispatch())
-
-        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
-        expect(container.querySelector('output')).toBeNull()
+        expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['VV']])
     })
 })
 
 it('replaces a TOA-only CCDC chart band when surface reflectance is enabled', () => {
-    const recipe = recipeWithBands('CCDC', ['cirrus'], 'optical')
+    const recipe = recipeWithBands(['cirrus'], 'optical')
     openChart(recipe, 'cirrus')
     expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
     expect(loadCCDCSegments$.mock.calls[0][0].bands).toEqual(['cirrus'])
@@ -102,49 +84,12 @@ it('replaces a TOA-only CCDC chart band when surface reflectance is enabled', ()
 it('withholds both CCDC requests when its band provider reports no available bands', () => {
     vi.spyOn(sources, 'getAvailableBands').mockReturnValue([])
 
-    openChart(recipeWithBands('CCDC', [], 'unavailable'), 'ndvi')
+    openChart(recipeWithBands([], 'unavailable'), 'ndvi')
 
     expect(loadCCDCSegments$).not.toHaveBeenCalled()
     expect(loadTimeSeriesObservations$).not.toHaveBeenCalled()
     expect(container.querySelector('output')).toBeNull()
 })
-
-describe('a Slice chart over segments read from an asset', () => {
-    const overAsset = () => {
-        const recipe = recipeWithBands('CCDC_SLICE', ['ndvi'], 'segments')
-        return {
-            ...recipe,
-            model: {...recipe.model, source: {type: 'ASSET', id: SEGMENTS_ASSET}},
-            ui: {...recipe.ui, sourceEvidence: {...recipe.ui.sourceEvidence, sourceKey: `ASSET:${SEGMENTS_ASSET}`}}
-        }
-    }
-
-    it('keeps its samples when the asset\'s first token is learned', () => {
-        openChart(overAsset(), 'ndvi')
-
-        tokens({version: 'v1', changedAt: null})
-
-        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
-    })
-
-    it('takes its samples again once the asset reports a new token, though nothing described changed', () => {
-        openChart(overAsset(), 'ndvi')
-        tokens({version: 'v1', changedAt: null})
-
-        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
-        tokens({version: 'v2', changedAt: 1})
-
-        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
-        expect(chart()).toMatchObject({segments: ['resampled segments']})
-    })
-})
-
-const SEGMENTS_ASSET = 'users/x/segments'
-
-// What the source runtime knows of the segments asset, for the credentials in effect: none are linked here.
-const tokens = ({version, changedAt}) => act(() => actionBuilder('UPDATE_ASSET_EVIDENCE')
-    .set('process.assetEvidence', {generation: 0, assets: {[SEGMENTS_ASSET]: {version, checkedAt: 0, changedAt}}})
-    .dispatch())
 
 const chart = () => JSON.parse(container.querySelector('output').textContent)
 
@@ -161,13 +106,12 @@ const openChart = (recipe, selectedBand) => {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    const Chart = recipe.type === 'CCDC_SLICE' ? SliceChartPixel : CcdcChartPixel
     act(() => root.render(
         <Provider store={store}>
             <PortalContainer id='chart-panel'/>
             <PortalContext id='chart-panel'>
                 <Recipe id={recipe.id}>
-                    <Chart values={{selectedBand}}/>
+                    <ChartPixel values={{selectedBand}}/>
                 </Recipe>
             </PortalContext>
         </Provider>
@@ -177,20 +121,14 @@ const openChart = (recipe, selectedBand) => {
         .dispatch())
 }
 
-const recipeWithBands = (type, bands, source) => ({
+const recipeWithBands = (bands, source) => ({
     id: 'chart-recipe',
-    type,
-    model: type === 'CCDC_SLICE'
-        ? {
-            source: {type: 'RECIPE_REF', id: source},
-            date: {dateType: 'SINGLE', date: '2020-06-01'},
-            options: {gapStrategy: 'INTERPOLATE', harmonics: 3}
-        }
-        : {
-            dates: {startDate: '2019-01-01', endDate: '2021-01-01'},
-            sources: {dataSets: bands.length ? (source === 'radar' ? {SENTINEL_1: ['SENTINEL_1']} : {LANDSAT: ['LANDSAT_8']}) : {}},
-            ccdcOptions: {dateFormat: 1}
-        },
+    type: 'CCDC',
+    model: {
+        dates: {startDate: '2019-01-01', endDate: '2021-01-01'},
+        sources: {dataSets: bands.length ? (source === 'radar' ? {SENTINEL_1: ['SENTINEL_1']} : {LANDSAT: ['LANDSAT_8']}) : {}},
+        ccdcOptions: {dateFormat: 1}
+    },
     ui: {
         chartPixel: {lat: 0, lng: 0},
         sourceEvidence: {

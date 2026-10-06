@@ -978,7 +978,7 @@
       "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
       "failing": "Earth Engine could not be reached. The drawing may be out of date.",
     "held": "Cannot render ''{recipe}''. Review {section} in that recipe.",
-    "checkingSection": "Checking the source selected in {section} of ''{recipe}''\u2026"
+    "checkingSection": "Checking the source selected in {section} of ''{recipe}''…"
     }
   },
   "featureLayerSources": {
@@ -1522,23 +1522,17 @@
           "tooltip": "Retrieve time-series"
         },
         "source": {
-          "asset": {
-            "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
-          },
           "button": "SRC",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported CCDC asset",
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "CCDC recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL CCDC recipe",
-            "title": "Saved SEPAL CCDC recipe"
           },
           "title": "Source",
           "tooltip": "Select EE asset with CCDC segments to slice"
@@ -5742,9 +5736,11 @@
       },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
+        "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",
         "missingBand": "{band} is missing",
         "scalarBand": "{band} is not an array, where {expected}-dimensional arrays are needed",
         "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",
+        "misordered": "the RMSE and magnitude bands of {measures} are not stored in the same order",
         "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
         "andMore": "{items} and {count} more",
         "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
@@ -5754,6 +5750,7 @@
         "noObservedMeasure": "The selected source has segments only for {measures}, which the selected data sets do not observe as currently processed. Choose data sets that observe one of them, or check the surface reflectance (SR) correction in pre-processing.",
         "noMeasures": "none",
         "noMeasure": "The selected source has no band with both coefficients and RMSE.",
+        "noSliceMeasure": "The selected source has no band with coefficients, RMSE and magnitude.",
         "noChartableMeasure": "No measure has the coefficients, RMSE and magnitude a segment chart plots."
       }
     },

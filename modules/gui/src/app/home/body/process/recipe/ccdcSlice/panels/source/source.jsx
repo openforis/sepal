@@ -1,14 +1,14 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
 import styles from './source.module.css'
 
 const fields = {
@@ -26,53 +26,54 @@ const fields = {
 }
 
 class _Source extends React.Component {
+    constructor(props) {
+        super(props)
+        this.clearSource = this.clearSource.bind(this)
+    }
+
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                {this.renderSections()}
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.ccdcSlice.panel.source.title')}/>
+                <Panel.Content>
+                    {this.renderSource()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {recipeId, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.ccdcSlice.panel.source.recipe.label'),
-                title: msg('process.ccdcSlice.panel.source.recipe.title'),
-                component: <RecipeSection inputs={inputs}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.ccdcSlice.panel.source.asset.label'),
-                title: msg('process.ccdcSlice.panel.source.asset.title'),
-                component: <AssetSection inputs={inputs}/>
-            }
+    renderSource() {
+        const {inputs} = this.props
+        const labelButtons = [
+            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
         ]
-        return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon='cog'
-                label={msg('process.ccdcSlice.panel.source.title')}
-            />
-        )
+        return inputs.section.value === 'ASSET'
+            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
+            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+    }
+
+    // A source of the other type starts over: nothing selected or configured for the previous one carries across.
+    clearSource() {
+        const {inputs} = this.props
+        inputs.asset.set(undefined)
+        inputs.recipe.set(undefined)
+        inputs.dateFormat.set(undefined)
     }
 }
+
 // Only the selection and, for an asset, the date representation the user configured. The description of
 // the source - its bands, base bands, dates, templates - is evidence read from the source while the recipe
 // is open, never written here; a copy an older GUI saved beside the reference is left as it is until the
 // selection is applied again, and dropped then, because it described a source that may no longer be this.
+// Nothing selected yet is a recipe to select.
 const modelToValues = ({id, type, dateFormat}) => {
     const values = {
-        section: type || 'SELECTION',
+        section: type || 'RECIPE_REF',
         dateFormat
     }
     switch (type) {

@@ -1,7 +1,6 @@
 import moment from 'moment'
 import React from 'react'
 
-import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -10,27 +9,21 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {selectedSourceOf, sourceKeyOf} from '../sourceEvidence'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
-import {defaultModel, preSetVisualizations, RecipeActions} from './ccdcSliceRecipe'
+import {defaultModel, preSetVisualizations} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
 import {resolveEvidence$, sliceObservation} from './sliceObservation'
+import {sliceRequirements} from './sourceRequirement'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),
-    sourceKey: sourceKeyOf(selectedSourceOf(recipe, PRIMARY_IMAGE)),
-    savedLayers: selectFrom(recipe, 'layers'),
-    savedLayerSource: selectFrom(recipe, 'ui.savedLayerSource')
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _CcdcSlice extends React.Component {
     constructor(props) {
         super(props)
-        const {savedLayers, savedLayerSource, sourceKey, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
-        if (savedLayerSource === undefined) {
-            this.recipeActions.recordSavedLayerSource(sourceKey)
-        }
+        const {savedLayers, recipeId} = props
         initializeLayers({recipeId, savedLayers})
     }
 
@@ -69,5 +62,8 @@ export default () => ({
         return [date, date]
     },
     resolveEvidence$,
-    getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments)
+    getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments),
+    sourceRequirements: sliceRequirements,
+    // What a layer, Retrieve or chart observes to check the source it requires, wherever it is shown.
+    sourceObservation: sliceObservation
 })

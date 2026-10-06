@@ -15,10 +15,9 @@ import {uuid} from '~/uuid'
 // an asset with a single `x_rmse` band yields one base band. Deciding whether an asset really carries CCDC
 // segments is left to each consumer's own requirement.
 //
-// Read for a requirement over its segments, it also carries the asset's typed bands (`typedBands`: the asset, and each
-// band with the array rank its metadata states, undefined where none was established - assetBands.js). They are
-// reported, not validated: no other field depends on them, and a consumer's requirement judges them
-// (segmentRequirements.js).
+// It also carries the asset's typed bands, from the same metadata (`typedBands`: the asset, and each band with the array
+// rank its metadata states, undefined where none was established - assetBands.js). They are reported, not validated: no
+// other field depends on them, and a consumer's requirement judges them (segmentRequirements.js).
 //
 // Two different things come out of the same metadata and must not be confused. Band names are the only input
 // to the structural fields. The visualization properties are presentation templates and contribute to none of
@@ -27,7 +26,7 @@ import {uuid} from '~/uuid'
 
 export const describeSegmentsAsset$ = assetId =>
     api.gee.assetMetadata$({asset: assetId}).pipe(
-        map(segmentsAssetDescription)
+        map(metadata => typedSegmentsAssetDescription(metadata, {assetId}))
     )
 
 export const typedSegmentsAssetDescription = (metadata, {assetId}) => ({

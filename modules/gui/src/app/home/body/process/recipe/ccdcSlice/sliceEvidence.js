@@ -109,8 +109,9 @@ export const knownTemplates = recipe => {
         : []
 }
 
-// Opening a Slice binds its restored styles to the original source, before any read can succeed or fail.
-// Unopened dependency records have no marker; their model and layers still come from the same saved record.
+// A Slice's restored styles are bound to the source it is first observed with, before any read can succeed or fail
+// (evidenceRegistry.js). Records never observed have no marker; their model and layers still come from the same saved
+// record.
 const savedLayerTemplates = recipe => {
     const savedLayerSource = selectFrom(recipe, 'ui.savedLayerSource')
     if (savedLayerSource !== undefined && savedLayerSource !== sourceKeyOf(selectedSourceOf(recipe, PRIMARY_IMAGE))) {

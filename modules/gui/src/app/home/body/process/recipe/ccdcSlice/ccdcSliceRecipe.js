@@ -36,12 +36,6 @@ export const RecipeActions = id => {
                 .set('ui.bands.baseBands', baseBands)
                 .dispatch()
         },
-        // Runtime provenance for restored styles, captured before the source can be changed or observed.
-        recordSavedLayerSource(sourceKey) {
-            return actionBuilder('RECORD_SAVED_LAYER_SOURCE', {sourceKey})
-                .set('ui.savedLayerSource', sourceKey)
-                .dispatch()
-        },
         setChartPixel(latLng) {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
