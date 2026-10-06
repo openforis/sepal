@@ -7,13 +7,17 @@ import {createGoogleSatelliteImageLayerSource} from '~/app/home/map/imageLayerSo
 import {createLabelsFeatureLayerSource} from '~/app/home/map/labelsFeatureLayerSource'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {getLogger} from '~/log'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {toUserErrorMessage} from '~/userError'
 import {Notifications} from '~/widget/notifications'
 
 import {recipeActionBuilder} from '../recipe'
 import {recipeAccess} from '../recipeAccess'
 import {withRecipe} from '../recipeContext'
+
+const log = getLogger('recipeImageLayerSource')
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -48,7 +52,8 @@ class _RecipeImageLayerSource extends React.Component {
     // relying on none being written again - and it reports nothing, because there is no missing dependency
     // here to report: the entry never referred to anything.
     loadRecipe() {
-        const {stream, source: {sourceConfig: {recipeId}}, loadRecipe$} = this.props
+        const {stream, source, loadRecipe$} = this.props
+        const {recipeId} = source.sourceConfig
         const {recipeFailedToLoad} = this.state
         if (!recipeId || recipeFailedToLoad) {
             return
@@ -58,7 +63,8 @@ class _RecipeImageLayerSource extends React.Component {
             recipe => this.updateSourceConfig(recipe),
             error => {
                 this.setState({recipeFailedToLoad: true})
-                Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
+                log.error(`Failed to load recipe ${recipeId} of layer source ${source.id}`, error)
+                Notifications.error(loadFailure(source, error))
             }
         )
     }
@@ -140,6 +146,14 @@ const createCurrentRecipeImageLayerSource = recipeId => ({
         description: msg('imageLayerSources.Recipe.thisRecipeDescription'),
     }
 })
+
+// Named as the source was saved, the name the user knows it by.
+const loadFailure = ({sourceConfig: {recipeId, description}}, error) => {
+    const source = description || recipeId
+    return error?.status === 404
+        ? {message: msg('imageLayerSources.Recipe.notFound', {description: source})}
+        : {message: msg('imageLayerSources.Recipe.loadFailed', {description: source}), error: toUserErrorMessage(error)}
+}
 
 const toDescription = recipe =>
     recipe && (recipe.title || recipe.placeholder)

@@ -1028,7 +1028,8 @@
     "Recipe": {
       "label": "Recipe",
       "thisRecipeDescription": "This recipe",
-      "loadError": "Failed to load recipe: {error}"
+      "notFound": "The recipe for layer source ''{description}'' could not be found or is no longer accessible.",
+      "loadFailed": "Failed to load the recipe for layer source ''{description}''."
     },
     "Planet": {
       "label": "Planet",

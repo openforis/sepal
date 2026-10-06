@@ -858,8 +858,7 @@
     },
     "Recipe": {
       "label": "",
-      "thisRecipeDescription": "",
-      "loadError": ""
+      "thisRecipeDescription": ""
     },
     "Planet": {
       "label": "",
