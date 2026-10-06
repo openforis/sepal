@@ -1,6 +1,7 @@
 import moment from 'moment'
 import {finalize, switchMap} from 'rxjs'
 
+import {userStorageSerializer$} from '#gee/jobs/service/userStorageSerializer'
 import {getLogger} from '#sepal/log'
 
 import {drive} from './drive.js'
@@ -29,7 +30,7 @@ export const exportToCSV$ = ({
     // against the round trip that cancels the Earth Engine task, and because Earth Engine resolves the Drive
     // destination by name, a task that still writes recreates the folder at the Drive root, where nothing
     // collects it. Blocking on confirmed cancellation is not worth buying back that window.
-    return createFolder$({path}).pipe(
+    return userStorageSerializer$(createFolder$({path}), undefined, sepalUser.username).pipe(
         switchMap(() =>
             exportTableToDrive$({
                 collection, description, folder, fileNamePrefix, selectors
