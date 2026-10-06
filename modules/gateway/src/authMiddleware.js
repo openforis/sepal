@@ -11,6 +11,8 @@ const log = getLogger('authMiddleware')
 
 const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
 const API_KEY_AUTH_URL = `http://${modules.worker}/sessions/api-key-authenticate`
+const TASK_API_KEY_AUTH_URL = `http://${modules.taskManager}/tasks/api-key-authenticate`
+const TASK_API_KEY_PREFIX = 'task_'
 const USER_LOOKUP_URL = `http://${modules.user}/info`
 
 // sepal-user header the gateway sends itself to call [ADMIN] endpoints internally.
@@ -118,18 +120,19 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
             }
 
             const authenticateApiKey$ = apiKey =>
-                post$(API_KEY_AUTH_URL, {
+                apiKey.startsWith(TASK_API_KEY_PREFIX)
+                    ? keyOwner$(TASK_API_KEY_AUTH_URL, apiKey, ({username, taskId}) => loadUser$(username, {workerType: 'task', taskId}))
+                    : keyOwner$(API_KEY_AUTH_URL, apiKey, ({username, sessionId, workerType}) => loadUser$(username, {sessionId, workerType}))
+
+            const keyOwner$ = (url, apiKey, authorized$) =>
+                post$(url, {
                     body: {apiKey},
                     headers: INTERNAL_ADMIN_HEADER,
                     responseType: 'json',
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
-                    const {statusCode} = response
-                    switch (statusCode) {
-                        case OK: {
-                            const {username, sessionId, workerType} = response.body
-                            return loadUser$(username, {sessionId, workerType})
-                        }
+                    switch (response.statusCode) {
+                        case OK: return authorized$(response.body)
                         case UNAUTHORIZED: return unauthorized$('')
                         default: return failure$('', response)
                     }

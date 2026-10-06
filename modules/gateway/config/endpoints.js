@@ -100,7 +100,7 @@ const endpoints = [
     {
         prefix: true,
         path: '/api/tasks',
-        target: `http://${modules.worker}/tasks`,
+        target: `http://${modules.taskManager}/tasks`,
         authenticate: true
     },
     {
@@ -193,8 +193,8 @@ const webSocketEndpoints = [
         target: `ws://${modules.user}/ws`
     },
     {
-        module: 'worker/task',
-        target: `ws://${modules.worker}/task/ws`
+        module: 'task-manager/task',
+        target: `ws://${modules.taskManager}/ws`
     },
     {
         module: 'worker/session',

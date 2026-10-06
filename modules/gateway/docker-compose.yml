@@ -47,6 +47,7 @@ services:
       SANDBOX_DEFAULT_INSTANCE_TYPE: "${SANDBOX_DEFAULT_INSTANCE_TYPE:-T3aSmall}"
     networks:
       - sepal
+      - sepal-task
     extra_hosts:
       - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
     ulimits:
@@ -70,4 +71,6 @@ services:
 
 networks:
   sepal:
+    external: true
+  sepal-task:
     external: true

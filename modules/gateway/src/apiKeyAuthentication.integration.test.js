@@ -12,6 +12,7 @@ const BOB = {id: 2, username: 'bob', roles: [], status: 'ACTIVE'}
 
 const EXECUTOR_KEY = 'executor-key'
 const SANDBOX_KEY = 'sandbox-key'
+const TASK_KEY = 'task_container-key'
 const EXECUTOR_SESSION = {sessionId: 's-executor', username: 'alice', workerType: 'task-executor'}
 const SANDBOX_SESSION = {sessionId: 's-sandbox', username: 'bob', workerType: 'sandbox'}
 
@@ -27,7 +28,7 @@ const listen = app => new Promise(resolve => {
 const upstream = await startUpstream()
 
 jest.unstable_mockModule('../config/modules.json', () => ({
-    default: {worker: upstream.address, user: upstream.address}
+    default: {worker: upstream.address, user: upstream.address, taskManager: upstream.address}
 }))
 
 // The real configuration parses process arguments at import and exits the process when a mandatory
@@ -84,6 +85,20 @@ describe('a request authenticated with a worker session api key', () => {
     test('is refused when the key is unknown or empty', async () => {
         expect((await probe({apiKey: 'no-such-key'})).status).toBe(401)
         expect((await probe({apiKey: ''})).status).toBe(401)
+    })
+})
+
+describe('a request authenticated with a task container\'s key', () => {
+    test('names the task\'s owner and the task it was authenticated as', async () => {
+        const {status, body} = await probe({apiKey: TASK_KEY})
+
+        expect(status).toBe(200)
+        expect(body.user).toMatchObject({username: 'alice'})
+        expect(body.session).toEqual({workerType: 'task', taskId: 't-1'})
+    })
+
+    test('is refused when task-manager does not know the key', async () => {
+        expect((await probe({apiKey: 'task_unknown'})).status).toBe(401)
     })
 })
 
@@ -162,6 +177,11 @@ async function startUpstream() {
     app.post('/sessions/api-key-authenticate', (req, res) => {
         const session = sessionsByKey[req.body.apiKey]
         session ? res.json(session) : res.status(401).json({})
+    })
+    app.post('/tasks/api-key-authenticate', (req, res) => {
+        req.body.apiKey === TASK_KEY
+            ? res.json({username: 'alice', taskId: 't-1'})
+            : res.status(401).json({})
     })
     app.post('/authenticate', (req, res) => {
         const {username, password} = req.body
