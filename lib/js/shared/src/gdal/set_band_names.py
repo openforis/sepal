@@ -1,17 +1,15 @@
 import sys
-from glob import glob
 
 from osgeo import gdal
 from osgeo.gdalconst import GA_Update
 
 
 def set_band_names(path, names):
-    for f in glob(path):
-        ds = gdal.Open(f, GA_Update)
-        for i in range(0, len(names)):
-            band = ds.GetRasterBand(i + 1)
-            band.SetDescription(names[i])
-            ds.FlushCache()
+    ds = gdal.Open(path, GA_Update)
+    for i in range(0, len(names)):
+        band = ds.GetRasterBand(i + 1)
+        band.SetDescription(names[i])
+    ds.FlushCache()
 
 
 if __name__ == '__main__':

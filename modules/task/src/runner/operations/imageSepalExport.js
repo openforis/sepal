@@ -1,4 +1,4 @@
-import {mkdir} from 'fs/promises'
+import {mkdir, readdir} from 'fs/promises'
 import {join} from 'path'
 import {lastValueFrom} from 'rxjs'
 
@@ -19,7 +19,14 @@ export const imageSepalExport = async (params, {sepal, report, signal, sleep}) =
     })
     if (downloaded) {
         const vrtPath = join(downloadDir, `${filenamePrefix || description}.vrt`)
-        await lastValueFrom(createVrt$({inputPaths: `${downloadDir}/*.tif`, outputPath: vrtPath}), {defaultValue: null})
+        const inputPaths = await geoTiffs(downloadDir)
+        await lastValueFrom(createVrt$({inputPaths, outputPath: vrtPath}), {defaultValue: null})
         await lastValueFrom(setBandNames$(vrtPath, bands.selection), {defaultValue: null})
     }
 }
+
+const geoTiffs = async dir =>
+    (await readdir(dir))
+        .filter(name => name.endsWith('.tif'))
+        .sort()
+        .map(name => join(dir, name))

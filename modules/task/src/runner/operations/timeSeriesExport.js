@@ -44,7 +44,7 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep}) =
 
 const stack = dir =>
     lastValueFrom(
-        terminal$('sepal-stack-time-series', [dir]).pipe(
+        terminal$('sepal-stack-time-series', [dir], {shell: false}).pipe(
             tap(({stream, value}) => {
                 if (value) {
                     stream === 'stdout' ? log.info(value) : log.warn(value)

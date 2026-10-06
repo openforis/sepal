@@ -12,8 +12,8 @@ jest.unstable_mockModule('../workspaceExport.js', () => ({
 }))
 
 jest.unstable_mockModule('#sepal/terminal', () => ({
-    terminal$: (command, args) => {
-        events.push({stack: [command, args]})
+    terminal$: (command, args, options) => {
+        events.push({stack: [command, args], options})
         return of({stream: 'stdout', value: ''})
     }
 }))
@@ -90,6 +90,16 @@ test('a tile without imagery is skipped, and nothing is stacked for it', async (
 
     expect(sepal.exported.map(({body}) => body.tileId)).toEqual(['b'])
     expect(events.filter(({stack}) => stack).map(({stack}) => stack[1])).toEqual([[`${home}/downloads/series/1`]])
+})
+
+test('the tile directory reaches the stacker as one argument, not through a shell', async () => {
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await timeSeriesExport({...params, description: 'my series; touch x'}, context(sepal))
+
+    const [stackEvent] = events.filter(({stack}) => stack)
+    expect(stackEvent.stack).toEqual(['sepal-stack-time-series', [`${home}/downloads/my series; touch x/0`]])
+    expect(stackEvent.options).toEqual({shell: false})
 })
 
 test('one failed chunk cancels the chunks still running and fails the export', async () => {
