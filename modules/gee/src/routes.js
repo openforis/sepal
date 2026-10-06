@@ -30,6 +30,9 @@ import tableQuery$ from '#gee/jobs/ee/table/query'
 import tableRows$ from '#gee/jobs/ee/table/rows'
 import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
 import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
+import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
+import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
+import taskShareAsset$ from '#gee/jobs/task/shareAsset'
 import {stream} from '#sepal/httpServer'
 
 export default router =>
@@ -68,4 +71,7 @@ export default router =>
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
+        .post('/task/operation/status', stream(ctx => taskOperationStatus$(ctx)))
+        .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
+        .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
