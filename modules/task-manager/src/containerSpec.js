@@ -40,6 +40,7 @@ export const containerSpec = ({task, apiKey, config}) => {
                 `${taskDirectory(config.sepalHostDataDir, task.id)}:/task`,
                 ...(dev ? sourceBinds(config.sepalHostProjectDir) : [])
             ],
+            Init: true,
             RestartPolicy: {Name: 'no'},
             Memory: config.taskMemoryMb * 1024 * 1024,
             NanoCpus: Math.round(config.taskCpus * 1e9),

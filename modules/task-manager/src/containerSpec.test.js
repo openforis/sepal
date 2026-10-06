@@ -36,6 +36,12 @@ test('reaches SEPAL only through the gateway, on a network of its own, with the 
     expect(HostConfig.NetworkMode).toBe('sepal-task')
 })
 
+test('runs an init process so a container stop reaches the runner', () => {
+    const {HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
+
+    expect(HostConfig.Init).toBe(true)
+})
+
 test('is never restarted by Docker and is limited in memory and CPU', () => {
     const {HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
 

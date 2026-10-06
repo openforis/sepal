@@ -54,4 +54,4 @@ ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 RUN chmod +x -R /usr/local/bin && sync
-CMD start.sh
+CMD ["start.sh"]
