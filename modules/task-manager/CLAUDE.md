@@ -14,8 +14,9 @@ API-key check, and the task-list websocket.
   `{"workerType":"task","taskId":"<id>"}`.
 - It attaches to the Docker network `sepal-task`, which only the gateway also joins, and calls
   `http://gateway/api/...`. It never joins the `sepal` network, whose services trust the `sepal-user` header.
-- It reports progress with `POST /tasks/task/:id/progress` and signals the outcome through its exit status;
-  the supervisor settles the task state from it.
+- It reports progress with `POST /tasks/task/:id/progress` and writes its outcome to `/task/result.json`
+  before exiting; the supervisor settles the task state from that file. A container that exits without one
+  has failed, and a CANCELED result counts only for a task being cancelled (any other stop interrupted it).
 
 ## Supervisor
 
