@@ -5705,7 +5705,6 @@
           "encodingConflict": "The image collection {assetId} already holds images stored with a different band encoding. Export with the Replace strategy instead of Resume.",
           "encodingTooLarge": "The band encoding of {assetId} cannot be stored as Earth Engine asset metadata: {reason}",
           "prepareImageCollection": "Prepare image collection {assetId}",
-          "share": "Sharing asset '{assetId}'",
           "startExport": "Start export of {tileCount} tiles",
           "sharing": "Sharing asset {assetId}",
           "tilingImage": "Tiling image"

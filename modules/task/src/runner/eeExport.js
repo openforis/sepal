@@ -5,6 +5,7 @@ import {getLogger} from '#sepal/log'
 const log = getLogger('ee')
 
 const POLL_MS = 10 * 1000
+const MAX_FAILED_POLLS = 60
 
 const PROGRESS = {
     UNSUBMITTED: {messageKey: 'tasks.ee.export.pending', defaultMessage: 'Submitting export task to Google Earth Engine'},
@@ -14,11 +15,26 @@ const PROGRESS = {
 }
 
 // Follows an export Earth Engine runs on Google's side until it ends. Only COMPLETED completes; an export
-// cancelled or lost on Google's side fails the task.
+// cancelled or lost on Google's side fails the task. Failed polls are tolerated (the export keeps running while
+// gee restarts) until MAX_FAILED_POLLS in a row.
 export const followEEExport = async ({eeTaskId, sepal, report, signal, sleep = sleepUnlessAborted}) => {
     let reportedState = null
+    let failedPolls = 0
     while (!signal.aborted) {
-        const {state, errorMessage} = await sepal.gee('task/operation/status', {eeTaskId})
+        let status
+        try {
+            status = await sepal.gee('task/operation/status', {eeTaskId})
+            failedPolls = 0
+        } catch (error) {
+            failedPolls++
+            if (failedPolls >= MAX_FAILED_POLLS) {
+                throw error
+            }
+            log.warn(`Earth Engine task ${eeTaskId}: status poll failed (${failedPolls}/${MAX_FAILED_POLLS})`, error)
+            await sleep(POLL_MS, signal)
+            continue
+        }
+        const {state, errorMessage} = status
         if (state === 'COMPLETED') {
             return
         }
@@ -51,4 +67,11 @@ const exportFailure = (state, errorMessage) => {
         ? 'the export was cancelled in Google Earth Engine'
         : `the export ended in state ${state}`)
     return Object.assign(new Error(`Earth Engine export ${state}: ${reason}`), {earthEngineMessage: reason})
+}
+
+export const shareIfPublic = async ({params, assetId, sepal, report, signal}) => {
+    if (!signal.aborted && params.image?.sharing === 'PUBLIC') {
+        report({messageKey: 'tasks.ee.export.asset.sharing', defaultMessage: `Sharing asset ${assetId}`, messageArgs: {assetId}})
+        await sepal.gee('task/asset/share', {assetId})
+    }
 }

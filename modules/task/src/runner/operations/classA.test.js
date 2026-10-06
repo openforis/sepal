@@ -46,3 +46,15 @@ test('a Drive export a user without a Google account cannot make completes witho
 
     expect(calls.map(({path}) => path)).toEqual(['task/export/image/drive'])
 })
+
+test('an image export stopped before it completes is not shared', async () => {
+    const abort = new AbortController()
+    const {sepal, calls} = client({start: {eeTaskId: 'T1', assetId: 'a'}, status: [{state: 'RUNNING'}]})
+
+    await operations['image.GEE'](
+        {image: {sharing: 'PUBLIC'}},
+        {sepal, report: () => {}, signal: abort.signal, sleep: async () => abort.abort()}
+    )
+
+    expect(calls.map(({path}) => path)).not.toContain('task/asset/share')
+})
