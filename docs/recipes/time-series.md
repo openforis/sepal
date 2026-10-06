@@ -68,5 +68,5 @@ Earth Engine is asked.
   the map's product, and a recipe over broken dependencies not previewed.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/timeSeriesWorkflow.test.js` - kept out of Masking's
   pickers, and Retrieve submitting `timeseries.download` for the indicator named.
-- `modules/task/src/tasks/imageAssetExport.test.js` - an image export records no encoding, reads no recipe, and fails
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - an image export records no encoding, reads no recipe, and fails
   over an AOI recipe that cannot be read.
