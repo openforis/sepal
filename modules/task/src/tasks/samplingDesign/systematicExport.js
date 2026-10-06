@@ -12,12 +12,12 @@ import {selectSystematicLevels, stratifiedSystematicExactCandidates, stratifiedS
 import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
 import {materializeSystematicIndexGeometry, unstratifiedSystematicIndexCandidates} from '#sepal/ee/samplingDesign/unstratifiedSystematicSampling'
 import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
+import {formatProperties} from '#sepal/formatProperties'
 import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
-import {formatProperties} from '../formatProperties.js'
 import {finalCountError, gateFinalExport$} from './finalValidationGate.js'
 import {stratifiedGridError, stratifiedMinDistanceError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
 import {samplingDesignPreflightError} from './samplingPreflight.js'

@@ -1,8 +1,8 @@
 import {forkJoin, switchMap} from 'rxjs'
 
 import ccdc from '#sepal/ee/timeSeries/ccdc'
+import {formatProperties} from '#sepal/formatProperties'
 
-import {formatProperties} from './formatProperties.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 

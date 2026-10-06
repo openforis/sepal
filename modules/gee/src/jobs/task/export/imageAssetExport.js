@@ -2,9 +2,9 @@ import {forkJoin, switchMap} from 'rxjs'
 
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
+import {formatProperties} from '#sepal/formatProperties'
 import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
 
-import {formatProperties} from './formatProperties.js'
 import {resolveImageOutput$, selectedBandEncoding} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
