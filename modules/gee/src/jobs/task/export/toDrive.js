@@ -3,18 +3,20 @@ import {concat, defer, last, map, of, switchMap} from 'rxjs'
 import ee from '#sepal/ee/ee'
 import {currentEEContext} from '#sepal/ee/eeContext'
 
-import {prepareDestination$} from '../storage/destination.js'
+import {exportFolderName, prepareDestination$} from '../storage/destination.js'
 import {castToLargest} from './castToLargest.js'
 
 // Earth Engine writes into a folder of that name anywhere in the user's Drive; SEPAL creates it in its own tree
 // first so the export lands there.
 export const startImageToDriveExport$ = ({
-    image, folder, description, dimensions, region, scale, crs, crsTransform, maxPixels = 1e13, shardSize,
+    image, folder: requestedFolder, description, dimensions, region, scale, crs, crsTransform, maxPixels = 1e13, shardSize,
     fileDimensions, skipEmptyTiles, fileFormat, formatOptions
 }, {sepalUser}) => defer(() => {
     if (currentEEContext().auth.type === 'serviceAccount') {
         return of({eeTaskId: null})
     }
+    // Earth Engine finds the Drive folder by name, so both are given the same one.
+    const folder = exportFolderName(requestedFolder)
     const castImage = castToLargest(image)
     return formatRegion$(region || castImage.geometry()).pipe(
         switchMap(region => {

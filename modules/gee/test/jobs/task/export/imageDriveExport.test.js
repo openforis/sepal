@@ -63,6 +63,16 @@ test('creates the Drive folder as the user, one creation at a time per user, the
     expect(state.started[0]).toMatchObject({folder: 'exports-1', fileNamePrefix: 'My mosaic', description: 'My mosaic'})
 })
 
+test('a folder named after a recipe title is made safe, the same for the Drive folder and the export', async () => {
+    const titled = {image: {...params.image, driveFolder: 'Mosaic 2020/21 "x"_2026-10-06'}}
+
+    const result = await lastValueFrom(inEEContext(context({type: 'user'}), startImageDriveExport$(titled, {sepalUser: ALICE})))
+
+    expect(result).toEqual({eeTaskId: 'T5'})
+    expect(state.folders).toEqual([{username: 'alice', path: 'SEPAL/exports/Mosaic 2020_21 _x__2026-10-06'}])
+    expect(state.started[0]).toMatchObject({folder: 'Mosaic 2020_21 _x__2026-10-06'})
+})
+
 test('starts nothing for a user without a Google account', async () => {
     const result = await lastValueFrom(inEEContext(context({type: 'serviceAccount'}), startImageDriveExport$(params, {sepalUser: {username: 'alice'}})))
 

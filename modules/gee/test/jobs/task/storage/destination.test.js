@@ -59,7 +59,7 @@ jest.unstable_mockModule('@google-cloud/storage', () => ({Storage: class {
     }
 }}))
 
-const {cleanupDestination$, listDownloads$, prepareDestination$} = await import('#gee/jobs/task/storage/destination')
+const {cleanupDestination$, exportFolderName, listDownloads$, prepareDestination$} = await import('#gee/jobs/task/storage/destination')
 const {userBucketName} = await import('#gee/jobs/task/storage/userBucket')
 
 const HOUR = 60 * 60 * 1000
@@ -73,6 +73,30 @@ beforeEach(() => {
     state.serialized = []
     state.drive = {created: [], listed: [], removed: [], files: {}, folders: []}
     state.gcs = {buckets: [], otherProjectBuckets: [], created: [], listed: [], deleted: [], signed: [], objects: {}}
+})
+
+describe('an export folder name from user text', () => {
+    test.each([
+        ['keeps a plain name', 'Mosaic 2020_2026-10-06', 'Mosaic 2020_2026-10-06'],
+        ['replaces slashes, backslashes and quotes', 'a/b\\c"d', 'a_b_c_d'],
+        ['replaces a name of only slashes', '///', '___'],
+        ['trims the name', '  a  ', 'a'],
+        ['names an empty text', '', 'export'],
+        ['names a blank text', '   ', 'export'],
+        ['names a missing text', undefined, 'export'],
+        ['names the current folder', '.', 'export'],
+        ['names the parent folder', ' .. ', 'export']
+    ])('%s', (_description, text, name) => {
+        expect(exportFolderName(text)).toBe(name)
+    })
+
+    test('is always a folder a destination accepts', async () => {
+        const folder = exportFolderName('../"x"/..')
+
+        const result = await lastValueFrom(prepareDestination$({folder}, {sepalUser: ALICE, auth: {type: 'user'}}))
+
+        expect(result.destination).toEqual({type: 'drive', folder})
+    })
 })
 
 describe('preparing a destination', () => {
