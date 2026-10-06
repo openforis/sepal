@@ -5899,10 +5899,13 @@
       "completed": "Completed!",
       "EEException": "Earth Engine: {error}",
       "executing": "Executing...",
+      "exitedUnexpectedly": "The task ended unexpectedly. Run the task again.",
       "failed": "{error}",
       "failedGeneric": "The task failed. Try running it again. If the problem persists, contact the SEPAL team.",
       "initializing": "Initializing...",
-      "interrupted": "Interrupted by a server restart. Run the task again."
+      "interrupted": "Interrupted by a server restart. Run the task again.",
+      "launchFailed": "The task could not be started. Run the task again.",
+      "stalled": "The task stopped responding. Run the task again."
     }
   },
   "terminal": {

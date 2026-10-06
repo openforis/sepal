@@ -3,7 +3,7 @@ import {tag} from '#sepal/tag'
 
 import {generateApiKey, hashApiKey} from './apiKey.js'
 import {containerName} from './containerSpec.js'
-import {failure, RUNNING_STATES, State, statusDescriptionOf} from './task.js'
+import {RUNNING_STATES, State, statusDescriptionOf} from './task.js'
 
 const log = getLogger('supervisor')
 
@@ -13,7 +13,18 @@ const INTERRUPTED = statusDescriptionOf({
     messageKey: 'tasks.status.interrupted',
     defaultMessage: 'Interrupted by a server restart. Run the task again.'
 })
-const STALLED = failure('the task stopped responding')
+const STALLED = statusDescriptionOf({
+    messageKey: 'tasks.status.stalled',
+    defaultMessage: 'The task stopped responding. Run the task again.'
+})
+const LAUNCH_FAILED = statusDescriptionOf({
+    messageKey: 'tasks.status.launchFailed',
+    defaultMessage: 'The task could not be started. Run the task again.'
+})
+const EXITED_UNEXPECTEDLY = statusDescriptionOf({
+    messageKey: 'tasks.status.exitedUnexpectedly',
+    defaultMessage: 'The task ended unexpectedly. Run the task again.'
+})
 
 // Launches, watches and collects one detached container per task. Every step that reads or changes tasks and
 // containers runs through one queue, so a reconcile never sees a task between being activated and its
@@ -110,7 +121,7 @@ export class ContainerSupervisor {
             await this.#docker.run(this.#spec({task, apiKey}))
         } catch (error) {
             log.error(`${taskTag(task)} could not be launched`, error)
-            await this.#repository.transition(task, {from: RUNNING_STATES, to: State.FAILED, statusDescription: failure('the task could not be started')})
+            await this.#repository.transition(task, {from: RUNNING_STATES, to: State.FAILED, statusDescription: LAUNCH_FAILED})
             await this.#discard(task.id)
             return
         }
@@ -152,7 +163,7 @@ export class ContainerSupervisor {
         }
         return task.state === State.CANCELING
             ? {state: State.CANCELED, statusDescription: undefined}
-            : {state: State.FAILED, statusDescription: failure('the task ended unexpectedly')}
+            : {state: State.FAILED, statusDescription: EXITED_UNEXPECTEDLY}
     }
 
     async #reconcile() {

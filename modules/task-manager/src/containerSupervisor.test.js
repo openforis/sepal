@@ -31,7 +31,9 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect(await repository.getTask('t-1')).toMatchObject({state: State.FAILED})
+        const task = await repository.getTask('t-1')
+        expect(task.state).toBe(State.FAILED)
+        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.launchFailed'})
     })
 })
 
@@ -61,7 +63,9 @@ describe('collecting', () => {
         docker.exit('sepal-task-t-1', 137)
         await supervisor.idle()
 
-        expect(await repository.getTask('t-1')).toMatchObject({state: State.FAILED})
+        const task = await repository.getTask('t-1')
+        expect(task.state).toBe(State.FAILED)
+        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.exitedUnexpectedly'})
     })
 
     test('a container being cancelled that exits without a result is canceled', async () => {
@@ -224,7 +228,9 @@ describe('timeouts', () => {
         await supervisor.enforceTimeouts()
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        const task = await repository.getTask('t-1')
+        expect(task.state).toBe(State.FAILED)
+        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.stalled'})
         expect(docker.killed).toEqual(['sepal-task-t-1'])
     })
 
