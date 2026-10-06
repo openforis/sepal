@@ -32,6 +32,7 @@ import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
 import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
 import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
+import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
 import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
 import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
 import taskShareAsset$ from '#gee/jobs/task/shareAsset'
@@ -77,5 +78,6 @@ export default router =>
         .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
         .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
         .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
+        .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
         .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
