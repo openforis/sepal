@@ -10,22 +10,19 @@ import Job from '#sepal/worker/job'
 // runtime <-> job form a cycle; load it lazily (at job() call time) to break it.
 const require = createRequire(import.meta.url)
 
-const getSepalUser = ctx => {
-    const sepalUser = ctx.request.headers['sepal-user']
-    return sepalUser
-        ? JSON.parse(sepalUser)
-        : {}
+const parseHeader = (ctx, name) => {
+    const value = ctx.request.headers[name]
+    return value
+        ? JSON.parse(value)
+        : null
 }
 
-const getCredentials = ctx => {
-    const sepalUser = getSepalUser(ctx)
-    const serviceAccountCredentials = config.serviceAccountCredentials
-    return {
-        sepalUser,
-        serviceAccountCredentials,
-        googleProjectId: config.googleProjectId
-    }
-}
+const getCredentials = ctx => ({
+    sepalUser: parseHeader(ctx, 'sepal-user') || {},
+    sepalSession: parseHeader(ctx, 'sepal-session'),
+    serviceAccountCredentials: config.serviceAccountCredentials,
+    googleProjectId: config.googleProjectId
+})
 
 const job = ({
     jobName,
@@ -42,14 +39,15 @@ const job = ({
         credentials: getCredentials(ctx)
     }),
     worker$,
-    finalize$
+    finalize$,
+    workloadTag
 }) => {
     // Every task of a request makes its Earth Engine calls as the request's user, and runs inside the request's
     // own recipe operation, which the configure task ahead of them put on the shared state.
     const workerInContext$ = (...args) => {
-        const [{credentials, initArgs: {eeEndpoint} = {}, requestId, state} = {}] = args
+        const [{credentials, requestArgs, initArgs: {eeEndpoint} = {}, requestId, state} = {}] = args
         return defer(() => inEEContext(
-            createEEContext({requestId, credentials, jobName, endpoint: eeEndpoint}),
+            createEEContext({requestId, credentials, jobName, workloadTag: workloadTag?.(requestArgs), endpoint: eeEndpoint}),
             defer(() => inRecipeScope(state?.recipeScope, worker$(...args)))
         ))
     }

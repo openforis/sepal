@@ -40,12 +40,12 @@ describe('who a call is made as', () => {
         expect(http.calls).toEqual([])
     })
 
-    test('each call passes the limiter as its user and project', async () => {
+    test('each call passes the limiter as its user, project and origin', async () => {
         const {client, limited} = setup()
 
         await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(limited).toEqual([{username: 'alice', projectId: 'alice-project'}])
+        expect(limited).toEqual([{username: 'alice', projectId: 'alice-project', origin: 'interactive'}])
     })
 })
 
@@ -234,6 +234,7 @@ describe('what is counted', () => {
 const alice = () => ({
     requestId: 'request-1',
     username: 'alice',
+    origin: 'interactive',
     auth: {type: 'user', accessToken: 'alice-token', expiresAt: Date.now() + 60 * 60 * 1000},
     projectId: 'alice-project',
     workloadTag: 'sepal-work-test',

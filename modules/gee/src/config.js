@@ -15,7 +15,9 @@ const DEFAULT_RECIPE_ENDPOINT = 'http://recipe'
 const DEFAULT_EE_LIMITS = {
     user: {maxRate: 25, maxConcurrency: 10},
     project: {maxRate: 100, maxConcurrency: 40},
-    global: {maxRate: 200, maxConcurrency: 100}
+    global: {maxRate: 200, maxConcurrency: 100},
+    taskUser: {maxRate: 10, maxConcurrency: 5},
+    taskGlobal: {maxRate: 50, maxConcurrency: 20}
 }
 
 const fatalError = error => {
@@ -103,6 +105,10 @@ try {
         .addOption(limitOption('--ee-limit-sepal-project-concurrency', 'EE_LIMIT_SEPAL_PROJECT_CONCURRENCY'))
         .addOption(limitOption('--ee-limit-global-rate', 'EE_LIMIT_GLOBAL_RATE', DEFAULT_EE_LIMITS.global.maxRate))
         .addOption(limitOption('--ee-limit-global-concurrency', 'EE_LIMIT_GLOBAL_CONCURRENCY', DEFAULT_EE_LIMITS.global.maxConcurrency))
+        .addOption(limitOption('--ee-limit-task-user-rate', 'EE_LIMIT_TASK_USER_RATE', DEFAULT_EE_LIMITS.taskUser.maxRate))
+        .addOption(limitOption('--ee-limit-task-user-concurrency', 'EE_LIMIT_TASK_USER_CONCURRENCY', DEFAULT_EE_LIMITS.taskUser.maxConcurrency))
+        .addOption(limitOption('--ee-limit-task-global-rate', 'EE_LIMIT_TASK_GLOBAL_RATE', DEFAULT_EE_LIMITS.taskGlobal.maxRate))
+        .addOption(limitOption('--ee-limit-task-global-concurrency', 'EE_LIMIT_TASK_GLOBAL_CONCURRENCY', DEFAULT_EE_LIMITS.taskGlobal.maxConcurrency))
     ignoreEmptyEnv(program).parse()
 } catch (error) {
     fatalError(error)
@@ -122,7 +128,11 @@ const {geeEmail,
     eeLimitSepalProjectRate,
     eeLimitSepalProjectConcurrency,
     eeLimitGlobalRate,
-    eeLimitGlobalConcurrency
+    eeLimitGlobalConcurrency,
+    eeLimitTaskUserRate,
+    eeLimitTaskUserConcurrency,
+    eeLimitTaskGlobalRate,
+    eeLimitTaskGlobalConcurrency
 } = program.opts()
 
 const serviceAccountCredentials = {
@@ -139,7 +149,9 @@ const eeLimits = {
         maxRate: eeLimitSepalProjectRate ?? eeLimitProjectRate,
         maxConcurrency: eeLimitSepalProjectConcurrency ?? eeLimitProjectConcurrency
     },
-    global: {maxRate: eeLimitGlobalRate, maxConcurrency: eeLimitGlobalConcurrency}
+    global: {maxRate: eeLimitGlobalRate, maxConcurrency: eeLimitGlobalConcurrency},
+    taskUser: {maxRate: eeLimitTaskUserRate, maxConcurrency: eeLimitTaskUserConcurrency},
+    taskGlobal: {maxRate: eeLimitTaskGlobalRate, maxConcurrency: eeLimitTaskGlobalConcurrency}
 }
 
 log.info('Configuration loaded')

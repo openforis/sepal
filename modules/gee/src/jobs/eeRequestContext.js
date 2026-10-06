@@ -5,8 +5,9 @@ import {tag} from '#sepal/tag'
 // service account; in the account's own project when it names one, otherwise in the SEPAL project.
 export const createEEContext = ({
     requestId,
-    credentials: {sepalUser, googleProjectId} = {},
+    credentials: {sepalUser, sepalSession, googleProjectId} = {},
     jobName,
+    workloadTag,
     endpoint = DEFAULT_EE_ENDPOINT,
     now = Date.now()
 }) => {
@@ -18,14 +19,19 @@ export const createEEContext = ({
     return {
         requestId,
         username,
+        origin: originOf(sepalSession),
         auth: googleTokens
             ? {type: 'user', accessToken: googleTokens.accessToken, expiresAt: googleTokens.accessTokenExpiryDate}
             : {type: 'serviceAccount'},
         projectId: googleTokens?.projectId || googleProjectId,
-        workloadTag: workloadTagOf(jobName),
+        workloadTag: workloadTag || workloadTagOf(jobName),
         endpoint
     }
 }
+
+// Only the gateway sets sepal-session, from the API key the request was authenticated with.
+const originOf = sepalSession =>
+    sepalSession?.workerType === 'task' ? 'task' : 'interactive'
 
 const workloadTagOf = jobName =>
     `sepal-work-${jobName.toLowerCase().replace(/[^a-z0-9_-]/g, '_').substring(0, 63)}`

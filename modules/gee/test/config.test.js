@@ -13,6 +13,23 @@ describe('Earth Engine limits', () => {
         expect(eeLimits.project.maxConcurrency).toBe(40)
     })
 
+    test('for task traffic take their defaults when their variables are empty', async () => {
+        const {eeLimits} = await loadConfig({
+            EE_LIMIT_TASK_USER_RATE: '', EE_LIMIT_TASK_USER_CONCURRENCY: '',
+            EE_LIMIT_TASK_GLOBAL_RATE: '', EE_LIMIT_TASK_GLOBAL_CONCURRENCY: ''
+        })
+
+        expect(eeLimits.taskUser).toEqual({maxRate: 10, maxConcurrency: 5})
+        expect(eeLimits.taskGlobal).toEqual({maxRate: 50, maxConcurrency: 20})
+    })
+
+    test('for task traffic are read from their variables', async () => {
+        const {eeLimits} = await loadConfig({EE_LIMIT_TASK_USER_CONCURRENCY: '2', EE_LIMIT_TASK_GLOBAL_RATE: '30'})
+
+        expect(eeLimits.taskUser.maxConcurrency).toBe(2)
+        expect(eeLimits.taskGlobal.maxRate).toBe(30)
+    })
+
     test('of the SEPAL project are those of other projects when their variables are empty', async () => {
         const {eeLimits} = await loadConfig({
             EE_LIMIT_PROJECT_RATE: '80',

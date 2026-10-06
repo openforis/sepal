@@ -71,5 +71,6 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 
 The `EE runtime` job (default `before` of every job) initializes Earth Engine once per worker thread and installs
 the REST transport; each task runs in its request's Earth Engine context (wrapped in `jobs/job.js`, built by `jobs/eeRequestContext.js`), so any
-thread serves any user. Calls pass the `EERestLimiter` tiers user → project → global, configured with
+thread serves any user. Calls pass the `EERestLimiter` tiers `taskUser` → `taskGlobal` (task traffic only, identified by
+`sepal-session` `workerType: 'task'`) before user → project → global, configured with
 `EE_LIMIT_*` (`src/config.js`). `verify/restTransport.mjs` checks the transport against live Earth Engine.
