@@ -27,7 +27,8 @@ import {
 // source can be read is the section that selects it's to say. `advisories` [{message}] are the
 // other problems established about the same source, each said apart so none hides what holds the section back: those of
 // a requirement its selection need not meet - one only an operation needs - each by what it says; and, where nothing
-// holds the section back, one naming the other sections whose settings no longer suit it, which say why themselves.
+// holds the section back, one naming the other sections whose settings no longer suit it, which say why themselves -
+// those whose requirements name this section to advise (`advise`). A section no requirement names advises of none.
 //
 // Names come from the recipe listing and types from their registered labels; what a requirement's own diagnoses say is
 // the requirement's (`describe`). A source not selected yet is the form's to require, not something for its section to
@@ -50,11 +51,11 @@ export const sectionStatusOf = (state, reads, sectionId) => {
         .map(read => statusOf(read, names))
         .filter(Boolean)
         .sort((a, b) => PRECEDENCE.indexOf(a.state) - PRECEDENCE.indexOf(b.state))[0]
-    const dependent = reads.filter(read => read.declaration.section.id !== sectionId && isRequired(read)
-        && own.some(({declaration}) => declaration.role === read.declaration.role))
+    const advising = reads.filter(read => read.declaration.section.id !== sectionId && isRequired(read)
+        && read.declaration.advise?.includes(sectionId))
     const advisories = [
         ...operationAdvisories(own.filter(read => !isRequired(read)), blocking, names),
-        ...blocking ? [] : sectionAdvisories(dependent, names)
+        ...blocking ? [] : sectionAdvisories(advising, names)
     ]
     if (!blocking && !advisories.length) {
         return null

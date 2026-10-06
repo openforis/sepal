@@ -34,7 +34,6 @@ export const recipeFormPanel = (
         mapRecipeToProps = () => ({}),
         modelToValues = model => ({...model}),
         valuesToModel = values => ({...values}),
-        sourceInput,
         policy = defaultPolicy,
         additionalPolicy = () => ({})
     }) => {
@@ -65,13 +64,17 @@ export const recipeFormPanel = (
 
     // A panel whose id names a section the recipe's type declares source requirements for judges its values by them
     // before they are applied (sourceCandidate.js). What it finds holds Apply back as an invalid field does, and is told
-    // to the input the source is selected in - `sourceInput`, the name of that input, or a function of the values naming
-    // it - as that input's feedback (inputFeedback.js). A panel that only configures something depending on the source
-    // names none: what is wrong with its settings is said on its section's toolbar button.
-    const sourceCandidateOf = (props, onChange) => {
+    // to the form input the section declares (`section.input`, sourceRequirements.js) as that input's feedback
+    // (inputFeedback.js). A section declaring none - one only configuring something depending on the source, say -
+    // says what is wrong with its settings on its toolbar button alone.
+    const sourceSectionOf = props => {
+        const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
+        return declarations.find(({section}) => section.id === id)?.section || null
+    }
+
+    const sourceCandidateOf = (section, props, onChange) => {
         const {recipeId, sourceRuntime} = props
-        const declarations = getRecipeType(select(['process.loadedRecipes', recipeId, 'type']))?.sourceRequirements || []
-        return declarations.some(({section}) => section.id === id)
+        return section
             ? new SourceCandidate({sourceRuntime, recipeId, section: id, path: path(props), valuesToModel, onChange})
             : null
     }
@@ -89,7 +92,8 @@ export const recipeFormPanel = (
                     super(props)
                     const {values, recipeStatePath: statePath, form} = props
                     this.prevValues = values
-                    this.sourceCandidate = sourceCandidateOf(props, () => this.mounted && this.setState(
+                    this.sourceSection = sourceSectionOf(props)
+                    this.sourceCandidate = sourceCandidateOf(this.sourceSection, props, () => this.mounted && this.setState(
                         ({sourceCandidateChanges = 0}) => ({sourceCandidateChanges: sourceCandidateChanges + 1})
                     ))
     
@@ -136,7 +140,7 @@ export const recipeFormPanel = (
                     if (!candidate) {
                         return form
                     }
-                    const input = typeof sourceInput === 'function' ? sourceInput(form.values()) : sourceInput
+                    const input = this.sourceSection.input?.(form.values())
                     const feedback = sourceInputFeedback(candidate.status(), () => candidate.refresh())
                     return withInputFeedback(form, {
                         feedbackOf: name => name === input ? feedback : null,

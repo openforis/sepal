@@ -237,7 +237,9 @@ token; the mutation follow-ups and polling cover it.
 
 Schema availability and structural validity do not prove executability. Missing dates, training data or required
 references can prevent execution even with READY and VALID results, including through wrappers. Document this
-boundary now; implement requirements validation separately, with no unused resource slot or new panel guards.
+boundary now. Requirements are validated in the GUI, before Apply and at Retrieve
+([requirement contract](source-resolution.md#requirement-contract)), with no unused resource slot or new panel guards;
+rechecking them at the execution boundary is not implemented yet.
 Task continues resolving independently. Separately review its acceptance of browser-supplied band selections and
 pyramiding policies, including whether policies should be derived or validated against its own description.
 
@@ -606,31 +608,10 @@ or project.
 
 ## Expectation validation
 
-Consumers derive requirements from their persisted selections:
-
-```js
-{
-    product: {
-        id: 'IMAGE_OUTPUT',
-        kind: 'IMAGE',
-        requiredBands: ['ndvi']
-    }
-}
-
-{
-    product: {
-        id: 'IMAGE_OUTPUT',
-        kind: 'IMAGE'
-    },
-    capabilities: [{
-        id: 'CCDC_SEGMENTS',
-        version: 1,
-        cardinality: 'EXACTLY_ONE',
-        baseBand: 'ndvi',
-        requiredMeasures: ['coefficients', 'magnitude', 'rmse']
-    }]
-}
-```
+Consumers declare requirements over the facts of what they select: pure shared rules, declared by the consuming
+type with the section owning them and the operations they gate
+([requirement contract](source-resolution.md#requirement-contract)). That contract supersedes the earlier
+expectation-object shape (product `requiredBands`, capability `cardinality` and `requiredMeasures`).
 
 Refresh reconciles evidence with intent:
 
@@ -654,8 +635,9 @@ output-relevant dependency or asset observation changes.
 
 Agreed direction for subsequent implementation, not an implemented declaration API: evaluate the current model
 against current source descriptions and local dependencies instead of maintaining chains of imperative
-"when X changes, invalidate Y" rules. The CCDC Slice synchronization packet supplies shared observation and
-source descriptions; it does not introduce this section-evaluation mechanism.
+"when X changes, invalidate Y" rules. Shared observation and source descriptions are implemented. The
+[validation boundary review](data-sources.md#validation-boundary-review) extends the implemented requirement contract
+towards this direction rather than defining a second one; CCDC Slice and BAYTS do not introduce it.
 
 Recipe definitions own ordinary pure functions declaring:
 
@@ -687,7 +669,8 @@ actual operation, not flags inferred from edit events. User-authored choices are
 
 The declaration shape and reusable evaluator remain open until the bounded Band Math workflow establishes what
 is needed. Extract only demonstrated common mechanics; do not build a general rules engine or rewrite Sampling
-Design's invalidation planner in the CCDC Slice or Band Math packet.
+Design's invalidation planner in the CCDC Slice or Band Math packet. That planner stays Sampling Design's current
+mechanism until then; it is not the final architecture.
 
 ## Availability state
 

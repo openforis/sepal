@@ -15,7 +15,13 @@ import {availableMeasures, monitorableMeasures, observedMeasures} from './monito
 // A reference with no measure any monitoring data Sources offers observes is refused in REF; one whose measures only
 // other monitoring settings observe is accepted, and Sources is what then needs changing.
 
-const REFERENCE = {id: 'reference', label: 'process.changeAlerts.panel.reference.button'}
+// REF says what it finds on the input the reference is selected in. Sources' choices cannot show it, so its toolbar
+// button does.
+const REFERENCE = {
+    id: 'reference',
+    label: 'process.changeAlerts.panel.reference.button',
+    input: ({section}) => section === 'RECIPE_REF' ? 'recipe' : 'asset'
+}
 const SOURCES = {id: 'sources', label: 'process.changeAlerts.panel.sources.button'}
 
 export const referenceRequirements = [
@@ -42,7 +48,8 @@ export const referenceRequirements = [
             available: availableMeasures(model.sources?.dataSetType),
             observed: observedMeasures(model)
         }),
-        operations: [IMAGE_OUTPUT]
+        operations: [IMAGE_OUTPUT],
+        advise: [REFERENCE.id]
     },
     {
         role: PRIMARY_IMAGE,

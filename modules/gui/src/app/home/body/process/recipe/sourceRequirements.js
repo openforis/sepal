@@ -16,12 +16,17 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // Whether the sources a recipe selects meet what its type declares it needs of them, as the session stands: pure and
 // synchronous, starting nothing. A recipe type declares `sourceRequirements`:
 //
-//   {role, section: {id, label}, requirement, parameters: recipe => ({...}), operations, providerOperations,
-//    requiredForSelection}
+//   {role, section: {id, label, input}, requirement, parameters: recipe => ({...}), operations, providerOperations,
+//    requiredForSelection, advise}
 //
 // `role` names the selection by the edge the recipe already declares (directSources), and `section` the form panel the
 // requirement belongs to: its id names the panel, which edits the model at that id - the section that selects the
-// source where its edge lies there, otherwise one configuring something that depends on it. `requirement` is a shared
+// source where its edge lies there, otherwise one configuring something that depends on it - one section object,
+// shared by every requirement in it. The section's `input`,
+// where it has one, is a function of the panel's form values naming the form input - not a model location - that
+// shows what the section's requirements find (recipeFormPanel.jsx); a section without one shows it only on its
+// toolbar button. `advise` names the other sections whose status says, in one aggregate advisory, that this
+// requirement is not met (selectedSourceStatus.js); none acquire one otherwise. `requirement` is a shared
 // pure requirement (lib/js/shared/src/recipe/requirement) as the GUI reads it: {id, capability, evaluate(facts,
 // parameters), describe(diagnostic)}, `capability` being the GUI side of the capability it is over - {capability,
 // label, evidenceAsset(provider), factsOf(observed, assetId)} - and `describe` what its diagnoses mean, as {message,

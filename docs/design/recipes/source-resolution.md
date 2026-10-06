@@ -464,7 +464,11 @@ decides when the answer can be trusted and what it does to the UI.
 
 - **Declaration** (`referenceRequirement.js`). Change Alerts' type declares four requirements over its reference,
   the selection by the role its source edge already has (`PRIMARY_IMAGE`), each with the section it belongs to and the
-  requests that need it met:
+  requests that need it met. A section may name the form input that shows what its requirements find (`input`, a
+  function of the panel's form values naming a form input, not a model location): REF names its asset or recipe input,
+  and Sources names none, so its findings show on its toolbar button only. A requirement names the other sections
+  whose status advises that it is not met (`advise`): the Sources requirement names REF. No other section advises of
+  it, and a recipe declaring no `advise` gets no cross-section advisory.
 
   | Requirement | Section | Gates | Required to apply |
   |---|---|---|---|
@@ -515,17 +519,17 @@ decides when the answer can be trusted and what it does to the UI.
   selecting section's to say. Every other established problem over the same source is an advisory, said apart and
   never in place of what holds the section back: a requirement of one operation only (the chart, in REF), by what it
   says; and, while nothing holds the section back, one advisory naming each other section whose settings no longer
-  suit the source (Sources, in REF), whose own status says why. A diagnosis is said once per section. Toolbar marks
+  suit the source and whose requirements name this section to advise (Sources, in REF), whose own status says why. A diagnosis is said once per section. Toolbar marks
   count only what holds a section back (REF and Sources alike).
 - **Input feedback** (`sourceInputFeedback.jsx`, `inputFeedback.js`). Inside REF, the section's status is said on the
-  input its source is selected in, which the panel names (`sourceInput`: the asset or recipe input), as that input's
+  input its source is selected in, which the section's declaration names (`input`: the asset or recipe input), as that input's
   field validation rather than messages of its own. What holds the section back is the input's error, with every
   problem in its tooltip, after the input's own required-field or loading error and never in its place, and it holds
   Apply back as an invalid field does. A check still running is the input's busy indicator, explained in its label's
   tooltip beside the tooltip it already has, and holds Apply back too; the label's content is left as it is.
   Advisories are its warning and hold nothing back. Refresh, where reading the source again may help, is a button
   beside the label. The combos read this from the form they are in (`feedbackOf`), so a panel adds no code for it.
-  Sources names no input: its choices keep their existing presentation, and a candidate it refuses holds its Apply
+  Sources declares no input: its button choices cannot show feedback (`Form.Buttons` does not read it), keep their existing presentation, and a candidate it refuses holds its Apply
   back. What is wrong with its committed settings is said by its toolbar button's mark and tooltip, naming the
   setting to change - the type where no data of that type observes a measure of the reference, the data sets or
   pre-processing (an optical reflectance correction) where others of the type would, otherwise the band.

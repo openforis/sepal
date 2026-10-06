@@ -306,15 +306,14 @@ In order, each independently mergeable:
    actual reads - the alerts, the monitored measure in Sources, the segment chart - and every source section validated
    before Apply through the shared form binding, with the Sources feedback and source-feasibility amendment
    ([below](#declarative-validation-across-model-properties)). The agreed order from here:
-   1. Finish and commit Change Alerts.
+   1. Finish and commit Change Alerts (done).
    2. Review the shared validation boundary against the
       [declarative dependency evaluation](source-freshness.md#declarative-dependency-evaluation) plan and the
       [validation guidance](../../code-design.md#validation-across-model-properties), with Change Alerts, Band Math and
-      Sampling Design as the concrete examples. Cover local model properties as well as external source facts, and
-      aim for clean rule declarations and minimal panel wiring. The review refines those existing contracts rather
-      than adding a competing one.
-   3. Adapt the boundary as the review finds, then resume CCDC Slice, and BAYTS with a requirement derived from what
-      its execution reads ([findings](#configured-source-suitability-findings)).
+      Sampling Design as the concrete examples (done; [outcome](#validation-boundary-review)).
+   3. Adapt the boundary as the review finds: declared feedback inputs and explicit cross-section advisories (done).
+      Then resume CCDC Slice, and BAYTS with a requirement derived from what its execution reads
+      ([findings](#configured-source-suitability-findings)).
    A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
    recipe-specific input-layer bookkeeping with shared derivation.
    One shared
@@ -1101,6 +1100,27 @@ The items below are concrete applications of that broader policy.
   validation boundary review declares feeding the same assessment, so a form's Apply, its toolbar action and its
   request gate answer from one rule. It stays per operation, never a recipe-wide validity flag, and adds no separate
   validation system.
+- **Validation boundary review, done; its further direction is proposed, not settled**
+  <a id="validation-boundary-review"></a>. The requirement reader, candidate validation, section status, gates and
+  operation availability stay the one assessment; the review extends that contract rather than adding another.
+  Implemented from it, preserving behaviour: a section declares the form input showing what its requirements find
+  (`input`, a form input name, never a model location), or none, showing them on its toolbar button only; a
+  requirement declares the sections advising that it is not met (`advise`), so a recipe declaring none acquires no
+  cross-section advisory. Availability keeps its structured reason (the gate) whether or not a tooltip shows it.
+  Proposed direction, to settle against Band Math's actual workflow rather than in advance:
+  - rules over local configuration, with facts projected from the model rather than read as source evidence;
+  - one read per list item (a calculation), with its model location;
+  - an item panel's Apply held back by the item being edited only, an item still being added included, while section
+    marks and operation gates aggregate every item;
+  - prerequisites between reads, identified by declaration and location rather than by rule id - Change Alerts
+    declares `ccdcSegments.monitoredMeasure` twice - possibly across items; a suppressed message never makes its
+    operation available.
+
+  Sampling Design's planner (`planDerivedUpdates.js`) stays its current invalidation mechanism, unchanged for now; the
+  [direction](source-freshness.md#declarative-dependency-evaluation) remains current-input evaluation and result
+  provenance rather than edit-triggered flags. Staleness keeps today's mark but stays distinct from incompatibility
+  in the assessment. A rule over min-distance would keep that check's applicability: stratified, systematic sampling
+  only.
 - **Date compatibility follow-up:** verify execution's required reference coverage relative to calibration dates
   and the available evidence before adding a declarative Dates requirement. Preserve user dates; distinguish an
   incompatible selected period from a reference that supports no valid period. The proposed preceding-year rule
