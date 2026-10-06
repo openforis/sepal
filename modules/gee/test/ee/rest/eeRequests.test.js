@@ -145,6 +145,26 @@ describe('a request built for the REST API is the one the client library sends',
         expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
     })
 
+    test('setting system time properties converts them to the asset fields the library sets', async () => {
+        const properties = {'system:time_start': 1577836800000, 'system:time_end': 1609459200000, recipe_id: 'r-1'}
+        const library = await libraryCall(
+            {url: `${API}/v1/${IMAGE_ASSET}`, answer: {name: IMAGE_ASSET, type: 'IMAGE', properties: {}}},
+            callback => ee.data.setAssetProperties(IMAGE_ASSET, properties, callback)
+        )
+
+        expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
+    })
+
+    test('removing a property together with a system property', async () => {
+        const properties = {'system:time_start': 1577836800000, sepal_band_encoding_2: null, stale: undefined}
+        const library = await libraryCall(
+            {url: `${API}/v1/${IMAGE_ASSET}`, answer: {name: IMAGE_ASSET, type: 'IMAGE', properties: {}}},
+            callback => ee.data.setAssetProperties(IMAGE_ASSET, properties, callback)
+        )
+
+        expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
+    })
+
     test('creating a folder', async () => {
         const parent = `projects/${TEST_PROJECT}/assets`
 
