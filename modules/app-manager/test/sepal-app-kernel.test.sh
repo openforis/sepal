@@ -160,5 +160,72 @@ if [[ $err == *"zstd"* ]]; then echo "ok   - a missing zstd is reported, not sil
 else echo "FAIL - no mention of zstd when it is absent: $err"; fail=$((fail+1)); fi
 teardown
 
+budget_results=$(mktemp -d)
+budget_pids=()
+# Exercise real timeouts concurrently; each must leave time within Voila's 60 s deadline.
+for scenario in lock extraction combined; do
+    (
+        setup yes
+        holder=''
+        case $scenario in
+            lock) lock_delay=35; extract_delay=0 ;;
+            extraction) lock_delay=0; extract_delay=35 ;;
+            combined) lock_delay=15; extract_delay=20 ;;
+        esac
+        if (( lock_delay > 0 )); then
+            ( flock -x 9; touch "$WORK/locked"; sleep "$lock_delay" ) \
+                9> "$SEPAL_CACHE_ROOT/.testapp.lock" &
+            holder=$!
+            while [[ ! -f $WORK/locked ]]; do sleep 0.01; done
+        fi
+        if (( extract_delay > 0 )); then
+            mkdir -p "$WORK/bin"
+            TEST_ZSTD=$(command -v zstd)
+            export TEST_ZSTD TEST_EXTRACT_DELAY=$extract_delay
+            cat > "$WORK/bin/zstd" <<'EOF'
+#!/bin/bash
+trap '' TERM
+sleep "$TEST_EXTRACT_DELAY"
+exec "$TEST_ZSTD" "$@"
+EOF
+            chmod +x "$WORK/bin/zstd"
+            export PATH="$WORK/bin:$PATH"
+        fi
+
+        timeout -k 1 40 bash "$LAUNCHER" testapp > "$WORK/result" 2> "$WORK/error"
+        status=$?
+        got=$(sed -n 's/^PREFIX=//p' "$WORK/result")
+        result=0
+        if [[ $status -ne 0 || $got != "$SEPAL_KERNELS_DIR/venv-testapp/venv" ]]; then
+            echo "$scenario: expected Lustre fallback before 40 s, got status=$status prefix=$got"
+            cat "$WORK/error"
+            result=1
+        fi
+        if [[ -n $(find "$SEPAL_CACHE_ROOT/testapp" -mindepth 1 -type d) ]]; then
+            echo "$scenario: left an incomplete or published cache after timing out"
+            result=1
+        fi
+        [[ -z $holder ]] || wait "$holder"
+        if ! flock -w 1 "$SEPAL_CACHE_ROOT/.testapp.lock" true; then
+            echo "$scenario: an extraction process still holds the lock"
+            result=1
+        fi
+        teardown
+        exit "$result"
+    ) > "$budget_results/$scenario" 2>&1 &
+    budget_pids+=("$!")
+done
+index=0
+for scenario in lock extraction combined; do
+    if wait "${budget_pids[$index]}"; then
+        echo "ok   - $scenario falls back within the shared startup budget"; pass=$((pass+1))
+    else
+        echo "FAIL - $scenario exceeds the shared startup budget"; fail=$((fail+1))
+        cat "$budget_results/$scenario"
+    fi
+    index=$((index+1))
+done
+rm -rf "$budget_results"
+
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

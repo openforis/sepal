@@ -6,6 +6,8 @@
 # usage: sepal-app-kernel <app-name> [args passed to ipykernel_launcher]
 set -u
 app=$1; shift
+# Voila allows 60 s for startup; cache preparation must leave time for Python itself.
+cache_deadline=$((SECONDS + 30))
 
 # Overridable only so the test harness can point at a fixture tree.
 kernels=${SEPAL_KERNELS_DIR:-/usr/local/share/jupyter/kernels}
@@ -33,7 +35,8 @@ then
         # themselves: the same app in two tabs, or Voila and a notebook on one kernelspec.
         # The lock file sits outside the cache dir so no cleanup can remove it from a waiter.
         exec 9> "$root/.$app.lock"
-        if flock -w 300 9; then
+        remaining=$((cache_deadline - SECONDS))
+        if (( remaining > 0 )) && flock -w "$remaining" 9; then
             if [[ ! -d $cache ]]; then
                 # Checked under the lock so two starts cannot both pass it. Unpacked is ~3.5x
                 # the archive; the margin keeps the user's own scratch intact.
@@ -41,9 +44,11 @@ then
                 free=$(df -Pm "$root" | awk 'NR==2{print $4}')
                 if (( free >= need )); then
                     rm -rf "$cache.tmp"
+                    remaining=$((cache_deadline - SECONDS))
                     # pipefail: without it a corrupt tail lets zstd fail while tar exits 0.
-                    if mkdir -p "$cache.tmp" \
-                       && timeout 600 bash -c 'set -o pipefail
+                    # TERM can exit bash before a child releases the lock; kill the whole group.
+                    if (( remaining > 0 )) && mkdir -p "$cache.tmp" \
+                       && timeout -s KILL "$remaining" bash -c 'set -o pipefail
                             zstd -q -dc -T0 "$1" | tar -C "$2" -xf -' _ "$tarball" "$cache.tmp" \
                        && [[ -x $cache.tmp/venv/bin/python3 ]]; then
                         # -T replaces the target; a plain mv would nest it inside.
@@ -53,8 +58,8 @@ then
                     fi
                 fi
             fi
-            exec 9>&-
         fi
+        exec 9>&-
         # Superseded generations are deliberately kept: a kernel still running from an older
         # copy resolves lazy imports and data files by path, so deleting one breaks a live app.
         [[ -d $cache && -x $cache/venv/bin/python3 ]] && venv="$cache/venv"
