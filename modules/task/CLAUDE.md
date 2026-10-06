@@ -30,7 +30,8 @@ sepal npm-test task -- --testPathPatterns runner
 
 - `src/run.js` - entry point: read task, run it, write result, exit.
 - `src/runner/` - `runTask` (outcome mapping), `operations` (operation name to
-  `async (params, {sepal, report, signal})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`.
+  `async (params, {sepal, report, signal})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`,
+  `exportToWorkspace` (follow an export, `downloadFiles` it into the workspace, clean up), `forEachInParallel`.
 - `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
 
 Class B sources under `src/tasks` and `src/jobs` (SEPAL-workspace exports, sampling design, time series) still
