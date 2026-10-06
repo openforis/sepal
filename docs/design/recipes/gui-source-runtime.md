@@ -622,6 +622,20 @@ settled. Checking is always an active acquisition: once the last watcher leaves,
 record claims are released, and readers see no owner. Source requirements read it
 ([Change Alerts REF](source-resolution.md#change-alerts-ref)).
 
+A selection being edited in a recipe form panel is observed the same way before it is applied
+(`watchCandidate$`, driven by the panel's `SourceCandidate`, [Change Alerts REF](source-resolution.md#change-alerts-ref)):
+over the recipe as it would be with the panel's values applied, by the observation the type registers, under the same
+basis, claims and cancellation. Its evidence and owner are held by the registry and handed to the panel whenever
+either changes - a first token adopted into the basis included, so a later token is a change however early it is read.
+Nothing is published: no default is applied, nothing is announced and nothing is written, so the recipe's own evidence
+and drawing stay as they are until Apply. It is started only where the recipe's own observation does not hold for the
+candidate, and is let go when the edit changes, the panel closes or the recipe's observation comes to hold for it.
+Letting it go can release the last claim on a record it read - the selection Apply has just committed - while the
+recipe's observation of that selection is starting. A closure takes a record from the session only if the session
+still holds it when the closure claims it; one released since is loaded through the watch's own claim, so the session
+holds it again for the discovery reading the evidence.
+Apply does not adopt it; the recipe's evidence is read again through its own lifecycle.
+
 Updates are synchronous with the store change that causes them. Claiming records or assets, marking an observation
 started, publishing and applying an editor's defaults can all dispatch again, so an observation's identity and its
 cancellation are installed before anything can dispatch, and every write is made only for the entry, observation and

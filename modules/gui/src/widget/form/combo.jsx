@@ -6,6 +6,7 @@ import {compose} from '~/compose'
 import {Combo} from '~/widget/combo'
 
 import {withFormContext} from './context'
+import {inputFeedback, withBusyExplanation, withFeedbackButtons} from './inputFeedback'
 
 class _FormCombo extends React.Component {
     constructor(props) {
@@ -32,10 +33,11 @@ class _FormCombo extends React.Component {
 
     render() {
         const {
-            input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
+            form, input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
             inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, hPlacement, vPlacement,
             readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, onCancel, onFilterChange
         } = this.props
+        const feedback = inputFeedback(form, input)
         return (
             <Combo
                 value={input.value}
@@ -46,15 +48,15 @@ class _FormCombo extends React.Component {
                 autoFocus={autoFocus}
                 autoOpen={autoOpen}
                 border={border}
-                busyMessage={busyMessage}
+                busyMessage={busyMessage || feedback.busy}
                 className={className}
                 disabled={disabled}
-                warningMessage={warningMessage}
+                warningMessage={warningMessage || feedback.warning}
                 errorMessage={this.getErrorMessage()}
                 inputClassName={inputClassName}
                 keyboard={keyboard}
                 label={label}
-                labelButtons={labelButtons}
+                labelButtons={withFeedbackButtons(labelButtons, feedback)}
                 optionsClassName={optionsClassName}
                 optionTooltipPlacement={optionTooltipPlacement}
                 placeholder={placeholder}
@@ -62,7 +64,7 @@ class _FormCombo extends React.Component {
                 vPlacement={vPlacement}
                 readOnly={readOnly}
                 stayOpenOnSelect={stayOpenOnSelect}
-                tooltip={tooltip}
+                tooltip={withBusyExplanation(tooltip, feedback)}
                 tooltipPlacement={tooltipPlacement}
                 onCancel={onCancel}
                 onFilterChange={onFilterChange}

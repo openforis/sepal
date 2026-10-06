@@ -95,7 +95,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.changeAlerts.panel.sources.button')}
-                        tooltip={msg('process.changeAlerts.panel.sources.tooltip')}
+                        tooltip={sourceProblems.sources || msg('process.changeAlerts.panel.sources.tooltip')}
+                        error={!!sourceProblems.sources}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton

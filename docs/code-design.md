@@ -79,6 +79,50 @@ inbound adapter: they extract `principal` and `recipeId` from HTTP and call `rec
 Shared `db.withTransaction` and `db.withConnection` belong inside persistence adapters. Keep connection
 and session-lock cleanup explicit: transaction commit or rollback does not release a MySQL named lock.
 
+## Validation across model properties
+
+Design guidance for forms whose fields or sections depend on each other; not a claim that existing forms implement
+it. This applies to ordinary model values and derived results as well as recipe or asset references.
+
+Keep three responsibilities distinct:
+
+- **Feasibility:** can a proposed value participate in any supported configuration? When the domain rule establishes
+  that it cannot, reject it at its own field. An unknown answer is not established incompatibility.
+- **Compatibility:** do the currently selected values work together? A feasible edit may require corrections in
+  other sections. Attribute each error to the actionable field, keep the affected section visibly invalid after
+  Apply, and block only the operations that require that configuration. Define which incompatibilities refuse the
+  current panel's Apply and which allow a repairable intermediate configuration.
+- **Invalidation:** is a derived result still current after its inputs change? An out-of-date result may simply need
+  recomputation; it does not by itself mean any selected value is invalid or that a warning is useful.
+
+Declare rule inputs, owning sections, actionable fields and affected operations rather than coordinating panels
+with callbacks. Pure domain rules consume model values and any required facts; shared form machinery routes their
+results and enforces Apply. Evidence acquisition and currency apply only where rules need external facts, through
+the existing owner. Source discovery is one possible collaborator, not the owner of general validation. Settle the
+declaration shape against concrete consumers, without introducing a general constraint solver. Where feasibility
+depends on combinations, independently available options do not prove that a valid combination exists.
+
+Presentation policy:
+
+- Prefer preventing established invalid combinations through available choices. Do not interpret pending or failed
+  reads as proof that choices are incompatible.
+- Use ordinary field errors, warnings and existing busy indications. Put the explanation where the user can act;
+  do not insert status rows that change form height or repeat every dependent error at the field being edited.
+- Cross-section advisories are deliberate domain decisions, not an automatic consequence of dependency edges or
+  invalidation. Use one short aggregate advisory when an edit leaves retained settings incompatible and advance
+  notice helps the user choose whether to proceed. Name the affected sections and the available remedies. Update
+  it as problems are resolved and remove it when none remain. Normal recalculation need not produce a warning.
+- Preserve explicit user settings during validation. Defaulting, reconciling obsolete selections and discarding or
+  regenerating derived results are separate policies; define them rather than hiding them inside validation.
+- Apply the same rules to the edited candidate and committed configuration, and recheck at submission. Optional
+  operations can be unavailable without making the whole configuration invalid.
+
+For example, changing a Change Alerts reference can leave its monitoring type incompatible: REF shows an aggregate
+advisory, while the Sources toolbar button is marked, saying to change the type. Changing a Sampling Design AOI can invalidate derived results without
+making the AOI unsuitable. Review which settings truly become incompatible, which results only need recalculation,
+and whether any loss of user work warrants advance notice before adding AOI warnings. No blanket warning policy is
+implied for that recipe.
+
 ## Test boundaries
 
 | Test | What it proves |

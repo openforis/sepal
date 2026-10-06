@@ -301,8 +301,20 @@ In order, each independently mergeable:
    reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
    from metadata alone (done); shared segment-evidence readers and selection by role (done); evidence owned by the
    source runtime, so an operation a type declares requirements for is checked wherever the recipe is shown, with
-   prefill behaviour kept (done); then CCDC Slice, and BAYTS with a requirement derived from what its execution reads
-   ([findings](#configured-source-suitability-findings)).
+   prefill behaviour kept (done); Change Alerts' boundary (done): pure shared requirements with stable ids over
+   explicit facts ([requirement contract](source-resolution.md#requirement-contract)), one requirement per operation's
+   actual reads - the alerts, the monitored measure in Sources, the segment chart - and every source section validated
+   before Apply through the shared form binding, with the Sources feedback and source-feasibility amendment
+   ([below](#declarative-validation-across-model-properties)). The agreed order from here:
+   1. Finish and commit Change Alerts.
+   2. Review the shared validation boundary against the
+      [declarative dependency evaluation](source-freshness.md#declarative-dependency-evaluation) plan and the
+      [validation guidance](../../code-design.md#validation-across-model-properties), with Change Alerts, Band Math and
+      Sampling Design as the concrete examples. Cover local model properties as well as external source facts, and
+      aim for clean rule declarations and minimal panel wiring. The review refines those existing contracts rather
+      than adding a competing one.
+   3. Adapt the boundary as the review finds, then resume CCDC Slice, and BAYTS with a requirement derived from what
+      its execution reads ([findings](#configured-source-suitability-findings)).
    A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
    recipe-specific input-layer bookkeeping with shared derivation.
    One shared
@@ -312,7 +324,8 @@ In order, each independently mergeable:
    [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery) and the
    [configured-source suitability findings](#configured-source-suitability-findings).
 3. **Declarative dependency evaluation**, starting with the
-   [Band Math chain](#later-follow-up-band-math-dependencies).
+   [Band Math chain](#later-follow-up-band-math-dependencies). The boundary review in item 2 informs it, and does not
+   implement it.
 4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
@@ -337,8 +350,9 @@ Re-audit the new task lifecycle and notification paths before choosing the integ
 Keep Task changes out of the next requirement-validation packet; its Task execution-boundary integration must
 be reviewed against the rewritten service.
 
-Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
-is a separate small packet.
+Recipe deletion warns about no dependents yet; [persisted reference indexing](#persisted-reference-index) is a
+separate follow-up, covering processing dependencies and display references. Loading
+[unused map sources](#load-map-sources-only-when-needed) should not serve as dependency checking.
 
 **Retained closed drafts after their save settles.** The recipe cache keeps a closed draft whose save has not settled
 past its last claimant (`recipeCacheClaims.js`), and nothing evicts it once the save settles: it stays cached until a
@@ -349,9 +363,16 @@ evicting an unclaimed closed draft when its save state settles.
 source selector cannot open its selected recipe consistently everywhere it appears. Settle
 [recipe-scoped modals](#recipe-scoped-modals) first; [opening the selected recipe](#open-selected-recipe) follows.
 
-Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
-its origin has not been investigated, and whether it is a regression is not established. Investigate the error
-presentation separately.
+**Recipe packages: separate developer architecture track.** [Recipe packaging](#recipe-packages) is the intended
+direction for keeping a recipe's concerns together. It does not block or expand the current user-facing sequence:
+Change Alerts requirement and form-validation improvements, the validation boundary review, then CCDC Slice, then
+BAYTS. Those improvements can
+ship incrementally without waiting for a packaging design.
+
+Opening a recipe with an unavailable saved recipe layer source can show a raw JSON 404 notification, even when no
+map area displays that source. `RecipeImageLayerSource` interpolates the raw load error into its translated message;
+the translation helper serializes that object. Replace it with a readable diagnosis naming the source, keeping
+technical details in logs. This presentation correction is separate from lazy loading and reference indexing below.
 
 **Geometry reads during incomplete input editing.** A Stack remove-all/add-again sequence exposed a geometry request
 with no first input, causing `imageFactory` to read `.type` from undefined. The unguarded first-input access predates
@@ -1042,10 +1063,94 @@ chart requesting it watches the evidence the operation needs
 the session does not hold before it is allowed or refused. Presentation evidence of types without requirements is
 observed only by their editors.
 
+Its segment chart read bands its requirement did not check: `CCDCGraph` plots `tBreak`, `changeProb`, `numObs` and a
+measure's `_magnitude`, which the alerts never read, and a reference without them made the chart fail as it drew. The
+chart now has its own requirement, reported in REF as a warning without refusing a reference the alerts can use.
+
 Source-error presentation acceptance includes a visibly invalid owning SRC/REF section, an explanation naming
 the affected source, a retained selection that can be repaired, and visible progress on Refresh. The missing
 Refresh feedback was observed manually after deleting a temporary asset; the unavailable message and export
 blocking worked. Broader Retrieve diagnostic presentation and Refresh feedback remain separate follow-ups.
+
+### Declarative validation across model properties
+
+General form-design guidance lives in
+[code design](../../code-design.md#validation-across-model-properties); it is not owned by source resolution or limited
+to source fields. Distinguish feasibility, compatibility of current settings and invalidation of derived results.
+Declare rule inputs and feedback ownership, keeping pure domain rules separate from shared form coordination.
+Cross-section warnings are chosen for useful advance notice, not generated for every dependency or invalidation.
+The items below are concrete applications of that broader policy.
+
+- **Change Alerts amendment, implemented** ([contract](source-resolution.md#change-alerts-ref)): REF is refused if
+  none of the supported monitoring sources can use its measures. Otherwise the replacement is allowed, with one
+  short aggregate REF advisory naming the sections needing attention and both remedies: choose another reference or
+  update those sections. Sources stays invalid after Apply, marked on the toolbar - whose Sources button previously
+  ignored the section's problems, so an Optical-to-Radar replacement showed no error there. Its tooltip names the
+  setting to change: the type; other data sets of the same type or other pre-processing, pointing to both; or the
+  band. Sources' choices keep their existing presentation.
+- **Operation availability, implemented for the segment chart and Retrieve**
+  ([contract](source-resolution.md#operation-availability)): availability is a shared assessment of one operation.
+  It is derived from the declared requirements, the current configuration and the current evidence, by the
+  requirement reads the request gates already use. Its consumers are the toolbar action that opens the operation
+  (disabled while prerequisites are checked or unmet, with no added feedback), the open panel (the chart takes its
+  segment gate, bands and whether any band can be plotted from it) and the request or submission gate (Retrieve's
+  source gate). Recipe types supply declarations and facts, such as the bands Change Alerts' monitoring data
+  observes; the evaluation and the gate interpretation are shared. Retrieve's listing, draft and asset authority
+  stay with its panel and submission, since opening the panel is what renews them.
+  Planned, not implemented: other operations and recipe types; rules over local model properties that the
+  validation boundary review declares feeding the same assessment, so a form's Apply, its toolbar action and its
+  request gate answer from one rule. It stays per operation, never a recipe-wide validity flag, and adds no separate
+  validation system.
+- **Date compatibility follow-up:** verify execution's required reference coverage relative to calibration dates
+  and the available evidence before adding a declarative Dates requirement. Preserve user dates; distinguish an
+  incompatible selected period from a reference that supports no valid period. The proposed preceding-year rule
+  needs verification, not an assumption encoded in validation.
+- **Prevent impossible choices:** subsequently derive enabled monitoring types and relevant dependent fields from
+  established reference facts: disable incompatible choices, and hide dependent fields that cannot apply. Pending or
+  failed reads must not disable choices as if incompatibility were known. Consider defaulting an unset Type when
+  exactly one type is compatible; do not silently replace an explicit configured type or monitoring settings.
+  Defaulting policy remains a separate decision.
+- **Field-level Sources feedback, deferred:** saying an incompatibility on the Type, Data sets or Analysis band
+  choice itself needs button choices to present field errors, which they do not today; doing it for every form is a
+  separate decision. Where an incompatible type leaves no possible band, avoid a redundant band error beside the
+  actionable one on the type.
+- **Accessible field semantics, deferred:** labelled widgets as named groups stating disabled, busy and invalid
+  state, application-wide, rather than as part of a validation packet.
+
+- **Sampling Design review, not yet scheduled:** an AOI change affects many derived results and settings. Identify
+  actual incompatibilities separately from normal invalidation and recomputation. Assess whether retained choices
+  or loss of user work merit advance notice; do not automatically warn on AOI merely because other sections depend
+  on it. Existing invalidation alone neither establishes suitability nor requires a warning.
+
+Implement and verify concrete rules incrementally, then reuse the boundary in other recipes. This does not
+authorize an application-wide validation rewrite or a general constraint-solving framework.
+
+### Recipe packages
+
+Architectural direction, not yet scheduled. A recipe should ultimately be owned by one JavaScript package containing
+its shared definitions and domain rules, GUI components and text, Earth Engine implementation, and tests. SEPAL
+provides the common forms, maps, source runtime, persistence and execution infrastructure through explicit interfaces.
+The aim is simpler recipe development and ownership; current validation and diagnostic improvements deliver
+independent user benefits and retain priority.
+
+Two kinds of spread need addressing: registration in the GUI recipe catalogue, GUI layer catalogue, shared type
+registry and Earth Engine factory; and recipe logic spread between locations such as `recipe/type/changeAlerts.js`
+and `recipe/changeAlerts/`. Consolidating registries alone does not create a recipe package.
+
+The design must establish:
+
+- Separate browser-safe shared, GUI and execution entry points, with enforced dependency boundaries. One package
+  must not make server code part of the browser bundle or require React in Task.
+- Dependencies between recipe packages, including composition such as Change Alerts building mosaics: distinguish
+  direct package dependencies from capabilities supplied through host interfaces.
+- How the host discovers and registers each package's contributions without parallel hand-maintained catalogues.
+- Package and saved-model versioning, migrations, and compatibility between GUI, shared definitions and execution.
+- Build and deployment ownership. Packaging together does not require independent deployment: a first migration
+  may build and deploy recipe packages with SEPAL. Independent installation and deployment remain separate decisions.
+
+Use a simple recipe to test a concrete package layout and Change Alerts to examine cross-recipe dependencies before
+choosing a migration. Keep current declarations and pure rules compatible with this direction, but introduce no
+package framework or speculative dependency machinery into the ongoing source-requirement packets.
 
 ### Declared reference layer sources
 
@@ -1064,6 +1169,41 @@ Not every dependency is suitable for display; the declaration decides which ones
   Ownership should be explicit rather than inferred from source-ID conventions.
 - Specify cleanup of area assignments when a derived source disappears, and compatibility for existing saved
   layouts, before migrating input panels. Keep derivation in the GUI; this declaration does not change execution.
+
+### Load map sources only when needed
+
+The map currently mounts a loader for every saved additional recipe source, including sources no area displays,
+to refresh its description. Use the recipe listing for display names, falling back to the saved description when
+needed. Listing absence does not establish deletion. Acquire the full recipe when an active consumer actually
+needs it, such as a displayed map layer, rather than merely because it remains in the layout's source list.
+
+- Keep source entries and area assignments intact when deferring their reads; use the existing runtime and cache
+  claims when a consumer starts or stops using one.
+- Verify that an unused source causes no full-recipe load, that selecting it loads and validates it, and that
+  display names follow listing changes without loading recipe contents.
+- Do not use these incidental reads to discover broken dependencies; that belongs to the reference index below.
+
+### Persisted reference index
+
+Extend the [save-time edge-indexing direction](source-resolution.md#deletion-and-movement) with a persisted index
+derived from recipe declarations and saved configuration. Recipes should not maintain another manual reference
+list. Index updates must remain consistent with the saved recipe revision; define how existing saved recipes are
+indexed before treating reverse-reference queries as complete.
+
+- Distinguish processing dependencies, whose loss breaks computation, from optional map display references.
+  A reference may serve both purposes. Display references must not become execution dependencies.
+- Support direct and transitive "used by" queries and warnings before deletion without loading every recipe's
+  full JSON. Respect access permissions when reporting dependents.
+- Keep processing references after deletion so their owning inputs can diagnose and repair them; never cascade
+  deletion to dependent recipes.
+- Define cleanup of display references after a confirmed deletion, including what happens to map areas using
+  them. The current manual removal also removes those areas; automatic cleanup must not inherit that implicitly.
+- A recipe-load 404 means missing or inaccessible, not confirmed deletion: the service deliberately answers both
+  alike. Do not automatically rewrite saved recipes on that signal alone, or on listing absence or transient
+  failure. Confirmed deletion events can support targeted cleanup under the policy above.
+
+These are follow-ups, not additions to the current suitability packet. Coordinate derived display references with
+[declared reference layer sources](#declared-reference-layer-sources).
 
 ### Recipe-scoped modals
 

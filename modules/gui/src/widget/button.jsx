@@ -278,10 +278,11 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type, style, tabIndex, innerButton, forwardedRef} = this.props
+        const {type, style, tabIndex, innerButton, hook, forwardedRef} = this.props
         const elementType = innerButton ? 'div' : 'button'
         const props = {
             ref: forwardedRef,
+            'data-hook': hook,
             type: innerButton ? null : type,
             className: this.classNames(),
             style: this.isActive() ? style : {...style, pointerEvents: 'none'},
@@ -454,6 +455,8 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     hidden: PropTypes.any,
     hint: PropTypes.any,
+    // Marks the element a click activates, for what finds it rather than sees it.
+    hook: PropTypes.string,
     hover: PropTypes.any, // three-state
     icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     iconAttributes: PropTypes.any,

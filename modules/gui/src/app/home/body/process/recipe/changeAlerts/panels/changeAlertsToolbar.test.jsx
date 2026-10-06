@@ -28,7 +28,14 @@ vi.mock('~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/co
 vi.mock('~/app/home/body/process/recipe/planetMosaic/panels/options/options', () => ({Options: () => null}))
 vi.mock('~/widget/panelWizard', () => ({PanelWizard: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/toolbar/toolbar', () => ({
-    Toolbar: Object.assign(({children}) => <div>{children}</div>, {ActivationButton: () => null})
+    Toolbar: Object.assign(({children}) => <div>{children}</div>, {
+        ActivationButton: ({id, tooltip, error}) => <button aria-label={id} aria-invalid={Boolean(error)} title={tooltip}/>
+    })
+}))
+// The sections held back by their source, as the source requirements read them (selectedSourceStatus.js).
+const sections = vi.hoisted(() => ({problems: {}}))
+vi.mock('../../selectedSource', () => ({
+    withSourceProblems: () => Component => props => <Component {...props} sourceProblems={sections.problems}/>
 }))
 vi.mock('~/app/home/body/process/recipe/chartPixelButton', () => ({
     ChartPixelButton: ({disabled}) => <button aria-label='chart-pixel' disabled={disabled}/>
@@ -47,6 +54,7 @@ const SOURCE_KEY = 'RECIPE_REF:masking-1'
 let root, container
 
 afterEach(() => {
+    sections.problems = {}
     act(() => root?.unmount())
     root = null
     container?.remove()
@@ -74,6 +82,19 @@ describe('an initialized recipe', () => {
         expect(container.querySelector('output')).toBeNull()
     })
 })
+
+describe('a section held back by its source', () => {
+    it.each(['reference', 'sources'])('marks %s, saying why, and no other section', section => {
+        sections.problems = {[section]: 'What is wrong'}
+
+        render(alerts({sourceKey: SOURCE_KEY, status: 'OBSERVED'}))
+
+        expect(markedSections()).toEqual([section])
+        expect(button(section).title).toBe('What is wrong')
+    })
+})
+
+const markedSections = () => [...container.querySelectorAll('button[aria-invalid="true"]')].map(button => button.getAttribute('aria-label'))
 
 const button = label => container.querySelector(`button[aria-label='${label}']`)
 

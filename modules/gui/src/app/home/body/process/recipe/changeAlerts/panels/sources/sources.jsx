@@ -3,9 +3,8 @@ import React from 'react'
 
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {RecipeActions} from '~/app/home/body/process/recipe/changeAlerts/changeAlertsRecipe'
-import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
@@ -19,6 +18,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {baseBandsOf} from '../../../segmentEvidence'
+import {dataSetOptions, MONITORING_TYPES} from '../../monitoringData'
 import {segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
@@ -84,11 +84,10 @@ class _Sources extends React.Component {
 
     renderDataSetTypes() {
         const {inputs: {dataSetType}} = this.props
-        const options = [
-            {value: 'OPTICAL', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.OPTICAL')},
-            {value: 'RADAR', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.RADAR')},
-            {value: 'PLANET', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.PLANET')},
-        ]
+        const options = MONITORING_TYPES.map(type => ({
+            value: type,
+            label: msg(`process.changeAlerts.panel.sources.form.dataSetTypes.${type}`)
+        }))
         return (
             <Form.Buttons
                 label={msg('process.changeAlerts.panel.sources.form.dataSetType.label')}
@@ -211,12 +210,7 @@ class _Sources extends React.Component {
 
     dataSetOptions() {
         const {dates, inputs: {dataSetType}} = this.props
-        switch (dataSetType.value) {
-            case 'OPTICAL': return opticalDataSetOptions({...dates})
-            case 'RADAR': return radarDataSetOptions({...dates})
-            case 'PLANET': return planetDataSetOptions({...dates})
-            default: return []
-        }
+        return dataSetOptions(dataSetType.value, {...dates})
     }
 
 }

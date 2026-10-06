@@ -3,12 +3,19 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {initValues} from '~/app/home/body/process/recipe'
+import {SourceCandidate} from '~/app/home/body/process/recipe/sourceCandidate'
+import {sourceInputFeedback} from '~/app/home/body/process/recipe/sourceInputFeedback'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
+import {select} from '~/store'
 import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
+import {FormContext} from '~/widget/form/context'
 import {withForm} from '~/widget/form/form'
+import {withInputFeedback} from '~/widget/form/inputFeedback'
 import {withPanelWizard} from '~/widget/panelWizard'
 
 const Context = React.createContext()
@@ -27,6 +34,7 @@ export const recipeFormPanel = (
         mapRecipeToProps = () => ({}),
         modelToValues = model => ({...model}),
         valuesToModel = values => ({...values}),
+        sourceInput,
         policy = defaultPolicy,
         additionalPolicy = () => ({})
     }) => {
@@ -55,6 +63,19 @@ export const recipeFormPanel = (
         }
     }
 
+    // A panel whose id names a section the recipe's type declares source requirements for judges its values by them
+    // before they are applied (sourceCandidate.js). What it finds holds Apply back as an invalid field does, and is told
+    // to the input the source is selected in - `sourceInput`, the name of that input, or a function of the values naming
+    // it - as that input's feedback (inputFeedback.js). A panel that only configures something depending on the source
+    // names none: what is wrong with its settings is said on its section's toolbar button.
+    const sourceCandidateOf = (props, onChange) => {
+        const {recipeId, sourceRuntime} = props
+        const declarations = getRecipeType(select(['process.loadedRecipes', recipeId, 'type']))?.sourceRequirements || []
+        return declarations.some(({section}) => section.id === id)
+            ? new SourceCandidate({sourceRuntime, recipeId, section: id, path: path(props), valuesToModel, onChange})
+            : null
+    }
+
     return WrappedComponent => {
         const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
         // [HACK] Using withRecipe() twice.
@@ -62,16 +83,22 @@ export const recipeFormPanel = (
         // withRecipe() is dependent on activatable props -> withActivatable() before withRecipe()
         return compose(
             class RecipeFormPanelHOC extends React.Component {
+                state = {}
+
                 constructor(props) {
                     super(props)
                     const {values, recipeStatePath: statePath, form} = props
                     this.prevValues = values
+                    this.sourceCandidate = sourceCandidateOf(props, () => this.mounted && this.setState(
+                        ({sourceCandidateChanges = 0}) => ({sourceCandidateChanges: sourceCandidateChanges + 1})
+                    ))
     
                     form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
                 }
     
                 render() {
-                    const {form, recipeStatePath: statePath, activatable: {deactivate}} = this.props
+                    const {recipeStatePath: statePath, activatable: {deactivate}} = this.props
+                    const form = this.form()
                     return (
                         <Context.Provider value={{
                             id,
@@ -82,9 +109,39 @@ export const recipeFormPanel = (
                             deactivate,
                             prevValues: this.prevValues
                         }}>
-                            {React.createElement(WrappedComponent, {...this.props, form})}
+                            <FormContext form={form}>
+                                {React.createElement(WrappedComponent, {...this.props, form})}
+                            </FormContext>
                         </Context.Provider>
                     )
+                }
+
+                componentDidMount() {
+                    this.mounted = true
+                    this.sourceCandidate?.update(this.props.form.values())
+                }
+
+                componentDidUpdate() {
+                    this.sourceCandidate?.update(this.props.form.values())
+                }
+
+                componentWillUnmount() {
+                    this.mounted = false
+                    this.sourceCandidate?.stop()
+                }
+
+                form() {
+                    const {form} = this.props
+                    const candidate = this.sourceCandidate
+                    if (!candidate) {
+                        return form
+                    }
+                    const input = typeof sourceInput === 'function' ? sourceInput(form.values()) : sourceInput
+                    const feedback = sourceInputFeedback(candidate.status(), () => candidate.refresh())
+                    return withInputFeedback(form, {
+                        feedbackOf: name => name === input ? feedback : null,
+                        blocked: () => candidate.refused()
+                    })
                 }
             },
             withForm({fields, constraints}),
@@ -92,7 +149,8 @@ export const recipeFormPanel = (
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
             withActivatable({id, policy: policyToApply}),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
-            withPanelWizard()
+            withPanelWizard(),
+            withSourceRuntime()
         )
     }
 }

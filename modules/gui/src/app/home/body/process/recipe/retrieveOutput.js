@@ -19,9 +19,9 @@ import {
 } from '../sourceRuntime/assetEvidence'
 import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
+import {retrieveAvailability} from './operationAvailability'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
-import {sourceRequirementGate} from './sourceRequirements'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
@@ -236,7 +236,7 @@ const authorityGate = ({state, recipe, graph, basis, assets, observedAt, depende
     // Dependencies known to be unsound already refuse it, with what it describes (unresolvedOutput).
     const requirement = dependencyValidity && dependencyValidity.status !== VALID
         ? null
-        : sourceRequirementGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, now})
+        : retrieveAvailability({state, recipe, evidenceOwnerOf, now}).gate
     const reasons = [...drafts, ...unauthorized, ...(requirement ? [requirement] : [])]
     return reasons.find(({wait}) => !wait) || reasons[0] || null
 }

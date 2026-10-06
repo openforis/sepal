@@ -2,8 +2,10 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {withMap} from '~/app/home/map/mapContext'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {formatCoordinates, parseCoordinates} from '~/coords'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -16,6 +18,7 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './chartPixelButton.module.css'
 import {rankCoordinateCandidates} from './coordinateCandidates'
+import {pixelChartAvailability} from './operationAvailability'
 
 const LONG_PRESS_DURATION_MS = 600
 const LONG_PRESS_MOVE_TOLERANCE_PX = 8
@@ -57,7 +60,7 @@ class _ChartPixelButton extends React.Component {
                     <Tooltip
                         msg={this.chartTooltip(isSelecting ? 'cancel' : 'start')}
                         placement='left'
-                        disabled={showCoordinateInput}>
+                        disabled={disabled || showCoordinateInput}>
                         <span className={styles.mainTooltipTarget}>
                             <Toolbar.Button
                                 className={styles.mainButton}
@@ -71,7 +74,7 @@ class _ChartPixelButton extends React.Component {
                     <Tooltip
                         msg={coordinateInputLabel}
                         placement='left'
-                        disabled={showCoordinateInput}>
+                        disabled={disabled || showCoordinateInput}>
                         <button
                             type='button'
                             className={[
@@ -114,13 +117,32 @@ class _ChartPixelButton extends React.Component {
         ) : null
     }
 
+    // A pixel being chosen, or a long press about to offer coordinates, when the chart can no longer be opened would
+    // open it all the same.
+    componentDidUpdate(prevProps) {
+        const {disabled} = this.props
+        const {isSelecting, showCoordinateInput} = this.state
+        if (disabled && !prevProps.disabled) {
+            this.cancelLongPress()
+            isSelecting && this.cancelSelecting()
+            showCoordinateInput && this.closeCoordinateInput()
+        }
+    }
+
     toggleCoordinateInput(event) {
         event.stopPropagation()
         this.cancelSelecting()
         const {showCoordinateInput} = this.state
         showCoordinateInput
             ? this.closeCoordinateInput()
-            : this.setState({showCoordinateInput: true})
+            : this.openCoordinateInput()
+    }
+
+    openCoordinateInput() {
+        const {disabled} = this.props
+        if (!disabled) {
+            this.setState({showCoordinateInput: true})
+        }
     }
 
     closeCoordinateInput() {
@@ -151,7 +173,7 @@ class _ChartPixelButton extends React.Component {
         this.longPressTimeout = setTimeout(() => {
             this.longPressTriggered = true
             this.cancelSelecting()
-            this.setState({showCoordinateInput: true})
+            this.openCoordinateInput()
         }, LONG_PRESS_DURATION_MS)
     }
 
@@ -218,8 +240,11 @@ class _ChartPixelButton extends React.Component {
     }
 
     selectCoordinates(latLng) {
-        const {map, onPixelSelected} = this.props
+        const {map, onPixelSelected, disabled} = this.props
         this.closeCoordinateInput()
+        if (disabled) {
+            return
+        }
         map.setView({center: latLng, zoom: map.getZoom()})
         onPixelSelected(latLng)
     }
@@ -268,9 +293,18 @@ class _ChartPixelButton extends React.Component {
     }
 }
 
+// Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js).
+const mapStateToProps = (state, {recipe, sourceRuntime, disabled}) => ({
+    disabled: disabled || !pixelChartAvailability({
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), now: Date.now()
+    }).available
+})
+
 export const ChartPixelButton = compose(
     _ChartPixelButton,
-    withRecipe(recipe => ({bounds: selectFrom(recipe, 'ui.bounds')})),
+    connect(mapStateToProps),
+    withSourceRuntime(),
+    withRecipe(recipe => ({recipe, bounds: selectFrom(recipe, 'ui.bounds')})),
     withMap()
 )
 

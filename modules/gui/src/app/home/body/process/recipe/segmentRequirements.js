@@ -1,90 +1,29 @@
+import {
+    CHARTABLE_SEGMENTS as CHARTABLE,
+    INCOMPATIBLE_SEGMENT_STRUCTURE,
+    INSUFFICIENT_SEGMENT_EVIDENCE,
+    MONITORED_MEASURE as MONITORED,
+    MONITORED_MEASURE_ABSENT,
+    MONITORED_MEASURE_UNOBSERVED,
+    NO_AVAILABLE_MEASURE,
+    NO_CHARTABLE_MEASURE,
+    NO_MONITORABLE_MEASURE,
+    NO_OBSERVED_MEASURE,
+    NO_SEGMENT_MEASURE,
+    SLICEABLE_SEGMENTS as SLICEABLE
+} from '#sepal/recipe/requirement/ccdcSegments'
 import {msg} from '~/translate'
 
 import {SEGMENTS} from './segmentCapability'
-import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from './sourceRequirements'
 
-// Requirements over the CCDC segments a source supplies (segmentCapability.js), each named for what it needs of them.
-// Every consumer declares the one it needs; none is applied to a consumer that did not declare it.
-//
-// A requirement is {capability, evaluate, describe}: `evaluate({assetId, evidence, parameters})` judges the segment
-// description an observation accepted (`evidence`) and, for segments read from an asset, that asset (`assetId`), to
-// {status: SUPPORTED, measures} | {status: UNSUPPORTED, diagnostic} | {status: NEEDS_EVIDENCE}; `describe(diagnostic)`
-// says what a diagnosis means, as {message, details}: a summary naming a few representative problems, and every one.
+// The shared requirements over CCDC segments (lib/js/shared/src/recipe/requirement/ccdcSegments.js) as the GUI reads
+// them: the facts each judges come from the segments capability (`SEGMENTS.factsOf`, segmentCapability.js), and what
+// a diagnosis means is said here (`describe`), as {message, details}: a summary naming a few representative problems,
+// and every one.
 
-export const INCOMPATIBLE_SEGMENT_STRUCTURE = 'INCOMPATIBLE_SEGMENT_STRUCTURE'
-export const INSUFFICIENT_SEGMENT_EVIDENCE = 'INSUFFICIENT_SEGMENT_EVIDENCE'
-export const MONITORED_MEASURE_ABSENT = 'MONITORED_MEASURE_ABSENT'
-export const NO_SEGMENT_MEASURE = 'NO_SEGMENT_MEASURE'
-
-export const SEGMENT_TIME_BANDS = ['tStart', 'tEnd']
-
-// Segments a per-pixel slicer can cut at a date and evaluate a measure from, as Change Alerts' does
-// (lib/js/ee/src/timeSeries/changeAlertsAlgorithm.js): the segment nearest a date is found from `tStart` and `tEnd`,
-// every band of the segments image is masked to that segment - a `_coefs` band as a two-dimensional array, any other as
-// a one-dimensional one - and a measure is evaluated from `<measure>_coefs` against `<measure>_rmse`. It does not define
-// valid CCDC segments.
-//
-// Segments read from an asset - selected directly, or named by an asset-backed recipe - are judged from the
-// dimensionality reported in the asset metadata for that asset's bands (`typedBands`, ccdc/segmentsAsset.js). A recipe
-// computing its segments guarantees the layout by its own declaration, so only the measure is asked of it, from its own
-// description. Dimensionality says nothing of how many coefficients an array holds, and an image collection's bands are
-// its first member's. A band whose dimensionality was not established is reported as such, never as a scalar.
-//
-// `parameters.monitoredMeasure` is the measure the consumer evaluates. With none selected yet, one complete measure
-// makes the source suitable; whether the operation can run is decided where the measure is.
-export const SLICEABLE_MEASURE_SEGMENTS = {
-    capability: SEGMENTS,
-    evaluate: ({assetId, evidence, parameters: {monitoredMeasure} = {}}) => {
-        if (assetId) {
-            return evidence?.typedBands?.assetId === assetId
-                ? assetSuitability({assetId, bands: evidence.typedBands.bands, monitoredMeasure})
-                : {status: NEEDS_EVIDENCE}
-        }
-        return evidence?.baseBands
-            ? measureSuitability({measures: evidence.baseBands.map(({name}) => name), monitoredMeasure})
-            : {status: NEEDS_EVIDENCE}
-    },
-    describe: diagnostic => describeDiagnostic(diagnostic)
-}
-
-// An established band of the wrong shape, or a required one absent, is incompatible whatever else is unknown.
-const assetSuitability = ({assetId, bands, monitoredMeasure}) => {
-    const names = bands.map(({name}) => name)
-    const missing = SEGMENT_TIME_BANDS.filter(name => !names.includes(name))
-    const wrongDimensions = bands
-        .filter(({arrayDimensions}) => arrayDimensions !== undefined)
-        .map(({name, arrayDimensions}) => ({band: name, expected: expectedDimensions(name), actual: arrayDimensions}))
-        .filter(({expected, actual}) => expected !== actual)
-    if (missing.length || wrongDimensions.length) {
-        return unsupported({code: INCOMPATIBLE_SEGMENT_STRUCTURE, assetId, missing, wrongDimensions})
-    }
-    const undetermined = bands.filter(({arrayDimensions}) => arrayDimensions === undefined).map(({name}) => name)
-    if (undetermined.length) {
-        return unsupported({code: INSUFFICIENT_SEGMENT_EVIDENCE, assetId, undetermined})
-    }
-    return measureSuitability({measures: completeMeasures(names), monitoredMeasure, assetId})
-}
-
-const measureSuitability = ({measures, monitoredMeasure, assetId}) => {
-    if (monitoredMeasure) {
-        return measures.includes(monitoredMeasure)
-            ? {status: SUPPORTED, measures}
-            : unsupported({code: MONITORED_MEASURE_ABSENT, ...(assetId && {assetId}), measure: monitoredMeasure, measures})
-    }
-    return measures.length
-        ? {status: SUPPORTED, measures}
-        : unsupported({code: NO_SEGMENT_MEASURE, ...(assetId && {assetId})})
-}
-
-const expectedDimensions = name => name.endsWith('_coefs') ? 2 : 1
-
-// A measure that can be evaluated: its coefficients paired with the RMSE it is measured against.
-const completeMeasures = names => names
-    .filter(name => name.endsWith('_coefs'))
-    .map(name => name.slice(0, -'_coefs'.length))
-    .filter(measure => names.includes(`${measure}_rmse`))
-
-const unsupported = diagnostic => ({status: UNSUPPORTED, diagnostic})
+export const SLICEABLE_SEGMENTS = {...SLICEABLE, capability: SEGMENTS, describe: diagnostic => describeDiagnostic(diagnostic)}
+export const MONITORED_MEASURE = {...MONITORED, capability: SEGMENTS, describe: diagnostic => describeDiagnostic(diagnostic)}
+export const CHARTABLE_SEGMENTS = {...CHARTABLE, capability: SEGMENTS, describe: diagnostic => describeDiagnostic(diagnostic)}
 
 const REPRESENTATIVE = 3
 
@@ -112,11 +51,34 @@ const describeDiagnostic = diagnostic => {
                 }),
                 details: []
             }
+        case MONITORED_MEASURE_UNOBSERVED:
+            return {
+                message: msg('process.source.segments.measureUnobserved', {
+                    measure: diagnostic.measure,
+                    measures: representative(diagnostic.measures)
+                }),
+                details: []
+            }
+        case NO_MONITORABLE_MEASURE:
+        case NO_AVAILABLE_MEASURE:
+        case NO_OBSERVED_MEASURE:
+            return {
+                message: msg(`process.source.segments.${UNMONITORED_MESSAGES[diagnostic.code]}`, {measures: representative(diagnostic.measures)}),
+                details: []
+            }
         case NO_SEGMENT_MEASURE:
             return {message: msg('process.source.segments.noMeasure'), details: []}
+        case NO_CHARTABLE_MEASURE:
+            return {message: msg('process.source.segments.noChartableMeasure'), details: []}
         default:
             return null
     }
+}
+
+const UNMONITORED_MESSAGES = {
+    [NO_MONITORABLE_MEASURE]: 'noMonitorableMeasure',
+    [NO_AVAILABLE_MEASURE]: 'noAvailableMeasure',
+    [NO_OBSERVED_MEASURE]: 'noObservedMeasure'
 }
 
 const structureProblems = ({missing, wrongDimensions}) => [

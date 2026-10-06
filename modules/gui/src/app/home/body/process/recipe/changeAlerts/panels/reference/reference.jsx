@@ -98,9 +98,12 @@ const valuesToModel = ({type, section, asset, recipe, dateFormat}) => {
     }
 }
 
+// Whether the selection suits the alerts is said on the input it is made in.
+const sourceInput = ({section}) => section === 'RECIPE_REF' ? 'recipe' : 'asset'
+
 export const Reference = compose(
     _Reference,
-    recipeFormPanel({id: 'reference', fields, valuesToModel, modelToValues})
+    recipeFormPanel({id: 'reference', fields, valuesToModel, modelToValues, sourceInput})
 )
 
 Reference.propTypes = {}

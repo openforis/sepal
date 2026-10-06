@@ -5,6 +5,7 @@ import api from '~/apiRegistry'
 import {browserWakeups$, isVisible} from '~/browserWakeups'
 
 import {
+    abandonedAssets,
     answeredAssets,
     checkingAssets,
     DEFAULT_ASSET_POLICY,
@@ -283,17 +284,21 @@ export class AssetRefresh {
             this.#cancelFollowUp(id)
             this.#retain(id)
         })
-        this.#requests.forEach(request => {
-            if (!request.ids.some(id => this.#claims.has(id))) {
-                request.subscription?.unsubscribe()
-                this.#requests.delete(request)
-                request.resolve()
-            }
+        // A read cancelled is no read: an asset claimed again is read at once, not judged by an answer never coming.
+        const abandoned = [...this.#requests].filter(request => !request.ids.some(id => this.#claims.has(id)))
+        abandoned.forEach(request => {
+            request.subscription?.unsubscribe()
+            this.#requests.delete(request)
+            request.ids.forEach(id => this.#attempts.get(id) === request.startedAt && this.#attempts.delete(id))
+            request.resolve()
         })
         if (!this.#claims.size) {
             this.#stopListening()
         }
         this.#schedule()
+        if (abandoned.length) {
+            this.#updateEvidence(assets => abandonedAssets(assets, abandoned))
+        }
     }
 
     #retain(id) {

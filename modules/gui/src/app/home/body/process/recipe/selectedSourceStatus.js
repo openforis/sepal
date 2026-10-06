@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -15,23 +17,57 @@ import {
     UNSUPPORTED
 } from './sourceRequirements'
 
-// What a recipe's source section says about the source selected in it (sourceRequirements.js): null when there is
-// nothing to say, otherwise {selected, state, message, details, refresh} - a short message, every problem behind it in
-// `details`, and `refresh` when reading the source again may help. Names come from the recipe listing and types from
-// their registered labels; what a requirement's own diagnoses say is the requirement's (`describe`). A source not
-// selected yet is the form's to require, not something for its section to report before anyone touched it.
+// What a recipe's source section says about the requirements declared for it (sourceRequirements.js): null when there is
+// nothing to say, otherwise {selected, state, message, details, refresh, advisories}.
+//
+// `state` is what holds the section back, from the requirements its selection must meet - a refusal before unavailable
+// or expired evidence before checking - with a short `message`, every problem behind it in `details`, and `refresh`
+// when reading the source again may help; null when nothing does. A section that does not select the source, but
+// configures something that depends on it, is held back only by what is established about that setting: whether the
+// source can be read is the section that selects it's to say. `advisories` [{message}] are the
+// other problems established about the same source, each said apart so none hides what holds the section back: those of
+// a requirement its selection need not meet - one only an operation needs - each by what it says; and, where nothing
+// holds the section back, one naming the other sections whose settings no longer suit it, which say why themselves.
+//
+// Names come from the recipe listing and types from their registered labels; what a requirement's own diagnoses say is
+// the requirement's (`describe`). A source not selected yet is the form's to require, not something for its section to
+// report before anyone touched it.
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
 
-export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now()) => {
-    const read = readsOf(state, recipeId, evidenceOwnerOf, now).find(({declaration}) => declaration.section.id === sectionId)
-    return read ? sectionStatusOf(read, recipeNames(state)) : null
+export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now()) =>
+    sectionStatusOf(state, readsOf(state, recipeId, evidenceOwnerOf, now), sectionId)
+
+// The same, over reads the caller made - of a selection being edited, say.
+export const sectionStatusOf = (state, reads, sectionId) => {
+    const own = reads.filter(({declaration}) => declaration.section.id === sectionId)
+    if (!own.some(({selected}) => selected)) {
+        return null
+    }
+    const names = recipeNames(state)
+    const blocking = own.filter(isRequired)
+        .map(read => statusOf(read, names))
+        .filter(Boolean)
+        .sort((a, b) => PRECEDENCE.indexOf(a.state) - PRECEDENCE.indexOf(b.state))[0]
+    const dependent = reads.filter(read => read.declaration.section.id !== sectionId && isRequired(read)
+        && own.some(({declaration}) => declaration.role === read.declaration.role))
+    const advisories = [
+        ...operationAdvisories(own.filter(read => !isRequired(read)), blocking, names),
+        ...blocking ? [] : sectionAdvisories(dependent, names)
+    ]
+    if (!blocking && !advisories.length) {
+        return null
+    }
+    return blocking
+        ? {...blocking, advisories}
+        : {selected: own.find(({selected}) => selected).selected, state: null, message: null, details: [], refresh: false, advisories}
 }
 
 // What a consumer of an operation over a recipe, wherever the recipe is shown, says about the requirement holding that
-// operation (`requestGate`): null when none holds it, otherwise {state, message} - the recipe and the section its source
-// is selected in, with what that section says of it. A source not selected holds it as much as an unsuitable one.
+// operation (`requestGate`): null when none holds it, otherwise {state, recipe, section} - the recipe's name and the
+// section to review in it. Why is that section's to say, in the recipe. A source not selected holds it as much as an
+// unsuitable one.
 export const heldSourceStatusOfState = (state, recipe, gate) => {
     if (!gate) {
         return null
@@ -40,15 +76,17 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
     const status = statusOf(gate.read, names)
     return status && {
         state: status.state,
-        message: msg('process.source.status.held', {recipe: recordText(recipe, names), section: msg(gate.section), message: status.message})
+        recipe: names[recipe.id] || recipe.title || recipe.placeholder || recipe.id,
+        section: msg(gate.section)
     }
 }
 
-// The sections whose selected source is unavailable or unsuitable, and why: {[sectionId]: message}.
+// The sections held back by an unavailable or unsuitable source, and why: {[sectionId]: message}. An advisory marks
+// nothing.
 export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now()) => {
-    const names = recipeNames(state)
-    return Object.fromEntries(readsOf(state, recipeId, evidenceOwnerOf, now)
-        .map(read => [read.declaration.section.id, sectionStatusOf(read, names)])
+    const reads = readsOf(state, recipeId, evidenceOwnerOf, now)
+    return Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
+        .map(section => [section, sectionStatusOf(state, reads, section)])
         .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE].includes(status?.state))
         .map(([section, {message}]) => [section, message]))
 }
@@ -58,12 +96,36 @@ const readsOf = (state, recipeId, evidenceOwnerOf, now) => {
     return recipe ? readSourceRequirements({state, recipe, evidenceOwnerOf, now}) : []
 }
 
-const sectionStatusOf = (read, names) =>
-    read.selected ? statusOf(read, names) : null
+const PRECEDENCE = [UNSUITABLE_SOURCE, UNAVAILABLE_SOURCE, CHECKING_SOURCE]
+
+// What is wrong with the selection itself - nothing it selects provides the capability - is said once, by what holds the
+// section back.
+const operationAdvisories = (reads, blocking, names) => reads
+    .map(read => [unsuitable(read, names), operationLabel(read.declaration)])
+    .filter(([status]) => status)
+    .filter(([{message}], index, all) => message !== blocking?.message && all.findIndex(([other]) => other.message === message) === index)
+    .map(([{message}, about]) => ({message: msg('process.source.status.advisory', {about, message})}))
+
+const sectionAdvisories = (reads, names) => {
+    const sections = _.uniq(reads.filter(read => unsuitable(read, names)).map(({declaration}) => msg(declaration.section.label)))
+    return sections.length
+        ? [{message: msg('process.source.status.sectionsIncompatible', {sections: sections.join(', ')})}]
+        : []
+}
+
+const unsuitable = (read, names) => {
+    const status = statusOf(read, names)
+    return status?.state === UNSUITABLE_SOURCE ? status : null
+}
+
+const isRequired = ({declaration}) => declaration.requiredForSelection !== false
+
+const operationLabel = ({operations = []}) =>
+    msg(`process.source.operation.${operations[0]}`)
 
 const statusOf = (read, names) => {
-    const {selected, acquisition, verdict, declaration, assetId, missing} = read
-    if (verdict.status === SUPPORTED) {
+    const {selected, selects, acquisition, verdict, declaration, assetId, missing} = read
+    if (verdict.status === SUPPORTED || (!selects && verdict.status !== UNSUPPORTED)) {
         return null
     }
     const status = (state, message, refresh, details = []) => ({selected, state, message, details, refresh})

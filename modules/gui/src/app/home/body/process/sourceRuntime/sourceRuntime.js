@@ -88,7 +88,8 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 // It keeps the evidence a recipe's consumers need about its source current while they watch it (evidenceRegistry.js),
 // one observation shared between them: a watched output acquires what the type's declared requirements hold that
 // product to, `watchEvidence$` what a chart's operation needs or what an editor presents, and a synchronous read judges
-// the published evidence against the basis it was read on (`evidenceOwnerOf`). Without `evidenceSession` nothing is
+// the published evidence against the basis it was read on (`evidenceOwnerOf`). `watchCandidate$` observes a selection
+// being edited, holding its evidence for the form rather than publishing it. Without `evidenceSession` nothing is
 // observed.
 
 const PENDING = 'PENDING'
@@ -406,6 +407,7 @@ export const createSourceRuntime = ({
             )
         }),
         watchEvidence$: watch => evidence.watch$(watch),
+        watchCandidate$: candidate => evidence.watchCandidate$(candidate),
         heldFor: key => outputs.heldFor(key),
         // A retry reaches a listing that failed as well: authority waits on it as much as on the answer.
         retryOutput: question => {

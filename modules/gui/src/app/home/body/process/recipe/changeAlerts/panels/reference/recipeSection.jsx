@@ -8,8 +8,6 @@ import {compose} from '~/compose'
 import {Layout} from '~/widget/layout'
 import {RecipeInput} from '~/widget/recipeInput'
 
-import {SelectedSourceStatus} from '../../../selectedSource'
-
 class _RecipeSection extends React.Component {
     constructor(props) {
         super(props)
@@ -27,7 +25,6 @@ class _RecipeSection extends React.Component {
                     keepSelection
                     errorMessage
                 />
-                <SelectedSourceStatus section='reference' type='RECIPE_REF' id={recipe.value}/>
             </Layout>
         )
     }

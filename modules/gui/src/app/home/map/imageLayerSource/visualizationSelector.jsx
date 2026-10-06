@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
-import {LayerSourceRequirement} from '~/app/home/body/process/recipe/selectedSource'
+import {CHECKING_SOURCE} from '~/app/home/body/process/recipe/selectedSourceStatus'
 import {renderableBandNames, renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
 import {inheritedVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -15,7 +15,6 @@ import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {Combo} from '~/widget/combo'
-import {Layout} from '~/widget/layout'
 import {RemoveButton} from '~/widget/removeButton'
 
 import {RefreshSourcesButton, withLayerSourceStatus} from '../layerSourceStatus'
@@ -57,12 +56,14 @@ class _VisualizationSelector extends React.Component {
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         const editorContext = this.editorContext()
         const {layerSourceStatus: status} = this.props
-        const combo = (
+        const feedback = sourceFeedback(status, {elsewhere: this.showsAnotherRecipe()})
+        return (
             <Combo
                 label={msg('map.visualizationSelector.label')}
-                busyMessage={status?.checking ? msg('map.layerSource.checking') : undefined}
-                errorMessage={status?.unavailable ? msg('map.layerSource.unavailable', {asset: status.unavailable}) : undefined}
-                warningMessage={status?.failing ? msg('map.layerSource.failing') : undefined}
+                busyMessage={feedback.busy}
+                tooltip={feedback.busy}
+                errorMessage={feedback.error}
+                warningMessage={feedback.warning}
                 labelButtons={[
                     <Button
                         key='add'
@@ -110,15 +111,11 @@ class _VisualizationSelector extends React.Component {
                 onChange={({visParams}) => this.selectVisParams(visParams)}
             />
         )
-        // Every recipe layer's form shows this selector, so it is where a layer says what holds it back.
-        return status?.heldSource
-            ? (
-                <Layout spacing='compact'>
-                    {combo}
-                    <LayerSourceRequirement/>
-                </Layout>
-            )
-            : combo
+    }
+
+    showsAnotherRecipe() {
+        const {source, recipeId} = this.props
+        return source?.sourceConfig?.recipeId !== recipeId
     }
 
     getOptions() {
@@ -229,6 +226,25 @@ class _VisualizationSelector extends React.Component {
             ? options[0].visParams
             : null
         )
+    }
+}
+
+// Every recipe layer's form shows this selector, so it is where a layer says what is known of its sources, as the
+// selector's own feedback: what it reads being checked is its busy indicator, explained by its label's tooltip. A
+// requirement holding what it shows says why in the recipe that holds it, on the section's fields and toolbar; a layer
+// of another recipe says only which recipe, and which section of it, to review.
+const sourceFeedback = ({checking, unavailable, failing, heldSource} = {}, {elsewhere}) => {
+    const held = heldSource && heldSource.state !== CHECKING_SOURCE && elsewhere
+    const errors = [
+        unavailable && msg('map.layerSource.unavailable', {asset: unavailable}),
+        held && msg('map.layerSource.held', {recipe: heldSource.recipe, section: heldSource.section})
+    ].filter(Boolean)
+    return {
+        busy: heldSource?.state === CHECKING_SOURCE
+            ? msg('map.layerSource.checkingSection', {recipe: heldSource.recipe, section: heldSource.section})
+            : checking ? msg('map.layerSource.checking') : undefined,
+        error: errors.length > 1 ? errors : errors[0],
+        warning: failing ? msg('map.layerSource.failing') : undefined
     }
 }
 

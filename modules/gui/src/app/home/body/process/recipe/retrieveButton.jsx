@@ -3,14 +3,18 @@ import React from 'react'
 
 import {usageHint} from '~/app/home/user/usage'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {ToolbarActivationButton} from '~/widget/toolbar/toolbarActivationButton'
 
 import {withRecipe} from '../recipeContext'
+import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
+import {retrieveAvailability} from './operationAvailability'
 
 const mapRecipeToProps = recipe => ({
+    recipe,
     initialized: selectFrom(recipe, 'ui.initialized'),
     budgetExceeded: select('user.budgetExceeded')
 })
@@ -56,8 +60,17 @@ class _RetrieveButton extends React.Component {
     }
 }
 
+// Not offered while Retrieve's prerequisites are being checked or are not met (operationAvailability.js).
+const mapStateToProps = (state, {recipe, sourceRuntime, disabled}) => ({
+    disabled: disabled || !retrieveAvailability({
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), now: Date.now()
+    }).available
+})
+
 export const RetrieveButton = compose(
     _RetrieveButton,
+    connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps)
 )
 

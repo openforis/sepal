@@ -47,6 +47,9 @@ const log = getLogger('sourceEvidence')
 // is watched, as a component's are (recipeCacheClaims.js). Assets are claimed from the runtime while the observation
 // reads them. The last watcher leaving cancels the work and releases both.
 //
+// A selection being edited is observed the same way, before it is applied (`watchCandidate$`): over the recipe as it
+// would be with the edit applied, with its evidence held by the registry for the form that asked, never published.
+//
 // What only the editor does: apply its observation's defaults (`applyAccepted`), in the action that publishes the
 // evidence they come from and only while the recipe is open, and announce a failure (`reportUnavailable`). Evidence
 // obtained while no editor watched is processed by the editor's policy once it attaches, against the last evidence that
@@ -78,6 +81,8 @@ export class EvidenceRegistry {
     #requirementsOf
     #clock
     #entries = new Map()
+    #candidates = new Map()
+    #candidateIds = 0
     #runtime = uuid()
     #observations = 0
     #listening = null
@@ -123,6 +128,29 @@ export class EvidenceRegistry {
         })
     }
 
+    // Keeps evidence current for a selection being edited - `overlay(recipe)` the recipe as it would be with the edit
+    // applied, which must hand back the same selection objects for as long as the edit is the same - without publishing
+    // it. The evidence is held here, and the subscriber is handed {owner, evidence} whenever either changes, `owner` as
+    // `ownerOf` answers for a recipe and `evidence` as a recipe's `ui.sourceEvidence` would hold it. It is observed by the
+    // observation the recipe's type registers, under the same rules as a recipe's evidence; it applies no defaults,
+    // announces nothing and writes nothing.
+    watchCandidate$({recipeId, overlay}) {
+        return new Observable(subscriber => {
+            if (this.#closed) {
+                subscriber.complete()
+                return
+            }
+            const entry = this.#addCandidate(recipeId, overlay, subscriber)
+            this.#listen()
+            this.#update(entry)
+            subscriber.next(candidateState(entry))
+            return () => {
+                this.#teardown(entry)
+                this.#stopListeningIfIdle()
+            }
+        })
+    }
+
     // {observationId, basis, observes, records} of the observation the recipe's evidence is being kept current by, or null.
     ownerOf(recipeId) {
         return this.#entries.get(recipeId)?.state || null
@@ -134,17 +162,36 @@ export class EvidenceRegistry {
         }
         this.#closed = true
         this.#stopListening()
-        const entries = [...this.#entries.values()]
+        const entries = [...this.#entries.values(), ...this.#candidates.values()]
         entries.forEach(entry => this.#teardown(entry))
         entries.flatMap(({watchers}) => [...watchers]).forEach(({subscriber}) => subscriber.complete())
     }
 
     #add(recipeId) {
         const entry = {
-            recipeId, watchers: new Set(), state: null, mode: null, observation: null, work: null,
-            records: null, releaseAssets: null, expiry: null, error: null, reported: null
+            ...newEntry(recipeId),
+            key: recipeId,
+            table: this.#entries,
+            recipeOf: session => session.loadedRecipes[recipeId]
         }
         this.#entries.set(recipeId, entry)
+        return entry
+    }
+
+    #addCandidate(recipeId, overlay, subscriber) {
+        const entry = {
+            ...newEntry(recipeId),
+            key: ++this.#candidateIds,
+            table: this.#candidates,
+            candidate: subscriber,
+            evidence: null,
+            recipeOf: session => {
+                const recipe = session.loadedRecipes[recipeId]
+                return recipe && {...overlay(recipe), ui: {...recipe.ui, sourceEvidence: entry.evidence || undefined}}
+            }
+        }
+        entry.watchers.add({subscriber})
+        this.#candidates.set(entry.key, entry)
         return entry
     }
 
@@ -157,14 +204,12 @@ export class EvidenceRegistry {
             return this.#update(entry)
         }
         this.#teardown(entry)
-        if (!this.#entries.size) {
-            this.#stopListening()
-        }
+        this.#stopListeningIfIdle()
     }
 
     #teardown(entry) {
-        if (this.#entries.get(entry.recipeId) === entry) {
-            this.#entries.delete(entry.recipeId)
+        if (entry.table.get(entry.key) === entry) {
+            entry.table.delete(entry.key)
         }
         this.#stop(entry)
         entry.records?.release()
@@ -172,7 +217,7 @@ export class EvidenceRegistry {
     }
 
     #live(entry) {
-        return !this.#closed && this.#entries.get(entry.recipeId) === entry
+        return !this.#closed && entry.table.get(entry.key) === entry
     }
 
     #current(entry, observationId) {
@@ -181,21 +226,29 @@ export class EvidenceRegistry {
 
     #update(entry) {
         const session = this.#sessionNow()
-        const recipe = session?.loadedRecipes[entry.recipeId]
+        const recipe = session && entry.recipeOf(session)
         const wanted = recipe && this.#wanted(entry, recipe)
         const key = wanted && sourceKeyOf(wanted.observation.sourceReference(recipe))
         if (!key) {
             return this.#stop(entry)
         }
         this.#adoptFirstVersions(entry, session)
+        if (!this.#live(entry)) {
+            return
+        }
         if (!entry.state || this.#needsObservation(entry, wanted, recipe, session)) {
             return this.#observe(entry, wanted, recipe, session)
         }
         this.#editorEffects(entry, recipe, session)
     }
 
-    // What the watchers need, by what its type declares for the operations they watch for. An editor needs it all.
+    // What the watchers need, by what its type declares for the operations they watch for. An editor needs it all, and
+    // so does a selection being edited, since every requirement over it is judged.
     #wanted(entry, recipe) {
+        if (entry.candidate) {
+            const observation = this.#observationOf(recipe)
+            return observation && {mode: FULL, observation}
+        }
         const watchers = [...entry.watchers]
         const editor = watchers.find(({observation}) => observation)
         if (editor) {
@@ -284,7 +337,7 @@ export class EvidenceRegistry {
             return of({graph: EMPTY_GRAPH, recipesById: new Map()})
         }
         const loadRecipesById$ = this.#loadRecipesById$(entry, session)
-        const seeds = new ClaimedSeeds(currentRecords(session), entry.records)
+        const seeds = new ClaimedSeeds(currentRecords(session), entry.records, () => this.#sessionNow())
         const seeded = seeds.get(reference.id)
         return (seeded ? of(seeded) : loadRecipesById$({ids: [reference.id], concurrency: 1}).pipe(map(([record]) => record))).pipe(
             switchMap(rootRecipe => completeRecipeClosure$({
@@ -341,7 +394,7 @@ export class EvidenceRegistry {
 
     #publish(entry, observationId, evidence, error) {
         const session = this.#sessionNow()
-        const recipe = session?.loadedRecipes[entry.recipeId]
+        const recipe = session && entry.recipeOf(session)
         if (!this.#current(entry, observationId) || !recipe || this.#outdated(entry, recipe, session)) {
             return
         }
@@ -351,6 +404,10 @@ export class EvidenceRegistry {
             ...evidence,
             ...retainedObservation(recipe, evidence),
             observationId
+        }
+        if (entry.candidate) {
+            entry.evidence = published
+            return entry.candidate.next(candidateState(entry))
         }
         const editor = this.#editor(entry)
         entry.error = error || null
@@ -407,14 +464,18 @@ export class EvidenceRegistry {
     }
 
     #notify(entry, observationId, observation) {
-        if (this.#current(entry, observationId)) {
-            this.#write({
-                recipeId: entry.recipeId,
-                type: 'SOURCE_EVIDENCE_OBSERVATION',
-                writes: [{path: 'ui.sourceEvidenceObservation', value: observation}],
-                whenOpen: []
-            })
+        if (!this.#current(entry, observationId)) {
+            return
         }
+        if (entry.candidate) {
+            return entry.candidate.next(candidateState(entry))
+        }
+        this.#write({
+            recipeId: entry.recipeId,
+            type: 'SOURCE_EVIDENCE_OBSERVATION',
+            writes: [{path: 'ui.sourceEvidenceObservation', value: observation}],
+            whenOpen: []
+        })
     }
 
     #stop(entry) {
@@ -428,6 +489,9 @@ export class EvidenceRegistry {
         entry.expiry = null
         entry.releaseAssets?.()
         entry.releaseAssets = null
+        if (entry.candidate && this.#live(entry)) {
+            entry.candidate.next(candidateState(entry))
+        }
     }
 
     // The assets the basis names are claimed before those it no longer names are released. An acquisition of records
@@ -447,7 +511,8 @@ export class EvidenceRegistry {
     }
 
     // A token first learned after the basis was taken is no change: the evidence was read from what it describes, so the
-    // basis takes it, and the next token that differs is one.
+    // basis takes it, and the next token that differs is one. A candidate's form judges by the owner it was handed, so it
+    // is handed this one at once: a change before the next update must find it.
     #adoptFirstVersions(entry, session) {
         const basis = entry.state?.basis
         const unknown = dependency => dependency.assetId && dependency.version === undefined
@@ -462,6 +527,7 @@ export class EvidenceRegistry {
                         : dependency)
                 }
             }
+            entry.candidate?.next(candidateState(entry))
         }
     }
 
@@ -489,8 +555,14 @@ export class EvidenceRegistry {
     #listen() {
         if (!this.#listening && !this.#closed) {
             this.#listening = this.#sessionChanges$.subscribe(() =>
-                [...this.#entries.values()].forEach(entry => this.#live(entry) && this.#update(entry))
+                [...this.#entries.values(), ...this.#candidates.values()].forEach(entry => this.#live(entry) && this.#update(entry))
             )
+        }
+    }
+
+    #stopListeningIfIdle() {
+        if (!this.#entries.size && !this.#candidates.size) {
+            this.#stopListening()
         }
     }
 
@@ -499,6 +571,13 @@ export class EvidenceRegistry {
         this.#listening = null
     }
 }
+
+const newEntry = recipeId => ({
+    recipeId, watchers: new Set(), state: null, mode: null, observation: null, work: null,
+    records: null, releaseAssets: null, expiry: null, error: null, reported: null
+})
+
+const candidateState = ({state, evidence}) => ({owner: state, evidence})
 
 // A read that failed says the source could not be reached. It does not unsay what the last successful read found, or
 // which source that was - and which source an answer was about is what a consumer needs to know whether an answer
@@ -513,19 +592,28 @@ const retainedObservation = (recipe, evidence) => {
 }
 
 // The session's records a closure starts from, each claimed for the watch as the closure takes it. A record read from
-// the session is held by whoever cached it, and could otherwise leave with them while the watch still needs it.
+// the session is held by whoever cached it, and could otherwise leave with them while the watch still needs it. One they
+// let go of after the closure started - an editor closing on a selection it had read, as the alerts begin observing it -
+// is no seed: the closure loads it through the watch's claim, so the session holds it again for as long as that lasts.
 class ClaimedSeeds extends Map {
     #claimant
+    #sessionNow
 
-    constructor(records, claimant) {
+    constructor(records, claimant, sessionNow) {
         super(records)
         this.#claimant = claimant
+        this.#sessionNow = sessionNow
+    }
+
+    has(id) {
+        return super.has(id) && Boolean(this.#sessionNow()?.loadedRecipes[id])
     }
 
     get(id) {
-        if (this.has(id)) {
-            this.#claimant.use(id)
+        if (!this.has(id)) {
+            return undefined
         }
+        this.#claimant.use(id)
         return super.get(id)
     }
 }

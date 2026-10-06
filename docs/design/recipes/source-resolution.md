@@ -420,63 +420,191 @@ Validation consumes supplied records and evidence regardless of how candidates w
 part of final validation. This is a compatibility direction, not a scheduled database migration or a reason to add
 a speculative storage abstraction to the current packet.
 
+#### Requirement contract
+
+A requirement is pure and shared (`lib/js/shared/src/recipe/requirement/`): a stable `id`, the capability it is over,
+and `evaluate(facts, parameters)`, where `parameters` is plain data and `facts` describe the provider the capability
+resolves to - never the recipe that selects it. It loads nothing, acquires nothing, translates nothing and holds no
+UI state; without facts it answers `NEEDS_EVIDENCE`. Capability discovery (`discoverProvider`) stays separate: it
+finds the provider over records, and a requirement judges that provider's facts. For CCDC segments the facts are
+`{producer: COMPUTED, measures}` for a recipe computing its segments, whose layout CCDC guarantees by declaration, or
+`{producer: ASSET, assetId, bands: [{name, arrayDimensions}]}` for segments stored in an asset, a rank undefined
+where the metadata established none. Each consumer's GUI side adds what diagnoses mean (`describe`) and where facts
+come from (`factsOf` on the capability).
+
+Today loaded records supply discovery, and the observation the source runtime accepted supplies the facts: typed
+asset metadata, or the producer's own description. A future index could supply both instead - per recipe its type and
+declared source edges, per asset its typed-band summary - and the same `evaluate` would answer a query without full
+recipe JSON. Facts from an index are no more current than facts read live: a summary must carry what makes it
+trustworthy - the identity of the source it describes, the record revisions it was taken from, the asset versions or
+update times it was read at, and the authorization scope it was read under - and be checked against the current
+state as live evidence is. The live check compares a basis that includes object identity within one session; an index
+needs equivalent semantics expressed in those durable terms, not that mechanism. Evaluating an old summary alone never
+establishes current suitability.
+
+#### Validation across model properties
+
+General policy belongs to [validation across model properties](../../code-design.md#validation-across-model-properties),
+not source resolution. Source-backed validation adds provider discovery and current evidence to that policy.
+
+For Change Alerts, REF is refused when established facts show no supported monitoring source can use its segments.
+When REF permits a valid configuration but the current monitoring settings do not, the reference replacement is
+applied, the actionable Sources field is invalid, and REF shows one aggregate advisory naming the affected sections and
+both remedies: choose another reference or update those sections. The advisory goes as incompatibilities are resolved.
+Optional chart requirements gate the chart independently. [Change Alerts REF](#change-alerts-ref) describes how.
+
+Date compatibility needs a separate execution-derived rule and adequate evidence. Preserve configured dates;
+distinguish an incompatible selected period from a reference that cannot support any permitted period. Metadata
+extents alone must not be assumed to establish per-pixel coverage.
+
 ### Change Alerts REF
 
 Change Alerts is the first consumer to validate its configured source. A recipe declares what it needs; shared code
 decides when the answer can be trusted and what it does to the UI.
 
-- **Declaration.** Change Alerts' type declares `sourceRequirements: [referenceRequirement]`: the selection by the
-  role its source edge already has (`PRIMARY_IMAGE`), the section it is selected in (REF), the requirement
-  (`SLICEABLE_MEASURE_SEGMENTS`), its parameters - the monitored measure - and the requests that need it met: the
-  alerts (`IMAGE_OUTPUT`) and the segment chart (`PIXEL_SEGMENTS`). The monitoring and calibration mosaics are built
-  around the geometry of the reference's segment source: execution resolves its provider chain for them, so they are
-  refused where that chain is (`providerOperations`), but not held by what the requirement judges of the segments.
-- **Requirement** (`segmentRequirements.js`). `SLICEABLE_MEASURE_SEGMENTS` is a named requirement over the segment
-  capability, taken from Change Alerts' slicer and applied only where declared - not a definition of valid CCDC
-  segments: `tStart` and `tEnd`, a measure's `<measure>_coefs` paired with its `<measure>_rmse`, and every band shaped
-  as the slicer masks it - a `_coefs` band as a two-dimensional array, any other as a one-dimensional one. Segments
-  read from an asset - selected directly or named by an asset-backed recipe - are judged from the dimensionality Earth
-  Engine evaluates for that asset's bands; a recipe computing its segments guarantees the layout by declaration, so
-  only the measure is asked of it. With no measure selected, one complete measure makes the source suitable; that is
-  not execution readiness. A band whose dimensionality was not established is insufficient evidence, kept apart from
-  an observed incompatibility and never reported as a scalar. The rule does not establish how many coefficients an
-  array holds, and an image collection's bands are its first member's. Its diagnoses read as a summary naming a few
+- **Declaration** (`referenceRequirement.js`). Change Alerts' type declares four requirements over its reference,
+  the selection by the role its source edge already has (`PRIMARY_IMAGE`), each with the section it belongs to and the
+  requests that need it met:
+
+  | Requirement | Section | Gates | Required to apply |
+  |---|---|---|---|
+  | `ccdcSegments.sliceable` | REF | the alerts and their Retrieve (`IMAGE_OUTPUT`); the monitoring and calibration mosaics through the provider chain only (`providerOperations`) | yes |
+  | `ccdcSegments.monitoredMeasure`, `{monitorable}`: the bands any monitoring data Sources offers observes | REF | the alerts and their Retrieve | yes |
+  | `ccdcSegments.monitoredMeasure`, `{measure, available, observed}` from `sources.band`, the bands any data sets of the selected type observe, and those its selected data sets observe | Sources | the alerts and their Retrieve | yes, in Sources |
+  | `ccdcSegments.chartable` | REF | the segment chart (`PIXEL_SEGMENTS`) | no (`requiredForSelection: false`) |
+
+  Each is derived from what reads it. The alerts' slicer (`changeAlertsAlgorithm.js`) finds the segment nearest a date
+  from `tStart` and `tEnd` and evaluates a measure from `<measure>_coefs` against `<measure>_rmse`, every band shaped as
+  it masks it: a `_coefs` band as a two-dimensional array, any other as a one-dimensional one. The segment chart
+  (`ccdcGraph.jsx`) also plots `tBreak`, `changeProb`, `numObs` and a measure's `_magnitude`. The mosaics resolve the
+  segment source's geometry only. Which measure is monitored is a setting of Sources, so a reference that fits other
+  measures is still a suitable reference; the alerts wait for Sources to name one it fits. A reference with no
+  measure any monitoring data Sources offers observes could never be monitored, and is refused in REF. What the
+  monitoring data observes comes from the band definitions Sources itself offers (`monitoringData.js`): any one data
+  set of a type, top of atmosphere or corrected to surface reflectance.
+- **Requirements** (`requirement/ccdcSegments.js`, shared; `segmentRequirements.js` for their wording). Segments read
+  from an asset - selected directly or named by an asset-backed recipe - are judged from the dimensionality its
+  metadata states for its bands; a recipe computing its segments guarantees the layout by declaration, so only its
+  measures are asked of it. A band whose dimensionality was not established is insufficient evidence, kept apart from
+  an observed incompatibility and never reported as a scalar, and refuses wherever the requirement is mandatory. The
+  rules do not establish how many coefficients an array holds, whether dates are in the configured representation, or
+  anything of an image collection beyond its first member. The monitored measure is judged against narrowing scopes,
+  the widest that observes none of the segments' measures refusing them - any monitoring data, the selected type, the
+  selected data sets - so the diagnosis names the setting to change. Diagnoses read as a summary naming a few
   representative problems, with every problem in their details.
-- **Evidence.** The observation reads the asset's metadata (`/assetMetadata`), which states each band's array rank:
-  for an image asset, the gee adapter restores the rank the Cloud record states (`dimensionsCount`) that the Earth
-  Engine client's legacy conversion drops; a band whose rank was not established stays unknown, never a scalar. The
-  segment description carries the ranks as `typedBands`, reported and not validated; CCDC Slice's acceptance is
-  unchanged. Version polling stays a separate metadata read. An asset just picked is judged once the observation reads
-  it, not from the picker's metadata.
-- **Capability.** The GUI side of `CCDC_SEGMENTS` (`SEGMENTS`, `segmentCapability.js`) says which asset establishes it
-  (the one the segments are read from) and where an accepted observation holds the segment description (`segments`,
-  as every segment consumer publishes it).
+- **Facts.** The observation reads the asset's metadata (`/assetMetadata`), which states each band's array rank: for an
+  image asset, the gee adapter restores the rank the Cloud record states (`dimensionsCount`) that the Earth Engine
+  client's legacy conversion drops; a band whose rank was not established stays unknown. The segment description
+  carries the ranks as `typedBands`; the capability's GUI side (`SEGMENTS`, `segmentCapability.js`) turns an accepted
+  observation into facts - an asset's typed bands, and only those of the asset that establishes the capability, or a
+  computing producer's measures. One observation answers all three requirements. Version polling stays a separate
+  metadata read.
 - **Trust** (`sourceRequirements.js`). Shared for every declaration: the selection by role, missing selections,
   `discoverProvider` and its generic diagnoses (not a producer, unfilled role, cyclic), and whether the evidence owner's
   answer counts - its live basis from the source runtime ([evidence watches](gui-source-runtime.md#evidence-watches))
   passing the owner's own rule for that selection, the evidence published by the observation that basis belongs to,
   and the asset that establishes the capability authorized by its asset evidence; a mask or AOI failing says nothing
-  about it. The owner observes one source; a selection it does not observe is unchecked. A chain that cannot lead to the
-  capability is refused from the held records alone, owner or not. A failed read settles to unavailable; nothing
-  reading the source is unchecked, never waited on. Each read answers its verdict (`SUPPORTED`, `UNSUPPORTED`,
-  `NEEDS_EVIDENCE`) apart from the state of its evidence (`UNCHECKED`, `CHECKING`, `CHECKED`, `UNAVAILABLE`,
-  `EXPIRED`).
-- **UI and authority.** Shared presentation (`selectedSourceStatus.js`, `selectedSource.jsx`) marks the declared
-  section and explains the problem under the retained selection - matched by type and id - with Refresh: checking as
-  information, a problem established about the source as a warning. A layer whose product the requirement holds says
-  so in its area menu, wherever it is shown, naming the recipe and section with the section's diagnosis; a product the
-  requirement does not hold says nothing of it, and a selection not made holds what needs one. Retrieve
-  decides from the same read at submission: it waits while the source is being checked and otherwise blocks, naming
-  the section; dependencies already known to be unsound refuse it for that instead. A new preview or segment-chart
-  request is held by the same read (`requestGate`) while the requirement is not known to be met, keeping what is
-  already drawn; a source found missing or unsuitable also withdraws the drawing. The consumer making the request
-  watches what its operation needs wherever the recipe is shown - its editor, or a layer in another recipe's map: the
-  whole evidence for an operation in `operations`, and for one only in `providerOperations` the records of a provider
-  chain the session does not hold, which hold the request while they are read and refuse it as unavailable if they
-  cannot be. Absence from the listing is never called deletion.
+  about it. A chain that cannot lead to the capability is refused from the held records alone, owner or not. A failed
+  read settles to unavailable; nothing reading the source is unchecked, never waited on. Each read answers its verdict
+  (`SUPPORTED`, `UNSUPPORTED`, `NEEDS_EVIDENCE`) apart from the state of its evidence (`UNCHECKED`, `CHECKING`,
+  `CHECKED`, `UNAVAILABLE`, `EXPIRED`), and says whether its section selects the source: a section names the form
+  panel editing the model at its id, so REF selects the reference and Sources configures something that depends on it.
+- **Section status** (`selectedSourceStatus.js`). A section is held back by the requirements its
+  selection must meet: a refusal before unavailable or expired evidence before checking. A section that only depends
+  on the source is held back by what is established about its own setting; whether the source can be read is the
+  selecting section's to say. Every other established problem over the same source is an advisory, said apart and
+  never in place of what holds the section back: a requirement of one operation only (the chart, in REF), by what it
+  says; and, while nothing holds the section back, one advisory naming each other section whose settings no longer
+  suit the source (Sources, in REF), whose own status says why. A diagnosis is said once per section. Toolbar marks
+  count only what holds a section back (REF and Sources alike).
+- **Input feedback** (`sourceInputFeedback.jsx`, `inputFeedback.js`). Inside REF, the section's status is said on the
+  input its source is selected in, which the panel names (`sourceInput`: the asset or recipe input), as that input's
+  field validation rather than messages of its own. What holds the section back is the input's error, with every
+  problem in its tooltip, after the input's own required-field or loading error and never in its place, and it holds
+  Apply back as an invalid field does. A check still running is the input's busy indicator, explained in its label's
+  tooltip beside the tooltip it already has, and holds Apply back too; the label's content is left as it is.
+  Advisories are its warning and hold nothing back. Refresh, where reading the source again may help, is a button
+  beside the label. The combos read this from the form they are in (`feedbackOf`), so a panel adds no code for it.
+  Sources names no input: its choices keep their existing presentation, and a candidate it refuses holds its Apply
+  back. What is wrong with its committed settings is said by its toolbar button's mark and tooltip, naming the
+  setting to change - the type where no data of that type observes a measure of the reference, the data sets or
+  pre-processing (an optical reflectance correction) where others of the type would, otherwise the band.
+- **Validation before Apply** (`sourceCandidate.js`, `recipeFormPanel.jsx`). A recipe form panel whose id names a
+  declared section judges its values before they are applied, with no panel code: over the recipe as it would be with
+  the values applied - the candidate - by the same reads. Where the observation keeping the recipe's own evidence
+  current holds for the candidate - its live basis passes for it, as when a Sources edit leaves the reference alone -
+  that evidence answers, so changing the monitored measure is judged anew without another read. Otherwise the
+  candidate is observed on its own while the panel is open (`watchCandidate$`): the evidence is held by the source
+  runtime, never published to the recipe, and the recipe's configuration, evidence and drawing stay as they are until
+  Apply. One object stands for an edit while it is the edit, and the recipe's own where the edit is what the recipe
+  holds, so selections compare as the basis compares them: a same-asset edit of the date representation is read
+  anew, and returning to the applied one reads nothing. An edit that changes, a Cancel and a closed panel let the
+  candidate go, cancelling its read. Apply asks the form at that moment (`isInvalid`), so evidence a change of
+  credentials, records, refreshes or tokens moved past refuses it however recently it was read. Refresh in the panel
+  reads again what the candidate's own observation read - its assets, explicitly refreshed, or failing that the
+  candidate observed anew - and never the source the recipe holds, unless that is the candidate's. A saved unsuitable
+  reference stays visible with its diagnosis and never blocks applying a suitable replacement. Applying commits what
+  the panel owns: a replacement fitting other measures is applied, with REF's advisory naming Sources, Sources marked
+  invalid, and the alerts waiting for it to be repaired. After Apply the recipe's evidence is read again through the normal lifecycle.
+- **Authority.** A layer whose product a requirement holds says so on its area menu's visualization selector, as that
+  selector's own feedback, without changing the menu's layout: a check in progress is its busy indicator, explained by
+  its label. Why the requirement is not met is said in the recipe, on the section's fields and toolbar, so a layer of
+  the recipe being edited adds nothing to them, and a layer of another recipe says only that it cannot be rendered and
+  which section of that recipe to review. A product no requirement holds says nothing of it, and a selection not made
+  holds what needs one. Retrieve decides from the same reads at submission: it waits while the source is
+  being checked and otherwise blocks, naming the section; dependencies already known to be unsound refuse it for that
+  instead. A new preview or segment-chart request is held by the reads of the requirements naming it (`requestGate`)
+  while they are not known to be met, keeping what is already drawn; a source found missing or unsuitable also
+  withdraws the drawing. The chart offers the measures the chart requirement establishes that its observations show
+  ([operation availability](#operation-availability)), and replaces a charted band that is no longer one of them, but
+  not while the reference is being checked again. Once none is left, an open chart cancels what it is reading, stops
+  showing what it read and settles on saying it has no band to chart; it charts again once one returns. The consumer making a request
+  watches what its operation needs wherever the recipe is shown. Absence from the listing is never called deletion.
 
 CCDC Slice, BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves,
 remain separate packets.
+
+### Operation availability
+
+Whether an operation over a recipe may start is one shared assessment (`operationAvailability.js`), derived from the
+type's declared requirements, the recipe's current configuration and the current evidence. It is not a separate
+validation system and adds no rules: it reads the same requirement reads the request gates read. The action opening
+an operation, the panel carrying it out and the requests it makes consume this one assessment, so they cannot
+disagree. Availability is per operation; there is no recipe-wide validity flag.
+
+Implemented for two operations:
+
+- **Segment chart** (`pixelChartAvailability`): the `PIXEL_SEGMENTS` request gate, and the measures the chart
+  requirement establishes, narrowed to the bands the chart's observations show. A type supplies those bands as a
+  fact (`observedBands(recipe)`); Change Alerts names the bands its monitoring data observes (`monitoringData.js`).
+  Established, but with none of its measures observed (`noChartableBand`), the chart is not available; while what
+  can be plotted is still being checked, that is not known, and the gate alone holds the chart back. The chart
+  panel takes its segment gate, band choices and `noChartableBand` from the same assessment, so the action and the
+  open chart cannot disagree about whether there is a band to plot.
+- **Retrieve** (`retrieveAvailability`): the `IMAGE_OUTPUT` source-requirement gate. Retrieve's submission decision
+  (`retrieveOutput.js`) takes its source gate from the same assessment. Retrieve's other readiness - the recipe
+  listing, unsettled drafts, asset authority and the output itself - does not hold the action back. Opening the
+  panel is what renews the listing and starts watching the output that the asset authority is read for, so gating
+  the action on them could keep it closed for good; and the panel is where their diagnosis is said. The panel and
+  the submission decide from them as before.
+
+The shared Chart and Retrieve toolbar actions are disabled while their operation's prerequisites are being checked or
+are not met. They use the buttons' existing disabled state, which also takes them out of keyboard focus. They add no
+tooltip, message or busy indicator: why a prerequisite is not met is said where the section's status says it. A pixel
+selection started before the chart became unavailable is let go, a pending long press is cancelled and the coordinate
+input is closed, and the input neither opens nor charts coordinates while the chart is unavailable, so a later map
+click or coordinate cannot open the chart. The actions become available again by themselves as the evidence or configuration
+recovers. Each action is held back only by its own operation: a chart that cannot plot leaves Retrieve available, and
+a monitored measure the reference lacks leaves the chart available.
+
+Disabling the opening action replaces no protection inside an already open panel: the chart still withdraws and
+recovers what it shows, and Retrieve still decides at submission. The evidence the actions read is kept current by
+whatever watches the recipe - its editor, an open panel or a layer - and the actions add no watch of their own. A type
+that declares no requirements is never held back.
+
+Extending availability to other operations, and to rules over local model properties, belongs to the
+[declarative validation roadmap](data-sources.md#declarative-validation-across-model-properties), not to this
+assessment's current scope.
 
 ## Source description
 

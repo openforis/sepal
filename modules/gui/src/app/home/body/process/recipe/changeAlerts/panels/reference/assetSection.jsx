@@ -8,8 +8,6 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
-import {SelectedSourceStatus} from '../../../selectedSource'
-
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
 const UNIX_TIME_MILLIS = 2
@@ -33,7 +31,6 @@ class _AssetSection extends React.Component {
                     allowedTypes={['Image', 'ImageCollection']}
                     onLoaded={this.onLoaded}
                 />
-                <SelectedSourceStatus section='reference' type='ASSET' id={asset.value}/>
                 <Form.Buttons
                     label={msg('process.ccdc.panel.dates.form.dateFormat.label')}
                     input={dateFormat}
@@ -59,8 +56,8 @@ class _AssetSection extends React.Component {
     }
 
     // Only the date representation is kept: it is configuration the user may correct, prefilled from the asset. Whether
-    // the asset suits the reference is judged once its typed bands are read (SelectedSourceStatus): the metadata read
-    // here cannot say which of its bands are arrays.
+    // the asset suits the reference is the requirements' to judge, from the evidence the candidate's observation reads
+    // (sourceCandidate.js).
     onLoaded({metadata}) {
         const {inputs: {dateFormat}} = this.props
         dateFormat.set(metadata.properties?.dateFormat)

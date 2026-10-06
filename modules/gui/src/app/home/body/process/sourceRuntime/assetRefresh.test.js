@@ -92,6 +92,18 @@ describe('releasing assets', () => {
         expect(session.evidence('users/x/a').version).toBe('v1')
     })
 
+    // A consumer replacing its claim - releasing, then claiming again - cancels the read it was waiting for.
+    it('reads at once an asset claimed again after its last release cancelled the read it awaited', () => {
+        const session = sessionOver()
+        session.refresh.claim(['users/x/a'])()
+
+        session.refresh.claim(['users/x/a'])
+        session.answer({'users/x/a': 'v1'})
+
+        expect(session.requests).toHaveLength(2)
+        expect(session.authority('users/x/a')).toBe(CURRENT)
+    })
+
     it('forgets their evidence a minute after release', () => {
         const session = sessionOver()
         session.refresh.claim(['users/x/a'])()

@@ -252,6 +252,7 @@ class _List extends React.Component {
                     width='max'
                     alignment={alignment}
                     disableTransitions
+                    hook='option'
                     onMouseEnter={() => this.mouseOption$.next(key)}
                     onClick={() => this.selectOption(key)}>
                     {option.render ? option.render() : null}

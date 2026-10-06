@@ -42,8 +42,8 @@ const requirementOn = role => ({
     role,
     section: {id: role, label: role},
     requirement: {
-        capability: {capability: CCDC_SEGMENTS, evidenceAsset: ({assetId}) => assetId, evidenceOf: observed => observed.segments},
-        evaluate: ({evidence}) => evidence ? {status: SUPPORTED} : {status: 'NEEDS_EVIDENCE'}
+        capability: {capability: CCDC_SEGMENTS, evidenceAsset: ({assetId}) => assetId, factsOf: observed => observed.segments},
+        evaluate: facts => facts ? {status: SUPPORTED} : {status: 'NEEDS_EVIDENCE'}
     }
 })
 

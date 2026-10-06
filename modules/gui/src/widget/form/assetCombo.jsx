@@ -7,6 +7,7 @@ import {msg} from '~/translate'
 import {AssetCombo} from '~/widget/assetCombo'
 
 import {withFormContext} from './context'
+import {inputFeedback, withBusyExplanation, withFeedbackButtons} from './inputFeedback'
 
 class _FormAssetCombo extends React.Component {
     constructor(props) {
@@ -17,10 +18,11 @@ class _FormAssetCombo extends React.Component {
 
     render() {
         const {
-            input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
+            form, input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
             includeNominalScale, inputClassName, keyboard, label, labelButtons, mode, optionsClassName, optionTooltipPlacement, placeholder, placement,
             preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, onCancel, onLoaded, onLoading
         } = this.props
+        const feedback = inputFeedback(form, input)
         return (
             <AssetCombo
                 value={input.value}
@@ -29,16 +31,16 @@ class _FormAssetCombo extends React.Component {
                 allowedTypes={allowedTypes}
                 autoFocus={autoFocus}
                 autoOpen={autoOpen}
-                busyMessage={busyMessage}
+                busyMessage={busyMessage || feedback.busy}
                 className={className}
                 disabled={disabled}
-                warningMessage={warningMessage}
+                warningMessage={warningMessage || feedback.warning}
                 errorMessage={this.getErrorMessage()}
                 includeNominalScale={includeNominalScale}
                 inputClassName={inputClassName}
                 keyboard={keyboard}
                 label={label}
-                labelButtons={labelButtons}
+                labelButtons={withFeedbackButtons(labelButtons, feedback)}
                 mode={mode}
                 optionsClassName={optionsClassName}
                 optionTooltipPlacement={optionTooltipPlacement}
@@ -47,7 +49,7 @@ class _FormAssetCombo extends React.Component {
                 preferredTypes={preferredTypes}
                 readOnly={readOnly}
                 stayOpenOnSelect={stayOpenOnSelect}
-                tooltip={tooltip}
+                tooltip={withBusyExplanation(tooltip, feedback)}
                 tooltipPlacement={tooltipPlacement}
                 onCancel={onCancel}
                 onChange={this.onChange}

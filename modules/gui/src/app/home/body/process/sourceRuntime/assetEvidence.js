@@ -68,6 +68,14 @@ export const checkingAssets = (assets, ids, requestId) => ({
     ...Object.fromEntries(ids.map(id => [id, {...(assets[id] || UNKNOWN), checking: requestId}]))
 })
 
+// Requests no longer awaited: the assets still waiting for one of them wait for nothing.
+export const abandonedAssets = (assets, requests) => {
+    const abandoned = requests.flatMap(({id: requestId, ids}) => ids.filter(id => assets[id]?.checking === requestId))
+    return abandoned.length
+        ? {...assets, ...Object.fromEntries(abandoned.map(id => [id, {...assets[id], checking: null}]))}
+        : assets
+}
+
 // Answers to a request, applied only to the assets still waiting for it.
 export const answeredAssets = (assets, {requestId, startedAt, answers, now}) => {
     const answered = answers.filter(({id}) => assets[id]?.checking === requestId)

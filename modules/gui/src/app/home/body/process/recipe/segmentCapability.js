@@ -5,6 +5,7 @@ import {
     MALFORMED_SEGMENT_SOURCE,
     UNSUPPORTED_SEGMENT_SOURCE
 } from '#sepal/recipe/capability/ccdcSegments'
+import {ASSET, COMPUTED} from '#sepal/recipe/requirement/ccdcSegments'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {describeSegmentsAsset$} from './ccdc/segmentsAsset'
@@ -19,13 +20,26 @@ import {NOT_A_SOURCE, resolveProvider, UNRESOLVED, UNSUPPORTED} from './sourcePr
 export const UNRESOLVED_SEGMENT_SOURCE = 'UNRESOLVED_SEGMENT_SOURCE'
 
 // The capability as a requirement over it reads it (sourceRequirements.js, segmentRequirements.js): which asset
-// establishes it - the one the segments are read from, if any - and where the evidence lifecycle's accepted observation
-// holds the segment description (`segments`, as every segment consumer publishes it).
+// establishes it - the one the segments are read from, if any - and the facts the shared requirements judge
+// (requirement/ccdcSegments.js), from the segment description an accepted observation holds (`segments`, as every
+// segment consumer publishes it). An asset's facts are its typed bands, and only those read from the asset that
+// establishes the capability; a computing producer's are the measures it describes. Null where there are none.
 export const SEGMENTS = {
     capability: CCDC_SEGMENTS,
     label: 'process.source.capability.ccdcSegments',
     evidenceAsset: provider => segmentsAssetOf(provider),
-    evidenceOf: observed => observed?.segments
+    factsOf: (observed, assetId) => segmentFacts(observed?.segments, assetId)
+}
+
+const segmentFacts = (segments, assetId) => {
+    if (assetId) {
+        return segments?.typedBands?.assetId === assetId
+            ? {producer: ASSET, assetId, bands: segments.typedBands.bands}
+            : null
+    }
+    return segments?.baseBands
+        ? {producer: COMPUTED, measures: segments.baseBands.map(({name}) => name)}
+        : null
 }
 
 export class SegmentSourceError extends Error {

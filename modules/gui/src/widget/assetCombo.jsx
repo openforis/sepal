@@ -70,14 +70,14 @@ class _AssetCombo extends React.Component {
         return options ? (
             <Combo
                 options={options}
-                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
+                busyMessage={busyMessage || (this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading'))}
                 buttons={[
                     this.renderCopyIdButton(),
                     this.renderReloadButton()
                 ]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
-                warningMessage={warningMessage || assetError ? msg('asset.failedToLoadSome') : null}
+                warningMessage={warningMessage || (assetError ? msg('asset.failedToLoadSome') : null)}
                 errorMessage={errorMessage}
                 {...otherProps}
             />

@@ -976,7 +976,9 @@
       },
       "checking": "Checking asset…",
       "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
-      "failing": "Earth Engine could not be reached. The drawing may be out of date."
+      "failing": "Earth Engine could not be reached. The drawing may be out of date.",
+    "held": "Cannot render ''{recipe}''. Review {section} in that recipe.",
+    "checkingSection": "Checking the source selected in {section} of ''{recipe}''\u2026"
     }
   },
   "featureLayerSources": {
@@ -1149,6 +1151,7 @@
         "loadFailed": "Failed to load chart.",
         "loadObservations.error": "Failed to load observations.",
         "loadSegments.error": "Failed to load segments.",
+        "noChartableBand": "The monitoring data observes none of the bands the reference's segments can be charted for.",
         "start.tooltip": "Chart time-series for pixel"
       },
       "create": "CCDC",
@@ -5727,10 +5730,12 @@
         "unfilledRole": "{way}{source} does not select the image it stands for.",
         "cyclic": "The selected source refers back to itself.",
         "unsuitable": "The selected source cannot provide {capability}.",
-        "showDetails": "Show all {count} problems",
-        "hideDetails": "Hide problems",
         "withheld": "Not loaded: the source selected in {section} cannot be used yet.",
-        "held": "{recipe}, {section}: {message}"
+        "advisory": "{about}: {message}",
+        "sectionsIncompatible": "The settings in {sections} are incompatible with this reference. Choose another reference or update the settings in {sections}."
+      },
+      "operation": {
+        "PIXEL_SEGMENTS": "Segment chart"
       },
       "capability": {
         "ccdcSegments": "CCDC segments"
@@ -5742,9 +5747,14 @@
         "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",
         "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
         "andMore": "{items} and {count} more",
-        "measureAbsent": "The selected source has no segments for band {measure}. It has segments for: {measures}.",
+        "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
+        "measureUnobserved": "The selected monitoring data does not observe {measure}. Choose a band it observes that the selected source has segments for: {measures}.",
+        "noMonitorableMeasure": "The selected source has segments only for {measures}, which no supported monitoring data observes. Choose another source.",
+        "noAvailableMeasure": "The selected source has segments only for {measures}, which this type of monitoring data does not observe. Choose a type that observes one of them.",
+        "noObservedMeasure": "The selected source has segments only for {measures}, which the selected data sets do not observe as currently processed. Choose data sets that observe one of them, or check the surface reflectance (SR) correction in pre-processing.",
         "noMeasures": "none",
-        "noMeasure": "The selected source has no band with both coefficients and RMSE."
+        "noMeasure": "The selected source has no band with both coefficients and RMSE.",
+        "noChartableMeasure": "No measure has the coefficients, RMSE and magnitude a segment chart plots."
       }
     },
     "sourceType": {
