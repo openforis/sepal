@@ -93,6 +93,19 @@ describe('TaskRepository', () => {
         expect((await repository.getTask(task.id)).statusDescription).toBe(progress)
     })
 
+    test('cancellations are timed from the last change, which a restart resets', async () => {
+        const task = aTask()
+        await repository.insert(task)
+        await repository.activate(task, 'a'.repeat(64))
+        await repository.transition(task, {from: [State.ACTIVE], to: State.CANCELING})
+        now = new Date('2026-10-06T10:20:00.000Z')
+
+        expect((await repository.cancelingSince(new Date('2026-10-06T10:05:00.000Z'))).map(({id}) => id)).toEqual([task.id])
+        await repository.resetProgressClock()
+        expect(await repository.cancelingSince(new Date('2026-10-06T10:05:00.000Z'))).toEqual([])
+        expect((await repository.getTask(task.id)).state).toBe(State.CANCELING)
+    })
+
     test('lists a user\'s tasks until removed, and removes only finished ones in bulk', async () => {
         const running = aTask({id: 't-1'})
         const done = aTask({id: 't-2'})

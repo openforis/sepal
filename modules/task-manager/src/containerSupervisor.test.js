@@ -249,6 +249,23 @@ describe('timeouts', () => {
     })
 })
 
+describe('starting', () => {
+    test('task-manager downtime does not count against a cancellation in progress', async () => {
+        const {repository, docker, clock, newSupervisor} = setup()
+        await repository.add(aTask({state: State.CANCELING}))
+        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: true})
+        clock.advance(6 * 60 * 1000)
+        const supervisor = newSupervisor()
+
+        await supervisor.start()
+        await supervisor.enforceTimeouts()
+        supervisor.stop()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.CANCELING)
+        expect(docker.killed).toEqual([])
+    })
+})
+
 describe('stopping', () => {
     test('stopping a container asks Docker to stop it with a grace period, without waiting for it to exit', async () => {
         const {supervisor, repository, docker} = setup()

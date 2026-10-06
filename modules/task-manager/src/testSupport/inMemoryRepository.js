@@ -67,6 +67,8 @@ export class InMemoryRepository {
         for (const task of this.#tasks.values()) {
             if (task.state === State.ACTIVE) {
                 this.#tasks.set(task.id, {...task, progressTime: this.#clock.now()})
+            } else if (task.state === State.CANCELING) {
+                this.#tasks.set(task.id, {...task, updateTime: this.#clock.now()})
             }
         }
     }

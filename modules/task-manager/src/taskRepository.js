@@ -86,9 +86,12 @@ export class TaskRepository {
         )
     }
 
-    // task-manager's own downtime must not count as a container falling silent.
+    // task-manager's own downtime must not count as a container falling silent, nor against a cancellation,
+    // which is timed from update_time.
     async resetProgressClock() {
-        await this.#query('UPDATE task SET progress_time = ? WHERE state = ?', [this.#clock(), State.ACTIVE])
+        const now = this.#clock()
+        await this.#query('UPDATE task SET progress_time = ? WHERE state = ?', [now, State.ACTIVE])
+        await this.#query('UPDATE task SET update_time = ? WHERE state = ?', [now, State.CANCELING])
     }
 
     async stalledTasks(before) {
