@@ -1,0 +1,12 @@
+[Unit]
+Description=Isolate SEPAL task containers (network sepal-task)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/sepal-task-firewall.sh
+
+[Install]
+WantedBy=multi-user.target

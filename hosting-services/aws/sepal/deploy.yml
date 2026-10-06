@@ -199,6 +199,24 @@
         enabled: yes
         masked: no
 
+    - name: Copy sepal-task firewall script
+      copy:
+        src: docker/sepal-task-firewall.sh
+        dest: /usr/local/sbin/sepal-task-firewall.sh
+        mode: '0755'
+
+    - name: Copy sepal-task firewall unit
+      copy:
+        src: docker/sepal-task-firewall.service
+        dest: /etc/systemd/system/sepal-task-firewall.service
+
+    - name: Enable sepal-task firewall
+      systemd:
+        name: sepal-task-firewall
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
     - name: pip install Docker SDK
       pip:
         name:
@@ -241,7 +259,13 @@
       register: network
       retries: 15
       delay: 2
-      until: network.stdout != "null"            
+      until: network.stdout != "null"
+
+    - docker_network:
+        name: sepal-task
+        driver: bridge
+        ipam_config:
+          - subnet: 172.29.0.0/16
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
