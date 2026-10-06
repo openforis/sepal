@@ -45,11 +45,17 @@ class SepalTaskFirewallTest(unittest.TestCase):
         return [call for call in calls if '-I' in call]
 
     def test_lets_task_containers_reach_their_own_network_before_any_drop(self):
-        # Each -I inserts at the top, so the rule inserted last is evaluated first.
+        # -I inserts at position 1 (the top), so the rule inserted last evaluates first.
+        # Simulate the final chain order: each insertion prepends the rule.
         calls = self.inserted(self.run_script(check_status=1))
-        top = [call for call in calls if 'DOCKER-USER' in call][-1]
-        self.assertEqual(SUBNET, top[top.index('-d') + 1])
-        self.assertEqual('RETURN', top[top.index('-j') + 1])
+        docker_user_calls = [call for call in calls if 'DOCKER-USER' in call]
+        # Simulate -I: reverse order (last inserted is first in the chain)
+        chain_order = list(reversed(docker_user_calls))
+        # First rule in the chain should be the own-subnet RETURN
+        self.assertIsNotNone(chain_order)
+        first_rule = chain_order[0]
+        self.assertEqual(SUBNET, first_rule[first_rule.index('-d') + 1])
+        self.assertEqual('RETURN', first_rule[first_rule.index('-j') + 1])
 
     def test_drops_task_traffic_to_the_metadata_service_and_every_private_range(self):
         calls = self.inserted(self.run_script(check_status=1))
@@ -77,14 +83,31 @@ class SepalTaskFirewallTest(unittest.TestCase):
     def test_dns_rules_end_above_drop_rules(self):
         calls = self.inserted(self.run_script(check_status=1))
         docker_user_calls = [i for i, call in enumerate(calls) if 'DOCKER-USER' in call]
-        if docker_user_calls:
-            dns_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'RETURN' and '--dport' in calls[i]]
-            drop_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'DROP' and '--dport' not in calls[i]]
-            # Since -I inserts at position 1, later insertions appear first in the list
-            # DNS rules (inserted last) should have lower indices than DROP rules (inserted earlier)
-            if dns_rules_indices and drop_rules_indices:
-                self.assertTrue(max(dns_rules_indices) < min(drop_rules_indices),
-                                "DNS rules should be inserted after DROP rules to evaluate first")
+        self.assertTrue(len(docker_user_calls) > 0, "Should have DOCKER-USER rules")
+
+        dns_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'RETURN' and '--dport' in calls[i]]
+        drop_rules_indices = [i for i in docker_user_calls if calls[i][-1] == 'DROP' and '--dport' not in calls[i]]
+
+        self.assertTrue(len(dns_rules_indices) > 0, "Should have DNS rules")
+        self.assertTrue(len(drop_rules_indices) > 0, "Should have DROP rules")
+
+        # -I inserts at position 1, so rules inserted later end up earlier in the chain.
+        # DNS rules must be inserted AFTER DROP rules so they are evaluated BEFORE DROP rules.
+        self.assertTrue(min(dns_rules_indices) > max(drop_rules_indices),
+                        "DNS rules must be inserted after DROP rules (higher indices)")
+
+        # Verify final chain order: simulate -I insertion (reverse order = chain order)
+        docker_user_insert_order = [call for call in calls if 'DOCKER-USER' in call]
+        chain_order = list(reversed(docker_user_insert_order))
+
+        # Find positions in the chain
+        dns_positions = [i for i, call in enumerate(chain_order) if call[-1] == 'RETURN' and '--dport' in call]
+        drop_positions = [i for i, call in enumerate(chain_order) if call[-1] == 'DROP' and '--dport' not in call]
+
+        if dns_positions and drop_positions:
+            # DNS rules should come before (lower position index) DROP rules in the chain
+            self.assertTrue(max(dns_positions) < min(drop_positions),
+                            "DNS rules should evaluate before DROP rules in the final chain")
 
 
 if __name__ == '__main__':
