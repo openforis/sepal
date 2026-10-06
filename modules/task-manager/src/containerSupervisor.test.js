@@ -1,5 +1,6 @@
 import {ContainerSupervisor} from './containerSupervisor.js'
-import {createTask, RUNNING_STATES, State, StateDescription} from './task.js'
+import {createTask, State} from './task.js'
+import {InMemoryRepository} from './testSupport/inMemoryRepository.js'
 
 describe('launching', () => {
     test('a pending task gets a running container and becomes active', async () => {
@@ -255,65 +256,6 @@ const setup = ({maxConcurrent = 10} = {}) => {
 const fakeClock = () => {
     let time = 1_000_000
     return {now: () => new Date(time), advance: ms => time += ms}
-}
-
-class InMemoryRepository {
-    #tasks = new Map()
-    #clock
-
-    constructor(clock) {
-        this.#clock = clock
-    }
-
-    async add(task) {
-        const stored = {...task, progressTime: task.state === State.ACTIVE ? this.#clock.now() : null, updateTime: this.#clock.now()}
-        this.#tasks.set(task.id, stored)
-        return stored
-    }
-
-    async getTask(id) {
-        return this.#tasks.get(id) ?? null
-    }
-
-    async pendingTasks(limit) {
-        return [...this.#tasks.values()]
-            .filter(({state}) => state === State.PENDING)
-            .sort((a, b) => a.creationTime - b.creationTime)
-            .slice(0, limit)
-    }
-
-    async runningTasks() {
-        return [...this.#tasks.values()].filter(({state}) => RUNNING_STATES.includes(state))
-    }
-
-    async countRunning() {
-        return (await this.runningTasks()).length
-    }
-
-    async activate(task, apiKeyHash) {
-        return this.#update(task.id, [State.PENDING], {state: State.ACTIVE, apiKeyHash, progressTime: this.#clock.now()})
-    }
-
-    async transition(task, {from, to, statusDescription = StateDescription[to]}) {
-        return this.#update(task.id, from, {state: to, statusDescription})
-    }
-
-    async stalledTasks(before) {
-        return [...this.#tasks.values()].filter(({state, progressTime}) => state === State.ACTIVE && progressTime < before)
-    }
-
-    async cancelingSince(before) {
-        return [...this.#tasks.values()].filter(({state, updateTime}) => state === State.CANCELING && updateTime < before)
-    }
-
-    #update(id, from, changes) {
-        const task = this.#tasks.get(id)
-        if (!task || !from.includes(task.state)) {
-            return false
-        }
-        this.#tasks.set(id, {...task, ...changes, updateTime: this.#clock.now()})
-        return true
-    }
 }
 
 class FakeDocker {
