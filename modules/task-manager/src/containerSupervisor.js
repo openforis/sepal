@@ -141,7 +141,12 @@ export class ContainerSupervisor {
         await this.#dispatchPending()
     }
 
+    // The runner reports CANCELED on any SIGTERM; only a stop the user asked for makes that a cancel. Anything
+    // else (a host reboot, an operator stopping the container) interrupted the task.
     #outcome(task, result) {
+        if (result?.state === State.CANCELED) {
+            return this.#interrupted(task)
+        }
         if (result) {
             return {state: result.state, statusDescription: statusDescriptionOf(result.statusDescription)}
         }

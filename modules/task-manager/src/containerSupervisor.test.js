@@ -76,6 +76,33 @@ describe('collecting', () => {
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
     })
 
+    test('a container stopped while its task was not being cancelled was interrupted, whatever its result says', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+
+        workspace.results.set('t-1', {state: 'CANCELED'})
+        docker.exit('sepal-task-t-1', 0)
+        await supervisor.idle()
+
+        const task = await repository.getTask('t-1')
+        expect(task.state).toBe(State.FAILED)
+        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.interrupted'})
+    })
+
+    test('a container being cancelled that reports itself canceled is canceled', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
+
+        workspace.results.set('t-1', {state: 'CANCELED'})
+        docker.exit('sepal-task-t-1', 0)
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+    })
+
     test('a finished container frees its slot for the next pending task', async () => {
         const {supervisor, repository, docker} = setup({maxConcurrent: 1})
         await repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
