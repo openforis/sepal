@@ -21,6 +21,21 @@ test('one failure stops the others and is what it rejects with', async () => {
     expect(aborted.sort()).toEqual([2, 3])
 })
 
+test('the failure is rejected only once the others have settled', async () => {
+    let settled = false
+    const work = async (item, signal) => {
+        if (item === 1) {
+            throw new Error('boom')
+        }
+        await new Promise(resolve => signal.addEventListener('abort', resolve))
+        await new Promise(resolve => setImmediate(resolve))
+        settled = true
+    }
+
+    await expect(forEachInParallel([1, 2], 2, new AbortController().signal, work)).rejects.toThrow('boom')
+    expect(settled).toBe(true)
+})
+
 test('an aborted task starts nothing more', async () => {
     const abort = new AbortController()
     const started = []

@@ -109,6 +109,76 @@ test('a server error is retried, then fails the download', async () => {
     expect(await filesIn(dir)).toEqual({})
 })
 
+test('repeated refusals back off before listing again, then fail the download', async () => {
+    server = await FileServer.start((_request, response) => response.writeHead(403).end())
+    const sepal = listing(() => filesOf({'a.tif': 'aaa'}))
+    const sleeps = []
+
+    await expect(download({sepal, sleep: async ms => sleeps.push(ms)})).rejects.toMatchObject({statusCode: 403})
+
+    expect(server.requests).toHaveLength(5)
+    expect(sepal.requests).toHaveLength(5)
+    expect(sleeps).toEqual([1000, 2000, 4000])
+})
+
+test('a file shorter than listed is a failed attempt, and leaves nothing behind', async () => {
+    server = await FileServer.start(serving({'a.tif': 'aa'}))
+    const sleeps = []
+
+    await expect(download({
+        sepal: listing(() => ({...filesOf({'a.tif': 'aa'}), files: [{...filesOf({'a.tif': 'aa'}).files[0], size: 3}]})),
+        sleep: async ms => sleeps.push(ms)
+    })).rejects.toThrow(/a\.tif/)
+
+    expect(server.requests).toHaveLength(5)
+    expect(sleeps).toHaveLength(4)
+    expect(await readdir(dir)).toEqual([])
+})
+
+test('a listing naming a file twice is refused before anything is downloaded', async () => {
+    server = await FileServer.start(serving({'a.tif': 'aaa'}))
+    const [file] = filesOf({'a.tif': 'aaa'}).files
+
+    await expect(download({sepal: listing(() => ({files: [file, file], expiresAt: NOW + HOUR}))})).rejects.toThrow('a.tif')
+
+    expect(server.requests).toEqual([])
+})
+
+test('reports progress while a file streams, at most once every 5 seconds', async () => {
+    const clock = fakeClock()
+    const {handle, firstPartRead} = inTwoParts('x'.repeat(400), 'y'.repeat(600))
+    server = await FileServer.start(handle)
+    const reported = []
+
+    await download({
+        sepal: listing(() => filesOf({'a.tif': 'x'.repeat(1000)})),
+        report: progress => reported.push(progress.messageArgs.bytes),
+        fetchFn: noticingChunks(() => {
+            clock.advance(6000)
+            firstPartRead()
+        }),
+        now: clock.now
+    })
+
+    expect(reported[0]).toBe(fileSize(1000))
+    expect(reported).toContain(fileSize(600))
+    expect(reported.at(-1)).toBe(fileSize(0))
+})
+
+test('progress within 5 seconds of the last report is not reported', async () => {
+    const {handle, firstPartRead} = inTwoParts('x'.repeat(400), 'y'.repeat(600))
+    server = await FileServer.start(handle)
+    const reported = []
+
+    await download({
+        sepal: listing(() => filesOf({'a.tif': 'x'.repeat(1000)})),
+        report: progress => reported.push(progress.messageArgs.bytes),
+        fetchFn: noticingChunks(firstPartRead)
+    })
+
+    expect(reported).toEqual([fileSize(1000), fileSize(0)])
+})
+
 test('a cancelled download leaves no complete-looking file', async () => {
     server = await FileServer.start(holdingOpen)
     const abort = new AbortController()
@@ -145,8 +215,27 @@ const download = ({
     report = () => {},
     signal = new AbortController().signal,
     sleep = async () => {},
-    fetchFn
-}) => downloadFiles({destination, dir, sepal, report, signal, fetchFn, sleep, now: () => NOW})
+    fetchFn,
+    now = () => NOW
+}) => downloadFiles({destination, dir, sepal, report, signal, fetchFn, sleep, now})
+
+const fakeClock = () => {
+    let time = NOW
+    return {now: () => time, advance: ms => time += ms}
+}
+
+// Answers with the first part of a body, and the rest only once the client has read the first.
+const inTwoParts = (first, rest) => {
+    let firstPartRead
+    const read = new Promise(resolve => firstPartRead = resolve)
+    const handle = async (_request, response) => {
+        response.writeHead(200, {'Content-Length': first.length + rest.length})
+        response.write(first)
+        await read
+        response.end(rest)
+    }
+    return {handle, firstPartRead}
+}
 
 // A gee answering each listing request with list(n), n counting listings from 1.
 const listing = list => {
