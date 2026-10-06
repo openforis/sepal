@@ -165,6 +165,31 @@ describe('a request built for the REST API is the one the client library sends',
         const task = ee.batch.Export.table.toDrive(collection, 'description', 'folder', 'prefix', 'CSV', ['a', 'b'])
         expect(sent(requests.exportTable(ee, task, 'T1', CONTEXT))).toEqual(library)
     })
+
+    test('starting an image export', async () => {
+        const image = ee.Image('USGS/SRTMGL1_003')
+        const region = ee.Geometry.Rectangle([0, 0, 1, 1])
+        const exportTask = () => ee.batch.Export.image.toAsset(image, 'description', `${FOLDER}/exported`, {'.default': 'sample'}, undefined, region, 30)
+        const libraryTask = exportTask()
+        libraryTask.id = 'T1'
+
+        const library = await withWorkloadTag(CONTEXT.workloadTag, () => libraryCall(
+            {url: `${API}/v1/projects/${TEST_PROJECT}/image:export`, answer: runningOperation('T1')},
+            callback => libraryTask.start(() => callback(libraryTask.id), error => callback(null, error))
+        ))
+
+        expect(sent(requests.exportImage(ee, exportTask(), 'T1', CONTEXT))).toEqual(library)
+    })
+})
+
+test('making an asset public sets a policy granting everyone read access', () => {
+    const policy = {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}
+
+    expect(requests.setAssetIamPolicy(IMAGE_ASSET, policy)).toEqual({
+        method: 'POST',
+        path: `v1/${IMAGE_ASSET}:setIamPolicy`,
+        body: {policy}
+    })
 })
 
 test('a map is built only from an image', () => {
