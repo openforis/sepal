@@ -9,11 +9,32 @@ test('prepares the collection, exports the tiles a resume does not keep, then sh
 
     await collectionExport('image', params, context(sepal))
 
-    const starts = sepal.calls.filter(({kind}) => kind === 'start')
+    const starts = sepal.calls.filter(({kind, path}) => kind === 'start' && path === 'task/export/collection/tile')
     expect(starts.map(({path, body}) => ({path, body}))).toEqual([
         {path: 'task/export/collection/tile', body: {kind: 'image', ...params, tileIndex: 1, tileId: 'b'}}
     ])
     expect(sepal.calls.at(-1)).toMatchObject({path: 'task/asset/share', body: {assetId: 'projects/p/assets/c'}})
+})
+
+test('prepares the collection once, never retrying a request that may have changed assets', async () => {
+    const params = {image: {assetId: 'a'}}
+    const sepal = fakeSepal({prepared: {assetId: 'a', tiles: []}})
+
+    await collectionExport('image', params, context(sepal))
+
+    expect(sepal.calls.filter(({path}) => path === 'task/export/collection/prepare')).toEqual([
+        {kind: 'start', path: 'task/export/collection/prepare', body: {kind: 'image', ...params}}
+    ])
+})
+
+test('the prepare message names no asset when the export gave none', async () => {
+    const sepal = fakeSepal({prepared: {assetId: 'projects/p/assets/derived', tiles: []}})
+    const reports = []
+
+    await collectionExport('image', {image: {}}, {...context(sepal), report: message => reports.push(message)})
+
+    const prepare = reports.find(({messageKey}) => messageKey === 'tasks.ee.export.asset.prepareImageCollection')
+    expect(prepare).toMatchObject({defaultMessage: 'Prepare image collection', messageArgs: {assetId: ''}})
 })
 
 test('reports collection progress with the existing messages', async () => {
@@ -70,9 +91,6 @@ const fakeSepal = ({prepared, states = {}}) => {
         calls,
         gee: async (path, body) => {
             calls.push({path, body})
-            if (path === 'task/export/collection/prepare') {
-                return prepared
-            }
             if (path === 'task/operation/status') {
                 return {state: states[body.eeTaskId] ?? 'COMPLETED'}
             }
@@ -80,7 +98,9 @@ const fakeSepal = ({prepared, states = {}}) => {
         },
         startExport: async (path, body) => {
             calls.push({kind: 'start', path, body})
-            return {eeTaskId: `T${started++}`}
+            return path === 'task/export/collection/prepare'
+                ? prepared
+                : {eeTaskId: `T${started++}`}
         }
     }
 }

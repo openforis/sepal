@@ -4,9 +4,10 @@ import {forEachInParallel} from '../parallel.js'
 const CONCURRENT_TILES = 3
 
 export const collectionExport = async (kind, params, {sepal, report, signal, sleep}) => {
-    report({defaultMessage: 'Prepare image collection', messageKey: 'tasks.ee.export.asset.prepareImageCollection', messageArgs: {assetId: params.image.assetId}})
+    report(prepareProgress(params.image.assetId || ''))
     report({defaultMessage: 'Tiling image', messageKey: 'tasks.ee.export.asset.tilingImage'})
-    const {assetId, tiles} = await sepal.gee('task/export/collection/prepare', {kind, ...params})
+    // Preparing may delete and create assets, so it is not retried either.
+    const {assetId, tiles} = await sepal.startExport('task/export/collection/prepare', {kind, ...params})
     const totalTiles = tiles.length
     let completedTiles = tiles.filter(({retained}) => retained).length
     report({defaultMessage: `Start export of ${totalTiles} tiles`, messageKey: 'tasks.ee.export.asset.startExport', messageArgs: {tileCount: totalTiles}})
@@ -26,3 +27,9 @@ export const collectionExport = async (kind, params, {sepal, report, signal, sle
     })
     await shareIfPublic({params, assetId, sepal, report, signal})
 }
+
+const prepareProgress = assetId => ({
+    defaultMessage: `Prepare image collection${assetId ? ` ${assetId}` : ''}`,
+    messageKey: 'tasks.ee.export.asset.prepareImageCollection',
+    messageArgs: {assetId}
+})
