@@ -205,7 +205,7 @@ describe('timeouts', () => {
 })
 
 describe('stopping', () => {
-    test('stopping a container asks Docker to stop it with a grace period', async () => {
+    test('stopping a container asks Docker to stop it with a grace period, without waiting for it to exit', async () => {
         const {supervisor, repository, docker} = setup()
         await repository.add(aTask())
         await supervisor.dispatch()
@@ -364,17 +364,20 @@ class FakeDocker {
         if (container && !container.running) {
             return Promise.resolve({StatusCode: container.exitCode})
         }
-        return new Promise(resolve => this.#waiters.set(name, resolve))
+        return this.#untilExit(name)
     }
 
     exit(name, exitCode) {
         this.containers.set(name, {...this.containers.get(name), running: false, exitCode})
-        this.#waiters.get(name)?.({StatusCode: exitCode})
+        this.#waiters.get(name)?.forEach(resolve => resolve({StatusCode: exitCode}))
+        this.#waiters.delete(name)
     }
 
+    // Like Docker, a stop settles only once the container has exited.
     async stop(name, seconds) {
         if (this.containers.has(name)) {
             this.stopped.push({name, seconds})
+            await this.#untilExit(name)
         }
     }
 
@@ -385,6 +388,10 @@ class FakeDocker {
 
     async remove(name) {
         this.containers.delete(name)
+    }
+
+    #untilExit(name) {
+        return new Promise(resolve => this.#waiters.set(name, [...this.#waiters.get(name) ?? [], resolve]))
     }
 }
 

@@ -17,7 +17,7 @@ const STALLED = failure('the task stopped responding')
 
 // Launches, watches and collects one detached container per task. Every step that reads or changes tasks and
 // containers runs through one queue, so a reconcile never sees a task between being activated and its
-// container existing. Only waiting for a container to exit happens outside it.
+// container existing. Only waiting for a container to exit, and for a stop to take effect, happens outside it.
 export class ContainerSupervisor {
     #repository
     #docker
@@ -60,15 +60,12 @@ export class ContainerSupervisor {
     }
 
     // The container cancels its own work on SIGTERM and exits; collecting it ends the task. Waiting for queued
-    // work lets a launch in progress create the container first; the stop itself stays out of the queue, which
-    // it would otherwise hold for the whole grace period.
+    // work lets a launch in progress create the container first. Docker's stop settles only once the container
+    // has exited, up to the grace period later, so it is issued, not awaited.
     async stopContainer(task) {
         await this.#queue
-        try {
-            await this.#docker.stop(containerName(task.id), this.#config.stopGraceSeconds)
-        } catch (error) {
-            log.error(`${taskTag(task)} could not be stopped`, error)
-        }
+        this.#docker.stop(containerName(task.id), this.#config.stopGraceSeconds)
+            .catch(error => log.error(`${taskTag(task)} could not be stopped`, error))
     }
 
     // Settles once no queued work remains, including work queued meanwhile by a container that exited.
