@@ -25,6 +25,8 @@ services:
       SYSLOG_ADDRESS: "${SYSLOG_ADDRESS}"
       TASK_MAX_CONCURRENT: "${TASK_MAX_CONCURRENT}"
       TASK_MEMORY_MB: "${TASK_MEMORY_MB}"
+      TASK_MAX_CONCURRENT_LOCAL: "${TASK_MAX_CONCURRENT_LOCAL}"
+      TASK_LOCAL_MEMORY_MB: "${TASK_LOCAL_MEMORY_MB}"
       TASK_CPUS: "${TASK_CPUS}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]

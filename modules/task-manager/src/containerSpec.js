@@ -1,3 +1,5 @@
+import {isLocalWork} from './operations.js'
+
 export const LABELS = Object.freeze({
     MANAGED: 'org.openforis.sepal.task-manager',
     TASK_ID: 'org.openforis.sepal.task-id',
@@ -42,7 +44,7 @@ export const containerSpec = ({task, apiKey, config}) => {
             ],
             Init: true,
             RestartPolicy: {Name: 'no'},
-            Memory: config.taskMemoryMb * 1024 * 1024,
+            Memory: (isLocalWork(task.operation) ? config.taskLocalMemoryMb : config.taskMemoryMb) * 1024 * 1024,
             NanoCpus: Math.round(config.taskCpus * 1e9),
             NetworkMode: TASK_NETWORK,
             ...(config.syslogAddress

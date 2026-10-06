@@ -9,6 +9,7 @@ const CONFIG = {
     deployEnvironment: 'PROD',
     syslogAddress: 'udp://172.20.128.2',
     taskMemoryMb: 2048,
+    taskLocalMemoryMb: 4096,
     taskCpus: 1
 }
 const TASK = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'image.GEE'})
@@ -19,6 +20,14 @@ test('runs the image of the release that launched it, under a name and labels th
     expect(spec.name).toBe('sepal-task-t-1')
     expect(spec.Image).toBe('registry.test/openforis/task:1953')
     expect(spec.Labels).toEqual({[LABELS.MANAGED]: 'true', [LABELS.TASK_ID]: 't-1', [LABELS.USERNAME]: 'alice'})
+})
+
+test('local work gets the larger memory limit', () => {
+    const task = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'timeseries.download'})
+
+    const {HostConfig} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskLocalMemoryMb: 4096}})
+
+    expect(HostConfig.Memory).toBe(4096 * 1024 * 1024)
 })
 
 test('mounts only its user\'s home and its own task directory', () => {

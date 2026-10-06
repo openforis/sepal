@@ -266,6 +266,32 @@ describe('starting', () => {
     })
 })
 
+describe('local work', () => {
+    test('a pending export to SEPAL waits for a local slot while a later asset export starts', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
+        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', operation: 'timeseries.download', creationTime: new Date(2000)}))
+        await repository.insert(aTask({id: 't-3', operation: 'image.GEE', creationTime: new Date(3000)}))
+
+        await supervisor.dispatch()
+
+        expect([...docker.containers.keys()].sort()).toEqual(['sepal-task-t-1', 'sepal-task-t-3'])
+        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+    })
+
+    test('a finished local task lets the next local one start', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
+        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
+        await supervisor.dispatch()
+
+        docker.exit('sepal-task-t-1', 1)
+        await supervisor.idle()
+
+        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+    })
+})
+
 describe('stopping', () => {
     test('stopping a container asks Docker to stop it with a grace period, without waiting for it to exit', async () => {
         const {supervisor, repository, docker} = setup()
@@ -299,7 +325,7 @@ const aTask = overrides => createTask({
     creationTime: new Date(1000), updateTime: new Date(1000), ...overrides
 })
 
-const setup = ({maxConcurrent = 10} = {}) => {
+const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10} = {}) => {
     const clock = fakeClock()
     const repository = new InMemoryRepository(clock)
     const docker = new FakeDocker()
@@ -309,7 +335,7 @@ const setup = ({maxConcurrent = 10} = {}) => {
         docker,
         workspace,
         spec: ({task, apiKey}) => ({name: `sepal-task-${task.id}`, taskId: task.id, apiKey}),
-        config: {maxConcurrent, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
+        config: {maxConcurrent, maxConcurrentLocal, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
     })
     return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}
 }

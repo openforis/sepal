@@ -31,6 +31,8 @@ program
     .addOption(new Option('--sepal-host-project-dir <value>').env('SEPAL_HOST_PROJECT_DIR'))
     .addOption(new Option('--syslog-address <value>').env('SYSLOG_ADDRESS'))
     .addOption(new Option('--task-max-concurrent <number>').env('TASK_MAX_CONCURRENT').argParser(positiveNumber('TASK_MAX_CONCURRENT')).default(30))
+    .addOption(new Option('--task-max-concurrent-local <number>').env('TASK_MAX_CONCURRENT_LOCAL').argParser(positiveNumber('TASK_MAX_CONCURRENT_LOCAL')).default(4))
+    .addOption(new Option('--task-local-memory-mb <number>').env('TASK_LOCAL_MEMORY_MB').argParser(positiveNumber('TASK_LOCAL_MEMORY_MB')).default(4096))
     .addOption(new Option('--task-memory-mb <number>').env('TASK_MEMORY_MB').argParser(positiveNumber('TASK_MEMORY_MB')).default(2048))
     .addOption(new Option('--task-cpus <number>').env('TASK_CPUS').argParser(positiveNumber('TASK_CPUS')).default(1))
 

@@ -3,6 +3,7 @@ import {tag} from '#sepal/tag'
 
 import {generateApiKey, hashApiKey} from './apiKey.js'
 import {containerName} from './containerSpec.js'
+import {isLocalWork, LOCAL_OPERATIONS} from './operations.js'
 import {RUNNING_STATES, State, statusDescriptionOf} from './task.js'
 
 const log = getLogger('supervisor')
@@ -102,11 +103,19 @@ export class ContainerSupervisor {
         return this.#queue
     }
 
+    // Oldest first, except that local work waits for a local slot without holding up anything else.
     async #dispatchPending() {
-        const free = this.#config.maxConcurrent - await this.#repository.countRunning()
-        if (free > 0) {
-            for (const task of await this.#repository.pendingTasks(free)) {
-                await this.#launch(task)
+        let free = this.#config.maxConcurrent - await this.#repository.countRunning()
+        let freeLocal = this.#config.maxConcurrentLocal - await this.#repository.countRunning({operations: LOCAL_OPERATIONS})
+        while (free > 0) {
+            const [task] = await this.#repository.pendingTasks(1, {excludeOperations: freeLocal > 0 ? [] : LOCAL_OPERATIONS})
+            if (!task) {
+                return
+            }
+            await this.#launch(task)
+            free--
+            if (isLocalWork(task.operation)) {
+                freeLocal--
             }
         }
     }

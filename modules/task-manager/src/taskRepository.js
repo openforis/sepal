@@ -40,10 +40,11 @@ export class TaskRepository {
         return rows.map(toTask)
     }
 
-    async pendingTasks(limit) {
+    async pendingTasks(limit, {excludeOperations = []} = {}) {
         const rows = await this.#select(
-            `SELECT ${COLUMNS} FROM task WHERE state = ? ORDER BY creation_time LIMIT ?`,
-            [State.PENDING, limit]
+            `SELECT ${COLUMNS} FROM task WHERE state = ?${excludeOperations.length ? ' AND operation NOT IN (?)' : ''}
+                ORDER BY creation_time LIMIT ?`,
+            [State.PENDING, ...(excludeOperations.length ? [excludeOperations] : []), limit]
         )
         return rows.map(toTask)
     }
@@ -53,8 +54,11 @@ export class TaskRepository {
         return rows.map(toTask)
     }
 
-    async countRunning() {
-        const [{count}] = await this.#select('SELECT COUNT(*) AS count FROM task WHERE state IN (?)', [RUNNING_STATES])
+    async countRunning({operations = []} = {}) {
+        const [{count}] = await this.#select(
+            `SELECT COUNT(*) AS count FROM task WHERE state IN (?)${operations.length ? ' AND operation IN (?)' : ''}`,
+            [RUNNING_STATES, ...(operations.length ? [operations] : [])]
+        )
         return Number(count)
     }
 
