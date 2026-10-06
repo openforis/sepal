@@ -20,17 +20,14 @@ jest.unstable_mockModule('#sepal/ee/timeSeries/ccdc', () => ({
         }
     }
 }))
-jest.unstable_mockModule('./workloadTag.js', () => ({
-    setWorkloadTag: recipe => captured.workloadTag = recipe
-}))
-jest.unstable_mockModule('../jobs/export/toAsset.js', () => ({
-    exportImageToAsset$: (taskId, args) => {
-        captured.export = {taskId, args}
-        return of('exported')
+jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
+    startImageToAssetExport$: args => {
+        captured.export = {args}
+        return of({eeTaskId: 'T1', assetId: args.assetId})
     }
 }))
 
-const {submit$} = await import('./ccdcAssetExport.js')
+const {startCcdcAssetExport$} = await import('#gee/jobs/task/export/ccdcAssetExport')
 
 const recipe = ({corrections = ['SR']} = {}) => ({
     id: 'ccdc-1',
@@ -66,7 +63,7 @@ const HARMONIC = {
 }
 
 const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], properties, scale = 30} = {}) => {
-    await lastValueFrom(submit$('task-1', {
+    await lastValueFrom(startCcdcAssetExport$({
         image: {
             recipe: model,
             bands,

@@ -2,14 +2,12 @@ import {forkJoin, switchMap} from 'rxjs'
 
 import ccdc from '#sepal/ee/timeSeries/ccdc'
 
-import {toVisualizationProperties} from '../ee/visualizations.js'
-import {exportImageToAsset$} from '../jobs/export/toAsset.js'
 import {formatProperties} from './formatProperties.js'
-import {setWorkloadTag} from './workloadTag.js'
+import {startImageToAssetExport$} from './toAsset.js'
+import {toVisualizationProperties} from './visualizations.js'
 
-export const submit$ = (taskId, {image, description}) => {
+export const startCcdcAssetExport$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
-    setWorkloadTag(recipe)
     const segments = ccdc(recipe, {selection: bands})
     return forkJoin({
         segments: segments.getImage$(),
@@ -18,7 +16,7 @@ export const submit$ = (taskId, {image, description}) => {
         switchMap(({segments, geometry}) => {
             const formattedProperties = formatProperties({...properties, scale})
             const allBands = getAllBands(bands)
-            return exportImageToAsset$(taskId, {
+            return startImageToAssetExport$({
                 ...other,
                 description,
                 image: segments,

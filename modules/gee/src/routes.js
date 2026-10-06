@@ -30,6 +30,7 @@ import tableQuery$ from '#gee/jobs/ee/table/query'
 import tableRows$ from '#gee/jobs/ee/table/rows'
 import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
 import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
+import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
 import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
 import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
@@ -74,6 +75,7 @@ export default router =>
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .post('/task/operation/status', stream(ctx => taskOperationStatus$(ctx)))
         .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
+        .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
         .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
         .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
