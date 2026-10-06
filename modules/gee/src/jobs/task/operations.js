@@ -1,6 +1,7 @@
-import {map} from 'rxjs'
+import {defer, map} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
+import {currentEEContext} from '#sepal/ee/eeContext'
 
 const PUBLIC_READ = {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}
 
@@ -14,7 +15,11 @@ export const operationCancel$ = ({eeTaskId}) =>
         map(() => ({}))
     )
 
-export const shareAsset$ = ({assetId}) =>
-    ee.setAssetIamPolicy$(assetId, PUBLIC_READ).pipe(
+export const shareAsset$ = ({assetId}) => defer(() => {
+    if (currentEEContext().auth.type === 'serviceAccount') {
+        throw new Error('Cannot share an asset using service account.')
+    }
+    return ee.setAssetIamPolicy$(assetId, PUBLIC_READ).pipe(
         map(() => ({}))
     )
+})
