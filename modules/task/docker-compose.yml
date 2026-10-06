@@ -12,11 +12,7 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
-      SEPAL_API_KEY: "${SEPAL_API_KEY}"
-      EE_ACCOUNT: "${EE_ACCOUNT}"
-      EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
     networks:
       - sepal
     ulimits:
