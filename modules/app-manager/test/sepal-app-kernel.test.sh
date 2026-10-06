@@ -182,9 +182,15 @@ for scenario in lock extraction combined; do
             mkdir -p "$WORK/bin"
             TEST_ZSTD=$(command -v zstd)
             export TEST_ZSTD TEST_EXTRACT_DELAY=$extract_delay
+            export TEST_FD_REPORT="$WORK/inherited-fd"
             cat > "$WORK/bin/zstd" <<'EOF'
 #!/bin/bash
 trap '' TERM
+# fd 9 is the launcher's lock. Recording it here is deterministic, where timing how long the
+# lock stays held after an orphaned extraction is not: the answer depends on how fast the
+# machine reaps orphans, which is why CI once passed this while a laptop failed it.
+if [[ -e /proc/self/fd/9 ]]; then echo inherited > "$TEST_FD_REPORT"
+else echo clean > "$TEST_FD_REPORT"; fi
 sleep "$TEST_EXTRACT_DELAY"
 exec "$TEST_ZSTD" "$@"
 EOF
@@ -206,8 +212,23 @@ EOF
             result=1
         fi
         [[ -z $holder ]] || wait "$holder"
-        if ! flock -w 1 "$SEPAL_CACHE_ROOT/.testapp.lock" true; then
-            echo "$scenario: an extraction process still holds the lock"
+        # An orphaned extraction must not be able to hold the lock: one that does blocks the
+        # next kernel start for its whole budget. Assert on fd inheritance, not on elapsed time.
+        if (( extract_delay > 0 )); then
+            fd_state=$(cat "$WORK/inherited-fd" 2>/dev/null || echo missing)
+            if [[ $fd_state != clean ]]; then
+                echo "$scenario: the extraction inherited the lock fd ($fd_state)"
+                result=1
+            fi
+        fi
+        # Backstop for any other holder. Generous, so a slow reap cannot fail it on its own.
+        acquired=no
+        for _ in $(seq 1 100); do
+            if flock -w 0 "$SEPAL_CACHE_ROOT/.testapp.lock" true 2>/dev/null; then acquired=yes; break; fi
+            sleep 0.1
+        done
+        if [[ $acquired != yes ]]; then
+            echo "$scenario: the lock was still held 10 s after the launcher exited"
             result=1
         fi
         teardown
