@@ -1,5 +1,5 @@
 import {jest} from '@jest/globals'
-import {lastValueFrom, of} from 'rxjs'
+import {lastValueFrom, of, throwError} from 'rxjs'
 
 // What an image export to the SEPAL workspace starts, per kind of user. Image construction, the destination and
 // Earth Engine are substituted.
@@ -14,7 +14,7 @@ jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
 }))
 jest.unstable_mockModule('#gee/jobs/task/export/castToLargest', () => ({castToLargest: image => image}))
 jest.unstable_mockModule('#gee/jobs/task/storage/destination', () => ({
-    exportFolderName: text => text,
+    exportFolderName: text => text.replaceAll('/', '_'),
     prepareDestination$: ({folder}, {auth}) => {
         state.prepared.push(folder)
         return of(auth.type === 'user'
@@ -31,7 +31,7 @@ jest.unstable_mockModule('#sepal/ee/ee', () => ({
             ExportTask: {create: config => config}
         },
         Geometry: geometry => geometry,
-        getInfo$: value => of(value),
+        getInfo$: value => state.regionError ? throwError(() => state.regionError) : of(value),
         startImageExport$: task => {
             state.started.push(task)
             return of('T9')
@@ -49,6 +49,7 @@ const context = type => ({requestId: 'r-1', username: 'alice', origin: 'task', a
 beforeEach(() => {
     state.prepared = []
     state.started = []
+    state.regionError = null
 })
 
 test('a user with a Google account exports to a Drive folder named for the export', async () => {
@@ -63,4 +64,23 @@ test('a user without one exports to their bucket, under the export\'s folder', a
 
     expect(result.destination).toEqual({type: 'gcs', prefix: expect.stringMatching(/\/$/)})
     expect(state.started[0]).toMatchObject({destination: 'GCS', config: {bucket: 'alice-bucket', fileNamePrefix: `${result.destination.prefix}prefix`}})
+})
+
+test('the folder named for a title with a slash is the same sanitised folder in the destination and the export', async () => {
+    const params = {image: {...PARAMS.image, recipe: {...PARAMS.image.recipe, title: 'North/South'}}}
+
+    const result = await lastValueFrom(inEEContext(context('user'), startImageWorkspaceExport$(params, {sepalUser: ALICE})))
+
+    expect(result.destination.folder).toMatch(/^North_South_\d{4}-\d{2}-\d{2}_/)
+    expect(state.prepared).toEqual([result.destination.folder])
+    expect(state.started[0].config.folder).toBe(result.destination.folder)
+})
+
+test('a region that cannot be resolved fails the start before any destination is prepared', async () => {
+    state.regionError = new Error('Too many pixels')
+
+    await expect(lastValueFrom(inEEContext(context('user'), startImageWorkspaceExport$(PARAMS, {sepalUser: ALICE})))).rejects.toThrow('Too many pixels')
+
+    expect(state.prepared).toEqual([])
+    expect(state.started).toEqual([])
 })

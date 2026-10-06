@@ -15,9 +15,10 @@ export const startImageToWorkspaceExport$ = ({
     // The destination and the Earth Engine export must name the same folder.
     const folder = exportFolderName(requestedFolder)
     const castImage = castToLargest(image)
-    return prepareDestination$({folder}, {sepalUser, auth}).pipe(
-        switchMap(({destination, exportTarget}) => formatRegion$(region || castImage.geometry()).pipe(
-            switchMap(region => {
+    // The region is resolved first: a failure there must not leave an empty folder behind.
+    return formatRegion$(region || castImage.geometry()).pipe(
+        switchMap(region => prepareDestination$({folder}, {sepalUser, auth}).pipe(
+            switchMap(({destination, exportTarget}) => {
                 const common = {
                     image: castImage, description, dimensions, region, scale, crs, crsTransform: crsTransform || undefined,
                     maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
@@ -25,9 +26,10 @@ export const startImageToWorkspaceExport$ = ({
                 const serverConfig = exportTarget.type === 'drive'
                     ? ee.batch.Export.convertToServerParams({...common, folder, fileNamePrefix: description}, ee.data.ExportDestination.DRIVE, ee.data.ExportType.IMAGE)
                     : ee.batch.Export.convertToServerParams({...common, bucket: exportTarget.bucket, fileNamePrefix: `${exportTarget.fileNamePrefix}${description}`}, ee.data.ExportDestination.GCS, ee.data.ExportType.IMAGE)
-                return ee.startImageExport$(ee.batch.ExportTask.create(serverConfig), `export to SEPAL (${description})`)
-            }),
-            map(eeTaskId => ({eeTaskId, destination}))
+                return ee.startImageExport$(ee.batch.ExportTask.create(serverConfig), `export to SEPAL (${description})`).pipe(
+                    map(eeTaskId => ({eeTaskId, destination}))
+                )
+            })
         ))
     )
 })
