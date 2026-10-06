@@ -1,6 +1,6 @@
 import {google} from 'googleapis'
 import moment from 'moment'
-import {catchError, from, map, of, switchMap, throwError} from 'rxjs'
+import {catchError, EMPTY, expand, from, map, of, reduce, switchMap, throwError} from 'rxjs'
 
 import {NotFoundException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -33,6 +33,14 @@ export const drive = ({sepalUser}) => {
                     ? readFileById$(file.id)
                     : throwError(() => new NotFoundException(`No file found in path: '${path}'`))
             )
+        )
+
+    const listFiles$ = ({path}) =>
+        getFolderByPath$({path}).pipe(
+            switchMap(({id}) => getFilesByFolder$({id}).pipe(
+                expand(({nextPageToken}) => nextPageToken ? getFilesByFolder$({id, pageToken: nextPageToken}) : EMPTY),
+                reduce((files, page) => [...files, ...page.files], [])
+            ))
         )
 
     const removeFolder$ = ({path}) =>
@@ -222,5 +230,5 @@ export const drive = ({sepalUser}) => {
         return operation$
     }
 
-    return {createFolder$, readFile$, removeFolder$}
+    return {createFolder$, readFile$, listFiles$, removeFolder$}
 }

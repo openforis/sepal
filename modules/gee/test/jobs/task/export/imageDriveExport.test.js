@@ -12,6 +12,13 @@ jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
         getGeometry$: () => of({bounds: () => ({bounds: () => 'bounds'})})
     })
 }))
+jest.unstable_mockModule('#gee/config', () => ({sepalHost: 'sepal.test', googleProjectId: 'p', serviceAccountCredentials: {}}))
+jest.unstable_mockModule('#gee/jobs/service/userStorageSerializer', () => ({
+    userStorageSerializer$: (observable$, _id, username) => {
+        state.serialized.push(username)
+        return observable$
+    }
+}))
 jest.unstable_mockModule('#gee/jobs/task/export/castToLargest', () => ({castToLargest: image => image}))
 jest.unstable_mockModule('#gee/jobs/ee/batch/drive', () => ({
     drive: ({sepalUser}) => ({
@@ -43,14 +50,16 @@ const params = {image: {recipe: {type: 'MOSAIC', title: 'My mosaic'}, bands: {se
 
 beforeEach(() => {
     state.folders = []
+    state.serialized = []
     state.started = []
 })
 
-test('creates the Drive folder as the user, then starts the export into it', async () => {
+test('creates the Drive folder as the user, one creation at a time per user, then starts the export into it', async () => {
     const result = await lastValueFrom(inEEContext(context({type: 'user'}), startImageDriveExport$(params, {sepalUser: ALICE})))
 
     expect(result).toEqual({eeTaskId: 'T5'})
     expect(state.folders).toEqual([{username: 'alice', path: 'SEPAL/exports/exports-1'}])
+    expect(state.serialized).toEqual(['alice'])
     expect(state.started[0]).toMatchObject({folder: 'exports-1', fileNamePrefix: 'My mosaic', description: 'My mosaic'})
 })
 

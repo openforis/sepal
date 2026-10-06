@@ -20,6 +20,7 @@ const GATE_RECIPE = 'gate'
 // the real process. So the configuration the worker runs under is stated here and passed to it.
 const WORKER_ENV = {
     SEPAL_ENDPOINT: 'http://sepal.test',
+    SEPAL_HOST: 'sepal.test',
     GOOGLE_PROJECT_ID: 'test-project',
     EE_ACCOUNT: 'test@example.iam.gserviceaccount.com',
     EE_PRIVATE_KEY: 'test-key'

@@ -76,10 +76,20 @@ describe('worker threads', () => {
     })
 })
 
+describe('the SEPAL host', () => {
+    test('is required, since it names every user\'s export bucket', async () => {
+        await expect(loadConfig({SEPAL_HOST: ''})).rejects.toMatchObject({
+            code: 1,
+            stdout: expect.stringContaining('--sepal-host')
+        })
+    })
+})
+
 const MODULE_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
 
 const REQUIRED_ENV = {
     SEPAL_ENDPOINT: 'https://sepal.test',
+    SEPAL_HOST: 'sepal.test',
     GOOGLE_PROJECT_ID: 'sepal-test-project',
     EE_ACCOUNT: 'sepal@sepal-test-project.iam.gserviceaccount.com',
     EE_PRIVATE_KEY: 'test-key'

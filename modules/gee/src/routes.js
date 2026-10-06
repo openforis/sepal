@@ -30,6 +30,8 @@ import tableQuery$ from '#gee/jobs/ee/table/query'
 import tableRows$ from '#gee/jobs/ee/table/rows'
 import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
 import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
+import taskDownloadCleanup$ from '#gee/jobs/task/downloadCleanup'
+import taskDownloadFiles$ from '#gee/jobs/task/downloadFiles'
 import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
 import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
@@ -79,5 +81,7 @@ export default router =>
         .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
         .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
         .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
+        .post('/task/download/files', stream(ctx => taskDownloadFiles$(ctx)))
+        .post('/task/download/cleanup', stream(ctx => taskDownloadCleanup$(ctx)))
         .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

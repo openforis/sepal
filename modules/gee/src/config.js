@@ -70,6 +70,16 @@ try {
                 .env('RECIPE_ENDPOINT')
                 .default(DEFAULT_RECIPE_ENDPOINT)
         )
+        // Names each user's export bucket: deployments sharing a Google project must not share buckets.
+        .addOption(
+            new Option('--sepal-host <value>')
+                .env('SEPAL_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--google-region <value>')
+                .env('GOOGLE_REGION')
+        )
         .addOption(
             new Option('--google-project-id <value>')
                 .env('GOOGLE_PROJECT_ID')
@@ -116,6 +126,8 @@ try {
 
 const {geeEmail,
     sepalEndpoint,
+    sepalHost,
+    googleRegion,
     recipeEndpoint,
     geeKey,
     googleProjectId,
@@ -159,8 +171,10 @@ log.info('Configuration loaded')
 export {
     eeLimits,
     googleProjectId,
+    googleRegion,
     instances,
     port,
     recipeEndpoint,
     sepalEndpoint,
+    sepalHost,
     serviceAccountCredentials}

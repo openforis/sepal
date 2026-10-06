@@ -1,12 +1,10 @@
 import {concat, defer, last, map, of, switchMap} from 'rxjs'
 
-import {drive} from '#gee/jobs/ee/batch/drive'
 import ee from '#sepal/ee/ee'
 import {currentEEContext} from '#sepal/ee/eeContext'
 
+import {prepareDestination$} from '../storage/destination.js'
 import {castToLargest} from './castToLargest.js'
-
-const drivePath = folder => `SEPAL/exports/${folder}`
 
 // Earth Engine writes into a folder of that name anywhere in the user's Drive; SEPAL creates it in its own tree
 // first so the export lands there.
@@ -30,7 +28,7 @@ export const startImageToDriveExport$ = ({
                 ee.data.ExportType.IMAGE
             )
             return concat(
-                drive({sepalUser}).createFolder$({path: drivePath(folder)}),
+                prepareDestination$({folder}, {sepalUser, auth: {type: 'user'}}),
                 ee.startImageExport$(ee.batch.ExportTask.create(serverConfig), `export to Drive (${description})`)
             ).pipe(last())
         }),
