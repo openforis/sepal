@@ -1,49 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -e
 
 HOME_DIR=/home/$USERNAME
-EE_PRIVATE_KEY=${EE_PRIVATE_KEY//-----LINE BREAK-----/\\n}
+GROUP_ID=$(stat -c '%g' "$HOME_DIR")
+USER_ID=$(stat -c '%u' "$HOME_DIR")
 
-if id "$USERNAME" >/dev/null 2>&1; then
-    echo "User already exists: $USERNAME"
-else
-    GROUP_ID=`stat -c '%g' $HOME_DIR`
-    USER_ID=`stat -c '%u' $HOME_DIR`
-    echo "Creating user and group: $USERNAME. HOME_DIR=$HOME_DIR, GROUP_ID=$GROUP_ID, USER_ID=$USER_ID"
-    groupadd -g $GROUP_ID $USERNAME
-    useradd -u $USER_ID -g $GROUP_ID $USERNAME
+# The container runs as the owner of the mounted home, so everything it writes there is theirs.
+if ! id "$USERNAME" >/dev/null 2>&1; then
+    groupadd -o -g "$GROUP_ID" "$USERNAME"
+    useradd -o -u "$USER_ID" -g "$GROUP_ID" -d "$HOME_DIR" "$USERNAME"
 fi
+chown "$USER_ID:$GROUP_ID" /task
 
-if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
-then
-  echo "Starting nodemon"
-  [[ -d node_modules ]] || npm install
-  exec sudo -Eu $USERNAME "PATH=$PATH NODE_TLS_REJECT_UNAUTHORIZED=0" nodemon \
-    --watch "${MODULE}"/src \
-    --watch "${MODULE}/config" \
-    --watch "${JS_SHARED}" \
-    --watch "${JS_EE}" \
-    --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --gee-email "$EE_ACCOUNT" \
-    --gee-key "$EE_PRIVATE_KEY" \
-    --google-project-id "$GOOGLE_PROJECT_ID" \
-    --google-region "$GOOGLE_REGION" \
-    --sepal-host "$SEPAL_HOST" \
-    --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-api-key "$SEPAL_API_KEY" \
-    --home-dir $HOME_DIR \
-    --username $USERNAME
-else
-  echo "Starting node"
-  exec sudo -Eu $USERNAME "PATH=$PATH" node \
-    src/main.js \
-    --gee-email "$EE_ACCOUNT" \
-    --gee-key "$EE_PRIVATE_KEY" \
-    --google-project-id "$GOOGLE_PROJECT_ID" \
-    --google-region "$GOOGLE_REGION" \
-    --sepal-host "$SEPAL_HOST" \
-    --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-api-key "$SEPAL_API_KEY" \
-    --home-dir $HOME_DIR \
-    --username $USERNAME
-fi
+cd /usr/local/src/sepal/modules/task
+exec sudo -Eu "$USERNAME" "PATH=$PATH" "HOME=$HOME_DIR" node src/run.js

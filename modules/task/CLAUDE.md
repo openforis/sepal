@@ -1,59 +1,37 @@
 # CLAUDE.md - modules/task
 
-Task execution module. Runs inside sandbox containers (not a standalone service). Handles GEE exports and data processing.
+One-shot task runner. task-manager starts one detached container from this image per task; the container runs
+that task and exits. It is not a service: nothing listens, and nothing runs inside sandbox sessions.
 
 ## Commands
 
 ```bash
-npm test              # Jest with jest-expect-message
-npm run testWatch     # Jest watch mode
+sepal npm-test task                         # Jest (needs the Earth Engine library; raw `npm test` fails some suites)
+sepal npm-test task -- --testPathPatterns runner
 ```
 
-## Key Architecture
+## Contract
 
-### Entry Point
-`src/main.js` - Single worker instance, HTTP server, scheduler with STICKY strategy.
+- Input: `/task/task.json` (`{id, operation, params}`), written by task-manager. Env: `TASK_ID`, `TASK_API_KEY`
+  (`task_...`), `SEPAL_ENDPOINT` (`http://gateway`), `USERNAME`, `DEPLOY_ENVIRONMENT`. The user's home is
+  bound at `/home/$USERNAME`, the task directory at `/task`.
+- Output: `/task/result.json` (`{state, statusDescription}`, state `COMPLETED`, `FAILED` or `CANCELED`),
+  written atomically just before exit. The file, not progress, is the authority on how the task ended.
+- Network: the container joins only `sepal-task` and talks to the gateway, authenticating with `TASK_API_KEY`
+  as Basic auth (empty username). The gateway injects the user; Earth Engine work goes to gee under
+  `/api/gee/...`, never directly to Earth Engine.
+- Progress: `POST /api/tasks/task/<id>/progress` with `{statusDescription}`, best-effort, repeated every
+  60 s as a heartbeat. A lost report never fails the task.
+- Cancel: SIGTERM aborts the `AbortSignal` given to the operation; the operation returns, and the result is
+  `CANCELED`.
+- Export starts are never retried (`retry: {maxRetries: 0}`).
 
-### API (3 endpoints)
-- `GET /healthcheck`
-- `POST /api/tasks` - Submit task (id, operation, params)
-- `DELETE /api/tasks/:taskId` - Cancel task
+## Structure
 
-### Task Manager
-`src/taskManager.js` - Manages lifecycle (ACTIVE -> COMPLETED/CANCELED/FAILED). Reports progress back to sepal-server at 1-60s intervals. Handles service account switching.
+- `src/run.js` - entry point: read task, run it, write result, exit.
+- `src/runner/` - `runTask` (outcome mapping), `operations` (operation name to
+  `async (params, {sepal, report, signal})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`.
+- `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
 
-### Supported Task Types (`src/tasks/`)
-
-| Operation | File | Destination |
-|-----------|------|-------------|
-| `image.GEE` | `imageAssetExport.js` | EE Asset |
-| `image.SEPAL` | `imageSepalExport.js` | User workspace |
-| `image.DRIVE` | `imageDriveExport.js` | Google Drive |
-| `ccdc.GEE` | `ccdcAssetExport.js` | EE Asset |
-| `timeseries.download` | `timeSeriesSepalExport.js` | User workspace |
-| `samplingDesign.GEE` | `samplingDesign/samplesAssetExport.js` | EE Asset (table) |
-| `samplingDesign.SEPAL` | `samplingDesign/samplesSepalExport.js` | User workspace (table) |
-
-### Export Orchestration (`src/jobs/export/`)
-- `toSepal.js`: Smart routing - Cloud Storage (service account) or Google Drive (user account). Downloads to local filesystem.
-- `toDrive.js`: Creates `SEPAL/exports/` folder structure in Drive. User accounts only.
-- `toAsset.js`: Multi-tile parallel export (3 concurrent). Supports create/replace/resume strategies for ImageCollections.
-
-### Rate Limiting Services
-- `exportLimiterService` - Throttles concurrent EE exports
-- `driveLimiterService` - Rate-limits Drive API calls
-- `driveSerializerService` / `gcsSerializerService` - Serializes storage operations
-
-## Non-Obvious Conventions
-
-- **Runs as user**: Dockerfile creates a user matching the sandbox user's uid/gid. Task process runs as that user.
-- **Base image**: `openforis/sandbox-base` (Ubuntu-based), not Alpine like other Node modules.
-- **Credential monitoring**: `src/context.js` polls credentials file every 60s, detects token expiration, switches between user/service account auth.
-- **SEPAL authentication**: every request back to SEPAL (recipe reads, state and progress callbacks) is made
-  as this executor's own worker session, using `SEPAL_API_KEY` (`--sepal-api-key`) as Basic auth with an
-  empty username (`src/sessionAuth.js`). The key is valid only while the session is PENDING or ACTIVE, so a
-  callback after the session closes gets a 401; that is reported as unconfirmed delivery, never as success.
-  Earth Engine credentials are separate and unaffected.
-- **Workload tags**: `src/tasks/workloadTag.js` sets GEE workload tag as `sepal-task-{recipeType}` for quota tracking.
-- **Post-processing**: After download, creates VRT files and sets band names via GDAL (uses Python `stack_time_series.py` from `lib/python/shared`).
-- **CRC32 validation**: Cloud Storage downloads validated with `fast-crc32c`.
+Class B sources under `src/tasks` and `src/jobs` (SEPAL-workspace exports, sampling design, time series) still
+use the old in-session executor model and await plan 2. `src/sessionAuth.js` remains only for `src/recipeReader.js`.

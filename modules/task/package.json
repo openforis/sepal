@@ -2,7 +2,7 @@
     "name": "task",
     "version": "1.0.0",
     "description": "",
-    "main": "src/main.js",
+    "main": "src/run.js",
     "scripts": {
         "test": "NODE_OPTIONS=--experimental-vm-modules jest",
         "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
