@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import {defer, from, map, of, switchMap} from 'rxjs'
 
 import * as config from '#gee/config'
+import {ServerException} from '#sepal/exception'
 
 const ALREADY_EXISTS = 409
 
@@ -11,13 +12,16 @@ export const storage = () => new Storage({credentials: config.serviceAccountCred
 export const userBucketName = username =>
     `sepal-exports-${crypto.createHash('sha256').update(`${config.sepalHost}/${username}`).digest('hex').substring(0, 24)}`
 
+// Bucket names are global and these are predictable: a bucket of the name is the user's only when it is in
+// SEPAL's own project. Emits the name, or null when SEPAL has no such bucket.
+export const findUserBucket$ = username =>
+    defer(() => ownBucket$(userBucketName(username)))
+
 // Owned by the service account, which writes the exports; the objects expire after a day whatever happens.
-export const ensureUserBucket$ = username => defer(() => {
-    const bucketName = userBucketName(username)
-    return from(storage().bucket(bucketName).exists()).pipe(
-        switchMap(([exists]) => exists ? of(bucketName) : create$(bucketName))
+export const ensureUserBucket$ = username =>
+    findUserBucket$(username).pipe(
+        switchMap(bucketName => bucketName ? of(bucketName) : create$(userBucketName(username)))
     )
-})
 
 const create$ = bucketName =>
     from(storage().createBucket(bucketName, {
@@ -31,5 +35,17 @@ const create$ = bucketName =>
             throw error
         }
     })).pipe(
-        map(() => bucketName)
+        switchMap(() => ownBucket$(bucketName)),
+        map(ownBucketName => {
+            if (!ownBucketName) {
+                throw new ServerException(`Export bucket name ${bucketName} is taken by another project`)
+            }
+            return ownBucketName
+        })
+    )
+
+// Lists the buckets of the client's own project only.
+const ownBucket$ = bucketName =>
+    from(storage().getBuckets({prefix: bucketName})).pipe(
+        map(([buckets]) => buckets.some(({name}) => name === bucketName) ? bucketName : null)
     )

@@ -4,7 +4,8 @@ import {firstValueFrom, lastValueFrom, of, throwError} from 'rxjs'
 import {NotFoundException} from '#sepal/exception'
 
 // Where a task's exports go and how the container gets them back, as which user. Drive, Cloud Storage and the
-// per-user serializer are substituted.
+// per-user serializer are substituted. Cloud Storage holds the buckets of SEPAL's own project and those of
+// other projects, whose names are just as taken.
 
 const state = {}
 
@@ -44,10 +45,14 @@ jest.unstable_mockModule('@google-cloud/storage', () => ({Storage: class {
         return fakeBucket(name)
     }
 
+    async getBuckets({prefix}) {
+        return [state.gcs.buckets.filter(name => name.startsWith(prefix)).map(name => fakeBucket(name))]
+    }
+
     async createBucket(name, metadata) {
         state.gcs.created.push({name, metadata})
-        if (state.gcs.createError) {
-            throw state.gcs.createError
+        if (state.gcs.buckets.includes(name) || state.gcs.otherProjectBuckets.includes(name)) {
+            throw Object.assign(new Error('Conflict'), {code: 409})
         }
         state.gcs.buckets.push(name)
         return [fakeBucket(name)]
@@ -59,12 +64,15 @@ const {userBucketName} = await import('#gee/jobs/task/storage/userBucket')
 
 const HOUR = 60 * 60 * 1000
 const ALICE = {username: 'alice', googleTokens: {accessToken: 'alice-token', accessTokenExpiryDate: 1234567890}}
+const ALICE_WITHOUT_GOOGLE = {username: 'alice'}
 const ALICE_BUCKET = userBucketName('alice')
+const UNSAFE_FOLDERS = [['empty', ''], ['missing', undefined], ['nested', 'a/b'], ['with a backslash', 'a\\b'],
+    ['with a quote', 'a"b'], ['the current folder', '.'], ['the parent folder', '..']]
 
 beforeEach(() => {
     state.serialized = []
     state.drive = {created: [], listed: [], removed: [], files: {}, folders: []}
-    state.gcs = {buckets: [], created: [], listed: [], deleted: [], signed: [], objects: {}, createError: null}
+    state.gcs = {buckets: [], otherProjectBuckets: [], created: [], listed: [], deleted: [], signed: [], objects: {}}
 })
 
 describe('preparing a destination', () => {
@@ -78,8 +86,8 @@ describe('preparing a destination', () => {
     })
 
     test('a user without one exports to their own bucket, created on first use', async () => {
-        const first = await lastValueFrom(prepareDestination$({folder: 'f1'}, {sepalUser: ALICE, auth: {type: 'serviceAccount'}}))
-        const second = await lastValueFrom(prepareDestination$({folder: 'f2'}, {sepalUser: ALICE, auth: {type: 'serviceAccount'}}))
+        const first = await lastValueFrom(prepareDestination$({folder: 'f1'}, {sepalUser: ALICE_WITHOUT_GOOGLE, auth: {type: 'serviceAccount'}}))
+        const second = await lastValueFrom(prepareDestination$({folder: 'f2'}, {sepalUser: ALICE_WITHOUT_GOOGLE, auth: {type: 'serviceAccount'}}))
 
         expect(first).toEqual({
             destination: {type: 'gcs', prefix: 'f1/'},
@@ -97,17 +105,31 @@ describe('preparing a destination', () => {
         expect(state.drive.created).toEqual([])
     })
 
-    test('a bucket created by a concurrent start is used as is', async () => {
-        state.gcs.createError = Object.assign(new Error('Conflict'), {code: 409})
+    test('a bucket of the user\'s name in another project is refused', async () => {
+        state.gcs.otherProjectBuckets = [ALICE_BUCKET]
 
-        const result = await lastValueFrom(prepareDestination$({folder: 'f1'}, {sepalUser: ALICE, auth: {type: 'serviceAccount'}}))
+        await expect(lastValueFrom(prepareDestination$({folder: 'f1'}, {sepalUser: ALICE_WITHOUT_GOOGLE, auth: {type: 'serviceAccount'}})))
+            .rejects.toThrow(`Export bucket name ${ALICE_BUCKET} is taken by another project`)
+    })
 
-        expect(result.exportTarget.bucket).toBe(ALICE_BUCKET)
+    test.each(UNSAFE_FOLDERS)('a folder that is %s is refused', async (_description, folder) => {
+        await expect(lastValueFrom(prepareDestination$({folder}, {sepalUser: ALICE, auth: {type: 'user'}}))).rejects.toMatchObject({statusCode: 400})
+        await expect(lastValueFrom(prepareDestination$({folder}, {sepalUser: ALICE_WITHOUT_GOOGLE, auth: {type: 'serviceAccount'}}))).rejects.toMatchObject({statusCode: 400})
+
+        expect(state.drive.created).toEqual([])
+        expect(state.gcs.created).toEqual([])
+    })
+
+    test('a request without a user is refused', async () => {
+        await expect(lastValueFrom(prepareDestination$({folder: 'f1'}, {sepalUser: {}, auth: {type: 'serviceAccount'}}))).rejects.toMatchObject({statusCode: 400})
+
+        expect(state.gcs.created).toEqual([])
     })
 })
 
 describe('listing downloads', () => {
-    test('a listing names only the requesting user\'s bucket, whatever prefix is asked', async () => {
+    test('a listing names only the requesting user\'s bucket, whatever bucket or prefix is asked', async () => {
+        state.gcs.buckets = [ALICE_BUCKET, userBucketName('bob')]
         state.gcs.objects[ALICE_BUCKET] = [{name: 'bob/a.tif', metadata: {size: '7'}}]
 
         const result = await firstValueFrom(listDownloads$({type: 'gcs', bucket: userBucketName('bob'), prefix: 'bob/'}, {sepalUser: ALICE}))
@@ -119,6 +141,7 @@ describe('listing downloads', () => {
     })
 
     test('a GCS listing signs each object for an hour of reading', async () => {
+        state.gcs.buckets = [ALICE_BUCKET]
         state.gcs.objects[ALICE_BUCKET] = [
             {name: 'f1/a.tif', metadata: {size: '10'}},
             {name: 'f1/b.tif', metadata: {size: '20'}}
@@ -140,6 +163,16 @@ describe('listing downloads', () => {
         ])
     })
 
+    test('a GCS listing is refused when the user\'s bucket is not one of SEPAL\'s', async () => {
+        state.gcs.otherProjectBuckets = [ALICE_BUCKET]
+        state.gcs.objects[ALICE_BUCKET] = [{name: 'f1/a.tif', metadata: {size: '10'}}]
+
+        await expect(firstValueFrom(listDownloads$({type: 'gcs', prefix: 'f1/'}, {sepalUser: ALICE}))).rejects.toMatchObject({statusCode: 404})
+
+        expect(state.gcs.listed).toEqual([])
+        expect(state.gcs.signed).toEqual([])
+    })
+
     test('a Drive listing gives each file\'s download URL and the user\'s own token', async () => {
         state.drive.files['SEPAL/exports/f1'] = [{id: 'x', name: 'a.tif', size: '10'}]
 
@@ -157,12 +190,26 @@ describe('listing downloads', () => {
         expect(state.drive.listed).toEqual([{username: 'alice', path: 'SEPAL/exports/f1'}])
     })
 
+    test('a Drive listing for a user without Google tokens is refused', async () => {
+        await expect(firstValueFrom(listDownloads$({type: 'drive', folder: 'f1'}, {sepalUser: ALICE_WITHOUT_GOOGLE})))
+            .rejects.toMatchObject({statusCode: 400, errorCode: 'MISSING_GOOGLE_TOKENS'})
+
+        expect(state.drive.listed).toEqual([])
+    })
+
+    test.each(UNSAFE_FOLDERS)('a Drive folder that is %s is refused', async (_description, folder) => {
+        await expect(firstValueFrom(listDownloads$({type: 'drive', folder}, {sepalUser: ALICE}))).rejects.toMatchObject({statusCode: 400})
+
+        expect(state.drive.listed).toEqual([])
+    })
+
     test.each([
         ['empty', ''],
         ['not a folder', 'f1'],
         ['outside the bucket\'s folders', '../f1/'],
         ['missing', undefined]
     ])('a GCS prefix that is %s is refused', async (_description, prefix) => {
+        state.gcs.buckets = [ALICE_BUCKET]
         state.gcs.objects[ALICE_BUCKET] = [{name: 'f1/a.tif', metadata: {size: '10'}}]
 
         await expect(firstValueFrom(listDownloads$({type: 'gcs', prefix}, {sepalUser: ALICE}))).rejects.toMatchObject({statusCode: 400})
@@ -171,11 +218,29 @@ describe('listing downloads', () => {
         expect(state.gcs.listed).toEqual([])
         expect(state.gcs.deleted).toEqual([])
     })
+
+    test.each([
+        ['no destination', undefined, ALICE],
+        ['an unknown kind of destination', {type: 'asset', prefix: 'f1/'}, ALICE],
+        ['no user', {type: 'gcs', prefix: 'f1/'}, {}]
+    ])('a request with %s is refused', async (_description, destination, sepalUser) => {
+        state.gcs.buckets = [ALICE_BUCKET]
+        state.drive.folders = ['SEPAL/exports/f1']
+
+        await expect(firstValueFrom(listDownloads$(destination, {sepalUser}))).rejects.toMatchObject({statusCode: 400})
+        await expect(firstValueFrom(cleanupDestination$(destination, {sepalUser}))).rejects.toMatchObject({statusCode: 400})
+
+        expect(state.gcs.listed).toEqual([])
+        expect(state.gcs.deleted).toEqual([])
+        expect(state.drive.listed).toEqual([])
+        expect(state.drive.removed).toEqual([])
+    })
 })
 
 describe('cleaning up', () => {
     test('cleaning up removes the Drive folder, or every object under the prefix in the user\'s bucket', async () => {
         state.drive.folders = ['SEPAL/exports/f1']
+        state.gcs.buckets = [ALICE_BUCKET]
 
         const driveResult = await lastValueFrom(cleanupDestination$({type: 'drive', folder: 'f1'}, {sepalUser: ALICE}))
         const gcsResult = await lastValueFrom(cleanupDestination$({type: 'gcs', prefix: 'f2/'}, {sepalUser: ALICE}))
@@ -191,10 +256,36 @@ describe('cleaning up', () => {
 
         expect(result).toEqual({})
     })
+
+    test('a user with no bucket of SEPAL\'s has nothing to clean up', async () => {
+        state.gcs.otherProjectBuckets = [ALICE_BUCKET]
+
+        const result = await lastValueFrom(cleanupDestination$({type: 'gcs', prefix: 'f1/'}, {sepalUser: ALICE}))
+
+        expect(result).toEqual({})
+        expect(state.gcs.deleted).toEqual([])
+    })
+
+    test.each(UNSAFE_FOLDERS)('a Drive folder that is %s is never removed', async (_description, folder) => {
+        state.drive.folders = ['SEPAL/exports/', 'SEPAL/exports/undefined', 'SEPAL/exports/a/b', 'SEPAL/exports/..']
+
+        await expect(lastValueFrom(cleanupDestination$({type: 'drive', folder}, {sepalUser: ALICE}))).rejects.toMatchObject({statusCode: 400})
+
+        expect(state.drive.removed).toEqual([])
+    })
+
+    test('a Drive cleanup for a user without Google tokens is refused', async () => {
+        state.drive.folders = ['SEPAL/exports/f1']
+
+        await expect(lastValueFrom(cleanupDestination$({type: 'drive', folder: 'f1'}, {sepalUser: ALICE_WITHOUT_GOOGLE})))
+            .rejects.toMatchObject({statusCode: 400, errorCode: 'MISSING_GOOGLE_TOKENS'})
+
+        expect(state.drive.removed).toEqual([])
+    })
 })
 
 const fakeBucket = name => ({
-    exists: async () => [state.gcs.buckets.includes(name)],
+    name,
     getFiles: async ({prefix}) => {
         state.gcs.listed.push({bucket: name, prefix})
         return [(state.gcs.objects[name] || []).filter(object => object.name.startsWith(prefix)).map(object => fakeFile(name, object))]

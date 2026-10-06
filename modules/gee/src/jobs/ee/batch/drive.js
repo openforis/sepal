@@ -222,8 +222,9 @@ export const drive = ({sepalUser}) => {
     const isParent = parentId =>
         parentId && `"${parentId}" in parents`
 
+    // Always a condition: an empty name must match no folder rather than every one.
     const isName = name =>
-        name && `name = "${name}"`
+        `name = "${name}"`
 
     const do$ = (message, operation$) => {
         log.debug(() => message)
