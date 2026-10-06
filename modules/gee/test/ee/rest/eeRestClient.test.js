@@ -50,11 +50,12 @@ describe('who a call is made as', () => {
 })
 
 describe('what a call answers', () => {
-    test('nothing, once an image collection is created', async () => {
+    test('nothing, once an image collection is created with the given properties', async () => {
         const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/c', type: 'IMAGE_COLLECTION'})]})
+        const properties = {recipe_id: 'r-1'}
 
-        expect(await call(alice(), client.createImageCollection$('projects/alice-project/assets/c'))).toEqual([undefined])
-        expect(http.calls[0].method).toBe('POST')
+        expect(await call(alice(), client.createImageCollection$('projects/alice-project/assets/c', properties))).toEqual([undefined])
+        expect(http.calls[0]).toMatchObject({method: 'POST', body: {type: 'IMAGE_COLLECTION', properties}})
     })
 
     test('nothing, once asset properties are set', async () => {

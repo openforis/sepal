@@ -124,6 +124,17 @@ describe('a request built for the REST API is the one the client library sends',
         expect(sent(requests.createImageCollection(ee, assetId))).toEqual(library)
     })
 
+    test('creating an image collection with properties', async () => {
+        const assetId = `${FOLDER}/collection`
+        const properties = {recipe_id: 'r-1', scale: 30}
+        const library = await libraryCall(
+            {url: `${API}/v1/projects/${TEST_PROJECT}/assets?assetId=folder%2Fcollection`, answer: {name: assetId, type: 'IMAGE_COLLECTION'}},
+            callback => ee.data.createAsset({type: 'ImageCollection'}, assetId, false, properties, callback)
+        )
+
+        expect(sent(requests.createImageCollection(ee, assetId, properties))).toEqual(library)
+    })
+
     test('setting and removing asset properties', async () => {
         const properties = {recipe_id: 'r-1', sepal_band_encoding_2: null}
         const library = await libraryCall(
