@@ -188,6 +188,17 @@ describe('reconciling after a restart', () => {
         expect(docker.containers.has('sepal-task-gone')).toBe(false)
     })
 
+    test('a container without a task id is removed, and does not stop the rest of the reconcile', async () => {
+        const {docker, newSupervisor} = setup()
+        docker.containers.set('unlabelled-1', {running: true})
+        docker.containers.set('unlabelled-2', {running: false})
+        docker.containers.set('sepal-task-gone', {taskId: 'gone', running: true})
+
+        await newSupervisor().reconcile()
+
+        expect([...docker.containers.keys()]).toEqual([])
+    })
+
     test('reconcile does not fail a task whose launch is in progress', async () => {
         const {supervisor, repository, docker} = setup()
         await repository.add(aTask())
@@ -377,7 +388,11 @@ class FakeWorkspace {
         return this.results.get(taskId) ?? null
     }
 
+    // Like the real workspace, whose path join rejects a missing id.
     async remove(taskId) {
+        if (typeof taskId !== 'string') {
+            throw new TypeError(`The "path" argument must be of type string. Received ${taskId}`)
+        }
         this.removed.push(taskId)
     }
 }

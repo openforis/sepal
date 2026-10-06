@@ -156,7 +156,7 @@ export class ContainerSupervisor {
     }
 
     async #reconcile() {
-        const containers = new Map((await this.#docker.list()).map(container => [container.taskId, container]))
+        const containers = await this.#taskContainers()
         const running = await this.#repository.runningTasks()
         for (const task of running) {
             const container = containers.get(task.id)
@@ -177,6 +177,19 @@ export class ContainerSupervisor {
                 await this.#discard(container.taskId)
             }
         }
+    }
+
+    async #taskContainers() {
+        const containers = new Map()
+        for (const container of await this.#docker.list()) {
+            if (container.taskId) {
+                containers.set(container.taskId, container)
+            } else {
+                log.warn(`Removing container ${container.name}: no task id label`)
+                await this.#docker.remove(container.name)
+            }
+        }
+        return containers
     }
 
     #interrupted(task) {
