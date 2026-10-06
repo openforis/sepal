@@ -1,0 +1,407 @@
+import {ContainerSupervisor} from './containerSupervisor.js'
+import {createTask, RUNNING_STATES, State, StateDescription} from './task.js'
+
+describe('launching', () => {
+    test('a pending task gets a running container and becomes active', async () => {
+        const {supervisor, repository, docker} = setup()
+        const task = await repository.add(aTask())
+
+        await supervisor.dispatch()
+
+        expect(docker.containers.get('sepal-task-t-1')).toMatchObject({running: true, taskId: 't-1'})
+        expect(await repository.getTask(task.id)).toMatchObject({state: State.ACTIVE})
+    })
+
+    test('no more containers run than allowed; the oldest pending task goes first', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrent: 1})
+        await repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
+        await repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
+
+        await supervisor.dispatch()
+
+        expect([...docker.containers.keys()]).toEqual(['sepal-task-t-1'])
+        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+    })
+
+    test('a task whose container cannot be started fails', async () => {
+        const {supervisor, repository, docker} = setup()
+        docker.failRun = true
+        await repository.add(aTask())
+
+        await supervisor.dispatch()
+
+        expect(await repository.getTask('t-1')).toMatchObject({state: State.FAILED})
+    })
+})
+
+describe('collecting', () => {
+    test('a container that exits leaves its task in the state its result names, and is removed', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+
+        workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}})
+        docker.exit('sepal-task-t-1', 0)
+        await supervisor.idle()
+
+        expect(await repository.getTask('t-1')).toMatchObject({
+            state: State.COMPLETED,
+            statusDescription: JSON.stringify({messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'})
+        })
+        expect(docker.containers.has('sepal-task-t-1')).toBe(false)
+        expect(workspace.removed).toEqual(['t-1'])
+    })
+
+    test('a container that exits without a result fails its task', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+
+        docker.exit('sepal-task-t-1', 137)
+        await supervisor.idle()
+
+        expect(await repository.getTask('t-1')).toMatchObject({state: State.FAILED})
+    })
+
+    test('a container being cancelled that exits without a result is canceled', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
+
+        docker.exit('sepal-task-t-1', 143)
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+    })
+
+    test('a finished container frees its slot for the next pending task', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrent: 1})
+        await repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
+        await repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
+        await supervisor.dispatch()
+
+        docker.exit('sepal-task-t-1', 1)
+        await supervisor.idle()
+
+        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+    })
+})
+
+describe('reconciling after a restart', () => {
+    test('a running container found after a restart is watched', async () => {
+        const {repository, docker, workspace, newSupervisor} = setup()
+        await repository.add(aTask({state: State.ACTIVE}))
+        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: true})
+        const supervisor = newSupervisor()
+
+        await supervisor.reconcile()
+        workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed'}})
+        docker.exit('sepal-task-t-1', 0)
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
+    })
+
+    test('an exited container found after a restart is collected', async () => {
+        const {repository, docker, workspace, newSupervisor} = setup()
+        await repository.add(aTask({state: State.ACTIVE}))
+        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: false, exitCode: 0})
+        workspace.results.set('t-1', {state: 'FAILED', statusDescription: {messageKey: 'tasks.status.failed'}})
+
+        await newSupervisor().reconcile()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        expect(docker.containers.has('sepal-task-t-1')).toBe(false)
+    })
+
+    test('an active task without a container was interrupted by a server restart', async () => {
+        const {repository, newSupervisor} = setup()
+        await repository.add(aTask({state: State.ACTIVE}))
+
+        await newSupervisor().reconcile()
+
+        const task = await repository.getTask('t-1')
+        expect(task.state).toBe(State.FAILED)
+        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.interrupted'})
+    })
+
+    test('a canceling task without a container is canceled', async () => {
+        const {repository, newSupervisor} = setup()
+        await repository.add(aTask({state: State.CANCELING}))
+
+        await newSupervisor().reconcile()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+    })
+
+    test('a container whose wait was interrupted is watched again', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
+        docker.failWaits = true
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        await supervisor.idle()
+        docker.failWaits = false
+
+        await supervisor.reconcile()
+        workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed'}})
+        docker.exit('sepal-task-t-1', 0)
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
+    })
+
+    test('a container no task is running in is removed', async () => {
+        const {docker, newSupervisor} = setup()
+        docker.containers.set('sepal-task-gone', {taskId: 'gone', running: true})
+
+        await newSupervisor().reconcile()
+
+        expect(docker.containers.has('sepal-task-gone')).toBe(false)
+    })
+
+    test('reconcile does not fail a task whose launch is in progress', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        docker.holdRuns()
+
+        const launch = supervisor.dispatch()
+        await docker.runHeld()
+        const reconcile = supervisor.reconcile()
+        docker.releaseRun()
+        await Promise.all([launch, reconcile])
+
+        expect((await repository.getTask('t-1')).state).toBe(State.ACTIVE)
+    })
+})
+
+describe('timeouts', () => {
+    test('a container silent for too long is killed and its task fails', async () => {
+        const {supervisor, repository, docker, clock} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+
+        clock.advance(16 * 60 * 1000)
+        await supervisor.enforceTimeouts()
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        expect(docker.killed).toEqual(['sepal-task-t-1'])
+    })
+
+    test('a cancellation the container does not finish in time is forced', async () => {
+        const {supervisor, repository, docker, clock} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
+
+        clock.advance(6 * 60 * 1000)
+        await supervisor.enforceTimeouts()
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+        expect(docker.killed).toEqual(['sepal-task-t-1'])
+    })
+})
+
+describe('stopping', () => {
+    test('stopping a container asks Docker to stop it with a grace period', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+
+        await supervisor.stopContainer(await repository.getTask('t-1'))
+
+        expect(docker.stopped).toEqual([{name: 'sepal-task-t-1', seconds: 120}])
+    })
+
+    test('a container whose launch is in progress is stopped once it runs', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        docker.holdRuns()
+        const launch = supervisor.dispatch()
+        await docker.runHeld()
+
+        const stopping = supervisor.stopContainer(await repository.getTask('t-1'))
+        docker.releaseRun()
+        await Promise.all([launch, stopping])
+
+        expect(docker.stopped).toEqual([{name: 'sepal-task-t-1', seconds: 120}])
+    })
+})
+
+// --- harness ---
+
+const aTask = overrides => createTask({
+    id: 't-1', state: State.PENDING, username: 'alice', operation: 'image.GEE', params: {},
+    creationTime: new Date(1000), updateTime: new Date(1000), ...overrides
+})
+
+const setup = ({maxConcurrent = 10} = {}) => {
+    const clock = fakeClock()
+    const repository = new InMemoryRepository(clock)
+    const docker = new FakeDocker()
+    const workspace = new FakeWorkspace()
+    const newSupervisor = () => new ContainerSupervisor({
+        repository,
+        docker,
+        workspace,
+        spec: ({task, apiKey}) => ({name: `sepal-task-${task.id}`, taskId: task.id, apiKey}),
+        config: {maxConcurrent, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
+    })
+    return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}
+}
+
+const fakeClock = () => {
+    let time = 1_000_000
+    return {now: () => new Date(time), advance: ms => time += ms}
+}
+
+class InMemoryRepository {
+    #tasks = new Map()
+    #clock
+
+    constructor(clock) {
+        this.#clock = clock
+    }
+
+    async add(task) {
+        const stored = {...task, progressTime: task.state === State.ACTIVE ? this.#clock.now() : null, updateTime: this.#clock.now()}
+        this.#tasks.set(task.id, stored)
+        return stored
+    }
+
+    async getTask(id) {
+        return this.#tasks.get(id) ?? null
+    }
+
+    async pendingTasks(limit) {
+        return [...this.#tasks.values()]
+            .filter(({state}) => state === State.PENDING)
+            .sort((a, b) => a.creationTime - b.creationTime)
+            .slice(0, limit)
+    }
+
+    async runningTasks() {
+        return [...this.#tasks.values()].filter(({state}) => RUNNING_STATES.includes(state))
+    }
+
+    async countRunning() {
+        return (await this.runningTasks()).length
+    }
+
+    async activate(task, apiKeyHash) {
+        return this.#update(task.id, [State.PENDING], {state: State.ACTIVE, apiKeyHash, progressTime: this.#clock.now()})
+    }
+
+    async transition(task, {from, to, statusDescription = StateDescription[to]}) {
+        return this.#update(task.id, from, {state: to, statusDescription})
+    }
+
+    async stalledTasks(before) {
+        return [...this.#tasks.values()].filter(({state, progressTime}) => state === State.ACTIVE && progressTime < before)
+    }
+
+    async cancelingSince(before) {
+        return [...this.#tasks.values()].filter(({state, updateTime}) => state === State.CANCELING && updateTime < before)
+    }
+
+    #update(id, from, changes) {
+        const task = this.#tasks.get(id)
+        if (!task || !from.includes(task.state)) {
+            return false
+        }
+        this.#tasks.set(id, {...task, ...changes, updateTime: this.#clock.now()})
+        return true
+    }
+}
+
+class FakeDocker {
+    containers = new Map()
+    killed = []
+    stopped = []
+    failRun = false
+    failWaits = false
+    #waiters = new Map()
+    #gate = null
+    #open = null
+    #held = null
+    #onHeld = null
+
+    holdRuns() {
+        this.#gate = new Promise(resolve => this.#open = resolve)
+        this.#held = new Promise(resolve => this.#onHeld = resolve)
+    }
+
+    runHeld() {
+        return this.#held
+    }
+
+    releaseRun() {
+        this.#open()
+    }
+
+    async run(spec) {
+        if (this.#gate) {
+            this.#onHeld()
+            await this.#gate
+        }
+        if (this.failRun) {
+            throw new Error('no such image')
+        }
+        this.containers.set(spec.name, {taskId: spec.taskId, running: true})
+    }
+
+    async list() {
+        return [...this.containers.entries()].map(([name, {taskId, running}]) => ({name, taskId, running}))
+    }
+
+    wait(name) {
+        if (this.failWaits) {
+            return Promise.reject(new Error('socket hang up'))
+        }
+        const container = this.containers.get(name)
+        if (container && !container.running) {
+            return Promise.resolve({StatusCode: container.exitCode})
+        }
+        return new Promise(resolve => this.#waiters.set(name, resolve))
+    }
+
+    exit(name, exitCode) {
+        this.containers.set(name, {...this.containers.get(name), running: false, exitCode})
+        this.#waiters.get(name)?.({StatusCode: exitCode})
+    }
+
+    async stop(name, seconds) {
+        if (this.containers.has(name)) {
+            this.stopped.push({name, seconds})
+        }
+    }
+
+    async kill(name) {
+        this.killed.push(name)
+        this.exit(name, 137)
+    }
+
+    async remove(name) {
+        this.containers.delete(name)
+    }
+}
+
+class FakeWorkspace {
+    results = new Map()
+    prepared = []
+    removed = []
+
+    async prepare(task) {
+        this.prepared.push(task.id)
+    }
+
+    async readResult(taskId) {
+        return this.results.get(taskId) ?? null
+    }
+
+    async remove(taskId) {
+        this.removed.push(taskId)
+    }
+}
