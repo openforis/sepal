@@ -46,10 +46,13 @@ then
                     rm -rf "$cache.tmp"
                     remaining=$((cache_deadline - SECONDS))
                     # pipefail: without it a corrupt tail lets zstd fail while tar exits 0.
-                    # TERM can exit bash before a child releases the lock; kill the whole group.
+                    # timeout kills only its direct child, so an over-budget extraction leaves
+                    # zstd and tar orphaned. 9>&- keeps them from inheriting the lock fd: an
+                    # orphan writing into an already-unlinked staging dir is harmless, but one
+                    # holding the lock would block the next kernel start for its whole budget.
                     if (( remaining > 0 )) && mkdir -p "$cache.tmp" \
                        && timeout -s KILL "$remaining" bash -c 'set -o pipefail
-                            zstd -q -dc -T0 "$1" | tar -C "$2" -xf -' _ "$tarball" "$cache.tmp" \
+                            zstd -q -dc -T0 "$1" | tar -C "$2" -xf -' _ "$tarball" "$cache.tmp" 9>&- \
                        && [[ -x $cache.tmp/venv/bin/python3 ]]; then
                         # -T replaces the target; a plain mv would nest it inside.
                         mv -T "$cache.tmp" "$cache"
