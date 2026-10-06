@@ -3,7 +3,7 @@ import {get$, post$, postJson$} from '~/http-client'
 import {moduleWebSocket$} from './ws.js'
 
 export default {
-    ws: () => moduleWebSocket$('worker/task'),
+    ws: () => moduleWebSocket$('task-manager/task'),
 
     loadDetails$: taskId =>
         get$(`/api/tasks/task/${taskId}/details`),
