@@ -43,7 +43,10 @@ jest.unstable_mockModule('#sepal/ee/tile', () => ({
         state.tile = {collection, sizeInDegrees}
         return {
             aggregate_array: () => 'tileIds',
-            filterMetadata: () => ({first: () => ({geometry: () => 'tileGeometry'})})
+            filterMetadata: (_property, _operator, tileId) => {
+                state.tilesLookedUp.push(tileId)
+                return {first: () => ({geometry: () => 'tileGeometry'})}
+            }
         }
     }
 }))
@@ -72,7 +75,7 @@ const recipe = {
 const image = {recipe, indicator: 'ndvi', scale: 30, tileSize: 2}
 
 beforeEach(() => {
-    Object.assign(state, {aois: [], getInfoCalls: [], tile: undefined, getCollection: undefined, export: undefined})
+    Object.assign(state, {aois: [], getInfoCalls: [], tilesLookedUp: [], tile: undefined, getCollection: undefined, export: undefined})
     tileIds = ['tile-0', 'tile-1']
     rangesWithImagery = []
 })
@@ -97,30 +100,36 @@ describe('timeSeriesChunks$', () => {
     it('answers, in order, only the date ranges that have imagery, checking the tile in one request', async () => {
         rangesWithImagery = ['2020-01-01', '2020-07-01']
 
-        const result = await lastValueFrom(timeSeriesChunks$({description: 'ts', image, tileId: 'tile-0', dateRanges}))
+        const result = await lastValueFrom(timeSeriesChunks$({description: 'ts', image, tileId: 'tile-1', dateRanges}))
 
         expect(result).toEqual({dateRanges: [dateRanges[0], dateRanges[2]]})
         expect(state.getInfoCalls).toHaveLength(1)
+        expect(state.tilesLookedUp).toEqual(['tile-1'])
     })
 })
 
 describe('startTimeSeriesChunkExport$', () => {
-    const request = {description: 'ts', image, tileId: 'tile-0', tileIndex: 3, startDate: '2020-01-01', endDate: '2020-04-01'}
+    const request = {description: 'ts', image, tileId: 'tile-1', tileIndex: 3, startDate: '2020-01-01', endDate: '2020-04-01'}
     const sepalUser = {username: 'alice'}
 
-    it('builds the chunk from the whole aoi and exports it to the workspace under the chunk name', async () => {
+    it('builds the chunk of its tile from the whole aoi and exports it to the workspace under the chunk name', async () => {
         const result = await lastValueFrom(startTimeSeriesChunkExport$(request, {sepalUser}))
 
         expect(result).toEqual({eeTaskId: 'T1', destination: {type: 'drive', folder: 'f'}})
+        expect(state.tilesLookedUp).toEqual(['tile-1'])
         expect(state.getCollection).toEqual(expect.objectContaining({
             recipe, geometry: aoiGeometry, bands: ['ndvi'], startDate: '2020-01-01', endDate: '2020-04-01'
         }))
-        expect(state.export.args).toEqual(expect.objectContaining({
-            folder: 'ts_3_2020-01-01_2020-04-01', description: 'ts_3_2020-01-01_2020-04-01', scale: 30
-        }))
+        expect(state.export.args).toEqual(expect.objectContaining({description: 'ts_3_2020-01-01_2020-04-01', scale: 30}))
         expect(state.export.args.image).toBe('time-series image')
         expect(state.export.args.region).toBeUndefined()
         expect(state.export.context).toEqual({sepalUser})
+    })
+
+    it('exports each run of a chunk into a folder named for the time it started', async () => {
+        await lastValueFrom(startTimeSeriesChunkExport$(request, {sepalUser}))
+
+        expect(state.export.args.folder).toMatch(/^ts_3_2020-01-01_2020-04-01_\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}\.\d{3}$/)
     })
 
     it('prefers the filename prefix over the description', async () => {

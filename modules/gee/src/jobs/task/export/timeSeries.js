@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moment from 'moment'
 import {map, switchMap} from 'rxjs'
 
 import {toFeatureCollection$} from '#sepal/ee/aoi'
@@ -36,8 +37,10 @@ export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indica
         switchMap(({aoiGeometry, tiles}) => timeSeries$({recipe, indicator, aoiGeometry, feature: tileFeature(tiles, tileId), startDate, endDate})),
         switchMap(timeSeries => {
             const chunkDescription = `${filenamePrefix || description}_${tileIndex}_${startDate}_${endDate}`
+            // Concurrent runs of one recipe must not share, or clean up, each other's folder.
+            const folder = `${chunkDescription}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
             return startImageToWorkspaceExport$({
-                image: timeSeries, folder: chunkDescription, description: chunkDescription, scale, crs, crsTransform, shardSize, fileDimensions
+                image: timeSeries, folder, description: chunkDescription, scale, crs, crsTransform, shardSize, fileDimensions
             }, {sepalUser})
         })
     )
