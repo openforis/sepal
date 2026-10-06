@@ -46,8 +46,9 @@ services:
       REDIS_HOST: "gateway-redis"
       SANDBOX_DEFAULT_INSTANCE_TYPE: "${SANDBOX_DEFAULT_INSTANCE_TYPE:-T3aSmall}"
     networks:
-      - sepal
-      - sepal-task
+      sepal:
+      sepal-task:
+        ipv4_address: 172.29.0.2 # outside the task containers' range; the task firewall admits only its port 80
     extra_hosts:
       - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
     ulimits:
