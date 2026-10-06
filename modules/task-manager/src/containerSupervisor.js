@@ -112,7 +112,9 @@ export class ContainerSupervisor {
             if (!task) {
                 return
             }
-            await this.#launch(task)
+            if (!await this.#launch(task)) {
+                continue
+            }
             free--
             if (isLocalWork(task.operation)) {
                 freeLocal--
@@ -123,7 +125,7 @@ export class ContainerSupervisor {
     async #launch(task) {
         const apiKey = generateApiKey()
         if (!await this.#repository.activate(task, hashApiKey(apiKey))) {
-            return
+            return false
         }
         try {
             await this.#workspace.prepare(task)
@@ -132,10 +134,11 @@ export class ContainerSupervisor {
             log.error(`${taskTag(task)} could not be launched`, error)
             await this.#repository.transition(task, {from: RUNNING_STATES, to: State.FAILED, statusDescription: LAUNCH_FAILED})
             await this.#discard(task.id)
-            return
+            return false
         }
         log.info(`${taskTag(task)} launched`)
         this.#watch(task)
+        return true
     }
 
     #watch(task) {

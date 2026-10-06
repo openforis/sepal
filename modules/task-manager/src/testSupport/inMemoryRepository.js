@@ -29,8 +29,8 @@ export class InMemoryRepository {
         return [...this.#tasks.values()].filter(({state}) => RUNNING_STATES.includes(state))
     }
 
-    async countRunning({operations} = {}) {
-        return (await this.runningTasks()).filter(task => !operations || operations.includes(task.operation)).length
+    async countRunning({operations = []} = {}) {
+        return (await this.runningTasks()).filter(task => !operations.length || operations.includes(task.operation)).length
     }
 
     async activate(task, apiKeyHash) {

@@ -35,6 +35,18 @@ describe('launching', () => {
         expect(task.state).toBe(State.FAILED)
         expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.launchFailed'})
     })
+
+    test('a task whose container cannot be started does not take a slot from the next pending task', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrent: 1})
+        docker.failingRuns.add('sepal-task-t-1')
+        await repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
+        await repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
+
+        await supervisor.dispatch()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+    })
 })
 
 describe('collecting', () => {
@@ -290,6 +302,18 @@ describe('local work', () => {
 
         expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
     })
+
+    test('a local task whose container cannot be started does not take the local slot', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
+        docker.failingRuns.add('sepal-task-t-1')
+        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
+
+        await supervisor.dispatch()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+    })
 })
 
 describe('stopping', () => {
@@ -350,6 +374,7 @@ class FakeDocker {
     killed = []
     stopped = []
     failRun = false
+    failingRuns = new Set()
     failWaits = false
     #waiters = new Map()
     #gate = null
@@ -375,7 +400,7 @@ class FakeDocker {
             this.#onHeld()
             await this.#gate
         }
-        if (this.failRun) {
+        if (this.failRun || this.failingRuns.has(spec.name)) {
             throw new Error('no such image')
         }
         this.containers.set(spec.name, {taskId: spec.taskId, running: true})
