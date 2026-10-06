@@ -32,7 +32,12 @@ sepal npm-test task -- --testPathPatterns runner
 - `src/runner/` - `runTask` (outcome mapping), `operations` (operation name to
   `async (params, {sepal, report, signal})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`,
   `exportToWorkspace` (follow an export, `downloadFiles` it into the workspace, clean up), `forEachInParallel`.
+- `src/runner/operations/` - task operations: `image.GEE` (image and ImageCollection exports to Earth Engine
+  assets), `ccdc.GEE` (CCDC export to Earth Engine assets), `image.DRIVE` (image exports to Google Drive),
+  `image.SEPAL` (image exports to the SEPAL workspace), `timeseries.download` (time series downloads to
+  the SEPAL workspace).
 - `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
 
-Class B sources under `src/tasks` and `src/jobs` (SEPAL-workspace exports, sampling design, time series) still
-use the old in-session executor model and await plan 2. `src/sessionAuth.js` remains only for `src/recipeReader.js`.
+Remaining old sources under `src/tasks/samplingDesign`, `src/jobs`, `src/ee`, `drive.js`, `cloudStorage*.js`,
+`context.js` implement the sampling-design path using the old in-session executor model and are not yet ported
+to the runner. `src/sessionAuth.js` remains only for `src/recipeReader.js`.
