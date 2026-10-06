@@ -6,7 +6,7 @@ that task and exits. It is not a service: nothing listens, and nothing runs insi
 ## Commands
 
 ```bash
-sepal npm-test task                         # Jest (needs the Earth Engine library; raw `npm test` fails some suites)
+sepal npm-test task                         # Jest
 sepal npm-test task -- --testPathPatterns runner
 ```
 
@@ -38,6 +38,4 @@ sepal npm-test task -- --testPathPatterns runner
   the SEPAL workspace).
 - `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
 
-Remaining old sources under `src/tasks/samplingDesign`, `src/jobs`, `src/ee`, `drive.js`, `cloudStorage*.js`,
-`context.js` implement the sampling-design path using the old in-session executor model and are not yet ported
-to the runner. `src/sessionAuth.js` remains only for `src/recipeReader.js`.
+Sampling design is not yet supported by the runner.
