@@ -4,23 +4,19 @@ import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
 import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
 
-import {resolveImageOutput$, selectedBandEncoding} from '../ee/imageOutput.js'
-import {toVisualizationProperties} from '../ee/visualizations.js'
-import {exportImageToAsset$} from '../jobs/export/toAsset.js'
 import {formatProperties} from './formatProperties.js'
-import {setWorkloadTag} from './workloadTag.js'
+import {resolveImageOutput$, selectedBandEncoding} from './imageOutput.js'
+import {startImageToAssetExport$} from './toAsset.js'
+import {toVisualizationProperties} from './visualizations.js'
 
-export const submit$ = (taskId, {
-    image: {recipe, ...retrieveOptions}
-}) => {
-    setWorkloadTag(recipe)
+export const startImageAssetExport$ = ({image: {recipe, ...retrieveOptions}}) => {
     const description = recipe.title || recipe.placeholder
-    return export$(taskId, {description, recipe, ...retrieveOptions})
+    return export$({description, recipe, ...retrieveOptions})
 }
 
 // The encoding is what this recipe establishes about the bands it names, never what the submitter claims or the
 // exported image inherited. How it is stored, and that it is stored even when empty, belongs to the exporter.
-const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
+const export$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, withOutputBands(bands))
     return forkJoin({
         image: factory.getImage$(),
@@ -31,7 +27,7 @@ const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...r
             const encoding = encodingOfBands(selectedBandEncoding(imageOutput, bands.selection))
             const formattedProperties = formatProperties({...properties, scale})
             const visualizationProperties = toVisualizationProperties(visualizations, bands)
-            return exportImageToAsset$(taskId, {
+            return startImageToAssetExport$({
                 ...retrieveOptions,
                 image,
                 region: geometry.bounds(scale),
@@ -39,7 +35,6 @@ const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...r
                 bandEncoding: encoding,
                 properties: {...formattedProperties, ...visualizationProperties}
             })
-        }
-        )
+        })
     )
 }

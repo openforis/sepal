@@ -459,8 +459,8 @@ const masking = ({primary, mask = {type: 'ASSET', id: 'users/x/mask'}}) => ({
 const state = {}
 
 const submit = async ({recipe, bands, pyramidingPolicy, properties = {}}) => {
-    const {submit$} = await import('./imageAssetExport.js')
-    await lastValueFrom(submit$('task-1', {
+    const {startImageAssetExport$} = await import('#gee/jobs/task/export/imageAssetExport')
+    await lastValueFrom(startImageAssetExport$({
         image: {
             recipe,
             bands: {selection: bands},
@@ -530,11 +530,10 @@ jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
             getGeometry$: () => of({bounds: () => 'region'})
         }
 }))
-jest.unstable_mockModule('./workloadTag.js', () => ({setWorkloadTag: () => {}}))
-jest.unstable_mockModule('../jobs/export/toAsset.js', () => ({
-    exportImageToAsset$: (_taskId, args) => {
+jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
+    startImageToAssetExport$: args => {
         state.exported.push(args)
-        return of(true)
+        return of({eeTaskId: 'T1', assetId: args.assetId})
     }
 }))
 
