@@ -35,6 +35,7 @@ import taskDownloadFiles$ from '#gee/jobs/task/downloadFiles'
 import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
 import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
+import taskExportImageToSepal$ from '#gee/jobs/task/exportImageToSepal'
 import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
 import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
 import taskShareAsset$ from '#gee/jobs/task/shareAsset'
@@ -81,6 +82,7 @@ export default router =>
         .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
         .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
         .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
+        .post('/task/export/image/sepal', stream(ctx => taskExportImageToSepal$(ctx)))
         .post('/task/download/files', stream(ctx => taskDownloadFiles$(ctx)))
         .post('/task/download/cleanup', stream(ctx => taskDownloadCleanup$(ctx)))
         .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
