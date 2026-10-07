@@ -33,9 +33,10 @@ test('drives the steps until done, following each export, then cleans up the tem
     const state2 = {tempAssetIds: ['a_tmp_1'], stage: 2}
     const state3 = {tempAssetIds: ['a_tmp_1'], stage: 3}
     const progress = {messageKey: 'k', defaultMessage: 'm'}
+    const next = {messageKey: 'n', defaultMessage: 'next'}
     const params = {description: 'Design'}
     const sepal = fakeSepal([
-        {state: state1, progress: [progress], action: 'export', eeTaskId: 'T1'},
+        {state: state1, progress: [progress], next, action: 'export', eeTaskId: 'T1'},
         {state: state2, progress: [], action: 'export', eeTaskId: 'T2'},
         {state: state3, progress: [], action: 'done'}
     ])
@@ -49,8 +50,59 @@ test('drives the steps until done, following each export, then cleans up the tem
         {...params, destination: 'ASSET', state: state2}
     ])
     expect(sepal.statusPolls).toEqual(['T1', 'T2'])
-    expect(reports).toContainEqual(progress)
     expect(sepal.cleanups).toEqual([{state: state3}])
+})
+
+test('reports the preparing message, then each step\'s progress, the export progress and the next stage message in order', async () => {
+    const progress = {messageKey: 'p', defaultMessage: 'progress'}
+    const next = {messageKey: 'n', defaultMessage: 'next'}
+    const sepal = fakeSepal([
+        {state: {}, progress: [progress], next, action: 'export', eeTaskId: 'T1'},
+        {state: {}, progress: [], action: 'done'}
+    ], {exportStates: ['RUNNING', 'COMPLETED']})
+    const events = []
+
+    await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {report: r => events.push(r)}))
+
+    expect(events).toEqual([PREPARE, progress, EXPORTING, next])
+})
+
+test('does not report the next stage message when the export was cancelled', async () => {
+    const next = {messageKey: 'n', defaultMessage: 'next'}
+    const controller = new AbortController()
+    const sepal = fakeSepal([
+        {state: {}, next, action: 'export', eeTaskId: 'T1'}
+    ], {onStep: () => controller.abort()})
+    const reports = []
+
+    await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {signal: controller.signal, report: r => reports.push(r)}))
+
+    expect(reports).not.toContainEqual(next)
+})
+
+test('an unknown step action fails the export and still cleans up', async () => {
+    const state = {tempAssetIds: ['a_tmp_1']}
+    const sepal = fakeSepal([{state, action: 'bogus'}])
+
+    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toThrow('Unknown sampling design step action: bogus')
+
+    expect(sepal.cleanups).toEqual([{state}])
+})
+
+test('a step without an action fails the export', async () => {
+    const sepal = fakeSepal([{state: {}}])
+
+    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toThrow('Unknown sampling design step action: undefined')
+})
+
+test('starts no step when already cancelled, but still cleans up', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const sepal = fakeSepal([{state: {}, action: 'done'}])
+
+    await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {signal: controller.signal}))
+
+    expect(sepal.started).toEqual([])
 })
 
 test('a workspace step downloads into the workspace path', async () => {
@@ -154,7 +206,10 @@ test('steps go through the no-retry path', async () => {
     expect(sepal.geeCalls.map(({path}) => path)).not.toContain('task/samplingDesign/step')
 })
 
-const fakeSepal = (answers, {onStep, cleanupError, exportState = 'COMPLETED'} = {}) => {
+const EXPORTING = {messageKey: 'tasks.ee.export.running', defaultMessage: 'Google Earth Engine is exporting'}
+const PREPARE = {messageKey: 'tasks.samplingDesign.progress.prepare', defaultMessage: 'Preparing samples'}
+
+const fakeSepal = (answers, {onStep, cleanupError, exportState = 'COMPLETED', exportStates = [exportState]} = {}) => {
     const queue = [...answers]
     const sepal = {
         started: [], geeCalls: [], statusPolls: [], cancelled: [], cleanups: [],
@@ -171,7 +226,7 @@ const fakeSepal = (answers, {onStep, cleanupError, exportState = 'COMPLETED'} = 
             sepal.geeCalls.push({path, body})
             if (path === 'task/operation/status') {
                 sepal.statusPolls.push(body.eeTaskId)
-                return {state: exportState}
+                return {state: exportStates.length > 1 ? exportStates.shift() : exportStates[0]}
             }
             if (path === 'task/operation/cancel') {
                 sepal.cancelled.push(body.eeTaskId)

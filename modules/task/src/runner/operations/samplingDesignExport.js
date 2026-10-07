@@ -9,32 +9,42 @@ import {exportToWorkspace} from '../workspaceExport.js'
 
 const log = getLogger('samplingDesign')
 
+const PREPARE = {messageKey: 'tasks.samplingDesign.progress.prepare', defaultMessage: 'Preparing samples'}
+
 // gee runs the workflow one stage at a time and owns its state; this only follows what each stage started and
 // always lets gee delete the temporary assets.
 export const samplingDesignExport = destination => async (params, {sepal, report, signal, sleep}) => {
     let state = null
     try {
-        for (;;) {
+        report(PREPARE)
+        while (!signal.aborted) {
             const step = await sepal.startExport('task/samplingDesign/step', {...params, destination, state})
             state = step.state
             step.progress?.forEach(report)
             if (step.action === 'done') {
                 return
             }
-            if (step.action === 'workspace') {
-                await exportToWorkspace({
-                    start: async () => ({eeTaskId: step.eeTaskId, destination: step.destination}),
-                    downloadDir: await downloadDir(params), sepal, report, signal, sleep
-                })
-            } else {
-                await followEEExport({eeTaskId: step.eeTaskId, sepal, report, signal, sleep})
-            }
-            if (signal.aborted) {
-                return
+            await followStep(step, {params, sepal, report, signal, sleep})
+            if (!signal.aborted && step.next) {
+                report(step.next)
             }
         }
     } finally {
         await cleanup(state, sepal)
+    }
+}
+
+const followStep = async (step, {params, sepal, report, signal, sleep}) => {
+    const {action, eeTaskId} = step
+    if (action === 'workspace') {
+        await exportToWorkspace({
+            start: async () => ({eeTaskId, destination: step.destination}),
+            downloadDir: await downloadDir(params), sepal, report, signal, sleep
+        })
+    } else if (action === 'export') {
+        await followEEExport({eeTaskId, sepal, report, signal, sleep})
+    } else {
+        throw new Error(`Unknown sampling design step action: ${action}`)
     }
 }
 
