@@ -40,82 +40,47 @@ function clone {
     cd $app_path
     git fetch
 }
-
-function json_escape {
-    local value=$1
-    value=${value//\\/\\\\}
-    value=${value//\"/\\\"}
-    value=${value//$'\n'/\\n}
-    value=${value//$'\r'/\\r}
-    value=${value//$'\t'/\\t}
-    printf '%s' "$value"
-}
-
 function create_kernel_json {
     echo "Creating kernel: $kernel_path"
     mkdir -p "$kernel_path"
-    local python_bin=$(json_escape "$venv_path/bin/python3")
-    local display_name=$(json_escape " (venv) $app_label")
-    local proj_data=$(json_escape "$venv_path/share/proj")
-    local gdal_data=$(json_escape "$venv_path/share/gdal")
-    local launcher=$(json_escape "$current_kernels_in_sandbox/sepal-app-kernel")
-    local app=$(json_escape "$app_name")
-    {
-        # Gated on the launcher actually being installed: naming a launcher that is not there
-        # is the spec's "kernel fails to start, every flagged app" row.
-        if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
-            # The launcher owns the interpreter environment for cached apps: it picks the
-            # prefix at run time, so a PROJ/GDAL path generated here would pin the kernel to
-            # Lustre even when a copy is in use, and PYTHONNOUSERSITE is exported there too.
-            # Leaving env empty keeps one source of truth rather than two that can drift.
-            cat <<EOF
-{
-  "argv": [
-    "/bin/bash",
-    "$launcher",
-    "$app",
-    "-f",
-    "{connection_file}"
-  ],
-  "display_name": "$display_name",
-  "language": "python",
-  "env": {}
-}
-EOF
-        else
-        cat <<EOF
-{
-  "argv": [
-    "$python_bin",
-    "-m",
-    "ipykernel_launcher",
-    "-f",
-    "{connection_file}"
-  ],
-  "display_name": "$display_name",
-  "language": "python",
-EOF
-        if [[ -f "$app_path/sepal_environment.yml" ]]; then
-            cat <<EOF
-  "env": {
-    "PYTHONNOUSERSITE": "1",
-    "PROJ_LIB": "$proj_data",
-    "PROJ_DATA": "$proj_data",
-    "GDAL_DATA": "$gdal_data"
-  }
-EOF
-        else
-            cat <<EOF
-  "env": {
-    "PYTHONNOUSERSITE": "1"
-  }
-EOF
-        fi
-        cat <<EOF
-}
-EOF
-        fi
-    } > "$kernel_path/kernel.json.tmp"
+    local use_launcher=false
+    # Only name the launcher if it is actually installed: a spec pointing at a missing launcher
+    # is the one failure that stops every flagged app from starting.
+    if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
+        use_launcher=true
+    fi
+    local conda=false
+    [[ -f "$app_path/sepal_environment.yml" ]] && conda=true
+    # Built by python rather than by hand: the label comes from the external app catalog, and
+    # JSON requires every control character below 0x20 to be escaped.
+    SPEC_VENV="$venv_path" \
+    SPEC_APP="$app_name" \
+    SPEC_LABEL=" (venv) $app_label" \
+    SPEC_LAUNCHER="$current_kernels_in_sandbox/sepal-app-kernel" \
+    SPEC_USE_LAUNCHER="$use_launcher" \
+    SPEC_CONDA="$conda" \
+    python3 -c '
+import json, os
+v = os.environ
+venv = v["SPEC_VENV"]
+env = {}
+spec = {}
+if v["SPEC_USE_LAUNCHER"] == "true":
+    # The launcher resolves the prefix at run time and owns the whole interpreter environment,
+    # so nothing prefix-dependent may be baked in here.
+    spec["argv"] = ["/bin/bash", v["SPEC_LAUNCHER"], v["SPEC_APP"], "-f", "{connection_file}"]
+else:
+    spec["argv"] = [venv + "/bin/python3", "-m", "ipykernel_launcher", "-f", "{connection_file}"]
+    env["PYTHONNOUSERSITE"] = "1"
+    if v["SPEC_CONDA"] == "true":
+        env["PROJ_LIB"] = venv + "/share/proj"
+        env["PROJ_DATA"] = venv + "/share/proj"
+        env["GDAL_DATA"] = venv + "/share/gdal"
+spec["display_name"] = v["SPEC_LABEL"]
+spec["language"] = "python"
+spec["env"] = env
+print(json.dumps(spec, indent=2, ensure_ascii=False))
+' > "$kernel_path/kernel.json.tmp"
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
     else

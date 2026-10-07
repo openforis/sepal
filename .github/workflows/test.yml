@@ -113,3 +113,4 @@ jobs:
       - run: shellcheck -S error modules/app-manager/update-app.sh
       - run: modules/app-manager/test/sepal-app-kernel.test.sh
       - run: modules/app-manager/test/pack-venv.test.sh
+      - run: modules/app-manager/test/kernel-json.test.sh
