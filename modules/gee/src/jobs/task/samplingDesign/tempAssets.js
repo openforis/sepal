@@ -4,7 +4,7 @@ import {defer, map, of} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 
-const TEMP_MARKER = /(_tmp_\d{17}|\/sampling_design_tmp_\d{17}_[0-9a-f]{6})/
+const TEMP_ASSET_ID = /((?<!\/sampling_design)_tmp_\d{17}|\/sampling_design_tmp_\d{17}_[0-9a-f]{6})(_candidates|_additional_candidates(_\d+)?|_selected)?$/
 
 // Clearly temporary and collision-free, so a stray temp asset is never mistaken for a result, and cleanup can
 // tell temp assets from the user's own.
@@ -22,4 +22,4 @@ export const tempAssetPrefix$ = ({assetId}) => defer(() => {
         )
 })
 
-export const isTempAssetId = id => typeof id === 'string' && TEMP_MARKER.test(id)
+export const isTempAssetId = id => typeof id === 'string' && TEMP_ASSET_ID.test(id)
