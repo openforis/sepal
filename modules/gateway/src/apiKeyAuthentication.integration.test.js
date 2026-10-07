@@ -13,10 +13,10 @@ const BOB = {id: 2, username: 'bob', roles: [], status: 'ACTIVE'}
 const EXECUTOR_KEY = 'executor-key'
 const SANDBOX_KEY = 'sandbox-key'
 const TASK_KEY = 'task_container-key'
-const EXECUTOR_SESSION = {sessionId: 's-executor', username: 'alice', workerType: 'task-executor'}
+const EXECUTOR_SESSION = {sessionId: 's-executor', username: 'alice', workerType: 'sandbox'}
 const SANDBOX_SESSION = {sessionId: 's-sandbox', username: 'bob', workerType: 'sandbox'}
 
-const FORGED = JSON.stringify({sessionId: 's-forged', workerType: 'task-executor'})
+const FORGED = JSON.stringify({sessionId: 's-forged', workerType: 'sandbox'})
 
 const parse = value => (value ? JSON.parse(value) : null)
 
@@ -59,7 +59,7 @@ describe('a request authenticated with a worker session api key', () => {
 
         expect(status).toBe(200)
         expect(body.user).toMatchObject({username: 'alice'})
-        expect(body.session).toEqual({sessionId: 's-executor', workerType: 'task-executor'})
+        expect(body.session).toEqual({sessionId: 's-executor', workerType: 'sandbox'})
     })
 
     test('passes on neither the key nor a role for it', async () => {

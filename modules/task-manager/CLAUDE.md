@@ -23,6 +23,23 @@ API-key check, and the task-list websocket.
 All supervisor work (dispatch, stop, supervision ticks, recovery) goes through its queue; never act on
 containers or task state from outside it.
 
+## Deployment
+
+- `deploy.yml` pre-pulls `openforis/task:<release>` (task-manager never pulls; `bin/deploy` verifies the image
+  is listed) and, after the modules run, removes task images of earlier releases that no container uses.
+- The `sepal-task` network and the host firewall unit `sepal-task-firewall` isolate task containers: they
+  reach the gateway only.
+- Task containers carry the label `org.openforis.sepal.task-manager=true` and survive deploys and
+  task-manager restarts; task-manager rediscovers them by label. They do not survive a Docker daemon restart
+  or a reboot (`live-restore` is incompatible with Swarm mode, and the main host is the Swarm manager): the
+  task then ends FAILED "interrupted" and the user runs it again.
+
+## Legacy import
+
+`migrations/legacy-import/001.do.import.sql` copies the worker's task history once (only into an empty `task`
+table), tracked in `legacy_import_version`. PENDING and ACTIVE tasks become FAILED "interrupted", CANCELING becomes CANCELED,
+and tasks the user had removed are skipped. The worker's `task` table is only the import's source.
+
 ## Commands
 - `npm test` - Jest (ESM); `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`

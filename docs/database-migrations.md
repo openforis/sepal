@@ -18,6 +18,7 @@ including reference data and backfills, belong in the schema stream instead.
 | `recipe` | `processing_recipe` |
 | `budget` | `sdms` |
 | `worker` | `sdms` sessions and tasks |
+| `task-manager` | worker tasks |
 | `user` | `sepal_user` |
 | `storage` | `user_storage` |
 | `message`, `scene-metadata` | none |

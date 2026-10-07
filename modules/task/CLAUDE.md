@@ -39,3 +39,9 @@ sepal npm-test task -- --testPathPatterns runner
   workflow as steps through `task/samplingDesign/step`; the runner follows each export and has gee clean up
   the temporary assets).
 - `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
+
+## Release compatibility
+
+A running task container keeps the image of the release that started it while gee is redeployed, so gee's
+`/task/...` endpoints must accept the previous release's requests: add fields, never rename or remove them
+within one release.

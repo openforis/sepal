@@ -23,8 +23,9 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions); also proxies user sandboxes (`/api/sandbox/*`)
 - `gee` - Google Earth Engine integration
 - `user` - User management, authentication, credentials (formerly `user-node`; replaced the Java `user` module and LDAP)
-- `worker` - Worker instances, sandbox sessions, task orchestration (replaced the sepal-server `sdms` cluster)
-- `task` - Task execution (runs inside sandbox containers, not a standalone service)
+- `worker` - Worker instances, sandbox sessions (replaced the sepal-server `sdms` cluster)
+- `task-manager` - Runs each export task in its own detached container on the main host
+- `task` - One-shot task runner image, started by task-manager per task
 - `app-manager` / `app-launcher` - Application management
 - `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
@@ -37,7 +38,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 ### Shared Libraries
 
 - `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via mysql2), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
-- `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` and `task` modules)
+- `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` only)
 - `lib/python/shared` - Shared Python utilities
 
 **Import mechanism:** The shared library is accessed via Node.js import maps (`#sepal/*`). In the shared lib's own `package.json`: `"#sepal/*": "./src/*.js"`. In consuming modules, it's linked as a dependency (`"sepal": "../../lib/js/shared"`) and mapped as `"#sepal/*": "sepal/src/*.js"`. Code imports look like `import {something} from '#sepal/httpServer'`.
@@ -206,10 +207,9 @@ See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, 
 ## Deployment
 
 Worker sessions authenticate with per-session API keys; see
-[modules/worker/CLAUDE.md](modules/worker/CLAUDE.md#session-api-keys), including the one-time
-task-executor transition (drain task executors before deploying that change).
+[modules/worker/CLAUDE.md](modules/worker/CLAUDE.md#session-api-keys).
 
-The worker AMI is built only when its content hash changes: the sandbox and task image IDs, every file in
+The worker AMI is built only when its content hash changes: the sandbox image ID, every file in
 `hosting-services/aws/sepal/worker-ami/`, and the env values listed in `worker_ami.py`. Anything the AMI
 build reads belongs in that directory. Force a rebuild (to pick up newer OS packages or GPU drivers) with
 `bin/deploy -s aws/sepal/build-worker-ami.sh -b <build> -c <config>` under a build newer than the current

@@ -1,10 +1,8 @@
 # CLAUDE.md - modules/worker
 
-SEPAL worker service (Node.js). Will replace the Java `sepal-server` `hostingservice`,
-`workersession`, `task`, and `budget` components. Owns the single `worker` MySQL schema via
-Postgrator (Phase 4a-revision). Phase 4a scaffolds the module with healthcheck only.
-Sub-phases 4b–4f will add worker instance provisioning, session management, task execution,
-budget tracking, and gateway route migration.
+SEPAL worker service (Node.js). Provisions worker instances and manages sandbox sessions. Owns the single
+`worker` MySQL schema via Postgrator. It has no task API and accepts no executor callbacks: export tasks
+belong to `task-manager`.
 
 ## Database migrations
 
@@ -60,7 +58,7 @@ budget tracking, and gateway route migration.
     `/api/sessions/expiry` before its authenticated `/api/sessions` entry.
 
 ## Session API keys
-Every session — SANDBOX and TASK_EXECUTOR alike — is minted an `api_key` by `RequestSession` and
+Every session is minted an `api_key` by `RequestSession` and
 provisioned with it as `SEPAL_API_KEY`. `dockerInstanceProvisioner` REFUSES to create a container
 without one (the caller's retry covers a lookup made before the row committed), so a worker never
 starts unable to authenticate.
@@ -71,13 +69,6 @@ injects the session as `sepal-session`.
 
 Keys resolve only while the session is PENDING or ACTIVE; closing a session clears `api_key`, so the
 last terminal callback of a session revokes its own credential.
-
-**One-time transition (task executors).** Task executors previously authenticated with
-`SEPAL_ADMIN_PASSWORD`. Executors already running when this change deploys hold no key and their
-callbacks are refused, and TASK_EXECUTOR rows predating it have `api_key = NULL`, so reprovisioning
-one fails through the full provision retry. Deploy with no PENDING/ACTIVE TASK_EXECUTOR session: let
-running tasks finish or cancel them, then close any leftover executor session so the next task
-requests a fresh one. Interactive sandboxes always had keys and are unaffected.
 
 ## Session expiration
 See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by
@@ -172,8 +163,8 @@ members; only `stopped` ones are candidates.
 
 ## Worker AMI version (AWS)
 `WORKER_AMI_VERSION` (default `SEPAL_VERSION`) names the build the worker AMI was made from. The worker
-finds the AMI by that `Version` tag, tags its instances with it, and runs the `sandbox` and `task`
-images of that tag, the ones baked into the AMI, so the provisioner never pulls. A deploy reuses the
+finds the AMI by that `Version` tag, tags its instances with it, and runs the `sandbox`
+image of that tag, the one baked into the AMI, so the provisioner never pulls. A deploy reuses the
 AMI while its content hash (`hosting-services/aws/sepal/worker-ami/worker_ami.py`) is unchanged, so
 this is often an older build than the one deployed, and can move back when a change is reverted.
 Instances of any other version are therefore stale, newer ones included, and are recycled.
@@ -188,7 +179,7 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 
 ## Database Schemas
 - `worker` — consolidated worker-cluster schema. Holds a COPY of the worker-cluster tables:
-  `worker_session`, `task`. The budget tables belong to the budget module's own schema.
+  `worker_session`. The budget tables belong to the budget module's own schema.
   - `session_app` — `(username, app_path)` PK mapping to `session_id` + `label`;
     one live session per app per user. No DB-level FK; rows are cascade-deleted at the application
     layer (`sessionAppRepository.deleteForSession`) when a session transitions to CLOSED.
@@ -198,7 +189,8 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
     per instance currently claimed by a session. EC2 (the hosting service) is authoritative for
     everything else about an instance; this table records only the one fact MySQL needs to know.
   - The originals remain LIVE in `sdms` (Java still uses them directly).
-  - Tables copied from `sdms` (Phase 4a-revision): worker_session, task.
+  - Table copied from `sdms`: worker_session.
+  - `task` — remains only as the source of task-manager's one-off import and is dropped in a later release.
   - `scene_meta_data` lives in the `scene_metadata` schema (moved in Phase 3).
   - `rmb_message` / `rmb_message_processing` (reliable message bus) belong to the Groovy
     sepal-server and stay in `sdms` — NOT part of the worker schema.

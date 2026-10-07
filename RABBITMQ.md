@@ -136,8 +136,8 @@ apiKey: null}`.
   {appPath, sessionId}` to the owner client, whose GUI closes the app's tab (takeover close).
 
 ### `workerSession.SessionExpiryNotified` — `{username, sessionId, session}`
-- **pub:** worker — when an ACTIVE session passes its stored `timeout_time` with no PENDING or
-  ACTIVE task (docs/session-expiration-model.md; gated by `SESSION_EXPIRY_MODE`, default `off`).
+- **pub:** worker — when an ACTIVE session passes its stored `timeout_time`
+  (docs/session-expiration-model.md; gated by `SESSION_EXPIRY_MODE`, default `off`).
   `session` has `apiKey` stripped. Fires once per cycle — the transition is a guarded UPDATE, and
   any extension resets the cycle to `NONE`.
 - **sub:** gateway (queue `gateway.sessionExpiryNotified`) — relays to the user's browser tabs as

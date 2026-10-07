@@ -74,3 +74,9 @@ the REST transport; each task runs in its request's Earth Engine context (wrappe
 thread serves any user. Calls pass the `EERestLimiter` tiers `taskUser` → `taskGlobal` (task traffic only, identified by
 `sepal-session` `workerType: 'task'`) before user → project → global, configured with
 `EE_LIMIT_*` (`src/config.js`). `verify/restTransport.mjs` checks the transport against live Earth Engine.
+
+## Task endpoints
+
+Task containers keep the image of the release that started them while gee is redeployed, so the `/task/...`
+endpoints must accept the previous release's requests: add fields, never rename or remove them within one
+release.
