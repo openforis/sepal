@@ -1,3 +1,4 @@
+import moment from 'moment'
 import {defer, map, switchMap} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
@@ -38,3 +39,31 @@ const formatRegion$ = region =>
     ee.getInfo$(region.bounds(1), 'format region for export').pipe(
         map(geometry => ee.Geometry(geometry))
     )
+
+const SUPPORTED_TABLE_FORMATS = ['CSV', 'GeoJSON', 'KML', 'KMZ', 'SHP']
+
+export const eeTableFileFormat = fileFormat =>
+    SUPPORTED_TABLE_FORMATS.includes(fileFormat) ? fileFormat : 'CSV'
+
+// Table exports have no region or CRS.
+export const startTableToWorkspaceExport$ = ({collection, description, filenamePrefix, fileFormat, selectors}, {sepalUser}) => defer(() => {
+    const auth = currentEEContext().auth
+    const prefix = filenamePrefix || description
+    const format = eeTableFileFormat(fileFormat)
+    const folder = exportFolderName(`${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`)
+    // CSV is columnar: the geometry survives a column selection only as `.geo`. The other formats always carry it.
+    const exportSelectors = selectors && format === 'CSV' && !selectors.includes('.geo')
+        ? [...selectors, '.geo']
+        : selectors
+    return prepareDestination$({folder}, {sepalUser, auth}).pipe(
+        switchMap(({destination, exportTarget}) => {
+            const common = {collection, description, fileFormat: format, selectors: exportSelectors}
+            const serverConfig = exportTarget.type === 'drive'
+                ? ee.batch.Export.convertToServerParams({...common, folder, fileNamePrefix: prefix}, ee.data.ExportDestination.DRIVE, ee.data.ExportType.TABLE)
+                : ee.batch.Export.convertToServerParams({...common, bucket: exportTarget.bucket, fileNamePrefix: `${exportTarget.fileNamePrefix}${prefix}`}, ee.data.ExportDestination.GCS, ee.data.ExportType.TABLE)
+            return ee.startTableExport$(ee.batch.ExportTask.create(serverConfig), `export table to SEPAL (${description})`).pipe(
+                map(eeTaskId => ({eeTaskId, destination}))
+            )
+        })
+    )
+})

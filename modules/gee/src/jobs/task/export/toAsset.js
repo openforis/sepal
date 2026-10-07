@@ -64,6 +64,25 @@ export const startImageToAssetExport$ = ({
     )
 })
 
+export const startTableToAssetExport$ = ({collection, description, assetId, strategy}) => defer(() => {
+    assertUserAccount()
+    const serverConfig = ee.batch.Export.convertToServerParams(
+        _.cloneDeep({collection, description, assetId}),
+        ee.data.ExportDestination.ASSET,
+        ee.data.ExportType.TABLE
+    )
+    const task = ee.batch.ExportTask.create(serverConfig)
+    return concat(
+        createParentFolder$(assetId),
+        strategy === 'replace'
+            ? ee.deleteAssetRecursive$(assetId, {include: ['ImageCollection', 'Image', 'Table']}).pipe(swallow())
+            : EMPTY,
+        ee.startTableExport$(task, `exportTableToAsset(assetId: ${assetId}, description: ${description})`).pipe(
+            map(eeTaskId => ({eeTaskId}))
+        )
+    )
+})
+
 // Prepares the collection before any tile is started: which tiles a resume keeps, whether those and the
 // collection agree with this export's encoding, and the collection itself with its properties.
 export const prepareImageCollection$ = ({image, description, assetId, strategy, region, tileSize, properties, bandEncoding}) => defer(() => {
