@@ -40,11 +40,16 @@ export class TaskRepository {
         return rows.map(toTask)
     }
 
-    async pendingTasks(limit, {excludeOperations = []} = {}) {
+    async pendingTasks(limit, {excludeOperations = [], excludeUsernames = []} = {}) {
         const rows = await this.#select(
-            `SELECT ${COLUMNS} FROM task WHERE state = ?${excludeOperations.length ? ' AND operation NOT IN (?)' : ''}
+            `SELECT ${COLUMNS} FROM task WHERE state = ?${excludeOperations.length ? ' AND operation NOT IN (?)' : ''}${excludeUsernames.length ? ' AND username NOT IN (?)' : ''}
                 ORDER BY creation_time LIMIT ?`,
-            [State.PENDING, ...(excludeOperations.length ? [excludeOperations] : []), limit]
+            [
+                State.PENDING,
+                ...(excludeOperations.length ? [excludeOperations] : []),
+                ...(excludeUsernames.length ? [excludeUsernames] : []),
+                limit
+            ]
         )
         return rows.map(toTask)
     }
@@ -60,6 +65,14 @@ export class TaskRepository {
             [RUNNING_STATES, ...(operations.length ? [operations] : [])]
         )
         return Number(count)
+    }
+
+    async countRunningByUser() {
+        const rows = await this.#select(
+            'SELECT username, COUNT(*) AS count FROM task WHERE state IN (?) GROUP BY username',
+            [RUNNING_STATES]
+        )
+        return new Map(rows.map(({username, count}) => [username, Number(count)]))
     }
 
     activate(task, apiKeyHash) {

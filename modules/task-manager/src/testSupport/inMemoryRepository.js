@@ -18,9 +18,10 @@ export class InMemoryRepository {
         return this.#tasks.get(id) ?? null
     }
 
-    async pendingTasks(limit, {excludeOperations = []} = {}) {
+    async pendingTasks(limit, {excludeOperations = [], excludeUsernames = []} = {}) {
         return [...this.#tasks.values()]
-            .filter(({state, operation}) => state === State.PENDING && !excludeOperations.includes(operation))
+            .filter(({state, operation, username}) =>
+                state === State.PENDING && !excludeOperations.includes(operation) && !excludeUsernames.includes(username))
             .sort((a, b) => a.creationTime - b.creationTime)
             .slice(0, limit)
     }
@@ -31,6 +32,14 @@ export class InMemoryRepository {
 
     async countRunning({operations = []} = {}) {
         return (await this.runningTasks()).filter(task => !operations.length || operations.includes(task.operation)).length
+    }
+
+    async countRunningByUser() {
+        const counts = new Map()
+        for (const {username} of await this.runningTasks()) {
+            counts.set(username, (counts.get(username) ?? 0) + 1)
+        }
+        return counts
     }
 
     async activate(task, apiKeyHash) {

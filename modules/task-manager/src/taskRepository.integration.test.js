@@ -132,6 +132,19 @@ describe('TaskRepository', () => {
         expect(await repository.countRunning()).toBe(1)
     })
 
+    test('counts running tasks per user and leaves the given users out of pending', async () => {
+        const running = aTask({id: 't-1', creationTime: new Date('2026-10-06T09:00:00.000Z')})
+        const waiting = aTask({id: 't-2', creationTime: new Date('2026-10-06T09:00:01.000Z')})
+        const other = aTask({id: 't-3', username: 'bob', creationTime: new Date('2026-10-06T09:00:02.000Z')})
+        await repository.insert(running)
+        await repository.insert(waiting)
+        await repository.insert(other)
+        await repository.activate(running, 'a'.repeat(64))
+
+        expect(await repository.countRunningByUser()).toEqual(new Map([['alice', 1]]))
+        expect((await repository.pendingTasks(10, {excludeUsernames: ['alice']})).map(({id}) => id)).toEqual(['t-3'])
+    })
+
     test('announces every write for the task\'s owner', async () => {
         const task = aTask()
 

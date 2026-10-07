@@ -34,6 +34,7 @@ const main = async () => {
         config: {
             maxConcurrent: config.taskMaxConcurrent,
             maxConcurrentLocal: config.taskMaxConcurrentLocal,
+            maxConcurrentPerUser: config.taskMaxConcurrentPerUser,
             stallTimeoutMs: 15 * 60 * 1000,
             cancelTimeoutMs: 5 * 60 * 1000,
             stopGraceSeconds: 120,

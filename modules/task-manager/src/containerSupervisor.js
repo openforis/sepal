@@ -103,12 +103,17 @@ export class ContainerSupervisor {
         return this.#queue
     }
 
-    // Oldest first, except that local work waits for a local slot without holding up anything else.
+    // Oldest first, except that local work waits for a local slot, and a user at the per-user limit waits for one
+    // of their own tasks to finish, without holding up anything else.
     async #dispatchPending() {
         let free = this.#config.maxConcurrent - await this.#repository.countRunning()
         let freeLocal = this.#config.maxConcurrentLocal - await this.#repository.countRunning({operations: LOCAL_OPERATIONS})
+        const runningByUser = await this.#repository.countRunningByUser()
         while (free > 0) {
-            const [task] = await this.#repository.pendingTasks(1, {excludeOperations: freeLocal > 0 ? [] : LOCAL_OPERATIONS})
+            const [task] = await this.#repository.pendingTasks(1, {
+                excludeOperations: freeLocal > 0 ? [] : LOCAL_OPERATIONS,
+                excludeUsernames: this.#usersAtLimit(runningByUser)
+            })
             if (!task) {
                 return
             }
@@ -119,7 +124,14 @@ export class ContainerSupervisor {
             if (isLocalWork(task.operation)) {
                 freeLocal--
             }
+            runningByUser.set(task.username, (runningByUser.get(task.username) ?? 0) + 1)
         }
+    }
+
+    #usersAtLimit(runningByUser) {
+        return [...runningByUser]
+            .filter(([_username, count]) => count >= this.#config.maxConcurrentPerUser)
+            .map(([username]) => username)
     }
 
     async #launch(task) {

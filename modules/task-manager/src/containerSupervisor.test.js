@@ -317,6 +317,43 @@ describe('local work', () => {
     })
 })
 
+describe('per-user limit', () => {
+    test('a user at the limit waits while a later task of another user starts', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrentPerUser: 1})
+        await repository.insert(aTask({id: 't-1', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', creationTime: new Date(2000)}))
+        await repository.insert(aTask({id: 't-3', username: 'bob', creationTime: new Date(3000)}))
+
+        await supervisor.dispatch()
+
+        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.bob.t-3'])
+        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+    })
+
+    test('a finished task lets the same user\'s next one start', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrentPerUser: 1})
+        await repository.insert(aTask({id: 't-1', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', creationTime: new Date(2000)}))
+        await supervisor.dispatch()
+
+        docker.exit('task.alice.t-1', 0)
+        await supervisor.idle()
+
+        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
+    })
+
+    test('tasks still running from before a restart count towards the limit', async () => {
+        const {repository, docker, newSupervisor} = setup({maxConcurrentPerUser: 1})
+        await repository.insert(aTask({id: 't-1', state: State.ACTIVE, creationTime: new Date(1000)}))
+        docker.containers.set('task.alice.t-1', {taskId: 't-1', running: true})
+        await repository.insert(aTask({id: 't-2', creationTime: new Date(2000)}))
+
+        await newSupervisor().dispatch()
+
+        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+    })
+})
+
 describe('stopping', () => {
     test('stopping a container asks Docker to stop it with a grace period, without waiting for it to exit', async () => {
         const {supervisor, repository, docker} = setup()
@@ -350,7 +387,7 @@ const aTask = overrides => createTask({
     creationTime: new Date(1000), updateTime: new Date(1000), ...overrides
 })
 
-const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10} = {}) => {
+const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUser = 10} = {}) => {
     const clock = fakeClock()
     const repository = new InMemoryRepository(clock)
     const docker = new FakeDocker()
@@ -360,7 +397,7 @@ const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10} = {}) => {
         docker,
         workspace,
         spec: ({task, apiKey}) => ({name: containerName(task), taskId: task.id, apiKey}),
-        config: {maxConcurrent, maxConcurrentLocal, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
+        config: {maxConcurrent, maxConcurrentLocal, maxConcurrentPerUser, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
     })
     return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}
 }
