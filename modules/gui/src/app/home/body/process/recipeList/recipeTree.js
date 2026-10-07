@@ -19,6 +19,10 @@ export const childFolders = (folders, folderId) =>
 export const folderRecipes = (recipes, folderId) =>
     recipes.filter(recipe => at(recipe.folderId) === at(folderId))
 
+// The root answers for a folder that sits there, and for one that is no longer there at all.
+export const parentFolderId = (folders, folderId) =>
+    at(folders.find(({id}) => id === at(folderId))?.parentId)
+
 // Ids already seen end the walk: a parent chain that revisits one is broken, and a path is worth more
 // than a hang.
 export const folderPath = (folders, folderId) => {
