@@ -20,7 +20,7 @@ export class Breadcrumb extends React.Component {
         // current segment, so it stays clickable and the list never strands with no way out.
         const atHome = path.length === 0 && !folderId
         return (
-            <Layout type='horizontal-nowrap' spacing='none'>
+            <Layout type='horizontal-nowrap' spacing='none' alignment='left'>
                 {this.renderSegment({id: ROOT, name: msg('process.recipeList.root'), icon: 'house'}, atHome)}
                 {path.map((segment, index) =>
                     <React.Fragment key={segment.id}>
