@@ -302,7 +302,7 @@ export class WorkerSessionRepository {
     // past the boundary would let a verdict landing one second before it push the deadline to
     // anchor + cap + extension. Clamping subsumes refusal — past the boundary the clamped
     // candidate is already in the past, so GREATEST keeps the existing deadline and the ratchet is
-    // a no-op. Only the busy verdict passes a cap; human and task events are never bounded.
+    // a no-op. Only the busy verdict passes a cap; human interaction is never bounded.
     //
     // The cap is converted to MINUTES before it reaches SQL. MySQL takes only an integer number of
     // units in `INTERVAL n HOUR` and quietly rounds anything else — `INTERVAL 0.1 HOUR` is NOW()

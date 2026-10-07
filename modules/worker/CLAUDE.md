@@ -1,8 +1,7 @@
 # CLAUDE.md - modules/worker
 
 SEPAL worker service (Node.js). Provisions worker instances and manages sandbox sessions. Owns the single
-`worker` MySQL schema via Postgrator. It has no task API and accepts no executor callbacks: export tasks
-belong to `task-manager`.
+`worker` MySQL schema via Postgrator. Export tasks belong to `task-manager`.
 
 ## Database migrations
 
@@ -189,8 +188,11 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
     per instance currently claimed by a session. EC2 (the hosting service) is authoritative for
     everything else about an instance; this table records only the one fact MySQL needs to know.
   - The originals remain LIVE in `sdms` (Java still uses them directly).
-  - Table copied from `sdms`: worker_session.
-  - `task` — remains only as the source of task-manager's one-off import and is dropped in a later release.
+  - Tables copied from `sdms`: `worker_session` and `task`.
+  - `task` — kept only as the source of task-manager's one-off import
+    (`modules/task-manager/migrations/legacy-import/001.do.import.sql`, which reads `worker.task`). The
+    worker's own task import (`migrations/legacy-import/001.do.import.sql`) must stay until task-manager's
+    import has run everywhere; the table is dropped in a later release.
   - `scene_meta_data` lives in the `scene_metadata` schema (moved in Phase 3).
   - `rmb_message` / `rmb_message_processing` (reliable message bus) belong to the Groovy
     sepal-server and stay in `sdms` — NOT part of the worker schema.
