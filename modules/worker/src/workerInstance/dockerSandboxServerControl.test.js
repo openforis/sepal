@@ -54,7 +54,7 @@ describe('startServer', () => {
 
     it('rejects for a non-sandbox session', async () => {
         const control = createDockerSandboxServerControl({config, fetcher: async () => ({Id: 'x'})})
-        await expect(control.startServer({...session, workerType: 'task-executor'}, 'shiny'))
+        await expect(control.startServer({...session, workerType: 'other'}, 'shiny'))
             .rejects.toThrow(/Not a sandbox session/)
     })
 })

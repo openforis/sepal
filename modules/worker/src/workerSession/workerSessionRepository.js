@@ -29,8 +29,8 @@ const SESSION_COLUMNS = `id, state, username, worker_type, instance_type, instan
     notification_state, notified_time`
 
 // unattendedAnchor — the cap's anchor (§2). COALESCE, because last_interaction_time is NULL until
-// the first human event and two paths reach a busy verdict without one (a task-executor session,
-// and a sandbox session whose job starts before any app or terminal is opened). `now − NULL` is
+// the first human event and a busy verdict can be reached without one (a sandbox
+// session whose job starts before any app or terminal is opened). `now − NULL` is
 // NULL in SQL, which would make the comparison false and the busy ratchet UNBOUNDED — the opposite
 // of the intent, in precisely the cases the cap exists for. creation_time is the never-NULL
 // backstop.

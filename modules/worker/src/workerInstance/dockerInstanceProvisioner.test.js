@@ -22,17 +22,10 @@ const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
 const CONFIG = {
     workerAmiVersion: '5.1.0',
     sepalHost: 'sepal.example.com',
-    sepalHttpsPort: 443,
     sepalHostDataDir: '/data',
-    sepalHostProjectDir: '/project',
     dockerPort: 2375,
     dockerEntryPoint: 'v1.38',
     dockerRegistryHost: 'registry.example.com',
-    googleProjectId: 'my-gcp-project',
-    googleRegion: 'europe-west1',
-    googleEarthEngineAccount: 'ee@example.iam.gserviceaccount.com',
-    googleEarthEnginePrivateKey: 'private-key-pem',
-    deployEnvironment: 'PRODUCTION',
     syslogAddress: null,
 }
 
@@ -279,76 +272,6 @@ describe('buildContainerBody — SANDBOX', () => {
         })
         await provisioner.provisionInstance(makeInstance())
         expect(capturedBody.HostConfig.ExtraHosts).toEqual(['sepal.example.com:host-gateway'])
-    })
-})
-
-describe('buildContainerBody — TASK_EXECUTOR', () => {
-    let capturedBody
-
-    const taskInstance = makeInstance({reservation: {username: 'alice', workerType: 'task-executor', sessionId: 'sess-1'}})
-
-    beforeEach(() => {
-        mockReadFileSync.mockReturnValue('ssh-rsa test')
-        setupFetchMock({captureCreate: body => { capturedBody = body }})
-    })
-
-    const runProvision = (cfg = CONFIG) => {
-        const provisioner = createDockerInstanceProvisioner({
-            config: cfg,
-            instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: SESSION_API_KEY,
-        })
-        return provisioner.provisionInstance(taskInstance)
-    }
-
-    test('Image field uses task image name', async () => {
-        await runProvision()
-        expect(capturedBody.Image).toBe('registry.example.com/openforis/task:5.1.0')
-    })
-
-    test('Env contains GOOGLE_PROJECT_ID', async () => {
-        await runProvision()
-        expect(capturedBody.Env).toContain('GOOGLE_PROJECT_ID=my-gcp-project')
-    })
-
-    test('Env contains EE_PRIVATE_KEY with line breaks replaced', async () => {
-        const cfg = {...CONFIG, googleEarthEnginePrivateKey: 'line1\nline2\nline3'}
-        await runProvision(cfg)
-        expect(capturedBody.Env).toContain('EE_PRIVATE_KEY=line1-----LINE BREAK-----line2-----LINE BREAK-----line3')
-    })
-
-    test('Env contains SEPAL_ENDPOINT', async () => {
-        await runProvision()
-        expect(capturedBody.Env).toContain('SEPAL_ENDPOINT=https://sepal.example.com:443')
-    })
-
-    test('Env carries the session api key and no administrator password', async () => {
-        await runProvision()
-        expect(capturedBody.Env).toContain('SEPAL_API_KEY=session-key')
-        expect(capturedBody.Env.some(e => e.startsWith('SEPAL_ADMIN_PASSWORD='))).toBe(false)
-    })
-
-    test('Env contains NODE_TLS_REJECT_UNAUTHORIZED=1 in PRODUCTION', async () => {
-        await runProvision()
-        expect(capturedBody.Env).toContain('NODE_TLS_REJECT_UNAUTHORIZED=1')
-    })
-
-    test('ExposedPorts contains 80', async () => {
-        await runProvision()
-        expect(capturedBody.ExposedPorts).toMatchObject({'80/tcp': {}})
-    })
-
-    test('HostConfig.PortBindings maps 80 → 8080', async () => {
-        await runProvision()
-        expect(capturedBody.HostConfig.PortBindings['80/tcp']).toEqual([{HostPort: '8080'}])
-    })
-
-    test('DEV mode adds hot-reload volume mounts', async () => {
-        const cfg = {...CONFIG, deployEnvironment: 'DEV', sepalHostProjectDir: '/project'}
-        await runProvision(cfg)
-        const binds = capturedBody.HostConfig.Binds
-        expect(binds.some(b => b.includes('/modules/task/src'))).toBe(true)
-        expect(binds.some(b => b.includes('/lib/js/shared/src'))).toBe(true)
     })
 })
 
@@ -721,6 +644,16 @@ describe('instanceStatus', () => {
         expect(await probe()).toBe('UNKNOWN')
     })
 
+    test('UNKNOWN, not MISSING, for a retired worker type', async () => {
+        inspectResponds({State: {Running: true}})
+        const status = await createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: NULL_API_KEY_IMPL,
+        }).instanceStatus(makeInstance({reservation: {username: 'alice', workerType: 'task-executor', sessionId: 'sess-1'}}))
+        expect(status).toBe('UNKNOWN')
+    })
+
     test('inspects the container instead of running an exec in it', async () => {
         inspectResponds({State: {Running: true}})
         await probe()
@@ -941,7 +874,6 @@ describe('removeOrphanedContainers', () => {
     it('keeps containers whose name suffix matches a live instance', async () => {
         const {fetch, requests} = makeFetch([
             {Id: 'c-live', Names: ['/sandbox.admin.aaa'], Created: OLD},
-            {Id: 'c-task-live', Names: ['/task.admin.aaa'], Created: OLD},
         ])
         global.fetch = fetch
 
@@ -949,6 +881,19 @@ describe('removeOrphanedContainers', () => {
 
         expect(deletedContainerIds(requests)).toEqual([])
         expect(removed).toEqual([])
+    })
+
+    it('leaves task-manager task containers on the shared daemon alone', async () => {
+        const {fetch, requests} = makeFetch([
+            {Id: 'c-task', Names: ['/task.alice.0f3c2a9e-1b2c-4d5e-8f90-123456789abc'], Created: OLD},
+            {Id: 'c-orphan', Names: ['/sandbox.alice.fancy-aspen.i-orphan'], Created: OLD},
+        ])
+        global.fetch = fetch
+
+        const removed = await makeProvisioner().removeOrphanedContainers([])
+
+        expect(deletedContainerIds(requests)).toEqual(['c-orphan'])
+        expect(removed).toEqual(['/sandbox.alice.fancy-aspen.i-orphan'])
     })
 
     it('keeps a current-format container whose name ends with a live instance id', async () => {

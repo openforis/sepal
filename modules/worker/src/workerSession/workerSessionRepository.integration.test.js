@@ -609,13 +609,13 @@ describe('WorkerSessionRepository', () => {
     describe('findSessionByApiKey', () => {
         test('names the session, its owner and its worker type for an open session', async () => {
             await repository.insert(activeSession({
-                id: 'executor-1', workerType: 'TASK_EXECUTOR', apiKey: 'live-key'
+                id: 'executor-1', workerType: 'SANDBOX', apiKey: 'live-key'
             }))
 
             const found = await repository.findSessionByApiKey('live-key')
 
             expect(found).toEqual({
-                sessionId: 'executor-1', username: USERNAME, workerType: 'TASK_EXECUTOR'
+                sessionId: 'executor-1', username: USERNAME, workerType: 'SANDBOX'
             })
         })
 
@@ -730,7 +730,7 @@ describe('WorkerSessionRepository', () => {
         test('narrows to the state, worker type and instance type it is given', async () => {
             await repository.insert(activeSession({id: 'match'}))
             await repository.insert(activeSession({
-                id: 'other-type', workerType: 'TASK_EXECUTOR', instance: {id: 'i-2', host: HOST}
+                id: 'other-type', workerType: 'OTHER_TYPE', instance: {id: 'i-2', host: HOST}
             }))
             await repository.insert(aSession({
                 id: 'other-state', state: State.CLOSED, instance: {id: 'i-3', host: HOST}

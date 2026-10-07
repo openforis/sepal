@@ -5,7 +5,7 @@
 import {jest} from '@jest/globals'
 
 import {instanceName} from '../instanceName.js'
-import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
+import {SANDBOX} from '../workerInstance/workerTypes.js'
 import {InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetErrors.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
@@ -51,17 +51,6 @@ describe('requestSession', () => {
         await expect(mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})).rejects.toThrow()
 
         expect(events.emitWorkerSessionRequested).not.toHaveBeenCalled()
-    })
-
-    test('every worker type gets its own api key', async () => {
-        const {mgr, repo} = build()
-
-        await mgr.requestSession({username: 'bob', workerType: TASK_EXECUTOR, instanceType: 'T3aSmall'})
-        await mgr.requestSession({username: 'bob', workerType: SANDBOX, instanceType: 'T3aSmall'})
-
-        const [taskExecutor, sandbox] = repo.insert.mock.calls.map(([session]) => session)
-        expect(taskExecutor.apiKey).toBeTruthy()
-        expect(sandbox.apiKey).toBeTruthy()
     })
 
     test('requestInstance runs BEFORE insert (api-key ordering, parity risk #3)', async () => {
@@ -212,6 +201,17 @@ describe('closeSession', () => {
         expect(repo.update).not.toHaveBeenCalled()
         expect(instanceManager.releaseInstance).not.toHaveBeenCalled()
         expect(events.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    })
+
+    test('a session of the retired task-executor type is closed and its instance released', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE, workerType: 'task-executor'})})
+        const {mgr, instanceManager, events} = build({repo})
+
+        await mgr.closeSession({sessionId: 's-1'})
+
+        expect(repo.update).toHaveBeenCalledWith(expect.objectContaining({state: State.CLOSED}))
+        expect(instanceManager.releaseInstance).toHaveBeenCalledWith('i-1')
+        expect(events.emitWorkerSessionClosed).toHaveBeenCalledTimes(1)
     })
 
     test('matching owner allowed', async () => {

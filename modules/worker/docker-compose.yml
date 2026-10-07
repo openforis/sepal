@@ -32,7 +32,6 @@ services:
       WORKER_AMI_VERSION: "${WORKER_AMI_VERSION:-${SEPAL_VERSION:-latest}}"
       SEPAL_USER: "sepaladmin"
       SEPAL_HOST: "${SEPAL_HOST}"
-      SEPAL_HTTPS_PORT: "${SEPAL_HTTPS_PORT}"
       # The SSH gateway's public address, for the ssh login the GUI offers to copy. Optional.
       SEPAL_SSH_HOST: "${SEPAL_SSH_HOST}"
       SEPAL_HOST_DATA_DIR: "${SEPAL_DATA_DIR}"
@@ -64,11 +63,6 @@ services:
       DOCKER_PORT: "2375"
       DOCKER_ENTRY_POINT: "v1.44"
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
-      # ─── GEE credentials ───────────────────────────────────────────────────
-      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
-      GOOGLE_REGION: "${GOOGLE_REGION}"
-      GOOGLE_EARTH_ENGINE_ACCOUNT: "${EE_ACCOUNT}"
-      GOOGLE_EARTH_ENGINE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
       CARTODB_BASEMAP_KEY: "${CARTODB_BASEMAP_KEY:-}"
       # ─── Google OAuth (workersession RefreshGoogleTokens → user module) ────
       GOOGLE_OAUTH_ENDPOINT: "${GOOGLE_OAUTH_ENDPOINT:-http://user/google/}"

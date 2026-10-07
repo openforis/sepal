@@ -11,10 +11,6 @@ services:
       - ${SEPAL_PROJECT_DIR}/modules/worker/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
       # module
       - ${SEPAL_PROJECT_DIR}/modules/worker:/usr/local/src/sepal/modules/worker
-    # Host path of the project sources, used by workerTypes.js to add task-container hot-reload
-    # mounts. Dev-only: prod has no project checkout on the host (same pattern as app-launcher).
-    environment:
-      SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
     # Resolve host.docker.internal to the Docker host so the local hosting provider can reach the
     # docker-api socat proxy (:2375) and the locally-provisioned sandbox containers. Dev-only —
     # with HOSTING_SERVICE=aws the worker uses each instance's own Docker daemon (real EC2 IPs).

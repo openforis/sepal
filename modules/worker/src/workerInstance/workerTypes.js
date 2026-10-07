@@ -1,18 +1,13 @@
-// WorkerTypes — container specs for the SANDBOX and TASK_EXECUTOR worker types.
+// WorkerTypes — container specs for the SANDBOX worker type.
 //
 // containerName(instance) comes from ../containerName.js, which needs both the session id the
 // two-word name derives from (carried on the reservation) and the instance id.
 
 import fs from 'node:fs'
 
-import {getLogger} from '#sepal/log'
-
 import {containerName} from '../containerName.js'
 
-const log = getLogger('workerTypes')
-
 const SANDBOX = 'sandbox'
-const TASK_EXECUTOR = 'task-executor'
 const USER_HOME_NAME = 'sepal-user'
 
 const TMP_VOLUME_PREFIX = 'sepal-tmp.'
@@ -27,7 +22,7 @@ const tmpMounts = ['/tmp:nocopy', '/var/tmp:nocopy', `/home/${USER_HOME_NAME}/tm
 
 // WORKER_IMAGE_NAMES — every image name a worker instance can run; the provisioner uses
 // these to recognize SEPAL worker containers among everything else on a (shared) daemon.
-const WORKER_IMAGE_NAMES = ['sandbox', 'task']
+const WORKER_IMAGE_NAMES = ['sandbox']
 
 const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, links = {}, environment = {}, runCommand = [], waitCommand = []}) => ({
     name,
@@ -89,67 +84,12 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
     }
 }
 
-const createTaskExecutorWorkerType = (instance, config, apiKey) => {
-    const username = instance.reservation.username
-    const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
-    const eePrivateKey = (config.googleEarthEnginePrivateKey ?? '').replaceAll('\n', '-----LINE BREAK-----')
-
-    const sepalEndpoint = `https://${config.sepalHost}:${config.sepalHttpsPort ?? 443}`
-
-    const volumes = {
-        [userHome]: `/home/${USER_HOME_NAME}`,
-        [tmpVolumeName(instance.id)]: tmpMounts,
-    }
-
-    // DEV mode: hot-reload mounts for task + shared lib.
-    // Without sepalHostProjectDir the binds would degrade to '/modules/task/src' etc. — Docker
-    // creates empty host dirs and mounts them OVER the image's baked-in code, breaking the container.
-    if (config.deployEnvironment === 'DEV') {
-        if (config.sepalHostProjectDir) {
-            volumes[`${config.sepalHostProjectDir}/modules/task/src`] = '/usr/local/src/sepal/modules/task/src'
-            volumes[`${config.sepalHostProjectDir}/lib/js/shared/src`] = '/usr/local/src/sepal/lib/js/shared/src'
-            volumes[`${config.sepalHostProjectDir}/lib/js/ee/src`] = '/usr/local/src/sepal/lib/js/ee/src'
-        } else {
-            log.warn('DEV deploy environment but sepalHostProjectDir is not set - skipping task hot-reload mounts')
-        }
-    }
-
-    return {
-        id: TASK_EXECUTOR,
-        images: [
-            makeImage({
-                name: 'task',
-                exposedPorts: [80],
-                publishedPorts: {8080: 80},
-                volumes,
-                environment: {
-                    GOOGLE_PROJECT_ID: config.googleProjectId,
-                    GOOGLE_REGION: config.googleRegion,
-                    EE_ACCOUNT: config.googleEarthEngineAccount,
-                    EE_PRIVATE_KEY: eePrivateKey,
-                    SEPAL_ENDPOINT: sepalEndpoint,
-                    SEPAL_API_KEY: apiKey ?? '',
-                    USERNAME: USER_HOME_NAME,
-                    NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment === 'DEV' ? 0 : 1,
-                    DEPLOY_ENVIRONMENT: config.deployEnvironment,
-                    NVIDIA_VISIBLE_DEVICES: 'all',
-                    NVIDIA_DRIVER_CAPABILITIES: 'all',
-                },
-                waitCommand: ['wait_until_initialized.sh'],
-            }),
-        ],
-    }
-}
-
 // createWorkerType — throws if workerTypeId is unknown.
 const createWorkerType = (workerTypeId, instance, config, apiKey = null) => {
     if (workerTypeId === SANDBOX) {
         return createSandboxWorkerType(instance, config, apiKey)
     }
-    if (workerTypeId === TASK_EXECUTOR) {
-        return createTaskExecutorWorkerType(instance, config, apiKey)
-    }
     throw new Error(`No worker type with id: ${workerTypeId}`)
 }
 
-export {createWorkerType, SANDBOX, TASK_EXECUTOR, TMP_VOLUME_PREFIX, tmpVolumeName, USER_HOME_NAME, WORKER_IMAGE_NAMES}
+export {createWorkerType, SANDBOX, TMP_VOLUME_PREFIX, tmpVolumeName, USER_HOME_NAME, WORKER_IMAGE_NAMES}

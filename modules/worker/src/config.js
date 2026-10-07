@@ -6,7 +6,6 @@ const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_HOSTING_SERVICE = 'local'
-const DEFAULT_SEPAL_HTTPS_PORT = 443
 const DEFAULT_DOCKER_PORT = 2375
 const DEFAULT_RABBITMQ_PORT = 5672
 
@@ -57,7 +56,7 @@ program
 
     // ─── SEPAL creds / host ─────────────────────────────────────────────────
     .addOption(
-        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox and task images were made from (e.g. 1937)')
+        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox image were made from (e.g. 1937)')
             .env('WORKER_AMI_VERSION')
     )
     .addOption(
@@ -69,22 +68,12 @@ program
             .env('SEPAL_HOST')
     )
     .addOption(
-        new Option('--sepal-https-port <number>', 'SEPAL HTTPS port (default 443)')
-            .env('SEPAL_HTTPS_PORT')
-            .argParser(v => parseInt(v))
-            .default(DEFAULT_SEPAL_HTTPS_PORT)
-    )
-    .addOption(
         new Option('--sepal-ssh-host <string>', 'Public address of the SSH gateway, for the ssh login shown to users (optional)')
             .env('SEPAL_SSH_HOST')
     )
     .addOption(
         new Option('--sepal-host-data-dir <path>', 'Host path to /data (mounted into sandbox containers)')
             .env('SEPAL_HOST_DATA_DIR')
-    )
-    .addOption(
-        new Option('--sepal-host-project-dir <path>', 'Host path to SEPAL project source (DEV only, optional)')
-            .env('SEPAL_HOST_PROJECT_DIR')
     )
 
     // ─── Instance usage monitoring ──────────────────────────────────────────
@@ -236,30 +225,6 @@ program
             .env('DOCKER_REGISTRY_HOST')
     )
 
-    // ─── GEE credentials ────────────────────────────────────────────────────
-    .addOption(
-        new Option('--google-project-id <string>', 'Google Cloud project ID for GEE')
-            .env('GOOGLE_PROJECT_ID')
-    )
-    .addOption(
-        new Option('--google-region <string>', 'Google Cloud region (e.g. europe-west1)')
-            .env('GOOGLE_REGION')
-    )
-    .addOption(
-        new Option('--google-earth-engine-account <string>', 'GEE service account email')
-            .env('GOOGLE_EARTH_ENGINE_ACCOUNT')
-    )
-    .addOption(
-        new Option('--google-earth-engine-private-key <string>', 'GEE service account private key (PEM)')
-            .env('GOOGLE_EARTH_ENGINE_PRIVATE_KEY')
-    )
-
-    // ─── Deploy environment ─────────────────────────────────────────────────
-    .addOption(
-        new Option('--deploy-environment <string>', 'Deployment environment name (e.g. DEV | PRODUCTION)')
-            .env('DEPLOY_ENVIRONMENT')
-    )
-
     // ─── Sandbox basemap key ────────────────────────────────────────────────
     .addOption(
         new Option('--carto-db-basemap-key <string>', 'CARTO basemap key forwarded into sandbox containers')
@@ -345,9 +310,7 @@ const {
     workerAmiVersion,
     sepalUser,
     sepalHost,
-    sepalHttpsPort,
     sepalHostDataDir,
-    sepalHostProjectDir,
     sepalSshHost,
     usageSamplingIntervalSeconds,
     usageSampleRetentionDays,
@@ -372,14 +335,9 @@ const {
     dockerPort,
     dockerEntryPoint,
     dockerRegistryHost,
-    googleProjectId,
-    googleRegion,
-    googleEarthEngineAccount,
-    googleEarthEnginePrivateKey,
     googleOAuthEndpoint,
     cartoDbBasemapKey,
     budgetUrl,
-    deployEnvironment,
     rabbitmqHost,
     rabbitmqPort,
     region,
@@ -405,17 +363,12 @@ export {
     busyNetworkThresholdKbps,
     busyWindowMinutes,
     cartoDbBasemapKey,
-    deployEnvironment,
     dockerEntryPoint,
     dockerPort,
     dockerRegistryHost,
     emailExtensionMinutes,
     environment,
-    googleEarthEngineAccount,
-    googleEarthEnginePrivateKey,
     googleOAuthEndpoint,
-    googleProjectId,
-    googleRegion,
     hostingService,
     interactionExtensionMinutes,
     manualExtensionMinutes,
@@ -431,8 +384,6 @@ export {
     sepalEndpoint,
     sepalHost,
     sepalHostDataDir,
-    sepalHostProjectDir,
-    sepalHttpsPort,
     sepalSshHost,
     sepalUser,
     sessionExpiryMode,

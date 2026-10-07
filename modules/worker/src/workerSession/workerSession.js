@@ -6,7 +6,7 @@
 //   id                    — session id
 //   state                 — PENDING | ACTIVE | CLOSED
 //   username              — owner
-//   workerType            — SANDBOX | TASK_EXECUTOR
+//   workerType            — SANDBOX
 //   instanceType          — instance type id
 //   instance              — { id, host } (maps to the instance_id / host columns)
 //   host                  — convenience copy of instance.host (kept in sync by the factory/mutators)

@@ -6,9 +6,9 @@ import {promisify} from 'util'
 // Compose hands an unset ${VAR} to the container as an empty string.
 describe('config', () => {
     test('uses the default for an option whose variable is empty', async () => {
-        const config = await loadConfig({SEPAL_HTTPS_PORT: ''})
+        const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: ''})
 
-        expect(config.sepalHttpsPort).toBe(443)
+        expect(config.usageSamplingIntervalSeconds).toBe(60)
     })
 
     test('leaves an option without a default unset when its variable is empty', async () => {
@@ -18,9 +18,9 @@ describe('config', () => {
     })
 
     test('parses a variable that has a value', async () => {
-        const config = await loadConfig({SEPAL_HTTPS_PORT: '8443', SESSION_EXPIRY_SECRET: 'secret'})
+        const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: '30', SESSION_EXPIRY_SECRET: 'secret'})
 
-        expect(config).toMatchObject({sepalHttpsPort: 8443, sessionExpirySecret: 'secret'})
+        expect(config).toMatchObject({usageSamplingIntervalSeconds: 30, sessionExpirySecret: 'secret'})
     })
 })
 
