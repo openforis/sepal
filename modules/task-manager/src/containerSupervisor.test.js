@@ -1,3 +1,4 @@
+import {containerName} from './containerSpec.js'
 import {ContainerSupervisor} from './containerSupervisor.js'
 import {createTask, State} from './task.js'
 import {InMemoryRepository} from './testSupport/inMemoryRepository.js'
@@ -9,7 +10,7 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect(docker.containers.get('sepal-task-t-1')).toMatchObject({running: true, taskId: 't-1'})
+        expect(docker.containers.get('task.alice.t-1')).toMatchObject({running: true, taskId: 't-1'})
         expect(await repository.getTask(task.id)).toMatchObject({state: State.ACTIVE})
     })
 
@@ -20,7 +21,7 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect([...docker.containers.keys()]).toEqual(['sepal-task-t-1'])
+        expect([...docker.containers.keys()]).toEqual(['task.alice.t-1'])
         expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
     })
 
@@ -38,14 +39,14 @@ describe('launching', () => {
 
     test('a task whose container cannot be started does not take a slot from the next pending task', async () => {
         const {supervisor, repository, docker} = setup({maxConcurrent: 1})
-        docker.failingRuns.add('sepal-task-t-1')
+        docker.failingRuns.add('task.alice.t-1')
         await repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
         await repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
 
         await supervisor.dispatch()
 
         expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
     })
 })
 
@@ -56,14 +57,14 @@ describe('collecting', () => {
         await supervisor.dispatch()
 
         workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}})
-        docker.exit('sepal-task-t-1', 0)
+        docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
         expect(await repository.getTask('t-1')).toMatchObject({
             state: State.COMPLETED,
             statusDescription: JSON.stringify({messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'})
         })
-        expect(docker.containers.has('sepal-task-t-1')).toBe(false)
+        expect(docker.containers.has('task.alice.t-1')).toBe(false)
         expect(workspace.removed).toEqual(['t-1'])
     })
 
@@ -72,7 +73,7 @@ describe('collecting', () => {
         await repository.add(aTask())
         await supervisor.dispatch()
 
-        docker.exit('sepal-task-t-1', 137)
+        docker.exit('task.alice.t-1', 137)
         await supervisor.idle()
 
         const task = await repository.getTask('t-1')
@@ -86,7 +87,7 @@ describe('collecting', () => {
         await supervisor.dispatch()
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
-        docker.exit('sepal-task-t-1', 143)
+        docker.exit('task.alice.t-1', 143)
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
@@ -98,7 +99,7 @@ describe('collecting', () => {
         await supervisor.dispatch()
 
         workspace.results.set('t-1', {state: 'CANCELED'})
-        docker.exit('sepal-task-t-1', 0)
+        docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
         const task = await repository.getTask('t-1')
@@ -113,7 +114,7 @@ describe('collecting', () => {
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
         workspace.results.set('t-1', {state: 'CANCELED'})
-        docker.exit('sepal-task-t-1', 0)
+        docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
@@ -125,10 +126,10 @@ describe('collecting', () => {
         await repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
         await supervisor.dispatch()
 
-        docker.exit('sepal-task-t-1', 1)
+        docker.exit('task.alice.t-1', 1)
         await supervisor.idle()
 
-        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
     })
 })
 
@@ -136,12 +137,12 @@ describe('reconciling after a restart', () => {
     test('a running container found after a restart is watched', async () => {
         const {repository, docker, workspace, newSupervisor} = setup()
         await repository.add(aTask({state: State.ACTIVE}))
-        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: true})
+        docker.containers.set('task.alice.t-1', {taskId: 't-1', running: true})
         const supervisor = newSupervisor()
 
         await supervisor.reconcile()
         workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed'}})
-        docker.exit('sepal-task-t-1', 0)
+        docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
@@ -150,13 +151,13 @@ describe('reconciling after a restart', () => {
     test('an exited container found after a restart is collected', async () => {
         const {repository, docker, workspace, newSupervisor} = setup()
         await repository.add(aTask({state: State.ACTIVE}))
-        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: false, exitCode: 0})
+        docker.containers.set('task.alice.t-1', {taskId: 't-1', running: false, exitCode: 0})
         workspace.results.set('t-1', {state: 'FAILED', statusDescription: {messageKey: 'tasks.status.failed'}})
 
         await newSupervisor().reconcile()
 
         expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.has('sepal-task-t-1')).toBe(false)
+        expect(docker.containers.has('task.alice.t-1')).toBe(false)
     })
 
     test('an active task without a container was interrupted by a server restart', async () => {
@@ -189,7 +190,7 @@ describe('reconciling after a restart', () => {
 
         await supervisor.reconcile()
         workspace.results.set('t-1', {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed'}})
-        docker.exit('sepal-task-t-1', 0)
+        docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
@@ -197,18 +198,18 @@ describe('reconciling after a restart', () => {
 
     test('a container no task is running in is removed', async () => {
         const {docker, newSupervisor} = setup()
-        docker.containers.set('sepal-task-gone', {taskId: 'gone', running: true})
+        docker.containers.set('task.alice.gone', {taskId: 'gone', running: true})
 
         await newSupervisor().reconcile()
 
-        expect(docker.containers.has('sepal-task-gone')).toBe(false)
+        expect(docker.containers.has('task.alice.gone')).toBe(false)
     })
 
     test('a container without a task id is removed, and does not stop the rest of the reconcile', async () => {
         const {docker, newSupervisor} = setup()
         docker.containers.set('unlabelled-1', {running: true})
         docker.containers.set('unlabelled-2', {running: false})
-        docker.containers.set('sepal-task-gone', {taskId: 'gone', running: true})
+        docker.containers.set('task.alice.gone', {taskId: 'gone', running: true})
 
         await newSupervisor().reconcile()
 
@@ -243,7 +244,7 @@ describe('timeouts', () => {
         const task = await repository.getTask('t-1')
         expect(task.state).toBe(State.FAILED)
         expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.stalled'})
-        expect(docker.killed).toEqual(['sepal-task-t-1'])
+        expect(docker.killed).toEqual(['task.alice.t-1'])
     })
 
     test('a cancellation the container does not finish in time is forced', async () => {
@@ -257,7 +258,7 @@ describe('timeouts', () => {
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
-        expect(docker.killed).toEqual(['sepal-task-t-1'])
+        expect(docker.killed).toEqual(['task.alice.t-1'])
     })
 })
 
@@ -265,7 +266,7 @@ describe('starting', () => {
     test('task-manager downtime does not count against a cancellation in progress', async () => {
         const {repository, docker, clock, newSupervisor} = setup()
         await repository.add(aTask({state: State.CANCELING}))
-        docker.containers.set('sepal-task-t-1', {taskId: 't-1', running: true})
+        docker.containers.set('task.alice.t-1', {taskId: 't-1', running: true})
         clock.advance(6 * 60 * 1000)
         const supervisor = newSupervisor()
 
@@ -287,7 +288,7 @@ describe('local work', () => {
 
         await supervisor.dispatch()
 
-        expect([...docker.containers.keys()].sort()).toEqual(['sepal-task-t-1', 'sepal-task-t-3'])
+        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.alice.t-3'])
         expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
     })
 
@@ -297,22 +298,22 @@ describe('local work', () => {
         await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
         await supervisor.dispatch()
 
-        docker.exit('sepal-task-t-1', 1)
+        docker.exit('task.alice.t-1', 1)
         await supervisor.idle()
 
-        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
     })
 
     test('a local task whose container cannot be started does not take the local slot', async () => {
         const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
-        docker.failingRuns.add('sepal-task-t-1')
+        docker.failingRuns.add('task.alice.t-1')
         await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
         await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
 
         await supervisor.dispatch()
 
         expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.get('sepal-task-t-2')).toMatchObject({running: true})
+        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
     })
 })
 
@@ -324,7 +325,7 @@ describe('stopping', () => {
 
         await supervisor.stopContainer(await repository.getTask('t-1'))
 
-        expect(docker.stopped).toEqual([{name: 'sepal-task-t-1', seconds: 120}])
+        expect(docker.stopped).toEqual([{name: 'task.alice.t-1', seconds: 120}])
     })
 
     test('a container whose launch is in progress is stopped once it runs', async () => {
@@ -338,7 +339,7 @@ describe('stopping', () => {
         docker.releaseRun()
         await Promise.all([launch, stopping])
 
-        expect(docker.stopped).toEqual([{name: 'sepal-task-t-1', seconds: 120}])
+        expect(docker.stopped).toEqual([{name: 'task.alice.t-1', seconds: 120}])
     })
 })
 
@@ -358,7 +359,7 @@ const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10} = {}) => {
         repository,
         docker,
         workspace,
-        spec: ({task, apiKey}) => ({name: `sepal-task-${task.id}`, taskId: task.id, apiKey}),
+        spec: ({task, apiKey}) => ({name: containerName(task), taskId: task.id, apiKey}),
         config: {maxConcurrent, maxConcurrentLocal, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
     })
     return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}

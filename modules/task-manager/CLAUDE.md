@@ -1,6 +1,6 @@
 # CLAUDE.md - modules/task-manager
 
-Runs each SEPAL export task in its own detached Docker container (`sepal-task-<taskId>`) on the main host's
+Runs each SEPAL export task in its own detached Docker container (`task.<username>.<taskId>`, like sandbox containers) on the main host's
 Docker daemon, instead of inside a user's worker session. Owns the `task_manager` MySQL schema and serves the
 GUI task API (the contract the worker module served before), the container progress callback, the gateway's
 API-key check, and the task-list websocket.

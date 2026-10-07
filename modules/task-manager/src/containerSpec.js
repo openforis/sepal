@@ -11,7 +11,9 @@ const SOURCE = '/usr/local/src/sepal'
 
 export const TASK_NETWORK = 'sepal-task'
 
-export const containerName = taskId => `sepal-task-${taskId}`
+// Named like a sandbox container ("{image}.{username}.{instanceName}.{instanceId}"), so `docker ps` on the host reads
+// the same way for both.
+export const containerName = ({id, username}) => `task.${username}.${id}`
 
 export const taskDirectory = (sepalHostDataDir, taskId) =>
     `${sepalHostDataDir}/task-manager/tasks/${taskId}`
@@ -21,7 +23,7 @@ export const taskDirectory = (sepalHostDataDir, taskId) =>
 export const containerSpec = ({task, apiKey, config}) => {
     const dev = config.deployEnvironment === 'DEV'
     return {
-        name: containerName(task.id),
+        name: containerName(task),
         Image: `${config.dockerRegistryHost}/openforis/task:${config.sepalVersion}`,
         Labels: {
             [LABELS.MANAGED]: 'true',

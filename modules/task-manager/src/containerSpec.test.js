@@ -17,7 +17,7 @@ const TASK = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', oper
 test('runs the image of the release that launched it, under a name and labels that identify the task', () => {
     const spec = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
 
-    expect(spec.name).toBe('sepal-task-t-1')
+    expect(spec.name).toBe('task.alice.t-1')
     expect(spec.Image).toBe('registry.test/openforis/task:1953')
     expect(spec.Labels).toEqual({[LABELS.MANAGED]: 'true', [LABELS.TASK_ID]: 't-1', [LABELS.USERNAME]: 'alice'})
 })

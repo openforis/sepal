@@ -76,7 +76,7 @@ export class ContainerSupervisor {
     // has exited, up to the grace period later, so it is issued, not awaited.
     async stopContainer(task) {
         await this.#queue
-        this.#docker.stop(containerName(task.id), this.#config.stopGraceSeconds)
+        this.#docker.stop(containerName(task), this.#config.stopGraceSeconds)
             .catch(error => log.error(`${taskTag(task)} could not be stopped`, error))
     }
 
@@ -133,7 +133,7 @@ export class ContainerSupervisor {
         } catch (error) {
             log.error(`${taskTag(task)} could not be launched`, error)
             await this.#repository.transition(task, {from: RUNNING_STATES, to: State.FAILED, statusDescription: LAUNCH_FAILED})
-            await this.#discard(task.id)
+            await this.#discard(task)
             return false
         }
         log.info(`${taskTag(task)} launched`)
@@ -146,21 +146,21 @@ export class ContainerSupervisor {
             return
         }
         this.#watched.add(task.id)
-        this.#docker.wait(containerName(task.id)).then(
-            () => this.#enqueue('collect', () => this.#collect(task.id)),
+        this.#docker.wait(containerName(task)).then(
+            () => this.#enqueue('collect', () => this.#collect(task)),
             // Waiting ends when the daemon restarts too; the next reconcile picks the container up again.
             error => log.warn(`${taskTag(task)} wait interrupted`, error)
         ).finally(() => this.#watched.delete(task.id))
     }
 
-    async #collect(taskId) {
-        const task = await this.#repository.getTask(taskId)
-        if (task && RUNNING_STATES.includes(task.state)) {
-            const {state, statusDescription} = this.#outcome(task, await this.#workspace.readResult(taskId))
-            await this.#repository.transition(task, {from: RUNNING_STATES, to: state, statusDescription})
-            log.info(`${taskTag(task)} ${state}`)
+    async #collect(task) {
+        const current = await this.#repository.getTask(task.id)
+        if (current && RUNNING_STATES.includes(current.state)) {
+            const {state, statusDescription} = this.#outcome(current, await this.#workspace.readResult(task.id))
+            await this.#repository.transition(current, {from: RUNNING_STATES, to: state, statusDescription})
+            log.info(`${taskTag(current)} ${state}`)
         }
-        await this.#discard(taskId)
+        await this.#discard(task)
         await this.#dispatchPending()
     }
 
@@ -190,14 +190,15 @@ export class ContainerSupervisor {
             } else if (container.running) {
                 this.#watch(task)
             } else {
-                await this.#collect(task.id)
+                await this.#collect(task)
             }
         }
         const runningIds = new Set(running.map(({id}) => id))
         for (const container of containers.values()) {
             if (!runningIds.has(container.taskId)) {
                 log.warn(`Removing container ${container.name}: no running task`)
-                await this.#discard(container.taskId)
+                await this.#docker.remove(container.name)
+                await this.#workspace.remove(container.taskId)
             }
         }
     }
@@ -225,22 +226,22 @@ export class ContainerSupervisor {
         const now = this.#config.clock().getTime()
         for (const task of await this.#repository.stalledTasks(new Date(now - this.#config.stallTimeoutMs))) {
             await this.#repository.transition(task, {from: [State.ACTIVE], to: State.FAILED, statusDescription: STALLED})
-            await this.#kill(task.id)
+            await this.#kill(task)
         }
         for (const task of await this.#repository.cancelingSince(new Date(now - this.#config.cancelTimeoutMs))) {
             await this.#repository.transition(task, {from: [State.CANCELING], to: State.CANCELED})
-            await this.#kill(task.id)
+            await this.#kill(task)
         }
     }
 
-    async #kill(taskId) {
-        await this.#docker.kill(containerName(taskId))
-        await this.#discard(taskId)
+    async #kill(task) {
+        await this.#docker.kill(containerName(task))
+        await this.#discard(task)
     }
 
-    async #discard(taskId) {
-        await this.#docker.remove(containerName(taskId))
-        await this.#workspace.remove(taskId)
+    async #discard(task) {
+        await this.#docker.remove(containerName(task))
+        await this.#workspace.remove(task.id)
     }
 }
 
