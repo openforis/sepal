@@ -69,6 +69,7 @@ const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./pl
 const {renderableVisualizations} = await import('./visualizationMatching')
 const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
 const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
+const {historicalStatsOf} = await import('./baytsAlerts/historicalStatistics')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -503,7 +504,7 @@ describe('a BAYTS alerts recipe', () => {
     const ALERTS = ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit', 'first_detection_date', 'confirmation_date']
 
     it('is described with its alerts, while the historical recipe it monitors is not even loaded', () => {
-        const {output} = read(baytsAlertsOf({reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}))
+        const output = described(baytsAlertsOf({reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
@@ -515,7 +516,7 @@ describe('a BAYTS alerts recipe', () => {
         const historical = baytsHistoricalOf({id: 'bayts-historical-1'})
         const alerts = baytsAlertsOf({reference: {type: 'RECIPE_REF', id: historical.id}})
 
-        const {output} = readAll([alerts, historical])
+        const output = described(alerts, historical)
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
@@ -1192,7 +1193,8 @@ const pyeoAlertsOf = ({classification} = {}) => ({
     }
 })
 
-// Monitoring a historical asset unless told otherwise, so that nothing it reads has to be loaded.
+// Monitoring a historical asset unless told otherwise, so that nothing it reads has to be loaded. Its editor observed
+// that asset and found the statistics of both passes, as its evidence lifecycle publishes them (`ui.sourceEvidence`).
 const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historical'}} = {}) => ({
     id: ID,
     type: 'BAYTS_ALERTS',
@@ -1202,8 +1204,29 @@ const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historica
         date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
         options: {orbits: ['ASCENDING', 'DESCENDING']},
         baytsAlertsOptions: {}
-    }
+    },
+    ...(reference.type === 'ASSET' && {ui: {sourceEvidence: historicalStatsObserved(reference)}})
 })
+
+// An image asset's historical statistics as the observation reads them from its metadata: each band scalar.
+const historicalStatsObserved = reference => {
+    const bands = ['asc', 'desc'].flatMap(suffix =>
+        ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle'].map(statistic => `${statistic}_${suffix}`)
+    )
+    return {
+        status: 'OBSERVED',
+        sourceKey: sourceKeyOf(reference),
+        historicalStats: historicalStatsOf({
+            producer: {assetId: reference.id},
+            metadata: {
+                type: 'Image',
+                bandNames: bands,
+                bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
+                properties: {}
+            }
+        })
+    }
+}
 
 const PERIOD = {
     monitoringEnd: '2024-01-01',
@@ -1370,15 +1393,16 @@ const observedNow = (record, owners) => {
 }
 
 const checkedAssets = record => {
-    const assetId = record.ui?.sourceEvidence?.segments?.typedBands?.assetId
+    const evidence = record.ui?.sourceEvidence
+    const assetId = evidence?.segments?.typedBands?.assetId || evidence?.historicalStats?.assetId
     return assetId ? [[assetId, {version: 'v1', checkedAt: Date.now(), changedAt: null, failure: null}]] : []
 }
 
-// What the recipe's output is described as, whatever its sources are found to be.
-const described = recipe => readRecipeOutput({
+// What the recipe's output is described as, whatever its sources are found to be, with the others loaded beside it.
+const described = (recipe, ...others) => readRecipeOutput({
     recipe,
     product: {name: 'IMAGE_OUTPUT'},
-    graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
+    graph: buildMapDependencyGraph({recipe, loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}),
     heldFor: () => null
 })
 

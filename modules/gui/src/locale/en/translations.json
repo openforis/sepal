@@ -4471,23 +4471,17 @@
           "tooltip": "Configure imagery pre-processing"
         },
         "reference": {
-          "asset": {
-            "label": "Earth Engine Asset",
-            "title": "Earth Engine Asset",
-            "notBayTSHistorical": "Asset is not a BAYTS historical image or image collection"
-          },
           "button": "REF",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported BAYTS historical asset",
               "label": "BAYTS historical asset",
               "placeholder": "Enter BAYTS historical asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "BAYTS historical recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL recipe",
-            "title": "Saved SEPAL recipe"
           },
           "title": "Source",
           "tooltip": "Select BAYTS historical asset or recipe to use as reference for alerts"
@@ -4500,14 +4494,6 @@
         "label": "Change alerts",
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
-      },
-      "reference": {
-        "asset": {
-          "loadError": "Failed to load asset"
-        },
-        "recipe": {
-          "loadError": "Failed to load recipe"
-        }
       },
       "tabPlaceholder": "BAYTS_alerts"
     },
@@ -4557,7 +4543,8 @@
                 "label": "Descending",
                 "tooltip": "Include scenes from descending orbits."
               },
-              "label": "Orbits"
+              "label": "Orbits",
+              "required": "Select at least one orbit."
             },
             "outlierRemoval": {
               "aggressive": {
@@ -5732,7 +5719,20 @@
         "PIXEL_SEGMENTS": "Segment chart"
       },
       "capability": {
+        "baytsHistoricalStats": "BAYTS historical statistics",
         "ccdcSegments": "CCDC segments"
+      },
+      "historicalStats": {
+        "incompatible": "Asset {asset} does not have the BAYTS historical statistics alert detection reads: {problems}.",
+        "missingBand": "{band} is missing",
+        "arrayBand": "{band} is an array, where a scalar is needed",
+        "unexpectedBand": "{band} would be read as a statistic of its orbit pass",
+        "misordered": "{bands} must be stored VV before VH",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "noPass": "The selected source has no orbit pass with BAYTS historical statistics.",
+        "passAbsent": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored. Monitor {passes} instead.",
+        "malformedPasses": "The orbit passes to monitor are not valid. Choose them again.",
+        "passAbsentNoAlternative": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored."
       },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",

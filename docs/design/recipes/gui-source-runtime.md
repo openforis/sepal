@@ -610,8 +610,8 @@ One observation per recipe is shared by everything watching it, wherever the rec
 An operation in a declaration's `operations` acquires the whole observation, read by the observation the type registers
 (`sourceObservation`) unless an editor names its own. One only in `providerOperations` acquires the records of the
 selected source's closure and nothing else: the provider chain is judged from them, no capability evidence is read, and
-no asset is claimed. A type without requirements is observed only by its editor, so Masking's presets and the evidence
-BAYTS reads stay editor-only; Masking layers elsewhere keep the saved-snapshot fallback. CCDC Slice and Change Alerts
+no asset is claimed. A type without requirements is observed only by its editor, so Masking's presets stay
+editor-only; Masking layers elsewhere keep the saved-snapshot fallback. CCDC Slice, Change Alerts and BAYTS Alerts
 declare requirements, so their layers, Retrieve and charts observe them wherever they are shown.
 
 The registry makes the live basis readable synchronously (`evidenceOwnerOf`) - `{observationId, basis, observes,
@@ -667,7 +667,8 @@ recovery does not overwrite user edits, and an editor opened over evidence a map
 as it would have on arrival. A failure no editor has seen is announced once when one attaches; the error stays in the
 runtime, not Redux. Change Alerts and BAYTS own their default-setting policies; the registry owns acceptance,
 cancellation and rejection of superseded responses. Change Alerts derives segment descriptions and monitoring
-settings from one asset-metadata response.
+settings from one asset-metadata response, and BAYTS Alerts the historical statistics' typed bands and processing
+options; neither announces a failure, which their reference sections say instead.
 
 An observation may declare `savedLayerSource`, as CCDC Slice's does: the registry then records the source the recipe's
 saved layers were styled for (`ui.savedLayerSource`) when the recipe is first observed in the session, by whoever
@@ -720,9 +721,10 @@ another recipe as a source.
 The implemented producer-step rule supports `CCDC_SEGMENTS`, `BAYTS_HISTORICAL_STATS` and
 `OPTICAL_COLLECTION_DEFAULTS`. Change Alerts, CCDC Slice and BAYTS selectors query type-level candidacy, so they can
 offer a Masking recipe whose particular input does not satisfy their requirement. The classification pickers still
-have type filters. None of these is configured-source capability discovery. Change Alerts and CCDC Slice validate their
-selected source once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref),
-[CCDC Slice SRC](source-resolution.md#ccdc-slice-src)); their pickers still offer type-level candidates.
+have type filters. None of these is configured-source capability discovery. Change Alerts, CCDC Slice and BAYTS Alerts
+validate their selected source once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref),
+[CCDC Slice SRC](source-resolution.md#ccdc-slice-src), [BAYTS Alerts REF](source-resolution.md#bayts-alerts-ref));
+their pickers still offer type-level candidates.
 
 The proposed discovery query accepts an operation-specific requirement containing only the structural, adapter or
 capability constraints that operation needs, plus cardinality and saved selections. Validation distinguishes a
@@ -842,7 +844,7 @@ answers belong to the runtime (`sourceRuntime/outputRegistry.js`):
 |---|---|---|
 | A recipe's map layer, on its own or another recipe's map | the `RecipeImageLayer` instance, on the product its config names (`outputWatch.js`) | while mounted |
 | Its layer form, visualization selector and visualization editor | none of their own: they are given the layer's read | - |
-| Source evidence: Change Alerts' requirements, and Masking, CCDC Slice and BAYTS presentation | the output watches and charts needing it, and the editor (`evidenceRegistry.js`) | while any of them watches; its basis |
+| Source evidence: Change Alerts', CCDC Slice's and BAYTS Alerts' requirements, and their and Masking's presentation | the output watches and charts needing it, and the editor (`evidenceRegistry.js`) | while any of them watches; its basis |
 | A Retrieve panel over its recipe's image output | the panel instance (`withRetrieveOutput.jsx`), on `IMAGE_OUTPUT` | while open |
 | Input workflows copying bands and presets at selection, and Sampling Design | their selection workflow | the selection; presets are filtered against the names that workflow observed |
 

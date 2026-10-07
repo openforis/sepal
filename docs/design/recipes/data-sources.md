@@ -298,7 +298,8 @@ In order, each independently mergeable:
 2. **Configured-source requirement validation.** Check whether a particular recipe or asset meets a consumer's
    requirements, using its configuration and available evidence. Change Alerts REF is implemented
    ([contract](source-resolution.md#change-alerts-ref)), and so is CCDC Slice SRC
-   ([contract](source-resolution.md#ccdc-slice-src)); BAYTS and the remaining consumers follow. The
+   ([contract](source-resolution.md#ccdc-slice-src)), and BAYTS Alerts REF and PRC
+   ([contract](source-resolution.md#bayts-alerts-ref)); the remaining consumers follow. The
    reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
    from metadata alone (done); shared segment-evidence readers and selection by role (done); evidence owned by the
    source runtime, so an operation a type declares requirements for is checked wherever the recipe is shown, with
@@ -313,8 +314,9 @@ In order, each independently mergeable:
       [validation guidance](../../code-design.md#validation-across-model-properties), with Change Alerts, Band Math and
       Sampling Design as the concrete examples (done; [outcome](#validation-boundary-review)).
    3. Adapt the boundary as the review finds: declared feedback inputs and explicit cross-section advisories (done).
-      Then resume CCDC Slice (done) and BAYTS, with a requirement derived from what its execution reads
-      ([findings](#configured-source-suitability-findings)).
+      Then resume CCDC Slice (done) and BAYTS (done), with a requirement derived from what its execution reads
+      ([findings](#configured-source-suitability-findings)); BAYTS' monitored passes are PRC's to check, advising
+      REF.
    A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
    recipe-specific input-layer bookkeeping with shared derivation.
    One shared
@@ -1039,7 +1041,7 @@ unless stated otherwise; they are not claims of end-to-end reproduction.
 | Type candidacy differs from configured capability | Masking is a candidate for segments and BAYTS statistics even when its primary source is an optical mosaic; the configured provider walk rejects it. An unfilled preserving role is malformed, and Stack does not currently preserve these capabilities. | Start with a diagnosis for Change Alerts REF that names where the configured chain stopped. Keep deliberate picker eligibility separate from suitability. |
 | Wrapper support differs between consumers (resolved for CCDC Slice) | CCDC Slice's picker offers the types that may provide segments, Masking among them; a Masking over anything but CCDC is refused from its configured chain. | None for Slice. |
 | Asset segment inference is not validation | `ccdc/segmentsAsset.js` derives a base band from a lone `x_rmse` or a derived `x_intercept`; non-empty `baseBands` does not prove CCDC segments. Change Alerts and CCDC Slice judge typed bands under their own requirements instead. | None for those consumers; another consumer of segments defines its own minimum structural evidence. |
-| Historical-statistics validation is incomplete | BAYTS's GUI walk can reject the configured source with a load-failure toast; its asset check establishes only that bands exist, and execution uses the reference image without a capability check. | Add a REF diagnosis and review the execution contract separately. |
+| Historical-statistics validation is GUI-only (REF and PRC resolved) | BAYTS Alerts REF judges each pass's statistics from typed evidence, and PRC the monitored passes' coverage ([contract](source-resolution.md#bayts-alerts-ref)). Execution still uses the reference image without a capability check. | Review the execution contract separately. |
 | Wrappers bypass direct type exclusions | Masking over CCDC remains eligible wherever Masking is offered, including its own mask field, despite CCDC's direct exclusion. | Audit each consumer's actual shape requirement before introducing scalar-image validation; do not assume every image consumer requires scalars. |
 | Classification-only inputs rely on GUI filters | Execution callers assume classifier/training methods exist; wrong types can fail with missing-method errors. | Define the requirement and execution diagnosis without incidentally admitting Masking over Classification. |
 | Selected-source errors are poorly presented | Evidence failures can disable actions without marking SRC/REF; unavailable or no-longer-offered selections can appear blank or disappear from input lists while remaining in the model. | Preserve and display the selected reference, mark its owning section, and explain the specific failure. Never clear it as a side effect of validation. |
@@ -1061,7 +1063,7 @@ Contract constraints for the first packet:
 - Reuse source-runtime and evidence-lifecycle ownership. Changing shared `lib/js/ee` code can affect Task even
   without editing `modules/task`; execution changes need a boundary review while Task is being rewritten.
 
-BAYTS, scalar-image and classification-input requirements are subsequent packets; CCDC Slice's is done. The first packet
+Scalar-image and classification-input requirements are subsequent packets; CCDC Slice's and BAYTS Alerts' are done. The first packet
 must not broaden their behavior while adapting shared discovery code. Execution parity for asset segment leaves
 and the ASSET/inline branches of `loadSegments` remains to be designed, rather than claimed by GUI validation.
 

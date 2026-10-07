@@ -148,7 +148,7 @@ class _Buttons extends React.Component {
     }
 
     render() {
-        const {label, labelButtons, tooltip, tooltipPlacement, groupSpacing, framed, disabled, options, className} = this.props
+        const {label, labelButtons, tooltip, tooltipPlacement, groupSpacing, framed, disabled, errorMessage, options, className} = this.props
         return (
             <Widget
                 className={className}
@@ -159,6 +159,7 @@ class _Buttons extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
+                errorMessage={errorMessage}
             >
                 {options.length && options[0].options
                     ? this.renderOptionGroups(options)
@@ -181,6 +182,7 @@ Buttons.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     framed: PropTypes.any,
     groupSpacing: PropTypes.any,
     label: PropTypes.any,

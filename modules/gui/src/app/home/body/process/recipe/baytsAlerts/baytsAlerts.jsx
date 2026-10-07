@@ -14,6 +14,7 @@ import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './baytsAlertsRecipe'
 import {BaytsAlertsToolbar} from './panels/baytsAlertsToolbar'
 import {baytsAlertsObservation} from './referenceObservation'
+import {baytsAlertsRequirements} from './sourceRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -67,5 +68,8 @@ export default () => ({
     mapProducts,
     bandPresentation,
     getPreSetVisualizations,
+    sourceRequirements: baytsAlertsRequirements,
+    // What a layer or Retrieve observes to check the reference it requires, wherever it is shown.
+    sourceObservation: baytsAlertsObservation,
     beta: true
 })

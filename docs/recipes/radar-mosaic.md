@@ -45,6 +45,10 @@ Sentinel-1 collection's measures for temporal consumers - CCDC, time series, cha
   harmonic terms into the reduction whenever harmonics are computed; the final selection drops them.
 - **A recipe stating no dates fails with Earth Engine's own error**
   (`Required argument (start) missing to function: DateRange`) rather than a stated reason.
+- **Its Orbits field names an undefined message.** The options panel
+  (`modules/gui/src/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options.jsx`) requires a pass with
+  `process.recipeMosaic.panel.options.form.orbits.required`, which the translations do not define. The locale test only
+  checks literal `msg()` calls, not constraint messages, so it does not catch it.
 - **An unused style entry.** `constant` in `lib/js/ee/src/radar/visParams.js` matches no band.
 - Whether a point in time should offer `unixTimeDays` is an open product decision.
 

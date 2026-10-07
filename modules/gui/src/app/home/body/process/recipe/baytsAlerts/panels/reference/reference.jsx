@@ -1,15 +1,15 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
-import {SectionSelection} from './sectionSelection'
 
 const fields = {
     section: new Form.Field()
@@ -19,64 +19,55 @@ const fields = {
         .notBlank('process.baytsAlerts.panel.reference.form.asset.required'),
     recipe: new Form.Field()
         .skip((_value, {section}) => section !== 'RECIPE_REF')
-        .notBlank('process.baytsAlerts.panel.reference.form.recipe.required'),
-    bands: new Form.Field()
-        .skip((_value, {section}) => section !== 'ASSET')
-        .notEmpty(),
-    startDate: new Form.Field(),
-    endDate: new Form.Field(),
-    visualizations: new Form.Field(),
+        .notBlank('process.baytsAlerts.panel.reference.form.recipe.required')
 }
 
 class _Reference extends React.Component {
+    constructor(props) {
+        super(props)
+        this.clearSource = this.clearSource.bind(this)
+    }
+
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                {this.renderSections()}
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.baytsAlerts.panel.reference.title')}/>
+                <Panel.Content>
+                    {this.renderSource()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {recipeId, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.baytsAlerts.panel.reference.recipe.label'),
-                title: msg('process.baytsAlerts.panel.reference.recipe.title'),
-                component: <RecipeSection inputs={inputs}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.baytsAlerts.panel.reference.asset.label'),
-                title: msg('process.baytsAlerts.panel.reference.asset.title'),
-                component: <AssetSection inputs={inputs}/>
-            }
+    renderSource() {
+        const {inputs} = this.props
+        const labelButtons = [
+            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
         ]
-        return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon='cog'
-                label={msg('process.baytsAlerts.panel.reference.title')}
-            />
-        )
+        return inputs.section.value === 'ASSET'
+            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
+            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+    }
+
+    // A source of the other type starts over: nothing selected for the previous one carries across.
+    clearSource() {
+        const {inputs} = this.props
+        inputs.asset.set(undefined)
+        inputs.recipe.set(undefined)
     }
 }
-const modelToValues = ({id, type, bands, startDate, endDate, visualizations}) => {
-    const values = {
-        section: type || 'SELECTION',
-        bands,
-        startDate,
-        endDate,
-        visualizations
-    }
+
+// Only the selection. What the statistics hold, and the options they were built with, are read from the source while
+// the recipe is shown (referenceObservation.js); a description an older GUI saved beside the selection - its bands,
+// dates and visualizations - is read by nothing, and is dropped once the reference is applied again. Nothing selected
+// yet is a recipe to select.
+const modelToValues = ({id, type}) => {
+    const values = {section: type || 'RECIPE_REF'}
     switch (type) {
         case 'RECIPE_REF':
             return {...values, recipe: id}
@@ -87,19 +78,12 @@ const modelToValues = ({id, type, bands, startDate, endDate, visualizations}) =>
     }
 }
 
-const valuesToModel = ({section, asset, recipe, bands, startDate, endDate, visualizations}) => {
-    const model = {
-        type: section,
-        bands,
-        startDate,
-        endDate,
-        visualizations
-    }
+const valuesToModel = ({section, asset, recipe}) => {
     switch (section) {
         case 'RECIPE_REF':
-            return {...model, id: recipe}
+            return {type: section, id: recipe}
         case 'ASSET':
-            return {...model, id: asset}
+            return {type: section, id: asset}
         default:
             return null
     }
@@ -109,5 +93,5 @@ export const Reference = compose(
     _Reference,
     recipeFormPanel({id: 'reference', fields, valuesToModel, modelToValues})
 )
-    
+
 Reference.propTypes = {}

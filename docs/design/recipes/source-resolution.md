@@ -274,7 +274,8 @@ The current shared contracts include:
 - the `IMAGE_OUTPUT` product: executable image, ordered output bands and per-band export requirements;
 - the `CCDC_SEGMENTS` capability: stored CCDC bands, base-band derivation, available measures and date
   interpretation;
-- `BAYTS_HISTORICAL_STATS`: the producer whose processing options BAYTS Alerts uses as defaults;
+- `BAYTS_HISTORICAL_STATS`: the producer whose statistics BAYTS Alerts monitors against, and whose processing options
+  it uses as defaults;
 - `OPTICAL_COLLECTION_DEFAULTS`: imagery configuration available for panel prefill, independently of whether that
   imagery can execute.
 
@@ -565,8 +566,8 @@ decides when the answer can be trusted and what it does to the UI.
   showing what it read and settles on saying it has no band to chart; it charts again once one returns. The consumer making a request
   watches what its operation needs wherever the recipe is shown. Absence from the listing is never called deletion.
 
-BAYTS, scalar-image and classification-input requirements, and execution parity for asset segment leaves, remain
-separate packets. CCDC Slice follows the same contract ([below](#ccdc-slice-src)).
+Scalar-image and classification-input requirements, and execution parity for asset segment leaves, remain separate
+packets. CCDC Slice ([below](#ccdc-slice-src)) and BAYTS Alerts ([below](#bayts-alerts-ref)) follow the same contract.
 
 ### CCDC Slice SRC
 
@@ -620,6 +621,70 @@ Options' break-analysis band naming a complete measure is not yet validated.
   establishes, holds new requests while the source is checked, withdraws what it drew once the source is refused,
   and charts again once one suits. Chart and Retrieve actions use the shared
   [availability](#operation-availability).
+
+### BAYTS Alerts REF
+
+BAYTS Alerts declares two requirements over the reference selected in REF (`baytsAlerts/sourceRequirement.js`), by
+the role its source edge already has (`PRIMARY_IMAGE`), and registers its existing observation
+(`baytsAlertsObservation`) so layers and Retrieve check it outside the editor:
+
+| Requirement | Section | Gates | Required to apply | Advises |
+|---|---|---|---|---|
+| `baytsHistoricalStats.monitorable` | REF | the alerts, their layers and Retrieve (`IMAGE_OUTPUT`) | yes | - |
+| `baytsHistoricalStats.monitoredPasses` | PRC (`options`) | the same | yes | REF |
+
+They are derived from what reads the reference. The alerts (`lib/js/ee/src/bayts/bayts.js`, `baytsAlerts.js`) read it
+whole. For each radar image of a pass they monitor, they select the bands whose names end in that pass's suffix
+(`_asc`, `_desc`), strip it, and read `orbit` by name and the `_mean`, `_std` and `_speckle` bands each as a pair
+matched against VV and VH by position; statistics of other passes are never read. A pass is held where any of its
+statistics is, and usable where it has all seven - `VV_mean`, `VV_std`, `VH_mean`, `VH_std`, `orbit`, `VV_speckle`,
+`VH_speckle` - as scalars, VV stored before VH, with no other band of that pass read as one of them. Each pass is judged
+on its own:
+
+- **REF** needs at least one usable pass. Where none is, a pass that may be usable but whose ranks are not stated
+  leaves it insufficiently evidenced; otherwise the held passes' problems refuse it, and a reference holding none is
+  refused as such.
+- **PRC** needs every pass it monitors (`options.orbits`; both where none are stated, as execution does) to be usable.
+  Passes saved as anything but a list of orbit passes are refused as malformed; otherwise a pass the reference does not
+  hold is refused naming the usable ones, then an incompatible monitored pass, then one
+  whose ranks are not stated. Passes not monitored are not judged. PRC has no input to show it on, so its toolbar
+  button is marked; the requirement advises REF, whose status gains the aggregate warning while nothing else holds it
+  back. Applying PRC judges the edited passes against the evidence already held for the reference, reading nothing.
+
+A computed BAYTS Historical builds every statistic of the passes it is configured with, so only those passes are
+asked of it; Masking over one is followed through its provider chain, and Masking over anything else is refused from
+the held records. The first and last radar observations a layer can show build a radar mosaic over the reference's
+geometry, masked by a direct asset reference's mask, and read none of its statistics, so neither requirement gates
+them.
+
+Asset metadata does not establish which pass's imagery the statistics were computed from, how they were filtered,
+anything of an image collection beyond its first member, or per-pixel validity. An asset that cannot be read is
+unavailable, with Refresh. The statistics come from the asset metadata response the observation already reads for the
+processing options (`historicalStats`, `baytsAlerts/historicalStatistics.js`); no second lookup is made. Processing
+options are not an execution requirement: options that cannot be parsed, or that state passes BAYTS Historical would
+refuse (`baytsHistoricalRefusals`), seed nothing and leave the statistics to be judged.
+
+REF does not own pass coverage: it would refuse a candidate before the prefill that follows Apply could align the
+passes. Validity does not depend on that prefill; where the reference describes its passes, the prefill resolves the
+mismatch PRC reports.
+
+- **REF.** The compact Asset/Recipe selector sits in the input's label row; changing the type clears the asset and
+  the recipe, and a recipe with nothing selected starts on Recipe. The picker offers recipes of types that may provide
+  the statistics (`mayProvideHistoricalStats`) and keeps a saved selection selected. REF names its input (`input`): a
+  candidate it refuses is that input's error and holds Apply back, a check is its busy indicator, and a reference that
+  cannot be read is its error, with Refresh; the toolbar marks REF through `withSourceProblems`. The failure toast is
+  gone. Only the selection is written: the bands, dates and visualizations an older GUI saved beside it are read by
+  nothing, and are dropped when the reference is next applied.
+- **PRC.** Where REF establishes the passes the reference supports - its verdict's usable passes
+  (`supportedPassesOf`) - PRC's pass choices are limited to them: an unsupported pass cannot be chosen, and once for
+  each answer the form keeps the passes chosen that are supported, or chooses every supported pass where none of them
+  is. A choice made after that, clearing every pass included, is left as made; no pass chosen is the Orbits field's
+  required error, shown beside its label (`Form.Buttons`' opt-in `errorMessage`), and holds Apply back. Passes saved as
+  anything but a list count as none chosen. While the reference is checked, unreadable or refused nothing is inferred.
+  This is the form's only: Cancel keeps the saved passes, and the PRC requirement still judges saved settings and
+  changing evidence. BAYTS Historical's own panel is given no support, shows no required error, and is unchanged.
+- **Prefill.** The processing options are applied as before, only while the editor watches; evidence a layer or
+  Retrieve obtained configures nothing until the editor opens and processes it once.
 
 ### Operation availability
 
