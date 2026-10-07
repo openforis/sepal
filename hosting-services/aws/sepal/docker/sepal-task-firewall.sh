@@ -2,7 +2,8 @@
 # Keeps task containers (network sepal-task, addresses 172.29.128.0/17) away from the EC2 metadata service, from
 # every private address except the gateway's HTTP port and the host's nameservers, and from the host itself.
 # The gateway has a pinned address outside that range, so its own traffic is never filtered here.
-# The SEPAL-TASK chain is rebuilt on every run, so changed rules replace the old ones. Docker evaluates
+# The SEPAL-TASK chain is replaced atomically on every run, so changed rules take effect without a gap in
+# filtering for running task containers. Docker evaluates
 # DOCKER-USER before its own rules and never flushes it.
 set -e
 
@@ -35,19 +36,27 @@ nameservers() {
     done
 }
 
-iptables -N DOCKER-USER 2>/dev/null || true
-iptables -N "$CHAIN" 2>/dev/null || true
-iptables -F "$CHAIN"
+rules() {
+    echo '*filter'
+    echo ":$CHAIN - [0:0]"
+    echo "-A $CHAIN -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN"
+    echo "-A $CHAIN -d $GATEWAY -p tcp --dport 80 -j RETURN"
+    for ns in $(nameservers); do
+        echo "-A $CHAIN -d $ns -p udp --dport 53 -j RETURN"
+        echo "-A $CHAIN -d $ns -p tcp --dport 53 -j RETURN"
+    done
+    for destination in $BLOCKED; do
+        echo "-A $CHAIN -d $destination -j DROP"
+    done
+    echo 'COMMIT'
+}
 
-iptables -A "$CHAIN" -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
-iptables -A "$CHAIN" -d "$GATEWAY" -p tcp --dport 80 -j RETURN
-for ns in $(nameservers); do
-    iptables -A "$CHAIN" -d "$ns" -p udp --dport 53 -j RETURN
-    iptables -A "$CHAIN" -d "$ns" -p tcp --dport 53 -j RETURN
-done
-for destination in $BLOCKED; do
-    iptables -A "$CHAIN" -d "$destination" -j DROP
-done
+# Without br_netfilter, traffic between containers on the sepal-task bridge never reaches iptables.
+modprobe br_netfilter
+sysctl -q -w net.bridge.bridge-nf-call-iptables=1
+
+iptables -N DOCKER-USER 2>/dev/null || true
+rules | iptables-restore --noflush
 
 ensure DOCKER-USER -s "$TASK_RANGE" -j "$CHAIN"
 ensure INPUT -s "$TASK_RANGE" -j DROP

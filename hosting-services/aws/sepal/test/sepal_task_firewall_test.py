@@ -43,7 +43,32 @@ else:
     status = 2
 with open(state_file, 'w') as f:
     json.dump(chains, f)
+with open(os.environ['IPTABLES_HISTORY'], 'a') as f:
+    f.write(json.dumps(chains) + '\\n')
 sys.exit(status)
+'''
+
+# Applies a '*filter ... COMMIT' ruleset in one step: declared chains are created or flushed, then rules appended.
+FAKE_IPTABLES_RESTORE = '''#!/usr/bin/env python3
+import json, os, sys
+assert sys.argv[1:] == ['--noflush'], sys.argv
+state_file = os.environ['IPTABLES_STATE']
+with open(state_file) as f:
+    chains = json.load(f)
+for line in sys.stdin.read().splitlines():
+    if line.startswith(':'):
+        chains[line[1:].split()[0]] = []
+    elif line.startswith('-A '):
+        _, chain, *rule = line.split()
+        chains[chain].append(rule)
+with open(state_file, 'w') as f:
+    json.dump(chains, f)
+with open(os.environ['IPTABLES_HISTORY'], 'a') as f:
+    f.write(json.dumps(chains) + '\\n')
+'''
+
+FAKE_LOGGER = '''#!/bin/sh
+echo "$(basename "$0") $*" >> "$COMMAND_LOG"
 '''
 
 
@@ -51,11 +76,15 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        fake = os.path.join(self.tmp.name, 'iptables')
-        with open(fake, 'w') as f:
-            f.write(FAKE_IPTABLES)
-        os.chmod(fake, os.stat(fake).st_mode | stat.S_IEXEC)
+        for name, content in [('iptables', FAKE_IPTABLES), ('iptables-restore', FAKE_IPTABLES_RESTORE),
+                              ('modprobe', FAKE_LOGGER), ('sysctl', FAKE_LOGGER)]:
+            fake = os.path.join(self.tmp.name, name)
+            with open(fake, 'w') as f:
+                f.write(content)
+            os.chmod(fake, os.stat(fake).st_mode | stat.S_IEXEC)
         self.state = os.path.join(self.tmp.name, 'state.json')
+        self.history_file = os.path.join(self.tmp.name, 'history.jsonl')
+        self.command_log = os.path.join(self.tmp.name, 'commands.log')
         self.resolv_conf = os.path.join(self.tmp.name, 'resolv.conf')
         self.given_chains({'DOCKER-USER': [], 'INPUT': []})
         self.given_resolv_conf(f'# Test resolv.conf\nnameserver {NAMESERVER}\nnameserver 127.0.0.53\nnameserver fd00::2\n')
@@ -114,6 +143,37 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
         self.assertEqual([], [rule for rule in chains['SEPAL-TASK'] if '--dport' in rule and '53' in rule])
 
+    def test_a_rerun_never_leaves_task_traffic_without_its_drops(self):
+        self.run_script()
+        self.reset_history()
+
+        self.run_script()
+
+        for chains in self.history():
+            if ['-s', TASK_RANGE, '-j', 'SEPAL-TASK'] in chains.get('DOCKER-USER', []):
+                for destination in BLOCKED:
+                    self.assertIn(['-d', destination, '-j', 'DROP'], chains['SEPAL-TASK'])
+
+    def test_bridged_traffic_passes_through_iptables(self):
+        self.run_script()
+
+        self.assertIn('modprobe br_netfilter', self.commands())
+        self.assertIn('sysctl -q -w net.bridge.bridge-nf-call-iptables=1', self.commands())
+
+    def reset_history(self):
+        if os.path.exists(self.history_file):
+            os.remove(self.history_file)
+
+    def history(self):
+        with open(self.history_file) as f:
+            return [json.loads(line) for line in f]
+
+    def commands(self):
+        if not os.path.exists(self.command_log):
+            return []
+        with open(self.command_log) as f:
+            return f.read().splitlines()
+
     def given_chains(self, chains):
         with open(self.state, 'w') as f:
             json.dump(chains, f)
@@ -124,7 +184,8 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
     def run_script(self):
         env = {**os.environ, 'PATH': f'{self.tmp.name}:{os.environ["PATH"]}',
-               'IPTABLES_STATE': self.state, 'RESOLV_CONF': self.resolv_conf}
+               'IPTABLES_STATE': self.state, 'IPTABLES_HISTORY': self.history_file,
+               'COMMAND_LOG': self.command_log, 'RESOLV_CONF': self.resolv_conf}
         subprocess.run(['sh', SCRIPT], check=True, env=env)
         with open(self.state) as f:
             return json.load(f)
