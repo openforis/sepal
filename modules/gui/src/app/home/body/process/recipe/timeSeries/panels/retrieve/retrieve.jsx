@@ -29,6 +29,7 @@ class _Retrieve extends React.Component {
                 defaultFileDimensionsMultiple={2}
                 toSepal
                 allowTiling
+                sitsFormat
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />
         )

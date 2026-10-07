@@ -56,6 +56,7 @@ const exportTiles$ = (taskId, featureCollection, {
     description,
     recipe,
     indicators,
+    format,
     scale,
     tileSize,
     shardSize,
@@ -99,8 +100,8 @@ const exportTiles$ = (taskId, featureCollection, {
             exportChunks$(createChunks$({tileId, tileIndex, indicator})),
             postProcess$(
                 Path.join(downloadDir, `${tileIndex}`, indicator),
-                indicator,
-                Path.join(downloadDir, `${tileIndex}`, 'sits')
+                format === 'SITS' ? indicator : undefined,
+                format === 'SITS' ? Path.join(downloadDir, `${tileIndex}`, 'sits') : undefined
             )
         )
 
@@ -240,7 +241,10 @@ const exportTiles$ = (taskId, featureCollection, {
 }
 
 const postProcess$ = (downloadDir, band, sitsDir) =>
-    terminal$('sepal-stack-time-series', [downloadDir, '--band', band, '--sits-dir', sitsDir])
+    terminal$('sepal-stack-time-series', [
+        downloadDir,
+        ...(band ? ['--band', band, '--sits-dir', sitsDir] : [])
+    ])
         .pipe(
             tap(({stream, value}) => {
                 if (value)
