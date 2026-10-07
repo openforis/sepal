@@ -4787,7 +4787,8 @@
         "parentNotFound": "Cannot update folder: the parent folder no longer exists"
       },
       "parent": {
-        "root": "Home"
+        "root": "Home",
+        "tooltip": "Go up one folder"
       },
       "move": {
         "done": "Moved {name} to {folder}."
