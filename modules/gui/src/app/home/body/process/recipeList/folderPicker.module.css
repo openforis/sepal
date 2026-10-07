@@ -8,6 +8,15 @@
     min-width: 0;
 }
 
+/* The name takes what the button leaves it and no more, so a long one is cut rather than widening
+   the box. */
+.folder {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Room for five folders, held whether the open folder has one or fifty. */
 .options {
     height: 11rem;
