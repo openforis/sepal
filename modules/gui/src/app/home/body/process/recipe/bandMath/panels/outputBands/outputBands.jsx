@@ -15,6 +15,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {withItemProblems} from '../../../selectedSource'
 import {ImageDescription} from '../../imageDescription'
 import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
@@ -129,12 +130,16 @@ class _OutputBands extends React.Component {
         )
     }
 
+    // An output whose image no longer exists is shown as it was saved, to be removed: it offers no bands to add.
     renderOutputImage(outputImage) {
-        const {images, calculations} = this.props
-        const image = [...images, ...calculations].find(({imageId}) => imageId === outputImage.imageId)
+        const {images, calculations, itemProblems = {}} = this.props
+        const current = [...images, ...calculations].find(({imageId}) => imageId === outputImage.imageId)
+        const image = current || outputImage
+        const problem = itemProblems[outputImage.imageId]
         return (
             <ListItem
-                key={image.imageId}
+                key={outputImage.imageId}
+                className={problem ? styles.error : null}
                 expansionClickable
                 expanded
                 expansion={this.renderOutputBands(outputImage)}
@@ -143,7 +148,8 @@ class _OutputBands extends React.Component {
                     title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
                     description={<ImageDescription image={image}/>}
                     metadata={image.name}
-                    inlineComponents={this.renderAddBandButton(outputImage)}
+                    titleTooltip={problem}
+                    inlineComponents={current ? this.renderAddBandButton(outputImage) : null}
                     unsafeRemove
                     onRemove={() => this.removeImage({image})}
                 />
@@ -298,6 +304,7 @@ class _OutputBands extends React.Component {
 
 export const OutputBands = compose(
     _OutputBands,
+    withItemProblems('outputBands'),
     recipeFormPanel({id: 'outputBands', fields, mapRecipeToProps})
 )
 

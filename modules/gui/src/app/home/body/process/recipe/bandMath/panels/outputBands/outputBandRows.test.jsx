@@ -31,9 +31,20 @@ vi.mock('~/widget/activation/activatable', async () => {
     }
 })
 
+// A tooltip's text is rendered where it is attached, to be read without hovering.
+vi.mock('~/widget/tooltip', () => ({
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+        : children
+}))
+
 const {OutputBands} = await import('./outputBands')
+const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
+const {default: bandMath} = await import('../../bandMath')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
+
+addRecipeType(bandMath())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -141,6 +152,50 @@ describe('the names bands are output under', () => {
     })
 })
 
+// What Band Math needs of its configuration judges what was applied; the panel's Apply stays the panel's.
+describe('output bands Band Math finds an output of unmet', () => {
+    it('are applied as before', async () => {
+        await openOutputBands([...OUTPUT_BANDS, {id: 'swir-id', name: 'swir', defaultOutputName: 'swir'}])
+        await type(rowOf(CURRENT_COPY), 'renamed')
+
+        await apply()
+
+        expect(savedCopies()).toEqual([LEGACY_COPY, {...CURRENT_COPY, outputName: 'renamed'}])
+    })
+})
+
+describe('an output whose image no longer exists', () => {
+    it.each([
+        ['a calculation', ORPHANED_CALCULATION],
+        ['a recipe input', ORPHANED_RECIPE_INPUT]
+    ])('taken from %s is listed as saved, saying so, offering no bands to add', async (_case, orphan) => {
+        await openOutputBands(OUTPUT_BANDS, {others: [orphan]})
+
+        expect(tooltipsOf(orphan)).toEqual([expect.stringContaining('process.bandMath.requirement.missingImage')])
+        expect(addBandButtons()).toHaveLength(1)
+    })
+
+    it('can be removed, and the rest applied', async () => {
+        await openOutputBands(OUTPUT_BANDS, {others: [ORPHANED_CALCULATION]})
+
+        await removeImage(ORPHANED_CALCULATION)
+        await type(rowOf(CURRENT_COPY), 'renamed')
+        await apply()
+
+        expect(savedImageIds()).toEqual([INPUT.imageId])
+        expect(savedCopies()).toEqual([LEGACY_COPY, {...CURRENT_COPY, outputName: 'renamed'}])
+    })
+
+    it('is kept when the panel is cancelled after removing it', async () => {
+        await openOutputBands(OUTPUT_BANDS, {others: [ORPHANED_CALCULATION]})
+
+        await removeImage(ORPHANED_CALCULATION)
+        await cancel()
+
+        expect(savedImageIds()).toEqual([INPUT.imageId, ORPHANED_CALCULATION.imageId])
+    })
+})
+
 describe('an output image', () => {
     it('cannot be applied without bands once its last is removed', async () => {
         await openOutputBands([LEGACY_COPY])
@@ -179,7 +234,17 @@ const CURRENT_COPY = {...RATIO, defaultOutputName: 'ratio_VV_VH_1'}
 
 const OUTPUT_BANDS = [{...VV, defaultOutputName: 'VV'}, LEGACY_COPY, {...VH, defaultOutputName: 'VH'}, CURRENT_COPY]
 
-const sessionState = outputBands => ({
+// Outputs saved from images since removed: a calculation, and an input selecting a recipe.
+const ORPHANED_CALCULATION = {
+    imageId: 'calc-9', name: 'gone', type: 'EXPRESSION', expression: 'i1.VV * 2', includedBands: [{id: 'g-id', name: 'g'}],
+    outputBands: [{id: 'g-id', name: 'g', defaultOutputName: 'g'}]
+}
+const ORPHANED_RECIPE_INPUT = {
+    imageId: 'input-9', name: 'i9', type: 'RECIPE_REF', id: 'recipe-gone', includedBands: [{id: 'r-id', name: 'r'}],
+    outputBands: [{id: 'r-id', name: 'r', defaultOutputName: 'r'}]
+}
+
+const sessionState = (outputBands, {others = []} = {}) => ({
     process: {
         loadedRecipes: {
             [ID]: {
@@ -187,7 +252,7 @@ const sessionState = outputBands => ({
                 model: {
                     inputImagery: {images: [INPUT]},
                     calculations: {calculations: []},
-                    outputBands: {outputImages: [{...INPUT, outputBands}]}
+                    outputBands: {outputImages: [{...INPUT, outputBands}, ...others]}
                 },
                 ui: {initialized: true}
             }
@@ -199,8 +264,8 @@ const sessionState = outputBands => ({
     dimensions: {width: 1024, height: 768}
 })
 
-const openOutputBands = async (outputBands = OUTPUT_BANDS) => {
-    const initialState = sessionState(outputBands)
+const openOutputBands = async (outputBands = OUTPUT_BANDS, configuration) => {
+    const initialState = sessionState(outputBands, configuration)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -286,5 +351,34 @@ const cancel = async () => {
 const savedCopies = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
     .flatMap(({outputBands}) => outputBands)
     .filter(({name}) => name === RATIO.name)
+
+// The header of an output image's entry, known by the image's name.
+const headerOf = ({name}) => [...document.querySelectorAll('svg[data-icon="trash"]')]
+    .map(icon => ancestors(icon).find(element => element.textContent.includes(name)
+        && element.querySelectorAll('svg[data-icon="trash"]').length === 1))
+    .find(Boolean)
+
+const ancestors = element => element.parentElement ? [element.parentElement, ...ancestors(element.parentElement)] : []
+
+const tooltipsOf = image => [...headerOf(image).querySelectorAll('[data-tooltip]')]
+    .flatMap(element => JSON.parse(element.dataset.tooltip))
+    .filter(line => line.startsWith('process.bandMath.requirement'))
+
+const addBandButtons = () => [...document.querySelectorAll('svg[data-icon="plus"]')]
+    .filter(icon => !icon.closest('button').textContent.includes('process.bandMath.panel.outputBands.addImage.label'))
+
+// An output image's remove button, pressed as a user presses it.
+const removeImage = async image => {
+    const button = headerOf(image).querySelector('svg[data-icon="trash"]').closest('button')
+    await act(async () => {
+        button.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}))
+        button.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
+        button.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}))
+    })
+    await settled()
+}
+
+const savedImageIds = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
+    .map(({imageId}) => imageId)
 
 const settled = () => act(async () => {})

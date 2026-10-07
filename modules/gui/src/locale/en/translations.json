@@ -2916,6 +2916,16 @@
       "tabPlaceholder": "Stack"
     },
     "bandMath": {
+      "requirement": {
+        "syntaxError": "The expression cannot be read.",
+        "unknownVariable": "\"{variable}\" is neither an input nor an earlier calculation.",
+        "unknownBand": "\"{variable}\" has no band \"{band}\".",
+        "forwardReference": "\"{variable}\" is calculated after this calculation.",
+        "selfReference": "\"{variable}\" cannot use itself.",
+        "missingImage": "\"{variable}\" no longer exists.",
+        "invalidArgCount": "A function is given {argCount} arguments instead of {expectedArgCount}.",
+        "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}."
+      },
       "create": "Band Math",
       "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
       "duplicateName": "Duplicate name. There are other images or calculations with this name.",
@@ -5015,7 +5025,8 @@
         "checking": "Checking the source selected under {section}…",
         "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
         "expired": "The source selected under {section} has not been checked recently. Refresh to check it again.",
-        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why."
+        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why.",
+        "configurationUnmet": "The settings under {section} need attention. Open {section} to see why."
       }
     },
     "saveRecipe": {
@@ -5698,6 +5709,10 @@
         "easeGrid2North": "North polar (EPSG:6931)",
         "easeGrid2South": "South polar (EPSG:6932)"
       }
+    },
+    "requirement": {
+      "itemProblem": "{item}: {message}",
+      "prerequisiteUnmet": "Depends on {items}, which need attention."
     },
     "source": {
       "status": {

@@ -847,14 +847,16 @@ Follow the [declarative evaluation direction](source-freshness.md#declarative-de
 shared source-observation lifecycle rather than adding another watcher, cache or source traversal.
 
 1. Identify user configuration versus derived fields in Band Math's current sync path, including expression and
-   output references. Preserve saved-model compatibility and intentional rename behavior.
+   output references. Preserve saved-model compatibility and intentional rename behavior (done).
 2. Express the chain's consumed inputs, requirements and derived output through recipe-owned pure functions,
    using the expression analysis the editor lints with (`modules/gui/src/widget/codeEditor/expressionAnalysis.js`).
    Use the same declaration and evaluation contract for local configuration, calculation outputs and current evidence
-   from selected recipes or assets; only their providers differ.
+   from selected recipes or assets; only their providers differ. Done for local configuration; current evidence of
+   the inputs' bands is not yet a fact any requirement judges.
 3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
-   superseded bookkeeping for this chain; leave unrelated sync behavior alone. Recheck the same requirements at
-   execution, so a closed panel or directly submitted model cannot bypass them.
+   superseded bookkeeping for this chain; leave unrelated sync behavior alone (done: the persisted `invalid` flag is
+   gone). Recheck the same requirements at execution, so a closed panel or directly submitted model cannot bypass
+   them (not done: Task and Earth Engine execution do not recheck them).
 
 Acceptance scenarios, without closing or reopening the recipe:
 
@@ -862,8 +864,8 @@ Acceptance scenarios, without closing or reopening the recipe:
   saved recipes whose copied input and output band IDs differ (done; [Band Math](../../recipes/band-math.md#inputs)).
   Unaffected calculations remain executable. This is distinct from preserving an expression that needs the removed band.
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
-  preserving the expression and output configuration. Restoring the band restores validity automatically.
-  Exercise the same rule for a local input-selection change and for a change to the external source's bands.
+  preserving the expression and output configuration. Restoring the band restores validity automatically. Done for a
+  local input-selection change; a change to the external source's bands is not yet judged.
 - Removing an unused band or changing only a visualization does not invalidate the calculation.
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
@@ -1108,25 +1110,30 @@ The items below are concrete applications of that broader policy.
   source gate). Recipe types supply declarations and facts, such as the bands Change Alerts' monitoring data
   observes; the evaluation and the gate interpretation are shared. Retrieve's listing, draft and asset authority
   stay with its panel and submission, since opening the panel is what renews them.
-  Planned, not implemented: other operations and recipe types; rules over local model properties that the
-  validation boundary review declares feeding the same assessment, so a form's Apply, its toolbar action and its
-  request gate answer from one rule. It stays per operation, never a recipe-wide validity flag, and adds no separate
-  validation system.
-- **Validation boundary review, done; its further direction is proposed, not settled**
+  Rules over local model properties feed the same assessment, implemented for Band Math (below), so a form's Apply,
+  its toolbar action and its request gate answer from one rule. Planned, not implemented: other operations and
+  recipe types. It stays per operation, never a recipe-wide validity flag, and adds no separate validation system.
+- **Validation boundary review, done; its local-configuration direction implemented for Band Math**
   <a id="validation-boundary-review"></a>. The requirement reader, candidate validation, section status, gates and
   operation availability stay the one assessment; the review extends that contract rather than adding another.
   Implemented from it, preserving behaviour: a section declares the form input showing what its requirements find
   (`input`, a form input name, never a model location), or none, showing them on its toolbar button only; a
   requirement declares the sections advising that it is not met (`advise`), so a recipe declaring none acquires no
   cross-section advisory. Availability keeps its structured reason (the gate) whether or not a tooltip shows it.
-  Proposed direction, to settle against Band Math's actual workflow rather than in advance:
-  - rules over local configuration, with facts projected from the model rather than read as source evidence;
-  - one read per list item (a calculation), with its model location;
-  - an item panel's Apply held back by the item being edited only, an item still being added included, while section
-    marks and operation gates aggregate every item;
-  - prerequisites between reads, identified by declaration and location rather than by rule id - Change Alerts
-    declares `ccdcSegments.monitoredMeasure` twice - possibly across items; a suppressed message never makes its
-    operation available.
+  Implemented for Band Math (`sourceRequirements.js`, [Band Math](../../recipes/band-math.md#configuration-checks)):
+  - rules over local configuration: a declaration supplies its facts from the recipe (`localFacts`) instead of a role
+    and its evidence, so its reads are checked at once, select nothing and are never acquired;
+  - optional item enumeration over those facts (`items`), one read per item - a calculation, an output image - with a
+    stable id, the model location its panel commits, and its prerequisites;
+  - prerequisites identified by declaration id and item id, never by rule id or path - Change Alerts declares
+    `ccdcSegments.monitoredMeasure` twice; a read keeps its own verdict apart from its effective one, a prerequisite
+    not read counts as unmet, and a suppressed message never makes its operation available;
+  - section marks, item marks and operation gates aggregating every item.
+
+  Not implemented: judging an edit by these rules before it is applied. A local declaration binds no form panel, so
+  each panel's Apply keeps its own validation. Proposed for a later packet: an item panel judged as a candidate by the
+  item being edited only, an item still being added included, with an explicit policy for whether unmet prerequisites
+  hold its Apply.
 
   Sampling Design's planner (`planDerivedUpdates.js`) stays its current invalidation mechanism, unchanged for now; the
   [direction](source-freshness.md#declarative-dependency-evaluation) remains current-input evaluation and result

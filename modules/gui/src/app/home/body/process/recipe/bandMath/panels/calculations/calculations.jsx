@@ -16,6 +16,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {withItemProblems} from '../../../selectedSource'
 import {Calculation} from './calculation'
 import styles from './calculations.module.css'
 
@@ -64,6 +65,8 @@ class _Calculations extends React.Component {
     }
 
     renderCalculation(calculation, index) {
+        const {itemProblems = {}} = this.props
+        const problem = itemProblems[calculation.imageId]
         const usedBandExpressions = calculation.usedBands.map(({imageName, name}) => `${imageName}.${name}`)
         const description = calculation.type === 'FUNCTION'
             ? (
@@ -76,12 +79,13 @@ class _Calculations extends React.Component {
         return (
             <ListItem
                 key={key}
-                className={calculation.invalid ? styles.error : null}
+                className={problem ? styles.error : null}
                 onClick={() => this.editCalculation(calculation)}>
                 <CrudItem
                     title={msg(`process.bandMath.panel.calculations.form.type.${calculation.type}`)}
                     description={description}
                     metadata={calculation.name}
+                    titleTooltip={problem}
                     onRemove={() => this.removeCalculation(calculation)}
                 />
             </ListItem>
@@ -121,6 +125,7 @@ const valuesToModel = null
 
 export const Calculations = compose(
     _Calculations,
+    withItemProblems('calculations'),
     recipeFormPanel({id: 'calculations', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('calculation')
 )

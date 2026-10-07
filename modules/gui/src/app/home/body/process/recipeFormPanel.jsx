@@ -66,10 +66,11 @@ export const recipeFormPanel = (
     // before they are applied (sourceCandidate.js). What it finds holds Apply back as an invalid field does, and is told
     // to the form input the section declares (`section.input`, sourceRequirements.js) as that input's feedback
     // (inputFeedback.js). A section declaring none - one only configuring something depending on the source, say -
-    // says what is wrong with its settings on its toolbar button alone.
+    // says what is wrong with its settings on its toolbar button alone. Requirements over the recipe's own configuration
+    // (`localFacts`) judge what was applied, not what is being edited: they bind no panel.
     const sourceSectionOf = props => {
         const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
-        return declarations.find(({section}) => section.id === id)?.section || null
+        return declarations.find(({role, section}) => role && section.id === id)?.section || null
     }
 
     const sourceCandidateOf = (section, props, onChange) => {

@@ -724,7 +724,10 @@ recovers what it shows, and Retrieve still decides at submission. The evidence t
 whatever watches the recipe - its editor, an open panel or a layer - and the actions add no watch of their own. A type
 that declares no requirements is never held back.
 
-Extending availability to other operations, and to rules over local model properties, belongs to the
+Requirements over a recipe's own configuration feed the same assessment ([local
+requirements](data-sources.md#validation-boundary-review)): one not met refuses its operations with
+`CONFIGURATION_UNMET`, naming its section, and withdraws what they drew, as a source found unsuitable does. Retrieve
+refuses on it whatever the output reads as. Extending availability to other operations belongs to the
 [declarative validation roadmap](data-sources.md#declarative-validation-across-model-properties), not to this
 assessment's current scope.
 

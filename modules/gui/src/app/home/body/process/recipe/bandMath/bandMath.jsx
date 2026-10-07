@@ -9,6 +9,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getDefaultModel} from './bandMathRecipe'
+import {bandMathRequirements} from './bandMathRequirements'
 import {BandMathToolbar} from './panels/bandMathToolbar'
 import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
@@ -56,6 +57,7 @@ export default () => ({
         recipe: BandMath
     },
     imageSource: true,
+    sourceRequirements: bandMathRequirements,
     getDateRange(_recipe) {
         return null
     },

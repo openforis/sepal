@@ -59,6 +59,23 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // A selection whose configured chain cannot lead to the capability is refused from the held records alone, with no
 // owner; one not made at all is refused as missing. Where the session does not hold the chain's records, whether it can
 // lead there is known once the owner has read them (`providerChain`): checking while it reads them, unavailable if it could not.
+//
+// A type may also declare requirements over its own configuration, judged from facts the recipe itself holds:
+//
+//   {id, section, requirement, localFacts: recipe => facts, items: facts => [...], parameters, operations}
+//
+// `localFacts` supplies the facts in place of a role and its evidence, so such a read is always CHECKED and selects
+// nothing; `requirement` is {id, evaluate(facts, parameters), describe(diagnostic)}. Where the facts concern several items
+// of a section - the calculations of a list, say - `items` enumerates them: [{id, path, label, facts, prerequisites}],
+// `id` stable across edits, `path` where the item lies in the model, and
+// `prerequisites` the reads it depends on, [{declaration, item}] by declaration id and item id. Without `items` the
+// facts are judged once, for the section.
+//
+// A local read keeps its own verdict (`ownVerdict`) apart from its effective one (`verdict`): a read met itself, whose
+// prerequisites are not all met - or not read at all - is UNSUPPORTED (`PREREQUISITE_UNMET`), and a read that is not
+// keeps its own diagnosis. `unmetPrerequisites` names them either way, so what a prerequisite's own read says need not
+// be repeated, while the operations it holds stay held. Evidence acquisition never reads these, and they bind no form
+// panel: they judge the configuration applied (recipeFormPanel.jsx).
 
 export {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED}
 
@@ -80,15 +97,36 @@ export const SOURCE_UNCHECKED = 'SOURCE_UNCHECKED'
 export const SOURCE_UNAVAILABLE = 'SOURCE_UNAVAILABLE'
 export const SOURCE_EXPIRED = 'SOURCE_EXPIRED'
 export const SOURCE_UNSUITABLE = 'SOURCE_UNSUITABLE'
+// What Retrieve is told when a requirement over the recipe's own configuration is not met.
+export const CONFIGURATION_UNMET = 'CONFIGURATION_UNMET'
+
+export const PREREQUISITE_UNMET = 'PREREQUISITE_UNMET'
 
 // The operation of reading the segments at a pixel, as a segment chart does.
 export const PIXEL_SEGMENTS = 'PIXEL_SEGMENTS'
 
 // {declaration, selected, acquisition, providerChain, verdict, assetId?, missing?} for each requirement the recipe's type declares.
-export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, now}) =>
-    (getRecipeType(recipe.type)?.sourceRequirements || []).map(declaration =>
-        readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})
+// Local reads, in their declaration's place, are {declaration, local: true, item, acquisition, providerChain, ownVerdict,
+// verdict, unmetPrerequisites}.
+export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, now}) => {
+    const local = readLocalRequirements(recipe)
+    return (getRecipeType(recipe.type)?.sourceRequirements || []).flatMap(declaration => isLocal(declaration)
+        ? local.filter(read => read.declaration === declaration)
+        : [readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})]
     )
+}
+
+// The reads of the requirements over the recipe's own configuration alone: they need nothing of the session.
+export const readLocalRequirements = recipe => {
+    if (!LOCAL_READS.has(recipe)) {
+        const declarations = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(isLocal)
+        LOCAL_READS.set(recipe, withPrerequisites(declarations.flatMap(declaration => readLocal(recipe, declaration))))
+    }
+    return LOCAL_READS.get(recipe)
+}
+
+// The identity of a local read: its declaration's id and its item's.
+export const readKey = ({declaration, item}) => keyOf(declaration.id, item?.id)
 
 // Why a request for an operation over the recipe may not start, by what it selected, if anything: blocks before waits.
 // Nothing an owner is not reading is waited for: no reader can say whether anything will. Retrieve refuses on any of
@@ -98,18 +136,28 @@ export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf
 
 // Whether a new Earth Engine request for an operation over the recipe may start now: null when it may, otherwise
 // {wait, withdraw, code, section, read} - `read` the requirement's read behind it, as far as the operation is held to it. While a requirement is not known to be met nothing new is requested, and what is
-// already drawn stays - checking is no reason to change it. A source found missing or unsuitable also withdraws it.
+// already drawn stays - checking is no reason to change it. A source found missing or unsuitable, or a configuration
+// found not to meet its requirements, also withdraws it.
 // Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
 // so what is held is being read.
 export const requestGate = ({state, recipe, operation, evidenceOwnerOf, now}) =>
     firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now})
-        .map(reason => ({...reason, withdraw: [SOURCE_MISSING, SOURCE_UNSUITABLE].includes(reason.code)})))
+        .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)})))
+
+// Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided
+// from the recipe alone, whatever its sources or its output read as.
+export const configurationGate = ({recipe, operation}) => {
+    const read = readLocalRequirements(recipe).find(read => reasonFor(read, operation))
+    return read
+        ? {...reasonOf(read), section: read.declaration.section.label, withdraw: true}
+        : null
+}
 
 // What the requirement an operation over the recipe is held to establishes, where it is met - the measures a segment
 // chart can plot, say: its SUPPORTED verdict, or null.
 export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, now}) => {
     const read = readSourceRequirements({state, recipe, evidenceOwnerOf, now})
-        .find(({declaration}) => declaration.operations?.includes(operation))
+        .find(({declaration, local}) => !local && declaration.operations?.includes(operation))
     return read?.verdict.status === SUPPORTED ? read.verdict : null
 }
 
@@ -135,6 +183,8 @@ const reasonFor = (read, operation) => {
     }
     return providerChain === CHECKED ? null : reasonOf({...read, acquisition: providerChain, verdict: NEEDS})
 }
+
+const WITHDRAWING = [SOURCE_MISSING, SOURCE_UNSUITABLE, CONFIGURATION_UNMET]
 
 const reasonOf = read => ({...retrieveReason(read), declaration: read.declaration, read})
 
@@ -212,7 +262,10 @@ const DISCOVERY_CODES = {
     [NOT_A_SOURCE]: MISSING_SOURCE
 }
 
-const retrieveReason = ({acquisition, verdict}) => {
+const retrieveReason = ({local, acquisition, verdict}) => {
+    if (local) {
+        return {wait: false, code: CONFIGURATION_UNMET}
+    }
     if (verdict.status === UNSUPPORTED) {
         return {wait: false, code: verdict.diagnostic.code === MISSING_SOURCE ? SOURCE_MISSING : SOURCE_UNSUITABLE}
     }
@@ -238,3 +291,67 @@ const assetAuthorityOf = (entry, now) => {
 }
 
 const unsupported = diagnostic => ({status: UNSUPPORTED, diagnostic})
+
+const isLocal = declaration => Boolean(declaration.localFacts)
+
+const keyOf = (declarationId, itemId) => `${declarationId}|${itemId ?? ''}`
+
+// Local reads are read once for each recipe the session holds: each edit of it is another.
+const LOCAL_READS = new WeakMap()
+
+const readLocal = (recipe, declaration) => {
+    const facts = declaration.localFacts(recipe)
+    const parameters = declaration.parameters?.(recipe) || {}
+    const items = declaration.items
+        ? declaration.items(facts)
+        : [{facts}]
+    return items.map(({id, path, label, facts, prerequisites = []}) => ({
+        declaration,
+        local: true,
+        item: declaration.items ? {id, path, label} : null,
+        acquisition: CHECKED,
+        providerChain: CHECKED,
+        ownVerdict: declaration.requirement.evaluate(facts, parameters),
+        prerequisites
+    }))
+}
+
+// Each read's effective verdict, from its own and those of its prerequisites, each resolved once. A prerequisite that was
+// not read, or that depends on the read itself, is not met.
+const withPrerequisites = reads => {
+    const byKey = new Map(reads.map(read => [readKey(read), read]))
+    const resolved = new Map()
+    const resolving = new Set()
+    const resolve = read => {
+        const key = readKey(read)
+        if (!resolved.has(key)) {
+            resolving.add(key)
+            const unmetPrerequisites = read.prerequisites
+                .map(prerequisite => unmetPrerequisite(prerequisite, byKey, resolving, resolve))
+                .filter(Boolean)
+            resolving.delete(key)
+            const {prerequisites: _prerequisites, ...rest} = read
+            resolved.set(key, {
+                ...rest,
+                unmetPrerequisites,
+                verdict: read.ownVerdict.status === SUPPORTED && unmetPrerequisites.length
+                    ? unsupported({code: PREREQUISITE_UNMET, prerequisites: unmetPrerequisites})
+                    : read.ownVerdict
+            })
+        }
+        return resolved.get(key)
+    }
+    return reads.map(resolve)
+}
+
+const unmetPrerequisite = ({declaration, item}, byKey, resolving, resolve) => {
+    const key = keyOf(declaration, item)
+    const read = byKey.get(key)
+    if (!read || resolving.has(key)) {
+        return {declaration, item, label: read?.item?.label || null, read: Boolean(read)}
+    }
+    const prerequisite = resolve(read)
+    return prerequisite.verdict.status === SUPPORTED
+        ? null
+        : {declaration, item, label: prerequisite.item?.label || null, read: true}
+}

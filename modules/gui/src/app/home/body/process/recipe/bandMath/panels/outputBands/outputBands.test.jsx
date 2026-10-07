@@ -4,6 +4,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     RecipeFormPanel: ({children}) => children,
     recipeFormPanel: () => Component => Component
 }))
+vi.mock('../../../selectedSource', () => ({withItemProblems: () => Component => Component}))
 vi.mock('~/widget/form', () => {
     class Property {
         notEmpty() {

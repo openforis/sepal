@@ -29,6 +29,39 @@ when given it must start with a letter or underscore, continue with letters, dig
 characters long. No two final names may be alike. Output bands checks both rules over every configured output, a saved
 configuration included, and Apply stays unavailable while any fails; each row shows the same rules as its own feedback.
 
+## Configuration checks
+
+Band Math judges its configuration as applied through the shared requirement reader (`bandMathRequirements.js`, pure
+rules in `chainRequirements.js`), one read per calculation and per output image. Execution builds every calculation in
+order, over the inputs and the calculations before it, so:
+
+- An expression may read only those, by variable name and physical band name. It is analysed as its editor analyses
+  it (`expressionAnalysis.js`): the same syntax, functions, argument counts and band-count rule. A function reads them
+  by image id and physical band name, as execution selects them. A missing variable or band, a removed calculation, a
+  later calculation and the calculation itself are each diagnosed.
+- An output band must be a band of the image it is taken from, by physical name, and that image must exist.
+- A calculation reading an unmet calculation depends on it, and so does an output taken from one. It names what it
+  depends on rather than repeating what is wrong there, and still reports its own problems.
+
+Any unmet calculation holds back the image output, whether or not an output reads it: previews, here and on other
+maps, are not requested or are withdrawn, and Retrieve is disabled and refused at submission (`CONFIGURATION_UNMET`,
+naming Calculations), whatever its output reads as. Repair restores them. Calculations and Output bands mark their
+toolbar buttons and the items concerned, with the reason as their tooltip. An output whose image no longer exists is
+listed in Output bands as it was saved, marked, to be removed; it offers no bands to add. Saved `invalid` flags from
+earlier versions are ignored.
+
+These checks do not bind the panels: a panel's Apply is decided by its own validation, as before - an expression by
+its editor's lint, over the inputs and the calculations before it.
+
+After a change, the sync derives each expression's bands again, in order, from the calculations before it as just
+derived, but only where everything it reads is met. One that is not keeps the bands it was derived with, and with them
+the names its outputs were given. Renamed inputs, calculations and bands are still renamed in expressions, used bands,
+outputs and visualizations.
+
+Not checked yet: whether an input's bands exist in the asset or recipe it is taken from, and anything at the execution
+boundary - Task and Earth Engine build what is submitted, and recipes reading Band Math as a source learn of an unmet
+configuration only when Earth Engine refuses its image. Describing such a recipe still asks Earth Engine to observe it.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/bandMath.js` (see the
@@ -79,4 +112,10 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - `modules/gee/test/jobs/ee/bandMath/bandMathBands.test.js` - the catalogue, whatever is selected.
 - `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathOutput.test.js` - the common read, Retrieve's
-  policies and destinations, and Masking over Band Math.
+  policies and destinations, Retrieve refused and allowed by the configuration checks, and Masking over Band Math.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/chainRequirements.test.js` - the configuration checks.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathLayer.test.jsx` - a layer on another map refused,
+  withdrawn and drawn again.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculationRequirements.test.jsx` - the
+  calculations' marks, and their panel's Apply left as it was.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames.

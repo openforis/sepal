@@ -9,6 +9,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withSourceProblems} from '../../selectedSource'
 import styles from './bandMathToolbar.module.css'
 import {Calculations} from './calculations/calculations'
 import {InputImagery} from './inputImagery/inputImagery'
@@ -18,7 +19,6 @@ import {Retrieve} from './retrieve/retrieve'
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     initialized: selectFrom(recipe, 'ui.initialized'),
-    calculations: selectFrom(recipe, 'model.calculations.calculations'),
 })
 
 class _BandMathToolbar extends React.Component {
@@ -27,7 +27,7 @@ class _BandMathToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, calculations} = this.props
+        const {recipeId, initialized, sourceProblems} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery']}
@@ -56,15 +56,16 @@ class _BandMathToolbar extends React.Component {
                         panel/>
                     <Toolbar.ActivationButton
                         id='calculations'
-                        error={calculations.find(({invalid}) => invalid)}
+                        error={!!sourceProblems.calculations}
                         label={msg('process.bandMath.panel.calculations.button')}
-                        tooltip={msg('process.bandMath.panel.calculations.tooltip')}
+                        tooltip={sourceProblems.calculations || msg('process.bandMath.panel.calculations.tooltip')}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
                         id='outputBands'
+                        error={!!sourceProblems.outputBands}
                         label={msg('process.bandMath.panel.outputBands.button')}
-                        tooltip={msg('process.bandMath.panel.outputBands.tooltip')}
+                        tooltip={sourceProblems.outputBands || msg('process.bandMath.panel.outputBands.tooltip')}
                         disabled={!initialized}
                         panel/>
                 </Toolbar>
@@ -75,5 +76,6 @@ class _BandMathToolbar extends React.Component {
 
 export const BandMathToolbar = compose(
     _BandMathToolbar,
+    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )

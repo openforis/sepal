@@ -7,3 +7,7 @@
     width: 12rem;
     flex-grow: 0 !important;
 }
+
+.error {
+    border: 1px solid var(--error-color)
+}

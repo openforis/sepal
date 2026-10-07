@@ -22,6 +22,7 @@ import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {retrieveAvailability} from './operationAvailability'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
+import {configurationGate} from './sourceRequirements'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
@@ -48,6 +49,8 @@ import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitte
 // authorized only while each is known to be met, decided from the same state and from the observation the source
 // runtime keeps the recipe's evidence current by (`evidenceOwnerOf`), which the panel's own watch acquires: while one is
 // being checked it is waited for, and otherwise it blocks, naming the section the source is selected in. Dependencies already known to be unsound refuse it for that.
+// A configuration that does not meet the requirements its type declares over it is refused for that, naming the section,
+// whatever its output reads as (`configurationGate`).
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -89,6 +92,12 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, n
     })
     const held = output.acquisition && heldFor(output.acquisition.key)
     const pending = Boolean(output.acquisition) && !held
+    // A configuration that does not meet its own requirements is refused for that, whatever its output reads as: the
+    // image it would build is not one it can.
+    const unmet = configurationGate({recipe, operation: IMAGE_OUTPUT})
+    if (unmet) {
+        return {recipe, graph, output: withheld(output, unmet), pending: false}
+    }
     const gate = output.status === READY
         && authorityGate({
             state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null,

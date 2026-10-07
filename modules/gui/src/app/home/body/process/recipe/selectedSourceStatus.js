@@ -10,6 +10,7 @@ import {
     EXPIRED,
     MISSING_SOURCE,
     NOT_A_PRODUCER,
+    readLocalRequirements,
     readSourceRequirements,
     SUPPORTED,
     UNAVAILABLE,
@@ -33,15 +34,38 @@ import {
 // Names come from the recipe listing and types from their registered labels; what a requirement's own diagnoses say is
 // the requirement's (`describe`). A source not selected yet is the form's to require, not something for its section to
 // report before anyone touched it.
+//
+// A requirement over the recipe's own configuration (a local read, sourceRequirements.js) holds its section back with
+// `UNMET_CONFIGURATION` by what it finds itself, each item's diagnosis named by the item. A read held only by its
+// prerequisites marks its item (itemStatusesOf), naming them, but not its section: what is wrong is said where it is.
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
+export const UNMET_CONFIGURATION = 'UNMET_CONFIGURATION'
 
 export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now()) =>
     sectionStatusOf(state, readsOf(state, recipeId, evidenceOwnerOf, now), sectionId)
 
 // The same, over reads the caller made - of a selection being edited, say.
 export const sectionStatusOf = (state, reads, sectionId) => {
+    const sourceStatus = selectedStatusOf(state, reads.filter(({local}) => !local), sectionId)
+    return sourceStatus?.state
+        ? sourceStatus
+        : configurationStatusOf(reads, sectionId) || sourceStatus
+}
+
+// What each item of a section its local requirements enumerate says, where anything does: {[itemId]: status}.
+export const itemStatusesOf = (reads, sectionId) => Object.fromEntries(reads
+    .filter(read => read.local && read.item && read.declaration.section.id === sectionId)
+    .map(read => [read.item.id, localStatusOf(read)])
+    .filter(([_id, status]) => status))
+
+export const itemStatusesOfState = (state, recipeId, sectionId) => {
+    const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
+    return recipe ? itemStatusesOf(readLocalRequirements(recipe), sectionId) : {}
+}
+
+const selectedStatusOf = (state, reads, sectionId) => {
     const own = reads.filter(({declaration}) => declaration.section.id === sectionId)
     if (!own.some(({selected}) => selected)) {
         return null
@@ -82,13 +106,13 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
     }
 }
 
-// The sections held back by an unavailable or unsuitable source, and why: {[sectionId]: message}. An advisory marks
-// nothing.
+// The sections held back by an unavailable or unsuitable source, or by their own configuration, and why:
+// {[sectionId]: message}. An advisory marks nothing.
 export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now()) => {
     const reads = readsOf(state, recipeId, evidenceOwnerOf, now)
     return Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
         .map(section => [section, sectionStatusOf(state, reads, section)])
-        .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE].includes(status?.state))
+        .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state))
         .map(([section, {message}]) => [section, message]))
 }
 
@@ -124,7 +148,52 @@ const isRequired = ({declaration}) => declaration.requiredForSelection !== false
 const operationLabel = ({operations = []}) =>
     msg(`process.source.operation.${operations[0]}`)
 
+// What the section's local requirements find themselves, the first item named, and every one in `details`.
+const configurationStatusOf = (reads, sectionId) => {
+    const problems = reads
+        .filter(read => read.local && read.declaration.section.id === sectionId && read.ownVerdict.status === UNSUPPORTED)
+        .map(read => ({read, ...ownDiagnosis(read)}))
+        .map(({read, message, details}) => read.item
+            ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
+            : {message, details})
+    return problems.length
+        ? {
+            state: UNMET_CONFIGURATION,
+            message: problems[0].message,
+            details: [...problems[0].details, ...problems.slice(1).map(({message}) => message)],
+            refresh: false,
+            advisories: []
+        }
+        : null
+}
+
+// What a local read says: its own diagnosis, followed by the prerequisites it waits on, named - not by what they say.
+const localStatusOf = read => {
+    if (read.verdict.status === SUPPORTED) {
+        return null
+    }
+    const own = read.ownVerdict.status === UNSUPPORTED ? ownDiagnosis(read) : null
+    const prerequisites = read.unmetPrerequisites.length
+        ? msg('process.requirement.prerequisiteUnmet', {
+            items: read.unmetPrerequisites.map(({label, item}) => label || item).join(', ')
+        })
+        : null
+    return {
+        state: UNMET_CONFIGURATION,
+        message: own ? own.message : prerequisites,
+        details: own ? [...own.details, ...(prerequisites ? [prerequisites] : [])] : [],
+        refresh: false,
+        advisories: []
+    }
+}
+
+const ownDiagnosis = ({ownVerdict, declaration}) =>
+    declaration.requirement.describe(ownVerdict.diagnostic)
+
 const statusOf = (read, names) => {
+    if (read.local) {
+        return localStatusOf(read)
+    }
     const {selected, selects, acquisition, verdict, declaration, assetId, missing} = read
     if (verdict.status === SUPPORTED || (!selects && verdict.status !== UNSUPPORTED)) {
         return null

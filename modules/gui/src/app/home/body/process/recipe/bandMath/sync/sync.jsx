@@ -1,15 +1,11 @@
-import {javascript} from '@codemirror/lang-javascript'
-import {EditorState} from '@codemirror/state'
 import _ from 'lodash'
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
-import {msg} from '~/translate'
-import {eeLint} from '~/widget/codeEditor/eeLint'
 
-import {updateIncludedBands} from '../panels/calculations/calculation'
+import {deriveCalculations} from './deriveCalculations'
 import {findChanges} from './findChanges'
 import {updateCalculation} from './updateCalculation'
 import {updateOutputBands} from './updateOutputBands'
@@ -22,7 +18,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Sync extends React.Component {
-    state = {lint: false}
+    state = {derive: false}
 
     render() {
         return null
@@ -34,7 +30,7 @@ class _Sync extends React.Component {
         const changed = !_.isEqual(images, nextImages)
             || !_.isEqual(calculations, nextCalculations)
             || !_.isEqual(outputImages, nextOutputImages)
-        return changed || nextState.lint
+        return changed || nextState.derive
     }
 
     componentDidUpdate(prevProps) {
@@ -54,10 +50,10 @@ class _Sync extends React.Component {
                 .set('model.calculations.calculations', updatedCalculations)
                 .dispatch()
 
-            this.setState({lint: true})
-        } else if (this.state.lint) {
-            this.setState({lint: false}, () =>
-                this.lint({images, calculations})
+            this.setState({derive: true})
+        } else if (this.state.derive) {
+            this.setState({derive: false}, () =>
+                this.deriveCalculations({images, calculations})
             )
         }
 
@@ -94,34 +90,15 @@ class _Sync extends React.Component {
         }
     }
 
-    lint({images, calculations}) {
-        calculations
-            .filter(({type}) => type === 'EXPRESSION')
-            .forEach(calculation => {
-                const onBandChanged = ({includedBands}) => {
-                    const updatedIncludedBands = updateIncludedBands({...calculation, includedBands})
-                    this.setCalculation({...calculation, includedBands: updatedIncludedBands})
-                }
-
-                const state = EditorState.create({
-                    doc: calculation.expression,
-                    extensions: javascript()
-                })
-
-                const lintErrors = eeLint([...images, ...calculations], msg, onBandChanged)({state})
-                if (lintErrors.length) {
-                    this.setCalculation({...calculation, invalid: lintErrors[0].message})
-                } else if (calculation.invalid) {
-                    this.setCalculation({...calculation, invalid: false})
-                }
-            })
-    }
-
-    setCalculation(calculation) {
+    // What the calculations yield, derived again once the changes they follow have settled, published at once.
+    deriveCalculations({images, calculations}) {
         const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_BAND_MATH_CALCULATION')
-            .set(['model.calculations.calculations', {imageId: calculation.imageId}], calculation)
-            .dispatch()
+        const derived = deriveCalculations({images, calculations})
+        if (derived.some((calculation, index) => calculation !== calculations[index])) {
+            recipeActionBuilder('UPDATE_BAND_MATH_CALCULATIONS')
+                .set('model.calculations.calculations', derived)
+                .dispatch()
+        }
     }
 }
 

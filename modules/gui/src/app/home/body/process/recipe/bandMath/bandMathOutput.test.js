@@ -32,7 +32,8 @@ const {retrieveTask: bandMathTask} = await import('./bandMathRecipe')
 const {retrieveTask: maskingTask} = await import('../masking/maskingRecipe')
 const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 const {readRecipeOutput} = await import('../recipeOutput')
-const {physicalRequest, retrieveDecision, submitRetrieve} = await import('../retrieveOutput')
+const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('../retrieveOutput')
+const {retrieveAvailability} = await import('../operationAvailability')
 
 addRecipeType(bandMath())
 addRecipeType(masking())
@@ -71,6 +72,28 @@ describe('retrieving a Band Math recipe', () => {
 
         expect(retrieveDecision({output, pending: false, names: ['coefs']}).destinations)
             .toEqual({GEE: true, DRIVE: false, SEPAL: false})
+    })
+})
+
+describe('retrieving a Band Math recipe whose calculation reads a band its input does not select', () => {
+    // Earth Engine refuses to build such an image, so its output cannot be observed either.
+    it('is refused, by Calculations, and submits nothing', () => {
+        const recipe = withExpression('i1.swir * 2')
+        const {output, pending} = retrieveRead(recipe, UNOBSERVABLE)
+
+        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(false)
+        expect(output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: 'process.bandMath.panel.calculations.button'}])
+        expect(submitRetrieve({recipe, output, pending, request: request(output), task: bandMathTask})).toBe(false)
+        expect(submitted).toEqual([])
+    })
+
+    it('is submitted once the calculation is repaired', () => {
+        const recipe = withExpression('i1.elevation * 2')
+        const {output, pending} = retrieveRead(recipe)
+
+        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(true)
+        expect(submitRetrieve({recipe, output, pending, request: request(output), task: bandMathTask})).toBe(true)
+        expect(submitted).toHaveLength(1)
     })
 })
 
@@ -157,3 +180,37 @@ const retrieve = (recipe, task, destination) => {
         task
     })
 }
+
+const withExpression = expression => ({
+    ...BAND_MATH,
+    model: {
+        ...BAND_MATH.model,
+        calculations: {calculations: BAND_MATH.model.calculations.calculations.map(calculation =>
+            calculation.imageId === 'c-1' ? {...calculation, expression} : calculation
+        )}
+    }
+})
+
+const stateOf = recipe => ({
+    process: {
+        loadedRecipes: {[recipe.id]: recipe},
+        recipes: [{id: recipe.id, revision: 1}],
+        recipeListing: {checkedAt: Date.now()},
+        saveStates: {},
+        tabs: []
+    }
+})
+
+// What Retrieve decides from as it submits: the session read at that moment, Band Math's running image observed - or
+// its observation refused.
+const retrieveRead = (recipe, observation = OBSERVED) => {
+    const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
+    const terminal = observation === UNOBSERVABLE ? REFUSED_OBSERVATION : acquired(graph, observation)
+    return readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: () => terminal})
+}
+
+const UNOBSERVABLE = 'UNOBSERVABLE'
+const REFUSED_OBSERVATION = {status: 'UNAVAILABLE', description: null, diagnostics: [], error: {message: 'Earth Engine refused the image'}}
+
+const request = output =>
+    physicalRequest({output, retrieveOptions: {scale: 30, assetId: 'users/x/out', destination: 'GEE', useAllBands: true}})

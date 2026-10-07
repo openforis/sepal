@@ -359,7 +359,8 @@ export const createSourceRuntime = ({
         claimAssets: ids => assets.claim(ids),
         write: writeRecipe,
         observationOf: recipe => getRecipeType(recipe.type)?.sourceObservation || null,
-        requirementsOf: recipe => getRecipeType(recipe.type)?.sourceRequirements || [],
+        // Only requirements over a selected source need its evidence.
+        requirementsOf: recipe => (getRecipeType(recipe.type)?.sourceRequirements || []).filter(({role}) => role),
         ...(clock && {clock})
     })
     const joined = (key, refresh) => {

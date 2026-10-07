@@ -88,14 +88,16 @@ const ASSET_MESSAGES = {
     ASSETS_UNAVAILABLE: 'process.retrieve.assets.failing',
     ASSETS_EXPIRED: 'process.retrieve.assets.expired'
 }
-// A source the recipe selected that does not meet its requirement, named by the section it is selected in.
+// A source the recipe selected that does not meet its requirement, named by the section it is selected in, or a
+// configuration that does not, named by the section it is configured in.
 const SOURCE_MESSAGES = {
     SOURCE_MISSING: 'process.retrieve.source.missing',
     SOURCE_PENDING: 'process.retrieve.source.checking',
     SOURCE_UNCHECKED: 'process.retrieve.source.checking',
     SOURCE_UNAVAILABLE: 'process.retrieve.source.unavailable',
     SOURCE_EXPIRED: 'process.retrieve.source.expired',
-    SOURCE_UNSUITABLE: 'process.retrieve.source.unsuitable'
+    SOURCE_UNSUITABLE: 'process.retrieve.source.unsuitable',
+    CONFIGURATION_UNMET: 'process.retrieve.source.configurationUnmet'
 }
 const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
 

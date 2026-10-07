@@ -9,8 +9,9 @@ class _ImageDescription extends React.Component {
     render() {
         const {image, loadedRecipes} = this.props
         if (image.type === 'RECIPE_REF') {
-            const {title, placeholder} = loadedRecipes[image.id]
-            return title || placeholder
+            // A recipe no longer loaded, its input gone, has no title to show.
+            const {title, placeholder} = loadedRecipes[image.id] || {}
+            return title || placeholder || null
         } else if (image.type === 'ASSET') {
             return image.id
         } else if (image.type === 'FUNCTION') {
