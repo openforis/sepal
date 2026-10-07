@@ -54,6 +54,8 @@
     text-transform: uppercase;
     color: var(--text-muted-color);
     white-space: nowrap;
+    /* The line is already clipped by .info above; the ellipsis says so, rather than cutting a word in half. */
+    text-overflow: ellipsis;
 }
 
 .description {
