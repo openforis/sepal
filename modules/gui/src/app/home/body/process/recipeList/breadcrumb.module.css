@@ -1,6 +1,7 @@
+/* The segments carry the spacing around the separator in their own padding, which the hover needs
+   anyway; adding more here would set them twice as far apart as the buttons beside them. */
 .separator {
     opacity: .4;
-    padding: 0 .2rem;
     align-self: center;
 }
 
@@ -19,7 +20,7 @@
     /* The link carries the look's own border; the current segment matches it, so both sit on one line. */
     border: 1px solid transparent;
     border-radius: var(--button-border-radius);
-    padding: .1rem .4rem;
+    padding: .1rem .35rem;
 }
 
 .label {
