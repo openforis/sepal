@@ -4913,8 +4913,14 @@
         },
         "format": {
           "label": "Format",
-          "CLASSIC": "Classic",
-          "SITS": "SITS"
+          "CLASSIC": {
+            "label": "Classic",
+            "tooltip": "Stack the time series into a single VRT, with one band per date."
+          },
+          "SITS": {
+            "label": "SITS",
+            "tooltip": "Also produce a sits/ folder with per-date, per-band files readable by the SITS R package."
+          }
         },
         "scale": {
           "label": "Scale",

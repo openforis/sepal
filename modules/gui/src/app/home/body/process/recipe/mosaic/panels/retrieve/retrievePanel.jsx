@@ -316,11 +316,13 @@ class _MosaicRetrievePanel extends React.Component {
         const formatOptions = [
             {
                 value: 'CLASSIC',
-                label: msg('process.retrieve.form.format.CLASSIC')
+                label: msg('process.retrieve.form.format.CLASSIC.label'),
+                tooltip: msg('process.retrieve.form.format.CLASSIC.tooltip')
             },
             {
                 value: 'SITS',
-                label: msg('process.retrieve.form.format.SITS')
+                label: msg('process.retrieve.form.format.SITS.label'),
+                tooltip: msg('process.retrieve.form.format.SITS.tooltip')
             }
         ]
         return (
