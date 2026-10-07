@@ -64,6 +64,7 @@ build ssh-gateway
 build geospatial-toolkit
 build sandbox
 build task
+build task-manager
 build gee
 build user
 build storage
@@ -106,6 +107,7 @@ push gateway
 push ssh-gateway
 push sandbox
 push task
+push task-manager
 push terminal
 push caddy
 push scene-metadata

@@ -52,6 +52,9 @@ check program rabbitmq with path /usr/local/bin/dockercheck-rabbitmq
 check program recipe with path /usr/local/bin/dockercheck-recipe
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
+check program task-manager with path /usr/local/bin/dockercheck-task-manager
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
 check program scene-metadata with path /usr/local/bin/dockercheck-scene-metadata
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 

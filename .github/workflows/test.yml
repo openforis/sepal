@@ -47,6 +47,8 @@ jobs:
             libs: lib/js/shared lib/js/ee
           - module: modules/task
             libs: lib/js/shared
+          - module: modules/task-manager
+            libs: lib/js/shared
           - module: modules/app-manager
             libs: lib/js/shared
           - module: modules/budget

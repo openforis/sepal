@@ -22,6 +22,7 @@
       - {module: worker}
       - {module: message}
       - {module: recipe}
+      - {module: task-manager}
       - {module: scene-metadata}
       - {module: user-assets}
       - {module: user-files}
@@ -31,6 +32,10 @@
       - {module: terminal}
       - {module: gateway}
       - {module: caddy}
+
+    # Images modules start containers from themselves, outside compose. bin/deploy verifies them as "image: <name>".
+    images:
+      - {image: task}
 
   pre_tasks:
     - set_fact:
@@ -319,7 +324,7 @@
     # when a pull fails and leaves each module's downtime to the recreate itself
     - name: Pull module images
       shell: >
-        printf '%s\n' {{ modules | map(attribute='module') | join(' ') }}
+        printf '%s\n' {{ ((modules | map(attribute='module') | list) + (images | map(attribute='image') | list)) | join(' ') }}
         | xargs -P 0 -I MODULE docker pull --quiet
         {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/MODULE:{{ version }}
       changed_when: false
@@ -333,6 +338,16 @@
       loop_control:
         loop_var: entry
         label: "{{ entry.module }}"
+
+    # A task container keeps the image of the release that started it; docker rmi refuses an image a container
+    # still uses, so only unused task images of earlier releases go.
+    - name: Remove unused task images of earlier releases
+      shell: >
+        docker images --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
+        {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task
+        | grep -v ':{{ version }}$'
+        | xargs -r -n 1 docker rmi 2>/dev/null || true
+      changed_when: false
 
   post_tasks:
     - name: Start monit
