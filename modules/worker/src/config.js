@@ -9,7 +9,6 @@ const DEFAULT_HOSTING_SERVICE = 'local'
 const DEFAULT_SEPAL_HTTPS_PORT = 443
 const DEFAULT_DOCKER_PORT = 2375
 const DEFAULT_RABBITMQ_PORT = 5672
-const DEFAULT_WORKER_PORT = 8080
 
 // EC2 accepts 100-300 MiB/s; anything else fails every RunInstances, so refuse it at boot instead.
 const parseVolumeInitializationRate = value => {
@@ -88,14 +87,6 @@ program
             .env('SEPAL_HOST_PROJECT_DIR')
     )
 
-    // ─── Task executor ──────────────────────────────────────────────────────
-    .addOption(
-        new Option('--worker-port <number>', 'Task-executor HTTP port on sandbox containers (default 8080)')
-            .env('WORKER_PORT')
-            .argParser(v => parseInt(v))
-            .default(DEFAULT_WORKER_PORT)
-    )
-
     // ─── Instance usage monitoring ──────────────────────────────────────────
     .addOption(
         new Option('--usage-sampling-interval-seconds <number>', 'Instance usage sampling interval (default 60)')
@@ -146,12 +137,6 @@ program
     .addOption(
         new Option('--busy-extension-minutes <number>', 'Extension per busy verdict from the sampler (default 15)')
             .env('BUSY_EXTENSION_MINUTES')
-            .argParser(v => parseInt(v))
-            .default(15)
-    )
-    .addOption(
-        new Option('--task-extension-minutes <number>', 'Extension per task progress report (default 15)')
-            .env('TASK_EXTENSION_MINUTES')
             .argParser(v => parseInt(v))
             .default(15)
     )
@@ -364,7 +349,6 @@ const {
     sepalHostDataDir,
     sepalHostProjectDir,
     sepalSshHost,
-    workerPort,
     usageSamplingIntervalSeconds,
     usageSampleRetentionDays,
     usageHourlyRetentionDays,
@@ -373,7 +357,6 @@ const {
     openExtensionMinutes,
     interactionExtensionMinutes,
     busyExtensionMinutes,
-    taskExtensionMinutes,
     manualExtensionMinutes,
     emailExtensionMinutes,
     maxUnattendedHours,
@@ -458,12 +441,10 @@ export {
     startupLeaseMinutes,
     stoppedPoolSize,
     syslogAddress,
-    taskExtensionMinutes,
     unknownBusyGraceTicks,
     usageHourlyRetentionDays,
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
     volumeInitializationRate,
     workerAmiVersion,
-    workerPort,
 }

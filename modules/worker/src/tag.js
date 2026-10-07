@@ -13,8 +13,6 @@ const sessionTag = session =>
         ? tag('Session', session)
         : tag('Session', session?.username, session?.id)
 
-const taskTag = taskId => tag('Task', taskId)
-
 const userTag = username => tag('User', username)
 
 const clientTag = clientId => tag('Client', clientId)
@@ -29,5 +27,4 @@ export {
     instanceTag,
     sessionTag,
     subscriptionTag,
-    taskTag,
     userTag}

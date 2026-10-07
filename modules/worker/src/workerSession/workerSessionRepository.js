@@ -435,7 +435,7 @@ export class WorkerSessionRepository {
     // redeemTermination — the email's terminate link. Guarded on the notified_time the token was
     // signed against, exactly like redeemExtension: any extension clears it, so the rescue always
     // wins and a link left sitting in an inbox cannot kill an instance whose owner went back to
-    // work. Deliberately WITHOUT the sweep's grace and task predicates — this is someone asking
+    // work. Deliberately WITHOUT the sweep's grace predicate — this is someone asking
     // explicitly, which is what the in-app [Terminate now] button does too.
     async redeemTermination({sessionId, notifiedTime}) {
         const terminated = await this.#db.withConnection(async connection => {
@@ -456,9 +456,7 @@ export class WorkerSessionRepository {
     }
 
     // ── expiry sweep ──────────────────────────────────────────────────────────
-    // expiredSessions — ACTIVE sessions past their deadline with no PENDING or ACTIVE task. The
-    // task exclusion is a filter here AND a predicate on the close (§5b rule 3), because a task
-    // can start during the grace period.
+    // expiredSessions — ACTIVE sessions past their deadline.
     expiredSessions() {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
@@ -466,10 +464,7 @@ export class WorkerSessionRepository {
                     FROM worker_session s
                     WHERE s.state = 'ACTIVE'
                       AND s.timeout_time IS NOT NULL
-                      AND s.timeout_time < NOW()
-                      AND NOT EXISTS (
-                          SELECT 1 FROM task t
-                           WHERE t.session_id = s.id AND t.state IN ('PENDING', 'ACTIVE'))`
+                      AND s.timeout_time < NOW()`
             )
             return rows.map(toSession)
         })
@@ -554,10 +549,7 @@ export class WorkerSessionRepository {
                       AND timeout_time IS NOT NULL AND timeout_time < NOW()
                       AND notification_state = ?
                       AND notified_time = ?
-                      AND notified_time < NOW() - INTERVAL ? MINUTE
-                      AND NOT EXISTS (
-                          SELECT 1 FROM task t
-                           WHERE t.session_id = worker_session.id AND t.state IN ('PENDING', 'ACTIVE'))`,
+                      AND notified_time < NOW() - INTERVAL ? MINUTE`,
                 [sessionId, notificationState, notifiedTime, graceMinutes]
             )
             return result.affectedRows

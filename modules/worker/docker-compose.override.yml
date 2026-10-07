@@ -15,10 +15,6 @@ services:
     # mounts. Dev-only: prod has no project checkout on the host (same pattern as app-launcher).
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
-      # Local instances are reached via per-instance network aliases (no host-published
-      # ports), so task-executor traffic hits the CONTAINER port (80), not the AWS-style
-      # published 8080.
-      WORKER_PORT: "80"
     # Resolve host.docker.internal to the Docker host so the local hosting provider can reach the
     # docker-api socat proxy (:2375) and the locally-provisioned sandbox containers. Dev-only —
     # with HOSTING_SERVICE=aws the worker uses each instance's own Docker daemon (real EC2 IPs).

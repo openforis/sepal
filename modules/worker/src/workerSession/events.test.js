@@ -6,7 +6,6 @@ import {
     emitWorkerSessionClosed,
     sessionChanged$,
     WORKER_SESSION_PUBLISHERS,
-    workerSessionEvents,
 } from './events.js'
 
 const collect = () => {
@@ -72,12 +71,8 @@ describe('SessionExpiryClosed', () => {
         expect(publisher).toBeDefined()
         const published = []
         const subscription = publisher.publish$.subscribe(value => published.push(value))
-        const inProc = []
-        const listener = payload => inProc.push(payload)
-        workerSessionEvents.on('SessionExpiryClosed', listener)
         emitSessionExpiryClosed({username: 'alice', sessionId: 's-1'})
         subscription.unsubscribe()
-        workerSessionEvents.off('SessionExpiryClosed', listener)
         // apps/terminals/ordinal/instanceName describe what was closed, so the GUI can replace its
         // warning with an accurate past-tense message. They default rather than being required.
         const expected = {
@@ -85,7 +80,6 @@ describe('SessionExpiryClosed', () => {
             apps: [], terminals: 0, ordinal: null, name: null, typeName: null,
         }
         expect(published).toEqual([expected])
-        expect(inProc).toEqual([expected])
     })
 })
 
@@ -108,24 +102,19 @@ describe('SessionExpiryNotified', () => {
         expect(published[0]).toMatchObject({name: 'crazy-banana', typeName: 't3a.small'})
     })
 
-    it('publishes {username, sessionId, session} on the bus subject and the in-proc emitter', () => {
+    it('publishes {username, sessionId, session} on the bus subject', () => {
         const publisher = WORKER_SESSION_PUBLISHERS
             .find(({key}) => key === 'workerSession.SessionExpiryNotified')
         expect(publisher).toBeDefined()
         const published = []
         const subscription = publisher.publish$.subscribe(value => published.push(value))
-        const inProc = []
-        const listener = payload => inProc.push(payload)
-        workerSessionEvents.on('SessionExpiryNotified', listener)
         const session = {id: 's-1', username: 'alice', apiKey: null}
         emitSessionExpiryNotified({username: 'alice', session})
         subscription.unsubscribe()
-        workerSessionEvents.off('SessionExpiryNotified', listener)
         const expected = {
             username: 'alice', sessionId: 's-1', session,
             apps: [], terminals: 0, ordinal: null, name: null, typeName: null, extensionMinutes: null,
         }
         expect(published).toEqual([expected])
-        expect(inProc).toEqual([expected])
     })
 })

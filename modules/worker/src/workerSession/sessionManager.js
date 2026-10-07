@@ -29,9 +29,7 @@ import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
 import {emitSessionAppAssociated, emitSessionAppDissociated, emitSessionChanged, emitSessionExpiryClosed, emitSessionExpiryNotified, emitWorkerSessionActivated, emitWorkerSessionClosed, emitWorkerSessionRequested} from './events.js'
 import {allOpenSessions as _allOpenSessions} from './query/allOpenSessions.js'
-import {findPendingOrActiveSession as _findPendingOrActiveSession} from './query/findPendingOrActiveSession.js'
 import {findSessionByApiKey as _findSessionByApiKey} from './query/findSessionByApiKey.js'
-import {findSessionById as _findSessionById} from './query/findSessionById.js'
 import {generateUserSessionReport as _generateUserSessionReport} from './query/generateUserSessionReport.js'
 import {generateUserUsageReport as _generateUserUsageReport} from './query/generateUserUsageReport.js'
 import {mostRecentlyClosedSession as _mostRecentlyClosedSession} from './query/mostRecentlyClosedSession.js'
@@ -237,17 +235,6 @@ const createSessionManager = ({
             interaction: true, reason: 'extend-button',
         })
 
-    // Task progress. Expressed as a ratchet rather than only as the sweep's task filter: a session
-    // that is notified, then runs a three-hour task, then leaves task protection would otherwise
-    // face a notified_time three hours old and close on the next sweep — a warning issued three
-    // hours before the user could act on it. As a ratchet, leaving protection always starts a
-    // fresh cycle. It does NOT stamp last_interaction_time: a task is not a human.
-    const taskExtension = sessionId =>
-        repo.extendSession({
-            sessionId, minutes: expiryPolicy.taskExtensionMinutes,
-            interaction: false, reason: 'task-progress',
-        })
-
     // Dismiss suppresses the email and nothing else — the session still closes at T+grace.
     const dismissExpiryNotification = async ({sessionId, username}) => {
         const dismissed = await repo.dismissNotification(sessionId, username)
@@ -291,8 +278,6 @@ const createSessionManager = ({
 
     // ── queries ─────────────────────────────────────────────────────────────
     const userWorkerSessions = query => _userWorkerSessions(query, {repo})
-    const findSessionById = sessionId => _findSessionById(sessionId, {repo})
-    const findPendingOrActiveSession = query => _findPendingOrActiveSession(query, {repo})
     const generateUserSessionReport = query =>
         _generateUserSessionReport(query, {repo, appRepo, instanceManager, usageRepo, terminals, verdicts})
     const generateUserUsageReport = query =>
@@ -387,8 +372,6 @@ const createSessionManager = ({
         return deleted
     }
 
-    // getDefaultInstanceType — the first tagged instance type.
-    const getDefaultInstanceType = () => instanceManager.getInstanceTypes().find(t => t.tag)
     const mostRecentlyClosedSessionByUser = () => _mostRecentlyClosedSessionByUser({repo})
     const mostRecentlyClosedSession = username => _mostRecentlyClosedSession(username, {repo})
 
@@ -424,7 +407,6 @@ const createSessionManager = ({
         setSessionTimeoutHours,
         openExtension,
         manualExtension,
-        taskExtension,
         dismissExpiryNotification,
         instanceDescription,
         redeemExtension,
@@ -432,13 +414,10 @@ const createSessionManager = ({
         expireSessions,
         // queries
         userWorkerSessions,
-        findSessionById,
-        findPendingOrActiveSession,
         generateUserSessionReport,
         generateUserUsageReport,
         findSessionByApiKey,
         allOpenSessions,
-        getDefaultInstanceType,
         mostRecentlyClosedSessionByUser,
         mostRecentlyClosedSession,
         // app ↔ session association

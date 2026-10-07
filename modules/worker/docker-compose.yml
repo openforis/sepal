@@ -36,8 +36,6 @@ services:
       # The SSH gateway's public address, for the ssh login the GUI offers to copy. Optional.
       SEPAL_SSH_HOST: "${SEPAL_SSH_HOST}"
       SEPAL_HOST_DATA_DIR: "${SEPAL_DATA_DIR}"
-      # ─── Task executor gateway (WorkerGateway: the executor's own container port) ──
-      WORKER_PORT: "${WORKER_PORT:-8080}"
       # ─── Instance usage monitoring (phase 1; defaults in config.js) ────────
       USAGE_SAMPLING_INTERVAL_SECONDS: "${USAGE_SAMPLING_INTERVAL_SECONDS:-60}"
       USAGE_SAMPLE_RETENTION_DAYS: "${USAGE_SAMPLE_RETENTION_DAYS:-30}"
@@ -52,7 +50,6 @@ services:
       OPEN_EXTENSION_MINUTES: "${OPEN_EXTENSION_MINUTES:-15}"
       INTERACTION_EXTENSION_MINUTES: "${INTERACTION_EXTENSION_MINUTES:-15}"
       BUSY_EXTENSION_MINUTES: "${BUSY_EXTENSION_MINUTES:-15}"
-      TASK_EXTENSION_MINUTES: "${TASK_EXTENSION_MINUTES:-15}"
       MANUAL_EXTENSION_MINUTES: "${MANUAL_EXTENSION_MINUTES:-60}"
       EMAIL_EXTENSION_MINUTES: "${EMAIL_EXTENSION_MINUTES:-60}"
       MAX_UNATTENDED_HOURS: "${MAX_UNATTENDED_HOURS:-12}"

@@ -4,8 +4,6 @@ import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
-import {createTask, State as TaskState, StateDescription} from '../task/task.js'
-import {TaskRepository} from '../task/taskRepository.js'
 import {SessionAppRepository} from './sessionAppRepository.js'
 import {activate, close, createWorkerSession, NotificationState, State} from './workerSession.js'
 import {WorkerSessionRepository} from './workerSessionRepository.js'
@@ -14,15 +12,14 @@ import {WorkerSessionRepository} from './workerSessionRepository.js'
 // own NOW() through GREATEST/LEAST/COALESCE, so what the ratchet, the cap and the guarded transitions
 // actually do to a stored TIMESTAMP is only observable here.
 //
-// The tasks and app associations these statements look for are arranged through the repositories that
-// own them. Rows are written directly only for the two things no operation can produce: a notification
-// that was raised in the past, and an interaction that happened an hour ago.
+// App associations are arranged through the repository that owns them. Rows are written directly only for
+// what no operation can produce: a notification that was raised in the past, an interaction that happened
+// an hour ago, and a leftover row in the legacy task table.
 
 describe('WorkerSessionRepository', () => {
     let testDb
     let repository
     let sessionAppRepository
-    let taskRepository
     let now
 
     beforeAll(async () => {
@@ -35,7 +32,6 @@ describe('WorkerSessionRepository', () => {
         now = new Date('2026-06-01T12:00:00Z')
         sessionAppRepository = new SessionAppRepository(testDb.db, () => now)
         repository = new WorkerSessionRepository(testDb.db, () => now, sessionAppRepository)
-        taskRepository = new TaskRepository(testDb.db, () => now)
     })
 
     afterAll(() => testDb?.remove())
@@ -368,13 +364,13 @@ describe('WorkerSessionRepository', () => {
             expect(expired.map(({id}) => id)).toEqual([SESSION_ID])
         })
 
-        test('never reports a session that is running a task', async () => {
+        test('reports an expired session even when the legacy task table still lists an unfinished task for it', async () => {
             await givenExpiredSession()
-            await givenTask(TaskState.ACTIVE)
+            await givenLegacyActiveTask()
 
             const expired = await repository.expiredSessions()
 
-            expect(expired).toEqual([])
+            expect(expired.map(({id}) => id)).toEqual([SESSION_ID])
         })
 
         test('never reports a session with no deadline at all', async () => {
@@ -482,16 +478,16 @@ describe('WorkerSessionRepository', () => {
             expect(stored.state).toBe(State.ACTIVE)
         })
 
-        test('leaves a session that started a task during its grace period', async () => {
+        test('closes an expired session even when the legacy task table still lists an unfinished task for it', async () => {
             await givenExpiredSession()
             const observed = await givenNotificationRaisedMinutesAgo(61)
-            await givenTask(TaskState.PENDING)
+            await givenLegacyActiveTask()
 
             const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(closed).toBe(false)
-            expect(stored.state).toBe(State.ACTIVE)
+            expect(closed).toBe(true)
+            expect(stored.state).toBe(State.CLOSED)
         })
 
         test('leaves a session whose grace has not elapsed', async () => {
@@ -779,11 +775,12 @@ describe('WorkerSessionRepository', () => {
     const givenExpiredSession = async (over = {}) =>
         await repository.insert(activeSession({timeoutTime: await secondsFromNow(-60), ...over}))
 
-    const givenTask = state => taskRepository.insert(createTask({
-        id: 't-1', state, username: USERNAME, sessionId: SESSION_ID, operation: 'some-operation',
-        params: {}, statusDescription: StateDescription[state], creationTime: now, updateTime: now,
-        recipeId: null,
-    }))
+    const givenLegacyActiveTask = () => testDb.query(
+        `INSERT INTO task (id, state, username, session_id, operation, params, status_description,
+             creation_time, update_time, removed)
+         VALUES ('legacy-task', 'ACTIVE', ?, ?, 'image.GEE', '{}', '{}', NOW(), NOW(), 0)`,
+        [USERNAME, SESSION_ID]
+    )
 
     // notifyExpiry stamps notified_time with NOW(), so a grace period has not elapsed by definition.
     // Backdating it is what lets a close be attempted at all, and keeps the guard tests failing for the

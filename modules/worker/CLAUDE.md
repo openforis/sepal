@@ -16,10 +16,7 @@ budget tracking, and gateway route migration.
 
 ## Routes
 - `GET /healthcheck` — returns `{status: 'ok'}`
-- `GET /task/ws` — gateway virtual-websocket endpoint (module `worker/task` in the gateway's
-  `webSocketEndpoints`): pushes per-user task listings to GUI subscribers
-  (`{path: '', items: {taskId: listItem}}` on subscribe and on every task mutation).
-- `/sessions/*` and `/tasks/*` REST surfaces (see `src/workerSession/routes.js` and `src/task/routes.js`)
+- `/sessions/*` REST surface (see `src/workerSession/routes.js`)
   - `GET /sessions/app-sessions` — the current user's app↔session associations, `[{path, label,
     sessionId, host, status, instanceType}]`.
   - `POST /sessions/session/:sessionId/app` — body `{path, label, clientId}`; associates the app
@@ -70,17 +67,10 @@ starts unable to authenticate.
 
 A worker authenticates back to SEPAL with Basic auth, empty username, key as password. The gateway
 resolves it through `POST /sessions/api-key-authenticate` → `{username, sessionId, workerType}` and
-injects the session as `sepal-session`; the two task-executor callbacks (`POST /tasks/active`,
-`POST /tasks/task/:id/state-updated`) require a TASK_EXECUTOR `sepal-session`, and
-`UpdateTaskProgress` additionally requires the task's owner and assigned `sessionId` to match. A
-role is never sufficient: every session of a user would share it.
+injects the session as `sepal-session`.
 
 Keys resolve only while the session is PENDING or ACTIVE; closing a session clears `api_key`, so the
-last terminal callback of a session revokes its own credential. Task-driven automatic closure waits
-until no assigned task is PENDING, ACTIVE or CANCELING (`hasUnfinishedTasksInSession`): a task being
-cancelled still awaits the executor's CANCELED confirmation. User action, expiry, budget enforcement
-and instance loss close a session regardless. Scheduling (`pendingOrActiveTasksInSession`) never
-dispatches a cancelling task again.
+last terminal callback of a session revokes its own credential.
 
 **One-time transition (task executors).** Task executors previously authenticated with
 `SEPAL_ADMIN_PASSWORD`. Executors already running when this change deploys hold no key and their
