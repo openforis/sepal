@@ -234,12 +234,13 @@ def create_dates_csv(directory, dates):
 
 
 def create_sits_files(sits_dir, tiles, band):
-    # one GeoTIFF per tile per date, named to match a sits local_cube
-    # parse_info of c("X1", "tile", "band", "date"). sits requires the band
-    # token in the file name to be upper case for raw (non-results) cubes.
-    # sits_dir may be shared across multiple bands (e.g. multiple indicators
-    # from the same recipe run), so they can be ingested as one multi-band
-    # cube without a separate merge step.
+    # one VRT per tile per date, named to match a sits local_cube parse_info
+    # of c("X1", "tile", "band", "date"). sits requires the band token in the
+    # file name to be upper case for raw (non-results) cubes. sits_dir may be
+    # shared across multiple bands (e.g. multiple indicators from the same
+    # recipe run), so they can be ingested as one multi-band cube without a
+    # separate merge step. These are thin VRTs referencing stack.vrt, not
+    # copies, so the band/date slice they point to must still exist on disk.
     create_tile_dir(sits_dir)
     band = band.replace('_', '-').upper()
     for tile in tiles:
@@ -250,16 +251,31 @@ def create_sits_tile_files(sits_dir, tile, band):
     tile_dir = tile['tile_dir']
     tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
     stack_file = join(tile_dir, 'stack.vrt')
+    rel_stack_file = relpath(stack_file, sits_dir)
     ds = gdal.Open(stack_file, GA_ReadOnly)
+    os.chdir(sits_dir)
+    gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
     for band_index in range(1, ds.RasterCount + 1):
         date = ds.GetRasterBand(band_index).GetDescription()
-        out_file = join(sits_dir, 'SEPAL_{}_{}_{}.tif'.format(tile_name, band, date))
-        gdal.Translate(
-            out_file, ds,
-            format='GTiff',
+        out_file = join(sits_dir, 'SEPAL_{}_{}_{}.vrt'.format(tile_name, band, date))
+        vrt = gdal.BuildVRT(
+            out_file, rel_stack_file,
             bandList=[band_index],
-            noData=nodata_value
+            VRTNodata=nodata_value
         )
+        vrt.GetRasterBand(1).SetDescription(date)
+        vrt.FlushCache()
+        vrt = None
+        # gdal.BuildVRT resolves the source to an absolute path regardless of
+        # the string passed in, so rewrite it to stay relative: sits_dir and
+        # tile_dir aren't siblings, but they do move together as one unit.
+        with open(out_file, 'r') as f:
+            content = f.read()
+        content = content.replace(stack_file, rel_stack_file).replace(
+            'relativeToVRT="0"', 'relativeToVRT="1"'
+        )
+        with open(out_file, 'w') as f:
+            f.write(content)
     ds = None
 
 
