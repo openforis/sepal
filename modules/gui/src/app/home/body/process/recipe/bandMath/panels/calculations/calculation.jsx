@@ -48,6 +48,7 @@ const fields = {
         .notBlank(),
     defaultBandName: new Form.Field(),
     bandName: new Form.Field(),
+    bandId: new Form.Field(),
     usedBands: new Form.Field()
         .notEmpty(),
     includedBands: new Form.Field()
@@ -156,6 +157,7 @@ const modelToValues = model => {
         reducer: model.reducer,
         expression: model.expression,
         bandName: model.bandName,
+        bandId: model.type === 'FUNCTION' ? model.includedBands?.[0]?.id : undefined,
         bandRenameStrategy: model.bandRenameStrategy,
         regex: model.regex,
         bandRename: model.bandRename,
@@ -185,7 +187,7 @@ const valuesToModel = values => {
 export const updateIncludedBands = values =>
     makeUnique(renameBands(values))
 
-const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
+const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, bandId, bandRenameStrategy, regex, bandRename}) => {
     if (includedBands.length === 1) {
         return [{...includedBands[0], userBandName: bandName, name: bandName || defaultBandName || includedBands[0].name}]
     } else if (bandRenameStrategy === 'PREFIX') {
@@ -195,8 +197,9 @@ const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, b
     } else if (bandRenameStrategy === 'REGEX') {
         return includedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
     } else {
+        // A FUNCTION calculation's one band keeps the identity it was saved with, which its output follows.
         return [{
-            id: uuid(),
+            id: bandId || uuid(),
             imageId: imageId,
             imageName: name,
             name: bandName || defaultBandName,

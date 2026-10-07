@@ -32,10 +32,11 @@ export class ImageForm extends Component {
     }
 
     renderImageSelector() {
-        const {input, inputComponent, inputs: {bands}} = this.props
+        const {input, inputComponent, inputs: {bands, otherSources}} = this.props
         return <div ref={this.element}>
             {React.createElement(inputComponent, {
                 input,
+                otherSources: otherSources.value,
                 onLoading: () => {
                     bands.set({})
                 },

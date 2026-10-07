@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {adoptOtherSources, DUPLICATE_SOURCE, isFreeSource} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -16,14 +17,17 @@ import {SectionSelection} from './sectionSelection'
 
 const fields = {
     imageId: new Form.Field(),
+    otherSources: new Form.Field(),
     section: new Form.Field()
         .notBlank(),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank(),
+        .notBlank()
+        .predicate(isFreeSource('RECIPE_REF'), DUPLICATE_SOURCE),
     asset: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
+        .notBlank()
+        .predicate(isFreeSource('ASSET'), DUPLICATE_SOURCE),
     bands: new Form.Field()
         .notEmpty(),
     visualizations: new Form.Field(),
@@ -32,7 +36,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id
+    recipeId: recipe.id,
+    images: selectFrom(recipe, 'model.inputImagery.images') || []
 })
 
 class _InputImage extends React.Component {
@@ -77,9 +82,20 @@ class _InputImage extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.setOtherSources()
+    }
+
     componentDidUpdate() {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
+        this.setOtherSources()
+    }
+
+    // The sources of the recipe's other inputs, which this one may not take.
+    setOtherSources() {
+        const {images, activatable: {imageId}, inputs: {otherSources}} = this.props
+        adoptOtherSources(otherSources, images, imageId)
     }
 
     updateImageLayerSources({section, asset, recipe: recipeId, visualizations}) {

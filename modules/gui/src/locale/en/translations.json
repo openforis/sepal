@@ -1076,6 +1076,7 @@
             "label": "Legend"
           },
           "noBands": "No bands selected",
+          "duplicateSource": "Another input already uses this image.",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",

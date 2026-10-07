@@ -36,10 +36,11 @@ export class ImageForm extends Component {
     }
 
     renderInput() {
-        const {input, inputComponent} = this.props
+        const {input, inputComponent, inputs: {otherSources}} = this.props
         const {loading} = this.state
         return React.createElement(inputComponent, {
             input,
+            otherSources: otherSources.value,
             busy: loading,
             onLoading: () => {
                 this.setState({loading: true})

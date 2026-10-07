@@ -858,7 +858,7 @@ shared source-observation lifecycle rather than adding another watcher, cache or
 Acceptance scenarios, without closing or reopening the recipe:
 
 - Deliberately removing an input band from the local selection removes its direct pass-through output, including
-  saved recipes whose copied input and output band IDs differ (see the [known bug](../../recipes/band-math.md#open-issues)).
+  saved recipes whose copied input and output band IDs differ (done; [Band Math](../../recipes/band-math.md#inputs)).
   Unaffected calculations remain executable. This is distinct from preserving an expression that needs the removed band.
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
   preserving the expression and output configuration. Restoring the band restores validity automatically.

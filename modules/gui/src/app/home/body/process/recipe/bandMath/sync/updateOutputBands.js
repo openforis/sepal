@@ -1,6 +1,6 @@
 import {compose} from '~/compose'
 
-import {addOutputBand, addOutputImage} from '../panels/outputBands/outputImages'
+import {addOutputBand, addOutputImage, isOutputOf} from '../panels/outputBands/outputImages'
 
 export const updateOutputBands = ({changes, outputImages}) =>
     compose(
@@ -62,17 +62,22 @@ const addBand = updatedImage =>
             )
             : outputImage
 
+// A removed band takes every output copied from it. The known bands are those still selected, the ones just added
+// included, and the removed ones themselves: none of them is taken by another's name.
 const removeBand = updatedImage =>
-    outputImage =>
-        updatedImage.removedBands?.length
-            ? updatedImage.removedBands.reduce(
-                (outputImage, removedBand) => ({
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.filter(({id}) => id !== removedBand.id)
-                }),
-                outputImage
-            )
-            : outputImage
+    outputImage => {
+        if (!updatedImage.removedBands?.length) {
+            return outputImage
+        }
+        const knownBandIds = [...updatedImage.includedBands, ...updatedImage.removedBands].map(({id}) => id)
+        return updatedImage.removedBands.reduce(
+            (outputImage, removedBand) => ({
+                ...outputImage,
+                outputBands: outputImage.outputBands.filter(outputBand => !isOutputOf(outputBand, removedBand, knownBandIds))
+            }),
+            outputImage
+        )
+    }
 
 const renameBand = updatedImage =>
     outputImage =>

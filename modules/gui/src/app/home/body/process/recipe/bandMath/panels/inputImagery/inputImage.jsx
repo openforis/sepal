@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {adoptOtherSources, DUPLICATE_SOURCE, isFreeSource} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -17,6 +18,7 @@ import {SectionSelection} from './sectionSelection'
 
 const fields = {
     otherNames: new Form.Field(),
+    otherSources: new Form.Field(),
     imageId: new Form.Field(),
     name: new Form.Field()
         .notBlank()
@@ -33,10 +35,12 @@ const fields = {
         .notBlank(),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank(),
+        .notBlank()
+        .predicate(isFreeSource('RECIPE_REF'), DUPLICATE_SOURCE),
     asset: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
+        .notBlank()
+        .predicate(isFreeSource('ASSET'), DUPLICATE_SOURCE),
     bands: new Form.Field()
         .notEmpty(),
     visualizations: new Form.Field(),
@@ -83,7 +87,7 @@ class _InputImage extends React.Component {
                 onApply={this.updateImageLayerSources}>
                 <PanelSections
                     inputs={inputs}
-                    shared={['imageId', 'name', 'otherNames']}
+                    shared={['imageId', 'name', 'otherNames', 'otherSources']}
                     sections={sections}
                     selected={inputs.section}
                     icon='image'
@@ -96,7 +100,14 @@ class _InputImage extends React.Component {
     componentDidMount() {
         this.setName()
         this.setOtherNames()
+        this.setOtherSources()
         this.setImageId()
+    }
+
+    // The sources of the recipe's other inputs, which this one may not take.
+    setOtherSources() {
+        const {images, activatable: {imageId}, inputs: {otherSources}} = this.props
+        adoptOtherSources(otherSources, images, imageId)
     }
 
     setImageId() {

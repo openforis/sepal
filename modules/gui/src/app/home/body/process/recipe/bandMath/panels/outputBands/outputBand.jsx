@@ -7,18 +7,20 @@ import {withForm} from '~/widget/form/form'
 import {RemoveButton} from '~/widget/removeButton'
 
 import styles from './outputBands.module.css'
+import {isUniqueOutputName, isValidOutputName, outputNameOf} from './outputImages'
 
 const fields = {
     allOutputBandNames: new Form.Field(),
     defaultOutputName: new Form.Field(),
     outputName: new Form.Field()
-        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.outputBands.invalidFormat')
+        .predicate(isValidOutputName, 'process.bandMath.panel.outputBands.invalidFormat')
 }
 
 const constraints = {
     unique: new Form.Constraint(['defaultOutputName', 'outputName', 'allOutputBandNames'])
         .predicate(
-            ({defaultOutputName, outputName, allOutputBandNames}) => isUnique(outputName || defaultOutputName, allOutputBandNames),
+            ({defaultOutputName, outputName, allOutputBandNames}) =>
+                isUniqueOutputName(outputNameOf({outputName, defaultOutputName}), allOutputBandNames || []),
             'process.bandMath.panel.outputBands.duplicateBand'
         )
 }
@@ -60,24 +62,20 @@ class _OutputBand extends React.Component {
     }
     
     componentDidMount() {
-        const {band, inputs: {defaultOutputName, outputName}} = this.props
+        const {band, inputs: {outputName}} = this.props
         outputName.set(band.outputName)
+        this.setOutputNames()
+    }
+
+    componentDidUpdate() {
+        this.setOutputNames()
+    }
+
+    // The names the row's feedback is checked against, as the panel holds them: another band's custom name can change
+    // this band's default.
+    setOutputNames() {
+        const {band, inputs: {allOutputBandNames, defaultOutputName}} = this.props
         defaultOutputName.set(band.defaultOutputName)
-        this.setAllOutputNames()
-    }
-
-    componentDidUpdate(prevProps) {
-        const {inputs: {outputName: {validationFailed: prevFailed}}} = prevProps
-        const {componentId, inputs: {outputName: {validationFailed: failed}}, onValidationStatusChanged} = this.props
-        if (prevFailed !== failed) {
-            onValidationStatusChanged(componentId, !failed)
-        }
-
-        this.setAllOutputNames()
-    }
-
-    setAllOutputNames() {
-        const {inputs: {allOutputBandNames}} = this.props
         allOutputBandNames.set(this.props.allOutputBandNames)
     }
 
@@ -92,9 +90,6 @@ class _OutputBand extends React.Component {
     }
 }
 
-const isUnique = (outputName, allOutputBandNames) =>
-    !allOutputBandNames || allOutputBandNames.filter(name => name === outputName).length <= 1
-
 export const OutputBand = compose(
     _OutputBand,
     withForm({fields, constraints})
@@ -106,5 +101,4 @@ OutputBand.propTypes = {
     image: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
     onRemove: PropTypes.func.isRequired,
-    onValidationStatusChanged: PropTypes.func.isRequired,
 }

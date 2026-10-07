@@ -9,8 +9,12 @@ chosen from it (`includedBands`). `bandNames.bandNames` maps them: one entry per
 each chosen band's `originalName` and the `outputName` it is given. The band lists and styles copied from a source when
 it was selected are editing aids and presets, never evidence of what the source holds.
 
-The form names bands after their source and renames a later image's band that repeats an earlier one - the same asset
-selected twice gives `elevation` and `elevation_1` - and refuses an edited name that repeats another.
+Inputs are told apart by their `imageId`, never by their source. A source - its type and id - can be taken by one
+input only: one another input uses is not offered, or refused where it is typed. A saved recipe whose inputs already
+share a source keeps them, each edited and removed alone.
+
+The form names bands after their source and renames a later image's band that repeats an earlier one - two inputs'
+`elevation` give `elevation` and `elevation_1` - and refuses an edited name that repeats another.
 
 ## Output
 

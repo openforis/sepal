@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {removeInputImage} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -72,21 +72,20 @@ class _InputImagery extends React.Component {
     renderImages(images) {
         return (
             <Layout type='vertical' spacing='tight'>
-                {images.map((image, index) => this.renderImage(image, index))}
+                {images.map(image => this.renderImage(image))}
             </Layout>
         )
     }
 
-    renderImage(image, index) {
+    renderImage(image) {
         const {recipeNameById} = this.props
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        const key = `${image.type}-${image.id}-${index}`
         return name
             ? (
                 <ListItem
-                    key={key}
+                    key={image.imageId}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
@@ -116,11 +115,7 @@ class _InputImagery extends React.Component {
 
     removeImage(imageToRemove) {
         const {recipeId} = this.props
-        const actionBuilder = recipeActionBuilder(recipeId)
-        actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
-            .del(['model.inputImagery.images', {id: imageToRemove.id}])
-            .del(['ui.inputImagery.images', {id: imageToRemove.id}])
-            .dispatch()
+        removeInputImage(recipeId, imageToRemove)
     }
 
     onChange() {

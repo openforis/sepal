@@ -38,7 +38,6 @@ describe('OutputBands band selection', () => {
             set: vi.fn()
         }
         const outputBands = new OutputBands({inputs: {outputImages}})
-        outputBands.updateAllOutputBandNames = vi.fn()
 
         outputBands.addBand({value: 'all', image, band: allBand})
 
@@ -46,5 +45,24 @@ describe('OutputBands band selection', () => {
             ...image,
             outputBands: [{...allBand, defaultOutputName: 'all'}]
         }])
+    })
+
+    // A choice the picker offered before the image came to output the band, as a saved recipe's legacy copy does.
+    it('adds no band its image already outputs under a legacy id', () => {
+        const redBand = {id: 'red-id', name: 'red'}
+        const image = {
+            imageId: 'image-id',
+            includedBands: [redBand],
+            outputBands: [{id: 'legacy-red-id', name: 'red', defaultOutputName: 'red'}]
+        }
+        const outputImages = {
+            value: [image],
+            set: vi.fn()
+        }
+        const outputBands = new OutputBands({inputs: {outputImages}})
+
+        outputBands.addBand({value: 'red', image, band: redBand})
+
+        expect(outputImages.set).toHaveBeenCalledWith([image])
     })
 })

@@ -66,21 +66,20 @@ class _InputImagery extends React.Component {
     renderImages(images) {
         return (
             <Layout type='vertical' spacing='tight'>
-                {images.map((image, index) => this.renderImage(image, index))}
+                {images.map(image => this.renderImage(image))}
             </Layout>
         )
     }
 
-    renderImage(image, index) {
+    renderImage(image) {
         const {recipeNameById} = this.props
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        const key = `${image.type}-${image.id}-${index}`
         return name
             ? (
                 <ListItem
-                    key={key}
+                    key={image.imageId}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
