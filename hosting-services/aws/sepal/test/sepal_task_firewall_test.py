@@ -149,7 +149,10 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
         self.run_script()
 
-        for chains in self.history():
+        snapshots = self.history()
+        self.assertTrue(any(['-s', TASK_RANGE, '-j', 'SEPAL-TASK'] in chains.get('DOCKER-USER', [])
+                            for chains in snapshots))
+        for chains in snapshots:
             if ['-s', TASK_RANGE, '-j', 'SEPAL-TASK'] in chains.get('DOCKER-USER', []):
                 for destination in BLOCKED:
                     self.assertIn(['-d', destination, '-j', 'DROP'], chains['SEPAL-TASK'])
@@ -159,6 +162,26 @@ class SepalTaskFirewallTest(unittest.TestCase):
 
         self.assertIn('modprobe br_netfilter', self.commands())
         self.assertIn('sysctl -q -w net.bridge.bridge-nf-call-iptables=1', self.commands())
+
+    def test_a_failing_bridge_filter_setup_fails_the_run_but_leaves_the_rules_in_place(self):
+        self.given_command_fails('modprobe')
+
+        result = self.run_script(check=False)
+
+        self.assertNotEqual(0, result.returncode)
+        chains = self.state_chains()
+        self.assertEqual([['-s', TASK_RANGE, '-j', 'SEPAL-TASK']], chains['DOCKER-USER'])
+        self.assertEqual([['-s', TASK_RANGE, '-j', 'DROP']], chains['INPUT'])
+        for destination in BLOCKED:
+            self.assertIn(['-d', destination, '-j', 'DROP'], chains['SEPAL-TASK'])
+
+    def given_command_fails(self, name):
+        with open(os.path.join(self.tmp.name, name), 'w') as f:
+            f.write('#!/bin/sh\nexit 1\n')
+
+    def state_chains(self):
+        with open(self.state) as f:
+            return json.load(f)
 
     def reset_history(self):
         if os.path.exists(self.history_file):
@@ -182,13 +205,12 @@ class SepalTaskFirewallTest(unittest.TestCase):
         with open(self.resolv_conf, 'w') as f:
             f.write(content)
 
-    def run_script(self):
+    def run_script(self, check=True):
         env = {**os.environ, 'PATH': f'{self.tmp.name}:{os.environ["PATH"]}',
                'IPTABLES_STATE': self.state, 'IPTABLES_HISTORY': self.history_file,
                'COMMAND_LOG': self.command_log, 'RESOLV_CONF': self.resolv_conf}
-        subprocess.run(['sh', SCRIPT], check=True, env=env)
-        with open(self.state) as f:
-            return json.load(f)
+        result = subprocess.run(['sh', SCRIPT], check=check, env=env)
+        return self.state_chains() if check else result
 
 
 if __name__ == '__main__':

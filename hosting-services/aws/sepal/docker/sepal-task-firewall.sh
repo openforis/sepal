@@ -3,8 +3,8 @@
 # every private address except the gateway's HTTP port and the host's nameservers, and from the host itself.
 # The gateway has a pinned address outside that range, so its own traffic is never filtered here.
 # The SEPAL-TASK chain is replaced atomically on every run, so changed rules take effect without a gap in
-# filtering for running task containers. Docker evaluates
-# DOCKER-USER before its own rules and never flushes it.
+# filtering for running task containers. Docker evaluates DOCKER-USER before its own rules and never flushes it.
+# Bridge filtering is enabled last: if it fails the unit fails, but the rules above are already in place.
 set -e
 
 TASK_RANGE=172.29.128.0/17
@@ -51,10 +51,6 @@ rules() {
     echo 'COMMIT'
 }
 
-# Without br_netfilter, traffic between containers on the sepal-task bridge never reaches iptables.
-modprobe br_netfilter
-sysctl -q -w net.bridge.bridge-nf-call-iptables=1
-
 iptables -N DOCKER-USER 2>/dev/null || true
 rules | iptables-restore --noflush
 
@@ -71,3 +67,8 @@ for destination in $BLOCKED; do
     remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$destination" -j DROP
 done
 remove INPUT -s "$LEGACY_SUBNET" -j DROP
+
+# Placed last so a failure here cannot skip the rules above. Without br_netfilter, traffic between
+# containers on the sepal-task bridge never reaches iptables.
+modprobe br_netfilter
+sysctl -q -w net.bridge.bridge-nf-call-iptables=1
