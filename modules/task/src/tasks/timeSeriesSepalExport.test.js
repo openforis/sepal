@@ -81,7 +81,7 @@ const runExport = async aoi => {
     captured.resolutions = 0
     await lastValueFrom(submit$('task-1', {
         description: 'time-series',
-        image: {recipe: recipe(aoi), indicator: 'ndvi', scale: 30, tileSize: 2}
+        image: {recipe: recipe(aoi), indicators: ['ndvi'], scale: 30, tileSize: 2}
     }))
     return captured.tile
 }
