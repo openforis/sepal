@@ -65,7 +65,6 @@ export class FolderPicker extends React.Component {
                     icon='folder-open'
                     iconVariant='info'
                     title={folder.name}
-                    titleClassName={styles.name}
                 />
             </ListItem>
         )
