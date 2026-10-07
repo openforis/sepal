@@ -14,22 +14,18 @@ import styles from './folderPicker.module.css'
 import {childFolders, isSelfOrDescendant, ROOT} from './recipeTree'
 
 export class FolderPicker extends React.Component {
-    path = React.createRef()
-
     state = {folderId: ROOT}
 
     render() {
         const {folders} = this.props
         const {folderId} = this.state
         return (
-            <Layout type='vertical' spacing='tight' className={styles.picker}>
-                <div ref={this.path} className={styles.path}>
-                    <Breadcrumb
-                        folders={folders}
-                        folderId={folderId}
-                        onNavigate={next => this.setState({folderId: next})}
-                    />
-                </div>
+            <Layout type='vertical' spacing='tight' className={styles.picker} contentClassName={styles.content}>
+                <Breadcrumb
+                    folders={folders}
+                    folderId={folderId}
+                    onNavigate={next => this.setState({folderId: next})}
+                />
                 {this.renderOptions()}
                 <Button
                     look='apply'
@@ -41,13 +37,6 @@ export class FolderPicker extends React.Component {
                 />
             </Layout>
         )
-    }
-
-    // A path too long for the box keeps its end in view: that end is the folder you are standing in,
-    // which is the one the button is about to move things to.
-    componentDidUpdate() {
-        const path = this.path.current
-        path.scrollLeft = path.scrollWidth
     }
 
     // One box of one size, whatever the open folder holds, so walking the tree never moves the

@@ -2,15 +2,10 @@
     width: 18rem;
 }
 
-/* A deep path scrolls rather than widening the box. The scrollbar stays hidden, as it does in every
-   other list here. */
-.path {
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.path::-webkit-scrollbar {
-    display: none;
+/* The box is a flex item, and a flex item is floored at the width of its contents. Without this, the
+   longest breadcrumb in it decides how wide the popup is. */
+.content {
+    min-width: 0;
 }
 
 /* Room for five folders, held whether the open folder has one or fifty. */
