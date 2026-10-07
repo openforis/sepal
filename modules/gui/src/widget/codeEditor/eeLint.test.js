@@ -434,6 +434,20 @@ it('When single band from a multi-band image is used using [] syntax, the single
     ])
 })
 
+// The editor holds a long document as several chunks of text, not one.
+it('An expression spanning many lines is linted whole', () => {
+    let bands
+    const image = {imageId: 'image-id1', name: 'i1', includedBands: [{id: 'id1', name: 'b1'}]}
+    const problems = lint({
+        images: [image],
+        expression: Array.from({length: 80}, () => 'i1.b1').join(' +\n'),
+        onBandChanged: changed => bands = changed
+    })
+    expect(problems).toEqual([])
+    expect(bands.usedBands).toEqual([{id: 'id1', name: 'b1', imageId: 'image-id1', imageName: 'i1'}])
+    expect(bands.includedBands).toEqual(bands.usedBands)
+})
+
 const lint = ({images, expression, onBandChanged}) => {
     const state = EditorState.create({
         doc: expression,

@@ -849,8 +849,9 @@ shared source-observation lifecycle rather than adding another watcher, cache or
 1. Identify user configuration versus derived fields in Band Math's current sync path, including expression and
    output references. Preserve saved-model compatibility and intentional rename behavior.
 2. Express the chain's consumed inputs, requirements and derived output through recipe-owned pure functions,
-   using the existing expression parser. Use the same declaration and evaluation contract for local configuration,
-   calculation outputs and current evidence from selected recipes or assets; only their providers differ.
+   using the expression analysis the editor lints with (`modules/gui/src/widget/codeEditor/expressionAnalysis.js`).
+   Use the same declaration and evaluation contract for local configuration, calculation outputs and current evidence
+   from selected recipes or assets; only their providers differ.
 3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
    superseded bookkeeping for this chain; leave unrelated sync behavior alone. Recheck the same requirements at
    execution, so a closed panel or directly submitted model cannot bypass them.

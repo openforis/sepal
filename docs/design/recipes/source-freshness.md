@@ -652,7 +652,7 @@ not load sources or branch on their location. Uniform evaluation does not imply 
 
 A section-to-section dependency list alone is insufficient. Band Math consumes the bands actually referenced by
 an expression; Sampling Design's manual proportions depend on stratum identities, not their colors or ordering,
-while automatic proportions consume different inputs. Reuse the existing expression parser and domain functions
+while automatic proportions consume different inputs. Reuse the existing expression analysis and domain functions
 rather than inventing a rule language. Keep external source traversal and observation in their existing shared
 boundaries; local calculation dependencies are not additional recipe-reference edges.
 
