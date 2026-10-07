@@ -1,6 +1,6 @@
 import {jest} from '@jest/globals'
 import {createRequire} from 'module'
-import {Observable, of, throwError} from 'rxjs'
+import {of, throwError} from 'rxjs'
 
 // The /assetMetadata boundary, exercised through recording Earth Engine stubs (the house pattern from
 // table/propertyFilter.test.js): ee.* needs an initialized API, so the structure the worker BUILDS is what is
@@ -35,28 +35,9 @@ const recordRequests = []
 let responses = {}
 
 const ee = {
-    $: ({operation}) => new Observable(subscriber => operation(
-        value => {
-            subscriber.next(value)
-            subscriber.complete()
-        },
-        error => subscriber.error(error)
-    )),
-    apiclient: {
-        Call: class {
-            constructor(callback) {
-                this.callback = callback
-            }
-
-            assets() {
-                return {get: name => name}
-            }
-
-            handle(name) {
-                recordRequests.push(name)
-                this.callback(responses.record)
-            }
-        }
+    getAssetRecord$: id => {
+        recordRequests.push(client.rpc_convert.assetIdToAssetName(id))
+        return of(responses.record)
     },
     rpc_convert: client.rpc_convert,
     Image: id => eeImage(`Image(${JSON.stringify(id)})`),

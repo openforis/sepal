@@ -127,14 +127,7 @@ const worker$ = ({
 // band `dimensions` is the grid's. A Cloud GeoTIFF is evaluated as an image, whose band types already state their rank.
 const assetRecord$ = asset => asset.startsWith('gs://')
     ? ee.getAsset$(asset, 0)
-    : ee.$({
-        description: `get asset (${asset})`,
-        operation: (resolve, reject) => {
-            const call = new ee.apiclient.Call((record, error) => error ? reject(error) : resolve(record))
-            call.handle(call.assets().get(ee.rpc_convert.assetIdToAssetName(asset), {prettyPrint: false}))
-        },
-        maxRetries: 0
-    }).pipe(
+    : ee.getAssetRecord$(asset, 0).pipe(
         map(withArrayDimensions)
     )
 

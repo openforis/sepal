@@ -41,14 +41,7 @@ const worker$ = ({requestArgs: {ids}}) => {
 
 const assetVersion$ = id => id.startsWith('gs://')
     ? of({id, version: null, unversioned: true})
-    : ee.$({
-        description: `get asset version (${id})`,
-        operation: (resolve, reject) => {
-            const call = new ee.apiclient.Call((asset, error) => error ? reject(error) : resolve(asset))
-            call.handle(call.assets().get(ee.rpc_convert.assetIdToAssetName(id), {prettyPrint: false}))
-        },
-        maxRetries: 0
-    }).pipe(
+    : ee.getAssetRecord$(id, 0).pipe(
         map(({type, updateTime}) => updateTime
             ? {id, type, version: updateTime}
             : {id, type, version: null, unversioned: true})

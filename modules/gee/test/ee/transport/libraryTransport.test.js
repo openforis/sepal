@@ -29,3 +29,18 @@ test('reads an export task\'s status as one status', async () => {
 
     expect(status).toMatchObject({id: 'T1', state: 'RUNNING'})
 })
+
+test('reads a Cloud asset record without dropping its version or band ranks', async () => {
+    const name = 'projects/earthengine-legacy/assets/users/test/segments'
+    const record = {
+        name,
+        type: 'IMAGE',
+        updateTime: '2026-10-07T00:00:00.123456Z',
+        bands: [{id: 'VV_coefs', dataType: {precision: 'DOUBLE', dimensionsCount: 2}}]
+    }
+    answerLibrary({[`${API}/v1/${name}?prettyPrint=false`]: record})
+
+    const result = await firstValueFrom(new LibraryTransport(ee).getAssetRecord$('users/test/segments'))
+
+    expect(result).toMatchObject(record)
+})

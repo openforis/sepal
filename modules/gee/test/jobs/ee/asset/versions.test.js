@@ -8,33 +8,22 @@ const requests = []
 let answer = () => ({})
 
 const ee = {
-    $: ({operation}) => new Observable(subscriber => operation(
-        value => {
-            subscriber.next(value)
-            subscriber.complete()
-        },
-        error => subscriber.error(error)
-    )),
-    apiclient: {
-        Call: class {
-            constructor(callback) {
-                this.callback = callback
-            }
-
-            assets() {
-                return {get: (name, params) => ({name, params})}
-            }
-
-            handle({name, params}) {
-                requests.push({name, params, respond: (asset, error) => this.callback(asset, error)})
-                const answered = answer(name)
-                if (answered !== undefined) {
-                    answered instanceof Error ? this.callback(undefined, answered) : this.callback(answered)
-                }
+    getAssetRecord$: id => new Observable(subscriber => {
+        const name = nameOf(id)
+        const respond = (asset, error) => {
+            if (error) {
+                subscriber.error(error)
+            } else {
+                subscriber.next(asset)
+                subscriber.complete()
             }
         }
-    },
-    rpc_convert: {assetIdToAssetName: id => `projects/earthengine-legacy/assets/${id}`}
+        requests.push({name, respond})
+        const answered = answer(name)
+        if (answered !== undefined) {
+            answered instanceof Error ? respond(undefined, answered) : respond(answered)
+        }
+    })
 }
 
 jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
@@ -69,7 +58,6 @@ describe('an asset version', () => {
             {id: 'users/x/image', type: 'IMAGE', version: '2026-10-01T06:23:41.888670Z'},
             {id: 'users/x/collection', type: 'IMAGE_COLLECTION', version: '2026-10-01T06:31:09.600525Z'}
         ])
-        expect(requests.map(({params}) => params)).toEqual([{prettyPrint: false}, {prettyPrint: false}])
     })
 
     it('is asked for once however often the id is repeated', () => {

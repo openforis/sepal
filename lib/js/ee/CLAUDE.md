@@ -54,6 +54,9 @@ sent as the `EEContext` (`eeContext.js`) it is subscribed in.
 
 - Under the REST transport an Earth Engine call made outside `inEEContext` fails; it never falls back to the
   service account.
+- Asset reads that need the Cloud API record (including `updateTime` and band ranks) use
+  `ee.getAssetRecord$`; `ee.getAsset$` returns the legacy shape. Both use the installed transport.
+  GEE jobs must not use `ee.$` around client-library calls: it uses the Task transport and its limiter.
 - Never share an observable between requests. A value shared across requests is a plain value or a Promise, so
   each subscriber resumes in its own async context. Work started on unsubscription (cleanup) captures the context
   when the work it cleans up starts, and runs inside it.
