@@ -41,6 +41,8 @@ import taskExportImageToSepal$ from '#gee/jobs/task/exportImageToSepal'
 import taskExportTimeSeriesChunk$ from '#gee/jobs/task/exportTimeSeriesChunk'
 import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
 import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
+import taskSamplingDesignCleanup$ from '#gee/jobs/task/samplingDesignCleanup'
+import taskSamplingDesignStep$ from '#gee/jobs/task/samplingDesignStep'
 import taskShareAsset$ from '#gee/jobs/task/shareAsset'
 import taskTimeSeriesChunks$ from '#gee/jobs/task/timeSeriesChunks'
 import taskTimeSeriesTiles$ from '#gee/jobs/task/timeSeriesTiles'
@@ -95,5 +97,7 @@ export default router =>
         .post('/task/timeseries/chunks', stream(ctx => taskTimeSeriesChunks$(ctx)))
         .post('/task/download/files', stream(ctx => taskDownloadFiles$(ctx)))
         .post('/task/download/cleanup', stream(ctx => taskDownloadCleanup$(ctx)))
+        .post('/task/samplingDesign/step', stream(ctx => taskSamplingDesignStep$(ctx)))
+        .post('/task/samplingDesign/cleanup', stream(ctx => taskSamplingDesignCleanup$(ctx)))
         .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
