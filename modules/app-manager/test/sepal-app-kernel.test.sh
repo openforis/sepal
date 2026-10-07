@@ -10,6 +10,7 @@ stub() {   # a fake interpreter that reports its own prefix and the geo env it w
     printf 'echo "PREFIX=$(cd "$(dirname "$0")/.." && pwd)"\n'
     printf 'echo "PROJ_DATA=${PROJ_DATA:-unset}"\n'
     printf 'echo "GDAL_DATA=${GDAL_DATA:-unset}"\n'
+    printf 'echo "GDAL_DRIVER_PATH=${GDAL_DRIVER_PATH:-unset}"\n'
 }
 
 setup() {                      # setup <with-tarball: yes|no>
@@ -158,6 +159,24 @@ done
 err=$(PATH="$WORK/nozstd" bash "$LAUNCHER" testapp 2>&1 >/dev/null)
 if [[ $err == *"zstd"* ]]; then echo "ok   - a missing zstd is reported, not silent"; pass=$((pass+1))
 else echo "FAIL - no mention of zstd when it is absent: $err"; fail=$((fail+1)); fi
+teardown
+
+# GDAL_DRIVER_PATH exists only because a copied env's libgdal has the wrong prefix compiled in.
+# The stock kernel never sets it, so the Lustre fallback must not either.
+setup no; mkdir -p "$SEPAL_KERNELS_DIR/venv-testapp/venv/lib/gdalplugins"
+got=$(bash "$LAUNCHER" testapp 2>/dev/null | sed -n 's/^GDAL_DRIVER_PATH=//p')
+if [[ $got == unset ]]; then echo "ok   - the Lustre fallback sets no GDAL_DRIVER_PATH"; pass=$((pass+1))
+else echo "FAIL - the fallback exported GDAL_DRIVER_PATH=$got"; fail=$((fail+1)); fi
+teardown
+
+setup yes
+bash "$LAUNCHER" testapp >/dev/null 2>&1          # populate the cache
+cachedir=$(echo "$SEPAL_CACHE_ROOT"/testapp/*)
+mkdir -p "$cachedir/venv/lib/gdalplugins"
+got=$(bash "$LAUNCHER" testapp 2>/dev/null | sed -n 's/^GDAL_DRIVER_PATH=//p')
+if [[ $got == "$cachedir/venv/lib/gdalplugins" ]]; then
+    echo "ok   - the cached copy gets GDAL_DRIVER_PATH"; pass=$((pass+1))
+else echo "FAIL - cached GDAL_DRIVER_PATH was $got"; fail=$((fail+1)); fi
 teardown
 
 budget_results=$(mktemp -d)

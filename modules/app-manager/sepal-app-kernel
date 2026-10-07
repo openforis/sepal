@@ -16,6 +16,7 @@ root=${SEPAL_CACHE_ROOT:-/tmp/sepal-kernels}
 lustre="$kernels/venv-$app/venv"
 tarball="$kernels/venv-$app/venv.tar.zst"
 venv=$lustre
+from_cache=no
 
 # The catalog is external input: a name with a path separator would escape the cache directory.
 cacheable=yes
@@ -65,20 +66,22 @@ then
         exec 9>&-
         # Superseded generations are deliberately kept: a kernel still running from an older
         # copy resolves lazy imports and data files by path, so deleting one breaks a live app.
-        [[ -d $cache && -x $cache/venv/bin/python3 ]] && venv="$cache/venv"
+        if [[ -d $cache && -x $cache/venv/bin/python3 ]]; then venv="$cache/venv"; from_cache=yes; fi
     fi
 fi
 
 # Last line of defence: never exec an interpreter that is not there.
-[[ -x $venv/bin/python3 ]] || venv=$lustre
+[[ -x $venv/bin/python3 ]] || { venv=$lustre; from_cache=no; }
 
 export PYTHONNOUSERSITE=1
 # Only for environments that actually carry the data, matching what create_kernel_json emits for
 # the uncached path. A pip venv has neither, and a bogus path overrides the system default.
 [[ -d $venv/share/proj ]] && export PROJ_LIB="$venv/share/proj" PROJ_DATA="$venv/share/proj"
 [[ -d $venv/share/gdal ]] && export GDAL_DATA="$venv/share/gdal"
-# libgdal has its build prefix compiled in; without this the copy finds no drivers.
-[[ -d $venv/lib/gdalplugins ]] && export GDAL_DRIVER_PATH="$venv/lib/gdalplugins"
+# libgdal has its build prefix compiled in, so a copy finds no drivers without this. Only for
+# the copy: on the Lustre fallback that prefix is already correct, and setting the variable
+# there would diverge from the stock kernel, which never sets it.
+[[ $from_cache == yes && -d $venv/lib/gdalplugins ]] && export GDAL_DRIVER_PATH="$venv/lib/gdalplugins"
 
 echo "sepal-app-kernel: $app running from $venv" >&2
 exec "$venv/bin/python3" -m ipykernel_launcher "$@"
