@@ -1,11 +1,10 @@
-import {join} from 'path'
+import {createDb, createPool} from '#sepal/db/mysql'
 
-import {createDb, createPool, initDb} from '#sepal/db/mysql'
-import {dirName} from '#sepal/path'
+import {migrateTaskManagerDb} from './databaseMigrations.js'
 
 const DATABASE_NAME = 'task_manager'
 
 export const initializeDb = async () => {
-    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
+    await migrateTaskManagerDb(DATABASE_NAME)
     return createDb(await createPool(DATABASE_NAME))
 }
