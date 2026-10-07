@@ -32,6 +32,9 @@ RUN apt-get update && apt-get install nodejs -y
 
 RUN npm install -g nodemon
 
+# update-app.sh packs each app venv with zstd; sandbox-base does not install it.
+RUN apt-get update && apt-get install -y zstd
+
 USER node
 ADD lib/js/shared ${SHARED}
 ADD modules/${MODULE_NAME}/lib/shared/package-*.json ${SHARED}
@@ -54,5 +57,7 @@ ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 ADD modules/${MODULE_NAME}/update-app.sh /usr/local/bin/update-app
+# Published into current-kernels by sync_launcher; sandboxes mount that directory read-only.
+ADD modules/${MODULE_NAME}/sepal-app-kernel /etc/sepal/app-manager/sepal-app-kernel
 
 CMD start.sh

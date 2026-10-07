@@ -16,11 +16,16 @@ npm run testWatch     # Jest watch mode
 ## Key Architecture
 
 ### Entry Point
-`src/main.js` constructs the adapters and starts ingestion before serving HTTP:
+`src/main.js` constructs the adapters and serves HTTP before starting ingestion:
 1. Initializes Redis (`initializeRedis`) and MySQL (`initializeDb`), which returns `{db, created}` after migrations
-2. Constructs `SceneRepository` and `SceneIngestor` using the same DB adapter and pool
-3. Subscribes to `IngestionCoordinator.start$(created)`. The coordinator resets Redis when the database was created, rebuilds from CSV when the initialization marker is absent, and schedules periodic STAC updates
-4. Starts the Koa HTTP server (`startHttpServer`) only after the coordinator is ready. Startup failure is logged and exits with status 1, so failed initialization cannot leave a healthy HTTP-only process
+2. Starts the Koa HTTP server (`startHttpServer`) over a `SceneRepository` on the live table. A rebuild never
+   touches that table until publication, so queries see the previous catalogue, or no scenes before the first
+   ingest publishes. Waiting for the ingest would hold the healthcheck down for the whole CSV load, and with it
+   the deploy playbook
+3. Subscribes to `IngestionCoordinator.start$(created)` with a `SceneIngestor` on the same DB adapter and pool.
+   The coordinator resets Redis when the database was created, rebuilds from CSV when the initialization
+   marker is absent, and schedules periodic STAC updates. Initialization failure is logged and exits with
+   status 1, taking the HTTP server down with it
 
 ### HTTP Server (`src/httpServer.js`, `src/routes.js`)
 Koa server (via `#sepal/httpServer`) on port 80 (env `HTTP_PORT`). `main.js` builds the read repository,
@@ -47,7 +52,7 @@ at this boundary and compose collection loads sequentially; no parallel public P
 `main.js`/`db.js`. The coordinator resets Redis before reading its initialization marker when that
 fact is true, so a recreated database cannot reuse an old marker. An existing database keeps its state.
 The observable defers initialization until subscription, emits readiness once the update scheduler is
-active, and remains subscribed for the scheduler's lifetime. `main.js` starts HTTP from that emission.
+active, and remains subscribed for the scheduler's lifetime.
 The coordinator composes observables throughout initialization and updates, wrapping Promise-based
 DB and Redis operations at their boundaries. The same subscription owns
 the active Landsat/Sentinel update and its STAC pagination, without an intermediate Promise adapter.
@@ -134,8 +139,8 @@ MySQL (`scene_metadata` schema — **not** the old `sdms` schema):
 ### Verification boundaries
 - `db.test.js` checks migration gating and the creation outcome. The coordinator tests own the
   Redis-reset decision for recreated/existing databases, readiness, scheduling and initialization
-  failure. The former `main.test.js` construction/transcript harness is removed. HTTP starting from
-  readiness and fatal exit status 1 remain composition-root wiring, reviewed by inspection rather than
+  failure. The former `main.test.js` construction/transcript harness is removed. HTTP starting before
+  ingestion and fatal exit status 1 remain composition-root wiring, reviewed by inspection rather than
   exercised by a dedicated main unit test.
 - `ingestionCoordinator.test.js` exercises the real source-update/STAC chain with controlled page
   retrieval and storage ports. It checks initialization policy, source ordering, cancellation during pending fetches/inserts,

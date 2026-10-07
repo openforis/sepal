@@ -2,7 +2,7 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
 import {configureServer, getLogger} from '#sepal/log'
 import {initScheduler} from '#sepal/worker/scheduler'
-import {STICKY} from '#sepal/worker/staticPool'
+import {ROUND_ROBIN} from '#sepal/worker/staticPool'
 
 import {instances, port} from './config.js'
 import routes from './routes.js'
@@ -17,7 +17,7 @@ const main = async () => {
         routes
     })
 
-    initScheduler({name: 'GoogleEarthEngine', strategy: STICKY, instances})
+    initScheduler({name: 'GoogleEarthEngine', strategy: ROUND_ROBIN, instances})
     
     log.info('Initialized')
 }

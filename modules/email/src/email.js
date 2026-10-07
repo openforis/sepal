@@ -45,12 +45,12 @@ const getBody = (content, contentType) => {
     }
 }
 
-const getFrom = from => {
+export const getFrom = from => {
     if (from) {
         if (from.includes('@')) {
             return from
         }
-        return `${from}@${smtpFromDomain}`
+        return `sepal-${from}@${smtpFromDomain}`
     }
     return `no-reply@${smtpFromDomain}`
 }
