@@ -64,8 +64,10 @@ function create_kernel_json {
         # Gated on the launcher actually being installed: naming a launcher that is not there
         # is the spec's "kernel fails to start, every flagged app" row.
         if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
-            # The launcher picks the prefix at run time, so no PROJ/GDAL path may be baked in
-            # here: a generated one would pin the kernel to Lustre even when a copy is in use.
+            # The launcher owns the interpreter environment for cached apps: it picks the
+            # prefix at run time, so a PROJ/GDAL path generated here would pin the kernel to
+            # Lustre even when a copy is in use, and PYTHONNOUSERSITE is exported there too.
+            # Leaving env empty keeps one source of truth rather than two that can drift.
             cat <<EOF
 {
   "argv": [
@@ -77,9 +79,7 @@ function create_kernel_json {
   ],
   "display_name": "$display_name",
   "language": "python",
-  "env": {
-    "PYTHONNOUSERSITE": "1"
-  }
+  "env": {}
 }
 EOF
         else
