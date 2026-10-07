@@ -10,9 +10,14 @@ import {Panel} from '~/widget/panel/panel'
 
 import styles from './folderForm.module.css'
 
+// Long enough for any name worth reading, short enough that a row, a breadcrumb and a dialog can still
+// show it whole. The column holds 255.
+const NAME_MAX_LENGTH = 50
+
 const fields = {
     name: new Form.Field()
         .notBlank('process.folder.form.name.required')
+        .maxLength(NAME_MAX_LENGTH)
         .predicate((name, {folderNames}) => !folderNames.includes(name.toLowerCase()), 'process.folder.form.name.unique')
 }
 
