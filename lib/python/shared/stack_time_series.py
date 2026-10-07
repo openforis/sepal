@@ -13,8 +13,11 @@ from osgeo.gdalconst import GA_ReadOnly
 import xml.etree.cElementTree as ET
 from xml.dom import minidom
 
-tile_file_pattern = re.compile('.*-(\d{10}-\d{10}).tif')
-tile_dir_pattern = re.compile('.*-(\d{10}-\d{10})')
+# Keeps GDAL's error-return behaviour this script was written for; the sandbox runs it too.
+gdal.DontUseExceptions()
+
+tile_file_pattern = re.compile(r'.*-(\d{10}-\d{10}).tif')
+tile_dir_pattern = re.compile(r'.*-(\d{10}-\d{10})')
 chunk_file_pattern = re.compile('chunk-(.*)')
 nodata_value = 0
 

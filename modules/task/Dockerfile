@@ -1,48 +1,30 @@
-FROM openforis/sandbox-base
+FROM node:26-alpine
 
-ENV DEBIAN_FRONTEND=noninteractive
+ENV MODULE_NAME=task
+ENV MODULE=/usr/local/src/sepal/modules/${MODULE_NAME}
+ENV SHARED=/usr/local/src/sepal/lib/js/shared
 
-ENV MODULE_NAME task
-ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
-ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
-ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
-ENV NODE_MAJOR=26
+# GDAL tools and Python bindings: image exports build VRTs and name their bands, time series are stacked by a
+# Python script. su-exec runs the task as the owner of the user's home.
+RUN apk add --no-cache gdal-tools py3-gdal su-exec
 
-# Install node.js
+# install lib/shared packages
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
+RUN npm install --omit=dev
 
-RUN mkdir -p /etc/apt/keyrings
-RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
-RUN apt-get update
-RUN apt-get install nodejs -y
-
-RUN groupadd --gid 1000 node && \
-    useradd --uid 1000 --gid node --shell /bin/bash --create-home node
-
-RUN npm install -g nodemon
-
-ADD lib/js/shared ${JS_SHARED}
-WORKDIR ${JS_SHARED}
-USER root
-ADD lib/python/shared ${PYTHON_SHARED}
-RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
-    ln -s ${PYTHON_SHARED}/stack_time_series.py /usr/local/bin/sepal-stack-time-series
-ADD modules/${MODULE_NAME}/lib/shared/package-lock.json ${JS_SHARED}
-RUN chown -R node: ${JS_SHARED}
-USER node
-RUN npm install
-
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
-USER root
-RUN mkdir src && chown -R node: ${MODULE}
-USER node
-RUN npm install
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
+RUN npm install --omit=dev
 
-USER root
+ADD --chmod=0755 lib/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+
+# add module source
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-RUN chmod +x -R /usr/local/bin && sync
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
+
 CMD ["start.sh"]

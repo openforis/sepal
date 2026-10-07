@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 HOME_DIR=/home/$USERNAME
@@ -11,12 +11,8 @@ if [ "$USER_ID" -eq 0 ]; then
     exit 1
 fi
 
-# The container runs as the owner of the mounted home, so everything it writes there is theirs.
-if ! id "$USERNAME" >/dev/null 2>&1; then
-    groupadd -o -g "$GROUP_ID" "$USERNAME"
-    useradd -o -u "$USER_ID" -g "$GROUP_ID" -d "$HOME_DIR" "$USERNAME"
-fi
 chown "$USER_ID:$GROUP_ID" /task
 
+# The task runs as the owner of the mounted home, so everything it writes there is theirs.
 cd /usr/local/src/sepal/modules/task
-exec sudo -Eu "$USERNAME" "PATH=$PATH" "HOME=$HOME_DIR" node src/run.js
+exec su-exec "$USER_ID:$GROUP_ID" env HOME="$HOME_DIR" node src/run.js

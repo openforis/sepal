@@ -206,9 +206,7 @@
         "lib": [
             "shared"
         ],
-        "build": {
-            "sandbox-base": "build"
-        },
+        "build": {},
         "run": false
     },
     "task-manager": {

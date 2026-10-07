@@ -38,7 +38,9 @@ sepal npm-test task -- --testPathPatterns runner
   the SEPAL workspace), `samplingDesign.GEE` / `samplingDesign.SEPAL` (sampling design exports: gee runs the
   workflow as steps through `task/samplingDesign/step`; the runner follows each export and has gee clean up
   the temporary assets).
-- `start.sh` - creates the user matching the home owner and runs `node src/run.js` as that user.
+- `start.sh` - runs `node src/run.js` as the uid and gid that own the mounted home (`su-exec`).
+- Image: `node:26-alpine` with GDAL's tools and Python bindings (`gdalbuildvrt`, band names,
+  `sepal-stack-time-series`); nothing from the sandbox images.
 
 ## Release compatibility
 
