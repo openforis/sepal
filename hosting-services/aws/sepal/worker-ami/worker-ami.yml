@@ -184,9 +184,6 @@
     - name: Pull sandbox
       command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/sandbox:{{ version }}"
 
-    - name: Pull task
-      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task:{{ version }}"
-
     - name: Logout from docker registry
       command: "docker logout {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
 

@@ -22,7 +22,7 @@ class ContentHashTest(unittest.TestCase):
         write(self.worker_ami_dir, 'packer.json', '{}')
         write(self.worker_ami_dir, 'docker/worker-daemon.json', '{"runtimes": {}}')
         self.registry_certificate = write(self.tmp.name, 'docker-registry.crt', 'certificate')
-        self.registry = Registry({'sandbox': manifest('sha256:sandbox'), 'task': manifest('sha256:task')})
+        self.registry = Registry({'sandbox': manifest('sha256:sandbox')})
         self.env = {name: f'{name.lower()}-value' for name in worker_ami.ENV_NAMES}
 
     def tearDown(self):
@@ -43,17 +43,11 @@ class ContentHashTest(unittest.TestCase):
     def test_reads_the_images_of_the_given_version(self):
         self.hash()
 
-        self.assertEqual(self.registry.references, [('sandbox', VERSION), ('task', VERSION)])
+        self.assertEqual(self.registry.references, [('sandbox', VERSION)])
 
     def test_a_different_sandbox_image_changes_the_hash(self):
         before = self.hash()
         self.registry.images['sandbox'] = manifest('sha256:other-sandbox')
-
-        self.assertNotEqual(self.hash(), before)
-
-    def test_a_different_task_image_changes_the_hash(self):
-        before = self.hash()
-        self.registry.images['task'] = manifest('sha256:other-task')
 
         self.assertNotEqual(self.hash(), before)
 

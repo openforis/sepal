@@ -5,7 +5,7 @@
   worker_ami.py lookup <hash>    prints the Version tag of the newest available AMI carrying
                                  that hash, or nothing when there is none
 
-The hash covers the sandbox and task image IDs, every file in this directory, the registry
+The hash covers the sandbox image ID, every file in this directory, the registry
 certificate and the environment values the AMI build bakes in. Configuration comes from the
 environment the calling script sources from $CONFIG_HOME/env.
 """
@@ -14,7 +14,7 @@ import os
 import sys
 
 WORKER_AMI_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGES = ['sandbox', 'task']
+IMAGES = ['sandbox']
 # The values worker-ami.yml and packer.json bake into the AMI, plus DEPLOY_ENVIRONMENT to keep each
 # environment on its own AMIs. A value the AMI build starts reading must be added here.
 ENV_NAMES = ['AWS_WORKER_AMI', 'AWS_REGION', 'AWS_EFS_ID', 'AWS_FSX_ID', 'DOCKER_REGISTRY_HOST', 'DEPLOY_ENVIRONMENT']
