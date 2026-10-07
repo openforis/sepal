@@ -379,9 +379,9 @@ owning visualizations. It must replace recipe-specific copying, derivation and r
 than introducing another parallel synchronization mechanism.
 
 Recipe storage is the Node `recipe` module: reads and writes carry a trusted principal, and `revision` is
-owned by the row. GEE reads referenced recipes as the user whose request it is serving, and a task executor as
-its own worker session's owning user; neither holds administrator credentials, and the executor's state and
-progress callbacks are authorized by that session against the task it was assigned. Each execution operation
+owned by the row. GEE reads referenced recipes as the user whose request it is serving. A task container calls
+GEE through the gateway with its per-task key, which the gateway resolves to the task's user, so its reads run
+as that user; GEE holds no administrator credentials. Each execution operation
 retains each successfully read recipe for its own lifetime, so one operation cannot mix two revisions of the
 same recipe. Failed reads can be retried. Authorized batch/closure endpoints and coherent execution bundles are
 not implemented. Browser resolution completes a selected root's closure through the existing authenticated
