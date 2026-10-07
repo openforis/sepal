@@ -1,3 +1,20 @@
+/* A path wider than the row it is given scrolls inside it. Without the min-width it would instead set
+   the width of whatever holds it: a flex item never shrinks below its content unless it is told it may,
+   and a deep path then pushed the sort buttons away and left the move popup. */
+.segments {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.segments::-webkit-scrollbar {
+    display: none;
+}
+
 /* The segments carry the spacing around the separator in their own padding, which the hover needs
    anyway; adding more here would set them twice as far apart as the buttons beside them. */
 .separator {

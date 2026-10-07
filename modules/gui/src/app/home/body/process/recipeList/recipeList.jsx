@@ -312,7 +312,7 @@ class _RecipeList extends React.Component {
     renderHeader2() {
         const {folders, folderId} = this.props
         return (
-            <Layout type='horizontal' spacing='compact'>
+            <Layout type='horizontal-nowrap' spacing='compact'>
                 <Breadcrumb
                     folders={folders}
                     folderId={folderId ?? ROOT}
