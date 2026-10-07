@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     canDropInto, childFolders, folderCounts, folderPath, folderPathLabel, folderRecipes,
-    isSelfOrDescendant, ROOT, searchTree
+    isSelfOrDescendant, parentFolderId, ROOT, searchTree
 } from './recipeTree'
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
@@ -51,6 +51,25 @@ describe('folderRecipes', () => {
     it('treats a recipe whose folder is an empty string as living at the root', () => {
         const legacy = {id: 'r0', name: 'legacy_draft', type: 'MOSAIC', folderId: ''}
         expect(ids(folderRecipes([legacy, IN_KENYA], ROOT))).toEqual(['r0'])
+    })
+})
+
+describe('parentFolderId', () => {
+    it('gives the folder above', () => {
+        expect(parentFolderId(folders, 'mosaics')).toBe('2024')
+    })
+
+    it('gives the root for a folder that sits there', () => {
+        expect(parentFolderId(folders, 'kenya')).toBe(ROOT)
+    })
+
+    it('gives the root for a folder that is no longer there', () => {
+        expect(parentFolderId(folders, 'removed')).toBe(ROOT)
+    })
+
+    it('gives the root for a folder whose parent is an empty string', () => {
+        const legacy = {id: 'legacy', name: 'Legacy', parentId: ''}
+        expect(parentFolderId([legacy], 'legacy')).toBe(ROOT)
     })
 })
 

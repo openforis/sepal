@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: key => key}))
-// The breadcrumb's home Icon renders a Tooltip, which reads the store; a passthrough avoids one.
+// The back button renders a Tooltip, which reads the store; a passthrough keeps the button without one.
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/crudItem', () => ({CrudItem: ({title}) => title}))
 // The real scrollable carries a Keybinding, which reads a store this isolated test has none of.
@@ -48,6 +48,14 @@ const clickSelectHere = () => act(() => {
     button.click()
 })
 
+// The way back up is the only button here that carries an icon instead of a label.
+const backButton = () => [...container.querySelectorAll('button')].find(el => !el.textContent.trim())
+
+const clickBack = () => act(() => backButton().click())
+
+// The folder the picker is in is named beside the way back out of it.
+const currentFolder = () => backButton().nextElementSibling.textContent
+
 beforeEach(() => {
     mounted = []
 })
@@ -70,6 +78,33 @@ describe('FolderPicker', () => {
         clickSelectHere()
 
         expect(onSelect).toHaveBeenCalledWith(null)
+    })
+
+    it('names the folder it is in, and home at the root', () => {
+        mount({folders, onSelect: () => {}})
+
+        expect(currentFolder()).toBe('process.recipeList.root')
+
+        clickOption('A')
+
+        expect(currentFolder()).toBe('A')
+    })
+
+    it('goes back to the folder above', () => {
+        mount({folders, onSelect: () => {}})
+
+        clickOption('A')
+        expect(names()).toEqual(['C'])
+
+        clickBack()
+
+        expect(names()).toEqual(['A', 'B'])
+    })
+
+    it('offers no way up from the root', () => {
+        mount({folders, onSelect: () => {}})
+
+        expect(backButton().disabled).toBe(true)
     })
 
     it('selects the folder that was navigated into', () => {
