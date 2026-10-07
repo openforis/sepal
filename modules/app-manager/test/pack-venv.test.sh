@@ -107,9 +107,11 @@ mkdir -p "$app_path"; touch "$app_path/sepal_environment.yml"; sync_launcher
 cache_venv=true; create_kernel_json
 assert_json "with caching, argv runs the launcher with the app name" \
     "d['argv'] == ['/bin/bash', '/usr/local/share/jupyter/kernels/sepal-app-kernel', 'testapp', '-f', '{connection_file}']"
-# The launcher resolves the prefix at run time; a generated PROJ/GDAL path would pin it to Lustre.
-assert_json "with caching, env carries no Lustre-pinned PROJ/GDAL paths" \
-    "d['env'] == {'PYTHONNOUSERSITE': '1'}"
+# The launcher owns the interpreter environment for cached apps, so the spec carries none of it:
+# a generated PROJ/GDAL path would pin the kernel to Lustre, and a second PYTHONNOUSERSITE here
+# could drift from the one the launcher exports.
+assert_json "with caching, the spec delegates the whole environment to the launcher" \
+    "d['env'] == {}"
 teardown
 
 # I7: a persistently failing pack must not re-read and re-compress a multi-GB tree every pass.
