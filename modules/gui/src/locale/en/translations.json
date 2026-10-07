@@ -5826,6 +5826,9 @@
       }
     },
     "samplingDesign": {
+      "progress": {
+        "prepare": "Preparing samples"
+      },
       "grid": {
         "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
         "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",

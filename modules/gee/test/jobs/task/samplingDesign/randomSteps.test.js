@@ -223,6 +223,7 @@ describe('starting a stratified design', () => {
                 tempAssetIds: [candidatesId]
             },
             progress: [RANDOM_PROGRESS.prepareCandidates],
+            next: RANDOM_PROGRESS.checkCandidates,
             action: 'export',
             eeTaskId: 'asset-export-1'
         })
@@ -292,7 +293,7 @@ describe('after inspecting the candidates', () => {
         const selectedId = `${first.state.prefix}_selected`
         expect(second).toEqual({
             state: {...first.state, stage: 'selected', counts: {1: 10}, tempAssetIds: [candidatesId, selectedId]},
-            progress: [RANDOM_PROGRESS.checkCandidates, RANDOM_PROGRESS.exportFinal],
+            progress: [RANDOM_PROGRESS.exportFinal],
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
@@ -325,7 +326,8 @@ describe('after inspecting the candidates', () => {
                 round: 1,
                 tempAssetIds: [candidatesId, repairId]
             },
-            progress: [RANDOM_PROGRESS.checkCandidates, RANDOM_PROGRESS.prepareCandidates],
+            progress: [RANDOM_PROGRESS.prepareCandidates],
+            next: RANDOM_PROGRESS.checkCandidates,
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
@@ -468,9 +470,15 @@ describe('publishing the selection to the user\'s asset', () => {
         const {prefix} = first.state
         expect([first, second, third, fourth].map(({progress}) => progress)).toEqual([
             [RANDOM_PROGRESS.prepareCandidates],
-            [RANDOM_PROGRESS.checkCandidates, RANDOM_PROGRESS.prepareCandidates],
-            [RANDOM_PROGRESS.checkCandidates, RANDOM_PROGRESS.exportFinal],
+            [RANDOM_PROGRESS.prepareCandidates],
+            [RANDOM_PROGRESS.exportFinal],
             []
+        ])
+        expect([first, second, third, fourth].map(({next}) => next)).toEqual([
+            RANDOM_PROGRESS.checkCandidates,
+            RANDOM_PROGRESS.checkCandidates,
+            undefined,
+            undefined
         ])
         expect(earthEngine.assetExports.map(({assetId}) => assetId))
             .toEqual([`${prefix}_candidates`, `${prefix}_additional_candidates_1`, `${prefix}_selected`])

@@ -174,7 +174,7 @@ class RandomSteps {
                     return this.#exportCandidates$({
                         kind: 'base', assetId: candidatesAssetId, allocation, loThresholds: allocation.map(() => 0), hiThresholds: thresholds
                     }).pipe(
-                        map(({eeTaskId}) => ({state, progress: [PROGRESS.prepareCandidates], action: 'export', eeTaskId}))
+                        map(({eeTaskId}) => ({state, progress: [PROGRESS.prepareCandidates], next: PROGRESS.checkCandidates, action: 'export', eeTaskId}))
                     )
                 })
             ))
@@ -192,7 +192,7 @@ class RandomSteps {
             tempAssetIds: [...state.tempAssetIds, repairAssetId]
         }
         return this.#exportCandidates$({kind: 'repair', assetId: repairAssetId, allocation: state.allocation, loThresholds, hiThresholds}).pipe(
-            map(({eeTaskId}) => ({state: repairState, progress: [PROGRESS.checkCandidates, PROGRESS.prepareCandidates], action: 'export', eeTaskId}))
+            map(({eeTaskId}) => ({state: repairState, progress: [PROGRESS.prepareCandidates], next: PROGRESS.checkCandidates, action: 'export', eeTaskId}))
         )
     }
 
@@ -208,7 +208,7 @@ class RandomSteps {
                 .set(this.#formattedProperties())
             return startTableToAssetExport$({collection, description: this.#taskName('Prepare samples'), assetId: selectedAssetId, strategy: 'create'})
         }).pipe(
-            map(({eeTaskId}) => ({state: selectedState, progress: [PROGRESS.checkCandidates, PROGRESS.exportFinal], action: 'export', eeTaskId}))
+            map(({eeTaskId}) => ({state: selectedState, progress: [PROGRESS.exportFinal], action: 'export', eeTaskId}))
         )
     }
 

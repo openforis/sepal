@@ -102,6 +102,7 @@ describe('starting a systematic design', () => {
         expect(first).toEqual({
             state: {kind: 'systematic', stage: 'base', prefix: first.state.prefix, allocation: ALLOCATION, tempAssetIds: [baseAssetId]},
             progress: [SYSTEMATIC_PROGRESS.prepareBase],
+            next: SYSTEMATIC_PROGRESS.checkBase,
             action: 'export',
             eeTaskId: 'asset-export-1'
         })
@@ -194,7 +195,7 @@ describe('after counting the base candidates', () => {
 
         expect(second).toMatchObject({
             state: {stage: 'final', tempAssetIds: [baseAssetId]},
-            progress: [SYSTEMATIC_PROGRESS.checkBase, SYSTEMATIC_PROGRESS.exportFinal],
+            progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
@@ -215,7 +216,8 @@ describe('after counting the base candidates', () => {
         const repairAssetId = candidateAssetId(first.state.prefix, 'repair')
         expect(second).toMatchObject({
             state: {stage: 'repair', tempAssetIds: [first.state.tempAssetIds[0], repairAssetId]},
-            progress: [SYSTEMATIC_PROGRESS.checkBase, SYSTEMATIC_PROGRESS.prepareRepair],
+            progress: [SYSTEMATIC_PROGRESS.prepareRepair],
+            next: SYSTEMATIC_PROGRESS.checkRepair,
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
@@ -267,7 +269,7 @@ describe('after counting the base candidates', () => {
 
         expect(second).toMatchObject({
             state: {stage: 'final'},
-            progress: [SYSTEMATIC_PROGRESS.checkBase, SYSTEMATIC_PROGRESS.exportFinal],
+            progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export'
         })
         expect(earthEngine.assetExports[1].collection).toMatchObject({samples: {selectedFrom: baseAssetId}, densityOffset: 0})
@@ -286,7 +288,7 @@ describe('after counting the repair candidates', () => {
 
         expect(third).toMatchObject({
             state: {stage: 'final', tempAssetIds: [baseAssetId, repairAssetId]},
-            progress: [SYSTEMATIC_PROGRESS.checkRepair, SYSTEMATIC_PROGRESS.exportFinal],
+            progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export',
             eeTaskId: 'asset-export-3'
         })
@@ -373,7 +375,7 @@ describe('the final export', () => {
         expect(first.state.prefix).toMatch(/^projects\/alice\/assets\/sampling_design_tmp_\d{17}_[0-9a-f]{6}$/)
         expect(second).toEqual({
             state: expect.objectContaining({stage: 'final', tempAssetIds: first.state.tempAssetIds}),
-            progress: [SYSTEMATIC_PROGRESS.checkBase, SYSTEMATIC_PROGRESS.exportFinal],
+            progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'workspace',
             eeTaskId: 'workspace-export',
             destination: WORKSPACE_DESTINATION

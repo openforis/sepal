@@ -131,7 +131,7 @@ class SystematicSteps {
                             const baseAssetId = candidateAssetId(prefix, 'base')
                             const state = {kind: 'systematic', stage: 'base', prefix, allocation: resolvedAllocation, tempAssetIds: [baseAssetId]}
                             return this.#exportCandidates$(eeInputs, {kind: 'base', assetId: baseAssetId, allocation: resolvedAllocation, densityOffset: BASE_OFFSET}).pipe(
-                                map(({eeTaskId}) => ({state, progress: [PROGRESS.prepareBase], action: 'export', eeTaskId}))
+                                map(({eeTaskId}) => ({state, progress: [PROGRESS.prepareBase], next: PROGRESS.checkBase, action: 'export', eeTaskId}))
                             )
                         })
                     )
@@ -151,7 +151,7 @@ class SystematicSteps {
                     throw this.#underproductionError(fail)
                 }
                 return final
-                    ? this.#final$(state, [PROGRESS.checkBase], final)
+                    ? this.#final$(state, final)
                     : this.#startRepair$(state, summary, repair)
             })
         )
@@ -165,7 +165,7 @@ class SystematicSteps {
                 if (this.#requireFull && stillShort.length) {
                     throw this.#underproductionError({counts: repairSummary.raw, strata: stillShort})
                 }
-                return this.#final$(state, [PROGRESS.checkRepair], {
+                return this.#final$(state, {
                     candidates: {repairedStrata: underproducing},
                     candidateDensityOffset: offset,
                     levelsByStratum: repairedLevels({baseLevels: summary.levels, repairLevels: repairSummary.levels, repairedStrata: underproducing})
@@ -179,11 +179,11 @@ class SystematicSteps {
         const repairState = {...state, stage: 'repair', summary, underproducing, offset, tempAssetIds: [...state.tempAssetIds, repairAssetId]}
         return this.#eeInputs$().pipe(
             switchMap(eeInputs => this.#exportCandidates$(eeInputs, {kind: 'repair', assetId: repairAssetId, allocation: underproducing, densityOffset: offset})),
-            map(({eeTaskId}) => ({state: repairState, progress: [PROGRESS.checkBase, PROGRESS.prepareRepair], action: 'export', eeTaskId}))
+            map(({eeTaskId}) => ({state: repairState, progress: [PROGRESS.prepareRepair], next: PROGRESS.checkRepair, action: 'export', eeTaskId}))
         )
     }
 
-    #final$(state, progress, {candidates, candidateDensityOffset = BASE_OFFSET, levelsByStratum}) {
+    #final$(state, {candidates, candidateDensityOffset = BASE_OFFSET, levelsByStratum}) {
         const {prefix, allocation} = state
         return toGeometry$(this.#request.recipe.model.aoi).pipe(
             switchMap(eeGeometry => {
@@ -206,7 +206,7 @@ class SystematicSteps {
                     export$: this.#startFinalExport$(samples)
                 })
             }),
-            map(started => ({state: {...state, stage: 'final'}, progress: [...progress, PROGRESS.exportFinal], ...started}))
+            map(started => ({state: {...state, stage: 'final'}, progress: [PROGRESS.exportFinal], ...started}))
         )
     }
 
