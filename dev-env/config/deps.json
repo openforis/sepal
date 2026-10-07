@@ -83,13 +83,6 @@
             "logger"
         ]
     },
-    "geospatial-toolkit": {
-        "build": {
-            "sandbox-base": "build",
-            "r-proxy": "run"
-        },
-        "run": false
-    },
     "gui": {
         "lib": [
             "shared"
@@ -161,7 +154,8 @@
     },
     "sandbox": {
         "build": {
-            "geospatial-toolkit": "build"
+            "sandbox-base": "build",
+            "r-proxy": "run"
         },
         "run": false
     },

@@ -33,7 +33,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `caddy`, `mysql`, `rabbitmq`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
-- `sandbox-base`, `sandbox`, `geospatial-toolkit` - User sandbox images
+- `sandbox-base`, `sandbox` - User sandbox images (`app-manager` and `r-proxy` also build on `sandbox-base`, so the binaries they build for sandboxes match its libraries)
 
 ### Shared Libraries
 

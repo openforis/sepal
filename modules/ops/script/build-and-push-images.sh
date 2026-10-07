@@ -61,7 +61,6 @@ build mysql
 build gateway
 build terminal
 build ssh-gateway
-build geospatial-toolkit
 build sandbox
 build task
 build task-manager
