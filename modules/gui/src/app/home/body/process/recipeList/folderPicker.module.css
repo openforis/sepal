@@ -17,6 +17,12 @@
     white-space: nowrap;
 }
 
+/* The rows may shrink to the box, so a name too long for it ends in an ellipsis instead of widening
+   the popup. The row itself gives way only once everything in it is allowed to. */
+.rows {
+    min-width: 0;
+}
+
 /* Room for five folders, held whether the open folder has one or fifty. */
 .options {
     height: 11rem;
