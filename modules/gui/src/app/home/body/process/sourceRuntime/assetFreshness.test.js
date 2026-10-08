@@ -471,6 +471,68 @@ describe('failures naming an asset', () => {
     })
 })
 
+// A Stack over two assets, one reported without a band's dimensionality - which no other evidence repairs - and one
+// that could not be read. The description is invalid on the first; the second still failed.
+describe('a diagnosis settled beside a failed observation', () => {
+    const STACK = Object.freeze({recipeId: 'stack-1', product: {name: 'IMAGE_OUTPUT'}})
+    const TOKENS = Object.freeze({'users/x/dem': 'v1', 'users/x/water': 'v1'})
+
+    const diagnosedBesideFailure = () => {
+        const session = sessionHolding([stackOver('users/x/dem', 'users/x/water')])
+        session.watch('stack-1')
+        answerVersions(TOKENS)
+        answerAsset('users/x/dem', [{name: 'elevation'}])
+        failAsset('users/x/water', eeFailure('Image.load: Image asset \'users/x/water\' not found'))
+        return session
+    }
+
+    it('is invalid on the diagnosis, and reads again the asset the failure names', () => {
+        const session = diagnosedBesideFailure()
+
+        expect(session.read('stack-1')).toMatchObject({status: 'INVALID', diagnostics: [{code: 'INCOMPLETE_IMAGE_OUTPUT'}]})
+        expect(versionReads().slice(1)).toEqual([['users/x/water']])
+    })
+
+    it('is kept, observing nothing again, while every token is unchanged', () => {
+        const session = diagnosedBesideFailure()
+        const observed = fake.bands.length
+
+        for (let poll = 0; poll < 3; poll++) {
+            answerVersions(TOKENS)
+            session.advance(270000)
+        }
+        answerVersions(TOKENS)
+
+        expect(session.read('stack-1').status).toBe('INVALID')
+        expect(fake.bands).toHaveLength(observed)
+    })
+
+    it('is described again once a token changes', () => {
+        const session = diagnosedBesideFailure()
+        answerVersions(TOKENS)
+
+        session.advance(270000)
+        answerVersions({...TOKENS, 'users/x/dem': 'v2'})
+        answerAsset('users/x/dem', [{name: 'elevation', arrayDimensions: 0}])
+        answerAsset('users/x/water', [{name: 'elevation', arrayDimensions: 0}])
+
+        expect(session.read('stack-1').status).toBe('READY')
+    })
+
+    it('is described again on an explicit refresh, though no token changed', async () => {
+        const session = diagnosedBesideFailure()
+        answerVersions(TOKENS)
+
+        const refreshed = session.runtime.refreshOutput(STACK)
+        answerVersions(TOKENS)
+        await refreshed
+        answerAsset('users/x/dem', [{name: 'elevation', arrayDimensions: 0}])
+        answerAsset('users/x/water', [{name: 'elevation', arrayDimensions: 0}])
+
+        expect(session.read('stack-1').status).toBe('READY')
+    })
+})
+
 // A real store holding these records, the runtime over it, and a clock the test moves.
 const sessionHolding = records => {
     let now = 0
@@ -607,6 +669,34 @@ const answerBands = names => fake.bands.filter(request => !request.answered).for
     request.answered = true
     request.subscriber.next((names || ['scaled']).map(name => ({name, arrayDimensions: 0})))
     request.subscriber.complete()
+})
+
+const unansweredFor = assetId => fake.bands.filter(request => !request.answered && request.request.asset === assetId)
+
+// Answers what is still waiting to be observed of one asset.
+const answerAsset = (assetId, bands) => unansweredFor(assetId).forEach(request => {
+    request.answered = true
+    request.subscriber.next(bands)
+    request.subscriber.complete()
+})
+
+const failAsset = (assetId, error) => unansweredFor(assetId).forEach(request => {
+    request.answered = true
+    request.subscriber.error(error)
+})
+
+const stackOver = (...assetIds) => ({
+    id: 'stack-1',
+    type: 'STACK',
+    revision: 1,
+    ui: {initialized: true},
+    model: {
+        inputImagery: {images: assetIds.map((id, index) => ({imageId: `i-${index}`, name: `i${index}`, type: 'ASSET', id}))},
+        bandNames: {bandNames: assetIds.map((_id, index) => ({
+            imageId: `i-${index}`,
+            bands: [{id: `b-${index}`, originalName: 'elevation', outputName: `elevation_${index}`}]
+        }))}
+    }
 })
 
 const maskingOver = assetId => ({

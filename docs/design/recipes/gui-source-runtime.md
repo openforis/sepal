@@ -835,7 +835,9 @@ One snapshot answers:
 - A dependencies-only terminal answers validity beside a map-product answer. Such an answer reads nothing
   but the root recipe and its runtime evidence, so the terminal's basis proves it read that same root.
 - An observation that failed over a sound closure leaves `dependencyValidity` `VALID` and the description
-  `UNAVAILABLE`.
+  `UNAVAILABLE` - unless the observations that arrived establish a definitive diagnosis, which outranks it: the
+  description is then `INVALID`, and the failure is still reported for the assets it names
+  (`sourceRuntime/assetFailure.js`). Either settles once every observation requested has.
 
 **Who watches.** Each consumer that can need evidence watches its question while it is open. The loading and the
 answers belong to the runtime (`sourceRuntime/outputRegistry.js`):

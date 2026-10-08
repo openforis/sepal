@@ -78,7 +78,9 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // A description that fails over an asset - one Earth Engine could not find or read, or one whose bands are not those
 // described - has that asset read again (assetFailure.js), at most once per interval while its token is unchanged; a
-// changed token withdraws the failure with the rest, so it recovers by itself. Other failures read nothing again.
+// changed token withdraws the failure with the rest, so it recovers by itself. Other failures read nothing again. So
+// does an observation that failed beside a definitive diagnosis, which the description is settled on instead
+// (`failures`, observeImageOutput.js).
 //
 // `refreshOutput` is an explicit refresh of a question, successful answers included: the metadata of every asset it
 // reads is read at once, then what was observed for it is observed again and its presentation evidence read again,
@@ -380,7 +382,7 @@ export const createSourceRuntime = ({
         acquisitionOf: outputLoading,
         operationOf: ({kind, recipe, key, reads}) => ({
             [DESCRIBE]: () => resolveImageOutput$({recipe, reads}).pipe(
-                tap(terminal => terminal.status === 'UNAVAILABLE' && reportAssetFailure(assetsFailedBy(terminal.error, terminal.assets)))
+                tap(terminal => reportAssetFailure(_.uniq(failuresOf(terminal).flatMap(error => assetsFailedBy(error, terminal.assets)))))
             ),
             [DEPENDENCIES]: () => completeDependencies$({recipe, reads}),
             [REFRESH]: () => refreshRecords$(key)
@@ -544,6 +546,11 @@ const sessionAssetsOf = (catalogue, recipeId) => {
 }
 
 const NONE = Object.freeze([])
+
+// What a description failed over: the failure it is unavailable for, or the observations that failed beside the
+// diagnosis it settled on instead.
+const failuresOf = ({status, error, failures = []}) =>
+    status === 'UNAVAILABLE' ? [error] : failures
 
 // Which explicit refresh of its question an observation was made after, if any. Counts are kept per recipe, so the
 // recipe is part of it: the first refresh of one recipe is not the first refresh of another.
