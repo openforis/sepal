@@ -43,14 +43,12 @@ function clone {
 function create_kernel_json {
     mkdir -p "$kernel_path"
     local use_launcher=false
-    # Only name the launcher if it is actually installed: a spec pointing at a missing launcher
-    # is the one failure that stops every flagged app from starting.
+    # A spec naming a launcher that is not installed stops every flagged app from starting.
     if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
         use_launcher=true
     fi
     local conda=false
     [[ -f "$app_path/sepal_environment.yml" ]] && conda=true
-    # Resolved per call, not at load time, so the tests can point at the repo copy.
     local generator=${KERNEL_SPEC:-/etc/sepal/app-manager/kernel-spec.py}
     if ! SPEC_VENV="$venv_path" \
          SPEC_APP="$app_name" \
@@ -60,8 +58,7 @@ function create_kernel_json {
          SPEC_CONDA="$conda" \
          python3 "$generator" > "$kernel_path/kernel.json.tmp"
     then
-        # Keeping the previous spec beats installing a truncated one: a stale kernel.json still
-        # starts the app, an empty one starts nothing.
+        # A stale kernel.json still starts the app; an empty one starts nothing.
         echo "Failed to generate kernel spec with $generator"
         rm -f "$kernel_path/kernel.json.tmp"
         return 0
@@ -69,8 +66,6 @@ function create_kernel_json {
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
     else
-        # Announced only on a change: reconcile_artifacts runs this every monitor pass and its
-        # output is appended to a log that is only truncated when the venv rebuilds.
         echo "Creating kernel: $kernel_path"
         mv -f "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"
     fi
@@ -78,7 +73,6 @@ function create_kernel_json {
 }
 
 function sync_launcher {
-    # Resolved per call, not at load time, so the tests can point at a fixture.
     local src=${LAUNCHER_SRC:-/etc/sepal/app-manager/sepal-app-kernel}
     local dst="$current_kernels/sepal-app-kernel"
     cmp -s "$src" "$dst" && return 0
@@ -87,7 +81,6 @@ function sync_launcher {
     if install -m 0755 "$src" "$dst.tmp.$$" && mv -f "$dst.tmp.$$" "$dst"; then
         echo "Installed kernel launcher: $dst"
     else
-        # Silence here would be dangerous: create_kernel_json would still name the launcher.
         echo "Failed to install kernel launcher from $src"
         rm -f "$dst.tmp.$$"
     fi
@@ -98,9 +91,8 @@ function pack_venv {
     local out="$kernel_path/venv.tar.zst"
     if [[ "$cache_venv" != true ]]; then rm -f "$out" "$out.failed"; return 0; fi
     if [[ -f "$out" && "$out" -nt "$current_venv_path/.installed" ]]; then return 0; fi
-    # A failed pack deletes the archive, so without a marker the next pass re-reads and
-    # re-compresses the whole tree. monitorApps walks apps serially, so that would stall every
-    # other app for as long as the cause persists. Back off until the venv itself changes.
+    # Without a marker a failed pack re-compresses the whole tree every pass, and monitorApps
+    # walks apps serially, so it would stall every other app until the cause clears.
     if [[ -f "$out.failed" && "$out.failed" -nt "$current_venv_path/.installed" ]]; then return 0; fi
     echo "Packing venv: $out"
     # A killed pack can leave its staging file behind; zstd refuses to overwrite it.
@@ -111,8 +103,7 @@ function pack_venv {
          tar -C "$kernel_path" -cf - venv | zstd -q -3 -T0 -o "$out.tmp" ); then
         mv -f "$out.tmp" "$out" && rm -f "$out.failed"
     else
-        # Never leave the previous archive published against a rebuilt venv: it would silently
-        # run old dependencies, which is worse than falling back to Lustre.
+        # A stale archive against a rebuilt venv would silently run old dependencies.
         echo "Packing failed; dropping any stale archive and backing off until the venv changes"
         rm -f "$out.tmp" "$out"
         touch "$out.failed"
@@ -120,9 +111,7 @@ function pack_venv {
     return 0
 }
 
-# Idempotent, and cheap when there is nothing to do: app-manager calls update-app for every app
-# on a 5 s loop, while update_venv only rebuilds when requirements change. Reconciling here is
-# what lets an app that never rebuilds still get its archive.
+# Runs for every app on app-manager's 5 s loop, so each step stays quiet and cheap when idle.
 function reconcile_artifacts {
     sync_launcher
     pack_venv
