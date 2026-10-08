@@ -4,9 +4,9 @@ import {withContext} from '~/context'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 
-// What a layer tells its form about the sources it draws from: {checking, unavailable, failing} (sourceStatus.js), the
-// requirement holding what it shows, if any: `heldSource` {state, recipe, section} (selectedSourceStatus.js), and its explicit
-// refresh: {refresh, refreshing}. Provided by the layer that owns the answer and read by the form the layer
+// What a layer tells its form about the sources it draws from: {checking, unavailable, failing} (sourceStatus.js), whether
+// the bands it shows are still being read (`describing`), the requirement holding what it shows, if any: `heldSource`
+// {state, recipe, section} (selectedSourceStatus.js), and its explicit refresh: {refresh, refreshing}. Provided by the layer that owns the answer and read by the form the layer
 // type renders, so no type's form has to pass it along.
 
 const Context = React.createContext(null)

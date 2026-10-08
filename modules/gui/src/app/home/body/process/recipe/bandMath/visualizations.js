@@ -11,8 +11,8 @@ export const visualizationOptions = (recipe, recipeNameById) => {
                 ? recipeNameById[image.id]
                 : image.id
             const visParamsToOption = visParams => {
-                const value = visParams.bands.join(', ')
-                return {value, label: value, visParams}
+                const bands = visParams.bands.join(', ')
+                return {value: visParams.id || bands, label: bands, visParams}
             }
             const options = updateVisualizations(recipe, image)
                 .map(visParamsToOption)

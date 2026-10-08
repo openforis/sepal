@@ -43,16 +43,10 @@ class _VisualizationSelector extends React.Component {
     state = {}
 
     render() {
-        const {selectedVisParams, labelButtons = []} = this.props
+        const {labelButtons = []} = this.props
         const options = this.getOptions()
-        const idMatch = selectedVisParams && selectedVisParams.id &&
-            this.flattenOptions(options).find(option => option.value === selectedVisParams.id)
-        const selectedOption = idMatch || (selectedVisParams && !selectedVisParams.id
-            ? this.flattenOptions(this.presetOptions()).find(({visParams: {bands}}) =>
-                bands.join(',') === selectedVisParams.bands.join(',')
-            )
-            : undefined
-        )
+        const selectedOption = this.selectedOption(options)
+        const shown = this.shownOptions(options, selectedOption)
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         const editorContext = this.editorContext()
         const {layerSourceStatus: status} = this.props
@@ -106,11 +100,44 @@ class _VisualizationSelector extends React.Component {
                     ? [<PresentationToggle key='presentation'/>]
                     : []}
                 placeholder={'Select bands to visualize...'}
-                options={options}
-                value={selectedOption && selectedOption.value}
+                options={shown.options}
+                value={shown.option && shown.option.value}
                 onChange={({visParams}) => this.selectVisParams(visParams)}
             />
         )
+    }
+
+    // The selection as the current options resolve it: by its identity, or one without by a preset's bands.
+    selectedOption(options) {
+        const {selectedVisParams} = this.props
+        const idMatch = selectedVisParams && selectedVisParams.id &&
+            this.flattenOptions(options).find(option => option.value === selectedVisParams.id)
+        return idMatch || (selectedVisParams && !selectedVisParams.id
+            ? this.flattenOptions(this.presetOptions()).find(({visParams: {bands}}) =>
+                bands.join(',') === selectedVisParams.bands.join(',')
+            )
+            : undefined
+        )
+    }
+
+    // What the Combo shows as chosen. Only the resolved selection counts for anything: the controls, the presentation
+    // and the editor follow it alone. While the layer's bands are being read again (`describing`) none is resolved, so
+    // the option last shown for this same selection of this same source goes on being shown - offered disabled, for its
+    // label alone - rather than the Combo emptying in between. Once the read settles the current options decide, and
+    // what they no longer hold is not shown.
+    shownOptions(options, selectedOption) {
+        const {source, selectedVisParams, layerSourceStatus: status} = this.props
+        const current = {source: sourceKey(source), selection: selectionKey(selectedVisParams)}
+        const retained = !selectedOption && status?.describing
+            && this.lastShown?.source === current.source && this.lastShown.selection === current.selection
+            ? this.lastShown
+            : null
+        this.lastShown = selectedOption
+            ? {...current, group: groupOf(options, selectedOption.value), option: selectedOption}
+            : retained
+        return retained
+            ? {options: withRetained(options, retained), option: retained.option}
+            : {options, option: selectedOption}
     }
 
     showsAnotherRecipe() {
@@ -233,7 +260,7 @@ class _VisualizationSelector extends React.Component {
 // selector's own feedback: what it reads being checked is its busy indicator, explained by its label's tooltip. A
 // requirement holding what it shows says why in the recipe that holds it, on the section's fields and toolbar; a layer
 // of another recipe says only which recipe, and which section of it, to review.
-const sourceFeedback = ({checking, unavailable, failing, heldSource} = {}, {elsewhere}) => {
+const sourceFeedback = ({checking, describing, unavailable, failing, heldSource} = {}, {elsewhere}) => {
     const held = heldSource && heldSource.state !== CHECKING_SOURCE && elsewhere
     const errors = [
         unavailable && msg('map.layerSource.unavailable', {asset: unavailable}),
@@ -242,10 +269,31 @@ const sourceFeedback = ({checking, unavailable, failing, heldSource} = {}, {else
     return {
         busy: heldSource?.state === CHECKING_SOURCE
             ? msg('map.layerSource.checkingSection', {recipe: heldSource.recipe, section: heldSource.section})
-            : checking ? msg('map.layerSource.checking') : undefined,
+            : checking ? msg('map.layerSource.checking')
+                : describing ? msg('map.visParams.bands.loading') : undefined,
         error: errors.length > 1 ? errors : errors[0],
         warning: failing ? msg('map.layerSource.failing') : undefined
     }
+}
+
+const sourceKey = source => `${source?.id}:${source?.sourceConfig?.recipeId}`
+
+const selectionKey = visParams => visParams ? visParams.id || visParams.bands.join(',') : null
+
+// The label of the group an option is offered in, or undefined for one offered on its own.
+const groupOf = (options, value) =>
+    options.find(option => option.options?.some(grouped => grouped.value === value))?.label
+
+const withRetained = (options, {group, option}) => {
+    const retained = {...option, disabled: true}
+    if (group === undefined) {
+        return [...options, retained]
+    }
+    return options.some(({label, options}) => options && label === group)
+        ? options.map(option => option.options && option.label === group
+            ? {...option, options: [...option.options, retained]}
+            : option)
+        : [...options, {label: group, options: [retained]}]
 }
 
 export const VisualizationSelector = compose(

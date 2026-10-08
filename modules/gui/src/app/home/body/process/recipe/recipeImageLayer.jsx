@@ -146,6 +146,7 @@ class _RecipeImageLayer extends React.Component {
         const {assetEvidence, heldSource} = this.props
         return {
             ...sourceStatus({output: imageOutput, assetEvidence}),
+            describing: imageOutput.status === NEEDS_EVIDENCE,
             heldSource,
             refresh: this.refresh,
             refreshing: this.state.refreshing
