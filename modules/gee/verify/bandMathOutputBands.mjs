@@ -9,8 +9,9 @@
 // Earth Engine operations Band Math applies, checked on their own as supporting evidence, decide that
 // dimensionality: a cast keeps an array an array, an expression over an array yields one, and reducers either refuse
 // arrays, keep them or count them. Two output bands named alike are refused by the declaration before anything is
-// observed, while Earth Engine itself would build them with the second renamed; a recipe with no output bands
-// describes none, while Earth Engine refuses to build it.
+// observed, while Earth Engine itself would build them with the second renamed; a recipe with no output bands is
+// refused the same way, as Earth Engine refuses to build it. Either refusal names only the inputs it could explain
+// itself with, never the recipe's own image.
 //
 // Inputs. Execution selects every band an input includes, read by a calculation or not, so a band the input lacks
 // fails the image Earth Engine builds. What describing an input reads of it is reported for representative assets - an
@@ -211,6 +212,12 @@ const declarationFor = ({type}) => recipeType(type)?.imageOutput
 // What the shared resolver says from the configuration alone, observing nothing.
 const describedFrom = recipe => readImageOutput({graph: graphOf(recipe), declarationFor})
 
+const definitiveCodes = ({diagnostics}) =>
+    diagnostics.map(({code}) => code).filter(code => code !== 'UNAVAILABLE_DESCRIPTION')
+
+const observesOwnImage = ({needs}, recipe) =>
+    needs.observations.some(({type, id}) => type === 'RECIPE_REF' && id === recipe.id)
+
 // What Earth Engine answers, acquired as Task's asset export acquires it (modules/task/src/ee/imageOutput.js): an asset's
 // bands, the catalogue of a recipe whose declaration asks only what it can be asked for, otherwise the image it builds.
 const observeBands$ = ({reference, recipe, observes}) => (reference.type === 'ASSET'
@@ -317,12 +324,13 @@ const main = async () => {
     await expectDimensions('a count over arrays is scalar', arrays.reduce(ee.Reducer.count()), [0])
 
     const duplicated = describedFrom(DUPLICATED)
-    report(duplicated.status === 'INVALID' && _.isEqual(duplicated.diagnostics.map(({code}) => code), ['DUPLICATE_BAND_NAME'])
-        && !duplicated.needs.observations.length, 'two output bands named alike are refused before observing', duplicated.diagnostics)
+    report(duplicated.status === 'INVALID' && _.isEqual(definitiveCodes(duplicated), ['DUPLICATE_BAND_NAME'])
+        && !observesOwnImage(duplicated, DUPLICATED), 'two output bands named alike are refused before observing', duplicated.diagnostics)
     await expectBuilt('two output bands named alike, as Earth Engine builds them', DUPLICATED, undefined, ['x', 'x_1'])
 
     const empty = describedFrom(EMPTY)
-    report(empty.status === 'READY' && !empty.description.output.bands.length, 'no output bands describes none', {status: empty.status})
+    report(empty.status === 'INVALID' && _.isEqual(definitiveCodes(empty), ['NO_OUTPUT_BANDS'])
+        && !observesOwnImage(empty, EMPTY), 'no output bands is refused before observing', empty.diagnostics)
     await expectRefusal('no output bands, as Earth Engine builds them', EMPTY, /did not match any bands/)
 
     console.info('Inputs')

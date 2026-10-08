@@ -78,11 +78,11 @@ describe('a Stack over an input with no image output', () => {
         expect(submitted).toEqual([])
     })
 
-    it('offers nothing when its mapping names two output bands alike, before reading that input', () => {
+    it('offers nothing when its mapping names two output bands alike, naming that input too', () => {
         const output = readOf(DUPLICATED_OVER_DESIGN)
 
         expect(output).toMatchObject({status: 'INVALID', bands: []})
-        expect(output.diagnostics.map(({code}) => code)).toEqual(['DUPLICATE_BAND_NAME'])
+        expect(output.diagnostics.map(({code}) => code)).toEqual(['NON_IMAGE_OUTPUT', 'DUPLICATE_BAND_NAME'])
         expect(retrieveDecision({output, pending: false, names: ['x']})).toMatchObject({status: 'BLOCKED', reason: 'UNRESOLVED_OUTPUT'})
     })
 })

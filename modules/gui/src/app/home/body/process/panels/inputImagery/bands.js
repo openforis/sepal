@@ -6,6 +6,11 @@ export const bandsAvailableToAdd = (bands, includedBands) =>
     (Object.keys(bands || {}))
         .filter(band => !(includedBands || []).find(({band: b}) => band === b))
 
+// A selected band a current read of its source found absent. Without such a read, or with one reporting no bands at
+// all, none is.
+export const isMissingBand = ({band}, bands) =>
+    !!Object.keys(bands || {}).length && !bands[band]
+
 export const defaultBand = (bandName, bands) => {
     const id = uuid()
     const values = bands[bandName].values

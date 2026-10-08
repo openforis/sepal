@@ -9,10 +9,10 @@ import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 import api from '~/apiRegistry'
 
 import {AGREED} from '../draftAgreement'
-import {createRecipeImageOutputObserver, observeImageBands$} from '../recipe/imageOutputObserver'
+import {createRecipeImageOutputObserver, explainRecipeImageOutput$, observeImageBands$} from '../recipe/imageOutputObserver'
 import {buildMapDependencyGraph} from '../recipe/mapDependencyGraph'
 import {recipeContent} from '../recipe/recipeContent'
-import {compatibleBasis, DEPENDENCIES, DESCRIBE, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
+import {compatibleBasis, DEPENDENCIES, DESCRIBE, EXPLAIN, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
 import {initializeRecipe} from '../recipeCache'
 import {getRecipeType} from '../recipeTypeRegistry'
 import {DEFAULT_ASSET_POLICY, isDefinitiveFailure} from './assetEvidence'
@@ -49,6 +49,13 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // `completeDependencies$` is the same operation stopped after its closure: validity without describing, for a
 // caller whose bands are already known and must not be failed by a description it never needed.
+//
+// `explainOutput$` is the same operation explaining a refusal instead of describing: once its closure is complete it
+// observes, once, what the refusal still names, each observation failing on its own, and settles COMPLETE with the
+// diagnoses that evidence establishes beside the refusal's (`diagnostics`) and the observations that failed
+// (`failures`) - even where it establishes nothing more. It settles UNAVAILABLE where its closure or its environment
+// failed, or every observation did, so it is retried and never retained as an answer. Every record and asset it read
+// is reported before it settles, as a description's are.
 //
 // `watchOutput$`, `heldFor` and `retryOutput` are for consumers with a lifetime of their own - map layers and Retrieve
 // panels. They watch an output question for as long as they are open and read what the runtime holds for it; the
@@ -157,7 +164,7 @@ export const createSourceRuntime = ({
         }
     }
 
-    const operation$ = ({recipe, describes, reads = NO_READS}) => new Observable(subscriber => {
+    const operation$ = ({recipe, describes, explains = false, reads = NO_READS}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
         // from inside a subscriber reacting to it, both re-enter here while setup is still running; without this
         // the operation would be publishing before it owned the work it was publishing about.
@@ -228,6 +235,20 @@ export const createSourceRuntime = ({
             currentObserver.observe({graph})
         }
 
+        const explain = graph => {
+            const explanation = new Subscriber({
+                next: ({diagnostics, failures, observed}) => terminate(failures.length && !observed
+                    ? {status: 'UNAVAILABLE', description: null, diagnostics: [], failures, error: failures[0]}
+                    : {status: 'COMPLETE', description: null, diagnostics, failures, error: null}),
+                error: unavailable
+            })
+            work.add(explanation)
+            explainRecipeImageOutput$({
+                graph,
+                observeBands$: request => observations.observe$(request, observationOf(request, graph, recipe.id))
+            }).subscribe(explanation)
+        }
+
         const completeClosure = ({catalogue}) => {
             const closure = completeClosure$({
                 rootRecipe: recipe,
@@ -248,7 +269,7 @@ export const createSourceRuntime = ({
                             if (describes) {
                                 observedAt = now()
                                 reads.assets(graphAssets(state.graph))
-                                observe(state.graph)
+                                explains ? explain(state.graph) : observe(state.graph)
                             } else {
                                 terminate({status: 'COMPLETE', error: null})
                             }
@@ -305,6 +326,7 @@ export const createSourceRuntime = ({
 
     const resolveImageOutput$ = ({recipe, reads}) => operation$({recipe, describes: true, reads})
     const completeDependencies$ = ({recipe, reads}) => operation$({recipe, describes: false, reads})
+    const explainOutput$ = ({recipe, reads}) => operation$({recipe, describes: true, explains: true, reads})
 
     // Reads the records again, as storage holds them now. What a recipe withdrawn from the listing needed was to be
     // read, so reading it is enough; a copy the session caches is replaced where it is present, closed and older.
@@ -384,6 +406,9 @@ export const createSourceRuntime = ({
             [DESCRIBE]: () => resolveImageOutput$({recipe, reads}).pipe(
                 tap(terminal => reportAssetFailure(_.uniq(failuresOf(terminal).flatMap(error => assetsFailedBy(error, terminal.assets)))))
             ),
+            [EXPLAIN]: () => explainOutput$({recipe, reads}).pipe(
+                tap(terminal => reportAssetFailure(_.uniq(failuresOf(terminal).flatMap(error => assetsFailedBy(error, terminal.assets)))))
+            ),
             [DEPENDENCIES]: () => completeDependencies$({recipe, reads}),
             [REFRESH]: () => refreshRecords$(key)
         })[kind](),
@@ -420,7 +445,7 @@ export const createSourceRuntime = ({
             outputs.retryOutput(question)
         },
         refreshRecipeListing,
-        refreshOutput: question => joined(`output:${question.recipeId}:${JSON.stringify(question.product)}`, () => {
+        refreshOutput: question => joined(`output:${question.recipeId}:${JSON.stringify(question.product)}:${Boolean(question.explain)}`, () => {
             const ids = [...sessionAssetsOf(session().catalogue, question.recipeId), ...outputs.assetsRead(question)]
             return assets.refresh(ids, {force: true})
                 .then(() => closed || refreshSources({recipes: [question.recipeId]}))
@@ -547,10 +572,10 @@ const sessionAssetsOf = (catalogue, recipeId) => {
 
 const NONE = Object.freeze([])
 
-// What a description failed over: the failure it is unavailable for, or the observations that failed beside the
+// What a description failed over: the failures it is unavailable for, or the observations that failed beside the
 // diagnosis it settled on instead.
 const failuresOf = ({status, error, failures = []}) =>
-    status === 'UNAVAILABLE' ? [error] : failures
+    status === 'UNAVAILABLE' ? _.uniq([error, ...failures]) : failures
 
 // Which explicit refresh of its question an observation was made after, if any. Counts are kept per recipe, so the
 // recipe is part of it: the first refresh of one recipe is not the first refresh of another.

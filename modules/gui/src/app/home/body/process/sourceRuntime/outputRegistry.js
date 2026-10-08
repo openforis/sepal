@@ -13,8 +13,9 @@ import {
 
 // Who is watching which output questions, and the description loading their answers need, shared across them.
 //
-// A question is a recipe id and the product its consumer reads, normalized as the common read names it
-// (layerProduct.js). Watching is separate from loading. Every watched question is recomputed from the session whenever
+// A question is a recipe id, the product its consumer reads, normalized as the common read names it (layerProduct.js),
+// and whether it asks to `explain` a refusal (recipeOutput.js): an editor's question and a layer's over the same
+// product are two questions, each loading only what its own read names. Watching is separate from loading. Every watched question is recomputed from the session whenever
 // the session changes; the common read decides whether work is needed (recipeOutput.js) and names it by key. A question
 // the session answers alone is still watched, and starts nothing. Its watchers are told when the work answering it
 // changes - withdrawn for other work, settled, or no longer needed because the session answers alone - and not when
@@ -118,7 +119,7 @@ export class OutputRegistry {
     }
 
     // Notifies whenever what `heldFor` answers for the question may have changed. Unsubscribing releases the claim.
-    watchOutput$({recipeId, product}) {
+    watchOutput$({recipeId, product, explain = false}) {
         return new Observable(subscriber => {
             this.#listen()
             if (this.#isClosed()) {
@@ -126,7 +127,7 @@ export class OutputRegistry {
                 subscriber.complete()
                 return
             }
-            const question = this.#claim({recipeId, product}, subscriber)
+            const question = this.#claim({recipeId, product, explain}, subscriber)
             this.#notify(this.#refresh(question), subscriber)
             return () => this.#release(question, subscriber)
         })
@@ -140,8 +141,8 @@ export class OutputRegistry {
         return work?.terminal && this.#isCurrent(work) ? work.terminal : null
     }
 
-    retryOutput({recipeId, product}) {
-        const failed = this.#questionFor({recipeId, product})?.work
+    retryOutput({recipeId, product, explain = false}) {
+        const failed = this.#questionFor({recipeId, product, explain})?.work
         if (this.#closed || failed?.terminal?.status !== 'UNAVAILABLE') {
             return
         }
@@ -151,8 +152,8 @@ export class OutputRegistry {
     }
 
     // The assets the work answering the question read, records loaded only for it included.
-    assetsRead({recipeId, product}) {
-        const work = this.#questionFor({recipeId, product})?.work
+    assetsRead({recipeId, product, explain = false}) {
+        const work = this.#questionFor({recipeId, product, explain})?.work
         return work ? work.ledger.filter(({asset}) => asset).map(({asset}) => asset) : []
     }
 
@@ -168,8 +169,8 @@ export class OutputRegistry {
         watchers.forEach(watcher => watcher.complete())
     }
 
-    #claim({recipeId, product}, subscriber) {
-        const question = this.#questionFor({recipeId, product}) || this.#addQuestion({recipeId, product})
+    #claim({recipeId, product, explain}, subscriber) {
+        const question = this.#questionFor({recipeId, product, explain}) || this.#addQuestion({recipeId, product, explain})
         question.watchers.add(subscriber)
         return question
     }
@@ -463,14 +464,15 @@ export class OutputRegistry {
         return work
     }
 
-    #addQuestion({recipeId, product}) {
-        const question = {recipeId, product, watchers: new Set(), work: null}
+    #addQuestion({recipeId, product, explain}) {
+        const question = {recipeId, product, explain, watchers: new Set(), work: null}
         this.#questions.push(question)
         return question
     }
 
-    #questionFor({recipeId, product}) {
-        return this.#questions.find(question => question.recipeId === recipeId && _.isEqual(question.product, product))
+    #questionFor({recipeId, product, explain = false}) {
+        return this.#questions.find(question => question.recipeId === recipeId && _.isEqual(question.product, product)
+            && question.explain === explain)
     }
 
     #workFor(key) {

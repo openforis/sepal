@@ -78,17 +78,20 @@ class _InputImagery extends React.Component {
     }
 
     renderImage(image) {
-        const {recipeNameById} = this.props
+        const {recipeNameById, inputBandProblems = []} = this.props
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
+        const problem = inputBandProblems.find(({imageId}) => imageId === image.imageId)
         return name
             ? (
                 <ListItem
                     key={image.imageId}
+                    className={problem ? styles.error : null}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
+                        titleTooltip={problem ? missingBandsMessage(problem) : null}
                         description={name}
                         onRemove={() => this.removeImage(image)}
                     />
@@ -124,7 +127,7 @@ class _InputImagery extends React.Component {
     }
 }
 
-const additionalPolicy = () => ({_: 'allow'})
+const additionalPolicy = () => ({inputImage: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
@@ -137,5 +140,11 @@ export const InputImagery = compose(
 )
 
 InputImagery.propTypes = {
+    // The inputs found to lack bands they include, where the recipe's output read finds them (withOutputProblems.jsx).
+    inputBandProblems: PropTypes.array,
     onChange: PropTypes.func
 }
+
+// What an input's problem says of it.
+export const missingBandsMessage = ({bands}) =>
+    msg('process.panels.inputImagery.form.missingBands', {bands: bands.join(', ')})

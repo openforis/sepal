@@ -147,14 +147,10 @@ class _Mapping extends React.Component {
 
 }
 
-const additionalPolicy = () => ({
-    _: 'disallow'
-})
-
 export const Mapping = compose(
     _Mapping,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
+    recipeFormPanel({id: 'mapping', mapRecipeToProps}),
     withActivators()
 )
 

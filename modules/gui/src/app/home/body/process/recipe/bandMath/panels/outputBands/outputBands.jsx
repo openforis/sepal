@@ -23,10 +23,10 @@ import {
     addOutputBand,
     addOutputImage,
     allOutputNames,
+    bandsToOutput,
     createUniqueBandName,
     hasUniqueOutputNames,
-    hasValidOutputNames,
-    outputsBand
+    hasValidOutputNames
 } from './outputImages'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
@@ -132,8 +132,8 @@ class _OutputBands extends React.Component {
 
     // An output whose image no longer exists is shown as it was saved, to be removed: it offers no bands to add.
     renderOutputImage(outputImage) {
-        const {images, calculations, itemProblems = {}} = this.props
-        const current = [...images, ...calculations].find(({imageId}) => imageId === outputImage.imageId)
+        const {itemProblems = {}} = this.props
+        const current = this.currentImage(outputImage.imageId)
         const image = current || outputImage
         const problem = itemProblems[outputImage.imageId]
         return (
@@ -149,7 +149,7 @@ class _OutputBands extends React.Component {
                     description={<ImageDescription image={image}/>}
                     metadata={image.name}
                     titleTooltip={problem}
-                    inlineComponents={current ? this.renderAddBandButton(outputImage) : null}
+                    inlineComponents={current ? this.renderAddBandButton(outputImage, current) : null}
                     unsafeRemove
                     onRemove={() => this.removeImage({image})}
                 />
@@ -179,10 +179,9 @@ class _OutputBands extends React.Component {
         )
     }
 
-    renderAddBandButton(outputImage) {
+    renderAddBandButton(outputImage, current) {
         const outputBandIds = outputImage.outputBands.map(({id}) => id)
-        const bandOptions = outputImage.includedBands
-            .filter(band => !outputsBand(outputImage, band))
+        const bandOptions = bandsToOutput(outputImage, current)
             .map(band => ({value: band.name, label: band.name, band, image: outputImage}))
         const options = bandOptions.length > 1
             ? [
@@ -238,14 +237,20 @@ class _OutputBands extends React.Component {
         outputImages.set(outputImages.value.filter(({imageId}) => imageId !== image.imageId))
     }
 
-    // A band its image already outputs is not added again, whatever the picker offered when it was chosen.
+    // Only a band its image includes now and does not already output is added, whatever the picker offered when it was
+    // chosen, and as the image includes it now: a choice offered before a rename carries the band's former name.
     addBand({value, image, band, bandOptions}) {
         const {inputs: {outputImages}} = this.props
         const chosen = value === ADD_ALL_BANDS ? bandOptions : [{image, band}]
         outputImages.set(chosen.reduce(
-            (outputImages, {image, band}) => outputsBand(outputImages.find(({imageId}) => imageId === image.imageId), band)
-                ? outputImages
-                : addOutputBand(image, band, outputImages),
+            (outputImages, {image, band}) => {
+                const current = this.currentImage(image.imageId)
+                const currentBand = bandsToOutput(outputImages.find(({imageId}) => imageId === image.imageId), current)
+                    .find(({id}) => id === band.id)
+                return currentBand
+                    ? addOutputBand(current, currentBand, outputImages)
+                    : outputImages
+            },
             outputImages.value
         ))
     }
@@ -285,6 +290,12 @@ class _OutputBands extends React.Component {
                 }
         )
         outputImages.set(updatedOutputImages)
+    }
+
+    // The input or calculation an output image is taken from, as configured now.
+    currentImage(imageId) {
+        const {images = [], calculations = []} = this.props
+        return [...images, ...calculations].find(image => image.imageId === imageId)
     }
 
     removeBand({image, band}) {

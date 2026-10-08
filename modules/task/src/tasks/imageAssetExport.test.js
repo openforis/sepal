@@ -240,6 +240,25 @@ describe('exporting a Band Math recipe', () => {
         expect(state.exported).toEqual([])
     })
 
+    // A refusal from the configuration alone is not delayed to read the inputs it would explain: its input here lacks the
+    // band it includes, which only reading it would add.
+    it('fails the export for two output bands named alike at once, reading none of its inputs', async () => {
+        state.assets['users/x/dem'] = {bands: [{name: 'slope', arrayDimensions: 0}], properties: {}}
+        const recipe = bandMath({outputNames: ['x', 'x']})
+
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)$/)
+        expect(state.exported).toEqual([])
+    })
+
+    // Earth Engine cannot build an image of no bands; this used to be described as one, and fail only there.
+    it('fails the export of a recipe outputting no bands, reading none of its inputs', async () => {
+        state.assets['users/x/dem'] = {bands: [{name: 'slope', arrayDimensions: 0}], properties: {}}
+        const recipe = bandMath({outputNames: []})
+
+        await expect(submit({recipe, bands: []})).rejects.toThrow(/invalid output \(NO_OUTPUT_BANDS\)$/)
+        expect(state.exported).toEqual([])
+    })
+
     // Earth Engine refuses to build an image selecting a band its input lacks, so its running image is not observed.
     it('fails the export naming a band its input lacks, though its running image cannot be observed', async () => {
         state.assets['users/x/dem'] = {bands: [{name: 'slope', arrayDimensions: 0}], properties: {}}
@@ -394,14 +413,15 @@ describe('exporting a Stack', () => {
         expect(bandEncoding).toEqual({r: REFLECTANCE, heat: THERMAL})
     })
 
-    it('fails the export for two output bands named alike, before reading an input with no image output', async () => {
+    // The input's record is read to complete the closure anyway; Earth Engine is asked nothing.
+    it('fails the export for two output bands named alike, naming the input with no image output beside them', async () => {
         state.catalogue = {[DESIGN.id]: DESIGN}
         const recipe = stack(
             [{imageId: 'i-1', type: 'RECIPE_REF', id: DESIGN.id}, {imageId: 'i-2', type: 'RECIPE_REF', id: DESIGN.id}],
             [mapping('i-1', [['class', 'x']]), mapping('i-2', [['class', 'x']])]
         )
 
-        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(NON_IMAGE_OUTPUT, DUPLICATE_BAND_NAME\)$/)
         expect(state.exported).toEqual([])
     })
 })

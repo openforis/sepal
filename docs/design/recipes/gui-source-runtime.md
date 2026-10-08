@@ -853,8 +853,10 @@ answers belong to the runtime (`sourceRuntime/outputRegistry.js`):
 Visualization settings belong to the preview's key, not the loading key, so restyling a layer rebuilds its preview
 and loads nothing.
 
-**Shared loading.** `watchOutput$({recipeId, product})` registers interest in a question: a recipe id and the product
-its consumer reads, normalized as the read names it (`layerProduct`). While a question is watched, the runtime
+**Shared loading.** `watchOutput$({recipeId, product, explain})` registers interest in a question: a recipe id, the
+product its consumer reads, normalized as the read names it (`layerProduct`), and whether it asks to explain a refusal -
+an editor saying what needs repair. Questions differing only in `explain` are distinct, each loading what its own read
+names, and so are their retries, refreshes and the assets they read. While a question is watched, the runtime
 recomputes its read whenever the session's catalogue changes and loads what the read's `acquisition` names. A question
 the session answers alone is still watched and loads nothing. Work is keyed by the acquisition key, so questions
 naming the same key share one operation - a map layer and Retrieve over one output, or two parameter sets of one
@@ -865,6 +867,13 @@ configuration-only product - while canonical output and products remain distinct
   other work, settled, or released because the session now answers alone. An edit leaving its key as it was tells
   it nothing.
 
+- A question asked to explain, whose read the session refuses while still naming records or observations it does not
+  hold, names `EXPLAIN`: the closure those records complete, then one pass observing what the refusal names, each
+  observation failing alone, settling `COMPLETE` with the diagnoses that evidence establishes, even where it adds none
+  - recorded, like any work's reads, before it settles. Where every observation fails it settles `UNAVAILABLE` on
+  those failures, so it is retried and never retained. The refusal answers at once and stays the answer; a held
+  `COMPLETE` explanation only adds diagnoses, and one pending, failed or withdrawn adds nothing. Questions not asked to
+  explain never load it.
 - Unfinished work is cancelled and discarded when the last question claiming it is released. A consumer watches a
   changed question before releasing the previous one, so switching a layer's product keeps loading the two share.
 - A settled `READY`, `INVALID` or `COMPLETE` answer is retained for 60 seconds after its last release, and at most 32

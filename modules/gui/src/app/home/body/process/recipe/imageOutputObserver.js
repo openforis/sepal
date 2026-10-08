@@ -1,6 +1,6 @@
 import {map} from 'rxjs'
 
-import {createImageOutputObserver} from '#sepal/recipe/output/observeImageOutput'
+import {createImageOutputObserver, explainImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -25,6 +25,11 @@ export const observeImageBands$ = ({reference, recipe, observes}) => reference.t
         : api.gee.bands$({recipe, includeDataTypes: true})
 
 const declarationFor = recipe => recipeType(recipe.type)?.imageOutput
+
+// What observing once can add to a refusal of the graph's root, for an editor saying what needs repair
+// (explainImageOutput$).
+export const explainRecipeImageOutput$ = ({graph, observeBands$ = observeImageBands$}) =>
+    explainImageOutput$({graph, observeBands$, declarationFor})
 
 // `observeBands$` is what a request goes through: Earth Engine itself unless a caller shares requests
 // (sourceRuntime/observationRegistry.js).

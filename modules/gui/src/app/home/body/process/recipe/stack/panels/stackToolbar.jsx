@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {InputImagery} from '~/app/home/body/process/panels/inputImagery/inputImagery'
+import {InputImagery, missingBandsMessage} from '~/app/home/body/process/panels/inputImagery/inputImagery'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -10,6 +10,9 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withOutputProblems} from '../../withOutputProblems'
+import {bandNamesProblemMessage, bandNamesProblems} from '../bandNamesProblems'
+import {inputBandProblems} from '../inputBandProblems'
 import {RecipeActions} from '../stackRecipe'
 import {BandNames} from './bandNames/bandNames'
 import {toBandNames} from './bandNames/bandNamesUpdate'
@@ -29,14 +32,16 @@ class _StackToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, inputBandProblems, bandNamesProblems} = this.props
+        const inputProblem = inputBandProblems[0]
+        const bandNamesProblem = bandNamesProblems[0]
         return (
             <PanelWizard
                 panels={['inputImagery']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery onChange={this.syncBandNames}/>
+                <InputImagery inputBandProblems={inputBandProblems} onChange={this.syncBandNames}/>
                 <BandNames/>
 
                 <Toolbar
@@ -51,14 +56,20 @@ class _StackToolbar extends React.Component {
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
+                        error={!!inputProblem}
                         label={msg('process.panels.inputImagery.button')}
-                        tooltip={msg('process.panels.inputImagery.tooltip')}
+                        tooltip={inputProblem
+                            ? msg('process.requirement.itemProblem', {item: inputProblem.name, message: missingBandsMessage(inputProblem)})
+                            : msg('process.panels.inputImagery.tooltip')}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
                         id='bandNames'
+                        error={!!bandNamesProblem}
                         label={msg('process.stack.panel.bandNames.button')}
-                        tooltip={msg('process.stack.panel.bandNames.tooltip')}
+                        tooltip={bandNamesProblem
+                            ? msg('process.requirement.itemProblem', {item: bandNamesProblem.name, message: bandNamesProblemMessage(bandNamesProblem)})
+                            : msg('process.stack.panel.bandNames.tooltip')}
                         disabled={!initialized}
                         panel/>
                 </Toolbar>
@@ -76,5 +87,6 @@ class _StackToolbar extends React.Component {
 
 export const StackToolbar = compose(
     _StackToolbar,
+    withOutputProblems({inputBandProblems, bandNamesProblems}),
     withRecipe(mapRecipeToProps)
 )

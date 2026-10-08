@@ -52,10 +52,14 @@ export const createUniqueBandName = (image, band, outputImages) => {
 export const isOutputOf = (outputBand, band, knownBandIds) =>
     outputBand.id === band.id || (!knownBandIds.includes(outputBand.id) && outputBand.name === band.name)
 
-// Whether an output image outputs a band of its image, the bands it includes being those known.
-export const outputsBand = (outputImage, band) => {
-    const knownBandIds = (outputImage?.includedBands || []).map(({id}) => id)
-    return (outputImage?.outputBands || []).some(outputBand => isOutputOf(outputBand, band, knownBandIds))
+// The bands an output image can still be given: those its image includes now that it does not output. Never the copy of
+// them the output image was saved with, which can still list a band since removed. The ids that copy knows stay known,
+// so a band replaced by a same-named one is not taken for it.
+export const bandsToOutput = (outputImage, image) => {
+    const knownBandIds = [...(outputImage?.includedBands || []), ...(image?.includedBands || [])].map(({id}) => id)
+    return (image?.includedBands || []).filter(band =>
+        !(outputImage?.outputBands || []).some(outputBand => isOutputOf(outputBand, band, knownBandIds))
+    )
 }
 
 // The name a band is output under: its custom name, if given, or else its default.

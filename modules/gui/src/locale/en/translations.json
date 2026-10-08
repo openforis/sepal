@@ -1077,6 +1077,7 @@
           },
           "noBands": "No bands selected",
           "duplicateSource": "Another input already uses this image.",
+          "missingBands": "Its source no longer has {bands}.",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",
@@ -2910,7 +2911,13 @@
           "title": "Band names",
           "tooltip": "Set the band names of the stack.",
           "duplicateBand": "Duplicate band name",
-          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
+          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+          "problem": {
+            "duplicate": "\"{outputName}\" is the name of more than one band.",
+            "blank": "A band has no name.",
+            "unmapped": "Its bands are not named.",
+            "invalidFormat": "\"{outputName}\" is not a valid band name."
+          }
         }
       },
       "tabPlaceholder": "Stack"
@@ -2924,7 +2931,12 @@
         "selfReference": "\"{variable}\" cannot use itself.",
         "missingImage": "\"{variable}\" no longer exists.",
         "invalidArgCount": "A function is given {argCount} arguments instead of {expectedArgCount}.",
-        "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}."
+        "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}.",
+        "missingInputBands": "Its source no longer has {bands}.",
+        "noOutputBands": "\"{variable}\" outputs no bands.",
+        "noOutputImages": "No image or calculation is output.",
+        "invalidOutputName": "\"{outputName}\" is not a valid band name.",
+        "duplicateOutputName": "\"{outputName}\" is the name of more than one output band."
       },
       "create": "Band Math",
       "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
@@ -3045,6 +3057,7 @@
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
           "noImages": "No images/calculations added to output",
           "noBands": "No bands added to output",
+          "missingBands": "An image or calculation outputs no bands.",
           "addImage": {
             "label": "Add",
             "tooltip": "Include bands from image or calculation to output",

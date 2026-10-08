@@ -10,6 +10,8 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
 import {withSourceProblems} from '../../selectedSource'
+import {withOutputProblems} from '../../withOutputProblems'
+import {inputBandProblems, missingBandsMessage} from '../inputBandProblems'
 import styles from './bandMathToolbar.module.css'
 import {Calculations} from './calculations/calculations'
 import {InputImagery} from './inputImagery/inputImagery'
@@ -27,14 +29,15 @@ class _BandMathToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, sourceProblems} = this.props
+        const {recipeId, initialized, sourceProblems, inputBandProblems} = this.props
+        const inputProblem = inputBandProblems[0]
         return (
             <PanelWizard
                 panels={['inputImagery']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery/>
+                <InputImagery inputBandProblems={inputBandProblems}/>
                 <Calculations/>
                 <OutputBands/>
 
@@ -50,8 +53,11 @@ class _BandMathToolbar extends React.Component {
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
+                        error={!!inputProblem}
                         label={msg('process.panels.inputImagery.button')}
-                        tooltip={msg('process.panels.inputImagery.tooltip')}
+                        tooltip={inputProblem
+                            ? msg('process.requirement.itemProblem', {item: inputProblem.name, message: missingBandsMessage(inputProblem)})
+                            : msg('process.panels.inputImagery.tooltip')}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
@@ -77,5 +83,6 @@ class _BandMathToolbar extends React.Component {
 export const BandMathToolbar = compose(
     _BandMathToolbar,
     withSourceProblems(),
+    withOutputProblems({inputBandProblems}),
     withRecipe(mapRecipeToProps)
 )

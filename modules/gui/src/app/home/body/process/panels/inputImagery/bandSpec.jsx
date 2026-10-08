@@ -14,15 +14,17 @@ import styles from './bandSpec.module.css'
 
 export class BandSpec extends React.Component {
     render() {
-        const {selected, spec: {id, band, type}, disabled, onClick, onRemove} = this.props
+        const {selected, spec: {id, band, type}, missing, disabled, onClick, onRemove} = this.props
         return (
             <ListItem
+                className={missing ? styles.error : null}
                 expansion={this.renderExpansion()}
                 expanded={selected}
                 disabled={disabled}
                 onClick={() => onClick(id)}>
                 <CrudItem
                     title={band}
+                    titleTooltip={missing ? this.missingMessage() : null}
                     metadata={msg(['process.panels.inputImagery.form.type', type])}
                     unsafeRemove
                     onRemove={() => onRemove(id)}
@@ -56,7 +58,7 @@ export class BandSpec extends React.Component {
     }
 
     renderBandSelector() {
-        const {bands, spec: {band}} = this.props
+        const {bands, spec: {band}, missing} = this.props
         const bandOptions = (Object.keys(bands) || [])
             .map(bandName => ({
                 value: bandName,
@@ -67,6 +69,7 @@ export class BandSpec extends React.Component {
                 label={msg('process.panels.inputImagery.form.band.label')}
                 value={band}
                 options={bandOptions}
+                errorMessage={missing ? this.missingMessage() : null}
                 className={styles.bandSelector}
                 onChange={({value}) => this.updateBand(value)}
             />
@@ -102,6 +105,11 @@ export class BandSpec extends React.Component {
         )
     }
 
+    missingMessage() {
+        const {spec: {band}} = this.props
+        return msg('process.panels.inputImagery.form.missingBands', {bands: band})
+    }
+
     updateBand(band) {
         const {spec, bands} = this.props
         if (spec.band !== band) {
@@ -132,6 +140,8 @@ BandSpec.propTypes = {
     onClick: PropTypes.func.isRequired,
     onRemove: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
+    // Its source is known not to have this band.
+    missing: PropTypes.bool,
     recipe: PropTypes.object,
     selected: PropTypes.any,
 }

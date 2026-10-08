@@ -10,6 +10,7 @@ import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
 import {AssetSection} from './assetSection'
+import {isMissingBand} from './bands'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
@@ -30,9 +31,16 @@ const fields = {
         .predicate(isFreeSource('ASSET'), DUPLICATE_SOURCE),
     bands: new Form.Field()
         .notEmpty(),
+    // What a read of the selected source in this panel answered, never saved: until one does, nothing is known missing.
+    currentBands: new Form.Field(),
     visualizations: new Form.Field(),
     includedBands: new Form.Field()
         .notEmpty()
+        .predicate(
+            (includedBands, {currentBands}) => !missingBands(includedBands, currentBands).length,
+            'process.panels.inputImagery.form.missingBands',
+            ({includedBands, currentBands}) => ({bands: missingBands(includedBands, currentBands).join(', ')})
+        )
 }
 
 const mapRecipeToProps = recipe => ({
@@ -159,6 +167,11 @@ class _InputImage extends React.Component {
         }
     }
 }
+
+const missingBands = (includedBands, bands) =>
+    (includedBands || [])
+        .filter(bandSpec => isMissingBand(bandSpec, bands))
+        .map(({band}) => band)
 
 const modelToValues = model => {
     const values = {

@@ -37,7 +37,8 @@ import {
 //
 // A requirement over the recipe's own configuration (a local read, sourceRequirements.js) holds its section back with
 // `UNMET_CONFIGURATION` by what it finds itself, each item's diagnosis named by the item. A read held only by its
-// prerequisites marks its item (itemStatusesOf), naming them, but not its section: what is wrong is said where it is.
+// prerequisites marks its item (itemStatusesOf), naming them, and holds its section back too, by that short summary
+// alone: what is wrong is said where it is, but a section with an item that cannot be used is not shown as sound.
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
@@ -148,11 +149,15 @@ const isRequired = ({declaration}) => declaration.requiredForSelection !== false
 const operationLabel = ({operations = []}) =>
     msg(`process.source.operation.${operations[0]}`)
 
-// What the section's local requirements find themselves, the first item named, and every one in `details`.
+// What the section's local requirements find, the first item named, and every one in `details`: what they find
+// themselves before what holds them only by their prerequisites, which is said by the prerequisites' names alone.
 const configurationStatusOf = (reads, sectionId) => {
-    const problems = reads
-        .filter(read => read.local && read.declaration.section.id === sectionId && read.ownVerdict.status === UNSUPPORTED)
-        .map(read => ({read, ...ownDiagnosis(read)}))
+    const unmet = reads.filter(read => read.local && read.declaration.section.id === sectionId && read.verdict.status === UNSUPPORTED)
+    const problems = [
+        ...unmet.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read)})),
+        ...unmet.filter(read => read.ownVerdict.status !== UNSUPPORTED)
+            .map(read => ({read, message: prerequisitesMessage(read), details: []}))
+    ]
         .map(({read, message, details}) => read.item
             ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
             : {message, details})
@@ -173,11 +178,7 @@ const localStatusOf = read => {
         return null
     }
     const own = read.ownVerdict.status === UNSUPPORTED ? ownDiagnosis(read) : null
-    const prerequisites = read.unmetPrerequisites.length
-        ? msg('process.requirement.prerequisiteUnmet', {
-            items: read.unmetPrerequisites.map(({label, item}) => label || item).join(', ')
-        })
-        : null
+    const prerequisites = read.unmetPrerequisites.length ? prerequisitesMessage(read) : null
     return {
         state: UNMET_CONFIGURATION,
         message: own ? own.message : prerequisites,
@@ -186,6 +187,9 @@ const localStatusOf = read => {
         advisories: []
     }
 }
+
+const prerequisitesMessage = ({unmetPrerequisites}) =>
+    msg('process.requirement.prerequisiteUnmet', {items: unmetPrerequisites.map(({label, item}) => label || item).join(', ')})
 
 const ownDiagnosis = ({ownVerdict, declaration}) =>
     declaration.requirement.describe(ownVerdict.diagnostic)

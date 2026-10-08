@@ -10,7 +10,7 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
-import {bandsAvailableToAdd, defaultBand} from './bands'
+import {bandsAvailableToAdd, defaultBand, isMissingBand} from './bands'
 import {BandSpec} from './bandSpec'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
@@ -18,7 +18,8 @@ const ADD_ALL_BANDS = Symbol('addAllBands')
 export class ImageForm extends Component {
     state = {
         loadedRecipe: null,
-        loadedId: undefined,
+        // The source the configured bands were chosen against: the one the input was saved with, until another loads.
+        reconciledId: this.props.input?.value,
         selected: undefined,
     }
 
@@ -32,14 +33,12 @@ export class ImageForm extends Component {
     }
 
     renderImageSelector() {
-        const {input, inputComponent, inputs: {bands, otherSources}} = this.props
+        const {input, inputComponent, inputs: {otherSources}} = this.props
         return <div ref={this.element}>
             {React.createElement(inputComponent, {
                 input,
                 otherSources: otherSources.value,
-                onLoading: () => {
-                    bands.set({})
-                },
+                onLoading: id => this.onLoading(id),
                 onLoaded: ({
                     id,
                     bands,
@@ -71,7 +70,7 @@ export class ImageForm extends Component {
     }
 
     renderBandSpecs() {
-        const {inputs: {bands, includedBands}} = this.props
+        const {inputs: {bands, currentBands, includedBands}} = this.props
         const {loadedRecipe, selected} = this.state
         const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
         const bandSpecs = (includedBands.value || []).map(bandSpec =>
@@ -82,6 +81,7 @@ export class ImageForm extends Component {
                 recipe={loadedRecipe}
                 spec={bandSpec}
                 selected={selected === bandSpec.id}
+                missing={isMissingBand(bandSpec, currentBands.value)}
                 disabled={!Object.keys(bands.value).length}
                 onClick={id => this.selectBandSpec(id)}
                 onUpdate={spec => this.updateSpec(spec)}
@@ -196,27 +196,49 @@ export class ImageForm extends Component {
         ])
     }
 
+    // A load of another source than the configured bands were chosen against hides them until it answers. One of that
+    // same source keeps showing the bands it was saved with. Either way, nothing is known missing until it answers.
+    onLoading(id) {
+        const {inputs: {bands, currentBands}} = this.props
+        currentBands.setInitialValue(null)
+        if (id !== this.state.reconciledId) {
+            bands.set({})
+        }
+    }
+
     // What the selected source turned out to have, and what that means for the bands already configured.
     //
     // The answer must be about the source selected NOW. Two loads can be in flight when a user changes their
     // mind, and Earth Engine has no obligation to answer in the order it was asked; the late one describes
     // an image nobody is looking at.
     //
-    // A band configured against the previous source is not a band of this one. It is dropped rather than
-    // left in the list looking like a valid selection, while everything the new source still has is kept -
-    // switching source is not a reason to discard work that remains meaningful.
+    // What a source has is learned, not edited: for the source the input was saved with, it is where the form
+    // started. Only a source other than the one the bands were chosen against reconciles them. A band configured
+    // against the previous source is not a band of this one. It is dropped rather than left in the list looking like
+    // a valid selection, while everything the new source still has is kept - switching source is not a reason to
+    // discard work that remains meaningful. Of the same source, a band it no longer has stays selected, refused by
+    // validation, for the user to replace or remove.
     onLoaded(id, loadedBands, loadedVisualizations, loadedRecipe) {
-        const {form, input, inputs: {bands, visualizations, recipe, includedBands}} = this.props
-        if (!id || id !== input.value || !form.isDirty()) {
+        const {input, inputs: {bands, currentBands, visualizations, recipe}} = this.props
+        if (!id || id !== input.value) {
             return
         }
-        const changedSource = this.state.loadedId !== id
-        bands.set(loadedBands)
-        visualizations.set(loadedVisualizations)
-        recipe.set(loadedRecipe?.id)
-        this.setState({loadedRecipe, loadedId: id})
-        // A source that reports no bands is not a source whose configuration can be reconciled against
-        // anything. The band list is not shown at all in that state, so what is configured is left as it is.
+        const changedSource = id !== this.state.reconciledId
+        const learn = (field, value) => input.isDirty() ? field.set(value) : field.setInitialValue(value)
+        currentBands.setInitialValue(loadedBands)
+        learn(bands, loadedBands)
+        learn(visualizations, loadedVisualizations)
+        learn(recipe, loadedRecipe?.id)
+        this.setState({loadedRecipe, reconciledId: id})
+        if (changedSource) {
+            this.reconcile(loadedBands)
+        }
+    }
+
+    // A source that reports no bands is not a source whose configuration can be reconciled against
+    // anything. The band list is not shown at all in that state, so what is configured is left as it is.
+    reconcile(loadedBands) {
+        const {inputs: {includedBands}} = this.props
         if (!Object.keys(loadedBands || {}).length) {
             return
         }
@@ -225,8 +247,7 @@ export class ImageForm extends Component {
         if (retained.length !== configured.length) {
             includedBands.set(retained)
         }
-        // Only when the source itself changed. Reloading the same one must not undo a deliberate clearing.
-        if (!retained.length && changedSource) {
+        if (!retained.length) {
             this.addFirstBand(loadedBands)
         }
     }

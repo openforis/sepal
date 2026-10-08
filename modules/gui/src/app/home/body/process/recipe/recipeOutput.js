@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {UNAVAILABLE_DESCRIPTION} from '#sepal/recipe/output/diagnostic'
 import {NEEDS_EVIDENCE, readImageOutput, READY} from '#sepal/recipe/output/readImageOutput'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
@@ -42,6 +43,12 @@ import {recipeContent} from './recipeContent'
 // DEPENDENCIES terminal answers validity beside a map-product answer, which reads nothing but the root recipe -
 // including its runtime evidence - so the terminal's basis proves it read that same root.
 //
+// A question asked to `explain` - an editor's, saying what needs repair - is answered the same way, except where the
+// session refuses the output while its read still names records or observations it did not hold. That refusal is the
+// answer at once, and stays the answer: EXPLAIN loads the closure those records complete and observes once what the
+// refusal names, and a COMPLETE terminal of it only adds the diagnoses that evidence establishes. One pending, failed or
+// withdrawn adds nothing; nothing it could not read is a diagnosis. Questions not asked to explain never load it.
+//
 // An asset the answer reads that a read found missing, or unreadable under these credentials (assetEvidence.js), makes
 // it UNAVAILABLE, naming the asset - an answer described from configuration alone included, since its pixels are
 // still read from it. The assets read are those the session graph reaches and those the held terminal's closure read.
@@ -53,18 +60,19 @@ export const UNAVAILABLE = 'UNAVAILABLE'
 export const INVALID = 'INVALID'
 export const DESCRIBED = 'DESCRIBED'
 export const DESCRIBE = 'DESCRIBE'
+export const EXPLAIN = 'EXPLAIN'
 export const DEPENDENCIES = 'DEPENDENCIES'
 export const REFRESH = 'REFRESH'
 export const UNKNOWN_PRODUCT = 'UNKNOWN_PRODUCT'
 export const ASSET_UNAVAILABLE = 'ASSET_UNAVAILABLE'
 
-export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, currency = null, assetEvidence = {}}) => {
+export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, currency = null, assetEvidence = {}, explain = false}) => {
     const refresh = currency && refreshing({graph, currency, heldFor})
     if (refresh) {
         return {...refresh, assets: graphAssets(graph)}
     }
-    const session = sessionAnswer({recipe, product, graph})
-    const kind = session.acquisition
+    const {explainable, ...session} = sessionAnswer({recipe, product, graph})
+    const kind = session.acquisition || (explain && explainable ? EXPLAIN : null)
     const acquisition = kind ? {kind, key: acquisitionKey(kind, graph)} : null
     const held = acquisition && heldFor(acquisition.key)
     const assets = _.uniq([...graphAssets(graph), ...(held?.assets || [])]).sort()
@@ -86,13 +94,13 @@ export const graphAssets = graph =>
 // What a watched question needs loaded, from the same graph and read its consumers render from: the acquisition with
 // the recipe, graph and session records it names, or null when the session answers on its own or holds no such
 // recipe.
-export const outputLoading = ({recipeId, product, catalogue, session}) => {
+export const outputLoading = ({recipeId, product, explain, catalogue, session}) => {
     const recipe = catalogue[recipeId]
     if (!recipe) {
         return null
     }
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: catalogue})
-    const {acquisition} = readRecipeOutput({recipe, product, graph, currency: session && recordCurrency(session)})
+    const {acquisition} = readRecipeOutput({recipe, product, graph, currency: session && recordCurrency(session), explain})
     // Refreshing reads storage, not the session's records, which are what it replaces.
     return acquisition && {acquisition, recipe, graph, records: acquisition.kind === REFRESH ? [] : graph.recipes}
 }
@@ -166,7 +174,11 @@ const sessionAnswer = ({recipe, product, graph}) => {
     }
     return status === NEEDS_EVIDENCE
         ? {...answer({status: NEEDS_EVIDENCE, diagnostics, validity}), acquisition: DESCRIBE}
-        : answer({status: INVALID, diagnostics, validity})
+        // An observation the refusal names but the session does not hold is a question, not a diagnosis.
+        : {
+            ...answer({status: INVALID, diagnostics: diagnostics.filter(({code}) => code !== UNAVAILABLE_DESCRIPTION), validity}),
+            explainable: read.needs.records.length + read.needs.observations.length > 0
+        }
 }
 
 // A map product is described from its root's configuration alone, so the session answers it and only validity is
@@ -187,6 +199,11 @@ const mapProduct = ({recipe, product, graph, validity, pending}) => {
 
 const heldAnswer = ({recipe, product, session, kind, terminal}) => {
     const validity = terminal.dependencyValidity || null
+    if (kind === EXPLAIN) {
+        return terminal.status === 'COMPLETE'
+            ? {...session, diagnostics: _.uniqWith([...session.diagnostics, ...terminal.diagnostics], _.isEqual)}
+            : session
+    }
     if (kind === DEPENDENCIES) {
         return {...session, dependencyValidity: validity, error: terminal.error || null}
     }

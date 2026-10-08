@@ -10,11 +10,14 @@ import {
     UNDEFINED_VARIABLE
 } from '~/widget/codeEditor/expressionAnalysis'
 
+import {allOutputNames, isUniqueOutputName, isValidOutputName, outputNameOf} from './panels/outputBands/outputImages'
+
 // What Band Math's configuration needs of itself (lib/js/ee/src/bandMath/bandMath.js builds it): pure, judged from the
 // model alone. Execution builds every calculation in order, over the inputs and the calculations before it, so each one
 // must read only those - an expression by variable name and physical band name, a function by the image id and
-// physical band name it selects - and every output band must be a band of the image it is taken from. Whether an
-// input's bands exist upstream is not judged here.
+// physical band name it selects - and every output band must be a band of the image it is taken from. Each output image
+// outputs at least one band, each under a valid name no other output band has, as Output bands requires of what it
+// applies (outputImages.js), and at least one image is output. Whether an input's bands exist upstream is not judged here.
 //
 // A calculation that reads an earlier calculation depends on it, and an output taken from a calculation depends on that
 // calculation (`prerequisites`, sourceRequirements.js): neither repeats what the other finds.
@@ -23,6 +26,7 @@ export {INVALID_ARG_COUNT, INVALID_BAND_COUNT, SYNTAX_ERROR}
 
 export const CALCULATIONS_REQUIREMENT = 'bandMath.calculations'
 export const OUTPUTS_REQUIREMENT = 'bandMath.outputs'
+export const OUTPUT_IMAGES_REQUIREMENT = 'bandMath.outputImages'
 
 export const UNRESOLVED_REFERENCES = 'UNRESOLVED_REFERENCES'
 
@@ -31,6 +35,10 @@ export const UNKNOWN_BAND = 'UNKNOWN_BAND'
 export const FORWARD_REFERENCE = 'FORWARD_REFERENCE'
 export const SELF_REFERENCE = 'SELF_REFERENCE'
 export const MISSING_IMAGE = 'MISSING_IMAGE'
+export const NO_OUTPUT_BANDS = 'NO_OUTPUT_BANDS'
+export const INVALID_OUTPUT_NAME = 'INVALID_OUTPUT_NAME'
+export const DUPLICATE_OUTPUT_NAME = 'DUPLICATE_OUTPUT_NAME'
+export const NO_OUTPUT_IMAGES = 'NO_OUTPUT_IMAGES'
 
 export const chainFacts = ({model}) => ({
     images: model?.inputImagery?.images || [],
@@ -70,8 +78,9 @@ export const calculationItem = ({images, calculations}, index) => {
     }
 }
 
-export const outputItems = ({images, calculations, outputImages}) =>
-    outputImages.map(outputImage => {
+export const outputItems = ({images, calculations, outputImages}) => {
+    const outputNames = allOutputNames(outputImages)
+    return outputImages.map(outputImage => {
         const calculation = calculations.find(({imageId}) => imageId === outputImage.imageId)
         const image = calculation || images.find(({imageId}) => imageId === outputImage.imageId)
         return {
@@ -81,13 +90,17 @@ export const outputItems = ({images, calculations, outputImages}) =>
             facts: {
                 name: outputImage.name,
                 bands: image ? (image.includedBands || []).map(({name}) => name) : null,
-                outputBands: (outputImage.outputBands || []).map(({name}) => name)
+                outputBands: (outputImage.outputBands || []).map(({name}) => name),
+                customNames: (outputImage.outputBands || []).map(({outputName}) => outputName).filter(Boolean),
+                outputNames: (outputImage.outputBands || []).map(outputNameOf).filter(Boolean),
+                allOutputNames: outputNames
             },
             prerequisites: calculation
                 ? [{declaration: CALCULATIONS_REQUIREMENT, item: calculation.imageId}]
                 : []
         }
     })
+}
 
 // UNRESOLVED_REFERENCES with every problem, each once: SYNTAX_ERROR, UNKNOWN_VARIABLE, UNKNOWN_BAND, FORWARD_REFERENCE,
 // SELF_REFERENCE, MISSING_IMAGE, INVALID_ARG_COUNT or INVALID_BAND_COUNT.
@@ -100,12 +113,26 @@ export const CALCULATION_REFERENCES = {
     )
 }
 
+// UNRESOLVED_REFERENCES with every problem, each once: MISSING_IMAGE, UNKNOWN_BAND, NO_OUTPUT_BANDS,
+// INVALID_OUTPUT_NAME or DUPLICATE_OUTPUT_NAME.
 export const OUTPUT_REFERENCES = {
     id: OUTPUTS_REQUIREMENT,
-    evaluate: ({name, bands, outputBands}) => verdictOf(bands
-        ? outputBands.filter(band => !bands.includes(band)).map(band => ({code: UNKNOWN_BAND, variable: name, band}))
-        : [{code: MISSING_IMAGE, variable: name}]
-    )
+    evaluate: ({name, bands, outputBands, customNames, outputNames, allOutputNames}) => verdictOf([
+        ...bands
+            ? outputBands.filter(band => !bands.includes(band)).map(band => ({code: UNKNOWN_BAND, variable: name, band}))
+            : [{code: MISSING_IMAGE, variable: name}],
+        ...outputBands.length ? [] : [{code: NO_OUTPUT_BANDS, variable: name}],
+        ...customNames.filter(outputName => !isValidOutputName(outputName))
+            .map(outputName => ({code: INVALID_OUTPUT_NAME, outputName})),
+        ...outputNames.filter(outputName => !isUniqueOutputName(outputName, allOutputNames))
+            .map(outputName => ({code: DUPLICATE_OUTPUT_NAME, outputName}))
+    ])
+}
+
+// UNRESOLVED_REFERENCES with NO_OUTPUT_IMAGES where nothing is output at all: judged once, for the section.
+export const OUTPUT_PRESENCE = {
+    id: OUTPUT_IMAGES_REQUIREMENT,
+    evaluate: ({outputImages}) => verdictOf(outputImages.length ? [] : [{code: NO_OUTPUT_IMAGES}])
 }
 
 const expressionProblems = ({analysis, later, self}) =>

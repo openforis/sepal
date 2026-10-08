@@ -39,6 +39,8 @@ vi.mock('~/widget/tooltip', () => ({
 }))
 
 const {OutputBands} = await import('./outputBands')
+const {findChanges} = await import('../../sync/findChanges')
+const {updateOutputBands} = await import('../../sync/updateOutputBands')
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('../../bandMath')
 const {EventShield} = await import('~/widget/eventShield')
@@ -49,6 +51,7 @@ addRecipeType(bandMath())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const ID = 'band-math-1'
+const ADD_ALL = 'process.bandMath.panel.outputBands.addBands.all.label'
 
 let root, container, store
 
@@ -223,6 +226,42 @@ describe('an output image', () => {
     })
 })
 
+describe('an output image whose input no longer includes a band', () => {
+    it('is not offered it once Sync has removed its outputs', async () => {
+        const input = removedFromInput(RATIO)
+        const changes = findChanges({prevImages: [INPUT], images: [input], prevCalculations: [], calculations: []})
+        const [{outputBands}] = updateOutputBands({changes, outputImages: [{...INPUT, outputBands: OUTPUT_BANDS}]})
+        await openOutputBands(outputBands, {input})
+
+        await openBandPicker()
+
+        expect(offered()).toEqual([NIR.name])
+    })
+
+    it('is given by Add all only the bands its input includes now', async () => {
+        await openOutputBands([{...VV, defaultOutputName: 'VV'}], {input: removedFromInput(RATIO)})
+
+        await addBand(ADD_ALL)
+        await apply()
+
+        expect(savedOutputNames()).toEqual([VV.name, VH.name, NIR.name])
+    })
+
+    it('is offered a same-named band that replaced one it still outputs', async () => {
+        const replacement = {...RATIO, id: 'replacement-ratio-id'}
+        const input = {...INPUT, includedBands: [VV, VH, replacement, NIR]}
+        await openOutputBands([{...VV, defaultOutputName: 'VV'}, CURRENT_COPY, {...VH, defaultOutputName: 'VH'}, {...NIR, defaultOutputName: 'nir'}], {input})
+
+        await openBandPicker()
+
+        expect(offered()).toEqual([RATIO.name])
+    })
+})
+
+// Its input as configured now, the band both copies are taken from no longer included: a saved output image's own copy of
+// the input's bands still lists it.
+const removedFromInput = band => ({...INPUT, includedBands: INPUT.includedBands.filter(({id}) => id !== band.id)})
+
 const VV = {id: 'vv-id', name: 'VV', type: 'continuous', legendEntries: []}
 const VH = {id: 'vh-id', name: 'VH', type: 'continuous', legendEntries: []}
 const RATIO = {id: 'ratio-id', name: 'ratio_VV_VH', type: 'continuous', legendEntries: []}
@@ -244,13 +283,13 @@ const ORPHANED_RECIPE_INPUT = {
     outputBands: [{id: 'r-id', name: 'r', defaultOutputName: 'r'}]
 }
 
-const sessionState = (outputBands, {others = []} = {}) => ({
+const sessionState = (outputBands, {others = [], input = INPUT} = {}) => ({
     process: {
         loadedRecipes: {
             [ID]: {
                 id: ID, type: 'BAND_MATH', revision: 1,
                 model: {
-                    inputImagery: {images: [INPUT]},
+                    inputImagery: {images: [input]},
                     calculations: {calculations: []},
                     outputBands: {outputImages: [{...INPUT, outputBands}, ...others]}
                 },
@@ -377,6 +416,10 @@ const removeImage = async image => {
     })
     await settled()
 }
+
+const savedOutputNames = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
+    .flatMap(({outputBands}) => outputBands)
+    .map(({name}) => name)
 
 const savedImageIds = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
     .map(({imageId}) => imageId)

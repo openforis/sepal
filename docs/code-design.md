@@ -112,8 +112,16 @@ Presentation policy:
   invalidation. Use one short aggregate advisory when an edit leaves retained settings incompatible and advance
   notice helps the user choose whether to proceed. Name the affected sections and the available remedies. Update
   it as problems are resolved and remove it when none remain. Normal recalculation need not produce a warning.
+- Mark every level containing an error: the field or item, its row in the owning list, the section's toolbar button,
+  and any recipe-level indicator. Explain at the actionable field; parent marks may summarize, naming the item. An
+  item held only by a prerequisite still marks its section, by naming what it depends on rather than repeating that
+  diagnosis. Marks follow the current configuration and evidence, clear on repair, and need no nested editor open.
+  Pending or failed evidence establishes nothing.
 - Preserve explicit user settings during validation. Defaulting, reconciling obsolete selections and discarding or
-  regenerating derived results are separate policies; define them rather than hiding them inside validation.
+  regenerating derived results are separate policies; define them rather than hiding them inside validation. A
+  deliberate removal - an input, or a band unselected - may remove what was derived from it. A value disappearing
+  upstream may not: keep the selection and what depends on it, mark it, and block only the operations that need it,
+  until it returns or the user repairs it.
 - Apply the same rules to the edited candidate and committed configuration, and recheck at submission. Optional
   operations can be unavailable without making the whole configuration invalid.
 

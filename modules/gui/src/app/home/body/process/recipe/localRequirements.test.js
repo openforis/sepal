@@ -75,16 +75,30 @@ describe('what a section says', () => {
         expect(status.message).toContain('"item":"Item b"')
     })
 
-    it('is not held back by an item unmet only by what it depends on, which its item mark names instead', () => {
+    it('is held back by an item unmet only by what it depends on, naming the item and what it depends on alone', () => {
         registry.OTHER = {sourceRequirements: [
             declaration({id: 'first', section: SECTION, items: [item('a', {ok: false})]}),
             declaration({id: 'second', section: OTHER_SECTION, items: [item('b', {needs: ['a'], from: 'first'})]})
         ]}
         const reads = readsOf({id: 'r', type: 'OTHER', model: {}})
 
-        expect(sectionStatusOf({}, reads, OTHER_SECTION.id)).toBe(null)
+        const status = sectionStatusOf({}, reads, OTHER_SECTION.id)
+        expect(status).toEqual(expect.objectContaining({state: UNMET_CONFIGURATION, details: []}))
+        expect(status.message).toContain('Item b')
+        expect(status.message).toContain('Item a')
+        expect(status.message).not.toContain('BROKEN')
         expect(itemStatusesOf(reads, OTHER_SECTION.id)).toEqual({b: expect.objectContaining({state: UNMET_CONFIGURATION})})
-        expect(itemStatusesOf(reads, OTHER_SECTION.id).b.message).toContain('Item a')
+    })
+
+    it('says what an item finds itself before what another is held by', () => {
+        registry.OTHER = {sourceRequirements: [
+            declaration({id: 'first', section: SECTION, items: [item('a', {ok: false}), item('b', {needs: ['a'], from: 'first'})]})
+        ]}
+        const reads = readsOf({id: 'r', type: 'OTHER', model: {}})
+
+        const status = sectionStatusOf({}, reads, SECTION.id)
+        expect(status.message).toContain('BROKEN')
+        expect(status.details).toEqual([expect.stringContaining('Item b')])
     })
 })
 

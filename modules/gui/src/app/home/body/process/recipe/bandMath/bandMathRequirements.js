@@ -6,10 +6,16 @@ import {
     calculationItems,
     CALCULATIONS_REQUIREMENT,
     chainFacts,
+    DUPLICATE_OUTPUT_NAME,
     FORWARD_REFERENCE,
     INVALID_ARG_COUNT,
     INVALID_BAND_COUNT,
+    INVALID_OUTPUT_NAME,
     MISSING_IMAGE,
+    NO_OUTPUT_BANDS,
+    NO_OUTPUT_IMAGES,
+    OUTPUT_IMAGES_REQUIREMENT,
+    OUTPUT_PRESENCE,
     OUTPUT_REFERENCES,
     outputItems,
     OUTPUTS_REQUIREMENT,
@@ -42,6 +48,13 @@ export const bandMathRequirements = [
         localFacts: chainFacts,
         items: outputItems,
         operations: [IMAGE_OUTPUT]
+    },
+    {
+        id: OUTPUT_IMAGES_REQUIREMENT,
+        section: OUTPUT_BANDS,
+        requirement: {...OUTPUT_PRESENCE, describe: diagnostic => describeProblems(diagnostic)},
+        localFacts: chainFacts,
+        operations: [IMAGE_OUTPUT]
     }
 ]
 
@@ -60,5 +73,9 @@ const MESSAGES = {
     [SELF_REFERENCE]: 'selfReference',
     [MISSING_IMAGE]: 'missingImage',
     [INVALID_ARG_COUNT]: 'invalidArgCount',
-    [INVALID_BAND_COUNT]: 'invalidBandCount'
+    [INVALID_BAND_COUNT]: 'invalidBandCount',
+    [NO_OUTPUT_BANDS]: 'noOutputBands',
+    [NO_OUTPUT_IMAGES]: 'noOutputImages',
+    [INVALID_OUTPUT_NAME]: 'invalidOutputName',
+    [DUPLICATE_OUTPUT_NAME]: 'duplicateOutputName'
 }

@@ -16,6 +16,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {missingBandsMessage} from '../../inputBandProblems'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
 
@@ -78,17 +79,20 @@ class _InputImagery extends React.Component {
     }
 
     renderImage(image) {
-        const {recipeNameById} = this.props
+        const {recipeNameById, inputBandProblems = []} = this.props
         const description = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
+        const problem = inputBandProblems.find(({imageId}) => imageId === image.imageId)
         return description
             ? (
                 <ListItem
                     key={image.imageId}
+                    className={problem ? styles.error : null}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
+                        titleTooltip={problem ? missingBandsMessage(problem) : null}
                         description={description}
                         metadata={image.name}
                         onRemove={() => this.removeImage(image)}
@@ -138,5 +142,7 @@ export const InputImagery = compose(
 )
 
 InputImagery.propTypes = {
+    // The inputs found to lack bands they include (inputBandProblems.js).
+    inputBandProblems: PropTypes.array,
     onChange: PropTypes.func
 }

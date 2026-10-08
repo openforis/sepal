@@ -105,6 +105,8 @@ describe('a calculation edited in its panel', () => {
 const RED = {id: 'red-id', name: 'red'}
 const NIR = {id: 'nir-id', name: 'nir'}
 const INPUT = {imageId: 'img-1', name: 'i1', type: 'ASSET', id: 'users/x/image', includedBands: [RED, NIR]}
+// Output as configured, so only the calculations need attention.
+const OUTPUT = {imageId: INPUT.imageId, outputBands: [{...RED, defaultOutputName: 'red'}]}
 
 function expression(imageId, name, text) {
     return {
@@ -118,7 +120,7 @@ const sessionState = ({images, calculations}) => ({
         loadedRecipes: {
             [ID]: {
                 id: ID, type: 'BAND_MATH', revision: 1,
-                model: {inputImagery: {images}, calculations: {calculations}, outputBands: {outputImages: []}},
+                model: {inputImagery: {images}, calculations: {calculations}, outputBands: {outputImages: [OUTPUT]}},
                 ui: {initialized: true}
             }
         },

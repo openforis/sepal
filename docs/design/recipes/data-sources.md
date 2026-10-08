@@ -855,7 +855,7 @@ shared source-observation lifecycle rather than adding another watcher, cache or
    Use the same declaration and evaluation contract for local configuration, calculation outputs and current evidence
    from selected recipes or assets; only their providers differ. Done for local configuration. Current evidence of
    the inputs' bands is judged by Band Math's output description instead (`inputs()`), which refuses what execution
-   would; no section is marked for it yet.
+   would, and the editor marks the inputs it finds lacking a band, and Input imagery, from that description.
 3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
    superseded bookkeeping for this chain; leave unrelated sync behavior alone (done: the persisted `invalid` flag is
    gone). Recheck the same requirements at execution, so a closed panel or directly submitted model cannot bypass
@@ -869,7 +869,12 @@ Acceptance scenarios, without closing or reopening the recipe:
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
   preserving the expression and output configuration. Restoring the band restores validity automatically. Done for a
   local input-selection change; a change to the external source's bands is refused by the output description, which
-  withholds previews and Retrieve until the band returns, while the sections are not marked for it yet.
+  withholds previews and Retrieve until the band returns, and marks the input and Input imagery until then. Still
+  deferred, as separate packets: judging an item's edit as a candidate before it is applied, with its own Apply policy,
+  and rechecking these requirements at the execution boundary. Where the description refuses the configuration before
+  reading the inputs - repeated output names, say, or nothing output - the editor reads them once to mark an input's
+  problem beside the refusal (`EXPLAIN`, [GUI source runtime](gui-source-runtime.md)); other consumers have the
+  refusal at once and read nothing for it.
 - Removing an unused band or changing only a visualization does not invalidate the calculation.
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
@@ -1132,7 +1137,8 @@ The items below are concrete applications of that broader policy.
   - prerequisites identified by declaration id and item id, never by rule id or path - Change Alerts declares
     `ccdcSegments.monitoredMeasure` twice; a read keeps its own verdict apart from its effective one, a prerequisite
     not read counts as unmet, and a suppressed message never makes its operation available;
-  - section marks, item marks and operation gates aggregating every item.
+  - section marks, item marks and operation gates aggregating every item - an item held only by a prerequisite marks
+    its section too, by naming what it depends on.
 
   Not implemented: judging an edit by these rules before it is applied. A local declaration binds no form panel, so
   each panel's Apply keeps its own validation. Proposed for a later packet: an item panel judged as a candidate by the
