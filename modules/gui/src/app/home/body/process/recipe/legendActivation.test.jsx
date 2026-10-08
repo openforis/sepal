@@ -11,7 +11,8 @@ import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import widgetStyles from '~/widget/widget.module.css'
 
-// The legend of a Classification and of an Index Change, as each editor's real toolbar, panels and activation show it
+// The legend of a Classification, an Index Change and a Class Change, as each editor's real toolbar, panels and
+// activation show it
 // over a real store: a saved legend opens unedited and gives way to another panel; an edited one keeps the others
 // closed until it is applied or cancelled, and an invalid one cannot be applied. Earth Engine never answers.
 
@@ -35,11 +36,15 @@ const {ClassificationToolbar} = await import('./classification/panels/classifica
 const {default: indexChange} = await import('./indexChange/indexChange')
 const {defaultModel: indexChangeModel} = await import('./indexChange/indexChangeRecipe')
 const {IndexChangeToolbar} = await import('./indexChange/panels/indexChangeToolbar')
+const {default: classChange} = await import('./classChange/classChange')
+const {defaultModel: classChangeModel} = await import('./classChange/classChangeRecipe')
+const {ClassChangeToolbar} = await import('./classChange/panels/classChangeToolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
 addRecipeType(classification())
 addRecipeType(indexChange())
+addRecipeType(classChange())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -63,6 +68,13 @@ const EDITORS = [
         toolbar: () => <IndexChangeToolbar/>,
         legend: {button: 'process.indexChange.panel.legend.button.label', title: 'process.indexChange.panel.legend.title'},
         other: {button: 'process.indexChange.panel.options.button.label', title: 'process.indexChange.panel.options.title'}
+    },
+    {
+        type: 'CLASS_CHANGE',
+        model: () => ({...classChangeModel, legend: {entries: LEGEND}}),
+        toolbar: () => <ClassChangeToolbar/>,
+        legend: {button: 'process.classChange.panel.legend.button.label', title: 'process.classification.panel.legend.title'},
+        other: {button: 'process.classChange.panel.options.button.label', title: 'process.classChange.panel.options.title'}
     }
 ]
 
