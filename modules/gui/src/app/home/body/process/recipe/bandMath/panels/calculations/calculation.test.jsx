@@ -70,6 +70,66 @@ describe('a FUNCTION calculation edited in its panel', () => {
     })
 })
 
+describe('an EXPRESSION calculation saved with bands named alike', () => {
+    it('is opened as saved, and named apart once applied, keeping identities, expression and custom output names', async () => {
+        await editCalculation(SAVED_ALIKE, SAVED_ALIKE_OUTPUTS)
+        const saved = model()
+
+        expect(saved).toEqual(sessionState(SAVED_ALIKE, SAVED_ALIKE_OUTPUTS).process.loadedRecipes[ID].model)
+
+        await type(CALCULATION_NAME, 'c3')
+        await apply()
+
+        expect(calculation().includedBands.map(({id, name}) => [id, name])).toEqual([
+            [RED.id, 'y'], [NIR.id, 'y_1'], [SWIR.id, 'y_2']
+        ])
+        expect(calculation().expression).toBe(SAVED_ALIKE.expression)
+        expect(outputBands().map(({id, outputName}) => [id, outputName])).toEqual([
+            [RED.id, undefined], [NIR.id, undefined], [SWIR.id, 'water']
+        ])
+    })
+})
+
+describe('an EXPRESSION calculation renaming its bands alike', () => {
+    it('names each band apart, keeping its identity', async () => {
+        await editCalculation(RENAMED_ALIKE)
+
+        await type(BAND_RENAME, 'y')
+        await apply()
+
+        expect(calculation().includedBands.map(({id, name}) => [id, name])).toEqual([
+            [RED.id, 'y'], [NIR.id, 'y_1'], [SWIR.id, 'y_2']
+        ])
+    })
+})
+
+describe('the bands of an EXPRESSION calculation', () => {
+    const renamed = (names, {regex = '(.*)', bandRename = 'x'} = {}) => updateIncludedBands({
+        section: 'EXPRESSION', bandRenameStrategy: 'REGEX', regex, bandRename,
+        includedBands: names.map(name => ({id: `${name}-id`, name}))
+    })
+
+    it('are named apart however many are renamed alike', () => {
+        expect(renamed(['a', 'b', 'c', 'd']).map(({name}) => name)).toEqual(['x', 'x_1', 'x_2', 'x_3'])
+    })
+
+    it('are named apart from a suffixed name already among them, later or earlier', () => {
+        expect(renamed(['red', 'nir', 'x_1'], {regex: '^(red|nir)$'}).map(({name}) => name)).toEqual(['x', 'x_2', 'x_1'])
+        expect(renamed(['x_1', 'red', 'nir'], {regex: '^(red|nir)$'}).map(({name}) => name)).toEqual(['x_1', 'x', 'x_2'])
+    })
+
+    it('are named apart beside a suffix too large for a number to count exactly', () => {
+        expect(renamed(['x_9007199254740992', 'red', 'nir'], {regex: '^(red|nir)$'}).map(({name}) => name))
+            .toEqual(['x_9007199254740992', 'x', 'x_9007199254740993'])
+    })
+
+    it('keep names already apart, and every band its identity', () => {
+        const bands = renamed(['red', 'nir'], {bandRename: '$1_x'})
+
+        expect(bands.map(({id, name}) => [id, name])).toEqual([['red-id', 'red_x'], ['nir-id', 'nir_x']])
+    })
+})
+
 describe('the band of a new FUNCTION calculation', () => {
     it('has an identity of its own', () => {
         const values = {section: 'FUNCTION', imageId: 'calc-2', name: 'c2', includedBands: '', defaultBandName: 'min'}
@@ -83,11 +143,13 @@ describe('the band of a new FUNCTION calculation', () => {
 })
 
 const CALCULATION_NAME = 'process.bandMath.panel.calculations.form.calculationName.label'
+const BAND_RENAME = 'process.bandMath.panel.calculations.form.bandRename.REGEX.label'
 const BAND_NAME = 'process.bandMath.panel.calculations.form.bandName.label'
 
 const RED = {id: 'red-id', name: 'red'}
 const NIR = {id: 'nir-id', name: 'nir'}
-const INPUT = {imageId: 'input-1', name: 'i1', type: 'ASSET', id: 'users/x/image', includedBands: [RED, NIR]}
+const SWIR = {id: 'swir-id', name: 'swir'}
+const INPUT = {imageId: 'input-1', name: 'i1', type: 'ASSET', id: 'users/x/image', includedBands: [RED, NIR, SWIR]}
 
 const MAXIMUM_BAND = {id: 'max-id', imageId: 'calc-1', imageName: 'c1', name: 'max', type: 'continuous', legendEntries: []}
 const MAXIMUM = {
@@ -96,7 +158,25 @@ const MAXIMUM = {
     includedBands: [MAXIMUM_BAND]
 }
 
-const sessionState = calculation => ({
+// An expression yielding every band of its input, each renamed by a pattern matching the whole name.
+const RENAMED_ALIKE = {
+    imageId: 'calc-2', name: 'c2', type: 'EXPRESSION', expression: 'i1', dataType: 'auto',
+    bandRenameStrategy: 'REGEX', regex: '(.*)', bandRename: 'x',
+    usedBands: [],
+    includedBands: [RED, NIR, SWIR].map(({id}) => ({id, name: 'x', imageId: 'calc-2', imageName: 'c2'}))
+}
+
+// The same, saved with two of its bands named alike, the third output under a name of the user's.
+const SAVED_ALIKE = {
+    ...RENAMED_ALIKE,
+    bandRename: 'y',
+    includedBands: [[RED, 'y'], [NIR, 'y_1'], [SWIR, 'y_1']].map(([{id}, name]) => ({id, name, imageId: 'calc-2', imageName: 'c2'}))
+}
+const SAVED_ALIKE_OUTPUTS = SAVED_ALIKE.includedBands.map(band => ({
+    ...band, defaultOutputName: band.name, ...(band.id === SWIR.id && {outputName: 'water'})
+}))
+
+const sessionState = (calculation, outputBands = [{...MAXIMUM_BAND, defaultOutputName: 'max', outputName: 'peak'}]) => ({
     process: {
         loadedRecipes: {
             [ID]: {
@@ -104,7 +184,7 @@ const sessionState = calculation => ({
                 model: {
                     inputImagery: {images: [INPUT]},
                     calculations: {calculations: [calculation]},
-                    outputBands: {outputImages: [{...calculation, outputBands: [{...MAXIMUM_BAND, defaultOutputName: 'max', outputName: 'peak'}]}]}
+                    outputBands: {outputImages: [{...calculation, outputBands}]}
                 },
                 ui: {initialized: true}
             }
@@ -116,9 +196,9 @@ const sessionState = calculation => ({
     dimensions: {width: 1024, height: 768}
 })
 
-const editCalculation = async calculation => {
+const editCalculation = async (calculation, outputBands) => {
     activation.imageId = calculation.imageId
-    const initialState = sessionState(calculation)
+    const initialState = sessionState(calculation, outputBands)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -158,6 +238,8 @@ const model = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, '
 
 const calculation = () => model().calculations.calculations[0]
 
-const outputBand = () => model().outputBands.outputImages[0].outputBands[0]
+const outputBands = () => model().outputBands.outputImages[0].outputBands
+
+const outputBand = () => outputBands()[0]
 
 const settled = () => act(async () => {})

@@ -35,10 +35,13 @@ same-named one is still offered. A choice is checked again when it is added, alo
 includes it then. Two outputs of one band a saved recipe holds are kept as saved. A FUNCTION calculation's band keeps
 its id when the calculation is edited, so its output, and any name given to it, follows.
 
-The forms generate unique default output names - two inputs' `red` become `red` and `red_1`. A custom name is optional;
-when given it must start with a letter or underscore, continue with letters, digits and underscores, and be at most 30
-characters long. No two final names may be alike. Output bands checks both rules over every configured output, a saved
-configuration included, and Apply stays unavailable while any fails; each row shows the same rules as its own feedback.
+The forms generate unique default output names - two inputs' `red` become `red` and `red_1`. A calculation whose
+renaming gives several of its bands one name - a pattern matching each whole name - names them apart in order, `x`,
+`x_1`, `x_2`, a repeat taking the suffix after the highest `x_<n>` already among them; each band keeps its identity. A
+custom name is optional; when given it must start with a letter or underscore, continue with letters, digits and
+underscores, and be at most 30 characters long. No two final names may be alike. Output bands checks both rules over
+every configured output, a saved configuration included, and Apply stays unavailable while any fails; each row shows the
+same rules as its own feedback.
 
 ## Configuration checks
 
@@ -157,9 +160,6 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - **Renaming a calculation's bands can repeat another output band's default name.** The sync that follows a rename
   (`modules/gui/src/app/home/body/process/recipe/bandMath/sync/updateOutputBands.js`) writes the new name as
   `defaultOutputName` without the uniqueness the form applies.
-- **Uniquifying repeated calculation band names can repeat itself.** `makeUnique` in
-  `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.jsx` matches its pattern
-  against band objects rather than names, so a third repetition is named like the second.
 
 ## Verification
 
@@ -195,6 +195,9 @@ the bands selected, in the order selected. The catalogue answers the configured 
   never a band removed from it, a same-named replacement offered.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathLayer.test.jsx` - a layer on another map refused,
   withdrawn and drawn again.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.test.jsx` - a calculation
+  edited in its panel keeping its bands' identities, bands renamed alike named apart beside suffixed names of any
+  length, and one saved with names alike opened unchanged and named apart once applied, its custom output name kept.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculationRequirements.test.jsx` - the
   calculations' marks, and their panel's Apply left as it was.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sectionMarks.test.jsx` - the toolbar buttons and Output bands

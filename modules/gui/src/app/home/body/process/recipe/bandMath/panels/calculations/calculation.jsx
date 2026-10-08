@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -209,28 +210,23 @@ const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, b
     }
 }
 
+// A name an earlier band already has is given the suffix after the highest `<name>_<n>` anywhere in the list - generated
+// names included - so no two bands share a name, however many repeat it and whatever suffixed names the list holds.
+// Suffixes are counted exactly, however long.
 const makeUnique = bands => {
-    return bands.reduce(
-        (acc, band, i) => {
-            const others = acc.slice(0, i)
-            const toUnique = () => {
-                const max = Math.max(...acc.map(o => {
-                    const match = new RegExp(`${band.name}_(\\d+)`).exec(o)
-                    return match ? parseInt(match[1]) : 0
-                }))
-                return `${band.name}_${max + 1}`
-            }
-            const uniqueString = others.find(({name}) => name === band.name)?.name
-                ? toUnique()
-                : band.name
-            return [
-                ...others,
-                {...band, name: uniqueString},
-                ...acc.slice(i + 1),
-            ]
-        },
-        bands
-    )
+    const names = bands.map(({name}) => name)
+    return bands.map((band, index) => {
+        if (!names.slice(0, index).includes(band.name)) {
+            return band
+        }
+        const suffixed = new RegExp(`^${_.escapeRegExp(band.name)}_(\\d+)$`)
+        const highest = names
+            .map(name => suffixed.exec(name)?.[1])
+            .filter(Boolean)
+            .reduce((highest, suffix) => BigInt(suffix) > highest ? BigInt(suffix) : highest, 0n)
+        names[index] = `${band.name}_${highest + 1n}`
+        return {...band, name: names[index]}
+    })
 }
 
 const policy = () => ({_: 'allow'})
