@@ -18,7 +18,7 @@ export class FolderPicker extends React.Component {
     render() {
         const {folderId} = this.state
         return (
-            <Layout type='vertical' spacing='tight' className={styles.picker} contentClassName={styles.content}>
+            <div className={styles.picker}>
                 {this.renderCurrentFolder()}
                 {this.renderOptions()}
                 <Button
@@ -29,7 +29,7 @@ export class FolderPicker extends React.Component {
                     label={msg('process.folder.selectHere')}
                     onClick={() => this.props.onSelect(folderId)}
                 />
-            </Layout>
+            </div>
         )
     }
 
@@ -63,9 +63,9 @@ export class FolderPicker extends React.Component {
                 <Scrollable direction='y'>
                     {options.length
                         ? (
-                            <Layout type='vertical' spacing='tight' contentClassName={styles.rows}>
+                            <div className={styles.rows}>
                                 {options.map(folder => this.renderOption(folder))}
-                            </Layout>
+                            </div>
                         )
                         : <NoData message={msg('process.folder.none')}/>}
                 </Scrollable>
