@@ -1,0 +1,8 @@
+/* Same reason as the dialog around it: a vertical Layout carries min-width: fit-content, which would
+   hold the rows at the width of the longest name instead of cutting it. */
+.items {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    min-width: 0;
+}
