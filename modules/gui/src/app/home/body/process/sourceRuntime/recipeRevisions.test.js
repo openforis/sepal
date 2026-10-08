@@ -103,7 +103,7 @@ describe('a dependency loaded privately', () => {
         session.list([listed(masking()), listed(bandMath(3)), {...listed(mosaic()), revision: 9}])
 
         expect(fake.loads).toHaveLength(1)
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.read('masking-1').status).toBe('READY')
     })
 
@@ -116,12 +116,12 @@ describe('a dependency loaded privately', () => {
 
         store(bandMath(4))
         session.list([listed(masking()), listed(bandMath(4))])
-        answerBands(fake.bands[0])
+        answerBands(imageObservations()[0])
 
         expect(session.read('masking-1').status).toBe('NEEDS_EVIDENCE')
         answerLoads()
         answerBands()
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
         expect(bandNames(session.read('masking-1'))).toEqual(['scaled4'])
     })
 
@@ -135,7 +135,7 @@ describe('a dependency loaded privately', () => {
         answerLoads()
 
         expect(fake.loads).toHaveLength(2)
-        expect(fake.bands).toEqual([])
+        expect(imageObservations()).toEqual([])
         expect(session.read('masking-1')).toMatchObject({status: 'UNAVAILABLE', error: {code: 'SOURCE_REVISION_BEHIND'}})
     })
 })
@@ -245,7 +245,7 @@ describe('a cached record the listing has moved past', () => {
 describe('an open dependency of what Earth Engine observes', () => {
     const opened = () => {
         const draft = mosaic(7)
-        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'}, 'blue')
         const session = sessionHolding([root, draft], {
             listing: [listed(root), listed(draft)], open: ['mosaic-1'], saves: {'mosaic-1': saved(draft)}
         })
@@ -262,7 +262,7 @@ describe('an open dependency of what Earth Engine observes', () => {
             saveStates: {'mosaic-1': {...saved(draft), revision: 8}}
         }))
 
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
         expect(session.cached('mosaic-1')).toBe(draft)
     })
 
@@ -278,7 +278,7 @@ describe('an observation', () => {
         session.watch('masking-1')
         answerBands()
 
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.read('band-math-1').status).toBe('READY')
         expect(session.read('masking-1').status).toBe('READY')
     })
@@ -296,7 +296,7 @@ describe('an observation', () => {
             model: {...masking().model, imageMask: {type: 'ASSET', id: 'users/x/other-mask'}}
         }}}))
 
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.read('masking-1').status).toBe('READY')
     })
 
@@ -308,7 +308,7 @@ describe('an observation', () => {
         layer.unsubscribe()
         answerBands()
 
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.read('masking-1').status).toBe('READY')
     })
 
@@ -325,7 +325,7 @@ describe('an observation', () => {
         change(session)
         answerBands()
 
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
     })
 
     it('is not shared between an asset and a recipe with the same id', () => {
@@ -335,8 +335,8 @@ describe('an observation', () => {
         session.watch('masking-1')
         session.watch('masking-2')
 
-        expect(fake.bands.map(({request}) => request.asset || request.recipe.id)).toEqual(['band-math-1', 'band-math-1'])
-        expect(fake.bands.map(({request}) => Boolean(request.asset))).toEqual([false, true])
+        expect(imageObservations().map(({request}) => request.recipe.id)).toEqual(['band-math-1'])
+        expect(fake.bands.filter(({request}) => request.asset === 'band-math-1')).toHaveLength(1)
     })
 })
 
@@ -348,11 +348,11 @@ describe('an observation over incomplete evidence', () => {
         const session = sessionHolding(records, {listing, open, saves})
         session.watch('band-math-1')
         session.watch('masking-1')
-        const inFlight = fake.bands.length
+        const inFlight = imageObservations().length
         answerBands()
         session.watch('masking-2')
         answerBands()
-        return {inFlight, total: fake.bands.length}
+        return {inFlight, total: imageObservations().length}
     }
 
     const secondMasking = {...masking(), id: 'masking-2'}
@@ -361,7 +361,7 @@ describe('an observation over incomplete evidence', () => {
     it('is shared in flight but not reused over a draft that changed its references', () => {
         const persisted = {...masking(), id: 'masked-dep', model: {...masking().model, imageToMask: {type: 'RECIPE_REF', id: 'mosaic-1'}}}
         const draft = {...persisted, model: {...persisted.model, imageToMask: {type: 'RECIPE_REF', id: 'stack-1'}}}
-        const root = bandMath(3, {type: 'RECIPE_REF', id: 'masked-dep'})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: 'masked-dep'}, 'b')
         const {inFlight, total} = observedTwice({
             records: [root, draft, mosaic(7), stack(), masking(), secondMasking],
             listing: [listed(root), listed(persisted), listed(mosaic(7)), listed(stack())],
@@ -375,7 +375,7 @@ describe('an observation over incomplete evidence', () => {
 
     it('is shared in flight but not reused over a draft storage holds a newer revision of', () => {
         const draft = mosaic(7)
-        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'}, 'blue')
         const {inFlight, total} = observedTwice({
             records: [root, draft, masking(), secondMasking],
             listing: [listed(root), {...listed(draft), revision: 8}],
@@ -389,7 +389,7 @@ describe('an observation over incomplete evidence', () => {
 
     it('is not reused over a dependency whose revision is not known', () => {
         const unrevised = {...mosaic(7), revision: undefined}
-        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'}, 'blue')
         const {total} = observedTwice({records: [root, unrevised, masking(), secondMasking], listing: [listed(root)]})
 
         expect(total).toBe(2)
@@ -397,7 +397,7 @@ describe('an observation over incomplete evidence', () => {
 
     it('is reused once the draft is what storage holds', () => {
         const draft = mosaic(7)
-        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: 'mosaic-1'}, 'blue')
         const {total} = observedTwice({
             records: [root, draft, masking(), secondMasking],
             listing: [listed(root), listed(draft)],
@@ -492,7 +492,7 @@ describe('a Retrieve applied', () => {
 describe('a dependency edited while its answer is held', () => {
     const editing = () => {
         const draft = mosaic(7)
-        const root = bandMath(3, {type: 'RECIPE_REF', id: draft.id})
+        const root = bandMath(3, {type: 'RECIPE_REF', id: draft.id}, 'blue')
         const session = sessionHolding([root, draft], {
             listing: [listed(root), listed(draft)], open: [draft.id], saves: {[draft.id]: saved(draft)}
         })
@@ -638,13 +638,19 @@ const failLoads = () => waiting(fake.loads).forEach(load => {
 })
 
 // Answers every description still waiting, or the one given, with the bands the recipe it was sent names.
+// Answers what is waiting: a recipe's image with the bands it is configured to output, an asset with the band the
+// fixtures include of it.
 const answerBands = only => (only ? [only] : waiting(fake.bands)).forEach(request => {
     request.answered = true
     if (!request.subscriber.closed) {
-        request.subscriber.next(outputNames(request.request.recipe).map(name => ({name, arrayDimensions: 0})))
+        const names = request.request.recipe ? outputNames(request.request.recipe) : ['elevation']
+        request.subscriber.next(names.map(name => ({name, arrayDimensions: 0})))
         request.subscriber.complete()
     }
 })
+
+// What Earth Engine was asked of the images recipes build, apart from what it was asked of assets.
+const imageObservations = () => fake.bands.filter(({request}) => request.recipe)
 
 const waiting = requests => requests.filter(({answered}) => !answered)
 
@@ -660,14 +666,15 @@ const published = (process, action) => action.build().reduce({process}).process
 
 const saved = draft => ({status: 'SAVED', model: draft.model, revision: draft.revision, since: null, unconfirmed: false})
 
-const bandMath = (revision, input = {type: 'ASSET', id: 'users/x/dem'}) => ({
+// Over one input, including a band of it: the asset's elevation, or one a recipe input provides.
+const bandMath = (revision, input = {type: 'ASSET', id: 'users/x/dem'}, band = 'elevation') => ({
     id: 'band-math-1',
     type: 'BAND_MATH',
     revision,
     model: {
-        inputImagery: {images: [{imageId: 'i-1', name: 'i1', ...input, includedBands: [{id: 'b1', name: 'elevation'}]}]},
+        inputImagery: {images: [{imageId: 'i-1', name: 'i1', ...input, includedBands: [{id: 'b1', name: band}]}]},
         calculations: {calculations: [
-            {imageId: 'c-1', name: 'c1', type: 'EXPRESSION', expression: `i1.elevation * ${revision}`, dataType: 'int16'}
+            {imageId: 'c-1', name: 'c1', type: 'EXPRESSION', expression: `i1.${band} * ${revision}`, dataType: 'int16'}
         ]},
         outputBands: {outputImages: [
             {imageId: 'c-1', outputBands: [{id: 'd', name: 'scaled', defaultOutputName: `scaled${revision}`}]}

@@ -2,14 +2,21 @@
 //
 // Schema. Its catalogue answers the configured output names, in configured order, however it is asked. Its running
 // image holds exactly those bands when asked for nothing and for an empty selection, and a subset out of order comes
-// back in the order asked. Described through the shared resolver from an observation of that running image, it is
-// READY with every verified scalar averaged. Over a CCDC recipe's array bands - an expression over its coefficients
+// back in the order asked. Described through the shared resolver and observer, acquiring what Task's asset export
+// acquires - that running image, its inputs' bands and a CCDC input's catalogue - it is READY with every verified scalar
+// averaged. Over a CCDC recipe's array bands - an expression over its coefficients
 // cast to float, and its segment starts passed through - the observed output keeps both arrays, each sampled. The
 // Earth Engine operations Band Math applies, checked on their own as supporting evidence, decide that
 // dimensionality: a cast keeps an array an array, an expression over an array yields one, and reducers either refuse
 // arrays, keep them or count them. Two output bands named alike are refused by the declaration before anything is
 // observed, while Earth Engine itself would build them with the second renamed; a recipe with no output bands
 // describes none, while Earth Engine refuses to build it.
+//
+// Inputs. Execution selects every band an input includes, read by a calculation or not, so a band the input lacks
+// fails the image Earth Engine builds. What describing an input reads of it is reported for representative assets - an
+// image, an image of several bands and collections, one of array bands - as the description path observes them
+// (assetBandEvidence$, which the GUI's band reads and Task's asset export share): whether every band, selected or not,
+// comes with its dimensionality.
 //
 // Pixels. One value is compared: a doubled elevation, cast to int16, at a point.
 //
@@ -20,14 +27,16 @@
 //   docker exec -w /usr/local/src/sepal/modules/gee gee node verify/bandMathOutputBands.mjs
 
 import _ from 'lodash'
-import {firstValueFrom, of, switchMap, timeout} from 'rxjs'
+import {firstValueFrom, map, of, switchMap, timeout} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
-import {imageBandEvidence$, typedBands} from '#sepal/ee/bandEvidence'
+import {assetBandEvidence$, imageBandEvidence$, typedBands} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
 import {RecipeScope, withRecipeScope} from '#sepal/ee/recipeScope'
+import {settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
+import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
 import {readImageOutput} from '#sepal/recipe/output/readImageOutput'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -75,6 +84,33 @@ const DUPLICATED = bandMath([
 ])
 
 const EMPTY = bandMath([])
+
+// The elevation input also includes a band the asset does not have, read by a calculation or by nothing at all.
+const lackingInputBand = ({read}) => {
+    const recipe = bandMath([{imageId: 'i-1', outputBands: [{id: 'b1', name: 'elevation', defaultOutputName: 'elevation'}]}])
+    const [dem, water] = recipe.model.inputImagery.images
+    return {
+        ...recipe,
+        model: {
+            ...recipe.model,
+            inputImagery: {images: [{...dem, includedBands: [...dem.includedBands, {id: 'bx', name: 'not_a_band'}]}, water]},
+            calculations: {calculations: read
+                ? [{imageId: 'c-9', name: 'c9', type: 'EXPRESSION', expression: 'i1.not_a_band * 2', dataType: 'auto',
+                    includedBands: [{id: 'bx', name: 'not_a_band'}]}]
+                : []}
+        }
+    }
+}
+
+// Assets an input may select: an image of one band, an image of several, collections read by their first image, one
+// of them of array bands.
+const INPUT_ASSETS = [
+    DEM.id,
+    WATER.id,
+    'JRC/GSW1_4/MonthlyHistory',
+    'COPERNICUS/S2_SR_HARMONIZED',
+    'GOOGLE/GLOBAL_CCDC/V1'
+]
 
 // Segments over a small area and two years, whose coefficients are one array per segment of one value per term.
 const CCDC = {
@@ -167,24 +203,35 @@ const expectRefusal = async (name, recipe, reason) => {
     }
 }
 
-// The description the shared resolver gives from what observing the running image establishes.
-const describedFrom = (recipe, observed, records = []) => readImageOutput({
-    graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([recipe, ...records].map(record => [record.id, record]))}),
-    declarationFor: ({type}) => recipeType(type)?.imageOutput,
-    observationFor: ({type, id}) => type === 'RECIPE_REF' && id === recipe.id && observed
-        ? {bands: observed.map(({name, arrayDimensions}) => ({name, dataType: {arrayDimensions}}))}
-        : undefined
-})
+const graphOf = (recipe, records = []) =>
+    buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map([recipe, ...records].map(record => [record.id, record]))})
+
+const declarationFor = ({type}) => recipeType(type)?.imageOutput
+
+// What the shared resolver says from the configuration alone, observing nothing.
+const describedFrom = recipe => readImageOutput({graph: graphOf(recipe), declarationFor})
+
+// What Earth Engine answers, acquired as Task's asset export acquires it (modules/task/src/ee/imageOutput.js): an asset's
+// bands, the catalogue of a recipe whose declaration asks only what it can be asked for, otherwise the image it builds.
+const observeBands$ = ({reference, recipe, observes}) => (reference.type === 'ASSET'
+    ? assetBandEvidence$(reference.id)
+    : observes === AVAILABLE_BANDS
+        ? ImageFactory(recipe).getBands$().pipe(map(names => names.map(name => ({name}))))
+        : imageBandEvidence$(recipe)
+).pipe(timeout(READ_TIMEOUT_MS))
+
+// The description the shared resolver and observer settle on, from everything it reads observed.
+const describedLive = (recipe, records = []) =>
+    firstValueFrom(settledImageOutput$({graph: graphOf(recipe, records), observeBands$, declarationFor}))
 
 const expectDescribed = async name => {
     const start = Date.now()
     try {
-        const observed = await firstValueFrom(imageBandEvidence$(CONFIGURED).pipe(timeout(READ_TIMEOUT_MS)))
-        const {status, description} = describedFrom(CONFIGURED, observed)
+        const {status, description, diagnostics, error} = await describedLive(CONFIGURED)
         const expected = bandMathOutputNames(CONFIGURED.model)
             .map(name => ({name, dataType: {arrayDimensions: 0}, pyramidingPolicy: 'mean'}))
         report(status === 'READY' && _.isEqual(description.output.bands, expected), name, {
-            ms: Date.now() - start, status, bands: description?.output.bands
+            ms: Date.now() - start, status, bands: description?.output.bands, diagnostics, error: error?.message
         })
     } catch (error) {
         report(false, name, {ms: Date.now() - start, error: error.message})
@@ -194,14 +241,13 @@ const expectDescribed = async name => {
 const expectDescribedArrays = name => inScope(async () => {
     const start = Date.now()
     try {
-        const observed = await firstValueFrom(imageBandEvidence$(OVER_ARRAYS).pipe(timeout(READ_TIMEOUT_MS)))
-        const {status, description} = describedFrom(OVER_ARRAYS, observed, [CCDC])
+        const {status, description, diagnostics, error} = await describedLive(OVER_ARRAYS, [CCDC])
         const expected = [
             {name: 'coefs2', dataType: {arrayDimensions: 2}, pyramidingPolicy: 'sample'},
             {name: 'tStart', dataType: {arrayDimensions: 1}, pyramidingPolicy: 'sample'}
         ]
         report(status === 'READY' && _.isEqual(description.output.bands, expected), name, {
-            ms: Date.now() - start, observed, bands: description?.output.bands
+            ms: Date.now() - start, status, bands: description?.output.bands, diagnostics, error: error?.message
         })
     } catch (error) {
         report(false, name, {ms: Date.now() - start, error: error.message})
@@ -214,6 +260,23 @@ const expectDimensions = async (name, image, expected) => {
         report(_.isEqual(bands.map(({arrayDimensions}) => arrayDimensions), expected), name, {bands})
     } catch (error) {
         report(expected === null && /must be a numeric scalar/.test(error.message), name, {expected, error: error.message})
+    }
+}
+
+// Every band an input asset is described with, as the description path observes it, with its dimensionality.
+const expectInputDimensions = async (name, assetId) => {
+    const start = Date.now()
+    try {
+        const bands = await firstValueFrom(assetBandEvidence$(assetId).pipe(timeout(READ_TIMEOUT_MS)))
+        const unreported = bands.filter(({arrayDimensions}) => !Number.isInteger(arrayDimensions)).map(({name}) => name)
+        report(bands.length > 0 && !unreported.length, name, {
+            ms: Date.now() - start,
+            bands: bands.length,
+            dimensions: _.countBy(bands, ({arrayDimensions}) => arrayDimensions),
+            unreported
+        })
+    } catch (error) {
+        report(false, name, {ms: Date.now() - start, error: error.message})
     }
 }
 
@@ -241,7 +304,7 @@ const main = async () => {
     await expectBuilt('running image, asked for nothing', CONFIGURED, undefined, configured)
     await expectBuilt('running image, empty selection', CONFIGURED, {selection: []}, configured)
     await expectBuilt('subset out of order', CONFIGURED, withOutputBands({selection: ['mean', 'dem2']}), ['mean', 'dem2'])
-    await expectDescribed('described from its observed running image')
+    await expectDescribed('described from its observed running image and inputs')
     await expectDescribedArrays('over CCDC arrays: a cast expression and a passed-through band stay arrays, sampled')
 
     const array = ee.Image([1, 2, 3]).toArray().rename('a')
@@ -261,6 +324,15 @@ const main = async () => {
     const empty = describedFrom(EMPTY)
     report(empty.status === 'READY' && !empty.description.output.bands.length, 'no output bands describes none', {status: empty.status})
     await expectRefusal('no output bands, as Earth Engine builds them', EMPTY, /did not match any bands/)
+
+    console.info('Inputs')
+    await expectRefusal('a selected input band the asset lacks, read by a calculation',
+        lackingInputBand({read: true}), /not_a_band.*did not match any bands|did not match any bands.*not_a_band/)
+    await expectRefusal('a selected input band the asset lacks, read by nothing',
+        lackingInputBand({read: false}), /not_a_band.*did not match any bands|did not match any bands.*not_a_band/)
+    for (const assetId of INPUT_ASSETS) {
+        await expectInputDimensions(`every band of ${assetId} is observed with its dimensionality`, assetId)
+    }
 
     console.info('Pixels')
     await expectPixel('a doubled elevation cast to int16')

@@ -161,11 +161,19 @@ const readOf = (recipe, observed) => {
     return readRecipeOutput({recipe, product: {name: 'IMAGE_OUTPUT'}, graph, heldFor: () => terminal})
 }
 
+// Its input assets hold the bands it includes of them.
+const INPUT_ASSETS = {
+    'users/x/dem': [{name: 'elevation', dataType: {arrayDimensions: 0}}],
+    'users/x/segments': [{name: 'coefs', dataType: {arrayDimensions: 1}}]
+}
+
 const acquired = (graph, observed) => {
     const {description, diagnostics} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,
-        observationFor: ({type, id}) => type === 'RECIPE_REF' && id === BAND_MATH.id ? {bands: observed} : undefined
+        observationFor: ({type, id}) => type === 'ASSET'
+            ? INPUT_ASSETS[id] && {bands: INPUT_ASSETS[id], evidence: []}
+            : id === BAND_MATH.id ? {bands: observed} : undefined
     })
     return {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
 }

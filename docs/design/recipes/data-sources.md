@@ -186,7 +186,9 @@ where a family still needs observation.
      whose dimensionality was not observed is refused; no encoding is stated. Arrays can therefore be exported
      to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
      Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
-     took its mode.
+     took its mode. Through `inputs()` it also requires every band an input includes to be a band of that input's
+     current description, refused as `MISSING_INPUT_BAND` where it is included, and holds each input to its whole
+     description as Stack does - so an input that cannot be described refuses it, Earth Engine building it or not;
 4. **Make the declaration mandatory.** `imageOutput` is required, as `directSources` is. Sampling Design, which
    produces no image, declares `imageOutput: NO_IMAGE_OUTPUT`; read as an image it is refused as `NON_IMAGE_OUTPUT`,
    which is definitive, located at the design through any wrapper, and stops a generic image export. A type stating
@@ -851,8 +853,9 @@ shared source-observation lifecycle rather than adding another watcher, cache or
 2. Express the chain's consumed inputs, requirements and derived output through recipe-owned pure functions,
    using the expression analysis the editor lints with (`modules/gui/src/widget/codeEditor/expressionAnalysis.js`).
    Use the same declaration and evaluation contract for local configuration, calculation outputs and current evidence
-   from selected recipes or assets; only their providers differ. Done for local configuration; current evidence of
-   the inputs' bands is not yet a fact any requirement judges.
+   from selected recipes or assets; only their providers differ. Done for local configuration. Current evidence of
+   the inputs' bands is judged by Band Math's output description instead (`inputs()`), which refuses what execution
+   would; no section is marked for it yet.
 3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
    superseded bookkeeping for this chain; leave unrelated sync behavior alone (done: the persisted `invalid` flag is
    gone). Recheck the same requirements at execution, so a closed panel or directly submitted model cannot bypass
@@ -865,7 +868,8 @@ Acceptance scenarios, without closing or reopening the recipe:
   Unaffected calculations remain executable. This is distinct from preserving an expression that needs the removed band.
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
   preserving the expression and output configuration. Restoring the band restores validity automatically. Done for a
-  local input-selection change; a change to the external source's bands is not yet judged.
+  local input-selection change; a change to the external source's bands is refused by the output description, which
+  withholds previews and Retrieve until the band returns, while the sections are not marked for it yet.
 - Removing an unused band or changing only a visualization does not invalidate the calculation.
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.

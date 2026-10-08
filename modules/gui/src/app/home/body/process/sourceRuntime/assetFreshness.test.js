@@ -101,7 +101,7 @@ describe('a description read from an asset', () => {
         answerVersions({'users/x/dem': 'v2'})
 
         expect(session.read('band-math-1').status).toBe('NEEDS_EVIDENCE')
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
     })
 
     it('read once its token was known is withdrawn in the dispatch that reports another', () => {
@@ -115,7 +115,7 @@ describe('a description read from an asset', () => {
         answerVersions({'users/x/dem': 'v2'})
 
         expect(session.read('band-math-1').status).toBe('NEEDS_EVIDENCE')
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
     })
 
     it('is kept, however long, while its token is unchanged', () => {
@@ -127,7 +127,7 @@ describe('a description read from an asset', () => {
         }
 
         expect(session.read('band-math-1').status).toBe('READY')
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
     })
 
     it('is not withdrawn when an asset it does not read changes', () => {
@@ -139,7 +139,7 @@ describe('a description read from an asset', () => {
         answerVersions({'users/x/dem': 'v1', 'users/x/landcover': 'v2'})
 
         expect(session.read('band-math-1').status).toBe('READY')
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
     })
 
     it('from a source without a token is kept however old, and authorizes Retrieve for half an hour, until refreshed', async () => {
@@ -150,7 +150,7 @@ describe('a description read from an asset', () => {
         session.advance(1)
 
         expect(session.read('band-math-1').status).toBe('READY')
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.decide('band-math-1')).toBe('BLOCKED')
         expect(session.retrieveRead('band-math-1').output.diagnostics).toEqual([{code: 'ASSETS_EXPIRED', assetId: 'gs://bucket/dem.tif'}])
         const refreshed = session.runtime.refreshOutput(QUESTION)
@@ -225,7 +225,7 @@ describe('a Retrieve over an output described from an asset', () => {
         answerVersions({'users/x/dem': 'v1'})
 
         expect(session.decide('band-math-1')).toBe('RETRIEVABLE')
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
     })
 })
 
@@ -258,7 +258,7 @@ describe('an explicit refresh', () => {
         await refreshed
 
         expect(session.read('band-math-1').status).toBe('NEEDS_EVIDENCE')
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
         answerBands()
         expect(session.read('band-math-1').status).toBe('READY')
     })
@@ -307,7 +307,7 @@ describe('an explicit refresh', () => {
         await refreshed
 
         expect(versionReads()).toHaveLength(2)
-        expect(fake.bands).toHaveLength(2)
+        expect(imageObservations()).toHaveLength(2)
         expect(session.store.getState().process.sourceRefreshes.recipes).toEqual({'band-math-1': 1})
     })
 
@@ -409,7 +409,7 @@ describe('failures naming an asset', () => {
         session.runtime.reportFailure({error: eeFailure('Image asset \'users/x/dem\' not found'), assets: ['users/x/dem']})
 
         expect(versionReads()).toEqual([['users/x/dem'], ['users/x/dem']])
-        expect(fake.bands).toHaveLength(1)
+        expect(imageObservations()).toHaveLength(1)
         expect(session.read('band-math-1').status).toBe('UNAVAILABLE')
     })
 
@@ -468,6 +468,79 @@ describe('failures naming an asset', () => {
         failBands(eeFailure('Image.select: Pattern \'elevation\' did not match any bands.'))
 
         expect(versionReads()).toEqual([['users/x/dem'], ['users/x/dem']])
+    })
+})
+
+// A Band Math including a band its asset turns out not to hold. Earth Engine refuses the image selecting it, so that
+// observation fails; the asset's own description is what establishes the band is missing.
+describe('a Band Math including a band its input asset lacks', () => {
+    const ELEVATION = [{name: 'elevation', arrayDimensions: 0}]
+    const SLOPE_ONLY = [{name: 'slope', arrayDimensions: 0}]
+    const SELECTION_REFUSED = eeFailure('Image.select: Band pattern \'elevation\' did not match any bands.')
+
+    const lackingElevation = () => {
+        const session = sessionHolding([bandMath('users/x/dem')])
+        session.watch('band-math-1')
+        answerVersions({'users/x/dem': 'v1'})
+        answerAsset('users/x/dem', SLOPE_ONLY)
+        failBands(SELECTION_REFUSED)
+        return session
+    }
+
+    it('is invalid where the band is included, and reads the asset again for the failure beside it', () => {
+        const session = lackingElevation()
+
+        expect(session.read('band-math-1')).toMatchObject({
+            status: 'INVALID',
+            diagnostics: [{code: 'MISSING_INPUT_BAND', path: ['model', 'inputImagery', 'images', 0, 'includedBands', 0]}]
+        })
+        expect(versionReads()).toEqual([['users/x/dem'], ['users/x/dem']])
+    })
+
+    it('is described again, and ready, once the asset is read at another token holding the band', () => {
+        const session = lackingElevation()
+        answerVersions({'users/x/dem': 'v1'})
+
+        session.advance(270000)
+        answerVersions({'users/x/dem': 'v2'})
+        answerAsset('users/x/dem', ELEVATION)
+        answerBands()
+
+        expect(session.read('band-math-1').status).toBe('READY')
+    })
+
+    it('is described again, and ready, on an explicit refresh though its token is unchanged', async () => {
+        const session = lackingElevation()
+        answerVersions({'users/x/dem': 'v1'})
+
+        const refreshed = session.runtime.refreshOutput(QUESTION)
+        answerVersions({'users/x/dem': 'v1'})
+        await refreshed
+        answerAsset('users/x/dem', ELEVATION)
+        answerBands()
+
+        expect(session.read('band-math-1').status).toBe('READY')
+    })
+
+    it('is not decided by an answer about a configuration since edited', () => {
+        const session = sessionHolding([bandMath('users/x/dem')])
+        session.watch('band-math-1')
+        answerVersions({'users/x/dem': 'v1'})
+        const superseded = imageObservations()
+
+        session.edit(withIncludedBand(bandMath('users/x/dem'), 'slope'))
+        superseded.forEach(request => {
+            request.answered = true
+            request.subscriber.next([{name: 'scaled', arrayDimensions: 0}])
+            request.subscriber.complete()
+        })
+        answerAsset('users/x/dem', ELEVATION)
+        failBands(eeFailure('Image.select: Band pattern \'slope\' did not match any bands.'))
+
+        expect(session.read('band-math-1')).toMatchObject({
+            status: 'INVALID',
+            diagnostics: [{code: 'MISSING_INPUT_BAND', path: ['model', 'inputImagery', 'images', 0, 'includedBands', 0]}]
+        })
     })
 })
 
@@ -664,12 +737,16 @@ const failVersions = () => fake.versionReads.filter(read => !read.answered).forE
     read.subscriber.error(new Error('Service unavailable'))
 })
 
-// Answers every description still waiting with these bands, or those the recipe names.
+// Answers every observation still waiting with these bands, or else an asset with the band the Band Math fixture includes
+// of it and a recipe's image with the band it outputs.
 const answerBands = names => fake.bands.filter(request => !request.answered).forEach(request => {
     request.answered = true
-    request.subscriber.next((names || ['scaled']).map(name => ({name, arrayDimensions: 0})))
+    request.subscriber.next((names || (request.request.asset ? ['elevation'] : ['scaled'])).map(name => ({name, arrayDimensions: 0})))
     request.subscriber.complete()
 })
+
+// What Earth Engine was asked of the images recipes build, apart from what it was asked of assets.
+const imageObservations = () => fake.bands.filter(({request}) => request.recipe)
 
 const unansweredFor = assetId => fake.bands.filter(request => !request.answered && request.request.asset === assetId)
 
@@ -684,6 +761,20 @@ const failAsset = (assetId, error) => unansweredFor(assetId).forEach(request => 
     request.answered = true
     request.subscriber.error(error)
 })
+
+// The recipe including another band of its input in place of the one it included, read by its calculation.
+const withIncludedBand = (recipe, name) => {
+    const [image] = recipe.model.inputImagery.images
+    return {
+        ...recipe,
+        model: {
+            ...recipe.model,
+            inputImagery: {images: [{...image, includedBands: [{id: 'b1', name}]}]},
+            calculations: {calculations: recipe.model.calculations.calculations
+                .map(calculation => ({...calculation, expression: `i1.${name} * 2`}))}
+        }
+    }
+}
 
 const stackOver = (...assetIds) => ({
     id: 'stack-1',

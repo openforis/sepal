@@ -58,9 +58,11 @@ derived, but only where everything it reads is met. One that is not keeps the ba
 the names its outputs were given. Renamed inputs, calculations and bands are still renamed in expressions, used bands,
 outputs and visualizations.
 
-Not checked yet: whether an input's bands exist in the asset or recipe it is taken from, and anything at the execution
-boundary - Task and Earth Engine build what is submitted, and recipes reading Band Math as a source learn of an unmet
-configuration only when Earth Engine refuses its image. Describing such a recipe still asks Earth Engine to observe it.
+Whether an input's bands exist in the asset or recipe it is taken from is judged by its output description
+([Output](#output)), not by these checks. Not checked yet: anything here at the execution boundary - Task and Earth
+Engine build what is submitted, and recipes reading Band Math as a source learn of an unmet configuration only when
+Earth Engine refuses its image. Describing such a recipe still asks Earth Engine to observe it. Its sections are not
+yet marked for an input band found missing.
 
 ## Output
 
@@ -83,6 +85,26 @@ encoding is stated, even for a band passed through from an input.
 | running image not yet observed, or its observation failed | nothing offered: needs evidence, or unavailable |
 | running image carrying other names, or another order | refused, `CONFLICTING_OBSERVATION` |
 | running image not reporting a band's dimensionality | refused, `INCOMPLETE_IMAGE_OUTPUT` |
+| an included band its input's description does not hold | refused, `MISSING_INPUT_BAND` where it is included, whether or not a calculation reads it and though the running image cannot be observed |
+| an input that cannot be described | refused or unavailable as that input is, never `MISSING_INPUT_BAND` |
+| an input not yet read, or whose read failed | nothing offered: needs evidence, or unavailable |
+
+Execution selects every band an input includes, so Earth Engine fails to build an image including one its input lacks,
+and observing that image fails with it. So the inputs are described too, both readings asked for before either is
+tested, and a band an input's current description does not hold is refused where it is included, its recipe and field
+path kept through nested recipes - never judged against the band list copied when the input was selected. Each input is
+held to its whole description, as Stack and Masking hold theirs: Band Math is not described while an input is not, even
+where Earth Engine would build what it selects. That refuses what used to export:
+
+- an input reporting no dimensionality for any of its bands, included or not (`INCOMPLETE_IMAGE_OUTPUT`) - every band
+  of the assets `bandMathOutputBands.mjs` reads reports it, which shows the usual case, not that it cannot happen;
+- an input refused for its own configuration, such as a Band Math naming two output bands alike, which Earth Engine
+  would build with the second renamed (`DUPLICATE_BAND_NAME`), or a Stack or BAYTS recipe its declaration refuses.
+
+The refusal reaches every route that reads the description: Retrieve, whatever the destination, Task's asset export,
+previews on every map, and recipes reading Band Math as a source. Task's Drive and SEPAL exports describe nothing, so a
+model submitted to them directly is not checked: Earth Engine still refuses a missing band there, and still builds what
+the description refuses.
 
 Each input is asked for the bands it includes as the physical bands it should return (`withOutputBands`), so an
 input whose own selection means something else - CCDC's names the measures to fit - still returns those bands. Asked
@@ -107,8 +129,14 @@ the bands selected, in the order selected. The catalogue answers the configured 
   nothing, an empty selection and a subset out of order, the description from an observed running image, an
   expression cast over CCDC's coefficients and its segment starts passed through, observed as arrays and sampled,
   the dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
-  declaration and Earth Engine each answer them, and one pixel value.
-- `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes.
+  declaration and Earth Engine each answer them, an input band the asset lacks as Earth Engine refuses it, the
+  dimensionality of every band of representative input assets, and one pixel value.
+- `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes, through the read and the
+  observer, over asset, declared-recipe, Masking and nested Band Math inputs.
+- `modules/task/src/tasks/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
+  input that cannot be described or read, and an input Band Math naming two outputs alike.
+- `modules/gui/src/app/home/body/process/sourceRuntime/assetFreshness.test.js` - a missing input band found, then
+  recovered on a changed token or an explicit refresh, and an answer about an edited configuration ignored.
 - `modules/gee/test/jobs/ee/bandMath/bandMathBands.test.js` - the catalogue, whatever is selected.
 - `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathOutput.test.js` - the common read, Retrieve's

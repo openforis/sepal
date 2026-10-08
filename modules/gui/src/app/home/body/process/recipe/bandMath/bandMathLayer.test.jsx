@@ -17,8 +17,9 @@ vi.mock('~/apiRegistry', async () => {
     const {NEVER, of} = await import('rxjs')
     return {default: {
         gee: {
-            // The running image observed carries the configured output, as Earth Engine builds it.
-            bands$: () => of([{name: 'red', arrayDimensions: 0}]),
+            // Its input asset holds both bands it includes, and the running image observed carries the configured
+            // output, as Earth Engine builds it.
+            bands$: ({asset}) => of((asset ? ['red', 'nir'] : ['red']).map(name => ({name, arrayDimensions: 0}))),
             // Its input asset is current.
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
         },

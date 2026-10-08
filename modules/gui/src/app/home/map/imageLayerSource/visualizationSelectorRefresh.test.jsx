@@ -100,7 +100,7 @@ describe.each([
 
         await refresh()
 
-        expect(earthEngine.observations.filter(isWaiting)).toHaveLength(1)
+        expect(earthEngine.observations.some(isWaiting)).toBe(true)
         expect(comboInput()).toBe(input)
         expect(input.placeholder).toBe('red')
         expect(combo.props.busyMessage).toBe(BUSY)

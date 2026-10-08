@@ -188,7 +188,7 @@ describe('exporting a masked CCDC', () => {
 })
 
 // Band Math is described from the output bands it is configured with, and the dimensionality its running image is
-// observed to have - here, within the export itself.
+// observed to have - here, within the export itself - over inputs described as holding every band it includes.
 describe('exporting a Band Math recipe', () => {
     const bandMath = ({outputNames = ['dem2', 'coefs']} = {}) => ({
         id: 'band-math-1',
@@ -200,6 +200,11 @@ describe('exporting a Band Math recipe', () => {
         }
     })
     const RUNNING_IMAGE = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs', arrayDimensions: 1}]
+    const DEM = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+
+    beforeEach(() => {
+        state.assets['users/x/dem'] = DEM
+    })
 
     it('exports once its own running image is observed, recording that nothing is known about its values', async () => {
         const recipe = bandMath()
@@ -232,6 +237,52 @@ describe('exporting a Band Math recipe', () => {
         state.recipeImages[recipe.id] = [{name: 'x', arrayDimensions: 0}, {name: 'x_1', arrayDimensions: 0}]
 
         await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    // Earth Engine refuses to build an image selecting a band its input lacks, so its running image is not observed.
+    it('fails the export naming a band its input lacks, though its running image cannot be observed', async () => {
+        state.assets['users/x/dem'] = {bands: [{name: 'slope', arrayDimensions: 0}], properties: {}}
+
+        await expect(submit({recipe: bandMath(), bands: ['dem2']})).rejects.toThrow(/invalid output \(MISSING_INPUT_BAND\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export as unavailable, not as a missing band, when its input cannot be read', async () => {
+        delete state.assets['users/x/dem']
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = RUNNING_IMAGE
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/unavailable output/)
+        expect(state.exported).toEqual([])
+    })
+
+    // An input is held to its whole description, including bands Band Math does not include.
+    it('fails the export when its input asset reports no dimensionality for a band it does not include', async () => {
+        state.assets['users/x/dem'] = {bands: [{name: 'elevation', arrayDimensions: 0}, {name: 'quality'}], properties: {}}
+        const recipe = bandMath()
+        state.recipeImages[recipe.id] = RUNNING_IMAGE
+
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/invalid output \(INCOMPLETE_IMAGE_OUTPUT\)/)
+        expect(state.exported).toEqual([])
+    })
+
+    // Earth Engine would build the inner recipe's outputs as `x` and `x_1`; it is refused, and with it what reads it.
+    it('fails the export over a Band Math input naming two output bands alike', async () => {
+        const inner = {...bandMath({outputNames: ['x', 'x']}), id: 'band-math-0'}
+        state.catalogue = {[inner.id]: inner}
+        state.recipeImages[inner.id] = [{name: 'x', arrayDimensions: 0}, {name: 'x_1', arrayDimensions: 0}]
+        const recipe = {
+            ...bandMath(),
+            model: {
+                ...bandMath().model,
+                inputImagery: {images: [{imageId: 'i-1', name: 'i1', type: 'RECIPE_REF', id: inner.id, includedBands: [{id: 'b1', name: 'x'}]}]},
+                outputBands: {outputImages: [{imageId: 'i-1', outputBands: [{id: 'b0', name: 'x', defaultOutputName: 'y'}]}]}
+            }
+        }
+        state.recipeImages[recipe.id] = [{name: 'y', arrayDimensions: 0}]
+
+        await expect(submit({recipe, bands: ['y']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
         expect(state.exported).toEqual([])
     })
 })
