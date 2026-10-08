@@ -4,7 +4,11 @@
     display: flex;
     flex-direction: column;
     gap: .5rem;
+    /* A preference, not a demand: the popup is clamped to the room between the button and the edge of
+       the window, and without the max-width the box keeps its 18rem and spills over its own padding. */
     width: 18rem;
+    max-width: 100%;
+    min-width: 0;
 }
 
 /* The name takes what the button leaves it and no more, so a long one is cut rather than widening
