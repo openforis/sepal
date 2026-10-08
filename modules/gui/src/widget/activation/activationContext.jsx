@@ -25,10 +25,11 @@ export class ActivationContext extends Component {
         return [...parentPathList, 'contexts', id]
     }
 
+    // Mounted after its children, which have already registered their activatables and contexts in it: those are kept.
     componentDidMount() {
         const pathList = this.pathList()
         actionBuilder('CREATE_ACTIVATION_CONTEXT', {pathList})
-            .set(pathList, {})
+            .assign(pathList, {})
             .dispatch()
     }
 

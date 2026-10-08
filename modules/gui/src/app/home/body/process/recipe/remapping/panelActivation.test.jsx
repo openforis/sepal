@@ -8,6 +8,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
+import {ActivationContext} from '~/widget/activation/activationContext'
 import widgetStyles from '~/widget/widget.module.css'
 
 // Which of the Remapping editor's panels its toolbar and set-up wizard open, and when one gives way to another: the
@@ -43,12 +44,25 @@ const ID = 'remapping-1'
 const LISTING = [{id: ID, name: 'Remapping', type: 'REMAPPING', revision: 1}]
 const ASSET = 'users/x/a'
 
-let root, container
+let root, container, tree
 
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     container?.remove()
+})
+
+describe('the editor closed and opened again', () => {
+    it('opens with no panel open, any of which can be opened', async () => {
+        await open()
+        await press(BUTTONS.LEGEND)
+
+        await reopen()
+
+        expect(openPanels()).toEqual([])
+        await press(BUTTONS.MAPPING)
+        expect(openPanels()).toEqual(['MAPPING'])
+    })
 })
 
 describe('Input imagery, unedited', () => {
@@ -227,25 +241,32 @@ async function open({initialized = true} = {}) {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    const tree = () =>
+    tree = () =>
         <Provider store={store}>
-            <SourceRuntimeProvider>
-                <Recipe id={ID}>
-                    <EventShield>
-                        <PortalContainer/>
-                        <PortalContainer id='panels'/>
-                        <PortalContext id='panels'>
-                            <RemappingToolbar/>
-                            <LegendImport/>
-                        </PortalContext>
-                    </EventShield>
-                </Recipe>
-            </SourceRuntimeProvider>
+            {/* The recipe's activation context nests in the root one, as the app nests it. */}
+            <ActivationContext id='root'>
+                <SourceRuntimeProvider>
+                    <Recipe id={ID}>
+                        <EventShield>
+                            <PortalContainer/>
+                            <PortalContainer id='panels'/>
+                            <PortalContext id='panels'>
+                                <RemappingToolbar/>
+                                <LegendImport/>
+                            </PortalContext>
+                        </EventShield>
+                    </Recipe>
+                </SourceRuntimeProvider>
+            </ActivationContext>
         </Provider>
     await act(async () => root.render(tree()))
     await settled()
-    // On first mount no panel is registered with the recipe's activation context; they register when the editor next
-    // renders. Unverified: that in the app its map and layers make it render again soon enough to hide this.
+}
+
+// The editor closed, as closing its recipe does, and opened again over the same session.
+async function reopen() {
+    await act(async () => root.unmount())
+    root = createRoot(container)
     await act(async () => root.render(tree()))
     await settled()
 }
