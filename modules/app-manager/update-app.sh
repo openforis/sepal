@@ -41,7 +41,6 @@ function clone {
     git fetch
 }
 function create_kernel_json {
-    echo "Creating kernel: $kernel_path"
     mkdir -p "$kernel_path"
     local use_launcher=false
     # Only name the launcher if it is actually installed: a spec pointing at a missing launcher
@@ -70,6 +69,9 @@ function create_kernel_json {
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
     else
+        # Announced only on a change: reconcile_artifacts runs this every monitor pass and its
+        # output is appended to a log that is only truncated when the venv rebuilds.
+        echo "Creating kernel: $kernel_path"
         mv -f "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"
     fi
     return 0

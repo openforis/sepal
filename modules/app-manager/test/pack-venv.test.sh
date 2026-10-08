@@ -150,5 +150,32 @@ if [[ $msg == *launcher* ]]; then ok "a failed launcher install is logged"
 else bad "a failed launcher install is logged" "silent: '$msg'"; fi
 teardown
 
+# reconcile_artifacts runs create_kernel_json on every monitor pass, and its output is appended
+# to a log on Lustre that is only truncated when the venv rebuilds. An idle pass must say nothing.
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; cache_venv=false
+create_kernel_json >/dev/null 2>&1
+idle=$(create_kernel_json 2>&1)
+if [[ -z $idle ]]; then ok "an unchanged kernel.json is not announced"
+else bad "an unchanged kernel.json is not announced" "logged: '$idle'"; fi
+teardown
+
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; cache_venv=false
+create_kernel_json >/dev/null 2>&1
+m1=$(stat -c %Y "$kernel_path/kernel.json"); sleep 1; create_kernel_json >/dev/null 2>&1
+m2=$(stat -c %Y "$kernel_path/kernel.json")
+if [[ $m1 == "$m2" ]]; then ok "an unchanged kernel.json is not rewritten"
+else bad "an unchanged kernel.json is not rewritten" "mtime moved $m1 -> $m2"; fi
+teardown
+
+setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
+mkdir -p "$app_path"; cache_venv=false
+create_kernel_json >/dev/null 2>&1
+app_label="Renamed App"; changed=$(create_kernel_json 2>&1)
+if [[ $changed == *"$kernel_path"* ]]; then ok "a changed kernel.json is announced"
+else bad "a changed kernel.json is announced" "silent: '$changed'"; fi
+teardown
+
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]
