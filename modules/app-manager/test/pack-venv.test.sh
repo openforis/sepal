@@ -4,6 +4,8 @@
 # shellcheck disable=SC2034  # cache_venv is read by pack_venv, from the sourced update-app.sh
 set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
+# update-app.sh looks for the generator where the image installs it; point it at the repo copy.
+export KERNEL_SPEC=${KERNEL_SPEC:-$HERE/kernel-spec.py}
 pass=0; fail=0
 ok()   { echo "ok   - $1"; pass=$((pass+1)); }
 bad()  { echo "FAIL - $1"; echo "        $2"; fail=$((fail+1)); }

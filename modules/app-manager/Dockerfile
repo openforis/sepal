@@ -59,5 +59,6 @@ ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 ADD modules/${MODULE_NAME}/update-app.sh /usr/local/bin/update-app
 # Published into current-kernels by sync_launcher; sandboxes mount that directory read-only.
 ADD modules/${MODULE_NAME}/sepal-app-kernel /etc/sepal/app-manager/sepal-app-kernel
+ADD modules/${MODULE_NAME}/kernel-spec.py /etc/sepal/app-manager/kernel-spec.py
 
 CMD start.sh
