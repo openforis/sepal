@@ -59,6 +59,28 @@ test('is never restarted by Docker and is limited in memory and CPU', () => {
     expect(HostConfig.NanoCpus).toBe(1e9)
 })
 
+test('yields CPU and memory to SEPAL\'s services when the host is under pressure', () => {
+    const {HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
+
+    expect(HostConfig.CpuShares).toBe(256)
+    expect(HostConfig.OomScoreAdj).toBe(500)
+})
+
+test('cannot swap beyond its memory limit or exhaust the host\'s processes', () => {
+    const {HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
+
+    expect(HostConfig.MemorySwap).toBe(HostConfig.Memory)
+    expect(HostConfig.PidsLimit).toBe(1024)
+})
+
+test('sizes GDAL\'s cache and threads to the container', () => {
+    const task = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'timeseries.download'})
+
+    const {Env} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskLocalMemoryMb: 4096, taskCpus: 2}})
+
+    expect(Env).toEqual(expect.arrayContaining(['GDAL_CACHEMAX=1024', 'GDAL_NUM_THREADS=2']))
+})
+
 test('in development, runs the checked-out source', () => {
     const {HostConfig: {Binds}} = containerSpec({task: TASK, apiKey: 'task_key', config: {...CONFIG, deployEnvironment: 'DEV'}})
 
