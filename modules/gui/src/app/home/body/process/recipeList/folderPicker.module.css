@@ -1,11 +1,10 @@
+/* Laid out here rather than with a vertical Layout, which carries min-width: fit-content: that floors
+   the box at the width of its longest row, and a long folder name then widens the whole popup. */
 .picker {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     width: 18rem;
-}
-
-/* The box is a flex item, and a flex item is floored at the width of its contents. Without this, the
-   longest breadcrumb in it decides how wide the popup is. */
-.content {
-    min-width: 0;
 }
 
 /* The name takes what the button leaves it and no more, so a long one is cut rather than widening
@@ -17,9 +16,11 @@
     white-space: nowrap;
 }
 
-/* The rows may shrink to the box, so a name too long for it ends in an ellipsis instead of widening
-   the popup. The row itself gives way only once everything in it is allowed to. */
+/* Same reason as the box above: a vertical Layout here would hold the rows at their full width. */
 .rows {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     min-width: 0;
 }
 
