@@ -63,7 +63,7 @@ export class FolderPicker extends React.Component {
                 <Scrollable direction='y'>
                     {options.length
                         ? (
-                            <Layout type='vertical' spacing='tight'>
+                            <Layout type='vertical' spacing='tight' contentClassName={styles.rows}>
                                 {options.map(folder => this.renderOption(folder))}
                             </Layout>
                         )
