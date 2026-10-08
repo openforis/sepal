@@ -5,7 +5,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('~/translate', () => ({msg: key => key}))
 // The back button renders a Tooltip, which reads the store; a passthrough keeps the button without one.
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
-vi.mock('~/widget/crudItem', () => ({CrudItem: ({title}) => title}))
+vi.mock('~/widget/crudItem', () => ({
+    CrudItem: ({title, titleTooltip}) => <span data-tooltip={titleTooltip}>{title}</span>
+}))
 // The real scrollable carries a Keybinding, which reads a store this isolated test has none of.
 vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => children}))
 vi.mock('~/widget/listItem', () => ({
@@ -88,6 +90,14 @@ describe('FolderPicker', () => {
         clickOption('A')
 
         expect(currentFolder()).toBe('A')
+    })
+
+    it('offers the whole name of a folder, which a row may be too narrow to show', () => {
+        mount({folders, onSelect: () => {}})
+
+        const tooltips = [...container.querySelectorAll('[data-tooltip]')].map(el => el.dataset.tooltip)
+
+        expect(tooltips).toEqual(['A', 'B'])
     })
 
     it('goes back to the folder above', () => {
