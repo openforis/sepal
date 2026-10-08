@@ -8,6 +8,7 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Scrollable} from '~/widget/scrollable'
+import {Tooltip} from '~/widget/tooltip'
 
 import styles from './folderPicker.module.css'
 import {at, childFolders, isSelfOrDescendant, parentFolderId, ROOT} from './recipeTree'
@@ -49,7 +50,9 @@ export class FolderPicker extends React.Component {
                     disabled={at(folderId) === ROOT}
                     onClick={() => this.setState({folderId: parentFolderId(folders, folderId)})}
                 />
-                <div className={styles.folder}>{this.currentFolderName()}</div>
+                <Tooltip msg={this.currentFolderName()}>
+                    <div className={styles.folder}>{this.currentFolderName()}</div>
+                </Tooltip>
             </Layout>
         )
     }
@@ -80,6 +83,7 @@ export class FolderPicker extends React.Component {
                     icon='folder-open'
                     iconVariant='info'
                     title={folder.name}
+                    titleTooltip={folder.name}
                 />
             </ListItem>
         )
