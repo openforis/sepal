@@ -51,36 +51,22 @@ function create_kernel_json {
     fi
     local conda=false
     [[ -f "$app_path/sepal_environment.yml" ]] && conda=true
-    # Built by python rather than by hand: the label comes from the external app catalog, and
-    # JSON requires every control character below 0x20 to be escaped.
-    SPEC_VENV="$venv_path" \
-    SPEC_APP="$app_name" \
-    SPEC_LABEL=" (venv) $app_label" \
-    SPEC_LAUNCHER="$current_kernels_in_sandbox/sepal-app-kernel" \
-    SPEC_USE_LAUNCHER="$use_launcher" \
-    SPEC_CONDA="$conda" \
-    python3 -c '
-import json, os
-v = os.environ
-venv = v["SPEC_VENV"]
-env = {}
-spec = {}
-if v["SPEC_USE_LAUNCHER"] == "true":
-    # The launcher resolves the prefix at run time and owns the whole interpreter environment,
-    # so nothing prefix-dependent may be baked in here.
-    spec["argv"] = ["/bin/bash", v["SPEC_LAUNCHER"], v["SPEC_APP"], "-f", "{connection_file}"]
-else:
-    spec["argv"] = [venv + "/bin/python3", "-m", "ipykernel_launcher", "-f", "{connection_file}"]
-    env["PYTHONNOUSERSITE"] = "1"
-    if v["SPEC_CONDA"] == "true":
-        env["PROJ_LIB"] = venv + "/share/proj"
-        env["PROJ_DATA"] = venv + "/share/proj"
-        env["GDAL_DATA"] = venv + "/share/gdal"
-spec["display_name"] = v["SPEC_LABEL"]
-spec["language"] = "python"
-spec["env"] = env
-print(json.dumps(spec, indent=2, ensure_ascii=False))
-' > "$kernel_path/kernel.json.tmp"
+    # Resolved per call, not at load time, so the tests can point at the repo copy.
+    local generator=${KERNEL_SPEC:-/etc/sepal/app-manager/kernel-spec.py}
+    if ! SPEC_VENV="$venv_path" \
+         SPEC_APP="$app_name" \
+         SPEC_LABEL=" (venv) $app_label" \
+         SPEC_LAUNCHER="$current_kernels_in_sandbox/sepal-app-kernel" \
+         SPEC_USE_LAUNCHER="$use_launcher" \
+         SPEC_CONDA="$conda" \
+         python3 "$generator" > "$kernel_path/kernel.json.tmp"
+    then
+        # Keeping the previous spec beats installing a truncated one: a stale kernel.json still
+        # starts the app, an empty one starts nothing.
+        echo "Failed to generate kernel spec with $generator"
+        rm -f "$kernel_path/kernel.json.tmp"
+        return 0
+    fi
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
     else

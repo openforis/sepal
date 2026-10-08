@@ -7,6 +7,8 @@ set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 GOLDEN=$HERE/test/kernel-json.golden
 GEN=${GEN:-$HERE/update-app.sh}
+# update-app.sh looks for the generator where the image installs it; point it at the repo copy.
+export KERNEL_SPEC=${KERNEL_SPEC:-$HERE/kernel-spec.py}
 
 # Labels chosen for what they do to a JSON string: nothing, non-ASCII, the two characters that
 # must be escaped, two whitespace controls, and a control character json_escape used to pass
@@ -81,7 +83,30 @@ if bad:
     else
         echo "FAIL - the golden file contains an unparseable spec"; exit 1
     fi
-    echo "2 passed, 0 failed"
+    # A generator that will not run must leave the installed spec alone. Shipping the generator
+    # as its own file introduced this failure mode: the image can be built without it.
+    G=$(mktemp -d); trap 'rm -rf "$G"' EXIT
+    mkdir -p "$G/ck/venv-testapp/venv" "$G/app"
+    printf 'previous spec\n' > "$G/ck/venv-testapp/kernel.json"
+    log=$(KERNEL_SPEC=$G/absent.py bash -c '
+        set -u
+        # shellcheck disable=SC1090
+        source "$1" /tmp/unused-app unused-label unused-repo HEAD
+        current_kernels=$2; kernel_path=$2/venv-testapp; venv_path=$kernel_path/venv
+        app_path=$3; app_name=testapp; app_label=label; cache_venv=false
+        create_kernel_json
+    ' _ "$GEN" "$G/ck" "$G/app" 2>&1)
+    if [[ $(cat "$G/ck/venv-testapp/kernel.json") == 'previous spec' ]] \
+       && [[ ! -e $G/ck/venv-testapp/kernel.json.tmp ]] \
+       && [[ $log == *"Failed to generate kernel spec"* ]]; then
+        echo "ok   - a generator that cannot run leaves the installed spec untouched"
+    else
+        echo "FAIL - a missing generator damaged the installed spec"
+        echo "  kernel.json: $(cat "$G/ck/venv-testapp/kernel.json" 2>&1)"
+        echo "  log: $log"
+        exit 1
+    fi
+    echo "3 passed, 0 failed"
 else
     echo "FAIL - generated specs differ from the golden file:"; head -40 /tmp/kj.diff
     echo "If the change is intended, regenerate with UPDATE_GOLDEN=1 and review the diff."
