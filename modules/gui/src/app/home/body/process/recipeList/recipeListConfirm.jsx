@@ -9,7 +9,7 @@ import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
-import {folderDescription} from './folderItem'
+import {folderContents} from './folderItem'
 import styles from './recipeListConfirm.module.css'
 import {PATH_SEPARATOR} from './recipeListConstants'
 import {folderCounts, folderPathLabel} from './recipeTree'
@@ -39,10 +39,11 @@ class _RecipeListConfirm extends React.Component {
                 <CrudItem
                     icon='folder-open'
                     iconSize='lg'
-                    title={folder.name}
+                    title={msg('process.folder.title')}
                     description={this.isDisabled(folder.id)
-                        ? msg('process.folder.remove.stays')
-                        : folderDescription(counts)}
+                        ? [folder.name, msg('process.folder.remove.stays')].join(' · ')
+                        : folder.name}
+                    metadata={folderContents(counts)}
                     {...this.selection(folder.id)}
                 />
             </ListItem>

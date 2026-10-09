@@ -38,7 +38,7 @@ vi.mock('~/widget/listItem', () => ({
 vi.mock('~/widget/crudItem', () => ({
     CrudItem: props => {
         crudItems.push(props)
-        return <div data-title>{props.title}</div>
+        return <div data-name>{props.description}</div>
     }
 }))
 // The real dialog renders through a portal that this isolated test has no root for.
@@ -112,9 +112,10 @@ const mount = (props = {}) => {
     })
 }
 
-const rowTitles = () => [...container.querySelectorAll('[data-title]')].map(row => row.textContent)
+// A folder row and a recipe row both carry their name in the description; the title names only the type.
+const rowNames = () => [...container.querySelectorAll('[data-name]')].map(row => row.textContent)
 
-const rowFor = title => crudItems.find(props => props.title === title)
+const rowFor = name => crudItems.find(props => props.description === name)
 
 // A dialog renders through a portal, outside the container this test mounted into.
 const confirm = () => act(() => document.querySelector('[data-confirm]').click())
@@ -148,13 +149,13 @@ describe('RecipeList', () => {
     it('shows the folders and the recipes of the open folder, folders first', () => {
         mount()
 
-        expect(rowTitles()).toEqual(['Kenya', 'Mozambique', 'CCDC', 'MOSAIC'])
+        expect(rowNames()).toEqual(['Kenya', 'Mozambique', 'mosaic_draft', 'kenya_draft'])
     })
 
     it('shows the contents of the folder it was told to open', () => {
         mount({folderId: '2024'})
 
-        expect(rowTitles()).toEqual(['Mosaics_2024', 'TIME_SERIES'])
+        expect(rowNames()).toEqual(['Mosaics_2024', 'nairobi_mosaic'])
     })
 
     it('opens the folder that was clicked, and clears the search', () => {
@@ -170,8 +171,7 @@ describe('RecipeList', () => {
     it('finds a recipe of a subfolder by its name, and names the folder holding it', () => {
         mount({filterValue: 'nairobi', filterValues: ['nairobi']})
 
-        expect(rowTitles()).toEqual(['TIME_SERIES'])
-        expect(rowFor('TIME_SERIES').description).toBe('Kenya / Kenya_2024 / nairobi_mosaic')
+        expect(rowNames()).toEqual(['Kenya / Kenya_2024 / nairobi_mosaic'])
     })
 
     it('refuses to remove a folder that still holds something, and asks the server nothing', () => {

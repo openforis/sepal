@@ -43,17 +43,18 @@ afterEach(() => {
 })
 
 describe('FolderItem', () => {
-    it('shows the folder name with both counts when it has subfolders', () => {
+    it('names the type, then the folder, with both counts when it has subfolders', () => {
         mount({folder, counts: {folders: 2, recipes: 4}, onClick: () => {}})
 
-        expect(lastProps().title).toBe('Kenya')
-        expect(lastProps().description).toBe('process.folder.folderCount · process.folder.description')
+        expect(lastProps().title).toBe('process.folder.title')
+        expect(lastProps().description).toBe('Kenya')
+        expect(lastProps().metadata).toBe('process.folder.folderCount · process.folder.description')
     })
 
     it('omits the folder count on a leaf folder', () => {
         mount({folder, counts: {folders: 0, recipes: 4}, onClick: () => {}})
 
-        expect(lastProps().description).toBe('process.folder.description')
+        expect(lastProps().metadata).toBe('process.folder.description')
     })
 
     it('offers edit and remove when handlers are given', () => {
