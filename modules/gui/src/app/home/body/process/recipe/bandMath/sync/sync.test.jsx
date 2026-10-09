@@ -23,6 +23,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: bandMath} = await import('../bandMath')
 const {Sync} = await import('./sync')
 const {readSourceRequirements, readKey} = await import('../../sourceRequirements')
+const {hasUniqueOutputNames, outputNameOf} = await import('../panels/outputBands/outputImages')
 
 addRecipeType(bandMath())
 
@@ -91,6 +92,55 @@ describe('a calculation found unmet', () => {
     })
 })
 
+describe('a band renamed to a name another output has', () => {
+    it('is given a unique default output name, the others kept', async () => {
+        await sync(NAMED)
+
+        await renameCalculationBand('red')
+
+        expect(outputNames()).toEqual(['red', 'nir', 'red_1'])
+        expect(hasUniqueOutputNames(outputImages())).toBe(true)
+    })
+
+    it('takes the suffix no output has, custom names counted', async () => {
+        await sync(withOutputBand(NAMED, 'img-1', 'nir-id', {outputName: 'red_1'}))
+
+        await renameCalculationBand('red')
+
+        expect(outputNames()).toEqual(['red', 'red_1', 'red_2'])
+        expect(hasUniqueOutputNames(outputImages())).toBe(true)
+    })
+
+    it('keeps its custom output name', async () => {
+        await sync(withOutputBand(NAMED, 'calc-1', 'nir-id', {outputName: 'custom'}))
+
+        await renameCalculationBand('red')
+
+        expect(outputBands('calc-1')).toEqual([expect.objectContaining({id: 'nir-id', name: 'red', outputName: 'custom'})])
+        expect(outputNames()).toEqual(['red', 'nir', 'custom'])
+    })
+
+    it('is left as saved on opening, however its names collide', async () => {
+        const saved = withOutputBand(NAMED, 'calc-1', 'nir-id', {defaultOutputName: 'red'})
+        await sync(saved)
+
+        expect(outputImages()).toEqual(saved.outputImages)
+    })
+})
+
+describe('an input band renamed throughout a chain whose outputs all take its name', () => {
+    it('names each output apart in turn, each keeping its band', async () => {
+        await sync(CHAIN_OUTPUT)
+
+        await setInputBands([RED, {...NIR, name: 'veg'}])
+
+        expect(outputImages().map(({imageId, outputBands}) => outputBands.map(({id, name}) => `${imageId}:${id}:${name}`)))
+            .toEqual([['img-1:nir-id:veg'], ['calc-1:nir-id:veg'], ['calc-2:nir-id:veg'], ['calc-3:nir-id:veg']])
+        expect(outputNames()).toEqual(['veg', 'veg_1', 'veg_2', 'custom'])
+        expect(hasUniqueOutputNames(outputImages())).toBe(true)
+    })
+})
+
 const RED = {id: 'red-id', name: 'red'}
 const NIR = {id: 'nir-id', name: 'nir'}
 const INPUT = {imageId: 'img-1', name: 'i1', type: 'ASSET', id: 'users/x/image', includedBands: [RED, NIR]}
@@ -111,6 +161,41 @@ const CHAIN = {
     outputImages: [{imageId: 'calc-3', name: 'c3', type: 'EXPRESSION', includedBands: [derived('calc-2', 'c2')],
         outputBands: [{...derived('calc-2', 'c2'), defaultOutputName: 'nir', outputName: 'custom'}]}]
 }
+
+// c1 names the band it reads from i1.nir `ndvi`; i1 outputs both its bands, and c1 its one.
+const C1_BAND = {...derived('img-1', 'i1'), name: 'ndvi', userBandName: 'ndvi'}
+const NAMED = {
+    images: [INPUT],
+    calculations: [
+        {imageId: 'calc-1', name: 'c1', type: 'EXPRESSION', expression: 'i1.nir', dataType: 'auto', bandName: 'ndvi',
+            usedBands: [derived('img-1', 'i1')], includedBands: [C1_BAND]}
+    ],
+    outputImages: [
+        {...INPUT, outputBands: [{...RED, defaultOutputName: 'red'}, {...NIR, defaultOutputName: 'nir'}]},
+        {imageId: 'calc-1', name: 'c1', type: 'EXPRESSION', includedBands: [C1_BAND],
+            outputBands: [{...C1_BAND, defaultOutputName: 'ndvi'}]}
+    ]
+}
+
+// The chain, with i1's nir and every calculation output, each under the name it was given when added.
+const CHAIN_OUTPUT = {
+    ...CHAIN,
+    outputImages: [
+        {...INPUT, outputBands: [{...NIR, defaultOutputName: 'nir'}]},
+        {imageId: 'calc-1', name: 'c1', type: 'EXPRESSION', includedBands: [derived('img-1', 'i1')],
+            outputBands: [{...derived('img-1', 'i1'), defaultOutputName: 'nir_1'}]},
+        {imageId: 'calc-2', name: 'c2', type: 'EXPRESSION', includedBands: [derived('calc-1', 'c1')],
+            outputBands: [{...derived('calc-1', 'c1'), defaultOutputName: 'nir_2'}]},
+        ...CHAIN.outputImages
+    ]
+}
+
+const withOutputBand = (configuration, imageId, id, changes) => ({
+    ...configuration,
+    outputImages: configuration.outputImages.map(outputImage => outputImage.imageId === imageId
+        ? {...outputImage, outputBands: outputImage.outputBands.map(band => band.id === id ? {...band, ...changes} : band)}
+        : outputImage)
+})
 
 async function sync({images, calculations, outputImages}) {
     const initialState = {
@@ -146,6 +231,11 @@ async function setCalculation(imageId, changes) {
     await settled()
 }
 
+// c1's band renamed as its panel applies a band name.
+async function renameCalculationBand(bandName) {
+    await setCalculation('calc-1', {bandName, includedBands: [{...C1_BAND, name: bandName, userBandName: bandName}]})
+}
+
 async function settled() {
     for (let i = 0; i < 6; i++) {
         await act(async () => {})
@@ -166,6 +256,18 @@ function calculations() {
 
 function outputBand() {
     return model().outputBands.outputImages[0].outputBands[0]
+}
+
+function outputImages() {
+    return model().outputBands.outputImages
+}
+
+function outputBands(imageId) {
+    return outputImages().find(outputImage => outputImage.imageId === imageId).outputBands
+}
+
+function outputNames() {
+    return outputImages().flatMap(({outputBands}) => outputBands.map(outputNameOf))
 }
 
 function unmet() {

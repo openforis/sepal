@@ -38,6 +38,11 @@ its id when the calculation is edited, so its output, and any name given to it, 
 The forms generate unique default output names - two inputs' `red` become `red` and `red_1`. A calculation whose
 renaming gives several of its bands one name - a pattern matching each whole name - names them apart in order, `x`,
 `x_1`, `x_2`, a repeat taking the suffix after the highest `x_<n>` already among them; each band keeps its identity. A
+band renamed under its id - an input band replaced, or a calculation's band renamed or derived again - keeps its
+outputs, the sync giving each the new name as its default, made unique as the forms make it against every other
+output's final name: custom names count, and so do names given earlier in the same change, while the old names of the
+bands renamed or removed in it, inputs' and calculations' alike, hold back none. Its custom name is kept, and no other
+output is renamed. Nothing is renamed on opening: a saved recipe whose names collide keeps them until a change. A
 custom name is optional; when given it must start with a letter or underscore, continue with letters, digits and
 underscores, and be at most 30 characters long. No two final names may be alike. Output bands checks both rules over
 every configured output, a saved configuration included, and Apply stays unavailable while any fails; each row shows the
@@ -157,9 +162,6 @@ the bands selected, in the order selected. The catalogue answers the configured 
 
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.
-- **Renaming a calculation's bands can repeat another output band's default name.** The sync that follows a rename
-  (`modules/gui/src/app/home/body/process/recipe/bandMath/sync/updateOutputBands.js`) writes the new name as
-  `defaultOutputName` without the uniqueness the form applies.
 
 ## Verification
 
@@ -205,4 +207,6 @@ the bands selected, in the order selected. The catalogue answers the configured 
   without any output image; an output
   of an unmet calculation marking Output bands by naming it alone; duplicate and invalid output names; an input
   lacking a band beside an output problem.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames,
+  and the output names a rename or added band is given: apart from other outputs, custom names and earlier renames in
+  the same change, a custom name kept, and a saved collision left as saved on opening.

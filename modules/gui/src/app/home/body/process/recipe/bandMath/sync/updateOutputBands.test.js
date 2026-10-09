@@ -1,3 +1,4 @@
+import {outputNameOf} from '../panels/outputBands/outputImages'
 import {findChanges} from './findChanges'
 import {updateOutputBands} from './updateOutputBands'
 
@@ -182,6 +183,46 @@ describe('deliberately removing an input band', () => {
         const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
 
         expect(updated[0].outputBands.map(({id}) => id)).toEqual([replacement.id])
+    })
+})
+
+describe('naming the output bands a band change gives', () => {
+    it('lets bands of a calculation trade names, none held back by a name another is leaving', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const prevCalculations = [input('c1', [a, b])]
+        const calculations = [input('c1', [{...a, name: 'b'}, {...b, name: 'a'}])]
+        const outputImages = [output('c1', [copied(a), copied(b)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated[0].outputBands.map(outputNameOf)).toEqual(['b', 'a'])
+    })
+
+    it('lets an input band and a calculation band trade names in one change', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const changes = findChanges({
+            prevImages: [input('i1', [a])], images: [input('i1', [{...a, name: 'b'}])],
+            prevCalculations: [input('c1', [b])], calculations: [input('c1', [{...b, name: 'a'}])]
+        })
+        const outputImages = [output('i1', [copied(a)]), output('c1', [copied(b)])]
+
+        const updated = updateOutputBands({changes, outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['b', 'a'])
+    })
+
+    it('names a band added to a calculation apart from another image\'s outputs', () => {
+        const red = band('red-id', 'red')
+        const x = band('x-id', 'x')
+        const prevCalculations = [input('c1', [x])]
+        const calculations = [input('c1', [x, red])]
+        const outputImages = [output('i1', [copied(red)]), output('c1', [copied(x)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['red', 'x', 'red_1'])
     })
 })
 
