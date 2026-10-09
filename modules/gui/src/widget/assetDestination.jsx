@@ -14,12 +14,14 @@ import {CopyButton} from '~/widget/copyButton'
 import {Form} from '~/widget/form'
 
 import {withActivators} from './activation/activator'
+import {findNonContainerAncestor} from './assetDestinationAncestor'
 import {AssetDestinationBrowser} from './assetDestinationBrowser'
 import {Button} from './button'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
     assetRoots: selectFrom(state, 'assets.roots'),
+    userAssets: selectFrom(state, 'assets.user'),
     tasks: selectFrom(state, 'tasks')
 })
 
@@ -28,8 +30,6 @@ const mapRecipeToProps = recipe => ({
     projectId: recipe.projectId,
     recipeName: recipe.title || recipe.placeholder
 })
-
-const shouldLoadAsset = assetId => !!assetId && isValidEarthEngineAssetId(assetId)
 
 class _AssetDestination extends React.Component {
     checking = false
@@ -47,6 +47,7 @@ class _AssetDestination extends React.Component {
         this.onError = this.onError.bind(this)
         this.onChange = this.onChange.bind(this)
         this.openAssetBrowser = this.openAssetBrowser.bind(this)
+        this.shouldLoadAsset = this.shouldLoadAsset.bind(this)
     }
 
     render() {
@@ -82,7 +83,7 @@ class _AssetDestination extends React.Component {
                 onLoading={this.onLoading}
                 onLoaded={({asset, metadata} = {}) => this.onLoaded({asset, currentType: metadata?.type})}
                 onError={this.onError}
-                shouldLoad={shouldLoadAsset}
+                shouldLoad={this.shouldLoadAsset}
             />
         )
     }
@@ -305,18 +306,36 @@ class _AssetDestination extends React.Component {
         return this.validationSequence
     }
 
+    shouldLoadAsset(assetId) {
+        return !!assetId && isValidEarthEngineAssetId(assetId) && !this.findNonContainerAncestor(assetId)
+    }
+
     validateAssetId() {
-        const {assetInput, strategyInput} = this.props
-        if (!assetInput.value) {
+        const {assetInput} = this.props
+        const assetId = assetInput.value
+        const nonContainerAncestor = assetId && this.findNonContainerAncestor(assetId)
+        if (!assetId) {
             this.cancelValidation()
-        } else if (!isValidEarthEngineAssetId(assetInput.value)) {
-            this.cancelValidation()
-            strategyInput.set(null)
-            this.setState({currentType: null})
-            assetInput.setInvalid(msg('widget.assetDestination.invalidAssetId'))
+        } else if (!isValidEarthEngineAssetId(assetId)) {
+            this.rejectAssetId(msg('widget.assetDestination.invalidAssetId'))
+        } else if (nonContainerAncestor) {
+            this.rejectAssetId(msg('widget.assetDestination.insideNonContainer', {ancestor: nonContainerAncestor.id}))
         } else {
             this.startValidation()
         }
+    }
+
+    findNonContainerAncestor(assetId) {
+        const {userAssets} = this.props
+        return findNonContainerAncestor(assetId, userAssets || [])
+    }
+
+    rejectAssetId(message) {
+        const {assetInput, strategyInput} = this.props
+        this.cancelValidation()
+        strategyInput.set(null)
+        this.setState({currentType: null})
+        assetInput.setInvalid(message)
     }
 
     cancelValidation() {

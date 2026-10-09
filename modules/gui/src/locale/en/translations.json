@@ -6402,6 +6402,7 @@
       },
       "loadError": "Unable to load asset",
       "invalidAssetId": "Use only letters, numbers, periods, hyphens, underscores, and forward slashes. Spaces are not allowed.",
+      "insideNonContainer": "{ancestor} is an existing asset that is not a folder or image collection, so nothing can be exported inside it",
       "taskPending": "A task is already exporting to this asset. Please choose a different asset ID.",
       "validating": "Validating asset destination...",
       "replace": {
