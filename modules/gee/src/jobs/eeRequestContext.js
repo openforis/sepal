@@ -23,11 +23,18 @@ export const createEEContext = ({
         auth: googleTokens
             ? {type: 'user', accessToken: googleTokens.accessToken, expiresAt: googleTokens.accessTokenExpiryDate}
             : {type: 'serviceAccount'},
-        projectId: googleTokens?.projectId || googleProjectId,
+        projectId: eeProjectId(sepalUser, googleProjectId),
         workloadTag: workloadTag || workloadTagOf(jobName),
         endpoint
     }
 }
+
+// The account a request's calls are made as, Google (GA) or service (SA), and the project they go to.
+export const eeAccountTag = (sepalUser, googleProjectId) =>
+    `<${sepalUser?.googleTokens ? 'GA' : 'SA'}:${eeProjectId(sepalUser, googleProjectId)}>`
+
+const eeProjectId = (sepalUser, googleProjectId) =>
+    sepalUser?.googleTokens?.projectId || googleProjectId
 
 // Only the gateway sets sepal-session, from the API key the request was authenticated with.
 const originOf = sepalSession =>

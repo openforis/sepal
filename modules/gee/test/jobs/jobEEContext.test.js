@@ -16,6 +16,7 @@ jest.unstable_mockModule('#gee/config', () => ({
 const {WORKER} = await import('#sepal/worker/factory')
 const {currentEEContext, DEFAULT_EE_ENDPOINT} = await import('#sepal/ee/eeContext')
 const {job} = await import('#gee/jobs/job')
+const {eeAccountTag} = await import('#gee/jobs/eeRequestContext')
 
 const SEPAL_PROJECT = 'sepal-test-project'
 const HIGH_VOLUME_ENDPOINT = 'https://earthengine-highvolume.googleapis.com'
@@ -91,6 +92,22 @@ describe('the Earth Engine context a job runs in', () => {
         const context = await contextOf({sepalUser: {username: 'bob'}, requestArgs: {workloadTag: 'sepal-task-mosaic'}})
 
         expect(context.workloadTag).toBe('sepal-task-mosaic')
+    })
+})
+
+describe('the account tag a request is logged with', () => {
+    test('names the Google account\'s project for a user with a Google account', () => {
+        expect(eeAccountTag({username: 'alice', googleTokens: tokens({projectId: 'alice-project'})}, SEPAL_PROJECT))
+            .toBe('<GA:alice-project>')
+    })
+
+    test('names the SEPAL project for a Google account without a project of its own', () => {
+        expect(eeAccountTag({username: 'alice', googleTokens: tokens()}, SEPAL_PROJECT)).toBe(`<GA:${SEPAL_PROJECT}>`)
+    })
+
+    test('names the service account for a user without a Google account, or no user at all', () => {
+        expect(eeAccountTag({username: 'bob'}, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
+        expect(eeAccountTag(null, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
     })
 })
 
