@@ -11,6 +11,11 @@ const Context = React.createContext()
 
 export const withButtonGroup = withContext(Context, 'buttonGroup')
 
+// React context crosses portals, so what a grouped button opens (a popup, say) would otherwise be
+// joined and dimmed as if it sat in the group itself.
+export const OutsideButtonGroup = ({children}) =>
+    <Context.Provider value={undefined}>{children}</Context.Provider>
+
 const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, dimmed, disabled,
     tooltip, tooltipPlacement, tooltipTrigger, onMouseOver, onMouseOut, forwardedRef, children, buttonGroup: {dimmed: parentDimmed} = {}}) => {
     const mapChild = (child, index, childrenCount) => {
