@@ -320,6 +320,18 @@
     - import_role: {name: aws-mount-efs}
     - import_role: {name: docker-login}
 
+    # Every release pulls a full set of images, so older ones are removed first to leave room for it. docker rmi
+    # refuses an image a container still uses: the running release, and task containers still running the
+    # release that started them, keep theirs.
+    - name: Remove unused images of other releases
+      shell: >
+        docker images --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
+        | grep '^{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/'
+        | grep -v ':{{ version }}$'
+        | xargs -r -n 1 docker rmi 2>/dev/null || true;
+        docker image prune --force
+      changed_when: false
+
     # Pulling all images up front, before any container is recreated, keeps running modules untouched
     # when a pull fails and leaves each module's downtime to the recreate itself
     - name: Pull module images
@@ -338,16 +350,6 @@
       loop_control:
         loop_var: entry
         label: "{{ entry.module }}"
-
-    # A task container keeps the image of the release that started it; docker rmi refuses an image a container
-    # still uses, so only unused task images of earlier releases go.
-    - name: Remove unused task images of earlier releases
-      shell: >
-        docker images --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
-        {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task
-        | grep -v ':{{ version }}$'
-        | xargs -r -n 1 docker rmi 2>/dev/null || true
-      changed_when: false
 
   post_tasks:
     - name: Start monit
