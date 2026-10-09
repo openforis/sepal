@@ -3,8 +3,6 @@ import React from 'react'
 
 import {Button} from '~/widget/button'
 
-import styles from './checkButton.module.css'
-
 export class CheckButton extends React.Component {
     constructor(props) {
         super(props)
@@ -16,13 +14,11 @@ export class CheckButton extends React.Component {
         return (
             <Button
                 chromeless={chromeless && !checked}
+                look={checked ? 'selected' : 'default'}
                 shape={shape}
                 size={size}
                 icon='check'
-                iconClassName={checked ? styles.checked : null}
-                iconAttributes={{
-                    transform: checked ? 'grow-2' : null
-                }}
+                iconSize={checked ? '2xs' : undefined}
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
