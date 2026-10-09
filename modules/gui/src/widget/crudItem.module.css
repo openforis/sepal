@@ -1,8 +1,11 @@
+/* The row and everything in it may shrink; only then can a title too long for the space end in an
+   ellipsis rather than deciding how wide the row is. */
 .container {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
     align-items: center;
+    min-width: 0;
 }
 
 .content {
@@ -22,6 +25,7 @@
     display: flex;
     flex-grow: 1;
     pointer-events: none;
+    min-width: 0;
 }
 
 .item> :not(:first-child) {
@@ -37,10 +41,13 @@
     flex-shrink: 1;
 }
 
+/* The lines are laid out from the start of the column, which leaves them at their own width: the
+   max-width is what holds them to the column instead. */
 .info>* {
     white-space: normal;
     word-break: break-word;
     overflow: hidden;
+    max-width: 100%;
 }
 
 .inline {
@@ -54,6 +61,8 @@
     text-transform: uppercase;
     color: var(--text-muted-color);
     white-space: nowrap;
+    /* The line is already clipped by .info above; the ellipsis says so, rather than cutting a word in half. */
+    text-overflow: ellipsis;
 }
 
 .description {

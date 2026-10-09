@@ -1,0 +1,38 @@
+/* Laid out here rather than with a vertical Layout, which carries min-width: fit-content: that floors
+   the box at the width of its longest row, and a long folder name then widens the whole popup. */
+.picker {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    /* A preference, not a demand: the popup is clamped to the room between the button and the edge of
+       the window, and without the max-width the box keeps its 18rem and spills over its own padding. */
+    width: 18rem;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* The name takes what the button leaves it and no more, so a long one is cut rather than widening
+   the box. */
+.folder {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Same reason as the box above: a vertical Layout here would hold the rows at their full width. */
+.rows {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    min-width: 0;
+}
+
+/* Room for five folders, held whether the open folder has one or fifty. */
+.options {
+    height: 11rem;
+}
+
+.select {
+    align-self: flex-end;
+}

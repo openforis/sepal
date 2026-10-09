@@ -10,7 +10,7 @@ import {Button} from '~/widget/button'
 import {FloatingBox} from '~/widget/floatingBox'
 import {Icon} from '~/widget/icon'
 
-import {ButtonGroup} from './buttonGroup'
+import {ButtonGroup, OutsideButtonGroup} from './buttonGroup'
 import styles from './buttonPopup.module.css'
 
 const mapStateToProps = state => ({
@@ -171,7 +171,9 @@ class _ButtonPopup extends React.Component {
                 vPlacement={vPlacement}
                 hPlacement={hPlacement}
                 onBlur={this.handleBlur}>
-                {this.renderContent()}
+                <OutsideButtonGroup>
+                    {this.renderContent()}
+                </OutsideButtonGroup>
             </FloatingBox>
         )
     }

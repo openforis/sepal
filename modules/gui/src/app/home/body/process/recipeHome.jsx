@@ -31,7 +31,7 @@ class _RecipeHome extends React.Component {
                         recipeId={recipeId}
                         onClick={recipeId => this.openRecipe(recipeId)}
                         onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                        onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
+                        onMove={(recipeIds, folderId) => this.moveRecipes(recipeIds, folderId)}
                         onRemove={recipeIds => this.removeRecipes(recipeIds)}
                     />
                 </Content>
@@ -85,10 +85,10 @@ class _RecipeHome extends React.Component {
         )
     }
 
-    moveRecipes(recipeIds, projectId) {
+    moveRecipes(recipeIds, folderId) {
         const {stream} = this.props
         stream('MOVE_RECIPES',
-            moveRecipes$(recipeIds, projectId)
+            moveRecipes$(recipeIds, folderId)
         )
     }
 

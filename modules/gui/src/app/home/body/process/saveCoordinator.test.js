@@ -107,14 +107,14 @@ describe('lost acknowledgement', () => {
     })
 })
 
-// Project placement changing cannot determine whether recipe content was saved.
-describe('project placement', () => {
+// Folder placement changing cannot determine whether recipe content was saved.
+describe('folder placement', () => {
     it('is excluded from recovery comparison', async () => {
         const {saves, loads, outcomes, coordinator} = setup()
         coordinator.open('a', 4)
-        coordinator.save({id: 'a', projectId: null, model: {content: 'A'}})
+        coordinator.save({id: 'a', folderId: null, model: {content: 'A'}})
         await fail(saves[0], 412)
-        await loaded(loads[0], {id: 'a', projectId: 'p2', model: {content: 'A'}}, 5)
+        await loaded(loads[0], {id: 'a', folderId: 'p2', model: {content: 'A'}}, 5)
 
         expect(outcomes).toContainEqual(expect.objectContaining({status: 'SAVED', revision: 5}))
     })

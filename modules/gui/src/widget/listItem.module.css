@@ -8,10 +8,13 @@
     /* flex-shrink: 1; */
 }
 
+/* A row takes the width it is given. Without this a flex item is floored at the width of its own
+   contents, and one long name then widens the row, the list and whatever holds them. */
 .horizontalWrapper {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-width: 0;
 }
 
 .dragHandle {
@@ -58,6 +61,7 @@
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
 }
 
 .expansion {
@@ -122,4 +126,9 @@
 
 .draggableClone > * {
     flex-grow: 1;
+}
+
+.dragCursor,
+.dragCursor * {
+    cursor: grabbing !important;
 }

@@ -154,7 +154,11 @@ class _ListItem extends React.Component {
                 ? lookStyles.interactive
                 : null,
             this.isDisabled() ? lookStyles.disabled : null,
-            hovered ? lookStyles.hoverForcedOn : null
+            hovered === false
+                ? lookStyles.hoverForcedOff
+                : hovered
+                    ? lookStyles.hoverForcedOn
+                    : null
         ]
     }
 
@@ -260,7 +264,12 @@ class _ListItem extends React.Component {
     }
 
     renderDragHandle(original = false) {
-        const handleOnly = this.props.dragTarget === 'handle'
+        const {showDragHandle, dragTarget} = this.props
+        const handleOnly = dragTarget === 'handle'
+        // An item dragged by its whole surface can do without the grip; one dragged by the grip cannot.
+        if (showDragHandle === false && !handleOnly) {
+            return null
+        }
         return (
             <div
                 ref={original && handleOnly ? this.dragHandle : null}
@@ -281,12 +290,17 @@ class _ListItem extends React.Component {
     }
 
     initializeDraggable() {
-        const {addSubscription, dragAxis, dragTarget} = this.props
+        const {addSubscription, dragAxis, dragPointer, dragTarget} = this.props
         const draggable = this.draggable.current
         const gestureTarget = dragTarget === 'handle' ? this.dragHandle.current : draggable
 
-        const hammer = new Hammer(gestureTarget)
-        
+        // Hammer sets touch-action: none on whatever it listens to, which would stop a finger on the
+        // item from scrolling the list around it. Listening for the mouse alone leaves that scrolling
+        // to the browser, at the price of no drag by touch.
+        const hammer = dragPointer === 'mouse'
+            ? new Hammer(gestureTarget, {inputClass: Hammer.MouseInput, touchAction: 'auto'})
+            : new Hammer(gestureTarget)
+
         hammer.get('pan').set({
             direction: dragAxis === 'vertical'
                 ? Hammer.DIRECTION_VERTICAL
@@ -362,10 +376,17 @@ class _ListItem extends React.Component {
 
     onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
+        this.showDragCursor(true)
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue, coords})
             onDragStart && onDragStart(dragValue)
         })
+    }
+
+    // The copy under the pointer lets every event through, so without this the cursor would take its
+    // shape from whatever the pointer passes over: a row, the gap between two rows, a button.
+    showDragCursor(dragging) {
+        document.body.classList.toggle(styles.dragCursor, dragging)
     }
 
     onDragMove({coords, position}) {
@@ -377,6 +398,7 @@ class _ListItem extends React.Component {
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
+        this.showDragCursor(false)
         this.setState({dragging: false, position: null, size: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
@@ -405,6 +427,10 @@ class _ListItem extends React.Component {
         )
     }
 
+    componentWillUnmount() {
+        this.showDragCursor(false)
+    }
+
     componentDidMount() {
         if (this.isDraggable()) {
             this.initializeDraggable()
@@ -429,6 +455,7 @@ ListItem.propTypes = {
     disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragAxis: PropTypes.oneOf(['horizontal', 'vertical']),
+    dragPointer: PropTypes.oneOf(['any', 'mouse']),
     dragCloneClassName: PropTypes.string,
     dragTarget: PropTypes.oneOf(['handle', 'item']),
     dragtooltip: PropTypes.any,
@@ -438,7 +465,7 @@ ListItem.propTypes = {
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
     expansionInteractive: PropTypes.any,
-    hovered: PropTypes.any,
+    hovered: PropTypes.any, // three-state
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,
@@ -447,5 +474,6 @@ ListItem.propTypes = {
     onExpand: PropTypes.func,
     onExpandDelayed: PropTypes.func,
     onMouseOut: PropTypes.func,
-    onMouseOver: PropTypes.func
+    onMouseOver: PropTypes.func,
+    showDragHandle: PropTypes.bool
 }

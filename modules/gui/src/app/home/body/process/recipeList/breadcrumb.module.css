@@ -1,0 +1,46 @@
+/* A path wider than the row it is given scrolls inside it. Without the min-width it would instead set
+   the width of whatever holds it: a flex item never shrinks below its content unless it is told it may,
+   and a deep path then pushed the sort buttons away and left the move popup. */
+.segments {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.segments::-webkit-scrollbar {
+    display: none;
+}
+
+/* The segments carry the spacing around the separator in their own padding, which the hover needs
+   anyway; adding more here would set them twice as far apart as the buttons beside them. */
+.separator {
+    opacity: .4;
+    align-self: center;
+}
+
+.link,
+.current {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    align-self: center;
+    white-space: nowrap;
+    font: inherit;
+    /* After the shorthand, which resets the size: these match the buttons beside the breadcrumb. */
+    font-size: .9rem;
+    letter-spacing: 0;
+    color: inherit;
+    /* The link carries the look's own border; the current segment matches it, so both sit on one line. */
+    border: 1px solid transparent;
+    border-radius: var(--button-border-radius);
+    padding: .1rem .35rem;
+}
+
+.label {
+    text-decoration: underline dotted;
+    text-underline-offset: .25em;
+}

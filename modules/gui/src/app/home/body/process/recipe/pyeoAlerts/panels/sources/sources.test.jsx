@@ -486,7 +486,7 @@ const open = ({classificationRead, imageryRead, imagery: input}) => {
                 {id: OTHER, name: OTHER, type: 'CLASSIFICATION'},
                 {id: THIRD, name: THIRD, type: 'CLASSIFICATION'}
             ],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

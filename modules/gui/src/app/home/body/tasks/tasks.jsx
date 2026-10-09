@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
+import {PATH_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -32,7 +32,7 @@ const getHighlightMatcher = memoizeOne(
 
 const mapStateToProps = state => ({
     tasks: state.tasks,
-    projects: state.process?.projects
+    folders: state.process?.folders
 })
 
 class _Tasks extends React.Component {
@@ -140,7 +140,7 @@ class _Tasks extends React.Component {
                     description={this.getRecipePath(task)}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
-                    iconSize='xl'
+                    iconSize='lg'
                     iconVariant={iconVariant}
                     inlineComponents={[
                         this.renderTaskMetadata(task),
@@ -204,7 +204,7 @@ class _Tasks extends React.Component {
 
     getFilteredTasks() {
         const {tasks, filterValues, statusFilter} = this.state
-        const {projects} = this.props
+        const {folders} = this.props
         const matchers = filterValues.map(v => new RegExp(v, 'i'))
         return tasks.filter(task => {
             if (statusFilter && statusFilter !== 'ALL') {
@@ -222,15 +222,16 @@ class _Tasks extends React.Component {
             }
             const recipeType = task.taskInfo?.recipeType
             const destination = task.taskInfo?.destination
-            const projectId = task.taskInfo?.projectId
-            const project = projects?.find(({id}) => id === projectId)
-            const projectName = project?.name ?? NO_PROJECT_SYMBOL
+            // Tasks made before the rename hold the old key.
+            const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
+            const folder = folders?.find(({id}) => id === folderId)
+            const folderName = folder?.name ?? msg('process.recipeList.root')
             const searchable = [
                 task.name,
                 task.description,
                 recipeType && msg(`tasks.details.recipeTypeNames.${recipeType}`),
                 destination && msg(`tasks.details.destination.${destination}`),
-                projectName
+                folderName
             ].filter(Boolean).join(' ')
             return matchers.every(matcher => matcher.test(simplifyString(searchable)))
         })
@@ -342,12 +343,12 @@ class _Tasks extends React.Component {
     }
 
     getRecipePath(task) {
-        const {projects} = this.props
-        const projectId = task.taskInfo?.projectId
-        const project = projects?.find(({id}) => id === projectId)
-        const projectName = project?.name ?? NO_PROJECT_SYMBOL
+        const {folders} = this.props
+        const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
+        const folder = folders?.find(({id}) => id === folderId)
+        const folderName = folder?.name ?? msg('process.recipeList.root')
         const recipeName = task.description || task.name
-        return [projectName, recipeName].join(PROJECT_RECIPE_SEPARATOR)
+        return [folderName, recipeName].join(PATH_SEPARATOR)
     }
 
     // Right-side one-line row metadata: current localized status/progress for a running task, or the final

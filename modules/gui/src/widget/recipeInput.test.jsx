@@ -6,7 +6,6 @@ import {of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
@@ -56,9 +55,9 @@ afterEach(async () => {
 })
 
 describe('the recipe an input belongs to', () => {
-    // Excluding the owner is on top of what the caller and the current project already leave out, not
-    // instead of either: the table recipe is ruled ineligible and the one in another project is elsewhere.
-    it('is not offered as its input, alongside what the caller and the project already exclude', async () => {
+    // Excluding the owner is on top of what the caller and the current folder already leave out, not
+    // instead of either: the table recipe is ruled ineligible and the one in another folder is elsewhere.
+    it('is not offered as its input, alongside what the caller and the folder already exclude', async () => {
         show({filter: type => type.imageSource})
 
         const options = await offered()
@@ -66,13 +65,13 @@ describe('the recipe an input belongs to', () => {
         expect(options).toEqual(['Another recipe'])
     })
 
-    it('is not offered in the ALL view either, where every project is', async () => {
+    it('is not offered in the ALL view either, where every folder is', async () => {
         show()
 
         await showAll()
         const options = await offered()
 
-        expect(options).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another project'])
+        expect(options).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another folder'])
     })
 
     // The saved model is only rewritten when the panel is applied. Clearing the value here would edit a
@@ -223,7 +222,7 @@ describe('a caller that wants the record', () => {
 // Masking's own eligibility rule over the production CCDC declaration: a recipe with no canonical image
 // output is still offered as the image to mask when it declares it may produce segments.
 describe('a recipe that produces segments rather than an image', () => {
-    it('is offered as the image to mask in its own project, without the ALL view', async () => {
+    it('is offered as the image to mask in its own folder, without the ALL view', async () => {
         show({filter: maskableImage})
 
         const options = await offered()
@@ -231,37 +230,37 @@ describe('a recipe that produces segments rather than an image', () => {
         expect(options).toEqual(['Another recipe', 'A CCDC'])
     })
 
-    it('is offered across projects in the ALL view, where what the caller cannot use still is not', async () => {
+    it('is offered across folders in the ALL view, where what the caller cannot use still is not', async () => {
         show({filter: maskableImage})
 
         await showAll()
         const options = await offered()
 
-        expect(options).toEqual(['Another recipe', 'A CCDC', 'In another project'])
+        expect(options).toEqual(['Another recipe', 'A CCDC', 'In another folder'])
     })
 })
 
-// ALL widens which projects are offered. It is not a second answer to what the caller can use.
+// ALL widens which folders are offered. It is not a second answer to what the caller can use.
 it('excludes what the caller rules out in the ALL view too', async () => {
     show({filter: type => type.imageSource})
 
     await showAll()
     const options = await offered()
 
-    expect(options).toEqual(['Another recipe', 'In another project'])
+    expect(options).toEqual(['Another recipe', 'In another folder'])
 })
 
-describe('the headings of the projects on offer', () => {
+describe('the headings of the folders on offer', () => {
     it('leave none of a name behind when the view they belong to is left', async () => {
         show({
             recipes: [
-                {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
-                {id: 'far', name: 'Far away', type: 'MOSAIC', projectId: 'p2'},
-                {id: 'further', name: 'Further away', type: 'MOSAIC', projectId: 'p3'}
+                {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
+                {id: 'far', name: 'Far away', type: 'MOSAIC', folderId: 'p2'},
+                {id: 'further', name: 'Further away', type: 'MOSAIC', folderId: 'p3'}
             ],
-            projects: [
-                {id: 'p1', name: 'Zulu project'},
+            folders: [
+                {id: 'p1', name: 'Zulu folder'},
                 {id: 'p2', name: 'Shared name'},
                 {id: 'p3', name: 'Shared name'}
             ]
@@ -269,65 +268,64 @@ describe('the headings of the projects on offer', () => {
         await open()
 
         await showAll()
-        expect(headings()).toEqual(['Shared name', 'Shared name', 'Zulu project'])
+        expect(headings()).toEqual(['Shared name', 'Shared name', 'Zulu folder'])
         await showAll()
 
-        expect(headings()).toEqual(['Zulu project'])
+        expect(headings()).toEqual(['Zulu folder'])
     })
 
-    // Three different things read as "[no project]": filed under nothing, filed under a project this
-    // session cannot resolve, and filed under the very symbol that stands for being unfiled.
-    it('leave none of the no-project label behind when what it stands for goes', async () => {
+    // Two different things read as Home: filed under nothing, and filed under a folder this session
+    // cannot resolve.
+    it('leave none of the Home label behind when what it stands for goes', async () => {
         show({
             recipes: [
-                {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
+                {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
                 {id: 'unfiled', name: 'Filed under nothing', type: 'MOSAIC'},
-                {id: 'symbol', name: 'Filed under the symbol', type: 'MOSAIC', projectId: NO_PROJECT_SYMBOL},
-                {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', projectId: 'unknown-a'}
+                {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', folderId: 'unknown-a'}
             ],
-            projects: [{id: 'p1', name: 'Zulu project'}]
+            folders: [{id: 'p1', name: 'Zulu folder'}]
         })
         await open()
 
         await showAll()
-        expect(headings()).toEqual([NO_PROJECT, NO_PROJECT, NO_PROJECT, 'Zulu project'])
+        expect(headings()).toEqual([NO_FOLDER, NO_FOLDER, 'Zulu folder'])
         await showAll()
 
-        expect(headings()).toEqual(['Zulu project'])
+        expect(headings()).toEqual(['Zulu folder'])
     })
 
-    it('put the unfiled recipes first and the named projects in case-insensitive order', async () => {
+    it('put the unfiled recipes first and the named folders in case-insensitive order', async () => {
         show({
             recipes: [
                 {id: OWNER, name: 'The owner', type: 'MOSAIC'},
                 {id: OTHER, name: 'Another recipe', type: 'MOSAIC'},
-                {id: 'far', name: 'Far away', type: 'MOSAIC', projectId: 'p1'},
-                {id: 'further', name: 'Further away', type: 'MOSAIC', projectId: 'p2'}
+                {id: 'far', name: 'Far away', type: 'MOSAIC', folderId: 'p1'},
+                {id: 'further', name: 'Further away', type: 'MOSAIC', folderId: 'p2'}
             ],
-            projects: [{id: 'p1', name: 'Zebra project'}, {id: 'p2', name: 'antelope project'}]
+            folders: [{id: 'p1', name: 'Zebra folder'}, {id: 'p2', name: 'antelope folder'}]
         })
         await open()
 
         await showAll()
 
-        expect(headings()).toEqual([NO_PROJECT, 'antelope project', 'Zebra project'])
+        expect(headings()).toEqual([NO_FOLDER, 'antelope folder', 'Zebra folder'])
     })
 })
 
 const OWNER = 'owner'
 const OTHER = 'other'
-const NO_PROJECT = 'process.project.noProjectOption'
+const NO_FOLDER = 'process.recipeList.root'
 
 const DEFAULT_RECIPES = [
-    {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-    {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
-    {id: 'table', name: 'A table recipe', type: 'TABLE_ONLY', projectId: 'p1'},
-    {id: 'ccdc', name: 'A CCDC', type: 'CCDC', projectId: 'p1'},
-    {id: 'elsewhere', name: 'In another project', type: 'MOSAIC', projectId: 'p2'}
+    {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+    {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
+    {id: 'table', name: 'A table recipe', type: 'TABLE_ONLY', folderId: 'p1'},
+    {id: 'ccdc', name: 'A CCDC', type: 'CCDC', folderId: 'p1'},
+    {id: 'elsewhere', name: 'In another folder', type: 'MOSAIC', folderId: 'p2'}
 ]
 
-const DEFAULT_PROJECTS = [{id: 'p1', name: 'Project one'}, {id: 'p2', name: 'Project two'}]
+const DEFAULT_FOLDERS = [{id: 'p1', name: 'Folder one'}, {id: 'p2', name: 'Folder two'}]
 
 const fields = {recipe: new Form.Field()}
 
@@ -352,14 +350,14 @@ const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecip
 
 const show = ({
     value, allowOwnRecipe, filter, requests = bandsRequested,
-    recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS
+    recipes = DEFAULT_RECIPES, folders = DEFAULT_FOLDERS
 } = {}) => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
-            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', projectId: 'p1', model: {}}},
+            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', folderId: 'p1', model: {}}},
             recipes,
-            projects,
+            folders,
             // No open tab: autosave is triggered from here and is not what a selector exercises.
             tabs: []
         }

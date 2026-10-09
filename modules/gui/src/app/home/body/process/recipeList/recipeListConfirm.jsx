@@ -1,54 +1,90 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
+import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
-import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
+import {folderContents} from './folderItem'
+import styles from './recipeListConfirm.module.css'
+import {PATH_SEPARATOR} from './recipeListConstants'
+import {folderCounts, folderPathLabel} from './recipeTree'
 
 const mapStateToProps = () => ({
-    projects: select('process.projects')
+    folders: select('process.folders'),
+    recipes: select('process.recipes')
 })
 
 class _RecipeListConfirm extends React.Component {
     render() {
-        const {recipes} = this.props
+        const {items} = this.props
         return (
-            <Layout type='vertical' spacing='tight'>
-                {recipes.map(recipe => this.renderRecipe(recipe))}
-            </Layout>
+            <div className={styles.items}>
+                {items.map(item => item.kind === 'folder'
+                    ? this.renderFolder(item.folder)
+                    : this.renderRecipe(item.recipe))}
+            </div>
+        )
+    }
+
+    renderFolder(folder) {
+        const {folders, recipes} = this.props
+        const counts = folderCounts(folders || [], recipes || [], folder.id)
+        return (
+            <ListItem key={folder.id}>
+                <CrudItem
+                    icon='folder-open'
+                    iconSize='lg'
+                    title={msg('process.folder.title')}
+                    description={this.isDisabled(folder.id)
+                        ? [folder.name, msg('process.folder.remove.stays')].join(' · ')
+                        : folder.name}
+                    metadata={folderContents(counts)}
+                    {...this.selection(folder.id)}
+                />
+            </ListItem>
         )
     }
 
     renderRecipe(recipe) {
-        const {isSelected, onSelect} = this.props
         return (
             <ListItem key={recipe.id}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
                     description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
-                    selected={isSelected ? isSelected(recipe.id) : undefined}
-                    onSelect={onSelect ? () => onSelect(recipe.id) : undefined}
+                    {...this.selection(recipe.id)}
                 />
             </ListItem>
         )
     }
 
+    // A row that cannot take part shows an empty box that does not answer, rather than no box at all:
+    // it belongs to the selection the dialog was opened with, and saying so is the point.
+    selection(id) {
+        const {isSelected, onSelect} = this.props
+        const disabled = this.isDisabled(id)
+        return {
+            selected: disabled ? false : (isSelected ? isSelected(id) : undefined),
+            selectDisabled: disabled,
+            onSelect: disabled || !onSelect ? undefined : () => onSelect(id)
+        }
+    }
+
+    isDisabled(id) {
+        const {disabledIds} = this.props
+        return !!disabledIds && disabledIds.includes(id)
+    }
+
+    // The whole path, because two folders of the same name can sit in different branches.
     getRecipePath(recipe) {
-        const {projects} = this.props
-        const name = recipe.name
-        const project = _.find(projects, ({id}) => id === recipe.projectId)
-        return [
-            project?.name ?? NO_PROJECT_SYMBOL,
-            name
-        ].join(PROJECT_RECIPE_SEPARATOR)
+        const {folders} = this.props
+        const path = folderPathLabel(folders || [], recipe.folderId) || msg('process.recipeList.root')
+        return [path, recipe.name].join(PATH_SEPARATOR)
     }
 
     getRecipeTypeName(type) {
@@ -64,7 +100,8 @@ export const RecipeListConfirm = compose(
 )
 
 RecipeListConfirm.propTypes = {
-    recipes: PropTypes.array.isRequired,
+    items: PropTypes.array.isRequired,
+    disabledIds: PropTypes.array,
     isSelected: PropTypes.func,
     onSelect: PropTypes.func
 }

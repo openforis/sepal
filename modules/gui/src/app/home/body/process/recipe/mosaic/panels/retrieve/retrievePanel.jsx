@@ -14,7 +14,7 @@ import {
 } from '~/app/home/body/process/recipe/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {updateFolder} from '~/app/home/body/process/recipeList/folderActions'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -103,11 +103,11 @@ const constraints = {
 }
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects')
+    folders: selectFrom(state, 'process.folders')
 })
 
 const mapRecipeToProps = recipe => ({
-    projectId: recipe.projectId,
+    folderId: recipe.folderId,
     recipeTitle: recipe.title,
     recipePlaceholder: recipe.placeholder
 })
@@ -571,7 +571,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     // A request about the recipe's output is decided again, from the session as it stands at this moment, by the
-    // submission itself - never from what this panel last rendered. The project remembers the destination only
+    // submission itself - never from what this panel last rendered. The folder remembers the destination only
     // once the retrieval was accepted.
     retrieve(values) {
         const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
@@ -591,12 +591,12 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     rememberDestination({assetId, workspacePath}) {
-        const project = this.findProject()
-        if (project) {
-            updateProject({
-                ...project,
-                defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+        const folder = this.findFolder()
+        if (folder) {
+            updateFolder({
+                ...folder,
+                defaultAssetFolder: assetId ? Path.dirname(assetId) : folder.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : folder.defaultWorkspaceFolder
             })
         }
     }
@@ -736,9 +736,9 @@ class _MosaicRetrievePanel extends React.Component {
         destination.set(replacement)
     }
 
-    findProject() {
-        const {projects, projectId} = this.props
-        return projects.find(({id}) => id === projectId)
+    findFolder() {
+        const {folders, folderId} = this.props
+        return folders.find(({id}) => id === folderId)
     }
     
     getRecipeName() {

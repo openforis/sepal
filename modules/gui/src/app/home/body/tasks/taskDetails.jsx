@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -21,7 +20,7 @@ import {updateTimeLabelKey} from './taskLabels'
 import {taskStatusDescription} from './taskStatusDescription'
 
 const mapStateToProps = (state, {taskId}) => ({
-    projects: select('process.projects'),
+    folders: select('process.folders'),
     // The live task from the list's Redux state, so an open panel follows status/progress updates.
     liveTask: (state.tasks || []).find(task => task.id === taskId)
 })
@@ -154,7 +153,7 @@ class _TaskDetails extends React.Component {
     }
     
     renderConfiguration(task) {
-        const {projects} = this.props
+        const {folders} = this.props
         const taskInfo = task.params?.taskInfo
         const image = task.params?.image
         const recipe = image?.recipe
@@ -164,9 +163,9 @@ class _TaskDetails extends React.Component {
         }
 
         const recipeType = taskInfo?.recipeType || recipe?.type
-        const projectId = taskInfo?.projectId
-        const project = projects?.find(({id}) => id === projectId)
-        const projectName = project?.name ?? NO_PROJECT_SYMBOL
+        const folderId = taskInfo?.folderId ?? taskInfo?.projectId
+        const folder = folders?.find(({id}) => id === folderId)
+        const folderName = folder?.name ?? msg('process.recipeList.root')
         const recipeName = task.params?.description
 
         return (
@@ -178,7 +177,7 @@ class _TaskDetails extends React.Component {
                 {recipeName && (
                     <div className={styles.row}>
                         <Label className={styles.fieldLabel} msg={msg('tasks.details.origin')}/>
-                        <div className={styles.fieldValue}>{`${projectName} / ${recipeName}`}</div>
+                        <div className={styles.fieldValue}>{`${folderName} / ${recipeName}`}</div>
                     </div>
                 )}
             </Widget>
@@ -299,7 +298,7 @@ _TaskDetails.propTypes = {
     taskId: PropTypes.string.isRequired,
     onClose: PropTypes.func.isRequired,
     liveTask: PropTypes.object,
-    projects: PropTypes.array
+    folders: PropTypes.array
 }
 
 export const TaskDetails = compose(

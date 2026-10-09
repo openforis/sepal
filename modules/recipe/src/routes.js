@@ -1,31 +1,42 @@
 import {gunzipSync} from 'zlib'
 
+// Reserved to mean "no folder" on a move (see modules/gui/src/api/recipe.js): a path segment can
+// carry neither null nor empty. Ids are client-generated UUIDs, so this cannot collide by accident,
+// and POST /folder (below) refuses to save one under it outright, so the reservation holds even if
+// a client ever sends this literally.
+const NO_FOLDER_ID = 'none'
+
 const createRoutes = ({recipeService, requireAuth}) => router => router
     .get('/healthcheck', ctx => {
         ctx.body = {status: 'ok'}
     })
-    // Project routes first so `/project` is not captured by `/:id`.
-    .post('/project/:id', requireAuth, async ctx => {
+    // Folder routes first so `/folder` is not captured by `/:id`.
+    .post('/folder/:id', requireAuth, async ctx => {
         ctx.body = await recipeService.moveRecipes({
             principal: principal(ctx),
-            projectId: ctx.params.id,
+            folderId: ctx.params.id === NO_FOLDER_ID ? null : ctx.params.id,
             recipeIds: ctx.request.body || []
         })
     })
-    .delete('/project/:id', requireAuth, async ctx => {
-        ctx.body = await recipeService.removeProject({
-            principal: principal(ctx), projectId: ctx.params.id
-        })
+    .delete('/folder/:id', requireAuth, async ctx => {
+        respondToFolderRemove(ctx, await recipeService.removeFolder({
+            principal: principal(ctx), folderId: ctx.params.id
+        }))
     })
-    .post('/project', requireAuth, async ctx => {
-        const {id, name, defaultAssetFolder, defaultWorkspaceFolder} = ctx.request.body || {}
-        ctx.body = await recipeService.saveProject({
-            principal: principal(ctx),
-            project: {id, name, defaultAssetFolder, defaultWorkspaceFolder}
-        })
+    .post('/folder', requireAuth, async ctx => {
+        const {id, name, parentId, defaultAssetFolder, defaultWorkspaceFolder} = ctx.request.body || {}
+        if (id === NO_FOLDER_ID) {
+            ctx.status = 400
+            ctx.body = {code: 'FOLDER_ID_RESERVED'}
+        } else {
+            respondToFolderSave(ctx, await recipeService.saveFolder({
+                principal: principal(ctx),
+                folder: {id, name, parentId: parentId || null, defaultAssetFolder, defaultWorkspaceFolder}
+            }))
+        }
     })
-    .get('/project', requireAuth, async ctx => {
-        ctx.body = await recipeService.listProjects({principal: principal(ctx)})
+    .get('/folder', requireAuth, async ctx => {
+        ctx.body = await recipeService.listFolders({principal: principal(ctx)})
     })
     .post('/:id', requireAuth, async ctx => {
         const expected = parseExpectedRevision(ctx.query.expectedRevision)
@@ -33,13 +44,13 @@ const createRoutes = ({recipeService, requireAuth}) => router => router
             ctx.status = 400
             ctx.body = {code: 'INVALID_EXPECTED_REVISION'}
         } else {
-            const {projectId, type, name} = ctx.query
+            const {folderId, type, name} = ctx.query
             respondToSave(ctx, await recipeService.saveRecipe({
                 principal: principal(ctx),
                 recipe: {
                     id: ctx.params.id,
-                    // Query strings cannot carry null; an empty project therefore maps to SQL NULL.
-                    projectId: projectId || null,
+                    // Query strings cannot carry null; an empty folder therefore maps to SQL NULL.
+                    folderId: folderId || null,
                     name,
                     type,
                     content: await gzippedJsonBody(ctx)
@@ -87,6 +98,31 @@ const respondToSave = (ctx, result) => {
         ctx.status = 404
     } else {
         throw new Error(`Unrecognized save outcome: ${result.outcome}`)
+    }
+}
+
+const respondToFolderSave = (ctx, result) => {
+    if (result.outcome === 'saved') {
+        ctx.body = result.folders
+    } else if (result.outcome === 'cycle') {
+        ctx.status = 409
+        ctx.body = {code: 'FOLDER_CYCLE'}
+    } else if (result.outcome === 'parentNotFound') {
+        ctx.status = 409
+        ctx.body = {code: 'FOLDER_PARENT_NOT_FOUND'}
+    } else {
+        throw new Error(`Unrecognized folder save outcome: ${result.outcome}`)
+    }
+}
+
+const respondToFolderRemove = (ctx, result) => {
+    if (result.outcome === 'removed') {
+        ctx.body = result.folders
+    } else if (result.outcome === 'notEmpty') {
+        ctx.status = 409
+        ctx.body = {code: 'FOLDER_NOT_EMPTY', folders: result.folders, recipes: result.recipes}
+    } else {
+        throw new Error(`Unrecognized folder remove outcome: ${result.outcome}`)
     }
 }
 

@@ -4757,38 +4757,44 @@
       },
       "tabPlaceholder": "Phenology"
     },
-    "projects": {
-      "title": "Projects",
-      "label": "Projects",
-      "tooltip": "Manage projects",
-      "noProjects": "No projects",
-      "search.placeholder": "Search projects",
-      "selected": "Currently selected",
-      "add": "Add"
-    },
-    "project": {
-      "title": "Project",
-      "loadingError": "Failed to load projects. Please reload the page to try again.",
+    "folder": {
+      "title": "Folder",
+      "add": "Create folder",
+      "loadingError": "Failed to load folders. Please reload the page to try again.",
       "description": "{count} {count, plural, one {recipe} other {recipes}}",
+      "folderCount": "{count} {count, plural, one {folder} other {folders}}",
       "form": {
         "name.label": "Name",
         "name.required": "Name is required",
-        "name.unique": "Project name is already in use"
+        "name.unique": "Folder name is already in use"
       },
       "edit": {
-        "tooltip": "Edit project"
+        "tooltip": "Edit folder"
       },
       "remove": {
-        "tooltip": "Remove project",
-        "title": "Remove project",
-        "confirm": "All recipes belonging to this project will be removed as well.",
-        "error": "Cannot remove project"
+        "tooltip": "Remove folder",
+        "title": "Remove folder",
+        "confirm": "Remove this folder?",
+        "notEmpty": "Cannot remove {name}: it still holds {counts}. Move or remove them first.",
+        "notEmpty.and": "{a} and {b}",
+        "skipped": "These folders still hold something, so they stay: {names}",
+        "stays": "Still holds something, so it stays",
+        "error": "Cannot remove folder"
       },
       "update": {
-        "error": "Cannot update project"
+        "error": "Cannot update folder",
+        "cycle": "Cannot move a folder into one of its own subfolders",
+        "parentNotFound": "Cannot update folder: the parent folder no longer exists"
       },
-      "noProject": "no project",
-      "noProjectOption": "[no project]"
+      "parent": {
+        "root": "Home",
+        "tooltip": "Go up one folder"
+      },
+      "move": {
+        "done": "Moved {name} to {folder}."
+      },
+      "selectHere": "Move here",
+      "none": "No folders"
     },
     "recipe": {
       "lastUpdate": "Last update",
@@ -4828,15 +4834,19 @@
       "move": {
         "label": "Move",
         "title": "Move recipes",
-        "tooltip": "Move selected recipes to a project",
-        "destinationProject": "Destination project",
-        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to project {project}?"
+        "tooltip": "Move selected recipes to a folder",
+        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?",
+        "done": "Moved {count} {count, plural, one {recipe} other {recipes}} to {folder}."
       },
       "export": {
         "success": "Recipe has been exported.",
         "error": "Could not export recipe."
       }
     },
+    "recipeList.root": "Home",
+    "recipeList.undo": "Undo",
+    "recipeList.undoHint": "Undo puts everything back where it was.",
+    "recipeList.moved": "Moved {count} {count, plural, one {item} other {items}} to {folder}.",
     "remapping": {
       "create": "Remapping",
       "description": "Remap categorical and continuous image bands into new categories.",
@@ -5641,7 +5651,9 @@
         "easeGrid2North": "North polar (EPSG:6931)",
         "easeGrid2South": "South polar (EPSG:6932)"
       }
-    }
+    },
+    "recipeList.noMatch": "No folders or recipes match \"{search}\"",
+    "recipeList.empty": "No folders or recipes here yet"
   },
   "sources": {
     "dataSets": {

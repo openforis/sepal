@@ -115,7 +115,7 @@ describe('migrateRecipes', () => {
         /UPDATE recipe SET type_version/i.test(sql) && params.includes(id)
 
     const aRecipe = (over = {}) => ({
-        id: 'a-recipe', owner: OWNER, projectId: null, name: 'A recipe', type: 'MOSAIC',
+        id: 'a-recipe', owner: OWNER, folderId: null, name: 'A recipe', type: 'MOSAIC',
         typeVersion: MOSAIC_VERSION, content: {model: {}}, ...over
     })
 })

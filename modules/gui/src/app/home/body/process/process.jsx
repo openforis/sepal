@@ -13,7 +13,7 @@ import {Tabs} from '~/widget/tabs/tabs'
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
 import {ProcessMenu} from './processMenu'
-import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
+import {loadFolders$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
 import {getRecipeType} from './recipeTypeRegistry'
@@ -104,12 +104,12 @@ class _Process extends React.Component {
     }
 
     componentDidMount() {
-        const {projects, recipes, stream} = this.props
-        if (!projects) {
-            stream('LOAD_PROJECTS',
-                loadProjects$(),
+        const {folders, recipes, stream} = this.props
+        if (!folders) {
+            stream('LOAD_FOLDERS',
+                loadFolders$(),
                 null,
-                () => Notifications.error({message: msg('process.project.loadingError'), timeout: -1})
+                () => Notifications.error({message: msg('process.folder.loadingError'), timeout: -1})
             )
         }
         if (!recipes) {
