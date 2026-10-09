@@ -33,8 +33,6 @@
     height: 11rem;
 }
 
-/* A button that spans the box leaves its label against the edge; holding the label at its own width
-   lets the button's own centring place it. */
-.select > * {
-    flex-grow: 0 !important;
+.select {
+    align-self: flex-end;
 }
