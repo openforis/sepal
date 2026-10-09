@@ -24,8 +24,7 @@ export class FolderPicker extends React.Component {
                 {this.renderOptions()}
                 <Button
                     look='apply'
-                    shape='pill'
-                    width='max'
+                    icon='check'
                     additionalClassName={styles.select}
                     label={msg('process.folder.selectHere')}
                     onClick={() => this.props.onSelect(folderId)}
