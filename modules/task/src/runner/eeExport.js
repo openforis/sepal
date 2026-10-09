@@ -20,6 +20,7 @@ const PROGRESS = {
 export const followEEExport = async ({eeTaskId, sepal, report, signal, sleep = sleepUnlessAborted}) => {
     let reportedState = null
     let failedPolls = 0
+    log.info(`Earth Engine task ${eeTaskId}: following`)
     while (!signal.aborted) {
         let status
         try {
@@ -36,12 +37,16 @@ export const followEEExport = async ({eeTaskId, sepal, report, signal, sleep = s
         }
         const {state, errorMessage} = status
         if (state === 'COMPLETED') {
+            log.info(`Earth Engine task ${eeTaskId}: completed`)
             return
         }
         if (!PROGRESS[state]) {
-            throw exportFailure(state, errorMessage)
+            const failure = exportFailure(state, errorMessage)
+            log.warn(`Earth Engine task ${eeTaskId}: ${describe(state)} - ${failure.earthEngineMessage}`)
+            throw failure
         }
         if (state !== reportedState) {
+            log.info(`Earth Engine task ${eeTaskId}: ${describe(state)}`)
             report(PROGRESS[state])
             reportedState = state
         }
@@ -49,6 +54,8 @@ export const followEEExport = async ({eeTaskId, sepal, report, signal, sleep = s
     }
     await cancel(eeTaskId, sepal)
 }
+
+const describe = state => state.toLowerCase().replaceAll('_', ' ')
 
 const sleepUnlessAborted = (ms, signal) =>
     setTimeout(ms, undefined, {signal}).catch(() => {})

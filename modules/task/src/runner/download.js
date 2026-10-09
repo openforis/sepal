@@ -27,11 +27,14 @@ export const downloadFiles = async ({destination, dir, sepal, report, signal, fe
     const files = await listing.files()
     const targets = targetsOf(dir, files)
     const progress = new Progress({files, report, now})
+    const summary = `${files.length} ${files.length === 1 ? 'file' : 'files'} (${fileSize(totalSize(files))}) to ${dir}`
+    log.info(`Downloading ${summary}`)
     await forEachInParallel(files, CONCURRENT_FILES, signal, ({name}, fileSignal) =>
         downloadFile({name, path: targets.get(name), listing, progress, fetchFn, sleep, signal: fileSignal})
     )
     if (!signal.aborted) {
         progress.done()
+        log.info(`Downloaded ${summary}`)
     }
 }
 
@@ -145,7 +148,7 @@ class Progress {
 
     constructor({files, report, now}) {
         this.#files = files.length
-        this.#totalBytes = files.reduce((total, {size}) => total + size, 0)
+        this.#totalBytes = totalSize(files)
         this.#report = report
         this.#now = now
         this.#send(this.#totalBytes)
@@ -177,6 +180,8 @@ class Progress {
         })
     }
 }
+
+const totalSize = files => files.reduce((total, {size}) => total + size, 0)
 
 // Two names for one path would have two downloads write the same file.
 const targetsOf = (dir, files) => {

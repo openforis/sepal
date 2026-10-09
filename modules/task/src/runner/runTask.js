@@ -11,7 +11,7 @@ const CANCELED = {state: 'CANCELED', statusDescription: {messageKey: 'tasks.stat
 export const runTask = async ({task, operations, sepal, report, signal}) => {
     const operation = operations[task.operation]
     if (!operation) {
-        log.error(`Task ${task.id}: unknown operation ${task.operation}`)
+        log.error(`Unknown operation ${task.operation}`)
         return {state: 'FAILED', statusDescription: failureStatus(null)}
     }
     report(EXECUTING)
@@ -22,7 +22,7 @@ export const runTask = async ({task, operations, sepal, report, signal}) => {
         if (signal.aborted) {
             return CANCELED
         }
-        log.error(`Task ${task.id} failed`, error)
+        log.error('Failed', error)
         return {state: 'FAILED', statusDescription: failureStatus(error)}
     }
 }

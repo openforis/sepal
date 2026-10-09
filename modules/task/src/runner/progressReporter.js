@@ -16,6 +16,7 @@ export class ProgressReporter {
     report(statusDescription) {
         if (!_.isEqual(statusDescription, this.#last)) {
             this.#last = statusDescription
+            log.info(statusDescription.defaultMessage ?? statusDescription.messageKey)
             this.#deliver()
         }
     }
