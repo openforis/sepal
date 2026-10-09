@@ -47,6 +47,8 @@ const mount = props => {
 
 const itemFor = title => crudItems.find(props => props.title === title)
 
+const folderRow = () => itemFor('process.folder.title')
+
 beforeEach(() => {
     mounted = []
     crudItems.length = 0
@@ -72,15 +74,16 @@ describe('RecipeListConfirm', () => {
     it('shows a folder with what it holds', () => {
         mount({items: [folderItem(KENYA)]})
 
-        expect(itemFor('Kenya').description).toContain('process.folder.folderCount')
+        expect(folderRow().description).toBe('Kenya')
+        expect(folderRow().metadata).toContain('process.folder.folderCount')
     })
 
     it('marks a folder that cannot take part, and offers it no choice', () => {
         mount({items: [folderItem(KENYA)], disabledIds: [KENYA.id], onSelect: () => {}})
 
-        expect(itemFor('Kenya').description).toBe('process.folder.remove.stays')
-        expect(itemFor('Kenya').selected).toBe(false)
-        expect(itemFor('Kenya').onSelect).toBeUndefined()
+        expect(folderRow().description).toBe('Kenya · process.folder.remove.stays')
+        expect(folderRow().selected).toBe(false)
+        expect(folderRow().onSelect).toBeUndefined()
     })
 
     it('lets a row that can take part be chosen', () => {
