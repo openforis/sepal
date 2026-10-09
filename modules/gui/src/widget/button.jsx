@@ -298,12 +298,13 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
         return React.isValidElement(icon)
             ? icon
             : (
                 <Icon
                     name={icon}
+                    size={iconSize}
                     type={iconType}
                     variant={iconVariant}
                     dimmed={iconDimmed || buttonGroupDimmed}
@@ -460,6 +461,7 @@ Button.propTypes = {
     iconClassName: PropTypes.any,
     iconDimmed: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
+    iconSize: PropTypes.string,
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
     innerButton: PropTypes.any,
