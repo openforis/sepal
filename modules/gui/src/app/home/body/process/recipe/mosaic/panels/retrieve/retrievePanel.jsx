@@ -1,4 +1,3 @@
-import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -18,6 +17,7 @@ import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {dirname} from '~/path'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
@@ -595,8 +595,8 @@ class _MosaicRetrievePanel extends React.Component {
         if (project) {
             updateProject({
                 ...project,
-                defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+                defaultAssetFolder: assetId ? dirname(assetId) : project.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
             })
         }
     }

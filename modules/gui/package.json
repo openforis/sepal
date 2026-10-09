@@ -43,7 +43,6 @@
         "natural-orderby": "^5.0.0",
         "object-hash": "^3.0.0",
         "papaparse": "5.4.1",
-        "path": "0.12.7",
         "rc-tooltip": "6.4.0",
         "react": "^19.3.0",
         "react-colorful": "^5.8.1",

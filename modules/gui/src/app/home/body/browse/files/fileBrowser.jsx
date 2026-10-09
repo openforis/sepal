@@ -1,7 +1,6 @@
 import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
-import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -10,6 +9,7 @@ import {compose} from '~/compose'
 import {withEnableDetector} from '~/enabled'
 import format from '~/format'
 import {getLogger} from '~/log'
+import {extname} from '~/path'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -348,7 +348,7 @@ class _FileBrowser extends React.Component {
     }
 
     renderFileIcon(key) {
-        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(key))
+        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(extname(key))
         return (
             <span className={styles.icon}>
                 <Icon name={isImage ? 'file-image' : 'file'}/>
@@ -417,7 +417,7 @@ class _FileBrowser extends React.Component {
         const {files: selectedFiles} = FileTree.getSelectedItems(tree)
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(FileTree.toStringPath(selectedFile))
-        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
+        const downloadFilename = selectedFiles.length === 1 && selectedFile.at(-1)
         return (
             <ButtonGroup layout='horizontal'>
                 <Button
