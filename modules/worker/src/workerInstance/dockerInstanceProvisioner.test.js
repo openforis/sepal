@@ -200,13 +200,13 @@ describe('buildContainerBody — SANDBOX', () => {
         expect(capturedBody.HostConfig.LogConfig).toBeNull()
     })
 
-    test('HostConfig.LogConfig has syslog type when syslogAddress is set', async () => {
+    test('HostConfig.LogConfig logs to syslog under the sandbox\'s user and instance name', async () => {
         await runProvision(CONFIG_WITH_SYSLOG)
         expect(capturedBody.HostConfig.LogConfig).toMatchObject({
             Type: 'syslog',
             Config: {
                 'syslog-address': 'udp://syslog.example.com:514',
-                'tag': 'worker-docker/{{.Name}}',
+                'tag': `sandbox/alice/${instanceName('sess-1')}`,
             },
         })
     })

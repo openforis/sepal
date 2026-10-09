@@ -239,7 +239,7 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
                 Type: 'syslog',
                 Config: {
                     'syslog-address': syslogAddress,
-                    'tag': 'worker-docker/{{.Name}}',
+                    'tag': `sandbox/${instance.reservation.username}/${instanceName(instance.reservation.sessionId)}`,
                 },
             }
             : null

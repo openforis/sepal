@@ -64,7 +64,7 @@ export const containerSpec = ({task, apiKey, config}) => {
             PidsLimit: PIDS_LIMIT,
             NetworkMode: TASK_NETWORK,
             ...(config.syslogAddress
-                ? {LogConfig: {Type: 'syslog', Config: {'syslog-address': config.syslogAddress, tag: 'task/{{.Name}}'}}}
+                ? {LogConfig: {Type: 'syslog', Config: {'syslog-address': config.syslogAddress, tag: `task/${task.username}/${task.id}`}}}
                 : {})
         }
     }

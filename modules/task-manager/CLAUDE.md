@@ -29,6 +29,8 @@ containers or task state from outside it.
   is listed) and, after the modules run, removes task images of earlier releases that no container uses.
 - The `sepal-task` network and the host firewall unit `sepal-task-firewall` isolate task containers: they
   reach the gateway only.
+- Task containers log to syslog tagged `task/<username>/<taskId>`; the logger writes the lines, prefixed by the
+  task id, to `/var/log/sepal/user/<username>/task.log` (on EFS in production).
 - Task containers carry the label `org.openforis.sepal.task-manager=true` and survive deploys and
   task-manager restarts; task-manager rediscovers them by label. They do not survive a Docker daemon restart
   or a reboot (`live-restore` is incompatible with Swarm mode, and the main host is the Swarm manager): the

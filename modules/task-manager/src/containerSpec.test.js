@@ -81,6 +81,12 @@ test('sizes GDAL\'s cache and threads to the container', () => {
     expect(Env).toEqual(expect.arrayContaining(['GDAL_CACHEMAX=1024', 'GDAL_NUM_THREADS=2']))
 })
 
+test('logs to syslog under its user and task', () => {
+    const {HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
+
+    expect(HostConfig.LogConfig).toEqual({Type: 'syslog', Config: {'syslog-address': 'udp://172.20.128.2', tag: 'task/alice/t-1'}})
+})
+
 test('in development, runs the checked-out source', () => {
     const {HostConfig: {Binds}} = containerSpec({task: TASK, apiKey: 'task_key', config: {...CONFIG, deployEnvironment: 'DEV'}})
 
