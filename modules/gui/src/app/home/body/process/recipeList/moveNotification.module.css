@@ -4,13 +4,9 @@
     gap: .4rem;
 }
 
-.message {
-    color: #ccc;
-}
-
 .hint {
     font-size: .9rem;
-    color: #999;
+    color: var(--text-muted-color);
 }
 
 /* A button that spans the card puts its icon and its label against the two edges. Holding the pair

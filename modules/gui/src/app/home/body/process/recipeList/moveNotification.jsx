@@ -8,10 +8,10 @@ import styles from './moveNotification.module.css'
 // The text reads like every other notification; the way back spans it, so it is easy to aim at.
 export const MoveNotification = ({message, onUndo}) =>
     <div className={styles.notification}>
-        <div className={styles.message}>{message}</div>
+        <div>{message}</div>
         <div className={styles.hint}>{msg('process.recipeList.undoHint')}</div>
         <Button
-            look='transparent'
+            look='cancel'
             shape='pill'
             size='small'
             width='max'
