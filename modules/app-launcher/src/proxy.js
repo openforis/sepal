@@ -1,7 +1,8 @@
+import url from 'node:url'
+
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import micromatch from 'micromatch'
 import {filter, from, map, switchMap, toArray} from 'rxjs'
-import url from 'url'
 
 import {getLogger} from '#sepal/log'
 

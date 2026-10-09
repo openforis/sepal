@@ -1,5 +1,6 @@
+import {fileURLToPath, URL} from 'node:url'
+
 import react from '@vitejs/plugin-react'
-import {fileURLToPath, URL} from 'url'
 import {defineConfig} from 'vite'
 
 const sharedSrc = fileURLToPath(new URL('../../lib/js/shared/src', import.meta.url))

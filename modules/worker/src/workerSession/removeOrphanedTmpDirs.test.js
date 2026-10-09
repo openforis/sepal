@@ -1,10 +1,11 @@
 // Tests for RemoveOrphanedTmpDirs — runs against a scratch temp dir (NOT the real /data/home).
 // Deletes only per-instance tmp dirs with no matching PENDING/ACTIVE session; keeps the rest.
 
+import {promises as fs} from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
 import {jest} from '@jest/globals'
-import {promises as fs} from 'fs'
-import os from 'os'
-import path from 'path'
 
 import {removeOrphanedTmpDirs} from './command/removeOrphanedTmpDirs.js'
 import {State} from './workerSession.js'

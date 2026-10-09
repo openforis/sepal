@@ -1,4 +1,4 @@
-import http from 'http'
+import http from 'node:http'
 
 // A real HTTP server on a free local port, answering every request with handle(request, response).
 export class FileServer {

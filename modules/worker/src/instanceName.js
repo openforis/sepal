@@ -18,7 +18,7 @@
 // Sessions live hours, so the blast radius is whatever is running at deploy time — but reorder or
 // prune only deliberately. Appending is safe for existing names only if nothing before it moves.
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const ADJECTIVES = [
     'amber', 'ancient', 'azure', 'balmy', 'blissful', 'bold', 'brave', 'breezy', 'bright', 'brisk',

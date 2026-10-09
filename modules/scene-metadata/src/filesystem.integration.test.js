@@ -1,8 +1,8 @@
-import {mkdtemp, readdir, readFile, rm, writeFile} from 'fs/promises'
-import {createServer} from 'http'
-import {tmpdir} from 'os'
-import {join} from 'path'
-import {gzipSync} from 'zlib'
+import {mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
+import {createServer} from 'node:http'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {gzipSync} from 'node:zlib'
 
 import {configureNoLogging} from '#sepal/log'
 

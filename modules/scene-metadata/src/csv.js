@@ -1,9 +1,10 @@
+import {createReadStream, createWriteStream} from 'node:fs'
+import {Readable} from 'node:stream'
+import {pipeline} from 'node:stream/promises'
+import {createGunzip} from 'node:zlib'
+
 import {parse} from 'csv-parse'
 import {stringify} from 'csv-stringify'
-import {createReadStream, createWriteStream} from 'fs'
-import {Readable} from 'stream'
-import {pipeline} from 'stream/promises'
-import {createGunzip} from 'zlib'
 
 import {getLogger} from '#sepal/log'
 

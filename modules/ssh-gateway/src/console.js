@@ -1,4 +1,5 @@
-import readline from 'readline'
+import readline from 'node:readline'
+
 import {defer, first, fromEvent} from 'rxjs'
 
 // One persistent readline interface for the whole process. Each prompt subscribes to its

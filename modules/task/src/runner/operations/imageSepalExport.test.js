@@ -1,7 +1,8 @@
+import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+
 import {jest} from '@jest/globals'
-import {mkdtemp, rm, writeFile} from 'fs/promises'
-import {tmpdir} from 'os'
-import {join} from 'path'
 import {of} from 'rxjs'
 
 const exportCalls = []

@@ -1,4 +1,5 @@
-import {access} from 'fs/promises'
+import {access} from 'node:fs/promises'
+
 import _ from 'lodash'
 
 import {compose} from './compose.js'

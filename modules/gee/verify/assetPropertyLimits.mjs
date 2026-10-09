@@ -8,7 +8,8 @@
 // Not a test. Nothing runs it automatically; it needs Earth Engine credentials and writes assets.
 // See README.md. Modes are selected with EE_PROPS_MODE; main() lists them.
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
+
 import {firstValueFrom} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'

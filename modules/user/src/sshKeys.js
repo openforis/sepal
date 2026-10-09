@@ -1,4 +1,4 @@
-import {createHash} from 'crypto'
+import {createHash} from 'node:crypto'
 
 const INVALID_KEY = 'INVALID_KEY'
 const UNSUPPORTED_TYPE = 'UNSUPPORTED_TYPE'

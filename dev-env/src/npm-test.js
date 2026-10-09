@@ -1,5 +1,5 @@
-import {access} from 'fs/promises'
-import Path from 'path'
+import {access} from 'node:fs/promises'
+import Path from 'node:path'
 
 import {compose} from './compose.js'
 import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'

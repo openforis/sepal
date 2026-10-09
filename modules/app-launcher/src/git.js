@@ -1,4 +1,4 @@
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
 
 import {ClientException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'

@@ -1,7 +1,8 @@
+import {mkdtemp, rm, stat} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+
 import {jest} from '@jest/globals'
-import {mkdtemp, rm, stat} from 'fs/promises'
-import {tmpdir} from 'os'
-import {join} from 'path'
 
 const workspaceCalls = []
 

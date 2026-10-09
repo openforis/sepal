@@ -1,4 +1,5 @@
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
+
 import {defer} from 'rxjs'
 
 import * as config from '#gee/config'

@@ -1,6 +1,7 @@
+import os from 'node:os'
+
 import {Command, Option} from 'commander'
 import _ from 'lodash'
-import os from 'os'
 
 import {getLogger} from '#sepal/log'
 

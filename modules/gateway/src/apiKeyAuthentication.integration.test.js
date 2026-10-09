@@ -1,6 +1,7 @@
+import {createServer} from 'node:http'
+
 import {jest} from '@jest/globals'
 import express from 'express'
-import {createServer} from 'http'
 import {Subject} from 'rxjs'
 
 // What a module downstream of the gateway is told about who is calling: over real HTTP, through the

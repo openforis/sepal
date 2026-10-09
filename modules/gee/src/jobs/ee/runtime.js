@@ -1,4 +1,4 @@
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
 
 import {googleProjectId} from '#gee/config'
 import {job} from '#gee/jobs/job'

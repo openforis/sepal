@@ -19,7 +19,7 @@
 //   notifiedTime          — Date | null (anchors the email escalation and the grace clock)
 //   apiKey                — credential; NEVER serialise (stripped from events / responses)
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const State = Object.freeze({
     PENDING: 'PENDING',

@@ -1,6 +1,6 @@
-import {mkdtemp, readFile, rm, stat, writeFile} from 'fs/promises'
-import {tmpdir} from 'os'
-import {join} from 'path'
+import {mkdtemp, readFile, rm, stat, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 import {createTask, State} from './task.js'
 import {TaskWorkspace} from './taskWorkspace.js'

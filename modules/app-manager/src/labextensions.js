@@ -1,6 +1,7 @@
-import fs from 'fs'
+import fs from 'node:fs'
+import path from 'node:path'
+
 import koaStatic from 'koa-static'
-import path from 'path'
 
 function getLabextensionsDir(appName) {
     const baseDir = '/usr/local/share/jupyter/current-kernels'

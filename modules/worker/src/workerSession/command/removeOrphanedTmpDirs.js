@@ -13,8 +13,8 @@
 // Filesystem side effect. homeDir is injected so tests run against a scratch dir — do NOT touch
 // the real /data/home in tests.
 
-import {promises as fs} from 'fs'
-import path from 'path'
+import {promises as fs} from 'node:fs'
+import path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

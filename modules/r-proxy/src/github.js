@@ -1,5 +1,5 @@
-import {opendir} from 'fs/promises'
-import Path from 'path'
+import {opendir} from 'node:fs/promises'
+import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

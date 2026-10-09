@@ -1,7 +1,8 @@
-import {createServer} from 'http'
-import {dirname, join} from 'path'
+import {createServer} from 'node:http'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
+
 import {filter, firstValueFrom, ReplaySubject, Subscription} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 // Whether an operation is really released when a request ends, through the worker the module runs its
 // jobs on: a real worker thread, the real job task list and a real recipe endpoint. The job leaves a

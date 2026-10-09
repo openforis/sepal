@@ -1,6 +1,6 @@
-import {spawnSync} from 'child_process'
-import {dirname, join} from 'path'
-import {fileURLToPath} from 'url'
+import {spawnSync} from 'node:child_process'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
 
 // A bridge, not a test of its own. The behavioral witness lives in the sibling .mjs and runs under Node's own
 // test runner, because imageFactory loads its implementations through createRequire: real Node supports

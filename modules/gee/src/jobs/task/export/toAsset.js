@@ -1,5 +1,6 @@
+import Path from 'node:path'
+
 import _ from 'lodash'
-import Path from 'path'
 import {catchError, concat, defer, EMPTY, from, ignoreElements, last, map, mergeMap, of, switchMap, throwError, toArray} from 'rxjs'
 
 import ee from '#sepal/ee/ee'

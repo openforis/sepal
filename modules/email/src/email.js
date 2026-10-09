@@ -1,4 +1,5 @@
-import fs from 'fs'
+import fs from 'node:fs'
+
 import Handlebars from 'handlebars'
 import {marked} from 'marked'
 import nodemailer from 'nodemailer'

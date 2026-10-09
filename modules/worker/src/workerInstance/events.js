@@ -15,7 +15,8 @@
 //   FailedToReleaseInstance       { instanceId, error }
 //   FailedToRequestInstance       { workerType, instanceType, exception }
 
-import EventEmitter from 'events'
+import EventEmitter from 'node:events'
+
 import {Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'

@@ -1,8 +1,8 @@
-import {execFile} from 'child_process'
-import os from 'os'
-import {dirname} from 'path'
-import {fileURLToPath} from 'url'
-import {promisify} from 'util'
+import {execFile} from 'node:child_process'
+import os from 'node:os'
+import {dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {promisify} from 'node:util'
 
 // Compose hands an unset ${VAR} to the container as an empty string.
 describe('Earth Engine limits', () => {

@@ -1,7 +1,7 @@
-import {randomBytes} from 'crypto'
-import {mkdtemp, readFile, rm, writeFile} from 'fs/promises'
-import {tmpdir} from 'os'
-import {join} from 'path'
+import {randomBytes} from 'node:crypto'
+import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'

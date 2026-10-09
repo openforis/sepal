@@ -1,6 +1,6 @@
-import {mkdtemp, readdir, readFile, rm} from 'fs/promises'
-import {tmpdir} from 'os'
-import {join} from 'path'
+import {mkdtemp, readdir, readFile, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 import {FileServer, holdingOpen, noticingChunks, serving} from '../testSupport/fileServer.js'
 import {exportToWorkspace} from './workspaceExport.js'

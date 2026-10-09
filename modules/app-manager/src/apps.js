@@ -1,4 +1,5 @@
-import {basename} from 'path'
+import {basename} from 'node:path'
+
 import {catchError, concatMap, defaultIfEmpty, defer, delay, EMPTY, exhaustMap, filter, from, interval, map, of, switchMap} from 'rxjs'
 
 import {getLogger} from '#sepal/log'

@@ -1,5 +1,5 @@
-import {randomBytes} from 'crypto'
-import {join} from 'path'
+import {randomBytes} from 'node:crypto'
+import {join} from 'node:path'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'

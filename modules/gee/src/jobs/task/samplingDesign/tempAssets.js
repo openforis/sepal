@@ -1,4 +1,5 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
+
 import moment from 'moment'
 import {defer, map, of} from 'rxjs'
 

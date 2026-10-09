@@ -1,4 +1,4 @@
-import {join} from 'path'
+import {join} from 'node:path'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'

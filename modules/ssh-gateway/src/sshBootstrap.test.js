@@ -1,5 +1,5 @@
-import {spawnSync} from 'child_process'
-import {join} from 'path'
+import {spawnSync} from 'node:child_process'
+import {join} from 'node:path'
 
 import {dirName} from '#sepal/path'
 

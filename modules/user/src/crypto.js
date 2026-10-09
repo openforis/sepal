@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const SHA1_DIGEST_BYTES = 20
 

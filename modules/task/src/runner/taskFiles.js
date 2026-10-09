@@ -1,5 +1,5 @@
-import {readFile, rename, writeFile} from 'fs/promises'
-import {join} from 'path'
+import {readFile, rename, writeFile} from 'node:fs/promises'
+import {join} from 'node:path'
 
 export const readTask = async dir =>
     JSON.parse(await readFile(join(dir, 'task.json'), 'utf8'))

@@ -1,8 +1,9 @@
+import {mkdirSync} from 'node:fs'
+import os from 'node:os'
+import Path from 'node:path'
+
 import {program} from 'commander'
-import {mkdirSync} from 'fs'
 import _ from 'lodash'
-import os from 'os'
-import Path from 'path'
 
 import {getLogger} from '#sepal/log'
 

@@ -1,5 +1,6 @@
-import {mkdir, readdir} from 'fs/promises'
-import {join} from 'path'
+import {mkdir, readdir} from 'node:fs/promises'
+import {join} from 'node:path'
+
 import {lastValueFrom} from 'rxjs'
 
 import {createVrt$, setBandNames$} from '#sepal/gdal'

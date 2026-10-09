@@ -1,4 +1,4 @@
-import {join} from 'path'
+import {join} from 'node:path'
 
 import {createDb, createPool, initDb} from '#sepal/db/mysql'
 import {dirName} from '#sepal/path'

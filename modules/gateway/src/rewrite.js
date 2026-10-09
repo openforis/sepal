@@ -1,4 +1,4 @@
-import {parse} from 'url'
+import {parse} from 'node:url'
 
 const rewriteLocation = ({path, target, location}) => {
     const targetUrl = parse(target)

@@ -1,5 +1,6 @@
+import Path from 'node:path'
+
 import _ from 'lodash'
-import Path from 'path'
 
 import {SEPAL_SRC} from './config.js'
 import {getLibDepList} from './deps.js'
