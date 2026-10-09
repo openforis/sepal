@@ -4,7 +4,6 @@ import os
 
 import re
 import subprocess
-import sys
 from glob import glob
 from os import listdir, pardir
 from os.path import abspath, exists, join, relpath, basename
@@ -19,7 +18,7 @@ chunk_file_pattern = re.compile('chunk-(.*)')
 nodata_value = 0
 
 
-def stack_time_series(directory):
+def stack_time_series(directory, band=None, sits_dir=None):
     chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
@@ -32,6 +31,8 @@ def stack_time_series(directory):
     dates = get_dates(chunks)
     create_stack(directory, dates)
     create_dates_csv(directory, dates)
+    if band:
+        create_sits_files(sits_dir or join(directory, 'sits'), tiles, band)
     print('    Done.')
 
 
@@ -232,15 +233,72 @@ def create_dates_csv(directory, dates):
             f.write(d + '\n')
 
 
+def create_sits_files(sits_dir, tiles, band):
+    # one VRT per tile per date, named to match a sits local_cube parse_info
+    # of c("X1", "tile", "band", "date"). sits requires the band token in the
+    # file name to be upper case for raw (non-results) cubes. sits_dir may be
+    # shared across multiple bands (e.g. multiple indicators from the same
+    # recipe run), so they can be ingested as one multi-band cube without a
+    # separate merge step. These are thin VRTs referencing stack.vrt, not
+    # copies, so the band/date slice they point to must still exist on disk.
+    create_tile_dir(sits_dir)
+    band = band.replace('_', '-').upper()
+    for tile in tiles:
+        create_sits_tile_files(sits_dir, tile, band)
+
+
+def create_sits_tile_files(sits_dir, tile, band):
+    tile_dir = tile['tile_dir']
+    tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
+    stack_file = join(tile_dir, 'stack.vrt')
+    rel_stack_file = relpath(stack_file, sits_dir)
+    ds = gdal.Open(stack_file, GA_ReadOnly)
+    os.chdir(sits_dir)
+    gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
+    for band_index in range(1, ds.RasterCount + 1):
+        date = ds.GetRasterBand(band_index).GetDescription()
+        out_file = join(sits_dir, 'SEPAL_{}_{}_{}.vrt'.format(tile_name, band, date))
+        vrt = gdal.BuildVRT(
+            out_file, rel_stack_file,
+            bandList=[band_index],
+            VRTNodata=nodata_value
+        )
+        vrt.GetRasterBand(1).SetDescription(date)
+        vrt.FlushCache()
+        vrt = None
+        # gdal.BuildVRT resolves the source to an absolute path regardless of
+        # the string passed in, so rewrite it to stay relative: sits_dir and
+        # tile_dir aren't siblings, but they do move together as one unit.
+        with open(out_file, 'r') as f:
+            content = f.read()
+        content = content.replace(stack_file, rel_stack_file).replace(
+            'relativeToVRT="0"', 'relativeToVRT="1"'
+        )
+        with open(out_file, 'w') as f:
+            f.write(content)
+    ds = None
+
+
 def make_relative_to_vrt(vrt_file):
     subprocess.check_call(['sed', '-i', 's/relativeToVRT="0"/relativeToVRT="1"/g', vrt_file])
 
 
 if __name__ == '__main__':
-    dirs = sys.argv[1:]
-    for d in dirs:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('directories', nargs='+')
+    parser.add_argument('--band', help='Indicator name, used to also emit sits-compatible per-date GeoTIFFs')
+    parser.add_argument(
+        '--sits-dir',
+        help='Where to write sits-compatible GeoTIFFs (default: <directory>/sits). '
+             'May be shared across multiple invocations for different bands.'
+    )
+    args = parser.parse_args()
+
+    for d in args.directories:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(abspath(d))
+            stack_time_series(abspath(d), args.band, args.sits_dir)
         else:
             print('Not found: {}'.format(d))

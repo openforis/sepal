@@ -4911,6 +4911,17 @@
           "tooLarge": "Multiple * shard size must be less than or equal to 131072",
           "tooltip": "Multiples of the shard size to set the file dimentions to, the size to split each export into. E.g. for a shard size of 256 and a multiple of 10, the exported image will be downloaded it images with the maximum size of 2560x2560 pixels."
         },
+        "format": {
+          "label": "Format",
+          "CLASSIC": {
+            "label": "Classic",
+            "tooltip": "Stack the time series into a single VRT, with one band per date."
+          },
+          "SITS": {
+            "label": "SITS",
+            "tooltip": "Also produce a sits/ folder with per-date, per-band files readable by the SITS R package."
+          }
+        },
         "scale": {
           "label": "Scale",
           "placeholder": "Scale...",

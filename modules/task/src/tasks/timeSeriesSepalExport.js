@@ -55,7 +55,8 @@ const exportTiles$ = (taskId, featureCollection, {
     downloadDir,
     description,
     recipe,
-    indicator,
+    indicators,
+    format,
     scale,
     tileSize,
     shardSize,
@@ -89,11 +90,22 @@ const exportTiles$ = (taskId, featureCollection, {
     const exportTile$ = ({tileId, tileIndex}) =>
         concat(
             of({tileIndex, chunks: 0}),
-            exportChunks$(createChunks$({tileId, tileIndex})),
-            postProcess$(Path.join(downloadDir, `${tileIndex}`))
+            from(indicators).pipe(
+                mergeMap(indicator => exportIndicator$({tileId, tileIndex, indicator}), 1)
+            )
         )
 
-    const createChunks$ = ({tileId, tileIndex}) => {
+    const exportIndicator$ = ({tileId, tileIndex, indicator}) =>
+        concat(
+            exportChunks$(createChunks$({tileId, tileIndex, indicator})),
+            postProcess$(
+                Path.join(downloadDir, `${tileIndex}`, indicator),
+                format === 'SITS' ? indicator : undefined,
+                format === 'SITS' ? Path.join(downloadDir, `${tileIndex}`, 'sits') : undefined
+            )
+        )
+
+    const createChunks$ = ({tileId, tileIndex, indicator}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
         const from = moment(startDate)
         const to = moment(endDate)
@@ -112,13 +124,13 @@ const exportTiles$ = (taskId, featureCollection, {
             ).pipe(
                 switchMap(notEmpty => {
                     if (notEmpty) {
-                        return createTimeSeries$(tile, startString, endString).pipe(
+                        return createTimeSeries$(tile, startString, endString, indicator).pipe(
                             map(timeSeries =>
-                                ({tileIndex, timeSeries, dateRange, notEmpty})
+                                ({tileIndex, indicator, timeSeries, dateRange, notEmpty})
                             )
                         )
                     } else {
-                        return of({tileIndex, dateRange, notEmpty})
+                        return of({tileIndex, indicator, dateRange, notEmpty})
                     }
                 })
             )
@@ -129,7 +141,7 @@ const exportTiles$ = (taskId, featureCollection, {
     const isRadar = () => _.isEqual(Object.values(dataSets).flat(), ['SENTINEL_1'])
     const isOptical = () => Object.keys(dataSets).find(type => ['LANDSAT', 'SENTINEL_2'].includes(type))
 
-    const createTimeSeries$ = (feature, startDate, endDate) => {
+    const createTimeSeries$ = (feature, startDate, endDate, indicator) => {
         const images$ = getCollection$({
             recipe,
             geometry: aoiGeometry,
@@ -187,9 +199,9 @@ const exportTiles$ = (taskId, featureCollection, {
             })
         )
 
-    const exportChunk$ = ({tileIndex, timeSeries, dateRange}) => {
-        const chunkDescription = `${description}_${tileIndex}_${dateRange}`
-        const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
+    const exportChunk$ = ({tileIndex, indicator, timeSeries, dateRange}) => {
+        const chunkDescription = `${description}_${indicator}_${tileIndex}_${dateRange}`
+        const chunkDownloadDir = `${downloadDir}/${tileIndex}/${indicator}/chunk-${dateRange}`
         const export$ = exportImageToSepal$(taskId, {
             image: timeSeries,
             folder: chunkDescription,
@@ -228,8 +240,11 @@ const exportTiles$ = (taskId, featureCollection, {
     )
 }
 
-const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [downloadDir])
+const postProcess$ = (downloadDir, band, sitsDir) =>
+    terminal$('sepal-stack-time-series', [
+        downloadDir,
+        ...(band ? ['--band', band, '--sits-dir', sitsDir] : [])
+    ])
         .pipe(
             tap(({stream, value}) => {
                 if (value)
