@@ -53,7 +53,7 @@ describe('a time series', () => {
             operation: 'timeseries.download',
             params: expect.objectContaining({
                 title: 'process.retrieve.form.task.SEPAL',
-                image: {bands: 'ndvi', scale: 30, tileSize: 2, recipe, indicator: 'ndvi'}
+                image: {bands: 'ndvi', scale: 30, tileSize: 2, recipe, indicators: 'ndvi'}
             })
         })])
     })
