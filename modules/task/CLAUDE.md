@@ -40,7 +40,9 @@ sepal npm-test task -- --testPathPatterns runner
   the temporary assets).
 - `start.sh` - runs `node src/run.js` as the uid and gid that own the mounted home (`su-exec`).
 - Image: `node:26-alpine` with GDAL's tools and Python bindings (`gdalbuildvrt`, band names,
-  `sepal-stack-time-series`); nothing from the sandbox images.
+  `sepal-stack-time-series`); nothing from the sandbox images. `NODE_OPTIONS=--max-semi-space-size=1` keeps
+  the heap small: without it V8 sizes the young generation from the container's limit and peaks near twice
+  the memory.
 
 ## Release compatibility
 

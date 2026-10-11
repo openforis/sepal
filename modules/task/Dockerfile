@@ -3,6 +3,9 @@ FROM node:26-alpine
 ENV MODULE_NAME=task
 ENV MODULE=/usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED=/usr/local/src/sepal/lib/js/shared
+# V8 sizes the young generation from the container's limit and lets garbage pile up there; a 1 MB semi-space
+# halves a task's memory with no measurable cost to download throughput.
+ENV NODE_OPTIONS=--max-semi-space-size=1
 
 # GDAL tools and Python bindings: image exports build VRTs and name their bands, time series are stacked by a
 # Python script. su-exec runs the task as the owner of the user's home.
