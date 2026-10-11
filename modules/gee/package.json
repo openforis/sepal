@@ -10,16 +10,16 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google-cloud/storage": "^8.2.0",
+        "@google-cloud/storage": "^8.4.0",
         "commander": "^15.0.0",
-        "googleapis": "^183.0.0",
+        "googleapis": "^185.0.0",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
         "moment": "^2.31.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "sepal-ee": "../../lib/js/ee",
-        "uuid": "^14.0.2"
+        "uuid": "^14.0.3"
     },
     "devDependencies": {
         "jest": "^30.5.2",

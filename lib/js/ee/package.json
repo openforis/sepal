@@ -11,7 +11,7 @@
         "moment": "^2.31.0",
         "rxjs": "^7.8.2",
         "sepal": "../shared",
-        "uuid": "^14.0.2"
+        "uuid": "^14.0.3"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
