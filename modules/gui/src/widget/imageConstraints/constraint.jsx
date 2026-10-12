@@ -142,37 +142,20 @@ class _Constraint extends React.Component {
     }
 
     renderImage() {
-        const {images, inputs: {image, band, operator}} = this.props
-        const imageOptions = images.map(({id, description, bands}) => ({value: id, label: description, bands}))
+        const {images, inputs: {image}} = this.props
+        const imageOptions = images.map(({id, description, bands, properties}) => ({value: id, label: description, bands, properties}))
         return (
             <Form.Combo
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands = [], properties = []}) => {
-                    const selectDefaultBand = bands.length === 1
-                    band.set(selectDefaultBand
-                        ? bands[0].name
-                        : null)
-                    if (selectDefaultBand) {
-                        if (bands[0].type === 'categorical') {
-                            operator !== 'class' && operator.set('class')
-                        } else {
-                            operator === 'class' && operator.set('<')
-                        }
-                    }
-
-                    const selectDefaultProperty = properties.length === 1
-                    band.set(selectDefaultProperty
-                        ? properties[0].name
-                        : null)
-                }}
+                onChange={option => this.selectImage(option)}
             />
         )
     }
 
     renderBand() {
-        const {images, inputs: {image, band, bit, operator}} = this.props
+        const {images, inputs: {image, band, bit}} = this.props
         const bitButton = (
             <Form.Buttons
                 key={'bit'}
@@ -200,19 +183,13 @@ class _Constraint extends React.Component {
                 options={bandOptions}
                 className={styles.band}
                 buttons={[bitButton]}
-                onChange={({type}) => {
-                    if (type === 'categorical') {
-                        operator.set('class')
-                    } else {
-                        (!operator.value || operator.value === 'class') && operator.set('<')
-                    }
-                }}
+                onChange={({type}) => this.bandSelected(type)}
             />
         )
     }
 
     renderProperty() {
-        const {images, categoriesByProperty, inputs: {image, property, operator, selectedClasses}} = this.props
+        const {images, categoriesByProperty, inputs: {image, property}} = this.props
         const propertyOptions = (images.find(({id}) => id === image.value)?.properties || [])
             .map(({name, type}) => ({value: name, label: name, type}))
 
@@ -222,18 +199,42 @@ class _Constraint extends React.Component {
                 input={property}
                 options={propertyOptions}
                 className={styles.band}
-                onChange={categoriesByProperty
-                    ? ({value}) => {
-                        selectedClasses.set([])
-                        if (this.categoricalOptions(value)) {
-                            operator.set('class')
-                        } else if (operator.value === 'class') {
-                            operator.set('=')
-                        }
-                    }
-                    : null}
+                onChange={categoriesByProperty ? ({value}) => this.propertySelected(value) : null}
             />
         )
+    }
+
+    // An image offering a single band, or a single property, has it selected, as if chosen; one offering several leaves
+    // the choice to be made. Bands and properties are chosen apart.
+    selectImage({bands = [], properties = []}) {
+        const {categoriesByProperty, inputs: {band, property}} = this.props
+        const [defaultBand] = bands.length === 1 ? bands : []
+        const [defaultProperty] = properties.length === 1 ? properties : []
+        band.set(defaultBand ? defaultBand.name : null)
+        property.set(defaultProperty ? defaultProperty.name : null)
+        defaultBand && this.bandSelected(defaultBand.type)
+        defaultProperty && categoriesByProperty && this.propertySelected(defaultProperty.name)
+    }
+
+    // A categorical band is compared by class, any other by value.
+    bandSelected(type) {
+        const {inputs: {operator}} = this.props
+        if (type === 'categorical') {
+            operator.set('class')
+        } else {
+            (!operator.value || operator.value === 'class') && operator.set('<')
+        }
+    }
+
+    // A property with categories is compared by class, any other by value.
+    propertySelected(name) {
+        const {inputs: {operator, selectedClasses}} = this.props
+        selectedClasses.set([])
+        if (this.categoricalOptions(name)) {
+            operator.set('class')
+        } else if (operator.value === 'class') {
+            operator.set('=')
+        }
     }
 
     renderOperator() {
