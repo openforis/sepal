@@ -5515,5 +5515,8 @@
     "light": "Clair",
     "system": "Système",
     "systemTooltip": "Suivre le réglage du système d'exploitation"
+  },
+  "language": {
+    "label": "Langue"
   }
 }

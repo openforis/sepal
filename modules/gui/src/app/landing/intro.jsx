@@ -1,3 +1,4 @@
+import {LanguageSelector} from '~/app/landing/languageSelector'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
@@ -43,6 +44,9 @@ export const Intro = ({onLaunch}) =>
 const Main = ({onLaunch}) =>
     <Keybinding keymap={{'Enter': onLaunch, 'Escape': onLaunch}}>
         <div id='main' className={styles.main}>
+            <div className={styles.language}>
+                <LanguageSelector/>
+            </div>
             <Title className={styles.title}/>
             <Tagline className={styles.tagline}/>
             <ButtonGroup layout='horizontal'>

@@ -5,7 +5,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {THEME_PREFERENCES, themeManager} from '~/theme'
 import {withThemePreference} from '~/themeHooks'
-import {msg} from '~/translate'
+import {getLanguage, languages, msg, setLanguage} from '~/translate'
 import {logout$} from '~/user'
 import {withActivators} from '~/widget/activation/activator'
 import {ButtonSelect} from '~/widget/buttonSelect'
@@ -43,6 +43,8 @@ class _UserMenuButton extends React.Component {
             this.option({value: 'sshKeys', label: msg('user.sshKeys.label'), icon: 'terminal'}, sshKeys),
             {key: 'theme', label: msg('theme.label'), group: true},
             ...THEME_PREFERENCES.map(preference => this.themeOption(preference)),
+            {key: 'language', label: msg('language.label'), group: true},
+            ...languages.map(language => this.languageOption(language)),
             {key: 'separator', group: true},
             {value: 'logout', label: msg('home.sections.logout'), icon: 'sign-out-alt', onSelect: () => this.logout()}
         ]
@@ -62,6 +64,19 @@ class _UserMenuButton extends React.Component {
             icon: preference === themePreference ? 'circle-dot' : 'circle',
             iconType: 'regular',
             onSelect: () => themeManager.setPreference(preference)
+        }
+    }
+
+    languageOption({code, name}) {
+        return {
+            value: `language-${code}`,
+            label: name,
+            icon: code === getLanguage() ? 'circle-dot' : 'circle',
+            iconType: 'regular',
+            onSelect: () => {
+                setLanguage(code)
+                window.location.reload()
+            }
         }
     }
 

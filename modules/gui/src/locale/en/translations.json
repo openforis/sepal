@@ -6601,5 +6601,8 @@
     "light": "Light",
     "system": "System",
     "systemTooltip": "Follow the operating system setting"
+  },
+  "language": {
+    "label": "Language"
   }
 }
