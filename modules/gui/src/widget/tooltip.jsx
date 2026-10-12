@@ -57,7 +57,8 @@ class _Tooltip extends React.Component {
                     afterVisibleChange={this.afterVisibleChange}
                     onPopupAlign={this.onPopupAlign}
                     getTooltipContainer={() => document.getElementById(DEFAULT_PORTAL_CONTAINER_ID)}
-                    zIndex={2}
+                    // Above everything, notifications (z-index 2, rendered after the portal) included.
+                    zIndex={3}
                     {...otherProps}>
                     {children}
                 </RcTooltip>

@@ -10,7 +10,10 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
+import {CopyButton} from './copyButton'
+import {Layout} from './layout'
 import styles from './notifications.module.css'
+import {setNotificationsContainer} from './notificationsContainer'
 import {Scrollable} from './scrollable'
 
 const PUBLISH_ANIMATION_DURATION_MS = 300
@@ -18,10 +21,6 @@ const DISMISS_ANIMATION_DURATION_MS = 500
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
-
-// The mounted container, for the BlurDetector: a click on a notification is never a click outside
-// an overlay.
-let containerElement = null
 
 const autoDismiss$ = publish$.pipe(
     filter(({timeout}) => timeout),
@@ -85,11 +84,32 @@ class _Notifications extends React.Component {
         timeouts: {}
     }
 
-    renderTitle(title) {
+    renderHeader(notification) {
+        const {title, level, error} = notification
+        const copyable = level === 'error' || error
+        return title || copyable
+            ? (
+                <Layout type='horizontal-no-wrap'>
+                    <div className={styles.title}>
+                        {title}
+                    </div>
+                    {copyable ? this.renderCopyButton(notification) : null}
+                </Layout>
+            )
+            : null
+    }
+
+    renderCopyButton(notification) {
         return (
-            <div className={styles.title}>
-                {title}
-            </div>
+            <CopyButton
+                value={getCopyableText(notification)}
+                air='none'
+                chromeless
+                icon='copy'
+                shape='circle'
+                tooltip={msg('button.copyToClipboard')}
+                tooltipPlacement='top'
+            />
         )
     }
 
@@ -110,10 +130,9 @@ class _Notifications extends React.Component {
     }
     
     renderError(error) {
-        const errorMessage = typeof error === 'string' ? error : error.message
         return (
             <div className={styles.error}>
-                {errorMessage}
+                {getErrorMessage(error)}
             </div>
         )
     }
@@ -155,7 +174,8 @@ class _Notifications extends React.Component {
             : null
     }
 
-    renderNotification({id, level, title, message, error, content, link, timeout, dismissable, adding, removing}) {
+    renderNotification(notification) {
+        const {id, level, message, error, content, link, timeout, dismissable, adding, removing} = notification
         const dismiss = () => manualDismiss$.next(id)
         return id
             ? (
@@ -177,7 +197,7 @@ class _Notifications extends React.Component {
                         }}
                         onClick={() => dismissable && dismiss()}
                     >
-                        {title ? this.renderTitle(title) : null}
+                        {this.renderHeader(notification)}
                         {message ? this.renderMessage(message) : null}
                         {error ? this.renderError(error) : null}
                         {content ? this.renderContent(content, dismiss) : null}
@@ -197,7 +217,7 @@ class _Notifications extends React.Component {
 
     render() {
         return (
-            <div className={styles.container} ref={element => containerElement = element}>
+            <div className={styles.container} ref={setNotificationsContainer}>
                 <Scrollable
                     direction='y'
                     className={styles.scrollable}
@@ -277,6 +297,16 @@ class _Notifications extends React.Component {
 
 }
 
+const getErrorMessage = error =>
+    typeof error === 'string' ? error : error.message
+
+const getCopyableText = ({title, message, error}) =>
+    [
+        title,
+        ...(message ? message.split('|') : []),
+        error ? getErrorMessage(error) : null
+    ].filter(Boolean).join('\n')
+
 // const publishRandomNotification = () => {
 //     const levels = ['info', 'success', 'warning', 'error']
 //     const level = levels[Math.floor(Math.random() * levels.length)]
@@ -309,9 +339,6 @@ Notifications.error = notification => {
         : (notification.message || notification)
     )
 }
-
-Notifications.container = () =>
-    containerElement
 
 Notifications.dismiss = notificationId =>
     dismiss(notificationId)
