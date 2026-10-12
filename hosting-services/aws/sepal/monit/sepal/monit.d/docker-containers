@@ -81,3 +81,6 @@ check program user-assets-redis with path /usr/local/bin/dockercheck-user-assets
 
 check program user-files with path /usr/local/bin/dockercheck-user-files
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
+check program user-data with path /usr/local/bin/dockercheck-user-data
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"

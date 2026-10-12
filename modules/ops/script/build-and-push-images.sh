@@ -70,6 +70,7 @@ build storage
 build user-storage-backup
 build user-assets
 build user-files
+build user-data
 build message
 build recipe
 build budget
@@ -93,6 +94,7 @@ push app-launcher
 push app-manager
 push user-assets
 push user-files
+push user-data
 push message
 push recipe
 push budget

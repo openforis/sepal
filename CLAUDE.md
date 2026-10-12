@@ -23,6 +23,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions); also proxies user sandboxes (`/api/sandbox/*`)
 - `gee` - Google Earth Engine integration
 - `user` - User management, authentication, credentials (formerly `user-node`; replaced the Java `user` module and LDAP)
+- `user-data` - Each user's cloud storage attachments ("Data", `~/data`): prefix-scoped credentials for the shared S3 bucket; all S3 code in `src/providers/s3.js`
 - `worker` - Worker instances, sandbox sessions (replaced the sepal-server `sdms` cluster)
 - `task-manager` - Runs each export task in its own detached container on the main host
 - `task` - One-shot task runner image, started by task-manager per task
