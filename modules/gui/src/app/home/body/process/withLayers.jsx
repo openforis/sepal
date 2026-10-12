@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one'
 import React from 'react'
 
 import {withMapArea} from '~/app/home/map/mapAreaContext'
@@ -25,6 +26,9 @@ export const withLayers = () =>
     WrappedComponent =>
         compose(
             class WithLayersHOC extends React.Component {
+                // Assembled again only when the recipe or the listing changes, not on every render.
+                assembleImageLayerSources = memoizeOne(assembleImageLayerSources)
+
                 render() {
                     const {
                         recipe,
@@ -39,7 +43,7 @@ export const withLayers = () =>
                         dependencySources: dependencyImageLayerSources,
                         additionalImageLayerSources,
                         legacySourceIds: legacyImageLayerSourceIds
-                    } = assembleImageLayerSources(recipe, recipeListing)
+                    } = this.assembleImageLayerSources(recipe, recipeListing)
                     const {imageLayer: {sourceId, layerConfig} = {}, featureLayerSources: areaFeatureLayerSources = []} = areas[area] || {}
 
                     const imageLayerSources = [...standardImageLayerSources, ...dependencyImageLayerSources, ...additionalImageLayerSources]

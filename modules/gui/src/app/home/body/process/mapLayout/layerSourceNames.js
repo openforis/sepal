@@ -1,5 +1,5 @@
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
-import {dotSafe, selectFrom} from '~/stateUtils'
+import {dotSafe} from '~/stateUtils'
 import {select} from '~/store'
 
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
@@ -13,7 +13,7 @@ import {getImageLayerSource} from '../imageLayerSourceRegistry'
 export const layerSourceNamePath = sourceId => ['layers.imageLayerSourceNames', dotSafe(sourceId)]
 
 export const layerSourceName = (recipe, sourceId) =>
-    sourceId ? selectFrom(recipe, layerSourceNamePath(sourceId)) : undefined
+    sourceId ? recipe?.layers?.imageLayerSourceNames?.[sourceId] : undefined
 
 // What a source is called wherever it is listed or shown: the name it was given, else what its type calls it.
 export const layerSourceDescription = ({recipe, source}) =>

@@ -12,7 +12,7 @@ import {ButtonSelect} from '~/widget/buttonSelect'
 import {Confirm} from '~/widget/confirm'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
-import {ListItem} from '~/widget/listItem'
+import {ListItem, useDragPreview} from '~/widget/listItem'
 import {Padding} from '~/widget/padding'
 import {Scrollable} from '~/widget/scrollable'
 
@@ -34,14 +34,15 @@ export class _ImageLayerSources extends React.Component {
     }
 
     render() {
-        const {standardImageLayerSources, dependencyImageLayerSources = [], additionalImageLayerSources, additionalFeatureLayerSources = []} = this.props
+        const {recipe, imageLayerSources, standardImageLayerSources, dependencyImageLayerSources = [], additionalImageLayerSources, additionalFeatureLayerSources = []} = this.props
+        const missingIds = missingImageLayerSources(recipe, imageLayerSources).map(({id}) => id)
         return (
             <Scrollable direction='y'>
                 <Padding noHorizontal>
                     <Layout type='vertical' spacing='tight'>
-                        {standardImageLayerSources.map(source => this.renderSource({source, userAdded: false}))}
-                        {dependencyImageLayerSources.map(source => this.renderSource({source, userAdded: false, renamable: true}))}
-                        {additionalImageLayerSources.map(source => this.renderSource({source, userAdded: true}))}
+                        {standardImageLayerSources.map(source => this.renderSource({source, missingIds, userAdded: false}))}
+                        {dependencyImageLayerSources.map(source => this.renderSource({source, missingIds, userAdded: false, renamable: true}))}
+                        {additionalImageLayerSources.map(source => this.renderSource({source, missingIds, userAdded: true}))}
                         {additionalFeatureLayerSources.map(source => this.renderFeatureSource(source))}
                     </Layout>
                 </Padding>
@@ -78,10 +79,10 @@ export class _ImageLayerSources extends React.Component {
     // A source found to name a recipe that no longer exists is marked, saying which, and left to be edited or removed. A
     // saved source of an image the recipe no longer reads, kept because an area shows it, says so. A source the layout
     // added is edited in the form that added it; one derived from the recipe's inputs, or kept from them, is renamed.
-    renderSource({source, userAdded, renamable}) {
-        const {drag$, recipe, imageLayerSources, legacyImageLayerSourceIds = [], onEdit, onRename} = this.props
+    renderSource({source, missingIds, userAdded, renamable}) {
+        const {drag$, recipe, legacyImageLayerSourceIds = [], onEdit, onRename} = this.props
         const description = layerSourceDescription({recipe, source})
-        const missing = missingImageLayerSources(recipe, imageLayerSources).some(({id}) => id === source?.id)
+        const missing = missingIds.includes(source?.id)
         const legacy = legacyImageLayerSourceIds.includes(source?.id)
         const editable = userAdded && isEditableLayerSource(source)
         const change = editable
@@ -175,12 +176,13 @@ const ownedDeleteAction = () => ({
     disabled: true
 })
 
-// The row's actions, opened from one button in a slot as wide on every row.
+// The row's actions, opened from one button in a slot as wide on every row. A dragged row's preview keeps the slot empty.
 const SourceActions = ({change, remove}) => {
+    const preview = useDragPreview()
     const offered = [change, remove].filter(Boolean)
     return (
         <div className={styles.actions}>
-            {offered.length
+            {offered.length && !preview
                 ? (
                     <ButtonSelect
                         chromeless

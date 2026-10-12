@@ -173,6 +173,7 @@ class _Areas extends React.Component {
         this.initializeDragDrop()
     }
 
+    // A move within the same drop area changes nothing shown, so only a move to another one is passed on.
     drag$(drag$, release$) {
         return drag$.pipe(
             filter(({dragging}) => dragging === true),
@@ -180,7 +181,7 @@ class _Areas extends React.Component {
                 drag$.pipe(
                     takeUntil(release$),
                     map(({coords}) => ({value, dropArea: this.getDropArea(coords)})),
-                    distinctUntilChanged()
+                    distinctUntilChanged((previous, current) => previous.dropArea === current.dropArea)
                 )
             )
         )
