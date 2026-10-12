@@ -13,8 +13,8 @@ npm run test:aws                                           # AWS isolation suite
 
 ## Structure
 
-- `attachments.js` — a user's attachments. Only the built-in Data attachment for now:
-  `{id: 'data', name: 'Data', owner, provider: 's3', location: {bucket, prefix: 'users/<owner>/'}, mountPath: 'data', quota: true}`.
+- `attachments.js` — a user's attachments. Only the built-in Data attachment for now: `{id: 'data', name: 'Data',
+  owner, provider: 's3', location: {bucket, prefix: 'users/<owner>/'}, mountPath: 'data', quota: true}`.
 - `access.js` — validates the purpose, decides the mode, builds the credentials URL, delegates to the provider.
 - `providers/providers.js` — provider registry. A provider implements `grantAccess(attachment, {mode, purpose,
   credentialsUrl, authorizationTokenFile})` and `credentials(attachment, {mode})`.
@@ -39,17 +39,24 @@ cached per user and mode and renewed within 15 minutes of expiry.
 
 ## Dev-env emulator
 
-`docker-compose.override.yml` runs the adapter in emulator mode against its own `s3-emulator` service (`rclone serve s3`, bucket
-`sepal-dev-user-data`, key `sepal-dev` / `sepal-dev-secret`). Emulator mode hands out that fixed key: there is no
-prefix isolation and no read-only mode in dev-env.
+`docker-compose.override.yml` runs the adapter in emulator mode against its own `s3-emulator` service
+(`rclone serve s3`, bucket `sepal-dev-user-data`, key `sepal-dev` / `sepal-dev-secret`). Emulator mode hands out
+that fixed key: there is no prefix isolation and no read-only mode in dev-env.
 
 ## AWS resources
 
 `hosting-services/aws/sepal/provision-user-data.yml` creates, per environment, the bucket
 `sepal-<env>-user-data`, the IAM user `sepal-<env>-user-data` this module runs as, and the role of the same name
-that user credentials are issued for. Access keys for the IAM user are created by hand once and put in the env
-file as `USER_DATA_AWS_ACCESS_KEY_ID` / `USER_DATA_AWS_SECRET_ACCESS_KEY`, with `USER_DATA_BUCKET` and
-`USER_DATA_ROLE_ARN`; the playbook prints the bucket and role ARN to use.
+that user credentials are issued for.
+
+**Before the first rollout of a build containing user-data to an environment**, run `provision-user-data.yml`,
+create access keys for the IAM user, and put `USER_DATA_BUCKET`, `USER_DATA_ROLE_ARN`,
+`USER_DATA_AWS_ACCESS_KEY_ID` and `USER_DATA_AWS_SECRET_ACCESS_KEY` in the env file (the playbook prints the bucket
+and role ARN to use). Without them the container exits at boot. `user-data` is the last module in `deploy.yml` so
+that such a failure leaves every other module updated.
+
+On the very first provisioning run, IAM eventual consistency can reject the role's trust policy ("Invalid
+principal") because it names the just-created IAM user; re-running the playbook fixes it.
 
 `*.aws.integration.test.js` checks prefix isolation and read-only mode on that real bucket. It runs only with
 `USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment:
