@@ -111,6 +111,33 @@ describe('submitting a panel outside a wizard', () => {
     })
 })
 
+describe('pressing Escape in a panel outside a wizard', () => {
+    it.each([
+        ['unedited', INITIAL],
+        ['edited', VALID]
+    ])('cancels an %s panel', async (_state, choice) => {
+        await open(undefined)
+        await choose(choice)
+
+        await pressEscape()
+
+        expect(cancelled).toEqual(1)
+    })
+
+    // Content such as a filter box can take over Escape, so clearing it does not close the panel.
+    it.each([
+        ['unedited', INITIAL],
+        ['edited', VALID]
+    ])('leaves an %s panel open while its Escape is disabled', async (_state, choice) => {
+        await open(undefined, {disabledEscape: true})
+        await choose(choice)
+
+        await pressEscape()
+
+        expect(cancelled).toEqual(0)
+    })
+})
+
 const INITIAL = 'initial'
 const VALID = 'valid'
 const INVALID = 'invalid'
@@ -119,18 +146,19 @@ const fields = {
     choice: new FormField().predicate(choice => choice !== INVALID, 'choice.invalid')
 }
 
-const Harness = withForm({fields})(({form, inputs}) =>
+const Harness = withForm({fields})(({form, inputs, disabledEscape}) =>
     <FormPanel
         id={PANEL}
         placement='inline'
         form={form}
-        onApply={values => applied.push(values)}>
+        onApply={values => applied.push(values)}
+        onCancel={() => cancelled++}>
         <PanelContent>
             <FormButtons
                 input={inputs.choice}
                 options={[INITIAL, VALID, INVALID].map(value => ({value, label: value}))}/>
         </PanelContent>
-        <FormPanelButtons/>
+        <FormPanelButtons disabledEscape={disabledEscape}/>
     </FormPanel>
 )
 
@@ -145,16 +173,21 @@ const click = label => act(async () => {
     button.click()
 })
 
+const pressEscape = () => act(async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}))
+})
+
 const submitForm = () => act(async () => {
     const form = document.querySelector('form')
     expect(form, 'the panel has no form to submit').toBeDefined()
     form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', {cancelable: true}))
 })
 
-let root, container, store, applied
+let root, container, store, applied, cancelled
 
 beforeEach(() => {
     applied = []
+    cancelled = 0
     wizard.context = undefined
 })
 
@@ -165,7 +198,7 @@ afterEach(async () => {
     vi.restoreAllMocks()
 })
 
-const open = context => {
+const open = (context, {disabledEscape} = {}) => {
     wizard.context = context
     store = createStore((state = {dimensions: {width: 1024, height: 768}}, action) =>
         action.reduce ? action.reduce(state) : state)
@@ -176,7 +209,7 @@ const open = context => {
     return act(async () => root.render(
         <Provider store={store}>
             <EventShield>
-                <Harness values={{choice: INITIAL}}/>
+                <Harness values={{choice: INITIAL}} disabledEscape={disabledEscape}/>
             </EventShield>
         </Provider>
     ))
