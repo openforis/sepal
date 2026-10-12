@@ -123,3 +123,8 @@
 .draggableClone > * {
     flex-grow: 1;
 }
+
+/* The look sets the border colour more specifically, and again on hover and press. */
+.error {
+    border-color: var(--error-color) !important;
+}

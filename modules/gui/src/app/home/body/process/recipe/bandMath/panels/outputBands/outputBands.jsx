@@ -139,7 +139,7 @@ class _OutputBands extends React.Component {
         return (
             <ListItem
                 key={outputImage.imageId}
-                className={problem ? styles.error : null}
+                error={!!problem}
                 expansionClickable
                 expanded
                 expansion={this.renderOutputBands(outputImage)}

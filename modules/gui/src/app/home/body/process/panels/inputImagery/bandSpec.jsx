@@ -17,7 +17,7 @@ export class BandSpec extends React.Component {
         const {selected, spec: {id, band, type}, missing, disabled, onClick, onRemove} = this.props
         return (
             <ListItem
-                className={missing ? styles.error : null}
+                error={!!missing}
                 expansion={this.renderExpansion()}
                 expanded={selected}
                 disabled={disabled}

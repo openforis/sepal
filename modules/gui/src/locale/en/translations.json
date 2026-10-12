@@ -4926,6 +4926,10 @@
           "title": "Mapping"
         }
       },
+      "requirement": {
+        "bandNotIncluded": "A constraint reads band \"{band}\", which its input does not include.",
+        "missingInput": "A constraint reads an input that has been removed."
+      },
       "tabPlaceholder": "Remapping"
     },
     "retrieve": {
@@ -6616,6 +6620,7 @@
       },
       "band": {
         "label": "Band",
+        "notOffered": "\"{band}\" is not among this image's bands.",
         "notSelected": "[No band selected]"
       },
       "booleanOperator": {
@@ -6628,6 +6633,7 @@
       },
       "image": {
         "label": "Image",
+        "notOffered": "This image is no longer available.",
         "notSelected": "[No image selected]"
       },
       "logicalAnd": {

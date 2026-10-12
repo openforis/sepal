@@ -6,12 +6,13 @@
 // entries, a probability-capable Classification's default output must fail with Earth Engine's refusal to reduce no
 // bands, while a request for its class alone still runs.
 //
-// Remapping's inputs. Execution selects every band each input includes, but Earth Engine evaluates lazily: only the bands
-// its legend's constraints read are evaluated, so only a missing band a constraint reads fails the image. A band an
-// input lacks is compared, built and at one pixel, with what the declaration would say if it refused any included band
-// its input's description lacks: for a band a constraint reads, for another band of an input a constraint reads, and
-// for a band of an input no constraint reads. Only included bands are compared; a constraint naming a band not included
-// is a different question.
+// Remapping's inputs. Execution passes the bands each input includes as its `selection`, which an asset input does
+// not read: an asset is built with every band it stores, and only the bands a constraint reads are selected from it.
+// So only a missing band a constraint reads fails the image. A band an input lacks is compared, built and at one
+// pixel, with what the declaration would say if it refused any included band its input's description lacks: for a
+// band a constraint reads, for another band of an input a constraint reads, and for a band of an input no constraint
+// reads. A constraint reading a band the asset stores but the input does not include is built and sampled too, and
+// the asset input itself built as Remapping builds it.
 //
 // The input is one Landsat scene, trained on nine inline points. Read-only: recipes are held in memory, nothing is
 // saved and no asset is written. Authenticates with the service account:
@@ -117,6 +118,13 @@ const INPUT_CASES = [
         rule: ruleReading('SR_B5'),
         executes: true,
         missing: [`${ELEVATION}:${MISSING_BAND}`]
+    },
+    {
+        name: 'a band the asset stores but the input does not include, which a constraint reads',
+        images: [sceneIncluding('SR_B4')],
+        rule: ruleReading('SR_B5'),
+        executes: true,
+        missing: []
     }
 ]
 
@@ -236,6 +244,13 @@ const main = async () => {
     for (const inputCase of INPUT_CASES) {
         await expectInputs(inputCase)
     }
+    const input = sceneIncluding('SR_B4')
+    const asRemappingBuildsIt = await built(input, {selection: input.includedBands.map(({band}) => band)})
+    report(
+        asRemappingBuildsIt.bands?.length > 1 && asRemappingBuildsIt.bands.some(({name}) => name === 'SR_B5'),
+        'An asset input, built as Remapping builds it, keeps every band it stores, not only those it includes',
+        {included: ['SR_B4'], built: asRemappingBuildsIt.bands?.map(({name}) => name) || asRemappingBuildsIt.error}
+    )
 
     if (failures) {
         throw new Error(`${failures} check(s) failed`)

@@ -304,7 +304,7 @@ describe('a classification', () => {
 
 describe('a remapping', () => {
     it('is described with its class while the imagery it remaps is not even loaded', () => {
-        const {output} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1'}]}))
+        const {output} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1', includedBands: [{band: 'class'}]}]}))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
@@ -1041,7 +1041,7 @@ describe.each([
     ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
     ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
-    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask],
+    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe, includedBands: [{band: 'class'}]}]}), remappingTask],
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
     ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
     ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
@@ -1151,7 +1151,7 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
     }
 })
 
-const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes'}], values = [1, 2, 3]} = {}) => ({
+const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes', includedBands: [{band: 'class'}]}], values = [1, 2, 3]} = {}) => ({
     id: ID,
     type: 'REMAPPING',
     title: 'Forest',

@@ -11,6 +11,7 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {RemappingToolbar} from './panels/remappingToolbar'
 import {getDefaultModel} from './remappingRecipe'
+import {remappingRequirements} from './remappingRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -57,5 +58,6 @@ export default () => ({
         return null
     },
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: remappingRequirements
 })

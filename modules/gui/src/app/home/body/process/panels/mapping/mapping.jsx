@@ -2,6 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -16,6 +17,7 @@ import {LegendItem} from '~/widget/legend/legendItem'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
+import {Tooltip} from '~/widget/tooltip'
 
 import styles from './mapping.module.css'
 
@@ -65,24 +67,29 @@ class _Mapping extends React.Component {
     }
 
     renderEntryMapping(entry) {
-        const {activator: {activatables}} = this.props
+        const {activator: {activatables}, itemProblems = {}} = this.props
+        const problem = itemProblems[entry.id]
         const onClick = () => activatables[`entryMapping-${entry.id}}`].activate()
+        const legendItem = (
+            <LegendItem
+                color={entry.color}
+                value={entry.value}
+                label={entry.label}
+                onClick={onClick}
+            />
+        )
         return (
             <ListItem
                 key={entry.id}
+                error={!!problem}
                 onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>
                 <CrudItem
-                    content={
-                        <LegendItem
-                            color={entry.color}
-                            value={entry.value}
-                            label={entry.label}
-                            onClick={onClick}
-                        />
-                    }
+                    content={problem
+                        ? <Tooltip msg={problem} placement='top'><div>{legendItem}</div></Tooltip>
+                        : legendItem}
                 />
             </ListItem>
         )
@@ -113,6 +120,7 @@ class _Mapping extends React.Component {
                     booleanOperator={booleanOperator}
                     constraints={constraints}
                     applyOn={'bands'}
+                    checkReferences
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />
                 {constraints.length
@@ -150,6 +158,7 @@ class _Mapping extends React.Component {
 export const Mapping = compose(
     _Mapping,
     connect(mapStateToProps),
+    withItemProblems('mapping'),
     recipeFormPanel({id: 'mapping', mapRecipeToProps}),
     withActivators()
 )

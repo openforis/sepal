@@ -24,7 +24,3 @@
     color: gray;
     font-size: .9rem;
 }
-
-.error {
-    border: 1px solid var(--error-color)
-}

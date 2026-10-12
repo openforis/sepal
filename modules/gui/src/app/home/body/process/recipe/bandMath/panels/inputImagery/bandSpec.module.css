@@ -2,7 +2,3 @@
 .bandSelector {
     flex-grow: 1;
 }
-
-.error {
-    border: 1px solid var(--error-color)
-}

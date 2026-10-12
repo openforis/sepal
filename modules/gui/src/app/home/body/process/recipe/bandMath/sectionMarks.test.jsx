@@ -10,9 +10,8 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
-
-import outputBandsStyles from './panels/outputBands/outputBands.module.css'
 
 // What the Band Math editor marks about its sections: the toolbar buttons, and the rows of the lists their panels show,
 // each from what the section's own rules or the output read find - one section's problem never hiding another's. The
@@ -329,7 +328,7 @@ const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])
     const names = [...recipe.model.inputImagery.images, ...recipe.model.calculations.calculations].map(({name}) => name)
         .sort((a, b) => b.length - a.length)
-    return [...document.getElementsByClassName(classOf(outputBandsStyles, 'error'))]
+    return [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
         .map(row => names.find(name => row.textContent.includes(name)))
 }
 

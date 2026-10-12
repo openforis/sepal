@@ -141,7 +141,7 @@ class _ImageConstraints extends React.Component {
     }
 
     renderConstraint(constraint) {
-        const {images, applyOn} = this.props
+        const {images, applyOn, checkReferences} = this.props
         const {selected} = this.state
         return (
             <Constraint
@@ -150,6 +150,7 @@ class _ImageConstraints extends React.Component {
                 images={images}
                 selected={selected === constraint.id}
                 applyOn={applyOn}
+                checkReferences={checkReferences}
                 onClick={() => this.select(constraint.id)}
                 onRemove={() => this.remove(constraint.id)}
                 onValidate={invalid => this.setState(({invalidById}) => ({
@@ -163,8 +164,12 @@ class _ImageConstraints extends React.Component {
         )
     }
 
+    // An invalid constraint keeps the focus, but any other invalid one can take it: several found invalid when opened can
+    // each be repaired.
     select(constraintId) {
-        !this.isInvalid() && this.setState(({selected}) => ({
+        const {selected, invalidById} = this.state
+        const selectable = !this.isInvalid() || (invalidById[constraintId] && constraintId !== selected)
+        selectable && this.setState(({selected}) => ({
             selected: selected === constraintId ? null : constraintId
         }))
     }
@@ -234,6 +239,8 @@ ImageConstraints.propTypes = {
     onChange: PropTypes.func.isRequired,
     applyOn: PropTypes.string,
     booleanOperator: PropTypes.any,
+    // Whether a constraint naming an image or band not among `images` is invalid.
+    checkReferences: PropTypes.any,
     constraints: PropTypes.array,
     constraintsId: PropTypes.string,
 }

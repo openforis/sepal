@@ -11,6 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withSourceProblems} from '../../selectedSource'
 import {Legend} from '../legend/legend'
 import styles from './remappingToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
@@ -23,7 +24,7 @@ const mapRecipeToProps = recipe => ({
 
 class _RemappingToolbar extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, sourceProblems} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend', 'mapping']}
@@ -58,8 +59,9 @@ class _RemappingToolbar extends React.Component {
                         panel/>
                     <Toolbar.ActivationButton
                         id='mapping'
+                        error={!!sourceProblems.mapping}
                         label={msg('process.remapping.panel.mapping.button.label')}
-                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}
+                        tooltip={sourceProblems.mapping || msg('process.remapping.panel.mapping.button.tooltip')}
                         disabled={!initialized}
                         panel/>
                 </Toolbar>
@@ -70,6 +72,7 @@ class _RemappingToolbar extends React.Component {
 
 export const RemappingToolbar = compose(
     _RemappingToolbar,
+    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )
 

@@ -10,9 +10,8 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
-
-import inputImageryStyles from './panels/inputImagery/inputImagery.module.css'
 
 // What the Band Math editor marks when its output read finds an input lacking a band it includes: the Input imagery
 // button and that input's row, saying which bands. The real toolbar and Input imagery list over a real store and source
@@ -369,7 +368,7 @@ const inputImageryMark = () => {
 }
 
 // The inputs whose rows are in their list's error state, by the name each shows.
-const inputsInError = () => [...document.getElementsByClassName(classOf(inputImageryStyles, 'error'))]
+const inputsInError = () => [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
     .map(row => inputNames().find(name => row.textContent.includes(name)))
 
 // Whether the Input imagery toolbar button is in its error state.

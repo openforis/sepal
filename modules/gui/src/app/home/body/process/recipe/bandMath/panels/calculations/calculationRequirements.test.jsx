@@ -8,6 +8,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import listItemStyles from '~/widget/listItem.module.css'
 
 // Calculations as their list and panel show them, judged by what Band Math needs of its configuration as applied, with
 // the sync that keeps the rest of the recipe following them, as the Band Math editor composes them, over a real store.
@@ -77,6 +78,7 @@ describe('the list of calculations', () => {
             [expect.stringContaining('process.requirement.prerequisiteUnmet')]
         ])
         expect(listTooltips()[1][0]).toContain('a')
+        expect(rowsInError()).toEqual(['i1.swir', 'a.a + 1'])
     })
 })
 
@@ -180,6 +182,12 @@ function listTooltips() {
     return [...document.querySelectorAll('[data-tooltip]')]
         .map(element => JSON.parse(element.dataset.tooltip))
         .filter(lines => lines.some(line => line.startsWith('process.bandMath.requirement') || line.startsWith('process.requirement')))
+}
+
+// The calculations whose rows are in their error state, by expression.
+function rowsInError() {
+    return [...document.getElementsByClassName(listItemStyles.error)]
+        .map(row => ['i1.swir', 'a.a + 1', 'i1.red'].find(expression => row.textContent.includes(expression)))
 }
 
 function calculation(imageId) {

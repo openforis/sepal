@@ -6,11 +6,11 @@ import {Observable, of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
-import inputImageryStyles from '~/app/home/body/process/panels/inputImagery/inputImagery.module.css'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What the Stack editor marks about its sections, from its output read: an input lacking a band it maps on the Input
@@ -543,7 +543,7 @@ const inputImageryMark = () => {
 }
 
 // The inputs whose rows are in their list's error state, by the asset each shows.
-const inputsInError = () => [...document.getElementsByClassName(classOf(inputImageryStyles, 'error'))]
+const inputsInError = () => [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
     .map(row => inputNames().find(name => row.textContent.includes(name)))
 
 // Whether the Input imagery toolbar button is in its error state.

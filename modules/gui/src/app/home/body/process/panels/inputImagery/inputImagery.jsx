@@ -87,7 +87,7 @@ class _InputImagery extends React.Component {
             ? (
                 <ListItem
                     key={image.imageId}
-                    className={problem ? styles.error : null}
+                    error={!!problem}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
