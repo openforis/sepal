@@ -14,7 +14,7 @@
 // The secret defaults to a random per-process value: without one configured, links simply stop
 // working across a restart, which is a far better failure than a predictable signing key.
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const SEPARATOR = '.'
 

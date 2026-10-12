@@ -1,6 +1,7 @@
+import {MessageChannel} from 'node:worker_threads'
+
 import {jest} from '@jest/globals'
 import {defaultIfEmpty, EMPTY, firstValueFrom, forkJoin, Observable, of, Subject, switchMap, take} from 'rxjs'
-import {MessageChannel} from 'worker_threads'
 
 // What one execution operation reads, and for how long: the real configure task opens it on the
 // request's state, the real job wrapper runs every later task inside it, and the real finalize task

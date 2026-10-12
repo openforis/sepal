@@ -1,7 +1,7 @@
-import {spawn} from 'child_process'
-import {createReadStream, createWriteStream, realpathSync} from 'fs'
-import {chmod, chown, lstat, mkdir, readdir, realpath, stat, unlink} from 'fs/promises'
-import Path from 'path'
+import {spawn} from 'node:child_process'
+import {createReadStream, createWriteStream, realpathSync} from 'node:fs'
+import {chmod, chown, lstat, mkdir, readdir, realpath, stat, unlink} from 'node:fs/promises'
+import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

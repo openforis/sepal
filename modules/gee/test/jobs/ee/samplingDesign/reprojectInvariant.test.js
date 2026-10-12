@@ -1,6 +1,6 @@
-import {readdirSync, readFileSync} from 'fs'
-import {dirname, join} from 'path'
-import {fileURLToPath} from 'url'
+import {readdirSync, readFileSync} from 'node:fs'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
 
 // The full graph gates run against real Earth Engine under modules/gee/verify/, outside CI, because Jest
 // cannot construct ee.Projection. This is the crude part that CI CAN hold: exactly one module under

@@ -478,12 +478,12 @@ test('mostRecentlyClosed → 400 when username missing', async () => {
 
 test('apiKeyAuthenticate → 200 with the user and the session the key belongs to', async () => {
     sessionManager.findSessionByApiKey.mockResolvedValue({
-        sessionId: 's-1', username: 'bob', workerType: 'task-executor'
+        sessionId: 's-1', username: 'bob', workerType: 'sandbox'
     })
     const c = ctx({request: {body: {apiKey: 'k'}}})
     await api.apiKeyAuthenticate(c)
     expect(sessionManager.findSessionByApiKey).toHaveBeenCalledWith('k')
-    expect(c.body).toEqual({username: 'bob', sessionId: 's-1', workerType: 'task-executor'})
+    expect(c.body).toEqual({username: 'bob', sessionId: 's-1', workerType: 'sandbox'})
 })
 
 test('apiKeyAuthenticate → 401 {} when not found', async () => {

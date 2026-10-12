@@ -55,9 +55,9 @@ together. Graph-wide coherence additionally needs a consistent transaction or bo
 Whether the Node server exposes this as batch HTTP, an internal repository adapter or both is an implementation
 decision, not a prerequisite for the pure contract.
 
-Neither executor reads recipes with administrator credentials. A GEE job reads as the user the gateway
-authenticated on the request that job was built from; a task executor reads as its own worker session, which
-the gateway resolves to that session's owning user. A job carrying no user reads nothing, and there is no
+GEE reads recipes without administrator credentials. A GEE job reads as the user the gateway authenticated
+on the request that job was built from; for a task container's request that is the task's user, resolved from
+its per-task key. A job carrying no user reads nothing, and there is no
 service-credential fallback. Recipe applies its existing ownership policy, so a recipe another user owns is
 answered exactly as a missing one.
 

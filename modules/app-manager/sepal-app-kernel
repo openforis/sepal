@@ -1,15 +1,13 @@
 #!/bin/bash
-# Kernel launcher for shared SEPAL apps. Runs the app environment from a copy on local disk when
-# app-manager has published an archive, otherwise straight from Lustre exactly as before.
-# Every failure path falls back to Lustre: a slow app beats a broken one.
-#
+# Kernel launcher for shared SEPAL apps: runs the environment from a local-disk copy when
+# app-manager has published an archive, otherwise from Lustre as before. Every failure path
+# falls back to Lustre, because a slow app beats a broken one.
 # usage: sepal-app-kernel <app-name> [args passed to ipykernel_launcher]
 set -u
 app=$1; shift
 # Voila allows 60 s for startup; cache preparation must leave time for Python itself.
 cache_deadline=$((SECONDS + 30))
 
-# Overridable only so the test harness can point at a fixture tree.
 kernels=${SEPAL_KERNELS_DIR:-/usr/local/share/jupyter/kernels}
 root=${SEPAL_CACHE_ROOT:-/tmp/sepal-kernels}
 
@@ -22,35 +20,29 @@ from_cache=no
 cacheable=yes
 case $app in */*|*..*) cacheable=no ;; esac
 
-# Require an archive at least as new as the live environment. An older archive holds superseded
-# dependencies, and a missing .installed means the environment is still being built.
+# An older archive holds superseded dependencies; no .installed means the venv is still building.
 if [[ $cacheable == yes && -f $tarball && -f $lustre/.installed && $tarball -nt $lustre/.installed ]]
 then
     cache="$root/$app/$(stat -c %Y "$tarball")"
     if ! command -v zstd >/dev/null 2>&1; then
-        # Not declared in the sandbox image, only present transitively. A silent fall-back here
-        # would look exactly like the feature being disabled.
+        # A silent fall-back here would look exactly like the feature being disabled.
         echo "sepal-app-kernel: zstd not found, $app will run from $lustre" >&2
     elif mkdir -p "$root/$app" 2>/dev/null; then
-        # One sandbox serves one user session, so this lock arbitrates one user against
-        # themselves: the same app in two tabs, or Voila and a notebook on one kernelspec.
-        # The lock file sits outside the cache dir so no cleanup can remove it from a waiter.
+        # One sandbox is one user session, so this arbitrates a user against themselves: one app
+        # in two tabs. The file sits outside the cache dir so no cleanup pulls it from a waiter.
         exec 9> "$root/.$app.lock"
         remaining=$((cache_deadline - SECONDS))
         if (( remaining > 0 )) && flock -w "$remaining" 9; then
             if [[ ! -d $cache ]]; then
-                # Checked under the lock so two starts cannot both pass it. Unpacked is ~3.5x
-                # the archive; the margin keeps the user's own scratch intact.
+                # Unpacked is ~3.5x the archive; the margin keeps the user's own scratch intact.
                 need=$(( $(stat -c %s "$tarball") / 1048576 * 4 + 2048 ))
                 free=$(df -Pm "$root" | awk 'NR==2{print $4}')
                 if (( free >= need )); then
                     rm -rf "$cache.tmp"
                     remaining=$((cache_deadline - SECONDS))
                     # pipefail: without it a corrupt tail lets zstd fail while tar exits 0.
-                    # timeout kills only its direct child, so an over-budget extraction leaves
-                    # zstd and tar orphaned. 9>&- keeps them from inheriting the lock fd: an
-                    # orphan writing into an already-unlinked staging dir is harmless, but one
-                    # holding the lock would block the next kernel start for its whole budget.
+                    # timeout kills only its direct child, so this can leave zstd and tar
+                    # orphaned; 9>&- stops an orphan holding the lock against the next start.
                     if (( remaining > 0 )) && mkdir -p "$cache.tmp" \
                        && timeout -s KILL "$remaining" bash -c 'set -o pipefail
                             zstd -q -dc -T0 "$1" | tar -C "$2" -xf -' _ "$tarball" "$cache.tmp" 9>&- \
@@ -64,23 +56,20 @@ then
             fi
         fi
         exec 9>&-
-        # Superseded generations are deliberately kept: a kernel still running from an older
-        # copy resolves lazy imports and data files by path, so deleting one breaks a live app.
+        # Old generations are kept on purpose: a kernel still running from one resolves lazy
+        # imports and data files by path, so deleting it breaks a live app.
         if [[ -d $cache && -x $cache/venv/bin/python3 ]]; then venv="$cache/venv"; from_cache=yes; fi
     fi
 fi
 
-# Last line of defence: never exec an interpreter that is not there.
 [[ -x $venv/bin/python3 ]] || { venv=$lustre; from_cache=no; }
 
 export PYTHONNOUSERSITE=1
-# Only for environments that actually carry the data, matching what create_kernel_json emits for
-# the uncached path. A pip venv has neither, and a bogus path overrides the system default.
+# Guarded because a pip venv carries neither, and a bogus path overrides the system default.
 [[ -d $venv/share/proj ]] && export PROJ_LIB="$venv/share/proj" PROJ_DATA="$venv/share/proj"
 [[ -d $venv/share/gdal ]] && export GDAL_DATA="$venv/share/gdal"
-# libgdal has its build prefix compiled in, so a copy finds no drivers without this. Only for
-# the copy: on the Lustre fallback that prefix is already correct, and setting the variable
-# there would diverge from the stock kernel, which never sets it.
+# libgdal has its build prefix compiled in, so a copy finds no drivers without this. Not set on
+# the Lustre fallback, where that prefix is already right and the stock kernel sets nothing.
 [[ $from_cache == yes && -d $venv/lib/gdalplugins ]] && export GDAL_DRIVER_PATH="$venv/lib/gdalplugins"
 
 echo "sepal-app-kernel: $app running from $venv" >&2

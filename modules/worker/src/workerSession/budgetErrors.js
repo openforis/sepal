@@ -2,9 +2,7 @@
 //
 // All three are ClientExceptions carrying statusCode 403, so the shared httpServer answers
 // `POST /sessions/instance-type/:type` with a 403 rather than the default 500 — a refusal is the
-// user's problem to act on, not a server fault. src/task/tasksApi.js maps them BY NAME instead
-// (see its BUDGET_ERROR_NAMES set), to the same 403 on the /tasks surface; `name` must therefore
-// stay the subclass name, not ClientException's.
+// user's problem to act on, not a server fault.
 
 import {ClientException} from '#sepal/exception'
 

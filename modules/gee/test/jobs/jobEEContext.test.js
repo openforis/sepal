@@ -16,6 +16,7 @@ jest.unstable_mockModule('#gee/config', () => ({
 const {WORKER} = await import('#sepal/worker/factory')
 const {currentEEContext, DEFAULT_EE_ENDPOINT} = await import('#sepal/ee/eeContext')
 const {job} = await import('#gee/jobs/job')
+const {eeAccountTag} = await import('#gee/jobs/eeRequestContext')
 
 const SEPAL_PROJECT = 'sepal-test-project'
 const HIGH_VOLUME_ENDPOINT = 'https://earthengine-highvolume.googleapis.com'
@@ -24,6 +25,7 @@ const HOUR = 60 * 60 * 1000
 const contextJob = job({
     jobName: 'Test Context Probe',
     before: [],
+    workloadTag: requestArgs => requestArgs?.workloadTag,
     worker$: () => of(currentEEContext())
 })
 
@@ -36,6 +38,7 @@ describe('the Earth Engine context a job runs in', () => {
         expect(context).toEqual({
             requestId: 'request-1',
             username: 'alice',
+            origin: 'interactive',
             auth: {type: 'user', accessToken: googleTokens.accessToken, expiresAt: googleTokens.accessTokenExpiryDate},
             projectId: 'alice-project',
             workloadTag: 'sepal-work-test_context_probe',
@@ -72,6 +75,40 @@ describe('the Earth Engine context a job runs in', () => {
 
         expect(context.endpoint).toBe(HIGH_VOLUME_ENDPOINT)
     })
+
+    test('is task traffic for a request authenticated with a task container\'s key', async () => {
+        const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'task', taskId: 't-1'}})
+
+        expect(context.origin).toBe('task')
+    })
+
+    test('is interactive for a sandbox session\'s request', async () => {
+        const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'sandbox', sessionId: 's-1'}})
+
+        expect(context.origin).toBe('interactive')
+    })
+
+    test('carries the workload tag the job derives from its request, when it derives one', async () => {
+        const context = await contextOf({sepalUser: {username: 'bob'}, requestArgs: {workloadTag: 'sepal-task-mosaic'}})
+
+        expect(context.workloadTag).toBe('sepal-task-mosaic')
+    })
+})
+
+describe('the account tag a request is logged with', () => {
+    test('names the Google account\'s project for a user with a Google account', () => {
+        expect(eeAccountTag({username: 'alice', googleTokens: tokens({projectId: 'alice-project'})}, SEPAL_PROJECT))
+            .toBe('<GA:alice-project>')
+    })
+
+    test('names the SEPAL project for a Google account without a project of its own', () => {
+        expect(eeAccountTag({username: 'alice', googleTokens: tokens()}, SEPAL_PROJECT)).toBe(`<GA:${SEPAL_PROJECT}>`)
+    })
+
+    test('names the service account for a user without a Google account, or no user at all', () => {
+        expect(eeAccountTag({username: 'bob'}, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
+        expect(eeAccountTag(null, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
+    })
 })
 
 const tokens = overrides => ({
@@ -80,10 +117,11 @@ const tokens = overrides => ({
     ...overrides
 })
 
-const contextOf = ({sepalUser}, initArgs) => {
+const contextOf = ({sepalUser, sepalSession, requestArgs}, initArgs) => {
     const [probe] = contextJob(WORKER)
     return firstValueFrom(probe.worker$({
-        credentials: {sepalUser, googleProjectId: SEPAL_PROJECT},
+        requestArgs,
+        credentials: {sepalUser, sepalSession, googleProjectId: SEPAL_PROJECT},
         requestId: 'request-1',
         initArgs,
         state: {}

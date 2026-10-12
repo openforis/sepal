@@ -1,5 +1,5 @@
-import {spawn} from 'child_process'
-import Path from 'path'
+import {spawn} from 'node:child_process'
+import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

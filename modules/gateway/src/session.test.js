@@ -1,4 +1,5 @@
-import {EventEmitter} from 'events'
+import {EventEmitter} from 'node:events'
+
 import {Subject} from 'rxjs'
 
 import {SessionManager} from './session.js'

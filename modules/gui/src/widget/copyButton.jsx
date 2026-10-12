@@ -5,8 +5,6 @@ import {copyToClipboard} from '~/clipboard'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 
-import styles from './copyButton.module.css'
-
 const ACKNOWLEDGEMENT_MS = 1000
 
 // A copy control that acknowledges itself. Success used to be announced by a global notification, which said
@@ -50,9 +48,6 @@ class _CopyButton extends React.Component {
                         : {}}
                     onClick={this.copy}
                 />
-                <span className={styles.status} role='status'>
-                    {acknowledged ? msg('clipboard.copy.success') : ''}
-                </span>
             </React.Fragment>
         )
     }

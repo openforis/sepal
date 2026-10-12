@@ -1,4 +1,5 @@
-import {readFile, stat} from 'fs/promises'
+import {readFile, stat} from 'node:fs/promises'
+
 import {catchError, from, map, of} from 'rxjs'
 
 const fileToJson$ = path =>

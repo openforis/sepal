@@ -65,15 +65,15 @@ printf '%s\n' \
 
 userHome=/home/$sandbox_user
 
-cp -n /etc/skel/.bashrc "$userHome"
+cp --update=none /etc/skel/.bashrc "$userHome"
 chown $sandbox_user_id:$home_group_id "$userHome/.bashrc"
 chmod g+w "$userHome/.bashrc"
 
-cp -n /etc/skel/.profile "$userHome"
+cp --update=none /etc/skel/.profile "$userHome"
 chown $sandbox_user_id:$home_group_id "$userHome/.profile"
 chmod g+w "$userHome/.profile"
 
-cp -n /etc/skel/.bash_logout "$userHome"
+cp --update=none /etc/skel/.bash_logout "$userHome"
 chown $sandbox_user_id:$home_group_id "$userHome/.bash_logout"
 chmod g+w "$userHome/.bash_logout"
 

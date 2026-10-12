@@ -2,9 +2,9 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Button is a passthrough that shows the icon and selected state it would render.
+// Button is a passthrough that shows the icon and look it would render.
 vi.mock('~/widget/button', () => ({
-    Button: ({icon, disabled, onClick}) => <button data-icon={icon} disabled={disabled} onClick={onClick}/>
+    Button: ({icon, look, onClick}) => <button data-icon={icon} data-look={look} onClick={onClick}/>
 }))
 
 import {themeManager} from '~/theme'
@@ -37,9 +37,9 @@ describe('the landing theme selector', () => {
     it('shows the active theme as selected', () => {
         const container = render()
 
-        expect(themeButton(container, 'moon').disabled).toBe(true)
-        expect(themeButton(container, 'sun').disabled).toBe(false)
-        expect(themeButton(container, 'circle-half-stroke').disabled).toBe(false)
+        expect(themeButton(container, 'moon').dataset.look).toBe('highlight')
+        expect(themeButton(container, 'sun').dataset.look).toBe('default')
+        expect(themeButton(container, 'circle-half-stroke').dataset.look).toBe('default')
     })
 
     it('switches the theme and shows the choice as selected', () => {
@@ -48,8 +48,8 @@ describe('the landing theme selector', () => {
         act(() => themeButton(container, 'sun').click())
 
         expect(themeManager.preference).toBe('light')
-        expect(themeButton(container, 'sun').disabled).toBe(true)
-        expect(themeButton(container, 'moon').disabled).toBe(false)
+        expect(themeButton(container, 'sun').dataset.look).toBe('highlight')
+        expect(themeButton(container, 'moon').dataset.look).toBe('default')
     })
 })
 

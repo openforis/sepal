@@ -1,5 +1,5 @@
-import {spawnSync} from 'child_process'
-import {fileURLToPath} from 'url'
+import {spawnSync} from 'node:child_process'
+import {fileURLToPath} from 'node:url'
 
 // Runs a behavioral witness under Node's own test runner from a Jest test, which is then a bridge rather than a test
 // of its own. imageFactory loads its implementations through createRequire: real Node supports require(esm), Jest's

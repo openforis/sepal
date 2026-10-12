@@ -1,5 +1,6 @@
+import {parse} from 'node:url'
+
 import {createProxyServer} from 'httpxy'
-import {parse} from 'url'
 
 import {getLogger} from '#sepal/log'
 

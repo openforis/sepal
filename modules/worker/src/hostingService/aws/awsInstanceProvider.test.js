@@ -161,9 +161,9 @@ describe('reserveTags', () => {
     })
 
     test('Name field falls back to "{env}: {workerType}, {username}" without a session id', () => {
-        const tags = reserveTags('prod', {username: 'bob', workerType: 'TASK_EXECUTOR'})
+        const tags = reserveTags('prod', {username: 'bob', workerType: 'sandbox'})
         const name = tags.find(t => t.Key === 'Name')
-        expect(name.Value).toBe('prod: TASK_EXECUTOR, bob')
+        expect(name.Value).toBe('prod: sandbox, bob')
     })
 })
 
@@ -598,7 +598,7 @@ describe('idleInstances — type filter', () => {
 })
 
 // A deploy that reuses an earlier AMI moves the version back, and instances launched from a later
-// AMI lack that version's sandbox and task images: every version but the current one is stale.
+// AMI lack that version's sandbox image: every version but the current one is stale.
 describe('idleInstances — version', () => {
     let ec2Mock
 
@@ -1583,7 +1583,7 @@ describe('reservedInstances', () => {
                 {Key: 'Environment', Value: 'test-env'},
                 {Key: 'Version', Value: '5.0.0'},
                 {Key: 'Username', Value: 'charlie'},
-                {Key: 'WorkerType', Value: 'TASK_EXECUTOR'},
+                {Key: 'WorkerType', Value: 'sandbox'},
             ],
         })
 
@@ -1606,6 +1606,6 @@ describe('reservedInstances', () => {
         expect(found).toBeDefined()
         expect(found.id).toBe('i-res1')
         expect(found.type).toBe('T3aSmall')
-        expect(found.reservation).toEqual({username: 'charlie', workerType: 'TASK_EXECUTOR', sessionId: null})
+        expect(found.reservation).toEqual({username: 'charlie', workerType: 'sandbox', sessionId: null})
     })
 })

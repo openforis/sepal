@@ -1,5 +1,6 @@
+import {join} from 'node:path'
+
 import {jest} from '@jest/globals'
-import {join} from 'path'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'

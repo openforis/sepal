@@ -29,11 +29,6 @@ describe('containerName', () => {
         expect(name.endsWith(`.${instanceId}`)).toBe(true)
     })
 
-    test('names task-executor containers the same way', () => {
-        expect(containerName({image: 'task', username: 'bob', sessionId, instanceId}))
-            .toBe(`task.bob.${instanceName(sessionId)}.i-0abc123`)
-    })
-
     test('is a valid docker container name, local uuid instance ids included', () => {
         expect(containerName({
             image: 'sandbox',

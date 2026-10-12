@@ -1,5 +1,6 @@
+import {createRequire} from 'node:module'
+
 import {jest} from '@jest/globals'
-import {createRequire} from 'module'
 import {of, throwError} from 'rxjs'
 
 // The /assetMetadata boundary, exercised through recording Earth Engine stubs (the house pattern from

@@ -3,8 +3,8 @@
 // schema, and a test that created or dropped that database would destroy the very data the import
 // exists to carry over; what the schema stream produces is covered by
 // databaseMigrations.integration.test.js against MySQL.
-import {readFileSync} from 'fs'
-import {join} from 'path'
+import {readFileSync} from 'node:fs'
+import {join} from 'node:path'
 
 import {dirName} from '#sepal/path'
 

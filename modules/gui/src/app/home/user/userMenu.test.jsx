@@ -26,7 +26,7 @@ vi.mock('~/widget/buttonSelect', () => ({
 import {of} from 'rxjs'
 
 import {themeManager} from '~/theme'
-import {setLanguage, TranslationProvider} from '~/translate'
+import {getLanguage, setLanguage, TranslationProvider} from '~/translate'
 import {logout$} from '~/user'
 
 import {UserMenuButton} from './userMenu'
@@ -57,15 +57,22 @@ describe('the user menu', () => {
     beforeEach(() => {
         mounted = []
         themeManager.setPreference('dark')
+        setLanguage('en')
     })
-    afterEach(() => mounted.forEach(unmount => unmount()))
+    afterEach(() => {
+        mounted.forEach(unmount => unmount())
+        vi.unstubAllGlobals()
+    })
 
-    it('is labelled with the username and offers user details, password, Google account, SSH keys and theme, then logout', () => {
+    it('is labelled with the username and offers user details, password, Google account, SSH keys, theme and language, then logout', () => {
         const container = render()
 
         expect(container.querySelector('.label').textContent).toBe('alice')
         expect(optionLabels(container)).toEqual([
-            'User details', 'Password', 'Google account', 'SSH keys', 'Theme', 'Dark', 'Light', 'System', '—', 'Logout'
+            'User details', 'Password', 'Google account', 'SSH keys',
+            'Theme', 'Dark', 'Light', 'System',
+            'Language', 'English', 'Español', 'Français',
+            '—', 'Logout'
         ])
     })
 
@@ -92,6 +99,10 @@ describe('the user menu', () => {
             ['Dark', 'circle-dot', 'regular'],
             ['Light', 'circle', 'regular'],
             ['System', 'circle', 'regular'],
+            ['Language', undefined, undefined],
+            ['English', 'circle-dot', 'regular'],
+            ['Español', 'circle', 'regular'],
+            ['Français', 'circle', 'regular'],
             ['—', undefined, undefined],
             ['Logout', 'sign-out-alt', undefined]
         ])
@@ -151,6 +162,27 @@ describe('the user menu', () => {
             expect(themeManager.preference).toBe('light')
             expect(option(container, 'Light').dataset.icon).toBe('circle-dot')
             expect(option(container, 'Dark').dataset.icon).toBe('circle')
+        })
+    })
+
+    describe('language', () => {
+        it('marks the active language', () => {
+            setLanguage('fr')
+            const container = render()
+
+            expect(option(container, 'Français').dataset.icon).toBe('circle-dot')
+            expect(option(container, 'English').dataset.icon).toBe('circle')
+        })
+
+        it('stores the chosen language and reloads the page to apply it', () => {
+            const reload = vi.fn()
+            vi.stubGlobal('location', {...window.location, reload})
+            const container = render()
+
+            act(() => option(container, 'Español').click())
+
+            expect(getLanguage()).toBe('es')
+            expect(reload).toHaveBeenCalled()
         })
     })
 })

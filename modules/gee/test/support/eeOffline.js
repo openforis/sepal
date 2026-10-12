@@ -48,6 +48,14 @@ const algorithm = (name, returnType, args) => ({
 
 const ALGORITHMS = [
     algorithm('Image.load', 'Image', [['id', 'String'], ['version', 'Long', true]]),
+    algorithm('Image.clipToBoundsAndScale', 'Image', [
+        ['input', 'Image'], ['geometry', 'Geometry', true], ['width', 'Integer', true], ['height', 'Integer', true],
+        ['maxDimension', 'Integer', true], ['scale', 'Float', true]
+    ]),
+    algorithm('GeometryConstructors.Polygon', 'Geometry', [
+        ['coordinates', 'Object'], ['crs', 'Projection', true], ['geodesic', 'Boolean', true],
+        ['maxError', 'ErrorMargin', true], ['evenOdd', 'Boolean', true]
+    ]),
     algorithm('Image.loadGeoTIFF', 'Image', [['uri', 'String']]),
     algorithm('Image.select', 'Image', [['input', 'Image'], ['bandSelectors', 'List'], ['newNames', 'List', true]]),
     algorithm('Image.visualize', 'Image', [

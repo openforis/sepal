@@ -1,4 +1,5 @@
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
+
 import {defer, NEVER, of, switchMap, throwError} from 'rxjs'
 
 import {job} from '#gee/jobs/job'

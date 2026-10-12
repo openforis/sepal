@@ -40,16 +40,31 @@ describe('who a call is made as', () => {
         expect(http.calls).toEqual([])
     })
 
-    test('each call passes the limiter as its user and project', async () => {
+    test('each call passes the limiter as its user, project and origin', async () => {
         const {client, limited} = setup()
 
         await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(limited).toEqual([{username: 'alice', projectId: 'alice-project'}])
+        expect(limited).toEqual([{username: 'alice', projectId: 'alice-project', origin: 'interactive'}])
     })
 })
 
 describe('what a call answers', () => {
+    test('nothing, once an image collection is created with the given properties', async () => {
+        const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/c', type: 'IMAGE_COLLECTION'})]})
+        const properties = {recipe_id: 'r-1'}
+
+        expect(await call(alice(), client.createImageCollection$('projects/alice-project/assets/c', properties))).toEqual([undefined])
+        expect(http.calls[0]).toMatchObject({method: 'POST', body: {type: 'IMAGE_COLLECTION', properties}})
+    })
+
+    test('nothing, once asset properties are set', async () => {
+        const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/i'})]})
+
+        expect(await call(alice(), client.setAssetProperties$('projects/alice-project/assets/i', {a: 1}))).toEqual([undefined])
+        expect(http.calls[0].method).toBe('PATCH')
+    })
+
     test('a computed value', async () => {
         const {client} = setup({answers: [ok({result: 42})]})
 
@@ -97,6 +112,23 @@ describe('what a call answers', () => {
         expect(await call(alice(), client.startTableExport$(task, 'start export'))).toEqual(['T9'])
     })
 
+    test('the id of an image export it starts, without retrying a failed start', async () => {
+        const image = ee.Image('image')
+        const task = ee.batch.Export.image.toAsset(image, 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
+        const {client, http} = setup({answers: [ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
+
+        expect(await call(alice(), client.startImageExport$(task, 'start export'))).toEqual(['T7'])
+        expect(http.calls[0].url).toBe(`${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/image:export`)
+    })
+
+    test('an image export start answered with a server error fails after one request', async () => {
+        const task = ee.batch.Export.image.toAsset(ee.Image('image'), 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
+        const {client, http} = setup({answers: [failure(503, {}), ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
+
+        await expect(call(alice(), client.startImageExport$(task, 'start export'))).rejects.toBeDefined()
+        expect(http.calls).toHaveLength(1)
+    })
+
     test('nothing, for a folder that exists already', async () => {
         const {client, http} = setup({answers: [failure(400, {message: 'Cannot overwrite asset'})]})
 
@@ -108,12 +140,6 @@ describe('what a call answers', () => {
             query: {assetId: 'folder'},
             body: {type: 'FOLDER'}
         })])
-    })
-
-    test('an error for what only the library transport does', async () => {
-        const {client} = setup()
-
-        await expect(call(alice(), client.setAssetProperties$('projects/alice-project/assets/image', {}))).rejects.toThrow('not supported')
     })
 })
 
@@ -234,6 +260,7 @@ describe('what is counted', () => {
 const alice = () => ({
     requestId: 'request-1',
     username: 'alice',
+    origin: 'interactive',
     auth: {type: 'user', accessToken: 'alice-token', expiresAt: Date.now() + 60 * 60 * 1000},
     projectId: 'alice-project',
     workloadTag: 'sepal-work-test',
@@ -293,7 +320,7 @@ const fakeHttp = answers => {
             subscription.unsubscribe()
         }
     })
-    return {calls, get$: respond('GET'), postJson$: respond('POST'), delete$: respond('DELETE')}
+    return {calls, get$: respond('GET'), postJson$: respond('POST'), patchJson$: respond('PATCH'), delete$: respond('DELETE')}
 }
 
 const ok = body => () => of({statusCode: 200, body})

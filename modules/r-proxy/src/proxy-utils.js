@@ -1,7 +1,7 @@
-import fs from 'fs'
-import {stat} from 'fs/promises'
-import https from 'https'
-import Path from 'path'
+import fs from 'node:fs'
+import {stat} from 'node:fs/promises'
+import https from 'node:https'
+import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

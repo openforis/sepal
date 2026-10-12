@@ -218,7 +218,7 @@ const definitiveCodes = ({diagnostics}) =>
 const observesOwnImage = ({needs}, recipe) =>
     needs.observations.some(({type, id}) => type === 'RECIPE_REF' && id === recipe.id)
 
-// What Earth Engine answers, acquired as Task's asset export acquires it (modules/task/src/ee/imageOutput.js): an asset's
+// What Earth Engine answers, acquired as Task's asset export acquires it (modules/gee/src/jobs/task/export/imageOutput.js): an asset's
 // bands, the catalogue of a recipe whose declaration asks only what it can be asked for, otherwise the image it builds.
 const observeBands$ = ({reference, recipe, observes}) => (reference.type === 'ASSET'
     ? assetBandEvidence$(reference.id)

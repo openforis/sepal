@@ -40,92 +40,39 @@ function clone {
     cd $app_path
     git fetch
 }
-
-function json_escape {
-    local value=$1
-    value=${value//\\/\\\\}
-    value=${value//\"/\\\"}
-    value=${value//$'\n'/\\n}
-    value=${value//$'\r'/\\r}
-    value=${value//$'\t'/\\t}
-    printf '%s' "$value"
-}
-
 function create_kernel_json {
-    echo "Creating kernel: $kernel_path"
     mkdir -p "$kernel_path"
-    local python_bin=$(json_escape "$venv_path/bin/python3")
-    local display_name=$(json_escape " (venv) $app_label")
-    local proj_data=$(json_escape "$venv_path/share/proj")
-    local gdal_data=$(json_escape "$venv_path/share/gdal")
-    local launcher=$(json_escape "$current_kernels_in_sandbox/sepal-app-kernel")
-    local app=$(json_escape "$app_name")
-    {
-        # Gated on the launcher actually being installed: naming a launcher that is not there
-        # is the spec's "kernel fails to start, every flagged app" row.
-        if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
-            # The launcher owns the interpreter environment for cached apps: it picks the
-            # prefix at run time, so a PROJ/GDAL path generated here would pin the kernel to
-            # Lustre even when a copy is in use, and PYTHONNOUSERSITE is exported there too.
-            # Leaving env empty keeps one source of truth rather than two that can drift.
-            cat <<EOF
-{
-  "argv": [
-    "/bin/bash",
-    "$launcher",
-    "$app",
-    "-f",
-    "{connection_file}"
-  ],
-  "display_name": "$display_name",
-  "language": "python",
-  "env": {}
-}
-EOF
-        else
-        cat <<EOF
-{
-  "argv": [
-    "$python_bin",
-    "-m",
-    "ipykernel_launcher",
-    "-f",
-    "{connection_file}"
-  ],
-  "display_name": "$display_name",
-  "language": "python",
-EOF
-        if [[ -f "$app_path/sepal_environment.yml" ]]; then
-            cat <<EOF
-  "env": {
-    "PYTHONNOUSERSITE": "1",
-    "PROJ_LIB": "$proj_data",
-    "PROJ_DATA": "$proj_data",
-    "GDAL_DATA": "$gdal_data"
-  }
-EOF
-        else
-            cat <<EOF
-  "env": {
-    "PYTHONNOUSERSITE": "1"
-  }
-EOF
-        fi
-        cat <<EOF
-}
-EOF
-        fi
-    } > "$kernel_path/kernel.json.tmp"
+    local use_launcher=false
+    # A spec naming a launcher that is not installed stops every flagged app from starting.
+    if [[ "$cache_venv" == true && -x "$current_kernels/sepal-app-kernel" ]]; then
+        use_launcher=true
+    fi
+    local conda=false
+    [[ -f "$app_path/sepal_environment.yml" ]] && conda=true
+    local generator=${KERNEL_SPEC:-/etc/sepal/app-manager/kernel-spec.py}
+    if ! SPEC_VENV="$venv_path" \
+         SPEC_APP="$app_name" \
+         SPEC_LABEL=" (venv) $app_label" \
+         SPEC_LAUNCHER="$current_kernels_in_sandbox/sepal-app-kernel" \
+         SPEC_USE_LAUNCHER="$use_launcher" \
+         SPEC_CONDA="$conda" \
+         python3 "$generator" > "$kernel_path/kernel.json.tmp"
+    then
+        # A stale kernel.json still starts the app; an empty one starts nothing.
+        echo "Failed to generate kernel spec with $generator"
+        rm -f "$kernel_path/kernel.json.tmp"
+        return 0
+    fi
     if cmp -s "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"; then
         rm -f "$kernel_path/kernel.json.tmp"
     else
+        echo "Creating kernel: $kernel_path"
         mv -f "$kernel_path/kernel.json.tmp" "$kernel_path/kernel.json"
     fi
     return 0
 }
 
 function sync_launcher {
-    # Resolved per call, not at load time, so the tests can point at a fixture.
     local src=${LAUNCHER_SRC:-/etc/sepal/app-manager/sepal-app-kernel}
     local dst="$current_kernels/sepal-app-kernel"
     cmp -s "$src" "$dst" && return 0
@@ -134,7 +81,6 @@ function sync_launcher {
     if install -m 0755 "$src" "$dst.tmp.$$" && mv -f "$dst.tmp.$$" "$dst"; then
         echo "Installed kernel launcher: $dst"
     else
-        # Silence here would be dangerous: create_kernel_json would still name the launcher.
         echo "Failed to install kernel launcher from $src"
         rm -f "$dst.tmp.$$"
     fi
@@ -145,9 +91,8 @@ function pack_venv {
     local out="$kernel_path/venv.tar.zst"
     if [[ "$cache_venv" != true ]]; then rm -f "$out" "$out.failed"; return 0; fi
     if [[ -f "$out" && "$out" -nt "$current_venv_path/.installed" ]]; then return 0; fi
-    # A failed pack deletes the archive, so without a marker the next pass re-reads and
-    # re-compresses the whole tree. monitorApps walks apps serially, so that would stall every
-    # other app for as long as the cause persists. Back off until the venv itself changes.
+    # Without a marker a failed pack re-compresses the whole tree every pass, and monitorApps
+    # walks apps serially, so it would stall every other app until the cause clears.
     if [[ -f "$out.failed" && "$out.failed" -nt "$current_venv_path/.installed" ]]; then return 0; fi
     echo "Packing venv: $out"
     # A killed pack can leave its staging file behind; zstd refuses to overwrite it.
@@ -158,8 +103,7 @@ function pack_venv {
          tar -C "$kernel_path" -cf - venv | zstd -q -3 -T0 -o "$out.tmp" ); then
         mv -f "$out.tmp" "$out" && rm -f "$out.failed"
     else
-        # Never leave the previous archive published against a rebuilt venv: it would silently
-        # run old dependencies, which is worse than falling back to Lustre.
+        # A stale archive against a rebuilt venv would silently run old dependencies.
         echo "Packing failed; dropping any stale archive and backing off until the venv changes"
         rm -f "$out.tmp" "$out"
         touch "$out.failed"
@@ -167,9 +111,7 @@ function pack_venv {
     return 0
 }
 
-# Idempotent, and cheap when there is nothing to do: app-manager calls update-app for every app
-# on a 5 s loop, while update_venv only rebuilds when requirements change. Reconciling here is
-# what lets an app that never rebuilds still get its archive.
+# Runs for every app on app-manager's 5 s loop, so each step stays quiet and cheap when idle.
 function reconcile_artifacts {
     sync_launcher
     pack_venv

@@ -1,5 +1,5 @@
 services:
-  geospatial-toolkit:
+  sandbox:
     build:
       context: ../..
       dockerfile: ./modules/sandbox/Dockerfile
@@ -7,12 +7,6 @@ services:
         nofile:
           soft: 65536
           hard: 65536
+      network: host
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sandbox:${SEPAL_VERSION:-latest}"
-    container_name: sandbox
-    networks:
-      - sepal
     platform: linux/amd64 # Required for macOS builds
-
-networks:
-  sepal:
-    external: true

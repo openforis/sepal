@@ -1,5 +1,6 @@
+import http from 'node:http'
+
 import {jest} from '@jest/globals'
-import http from 'http'
 import {WebSocket, WebSocketServer} from 'ws'
 
 import {createSandboxProxy, parseSandboxPath} from './sandboxProxy.js'

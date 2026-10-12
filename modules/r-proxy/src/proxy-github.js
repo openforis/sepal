@@ -1,7 +1,8 @@
-import fs from 'fs'
-import {mkdir} from 'fs/promises'
+import fs from 'node:fs'
+import {mkdir} from 'node:fs/promises'
+import Path from 'node:path'
+
 import httpProxy from 'http-proxy'
-import Path from 'path'
 
 import {getLogger} from '#sepal/log'
 

@@ -62,9 +62,9 @@ const removeRequestUser = req =>
 export const getRequestSession = req =>
     deserialize(req.headers[SEPAL_SESSION_HEADER])
 
-export const setRequestSession = (req, {sessionId, workerType}) => {
-    log.debug(() => `Injecting worker session into request headers: ${workerType} ${sessionId}`)
-    req.headers[SEPAL_SESSION_HEADER] = serialize({sessionId, workerType})
+export const setRequestSession = (req, {sessionId, workerType, taskId}) => {
+    log.debug(() => `Injecting session into request headers: ${workerType} ${sessionId ?? taskId}`)
+    req.headers[SEPAL_SESSION_HEADER] = serialize({sessionId, workerType, taskId})
 }
 
 export const removeRequestSession = req =>

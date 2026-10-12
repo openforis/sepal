@@ -6,10 +6,8 @@ const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_HOSTING_SERVICE = 'local'
-const DEFAULT_SEPAL_HTTPS_PORT = 443
 const DEFAULT_DOCKER_PORT = 2375
 const DEFAULT_RABBITMQ_PORT = 5672
-const DEFAULT_WORKER_PORT = 8080
 
 // EC2 accepts 100-300 MiB/s; anything else fails every RunInstances, so refuse it at boot instead.
 const parseVolumeInitializationRate = value => {
@@ -58,7 +56,7 @@ program
 
     // ─── SEPAL creds / host ─────────────────────────────────────────────────
     .addOption(
-        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox and task images were made from (e.g. 1937)')
+        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox image were made from (e.g. 1937)')
             .env('WORKER_AMI_VERSION')
     )
     .addOption(
@@ -70,30 +68,12 @@ program
             .env('SEPAL_HOST')
     )
     .addOption(
-        new Option('--sepal-https-port <number>', 'SEPAL HTTPS port (default 443)')
-            .env('SEPAL_HTTPS_PORT')
-            .argParser(v => parseInt(v))
-            .default(DEFAULT_SEPAL_HTTPS_PORT)
-    )
-    .addOption(
         new Option('--sepal-ssh-host <string>', 'Public address of the SSH gateway, for the ssh login shown to users (optional)')
             .env('SEPAL_SSH_HOST')
     )
     .addOption(
         new Option('--sepal-host-data-dir <path>', 'Host path to /data (mounted into sandbox containers)')
             .env('SEPAL_HOST_DATA_DIR')
-    )
-    .addOption(
-        new Option('--sepal-host-project-dir <path>', 'Host path to SEPAL project source (DEV only, optional)')
-            .env('SEPAL_HOST_PROJECT_DIR')
-    )
-
-    // ─── Task executor ──────────────────────────────────────────────────────
-    .addOption(
-        new Option('--worker-port <number>', 'Task-executor HTTP port on sandbox containers (default 8080)')
-            .env('WORKER_PORT')
-            .argParser(v => parseInt(v))
-            .default(DEFAULT_WORKER_PORT)
     )
 
     // ─── Instance usage monitoring ──────────────────────────────────────────
@@ -146,12 +126,6 @@ program
     .addOption(
         new Option('--busy-extension-minutes <number>', 'Extension per busy verdict from the sampler (default 15)')
             .env('BUSY_EXTENSION_MINUTES')
-            .argParser(v => parseInt(v))
-            .default(15)
-    )
-    .addOption(
-        new Option('--task-extension-minutes <number>', 'Extension per task progress report (default 15)')
-            .env('TASK_EXTENSION_MINUTES')
             .argParser(v => parseInt(v))
             .default(15)
     )
@@ -234,10 +208,6 @@ program
         new Option('--sepal-endpoint <url>', 'Public SEPAL base URL, for links in outbound email')
             .env('SEPAL_ENDPOINT')
     )
-    .addOption(
-        new Option('--geoid-endpoint <url>', 'GeoID service base URL handed to task executors (their default if unset)')
-            .env('GEOID_ENDPOINT')
-    )
 
     // ─── Docker ─────────────────────────────────────────────────────────────
     .addOption(
@@ -253,30 +223,6 @@ program
     .addOption(
         new Option('--docker-registry-host <string>', 'Docker registry hostname for image pulls')
             .env('DOCKER_REGISTRY_HOST')
-    )
-
-    // ─── GEE credentials ────────────────────────────────────────────────────
-    .addOption(
-        new Option('--google-project-id <string>', 'Google Cloud project ID for GEE')
-            .env('GOOGLE_PROJECT_ID')
-    )
-    .addOption(
-        new Option('--google-region <string>', 'Google Cloud region (e.g. europe-west1)')
-            .env('GOOGLE_REGION')
-    )
-    .addOption(
-        new Option('--google-earth-engine-account <string>', 'GEE service account email')
-            .env('GOOGLE_EARTH_ENGINE_ACCOUNT')
-    )
-    .addOption(
-        new Option('--google-earth-engine-private-key <string>', 'GEE service account private key (PEM)')
-            .env('GOOGLE_EARTH_ENGINE_PRIVATE_KEY')
-    )
-
-    // ─── Deploy environment ─────────────────────────────────────────────────
-    .addOption(
-        new Option('--deploy-environment <string>', 'Deployment environment name (e.g. DEV | PRODUCTION)')
-            .env('DEPLOY_ENVIRONMENT')
     )
 
     // ─── Sandbox basemap key ────────────────────────────────────────────────
@@ -364,11 +310,8 @@ const {
     workerAmiVersion,
     sepalUser,
     sepalHost,
-    sepalHttpsPort,
     sepalHostDataDir,
-    sepalHostProjectDir,
     sepalSshHost,
-    workerPort,
     usageSamplingIntervalSeconds,
     usageSampleRetentionDays,
     usageHourlyRetentionDays,
@@ -377,7 +320,6 @@ const {
     openExtensionMinutes,
     interactionExtensionMinutes,
     busyExtensionMinutes,
-    taskExtensionMinutes,
     manualExtensionMinutes,
     emailExtensionMinutes,
     maxUnattendedHours,
@@ -390,18 +332,12 @@ const {
     busyNetworkThresholdKbps,
     sessionExpirySecret,
     sepalEndpoint,
-    geoidEndpoint: geoIdEndpoint,
     dockerPort,
     dockerEntryPoint,
     dockerRegistryHost,
-    googleProjectId,
-    googleRegion,
-    googleEarthEngineAccount,
-    googleEarthEnginePrivateKey,
     googleOAuthEndpoint,
     cartoDbBasemapKey,
     budgetUrl,
-    deployEnvironment,
     rabbitmqHost,
     rabbitmqPort,
     region,
@@ -427,18 +363,12 @@ export {
     busyNetworkThresholdKbps,
     busyWindowMinutes,
     cartoDbBasemapKey,
-    deployEnvironment,
     dockerEntryPoint,
     dockerPort,
     dockerRegistryHost,
     emailExtensionMinutes,
     environment,
-    geoIdEndpoint,
-    googleEarthEngineAccount,
-    googleEarthEnginePrivateKey,
     googleOAuthEndpoint,
-    googleProjectId,
-    googleRegion,
     hostingService,
     interactionExtensionMinutes,
     manualExtensionMinutes,
@@ -454,8 +384,6 @@ export {
     sepalEndpoint,
     sepalHost,
     sepalHostDataDir,
-    sepalHostProjectDir,
-    sepalHttpsPort,
     sepalSshHost,
     sepalUser,
     sessionExpiryMode,
@@ -464,12 +392,10 @@ export {
     startupLeaseMinutes,
     stoppedPoolSize,
     syslogAddress,
-    taskExtensionMinutes,
     unknownBusyGraceTicks,
     usageHourlyRetentionDays,
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
     volumeInitializationRate,
     workerAmiVersion,
-    workerPort,
 }

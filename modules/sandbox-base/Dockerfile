@@ -77,7 +77,8 @@ RUN apt-get -y update && apt-get install -y \
     unrar-free \
     unzip \
     vim \
-    zip
+    zip \
+    zstd
 
 # Install GIS utilities
 RUN apt-get update -y && apt-get install -y \

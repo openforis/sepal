@@ -14,7 +14,7 @@
 // apiKeyForInstance lookup polls because the InstanceProvisioned event may fire before this
 // insert commits — keep the ordering (request instance → insert); do NOT insert first.
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'

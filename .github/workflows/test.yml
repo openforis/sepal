@@ -46,7 +46,9 @@ jobs:
           - module: modules/gee
             libs: lib/js/shared lib/js/ee
           - module: modules/task
-            libs: lib/js/shared lib/js/ee
+            libs: lib/js/shared
+          - module: modules/task-manager
+            libs: lib/js/shared
           - module: modules/app-manager
             libs: lib/js/shared
           - module: modules/budget
@@ -111,5 +113,4 @@ jobs:
       # pre-existing warnings in code this change does not touch.
       - run: shellcheck -S warning modules/app-manager/sepal-app-kernel modules/app-manager/test/*.sh
       - run: shellcheck -S error modules/app-manager/update-app.sh
-      - run: modules/app-manager/test/sepal-app-kernel.test.sh
-      - run: modules/app-manager/test/pack-venv.test.sh
+      - run: modules/app-manager/test/run-all.sh

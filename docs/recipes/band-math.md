@@ -185,7 +185,7 @@ the bands selected, in the order selected. The catalogue answers the configured 
   dimensionality of every band of representative input assets, and one pixel value.
 - `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes, through the read and the
   observer, over asset, declared-recipe, Masking and nested Band Math inputs.
-- `modules/task/src/tasks/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
   input that cannot be described or read, and an input Band Math naming two outputs alike.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
   marked for a missing band, and not for pending, failed, upstream or superseded reads, the output read shared.

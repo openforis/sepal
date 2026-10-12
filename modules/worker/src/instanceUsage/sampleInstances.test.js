@@ -199,11 +199,11 @@ describe('the interaction signal from pty atime', () => {
         expect(inserted).toHaveLength(1)
     })
 
-    // A task-executor container has no user terminals; an exec per tick would be pure waste.
+    // Only sandboxes have user terminals; an exec per tick on anything else would be pure waste.
     it('only sandbox sessions are stat-ed', async () => {
         let execs = 0
         const {deps: d} = deps({
-            sessions: [session({workerType: 'taskExecutor'})],
+            sessions: [session({workerType: 'other'})],
             statsBySession: {s1: statsPayload({cpuTotal: 0, systemTotal: 0})},
         })
         d.stats.ptyStats = async () => { execs++; return '' }

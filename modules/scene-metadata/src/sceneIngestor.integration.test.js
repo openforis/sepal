@@ -1,5 +1,6 @@
+import {join} from 'node:path'
+
 import {jest} from '@jest/globals'
-import {join} from 'path'
 import {defer, EMPTY, of, Subject} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'

@@ -1,6 +1,7 @@
-import fs from 'fs'
+import fs from 'node:fs'
+import path from 'node:path'
+
 import pty from 'node-pty'
-import path from 'path'
 
 import {getLogger} from '#sepal/log'
 

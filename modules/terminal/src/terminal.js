@@ -1,4 +1,5 @@
-import {unlinkSync} from 'fs'
+import {unlinkSync} from 'node:fs'
+
 import {bufferTime, filter, interval, map, merge, Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'

@@ -1,4 +1,4 @@
-import {createHash} from 'crypto'
+import {createHash} from 'node:crypto'
 
 // gecos is free-form (the user's display name); strip the field/line separators that would corrupt
 // the colon-delimited passwd format.

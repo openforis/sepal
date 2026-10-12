@@ -1,8 +1,9 @@
+import {stat} from 'node:fs/promises'
+import Path from 'node:path'
+
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {stat} from 'fs/promises'
 import _ from 'lodash'
-import Path from 'path'
 
 import {compose} from './compose.js'
 import {deps, DEPS_COLUMN, EXCLUDE_PREFIX, GROUP_PREFIX, groups, NAME_COLUMN, SEPAL_SRC, STATUS_COLUMN} from './config.js'

@@ -1,8 +1,9 @@
+import {chmod, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
+import {join} from 'node:path'
+import {gzipSync} from 'node:zlib'
+
 import {jest} from '@jest/globals'
-import {chmod, mkdtemp, readFile, rm, writeFile} from 'fs/promises'
-import {join} from 'path'
 import {concatMap, defer, EMPTY, firstValueFrom, lastValueFrom, throwError, toArray} from 'rxjs'
-import {gzipSync} from 'zlib'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'

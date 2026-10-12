@@ -1,4 +1,4 @@
-import {gzipSync} from 'zlib'
+import {gzipSync} from 'node:zlib'
 
 import * as httpServer from '#sepal/httpServer'
 

@@ -1,8 +1,7 @@
 // workerSession events.
 //
-// Each event is published to BOTH:
-//   1. the sepal.topic RabbitMQ exchange (via an RxJS Subject → publisher stream wired in main.js)
-//   2. an in-proc Node.js EventEmitter — the task component consumes these in-proc.
+// Each event is published to the sepal.topic RabbitMQ exchange (via an RxJS Subject → publisher
+// stream wired in main.js).
 //
 // Routing keys: workerSession.{EventName}
 //
@@ -11,7 +10,6 @@
 //   WorkerSessionActivated  { username, session }   (session has its api_key STRIPPED)
 //   WorkerSessionClosed     { username, sessionId }
 
-import EventEmitter from 'events'
 import {Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
@@ -19,11 +17,6 @@ import {getLogger} from '#sepal/log'
 import {sessionTag} from '../tag.js'
 
 const log = getLogger('worker/sessionEvents')
-
-// ─── In-proc EventEmitter ────────────────────────────────────────────────────
-// Consumed in-proc by the task component.
-const workerSessionEvents = new EventEmitter()
-workerSessionEvents.setMaxListeners(50)
 
 // ─── RxJS Subjects (→ sepal.topic publishers) ────────────────────────────────
 const workerSessionRequested$ = new Subject()
@@ -52,7 +45,7 @@ const emitSessionChanged = ({username}) => {
 }
 
 // ─── Emit helpers ────────────────────────────────────────────────────────────
-// Each helper publishes to the Subject (→ RabbitMQ) AND fires the in-proc emitter.
+// Each helper publishes to the Subject (→ RabbitMQ).
 
 // emitWorkerSessionRequested({username, session}) — a new PENDING row exists. Budget opens the
 // instance-use row on it, so a session is billed from its creationTime even if it is closed
@@ -61,7 +54,6 @@ const emitWorkerSessionRequested = ({username, session}) => {
     const payload = {username, session}
     log.debug(`Emitting WorkerSessionRequested ${sessionTag(session)}`)
     workerSessionRequested$.next(payload)
-    workerSessionEvents.emit('WorkerSessionRequested', payload)
 }
 
 // emitWorkerSessionActivated({username, session}) — the session MUST already have its api_key
@@ -70,7 +62,6 @@ const emitWorkerSessionActivated = ({username, session}) => {
     const payload = {username, session}
     log.debug(`Emitting WorkerSessionActivated ${sessionTag(session)}`)
     workerSessionActivated$.next(payload)
-    workerSessionEvents.emit('WorkerSessionActivated', payload)
     emitSessionChanged({username})
 }
 
@@ -78,7 +69,6 @@ const emitWorkerSessionClosed = ({username, sessionId}) => {
     const payload = {username, sessionId}
     log.debug(`Emitting WorkerSessionClosed ${sessionTag(sessionId)}`)
     workerSessionClosed$.next(payload)
-    workerSessionEvents.emit('WorkerSessionClosed', payload)
     emitSessionChanged({username})
 }
 
@@ -89,7 +79,6 @@ const emitSessionAppAssociated = ({username, sessionId, path, label}) => {
     const payload = {username, sessionId, path, label}
     log.debug(`Emitting SessionAppAssociated ${sessionTag(sessionId)} ${path}`)
     sessionAppAssociated$.next(payload)
-    workerSessionEvents.emit('SessionAppAssociated', payload)
     emitSessionChanged({username})
 }
 
@@ -103,7 +92,6 @@ const emitSessionAppDissociated = ({username, sessionId, path, clientId, request
     const payload = {username, sessionId, path, clientId: clientId ?? null, requestingClientId: requestingClientId ?? null}
     log.debug(`Emitting SessionAppDissociated ${sessionTag(sessionId)} ${path}`)
     sessionAppDissociated$.next(payload)
-    workerSessionEvents.emit('SessionAppDissociated', payload)
     emitSessionChanged({username})
 }
 
@@ -124,7 +112,6 @@ const emitSessionExpiryNotified = ({username, session, apps = [], terminals = 0,
     const payload = {username, sessionId: session.id, session, apps, terminals, ordinal, name, typeName, extensionMinutes}
     log.debug(`Emitting SessionExpiryNotified ${sessionTag(session)}`)
     sessionExpiryNotified$.next(payload)
-    workerSessionEvents.emit('SessionExpiryNotified', payload)
     emitSessionChanged({username})
 }
 
@@ -135,7 +122,6 @@ const emitSessionExpiryClosed = ({username, sessionId, apps = [], terminals = 0,
     const payload = {username, sessionId, apps, terminals, ordinal, name, typeName}
     log.debug(`Emitting SessionExpiryClosed ${sessionTag(sessionId)}`)
     sessionExpiryClosed$.next(payload)
-    workerSessionEvents.emit('SessionExpiryClosed', payload)
     emitSessionChanged({username})
 }
 
@@ -163,6 +149,5 @@ export {
     WORKER_SESSION_PUBLISHERS,
     workerSessionActivated$,
     workerSessionClosed$,
-    workerSessionEvents,
     workerSessionRequested$,
 }

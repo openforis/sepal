@@ -32,6 +32,22 @@ import tableQuery$ from '#gee/jobs/ee/table/query'
 import tableRows$ from '#gee/jobs/ee/table/rows'
 import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
 import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
+import taskDownloadCleanup$ from '#gee/jobs/task/downloadCleanup'
+import taskDownloadFiles$ from '#gee/jobs/task/downloadFiles'
+import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
+import taskExportCollectionPrepare$ from '#gee/jobs/task/exportCollectionPrepare'
+import taskExportCollectionTile$ from '#gee/jobs/task/exportCollectionTile'
+import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
+import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
+import taskExportImageToSepal$ from '#gee/jobs/task/exportImageToSepal'
+import taskExportTimeSeriesChunk$ from '#gee/jobs/task/exportTimeSeriesChunk'
+import taskOperationCancel$ from '#gee/jobs/task/operationCancel'
+import taskOperationStatus$ from '#gee/jobs/task/operationStatus'
+import taskSamplingDesignCleanup$ from '#gee/jobs/task/samplingDesignCleanup'
+import taskSamplingDesignStep$ from '#gee/jobs/task/samplingDesignStep'
+import taskShareAsset$ from '#gee/jobs/task/shareAsset'
+import taskTimeSeriesChunks$ from '#gee/jobs/task/timeSeriesChunks'
+import taskTimeSeriesTiles$ from '#gee/jobs/task/timeSeriesTiles'
 import {stream} from '#sepal/httpServer'
 
 export default router =>
@@ -72,4 +88,20 @@ export default router =>
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
+        .post('/task/operation/status', stream(ctx => taskOperationStatus$(ctx)))
+        .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
+        .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
+        .post('/task/export/collection/prepare', stream(ctx => taskExportCollectionPrepare$(ctx)))
+        .post('/task/export/collection/tile', stream(ctx => taskExportCollectionTile$(ctx)))
+        .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
+        .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
+        .post('/task/export/image/sepal', stream(ctx => taskExportImageToSepal$(ctx)))
+        .post('/task/export/timeseries/chunk', stream(ctx => taskExportTimeSeriesChunk$(ctx)))
+        .post('/task/timeseries/tiles', stream(ctx => taskTimeSeriesTiles$(ctx)))
+        .post('/task/timeseries/chunks', stream(ctx => taskTimeSeriesChunks$(ctx)))
+        .post('/task/download/files', stream(ctx => taskDownloadFiles$(ctx)))
+        .post('/task/download/cleanup', stream(ctx => taskDownloadCleanup$(ctx)))
+        .post('/task/samplingDesign/step', stream(ctx => taskSamplingDesignStep$(ctx)))
+        .post('/task/samplingDesign/cleanup', stream(ctx => taskSamplingDesignCleanup$(ctx)))
+        .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

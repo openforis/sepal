@@ -1,7 +1,7 @@
-import {createWriteStream} from 'fs'
-import {rename, rm} from 'fs/promises'
-import {Readable} from 'stream'
-import {pipeline} from 'stream/promises'
+import {createWriteStream} from 'node:fs'
+import {rename, rm} from 'node:fs/promises'
+import {Readable} from 'node:stream'
+import {pipeline} from 'node:stream/promises'
 
 import {getLogger} from '#sepal/log'
 

@@ -6,6 +6,7 @@ import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
 
+import {userStorageSerializerService} from '../../service/userStorageSerializer.js'
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 import {toAreaWeightedProportions} from './areaWeightedProportions.js'
@@ -52,5 +53,6 @@ const worker$ = ({
 export default job({
     jobName: 'Calculate probability per stratum',
     jobPath: fileName(import.meta.url),
+    services: [userStorageSerializerService],
     worker$
 })
