@@ -41,12 +41,26 @@ describeOnAws('prefix isolation on AWS', () => {
         expect(listed.Contents.map(({Key}) => Key)).toEqual(expect.arrayContaining([own('isolationA'), own('isolationA', 'written.txt')]))
     })
 
+    it('lets a user list the attachment root and read their own object', async () => {
+        const client = await clientFor('isolationA', 'readWrite')
+
+        const root = await client.send(new ListObjectsV2Command({
+            Bucket: config.bucket,
+            Prefix: attachments.get('isolationA', 'data').location.prefix,
+            Delimiter: '/'
+        }))
+        const read = await client.send(new GetObjectCommand({Bucket: config.bucket, Key: own('isolationA')}))
+
+        expect(root.CommonPrefixes.map(({Prefix}) => Prefix)).toContain(`users/isolationA/${run}/`)
+        expect(await read.Body.transformToString()).toBe('isolationA')
+    })
+
     it.each([
         ['read', client => client.send(new GetObjectCommand({Bucket: config.bucket, Key: own('isolationB')}))],
         ['overwrite', client => client.send(new PutObjectCommand({Bucket: config.bucket, Key: own('isolationB'), Body: 'x'}))],
         ['delete', client => client.send(new DeleteObjectCommand({Bucket: config.bucket, Key: own('isolationB')}))],
         ['list', client => client.send(new ListObjectsV2Command({Bucket: config.bucket, Prefix: 'users/isolationB/'}))]
-    ])('denies a user to %s another user\'s objects', async (_operation, operation) => {
+    ])('forbids a user to %s another user\'s objects', async (_operation, operation) => {
         const client = await clientFor('isolationA', 'readWrite')
 
         await expect(operation(client)).rejects.toMatchObject({name: 'AccessDenied'})

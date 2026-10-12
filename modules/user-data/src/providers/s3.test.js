@@ -194,7 +194,9 @@ describe('grantAccess', () => {
 
         await provider.grantAccess(attachment('alice'), request({purpose: 'task', mode: 'read'}))
 
-        expect(sts.requests[0].Policy).toBeDefined()
+        const actions = JSON.parse(sts.requests[0].Policy).Statement.flatMap(statement => statement.Action)
+        expect(actions).toEqual(expect.arrayContaining(['s3:GetObject']))
+        expect(actions.filter(action => /Put|Delete|\*/.test(action))).toEqual([])
     })
 
     it('in emulator mode points rclone and native tools at the emulator', async () => {
