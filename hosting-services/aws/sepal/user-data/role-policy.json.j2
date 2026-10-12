@@ -1,0 +1,33 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ListOwnPrefix",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::{{ bucket }}",
+            "Condition": {"StringLike": {"s3:prefix": [
+                "users/${aws:PrincipalTag/username}/",
+                "users/${aws:PrincipalTag/username}/*"
+            ]}}
+        },
+        {
+            "Sid": "LocateBucket",
+            "Effect": "Allow",
+            "Action": "s3:GetBucketLocation",
+            "Resource": "arn:aws:s3:::{{ bucket }}"
+        },
+        {
+            "Sid": "OwnObjects",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts"
+            ],
+            "Resource": "arn:aws:s3:::{{ bucket }}/users/${aws:PrincipalTag/username}/*"
+        }
+    ]
+}

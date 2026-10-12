@@ -54,6 +54,9 @@ ansible-playbook provision-security-groups.yml \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
 
+ansible-playbook provision-user-data.yml \
+    --extra-vars "env_file=$CONFIG_HOME/env"
+
 ansible-playbook mount-ebs.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \

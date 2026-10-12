@@ -1,0 +1,69 @@
+# The shared Data bucket, the IAM user user-data runs as, and the role user credentials are issued for.
+# Access keys for the IAM user are created by hand once (see modules/user-data/CLAUDE.md).
+- name: Provision user data storage
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    region: "{{ lookup('env', 'AWS_REGION') }}"
+    environment_name: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') | lower }}"
+    identity: "sepal-{{ environment_name }}-user-data"
+    bucket: "{{ lookup('env', 'USER_DATA_BUCKET') | default(identity, true) }}"
+
+  tasks:
+    - name: Look up the account
+      amazon.aws.aws_caller_info:
+      register: caller
+
+    - name: Create the user data bucket
+      amazon.aws.s3_bucket:
+        name: "{{ bucket }}"
+        region: "{{ region }}"
+        state: present
+        encryption: AES256
+        object_ownership: BucketOwnerEnforced
+        public_access:
+          block_public_acls: true
+          ignore_public_acls: true
+          block_public_policy: true
+          restrict_public_buckets: true
+        policy: "{{ lookup('template', 'user-data/bucket-policy.json.j2') }}"
+
+    - name: Abort incomplete multipart uploads after 7 days
+      community.aws.s3_lifecycle:
+        name: "{{ bucket }}"
+        region: "{{ region }}"
+        rule_id: abort-incomplete-multipart-uploads
+        prefix: ""
+        abort_incomplete_multipart_upload_days: 7
+        status: enabled
+        state: present
+
+    - name: Create the IAM user user-data runs as
+      amazon.aws.iam_user:
+        name: "{{ identity }}"
+        state: present
+
+    - name: Let user-data issue user credentials and manage user objects
+      amazon.aws.iam_policy:
+        iam_type: user
+        iam_name: "{{ identity }}"
+        policy_name: user-data
+        policy_json: "{{ lookup('template', 'user-data/identity-policy.json.j2') }}"
+        state: present
+
+    - name: Create the role user credentials are issued for
+      amazon.aws.iam_role:
+        name: "{{ identity }}"
+        assume_role_policy_document: "{{ lookup('template', 'user-data/role-trust-policy.json.j2') }}"
+        create_instance_profile: false
+        state: present
+
+    - name: Limit the role to the prefix of the user named in the session tag
+      amazon.aws.iam_policy:
+        iam_type: role
+        iam_name: "{{ identity }}"
+        policy_name: user-prefix
+        policy_json: "{{ lookup('template', 'user-data/role-policy.json.j2') }}"
+        state: present
