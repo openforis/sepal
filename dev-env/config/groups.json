@@ -21,6 +21,7 @@
         "terminal",
         "user",
         "user-assets",
+        "user-data",
         "user-files",
         "worker"
     ],
@@ -69,6 +70,7 @@
         "terminal",
         "user",
         "user-assets",
+        "user-data",
         "user-files",
         "worker"
     ]

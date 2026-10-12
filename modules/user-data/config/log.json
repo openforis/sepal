@@ -1,0 +1,10 @@
+{
+    "port": 5000,
+    "categories": {
+        "access": "info",
+        "config": "info",
+        "http": "info",
+        "main": "info",
+        "s3": "info"
+    }
+}

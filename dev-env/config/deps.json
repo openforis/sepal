@@ -245,6 +245,15 @@
             "gee"
         ]
     },
+    "user-data": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
     "user-files": {
         "lib": [
             "shared"

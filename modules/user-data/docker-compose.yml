@@ -1,0 +1,37 @@
+services:
+  user-data:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/user-data/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-data:${SEPAL_VERSION:-latest}"
+    container_name: user-data
+    init: true
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      HTTP_PORT: "80"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      AWS_REGION: "${AWS_REGION}"
+      USER_DATA_BUCKET: "${USER_DATA_BUCKET}"
+      USER_DATA_ROLE_ARN: "${USER_DATA_ROLE_ARN}"
+      USER_DATA_AWS_ACCESS_KEY_ID: "${USER_DATA_AWS_ACCESS_KEY_ID}"
+      USER_DATA_AWS_SECRET_ACCESS_KEY: "${USER_DATA_AWS_SECRET_ACCESS_KEY}"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sepal
+    restart: always
+    ulimits:
+      core: 0
+    platform: linux/amd64
+
+networks:
+  sepal:
+    external: true

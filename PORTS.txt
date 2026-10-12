@@ -22,6 +22,7 @@ Modules
     terminal        80
     user            80
     user-assets     80
+    user-data       80
     user-files      80
     worker          80
 

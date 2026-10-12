@@ -1,0 +1,47 @@
+services:
+  user-data:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    depends_on:
+      s3-emulator:
+        condition: service_healthy
+    environment:
+      AWS_REGION: "us-east-1"
+      USER_DATA_BUCKET: "sepal-dev-user-data"
+      USER_DATA_S3_EMULATOR: "true"
+      USER_DATA_S3_ENDPOINT: "http://s3-emulator:8080"
+      USER_DATA_AWS_ACCESS_KEY_ID: "sepal-dev"
+      USER_DATA_AWS_SECRET_ACCESS_KEY: "sepal-dev-secret"
+    volumes:  # To allow dynamic reloading in dev
+      # lib/shared
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/user-data/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/user-data/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # module
+      - ${SEPAL_PROJECT_DIR}/modules/user-data:/usr/local/src/sepal/modules/user-data
+
+  # An S3 server standing in for AWS behind the S3 adapter, with one fixed key and the dev bucket.
+  s3-emulator:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    image: "rclone/rclone:1.68.2"
+    container_name: s3-emulator
+    entrypoint:
+      - /bin/sh
+      - -c
+      - mkdir -p /data/sepal-dev-user-data && exec rclone serve s3 /data --addr :8080 --auth-key sepal-dev,sepal-dev-secret
+    volumes:
+      - "${SEPAL_DATA_DIR}/s3-emulator:/data"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      start_period: 30s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sepal
+    restart: always
