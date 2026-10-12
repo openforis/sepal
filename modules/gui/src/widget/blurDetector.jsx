@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, skipUntil, switchMap, throttleTime, timer} from 'rxjs'
+import {asapScheduler, delay, distinctUntilChanged, filter, fromEvent, map, merge, observeOn, sample, shareReplay, skipUntil, switchMap, throttleTime, timer} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -104,7 +104,11 @@ class _BlurDetector extends React.Component {
                         // Focus events without relatedTarget are fired when the window itself
                         // regains focus (e.g. switching browser tab and back), as opposed to
                         // the user moving focus within the page. Ignore them.
-                        filter(e => !!e.relatedTarget)
+                        filter(e => !!e.relatedTarget),
+                        // An element autofocused while an overlay mounts takes focus before that
+                        // overlay's detector registers, as children mount first. Deciding after
+                        // the commit lets the new detector claim it.
+                        observeOn(asapScheduler)
                     )
                 ).pipe(
                     skipUntil(timer(SKIP_INITIAL_EVENTS_MS)),
