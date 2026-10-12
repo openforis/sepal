@@ -85,6 +85,12 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/user-data',
+        target: `http://${modules.userData}`,
+        authenticate: true
+    },
+    {
+        prefix: true,
         path: '/api/user-files',
         target: `http://${modules.userFiles}`,
         ws: true,
