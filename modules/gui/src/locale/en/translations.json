@@ -868,6 +868,7 @@
           "tooltip": "Remove layer"
         }
       },
+      "missingSources": "{count, plural, one {A layer source names a recipe that is no longer available} other {# layer sources name recipes that are no longer available}}",
       "mode": {
         "grid": {
           "label": "Grid"

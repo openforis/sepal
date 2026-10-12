@@ -20,6 +20,7 @@ import {assetDisplayLabel} from './assetLabel'
 import styles from './imageLayerSources.module.css'
 import {removeArea} from './layerAreas'
 import {isEditableLayerSource} from './layerSourceEdit'
+import {missingImageLayerSources, missingSourceMessage} from './missingLayerSources'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -62,13 +63,16 @@ export class _ImageLayerSources extends React.Component {
             : null
     }
 
+    // A source found to name a recipe that no longer exists is marked, saying which, and left to be edited or removed.
     renderSource({source, userAdded}) {
         const {drag$, recipe, onEdit} = this.props
         const {description} = getImageLayerSource({recipe, source})
+        const missing = missingImageLayerSources(recipe).some(({id}) => id === source?.id)
         return source && source.id
             ? (
                 <ListItem
                     key={source.id}
+                    error={missing}
                     drag$={drag$}
                     dragValue={{
                         id: uuid(),
@@ -80,6 +84,7 @@ export class _ImageLayerSources extends React.Component {
                             key={source.id}
                             buttonSpacing='tight'
                             title={msg(`imageLayerSources.${source.type}.label`)}
+                            titleTooltip={missing ? missingSourceMessage(source) : null}
                             description={description}
                             editTooltip={msg('map.layout.layer.edit.tooltip')}
                             removeTooltip={msg('map.layout.layer.remove.tooltip')}

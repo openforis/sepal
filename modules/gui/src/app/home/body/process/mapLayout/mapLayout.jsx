@@ -19,6 +19,7 @@ import {isChromiumBasedBrowser, isHighDensityDisplay} from '~/widget/userAgent'
 import {Areas} from './areas'
 import {ImageLayerSources} from './imageLayerSources'
 import styles from './mapLayout.module.css'
+import {missingImageLayerSources} from './missingLayerSources'
 import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
@@ -195,8 +196,17 @@ export const MapLayoutPanel = compose(
     withActivators('selectRecipe', 'selectAsset', 'selectPlanet')
 )
 
-export const MapLayoutButton = () =>
+// Marked while a layer source names a recipe that no longer exists, which Layers shows, and lets be repaired or removed.
+const _MapLayoutButton = ({missingSources}) =>
     <Toolbar.ActivationButton
         id='mapLayout'
         icon='layer-group'
-        tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
+        error={missingSources > 0}
+        tooltip={missingSources > 0
+            ? msg('map.layout.missingSources', {count: missingSources})
+            : msg('process.mosaic.mapToolbar.layers.tooltip')}/>
+
+export const MapLayoutButton = compose(
+    _MapLayoutButton,
+    withRecipe(recipe => ({missingSources: missingImageLayerSources(recipe).length}))
+)

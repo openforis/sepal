@@ -1,6 +1,6 @@
 import {act, createElement} from 'react'
 import {createRoot} from 'react-dom/client'
-import {of, throwError} from 'rxjs'
+import {of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest'
 
 // An additional image layer that shows another recipe. Two things are asked of it: that it loads what it
@@ -36,7 +36,7 @@ vi.mock('../recipeContext', () => ({withRecipe: () => Component => Component}))
 const {RecipeImageLayerSource} = await import('./recipeImageLayerSource')
 const {msg, setLanguage, TranslationProvider} = await import('~/translate')
 
-const loadRecipe$ = vi.fn(() => of({id: 'source-1', title: 'Band math'}))
+const loadRecipe$ = vi.fn()
 
 const layerSource = source => {
     const {props, dispatched, streams} = layerSourceProps(source)
@@ -62,6 +62,10 @@ const layerSourceProps = source => {
         recipeActionBuilder: () => ({
             set(path, value) {
                 this.written = {path, value}
+                return this
+            },
+            del(path) {
+                this.written = {path, deleted: true}
                 return this
             },
             dispatch() {
@@ -92,7 +96,8 @@ beforeAll(() => {
 afterEach(() => mounted.splice(0).forEach(root => act(() => root.unmount())))
 
 beforeEach(() => {
-    loadRecipe$.mockClear()
+    loadRecipe$.mockReset()
+    loadRecipe$.mockImplementation(() => of({id: 'source-1', title: 'Band math'}))
     error.mockClear()
     logged.mockClear()
 })
@@ -114,8 +119,8 @@ describe('a saved layer entry that names no recipe', () => {
         const {component} = layerSource(incomplete)
 
         component.componentDidMount()
-        component.componentDidUpdate({})
-        component.componentDidUpdate({})
+        component.componentDidUpdate({source: incomplete})
+        component.componentDidUpdate({source: incomplete})
 
         expect(loadRecipe$).not.toHaveBeenCalled()
     })
@@ -169,7 +174,8 @@ describe('a layer entry naming a recipe', () => {
 })
 
 // Derived from a saved Masking recipe whose layer source 'optical_2' names a recipe that no longer loads. The
-// notification showed the transport error serialized as JSON.
+// notification showed the transport error serialized as JSON. A recipe found gone is now marked on the source, for
+// Layers to show (missingLayerSources.js), rather than notified each time the recipe opens.
 describe('a layer entry whose recipe cannot be loaded', () => {
     const optical2 = {
         id: 'f4c19176-aade-4f1f-bc4f-68d95ce2eaa9',
@@ -177,15 +183,13 @@ describe('a layer entry whose recipe cannot be loaded', () => {
         sourceConfig: {recipeId: 'f4c19176-aade-4f1f-bc4f-68d95ce2eaa9', description: 'optical_2'}
     }
 
-    it('reports a recipe that is gone by the source naming it', () => {
-        const failure = ajaxError(404)
-        loadRecipe$.mockReturnValueOnce(throwError(() => failure))
+    it('marks a recipe that is gone on the source naming it, rather than notifying it', () => {
+        loadRecipe$.mockReturnValueOnce(throwError(() => ajaxError(404)))
 
-        mountLayerSource(optical2)
+        const {dispatched} = mountLayerSource(optical2)
 
-        expect(notification().message).toEqual(msg('imageLayerSources.Recipe.notFound', {description: 'optical_2'}))
-        expect(notification().message).toContain('optical_2')
-        expectNothingOf(failure)
+        expect(error).not.toHaveBeenCalled()
+        expect(dispatched).toEqual([{path: ['ui.missingImageLayerSources', optical2.id], value: {recipeId: optical2.sourceConfig.recipeId}}])
     })
 
     it('reports any other failure by the source naming it, and the error as the user is told errors', () => {
@@ -213,9 +217,67 @@ describe('a layer entry whose recipe cannot be loaded', () => {
 
         const {dispatched} = mountLayerSource(optical2)
 
-        expect(dispatched).toEqual([])
+        expect(dispatched.filter(({path}) => JSON.stringify(path).includes('layers.'))).toEqual([])
     })
 })
+
+// A source edited to name another recipe while the first is still being read, as Layers edits a source in place.
+describe('a layer entry naming another recipe since', () => {
+    const before = {id: 'source-1', type: 'Recipe', sourceConfig: {recipeId: 'gone'}}
+    const after = {id: 'source-1', type: 'Recipe', sourceConfig: {recipeId: 'other'}}
+
+    it('marks nothing on a late answer that the recipe it named first is gone', () => {
+        const answers = {gone: new Subject(), other: new Subject()}
+        loadRecipe$.mockImplementation(id => answers[id])
+        const {component, dispatched} = layerSource(before)
+        component.componentDidMount()
+
+        renamed(component, after)
+        answers.gone.error(ajaxError(404))
+
+        expect(dispatched).toEqual([])
+        expect(error).not.toHaveBeenCalled()
+    })
+
+    it('clears the mark of the recipe it named before, and reads the one it names now', () => {
+        loadRecipe$.mockReturnValueOnce(throwError(() => ajaxError(404)))
+        const {component, dispatched} = layerSource(before)
+        component.componentDidMount()
+
+        component.props = {...component.props, missingMark: {recipeId: 'gone'}}
+        renamed(component, after)
+
+        expect(loadRecipe$).toHaveBeenLastCalledWith('other')
+        expect(dispatched).toContainEqual({path: ['ui.missingImageLayerSources', 'source-1'], deleted: true})
+    })
+})
+
+describe('a layer entry naming again the recipe it was found missing for', () => {
+    const missing = {id: 'source-1', type: 'Recipe', sourceConfig: {recipeId: 'gone'}}
+    const other = {id: 'source-1', type: 'Recipe', sourceConfig: {recipeId: 'other'}}
+
+    it('reads it again, marking it again', () => {
+        loadRecipe$.mockImplementation(id => id === 'gone' ? throwError(() => ajaxError(404)) : of({id, title: 'Other'}))
+        const {component, dispatched} = layerSource(missing)
+        component.componentDidMount()
+        renamed(component, other)
+
+        renamed(component, missing)
+
+        expect(loadRecipe$.mock.calls.map(([id]) => id)).toEqual(['gone', 'other', 'gone'])
+        expect(dispatched.filter(({path, value}) => path[0] === 'ui.missingImageLayerSources' && value)).toEqual([
+            {path: ['ui.missingImageLayerSources', 'source-1'], value: {recipeId: 'gone'}},
+            {path: ['ui.missingImageLayerSources', 'source-1'], value: {recipeId: 'gone'}}
+        ])
+    })
+})
+
+// The source's props as its form changes them, the component updated as React updates it.
+const renamed = (component, source) => {
+    const prevProps = component.props
+    component.props = {...prevProps, source}
+    component.componentDidUpdate(prevProps)
+}
 
 // As an rxjs AjaxError carries it: the request, the status and the response body.
 const ajaxError = status => ({
