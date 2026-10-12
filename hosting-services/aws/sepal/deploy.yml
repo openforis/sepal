@@ -22,6 +22,7 @@
       - {module: worker}
       - {module: message}
       - {module: recipe}
+      - {module: task-manager}
       - {module: scene-metadata}
       - {module: user-assets}
       - {module: user-files}
@@ -31,6 +32,10 @@
       - {module: terminal}
       - {module: gateway}
       - {module: caddy}
+
+    # Images modules start containers from themselves, outside compose. bin/deploy verifies them as "image: <name>".
+    images:
+      - {image: task}
 
   pre_tasks:
     - set_fact:
@@ -199,6 +204,24 @@
         enabled: yes
         masked: no
 
+    - name: Copy sepal-task firewall script
+      copy:
+        src: docker/sepal-task-firewall.sh
+        dest: /usr/local/sbin/sepal-task-firewall.sh
+        mode: '0755'
+
+    - name: Copy sepal-task firewall unit
+      copy:
+        src: docker/sepal-task-firewall.service
+        dest: /etc/systemd/system/sepal-task-firewall.service
+
+    - name: Enable sepal-task firewall
+      systemd:
+        name: sepal-task-firewall
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
     - name: pip install Docker SDK
       pip:
         name:
@@ -241,7 +264,14 @@
       register: network
       retries: 15
       delay: 2
-      until: network.stdout != "null"            
+      until: network.stdout != "null"
+
+    - docker_network:
+        name: sepal-task
+        driver: bridge
+        ipam_config:
+          - subnet: 172.29.0.0/16
+            iprange: 172.29.128.0/17
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
@@ -290,11 +320,23 @@
     - import_role: {name: aws-mount-efs}
     - import_role: {name: docker-login}
 
+    # Every release pulls a full set of images, so older ones are removed first to leave room for it. docker rmi
+    # refuses an image a container still uses: the running release, and task containers still running the
+    # release that started them, keep theirs.
+    - name: Remove unused images of other releases
+      shell: >
+        docker images --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
+        | grep '^{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/'
+        | grep -v ':{{ version }}$'
+        | xargs -r -n 1 docker rmi 2>/dev/null || true;
+        docker image prune --force
+      changed_when: false
+
     # Pulling all images up front, before any container is recreated, keeps running modules untouched
     # when a pull fails and leaves each module's downtime to the recreate itself
     - name: Pull module images
       shell: >
-        printf '%s\n' {{ modules | map(attribute='module') | join(' ') }}
+        printf '%s\n' {{ ((modules | map(attribute='module') | list) + (images | map(attribute='image') | list)) | join(' ') }}
         | xargs -P 0 -I MODULE docker pull --quiet
         {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/MODULE:{{ version }}
       changed_when: false

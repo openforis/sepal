@@ -5826,6 +5826,9 @@
       }
     },
     "samplingDesign": {
+      "progress": {
+        "prepare": "Preparing samples"
+      },
       "grid": {
         "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
         "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
@@ -5899,9 +5902,13 @@
       "completed": "Completed!",
       "EEException": "Earth Engine: {error}",
       "executing": "Executing...",
+      "exitedUnexpectedly": "The task ended unexpectedly. Run the task again.",
       "failed": "{error}",
       "failedGeneric": "The task failed. Try running it again. If the problem persists, contact the SEPAL team.",
-      "initializing": "Initializing..."
+      "initializing": "Initializing...",
+      "interrupted": "Interrupted by a server restart. Run the task again.",
+      "launchFailed": "The task could not be started. Run the task again.",
+      "stalled": "The task stopped responding. Run the task again."
     }
   },
   "terminal": {
@@ -6395,6 +6402,7 @@
       },
       "loadError": "Unable to load asset",
       "invalidAssetId": "Use only letters, numbers, periods, hyphens, underscores, and forward slashes. Spaces are not allowed.",
+      "insideNonContainer": "{ancestor} is an existing asset that is not a folder or image collection, so nothing can be exported inside it",
       "taskPending": "A task is already exporting to this asset. Please choose a different asset ID.",
       "validating": "Validating asset destination...",
       "replace": {

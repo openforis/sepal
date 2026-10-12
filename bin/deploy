@@ -113,6 +113,9 @@ function verify_images() {
         fi
         IMAGES="$IMAGES $(sed -nE 's|.*image: *"[^"]*/(openforis/[a-z0-9-]+):\$\{SEPAL_VERSION.*|\1|p' $COMPOSE_FILE)"
     done
+    # Images the modules start containers from themselves, listed in the playbooks as "image: <name>"
+    IMAGES="$IMAGES $(grep -hoE '\{image: *[a-z0-9-]+\}' $PROJECT_DIR/hosting-services/$PLATFORM/sepal/deploy*.yml \
+        | sed -E 's|\{image: *([a-z0-9-]+)\}|openforis/\1|')"
     IMAGES=$(echo $IMAGES | tr ' ' '\n' | sort -u)
 
     echo "Verifying images for build $BUILD_NUMBER in $DOCKER_REGISTRY_HOST..."

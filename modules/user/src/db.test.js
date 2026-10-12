@@ -1,8 +1,8 @@
 // Contract test for the legacy import (migrations/legacy-import/001.do.import.sql). Its conditions and
 // transformations are asserted against the SQL because running it needs the legacy `sepal_user` schema;
 // what the schema stream produces is covered by databaseMigrations.integration.test.js against MySQL.
-import {readFileSync} from 'fs'
-import {join} from 'path'
+import {readFileSync} from 'node:fs'
+import {join} from 'node:path'
 
 import {dirName} from '#sepal/path'
 

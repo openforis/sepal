@@ -1,4 +1,5 @@
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
+
 import {from, of, switchMap, tap} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'

@@ -58,11 +58,3 @@ describe('budgetErrorFor', () => {
         expect(budgetErrorFor(undefined, 'bob')).toBeInstanceOf(InstanceBudgetExceeded)
     })
 })
-
-test('every error name is in the task API\'s BUDGET_ERROR_NAMES set (mapped to 403, not 500)', async () => {
-    const {createTasksApi} = await import('../task/tasksApi.js')
-    const {mapError} = createTasksApi({taskManager: {}})._internal
-    for (const Err of [InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded]) {
-        expect(mapError(new Err('bob'))).toEqual({status: 403, message: expect.any(String)})
-    }
-})

@@ -310,7 +310,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         return findInstancesByRequest(onlyCorrectVersion, {Filters: filters})
     }
 
-    // Only instances of workerAmiVersion hold its sandbox and task images. A deploy that reuses an
+    // Only instances of workerAmiVersion hold its sandbox image. A deploy that reuses an
     // earlier AMI moves the version back, so a newer version is as stale as an older one.
     const isStale = awsInstance => instanceVersion(awsInstance) !== workerAmiVersion
 

@@ -1,7 +1,8 @@
-import {createServer} from 'http'
-import {dirname, join} from 'path'
+import {createServer} from 'node:http'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
+
 import {filter, firstValueFrom, ReplaySubject, Subscription} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 // Whether an operation is really released when a request ends, through the worker the module runs its
 // jobs on: a real worker thread, the real job task list and a real recipe endpoint. The job leaves a
@@ -20,6 +21,7 @@ const GATE_RECIPE = 'gate'
 // the real process. So the configuration the worker runs under is stated here and passed to it.
 const WORKER_ENV = {
     SEPAL_ENDPOINT: 'http://sepal.test',
+    SEPAL_HOST: 'sepal.test',
     GOOGLE_PROJECT_ID: 'test-project',
     EE_ACCOUNT: 'test@example.iam.gserviceaccount.com',
     EE_PRIVATE_KEY: 'test-key'

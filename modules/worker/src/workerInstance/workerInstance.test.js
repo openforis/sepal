@@ -72,7 +72,7 @@ describe('reserve', () => {
     test('preserves all other fields', () => {
         const now = new Date()
         const inst = createWorkerInstance({id: 'i-001', type: 'T3aSmall', host: 'myhost', running: false, launchTime: now})
-        const reserved = reserve(inst, {username: 'bob', workerType: 'TASK_EXECUTOR'})
+        const reserved = reserve(inst, {username: 'bob', workerType: 'sandbox'})
         expect(reserved.id).toBe('i-001')
         expect(reserved.type).toBe('T3aSmall')
         expect(reserved.host).toBe('myhost')
@@ -97,7 +97,7 @@ describe('release', () => {
 
     test('preserves all other fields', () => {
         const now = new Date()
-        const inst = createWorkerInstance({id: 'i-002', type: 'M6aLarge', host: 'srv', running: true, launchTime: now, reservation: {username: 'bob', workerType: 'TASK_EXECUTOR'}})
+        const inst = createWorkerInstance({id: 'i-002', type: 'M6aLarge', host: 'srv', running: true, launchTime: now, reservation: {username: 'bob', workerType: 'sandbox'}})
         const released = release(inst)
         expect(released.id).toBe('i-002')
         expect(released.type).toBe('M6aLarge')

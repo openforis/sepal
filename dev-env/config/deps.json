@@ -69,7 +69,8 @@
         "run": [
             "logger",
             "rabbitmq",
-            "worker"
+            "worker",
+            "task-manager"
         ]
     },
     "gee": {
@@ -81,13 +82,6 @@
         "run": [
             "logger"
         ]
-    },
-    "geospatial-toolkit": {
-        "build": {
-            "sandbox-base": "build",
-            "r-proxy": "run"
-        },
-        "run": false
     },
     "gui": {
         "lib": [
@@ -160,7 +154,8 @@
     },
     "sandbox": {
         "build": {
-            "geospatial-toolkit": "build"
+            "sandbox-base": "build",
+            "r-proxy": "run"
         },
         "run": false
     },
@@ -203,13 +198,22 @@
     },
     "task": {
         "lib": [
-            "shared",
-            "ee"
+            "shared"
+        ],
+        "build": {},
+        "run": false
+    },
+    "task-manager": {
+        "lib": [
+            "shared"
         ],
         "build": {
-            "sandbox-base": "build"
+            "task": "build"
         },
-        "run": false
+        "run": [
+            "logger",
+            "mysql"
+        ]
     },
     "terminal": {
         "lib": [

@@ -98,4 +98,4 @@ the new monitoring observations are tested against the corrected ones.
   Retrieve's order and policies, refused orbits, broken dependencies, and BAYTS Alerts over a historical recipe.
 - `modules/gui/src/app/home/body/process/recipe/baytsHistorical/baytsHistoricalOutput.test.js` - Masking and Stack over
   it.
-- `modules/task/src/tasks/imageAssetExport.test.js` - no encoding recorded, and refused orbits failing the export.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - no encoding recorded, and refused orbits failing the export.

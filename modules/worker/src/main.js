@@ -13,12 +13,6 @@ import {createTerminalRegistry} from './instanceUsage/terminalRegistry.js'
 import {UsageRepository} from './instanceUsage/usageRepository.js'
 import {createLockedUsers} from './lockedUsers.js'
 import {createRoutes, createWsRoutes} from './routes.js'
-import {EventEmittingTaskRepository} from './task/events.js'
-import {createTaskComponent} from './task/index.js'
-import {createTaskManager} from './task/taskManager.js'
-import {TaskRepository} from './task/taskRepository.js'
-import {createTasksApi} from './task/tasksApi.js'
-import {createWorkerGateway} from './task/workerGateway.js'
 import {ClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
@@ -49,7 +43,6 @@ const amqpUri = `amqp://${rabbitmqHost}:${rabbitmqPort}`
 
 let instanceComponent = null
 let sessionComponent = null
-let taskComponent = null
 let usageComponent = null
 
 const main = async () => {
@@ -119,7 +112,6 @@ const main = async () => {
         openExtensionMinutes: config.openExtensionMinutes,
         interactionExtensionMinutes: config.interactionExtensionMinutes,
         busyExtensionMinutes: config.busyExtensionMinutes,
-        taskExtensionMinutes: config.taskExtensionMinutes,
         manualExtensionMinutes: config.manualExtensionMinutes,
         emailExtensionMinutes: config.emailExtensionMinutes,
         maxUnattendedHours: config.maxUnattendedHours,
@@ -181,17 +173,6 @@ const main = async () => {
         instanceManager: instanceComponent.instanceManager,
     })
 
-    // workerGateway is the outbound HTTP client to the sandbox task-executor. Constructing it never
-    // calls the executor; that only happens on execute/cancel.
-    const taskRepository = new EventEmittingTaskRepository(new TaskRepository(db, clock))
-    const workerGateway = createWorkerGateway({workerPort: config.workerPort})
-    const taskManager = createTaskManager({
-        repo: taskRepository,
-        sessionManager,
-        workerGateway,
-    })
-    taskComponent = createTaskComponent({taskManager})
-
     usageComponent = createInstanceUsageComponent({
         sessionRepo: workerSessionRepository,
         usageRepo: usageRepository,
@@ -212,7 +193,6 @@ const main = async () => {
     })
 
     const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens, sshHost: config.sepalSshHost})
-    const tasksApi = createTasksApi({taskManager})
 
     await initMessageQueue(amqpUri, {
         publishers: [
@@ -235,17 +215,14 @@ const main = async () => {
         ],
     })
 
-    // Task component last: its session-event consumers must register against an already-live
-    // session component.
     await instanceComponent.start()
     sessionComponent.start()
-    taskComponent.start()
     usageComponent.start()
 
     await server.start({
         port,
-        routes: createRoutes({sessionsApi, tasksApi}),
-        wsRoutes: createWsRoutes({taskManager, sessionsApi, sessionManager}),
+        routes: createRoutes({sessionsApi}),
+        wsRoutes: createWsRoutes({sessionsApi, sessionManager}),
     })
 
     log.info('Initialized')
@@ -257,13 +234,6 @@ const stop = async () => {
             usageComponent.stop()
         } catch (error) {
             log.error('Error stopping instanceUsage component', error)
-        }
-    }
-    if (taskComponent) {
-        try {
-            taskComponent.stop()
-        } catch (error) {
-            log.error('Error stopping task component', error)
         }
     }
     if (sessionComponent) {

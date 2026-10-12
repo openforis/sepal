@@ -25,11 +25,10 @@
 
 import {containerName as buildContainerName} from '../containerName.js'
 import {dockerFetch} from '../workerInstance/dockerApi.js'
-import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
+import {SANDBOX} from '../workerInstance/workerTypes.js'
 
 const IMAGE_BY_WORKER_TYPE = {
     [SANDBOX]: 'sandbox',
-    [TASK_EXECUTOR]: 'task',
 }
 
 const GPU_QUERY_COMMAND = ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used', '--format=csv,noheader,nounits']

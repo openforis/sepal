@@ -73,4 +73,4 @@ declared product delegating to this declaration.
 - `modules/gui/src/app/home/body/process/recipe/planetMosaic/planetMosaicOutput.test.js` - Masking and Stack over it.
 - `modules/gui/src/sources.test.js` and `modules/gui/src/app/home/body/process/recipe/ccdc/planetTemplates.test.js` -
   the temporal choices and CCDC's presets, unchanged.
-- `modules/task/src/tasks/imageAssetExport.test.js` - the encoding an export records, directly and through Masking.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the encoding an export records, directly and through Masking.

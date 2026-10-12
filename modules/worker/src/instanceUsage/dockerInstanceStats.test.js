@@ -36,12 +36,12 @@ describe('containerStats', () => {
         const stats = createDockerInstanceStats({config, defaultDaemonHost: 'host.docker.internal', fetcher})
         await stats.containerStats({
             ...session,
-            workerType: 'task-executor',
+            workerType: 'sandbox',
             instance: {id: '3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3', host: 'alias-42'},
         })
         const [baseUrl, path] = calls[0]
         expect(baseUrl).toBe('http://host.docker.internal:2375/v1.44')
-        expect(path).toBe(`containers/task.alice.${instanceName('sess-1')}.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3/stats`)
+        expect(path).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3/stats`)
     })
 })
 

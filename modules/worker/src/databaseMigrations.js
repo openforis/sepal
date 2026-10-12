@@ -1,4 +1,4 @@
-import {join} from 'path'
+import {join} from 'node:path'
 
 import {initDb, migrateDb} from '#sepal/db/mysql'
 import {dirName} from '#sepal/path'

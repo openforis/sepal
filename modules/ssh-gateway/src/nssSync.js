@@ -1,4 +1,4 @@
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
 
 import {getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'

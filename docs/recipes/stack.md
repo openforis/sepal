@@ -58,5 +58,5 @@ anything.
 - `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
 - `modules/gui/src/app/home/body/process/recipe/stack/stackOutput.test.js` - Retrieve's policies and destinations,
   Masking over Stack, and a Stack over an input with no image output.
-- `modules/task/src/tasks/imageAssetExport.test.js` - encoding recorded under renamed names, and the export refused
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - encoding recorded under renamed names, and the export refused
   before an input with no image output is read.

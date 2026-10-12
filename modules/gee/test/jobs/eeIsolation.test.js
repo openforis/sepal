@@ -1,7 +1,8 @@
+import {AsyncLocalStorage} from 'node:async_hooks'
+import {MessageChannel} from 'node:worker_threads'
+
 import {jest} from '@jest/globals'
-import {AsyncLocalStorage} from 'async_hooks'
 import {firstValueFrom, Observable, of, switchMap} from 'rxjs'
-import {MessageChannel} from 'worker_threads'
 
 // Who each Earth Engine request is sent as when jobs of different users share one worker thread and their calls
 // queue behind one another. The real job boundary, REST client and limiter - reached over a real MessagePort, as

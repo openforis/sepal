@@ -5,7 +5,7 @@
 import {jest} from '@jest/globals'
 
 import {instanceName} from '../instanceName.js'
-import {SANDBOX, TASK_EXECUTOR} from '../workerInstance/workerTypes.js'
+import {SANDBOX} from '../workerInstance/workerTypes.js'
 import {InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetErrors.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
@@ -51,17 +51,6 @@ describe('requestSession', () => {
         await expect(mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})).rejects.toThrow()
 
         expect(events.emitWorkerSessionRequested).not.toHaveBeenCalled()
-    })
-
-    test('every worker type gets its own api key', async () => {
-        const {mgr, repo} = build()
-
-        await mgr.requestSession({username: 'bob', workerType: TASK_EXECUTOR, instanceType: 'T3aSmall'})
-        await mgr.requestSession({username: 'bob', workerType: SANDBOX, instanceType: 'T3aSmall'})
-
-        const [taskExecutor, sandbox] = repo.insert.mock.calls.map(([session]) => session)
-        expect(taskExecutor.apiKey).toBeTruthy()
-        expect(sandbox.apiKey).toBeTruthy()
     })
 
     test('requestInstance runs BEFORE insert (api-key ordering, parity risk #3)', async () => {
@@ -212,6 +201,17 @@ describe('closeSession', () => {
         expect(repo.update).not.toHaveBeenCalled()
         expect(instanceManager.releaseInstance).not.toHaveBeenCalled()
         expect(events.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    })
+
+    test('a session of the retired task-executor type is closed and its instance released', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE, workerType: 'task-executor'})})
+        const {mgr, instanceManager, events} = build({repo})
+
+        await mgr.closeSession({sessionId: 's-1'})
+
+        expect(repo.update).toHaveBeenCalledWith(expect.objectContaining({state: State.CLOSED}))
+        expect(instanceManager.releaseInstance).toHaveBeenCalledWith('i-1')
+        expect(events.emitWorkerSessionClosed).toHaveBeenCalledTimes(1)
     })
 
     test('matching owner allowed', async () => {
@@ -429,20 +429,9 @@ describe('extensions', () => {
         const {mgr} = build({repo})
         await mgr.openExtension({sessionId: 's-1'})
         await mgr.manualExtension({sessionId: 's-1'})
-        await mgr.taskExtension('s-1')
         // Each ratchet names itself, so the debug log says WHY a deadline moved.
         expect(repo.extendSession.mock.calls.map(([{minutes, reason}]) => [minutes, reason]))
-            .toEqual([[15, 'opened'], [19, 'extend-button'], [18, 'task-progress']])
-    })
-
-    // A task is not a human: stamping last_interaction_time here would re-anchor the unattended
-    // cap and let a wedged task keep an instance forever.
-    test('the task ratchet is not an interaction', async () => {
-        const repo = activeRepo()
-        const {mgr} = build({repo})
-        await mgr.taskExtension('s-1')
-        expect(repo.extendSession).toHaveBeenCalledWith(
-            {sessionId: 's-1', minutes: 18, interaction: false, reason: 'task-progress'})
+            .toEqual([[15, 'opened'], [19, 'extend-button']])
     })
 
     test('ownership check throws for wrong user', async () => {
@@ -537,26 +526,6 @@ describe('extensions', () => {
 })
 
 describe('queries', () => {
-    test('findPendingOrActiveSession prefers ACTIVE over PENDING', async () => {
-        const pending = session({id: 's-p', state: State.PENDING})
-        const active = session({id: 's-a', state: State.ACTIVE})
-        const repo = makeRepo({userSessions: () => [pending, active]})
-        const {mgr} = build({repo})
-        const result = await mgr.findPendingOrActiveSession({username: 'alice', workerType: SANDBOX, instanceType: 't'})
-        expect(result.id).toBe('s-a')
-    })
-
-    test('findPendingOrActiveSession falls back to PENDING then null', async () => {
-        const pending = session({id: 's-p', state: State.PENDING})
-        const repoPending = makeRepo({userSessions: () => [pending]})
-        expect((await build({repo: repoPending}).mgr
-            .findPendingOrActiveSession({username: 'a', workerType: SANDBOX, instanceType: 't'})).id).toBe('s-p')
-
-        const repoEmpty = makeRepo({userSessions: () => []})
-        expect(await build({repo: repoEmpty}).mgr
-            .findPendingOrActiveSession({username: 'a', workerType: SANDBOX, instanceType: 't'})).toBeNull()
-    })
-
     test('generateUserSessionReport shape {sessions, instanceTypes} (no spending — pushed by budget ws)', async () => {
         const sessions = [session({id: 's-a', state: State.ACTIVE})]
         const repo = makeRepo({userSessions: () => sessions})
@@ -592,14 +561,6 @@ describe('queries', () => {
         expect(await mgr.findSessionByApiKey('nope')).toBeNull()
     })
 
-    test('findSessionById passes through repo (throws on missing)', async () => {
-        const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
-        const {mgr} = build({repo})
-        expect((await mgr.findSessionById('s-1')).id).toBe('s-1')
-        const repoMissing = makeRepo()
-        await expect(build({repo: repoMissing}).mgr.findSessionById('nope')).rejects.toThrow('Non-existing')
-    })
-
     test('userWorkerSessions passes username/states/workerType', async () => {
         const repo = makeRepo({userSessions: () => [session({id: 's-a'})]})
         const {mgr} = build({repo})
@@ -628,24 +589,6 @@ describe('queries', () => {
         const {mgr} = build({repo})
         expect(await mgr.allOpenSessions()).toBe(openList)
         expect(repo.allOpenSessions).toHaveBeenCalledWith()
-    })
-
-    test('getDefaultInstanceType returns the first tagged instance type', async () => {
-        const instanceManager = makeInstanceManager({
-            getInstanceTypes: jest.fn(() => [
-                {id: 'T3aSmall'},
-                {id: 'T3aMedium', tag: 'medium'},
-                {id: 'T3aLarge', tag: 'large'},
-            ]),
-        })
-        const {mgr} = build({instanceManager})
-        expect(mgr.getDefaultInstanceType()).toEqual({id: 'T3aMedium', tag: 'medium'})
-    })
-
-    test('getDefaultInstanceType returns undefined when no type is tagged', async () => {
-        const instanceManager = makeInstanceManager({getInstanceTypes: jest.fn(() => [{id: 'T3aSmall'}])})
-        const {mgr} = build({instanceManager})
-        expect(mgr.getDefaultInstanceType()).toBeUndefined()
     })
 })
 
@@ -1018,7 +961,6 @@ const expiryPolicy = {
     openExtensionMinutes: 15,
     interactionExtensionMinutes: 16,
     busyExtensionMinutes: 17,
-    taskExtensionMinutes: 18,
     manualExtensionMinutes: 19,
     emailExtensionMinutes: 20,
     maxUnattendedHours: 12,

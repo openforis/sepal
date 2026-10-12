@@ -11,6 +11,7 @@
   "worker": "worker",
   "sceneMetadata": "scene-metadata",
   "storage": "storage",
+  "taskManager": "task-manager",
   "terminal": "terminal",
   "user": "user",
   "userAssets": "user-assets",

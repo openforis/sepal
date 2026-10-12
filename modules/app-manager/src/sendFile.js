@@ -1,5 +1,6 @@
-import fs from 'fs'
-import {stat} from 'fs/promises'
+import fs from 'node:fs'
+import {stat} from 'node:fs/promises'
+
 import mime from 'mime-types'
 import moment from 'moment'
 

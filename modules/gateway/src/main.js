@@ -1,11 +1,12 @@
+import {createRequire} from 'node:module'
+import url from 'node:url'
+
 import {RedisStore as RedisSessionStore} from 'connect-redis'
 import express from 'express'
 import Session from 'express-session'
 import micromatch from 'micromatch'
-import {createRequire} from 'module'
 import {createClient} from 'redis'
 import {firstValueFrom, Subject} from 'rxjs'
-import url from 'url'
 import {v4 as uuid} from 'uuid'
 import {WebSocketServer} from 'ws'
 
