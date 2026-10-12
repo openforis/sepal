@@ -1,4 +1,4 @@
-import {ClientException} from '#sepal/exception'
+import {ClientException, ServerException} from '#sepal/exception'
 
 import {Attachments} from '../attachments.js'
 import {S3Provider} from './s3.js'
@@ -99,12 +99,22 @@ describe('credentials', () => {
         expect(sts.requests).toEqual([])
     })
 
+    it.each([undefined, 'readonly'])('are refused, without a role session, for the unknown mode %s', async mode => {
+        const sts = fakeSts()
+        const provider = awsProvider({sts})
+
+        await expect(provider.credentials(attachment('alice'), {mode})).rejects.toThrow(ServerException)
+        expect(sts.requests).toEqual([])
+    })
+
     it('in emulator mode are the emulator key, without a role session', async () => {
         const provider = emulatorProvider()
 
         const credentials = await provider.credentials(attachment('alice'), {mode: 'readWrite'})
 
         expect(credentials).toMatchObject({AccessKeyId: EMULATOR.accessKeyId, SecretAccessKey: EMULATOR.secretAccessKey})
+        expect(credentials.Token).toEqual(expect.any(String))
+        expect(credentials.Token).not.toBe('')
         expect(Date.parse(credentials.Expiration)).toBeGreaterThan(Date.parse(NOW))
     })
 })
@@ -155,6 +165,27 @@ describe('grantAccess', () => {
             session_token: issued.SessionToken
         })
         expect(access.env).toEqual({})
+    })
+
+    it('gives tasks fresh credentials rather than ones already cached for the endpoint', async () => {
+        const clock = fakeClock()
+        const sts = fakeSts({clock})
+        const provider = awsProvider({sts, clock})
+        await provider.credentials(attachment('alice'), {mode: 'readWrite'})
+        clock.advance(40 * MINUTE)
+
+        const access = await provider.grantAccess(attachment('alice'), request({purpose: 'task'}))
+
+        expect(sts.requests).toHaveLength(2)
+        expect(access.rclone.options.access_key_id).toBe(sts.issued[1].AccessKeyId)
+    })
+
+    it.each([undefined, 'readonly'])('refuses the unknown mode %s without a role session', async mode => {
+        const sts = fakeSts()
+        const provider = awsProvider({sts})
+
+        await expect(provider.grantAccess(attachment('alice'), {...request({purpose: 'task'}), mode})).rejects.toThrow(ServerException)
+        expect(sts.requests).toEqual([])
     })
 
     it('scopes task credentials to the requested mode', async () => {

@@ -1,12 +1,14 @@
 import {AssumeRoleCommand, STSClient} from '@aws-sdk/client-sts'
 
-import {ClientException} from '#sepal/exception'
+import {ClientException, ServerException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('s3')
 
 const DURATION_SECONDS = 3600
 const RENEW_BEFORE_EXPIRY_MS = 15 * 60 * 1000
+const MODES = ['read', 'readWrite']
+const EMULATOR_SESSION_TOKEN = 'sepal-dev-emulator'
 const USERNAME = /^[a-zA-Z_][a-zA-Z0-9]*$/
 
 export const createS3Provider = ({region, roleArn, accessKeyId, secretAccessKey, endpoint, emulator}) =>
@@ -38,9 +40,10 @@ export class S3Provider {
 
     async grantAccess(attachment, {mode, purpose, credentialsUrl, authorizationTokenFile}) {
         requireUsername(attachment.owner)
+        requireMode(mode)
         const root = rootOf(attachment)
         if (purpose === 'task') {
-            const credentials = await this.#credentials(attachment.owner, mode)
+            const credentials = await this.#issue(attachment.owner, mode)
             return {
                 rclone: {type: 's3', root, options: {...this.#rcloneOptions('false'), ...rcloneCredentials(credentials)}},
                 env: {}
@@ -71,16 +74,21 @@ export class S3Provider {
 
     async #credentials(username, mode) {
         requireUsername(username)
+        requireMode(mode)
         const key = `${username}:${mode}`
         const cached = this.#cache.get(key)
         if (cached && cached.expiration.getTime() - this.#now().getTime() > RENEW_BEFORE_EXPIRY_MS) {
             return cached
         }
-        const credentials = this.#emulator
-            ? this.#emulatorCredentials()
-            : await this.#assumeRole(username, mode)
+        const credentials = await this.#issue(username, mode)
         this.#cache.set(key, credentials)
         return credentials
+    }
+
+    #issue(username, mode) {
+        return this.#emulator
+            ? this.#emulatorCredentials()
+            : this.#assumeRole(username, mode)
     }
 
     async #assumeRole(username, mode) {
@@ -104,6 +112,7 @@ export class S3Provider {
         return {
             accessKeyId: this.#emulator.accessKeyId,
             secretAccessKey: this.#emulator.secretAccessKey,
+            sessionToken: EMULATOR_SESSION_TOKEN,
             expiration: new Date(this.#now().getTime() + DURATION_SECONDS * 1000)
         }
     }
@@ -147,6 +156,12 @@ const rcloneCredentials = ({accessKeyId, secretAccessKey, sessionToken}) => ({
     secret_access_key: secretAccessKey,
     ...(sessionToken ? {session_token: sessionToken} : {})
 })
+
+const requireMode = mode => {
+    if (!MODES.includes(mode)) {
+        throw new ServerException(`Unknown access mode: ${mode}`)
+    }
+}
 
 const requireUsername = username => {
     if (!USERNAME.test(username ?? '')) {
