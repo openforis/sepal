@@ -49,7 +49,7 @@ prefix isolation and no read-only mode in dev-env.
 `sepal-<env>-user-data`, the IAM user `sepal-<env>-user-data` this module runs as, and the role of the same name
 that user credentials are issued for. Access keys for the IAM user are created by hand once and put in the env
 file as `USER_DATA_AWS_ACCESS_KEY_ID` / `USER_DATA_AWS_SECRET_ACCESS_KEY`, with `USER_DATA_BUCKET` and
-`USER_DATA_ROLE_ARN`.
+`USER_DATA_ROLE_ARN`; the playbook prints the bucket and role ARN to use.
 
 `*.aws.integration.test.js` checks prefix isolation and read-only mode on that real bucket. It runs only with
 `USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment:

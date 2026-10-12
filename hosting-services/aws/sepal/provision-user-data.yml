@@ -9,9 +9,18 @@
     region: "{{ lookup('env', 'AWS_REGION') }}"
     environment_name: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') | lower }}"
     identity: "sepal-{{ environment_name }}-user-data"
-    bucket: "{{ lookup('env', 'USER_DATA_BUCKET') | default(identity, true) }}"
+    bucket: "{{ identity }}"
 
   tasks:
+    - name: Refuse an empty environment or a bucket other than the derived one
+      ansible.builtin.assert:
+        that:
+          - environment_name | length > 0
+          - lookup('env', 'USER_DATA_BUCKET') in ['', bucket]
+        fail_msg: >-
+          DEPLOY_ENVIRONMENT must be set, and USER_DATA_BUCKET in the env file must be empty or equal
+          sepal-<env>-user-data ({{ bucket }}).
+
     - name: Look up the account
       amazon.aws.aws_caller_info:
       register: caller
@@ -67,3 +76,9 @@
         policy_name: user-prefix
         policy_json: "{{ lookup('template', 'user-data/role-policy.json.j2') }}"
         state: present
+
+    - name: Show the values for the env file
+      ansible.builtin.debug:
+        msg:
+          - "USER_DATA_BUCKET={{ bucket }}"
+          - "USER_DATA_ROLE_ARN=arn:aws:iam::{{ caller.account }}:role/{{ identity }}"
