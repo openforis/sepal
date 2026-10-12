@@ -93,12 +93,12 @@ describe('an input editor holding an edit', () => {
         await press(INPUT_IMAGERY)
         await editInput()
 
-        await chooseSection(ASSET_SECTION, 'process.panels.inputImagery.recipe.title')
+        await press('process.sourceType.RECIPE')
         expect(canOpen(BUTTONS[panel])).toBe(false)
         await press(BUTTONS[panel])
 
         expect(openPanels()).toEqual(['INPUT_IMAGERY'])
-        expect(editorShowing()).toBe(RECIPE_SECTION)
+        expect(editorShowing()).toBe('RECIPE')
         expect(panelButton('button.apply')).toBeDefined()
     })
 })
@@ -194,8 +194,6 @@ const BUTTONS = {
     LEGEND: 'process.remapping.panel.legend.button',
     MAPPING: 'process.remapping.panel.mapping.button.label'
 }
-const ASSET_SECTION = 'EARTH ENGINE ASSET'
-const RECIPE_SECTION = 'SEPAL RECIPE'
 
 // What each panel shows as its title, for telling which are open.
 const TITLES = {
@@ -284,12 +282,6 @@ async function editInput() {
     await settled()
 }
 
-// Another kind of source chosen for the input being edited, from the one it shows.
-async function chooseSection(current, label) {
-    await press(current)
-    await chooseOption(label)
-}
-
 // Import chosen from what the legend's Add button offers beside adding an entry, behind its chevron.
 async function importLegend() {
     const buttons = [...document.querySelectorAll('button')]
@@ -324,8 +316,10 @@ const canOpen = label => !panelButton(label).disabled
 
 const openPanels = () => Object.keys(TITLES).filter(panel => document.body.textContent.includes(TITLES[panel]))
 
-// The kind of source the input editor shows, if it is open.
-const editorShowing = () => [ASSET_SECTION, RECIPE_SECTION].find(section => panelButton(section))
+// The kind of source the input editor's picker is for.
+const editorShowing = () => document.querySelector('[data-label="widget.recipeInput.label"]') ? 'RECIPE'
+    : document.querySelector('[data-label="process.classChange.panel.inputImage.asset.label"]') ? 'ASSET'
+        : null
 
 const labelField = label => [...document.querySelectorAll('input')].find(field => field.value === label)
 

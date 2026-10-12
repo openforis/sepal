@@ -100,20 +100,18 @@ describe('an input editor holding an edit', () => {
         await press(INPUT_IMAGERY)
         await editInput()
 
-        await chooseSection(ASSET_SECTION, 'process.panels.inputImagery.recipe.title')
-        expect(editorShowing()).toBe(RECIPE_SECTION)
+        await press('process.sourceType.RECIPE')
+        expect(editorShowing()).toBe('RECIPE')
         expect(panelButton('button.apply')).toBeDefined()
 
         expect(canOpen(BAND_NAMES)).toBe(false)
         await press(BAND_NAMES)
-        expect(editorShowing()).toBe(RECIPE_SECTION)
+        expect(editorShowing()).toBe('RECIPE')
         expect(panelButton('button.apply')).toBeDefined()
     })
 })
 
 const INPUT_IMAGERY = 'process.panels.inputImagery.button'
-const ASSET_SECTION = 'EARTH ENGINE ASSET'
-const RECIPE_SECTION = 'SEPAL RECIPE'
 const BAND_NAMES = 'process.stack.panel.bandNames.button'
 
 // What each toolbar button's panel shows as its title, for telling which are open.
@@ -183,13 +181,6 @@ async function editInput() {
     await settled()
 }
 
-// Another kind of source chosen for the input being edited, from the one it shows.
-async function chooseSection(current, label) {
-    await press(current)
-    await act(async () => [...document.querySelectorAll('[data-hook="option"]')].find(option => option.textContent.includes(label)).click())
-    await settled()
-}
-
 async function typeName(name) {
     const field = nameField()
     await act(async () => {
@@ -211,7 +202,9 @@ const canOpen = label => !panelButton(label).disabled
 
 const openPanels = () => Object.keys(TITLES).filter(label => document.body.textContent.includes(TITLES[label]))
 
-// The kind of source the input editor shows, if it is open.
-const editorShowing = () => [ASSET_SECTION, RECIPE_SECTION].find(section => panelButton(section))
+// The kind of source the input editor's picker is for.
+const editorShowing = () => document.querySelector('[data-label="widget.recipeInput.label"]') ? 'RECIPE'
+    : document.querySelector('[data-label="process.classChange.panel.inputImage.asset.label"]') ? 'ASSET'
+        : null
 
 const nameField = () => document.querySelector('input')

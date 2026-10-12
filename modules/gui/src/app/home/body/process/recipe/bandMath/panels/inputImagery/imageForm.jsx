@@ -1,7 +1,7 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
+import {inputSourceKey} from '~/app/home/body/process/inputImages'
 import {msg} from '~/translate'
 import {ButtonPopup} from '~/widget/buttonPopup'
 import {Combo} from '~/widget/combo'
@@ -11,7 +11,7 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
-import {bandsAvailableToAdd, defaultBand, isMissingBand} from './bands'
+import {bandsAvailableToAdd, defaultBand, defaultLegendEntries, isMissingBand} from './bands'
 import {BandSpec} from './bandSpec'
 import styles from './inputImage.module.css'
 
@@ -20,9 +20,11 @@ const ADD_ALL_BANDS = Symbol('addAllBands')
 export class ImageForm extends Component {
     state = {
         loadedRecipe: null,
-        // The source the configured bands were chosen against: the one the input was saved with, until another loads.
-        reconciledId: this.props.input?.value,
-        selected: undefined,
+        // The categorical bands whose legends are collapsed; the others show them.
+        collapsed: [],
+        // Whether the bands to add are offered as soon as the list shows: once, for a source just selected that answered
+        // with bands, none of them selected.
+        offerBands: false
     }
 
     render() {
@@ -49,10 +51,11 @@ export class ImageForm extends Component {
     }
 
     renderImageSelector() {
-        const {input, inputComponent, inputs: {otherSources}} = this.props
+        const {input, inputComponent, labelButtons, inputs: {otherSources}} = this.props
         return <div ref={this.element}>
             {React.createElement(inputComponent, {
                 input,
+                labelButtons,
                 otherSources: otherSources.value,
                 onLoading: id => this.onLoading(id),
                 onLoaded: ({
@@ -87,19 +90,17 @@ export class ImageForm extends Component {
 
     renderBandSpecs() {
         const {inputs: {bands, currentBands, includedBands}} = this.props
-        const {loadedRecipe, selected} = this.state
-        const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
+        const {loadedRecipe, collapsed} = this.state
         const bandSpecs = (includedBands.value || []).map(bandSpec =>
             <BandSpec
                 key={bandSpec.name}
-                bands={_.omit(bands.value, Object.keys(bands.value)
-                    .filter(name => ![bandSpec.name, ...availableBands].includes(name))) || {}}
                 recipe={loadedRecipe}
                 spec={bandSpec}
-                selected={selected === bandSpec.id}
+                expanded={!collapsed.includes(bandSpec.id)}
                 missing={isMissingBand(bandSpec, currentBands.value)}
                 disabled={!Object.keys(bands.value).length}
-                onClick={id => this.selectBandSpec(id)}
+                onToggle={id => this.toggleBandSpec(id)}
+                onTypeChange={type => this.changeType(bandSpec, type)}
                 onUpdate={spec => this.updateSpec(spec)}
                 onRemove={id => this.removeBandSpec(id)}/>
         )
@@ -133,6 +134,7 @@ export class ImageForm extends Component {
                 chromeless
                 icon='plus'
                 noChevron
+                showPopupOnMount={this.state.offerBands}
                 vPlacement='below'
                 hPlacement='over-left'
                 tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}
@@ -160,12 +162,12 @@ export class ImageForm extends Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
-        const {inputs: {includedBands: prevIncludedBands}} = prevProps
-        const {inputs: {includedBands}} = this.props
-        if ((includedBands.value || []).length > (prevIncludedBands.value || []).length) {
-            // A band was added - select last
-            this.selectBandSpec(includedBands.value[includedBands.value.length - 1].id)
+    // The offer is taken up by the list as it first shows, then withdrawn: neither a rerender nor a draft restored, which
+    // shows the list afresh, offers the bands again.
+    componentDidUpdate() {
+        const {inputs: {bands}} = this.props
+        if (this.state.offerBands && Object.keys(bands.value || {}).length) {
+            this.setState({offerBands: false})
         }
     }
 
@@ -178,10 +180,30 @@ export class ImageForm extends Component {
             ))
     }
 
-    selectBandSpec(bandSpecId) {
-        this.setState(({selected}) => ({
-            selected: selected === bandSpecId ? null : bandSpecId
+    toggleBandSpec(bandSpecId) {
+        this.setState(({collapsed}) => ({
+            collapsed: collapsed.includes(bandSpecId)
+                ? collapsed.filter(id => id !== bandSpecId)
+                : [...collapsed, bandSpecId]
         }))
+    }
+
+    // A type chosen over the source's default, in either direction. A band switched to categorical shows its legend - the
+    // one it had before this form switched it to continuous, or else its source's - and one switched to continuous keeps
+    // its legend aside in its kind's draft, for as long as the form is open, rather than in the model.
+    changeType(spec, type) {
+        if (spec.type === type) {
+            return
+        }
+        const {inputs: {bands, setAsideLegends}} = this.props
+        if (type === 'categorical') {
+            const legendEntries = setAsideLegends.value?.[spec.id] || defaultLegendEntries(spec.name, bands.value || {})
+            this.setState(({collapsed}) => ({collapsed: collapsed.filter(id => id !== spec.id)}))
+            this.updateSpec({...spec, type, legendEntries})
+        } else {
+            setAsideLegends.setInitialValue({...setAsideLegends.value, [spec.id]: spec.legendEntries})
+            this.updateSpec({...spec, type, legendEntries: []})
+        }
     }
 
     removeBandSpec(bandSpecId) {
@@ -215,9 +237,9 @@ export class ImageForm extends Component {
     // A load of another source than the configured bands were chosen against hides them until it answers. One of that
     // same source keeps showing the bands it was saved with. Either way, nothing is known missing until it answers.
     onLoading(id) {
-        const {inputs: {bands, currentBands}} = this.props
+        const {inputs: {bands, bandsSource, currentBands}} = this.props
         currentBands.setInitialValue(null)
-        if (id !== this.state.reconciledId) {
+        if (this.sourceOf(id) !== bandsSource.value) {
             bands.set({})
         }
     }
@@ -233,55 +255,53 @@ export class ImageForm extends Component {
     // against the previous source is not a band of this one. It is dropped rather than left in the list looking like
     // a valid selection, while everything the new source still has is kept - switching source is not a reason to
     // discard work that remains meaningful. Of the same source, a band it no longer has stays selected, refused by
-    // validation, for the user to replace or remove.
+    // validation, for the user to remove.
     onLoaded(id, loadedBands, loadedVisualizations, loadedRecipe) {
-        const {input, inputs: {bands, currentBands, visualizations, recipe}} = this.props
+        const {input, inputs: {bands, bandsSource, currentBands, visualizations}} = this.props
         if (!id || id !== input.value) {
             return
         }
-        const changedSource = id !== this.state.reconciledId
+        const changedSource = this.sourceOf(id) !== bandsSource.value
         const learn = (field, value) => input.isDirty() ? field.set(value) : field.setInitialValue(value)
         currentBands.setInitialValue(loadedBands)
         learn(bands, loadedBands)
         learn(visualizations, loadedVisualizations)
-        learn(recipe, loadedRecipe?.id)
-        this.setState({loadedRecipe, reconciledId: id})
         if (changedSource) {
-            this.reconcile(loadedBands)
+            const retained = this.reconcile(loadedBands)
+            bandsSource.setInitialValue(this.sourceOf(id))
+            this.setState({loadedRecipe, offerBands: !!Object.keys(loadedBands || {}).length && !retained.length})
+        } else {
+            this.setState({loadedRecipe})
         }
+    }
+
+    // A source of the kind the picker is for. The bands' source is kept by the form, not here: the picker starts afresh
+    // whenever its kind is chosen again.
+    sourceOf(id) {
+        const {inputs: {section}} = this.props
+        return inputSourceKey({type: section.value, id})
     }
 
     // A source that reports no bands is not a source whose configuration can be reconciled against
     // anything. The band list is not shown at all in that state, so what is configured is left as it is.
     reconcile(loadedBands) {
         const {inputs: {includedBands}} = this.props
-        if (!Object.keys(loadedBands || {}).length) {
-            return
-        }
         const configured = includedBands.value || []
+        if (!Object.keys(loadedBands || {}).length) {
+            return configured
+        }
         const retained = configured.filter(({name}) => loadedBands[name])
         if (retained.length !== configured.length) {
             includedBands.set(retained)
         }
-        if (!retained.length) {
-            this.addFirstBand(loadedBands)
-        }
-    }
-
-    addFirstBand(loadedBands) {
-        const {inputs: {includedBands}} = this.props
-        const availableBands = bandsAvailableToAdd(loadedBands, [])
-        if (!availableBands.length) {
-            return includedBands.set([])
-        }
-        const bandSpec = defaultBand(availableBands[0], loadedBands)
-        includedBands.set([bandSpec])
-        this.setState({selected: bandSpec.id})
+        return retained
     }
 }
 
 ImageForm.propTypes = {
     children: PropTypes.any,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    // Shown in the source picker's label row: the choice of the kind of source.
+    labelButtons: PropTypes.array
 }

@@ -1,4 +1,26 @@
+/* A band's header: its name, cut short rather than widening the editor, and its type. The header takes the width it is
+   given and contributes none of its own, so a long name cannot push the editor wider than its panel. */
+.header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    contain: inline-size;
+}
 
-.bandSelector {
+/* As a list item's title is set. */
+.name {
     flex-grow: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .8rem;
+    font-weight: 800;
+    line-height: 1.5rem;
+    text-transform: uppercase;
+    color: var(--text-muted-color);
+}
+
+.type {
+    flex-shrink: 0;
 }

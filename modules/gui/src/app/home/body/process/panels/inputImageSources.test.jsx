@@ -10,7 +10,8 @@ import {initStore} from '~/store'
 
 // The source of an input chosen in the panel editing it, as each input imagery form offers it, over a real store: a
 // source another input of the recipe uses is not offered, or is refused where it is typed. A saved recipe whose inputs
-// already share a source stays editable.
+// already share a source stays editable. Stack's, Remapping's and Band Math's forms offer the kind of source beside its
+// picker, starting a new input as an asset; the classification family's chooses it in a step of its own.
 
 const fake = vi.hoisted(() => ({metadata: null}))
 vi.mock('~/apiRegistry', async () => {
@@ -84,8 +85,8 @@ afterEach(async () => {
 const FORMS = [
     {
         form: 'Stack and Remapping', InputImage: SharedInputImage,
-        assetSection: 'process.panels.inputImagery.asset.title',
-        recipeSection: 'process.panels.inputImagery.recipe.title',
+        assetSection: null,
+        recipeSection: 'process.sourceType.RECIPE',
         assetLabel: 'process.classChange.panel.inputImage.asset.label',
         bands: {red: {}, nir: {}}
     },
@@ -98,12 +99,33 @@ const FORMS = [
     },
     {
         form: 'Band Math', InputImage: BandMathInputImage,
-        assetSection: 'process.panels.inputImagery.asset.title',
-        recipeSection: 'process.panels.inputImagery.recipe.title',
+        assetSection: null,
+        recipeSection: 'process.sourceType.RECIPE',
         assetLabel: 'process.classChange.panel.inputImage.asset.label',
         bands: {red: {}, nir: {}}
     }
 ]
+
+describe.each(FORMS.filter(({assetSection}) => !assetSection))('an input in the form of $form', ({InputImage, assetLabel, bands}) => {
+    const input = (imageId, type, id) => inputOf(imageId, type, id, bands)
+
+    it('starts new as an asset, its kind offered beside the picker', async () => {
+        await editInput(InputImage, {images: [], imageId: 'input-new'})
+
+        expect(field(assetLabel)).not.toBeNull()
+        expect(panelButton('process.sourceType.ASSET')).toBeDefined()
+        expect(panelButton('process.sourceType.RECIPE')).toBeDefined()
+        expect(applyEnabled()).toBe(false)
+    })
+
+    it('keeps the kind of a saved input, opening unedited', async () => {
+        await editInput(InputImage, {images: [input('input-a', 'RECIPE_REF', 'mosaic-1')], imageId: 'input-a'})
+
+        expect(field('widget.recipeInput.label')).not.toBeNull()
+        expect(field(assetLabel)).toBeNull()
+        expect(panelButton('button.apply')).toBeUndefined()
+    })
+})
 
 describe.each(FORMS)('an input in the form of $form', ({InputImage, assetSection, recipeSection, assetLabel, bands}) => {
     const input = (imageId, type, id) => inputOf(imageId, type, id, bands)
@@ -212,7 +234,8 @@ const editInput = async (InputImage, {images, imageId}) => {
     await settled()
 }
 
-const choose = label => act(async () => panelButton(label).click())
+// The kind of source chosen, where the form asks for one: a form offering it beside the picker starts as an asset.
+const choose = label => label && act(async () => panelButton(label).click())
 
 // An asset typed into the picker and chosen from what it offers, as a user chooses it.
 const selectAsset = async (label, id) => {

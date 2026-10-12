@@ -1,20 +1,20 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {adoptOtherSources, DUPLICATE_SOURCE, isFreeSource} from '~/app/home/body/process/inputImages'
+import {adoptOtherSources, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {isMissingBand} from './bands'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
 
 const fields = {
     imageId: new Form.Field(),
@@ -33,6 +33,11 @@ const fields = {
         .notEmpty(),
     // What a read of the selected source in this panel answered, never saved: until one does, nothing is known missing.
     currentBands: new Form.Field(),
+    // The source the selected bands belong to, never saved: the one the input was saved with, until another answers.
+    bandsSource: new Form.Field(),
+    // The legends of bands switched to continuous while the form is open, by band id, restored if switched back. Never
+    // saved.
+    setAsideLegends: new Form.Field(),
     visualizations: new Form.Field(),
     includedBands: new Form.Field()
         .notEmpty()
@@ -55,42 +60,44 @@ class _InputImage extends React.Component {
     }
 
     render() {
-        const {inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection section={inputs.section}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.panels.inputImagery.recipe.title'),
-                title: msg('SEPAL RECIPE'),
-                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.panels.inputImagery.asset.title'),
-                title: msg('EARTH ENGINE ASSET'),
-                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-            }
-        ]
-
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
                 onApply={this.updateImageLayerSources}>
-                <PanelSections
-                    inputs={inputs}
-                    sections={sections}
-                    selected={inputs.section}
-                    icon='image'
-                    label={msg('process.panels.inputImagery.sections.title')}
-                />
+                <Panel.Header icon='image' title={msg('process.panels.inputImagery.sections.title')}/>
+                <Panel.Content>
+                    {this.renderImageForm()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
+    // The kind of source is chosen beside its picker, each kind showing its own draft.
+    renderImageForm() {
+        const {inputs} = this.props
+        const recipe = inputs.section.value === 'RECIPE_REF'
+        return (
+            <ImageForm
+                key={inputs.section.value}
+                {...this.props}
+                inputComponent={recipe ? RecipeSection : AssetSection}
+                input={recipe ? inputs.recipe : inputs.asset}
+                labelButtons={[
+                    <SourceTypeButtons
+                        key='section'
+                        input={inputs.section}
+                        recipe='RECIPE_REF'
+                        onChange={kind => this.switchKind(kind)}
+                    />
+                ]}
+            />
+        )
+    }
+
     componentDidMount() {
+        this.setSection()
         this.setOtherSources()
     }
 
@@ -98,6 +105,31 @@ class _InputImage extends React.Component {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
         this.setOtherSources()
+    }
+
+    // Each kind of source keeps a draft of its own while the form is open - the bands selected for its source, and what that
+    // source was read to have - so switching back restores what was selected for that kind, and no band crosses from one
+    // kind to the other. A kind not yet shown starts with nothing selected. The pickers keep their sources themselves.
+    switchKind(kind) {
+        const {inputs} = this.props
+        this.drafts = {...this.drafts, [this.shownKind]: draftOf(inputs)}
+        const {includedBands, bands, visualizations, currentBands, bandsSource, setAsideLegends} = this.drafts[kind] || EMPTY_DRAFT
+        inputs.includedBands.set(includedBands)
+        inputs.bands.set(bands)
+        inputs.visualizations.set(visualizations)
+        inputs.currentBands.setInitialValue(currentBands)
+        inputs.bandsSource.setInitialValue(bandsSource)
+        inputs.setAsideLegends.setInitialValue(setAsideLegends)
+        this.shownKind = kind
+    }
+
+    // A new input starts as an asset: where its form starts, not an edit.
+    setSection() {
+        const {inputs: {section}} = this.props
+        if (!section.value) {
+            section.setInitialValue('ASSET')
+        }
+        this.shownKind = section.value || 'ASSET'
     }
 
     // The sources of the recipe's other inputs, which this one may not take.
@@ -173,15 +205,26 @@ const missingBands = (includedBands, bands) =>
         .filter(bandSpec => isMissingBand(bandSpec, bands))
         .map(({band}) => band)
 
+const draftOf = ({includedBands, bands, visualizations, currentBands, bandsSource, setAsideLegends}) => ({
+    includedBands: includedBands.value,
+    bands: bands.value,
+    visualizations: visualizations.value,
+    currentBands: currentBands.value,
+    bandsSource: bandsSource.value,
+    setAsideLegends: setAsideLegends.value
+})
+
+const EMPTY_DRAFT = {includedBands: [], bands: {}, visualizations: undefined, currentBands: null, bandsSource: null, setAsideLegends: {}}
+
 const modelToValues = model => {
     const values = {
         imageId: model.imageId,
-        section: model.type || 'SELECTION',
-        recipe: model.recipe,
+        section: model.type || 'ASSET',
         asset: model.asset,
         bands: model.bands,
         visualizations: model.visualizations,
-        includedBands: model.includedBands
+        includedBands: model.includedBands,
+        bandsSource: inputSourceKey(model)
     }
     switch (model.type) {
         case 'RECIPE_REF':

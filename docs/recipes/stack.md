@@ -13,13 +13,25 @@ Inputs are told apart by their `imageId`, never by their source. A source - its 
 input only: one another input uses is not offered, or refused where it is typed. A saved recipe whose inputs already
 share a source keeps them, each edited and removed alone.
 
-Stack and Remapping share an input editor, which learns what a source holds by reading it; nothing it learns is an edit:
-opening a saved input leaves it unchanged, offering no Apply. A read of the source the input was saved with keeps every
-selected band as saved, with its id. One that read finds absent stays selected, marked on its row and band selector, and
-refuses Apply until it is replaced - keeping its id - or removed. Absence is judged from that read alone: never from the
-band list saved with the input, nor while the read is pending or after it fails. Choosing another source reconciles the
-selection once that source answers: bands it holds are kept, the others dropped, and its first band selected when none
-remains, as a new input is given its source's first band. An answer about a source no longer selected changes nothing.
+Stack and Remapping share an input editor. The kind of source - an asset or a recipe - is chosen beside its picker, a
+new input starting as an asset; each kind keeps a draft of its own while the editor is open - its source and the bands
+selected for it - so switching back restores it, and no band crosses from one kind to the other. A kind not yet shown
+starts with nothing selected. It learns what a source holds by reading it; nothing it learns is an edit: opening a saved
+input leaves it unchanged, offering no Apply. Each selected band is a row of its own, named in its header and chosen
+when it is added: another band is taken by removing the row and adding one, which takes nothing of the removed band, not
+its id. The header chooses the band's type, continuous or categorical, over its source's default either way, without
+opening or closing the row. A categorical band shows its legend, open until its row collapses it and opened when the
+band is switched to categorical; a continuous band has none. A legend set aside by switching its band to continuous
+returns if the band is switched back while the editor is open; the configuration keeps no legend for a continuous band.
+Each legend is edited in an editor of its own, however many are shown. A long name is cut short in its row, named in
+full by its tooltip. A read of the source the input was saved with keeps every selected band as saved, with its id. One
+that read finds absent stays selected, marked on its row with the reason as its tooltip, and refuses Apply until it is
+removed or its source has it again. Absence is judged from that read alone: never from the band list saved with the
+input, nor while the read is pending or after it fails. Choosing another source reconciles the selection once that
+source answers: bands it holds are kept and the others dropped; no band is selected for the user. Once a source just
+chosen answers with bands, none of them selected, the bands to add are offered, once: not again after they are
+dismissed, nor when a draft returns or its source is read again, and never while it loads, after its read fails or when
+it has no bands. An answer about a source no longer selected changes nothing.
 
 The editor marks an input found to lack a band it maps: its row in Input imagery and the Input imagery toolbar button,
 naming the bands (`stack/inputBandProblems.js`). The marks come from the output read as it stands - the
@@ -99,6 +111,13 @@ anything.
 - `modules/gui/src/app/home/body/process/recipe/stack/panels/bandNames/bandNamesUpdate.test.js` - the mapping following
   the bands included, names given kept and new ones named apart.
 - `modules/gui/src/app/home/body/process/panels/inputImagery/inputImageBands.test.jsx` - the input editor Stack and
-  Remapping share: an input opened unchanged, a band its source no longer has kept, marked and refused until replaced or
-  removed, never judged from saved bands, pending or failed reads, edits kept while reading, and source switches
-  reconciled, over asset and recipe inputs.
+  Remapping share: an input opened unchanged, a band its source no longer has kept, marked and refused until removed,
+  another band taken by removing and adding, never judged from saved bands, pending or failed reads, edits kept while
+  reading, source switches reconciled, each kind's draft kept and restored with no band crossing, no band selected for
+  the user, the bands to add offered once, and a band's type chosen either way, its legend open, collapsed and kept
+  through a switch to continuous and back, over asset and recipe inputs.
+- `modules/gui/src/app/home/body/process/panels/inputImageSources.test.jsx` - the kind of source chosen beside its
+  picker, a new input starting as an asset and a saved one keeping its kind, and a source another input uses not offered
+  or refused.
+- `modules/gui/src/app/home/body/process/panels/inputImagery/bandLegends.test.jsx` - two categorical bands' legends
+  shown at once in Remapping's real input editor, each edited in the legend widget's own editor alone.
