@@ -80,6 +80,10 @@ const setRemoving = (tree, paths) =>
 const updateItem = (tree, path, items) =>
     STree.alter(tree, tree => {
         const node = STree.traverse(tree, path)
+        // A directory just removed from its parent can still report once before it stops being watched.
+        if (!node) {
+            return
+        }
         STree.updateValue(
             node,
             ({loading: _loading, ...value} = {}) => Object.keys(value).length ? value : undefined
@@ -97,6 +101,17 @@ const updateItem = (tree, path, items) =>
         })
     })
 
+// Adds a directory known to exist, such as one just created, ahead of the next listing of its parent.
+const addDirectory = (tree, path) =>
+    STree.alter(tree, tree =>
+        path.forEach((_key, index) =>
+            STree.updateValue(
+                STree.traverse(tree, path.slice(0, index + 1), true),
+                (value = {}) => ({...value, dir: true})
+            )
+        )
+    )
+
 const getSelectedItems = tree =>
     STree.reduce(tree, ({directories, files}, {value: {dir, selected} = {}, path}) => {
         return selected
@@ -106,12 +121,14 @@ const getSelectedItems = tree =>
             : ({directories, files})
     }, {directories: [], files: []})
 
-const getOpenDirectories = (tree, basePath) =>
-    STree.reduce(STree.traverse(tree, basePath), (directories, {value: {dir, opened} = {}, path}) => {
-        return dir && opened
-            ? [...directories, path]
-            : directories
-    }, [])
+// Open directories whose contents are on display: every ancestor is open too.
+const getExpandedDirectories = node =>
+    isOpened(node)
+        ? [STree.getPath(node), ...Object.values(STree.getChildNodes(node)).flatMap(getExpandedDirectories)]
+        : []
+
+const getNode = (tree, path) =>
+    STree.traverse(tree, path)
 
 const toStringPath = STree.toStringPath
 
@@ -149,6 +166,6 @@ const isRemoving = node =>
     
 export const FileTree = {
     create, expandDirectory, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
-    setRemoving, updateItem, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth,
-    getChildNodes, getMTime, getSize, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
+    setRemoving, updateItem, addDirectory, getSelectedItems, getExpandedDirectories, getNode, toStringPath, fromStringPath, getPath,
+    getDepth, getChildNodes, getMTime, getSize, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
 }

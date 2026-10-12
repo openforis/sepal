@@ -6420,7 +6420,20 @@
     "workspaceDestination": {
       "taskPending": "A task is already pending in this folder. Please choose a different folder.",
       "notEmpty": "This folder must be completely empty. Please choose a different folder or remove its contents.",
-      "loadError": "Unable to load the workspace. Please try again."
+      "loadError": "Unable to load the workspace. Please try again.",
+      "browser": {
+        "tooltip": "Open workspace browser",
+        "title": "Workspace browser",
+        "path": "Destination",
+        "home": "Home",
+        "filter.placeholder": "Filter by name",
+        "createFolder": {
+          "label": "Create folder",
+          "placeholder": "Enter folder name",
+          "existing.error": "A file or folder with this name already exists",
+          "error": "Unable to create the folder"
+        }
+      }
     },
     "assetInput": {
       "loadError": "Unable to load asset"
