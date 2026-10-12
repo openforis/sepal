@@ -60,10 +60,11 @@ class _ButtonSelect extends React.Component {
 
     renderSingleButton() {
         const {noChevron, disabled, chromeless, shape, look, size, air, additionalClassName, icon, iconType, labelStyle, hint,
-            tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+            ariaLabel, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <Button
                 ref={this.input}
+                ariaLabel={ariaLabel}
                 chromeless={chromeless}
                 shape={shape}
                 look={look}
@@ -286,6 +287,7 @@ ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
     additionalClassName: PropTypes.string,
     air: PropTypes.string,
+    ariaLabel: PropTypes.string,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,

@@ -193,8 +193,9 @@ class _List extends React.Component {
         ) : null
     }
 
+    // A disabled option may say why it is.
     renderNonSelectableOption(option, index) {
-        const {alignment, air} = this.props
+        const {tooltipPlacement, alignment, air} = this.props
         return (
             <li key={option.key || option.value || index} style={this.getOptionStyle(option)}>
                 <Button
@@ -208,6 +209,9 @@ class _List extends React.Component {
                         fixedWidth: true
                     }}
                     label={option.render ? option.render() : option.label}
+                    tooltip={option.tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipAllowedWhenDisabled={!!option.tooltip}
                     width='max'
                     alignment={alignment}
                     disabled

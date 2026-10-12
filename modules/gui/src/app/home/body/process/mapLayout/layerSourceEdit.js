@@ -4,6 +4,8 @@ import React from 'react'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
 import {select} from '~/store'
 
+import {withLayerSourceName} from './layerSourceNames'
+
 // Input panels keep the sources they maintain under the id of the asset or recipe they show, and own their settings.
 // The layout's Add forms give a source an id of its own; only those sources are edited here, whatever they show.
 export const isEditableLayerSource = source =>
@@ -27,14 +29,15 @@ export const editLayerSource = ({layers, sourceId, sourceConfig, reconcileLayerC
     return {...layers, [collection]: sources, areas}
 }
 
-export const updateLayerSource = ({recipeId, sourceId, sourceConfig, reconcileLayerConfig}) => {
+// A form naming the source passes its `name`, saved with the edit; without one, the source's name is left as it is.
+export const updateLayerSource = ({recipeId, sourceId, sourceConfig, reconcileLayerConfig, name}) => {
     const layers = select(recipePath(recipeId, 'layers'))
     const collection = sourceCollection(layers, sourceId)
     const edited = editLayerSource({layers, sourceId, sourceConfig, reconcileLayerConfig})
-    recipeActionBuilder(recipeId)('UPDATE_LAYER_SOURCE', {sourceId})
+    const action = recipeActionBuilder(recipeId)('UPDATE_LAYER_SOURCE', {sourceId})
         .set(['layers', collection], edited[collection])
         .set('layers.areas', edited.areas)
-        .dispatch()
+    return (name === undefined ? action : withLayerSourceName({action, recipeId, sourceId, name})).dispatch()
 }
 
 // The source-selection forms are opened with a `source` to edit it. The form then starts from that source's values;
@@ -42,7 +45,7 @@ export const updateLayerSource = ({recipeId, sourceId, sourceConfig, reconcileLa
 export const withSourceValues = sourceValues => WrappedComponent => {
     const WithSourceValues = props => {
         const source = props.activatable?.source
-        return React.createElement(WrappedComponent, source ? {...props, values: sourceValues(source)} : props)
+        return React.createElement(WrappedComponent, source ? {...props, values: sourceValues(source, props)} : props)
     }
     return WithSourceValues
 }

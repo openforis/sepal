@@ -13,6 +13,7 @@ import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
 import {Notifications} from '~/widget/notifications'
 
+import {isEditableLayerSource} from '../mapLayout/layerSourceEdit'
 import {missingMarkPath} from '../mapLayout/missingLayerSources'
 import {recipeActionBuilder} from '../recipe'
 import {recipeAccess} from '../recipeAccess'
@@ -112,15 +113,16 @@ class _RecipeImageLayerSource extends React.Component {
         }
     }
 
-    // The description only. The source's styles are not copied here: they are read from the source wherever
-    // they are offered, so an edit or a deletion there reaches this recipe rather than leaving a copy behind
-    // that nothing can correct. Styles already saved under this layer stay untouched - a copy made by the
-    // previous behavior cannot be told apart from a style the user deliberately made here.
+    // The description only, and only of a source the layout added: one derived from the recipe's inputs is named from the
+    // listing (dependencyLayerSources.js), and writing here would save an entry for it. The source's styles are not
+    // copied here: they are read from the source wherever they are offered, so an edit or a deletion there reaches this
+    // recipe rather than leaving a copy behind that nothing can correct. Styles already saved under this layer stay
+    // untouched - a copy made by the previous behavior cannot be told apart from a style the user deliberately made here.
     updateSourceConfig(recipe) {
         const {recipeId, source, recipeActionBuilder} = this.props
         this.unmarkMissing()
         const description = toDescription(recipe)
-        if (recipeId !== source.sourceConfig.recipeId) {
+        if (recipeId !== source.sourceConfig.recipeId && isEditableLayerSource(source)) {
             recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
                 .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
                 .dispatch()

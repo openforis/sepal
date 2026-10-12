@@ -836,7 +836,13 @@
             }
           },
           "Recipe": {
-            "description": "Add a SEPAL recipe"
+            "description": "Add a SEPAL recipe",
+            "form": {
+              "name": {
+                "label": "Name",
+                "placeholder": "Optional display name"
+              }
+            }
           }
         }
       },
@@ -866,8 +872,19 @@
         },
         "remove": {
           "tooltip": "Remove layer"
+        },
+        "actions": {
+          "label": "Source actions",
+          "edit": "Edit source",
+          "rename": "Rename source",
+          "delete": "Delete source",
+          "deleteOwned": "Remove this source from the recipe’s inputs."
+        },
+        "delete": {
+          "confirmation": "Delete {description} from Layers? Any map area showing it stops showing it."
         }
       },
+      "legacySource": "No longer an input of this recipe; kept because a map area shows it",
       "missingSources": "{count, plural, one {A layer source names a recipe that is no longer available} other {# layer sources name recipes that are no longer available}}",
       "mode": {
         "grid": {
@@ -875,6 +892,12 @@
         },
         "stack": {
           "label": "Stack"
+        }
+      },
+      "renameImageLayerSource": {
+        "title": "Rename layer",
+        "name": {
+          "label": "Label"
         }
       },
       "title": "Layers"

@@ -70,7 +70,7 @@ const mapRecipeToProps = recipe => ({
 class _InputImage extends React.Component {
     constructor(props) {
         super(props)
-        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
+        this.notifyChange = this.notifyChange.bind(this)
     }
 
     render() {
@@ -78,7 +78,7 @@ class _InputImage extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
-                onApply={this.updateImageLayerSources}>
+                onApply={this.notifyChange}>
                 <Panel.Header icon='image' title={msg('process.panels.inputImagery.sections.title')}/>
                 <Panel.Content>
                     {this.renderImageForm()}
@@ -175,40 +175,9 @@ class _InputImage extends React.Component {
         }
     }
 
-    updateImageLayerSources({section, asset, recipe: recipeId, visualizations}) {
-        const {recipeActionBuilder, onChange} = this.props
-
-        const toImageLayerSource = () => {
-            switch (section) {
-                case 'RECIPE_REF':
-                    return {
-                        id: recipeId,
-                        type: 'Recipe',
-                        sourceConfig: {
-                            recipeId
-                        }
-                    }
-                case 'ASSET':
-                    return {
-                        id: asset,
-                        type: 'Asset',
-                        sourceConfig: {
-                            description: asset,
-                            asset,
-                            visualizations
-                        }
-                    }
-                default:
-                    throw Error(`Unexpected section: ${section}`)
-            }
-        }
-
-        const source = toImageLayerSource()
-
-        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
-
+    // The list follows an applied input; the layout's sources follow the recipe's inputs (dependencyLayerSources.js).
+    notifyChange() {
+        const {onChange} = this.props
         onChange && setTimeout(() => onChange())
     }
 

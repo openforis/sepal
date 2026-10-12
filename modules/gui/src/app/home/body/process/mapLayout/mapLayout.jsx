@@ -16,10 +16,12 @@ import {Panel} from '~/widget/panel/panel'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 import {isChromiumBasedBrowser, isHighDensityDisplay} from '~/widget/userAgent'
 
+import {withLayers} from '../withLayers'
 import {Areas} from './areas'
 import {ImageLayerSources} from './imageLayerSources'
 import styles from './mapLayout.module.css'
 import {missingImageLayerSources} from './missingLayerSources'
+import {RenameLayerSource} from './renameLayerSource'
 import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
@@ -32,6 +34,7 @@ export class MapLayout extends React.Component {
                 <SelectRecipe/>
                 <SelectAsset/>
                 <SelectPlanet/>
+                <RenameLayerSource/>
             </React.Fragment>
         )
     }
@@ -49,6 +52,7 @@ class _MapLayoutPanel extends React.Component {
         super(props)
         this.setMode = this.setMode.bind(this)
         this.editSource = this.editSource.bind(this)
+        this.renameSource = this.renameSource.bind(this)
     }
 
     render() {
@@ -140,7 +144,7 @@ class _MapLayoutPanel extends React.Component {
                 {isChromiumBasedBrowser() && isHighDensityDisplay() ? this.renderWarning() : null}
                 <div className={styles.content}>
                     <Areas sourceDrag$={this.sourceDrag$}/>
-                    <ImageLayerSources drag$={this.sourceDrag$} onEdit={this.editSource}/>
+                    <ImageLayerSources drag$={this.sourceDrag$} onEdit={this.editSource} onRename={this.renameSource}/>
                 </div>
             </Layout>
         )
@@ -175,6 +179,11 @@ class _MapLayoutPanel extends React.Component {
         form?.activate({source})
     }
 
+    renameSource(source) {
+        const {activator: {activatables: {renameLayerSource}}} = this.props
+        renameLayerSource.activate({source})
+    }
+
     addImageLayerSource() {
         const {activator: {activatables: {addImageLayerSource}}} = this.props
         addImageLayerSource.activate()
@@ -193,20 +202,24 @@ export const MapLayoutPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    withActivators('selectRecipe', 'selectAsset', 'selectPlanet')
+    withActivators('selectRecipe', 'selectAsset', 'selectPlanet', 'renameLayerSource')
 )
 
 // Marked while a layer source names a recipe that no longer exists, which Layers shows, and lets be repaired or removed.
-const _MapLayoutButton = ({missingSources}) =>
-    <Toolbar.ActivationButton
-        id='mapLayout'
-        icon='layer-group'
-        error={missingSources > 0}
-        tooltip={missingSources > 0
-            ? msg('map.layout.missingSources', {count: missingSources})
-            : msg('process.mosaic.mapToolbar.layers.tooltip')}/>
+const _MapLayoutButton = ({recipe, imageLayerSources}) => {
+    const missingSources = missingImageLayerSources(recipe, imageLayerSources).length
+    return (
+        <Toolbar.ActivationButton
+            id='mapLayout'
+            icon='layer-group'
+            error={missingSources > 0}
+            tooltip={missingSources > 0
+                ? msg('map.layout.missingSources', {count: missingSources})
+                : msg('process.mosaic.mapToolbar.layers.tooltip')}/>
+    )
+}
 
 export const MapLayoutButton = compose(
     _MapLayoutButton,
-    withRecipe(recipe => ({missingSources: missingImageLayerSources(recipe).length}))
+    withLayers()
 )

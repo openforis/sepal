@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {FROM_IMAGE, TO_IMAGE} from '#sepal/recipe/type/indexChange'
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
@@ -52,6 +53,8 @@ const getDateRange = recipe => {
 
 export default () => ({
     id: 'INDEX_CHANGE',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [FROM_IMAGE, TO_IMAGE],
     labels: {
         name: msg('process.indexChange.create'),
         creationDescription: msg('process.indexChange.description'),

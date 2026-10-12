@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {PROPORTIONS_IMAGE, STRATIFICATION} from '#sepal/recipe/type/samplingDesign'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -70,6 +71,8 @@ const SamplingDesign = compose(
 
 export default () => ({
     id: 'SAMPLING_DESIGN',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [STRATIFICATION, PROPORTIONS_IMAGE],
     labels: {
         name: msg('process.samplingDesign.create'),
         creationDescription: msg('process.samplingDesign.description'),

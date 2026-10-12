@@ -8,17 +8,22 @@ import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 
 import {updateLayerSource, withSourceValues} from './layerSourceEdit'
+import {layerSourceName, withLayerSourceName} from './layerSourceNames'
 import styles from './selectRecipe.module.css'
 
 const fields = {
-    recipe: new Form.Field().notBlank()
+    recipe: new Form.Field().notBlank(),
+    name: new Form.Field()
 }
 
-// Opened with a `source` to edit, the form changes which recipe that source references, never the recipe itself.
+// Opened with a `source` to edit, the form changes which recipe that source references, never the recipe itself. The
+// name is the layer's own, kept apart from the source (layerSourceNames.js): left blank, the layer is called by its
+// recipe's title, and another recipe keeps the name given.
 class _SelectRecipe extends React.Component {
     state = {
         recipe: null
@@ -67,17 +72,25 @@ class _SelectRecipe extends React.Component {
 
     // A saved source can reference a recipe in any project, so editing keeps showing it while only one is offered.
     renderContent() {
-        const {inputs: {recipe}, activatable: {source}} = this.props
+        const {inputs: {recipe, name}, activatable: {source}} = this.props
+        const {recipe: loadedRecipe} = this.state
         return (
-            <RecipeInput
-                input={recipe}
-                filter={isImageSource}
-                allowOwnRecipe
-                keepSelection={!!source}
-                autoFocus
-                onLoading={() => this.setState({recipe: null})}
-                onRecipeLoaded={this.onRecipeLoaded}
-            />
+            <Layout type='vertical'>
+                <RecipeInput
+                    input={recipe}
+                    filter={isImageSource}
+                    allowOwnRecipe
+                    keepSelection={!!source}
+                    autoFocus
+                    onLoading={() => this.setState({recipe: null})}
+                    onRecipeLoaded={this.onRecipeLoaded}
+                />
+                <Form.Input
+                    input={name}
+                    label={msg('map.layout.addImageLayerSource.types.Recipe.form.name.label')}
+                    placeholder={loadedRecipe?.title || msg('map.layout.addImageLayerSource.types.Recipe.form.name.placeholder')}
+                />
+            </Layout>
         )
     }
 
@@ -91,16 +104,17 @@ class _SelectRecipe extends React.Component {
 
     add() {
         const {recipe} = this.state
-        const {recipeActionBuilder, activatable: {deactivate}} = this.props
-        recipeActionBuilder('ADD_RECIPE_IMAGE_LAYER_SOURCE')
+        const {recipeId, recipeActionBuilder, inputs: {name}, activatable: {deactivate}} = this.props
+        const id = uuid()
+        const action = recipeActionBuilder('ADD_RECIPE_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {
-                id: uuid(),
+                id,
                 type: 'Recipe',
                 sourceConfig: {
                     recipeId: recipe.id
                 }
             })
-            .dispatch()
+        withLayerSourceName({action, recipeId, sourceId: id, name: name.value}).dispatch()
         deactivate()
     }
 
@@ -108,20 +122,22 @@ class _SelectRecipe extends React.Component {
     // own defaults; a recipe of the same type keeps them, for its layer to reconcile.
     apply() {
         const {recipe} = this.state
-        const {recipeId, activatable: {deactivate, source}} = this.props
+        const {recipeId, inputs: {name}, activatable: {deactivate, source}} = this.props
         const sameType = recipe.type === this.sourceRecipeType
         updateLayerSource({
             recipeId,
             sourceId: source.id,
             sourceConfig: {...source.sourceConfig, recipeId: recipe.id},
-            reconcileLayerConfig: layerConfig => sameType ? layerConfig : undefined
+            reconcileLayerConfig: layerConfig => sameType ? layerConfig : undefined,
+            name: name.value || ''
         })
         deactivate()
     }
 }
 
-const sourceValues = source => ({
-    recipe: source.sourceConfig.recipeId
+const sourceValues = (source, {recipe}) => ({
+    recipe: source.sourceConfig.recipeId,
+    name: layerSourceName(recipe, source.id) || ''
 })
 
 const policy = () => ({
@@ -132,6 +148,6 @@ export const SelectRecipe = compose(
     _SelectRecipe,
     withForm({fields}),
     withSourceValues(sourceValues),
-    withRecipe(),
+    withRecipe(recipe => ({recipe})),
     withActivatable({id: 'selectRecipe', policy, alwaysAllow: true})
 )

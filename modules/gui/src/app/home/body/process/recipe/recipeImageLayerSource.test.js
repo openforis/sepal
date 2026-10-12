@@ -145,15 +145,24 @@ describe('a layer entry naming a recipe', () => {
         expect(loadRecipe$).toHaveBeenCalledWith('source-1')
     })
 
-    it('records the loaded recipe\'s name on the layer', () => {
-        const {component, dispatched} = layerSource(valid)
+    it('records the loaded recipe\'s name on a source the layout added', () => {
+        const {component, dispatched} = layerSource({id: 'layer-1', type: 'Recipe', sourceConfig: {recipeId: 'source-1'}})
 
         component.componentDidMount()
 
         expect(dispatched).toEqual([{
-            path: ['layers.additionalImageLayerSources', {id: 'source-1'}, 'sourceConfig.description'],
+            path: ['layers.additionalImageLayerSources', {id: 'layer-1'}, 'sourceConfig.description'],
             value: 'Band math'
         }])
+    })
+
+    // Derived from the recipe's inputs and named from the listing: a write here would save an entry for it.
+    it('writes nothing for a source derived from the recipe\'s inputs', () => {
+        const {component, dispatched} = layerSource(valid)
+
+        component.componentDidMount()
+
+        expect(dispatched).toEqual([])
     })
 
     // The styles belong to the recipe being shown, and are read from it wherever they are offered. Copying

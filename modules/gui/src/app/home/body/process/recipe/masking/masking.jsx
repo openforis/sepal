@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {MASK_IMAGE, PRIMARY_IMAGE} from '#sepal/recipe/type/masking'
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
 import {SourceEvidenceSync} from '~/app/home/body/process/recipe/sourceEvidenceSync'
 import {recipe} from '~/app/home/body/process/recipeContext'
@@ -46,6 +47,8 @@ const Masking = compose(
 
 export default () => ({
     id: 'MASKING',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [PRIMARY_IMAGE, MASK_IMAGE],
     labels: {
         name: msg('process.masking.create'),
         creationDescription: msg('process.masking.description'),

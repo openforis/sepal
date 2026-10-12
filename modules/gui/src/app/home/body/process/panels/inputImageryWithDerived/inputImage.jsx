@@ -50,7 +50,6 @@ const mapRecipeToProps = recipe => ({
 class _InputImage extends React.Component {
     constructor(props) {
         super(props)
-        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
     }
 
     render() {
@@ -76,8 +75,7 @@ class _InputImage extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='modal'
-                onApply={this.updateImageLayerSources}>
+                placement='modal'>
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -127,42 +125,6 @@ class _InputImage extends React.Component {
         if (!bandSetSpecs.value) {
             bandSetSpecs.set([{id: uuid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: []}])
         }
-    }
-
-    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
-        const {recipeActionBuilder} = this.props
-
-        const toImageLayerSource = () => {
-            switch (section) {
-                case 'RECIPE_REF':
-                    return {
-                        id: recipeId,
-                        type: 'Recipe',
-                        sourceConfig: {
-                            recipeId
-                        }
-                    }
-                case 'ASSET':
-                    return {
-                        id: asset,
-                        type: 'Asset',
-                        sourceConfig: {
-                            description: asset,
-                            asset,
-                            metadata,
-                            visualizations
-                        }
-                    }
-                default:
-                    throw Error(`Unexpected section: ${section}`)
-            }
-        }
-
-        const source = toImageLayerSource()
-
-        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
     }
 
     addImage() {

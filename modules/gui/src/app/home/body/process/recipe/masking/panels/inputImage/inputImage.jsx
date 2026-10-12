@@ -30,7 +30,6 @@ export class InputImage extends React.Component {
 
     constructor(props) {
         super(props)
-        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
         this.clearSource = this.clearSource.bind(this)
     }
 
@@ -39,8 +38,7 @@ export class InputImage extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement="bottom-right"
-                onApply={this.updateImageLayerSources}>
+                placement="bottom-right">
                 <Panel.Header icon='image' title={title}/>
                 <Panel.Content>
                     {this.renderImageForm()}
@@ -75,44 +73,6 @@ export class InputImage extends React.Component {
         inputs.visualizations.set(undefined)
     }
 
-    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
-        const {recipeActionBuilder} = this.props
-
-        const imageMaskLayerSource = () => {
-            switch (section) {
-                case 'RECIPE_REF':
-                    return {
-                        id: recipeId,
-                        type: 'Recipe',
-                        sourceConfig: {
-                            recipeId
-                        }
-                    }
-                case 'ASSET':
-                    return {
-                        id: asset,
-                        type: 'Asset',
-                        sourceConfig: {
-                            description: asset,
-                            asset,
-                            metadata,
-                            visualizations
-                        }
-                    }
-                default:
-                    return
-            }
-        }
-
-        const source = imageMaskLayerSource()
-        // A layer entry is keyed by the id of what it shows. Applying a section with nothing selected once
-        // wrote an entry with no id and no recipe, which every later open tried to load.
-        if (source?.id) {
-            recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-                .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-                .dispatch()
-        }
-    }
 }
 
 export const modelToValues = model => {
@@ -151,6 +111,5 @@ InputImage.propTypes = {
     filter: PropTypes.func,
     form: PropTypes.object.isRequired,
     inputs: PropTypes.object.isRequired,
-    recipeActionBuilder: PropTypes.any.isRequired,
     title: PropTypes.string.isRequired
 }

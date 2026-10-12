@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -49,6 +50,8 @@ const Regression = compose(
 
 export default () => ({
     id: 'REGRESSION',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.regression.create'),
         creationDescription: msg('process.regression.description'),
