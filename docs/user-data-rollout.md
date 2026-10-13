@@ -33,6 +33,27 @@ No other settings are needed.
   a different IAM user, put its keys in the env file and run a rollout (not a bare deploy): provisioning updates
   the role's trust before `user-data` starts with the new keys.
 
+## Permissions the keys need
+
+The same keys run provisioning and `user-data`, so they need both sets of permissions.
+
+Provisioning:
+
+- create and update the S3 bucket, its bucket policy and its lifecycle configuration;
+- create the IAM role and put its policies (trust and permissions);
+- `sts:GetCallerIdentity`.
+
+`user-data` at runtime:
+
+- `sts:GetCallerIdentity`;
+- `sts:AssumeRole` and `sts:TagSession` on the role;
+- `s3:ListBucket` on the bucket;
+- `s3:GetObject` and `s3:DeleteObject` on `users/*` in the bucket.
+
+A provisioning run with different keys rewrites the role's trust to their IAM user. Restart `user-data` with those
+keys afterwards: until then it keeps running with keys the role no longer trusts. At startup `user-data` checks that
+it can reach the bucket and assume the role, so a mismatch stops the boot instead of failing users later.
+
 ## Deploy without provisioning
 
 `-o deploy` alone works for any environment that has been rolled out at least once with this build or later. On an

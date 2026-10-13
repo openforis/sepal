@@ -176,15 +176,16 @@ Published by **budget** ([events.js](modules/budget/src/events.js)). Level-trigg
 carries a user's *current* verdict, re-published for every user on the hourly enforcement cycle, so
 a lost delivery or a consumer restart self-corrects within the hour.
 
-### `budget.UserBudgetExceeded` — `{username, reason}` / `budget.UserBudgetCleared` — `{username}`
-`reason` is the one `GET /budget/check` reports.
+### `budget.UserBudgetExceeded` — `{username, reason, dataQuotaExceeded}` / `budget.UserBudgetCleared` — `{username}`
+`reason` is the one `GET /budget/check` reports: the first limit exceeded. `dataQuotaExceeded` says whether the
+Data quota is exceeded too, whatever the reason.
 - **pub:** budget — after each enforcement cycle (hourly spending-report rebuild, and on
   storage/session events that change a user's spending)
 - **sub:** worker (queues `worker.budgetExceeded` / `worker.budgetCleared`) — maintains the
   in-process locked-users set that gates new session requests; a *new* lock also closes the user's
   running sessions ([main.js](modules/worker/src/main.js))
 - **sub:** user-data (queues `user-data.budgetExceeded` / `user-data.budgetCleared`) — grants read-only
-  Data access while the reason is `DATA_QUOTA`
+  Data access while `dataQuotaExceeded` is true (or, from publishers that predate it, the reason is `DATA_QUOTA`)
 
 ## `storage.size` — storage scan result
 
@@ -195,14 +196,17 @@ a lost delivery or a consumer restart self-corrects within the hour.
   the user's cached spending report
 
 ### `storage.UserStorageErased` — `{username}`
-- **pub:** storage — after purging an inactive user's home ([inactivityCheck.js](modules/storage/src/inactivityCheck.js))
-- **sub:** user-data (queue `user-data.userStorageErased`) — erases the user's Data
+- **pub:** storage — after purging an inactive user's home, before recording the purge
+  ([inactivityCheck.js](modules/storage/src/inactivityCheck.js)); republished daily, and on start, for every user
+  purged within the last 7 days, so a lost announcement still erases the Data
+- **sub:** user-data (queue `user-data.userStorageErased`) — erases the user's Data (idempotent; ignored for a
+  user who never had Data)
 
 ## `userData.*` — Data usage
 
 ### `userData.size` — `{username, size}` (bytes)
-- **pub:** user-data — after measuring a user's Data, and with `size: 0` after erasing it
-  ([usage.js](modules/user-data/src/usage.js))
+- **pub:** user-data — after measuring a user's Data, with `size: 0` after erasing it, and hourly for every
+  recorded size, so a lost event heals within the hour ([usage.js](modules/user-data/src/usage.js))
 - **sub:** budget (queue `budget.userData`) — accumulates the month's Data use and refreshes the user's cached
   spending report
 
