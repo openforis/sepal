@@ -4,6 +4,7 @@ import {join} from 'node:path'
 import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
 import {getLogger} from '#sepal/log'
 
+import {requireWorkspacePath} from '../dataPath.js'
 import {followEEExport} from '../eeExport.js'
 import {exportToWorkspace} from '../workspaceExport.js'
 
@@ -14,6 +15,9 @@ const PREPARE = {messageKey: 'tasks.samplingDesign.progress.prepare', defaultMes
 // gee runs the workflow one stage at a time and owns its state; this only follows what each stage started and
 // always lets gee delete the temporary assets.
 export const samplingDesignExport = destination => async (params, {sepal, report, signal, sleep}) => {
+    if (destination === 'SEPAL') {
+        requireWorkspacePath(params.workspacePath)
+    }
     let state = null
     try {
         report(PREPARE)

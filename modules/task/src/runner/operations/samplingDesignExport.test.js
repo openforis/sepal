@@ -119,6 +119,14 @@ test('a workspace step downloads into the workspace path', async () => {
     expect((await stat(`${home}/out`)).isDirectory()).toBe(true)
 })
 
+test('refuses a workspace folder inside data before exporting', async () => {
+    const sepal = fakeSepal([{state: {}, action: 'done'}])
+
+    await expect(samplingDesignExport('SEPAL')({description: 'Design', workspacePath: 'data/x'}, context(sepal)))
+        .rejects.toMatchObject({userMessage: {key: 'tasks.workspace.dataReserved'}})
+    expect(sepal.started).toEqual([])
+})
+
 test('a workspace step without a workspace path downloads into downloads/<description>', async () => {
     const sepal = fakeSepal([
         {state: {}, action: 'workspace', eeTaskId: 'T', destination: {}},

@@ -14,7 +14,20 @@ export function requireDataPath(path) {
     return normalized
 }
 
-export function isWorkspaceDataPath(workspacePath) {
+// The home's data folder is Data, which only image.DATA exports to.
+export function requireWorkspacePath(workspacePath) {
+    if (isWorkspaceDataPath(workspacePath)) {
+        throw Object.assign(new Error(`Workspace folder is reserved for Data: ${workspacePath}`), {
+            userMessage: {
+                key: 'tasks.workspace.dataReserved',
+                message: 'Folder "data" in your workspace is your Data. Export to the Data destination instead.'
+            }
+        })
+    }
+    return workspacePath
+}
+
+function isWorkspaceDataPath(workspacePath) {
     if (!workspacePath) {
         return false
     }

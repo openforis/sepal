@@ -122,6 +122,14 @@ test('one failed chunk cancels the chunks still running and fails the export', a
     expect(events.filter(({stack}) => stack)).toEqual([])
 })
 
+test('refuses a workspace folder inside data before exporting', async () => {
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await expect(timeSeriesExport({...params, image: {...params.image, workspacePath: 'data/x'}}, context(sepal)))
+        .rejects.toMatchObject({userMessage: {key: 'tasks.workspace.dataReserved'}})
+    expect(sepal.exported).toEqual([])
+})
+
 const fakeSepal = ({tileIds, ranges}) => {
     const exported = []
     return {

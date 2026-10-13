@@ -6,6 +6,7 @@ import {lastValueFrom, tap} from 'rxjs'
 import {getLogger} from '#sepal/log'
 import {terminal$} from '#sepal/terminal'
 
+import {requireWorkspacePath} from '../dataPath.js'
 import {chunkDateRanges} from '../dateRanges.js'
 import {forEachInParallel} from '../parallel.js'
 import {exportToWorkspace} from '../workspaceExport.js'
@@ -15,7 +16,8 @@ const log = getLogger('timeSeriesExport')
 const CONCURRENT_CHUNKS = 3
 
 export const timeSeriesExport = async (params, {sepal, report, signal, sleep}) => {
-    const {description, image: {workspacePath, recipe}} = params
+    const {description, image: {recipe}} = params
+    const workspacePath = requireWorkspacePath(params.image.workspacePath)
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
     const {tileIds} = await sepal.gee('task/timeseries/tiles', params)

@@ -1,4 +1,4 @@
-import {isWorkspaceDataPath, requireDataPath} from './dataPath.js'
+import {requireDataPath, requireWorkspacePath} from './dataPath.js'
 
 describe('requireDataPath', () => {
     it.each([['exports/x', 'exports/x'], ['x/', 'x']])('accepts %p as %p', (path, expected) => {
@@ -12,12 +12,14 @@ describe('requireDataPath', () => {
     })
 })
 
-describe('isWorkspaceDataPath', () => {
-    it.each(['data', 'data/x', './data/x', '/data/x', 'x/../data', 'x/../data/y'])('is true for %p', path => {
-        expect(isWorkspaceDataPath(path)).toBe(true)
+describe('requireWorkspacePath', () => {
+    it.each(['data', 'data/x', './data/x', '/data/x', 'x/../data', 'x/../data/y'])('refuses %p, inside the home\'s data folder', path => {
+        const error = (() => { try { requireWorkspacePath(path) } catch (e) { return e } })()
+
+        expect(error.userMessage).toEqual(expect.objectContaining({key: 'tasks.workspace.dataReserved'}))
     })
 
-    it.each(['datax', 'x/data', 'data/../x', undefined, null, ''])('is false for %p', path => {
-        expect(isWorkspaceDataPath(path)).toBe(false)
+    it.each(['datax', 'x/data', 'data/../x', undefined, null, ''])('accepts %p', path => {
+        expect(requireWorkspacePath(path)).toBe(path)
     })
 })
