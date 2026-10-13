@@ -1,4 +1,4 @@
-import {isEqual} from '~/hash'
+import {getHash, isEqual} from '~/hash'
 
 import {CONFLICTED, FAILED, SAVED, SAVING, UNRESOLVED} from './saveCoordinator'
 
@@ -30,11 +30,15 @@ export const draftAgreement = ({draft, saveState, knownRevision}) => {
         case SAVING:
             return saveState.unconfirmed ? SAVE_UNCONFIRMED : SAVE_PENDING
     }
-    // The store copies the published model but keeps its change identifier (~/hash), so the copy agrees with the
-    // draft it was taken from without comparing content. Load, acknowledgement, recovery and equivalence all publish
-    // the draft's own model object; only a model that never had an identifier is compared by content.
-    if (!Number.isInteger(saveState?.revision) || !isEqual(saveState.model, draft.model)) {
+    if (!Number.isInteger(saveState?.revision) || !isAcknowledged(saveState, draft.model)) {
         return saveState?.status === FAILED ? SAVE_FAILED : UNSAVED
     }
     return Number.isInteger(knownRevision) && knownRevision > saveState.revision ? REMOTE_NEWER : AGREED
 }
+
+// The acknowledged model is published as its change identifier (~/hash), which every copy of it keeps and every edit
+// replaces, so a draft agrees with it without comparing content. Load, acknowledgement, recovery and equivalence all
+// acknowledge the draft's own model object; only a model that never had an identifier is published, and compared by
+// content.
+const isAcknowledged = ({modelHash, model}, draftModel) =>
+    modelHash ? getHash(draftModel) === modelHash : isEqual(model, draftModel)

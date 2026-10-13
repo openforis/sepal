@@ -27,12 +27,14 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 
 const {actionBuilder} = await import('~/action-builder')
 const {initStore} = await import('~/store')
-const {forgetRecipeSaveState, openRecipeRevision, recipePath} = await import('./recipe')
+const {forgetRecipeSaveState, openRecipeRevision, recipePath, sessionRecipeCache} = await import('./recipe')
 const {draftAgreement} = await import('./draftAgreement')
+const {RecipeCacheClaimant} = await import('./recipeCacheClaims')
 
 let store
 let loaded
 let id = 0
+const claimants = []
 
 beforeEach(() => {
     server.requests.length = 0
@@ -43,6 +45,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+    claimants.splice(0).forEach(claimant => claimant.release())
     actionBuilder('CLOSE').set('process.tabs', []).dispatch()
     forgetRecipeSaveState(loaded.id)
 })
@@ -89,12 +92,10 @@ describe('an edit', () => {
     })
 })
 
-describe('the published copy of the acknowledged model', () => {
-    // The store copies the acknowledged model into the save state, so the two are never the same object.
+describe('the acknowledged model, as the save state names it', () => {
     it('agrees with the loaded draft without reading its content', () => {
         const {model, read} = reading(draft().model)
 
-        expect(saveState().model).not.toBe(draft().model)
         expect(draftAgreement({draft: {...draft(), model}, saveState: saveState(), knownRevision: 1})).toBe('AGREED')
         expect(read).toEqual([])
     })
@@ -106,6 +107,158 @@ describe('the published copy of the acknowledged model', () => {
 
         expect(server.requests).toHaveLength(0)
         expect(agreement({knownRevision: 1})).toBe('AGREED')
+    })
+})
+
+describe('a recipe closed once its saves have settled', () => {
+    it('is released, with its save state, when its last claimant lets go', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        close()
+        editor.release()
+
+        expect(draft()).toBeUndefined()
+        expect(saveState()).toBeUndefined()
+    })
+
+    it('stays, with its save state, while another consumer still reads it', async () => {
+        const editor = claim()
+        const dependent = claim()
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        close()
+        editor.release()
+
+        expect(draft().model.bands).toEqual(['VV', 'VH'])
+        expect(saveState().status).toBe('SAVED')
+
+        dependent.release()
+
+        expect(draft()).toBeUndefined()
+        expect(saveState()).toBeUndefined()
+    })
+
+    it('keeps its acknowledged revision listed, and saves on top of it once reopened', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+        close()
+        editor.release()
+
+        expect(listed().revision).toBe(2)
+
+        openRecipeRevision({...loaded, revision: 2, model: {bands: ['VV', 'VH']}})
+        actionBuilder('OPEN').set('process.tabs', [{id: loaded.id}]).dispatch()
+        edit(['VV'])
+
+        expect(server.requests.map(({request}) => request.expectedRevision)).toEqual([1, 2])
+    })
+})
+
+describe('a recipe closed while it is saving', () => {
+    it('keeps its draft until the save settles, then is released', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        close()
+        editor.release()
+
+        expect(draft().model.bands).toEqual(['VV', 'VH'])
+        expect(saveState().status).toBe('SAVING')
+
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(draft()).toBeUndefined())
+
+        expect(saveState()).toBeUndefined()
+        expect(listed().revision).toBe(2)
+    })
+
+    it('stays, once the save settles, while another consumer still reads it', async () => {
+        const editor = claim()
+        const dependent = claim()
+        edit(['VV', 'VH'])
+        close()
+        editor.release()
+
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        expect(draft().model.bands).toEqual(['VV', 'VH'])
+
+        dependent.release()
+
+        expect(draft()).toBeUndefined()
+        expect(saveState()).toBeUndefined()
+    })
+
+    it('is not released by an earlier save completing while a newer one is pending', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        edit(['VV'])
+        close()
+        editor.release()
+
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(server.requests).toHaveLength(2))
+
+        expect(draft().model.bands).toEqual(['VV'])
+        expect(saveState().status).toBe('SAVING')
+
+        acknowledge(1, 3)
+        await vi.waitFor(() => expect(draft()).toBeUndefined())
+
+        expect(saveState()).toBeUndefined()
+    })
+
+    it('keeps a draft whose save was refused', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        close()
+        editor.release()
+
+        server.requests[0].response.error({status: 400})
+        await vi.waitFor(() => expect(saveState().status).toBe('FAILED'))
+
+        expect(draft().model.bands).toEqual(['VV', 'VH'])
+    })
+
+    it('keeps a draft whose save conflicts with storage', async () => {
+        const editor = claim()
+        edit(['VV', 'VH'])
+        close()
+        editor.release()
+        server.stored = {...loaded, model: {bands: ['HH']}, revision: 7}
+
+        server.requests[0].response.error({status: 503})
+        await vi.waitFor(() => expect(saveState().status).toBe('CONFLICT'))
+
+        expect(draft().model.bands).toEqual(['VV', 'VH'])
+    })
+})
+
+describe('the published save state', () => {
+    it('names the acknowledged model by its change identifier instead of holding a copy', async () => {
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        expect(saveState()).not.toHaveProperty('model')
+        expect(agreement({knownRevision: 2})).toBe('AGREED')
+    })
+
+    it('compares by content an acknowledged model the store gave no identifier', async () => {
+        // A recipe written whole carries a model without a change identifier of its own.
+        actionBuilder('REPLACE_RECIPE').set(recipePath(loaded.id), {...draft(), model: {bands: ['VV']}}).dispatch()
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        expect(agreementWith({bands: ['VV']})).toBe('AGREED')
+        expect(agreementWith({bands: ['VH']})).toBe('UNSAVED')
     })
 })
 
@@ -134,7 +287,20 @@ const acknowledge = (request, revision) => {
 
 const draft = () => store.getState().process.loadedRecipes[loaded.id]
 
-const saveState = () => store.getState().process.saveStates[loaded.id]
+const saveState = () => store.getState().process.saveStates?.[loaded.id]
+
+const listed = () => store.getState().process.recipes.find(({id}) => id === loaded.id)
+
+const claim = () => {
+    const claimant = new RecipeCacheClaimant(sessionRecipeCache)
+    claimant.use(loaded.id)
+    claimants.push(claimant)
+    return claimant
+}
+
+const close = () => actionBuilder('CLOSE').set('process.tabs', []).dispatch()
+
+const agreementWith = model => draftAgreement({draft: {...draft(), model}, saveState: saveState(), knownRevision: 2})
 
 const agreement = ({knownRevision}) => draftAgreement({draft: draft(), saveState: saveState(), knownRevision})
 

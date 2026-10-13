@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
 import {gzip$} from '~/gzip'
+import {getHash} from '~/hash'
 import {serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
 import {select, subscribe} from '~/store'
@@ -18,6 +19,7 @@ import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
 import {initializeRecipe, saveStatePath} from './recipeCache'
+import {releaseSettled} from './recipeCacheClaims'
 import {
     failedListing,
     LISTING_STATE_PATH,
@@ -27,7 +29,7 @@ import {
     refreshingListing,
     touchedListing
 } from './recipeListing'
-import {createSaveCoordinator} from './saveCoordinator'
+import {createSaveCoordinator, SAVED} from './saveCoordinator'
 
 export {saveStatePath} from './recipeCache'
 
@@ -101,7 +103,7 @@ export const saveRecipe = tab => {
 
 // Seed saving and freshness from the same authoritative load, whose model is what is persisted at its revision. The
 // model is written on its own path, so the store gives it a change identifier (~/hash) that the published save evidence
-// keeps in its copy: the draft then agrees with what was loaded without comparing content (draftAgreement.js).
+// names it by: the draft then agrees with what was loaded without comparing content (draftAgreement.js).
 export const openRecipeRevision = loaded => {
     const {model, ...recipe} = initializeRecipe(loaded)
     actionBuilder('CACHE_RECIPE', {recipeId: recipe.id})
@@ -237,6 +239,19 @@ export const addRecipe = recipe => {
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
+// The session's recipe cache, as its claimants use it (recipeCacheClaims.js).
+export const sessionRecipeCache = {
+    held: recipeId => select(recipePath(recipeId)),
+    open: recipeId => isRecipeOpen(recipeId),
+    saveState: recipeId => select(saveStatePath(recipeId)),
+    write: recipe => actionBuilder('CACHE_RECIPE', recipe)
+        .set(['process.loadedRecipes', recipe.id], recipe)
+        .dispatch(),
+    remove: recipeId => actionBuilder('REMOVE_CACHE_RECIPE', recipeId)
+        .del(['process.loadedRecipes', recipeId])
+        .dispatch()
+}
+
 const save$ = {
     next: recipe => {
         if (recipe.ui.unsaved) {
@@ -253,6 +268,7 @@ const saveCoordinator = createSaveCoordinator({
     onOutcome: ({recipeId, status, revision, model, error}) => {
         if (status === 'SAVED') {
             adoptRevision(recipeId, revision, model)
+            releaseSettled(recipeId, sessionRecipeCache)
         } else if (status === 'CONFLICT') {
             Notifications.error({timeout: 0, message: msg('process.saveRecipe.conflict'), error})
         } else if (status === 'FAILED' || status === 'UNRESOLVED') {
@@ -278,7 +294,25 @@ const postRecipe = ({recipe, expectedRevision}) => firstValueFrom(
 
 const publishSaveState = (recipeId, saveState) => {
     const action = actionBuilder('SET_SAVE_STATE', {recipeId})
-    ;(saveState ? action.set(saveStatePath(recipeId), saveState) : action.del(saveStatePath(recipeId))).dispatch()
+    ;(saveState ? action.set(saveStatePath(recipeId), publishedSaveState(saveState)) : action.del(saveStatePath(recipeId))).dispatch()
+}
+
+// The store copies whatever it is given, and copying the acknowledged model costs more than the save it reports. Its
+// change identifier proves the same thing; only a model the store never identified is published, to be compared by
+// content (draftAgreement.js).
+const publishedSaveState = ({model, ...saveState}) => {
+    const modelHash = getHash(model)
+    return modelHash ? {...saveState, modelHash} : {...saveState, model}
+}
+
+// A closed recipe's save state lasts as long as the session holds the recipe. Its cache entry is released only once
+// nothing claims it and its saves have settled (recipeCacheClaims.js); its revision stays listed, and reopening starts
+// from the load that opens it.
+const forgetReleasedSaveStates = loadedRecipes => {
+    const saves = select('process.saveStates') || {}
+    Object.keys(saves)
+        .filter(id => !loadedRecipes[id] && saves[id]?.status === SAVED)
+        .forEach(id => forgetRecipeSaveState(id))
 }
 
 // Catalogue revisions are freshness evidence; save preconditions come from the coordinator's draft base. They only
@@ -306,6 +340,7 @@ const adoptRevision = (recipeId, revision, model) => {
 }
 
 let prevRecipes = []
+let releasedFrom = null
 
 // A copy is a recipe the server has never seen, so it must not inherit the source's revision.
 const recipeCopy = sourceRecipe => ({
@@ -355,6 +390,10 @@ subscribe('process.loadedRecipes', loadedRecipes => {
                 saveCoordinator.equivalent(recipe.id, previous, recipe.model)
             }
         })
+    }
+    if (loadedRecipes && loadedRecipes !== releasedFrom) {
+        releasedFrom = loadedRecipes
+        forgetReleasedSaveStates(loadedRecipes)
     }
 })
 

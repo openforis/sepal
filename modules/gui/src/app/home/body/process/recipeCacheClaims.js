@@ -18,6 +18,13 @@ import {cacheAcceptance, DRAFT, initializeRecipe, KEEP} from './recipeCache'
 
 const claimantsByRecipeId = new Map()
 
+// An entry every claimant released while it was a draft is removed once its saves settle, unless it is claimed again.
+export const releaseSettled = (recipeId, cache) => {
+    if (!claimantsByRecipeId.has(recipeId) && cache.held(recipeId)) {
+        evict(recipeId, cache)
+    }
+}
+
 export class RecipeCacheClaimant {
     #id = uuid()
     #cache
@@ -67,9 +74,7 @@ export class RecipeCacheClaimant {
     }
 
     #evict(recipeId) {
-        if (!isDraft({open: this.#cache.open(recipeId), saveState: this.#cache.saveState(recipeId)})) {
-            this.#cache.remove(recipeId)
-        }
+        evict(recipeId, this.#cache)
     }
 
     #read$(recipeId) {
@@ -96,5 +101,11 @@ export class RecipeCacheClaimant {
                 this.#cache.write(record)
                 return record
         }
+    }
+}
+
+const evict = (recipeId, cache) => {
+    if (!isDraft({open: cache.open(recipeId), saveState: cache.saveState(recipeId)})) {
+        cache.remove(recipeId)
     }
 }
