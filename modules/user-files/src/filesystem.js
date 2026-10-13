@@ -384,13 +384,18 @@ const listFiles = async (homeDir, ctx) => {
     const includeHidden = q.includeHidden === 'true'
     const exts = q.extensions ? new Set(q.extensions.split(',').map(s => s.trim())) : null
 
+    if (isDataPath(relPath)) {
+        refuseData(ctx)
+        return
+    }
+
     const pathResult = resolvePathSafe(userHomeDir, relPath)
     if (pathResult.error || !pathResult.isSubPath) {
         log.warn('Cannot list files - invalid path:', pathResult.absolutePath || pathResult.error)
         ctx.response.status = 404
         return
     }
-    if (isDataPath(relPath) || isDataPath(pathResult.relativePath)) {
+    if (isDataPath(pathResult.relativePath)) {
         refuseData(ctx)
         return
     }
