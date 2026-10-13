@@ -1446,6 +1446,7 @@
               "label": "Destination",
               "required": "A destination must be selected",
               "SEPAL": "SEPAL workspace",
+              "DATA": "Data",
               "DRIVE": "Google Drive"
             },
             "scale": {
@@ -1480,6 +1481,7 @@
           "task": {
             "GEE": "Export recipe: {name} as a Google Earth Engine asset",
             "SEPAL": "Retrieve recipe: {name} to SEPAL workspace",
+            "DATA": "Retrieve recipe: {name} to Data",
             "DRIVE": "Retrieve recipe: {name} to Google Drive"
           },
           "title": "Retrieve",
@@ -1849,6 +1851,7 @@
               "label": "Destination",
               "required": "A destination must be selected",
               "SEPAL": "SEPAL workspace",
+              "DATA": "Data",
               "DRIVE": "Google Drive"
             },
             "scale": {
@@ -1881,7 +1884,8 @@
           },
           "task": {
             "GEE": "Export recipe: {name} as a Google Earth Engine asset",
-            "SEPAL": "Retrieve recipe: {name} to SEPAL workspace"
+            "SEPAL": "Retrieve recipe: {name} to SEPAL workspace",
+            "DATA": "Retrieve recipe: {name} to Data"
           },
           "title": "Retrieve",
           "tooltip": "Retrieve time-series"
@@ -4908,6 +4912,7 @@
           "label": "Destination",
           "required": "A destination must be selected",
           "SEPAL": "SEPAL workspace",
+          "DATA": "Data",
           "DRIVE": "Google Drive"
         },
         "fileDimensionsMultiple": {
@@ -4942,6 +4947,7 @@
         "task": {
           "GEE": "Export recipe: {name} as a Google Earth Engine asset",
           "SEPAL": "Retrieve recipe: {name} to SEPAL workspace",
+          "DATA": "Retrieve recipe: {name} to Data",
           "DRIVE": "Retrieve recipe: {name} to Google Drive"
         },
         "tileSize": {
@@ -5788,6 +5794,7 @@
       "destination": {
         "label": "Destination",
         "SEPAL": "SEPAL workspace",
+        "DATA": "Data",
         "GEE": "Google Earth Engine asset",
         "DRIVE": "Google Drive"
       },

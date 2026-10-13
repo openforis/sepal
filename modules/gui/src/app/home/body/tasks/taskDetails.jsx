@@ -205,7 +205,7 @@ class _TaskDetails extends React.Component {
                     </div>
                 )}
                 
-                {['SEPAL', 'DRIVE'].includes(taskInfo?.destination) && taskInfo?.filenamePrefix && (
+                {['SEPAL', 'DRIVE', 'DATA'].includes(taskInfo?.destination) && taskInfo?.filenamePrefix && (
                     <div className={styles.row}>
                         <Label className={styles.fieldLabel} msg={msg('tasks.details.filenamePrefix')}/>
                         <div className={styles.fieldValue}>{taskInfo.filenamePrefix}</div>
@@ -247,6 +247,8 @@ class _TaskDetails extends React.Component {
         switch (taskInfo.destination) {
             case 'SEPAL':
                 return `~/${taskInfo.outputPath}`
+            case 'DATA':
+                return `Data/${taskInfo.outputPath}`
             case 'DRIVE':
                 return `SEPAL/exports/${taskInfo.outputPath}`
             default:

@@ -79,7 +79,7 @@ const physicalRequirements = (physicalBands, selection) => {
         }
         throw new Error('Resolved image output does not provide a valid selected band schema')
     }
-    if (['GEE', 'DRIVE', 'SEPAL'].includes(destination) && !compatibility.destinations[destination]) {
+    if (['GEE', 'DRIVE', 'SEPAL', 'DATA'].includes(destination) && !compatibility.destinations[destination]) {
         throw new Error(`Resolved selected band schema is not physically compatible with destination ${destination}`)
     }
     if (destination === 'GEE' && requirements.policyError) {
@@ -167,7 +167,10 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
     const operation = `image.${destination}`
     const selection = {destination, bands, useAllBands: retrieveOptions.useAllBands, fallbackPyramidingPolicy}
     const resolvedRequirements = describedRequirements(recipe, imageOutputDescription, selection)
-    const effectiveRetrieveOptions = {...retrieveOptions, bands: resolvedRequirements.selectedBandNames}
+    const effectiveRetrieveOptions = {
+        ...(destination === 'DATA' ? _.omit(retrieveOptions, 'workspacePath') : retrieveOptions),
+        bands: resolvedRequirements.selectedBandNames
+    }
     const effectiveBands = effectiveRetrieveOptions.bands || []
 
     const visualizations = recipeVisualizations(recipe, visualizationBands)

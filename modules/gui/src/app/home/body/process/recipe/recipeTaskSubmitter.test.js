@@ -335,17 +335,34 @@ describe('submitRetrieveRecipeTask destination validation over resolved physical
         expect(imageOf(submitted).bands).toEqual({selection: ['array']})
     })
 
-    it.each(['DRIVE', 'SEPAL'])('rejects selected array bands for the %s scalar renderer', destination => {
+    it.each(['DRIVE', 'SEPAL', 'DATA'])('rejects selected array bands for the %s scalar renderer', destination => {
         expect(() => submitSelection({destination, bands: ['array']})).toThrow(/array|dimension|band/i)
         expect(state.submitted).toEqual([])
     })
 
-    it.each(['DRIVE', 'SEPAL'])('allows selected scalar bands for %s without requiring or sending a policy', destination => {
+    it.each(['DRIVE', 'SEPAL', 'DATA'])('allows selected scalar bands for %s without requiring or sending a policy', destination => {
         const submitted = submitSelection({destination, bands: ['scalar']})
 
         expect(submitted).toHaveLength(1)
         expect(imageOf(submitted).bands).toEqual({selection: ['scalar']})
         expect(imageOf(submitted)).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('submits a Data export to the chosen Data folder, without a workspace path', () => {
+        const submitted = submitRecipe(outerRecipe(['stored'], 'SEPAL'), {
+            retrieveOptions: {
+                destination: 'DATA',
+                bands: ['scalar'],
+                dataPath: 'exports/r',
+                workspacePath: 'stale/workspace',
+                filenamePrefix: 'prefix'
+            },
+            imageOutputDescription: description
+        })
+
+        expect(submitted[0].operation).toBe('image.DATA')
+        expect(imageOf(submitted)).toMatchObject({dataPath: 'exports/r', filenamePrefix: 'prefix'})
+        expect(imageOf(submitted)).not.toHaveProperty('workspacePath')
     })
 
     it('treats a scalar policy as irrelevant for a non-Earth-Engine destination', () => {

@@ -6,6 +6,8 @@ export const getOutputPath = ({destination, retrieveOptions, recipe}) => {
             return retrieveOptions.assetId
         case 'SEPAL':
             return retrieveOptions.workspacePath
+        case 'DATA':
+            return retrieveOptions.dataPath
         case 'DRIVE': {
             const description = recipe.title || recipe.placeholder
             return `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
