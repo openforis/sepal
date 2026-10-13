@@ -260,7 +260,11 @@ export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf
 // Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
 // so what is held is being read.
 export const requestGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, heldFor, now})
+    requestGateOf(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
+
+// The same, judged from the recipe's reads (readSourceRequirements), for a caller asking more than one question of them.
+export const requestGateOf = (reads, operation) =>
+    firstReason(reasonsIn(reads, operation)
         .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)})))
 
 // Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided
@@ -274,9 +278,12 @@ export const configurationGate = ({recipe, operation}) => {
 
 // What the requirement an operation over the recipe is held to establishes, where it is met - the measures a segment
 // chart can plot, say: its SUPPORTED verdict, or null.
-export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) => {
-    const read = readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
-        .find(({declaration, local}) => !local && declaration.operations?.includes(operation))
+export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
+    establishedIn(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
+
+// The same, judged from the recipe's reads (readSourceRequirements).
+export const establishedIn = (reads, operation) => {
+    const read = reads.find(({declaration, local}) => !local && declaration.operations?.includes(operation))
     return read?.verdict.status === SUPPORTED ? read.verdict : null
 }
 
@@ -284,10 +291,12 @@ export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, heldF
 // its provider chain is refused only where that chain is, and waits only for its records: what the requirement judges
 // of the segments is not its concern.
 const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
-        .map(read => reasonFor(read, operation))
-        .filter(Boolean)
-        .map(reason => ({...reason, section: reason.declaration.section.label}))
+    reasonsIn(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
+
+const reasonsIn = (reads, operation) => reads
+    .map(read => reasonFor(read, operation))
+    .filter(Boolean)
+    .map(reason => ({...reason, section: reason.declaration.section.label}))
 
 const reasonFor = (read, operation) => {
     const {declaration, verdict, providerChain} = read

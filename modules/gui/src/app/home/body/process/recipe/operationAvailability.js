@@ -2,7 +2,7 @@ import _ from 'lodash'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {IMAGE_OUTPUT} from './recipeOutput'
-import {establishedFor, PIXEL_SEGMENTS, requestGate, sourceRequirementGate} from './sourceRequirements'
+import {establishedIn, PIXEL_SEGMENTS, readSourceRequirements, requestGateOf, sourceRequirementGate} from './sourceRequirements'
 
 // Whether an operation over a recipe may start, assessed from what its type declares it needs of its sources
 // (sourceRequirements.js), its current configuration and the current evidence. The action that opens an operation and
@@ -15,9 +15,9 @@ import {establishedFor, PIXEL_SEGMENTS, requestGate, sourceRequirementGate} from
 // no band to plot (`noChartableBand`), it is not available either; while what can be plotted is not established, that
 // is not known.
 export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
-    const request = {state, recipe, operation: PIXEL_SEGMENTS, evidenceOwnerOf, heldFor, now}
-    const gate = requestGate(request)
-    const chartable = establishedFor(request)
+    const reads = readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
+    const gate = requestGateOf(reads, PIXEL_SEGMENTS)
+    const chartable = establishedIn(reads, PIXEL_SEGMENTS)
     const bands = chartable ? chartBands(recipe, chartable.measures) : []
     const noChartableBand = Boolean(chartable) && !bands.length
     return {available: !gate && !noChartableBand, gate, chartable, bands, noChartableBand}
