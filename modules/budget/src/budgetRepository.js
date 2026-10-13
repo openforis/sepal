@@ -118,7 +118,11 @@ export class BudgetRepository {
                     params
                 )
             }
-            const [[stored]] = await connection.query('SELECT data_quota FROM user_budget WHERE username = ?', [storedUsername(username)])
+            const [[stored]] = await connection.query(
+                `SELECT IFNULL(data_quota, (SELECT data_quota FROM default_data_quota LIMIT 1)) AS data_quota
+                    FROM user_budget WHERE username = ?`,
+                [storedUsername(username)]
+            )
             await this.#closeBudgetUpdateRequest(connection, username, {...budget, dataQuota: stored.data_quota})
         })
     }

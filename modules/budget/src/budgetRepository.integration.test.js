@@ -203,6 +203,17 @@ describe('BudgetRepository', () => {
         })
     })
 
+    describe('Data quota of a closed request', () => {
+        test('is the default one when the user has none of their own and the update leaves it out', async () => {
+            await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 1, storageQuota: 1}))
+            await repository.requestBudgetUpdate(OWNER, 'more', budget({instanceSpending: 2, storageSpending: 2, storageQuota: 2}))
+
+            await repository.updateBudget(OWNER, budget({instanceSpending: 2, storageSpending: 2, storageQuota: 2}))
+
+            expect((await storedRequests(OWNER))[0]).toMatchObject({state: 'CLOSED', final_data_quota: 10})
+        })
+    })
+
     describe('spending', () => {
         test('carries Data usage and the Data quota', async () => {
             await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 10, storageQuota: 100}))
