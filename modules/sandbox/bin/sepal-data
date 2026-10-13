@@ -1,0 +1,93 @@
+#!/bin/bash
+# Connects a SEPAL sandbox to the user's Data. Credentials are never written here: clients fetch and refresh them
+# from user-data's credentials endpoint, authenticating with the token file this writes.
+#   sepal-data env <purpose> [owner]     KEY=value lines for /etc/environment
+#   sepal-data mount                     (mount sidecar, root) mount Data at $DATA_MOUNT_POINT, in the foreground
+#   sepal-data wait-mounted [seconds]    wait until $DATA_MOUNT_POINT is mounted
+#   sepal-data pending-uploads           paths still waiting to be uploaded, one per line
+set -euo pipefail
+
+TOKEN_FILE=${SEPAL_DATA_TOKEN_FILE:-/var/run/sepal-data-token}
+API_KEY_FILE=${SEPAL_DATA_API_KEY_FILE:-/var/run/sepal-api-key}
+MOUNT_POINT=${DATA_MOUNT_POINT:-/mnt/host/data}
+RC_ADDR=127.0.0.1:5572
+
+main() {
+    case "${1:-}" in
+        env) data_env "${2:?purpose required}" "${3:-}" ;;
+        mount) data_mount ;;
+        wait-mounted) wait_mounted "${2:-30}" ;;
+        pending-uploads) pending_uploads ;;
+        *) echo "usage: sepal-data env <purpose> [owner] | mount | wait-mounted [seconds] | pending-uploads" >&2; exit 2 ;;
+    esac
+}
+
+data_env() {
+    local purpose=$1 owner=$2 response lines
+    write_token "$owner"
+    if ! response=$(access "$purpose"); then
+        echo "sepal-data: cannot reach user-data; Data is not available in this session" >&2
+        return 1
+    fi
+    lines=$(to_env <<< "$response") || return 1
+    printf '%s\n' "$lines"
+}
+
+data_mount() {
+    local lines line
+    lines=$(data_env mount "")
+    while IFS= read -r line; do
+        export "${line?}"
+    done <<< "$lines"
+    mkdir -p "$MOUNT_POINT"
+    exec rclone mount data: "$MOUNT_POINT" \
+        --allow-other --uid "${DATA_UID:?}" --gid "${DATA_GID:?}" \
+        --vfs-cache-mode full --cache-dir /cache --vfs-cache-max-size "${DATA_CACHE_MAX_SIZE:-20G}" \
+        --buffer-size 0 --vfs-write-back 5s --dir-cache-time 1m \
+        --rc --rc-addr "$RC_ADDR" --rc-no-auth
+}
+
+wait_mounted() {
+    local seconds=$1 i
+    for ((i = 0; i < seconds; i++)); do
+        mountpoint -q "$MOUNT_POINT" && return 0
+        sleep 1
+    done
+    mountpoint -q "$MOUNT_POINT"
+}
+
+pending_uploads() {
+    rclone rc --url "http://$RC_ADDR/" vfs/queue | jq -r '.queue[]?.name'
+}
+
+write_token() {
+    local owner=$1 key
+    key=${SEPAL_API_KEY:-$(cat "$API_KEY_FILE")}
+    (umask 077 && printf 'Basic %s' "$(printf ':%s' "$key" | base64 -w0)" > "$TOKEN_FILE")
+    if [ -n "$owner" ]; then
+        chown "$owner" "$TOKEN_FILE"
+    fi
+}
+
+access() {
+    curl --fail --silent --show-error --max-time 10 \
+        -H "Authorization: $(cat "$TOKEN_FILE")" \
+        -H 'Content-Type: application/json' \
+        -d "{\"purpose\":\"$1\"}" \
+        "https://${SEPAL_HOST:?}/api/user-data/attachments/data/access"
+}
+
+# /etc/environment is read by pam_env, a word-splitting shell loop and R's Renviron (which expands $), so values
+# with whitespace, quotes or $ would be corrupted: refuse them rather than quote them.
+to_env() {
+    jq -re '
+        def line(k; v): if (v | tostring | test("^[^\\s\"'"'"'$\\\\]+$")) then "\(k)=\(v)" else error("unsafe value for \(k)") end;
+        line("RCLONE_CONFIG_DATAREMOTE_TYPE"; .rclone.type),
+        (.rclone.options | to_entries | sort_by(.key)[] | line("RCLONE_CONFIG_DATAREMOTE_\(.key | ascii_upcase)"; .value)),
+        line("RCLONE_CONFIG_DATA_TYPE"; "alias"),
+        line("RCLONE_CONFIG_DATA_REMOTE"; "dataremote:\(.rclone.root)"),
+        (.env | to_entries | sort_by(.key)[] | line(.key; .value))
+    '
+}
+
+main "$@"

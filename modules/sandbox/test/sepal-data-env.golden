@@ -1,0 +1,12 @@
+RCLONE_CONFIG_DATAREMOTE_TYPE=s3
+RCLONE_CONFIG_DATAREMOTE_ENV_AUTH=true
+RCLONE_CONFIG_DATAREMOTE_NO_CHECK_BUCKET=true
+RCLONE_CONFIG_DATAREMOTE_PROVIDER=AWS
+RCLONE_CONFIG_DATAREMOTE_REGION=eu-west-1
+RCLONE_CONFIG_DATA_TYPE=alias
+RCLONE_CONFIG_DATA_REMOTE=dataremote:sepal-test-user-data/users/alice
+AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE=/var/run/sepal-data-token
+AWS_CONTAINER_CREDENTIALS_FULL_URI=https://sepal.example.org/api/user-data/attachments/data/credentials
+AWS_REGION=eu-west-1
+SEPAL_DATA_URL=s3://sepal-test-user-data/users/alice/
+SEPAL_DATA_VSI=/vsis3/sepal-test-user-data/users/alice

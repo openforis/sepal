@@ -108,9 +108,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get update && sudo apt-get install -y shellcheck zstd
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck zstd jq
       # New code is held to warnings; update-app.sh only to errors, because it carries
       # pre-existing warnings in code this change does not touch.
-      - run: shellcheck -S warning modules/app-manager/sepal-app-kernel modules/app-manager/test/*.sh
+      - run: shellcheck -S warning modules/app-manager/sepal-app-kernel modules/app-manager/test/*.sh modules/sandbox/bin/sepal-data modules/sandbox/test/*.sh
       - run: shellcheck -S error modules/app-manager/update-app.sh
       - run: modules/app-manager/test/run-all.sh
+      - run: modules/sandbox/test/run-all.sh
