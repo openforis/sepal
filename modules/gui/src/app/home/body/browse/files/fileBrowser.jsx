@@ -22,9 +22,12 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
+import {isDataPath, splitByOwner, withDataNode} from './dataPaths'
 import styles from './fileBrowser.module.css'
 import {FileTree} from './fileTree'
 import {UserFilesMonitor} from './userFilesMonitor'
+
+const DATA_PATH = 'data'
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -74,6 +77,7 @@ const getSorter = memoizeOne((splitDirs, sortingOrder, sortingDirection) => {
 class _FileBrowser extends React.Component {
 
     monitor = new UserFilesMonitor()
+    dataMonitor = new UserFilesMonitor({api: () => api.userData})
 
     state = {
         tree: FileTree.create(),
@@ -97,6 +101,7 @@ class _FileBrowser extends React.Component {
         const {enableDetector: {onChange}, addSubscription} = this.props
         onChange(() => this.updateMonitoring())
         addSubscription(this.monitor.subscribe(this.onUpdate))
+        addSubscription(this.dataMonitor.subscribe(this.onUpdate))
         this.updateMonitoring()
     }
 
@@ -110,11 +115,13 @@ class _FileBrowser extends React.Component {
     updateMonitoring() {
         const {enableDetector: {isEnabled}} = this.props
         const {tree} = this.state
-        this.monitor.watch(
+        const {files, data} = splitByOwner(
             isEnabled()
                 ? FileTree.getExpandedDirectories(tree).map(FileTree.toStringPath)
                 : []
         )
+        this.monitor.watch(files)
+        this.dataMonitor.watch(data)
     }
 
     reset() {
@@ -122,7 +129,7 @@ class _FileBrowser extends React.Component {
     }
 
     onUpdate({path, items}) {
-        this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)}))
+        this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), withDataNode(path, items))}))
     }
 
     expandDirectory(node) {
@@ -161,7 +168,9 @@ class _FileBrowser extends React.Component {
 
     removePaths(paths) {
         this.setState(({tree}) => ({tree: FileTree.setRemoving(tree, paths)}))
-        this.monitor.remove(paths.map(FileTree.toStringPath))
+        const {files, data} = splitByOwner(paths.map(FileTree.toStringPath))
+        files.length && this.monitor.remove(files)
+        data.length && this.dataMonitor.remove(data)
     }
 
     removeSelected() {
@@ -262,7 +271,7 @@ class _FileBrowser extends React.Component {
     
     renderDirectoryInfo(node) {
         const mtime = FileTree.getMTime(node)
-        return (
+        return mtime === undefined ? null : (
             <span className={styles.fileInfo}>
                 {moment(mtime).fromNow()}
             </span>
@@ -358,12 +367,18 @@ class _FileBrowser extends React.Component {
                     onClick={() => this.toggleSelected(node)}
                 >
                     {this.renderIcon(key, node)}
-                    <span className={styles.fileName}>{key}</span>
+                    <span className={styles.fileName}>{this.renderName(key, node)}</span>
                     {this.renderNodeInfo(node)}
                 </div>
                 {this.renderList(node)}
             </li>
         )
+    }
+
+    renderName(key, node) {
+        return FileTree.toStringPath(FileTree.getPath(node)) === DATA_PATH
+            ? msg('browse.data.label')
+            : key
     }
 
     renderActionButtons() {
@@ -373,7 +388,8 @@ class _FileBrowser extends React.Component {
         const oneFileSelected = files === 1 && directories === 0
         const {files: selectedFiles} = FileTree.getSelectedItems(tree)
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.userFiles.downloadUrl(FileTree.toStringPath(selectedFile))
+        const dataSelected = directories.some(directory => FileTree.toStringPath(directory) === DATA_PATH)
+        const downloadUrl = selectedFile && this.downloadUrl(FileTree.toStringPath(selectedFile))
         const downloadFilename = selectedFiles.length === 1 && selectedFile.at(-1)
         return (
             <ButtonGroup layout='horizontal'>
@@ -392,7 +408,7 @@ class _FileBrowser extends React.Component {
                     shape='circle'
                     tooltip={msg('browse.controls.remove.tooltip')}
                     tooltipPlacement='bottom'
-                    disabled={nothingSelected}
+                    disabled={nothingSelected || dataSelected}
                     onRemove={this.removeSelected}
                 />
                 <Button
@@ -406,6 +422,12 @@ class _FileBrowser extends React.Component {
                 />
             </ButtonGroup>
         )
+    }
+
+    downloadUrl(path) {
+        return isDataPath(path)
+            ? api.userData.downloadUrl(path)
+            : api.userFiles.downloadUrl(path)
     }
 
     renderActionsToolbar() {

@@ -16,6 +16,7 @@ import storage from './api/storage'
 import tasks from './api/tasks'
 import user from './api/user'
 import userAssets from './api/userAssets'
+import userData from './api/userData'
 import userFiles from './api/userFiles'
 import wmts from './api/wmts'
 
@@ -35,6 +36,7 @@ export const initApi = () =>
         tasks,
         user,
         userAssets,
+        userData,
         userFiles,
         wmts,
         ceoGateway,

@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
+import {withDataNode} from './dataPaths'
 import {FileTree} from './fileTree'
 
 describe('getExpandedDirectories', () => {
@@ -53,3 +54,13 @@ const withDirectories = names =>
         [],
         Object.fromEntries(names.map(name => [name, {dir: true}]))
     )
+
+describe('updateItem with the Data folder', () => {
+    it('keeps the Data folder after a home listing that lacks it', () => {
+        const tree = FileTree.updateItem(FileTree.create(), [], withDataNode('', {a: {dir: true}}))
+
+        const updated = FileTree.updateItem(tree, [], withDataNode('', {b: {dir: true}}))
+
+        expect(Object.keys(FileTree.getChildNodes(FileTree.getNode(updated, [])))).toEqual(['data', 'b'])
+    })
+})

@@ -107,6 +107,29 @@ describe('UserFilesMonitor', () => {
         expect(ws.sent.at(-1)).toEqual({remove: ['downloads/old']})
     })
 
+    it('drives the socket of the api it was given', () => {
+        const dataWs = fakeUserFilesWs()
+        const monitor = new UserFilesMonitor({api: () => ({ws: () => dataWs})})
+        monitor.subscribe(() => {})
+
+        monitor.watch(['data'])
+        dataWs.ready(true)
+
+        expect(dataWs.sent).toEqual([{monitor: ['data'], reset: true}])
+        expect(ws.sent).toEqual([])
+    })
+
+    it('ignores a listing that reports an error instead of items', () => {
+        const onUpdate = vi.fn()
+        const monitor = subscribed(onUpdate)
+        ws.ready(true)
+        monitor.watch(['data/x'])
+
+        ws.update({path: 'data/x', error: 'INVALID_PATH'})
+
+        expect(onUpdate).not.toHaveBeenCalled()
+    })
+
     const subscribed = (onUpdate = () => {}) => {
         const monitor = new UserFilesMonitor()
         monitor.subscribe(onUpdate)
