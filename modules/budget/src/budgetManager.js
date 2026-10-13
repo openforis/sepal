@@ -53,21 +53,15 @@ const createBudgetManager = ({repo, pricing, userClient, events, clock = () => n
     const commands = createBudgetCommands({repo, hostingService: pricing, userClient, events, clock})
 
     // verdict — the authoritative over-budget decision for one user, reported rather than thrown.
-    // Short-circuits: instance budget first (a user over it never has their storage evaluated), then
-    // storage budget (home + Data spending), then storage quota, then Data quota. The checkUser* commands emit the budget.* events as a side
-    // effect, so this is not read-only.
+    // The reason is the first limit exceeded: instance budget, then storage budget (home + Data
+    // spending), then storage quota, then Data quota. dataQuotaExceeded is reported on its own,
+    // whatever the reason, because user-data makes Data read-only on it alone. The checkUser*
+    // commands emit the budget.* events as a side effect, so this is not read-only.
     const verdict = async username => {
         const instanceSpending = await commands.checkUserInstanceSpending(username)
-        if (instanceSpending.isBudgetExceeded)
-            return {username, exceeded: true, reason: Reason.INSTANCE_BUDGET}
         const storageUse = await commands.checkUserStorageUse(username)
-        if (storageUse.isBudgetExceeded)
-            return {username, exceeded: true, reason: Reason.STORAGE_BUDGET}
-        if (storageUse.isQuotaExceeded)
-            return {username, exceeded: true, reason: Reason.STORAGE_QUOTA}
-        if (storageUse.isDataQuotaExceeded)
-            return {username, exceeded: true, reason: Reason.DATA_QUOTA}
-        return {username, exceeded: false, reason: null}
+        const reason = reasonFor(instanceSpending, storageUse)
+        return {username, exceeded: reason != null, reason, dataQuotaExceeded: storageUse.isDataQuotaExceeded}
     }
 
     // check — the throwing form, on top of the one decision path in verdict().
@@ -101,6 +95,18 @@ const createBudgetManager = ({repo, pricing, userClient, events, clock = () => n
         asSpending,
         commands,
     }
+}
+
+const reasonFor = (instanceSpending, storageUse) => {
+    if (instanceSpending.isBudgetExceeded)
+        return Reason.INSTANCE_BUDGET
+    if (storageUse.isBudgetExceeded)
+        return Reason.STORAGE_BUDGET
+    if (storageUse.isQuotaExceeded)
+        return Reason.STORAGE_QUOTA
+    if (storageUse.isDataQuotaExceeded)
+        return Reason.DATA_QUOTA
+    return null
 }
 
 export {

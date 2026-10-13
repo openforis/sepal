@@ -69,7 +69,7 @@ describe('BudgetManager.check', () => {
         expect(events.emitted.storageQuota).toHaveLength(0)
     })
 
-    test('throws InstanceBudgetExceeded when instance spending >= budget and does NOT check storage', async () => {
+    test('throws InstanceBudgetExceeded when instance spending >= budget, ahead of storage', async () => {
         const events = createEvents()
         const repo = createFakeRepo({
             budgets: {u: {instanceSpending: 24, storageSpending: 0, storageQuota: 0}}, // spending 24 >= 24
@@ -78,8 +78,6 @@ describe('BudgetManager.check', () => {
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
         await expect(mgr.check('u')).rejects.toBeInstanceOf(InstanceBudgetExceeded)
         expect(events.emitted.instanceBudget).toHaveLength(1)
-        expect(events.emitted.storageSpending).toHaveLength(0)
-        expect(events.emitted.storageQuota).toHaveLength(0)
     })
 
     test('throws StorageBudgetExceeded when storage spending >= budget (instance under budget)', async () => {
@@ -127,20 +125,16 @@ describe('BudgetManager.verdict', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: false, reason: null})
+        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: false, reason: null, dataQuotaExceeded: false})
     })
 
-    test('instance spending >= budget → INSTANCE_BUDGET, storage never evaluated', async () => {
-        const events = createEvents()
+    test('instance spending >= budget → INSTANCE_BUDGET, ahead of any storage limit', async () => {
         const repo = createFakeRepo({
             budgets: {u: {instanceSpending: 24, storageSpending: 0, storageQuota: 0}},
             instanceUses: {u: oneDayInJuly()},
         })
-        const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'INSTANCE_BUDGET'})
-        // Short-circuits like check(): storage checks must not have run.
-        expect(events.emitted.storageSpending).toHaveLength(0)
-        expect(events.emitted.storageQuota).toHaveLength(0)
+        const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
+        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'INSTANCE_BUDGET', dataQuotaExceeded: false})
     })
 
     test('storage spending >= budget → STORAGE_BUDGET', async () => {
@@ -150,7 +144,7 @@ describe('BudgetManager.verdict', () => {
             storageRows: {u: {gbHours: 1000, gb: 10, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_BUDGET'})
+        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_BUDGET', dataQuotaExceeded: false})
     })
 
     test('use > quota → STORAGE_QUOTA', async () => {
@@ -160,7 +154,7 @@ describe('BudgetManager.verdict', () => {
             storageRows: {u: {gbHours: 0, gb: 11, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_QUOTA'})
+        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_QUOTA', dataQuotaExceeded: false})
     })
 
     test('check() throws the error matching verdict()\'s reason — one shared decision path', async () => {
@@ -218,7 +212,27 @@ describe('verdict for Data', () => {
     test('refuses a user over the Data quota with reason DATA_QUOTA', async () => {
         const manager = managerWith({budgets: {alice: generousBudget({dataQuota: 10})}, dataRows: {alice: usingGb(11)}})
 
-        expect(await manager.verdict('alice')).toEqual({username: 'alice', exceeded: true, reason: Reason.DATA_QUOTA})
+        expect(await manager.verdict('alice')).toEqual({username: 'alice', exceeded: true, reason: Reason.DATA_QUOTA, dataQuotaExceeded: true})
+    })
+
+    test('reports a user over the instance budget and the Data quota as over the Data quota too', async () => {
+        const manager = managerWith({
+            budgets: {alice: generousBudget({instanceSpending: 24, dataQuota: 10})},
+            instanceUses: {alice: oneDayInJuly()},
+            dataRows: {alice: usingGb(11)},
+        })
+
+        expect(await manager.verdict('alice')).toEqual({username: 'alice', exceeded: true, reason: Reason.INSTANCE_BUDGET, dataQuotaExceeded: true})
+    })
+
+    test('reports a user over the instance budget only as within the Data quota', async () => {
+        const manager = managerWith({
+            budgets: {alice: generousBudget({instanceSpending: 24, dataQuota: 10})},
+            instanceUses: {alice: oneDayInJuly()},
+            dataRows: {alice: usingGb(10)},
+        })
+
+        expect(await manager.verdict('alice')).toMatchObject({reason: Reason.INSTANCE_BUDGET, dataQuotaExceeded: false})
     })
 
     test('accepts a user exactly at the Data quota', async () => {
@@ -234,7 +248,7 @@ describe('verdict for Data', () => {
             dataRows: {alice: usingGb(2)},
         })
 
-        expect((await manager.verdict('alice')).reason).toBe(Reason.STORAGE_QUOTA)
+        expect(await manager.verdict('alice')).toMatchObject({reason: Reason.STORAGE_QUOTA, dataQuotaExceeded: true})
     })
 
     test('throws DataQuotaExceeded from check', async () => {

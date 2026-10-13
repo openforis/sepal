@@ -45,6 +45,18 @@ describe('budget DTOs', () => {
         })
     })
 
+    describe('userStorageUse.isDataQuotaExceeded — Data use > Data quota (STRICT)', () => {
+        test('Data use equal to the Data quota → false', () => {
+            expect(userStorageUse({...withinBudget, dataUse: 10, dataQuota: 10}).isDataQuotaExceeded).toBe(false)
+        })
+        test('Data use above the Data quota → true', () => {
+            expect(userStorageUse({...withinBudget, dataUse: 10.1, dataQuota: 10}).isDataQuotaExceeded).toBe(true)
+        })
+        test('no Data quota (missing default) → never exceeded', () => {
+            expect(userStorageUse({...withinBudget, dataUse: 1000, dataQuota: null}).isDataQuotaExceeded).toBe(false)
+        })
+    })
+
     test('storageUse carries gbHours/gb/updateTime', () => {
         const t = new Date('2026-06-01T00:00:00Z')
         expect(storageUse({gbHours: 12, gb: 3, updateTime: t})).toEqual({gbHours: 12, gb: 3, updateTime: t})
@@ -81,3 +93,5 @@ describe('budget DTOs', () => {
         })
     })
 })
+
+const withinBudget = {username: 'a', spending: 1, use: 1, budget: 5, quota: 10}

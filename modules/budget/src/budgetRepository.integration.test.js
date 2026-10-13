@@ -185,6 +185,14 @@ describe('BudgetRepository', () => {
             expect((await repository.userBudget(ANOTHER_OWNER)).dataQuota).toBe(25)
         })
 
+        test('keeps the default when a default budget update leaves it out', async () => {
+            await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 25}))
+
+            await repository.updateDefaultBudget(budget({instanceSpending: 4, storageSpending: 5, storageQuota: 6}))
+
+            expect((await repository.userBudget(ANOTHER_OWNER)).dataQuota).toBe(25)
+        })
+
         test('is part of a budget update request, with the current quota as initial', async () => {
             await repository.updateBudget(OWNER, budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 50}))
 

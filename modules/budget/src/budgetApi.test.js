@@ -203,6 +203,52 @@ describe('Data quota', () => {
         })
     })
 
+    test.each([
+        ['an empty', ''],
+        ['a null', null],
+    ])('treats %s Data quota as absent', async (_description, dataQuota) => {
+        const commands = makeCommands()
+        const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota}})
+
+        await makeApi(commands).updateBudget(c)
+
+        expect(commands.updateBudget).toHaveBeenCalledWith({
+            username: 'alice',
+            budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: null},
+        })
+    })
+
+    test('treats an empty requested Data quota as absent', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {message: 'more', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: ''}})
+
+        await makeApi(commands).requestUpdate(c)
+
+        expect(commands.requestBudgetUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({budget: expect.objectContaining({dataQuota: null})})
+        )
+    })
+
+    test('refuses a non-numeric Data quota', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 'lots'}})
+
+        await makeApi(commands).updateBudget(c)
+
+        expect(c.status).toBe(400)
+        expect(commands.updateBudget).not.toHaveBeenCalled()
+    })
+
+    test('refuses a non-numeric requested Data quota', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {message: 'more', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 'lots'}})
+
+        await makeApi(commands).requestUpdate(c)
+
+        expect(c.status).toBe(400)
+        expect(commands.requestBudgetUpdate).not.toHaveBeenCalled()
+    })
+
     test('refuses a negative Data quota', async () => {
         const commands = makeCommands()
         const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: -1}})

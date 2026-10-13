@@ -11,14 +11,14 @@ describe('events exported surface', () => {
         expect(typeof events.emitUserStorageQuotaExceeded).toBe('function')
     })
 
-    test('Exceeded events carry the reason', () => {
+    test('Exceeded events carry the reason and whether the Data quota is exceeded', () => {
         const received = []
         const subscription = publisher('budget.UserBudgetExceeded').subscribe(event => received.push(event))
 
-        events.emitUserBudgetExceeded('alice', 'DATA_QUOTA')
+        events.emitUserBudgetExceeded('alice', 'INSTANCE_BUDGET', true)
         subscription.unsubscribe()
 
-        expect(received).toEqual([{username: 'alice', reason: 'DATA_QUOTA'}])
+        expect(received).toEqual([{username: 'alice', reason: 'INSTANCE_BUDGET', dataQuotaExceeded: true}])
     })
 
     test('legacy no-op emitters (budgetCommands.js contract) do not throw', () => {

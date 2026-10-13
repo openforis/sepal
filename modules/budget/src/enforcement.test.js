@@ -1,4 +1,8 @@
+import {configureNoLogging} from '#sepal/log'
+
 import {createEnforcement} from './enforcement.js'
+
+beforeAll(() => configureNoLogging())
 
 test('publishes Exceeded with the reason for over-budget users and Cleared for the rest, every cycle', async () => {
     const budgetManager = {verdict: verdictOf({over: 'DATA_QUOTA'})}
@@ -10,8 +14,8 @@ test('publishes Exceeded with the reason for over-budget users and Cleared for t
     await enforcement.publishVerdicts() // level-triggered: re-publishes each cycle
 
     expect(events.emitted).toEqual([
-        ['x', 'over', 'DATA_QUOTA'], ['c', 'ok'],
-        ['x', 'over', 'DATA_QUOTA'], ['c', 'ok'],
+        ['x', 'over', 'DATA_QUOTA', true], ['c', 'ok'],
+        ['x', 'over', 'DATA_QUOTA', true], ['c', 'ok'],
     ])
 })
 
@@ -27,8 +31,8 @@ test('recomputes the verdict fresh each cycle (no cached/edge-triggered state)',
     await enforcement.publishVerdicts()
 
     expect(events.emitted).toEqual([
-        ['x', 'alice', 'STORAGE_QUOTA'], ['c', 'bob'],
-        ['c', 'alice'], ['x', 'bob', 'INSTANCE_BUDGET'],
+        ['x', 'alice', 'STORAGE_QUOTA', false], ['c', 'bob'],
+        ['c', 'alice'], ['x', 'bob', 'INSTANCE_BUDGET', false],
     ])
 })
 
@@ -51,7 +55,30 @@ test('publishes the live verdict and reason for each user with an open session',
     const enforcement = createEnforcement({budgetManager, openSessionUse, events})
     await enforcement.publishOpenSessionVerdicts()
 
-    expect(events.emitted).toEqual([['x', 'over', 'STORAGE_BUDGET'], ['c', 'ok']])
+    expect(events.emitted).toEqual([['x', 'over', 'STORAGE_BUDGET', false], ['c', 'ok']])
+})
+
+test('publishes that the Data quota is exceeded when an earlier limit is the reason', async () => {
+    const budgetManager = {verdict: async username => ({username, exceeded: true, reason: 'INSTANCE_BUDGET', dataQuotaExceeded: true})}
+    const userClient = {eachUsername: async fn => fn('alice')}
+    const events = createEvents()
+
+    const enforcement = createEnforcement({budgetManager, userClient, events})
+    await enforcement.publishVerdicts()
+
+    expect(events.emitted).toEqual([['x', 'alice', 'INSTANCE_BUDGET', true]])
+})
+
+test('publishes the verdicts of the remaining users when one user\'s verdict fails', async () => {
+    const verdict = verdictOf({carol: 'DATA_QUOTA'})
+    const budgetManager = {verdict: async username => username === 'bob' ? Promise.reject(new Error('db down')) : verdict(username)}
+    const userClient = {eachUsername: async fn => { await fn('alice'); await fn('bob'); await fn('carol') }}
+    const events = createEvents()
+
+    const enforcement = createEnforcement({budgetManager, userClient, events})
+    await enforcement.publishVerdicts()
+
+    expect(events.emitted).toEqual([['c', 'alice'], ['x', 'carol', 'DATA_QUOTA', true]])
 })
 
 test('leaves users without open sessions to the hourly pass', async () => {
@@ -66,14 +93,14 @@ test('leaves users without open sessions to the hourly pass', async () => {
 })
 
 const verdictOf = reasonByUser => async username => username in reasonByUser
-    ? {username, exceeded: true, reason: reasonByUser[username]}
-    : {username, exceeded: false, reason: null}
+    ? {username, exceeded: true, reason: reasonByUser[username], dataQuotaExceeded: reasonByUser[username] === 'DATA_QUOTA'}
+    : {username, exceeded: false, reason: null, dataQuotaExceeded: false}
 
 const createEvents = () => {
     const emitted = []
     return {
         emitted,
-        emitUserBudgetExceeded: (username, reason) => emitted.push(['x', username, reason]),
+        emitUserBudgetExceeded: (username, reason, dataQuotaExceeded) => emitted.push(['x', username, reason, dataQuotaExceeded]),
         emitUserBudgetCleared: username => emitted.push(['c', username]),
     }
 }

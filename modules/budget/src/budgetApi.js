@@ -1,5 +1,7 @@
 const isBlank = value => value == null || typeof value !== 'string' || value.trim() === ''
 
+const INVALID_BUDGET = 'instanceSpending, storageSpending, storageQuota and dataQuota (when present) must be numbers >= 0'
+
 // current.storageQuota deliberately carries the storage USAGE, not the quota; the quota is under
 // budget.storageQuota. budgetUpdateRequest is normalised to null so JSON.stringify keeps the key.
 const spendingAsMap = spending => ({
@@ -37,21 +39,17 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
 
     // POST /budget [ADMIN] — set a user's budget; closes any pending update request.
     const updateBudget = async ctx => {
-        const {username, instanceSpending, storageSpending, storageQuota, dataQuota} = ctx.request.body ?? {}
+        const body = ctx.request.body ?? {}
+        const {username} = body
         if (isBlank(username)) {
             ctx.status = 400
             ctx.body = {message: 'username is required'}
             return
         }
-        const budget = {
-            instanceSpending: Number(instanceSpending),
-            storageSpending: Number(storageSpending),
-            storageQuota: Number(storageQuota),
-            dataQuota: dataQuota == null ? null : Number(dataQuota),
-        }
+        const budget = budgetFrom(body)
         if (!isValidBudget(budget)) {
             ctx.status = 400
-            ctx.body = {message: 'instanceSpending, storageSpending, storageQuota and dataQuota (when present) must be numbers >= 0'}
+            ctx.body = {message: INVALID_BUDGET}
             return
         }
         await commands.updateBudget({username, budget})
@@ -61,21 +59,17 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
 
     // POST /budget/requestUpdate — request a budget change for the current user.
     const requestUpdate = async ctx => {
-        const {message, instanceSpending, storageSpending, storageQuota, dataQuota} = ctx.request.body ?? {}
+        const body = ctx.request.body ?? {}
+        const {message} = body
         if (isBlank(message)) {
             ctx.status = 400
             ctx.body = {message: 'message is required'}
             return
         }
-        const budget = {
-            instanceSpending: Number(instanceSpending),
-            storageSpending: Number(storageSpending),
-            storageQuota: Number(storageQuota),
-            dataQuota: dataQuota == null ? null : Number(dataQuota),
-        }
+        const budget = budgetFrom(body)
         if (!isValidBudget(budget)) {
             ctx.status = 400
-            ctx.body = {message: 'instanceSpending, storageSpending, storageQuota and dataQuota (when present) must be numbers >= 0'}
+            ctx.body = {message: INVALID_BUDGET}
             return
         }
         await commands.requestBudgetUpdate({
@@ -108,6 +102,16 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
         _internal: {spendingAsMap, reportToMap},
     }
 }
+
+// A Data quota left out, null or '' (an emptied form field) is absent: the stored quota is kept.
+const budgetFrom = ({instanceSpending, storageSpending, storageQuota, dataQuota}) => ({
+    instanceSpending: Number(instanceSpending),
+    storageSpending: Number(storageSpending),
+    storageQuota: Number(storageQuota),
+    dataQuota: isAbsent(dataQuota) ? null : Number(dataQuota),
+})
+
+const isAbsent = value => value == null || (typeof value === 'string' && value.trim() === '')
 
 const isValidBudget = budget =>
     [budget.instanceSpending, budget.storageSpending, budget.storageQuota]

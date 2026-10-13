@@ -22,7 +22,7 @@ const userStorageUse = ({username, spending, use, budget, quota, dataUse, dataQu
     dataQuota,
     isBudgetExceeded: spending >= budget,
     isQuotaExceeded: use > quota,
-    isDataQuotaExceeded: dataUse > dataQuota,
+    isDataQuotaExceeded: dataQuota != null && dataUse > dataQuota,
 })
 
 const storageUse = ({gbHours, gb, updateTime}) => ({
