@@ -23,6 +23,7 @@ const timedOutSession = createWorkerSession({
 
 const makeRepo = () => ({
     update: jest.fn(async () => {}),
+    clearApiKey: jest.fn(async () => {}),
     getSession: jest.fn(async () => timedOutSession),
     sessionOnInstance: jest.fn(async () => null),
     sessions: jest.fn(async () => []),

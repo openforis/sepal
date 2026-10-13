@@ -30,6 +30,7 @@ import {sessionTag} from '../../tag.js'
 import {MINUTE_MS} from '../../time.js'
 import {sessionOrdinals} from '../query/sessionOrdinals.js'
 import {NotificationState, withApiKey} from '../workerSession.js'
+import {releaseSessionInstance} from './releaseSessionInstance.js'
 
 const log = getLogger('worker/expireSessions')
 
@@ -192,7 +193,7 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
         return false
     }
     log.info(`${sessionTag(session)} (${session.instanceType}) expired past grace - closed`)
-    await releaseInstance(session.instance.id)
+    await releaseSessionInstance({sessionId: session.id, instanceId: session.instance.id}, {repo, releaseInstance})
     emitWorkerSessionClosed({username: session.username, sessionId: session.id})
     emitSessionExpiryClosed({
         username: session.username,

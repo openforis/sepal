@@ -6,6 +6,7 @@ import {getLogger} from '#sepal/log'
 
 import {sessionTag} from '../../tag.js'
 import {close, State} from '../workerSession.js'
+import {releaseSessionInstance} from './releaseSessionInstance.js'
 
 const log = getLogger('worker/closeUserSessions')
 
@@ -14,7 +15,10 @@ const closeUserSessions = async (username, {repo, instanceManager, emitWorkerSes
     for (const session of sessions) {
         try {
             await repo.update(close(session))
-            await instanceManager.releaseInstance(session.instance.id)
+            await releaseSessionInstance(
+                {sessionId: session.id, instanceId: session.instance.id},
+                {repo, releaseInstance: instanceManager.releaseInstance}
+            )
             emitWorkerSessionClosed({username: session.username, sessionId: session.id})
         } catch (error) {
             log.error(`Failed to close ${sessionTag(session)}`, error)

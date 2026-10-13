@@ -22,7 +22,7 @@ import {createWorkerSession, NotificationState, State, Timeout} from './workerSe
 // the one logger name.
 const log = getLogger('worker/expiry')
 
-const {PENDING, ACTIVE, CLOSED} = State
+const {PENDING, CLOSED} = State
 
 const SESSION_COLUMNS = `id, state, username, worker_type, instance_type, instance_id, host,
     creation_time, update_time, api_key, timeout_time, last_interaction_time, active_time,
@@ -67,27 +67,17 @@ export class WorkerSessionRepository {
 
     // update — state + update_time only. It deliberately does NOT write timeout_time: the deadline
     // moves through extendSession and nowhere else, so a stale in-memory session can never undo a
-    // ratchet that landed while it was held.
-    //   PENDING/ACTIVE → SET state, update_time WHERE id
-    //   otherwise (CLOSED) → ALSO SET api_key = NULL
+    // ratchet that landed while it was held. Nor does a close withdraw the api key: that waits for
+    // the instance's release (clearApiKey).
     async update(session) {
         const now = this.#clock()
         await this.#db.withConnection(async connection => {
-            if (session.state === PENDING || session.state === ACTIVE) {
-                await connection.query(
-                    `UPDATE worker_session
-                        SET state = ?, update_time = ?
-                        WHERE id = ?`,
-                    [session.state, now, session.id]
-                )
-            } else {
-                await connection.query(
-                    `UPDATE worker_session
-                        SET state = ?, update_time = ?, api_key = NULL
-                        WHERE id = ?`,
-                    [session.state, now, session.id]
-                )
-            }
+            await connection.query(
+                `UPDATE worker_session
+                    SET state = ?, update_time = ?
+                    WHERE id = ?`,
+                [session.state, now, session.id]
+            )
         })
         if (session.state === CLOSED) {
             // Cascade: a closed session's app associations are gone.
@@ -237,8 +227,9 @@ export class WorkerSessionRepository {
         })
     }
 
-    // findSessionByApiKey — null for a falsy apiKey. Only PENDING/ACTIVE sessions match, so
-    // closing a session revokes its key.
+    // findSessionByApiKey — null for a falsy apiKey. A closed session's key still matches until
+    // clearApiKey withdraws it at the end of the instance's release: the Data mount sidecar refreshes
+    // its credentials with it while it uploads what is pending.
     findSessionByApiKey(apiKey) {
         if (!apiKey) {
             return Promise.resolve(null)
@@ -246,14 +237,25 @@ export class WorkerSessionRepository {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, username, worker_type FROM worker_session
-                    WHERE api_key = ? AND state IN (?, ?)`,
-                [apiKey, PENDING, ACTIVE]
+                    WHERE api_key = ?`,
+                [apiKey]
             )
             const row = rows[0]
             return row
                 ? {sessionId: row.id, username: row.username, workerType: row.worker_type}
                 : null
         })
+    }
+
+    // clearApiKey — revokes the session's key; called once the session is closed and its instance
+    // released.
+    async clearApiKey(sessionId) {
+        await this.#db.withConnection(connection => connection.query(
+            `UPDATE worker_session
+                SET api_key = NULL
+                WHERE id = ?`,
+            [sessionId]
+        ))
     }
 
     // mostRecentlyClosedSessionByUser — a plain object { <username>: Date }.
@@ -441,7 +443,7 @@ export class WorkerSessionRepository {
         const terminated = await this.#db.withConnection(async connection => {
             const [result] = await connection.query(
                 `UPDATE worker_session
-                    SET state = 'CLOSED', update_time = NOW(), api_key = NULL
+                    SET state = 'CLOSED', update_time = NOW()
                     WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
                 [sessionId, notifiedTime]
             )
@@ -543,7 +545,7 @@ export class WorkerSessionRepository {
         const closedRows = await this.#db.withConnection(async connection => {
             const [result] = await connection.query(
                 `UPDATE worker_session
-                    SET state = 'CLOSED', update_time = NOW(), api_key = NULL
+                    SET state = 'CLOSED', update_time = NOW()
                     WHERE id = ?
                       AND state = 'ACTIVE'
                       AND timeout_time IS NOT NULL AND timeout_time < NOW()

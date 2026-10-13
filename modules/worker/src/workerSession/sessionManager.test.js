@@ -220,6 +220,36 @@ describe('closeSession', () => {
         await mgr.closeSession({sessionId: 's-1', username: 'alice'})
         expect(events.emitWorkerSessionClosed).toHaveBeenCalledTimes(1)
     })
+
+    // The Data mount sidecar refreshes its credentials with the session's key while the release
+    // waits for its uploads.
+    test('the api key resolves while the instance is released and no longer once it is', async () => {
+        const open = session({state: State.ACTIVE})
+        const repo = withRevocableKeys(makeRepo({getSession: () => open}), [open])
+        let resolvedDuringRelease
+        const instanceManager = makeInstanceManager({
+            releaseInstance: jest.fn(async () => {resolvedDuringRelease = await mgr.findSessionByApiKey(open.apiKey)}),
+        })
+        const {mgr} = build({repo, instanceManager})
+
+        await mgr.closeSession({sessionId: open.id})
+
+        expect(resolvedDuringRelease).toMatchObject({sessionId: open.id})
+        expect(await mgr.findSessionByApiKey(open.apiKey)).toBeNull()
+    })
+
+    test('a failed release still revokes the api key', async () => {
+        const open = session({state: State.ACTIVE})
+        const repo = withRevocableKeys(makeRepo({getSession: () => open}), [open])
+        const instanceManager = makeInstanceManager({
+            releaseInstance: jest.fn(async () => {throw new Error('release failed')}),
+        })
+        const {mgr} = build({repo, instanceManager})
+
+        await expect(mgr.closeSession({sessionId: open.id})).rejects.toThrow('release failed')
+
+        expect(await mgr.findSessionByApiKey(open.apiKey)).toBeNull()
+    })
 })
 
 describe('closeSessionOnInstance', () => {
@@ -268,6 +298,26 @@ describe('closeUserSessions', () => {
         await mgr.closeUserSessions('alice')
         // second session still closed + emitted despite the first failing
         expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-b'})
+    })
+
+    test('revokes the api key of each session once its release ends, failed or not', async () => {
+        const a = session({id: 's-a', apiKey: 'key-a', instance: {id: 'i-a', host: 'h'}})
+        const b = session({id: 's-b', apiKey: 'key-b', instance: {id: 'i-b', host: 'h'}})
+        const repo = withRevocableKeys(makeRepo({userSessions: () => [a, b]}), [a, b])
+        const resolvedDuringRelease = []
+        const instanceManager = makeInstanceManager({
+            releaseInstance: jest.fn(async id => {
+                resolvedDuringRelease.push(await mgr.findSessionByApiKey(id === 'i-a' ? a.apiKey : b.apiKey))
+                if (id === 'i-a') throw new Error('boom')
+            }),
+        })
+        const {mgr} = build({repo, instanceManager})
+
+        await mgr.closeUserSessions('alice')
+
+        expect(resolvedDuringRelease.map(({sessionId}) => sessionId)).toEqual([a.id, b.id])
+        expect(await mgr.findSessionByApiKey(a.apiKey)).toBeNull()
+        expect(await mgr.findSessionByApiKey(b.apiKey)).toBeNull()
     })
 })
 
@@ -470,6 +520,21 @@ describe('extensions', () => {
         expect(repo.redeemTermination).toHaveBeenCalledWith({sessionId: 's-1', notifiedTime})
         expect(instanceManager.releaseInstance).toHaveBeenCalledWith('i-1')
         expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
+    })
+
+    test('the terminate link revokes the api key once the instance is released', async () => {
+        const open = session({state: State.ACTIVE})
+        const repo = withRevocableKeys(activeRepo({getSession: () => open}), [open])
+        let resolvedDuringRelease
+        const instanceManager = makeInstanceManager({
+            releaseInstance: jest.fn(async () => {resolvedDuringRelease = await mgr.findSessionByApiKey(open.apiKey)}),
+        })
+        const {mgr} = build({repo, instanceManager})
+
+        await mgr.redeemTermination({sessionId: open.id, notifiedTime: new Date('2026-01-01T11:00:00Z')})
+
+        expect(resolvedDuringRelease).toMatchObject({sessionId: open.id})
+        expect(await mgr.findSessionByApiKey(open.apiKey)).toBeNull()
     })
 
     // Zero rows changed means the session was rescued between the mail and the click. Releasing
@@ -824,6 +889,7 @@ const makeRepo = (canned = {}) => {
             return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
         }),
         findSessionByApiKey: jest.fn(async apiKey => canned.findSessionByApiKey?.(apiKey) ?? null),
+        clearApiKey: jest.fn(async id => record('clearApiKey', id)),
         mostRecentlyClosedSessionByUser: jest.fn(async () => canned.mostRecentlyClosedSessionByUser?.() ?? {}),
         mostRecentlyClosedSession: jest.fn(async u => canned.mostRecentlyClosedSession?.(u) ?? {}),
         allOpenSessions: jest.fn(async () => canned.allOpenSessions ? canned.allOpenSessions() : []),
@@ -850,6 +916,22 @@ const makeRepo = (canned = {}) => {
         redeemExtension: jest.fn(async (...args) => canned.redeemExtension ? canned.redeemExtension(...args) : true),
         redeemTermination: jest.fn(async (...args) => canned.redeemTermination ? canned.redeemTermination(...args) : true),
     }
+}
+
+// withRevocableKeys — the repo's api-key lookup over a live key table: a key resolves, whatever its
+// session's state, until clearApiKey revokes it.
+const withRevocableKeys = (repo, sessions) => {
+    const keys = new Map(sessions.map(s => [s.apiKey, s]))
+    repo.findSessionByApiKey = jest.fn(async apiKey => {
+        const found = keys.get(apiKey)
+        return found ? {sessionId: found.id, username: found.username, workerType: found.workerType} : null
+    })
+    repo.clearApiKey = jest.fn(async sessionId => {
+        for (const [key, {id}] of keys) {
+            if (id === sessionId) keys.delete(key)
+        }
+    })
+    return repo
 }
 
 const makeInstanceManager = (overrides = {}) => {

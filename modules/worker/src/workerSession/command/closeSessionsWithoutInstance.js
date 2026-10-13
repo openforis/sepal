@@ -34,6 +34,7 @@ const closeSessionsWithoutInstance = async ({repo, instanceManager, emitWorkerSe
         }
         try {
             await repo.update(close(session))
+            await repo.clearApiKey(session.id)
             emitWorkerSessionClosed({username: session.username, sessionId: session.id})
             log.info(`Closed ${sessionTag(session)} - instance ${status}`)
         } catch (error) {

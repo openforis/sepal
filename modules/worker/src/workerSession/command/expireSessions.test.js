@@ -37,6 +37,7 @@ const makeRepo = (sessions = [], overrides = {}) => ({
     markEmailed: jest.fn(async () => true),
     restartExpiryCycle: jest.fn(async () => true),
     closeExpiredSession: jest.fn(async () => true),
+    clearApiKey: jest.fn(async () => {}),
     ...overrides,
 })
 
@@ -195,6 +196,16 @@ describe('T+graceMinutes — close', () => {
         })
         await run(repo, {releaseInstance: jest.fn(async () => { order.push('release') })})
         expect(order).toEqual(['close', 'release'])
+    })
+
+    // The Data mount sidecar refreshes its credentials with the key while the release drains it.
+    test('the api key is revoked only once the instance is released, failed or not', async () => {
+        const order = []
+        const repo = makeRepo([expiredPastGrace()], {
+            clearApiKey: jest.fn(async id => { order.push(`revoke:${id}`) }),
+        })
+        await run(repo, {releaseInstance: jest.fn(async () => { order.push('release'); throw new Error('release failed') })})
+        expect(order).toEqual(['release', 'revoke:s-1'])
     })
 })
 

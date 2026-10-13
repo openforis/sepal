@@ -53,6 +53,14 @@ test('loads ACTIVE sessions only and never releases the instance', async () => {
     expect(deps.instanceManager.releaseInstance).toBeUndefined()
 })
 
+// With no release to wait for, nothing needs the key any more.
+test('revokes the api key of a session it closes', async () => {
+    const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
+    await closeSessionsWithoutInstance(deps)
+    await closeSessionsWithoutInstance(deps)
+    expect(deps.repo.clearApiKey).toHaveBeenCalledWith('s-1')
+})
+
 test('one close failing does not abort the rest', async () => {
     const deps = build({
         sessions: [session('s-1'), session('s-2')],
@@ -82,6 +90,7 @@ const build = ({sessions, statuses}) => {
         repo: {
             sessions: jest.fn(async () => sessions),
             update: jest.fn(async () => {}),
+            clearApiKey: jest.fn(async () => {}),
         },
         instanceManager: {
             sessionsWithoutInstance: jest.fn(async probed => probed

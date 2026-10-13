@@ -24,6 +24,7 @@ import {extendSession as _extendSession} from './command/extendSession.js'
 import {heartbeat as _heartbeat} from './command/heartbeat.js'
 import {reclaimStaleClaims as _reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {reconcilePendingSessions as _reconcilePendingSessions} from './command/reconcilePendingSessions.js'
+import {releaseSessionInstance} from './command/releaseSessionInstance.js'
 import {releaseUnusedInstances as _releaseUnusedInstances} from './command/releaseUnusedInstances.js'
 import {requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
@@ -159,7 +160,10 @@ const createSessionManager = ({
         if (!terminated) {
             return false
         }
-        await instanceManager.releaseInstance(session?.instance?.id)
+        await releaseSessionInstance(
+            {sessionId, instanceId: session?.instance?.id},
+            {repo, releaseInstance: instanceManager.releaseInstance}
+        )
         emitClosed({username: session?.username, sessionId})
         emitChanged({username: session?.username})
         return true

@@ -87,14 +87,15 @@ describe('WorkerSessionRepository', () => {
             expect(stored.updateTime.getTime()).toBe(now.getTime())
         })
 
-        test('withdraws the api key of a session it closes', async () => {
-            await repository.insert(aSession({apiKey: 'to-be-nulled'}))
+        // The key outlives the close until the instance's release ends (clearApiKey).
+        test('keeps the api key of a session it closes', async () => {
+            await repository.insert(aSession({apiKey: 'kept-for-the-release'}))
 
             await repository.update(close(await repository.getSession(SESSION_ID)))
 
             const stored = await repository.getSession(SESSION_ID)
             expect(stored.state).toBe(State.CLOSED)
-            expect(stored.apiKey).toBeNull()
+            expect(stored.apiKey).toBe('kept-for-the-release')
         })
 
         // The deadline moves through extendSession and nowhere else, so a stale in-memory session
@@ -452,7 +453,7 @@ describe('WorkerSessionRepository', () => {
     })
 
     describe('closeExpiredSession', () => {
-        test('closes an undisturbed session and withdraws its api key', async () => {
+        test('closes an undisturbed session, keeping its api key for the release', async () => {
             await givenExpiredSession({apiKey: 'the-key'})
             const observed = await givenNotificationRaisedMinutesAgo(61)
 
@@ -461,7 +462,7 @@ describe('WorkerSessionRepository', () => {
             const stored = await repository.getSession(SESSION_ID)
             expect(closed).toBe(true)
             expect(stored.state).toBe(State.CLOSED)
-            expect(stored.apiKey).toBeNull()
+            expect(stored.apiKey).toBe('the-key')
         })
 
         // Selecting candidates and then closing them is a lost update waiting to happen: an
@@ -632,19 +633,26 @@ describe('WorkerSessionRepository', () => {
             expect(second.sessionId).toBe('executor-2')
         })
 
-        test('finds nothing for a session that has closed', async () => {
-            await repository.insert(aSession({state: State.CLOSED, apiKey: 'dead-key'}))
-
-            expect(await repository.findSessionByApiKey('dead-key')).toBeNull()
-        })
-
-        test('finds nothing once an open session is closed', async () => {
-            const session = activeSession({id: 'executor-1', apiKey: 'live-key'})
+        // Closed but not yet released: the Data mount sidecar still refreshes its credentials.
+        test('still finds a closed session whose key is not revoked yet', async () => {
+            const session = activeSession({id: 'executor-1', apiKey: 'draining-key'})
             await repository.insert(session)
-
             await repository.update({...session, state: State.CLOSED})
 
+            const found = await repository.findSessionByApiKey('draining-key')
+
+            expect(found.sessionId).toBe('executor-1')
+        })
+
+        test('finds nothing once the key is revoked', async () => {
+            const session = activeSession({id: 'executor-1', apiKey: 'live-key'})
+            await repository.insert(session)
+            await repository.update({...session, state: State.CLOSED})
+
+            await repository.clearApiKey(session.id)
+
             expect(await repository.findSessionByApiKey('live-key')).toBeNull()
+            expect((await repository.getSession(session.id)).apiKey).toBeNull()
         })
 
         // Answered while the suite's only connection is held: with no key there is nothing to look up,
