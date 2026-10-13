@@ -964,9 +964,10 @@ describe('undeploy with Data', () => {
     })
 
     test('waits for pending uploads before stopping the sidecar', async () => {
-        recordFetch({pending: ['out/a.tif\n', 'out/a.tif\n', '']})
+        recordFetch({pending: ['out/a.tif\n', 'out/a.tif\n', '', '']})
         const expected = [
             `POST containers/${sandbox}/stop`,
+            `POST containers/${sidecar}/exec`,
             `POST containers/${sidecar}/exec`,
             `POST containers/${sidecar}/exec`,
             `POST containers/${sidecar}/exec`,
@@ -980,7 +981,27 @@ describe('undeploy with Data', () => {
         await provisioner().undeploy(instance)
 
         expect(calls.filter(call => expected.includes(call))).toEqual(expected)
-        expect(slept).toEqual([5000, 5000])
+        expect(slept).toEqual([5000, 5000, 5000])
+        expect(notified).toEqual([])
+    })
+
+    test('finishes on two consecutive empty answers', async () => {
+        recordFetch({pending: ['', '']})
+
+        await provisioner().undeploy(instance)
+
+        expect(pendingChecks()).toBe(2)
+        expect(slept).toEqual([5000])
+    })
+
+    // Files the stopped sandbox's killed processes closed can reach the upload queue after the first
+    // empty answer.
+    test('keeps waiting when an empty answer is followed by pending files', async () => {
+        recordFetch({pending: ['', 'out/late.tif\n', '', '']})
+
+        await provisioner().undeploy(instance)
+
+        expect(pendingChecks()).toBe(4)
         expect(notified).toEqual([])
     })
 
@@ -1011,12 +1032,22 @@ describe('undeploy with Data', () => {
     })
 
     test('keeps waiting through a failed check of the pending uploads', async () => {
-        recordFetch({pending: [500, 'out/a.tif\n', '']})
+        recordFetch({pending: [500, 'out/a.tif\n', '', '']})
 
         await provisioner().undeploy(instance)
 
-        expect(calls.filter(call => call === `POST containers/${sidecar}/exec`)).toHaveLength(3)
-        expect(slept).toEqual([5000, 5000])
+        expect(pendingChecks()).toBe(4)
+        expect(slept).toEqual([5000, 5000, 5000])
+        expect(notified).toEqual([])
+    })
+
+    // sepal-data exits non-zero when rclone cannot be asked: that is "unknown", not "nothing pending".
+    test('keeps waiting when listing the pending uploads exits non-zero', async () => {
+        recordFetch({pending: [{exit: 1, output: 'connection refused'}, 'out/a.tif\n', '', '']})
+
+        await provisioner().undeploy(instance)
+
+        expect(pendingChecks()).toBe(4)
         expect(notified).toEqual([])
     })
 
@@ -1027,6 +1058,28 @@ describe('undeploy with Data', () => {
 
         expect(slept).toEqual([5000, 5000])
         expect(calls).toContain(`POST containers/${sidecar}/stop`)
+        expect(notified).toEqual([])
+    })
+
+    test('gives up after two minutes on a sidecar that could never be asked', async () => {
+        recordFetch({pending: [500]})
+
+        await provisioner().undeploy(instance)
+
+        expect(clock).toBe(120_000)
+        expect(calls).toContain(`POST containers/${sidecar}/stop`)
+        expect(calls).toContain('DELETE volumes/sepal-data-cache.inst-abc123')
+        expect(notified).toEqual([])
+    })
+
+    test('waits out the whole flush timeout once a check has answered', async () => {
+        recordFetch({pending: ['out/a.tif\n', 500]})
+
+        await provisioner().undeploy(instance)
+
+        expect(clock).toBe(600_000)
+        expect(notified).toHaveLength(1)
+        expect(notified[0].content).toContain('out/a.tif')
     })
 
     test('cleans up an instance whose sidecar is already gone', async () => {
@@ -1035,7 +1088,8 @@ describe('undeploy with Data', () => {
         await expect(provisioner().undeploy(instance)).resolves.toBeUndefined()
 
         expect(slept).toEqual([])
-        expect(calls.filter(call => call === `POST containers/${sidecar}/exec`).length).toBeLessThanOrEqual(1)
+        expect(notified).toEqual([])
+        expect(pendingChecks()).toBeLessThanOrEqual(1)
         expect(calls).toContain(`POST containers/create?name=${unmountHelper}`)
         expect(calls).toContain('DELETE volumes/sepal-data-cache.inst-abc123')
     })
@@ -1084,8 +1138,10 @@ describe('undeploy with Data', () => {
         _now: () => clock,
     })
 
-    // pending: what successive pending-uploads execs print, or the status their start fails with; the
-    // last answer repeats. gone: containers
+    const pendingChecks = () => calls.filter(call => call === `POST containers/${sidecar}/exec`).length
+
+    // pending: what successive pending-uploads execs print, {exit, output} for a non-zero exit, or the
+    // status their start fails with; the last answer repeats. gone: containers
     // Docker no longer has. failing: calls Docker answers with a 500.
     const recordFetch = ({
         pending = [''],
@@ -1095,6 +1151,7 @@ describe('undeploy with Data', () => {
         containers = [{Id: 'c-sandbox', Names: [`/${sandbox}`]}, {Id: 'c-sidecar', Names: [`/${sidecar}`]}],
     } = {}) => {
         const answers = [...pending]
+        let exitCode = 0
         globalThis.fetch = jest.fn(async (url, opts = {}) => {
             const {pathname, searchParams} = new URL(url)
             const path = pathname.replace('/v1.38/', '')
@@ -1113,9 +1170,11 @@ describe('undeploy with Data', () => {
             if (path.endsWith('/exec')) return respond(201, JSON.stringify({Id: 'exec-1'}))
             if (path === 'exec/exec-1/start') {
                 const answer = answers.length > 1 ? answers.shift() : answers[0]
-                return typeof answer === 'number' ? respond(answer, 'daemon error') : respond(200, answer)
+                if (typeof answer === 'number') return respond(answer, 'daemon error')
+                exitCode = answer.exit ?? 0
+                return respond(200, answer.output ?? answer)
             }
-            if (path === 'exec/exec-1/json') return respond(200, JSON.stringify({ExitCode: 0}))
+            if (path === 'exec/exec-1/json') return respond(200, JSON.stringify({ExitCode: exitCode}))
             if (missingVolumes && path.startsWith('volumes/')) return respond(404, 'no such volume')
             return respond(204, '')
         })

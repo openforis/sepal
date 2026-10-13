@@ -67,6 +67,12 @@ const PENDING_UPLOADS_POLL_MS = 5000
 const PENDING_UPLOADS_TIMEOUT_MS = 30_000
 const NOT_UPLOADED_LISTED = 20
 
+// UNREACHABLE_GIVE_UP_MS — how long a release keeps asking a sidecar it has never once been able to
+// ask, before tearing down anyway: a dead daemon must not hold the release for the whole flush timeout.
+const UNREACHABLE_GIVE_UP_MS = 120_000
+
+const SIDECAR_GONE = Symbol('sidecar gone')
+
 // Docker answers 304 for a container already stopped, 404 for one already deleted, and 409 for an
 // exec in one that is not running: each means a retried release has nothing left to do there.
 const CONTAINER_GONE = [304, 404, 409]
@@ -494,18 +500,31 @@ const createDockerInstanceProvisioner = ({
         }
     }
 
-    // waitForPendingUploads — on timeout the user is told which files never reached their Data:
-    // the sidecar's cache, the only copy, goes with the instance. A check that failed tells nothing,
-    // so the last known list stands until the next one.
+    // waitForPendingUploads — done on two consecutive empty answers, one interval apart: files the
+    // stopped sandbox's killed processes closed may reach the upload queue only after the first. On
+    // timeout the user is told which files never reached their Data: the sidecar's cache, the only
+    // copy, goes with the instance. A check that failed tells nothing, so the last known list stands
+    // until the next one.
     const waitForPendingUploads = async (instance, sidecar) => {
-        const deadline = _now() + config.dataFlushTimeoutSeconds * 1000
+        const started = _now()
+        const deadline = started + config.dataFlushTimeoutSeconds * 1000
         let pending = null
         for (;;) {
             const checked = await pendingUploads(instance, sidecar)
-            if (checked?.length === 0) {
+            if (checked === SIDECAR_GONE) {
+                if (pending?.length !== 0) {
+                    log.warn(`${instanceTag(instance)}: the Data mount sidecar of ${instance.reservation.username} is gone; the Data cache may hold files that were not uploaded`)
+                }
+                return
+            }
+            if (checked?.length === 0 && pending?.length === 0) {
                 return
             }
             pending = checked ?? pending
+            if (!pending && _now() - started >= UNREACHABLE_GIVE_UP_MS) {
+                log.warn(`${instanceTag(instance)}: could not ask the Data mount sidecar of ${instance.reservation.username} for pending uploads in ${UNREACHABLE_GIVE_UP_MS / 1000}s; not waiting for them`)
+                return
+            }
             if (_now() >= deadline) {
                 notifyNotUploaded(instance, pending)
                 return
@@ -519,23 +538,26 @@ const createDockerInstanceProvisioner = ({
             log.warn(`${instanceTag(instance)}: could not tell whether Data uploads were pending after ${config.dataFlushTimeoutSeconds}s`)
             return
         }
-        log.warn(`${instanceTag(instance)}: ${pending.length} Data file(s) not uploaded after ${config.dataFlushTimeoutSeconds}s`)
-        notify({username: instance.reservation.username, ...notUploadedEmail(pending)})
+        if (pending.length) {
+            log.warn(`${instanceTag(instance)}: ${pending.length} Data file(s) not uploaded after ${config.dataFlushTimeoutSeconds}s`)
+            notify({username: instance.reservation.username, ...notUploadedEmail(pending)})
+        }
     }
 
-    // pendingUploads — the paths still to upload, or null when the check failed. None once the
-    // sidecar is gone, or when rclone is not up (sepal-data exits non-zero).
+    // pendingUploads — the paths still to upload, SIDECAR_GONE once the sidecar is gone or stopped,
+    // or null when the check failed, which includes sepal-data's non-zero exit: rclone could not be
+    // asked, so nothing is known.
     const pendingUploads = async (instance, sidecar) => {
         try {
             const {exitCode, output} = await dockerExec(baseUrl(instance), sidecar, PENDING_UPLOADS, {timeoutMs: PENDING_UPLOADS_TIMEOUT_MS})
             if (exitCode !== 0) {
                 log.warn(`${instanceTag(instance)}: cannot list pending Data uploads (exit ${exitCode}): ${output.trim()}`)
-                return []
+                return null
             }
             return output.split('\n').map(line => line.trim()).filter(Boolean)
         } catch (e) {
             if (CONTAINER_GONE.includes(e.statusCode)) {
-                return []
+                return SIDECAR_GONE
             }
             log.warn(`${instanceTag(instance)}: cannot list pending Data uploads: ${e.message}`)
             return null
