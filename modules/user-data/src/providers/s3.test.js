@@ -22,7 +22,7 @@ describe('createS3Provider in AWS mode', () => {
 
         await provider.credentials(attachment('alice'), {mode: 'readWrite'})
 
-        expect(sts.assumed).toEqual([expect.objectContaining({RoleArn: ROLE_ARN})])
+        expect(sts.requests).toEqual([expect.objectContaining({RoleArn: ROLE_ARN})])
     })
 
     it('fails startup with a clear message when the caller identity cannot be resolved', async () => {
@@ -32,6 +32,17 @@ describe('createS3Provider in AWS mode', () => {
             {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', emulator: false},
             {sts}
         )).rejects.toThrow(/Cannot resolve the AWS account/)
+    })
+})
+
+describe('createS3Provider with root credentials', () => {
+    it('fails startup because root cannot assume roles', async () => {
+        const sts = fakeSts({arn: 'arn:aws:iam::123456789012:root'})
+
+        await expect(createS3Provider(
+            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', emulator: false},
+            {sts}
+        )).rejects.toThrow('user-data must run with an IAM user\'s keys; root credentials cannot assume roles')
     })
 })
 
@@ -278,21 +289,19 @@ const fakeClock = () => {
     }
 }
 
-const fakeSts = ({clock = fakeClock(), failures = 0, account = '123456789012', identityFails = false} = {}) => {
+const fakeSts = ({clock = fakeClock(), failures = 0, account = '123456789012', arn = `arn:aws:iam::${account}:user/deployer`, identityFails = false} = {}) => {
     const requests = []
-    const assumed = requests
     const issued = []
     let remainingFailures = failures
     return {
         requests,
-        assumed,
         issued,
         send: async command => {
             if (command.constructor.name === 'GetCallerIdentityCommand') {
                 if (identityFails) {
                     throw new Error('denied')
                 }
-                return {Account: account, Arn: `arn:aws:iam::${account}:user/deployer`}
+                return {Account: account, Arn: arn}
             }
             requests.push(command.input)
             if (remainingFailures > 0) {

@@ -16,22 +16,29 @@ export const dataBucketName = deployEnvironment => `sepal-${deployEnvironment.to
 
 export const createS3Provider = async (
     {region, bucket, accessKeyId, secretAccessKey, deployEnvironment, endpoint, emulator},
-    {sts = new STSClient({region, credentials: {accessKeyId, secretAccessKey}})} = {}
+    {sts} = {}
 ) => {
     const credentials = {accessKeyId, secretAccessKey}
-    const s3 = new S3Client({region, credentials, ...(emulator ? {endpoint, forcePathStyle: true} : {})})
-    return emulator
-        ? new S3Provider({region, bucket, s3, emulator: {endpoint, accessKeyId, secretAccessKey}})
-        : new S3Provider({region, bucket, s3, sts, roleArn: await resolveRoleArn(sts, deployEnvironment)})
+    if (emulator) {
+        const s3 = new S3Client({region, credentials, endpoint, forcePathStyle: true})
+        return new S3Provider({region, bucket, s3, emulator: {endpoint, accessKeyId, secretAccessKey}})
+    }
+    const s3 = new S3Client({region, credentials})
+    const stsClient = sts ?? new STSClient({region, credentials})
+    return new S3Provider({region, bucket, s3, sts: stsClient, roleArn: await resolveRoleArn(stsClient, deployEnvironment)})
 }
 
 const resolveRoleArn = async (sts, deployEnvironment) => {
+    let identity
     try {
-        const {Account} = await sts.send(new GetCallerIdentityCommand({}))
-        return `arn:aws:iam::${Account}:role/${dataBucketName(deployEnvironment)}`
+        identity = await sts.send(new GetCallerIdentityCommand({}))
     } catch (error) {
         throw new ServerException(`Cannot resolve the AWS account of the configured keys: ${error.message}`)
     }
+    if (!identity.Arn.includes(':user/')) {
+        throw new ServerException('user-data must run with an IAM user\'s keys; root credentials cannot assume roles')
+    }
+    return `arn:aws:iam::${identity.Account}:role/${dataBucketName(deployEnvironment)}`
 }
 
 // Data on S3: every user's attachment is a prefix of one shared bucket. Credentials come from a role whose
