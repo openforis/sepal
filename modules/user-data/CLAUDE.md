@@ -30,8 +30,9 @@ npm run test:aws                                           # AWS isolation suite
 ## Usage, quota and events
 
 MySQL database `user_data`, table `data_usage` (size and measurement times per user). `Usage` measures a user within
-an hour after a read-write grant marked them dirty, within seconds after a delete in the file browser (debounced per
-user, so a burst of deletes measures once), and every user with Data (or measured before) once a day, then
+an hour after a read-write grant marked them dirty, within seconds after a delete in the file browser or an export's
+`changed` call (at most once a minute per user: a burst measures once, and a request within a minute of the last such
+measurement waits for the minute's end), and every user with Data (or measured before) once a day, then
 publishes `userData.size {username, size}`. Every hourly tick also republishes the last recorded size of every
 known user (no S3 call), so events lost while the broker is down heal within an hour; the first tick runs 60 s
 after start, once the broker connection is up. A failed daily sweep is retried next tick without holding up the
@@ -66,8 +67,8 @@ republishes recent purges daily; a user with no `data_usage` row and nothing sto
 - `GET /attachments/data/files?path=<relative to Data>` — `{items}` as the browser lists it (`{[name]: {dir: true} |
   {file: true, size, mtime}}`); empty path is the Data root, a missing folder lists as `{items: {}}`. Unsafe path 400,
   other attachment ids 404, always `no-store`. The GUI export panel uses it to warn about non-empty folders.
-- `POST /attachments/data/changed` — 204; has the user's Data measured soon (debounced). Export tasks call it after
-  uploading.
+- `POST /attachments/data/changed` — 204; has the user's Data measured soon (at most once a minute). Export tasks
+  call it once a file was uploaded.
 
 ## File browser websocket
 

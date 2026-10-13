@@ -8,12 +8,13 @@ const TICK_MS = 60 * 60 * 1000
 const START_DELAY_MS = 60 * 1000
 const SWEEP_MS = 24 * 60 * 60 * 1000
 const MEASURE_DELAY_MS = 5 * 1000
+const MEASURE_INTERVAL_MS = 60 * 1000
 
 // Measures users' Data and publishes it for budget. A user is measured within an hour after being marked dirty
 // (credentials issued for writing), and every user with Data, or measured before, once a day. Every tick also
 // republishes the last recorded size of every known user, so events lost while the broker is unreachable heal
-// within an hour. A user who deleted Data from the file browser is measured within seconds, so a quota they got
-// under no longer holds them up for the hour.
+// within an hour. A user who deleted Data from the file browser, or an export that saved to it, has it measured
+// within seconds, at most once a minute, so a quota they got under no longer holds them up for the hour.
 export class Usage {
     #repository
     #attachments
@@ -24,11 +25,13 @@ export class Usage {
     #running = null
     #startDelayMs
     #measureDelayMs
+    #measureIntervalMs
     #startTimer = null
     #timer = null
     #soon = new Map()
+    #soonMeasuredAt = new Map()
 
-    constructor({repository, attachments, providers, events, now = () => new Date(), startDelayMs = START_DELAY_MS, measureDelayMs = MEASURE_DELAY_MS}) {
+    constructor({repository, attachments, providers, events, now = () => new Date(), startDelayMs = START_DELAY_MS, measureDelayMs = MEASURE_DELAY_MS, measureIntervalMs = MEASURE_INTERVAL_MS}) {
         this.#repository = repository
         this.#attachments = attachments
         this.#providers = providers
@@ -36,6 +39,7 @@ export class Usage {
         this.#now = now
         this.#startDelayMs = startDelayMs
         this.#measureDelayMs = measureDelayMs
+        this.#measureIntervalMs = measureIntervalMs
     }
 
     start() {
@@ -54,13 +58,19 @@ export class Usage {
         return this.#repository.markDirty(username)
     }
 
-    // Debounced per user: a burst of requests measures once, after the last one.
+    // Each measurement lists the user's whole prefix, and any user can ask for one. A request waiting to be measured
+    // covers every request until it starts, and one within a minute of the last measurement waits for that minute.
     measureSoon(username) {
-        clearTimeout(this.#soon.get(username))
+        if (this.#soon.has(username)) {
+            return
+        }
+        const sinceMeasured = this.#now().getTime() - (this.#soonMeasuredAt.get(username) ?? -Infinity)
+        const delay = Math.max(this.#measureDelayMs, this.#measureIntervalMs - sinceMeasured)
         this.#soon.set(username, setTimeout(() => {
             this.#soon.delete(username)
+            this.#soonMeasuredAt.set(username, this.#now().getTime())
             this.#measure(username)
-        }, this.#measureDelayMs))
+        }, delay))
     }
 
     async recordErased(username) {

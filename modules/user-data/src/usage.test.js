@@ -163,6 +163,32 @@ describe('measureSoon', () => {
         expect(harness.recorded).toEqual([['alice', 7]])
     })
 
+    it('measures once more at the end of the minute when asked again within it, however often asked', async () => {
+        const harness = usageHarness({sizes: {alice: 7}, measureDelayMs: 10, measureIntervalMs: 100})
+        harness.usage.measureSoon('alice')
+        await wait(40)
+
+        harness.usage.measureSoon('alice')
+        harness.usage.measureSoon('alice')
+        await wait(40)
+        expect(harness.recorded).toHaveLength(1)
+        await wait(120)
+
+        expect(harness.recorded).toEqual([['alice', 7], ['alice', 7]])
+    })
+
+    it('measures shortly after a request once the minute has passed', async () => {
+        const harness = usageHarness({sizes: {alice: 7}, measureDelayMs: 10, measureIntervalMs: 100})
+        harness.usage.measureSoon('alice')
+        await wait(40)
+        harness.advance(100)
+
+        harness.usage.measureSoon('alice')
+        await wait(40)
+
+        expect(harness.recorded).toHaveLength(2)
+    })
+
     it('measures each user of a burst', async () => {
         const harness = usageHarness({sizes: {alice: 7, bob: 8}, measureDelayMs: 10})
 
@@ -191,7 +217,7 @@ const harnesses = []
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], failingOwners = 0, measuringTakes = 0, slow = false, measureDelayMs}) {
+function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], failingOwners = 0, measuringTakes = 0, slow = false, measureDelayMs, measureIntervalMs}) {
     let time = Date.parse('2026-10-13T10:00:00Z')
     let remainingOwnersFailures = failingOwners
     const harness = {published: [], recorded: [], measuredFrom: {}, dirty: [...dirty], measured: {...measured}}
@@ -245,7 +271,8 @@ function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured
             }
         },
         now: () => new Date(time),
-        measureDelayMs
+        measureDelayMs,
+        measureIntervalMs
     })
     harnesses.push(harness)
     harness.advance = ms => {
