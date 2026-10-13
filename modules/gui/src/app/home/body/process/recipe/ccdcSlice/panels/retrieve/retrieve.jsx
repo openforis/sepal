@@ -1,5 +1,6 @@
 import React from 'react'
 
+import api from '~/apiRegistry'
 import {
     isUnresolved,
     reconciledChoices,
@@ -47,6 +48,9 @@ const fields = {
     workspacePath: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL')
         .notBlank(),
+    dataPath: new Form.Field()
+        .skip((v, {destination}) => destination !== 'DATA')
+        .notBlank('process.retrieve.form.dataPath.required'),
     assetId: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
@@ -63,7 +67,7 @@ const fields = {
         .int()
         .notBlank(),
     fileDimensionsMultiple: new Form.Field()
-        .skip((v, {destination}) => destination !== 'SEPAL')
+        .skip((v, {destination}) => !isFileDestination(destination))
         .int()
         .notBlank(),
     tileSize: new Form.Field()
@@ -77,7 +81,7 @@ const fields = {
 
 const constraints = {
     fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
-        .skip(({destination}) => destination !== 'SEPAL')
+        .skip(({destination}) => !isFileDestination(destination))
         .predicate(({fileDimensionsMultiple, shardSize}) =>
             fileDimensionsMultiple * shardSize <= 131072, 'process.retrieve.form.fileDimensionsMultiple.tooLarge'
         ),
@@ -86,6 +90,9 @@ const constraints = {
             (baseBands?.length && bandTypes?.length) || segmentBands?.length, 'process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne'
         )
 }
+
+// Destinations whose folder or asset is checked before Apply.
+const VALIDATED_DESTINATIONS = ['GEE', 'SEPAL', 'DATA']
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects')
@@ -149,12 +156,13 @@ class _Retrieve extends React.Component {
                 {this.renderScale()}
                 {this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
+                {destination.value === 'DATA' ? this.renderDataDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
                 {more && destination.value === 'GEE' ? this.renderShardSize() : null}
-                {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
+                {more && isFileDestination(destination.value) ? this.renderFileDimensionsMultiple() : null}
                 <Layout type='horizontal'>
                     {more ? this.renderCrs() : null}
                     {more ? this.renderCrsTransform() : null}
@@ -244,9 +252,13 @@ class _Retrieve extends React.Component {
             {
                 value: 'SEPAL',
                 label: msg('process.retrieve.form.destination.SEPAL')
+            },
+            {
+                value: 'DATA',
+                label: msg('process.retrieve.form.destination.DATA')
             }
         ]
-            .filter(({value}) => isGoogleAccount() || value === 'SEPAL')
+            .filter(({value}) => isGoogleAccount() || isFileDestination(value))
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
@@ -265,6 +277,21 @@ class _Retrieve extends React.Component {
                 placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
                 tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
                 workspacePathInput={workspacePath}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
+            />
+        )
+    }
+
+    renderDataDestination() {
+        const {inputs: {dataPath}} = this.props
+        return (
+            <WorkspaceDestination
+                label={msg('process.retrieve.form.dataPath.label')}
+                placeholder={msg('process.retrieve.form.dataPath.placeholder')}
+                workspacePathInput={dataPath}
+                destination='DATA'
+                listFiles$={api.userData.listFiles$}
+                browse={false}
                 onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
@@ -663,11 +690,11 @@ class _Retrieve extends React.Component {
 
     requiresDestinationValidation(props = this.props) {
         const {inputs: {destination}} = props
-        return ['GEE', 'SEPAL'].includes(destination.value)
+        return VALIDATED_DESTINATIONS.includes(destination.value)
     }
 
     onDestinationChange(destination) {
-        this.setDestinationValidationPending(['GEE', 'SEPAL'].includes(destination))
+        this.setDestinationValidationPending(VALIDATED_DESTINATIONS.includes(destination))
     }
 
     onDestinationValidityCheckChange(destinationValidationPending) {
@@ -695,3 +722,7 @@ export const Retrieve = compose(
         defaultTileSize: 2
     })
 )
+
+// Exported as files to a folder: the user's workspace or Data.
+const isFileDestination = destination =>
+    destination === 'SEPAL' || destination === 'DATA'

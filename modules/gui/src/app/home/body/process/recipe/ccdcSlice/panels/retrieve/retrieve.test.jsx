@@ -1,10 +1,14 @@
-import {describe, expect, it, vi} from 'vitest'
+import {act} from 'react'
+import {createRoot} from 'react-dom/client'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 // The Retrieve panel of CCDC Slice, on what it lets through. Its selection is structured - base bands, measures and
 // segment bands - and every combination it asks for is checked against the slice's read of its own output: one the
 // output does not hold is refused and named, never dropped from the export. Once the output has answered, a saved
 // option it no longer offers goes from the selection. The read, the decision and the generic submitter are the real
-// ones; the panel's form wrappers, the task API and notifications are replaced.
+// ones; the panel's form wrappers, its lower-level widgets, the task API and notifications are replaced.
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -19,6 +23,13 @@ const notified = vi.hoisted(() => [])
 vi.mock('~/widget/notifications', () => ({Notifications: {error: message => notified.push(message)}}))
 
 const submitted = vi.hoisted(() => [])
+const capture = vi.hoisted(() => ({
+    destinationButtons: null,
+    folderFields: [],
+    googleAccount: true,
+    listDataFiles$: () => null,
+    onApply: null
+}))
 vi.mock('~/apiRegistry', () => ({
     default: {
         tasks: {
@@ -26,14 +37,47 @@ vi.mock('~/apiRegistry', () => ({
                 submitted.push(task)
                 return {subscribe: () => {}}
             }
-        }
+        },
+        userData: {listFiles$: capture.listDataFiles$}
     }
 }))
 
 vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
-    RecipeFormPanel: () => null,
+    RecipeFormPanel: ({children, onApply}) => {
+        capture.onApply = onApply
+        return children
+    },
     recipeFormPanel: () => Component => Component
 }))
+vi.mock('~/user', async importOriginal => ({...await importOriginal(), isGoogleAccount: () => capture.googleAccount}))
+vi.mock('~/widget/assetDestination', () => ({AssetDestination: () => null}))
+vi.mock('~/widget/button', () => ({Button: () => null}))
+vi.mock('~/widget/buttons', () => ({Buttons: () => null}))
+vi.mock('~/widget/layout', () => ({Layout: ({children}) => children}))
+vi.mock('~/widget/numberButtons', () => ({NumberButtons: () => null}))
+vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({children}) => children}}))
+vi.mock('~/widget/workspaceDestination', () => ({
+    WorkspaceDestination: props => {
+        capture.folderFields.push(props)
+        return null
+    }
+}))
+vi.mock('~/widget/form', async importOriginal => {
+    const {Form} = await importOriginal()
+    return {
+        Form: {
+            ...Form,
+            Input: () => null,
+            Buttons: props => {
+                if (props.label === 'process.retrieve.form.destination.label') {
+                    capture.destinationButtons = props
+                }
+                return null
+            },
+            PanelButtons: ({children}) => children
+        }
+    }
+})
 
 vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: () => {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({getPreSetVisualizations: () => []})}))
@@ -119,6 +163,49 @@ describe('a saved selection once the slice has answered', () => {
     })
 })
 
+describe('the Data destination', () => {
+    it('is offered to a user with a Google account', () => {
+        show(describedRead(), {destination: null})
+
+        expect(offeredDestinations()).toEqual(['GEE', 'DRIVE', 'SEPAL', 'DATA'])
+    })
+
+    it('is offered to a user without a Google account', () => {
+        capture.googleAccount = false
+
+        show(describedRead(), {destination: 'SEPAL'})
+
+        expect(offeredDestinations()).toEqual(['SEPAL', 'DATA'])
+    })
+
+    it('asks for a Data folder, checked against Data and not browsable in the home', () => {
+        const {inputs} = show(describedRead(), {destination: 'DATA'})
+
+        expect(capture.folderFields.at(-1)).toEqual(expect.objectContaining({
+            workspacePathInput: inputs.dataPath,
+            destination: 'DATA',
+            browse: false,
+            listFiles$: capture.listDataFiles$,
+            label: 'process.retrieve.form.dataPath.label'
+        }))
+    })
+
+    it('submits the Data folder', () => {
+        show(describedRead(), {destination: 'DATA'})
+
+        capture.onApply({
+            ...selecting({baseBands: ['ndvi'], bandTypes: ['value'], segmentBands: []}),
+            destination: 'DATA',
+            dataPath: 'exports/slice',
+            fileDimensionsMultiple: 10,
+            shardSize: 256
+        })
+
+        expect(submitted.map(({operation, params}) => ({operation, dataPath: params.image.dataPath})))
+            .toEqual([{operation: 'image.DATA', dataPath: 'exports/slice'}])
+    })
+})
+
 describe('an open panel whose source became unreachable', () => {
     it('cannot be applied', () => {
         expect(panel(unavailableRead(), {baseBands: ['ndvi'], bandTypes: ['value']}).decision().status).toBe('BLOCKED')
@@ -130,6 +217,16 @@ describe('an open panel whose source became unreachable', () => {
         expect(submitted).toEqual([])
         expect(notified).toHaveLength(1)
     })
+})
+
+const roots = []
+
+afterEach(() => {
+    roots.splice(0).forEach(root => act(() => root.unmount()))
+    capture.destinationButtons = null
+    capture.folderFields = []
+    capture.googleAccount = true
+    capture.onApply = null
 })
 
 const SLICE = {
@@ -214,3 +311,36 @@ const panel = (read, {baseBands = [], bandTypes = [], segmentBands = []} = {}) =
 
 // What the panel set its selection fields to.
 const changes = instance => instance.changes
+
+const show = (read, {destination}) => {
+    submitted.length = 0
+    notified.length = 0
+    const input = value => ({value, set: () => {}})
+    const inputs = {
+        baseBands: input([]), bandTypes: input([]), segmentBands: input([]), scale: input(30),
+        destination: input(destination), workspacePath: input('downloads/slice'), dataPath: input('exports/slice'),
+        assetId: input('users/x/sliced'), assetType: input('Image'), sharing: input('PRIVATE'), strategy: input('REPLACE'),
+        shardSize: input(256), fileDimensionsMultiple: input(10), tileSize: input(2), crs: input('EPSG:4326'),
+        crsTransform: input('')
+    }
+    const root = createRoot(document.createElement('div'))
+    roots.push(root)
+    act(() => root.render(
+        <Retrieve
+            projectId={null}
+            retrieveOutput={read}
+            readRetrieveOutput={() => read}
+            inputs={inputs}
+            projects={[]}
+            form={{isInvalid: () => false}}
+            defaultCrs='EPSG:4326'
+            defaultScale={30}
+            defaultShardSize={256}
+            defaultFileDimensionsMultiple={10}
+            defaultTileSize={2}
+        />
+    ))
+    return {inputs}
+}
+
+const offeredDestinations = () => capture.destinationButtons.options.map(({value}) => value)

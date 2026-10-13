@@ -12,6 +12,7 @@ export class Retrieve extends React.Component {
                 defaultScale={3}
                 ticks={[3, 5, 10, 30, 100]}
                 toSepal
+                toData
                 toEE
                 toDrive
                 task={retrieveTask}

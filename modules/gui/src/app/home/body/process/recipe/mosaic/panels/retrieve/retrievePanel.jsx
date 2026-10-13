@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import api from '~/apiRegistry'
 import {
     isUnresolved,
     MISSING_SELECTION,
@@ -49,6 +50,9 @@ const fields = {
     workspacePath: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL')
         .notBlank(),
+    dataPath: new Form.Field()
+        .skip((v, {destination}) => destination !== 'DATA')
+        .notBlank('process.retrieve.form.dataPath.required'),
     assetId: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
@@ -65,7 +69,7 @@ const fields = {
         .int()
         .notBlank(),
     fileDimensionsMultiple: new Form.Field()
-        .skip((v, {destination}) => destination !== 'SEPAL')
+        .skip((v, {destination}) => !isFileDestination(destination))
         .int()
         .notBlank(),
     tileSize: new Form.Field()
@@ -73,11 +77,14 @@ const fields = {
         .number()
         .notBlank(),
     filenamePrefix: new Form.Field()
-        .skip((v, {destination}) => destination !== 'SEPAL'),
+        .skip((v, {destination}) => !isFileDestination(destination)),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
 }
+
+// Destinations whose folder or asset is checked before Apply.
+const VALIDATED_DESTINATIONS = ['GEE', 'SEPAL', 'DATA']
 
 const REQUEST_CHOICES = 'REQUEST_CHOICES'
 const LOADING_CHOICES = 'LOADING_CHOICES'
@@ -96,7 +103,7 @@ const physicalSelection = {
 
 const constraints = {
     fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
-        .skip(({destination}) => destination !== 'SEPAL')
+        .skip(({destination}) => !isFileDestination(destination))
         .predicate(({fileDimensionsMultiple, shardSize}) =>
             fileDimensionsMultiple * shardSize <= 131072, 'process.retrieve.form.fileDimensionsMultiple.tooLarge'
         )
@@ -175,13 +182,14 @@ class _MosaicRetrievePanel extends React.Component {
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
-                {destination.value === 'SEPAL' ? this.renderFilenamePrefix() : null}
+                {destination.value === 'DATA' ? this.renderDataDestination() : null}
+                {isFileDestination(destination.value) ? this.renderFilenamePrefix() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && (allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection')) ? this.renderTileSize() : null}
                 {more ? this.renderShardSize() : null}
-                {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
+                {more && isFileDestination(destination.value) ? this.renderFileDimensionsMultiple() : null}
                 <Layout type='horizontal'>
                     {more ? this.renderCrs() : null}
                     {more ? this.renderCrsTransform() : null}
@@ -272,7 +280,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderDestination() {
-        const {toSepal, toEE, toDrive, inputs: {destination}} = this.props
+        const {toSepal, toData, toEE, toDrive, inputs: {destination}} = this.props
         const destinations = this.destinations()
         const destinationOptions = [
             {
@@ -286,10 +294,15 @@ class _MosaicRetrievePanel extends React.Component {
             {
                 value: 'SEPAL',
                 label: msg('process.retrieve.form.destination.SEPAL')
+            },
+            {
+                value: 'DATA',
+                label: msg('process.retrieve.form.destination.DATA')
             }
         ]
-            .filter(({value}) => isGoogleAccount() || value === 'SEPAL')
+            .filter(({value}) => isGoogleAccount() || isFileDestination(value))
             .filter(({value}) => toSepal || value !== 'SEPAL')
+            .filter(({value}) => toData || value !== 'DATA')
             .filter(({value}) => toEE || value !== 'GEE')
             .filter(({value}) => toDrive || value !== 'DRIVE')
             .map(option => ({
@@ -317,6 +330,21 @@ class _MosaicRetrievePanel extends React.Component {
                 placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
                 tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
                 workspacePathInput={workspacePath}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
+            />
+        )
+    }
+
+    renderDataDestination() {
+        const {inputs: {dataPath}} = this.props
+        return (
+            <WorkspaceDestination
+                label={msg('process.retrieve.form.dataPath.label')}
+                placeholder={msg('process.retrieve.form.dataPath.placeholder')}
+                workspacePathInput={dataPath}
+                destination='DATA'
+                listFiles$={api.userData.listFiles$}
+                browse={false}
                 onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
@@ -553,7 +581,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     update() {
-        const {toEE, toSepal, inputs: {destination, assetType}} = this.props
+        const {toEE, toSepal, toData, inputs: {destination, assetType}} = this.props
         const destinations = this.destinations()
         if (!destination.value) {
             if (toEE && isGoogleAccount() && destinations?.GEE !== false) {
@@ -562,6 +590,9 @@ class _MosaicRetrievePanel extends React.Component {
             } else if (toSepal && destinations?.SEPAL !== false) {
                 this.setDestinationValidationPending(true)
                 destination.set('SEPAL')
+            } else if (toData && destinations?.DATA !== false) {
+                this.setDestinationValidationPending(true)
+                destination.set('DATA')
             }
         } else {
             if (destination.value === 'GEE' && !assetType.value) {
@@ -748,11 +779,11 @@ class _MosaicRetrievePanel extends React.Component {
 
     requiresDestinationValidation(props = this.props) {
         const {inputs: {destination}} = props
-        return ['GEE', 'SEPAL'].includes(destination.value)
+        return VALIDATED_DESTINATIONS.includes(destination.value)
     }
 
     onDestinationChange(destination) {
-        this.setDestinationValidationPending(['GEE', 'SEPAL'].includes(destination))
+        this.setDestinationValidationPending(VALIDATED_DESTINATIONS.includes(destination))
     }
 
     onDestinationValidityCheckChange(destinationValidationPending) {
@@ -807,6 +838,7 @@ MosaicRetrievePanel.propTypes = {
     submitTask: PropTypes.func,
     task: PropTypes.object,
     toDrive: PropTypes.any,
+    toData: PropTypes.any,
     toEE: PropTypes.any,
     toSepal: PropTypes.any,
     onRetrieve: PropTypes.func
@@ -824,3 +856,7 @@ const presentedChoices = (values, presentationGroups = []) => {
         .map(value => ({value, label: value}))
     return [...groups, unpresented].filter(group => group.length)
 }
+
+// Exported as files to a folder: the user's workspace or Data.
+const isFileDestination = destination =>
+    destination === 'SEPAL' || destination === 'DATA'

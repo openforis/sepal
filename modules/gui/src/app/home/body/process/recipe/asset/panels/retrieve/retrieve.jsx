@@ -5,6 +5,7 @@ export const Retrieve = () =>
     <MosaicRetrievePanel
         defaultScale={20}
         toSepal
+        toData
         toEE
         toDrive
         task={retrieveTask}

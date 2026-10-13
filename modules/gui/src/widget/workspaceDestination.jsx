@@ -31,6 +31,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _WorkspaceDestination extends React.Component {
+    static defaultProps = {
+        browse: true,
+        destination: 'SEPAL'
+    }
+
     loading = false
     validationSequence = 0
     workspacePath$ = new Subject()
@@ -48,16 +53,17 @@ class _WorkspaceDestination extends React.Component {
     }
 
     render() {
+        const {browse} = this.props
         return (
             <React.Fragment>
                 {this.renderWorkspaceInput()}
-                {this.renderWorkspaceBrowser()}
+                {browse ? this.renderWorkspaceBrowser() : null}
             </React.Fragment>
         )
     }
 
     renderWorkspaceInput() {
-        const {workspacePathInput, label, placeholder, autoFocus} = this.props
+        const {workspacePathInput, label, placeholder, autoFocus, browse} = this.props
         const {loading} = this.state
         return (
             <Form.Input
@@ -66,7 +72,7 @@ class _WorkspaceDestination extends React.Component {
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={loading && msg('widget.loading')}
-                buttons={[this.renderWorkspaceBrowserButton()]}
+                buttons={browse ? [this.renderWorkspaceBrowserButton()] : []}
             />
         )
     }
@@ -128,31 +134,20 @@ class _WorkspaceDestination extends React.Component {
             this.workspacePath$.pipe(
                 debounceTime(DEBOUNCE_TIME_MS),
                 switchMap(({path, validationSequence}) =>
-                    path
-                        ? forkJoin({
-                            files: api.userFiles.listFiles$(path, {includeHidden: true}).pipe(
-                                catchError(error => {
-                                    if (error.status === 404) {
-                                        return of(null)
-                                    }
-                                    throw error
-                                })
-                            ),
-                            conflictingTasks: of(this.findConflictingTasks(path))
-                        }).pipe(
-                            map(response => ({...response, validationSequence})),
-                            catchError(error => of({error, validationSequence}))
-                        )
-                        : of({skip: true, validationSequence})
+                    this.validate$(path).pipe(
+                        map(response => ({...response, validationSequence}))
+                    )
                 )
             ).subscribe(
                 response => {
-                    const {validationSequence, skip, error} = response
+                    const {validationSequence, skip, invalidPath, error} = response
                     if (!this.completeValidation(validationSequence)) {
                         return
                     }
                     if (skip) {
                         this.props.workspacePathInput.setInvalid(null)
+                    } else if (invalidPath) {
+                        this.props.workspacePathInput.setInvalid(invalidPath)
                     } else if (error) {
                         this.onError(error)
                     } else {
@@ -163,19 +158,58 @@ class _WorkspaceDestination extends React.Component {
         )
     }
 
-    defaultWorkspacePath() {
-        const {recipeName} = this.props
-        const project = this.findProject()
-        if (project?.defaultWorkspaceFolder) {
-            return `${project?.defaultWorkspaceFolder}/${recipeName}`
-        } else {
-            if (project) {
-                const projectDir = toSafeString(project?.name)
-                return `downloads/${projectDir}/${recipeName}`
-            } else {
-                return `downloads/${recipeName}`
-            }
+    validate$(path) {
+        if (!path) {
+            return of({skip: true})
         }
+        const invalidPath = this.invalidPath(path)
+        if (invalidPath) {
+            return of({invalidPath})
+        }
+        return forkJoin({
+            files: this.listFiles$(path).pipe(
+                catchError(error => {
+                    if (error.status === 404) {
+                        return of(null)
+                    }
+                    throw error
+                })
+            ),
+            conflictingTasks: of(this.findConflictingTasks(path))
+        }).pipe(
+            catchError(error => of({error}))
+        )
+    }
+
+    invalidPath(path) {
+        const {destination} = this.props
+        if (destination === 'SEPAL' && isInHomeDataFolder(path)) {
+            return msg('widget.workspaceDestination.dataReserved')
+        }
+        if (destination === 'DATA' && !isSafeDataFolder(path)) {
+            return msg('widget.workspaceDestination.invalidDataFolder')
+        }
+        return null
+    }
+
+    listFiles$(path) {
+        const {listFiles$} = this.props
+        return listFiles$
+            ? listFiles$(path)
+            : api.userFiles.listFiles$(path, {includeHidden: true})
+    }
+
+    // Data is not the home: what is remembered as the project's workspace folder does not apply there.
+    defaultWorkspacePath() {
+        const {recipeName, destination} = this.props
+        const project = this.findProject()
+        if (destination === 'SEPAL' && project?.defaultWorkspaceFolder) {
+            return `${project.defaultWorkspaceFolder}/${recipeName}`
+        }
+        const root = destination === 'DATA' ? 'exports' : 'downloads'
+        return project
+            ? `${root}/${toSafeString(project.name)}/${recipeName}`
+            : `${root}/${recipeName}`
     }
 
     findProject() {
@@ -184,10 +218,10 @@ class _WorkspaceDestination extends React.Component {
     }
 
     findConflictingTasks(path) {
-        const {tasks} = this.props
+        const {tasks, destination} = this.props
         return (tasks || []).filter(({status, taskInfo}) =>
             ['PENDING', 'ACTIVE'].includes(status)
-                && taskInfo?.destination === 'SEPAL'
+                && taskInfo?.destination === destination
                 && taskInfo?.outputPath === path
         )
     }
@@ -256,8 +290,29 @@ export const WorkspaceDestination = compose(
 
 WorkspaceDestination.propTypes = {
     workspacePathInput: PropTypes.object.isRequired,
+    browse: PropTypes.bool,
+    destination: PropTypes.oneOf(['SEPAL', 'DATA']),
     label: PropTypes.any,
+    listFiles$: PropTypes.func,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any,
     onValidityCheckChange: PropTypes.func
 }
+
+// The home's data folder is Data, which only the Data destination exports to.
+const isInHomeDataFolder = path =>
+    normalizedSegments(path)[0] === 'data'
+
+const normalizedSegments = path =>
+    path.split('/').reduce((segments, segment) => {
+        if (segment === '..') {
+            return segments.slice(0, -1)
+        }
+        return segment && segment !== '.' ? [...segments, segment] : segments
+    }, [])
+
+// As Data's storage takes a folder: relative, slash-separated, every segment named.
+const isSafeDataFolder = path =>
+    !path.includes('\\')
+        && !path.includes('\0')
+        && path.split('/').every(segment => segment && segment !== '.' && segment !== '..')

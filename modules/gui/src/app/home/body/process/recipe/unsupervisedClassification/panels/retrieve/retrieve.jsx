@@ -5,6 +5,7 @@ export const Retrieve = () =>
     <MosaicRetrievePanel
         defaultScale={30}
         toSepal
+        toData
         toEE
         toDrive
         allBands

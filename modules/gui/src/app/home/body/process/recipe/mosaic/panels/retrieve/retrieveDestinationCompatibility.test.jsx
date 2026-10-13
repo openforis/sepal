@@ -10,7 +10,10 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const capture = vi.hoisted(() => ({
     destinationButtons: null,
+    folderFields: [],
     googleAccount: true,
+    inputLabels: [],
+    listDataFiles$: () => null,
     onApply: null,
     panelButtons: null,
     read: null,
@@ -23,6 +26,7 @@ vi.mock('~/app/home/body/process/recipe/withRetrieveOutput', () => ({
         : <Component {...props}/>
 }))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+vi.mock('~/apiRegistry', () => ({default: {userData: {listFiles$: capture.listDataFiles$}}}))
 
 vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     RecipeFormPanel: ({children, onApply}) => {
@@ -42,12 +46,21 @@ vi.mock('~/widget/button', () => ({Button: () => null}))
 vi.mock('~/widget/layout', () => ({Layout: ({children}) => children}))
 vi.mock('~/widget/numberButtons', () => ({NumberButtons: () => null}))
 vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({children}) => children}}))
-vi.mock('~/widget/workspaceDestination', () => ({WorkspaceDestination: () => null}))
+vi.mock('~/widget/workspaceDestination', () => ({
+    WorkspaceDestination: props => {
+        capture.folderFields.push(props)
+        return null
+    }
+}))
 vi.mock('~/widget/form', async importOriginal => {
     const {Form} = await importOriginal()
     return {
         Form: {
             ...Form,
+            Input: props => {
+                capture.inputLabels.push(props.label)
+                return null
+            },
             Buttons: props => {
                 if (props.label === 'process.retrieve.form.destination.label') {
                     capture.destinationButtons = props
@@ -136,6 +149,7 @@ const inputs = ({bands = [], destination = 'DRIVE', useAllBands = false} = {}) =
     scale: input('scale', 30),
     destination: input('destination', destination),
     workspacePath: input('workspacePath', 'exports'),
+    dataPath: input('dataPath', 'exports/recipe'),
     assetId: input('assetId', 'users/me/output'),
     assetType: input('assetType', 'Image'),
     sharing: input('sharing', 'PRIVATE'),
@@ -219,7 +233,9 @@ beforeEach(() => {
     capture.read = resolving()
     capture.rerender = null
     capture.destinationButtons = null
+    capture.folderFields = []
     capture.googleAccount = true
+    capture.inputLabels = []
     capture.onApply = null
     capture.panelButtons = null
 })
@@ -496,5 +512,102 @@ describe('resolution and submission lifecycle', () => {
         capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
         expect(onRetrieve).toHaveBeenCalledTimes(1)
         expect(submitTask).not.toHaveBeenCalled()
+    })
+})
+
+describe('the Data destination', () => {
+    it('is offered, and permitted for scalar bands, when the panel exports to Data', () => {
+        mount(baseProps({toData: true, formInputs: inputs({bands: ['scalar'], destination: null})}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(capture.destinationButtons.options.map(({value}) => value)).toEqual(['GEE', 'DRIVE', 'SEPAL', 'DATA'])
+        expectEnabled('DATA')
+    })
+
+    it('is not offered when the panel does not export to Data', () => {
+        mount(baseProps({formInputs: inputs({bands: ['scalar']})}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(option('DATA')).toBeUndefined()
+    })
+
+    it('is offered to a user without a Google account', () => {
+        capture.googleAccount = false
+        mount(baseProps({toData: true, formInputs: inputs({bands: ['scalar'], destination: 'SEPAL'})}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(capture.destinationButtons.options.map(({value}) => value)).toEqual(['SEPAL', 'DATA'])
+    })
+
+    it('is disabled, like SEPAL, for array-only bands', () => {
+        mount(baseProps({toData: true, formInputs: inputs({bands: []})}))
+
+        answer(ready([band('first', 1, 'sample'), band('second', 2, 'sample')]))
+        passMinimum()
+
+        expectEnabled('GEE')
+        expectDisabled('SEPAL', 'DATA')
+    })
+
+    it('asks for a Data folder, checked against Data and not browsable in the home, and a filename prefix', () => {
+        const formInputs = inputs({bands: ['scalar'], destination: 'DATA'})
+        mount(baseProps({toData: true, formInputs}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(capture.folderFields.at(-1)).toEqual(expect.objectContaining({
+            workspacePathInput: formInputs.dataPath,
+            destination: 'DATA',
+            browse: false,
+            listFiles$: capture.listDataFiles$,
+            label: 'process.retrieve.form.dataPath.label'
+        }))
+        expect(capture.folderFields.some(({workspacePathInput}) => workspacePathInput === formInputs.workspacePath)).toBe(false)
+        expect(capture.inputLabels).toContain('process.retrieve.form.filenamePrefix.label')
+    })
+
+    it('is chosen for a user without a Google account when the panel exports to Data but not to SEPAL', () => {
+        capture.googleAccount = false
+        const formInputs = inputs({bands: ['scalar'], destination: null})
+        mount(baseProps({toData: true, toSepal: false, formInputs}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(formInputs.destination.set).toHaveBeenCalledWith('DATA')
+    })
+
+    it('leaves SEPAL asking for a workspace folder in the home', () => {
+        const formInputs = inputs({bands: ['scalar'], destination: 'SEPAL'})
+        mount(baseProps({toData: true, formInputs}))
+
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        expect(capture.folderFields.at(-1).workspacePathInput).toBe(formInputs.workspacePath)
+        expect(capture.folderFields.at(-1).destination).not.toBe('DATA')
+    })
+
+    it('submits the Data folder with the destination', () => {
+        const submitTask = vi.fn()
+        mount(baseProps({toData: true, formInputs: inputs({bands: ['scalar'], destination: 'DATA'}), submitTask}))
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        capture.onApply({
+            bands: ['scalar'], destination: 'DATA', dataPath: 'exports/recipe', fileDimensionsMultiple: 10, shardSize: 256
+        })
+
+        expect(submitTask).toHaveBeenCalledTimes(1)
+        expect(submitTask.mock.calls[0][0].retrieveOptions).toEqual(expect.objectContaining({
+            destination: 'DATA', dataPath: 'exports/recipe', fileDimensions: 2560
+        }))
     })
 })

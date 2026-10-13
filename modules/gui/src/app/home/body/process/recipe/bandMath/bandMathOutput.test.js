@@ -70,7 +70,7 @@ describe('retrieving a Band Math recipe', () => {
         const output = readOf(BAND_MATH, OBSERVED)
 
         expect(retrieveDecision({output, pending: false, names: ['coefs']}).destinations)
-            .toEqual({GEE: true, DRIVE: false, SEPAL: false})
+            .toEqual({GEE: true, DRIVE: false, SEPAL: false, DATA: false})
     })
 })
 

@@ -15,6 +15,7 @@ class _Retrieve extends React.Component {
                 bandOptions={this.bandOptions()}
                 defaultScale={10}
                 toSepal
+                toData
                 toEE
                 toDrive
                 task={retrieveTask}

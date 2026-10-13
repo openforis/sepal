@@ -19,6 +19,7 @@ class _Retrieve extends React.Component {
                 bandOptions={groupedBandPresentation()}
                 defaultScale={minScale(recipe)}
                 toSepal
+                toData
                 toEE
                 toDrive
                 task={retrieveTask}

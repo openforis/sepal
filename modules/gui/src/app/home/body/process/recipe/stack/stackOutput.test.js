@@ -53,7 +53,7 @@ describe('retrieving a Stack over assets', () => {
 
     it('offers an array band to Earth Engine alone', () => {
         expect(retrieveDecision({output: readOf(OVER_ASSETS), pending: false, names: ['coefs']}).destinations)
-            .toEqual({GEE: true, DRIVE: false, SEPAL: false})
+            .toEqual({GEE: true, DRIVE: false, SEPAL: false, DATA: false})
     })
 })
 
