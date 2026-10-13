@@ -2,7 +2,7 @@
     "Version": "2012-10-17",
     "Statement": [{
         "Effect": "Allow",
-        "Principal": {"AWS": "arn:aws:iam::{{ caller.account }}:user/{{ identity }}"},
+        "Principal": {"AWS": "{{ caller.arn }}"},
         "Action": ["sts:AssumeRole", "sts:TagSession"],
         "Condition": {"StringLike": {"aws:RequestTag/username": "?*"}}
     }]

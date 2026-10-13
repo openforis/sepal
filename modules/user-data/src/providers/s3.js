@@ -1,5 +1,5 @@
 import {DeleteObjectsCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
-import {AssumeRoleCommand, STSClient} from '@aws-sdk/client-sts'
+import {AssumeRoleCommand, GetCallerIdentityCommand, STSClient} from '@aws-sdk/client-sts'
 
 import {ClientException, ServerException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -12,12 +12,26 @@ const MODES = ['read', 'readWrite']
 const EMULATOR_SESSION_TOKEN = 'sepal-dev-emulator'
 const USERNAME = /^[a-zA-Z_][a-zA-Z0-9]*$/
 
-export const createS3Provider = ({region, bucket, roleArn, accessKeyId, secretAccessKey, endpoint, emulator}) => {
+export const dataBucketName = deployEnvironment => `sepal-${deployEnvironment.toLowerCase()}-user-data`
+
+export const createS3Provider = async (
+    {region, bucket, accessKeyId, secretAccessKey, deployEnvironment, endpoint, emulator},
+    {sts = new STSClient({region, credentials: {accessKeyId, secretAccessKey}})} = {}
+) => {
     const credentials = {accessKeyId, secretAccessKey}
     const s3 = new S3Client({region, credentials, ...(emulator ? {endpoint, forcePathStyle: true} : {})})
     return emulator
         ? new S3Provider({region, bucket, s3, emulator: {endpoint, accessKeyId, secretAccessKey}})
-        : new S3Provider({region, bucket, s3, roleArn, sts: new STSClient({region, credentials})})
+        : new S3Provider({region, bucket, s3, sts, roleArn: await resolveRoleArn(sts, deployEnvironment)})
+}
+
+const resolveRoleArn = async (sts, deployEnvironment) => {
+    try {
+        const {Account} = await sts.send(new GetCallerIdentityCommand({}))
+        return `arn:aws:iam::${Account}:role/${dataBucketName(deployEnvironment)}`
+    } catch (error) {
+        throw new ServerException(`Cannot resolve the AWS account of the configured keys: ${error.message}`)
+    }
 }
 
 // Data on S3: every user's attachment is a prefix of one shared bucket. Credentials come from a role whose

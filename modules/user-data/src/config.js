@@ -2,6 +2,8 @@ import {Command, Option} from 'commander'
 
 import {getLogger} from '#sepal/log'
 
+import {dataBucketName} from './providers/s3.js'
+
 const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
@@ -24,10 +26,9 @@ program
     .addOption(mandatory('--rabbitmq-host <host>', 'RABBITMQ_HOST'))
     .addOption(new Option('--rabbitmq-port <port>').env('RABBITMQ_PORT').argParser(v => parseInt(v)).default(5672))
     .addOption(mandatory('--region <region>', 'AWS_REGION'))
-    .addOption(mandatory('--bucket <name>', 'USER_DATA_BUCKET'))
-    .addOption(mandatory('--access-key-id <id>', 'USER_DATA_AWS_ACCESS_KEY_ID'))
-    .addOption(mandatory('--secret-access-key <key>', 'USER_DATA_AWS_SECRET_ACCESS_KEY'))
-    .addOption(new Option('--role-arn <arn>', 'Role user credentials are issued for').env('USER_DATA_ROLE_ARN'))
+    .addOption(mandatory('--access-key-id <id>', 'AWS_ACCESS_KEY_ID'))
+    .addOption(mandatory('--secret-access-key <key>', 'AWS_SECRET_ACCESS_KEY'))
+    .addOption(mandatory('--deploy-environment <name>', 'DEPLOY_ENVIRONMENT'))
     .addOption(new Option('--s3-endpoint <url>', 'S3 endpoint of the dev-env emulator').env('USER_DATA_S3_ENDPOINT'))
     .addOption(new Option('--s3-emulator <boolean>', 'Use the dev-env emulator instead of AWS')
         .env('USER_DATA_S3_EMULATOR').argParser(value => value === 'true').default(false))
@@ -35,11 +36,8 @@ program
 
 const options = program.opts()
 
-// Without a role there is nothing to scope credentials with; emulator mode is the only setup that may lack one.
-if (options.s3Emulator ? !options.s3Endpoint?.trim() : !options.roleArn?.trim()) {
-    program.error(options.s3Emulator
-        ? 'USER_DATA_S3_ENDPOINT is required in emulator mode'
-        : 'USER_DATA_ROLE_ARN is required unless USER_DATA_S3_EMULATOR=true')
+if (options.s3Emulator && !options.s3Endpoint?.trim()) {
+    program.error('USER_DATA_S3_ENDPOINT is required in emulator mode')
 }
 
 export const {port, sepalHost} = options
@@ -48,8 +46,8 @@ export const amqpUri = `amqp://${options.rabbitmqHost}:${options.rabbitmqPort}`
 
 export const s3 = {
     region: options.region,
-    bucket: options.bucket,
-    roleArn: options.roleArn,
+    deployEnvironment: options.deployEnvironment,
+    bucket: dataBucketName(options.deployEnvironment),
     accessKeyId: options.accessKeyId,
     secretAccessKey: options.secretAccessKey,
     endpoint: options.s3Endpoint,

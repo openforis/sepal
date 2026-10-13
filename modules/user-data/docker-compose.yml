@@ -19,10 +19,8 @@ services:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       AWS_REGION: "${AWS_REGION}"
-      USER_DATA_BUCKET: "${USER_DATA_BUCKET}"
-      USER_DATA_ROLE_ARN: "${USER_DATA_ROLE_ARN}"
-      USER_DATA_AWS_ACCESS_KEY_ID: "${USER_DATA_AWS_ACCESS_KEY_ID}"
-      USER_DATA_AWS_SECRET_ACCESS_KEY: "${USER_DATA_AWS_SECRET_ACCESS_KEY}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       start_period: 60s

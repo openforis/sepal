@@ -8,11 +8,10 @@ services:
         condition: service_healthy
     environment:
       AWS_REGION: "us-east-1"
-      USER_DATA_BUCKET: "sepal-dev-user-data"
+      AWS_ACCESS_KEY_ID: "sepal-dev"
+      AWS_SECRET_ACCESS_KEY: "sepal-dev-secret"
       USER_DATA_S3_EMULATOR: "true"
       USER_DATA_S3_ENDPOINT: "http://s3-emulator:8080"
-      USER_DATA_AWS_ACCESS_KEY_ID: "sepal-dev"
-      USER_DATA_AWS_SECRET_ACCESS_KEY: "sepal-dev-secret"
     volumes:  # To allow dynamic reloading in dev
       # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src

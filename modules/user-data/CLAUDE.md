@@ -1,7 +1,7 @@
 # CLAUDE.md - modules/user-data
 
 Each user's cloud storage attachments ("Data" in the GUI, `~/data` in sandboxes) and the access to them. Issues
-prefix-scoped credentials; holds the only AWS identity that can act on the whole bucket. Measures each user's Data and publishes it for
+prefix-scoped credentials; holds the AWS keys that can act on the whole bucket. Measures each user's Data and publishes it for
 budget; serves read-only credentials to users over their Data quota.
 
 ## Commands
@@ -56,7 +56,7 @@ erase stays pending (the message queue retries only once) and `Lifecycle` retrie
 
 ## Credentials
 
-`AssumeRole` on `USER_DATA_ROLE_ARN` with session tag `username`; the role policy limits every action to
+`AssumeRole` on the derived role with session tag `username`; the role policy limits every action to
 `users/${aws:PrincipalTag/username}/`. Mode `read` adds a session policy without put or delete. Credentials are
 cached per user and mode and renewed within 15 minutes of expiry.
 
@@ -68,13 +68,13 @@ that fixed key: there is no prefix isolation and no read-only mode in dev-env.
 
 ## AWS resources
 
-`hosting-services/aws/sepal/provision-user-data.yml` creates, per environment, the bucket
-`sepal-<env>-user-data`, the IAM user `sepal-<env>-user-data` this module runs as, and the role of the same name
-that user credentials are issued for.
+The module runs with the environment's regular AWS keys (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) and derives
+the bucket and role name `sepal-<env>-user-data` from `DEPLOY_ENVIRONMENT`, and the role ARN from the account of
+the keys (`GetCallerIdentity` at startup; a failure there stops the boot).
 
-Each environment needs these resources and four env-file settings before its first rollout of `user-data`;
-without them the container exits at boot. The steps are in [docs/user-data-rollout.md](../../docs/user-data-rollout.md).
-`user-data` is the last module in `deploy.yml`, so such a failure leaves every other module updated.
+`hosting-services/aws/sepal/provision-user-data.yml`, run by every rollout, creates the bucket and the role, which
+trusts the IAM user that ran provisioning. The steps are in [docs/user-data-rollout.md](../../docs/user-data-rollout.md).
 
 `*.aws.integration.test.js` checks prefix isolation and read-only mode on that real bucket. It runs only with
-`USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment (see the rollout doc).
+`USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment:
+`docker exec -e USER_DATA_AWS_ISOLATION_TEST=true user-data npm run test:aws`.

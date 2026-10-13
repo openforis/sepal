@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto'
 import {DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client} from '@aws-sdk/client-s3'
 
 import {Attachments} from '../attachments.js'
-import {createS3Provider} from './s3.js'
+import {createS3Provider, dataBucketName} from './s3.js'
 
 // Runs on a real bucket only (the test deployment): no emulator evaluates IAM policies.
 const ENABLED = process.env.USER_DATA_AWS_ISOLATION_TEST === 'true'
@@ -12,12 +12,13 @@ const describeOnAws = ENABLED ? describe : describe.skip
 
 describeOnAws('prefix isolation on AWS', () => {
     const config = awsConfig()
-    const provider = createS3Provider(config)
+    let provider
     const attachments = new Attachments({bucket: config.bucket})
     const run = randomUUID()
     const own = (user, name = 'object.txt') => `${attachments.get(user, 'data').location.prefix}${run}/${name}`
 
     beforeAll(async () => {
+        provider = await createS3Provider(config)
         for (const user of ['isolationA', 'isolationA2', 'isolationB']) {
             const client = await clientFor(user, 'readWrite')
             await client.send(new PutObjectCommand({Bucket: config.bucket, Key: own(user), Body: user}))
@@ -112,10 +113,10 @@ describeOnAws('prefix isolation on AWS', () => {
 function awsConfig() {
     return {
         region: process.env.AWS_REGION,
-        bucket: process.env.USER_DATA_BUCKET,
-        roleArn: process.env.USER_DATA_ROLE_ARN,
-        accessKeyId: process.env.USER_DATA_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.USER_DATA_AWS_SECRET_ACCESS_KEY,
+        bucket: dataBucketName(process.env.DEPLOY_ENVIRONMENT),
+        deployEnvironment: process.env.DEPLOY_ENVIRONMENT,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         emulator: false
     }
 }

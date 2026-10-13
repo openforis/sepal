@@ -1,5 +1,5 @@
-# The shared Data bucket, the IAM user user-data runs as, and the role user credentials are issued for.
-# Access keys for the IAM user are created by hand once (see modules/user-data/CLAUDE.md).
+# The shared Data bucket and the role user credentials are issued for. user-data runs with the environment's
+# regular AWS keys; the role trusts the IAM user these keys belong to.
 - name: Provision user data storage
   hosts: localhost
   connection: local
@@ -12,18 +12,18 @@
     bucket: "{{ identity }}"
 
   tasks:
-    - name: Refuse an empty environment or a bucket other than the derived one
-      ansible.builtin.assert:
-        that:
-          - environment_name | length > 0
-          - lookup('env', 'USER_DATA_BUCKET') in ['', bucket]
-        fail_msg: >-
-          DEPLOY_ENVIRONMENT must be set, and USER_DATA_BUCKET in the env file must be empty or equal
-          sepal-<env>-user-data ({{ bucket }}).
-
     - name: Look up the account
       amazon.aws.aws_caller_info:
       register: caller
+
+    - name: Refuse an empty environment or credentials that cannot assume roles
+      ansible.builtin.assert:
+        that:
+          - environment_name | length > 0
+          - "':user/' in caller.arn"
+        fail_msg: >-
+          DEPLOY_ENVIRONMENT must be set, and provisioning must run with an IAM user's keys; root credentials
+          cannot assume roles.
 
     - name: Create the user data bucket
       amazon.aws.s3_bucket:
@@ -49,19 +49,6 @@
         status: enabled
         state: present
 
-    - name: Create the IAM user user-data runs as
-      amazon.aws.iam_user:
-        name: "{{ identity }}"
-        state: present
-
-    - name: Let user-data issue user credentials and manage user objects
-      amazon.aws.iam_policy:
-        iam_type: user
-        iam_name: "{{ identity }}"
-        policy_name: user-data
-        policy_json: "{{ lookup('template', 'user-data/identity-policy.json.j2') }}"
-        state: present
-
     - name: Create the role user credentials are issued for
       amazon.aws.iam_role:
         name: "{{ identity }}"
@@ -77,8 +64,8 @@
         policy_json: "{{ lookup('template', 'user-data/role-policy.json.j2') }}"
         state: present
 
-    - name: Show the values for the env file
+    - name: Show the bucket and role
       ansible.builtin.debug:
         msg:
-          - "USER_DATA_BUCKET={{ bucket }}"
-          - "USER_DATA_ROLE_ARN=arn:aws:iam::{{ caller.account }}:role/{{ identity }}"
+          - "Bucket: {{ bucket }}"
+          - "Role: arn:aws:iam::{{ caller.account }}:role/{{ identity }}"

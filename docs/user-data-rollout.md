@@ -1,92 +1,50 @@
-# Rolling out user-data to an environment
+# Rolling out user-data
 
-The `user-data` module needs AWS resources and four settings in the environment's env file before it can start.
-Do these steps once per environment (test, production, …), before the first build that contains `user-data` is
-deployed there. Later rollouts need none of this.
-
-Without these settings the `user-data` container exits at boot and the deploy stops there. `user-data` is the last
-module in `hosting-services/aws/sepal/deploy.yml`, so every other module is updated by then.
-
-**Don't use `-o rollout` for the first rollout.** It provisions and deploys in one go, which leaves no gap to add
-the settings in step 3. Provision and deploy separately, as below.
-
-## 1. Provision the AWS resources
+`user-data` needs no preparation per environment: a normal rollout provisions what it needs and then deploys it.
 
 ```bash
-bin/deploy -o provision -b <build> -c <config dir>
+bin/deploy -o rollout -b <build> -c <config dir>
 ```
 
-Run this with your usual deploy credentials (the `AWS_*` keys in the env file); they must be allowed to create IAM
-users, roles and policies and S3 buckets. Provisioning runs `provision-user-data.yml`, which creates:
+## What provisioning creates
+
+Every rollout's provisioning step runs `hosting-services/aws/sepal/provision-user-data.yml`. Every step is safe to
+repeat, so the first rollout creates these resources and later rollouts keep them in line with the playbook:
 
 | Resource | Name |
 |---|---|
 | S3 bucket (private, encrypted, HTTPS only) | `sepal-<env>-user-data` |
-| IAM user the `user-data` module runs as | `sepal-<env>-user-data` |
 | IAM role that gives one user access to their own folder | `sepal-<env>-user-data` |
 
-The role is how a user's tools get into the bucket without seeing anyone else's files. When a user's sandbox tools
-(the `~/data` mount, rclone, GDAL, the AWS CLI) or one of their export tasks need S3 access, they ask `user-data`
-for credentials. `user-data` assumes the role on that user's behalf and tags the session with their username.
-AWS returns temporary keys, valid for an hour, that can read, write, delete and list only
-`users/<username>/` in the bucket. The module's own IAM user can reach every user's folder, so its keys never
-leave the `user-data` container.
+`<env>` is `DEPLOY_ENVIRONMENT` from the env file, in lower case.
 
-`<env>` is `DEPLOY_ENVIRONMENT` from the env file, in lower case. The playbook ends by printing the two values
-step 3 needs:
+When a user's tools (the `~/data` mount, export tasks) need S3 access, they ask `user-data` for credentials.
+`user-data` assumes the role on that user's behalf, tagging the session with their username. AWS returns temporary
+keys, valid for an hour, that can only read, write, delete and list `users/<username>/` in the bucket.
 
-```
-USER_DATA_BUCKET=sepal-<env>-user-data
-USER_DATA_ROLE_ARN=arn:aws:iam::<account>:role/sepal-<env>-user-data
-```
+## Credentials
 
-**On the very first run** the role can fail with `Invalid principal`. IAM hasn't yet propagated the IAM user it
-created a moment earlier. Run the same command again; every step is safe to repeat.
+`user-data` uses the environment's regular `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` from the
+env file. It derives the bucket name from `DEPLOY_ENVIRONMENT` and the role from the account those keys belong to.
+No other settings are needed.
 
-The playbook stops before touching AWS if `DEPLOY_ENVIRONMENT` is empty, or if the env file already sets
-`USER_DATA_BUCKET` to anything other than `sepal-<env>-user-data`. It never touches other buckets, such as the
-existing `sepal-user-data`.
+- The keys must belong to an IAM user, not the AWS root user: root credentials cannot assume roles.
+- The role trusts the IAM user that ran provisioning. Rotating that user's access keys changes nothing. To switch to
+  a different IAM user, put its keys in the env file and run a rollout (not a bare deploy): provisioning updates
+  the role's trust before `user-data` starts with the new keys.
 
-## 2. Create access keys for the module's IAM user
+## Deploy without provisioning
 
-```bash
-aws iam create-access-key --user-name sepal-<env>-user-data
-```
+`-o deploy` alone works for any environment that has been rolled out at least once with this build or later. On an
+environment that never had a rollout including `user-data`, the bucket and role don't exist yet. In that case
+`user-data` fails to start, and the modules deployed after it (`gui`, `ssh-gateway`, `terminal`, `gateway`,
+`caddy`) keep their previous version. Run a rollout instead.
 
-Use the same AWS account as step 1. Keep `AccessKeyId` and `SecretAccessKey` from the output; the secret is shown
-only once. Don't store them anywhere except the env file.
+## Check user isolation (test environment)
 
-## 3. Add the settings to the env file
-
-Append to `<config dir>/env`:
-
-```bash
-USER_DATA_BUCKET='sepal-<env>-user-data'
-USER_DATA_ROLE_ARN='arn:aws:iam::<account>:role/sepal-<env>-user-data'
-USER_DATA_AWS_ACCESS_KEY_ID='<AccessKeyId from step 2>'
-USER_DATA_AWS_SECRET_ACCESS_KEY='<SecretAccessKey from step 2>'
-```
-
-None of these may be empty: the module refuses to start, and says which setting is missing.
-
-## 4. Deploy
-
-```bash
-bin/deploy -o deploy -b <build> -c <config dir>
-```
-
-Check that the module is up on the main host:
-
-```bash
-docker ps --filter name=user-data --format '{{.Names}} {{.Status}}'   # user-data Up … (healthy)
-docker logs user-data 2>&1 | grep 'Configuration loaded'             # no "(S3 emulator)" suffix
-```
-
-## 5. Check user isolation (test environment)
-
-Run this once in the test environment, before the first production rollout, and again whenever the IAM policies
-in `hosting-services/aws/sepal/user-data/` change. It is the only check that, on real AWS, one user's credentials
-can't read, write, delete or list another user's files:
+Run this once in the test environment, before the first production rollout, and again whenever the IAM policies in
+`hosting-services/aws/sepal/user-data/` change. It is the only check that, on real AWS, one user's credentials can't
+read, write, delete or list another user's files. Run it on the main host:
 
 ```bash
 docker exec -e USER_DATA_AWS_ISOLATION_TEST=true user-data npm run test:aws
@@ -94,8 +52,3 @@ docker exec -e USER_DATA_AWS_ISOLATION_TEST=true user-data npm run test:aws
 
 Every test must pass. The suite works under `users/isolationA/`, `users/isolationA2/` and `users/isolationB/`, and
 deletes what it creates.
-
-## Rotating the access keys
-
-Create a new key (step 2), replace the two key settings in the env file (step 3), deploy (step 4), then delete the
-old key with `aws iam delete-access-key --user-name sepal-<env>-user-data --access-key-id <old id>`.

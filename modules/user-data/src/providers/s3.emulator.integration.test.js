@@ -4,7 +4,7 @@ import {GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client} from
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner'
 
 import {Attachments} from '../attachments.js'
-import {createS3Provider} from './s3.js'
+import {createS3Provider, dataBucketName} from './s3.js'
 
 const EMULATOR = process.env.USER_DATA_S3_EMULATOR === 'true'
 
@@ -12,8 +12,12 @@ const describeWithEmulator = EMULATOR ? describe : describe.skip
 
 describeWithEmulator('S3 adapter against the dev-env emulator', () => {
     const config = emulatorConfig()
-    const provider = createS3Provider(config)
+    let provider
     const attachment = new Attachments({bucket: config.bucket}).get('emulatortest', 'data')
+
+    beforeAll(async () => {
+        provider = await createS3Provider(config)
+    })
 
     it('grants task access that writes, lists and reads the user prefix', async () => {
         const client = await taskClient(provider, attachment)
@@ -84,9 +88,9 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
 function emulatorConfig() {
     return {
         region: process.env.AWS_REGION,
-        bucket: process.env.USER_DATA_BUCKET,
-        accessKeyId: process.env.USER_DATA_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.USER_DATA_AWS_SECRET_ACCESS_KEY,
+        bucket: dataBucketName(process.env.DEPLOY_ENVIRONMENT),
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         endpoint: process.env.USER_DATA_S3_ENDPOINT,
         emulator: true
     }

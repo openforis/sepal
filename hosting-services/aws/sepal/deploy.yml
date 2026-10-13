@@ -26,13 +26,13 @@
       - {module: scene-metadata}
       - {module: user-assets}
       - {module: user-files}
+      - {module: user-data}
       - {module: gui}
       - {module: ceo-gateway}
       - {module: ssh-gateway}
       - {module: terminal}
       - {module: gateway}
       - {module: caddy}
-      - {module: user-data}
 
     # Images modules start containers from themselves, outside compose. bin/deploy verifies them as "image: <name>".
     images:

@@ -23,7 +23,7 @@ const log = getLogger('main')
 const main = async () => {
     const db = await initializeDb()
     const attachments = new Attachments({bucket: s3.bucket})
-    const providers = new Providers({s3: createS3Provider(s3)})
+    const providers = new Providers({s3: await createS3Provider(s3)})
     const repository = new UsageRepository(db, () => new Date())
     const usage = new Usage({
         repository,

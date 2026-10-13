@@ -1,7 +1,39 @@
 import {ClientException, ServerException} from '#sepal/exception'
 
 import {Attachments} from '../attachments.js'
-import {S3Provider} from './s3.js'
+import {createS3Provider, dataBucketName, S3Provider} from './s3.js'
+
+describe('dataBucketName', () => {
+    it.each([
+        ['PROD', 'sepal-prod-user-data'],
+        ['Test', 'sepal-test-user-data']
+    ])('derives the bucket and role name of environment %s', (environment, name) => {
+        expect(dataBucketName(environment)).toBe(name)
+    })
+})
+
+describe('createS3Provider in AWS mode', () => {
+    it('issues credentials for the role named after the environment in the keys\' account', async () => {
+        const sts = fakeSts({account: '123456789012'})
+        const provider = await createS3Provider(
+            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', bucket: 'sepal-test-user-data', emulator: false},
+            {sts}
+        )
+
+        await provider.credentials(attachment('alice'), {mode: 'readWrite'})
+
+        expect(sts.assumed).toEqual([expect.objectContaining({RoleArn: ROLE_ARN})])
+    })
+
+    it('fails startup with a clear message when the caller identity cannot be resolved', async () => {
+        const sts = fakeSts({identityFails: true})
+
+        await expect(createS3Provider(
+            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', emulator: false},
+            {sts}
+        )).rejects.toThrow(/Cannot resolve the AWS account/)
+    })
+})
 
 describe('credentials', () => {
     it('are issued through a role session tagged with the attachment owner', async () => {
@@ -246,14 +278,22 @@ const fakeClock = () => {
     }
 }
 
-const fakeSts = ({clock = fakeClock(), failures = 0} = {}) => {
+const fakeSts = ({clock = fakeClock(), failures = 0, account = '123456789012', identityFails = false} = {}) => {
     const requests = []
+    const assumed = requests
     const issued = []
     let remainingFailures = failures
     return {
         requests,
+        assumed,
         issued,
         send: async command => {
+            if (command.constructor.name === 'GetCallerIdentityCommand') {
+                if (identityFails) {
+                    throw new Error('denied')
+                }
+                return {Account: account, Arn: `arn:aws:iam::${account}:user/deployer`}
+            }
             requests.push(command.input)
             if (remainingFailures > 0) {
                 remainingFailures--
