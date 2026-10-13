@@ -5,7 +5,7 @@ File management service for user workspaces. REST API for file operations and We
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
+npm test              # Jest
 npm run testWatch     # Jest watch mode
 ```
 
@@ -15,7 +15,7 @@ npm run testWatch     # Jest watch mode
 `src/main.js` - Koa HTTP server with WebSocket support via `#sepal/httpServer` `wsStream()`.
 
 ### REST API
-- `GET /files` - Download file
+- `GET /download` - Download file
 - `GET /listFiles` - List directory contents
 - `POST /setFile` - Upload file (multipart via `koa-body`, max 100MB)
 - `POST /createFolder` - Create new folder
@@ -34,6 +34,7 @@ npm run testWatch     # Jest watch mode
 
 ## Non-Obvious Conventions
 
+- **`data` belongs to `user-data`**: in the home, `data` is only a mount point here. The root listing omits it, and monitoring, removing, downloading, listing, uploading or creating folders under it is refused (403 `{message: 'Data is managed by user-data'}` on the routes; a logged warning and nothing sent on the websocket). See `src/dataPath.js`.
 - **File permissions preserved**: Uses `chown`/`chmod` based on looked-up user info
 - **Path traversal protection**: `resolvePath()` validates all paths stay within user's home directory
 - **Polling interval configurable**: `--poll-interval-milliseconds` CLI arg for file watcher

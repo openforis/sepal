@@ -5,6 +5,8 @@ import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 
+import {DATA_REFUSED_MESSAGE, isDataPath} from './dataPath.js'
+
 const log = getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {
@@ -155,6 +157,11 @@ async function createDirectoryRecursive(targetAbs, userInfo, firstMissing) {
     }
 }
 
+const refuseData = ctx => {
+    ctx.response.status = 403
+    ctx.body = {message: DATA_REFUSED_MESSAGE}
+}
+
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']
     return sepalUser
@@ -178,8 +185,16 @@ const download = async (homeDir, ctx) => {
             ctx.body = {error: 'No path specified'}
             return
         }
+        if (isDataPath(path)) {
+            refuseData(ctx)
+            return
+        }
         try {
-            const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+            const {absolutePath, relativePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+            if (isDataPath(relativePath)) {
+                refuseData(ctx)
+                return
+            }
             if (!validPath) {
                 log.warn('Cannot download - invalid path:', absolutePath)
                 ctx.response.status = 404
@@ -225,6 +240,10 @@ const setFile = async (homeDir, ctx) => {
     if (!upload?.filepath) {
         ctx.response.status = 400
         ctx.body = {error: 'No file content provided'}
+        return
+    }
+    if (isDataPath(relPath)) {
+        refuseData(ctx)
         return
     }
 
@@ -293,6 +312,10 @@ const createFolder = async (homeDir, ctx) => {
     if (!path) {
         ctx.response.status = 400
         ctx.body = {error: 'No path specified'}
+        return
+    }
+    if (isDataPath(path)) {
+        refuseData(ctx)
         return
     }
 
@@ -367,7 +390,12 @@ const listFiles = async (homeDir, ctx) => {
         ctx.response.status = 404
         return
     }
+    if (isDataPath(relPath) || isDataPath(pathResult.relativePath)) {
+        refuseData(ctx)
+        return
+    }
     const absolutePath = pathResult.absolutePath
+    const isHomeRoot = pathResult.relativePath === ''
 
     try {
         const st = await stat(absolutePath)
@@ -378,7 +406,9 @@ const listFiles = async (homeDir, ctx) => {
         }
 
         const names = await readdir(absolutePath)
-        const visible = includeHidden ? names : names.filter(n => !n.startsWith('.'))
+        const visible = names
+            .filter(n => !(isHomeRoot && n === 'data'))
+            .filter(n => includeHidden || !n.startsWith('.'))
 
         const describe = async name => {
             const filePath = Path.join(absolutePath, name)

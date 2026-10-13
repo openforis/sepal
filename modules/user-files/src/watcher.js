@@ -2,12 +2,13 @@ import {readdir, realpath, rm, stat} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
-import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+import {catchError, defer, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
+import {isDataPath} from './dataPath.js'
 import {resolvePath} from './filesystem.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
@@ -132,6 +133,20 @@ const createWatcher = async ({send, stop$}) => {
     })
 
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
+        defer(() => isDataPath(path)
+            ? refuseData$({username, clientId, subscriptionId, path})
+            : resolveScanDir$({username, clientId, subscriptionId, path})
+        )
+
+    const refuseData$ = ({username, clientId, subscriptionId, path}) => {
+        warnDataRefused({username, clientId, subscriptionId, path})
+        return EMPTY
+    }
+
+    const warnDataRefused = ({username, clientId, subscriptionId, path}) =>
+        log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused data path: ${path}`)
+
+    const resolveScanDir$ = ({username, clientId, subscriptionId, path}) =>
         from(userHomeDir(username)).pipe(
             map(home => resolvePath(home, path)),
             catchError(error => {
@@ -143,21 +158,23 @@ const createWatcher = async ({send, stop$}) => {
                 }
                 return EMPTY
             }),
-            switchMap(({absolutePath, isExternalPath}) => {
-                if (isExternalPath) {
+            switchMap(({absolutePath, relativePath, isExternalPath}) => {
+                if (isDataPath(relativePath)) {
+                    return refuseData$({username, clientId, subscriptionId, path})
+                } else if (isExternalPath) {
                     log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
                     return EMPTY
                 } else {
                     log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
                     stats$.next(clientId)
-                    return scanValidDir$({username, clientId, subscriptionId, path, absolutePath})
+                    return scanValidDir$({username, clientId, subscriptionId, path, absolutePath, isHomeRoot: relativePath === ''})
                 }
             })
         )
 
-    const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath}) =>
+    const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath, isHomeRoot}) =>
         from(readdir(absolutePath)).pipe(
-            switchMap(dir => of(...dir)),
+            switchMap(dir => of(...dir.filter(filename => !(isHomeRoot && filename === 'data')))),
             mergeMap(filename => from(scanFile(absolutePath, filename))),
             filter(fileInfo => !!fileInfo),
             reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
@@ -209,8 +226,16 @@ const createWatcher = async ({send, stop$}) => {
             )
         } else {
             unmonitor({username, clientId, subscriptionId, path})
+            if (isDataPath(path)) {
+                warnDataRefused({username, clientId, subscriptionId, path})
+                return
+            }
             try {
-                const {absolutePath} = resolvePath(await userHomeDir(username), path)
+                const {absolutePath, relativePath} = resolvePath(await userHomeDir(username), path)
+                if (isDataPath(relativePath)) {
+                    warnDataRefused({username, clientId, subscriptionId, path})
+                    return
+                }
                 await rm(absolutePath, {recursive: true})
                 log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
             } catch (error) {
