@@ -2,7 +2,7 @@ import {jest} from '@jest/globals'
 
 const LIMITS = {
     user: {maxRate: 25, maxConcurrency: 10},
-    project: {maxRate: 100, maxConcurrency: 40},
+    userProject: {maxRate: 100, maxConcurrency: 40},
     sepalProject: {maxRate: 50, maxConcurrency: 20},
     global: {maxRate: 200, maxConcurrency: 100},
     taskUser: {maxRate: 10, maxConcurrency: 5},
@@ -38,9 +38,9 @@ test('a task call is capped per user and across all tasks before the shared tier
     expect(taskGlobal.limits(taskGlobal.key(request))).toBe(LIMITS.taskGlobal)
 })
 
-test('the SEPAL project has limits of its own, other projects share the common ones', () => {
+test('the SEPAL project has limits of its own, user projects share the user-project ones', () => {
     const [, , , project] = eeLimiterTiers({limits: LIMITS, sepalProjectId: 'sepal-test-project'})
 
     expect(project.limits('sepal-test-project')).toBe(LIMITS.sepalProject)
-    expect(project.limits('alice-project')).toBe(LIMITS.project)
+    expect(project.limits('alice-project')).toBe(LIMITS.userProject)
 })

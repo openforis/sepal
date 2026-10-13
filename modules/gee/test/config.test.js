@@ -7,10 +7,10 @@ import {promisify} from 'node:util'
 // Compose hands an unset ${VAR} to the container as an empty string.
 describe('Earth Engine limits', () => {
     test('take their default when their variable is empty', async () => {
-        const {eeLimits} = await loadConfig({EE_LIMIT_USER_RATE: '', EE_LIMIT_PROJECT_CONCURRENCY: ''})
+        const {eeLimits} = await loadConfig({EE_LIMIT_USER_RATE: '', EE_LIMIT_USER_PROJECT_CONCURRENCY: ''})
 
         expect(eeLimits.user.maxRate).toBe(25)
-        expect(eeLimits.project.maxConcurrency).toBe(40)
+        expect(eeLimits.userProject.maxConcurrency).toBe(40)
     })
 
     test('for task traffic take their defaults when their variables are empty', async () => {
@@ -30,9 +30,9 @@ describe('Earth Engine limits', () => {
         expect(eeLimits.taskGlobal.maxRate).toBe(30)
     })
 
-    test('of the SEPAL project are those of other projects when their variables are empty', async () => {
+    test('of the SEPAL project are those of user projects when their variables are empty', async () => {
         const {eeLimits} = await loadConfig({
-            EE_LIMIT_PROJECT_RATE: '80',
+            EE_LIMIT_USER_PROJECT_RATE: '80',
             EE_LIMIT_SEPAL_PROJECT_RATE: '',
             EE_LIMIT_SEPAL_PROJECT_CONCURRENCY: ''
         })
