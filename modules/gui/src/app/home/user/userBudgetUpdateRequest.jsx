@@ -30,6 +30,9 @@ const fields = {
         // .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
+    dataQuota: new Form.Field()
+        .int('user.userDetails.form.monthlyBudget.dataQuota.atLeast1')
+        .min(1, 'user.userDetails.form.monthlyBudget.dataQuota.atLeast1'),
     message: new Form.Field()
         .notBlank('user.quotaUpdate.form.message.required')
 }
@@ -41,6 +44,7 @@ const mapStateToProps = () => {
         instanceSpending: budgetUpdateRequest ? budgetUpdateRequest.instanceSpending : spending.monthlyInstanceBudget,
         storageSpending: budgetUpdateRequest ? budgetUpdateRequest.storageSpending : spending.monthlyStorageBudget,
         storageQuota: budgetUpdateRequest ? budgetUpdateRequest.storageQuota : spending.storageQuota,
+        dataQuota: budgetUpdateRequest ? budgetUpdateRequest.dataQuota ?? spending.dataQuota : spending.dataQuota,
         message: budgetUpdateRequest && budgetUpdateRequest.message
     }
     return {budgetUpdateRequest, values}
@@ -129,7 +133,7 @@ export class _BudgetUpdateRequest extends React.Component {
     }
 
     renderMonthlyLimits() {
-        const {inputs: {instanceSpending, storageSpending, storageQuota}} = this.props
+        const {inputs: {instanceSpending, storageSpending, storageQuota, dataQuota}} = this.props
         return (
             <Form.FieldSet
                 className={styles.monthlyLimits}
@@ -137,7 +141,7 @@ export class _BudgetUpdateRequest extends React.Component {
                 label={msg('user.userDetails.form.monthlyLimits.label')}
                 tooltip={msg('user.userDetails.form.monthlyLimits.tooltip')}
                 tooltipPlacement='topLeft'
-                errorMessage={[instanceSpending, storageSpending, storageQuota]}>
+                errorMessage={[instanceSpending, storageSpending, storageQuota, dataQuota]}>
                 <Form.Input
                     label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                     type='number'
@@ -158,6 +162,14 @@ export class _BudgetUpdateRequest extends React.Component {
                     label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
                     type='number'
                     input={storageQuota}
+                    spellCheck={false}
+                    prefix='GB'
+                    errorMessage={false}
+                />
+                <Form.Input
+                    label={msg('user.userDetails.form.monthlyBudget.dataQuota.label')}
+                    type='number'
+                    input={dataQuota}
                     spellCheck={false}
                     prefix='GB'
                     errorMessage={false}
@@ -183,7 +195,6 @@ export class _BudgetUpdateRequest extends React.Component {
 
     save(budgetUpdateRequest) {
         const {stream} = this.props
-        api.user.updateBudgetUpdateRequest$(budgetUpdateRequest)
         stream({
             name: 'UPDATE_BUDGET_UPDATE_REQUEST',
             stream$: api.user.updateBudgetUpdateRequest$(budgetUpdateRequest),

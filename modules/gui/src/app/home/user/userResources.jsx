@@ -30,6 +30,7 @@ class _UserResources extends React.Component {
                     {this.renderInstanceBudget(spending)}
                     {this.renderStorageBudget(spending)}
                     {this.renderStorage(spending)}
+                    {this.renderData(spending)}
                 </Layout>
             </Layout>
         ) : null
@@ -87,6 +88,17 @@ class _UserResources extends React.Component {
                 <Gauge value={storageUsed} maxValue={storageQuota}/>
             </div>
         )
+    }
+
+    renderData({dataUsed, dataQuota}) {
+        return dataQuota != null ? (
+            <div className={styles.resources}>
+                <Label className={styles.label} msg={msg('user.report.resources.dataSpace')}/>
+                <div className={styles.quota}>{format.number({value: dataQuota, scale: 'G', unit: 'B'})}</div>
+                <div className={styles.used}>{format.percent(dataUsed, dataQuota, 0)}</div>
+                <Gauge value={dataUsed} maxValue={dataQuota}/>
+            </div>
+        ) : null
     }
 }
 

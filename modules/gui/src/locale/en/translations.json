@@ -6001,6 +6001,7 @@
         "instanceSpending": "Instance spending",
         "storageSpending": "Storage spending",
         "storageSpace": "Storage space",
+        "dataSpace": "Data",
         "quota": "Quota",
         "title": "Resources",
         "used": "Used",
@@ -6154,6 +6155,10 @@
             "atLeast1": "Storage space must be at least 1",
             "label": "Storage space",
             "required:": "Storage space is required"
+          },
+          "dataQuota": {
+            "atLeast1": "Data must be at least 1 GB",
+            "label": "Data"
           }
         },
         "monthlyLimits": {

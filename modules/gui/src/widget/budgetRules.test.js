@@ -10,7 +10,8 @@ const session = hourlyCost => ({instanceType: {hourlyCost}})
 const spending = ({
     instanceBudget = 0, instanceSpending = 0,
     storageBudget = 0, storageSpending = 0,
-    storageQuota = 0, storageUsed = 0, costPerGbMonth = 0
+    storageQuota = 0, storageUsed = 0, costPerGbMonth = 0,
+    dataUsed = 0, dataQuota = 10
 } = {}) => ({
     monthlyInstanceBudget: instanceBudget,
     monthlyInstanceSpending: instanceSpending,
@@ -18,7 +19,9 @@ const spending = ({
     monthlyStorageSpending: storageSpending,
     storageQuota,
     storageUsed,
-    costPerGbMonth
+    costPerGbMonth,
+    dataUsed,
+    dataQuota
 })
 
 describe('hourlyInstanceSpending', () => {
@@ -106,6 +109,15 @@ describe('isBudgetExceeded', () => {
     it('is true once the storage quota is passed, not when it is reached', () => {
         expect(isBudgetExceeded(spending({...withinLimits, storageUsed: 10}))).toBe(false)
         expect(isBudgetExceeded(spending({...withinLimits, storageUsed: 10.1}))).toBe(true)
+    })
+
+    it('is true once Data use is over the Data quota, not when it is at it', () => {
+        expect(isBudgetExceeded(spending({...withinLimits, dataUsed: 10, dataQuota: 10}))).toBe(false)
+        expect(isBudgetExceeded(spending({...withinLimits, dataUsed: 11, dataQuota: 10}))).toBe(true)
+    })
+
+    it('ignores Data when the budget sends no Data quota', () => {
+        expect(isBudgetExceeded(spending({...withinLimits, dataUsed: 11, dataQuota: null}))).toBe(false)
     })
 
     it('is false while every limit still has room', () => {
