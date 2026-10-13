@@ -27,8 +27,8 @@ containers or task state from outside it.
 
 - `deploy.yml` pre-pulls `openforis/task:<release>` (task-manager never pulls; `bin/deploy` verifies the image
   is listed) and, after the modules run, removes task images of earlier releases that no container uses.
-- The `sepal-task` network and the host firewall unit `sepal-task-firewall` isolate task containers: they
-  reach the gateway only.
+- The `sepal-task` network and the host firewall unit `sepal-task-firewall` isolate task containers: among
+  private addresses they reach only the gateway; they reach the internet (Google, and S3 for exports to Data).
 - Task containers log to syslog tagged `task/<username>/<taskId>`; the logger writes the lines, prefixed by the
   task id, to `/var/log/sepal/user/<username>/task.log` (on EFS in production).
 - Task containers carry the label `org.openforis.sepal.task-manager=true` and survive deploys and
