@@ -1,10 +1,10 @@
 import {existsSync} from 'node:fs'
-import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readFile, rm, utimes, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import {jest} from '@jest/globals'
-import {of} from 'rxjs'
+import {from, of} from 'rxjs'
 
 let downloaded = true
 
@@ -22,8 +22,7 @@ jest.unstable_mockModule('../workspaceExport.js', () => ({
 
 jest.unstable_mockModule('#sepal/gdal', () => ({
     createVrt$: ({outputPath}) => {
-        writeFile(outputPath, 'vrt')
-        return of(null)
+        return from(writeFile(outputPath, 'vrt'))
     },
     setBandNames$: () => of(null)
 }))
@@ -130,6 +129,37 @@ test('clears leftovers of an earlier run from staging', async () => {
     expect(copies.map(c => c.remotePath)).not.toContain('exports/r/old.tif')
 })
 
+test('removes staging folders of other tasks older than a week, keeps recent ones', async () => {
+    const {run} = harness({accesses: [rw, rw, rw]})
+    const root = join(home, '.data-staging')
+    const hoursAgo = hours => new Date(Date.now() - hours * 3600 * 1000)
+    for (const [name, age] of [['old', 8 * 24], ['fresh', 1]]) {
+        await mkdir(join(root, name), {recursive: true})
+        await utimes(join(root, name), hoursAgo(age), hoursAgo(age))
+    }
+
+    await run(params)
+
+    expect(existsSync(join(root, 'old'))).toBe(false)
+    expect(existsSync(join(root, 'fresh'))).toBe(true)
+})
+
+test('an export succeeds even when sweeping stale staging fails', async () => {
+    const {run, copies} = harness({accesses: [rw, rw, rw]})
+    const old = join(home, '.data-staging', 'old')
+    await mkdir(old, {recursive: true})
+    await utimes(old, new Date(0), new Date(0))
+
+    await run(params, {remove: async path => {
+        if (path === old) {
+            throw new Error('EACCES')
+        }
+        await rm(path, {recursive: true, force: true})
+    }})
+
+    expect(copies).toHaveLength(3)
+})
+
 const harness = ({accesses = [], copy}) => {
     const copies = []
     const reports = []
@@ -147,7 +177,7 @@ const harness = ({accesses = [], copy}) => {
     const fakeCopy = copy ?? (async ({localPath, remotePath}) => {
         copies.push({remotePath, localPath, content: await readFile(localPath, 'utf8')})
     })
-    const run = (p, {signal = new AbortController().signal} = {}) =>
-        imageDataExport(p, {sepal, report: r => reports.push(r), signal, sleep: async () => {}, copy: fakeCopy})
+    const run = (p, {signal = new AbortController().signal, ...options} = {}) =>
+        imageDataExport(p, {...options, sepal, report: r => reports.push(r), signal, sleep: async () => {}, copy: fakeCopy})
     return {run, sepal, copies, reports}
 }
