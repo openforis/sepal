@@ -24,6 +24,10 @@ const renderBudget = info => {
         format(`${budget(info.spending.monthlyStorageSpending, info.spending.monthlyStorageBudget)} USD`, 'PURPLE_INTENSE'))
     println('Storage used:'.padEnd(19) +
         format(`${budget(info.spending.storageUsed, info.spending.storageQuota)} GB`, 'PURPLE_INTENSE'))
+    if (info.spending.dataQuota != null) {
+        println('Data used:'.padEnd(19) +
+            format(`${budget(info.spending.dataUsed, info.spending.dataQuota)} GB`, 'PURPLE_INTENSE'))
+    }
     println()
 }
 

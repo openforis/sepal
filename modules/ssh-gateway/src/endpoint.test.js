@@ -10,6 +10,10 @@ jest.unstable_mockModule('#sepal/httpClient', () => ({
     delete$: jest.fn()
 }))
 
+const println = jest.fn()
+
+jest.unstable_mockModule('./console.js', () => ({println}))
+
 jest.unstable_mockModule('./config.js', () => ({
     endpoint: 'http://worker/',
     endpointPassword: 'pw',
@@ -47,6 +51,38 @@ describe('sandboxInfo$', () => {
         expect(results[0].spending.monthlyInstanceBudget).toBe(10)
         expect(results[0].instanceTypes).toEqual([{tag: 't1'}])
         expect(results[0].exceededBudget).toBe(false)
+    })
+
+    describe('Data quota', () => {
+        const withinBudget = {
+            monthlyInstanceSpending: 1, monthlyInstanceBudget: 10,
+            monthlyStorageSpending: 0, monthlyStorageBudget: 10,
+            storageUsed: 0, storageQuota: 100
+        }
+        const exceededBudgetFor = spending => {
+            get$.mockImplementation(url => url.includes('/report')
+                ? of({statusCode: 200, body: {sessions: [], instanceTypes: []}})
+                : of({statusCode: 200, body: spending}))
+            const results = []
+            sandboxInfo$().subscribe(result => results.push(result))
+            return results[0].exceededBudget
+        }
+        const printed = () => println.mock.calls.flat().join('\n')
+
+        beforeEach(() => println.mockReset())
+
+        it('refuses when the Data used is over the quota', () => {
+            expect(exceededBudgetFor({...withinBudget, dataUsed: 10.5, dataQuota: 10})).toBe(true)
+            expect(printed()).toContain('Data')
+        })
+
+        it('allows the Data used to be exactly at the quota', () => {
+            expect(exceededBudgetFor({...withinBudget, dataUsed: 10, dataQuota: 10})).toBe(false)
+        })
+
+        it('never refuses a spending without a Data quota', () => {
+            expect(exceededBudgetFor({...withinBudget, dataUsed: 500})).toBe(false)
+        })
     })
 })
 

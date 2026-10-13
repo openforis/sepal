@@ -41,7 +41,9 @@ const info = {
         monthlyStorageSpending: 1,
         monthlyStorageBudget: 10,
         storageUsed: 1,
-        storageQuota: 10
+        storageQuota: 10,
+        dataUsed: 3,
+        dataQuota: 10
     },
     instanceTypes: [{tag: 't1', cpuCount: 2, ramGiB: 4, hourlyCost: 0.1}],
     sessions: [{
@@ -254,6 +256,21 @@ describe('interactive$', () => {
 
 describe('instance names', () => {
     const printed = () => println.mock.calls.flat().map(t => `${t}`).join('\n')
+
+    it('shows the Data used against its quota in GB', async () => {
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).toContain('Data used:'.padEnd(19) + '30% of 10 GB')
+        subscription.unsubscribe()
+    })
+
+    it('omits the Data line when the spending has no Data quota', async () => {
+        sandboxInfo$.mockImplementation(() => of({...info, spending: {...info.spending, dataQuota: undefined}}))
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).not.toContain('Data used')
+        subscription.unsubscribe()
+    })
 
     it('shows the instance name alongside the number', async () => {
         const subscription = interactive$(NEVER).subscribe()
