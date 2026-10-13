@@ -1,6 +1,7 @@
 // Duplicated from the worker's instance-type catalog. Unknown types price at 0, so a missing
 // entry silently under-charges — see pricing.test.js.
 export const STORAGE_COST_PER_GB_MONTH = 0.33
+export const DATA_COST_PER_GB_MONTH = 0.025
 
 const HOURLY_COST_BY_INSTANCE_TYPE = {
     'T3aSmall': 0.0204,
@@ -98,4 +99,5 @@ const HOURLY_COST_BY_INSTANCE_TYPE = {
 export const createPricing = () => ({
     hourlyCostByInstanceType: () => HOURLY_COST_BY_INSTANCE_TYPE,
     storageCostPerGbMonth: STORAGE_COST_PER_GB_MONTH,
+    dataCostPerGbMonth: DATA_COST_PER_GB_MONTH,
 })

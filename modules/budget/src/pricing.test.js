@@ -1,4 +1,4 @@
-import {createPricing, STORAGE_COST_PER_GB_MONTH} from './pricing.js'
+import {createPricing, DATA_COST_PER_GB_MONTH, STORAGE_COST_PER_GB_MONTH} from './pricing.js'
 
 // Instance-type ids in the worker's catalog when this map was copied.
 // Pins budget's copy only; drift in the worker's table needs a manual cross-check.
@@ -9,6 +9,11 @@ describe('pricing', () => {
         const pricing = createPricing()
         expect(pricing.storageCostPerGbMonth).toBe(0.33)
         expect(STORAGE_COST_PER_GB_MONTH).toBe(0.33)
+    })
+
+    test('prices Data per GB-month separately from home storage', () => {
+        expect(createPricing().dataCostPerGbMonth).toBe(0.025)
+        expect(DATA_COST_PER_GB_MONTH).toBe(0.025)
     })
 
     test('hourlyCostByInstanceType() has one entry per worker instance type (completeness)', () => {

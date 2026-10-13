@@ -1,5 +1,5 @@
 import {createBudgetCommands} from './budgetCommands.js'
-import {createBudgetManager, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetManager.js'
+import {createBudgetManager, DataQuotaExceeded, InstanceBudgetExceeded, Reason, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetManager.js'
 
 const CLOCK = () => new Date('2026-07-15T00:00:00Z')
 
@@ -16,6 +16,7 @@ const createEvents = () => {
 const pricing = {
     hourlyCostByInstanceType: () => ({'m5.large': 1}),
     storageCostPerGbMonth: 0.33,
+    dataCostPerGbMonth: 0.025,
 }
 
 const userClientOf = (...usernames) => ({
@@ -25,15 +26,17 @@ const userClientOf = (...usernames) => ({
     },
 })
 
-const createFakeRepo = ({budgets = {}, defaultBudget, instanceUses = {}, storageRows = {}, pendingRequests = {}} = {}) => {
-    const calls = {updateBudget: [], updateDefaultBudget: [], requestBudgetUpdate: [], saveSpendingReport: [], updateSpendingReport: [], updateUserStorageUse: []}
+const createFakeRepo = ({budgets = {}, defaultBudget, instanceUses = {}, storageRows = {}, dataRows = {}, pendingRequests = {}} = {}) => {
+    const calls = {updateBudget: [], updateDefaultBudget: [], requestBudgetUpdate: [], saveSpendingReport: [], updateSpendingReport: [], updateUserStorageUse: [], updateUserDataUse: []}
     return {
         calls,
         userBudget: async username =>
-            budgets[username] ?? defaultBudget ?? {instanceSpending: 0, storageSpending: 0, storageQuota: 0},
+            budgets[username] ?? defaultBudget ?? {instanceSpending: 0, storageSpending: 0, storageQuota: 0, dataQuota: 10},
         userInstanceUses: async username => instanceUses[username] ?? [],
         lastUserStorageUse: async username =>
             storageRows[username] ?? {gbHours: 0, gb: 0, updateTime: CLOCK()},
+        lastUserDataUse: async username =>
+            dataRows[username] ?? {gbHours: 0, gb: 0, updateTime: CLOCK()},
         budgetUpdateRequest: async username => pendingRequests[username] ?? null,
         updateBudget: async (username, budget) => calls.updateBudget.push({username, budget}),
         updateDefaultBudget: async budget => calls.updateDefaultBudget.push(budget),
@@ -41,6 +44,7 @@ const createFakeRepo = ({budgets = {}, defaultBudget, instanceUses = {}, storage
         saveSpendingReport: async report => calls.saveSpendingReport.push(report),
         updateSpendingReport: async (username, report) => calls.updateSpendingReport.push({username, report}),
         updateUserStorageUse: async (username, storageUse) => calls.updateUserStorageUse.push({username, storageUse}),
+        updateUserDataUse: async (username, storageUse) => calls.updateUserDataUse.push({username, storageUse}),
         spendingReport: async () => ({cached: {username: 'cached', instanceSpending: 1}}),
     }
 }
@@ -173,17 +177,17 @@ describe('BudgetManager.verdict', () => {
 })
 
 describe('BudgetManager.userSpending', () => {
-    test('returns the exact 8-field Spending shape from the live compute', async () => {
+    test('returns the exact 11-field Spending shape from the live compute', async () => {
         const events = createEvents()
         const repo = createFakeRepo({
-            budgets: {u: {instanceSpending: 50, storageSpending: 20, storageQuota: 30}},
+            budgets: {u: {instanceSpending: 50, storageSpending: 20, storageQuota: 30, dataQuota: 40}},
             instanceUses: {u: oneDayInJuly()}, // $24
             storageRows: {u: {gbHours: 0, gb: 7, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
         const spending = await mgr.userSpending('u')
         expect(Object.keys(spending).sort()).toEqual([
-            'budgetUpdateRequest', 'costPerGbMonth', 'monthlyInstanceBudget', 'monthlyInstanceSpending',
+            'budgetUpdateRequest', 'costPerGbMonth', 'dataCostPerGbMonth', 'dataQuota', 'dataUsed', 'monthlyInstanceBudget', 'monthlyInstanceSpending',
             'monthlyStorageBudget', 'monthlyStorageSpending', 'storageQuota', 'storageUsed',
         ])
         expect(spending.monthlyInstanceBudget).toBe(50)
@@ -192,6 +196,9 @@ describe('BudgetManager.userSpending', () => {
         expect(spending.storageQuota).toBe(30)
         expect(spending.storageUsed).toBe(7)
         expect(spending.costPerGbMonth).toBe(0.33)
+        expect(spending.dataQuota).toBe(40)
+        expect(spending.dataUsed).toBe(0)
+        expect(spending.dataCostPerGbMonth).toBe(0.025)
         expect(spending.budgetUpdateRequest).toBeNull()
     })
 
@@ -207,33 +214,80 @@ describe('BudgetManager.userSpending', () => {
     })
 })
 
-describe('BudgetManager.usersExceedingBudget', () => {
-    test('iterates all users, collects exceeded ones, and emits the budget.* events (same path as check)', async () => {
-        const events = createEvents()
-        const repo = createFakeRepo({
-            budgets: {
-                over_instance: {instanceSpending: 24, storageSpending: 1e9, storageQuota: 1e9}, // instance >= budget
-                over_storage_quota: {instanceSpending: 1e9, storageSpending: 1e9, storageQuota: 5}, // use 11 > 5
-                ok: {instanceSpending: 1e9, storageSpending: 1e9, storageQuota: 1e9},
-            },
-            instanceUses: {over_instance: oneDayInJuly()},
-            storageRows: {
-                over_storage_quota: {gbHours: 0, gb: 11, updateTime: new Date('2026-07-14T00:00:00Z')},
-            },
+describe('verdict for Data', () => {
+    test('refuses a user over the Data quota with reason DATA_QUOTA', async () => {
+        const manager = managerWith({budgets: {alice: generousBudget({dataQuota: 10})}, dataRows: {alice: usingGb(11)}})
+
+        expect(await manager.verdict('alice')).toEqual({username: 'alice', exceeded: true, reason: Reason.DATA_QUOTA})
+    })
+
+    test('accepts a user exactly at the Data quota', async () => {
+        const manager = managerWith({budgets: {alice: generousBudget({dataQuota: 10})}, dataRows: {alice: usingGb(10)}})
+
+        expect((await manager.verdict('alice')).exceeded).toBe(false)
+    })
+
+    test('reports the storage quota before the Data quota', async () => {
+        const manager = managerWith({
+            budgets: {alice: generousBudget({storageQuota: 1, dataQuota: 1})},
+            storageRows: {alice: usingGb(2)},
+            dataRows: {alice: usingGb(2)},
         })
-        const mgr = createBudgetManager({
-            repo, pricing,
-            userClient: userClientOf('over_instance', 'over_storage_quota', 'ok'),
-            events, clock: CLOCK,
+
+        expect((await manager.verdict('alice')).reason).toBe(Reason.STORAGE_QUOTA)
+    })
+
+    test('throws DataQuotaExceeded from check', async () => {
+        const manager = managerWith({budgets: {alice: generousBudget({dataQuota: 10})}, dataRows: {alice: usingGb(11)}})
+
+        await expect(manager.check('alice')).rejects.toBeInstanceOf(DataQuotaExceeded)
+    })
+})
+
+describe('storage spending with Data', () => {
+    test('adds Data GB-hours at the Data price to home storage spending', async () => {
+        const manager = managerWith({storageRows: {alice: gbHours(720)}, dataRows: {alice: gbHours(720)}})
+
+        const spending = await manager.userSpending('alice')
+
+        expect(spending.monthlyStorageSpending).toBeCloseTo((720 * 0.33 + 720 * 0.025) / 31 / 24)
+    })
+
+    test('counts Data spending towards the storage budget', async () => {
+        const manager = managerWith({
+            budgets: {alice: generousBudget({storageSpending: 1})},
+            dataRows: {alice: gbHours(31 * 24 * 41)}, // 41 GB for the whole month at 0.025 > 1 US$
         })
-        const exceeding = await mgr.usersExceedingBudget()
-        expect(exceeding.sort()).toEqual(['over_instance', 'over_storage_quota'])
-        expect(events.emitted.instanceBudget.map(d => d.username)).toEqual(['over_instance'])
-        expect(events.emitted.storageQuota.map(d => d.username)).toEqual(['over_storage_quota'])
+
+        expect((await manager.verdict('alice')).reason).toBe(Reason.STORAGE_BUDGET)
+    })
+
+    test('starts Data GB-hours afresh in a new month', async () => {
+        const manager = managerWith({dataRows: {alice: {gbHours: 9999, gb: 2, updateTime: new Date('2026-06-20T00:00:00Z')}}})
+
+        const spending = await manager.userSpending('alice')
+
+        // 2 GB from July 1 to the clock's July 15, none of June's 9999 GB-hours
+        expect(spending.monthlyStorageSpending).toBeCloseTo(2 * 14 * 24 * 0.025 / 31 / 24)
+    })
+
+    test('shows Data use, quota and price in the spending', async () => {
+        const manager = managerWith({budgets: {alice: generousBudget({dataQuota: 10})}, dataRows: {alice: usingGb(3)}})
+
+        expect(await manager.userSpending('alice')).toMatchObject({dataQuota: 10, dataUsed: 3, dataCostPerGbMonth: 0.025})
     })
 })
 
 describe('budget commands', () => {
+    test('updateUserDataUsage → the Data upsert (repo.updateUserDataUse), not the home one', async () => {
+        const repo = createFakeRepo()
+        await mk(repo).updateUserDataUsage('u', 12)
+        expect(repo.calls.updateUserDataUse).toHaveLength(1)
+        expect(repo.calls.updateUserDataUse[0].username).toBe('u')
+        expect(repo.calls.updateUserDataUse[0].storageUse.gb).toBe(12)
+        expect(repo.calls.updateUserStorageUse).toHaveLength(0)
+    })
+
     const mk = repo => createBudgetCommands({repo, hostingService: pricing, userClient: userClientOf(), events: createEvents(), clock: CLOCK})
 
     test('updateBudget with username → repo.updateBudget (closes pending request)', async () => {
@@ -290,3 +344,13 @@ describe('budget commands', () => {
         expect(report).toEqual({cached: {username: 'cached', instanceSpending: 1}})
     })
 })
+
+const managerWith = options =>
+    createBudgetManager({repo: createFakeRepo(options), pricing, userClient: userClientOf('alice'), events: createEvents(), clock: CLOCK})
+
+const generousBudget = overrides =>
+    ({instanceSpending: 1000, storageSpending: 1000, storageQuota: 1000, dataQuota: 1000, ...overrides})
+
+const usingGb = gb => ({gbHours: 0, gb, updateTime: CLOCK()})
+
+const gbHours = hours => ({gbHours: hours, gb: 0, updateTime: CLOCK()})

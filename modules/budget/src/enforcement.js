@@ -5,23 +5,17 @@
 // users with open sessions — the only ones whose instances need stopping — and runs every minute,
 // so running out of budget stops a user's instances within a minute rather than an hour.
 export const createEnforcement = ({budgetManager, userClient, openSessionUse, events}) => {
-    const publish = (username, exceeded) =>
+    const publish = ({username, exceeded, reason}) =>
         exceeded
-            ? events.emitUserBudgetExceeded(username)
+            ? events.emitUserBudgetExceeded(username, reason)
             : events.emitUserBudgetCleared(username)
 
-    const publishVerdicts = async () => {
-        const exceeded = new Set(await budgetManager.usersExceedingBudget())
-        await userClient.eachUsername(async username =>
-            publish(username, exceeded.has(username))
-        )
-    }
+    const publishVerdicts = async () =>
+        userClient.eachUsername(async username => publish(await budgetManager.verdict(username)))
 
     const publishOpenSessionVerdicts = async () => {
-        for (const username of await openSessionUse.usersWithOpenSessions()) {
-            const {exceeded} = await budgetManager.verdict(username)
-            publish(username, exceeded)
-        }
+        for (const username of await openSessionUse.usersWithOpenSessions())
+            publish(await budgetManager.verdict(username))
     }
 
     return {publishVerdicts, publishOpenSessionVerdicts}

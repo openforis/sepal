@@ -1,5 +1,7 @@
 import * as events from './events.js'
 
+const publisher = key => events.BUDGET_PUBLISHERS.find(p => p.key === key).publish$
+
 describe('events exported surface', () => {
     test('exports all five emit functions', () => {
         expect(typeof events.emitUserBudgetExceeded).toBe('function')
@@ -7,6 +9,16 @@ describe('events exported surface', () => {
         expect(typeof events.emitUserInstanceBudgetExceeded).toBe('function')
         expect(typeof events.emitUserStorageSpendingExceeded).toBe('function')
         expect(typeof events.emitUserStorageQuotaExceeded).toBe('function')
+    })
+
+    test('Exceeded events carry the reason', () => {
+        const received = []
+        const subscription = publisher('budget.UserBudgetExceeded').subscribe(event => received.push(event))
+
+        events.emitUserBudgetExceeded('alice', 'DATA_QUOTA')
+        subscription.unsubscribe()
+
+        expect(received).toEqual([{username: 'alice', reason: 'DATA_QUOTA'}])
     })
 
     test('legacy no-op emitters (budgetCommands.js contract) do not throw', () => {

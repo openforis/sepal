@@ -10,7 +10,15 @@ import {
     updateStorageUseForThisMonth,
 } from './storageUseService.js'
 
+// storageUseService works on a repository's home-storage methods; this gives it the Data ones.
+const dataUseStore = repo => ({
+    lastUserStorageUse: username => repo.lastUserDataUse(username),
+    updateUserStorageUse: (username, storageUse) => repo.updateUserDataUse(username, storageUse),
+})
+
 const createBudgetCommands = ({repo, hostingService, userClient, events, clock}) => {
+    const dataStore = dataUseStore(repo)
+
     const checkUserInstanceSpending = async username => {
         const spending = await computeInstanceSpending(
             repo, username, hostingService.hourlyCostByInstanceType(), clock)
@@ -27,15 +35,16 @@ const createBudgetCommands = ({repo, hostingService, userClient, events, clock})
 
     const checkUserStorageUse = async username => {
         const now = clock()
-        const storageUse = await storageUseForThisMonth(repo, username, now)
-        const spending = calculateStorageSpending(storageUse, hostingService.storageCostPerGbMonth, now)
+        const {homeUse, dataUse, spending} = await storageState(username, now)
         const budget = await repo.userBudget(username)
         const result = userStorageUseDto({
             username,
             spending,
-            use: storageUse.gb,
+            use: homeUse.gb,
             budget: budget.storageSpending,
             quota: budget.storageQuota,
+            dataUse: dataUse.gb,
+            dataQuota: budget.dataQuota,
         })
         if (result.isBudgetExceeded)
             events.emitUserStorageSpendingExceeded(result)
@@ -48,20 +57,21 @@ const createBudgetCommands = ({repo, hostingService, userClient, events, clock})
         const now = clock()
         const instanceSpending = await computeInstanceSpending(
             repo, username, hostingService.hourlyCostByInstanceType(), clock)
-        const storageUse = await storageUseForThisMonth(repo, username, now)
-        const storageSpending = calculateStorageSpending(
-            storageUse, hostingService.storageCostPerGbMonth, now)
+        const {homeUse, dataUse, spending: storageSpending} = await storageState(username, now)
         const budget = await repo.userBudget(username)
         const budgetUpdateRequest = await repo.budgetUpdateRequest(username)
         return userSpendingReportDto({
             username,
             instanceSpending,
             storageSpending,
-            storageUsage: storageUse.gb,
+            storageUsage: homeUse.gb,
             instanceBudget: budget.instanceSpending,
             storageBudget: budget.storageSpending,
             storageQuota: budget.storageQuota,
             costPerGbMonth: hostingService.storageCostPerGbMonth,
+            dataUsage: dataUse.gb,
+            dataQuota: budget.dataQuota,
+            dataCostPerGbMonth: hostingService.dataCostPerGbMonth,
             budgetUpdateRequest,
         })
     }
@@ -76,21 +86,6 @@ const createBudgetCommands = ({repo, hostingService, userClient, events, clock})
 
     const loadSpendingReport = async () =>
         repo.spendingReport()
-
-    const findUsersExceedingBudget = async () => {
-        const usersExceedingBudget = []
-        await userClient.eachUsername(async username => {
-            const instanceSpending = await checkUserInstanceSpending(username)
-            if (instanceSpending.isBudgetExceeded) {
-                usersExceedingBudget.push(username)
-            } else {
-                const storageUse = await checkUserStorageUse(username)
-                if (storageUse.isBudgetExceeded || storageUse.isQuotaExceeded)
-                    usersExceedingBudget.push(username)
-            }
-        })
-        return usersExceedingBudget
-    }
 
     const updateBudget = async ({username, budget}) => {
         if (username)
@@ -114,20 +109,32 @@ const createBudgetCommands = ({repo, hostingService, userClient, events, clock})
         await updateStorageUseForThisMonth(repo, username, gbUsed, clock())
     }
 
+    const updateUserDataUsage = async (username, gbUsed) => {
+        await updateStorageUseForThisMonth(dataStore, username, gbUsed, clock())
+    }
+
     const requestBudgetUpdate = async ({username, message, budget}) => {
         await repo.requestBudgetUpdate(username, message, budget)
+    }
+
+    const storageState = async (username, now) => {
+        const homeUse = await storageUseForThisMonth(repo, username, now)
+        const dataUse = await storageUseForThisMonth(dataStore, username, now)
+        const spending = calculateStorageSpending(homeUse, hostingService.storageCostPerGbMonth, now)
+            + calculateStorageSpending(dataUse, hostingService.dataCostPerGbMonth, now)
+        return {homeUse, dataUse, spending}
     }
 
     return {
         checkUserInstanceSpending,
         checkUserStorageUse,
-        findUsersExceedingBudget,
         generateSpendingReport,
         generateUserSpendingReport,
         loadSpendingReport,
         requestBudgetUpdate,
         updateBudget,
         updateSpendingReport,
+        updateUserDataUsage,
         updateUserSpendingReport,
         updateUserStorageUsage,
     }

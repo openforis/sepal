@@ -12,14 +12,17 @@ const userInstanceSpending = ({username, spending, budget}) => ({
     isBudgetExceeded: spending >= budget,
 })
 
-const userStorageUse = ({username, spending, use, budget, quota}) => ({
+const userStorageUse = ({username, spending, use, budget, quota, dataUse, dataQuota}) => ({
     username,
     spending,
     use,
     budget,
     quota,
+    dataUse,
+    dataQuota,
     isBudgetExceeded: spending >= budget,
     isQuotaExceeded: use > quota,
+    isDataQuotaExceeded: dataUse > dataQuota,
 })
 
 const storageUse = ({gbHours, gb, updateTime}) => ({
@@ -46,6 +49,7 @@ const userSpendingReport = ({
     budgetUpdateRequest,
     dataUsage,
     dataQuota,
+    dataCostPerGbMonth,
 }) => ({
     username,
     instanceSpending,
@@ -58,6 +62,7 @@ const userSpendingReport = ({
     budgetUpdateRequest,
     dataUsage,
     dataQuota,
+    dataCostPerGbMonth,
 })
 
 const budgetUpdateRequest = ({

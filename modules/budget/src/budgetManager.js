@@ -16,6 +16,14 @@ class StorageBudgetExceeded extends Error {
     }
 }
 
+class DataQuotaExceeded extends Error {
+    constructor(username) {
+        super('Data quota exceeded')
+        this.name = 'DataQuotaExceeded'
+        this.username = username
+    }
+}
+
 class StorageQuotaExceeded extends Error {
     constructor(username) {
         super('Storage quota exceeded')
@@ -31,12 +39,14 @@ const Reason = Object.freeze({
     INSTANCE_BUDGET: 'INSTANCE_BUDGET',
     STORAGE_BUDGET: 'STORAGE_BUDGET',
     STORAGE_QUOTA: 'STORAGE_QUOTA',
+    DATA_QUOTA: 'DATA_QUOTA',
 })
 
 const ERROR_BY_REASON = {
     [Reason.INSTANCE_BUDGET]: InstanceBudgetExceeded,
     [Reason.STORAGE_BUDGET]: StorageBudgetExceeded,
     [Reason.STORAGE_QUOTA]: StorageQuotaExceeded,
+    [Reason.DATA_QUOTA]: DataQuotaExceeded,
 }
 
 const createBudgetManager = ({repo, pricing, userClient, events, clock = () => new Date()}) => {
@@ -44,7 +54,7 @@ const createBudgetManager = ({repo, pricing, userClient, events, clock = () => n
 
     // verdict — the authoritative over-budget decision for one user, reported rather than thrown.
     // Short-circuits: instance budget first (a user over it never has their storage evaluated), then
-    // storage budget, then quota. The checkUser* commands emit the budget.* events as a side
+    // storage budget (home + Data spending), then storage quota, then Data quota. The checkUser* commands emit the budget.* events as a side
     // effect, so this is not read-only.
     const verdict = async username => {
         const instanceSpending = await commands.checkUserInstanceSpending(username)
@@ -55,6 +65,8 @@ const createBudgetManager = ({repo, pricing, userClient, events, clock = () => n
             return {username, exceeded: true, reason: Reason.STORAGE_BUDGET}
         if (storageUse.isQuotaExceeded)
             return {username, exceeded: true, reason: Reason.STORAGE_QUOTA}
+        if (storageUse.isDataQuotaExceeded)
+            return {username, exceeded: true, reason: Reason.DATA_QUOTA}
         return {username, exceeded: false, reason: null}
     }
 
@@ -73,27 +85,27 @@ const createBudgetManager = ({repo, pricing, userClient, events, clock = () => n
         storageQuota: report.storageQuota,
         storageUsed: report.storageUsage,
         costPerGbMonth: report.costPerGbMonth,
+        dataQuota: report.dataQuota,
+        dataUsed: report.dataUsage,
+        dataCostPerGbMonth: report.dataCostPerGbMonth,
         budgetUpdateRequest: report.budgetUpdateRequest ?? null,
     })
 
     const userSpending = async username =>
         asSpending(await commands.generateUserSpendingReport(username))
 
-    const usersExceedingBudget = async () =>
-        commands.findUsersExceedingBudget()
-
     return {
         check,
         verdict,
         userSpending,
         asSpending,
-        usersExceedingBudget,
         commands,
     }
 }
 
 export {
     createBudgetManager,
+    DataQuotaExceeded,
     InstanceBudgetExceeded,
     Reason,
     StorageBudgetExceeded,

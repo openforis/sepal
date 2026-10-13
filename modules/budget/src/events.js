@@ -8,7 +8,7 @@ export const BUDGET_PUBLISHERS = [
     {key: 'budget.UserBudgetCleared', publish$: userBudgetCleared$}
 ]
 
-export const emitUserBudgetExceeded = username => userBudgetExceeded$.next({username})
+export const emitUserBudgetExceeded = (username, reason) => userBudgetExceeded$.next({username, reason})
 export const emitUserBudgetCleared = username => userBudgetCleared$.next({username})
 
 // budgetCommands' checkers call these on every over-budget user, but nothing subscribes to them,
