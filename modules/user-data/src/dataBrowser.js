@@ -87,6 +87,6 @@ const decode = segment => {
     try {
         return decodeURIComponent(segment)
     } catch (_error) {
-        return '..'
+        return segment
     }
 }

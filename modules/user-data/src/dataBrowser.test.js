@@ -25,6 +25,20 @@ describe('list', () => {
         expect(await browser.list('alice', 'data')).toEqual({ok: {dir: true}})
     })
 
+    it.each(['growth_10%.csv', '%zz'])('keeps an entry named %j, which is not a dot segment', async name => {
+        const {browser} = harness({listing: [{name, file: true}]})
+
+        expect(await browser.list('alice', 'data')).toEqual({[name]: {file: true}})
+    })
+
+    it.each(['data/growth_10%.csv', 'data/%zz'])('maps %p to its literal path', async path => {
+        const {browser, provider} = harness({listing: []})
+
+        await browser.list('alice', path)
+
+        expect(provider.calls).toEqual([['list', 'alice', path.slice('data/'.length)]])
+    })
+
     it('maps a path below data to the attachment', async () => {
         const {browser, provider} = harness({listing: []})
 
@@ -33,7 +47,7 @@ describe('list', () => {
         expect(provider.calls).toEqual([['list', 'alice', 'dir/sub']])
     })
 
-    it.each(['', 'downloads', 'data/../x', 'data/a/../../b', 'data//x', 'data/.', 'data/a\\b', 'data/%2e%2e', 'data/%2E', 'data/%zz', 'data/a\0b', 'datax'])(
+    it.each(['', 'downloads', 'data/../x', 'data/a/../../b', 'data//x', 'data/.', 'data/a\\b', 'data/%2e%2e', 'data/%2E', 'data/a\0b', 'datax'])(
         'refuses %p before calling the provider', async path => {
             const {browser, provider} = harness({listing: []})
 
@@ -51,6 +65,14 @@ describe('remove', () => {
         expect(provider.calls).toEqual([['remove', 'alice', 'a.txt'], ['remove', 'alice', 'dir']])
         expect(usage.dirty).toEqual(['alice'])
         expect(usage.measuredSoon).toEqual(['alice'])
+    })
+
+    it('removes a file whose name contains a stray percent sign', async () => {
+        const {browser, provider} = harness({})
+
+        await browser.remove('alice', ['data/growth_10%.csv', 'data/%zz'])
+
+        expect(provider.calls).toEqual([['remove', 'alice', 'growth_10%.csv'], ['remove', 'alice', '%zz']])
     })
 
     it('has the usage measured again when a later removal fails', async () => {
@@ -87,6 +109,12 @@ describe('download', () => {
         const {browser} = harness({emulator: false})
 
         expect(await browser.download('alice', 'data/dir/b.txt')).toEqual({redirect: 'https://signed/users/alice/dir/b.txt'})
+    })
+
+    it('downloads a file whose name contains a stray percent sign', async () => {
+        const {browser} = harness({emulator: false})
+
+        expect(await browser.download('alice', 'data/growth_10%.csv')).toEqual({redirect: 'https://signed/users/alice/growth_10%.csv'})
     })
 
     it('streams the file in emulator mode', async () => {
