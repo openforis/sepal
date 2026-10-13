@@ -59,39 +59,19 @@ export class BudgetRepository {
     }
 
     lastUserStorageUse(username) {
-        return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                `SELECT gb_hours, storage_used, update_time
-                    FROM user_monthly_storage
-                    WHERE username = ?
-                    ORDER BY year DESC, month DESC
-                    LIMIT 1`,
-                [username]
-            )
-            return this.#toStorageUse(rows[0])
-        })
+        return this.#lastUse('user_monthly_storage', username)
     }
 
     updateUserStorageUse(username, storageUse) {
-        return this.#db.withConnection(async connection => {
-            const updateTime = storageUse.updateTime
-            const year = yearOf(updateTime)
-            const month = monthOf(updateTime)
-            const params = [storageUse.gbHours, storageUse.gb, updateTime, storedUsername(username), year, month]
-            const [result] = await connection.query(
-                `UPDATE user_monthly_storage
-                    SET gb_hours = ?, storage_used = ?, update_time = ?
-                    WHERE username = ? AND year = ? AND month = ?`,
-                params
-            )
-            if (!result.affectedRows) {
-                await connection.query(
-                    `INSERT INTO user_monthly_storage(gb_hours, storage_used, update_time, username, year, month)
-                        VALUES(?, ?, ?, ?, ?, ?)`,
-                    params
-                )
-            }
-        })
+        return this.#updateUse('user_monthly_storage', username, storageUse)
+    }
+
+    lastUserDataUse(username) {
+        return this.#lastUse('user_monthly_data_storage', username)
+    }
+
+    updateUserDataUse(username, storageUse) {
+        return this.#updateUse('user_monthly_data_storage', username, storageUse)
     }
 
     userBudget(username) {
@@ -113,26 +93,33 @@ export class BudgetRepository {
                     params
                 )
             }
+            if (budget.dataQuota != null) {
+                await connection.query('UPDATE default_data_quota SET data_quota = ?', [budget.dataQuota])
+            }
         })
     }
 
     updateBudget(username, budget) {
         return this.#db.withConnection(async connection => {
-            const params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota, storedUsername(username)]
+            const params = [
+                budget.instanceSpending, budget.storageSpending, budget.storageQuota, budget.dataQuota ?? null,
+                storedUsername(username),
+            ]
             const [result] = await connection.query(
                 `UPDATE user_budget
-                    SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?
+                    SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?, data_quota = IFNULL(?, data_quota)
                     WHERE username = ?`,
                 params
             )
             if (!result.affectedRows) {
                 await connection.query(
-                    `INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, username)
-                        VALUES(?, ?, ?, ?)`,
+                    `INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, data_quota, username)
+                        VALUES(?, ?, ?, ?, ?)`,
                     params
                 )
             }
-            await this.#closeBudgetUpdateRequest(connection, username, budget)
+            const [[stored]] = await connection.query('SELECT data_quota FROM user_budget WHERE username = ?', [storedUsername(username)])
+            await this.#closeBudgetUpdateRequest(connection, username, {...budget, dataQuota: stored.data_quota})
         })
     }
 
@@ -143,9 +130,9 @@ export class BudgetRepository {
             for (const entry of entries) {
                 await connection.query(
                     `INSERT INTO user_spending
-                        (username, instance_spending, storage_spending, storage_usage)
-                        values (?, ?, ?, ?)`,
-                    [entry.username, entry.instanceSpending, entry.storageSpending, entry.storageUsage]
+                        (username, instance_spending, storage_spending, storage_usage, data_usage)
+                        values (?, ?, ?, ?, ?)`,
+                    [entry.username, entry.instanceSpending, entry.storageSpending, entry.storageUsage, entry.dataUsage ?? 0]
                 )
             }
         })
@@ -155,9 +142,9 @@ export class BudgetRepository {
         return this.#db.withConnection(async connection => {
             await connection.query(
                 `UPDATE user_spending
-                    SET instance_spending = ?, storage_spending = ?, storage_usage = ?
+                    SET instance_spending = ?, storage_spending = ?, storage_usage = ?, data_usage = ?
                     WHERE username = ?`,
-                [report.instanceSpending, report.storageSpending, report.storageUsage, username]
+                [report.instanceSpending, report.storageSpending, report.storageUsage, report.dataUsage ?? 0, username]
             )
         })
     }
@@ -166,22 +153,22 @@ export class BudgetRepository {
         return this.#db.withConnection(async connection => {
             const [result] = await connection.query(
                 `UPDATE budget_update_request
-                    SET requested_monthly_instance = ?, requested_monthly_storage = ?, requested_storage_quota = ?, message = ?, update_time = ?
+                    SET requested_monthly_instance = ?, requested_monthly_storage = ?, requested_storage_quota = ?, requested_data_quota = ?, message = ?, update_time = ?
                     WHERE username = ? and state = 'PENDING'`,
                 [
                     requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota,
-                    message, this.#clock(), username,
+                    requestedBudget.dataQuota ?? null, message, this.#clock(), username,
                 ]
             )
             if (!result.affectedRows) {
                 const initialBudget = await this.#userBudget(connection, username)
                 await connection.query(
-                    `INSERT INTO budget_update_request(id, initial_monthly_instance, initial_monthly_storage, initial_storage_quota, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time, state, username)
-                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT INTO budget_update_request(id, initial_monthly_instance, initial_monthly_storage, initial_storage_quota, initial_data_quota, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, requested_data_quota, message, creation_time, update_time, state, username)
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         crypto.randomUUID(), initialBudget.instanceSpending, initialBudget.storageSpending,
-                        initialBudget.storageQuota, requestedBudget.instanceSpending, requestedBudget.storageSpending,
-                        requestedBudget.storageQuota, message, this.#clock(), this.#clock(), 'PENDING', storedUsername(username),
+                        initialBudget.storageQuota, initialBudget.dataQuota, requestedBudget.instanceSpending,
+                        requestedBudget.storageSpending, requestedBudget.storageQuota, requestedBudget.dataQuota ?? null, message, this.#clock(), this.#clock(), 'PENDING', storedUsername(username),
                     ]
                 )
             }
@@ -191,7 +178,7 @@ export class BudgetRepository {
     budgetUpdateRequest(username) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
-                `SELECT requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
+                `SELECT requested_monthly_instance, requested_monthly_storage, requested_storage_quota, requested_data_quota, message, creation_time, update_time
                     FROM budget_update_request
                     WHERE username = ? and state = 'PENDING'`,
                 [username]
@@ -206,10 +193,11 @@ export class BudgetRepository {
             const requests = await this.#budgetUpdateRequests(connection)
             const report = {}
             const [rows] = await connection.query(
-                `SELECT u.username, s.instance_spending, s.storage_spending, s.storage_usage,
+                `SELECT u.username, s.instance_spending, s.storage_spending, s.storage_usage, s.data_usage,
                        IFNULL(b.monthly_instance, d.monthly_instance) monthly_instance,
                        IFNULL(b.monthly_storage, d.monthly_storage) monthly_storage,
-                       IFNULL(b.storage_quota, d.storage_quota) storage_quota
+                       IFNULL(b.storage_quota, d.storage_quota) storage_quota,
+                       IFNULL(b.data_quota, (SELECT data_quota FROM default_data_quota LIMIT 1)) data_quota
                 FROM (
                     SELECT username FROM user_spending
                     UNION
@@ -227,14 +215,52 @@ export class BudgetRepository {
                     instanceSpending: row.instance_spending ?? 0,
                     storageSpending: row.storage_spending ?? 0,
                     storageUsage: row.storage_usage ?? 0,
+                    dataUsage: row.data_usage ?? 0,
                     instanceBudget: row.monthly_instance ?? 0,
                     storageBudget: row.monthly_storage ?? 0,
                     storageQuota: row.storage_quota ?? 0,
+                    dataQuota: row.data_quota ?? 0,
                     costPerGbMonth: 0,
                     budgetUpdateRequest: requests[row.username],
                 })
             }
             return report
+        })
+    }
+
+    #lastUse(table, username) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT gb_hours, storage_used, update_time
+                    FROM ??
+                    WHERE username = ?
+                    ORDER BY year DESC, month DESC
+                    LIMIT 1`,
+                [table, username]
+            )
+            return this.#toStorageUse(rows[0])
+        })
+    }
+
+    #updateUse(table, username, storageUse) {
+        return this.#db.withConnection(async connection => {
+            const updateTime = storageUse.updateTime
+            const year = yearOf(updateTime)
+            const month = monthOf(updateTime)
+            const params = [storageUse.gbHours, storageUse.gb, updateTime, storedUsername(username), year, month]
+            const [result] = await connection.query(
+                `UPDATE ??
+                    SET gb_hours = ?, storage_used = ?, update_time = ?
+                    WHERE username = ? AND year = ? AND month = ?`,
+                [table, ...params]
+            )
+            if (!result.affectedRows) {
+                await connection.query(
+                    `INSERT INTO ??(gb_hours, storage_used, update_time, username, year, month)
+                        VALUES(?, ?, ?, ?, ?, ?)`,
+                    [table, ...params]
+                )
+            }
         })
     }
 
@@ -248,15 +274,17 @@ export class BudgetRepository {
 
     async #userBudget(connection, username) {
         const [userRows] = await connection.query(
-            `SELECT monthly_instance, monthly_storage, storage_quota
-                FROM user_budget
-                WHERE username = ?`,
+            `SELECT b.monthly_instance, b.monthly_storage, b.storage_quota,
+                    IFNULL(b.data_quota, (SELECT data_quota FROM default_data_quota LIMIT 1)) AS data_quota
+                FROM user_budget b
+                WHERE b.username = ?`,
             [username]
         )
         let row = userRows[0]
         if (!row) {
             const [defaultRows] = await connection.query(
-                `SELECT monthly_instance, monthly_storage, storage_quota
+                `SELECT monthly_instance, monthly_storage, storage_quota,
+                        (SELECT data_quota FROM default_data_quota LIMIT 1) AS data_quota
                     FROM default_user_budget`
             )
             row = defaultRows[0]
@@ -267,15 +295,15 @@ export class BudgetRepository {
     #closeBudgetUpdateRequest(connection, username, finalBudget) {
         return connection.query(
             `UPDATE budget_update_request
-                SET final_monthly_instance = ?, final_monthly_storage = ?, final_storage_quota = ?, update_time = ?, state = 'CLOSED'
+                SET final_monthly_instance = ?, final_monthly_storage = ?, final_storage_quota = ?, final_data_quota = ?, update_time = ?, state = 'CLOSED'
                 WHERE username = ? and state = 'PENDING'`,
-            [finalBudget.instanceSpending, finalBudget.storageSpending, finalBudget.storageQuota, this.#clock(), username]
+            [finalBudget.instanceSpending, finalBudget.storageSpending, finalBudget.storageQuota, finalBudget.dataQuota, this.#clock(), username]
         )
     }
 
     async #budgetUpdateRequests(connection) {
         const [rows] = await connection.query(
-            `SELECT username, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
+            `SELECT username, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, requested_data_quota, message, creation_time, update_time
                 FROM budget_update_request
                 WHERE state = 'PENDING'`
         )
@@ -292,6 +320,7 @@ const toBudgetUpdateRequest = row => budgetUpdateRequestDto({
     instanceSpending: row.requested_monthly_instance,
     storageSpending: row.requested_monthly_storage,
     storageQuota: row.requested_storage_quota,
+    dataQuota: row.requested_data_quota,
     creationTime: toDate(row.creation_time),
     updateTime: toDate(row.update_time),
 })
@@ -302,4 +331,5 @@ const toBudget = row => budgetDto({
     instanceSpending: row.monthly_instance,
     storageSpending: row.monthly_storage,
     storageQuota: row.storage_quota,
+    dataQuota: row.data_quota,
 })

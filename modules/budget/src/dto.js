@@ -1,7 +1,8 @@
-const budget = ({instanceSpending, storageSpending, storageQuota}) => ({
+const budget = ({instanceSpending, storageSpending, storageQuota, dataQuota}) => ({
     instanceSpending,
     storageSpending,
     storageQuota,
+    dataQuota,
 })
 
 const userInstanceSpending = ({username, spending, budget}) => ({
@@ -43,6 +44,8 @@ const userSpendingReport = ({
     storageQuota,
     costPerGbMonth,
     budgetUpdateRequest,
+    dataUsage,
+    dataQuota,
 }) => ({
     username,
     instanceSpending,
@@ -53,6 +56,8 @@ const userSpendingReport = ({
     storageQuota,
     costPerGbMonth,
     budgetUpdateRequest,
+    dataUsage,
+    dataQuota,
 })
 
 const budgetUpdateRequest = ({
@@ -60,6 +65,7 @@ const budgetUpdateRequest = ({
     instanceSpending,
     storageSpending,
     storageQuota,
+    dataQuota,
     creationTime,
     updateTime,
 }) => ({
@@ -67,6 +73,7 @@ const budgetUpdateRequest = ({
     instanceSpending,
     storageSpending,
     storageQuota,
+    dataQuota,
     creationTime,
     updateTime,
 })

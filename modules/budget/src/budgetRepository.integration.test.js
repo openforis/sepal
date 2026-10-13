@@ -37,7 +37,7 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget(OWNER)
 
-            expect(found).toEqual({instanceSpending: 1, storageSpending: 20, storageQuota: 30})
+            expect(found).toEqual({instanceSpending: 1, storageSpending: 20, storageQuota: 30, dataQuota: 10})
         })
 
         test('prefers the user\'s own budget over the default', async () => {
@@ -46,7 +46,7 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget(OWNER)
 
-            expect(found).toEqual({instanceSpending: 5, storageSpending: 50, storageQuota: 500})
+            expect(found).toEqual({instanceSpending: 5, storageSpending: 50, storageQuota: 500, dataQuota: 10})
         })
     })
 
@@ -144,7 +144,75 @@ describe('BudgetRepository', () => {
         })
     })
 
+    describe('Data use', () => {
+        test('is kept apart from home storage use', async () => {
+            await repository.updateUserStorageUse(OWNER, storageUse({gbHours: 1, gb: 1, updateTime: at('06-10')}))
+            await repository.updateUserDataUse(OWNER, storageUse({gbHours: 5, gb: 2, updateTime: at('06-11')}))
+
+            expect(await repository.lastUserDataUse(OWNER)).toEqual(storageUse({gbHours: 5, gb: 2, updateTime: at('06-11')}))
+            expect(await repository.lastUserStorageUse(OWNER)).toEqual(storageUse({gbHours: 1, gb: 1, updateTime: at('06-10')}))
+        })
+
+        test('is empty for a user who never had Data', async () => {
+            expect(await repository.lastUserDataUse(OWNER)).toEqual(storageUse({gbHours: 0, gb: 0, updateTime: now}))
+        })
+    })
+
+    describe('Data quota', () => {
+        beforeEach(() => repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 1, storageQuota: 1})))
+
+        test('defaults to the default data quota', async () => {
+            expect((await repository.userBudget(OWNER)).dataQuota).toBe(10)
+        })
+
+        test('is the user\'s own once set', async () => {
+            await repository.updateBudget(OWNER, budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 50}))
+
+            expect(await repository.userBudget(OWNER)).toEqual({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 50})
+        })
+
+        test('is kept when a budget update leaves it out', async () => {
+            await repository.updateBudget(OWNER, budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 50}))
+
+            await repository.updateBudget(OWNER, budget({instanceSpending: 4, storageSpending: 5, storageQuota: 6, dataQuota: null}))
+
+            expect((await repository.userBudget(OWNER)).dataQuota).toBe(50)
+        })
+
+        test('can be changed as the default for everyone without one', async () => {
+            await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 25}))
+
+            expect((await repository.userBudget(ANOTHER_OWNER)).dataQuota).toBe(25)
+        })
+
+        test('is part of a budget update request, with the current quota as initial', async () => {
+            await repository.updateBudget(OWNER, budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 50}))
+
+            await repository.requestBudgetUpdate(OWNER, 'more data', budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 200}))
+
+            expect((await repository.budgetUpdateRequest(OWNER)).dataQuota).toBe(200)
+            expect((await storedRequests(OWNER))[0]).toMatchObject({initial_data_quota: 50, requested_data_quota: 200})
+        })
+
+        test('is recorded as final when the request is closed by a budget update', async () => {
+            await repository.requestBudgetUpdate(OWNER, 'more data', budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 200}))
+
+            await repository.updateBudget(OWNER, budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 150}))
+
+            expect((await storedRequests(OWNER))[0]).toMatchObject({state: 'CLOSED', final_data_quota: 150})
+        })
+    })
+
     describe('spending', () => {
+        test('carries Data usage and the Data quota', async () => {
+            await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 10, storageQuota: 100}))
+            await repository.saveSpendingReport({[OWNER]: spending({username: OWNER, dataUsage: 4})})
+
+            const report = await repository.spendingReport()
+
+            expect(report[OWNER]).toMatchObject({dataUsage: 4, dataQuota: 10})
+        })
+
         test('replaces the whole report, dropping users it no longer names', async () => {
             await repository.updateDefaultBudget(budget({instanceSpending: 1, storageSpending: 10, storageQuota: 100}))
             await repository.saveSpendingReport({
@@ -258,7 +326,7 @@ describe('BudgetRepository', () => {
             const applied = await repository.userBudget(OWNER)
             const rows = await storedRequests(OWNER)
             const pending = await repository.budgetUpdateRequest(OWNER)
-            expect(applied).toEqual({instanceSpending: 6, storageSpending: 60, storageQuota: 600})
+            expect(applied).toEqual({instanceSpending: 6, storageSpending: 60, storageQuota: 600, dataQuota: 10})
             expect(rows[0].state).toBe('CLOSED')
             expect(rows[0].final_monthly_instance).toBe(6)
             expect(rows[0].final_storage_quota).toBe(600)
@@ -274,7 +342,7 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget('nobody')
             const [rows] = await testDb.query('SELECT COUNT(*) c FROM default_user_budget')
-            expect(found).toEqual({instanceSpending: 10, storageSpending: 20, storageQuota: 30})
+            expect(found).toEqual({instanceSpending: 10, storageSpending: 20, storageQuota: 30, dataQuota: 10})
             expect(rows[0].c).toBe(1)
         })
     })
@@ -299,9 +367,9 @@ describe('BudgetRepository', () => {
         return rows
     }
 
-    const spending = ({username, instanceSpending, storageSpending, storageUsage}) => userSpendingReport({
-        username, instanceSpending, storageSpending, storageUsage,
-        instanceBudget: 0, storageBudget: 0, storageQuota: 0, costPerGbMonth: 0,
+    const spending = ({username, instanceSpending = 0, storageSpending = 0, storageUsage = 0, dataUsage = 0}) => userSpendingReport({
+        username, instanceSpending, storageSpending, storageUsage, dataUsage,
+        instanceBudget: 0, storageBudget: 0, storageQuota: 0, dataQuota: 0, costPerGbMonth: 0,
         budgetUpdateRequest: null,
     })
 

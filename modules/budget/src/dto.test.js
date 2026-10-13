@@ -9,9 +9,9 @@ import {
 } from './dto.js'
 
 describe('budget DTOs', () => {
-    test('budget carries the three fields', () => {
-        expect(budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3}))
-            .toEqual({instanceSpending: 1, storageSpending: 2, storageQuota: 3})
+    test('budget carries the four fields', () => {
+        expect(budget({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 4}))
+            .toEqual({instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 4})
     })
 
     describe('userInstanceSpending.isBudgetExceeded — spending >= budget (non-strict)', () => {
@@ -56,27 +56,27 @@ describe('budget DTOs', () => {
         expect(instanceUse({instanceType: 't2', from, to})).toEqual({instanceType: 't2', from, to})
     })
 
-    test('userSpendingReport carries the nine fields', () => {
+    test('userSpendingReport carries the eleven fields', () => {
         const r = userSpendingReport({
-            username: 'a', instanceSpending: 1, storageSpending: 2, storageUsage: 3,
-            instanceBudget: 4, storageBudget: 5, storageQuota: 6, costPerGbMonth: 0.33,
+            username: 'a', instanceSpending: 1, storageSpending: 2, storageUsage: 3, dataUsage: 7,
+            instanceBudget: 4, storageBudget: 5, storageQuota: 6, dataQuota: 8, costPerGbMonth: 0.33,
             budgetUpdateRequest: null,
         })
         expect(r).toEqual({
-            username: 'a', instanceSpending: 1, storageSpending: 2, storageUsage: 3,
-            instanceBudget: 4, storageBudget: 5, storageQuota: 6, costPerGbMonth: 0.33,
+            username: 'a', instanceSpending: 1, storageSpending: 2, storageUsage: 3, dataUsage: 7,
+            instanceBudget: 4, storageBudget: 5, storageQuota: 6, dataQuota: 8, costPerGbMonth: 0.33,
             budgetUpdateRequest: null,
         })
     })
 
-    test('budgetUpdateRequest carries message/spending/quota/times', () => {
+    test('budgetUpdateRequest carries message/spending/quotas/times', () => {
         const c = new Date('2026-06-01T00:00:00Z')
         const u = new Date('2026-06-02T00:00:00Z')
         expect(budgetUpdateRequest({
-            message: 'please', instanceSpending: 1, storageSpending: 2, storageQuota: 3,
+            message: 'please', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 4,
             creationTime: c, updateTime: u,
         })).toEqual({
-            message: 'please', instanceSpending: 1, storageSpending: 2, storageQuota: 3,
+            message: 'please', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 4,
             creationTime: c, updateTime: u,
         })
     })
