@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
+import {inputSourceKey} from '~/app/home/body/process/inputImages'
 import {mutate} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -17,16 +18,15 @@ import {BandSetSpec} from './bandSetSpec'
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
 export class ImageForm extends Component {
-    state = {loading: false}
+    state = {loadingSource: null}
     render() {
-        const {inputs: {bands, bandSetSpecs}} = this.props
-        const {loading} = this.state
+        const {inputs: {bandSetSpecs}} = this.props
         return (
             <Layout
                 type='vertical'
                 spacing='compact'>
                 {this.renderInput()}
-                {!loading && bandSetSpecs.value?.length && bands.value?.length
+                {this.isShowingBandSets()
                     ? bandSetSpecs.value.map(bandSetSpec =>
                         this.renderBandSetSpec(bandSetSpec)
                     )
@@ -36,15 +36,13 @@ export class ImageForm extends Component {
     }
 
     renderInput() {
-        const {input, inputComponent, inputs: {otherSources}} = this.props
-        const {loading} = this.state
+        const {input, inputComponent, labelButtons, inputs: {otherSources}} = this.props
         return React.createElement(inputComponent, {
             input,
+            labelButtons,
             otherSources: otherSources.value,
-            busy: loading,
-            onLoading: () => {
-                this.setState({loading: true})
-            },
+            busy: this.isLoadingAnotherSource(),
+            onLoading: id => this.onLoading(id),
             onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
         })
     }
@@ -139,16 +137,6 @@ export class ImageForm extends Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
-        const {inputs: {section: prevSection, bands, bandSetSpecs}} = prevProps
-        const {inputs: {section}} = this.props
-
-        if (prevSection.value !== section.value) {
-            bands.set(null)
-            bandSetSpecs.set(null)
-        }
-    }
-
     addSelection(bandSetSpec, value) {
         const {inputs: {bandSetSpecs}} = this.props
         const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included']).push(value)
@@ -180,25 +168,58 @@ export class ImageForm extends Component {
         bandSetSpecs.set(updated)
     }
 
+    onLoading(id) {
+        this.setState({loadingSource: this.sourceOf(id)})
+    }
+
+    // What the selected source has is learned, not edited: for the source the input was saved with, it is where the form
+    // started. Only another source reconciles the band sets, keeping what it still offers - an image band it has, an
+    // index it can derive - and the image bands set, emptied if need be. Of the same source, every set is kept as the
+    // user left it, a selection it no longer has included.
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
-        const {form, inputs: {bands, bandSetSpecs, metadata, visualizations}} = this.props
-        this.setState({loading: false})
-        if (!id || !form.isDirty()) {
+        const {input, inputs: {bands, bandsSource, bandSetSpecs, metadata, visualizations}} = this.props
+        this.setState({loadingSource: null})
+        if (!id) {
             return
         }
-        const filteredSpecs = bandSetSpecs.value
-            .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
-            .map(spec => ({...spec, included: BandSetSpec.filter(spec, loadedBands)}))
+        const learn = (field, value) => input.isDirty() ? field.set(value) : field.setInitialValue(value)
+        learn(bands, loadedBands)
+        learn(metadata, loadedMetadata)
+        learn(visualizations, loadedVisualizations)
+        if (this.sourceOf(id) !== bandsSource.value) {
+            bandSetSpecs.set(bandSetSpecs.value
+                .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
+                .map(spec => ({...spec, included: BandSetSpec.filter(spec, loadedBands)})))
+            bandsSource.setInitialValue(this.sourceOf(id))
+        }
+    }
 
-        bandSetSpecs.set(filteredSpecs)
-        bands.set(loadedBands)
-        metadata.set(loadedMetadata)
-        visualizations.set(loadedVisualizations)
+    // The band sets are hidden only while another source than they were chosen against loads; one of that same source
+    // shows them as they are, whether or not it answers. Selections are shown even when their source has no bands, to be
+    // removed.
+    isShowingBandSets() {
+        const {inputs: {bands, bandSetSpecs}} = this.props
+        return !this.isLoadingAnotherSource()
+            && bandSetSpecs.value?.length
+            && (bands.value?.length || bandSetSpecs.value.some(({included}) => included.length))
+    }
+
+    isLoadingAnotherSource() {
+        const {inputs: {bandsSource}} = this.props
+        const {loadingSource} = this.state
+        return !!loadingSource && loadingSource !== bandsSource.value
+    }
+
+    sourceOf(id) {
+        const {inputs: {section}} = this.props
+        return inputSourceKey({type: section.value, id})
     }
 }
 
 ImageForm.propTypes = {
     children: PropTypes.any,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    // Shown in the source picker's label row: the choice of the kind of source.
+    labelButtons: PropTypes.array
 }

@@ -15,12 +15,13 @@ class _RecipeSection extends React.Component {
     }
 
     render() {
-        const {inputs: {recipe}} = this.props
+        const {labelButtons, inputs: {recipe}} = this.props
         return (
             <Layout>
                 <RecipeInput
                     filter={type => mayProvideSegments(type.id)}
                     input={recipe}
+                    labelButtons={labelButtons}
                     autoFocus
                     keepSelection
                     errorMessage
@@ -36,5 +37,6 @@ export const RecipeSection = compose(
 )
 
 RecipeSection.propTypes = {
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array
 }

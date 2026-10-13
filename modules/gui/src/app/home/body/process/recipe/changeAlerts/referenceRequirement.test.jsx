@@ -693,6 +693,48 @@ describe('a reference edited in REF', () => {
     })
 })
 
+// The kind of reference is chosen beside its picker. Each kind's picker keeps what was chosen in it while REF is open, and
+// only the kind shown is applied.
+describe('the kind of a reference chosen in REF', () => {
+    it('is a recipe for a reference not yet selected, opening unedited', async () => {
+        await editor({selection: {}, panels: ['reference']})
+
+        expect(field(RECIPE_INPUT)).not.toBeNull()
+        expect(field(ASSET_INPUT)).toBeNull()
+        expect(panelButton('button.apply')).toBeUndefined()
+    })
+
+    it('is the saved one for a selected reference, opening unedited', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2}, panels: ['reference']})
+
+        expect(field(ASSET_INPUT)).not.toBeNull()
+        expect(panelButton('button.apply')).toBeUndefined()
+    })
+
+    it('keeps the asset it was saved with, and the date representation saved over the asset\'s, once switched back to', async () => {
+        fake.stored = storedRecords(['ccdc-radar', 'ccdc-optical'])
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2}, panels: ['reference'], unloaded: ['ccdc-radar', 'ccdc-optical']})
+        await selectRecipe('Optical CCDC')
+
+        await chooseReferenceType('asset')
+        await apply()
+
+        expect(committedReference()).toEqual({type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2})
+    })
+
+    it('applies only the kind shown', async () => {
+        fake.stored = storedRecords(['ccdc-radar', 'ccdc-optical'])
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2}, panels: ['reference'], unloaded: ['ccdc-radar', 'ccdc-optical']})
+        await selectRecipe('Optical CCDC')
+        await chooseReferenceType('asset')
+        await chooseReferenceType('recipe')
+
+        await apply()
+
+        expect(committedReference()).toEqual(ref('ccdc-optical'))
+    })
+})
+
 // The reference supplies segments; which of their measures the alerts monitor, and in what data, are settings of Sources,
 // judged there and said on the setting to change. A reference no monitoring data Sources offers observes is refused in
 // REF; one only other monitoring settings observe is applied, and REF says, once, which sections then need attention.
@@ -792,11 +834,12 @@ describe('a reference the alerts can use but a segment chart cannot plot', () =>
 
         expect(errorsOf(ASSET_INPUT)).toEqual([])
         expect(warningsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.source.operation.PIXEL_SEGMENTS')])
-        expect(applyEnabled()).toBe(true)
         expect(sourceProblems()).toEqual({})
         expect(gate('IMAGE_OUTPUT')).toBe(null)
         expect(gate('COLLECTION_MOSAIC')).toBe(null)
         expect(gate('PIXEL_SEGMENTS')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
+        await chooseDateFormat('unixTimeMillis')
+        expect(applyEnabled()).toBe(true)
     })
 
     it('says the chart\'s problem apart from a refusal of the reference itself, which alone holds REF back', async () => {
@@ -1634,10 +1677,7 @@ const chooseReferenceType = async kind => {
     if (field(kind === 'asset' ? ASSET_INPUT : RECIPE_INPUT)) {
         return
     }
-    const header = [...document.querySelectorAll('button')].find(button =>
-        /^process\.changeAlerts\.panel\.reference\.(recipe\.title|asset\.title|title)$/.test(button.textContent))
-    await act(async () => header.click())
-    await act(async () => option(`process.changeAlerts.panel.reference.${kind}.label`).click())
+    await act(async () => panelButton(`process.sourceType.${kind === 'asset' ? 'ASSET' : 'RECIPE'}`).click())
 }
 
 const chooseDateFormat = key => chooseButton(`process.ccdc.panel.dates.form.dateFormat.${key}.label`)

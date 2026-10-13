@@ -10,8 +10,8 @@ import {initStore} from '~/store'
 
 // The source of an input chosen in the panel editing it, as each input imagery form offers it, over a real store: a
 // source another input of the recipe uses is not offered, or is refused where it is typed. A saved recipe whose inputs
-// already share a source stays editable. Stack's, Remapping's and Band Math's forms offer the kind of source beside its
-// picker, starting a new input as an asset; the classification family's chooses it in a step of its own.
+// already share a source stays editable. Every form offers the kind of source beside its picker, starting a new input as
+// an asset.
 
 const fake = vi.hoisted(() => ({metadata: null}))
 vi.mock('~/apiRegistry', async () => {
@@ -85,28 +85,25 @@ afterEach(async () => {
 const FORMS = [
     {
         form: 'Stack and Remapping', InputImage: SharedInputImage,
-        assetSection: null,
         recipeSection: 'process.sourceType.RECIPE',
         assetLabel: 'process.classChange.panel.inputImage.asset.label',
         bands: {red: {}, nir: {}}
     },
     {
         form: 'the classification family', InputImage: DerivedInputImage,
-        assetSection: 'process.classification.panel.inputImagery.asset.title',
-        recipeSection: 'process.classification.panel.inputImagery.recipe.title',
+        recipeSection: 'process.sourceType.RECIPE',
         assetLabel: 'process.classification.panel.inputImagery.form.asset.label',
         bands: ['red', 'nir']
     },
     {
         form: 'Band Math', InputImage: BandMathInputImage,
-        assetSection: null,
         recipeSection: 'process.sourceType.RECIPE',
         assetLabel: 'process.classChange.panel.inputImage.asset.label',
         bands: {red: {}, nir: {}}
     }
 ]
 
-describe.each(FORMS.filter(({assetSection}) => !assetSection))('an input in the form of $form', ({InputImage, assetLabel, bands}) => {
+describe.each(FORMS)('an input in the form of $form', ({InputImage, assetLabel, bands}) => {
     const input = (imageId, type, id) => inputOf(imageId, type, id, bands)
 
     it('starts new as an asset, its kind offered beside the picker', async () => {
@@ -127,12 +124,11 @@ describe.each(FORMS.filter(({assetSection}) => !assetSection))('an input in the 
     })
 })
 
-describe.each(FORMS)('an input in the form of $form', ({InputImage, assetSection, recipeSection, assetLabel, bands}) => {
+describe.each(FORMS)('an input in the form of $form', ({InputImage, recipeSection, assetLabel, bands}) => {
     const input = (imageId, type, id) => inputOf(imageId, type, id, bands)
 
     it('cannot be added with an asset another input uses, and can with another', async () => {
         await editInput(InputImage, {images: [input('input-a', 'ASSET', ASSET_X)], imageId: 'input-new'})
-        await choose(assetSection)
 
         await selectAsset(assetLabel, ASSET_X)
         expect(errorsOf(assetLabel)).toEqual([expect.stringContaining(DUPLICATE)])
@@ -234,8 +230,8 @@ const editInput = async (InputImage, {images, imageId}) => {
     await settled()
 }
 
-// The kind of source chosen, where the form asks for one: a form offering it beside the picker starts as an asset.
-const choose = label => label && act(async () => panelButton(label).click())
+// The kind of source chosen beside the picker.
+const choose = label => act(async () => panelButton(label).click())
 
 // An asset typed into the picker and chosen from what it offers, as a user chooses it.
 const selectAsset = async (label, id) => {

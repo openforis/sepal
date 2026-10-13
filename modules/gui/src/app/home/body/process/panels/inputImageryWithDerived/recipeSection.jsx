@@ -7,10 +7,11 @@ import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading, otherSources} = this.props
+        const {input, labelButtons, onLoading, otherSources} = this.props
         return (
             <RecipeInput
                 input={input}
+                labelButtons={labelButtons}
                 filter={(recipeType, recipe) => isImageSource(recipeType) && !isTakenSource(otherSources, 'RECIPE_REF', recipe.id)}
                 autoFocus
                 onLoading={onLoading}
@@ -30,6 +31,7 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
     // The sources of the recipe's other inputs, which are not offered.
     otherSources: PropTypes.array
 }

@@ -1,15 +1,15 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
-import {SectionSelection} from './sectionSelection'
 
 const fields = {
     section: new Form.Field()
@@ -31,44 +31,34 @@ class _Reference extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                {this.renderSections()}
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.changeAlerts.panel.reference.title')}/>
+                <Panel.Content>
+                    {this.renderSource()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {recipeId, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.changeAlerts.panel.reference.recipe.label'),
-                title: msg('process.changeAlerts.panel.reference.recipe.title'),
-                component: <RecipeSection inputs={inputs}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.changeAlerts.panel.reference.asset.label'),
-                title: msg('process.changeAlerts.panel.reference.asset.title'),
-                component: <AssetSection inputs={inputs}/>
-            }
+    // The kind of source is chosen beside its picker. Each picker keeps what was selected in it while the form is open;
+    // only the kind shown is applied.
+    renderSource() {
+        const {inputs} = this.props
+        const labelButtons = [
+            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF'/>
         ]
-        return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon='cog'
-                label={msg('process.changeAlerts.panel.reference.title')}
-            />
-        )
+        return inputs.section.value === 'ASSET'
+            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
+            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
     }
 }
+
+// Nothing selected yet is a recipe to select.
 const modelToValues = ({id, type, dateFormat}) => {
     const values = {
-        section: type || 'SELECTION',
+        section: type || 'RECIPE_REF',
         dateFormat
     }
     switch (type) {
@@ -83,16 +73,12 @@ const modelToValues = ({id, type, dateFormat}) => {
 
 // The selection and the configuration made about it. The description of what it produces is the source's,
 // read when it is needed, and is not written here.
-const valuesToModel = ({type, section, asset, recipe, dateFormat}) => {
-    const model = {
-        type: section,
-        dateFormat: type === 'RECIPE_REF' ? null : dateFormat
-    }
+const valuesToModel = ({section, asset, recipe, dateFormat}) => {
     switch (section) {
         case 'RECIPE_REF':
-            return {...model, id: recipe}
+            return {type: section, id: recipe}
         case 'ASSET':
-            return {...model, id: asset}
+            return {type: section, id: asset, dateFormat}
         default:
             return null
     }
