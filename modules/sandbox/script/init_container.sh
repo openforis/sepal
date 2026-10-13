@@ -46,10 +46,8 @@ fi
 
 # Data: the rclone remote and the AWS settings that point clients at user-data's credentials endpoint. Best effort:
 # without it the session still starts, with an empty ~/data.
-if [ "$SEPAL_DATA_ENABLED" = "true" ]; then
-    if data_env=$(sepal-data env sandbox "${sandbox_user_id}:${home_group_id}"); then
-        printf '%s\n' "$data_env" >> /etc/environment
-    fi
+if data_env=$(sepal-data env sandbox "${sandbox_user_id}:${home_group_id}"); then
+    printf '%s\n' "$data_env" >> /etc/environment
 fi
 
 # Must stay in the environment: pysepal reads it with os.getenv() at import time.

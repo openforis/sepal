@@ -19,17 +19,21 @@ const instance = {
 const config = () => ({
     sepalHostDataDir: '/host/data',
     sepalHost: 'sepal.example.org',
+    dataMountRoot: '/var/lib/sepal/data-mounts',
+    dataCacheMaxSize: '20G',
 })
+
+const sandboxImage = workerType => workerType.images.at(-1)
 
 describe('image containerName', () => {
     it('is "{image}.{username}.{instance name}.{instance id}"', () => {
         const workerType = createWorkerType(SANDBOX, instance, config())
-        expect(workerType.images[0].containerName(instance))
+        expect(sandboxImage(workerType).containerName(instance))
             .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`)
 
         const localInstance = {...instance, host: instance.id, daemonHost: 'host.docker.internal'}
         const localWorkerType = createWorkerType(SANDBOX, localInstance, config())
-        expect(localWorkerType.images[0].containerName(localInstance))
+        expect(sandboxImage(localWorkerType).containerName(localInstance))
             .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`)
     })
 
@@ -38,7 +42,7 @@ describe('image containerName', () => {
     it('ends with the instance id', () => {
         const awsInstance = {...instance, id: 'i-0abc123'}
         const workerType = createWorkerType(SANDBOX, awsInstance, config())
-        expect(workerType.images[0].containerName(awsInstance))
+        expect(sandboxImage(workerType).containerName(awsInstance))
             .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.i-0abc123`)
     })
 
@@ -47,7 +51,7 @@ describe('image containerName', () => {
     it('throws when the reservation carries no session id', () => {
         const orphaned = {...instance, reservation: {username: 'admin', workerType: SANDBOX}}
         const workerType = createWorkerType(SANDBOX, orphaned, config())
-        expect(() => workerType.images[0].containerName(orphaned)).toThrow(/session/i)
+        expect(() => sandboxImage(workerType).containerName(orphaned)).toThrow(/session/i)
     })
 })
 
@@ -59,7 +63,7 @@ describe('createWorkerType SANDBOX readiness', () => {
             config(),
             'api-key'
         )
-        const [image] = workerType.images
+        const image = sandboxImage(workerType)
         expect(image.waitCommand).toEqual(['/script/wait_until_initialized.sh', '22'])
         // Routing is unchanged — only readiness narrows.
         expect(image.exposedPorts).toEqual([22, 8787, 3838, 8888])
@@ -67,15 +71,9 @@ describe('createWorkerType SANDBOX readiness', () => {
     })
 })
 
-describe('with Data enabled', () => {
-    const dataConfig = () => ({
-        ...config(),
-        dataEnabled: true,
-        dataMountRoot: '/var/lib/sepal/data-mounts',
-        dataCacheMaxSize: '20G',
-    })
+describe('Data mount', () => {
     const data = {uid: 1001, gid: 1002}
-    const create = () => createWorkerType(SANDBOX, instance, dataConfig(), 'session-key', data)
+    const create = () => createWorkerType(SANDBOX, instance, config(), 'session-key', data)
 
     it('starts the mount sidecar before the sandbox', () => {
         const {images} = create()
@@ -93,7 +91,7 @@ describe('with Data enabled', () => {
 
         expect(sidecar.name).toBe('sandbox')
         expect(sidecar.volumes).toEqual({
-            [dataMountDir(dataConfig(), instance.id)]: '/mnt/host:rshared',
+            [dataMountDir(config(), instance.id)]: '/mnt/host:rshared',
             [dataCacheVolumeName(instance.id)]: '/cache',
         })
         expect(sidecar.hostConfig).toEqual({
@@ -118,31 +116,7 @@ describe('with Data enabled', () => {
     it('binds the mounted Data into the sandbox home', () => {
         const [, sandbox] = create().images
 
-        expect(sandbox.volumes[`${dataMountDir(dataConfig(), instance.id)}/data`]).toBe('/home/sepal-user/data:rslave')
-        expect(sandbox.environment.SEPAL_DATA_ENABLED).toBe('true')
+        expect(sandbox.volumes[`${dataMountDir(config(), instance.id)}/data`]).toBe('/home/sepal-user/data:rslave')
         expect(sandbox).toMatchObject({essential: true, networkAlias: true, tmpfs: true, hostConfig: {}})
-    })
-})
-
-describe('with Data disabled', () => {
-    it('describes only the sandbox, exactly as before Data existed', () => {
-        const {images} = createWorkerType(SANDBOX, instance, config(), 'session-key')
-
-        expect(images).toHaveLength(1)
-        expect(images[0].volumes).toEqual({
-            '/host/data/sepal/shiny': '/shiny',
-            '/host/data/sepal/shared': '/home/sepal-user/shared',
-            '/host/data/sepal/jupyter/current-kernels': '/usr/local/share/jupyter/kernels/',
-            '/host/data/sepal/home/admin': '/home/sepal-user',
-            [`sepal-tmp.${instance.id}`]: ['/tmp:nocopy', '/var/tmp:nocopy', '/home/sepal-user/tmp:nocopy'],
-        })
-        expect(images[0].environment).toEqual({
-            USER_PUBLIC_KEY: 'ssh-rsa PUBLIC-KEY\n',
-            SEPAL_API_KEY: 'session-key',
-            SEPAL_HOST: 'sepal.example.org',
-            CARTODB_BASEMAP_KEY: '',
-            NVIDIA_VISIBLE_DEVICES: 'all',
-            NVIDIA_DRIVER_CAPABILITIES: 'all',
-        })
     })
 })

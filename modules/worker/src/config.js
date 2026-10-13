@@ -302,12 +302,6 @@ program
             .default(false)
     )
     .addOption(
-        new Option('--data-enabled <boolean>', 'Mount each user\'s Data at ~/data in sandboxes')
-            .env('DATA_ENABLED')
-            .argParser(v => v === 'true')
-            .default(false)
-    )
-    .addOption(
         new Option('--data-flush-timeout-seconds <number>', 'Time to let the Data mount write back pending changes before it is removed')
             .env('DATA_FLUSH_TIMEOUT_SECONDS')
             .argParser(v => parseInt(v))
@@ -371,7 +365,6 @@ const {
     volumeInitializationRate,
     prewarmIdleVolumes,
     stoppedPoolSize,
-    dataEnabled,
     dataFlushTimeoutSeconds,
     dataMountRoot,
     dataCacheMaxSize,
@@ -390,7 +383,6 @@ export {
     busyWindowMinutes,
     cartoDbBasemapKey,
     dataCacheMaxSize,
-    dataEnabled,
     dataFlushTimeoutSeconds,
     dataMountRoot,
     dockerEntryPoint,

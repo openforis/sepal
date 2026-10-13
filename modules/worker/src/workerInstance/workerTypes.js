@@ -41,10 +41,6 @@ const sidecarContainerName = instance => containerName({
     instanceId: instance.id,
 })
 
-// isDataMountSidecar — for a container from Docker's listing, whose names start with '/'.
-const isDataMountSidecar = container =>
-    (container.Names ?? []).some(name => name.startsWith(`/${DATA_MOUNT_SIDECAR}.`))
-
 const makeImage = ({
     name,
     exposedPorts = [],
@@ -94,8 +90,6 @@ const createSandboxWorkerType = (instance, config, apiKey, data) => {
     // this removes — the terminal must not wait for Jupyter.
     const waitPorts = '22'
 
-    const dataEnabled = Boolean(config.dataEnabled)
-
     const sandbox = makeImage({
         name: 'sandbox',
         exposedPorts: [22, 8787, 3838, 8888],
@@ -106,7 +100,7 @@ const createSandboxWorkerType = (instance, config, apiKey, data) => {
             [`${config.sepalHostDataDir}/sepal/jupyter/current-kernels`]: '/usr/local/share/jupyter/kernels/',
             [userHome]: `/home/${USER_HOME_NAME}`,
             [tmpVolumeName(instance.id)]: tmpMounts,
-            ...(dataEnabled ? {[`${dataMountDir(config, instance.id)}/data`]: `/home/${USER_HOME_NAME}/data:rslave`} : {}),
+            [`${dataMountDir(config, instance.id)}/data`]: `/home/${USER_HOME_NAME}/data:rslave`,
         },
         environment: {
             USER_PUBLIC_KEY: userPublicKey,
@@ -115,7 +109,6 @@ const createSandboxWorkerType = (instance, config, apiKey, data) => {
             CARTODB_BASEMAP_KEY: config.cartoDbBasemapKey ?? '',
             NVIDIA_VISIBLE_DEVICES: 'all',
             NVIDIA_DRIVER_CAPABILITIES: 'all',
-            ...(dataEnabled ? {SEPAL_DATA_ENABLED: 'true'} : {}),
         },
         runCommand: ['/script/init_container.sh'],
         waitCommand: ['/script/wait_until_initialized.sh', waitPorts],
@@ -124,9 +117,7 @@ const createSandboxWorkerType = (instance, config, apiKey, data) => {
     // The sidecar comes first: its mount has to exist before the sandbox binds it.
     return {
         id: SANDBOX,
-        images: dataEnabled
-            ? [createDataMountSidecar(instance, config, apiKey, data), sandbox]
-            : [sandbox],
+        images: [createDataMountSidecar(instance, config, apiKey, data), sandbox],
     }
 }
 
@@ -174,7 +165,6 @@ export {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
-    isDataMountSidecar,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,

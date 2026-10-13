@@ -29,6 +29,19 @@ const CONFIG = {
     dockerEntryPoint: 'v1.38',
     dockerRegistryHost: 'registry.example.com',
     syslogAddress: null,
+    dataMountRoot: '/var/lib/sepal/data-mounts',
+    dataCacheMaxSize: '20G',
+    dataFlushTimeoutSeconds: 600,
+}
+
+const DATA_FOLDER = {prepare: async () => ({uid: 1001, gid: 1002, movedTo: null})}
+
+const UNMOUNT_HELPER = 'sandbox.data-unmount.'
+
+// A release's flush waits in simulated time: an unanswered pending-uploads check gives up at once.
+const instantClock = () => {
+    let now = 0
+    return {_sleep: async ms => { now += ms }, _now: () => now}
 }
 
 const CONFIG_WITH_SYSLOG = {
@@ -58,17 +71,6 @@ const INSTANCE_TYPE_GPU = {
 }
 
 const INSTANCE_TYPES = [INSTANCE_TYPE_T3A, INSTANCE_TYPE_GPU]
-
-const CONFIG_DATA = {
-    ...CONFIG,
-    dataEnabled: true,
-    dataMountRoot: '/var/lib/sepal/data-mounts',
-    dataCacheMaxSize: '20G',
-    dataFlushTimeoutSeconds: 600,
-}
-
-// Data turned off with the settings it had while on, as the worker's configuration keeps them.
-const DATA_DISABLED = {...CONFIG_DATA, dataEnabled: false}
 
 const makeInstance = (overrides = {}) => ({
     id: 'inst-abc123',
@@ -122,6 +124,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: cfg,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         return provisioner.provisionInstance(makeInstance())
     }
@@ -207,6 +210,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
         expect(capturedBody.HostConfig.Devices).toEqual([
@@ -265,6 +269,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
         expect(capturedBody.Env).toContain('SEPAL_INSTANCE_TYPE=g5.xlarge')
@@ -288,6 +293,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
             extraHosts: ['sepal.example.com:host-gateway'],
         })
         await provisioner.provisionInstance(makeInstance())
@@ -323,6 +329,7 @@ describe('provisionInstance sequence', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         await provisioner.provisionInstance(makeInstance())
         const paths = calls.map(c => `${c.method} ${new URL(c.url).pathname}`)
@@ -330,8 +337,9 @@ describe('provisionInstance sequence', () => {
         expect(paths[0]).toMatch(/GET.*containers\/json/)
         expect(at(/DELETE.*volumes\/sepal-tmp\.inst-abc123$/)).toBeLessThan(at(/POST.*volumes\/create$/))
         expect(at(/POST.*volumes\/create$/)).toBeLessThan(at(/POST.*containers\/sandbox\.alice\..*\/start$/))
-        expect(at(/POST.*containers\/sandbox\.alice\..*\/start$/)).toBeLessThan(at(/POST.*exec$/))
-        expect(at(/POST.*exec$/)).toBeLessThan(at(/POST.*exec\/.*\/start$/))
+        const sandboxExec = at(/POST.*containers\/sandbox\.alice\..*\/exec$/)
+        expect(at(/POST.*containers\/sandbox\.alice\..*\/start$/)).toBeLessThan(sandboxExec)
+        expect(sandboxExec).toBeLessThan(paths.findLastIndex(path => /POST.*exec\/.*\/start$/.test(path)))
     })
 })
 
@@ -362,6 +370,7 @@ describe('provisionInstance on a scratch device', () => {
         config: CONFIG,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
+        dataFolder: DATA_FOLDER,
     })
 
     const formatName = 'sandbox.format-tmp.inst-abc123'
@@ -451,7 +460,7 @@ describe('provisionInstance deletes .worker containers only', () => {
             }
             if (method === 'DELETE') {
                 const match = url.match(/\/containers\/([^?]+)/)
-                if (match) deletedIds.push(match[1])
+                if (match && !match[1].startsWith(UNMOUNT_HELPER)) deletedIds.push(match[1])
                 return {ok: true, status: 204, text: async () => ''}
             }
             if (url.includes('/exec') && !url.includes('/start')) {
@@ -464,6 +473,7 @@ describe('provisionInstance deletes .worker containers only', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         await provisioner.provisionInstance(makeInstance())
 
@@ -494,7 +504,7 @@ describe('undeploy', () => {
             }
             if (method === 'DELETE') {
                 const match = url.match(/\/containers\/([^?]+)/)
-                if (match) deletedIds.push(match[1])
+                if (match && !match[1].startsWith(UNMOUNT_HELPER)) deletedIds.push(match[1])
                 return {ok: true, status: 204, text: async () => ''}
             }
             return {ok: true, status: 200, text: async () => '{}'}
@@ -504,6 +514,8 @@ describe('undeploy', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
+            ...instantClock(),
         })
         await provisioner.undeploy(makeInstance())
 
@@ -527,7 +539,7 @@ describe('undeploy', () => {
             }
             if (method === 'DELETE') {
                 const match = url.match(/\/containers\/([^?]+)/)
-                if (match) deletedIds.push(match[1])
+                if (match && !match[1].startsWith(UNMOUNT_HELPER)) deletedIds.push(match[1])
                 return {ok: true, status: 204, text: async () => ''}
             }
             return {ok: true, status: 200, text: async () => '{}'}
@@ -537,6 +549,8 @@ describe('undeploy', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
+            ...instantClock(),
             defaultDaemonHost: 'daemon-host',
         })
         await provisioner.undeploy(makeInstance({daemonHost: 'daemon-host'}))
@@ -565,10 +579,13 @@ describe('undeploy', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
+            ...instantClock(),
         })
         await provisioner.undeploy(makeInstance())
 
-        expect(deletions).toEqual(['containers/w-001', 'volumes/sepal-tmp.inst-abc123'])
+        expect(deletions).toContain('containers/w-001')
+        expect(deletions.indexOf('containers/w-001')).toBeLessThan(deletions.indexOf('volumes/sepal-tmp.inst-abc123'))
     })
 
     test('succeeds when the instance has no tmp volume', async () => {
@@ -583,36 +600,11 @@ describe('undeploy', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
+            ...instantClock(),
         })
 
         await expect(provisioner.undeploy(makeInstance())).resolves.toBeUndefined()
-    })
-
-    test('undeploys exactly as before with Data disabled', async () => {
-        const requests = []
-        globalThis.fetch = jest.fn(async (url, opts = {}) => {
-            requests.push(`${opts.method ?? 'GET'} ${new URL(url).pathname}`)
-            if (url.includes('/containers/json')) {
-                return {
-                    ok: true, status: 200,
-                    text: async () => JSON.stringify([{Id: 'w-001', Names: ['/sandbox.alice.lofty-reef.inst-abc123']}]),
-                }
-            }
-            return {ok: true, status: 204, text: async () => ''}
-        })
-
-        const provisioner = createDockerInstanceProvisioner({
-            config: CONFIG,
-            instanceTypes: INSTANCE_TYPES,
-            sandboxSessionApiKey: SESSION_API_KEY,
-        })
-        await provisioner.undeploy(makeInstance())
-
-        expect(requests).toEqual([
-            'GET /v1.38/containers/json',
-            'DELETE /v1.38/containers/w-001',
-            'DELETE /v1.38/volumes/sepal-tmp.inst-abc123',
-        ])
     })
 
     test('undeploy deletes no container when no .worker containers exist', async () => {
@@ -623,7 +615,7 @@ describe('undeploy', () => {
             if (url.includes('/containers/json')) {
                 return {ok: true, status: 200, text: async () => JSON.stringify([])}
             }
-            if (method === 'DELETE' && url.includes('/containers/')) {
+            if (method === 'DELETE' && url.includes('/containers/') && !url.includes(UNMOUNT_HELPER)) {
                 deleteCallCount++
                 return {ok: true, status: 204, text: async () => ''}
             }
@@ -634,6 +626,8 @@ describe('undeploy', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
+            ...instantClock(),
         })
         await provisioner.undeploy(makeInstance())
 
@@ -650,6 +644,7 @@ describe('instanceStatus', () => {
         config: CONFIG,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: NULL_API_KEY_IMPL,
+        dataFolder: DATA_FOLDER,
     }).instanceStatus(makeInstance())
 
     const inspectResponds = body => {
@@ -697,6 +692,7 @@ describe('instanceStatus', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            dataFolder: DATA_FOLDER,
         }).instanceStatus(makeInstance({reservation: {username: 'alice', workerType: 'task-executor', sessionId: 'sess-1'}}))
         expect(status).toBe('UNKNOWN')
     })
@@ -740,6 +736,7 @@ describe('apiKey retry', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: retryWrapper,
+            dataFolder: DATA_FOLDER,
         })
         await provisioner.provisionInstance(makeInstance())
 
@@ -749,12 +746,13 @@ describe('apiKey retry', () => {
 
     test('no container is created when the key is never found', async () => {
         let created = false
-        setupFetchMock({captureCreate: () => { created = true }})
+        setupFetchMock({captureCreate: (_body, name) => { created ||= !name.startsWith(UNMOUNT_HELPER) }})
 
         const provisioner = createDockerInstanceProvisioner({
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: NULL_API_KEY_IMPL,
+            dataFolder: DATA_FOLDER,
         })
 
         await expect(provisioner.provisionInstance(makeInstance())).rejects.toThrow(/api key/)
@@ -879,41 +877,12 @@ describe('provisionInstance with Data', () => {
         expect(await provisioner().instanceStatus(instance)).toBe('PROVISIONED')
     })
 
-    test('provisions exactly as before with Data disabled', async () => {
-        const instance = makeInstance()
-
-        await provisioner(CONFIG).provisionInstance(instance)
-
-        expect(prepared).toEqual([])
-        expect(created).not.toHaveProperty([sidecarContainerName(instance)])
-        const sandbox = created[sandboxName(instance)]
-        expect(sandbox.HostConfig.Binds.some(bind => bind.includes('/home/sepal-user/data'))).toBe(false)
-        expect(sandbox.Env).not.toContain('SEPAL_DATA_ENABLED=true')
-        expect(sandbox.HostConfig.Tmpfs).toHaveProperty('/ram')
-        expect(sandbox.NetworkingConfig.EndpointsConfig.sepal).toEqual({})
-        expect(calls).not.toContain('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
-    })
-
-    // Data was disabled while a session with a Data mount ran on the instance.
-    test('with Data disabled, unmounts the Data a leftover sidecar mounted before provisioning', async () => {
-        const instance = makeInstance()
-        recordFetch({containers: [{Id: 'c-old-sidecar', Names: ['/sandbox.data-mount.bob.old-name.inst-abc123']}]})
-
-        await provisioner(DATA_DISABLED).provisionInstance(instance)
-
-        const unmount = calls.indexOf('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
-        expect(calls.indexOf('DELETE /v1.38/containers/c-old-sidecar')).toBeLessThan(unmount)
-        expect(unmount).toBeLessThan(calls.indexOf(`POST /v1.38/containers/create?name=${sandboxName(instance)}`))
-        expect(calls).toContain('DELETE /v1.38/volumes/sepal-data-cache.inst-abc123')
-        expect(created).not.toHaveProperty([sidecarContainerName(instance)])
-    })
-
     test('fails provisioning when the data folder cannot be prepared', async () => {
         const dataFolder = {prepare: async () => { throw new Error('EACCES: permission denied') }}
 
         const instance = makeInstance()
 
-        await expect(provisioner(CONFIG_DATA, dataFolder).provisionInstance(instance)).rejects.toThrow(/EACCES/)
+        await expect(provisioner(CONFIG, dataFolder).provisionInstance(instance)).rejects.toThrow(/EACCES/)
         expect(created).not.toHaveProperty([sidecarContainerName(instance)])
         expect(created).not.toHaveProperty([sandboxName(instance)])
     })
@@ -926,7 +895,7 @@ describe('provisionInstance with Data', () => {
         },
     }
 
-    const provisioner = (config = CONFIG_DATA, dataFolder = fakeDataFolder) => createDockerInstanceProvisioner({
+    const provisioner = (config = CONFIG, dataFolder = fakeDataFolder) => createDockerInstanceProvisioner({
         config,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
@@ -1003,25 +972,6 @@ describe('undeploy with Data', () => {
         expect(notified).toEqual([])
     })
 
-    test('with Data disabled, still drains and tears down a sidecar that is deployed', async () => {
-        recordFetch({pending: ['out/a.tif\n', '', '']})
-        const expected = [
-            `POST containers/${sandbox}/stop`,
-            `POST containers/${sidecar}/exec`,
-            `POST containers/${sidecar}/stop`,
-            'DELETE containers/c-sandbox',
-            'DELETE containers/c-sidecar',
-            `POST containers/create?name=${unmountHelper}`,
-            'DELETE volumes/sepal-data-cache.inst-abc123',
-        ]
-
-        await provisioner(DATA_DISABLED).undeploy(instance)
-
-        expect(calls[0]).toBe('GET containers/json')
-        expect(dedupe(calls.filter(call => expected.includes(call)))).toEqual(expected)
-        expect(pendingChecks()).toBe(3)
-    })
-
     test('finishes on two consecutive empty answers', async () => {
         recordFetch({pending: ['', '']})
 
@@ -1045,7 +995,7 @@ describe('undeploy with Data', () => {
     test('gives up after the flush timeout and tells the user what was not uploaded', async () => {
         recordFetch({pending: ['out/a.tif\nout/b.tif\n']})
 
-        await provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 10}).undeploy(instance)
+        await provisioner({...CONFIG, dataFlushTimeoutSeconds: 10}).undeploy(instance)
 
         expect(notified).toHaveLength(1)
         expect(notified[0].username).toBe('alice')
@@ -1060,7 +1010,7 @@ describe('undeploy with Data', () => {
         const paths = Array.from({length: 23}, (_, i) => `out/${i + 1}.tif`)
         recordFetch({pending: [`${paths.join('\n')}\n`]})
 
-        await provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 0}).undeploy(instance)
+        await provisioner({...CONFIG, dataFlushTimeoutSeconds: 0}).undeploy(instance)
 
         const {content} = notified[0]
         expect(content).toContain('out/20.tif')
@@ -1091,7 +1041,7 @@ describe('undeploy with Data', () => {
     test('stops waiting at the flush timeout when the pending uploads cannot be checked', async () => {
         recordFetch({pending: [500]})
 
-        await expect(provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 10}).undeploy(instance)).resolves.toBeUndefined()
+        await expect(provisioner({...CONFIG, dataFlushTimeoutSeconds: 10}).undeploy(instance)).resolves.toBeUndefined()
 
         expect(slept).toEqual([5000, 5000])
         expect(calls).toContain(`POST containers/${sidecar}/stop`)
@@ -1163,10 +1113,11 @@ describe('undeploy with Data', () => {
         expect(HostConfig).toEqual({Privileged: true, Binds: ['/:/host:rshared'], NetworkMode: 'none'})
     })
 
-    const provisioner = (config = CONFIG_DATA) => createDockerInstanceProvisioner({
+    const provisioner = (config = CONFIG) => createDockerInstanceProvisioner({
         config,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
+        dataFolder: DATA_FOLDER,
         notify: message => notified.push(message),
         _sleep: async ms => {
             slept.push(ms)
@@ -1176,9 +1127,6 @@ describe('undeploy with Data', () => {
     })
 
     const pendingChecks = () => calls.filter(call => call === `POST containers/${sidecar}/exec`).length
-
-    // dedupe — consecutive repeats collapsed, so a sequence reads the same however often a step polled.
-    const dedupe = list => list.filter((call, i) => call !== list[i - 1])
 
     // pending: what successive pending-uploads execs print, {exit, output} for a non-zero exit, or the
     // status their start fails with; the last answer repeats. gone: containers
@@ -1306,6 +1254,7 @@ describe('waitUntilDockerIsAvailable', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            dataFolder: DATA_FOLDER,
         })
         await expect(provisioner.provisionInstance(makeInstance())).resolves.toBeUndefined()
     })
@@ -1354,11 +1303,12 @@ const makeProvisioner = ({defaultDaemonHost = 'daemon-host', config = ORPHAN_CON
         config,
         instanceTypes: [],
         sandboxSessionApiKey: {apiKeyForInstance: async () => null},
+        dataFolder: DATA_FOLDER,
         defaultDaemonHost,
     })
 
 const deletedContainerIds = requests => requests
-    .filter(({method, url}) => method === 'DELETE' && url.includes('/containers/'))
+    .filter(({method, url}) => method === 'DELETE' && url.includes('/containers/') && !url.includes(UNMOUNT_HELPER))
     .map(({url}) => url.match(/containers\/([^/?]+)/)[1])
 
 describe('removeOrphanedContainers', () => {
@@ -1483,7 +1433,9 @@ describe('removeOrphanedContainers', () => {
 
         await makeProvisioner().removeOrphanedContainers([])
 
-        const deletions = requests.filter(({method}) => method === 'DELETE').map(({url}) => new URL(url).pathname)
+        const deletions = requests
+            .filter(({method, url}) => method === 'DELETE' && !url.includes(UNMOUNT_HELPER))
+            .map(({url}) => new URL(url).pathname)
         expect(deletions).toEqual([
             expect.stringMatching(/containers\/c-orphan$/),
             expect.stringMatching(/volumes\/sepal-tmp\.bbb$/),
@@ -1504,7 +1456,7 @@ describe('removeOrphanedContainers', () => {
             ],
         )
         global.fetch = fetch
-        const config = {...ORPHAN_CONFIG, dataEnabled: true, dataMountRoot: '/var/lib/sepal/data-mounts'}
+        const config = {...ORPHAN_CONFIG, dataMountRoot: '/var/lib/sepal/data-mounts'}
 
         const removed = await makeProvisioner({config}).removeOrphanedContainers(['aaa'])
 
@@ -1513,25 +1465,6 @@ describe('removeOrphanedContainers', () => {
         expect(JSON.parse(unmounts[0].body).Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/bbb')
         expect(deletedVolumeNames(requests)).toEqual(['sepal-data-cache.bbb'])
         expect(removed).toContain('sepal-data-cache.bbb')
-    })
-
-    it('with Data disabled, still unmounts an orphaned sidecar and deletes its cache', async () => {
-        const {fetch, requests} = makeFetch(
-            [
-                {Id: 'c-orphan', Names: ['/sandbox.alice.lofty-reef.bbb'], Created: OLD},
-                {Id: 'c-orphan-sidecar', Names: ['/sandbox.data-mount.alice.lofty-reef.bbb'], Created: OLD},
-                {Id: 'c-orphan-plain', Names: ['/sandbox.carol.quiet-dune.ccc'], Created: OLD},
-            ],
-            [{Name: 'sepal-data-cache.bbb', CreatedAt: isoDate(OLD)}],
-        )
-        global.fetch = fetch
-        const config = {...ORPHAN_CONFIG, dataEnabled: false, dataMountRoot: '/var/lib/sepal/data-mounts'}
-
-        await makeProvisioner({config}).removeOrphanedContainers([])
-
-        const unmounts = requests.filter(({url}) => url.includes('/containers/create'))
-        expect(unmounts.map(({url}) => new URL(url).searchParams.get('name'))).toEqual(['sandbox.data-unmount.bbb'])
-        expect(deletedVolumeNames(requests)).toEqual(['sepal-data-cache.bbb'])
     })
 
     it('is a no-op without a defaultDaemonHost (dedicated-host hosting, e.g. AWS)', async () => {

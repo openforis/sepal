@@ -144,11 +144,9 @@ On AWS the volume lives on local disk, never on EFS:
   `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
 
 ## Data mount
-With `DATA_ENABLED=true` (default `false`; with it off no session gets a mount, but what one already has is still
-torn down as below) each session mounts the user's Data
-(the `user-data` attachment) at `~/data`. Settings: `DATA_FLUSH_TIMEOUT_SECONDS` (600, how long a release waits for
-uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/` per instance), `DATA_CACHE_MAX_SIZE`
-(`20G`, rclone cache per sandbox).
+Each session mounts the user's Data (the `user-data` attachment) at `~/data`. Settings: `DATA_FLUSH_TIMEOUT_SECONDS`
+(600, how long a release waits for uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/`
+per instance), `DATA_CACHE_MAX_SIZE` (`20G`, rclone cache per sandbox).
 
 **Rollout requirements.** The worker host's `/` must be a shared mount (systemd hosts mount it so), or the
 sidecar's `rshared` bind cannot propagate the mount to the sandbox and the unmount helper cannot detach it;
@@ -181,11 +179,6 @@ not released twice. A session close therefore waits for the Data flush: normally
 `DATA_FLUSH_TIMEOUT_SECONDS`. Because a release takes that long, `ReclaimStaleClaims` and `ReleaseUnusedInstances`
 re-read each claim or instance just before releasing it and skip it when a new session has taken it since the
 sweep listed it.
-
-**Teardown follows what is deployed.** The release steps run whenever the instance has a sidecar container, even
-with `DATA_ENABLED=false`; so do the unmount and cache delete at provisioning and in the orphan sweep. Turning
-the flag off under running Data sessions therefore still drains and removes their mounts. With the flag off and
-no sidecar, release and provisioning are unchanged.
 
 **Durability.** Writes in `~/data` are durable only once uploaded; a terminated instance loses its cache. Never
 `docker rm -f` a sidecar without the unmount: it leaves a dead FUSE mount at the host path (the provisioner always

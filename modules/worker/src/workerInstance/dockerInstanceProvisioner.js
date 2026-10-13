@@ -6,10 +6,9 @@
 //
 // Methods:
 //   provisionInstance(instance, {tmpDevice})  — full provision sequence
-//   undeploy(instance)                        — delete the worker containers and the /tmp volume;
-//                                               with Data enabled or a Data mount sidecar deployed,
-//                                               first let pending uploads finish, and afterwards
-//                                               remove the mount and its cache
+//   undeploy(instance)                        — let pending Data uploads finish, delete the worker
+//                                               containers and the /tmp volume, then remove the
+//                                               Data mount and its cache
 //   instanceStatus(instance)                  — liveness probe → PROVISIONED | MISSING | UNKNOWN
 //   removeOrphanedContainers(liveInstanceIds) — shared-daemon sweep for leaked containers and
 //                                               /tmp volumes (and Data mounts and caches)
@@ -27,7 +26,6 @@ import {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
-    isDataMountSidecar,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,
@@ -85,7 +83,7 @@ const createDockerInstanceProvisioner = ({
     sandboxSessionApiKey,
     extraHosts = [],
     defaultDaemonHost = null,
-    dataFolder = null,
+    dataFolder,
     notify = () => {},
     _dockerRetries = 60,
     _dockerRetryDelayMs = 1000,
@@ -197,12 +195,10 @@ const createDockerInstanceProvisioner = ({
         }
     }
 
-    // removeInstanceContainers — the containers it deleted.
     const removeInstanceContainers = async instance => {
         const containers = await instanceContainers(instance)
         await deleteContainers(instance, containers)
         await deleteTmpVolume(instance)
-        return containers
     }
 
     // createTmpVolume — an empty volume of mode 1777, on tmpDevice when there is one (the session's
@@ -399,11 +395,10 @@ const createDockerInstanceProvisioner = ({
 
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
-    //   2. removeInstanceContainers (containers and /tmp volume); with Data enabled or a Data mount
-    //      sidecar among them, also the mount and cache a crashed predecessor left, so the new mount
-    //      never lands on a dead one
+    //   2. removeInstanceContainers (containers and /tmp volume), then the mount and cache a crashed
+    //      predecessor left, so the new mount never lands on a dead one
     //   3. apiKeyForInstance (with retry)
-    //   4. with Data enabled: dataFolder.prepare, the user's ~/data the mount lands on
+    //   4. dataFolder.prepare, the user's ~/data the mount lands on
     //   5. createWorkerType → get images
     //   6. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
     //   7. for each image in turn: createContainer, startContainer, waitUntilInitialized — the
@@ -412,10 +407,8 @@ const createDockerInstanceProvisioner = ({
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
         await waitUntilDockerIsAvailable(instance)
-        const removed = await removeInstanceContainers(instance)
-        if (config.dataEnabled || removed.some(isDataMountSidecar)) {
-            await removeDataMount(instance)
-        }
+        await removeInstanceContainers(instance)
+        await removeDataMount(instance)
 
         const apiKey = await sandboxSessionApiKey.apiKeyForInstance(instance.id)
         log.debug(`ApiKey for ${instanceTag(instance)}: ${apiKey ? '[obtained]' : '[null]'}`)
@@ -455,37 +448,25 @@ const createDockerInstanceProvisioner = ({
         }
     }
 
-    // prepareDataFolder — {uid, gid} the Data is mounted as, or null with Data disabled. A home that
-    // could not be prepared fails provisioning: the mount must never land on what the user kept there.
+    // prepareDataFolder — {uid, gid} the Data is mounted as. A home that could not be prepared fails
+    // provisioning: the mount must never land on what the user kept there.
     const prepareDataFolder = async instance => {
-        if (!config.dataEnabled) {
-            return null
-        }
         const {uid, gid} = await dataFolder.prepare(instance.reservation.username)
         return {uid, gid}
     }
 
     // undeploy — retried until it succeeds (ReclaimStaleClaims), and a failure terminates the
     // instance, so each Data step tolerates what an earlier attempt already removed and only logs
-    // its own failures. With Data, the sandbox stops first so nothing new is written, and the
-    // sidecar stays up until its pending uploads are done.
-    //
-    // What is deployed decides, not only the flag: a Data mount sidecar still running after Data was
-    // disabled holds the user's only copy of what it has not uploaded.
+    // its own failures. The sandbox stops first so nothing new is written, and the sidecar stays up
+    // until its pending uploads are done.
     const undeploy = async rawInstance => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Undeploying ${instanceTag(instance)}...`)
-        const listed = config.dataEnabled ? null : await instanceContainers(instance)
-        if (listed && !listed.some(isDataMountSidecar)) {
-            await deleteContainers(instance, listed)
-            await deleteTmpVolume(instance)
-        } else {
-            if (instance.reservation?.sessionId) {
-                await flushData(instance)
-            }
-            await removeInstanceContainers(instance)
-            await removeDataMount(instance)
+        if (instance.reservation?.sessionId) {
+            await flushData(instance)
         }
+        await removeInstanceContainers(instance)
+        await removeDataMount(instance)
         log.info(`Undeployed ${instanceTag(instance)}`)
     }
 
@@ -609,7 +590,7 @@ const createDockerInstanceProvisioner = ({
 
     // removeOrphanedContainers — delete worker containers, then their Data mounts, /tmp volumes
     // and Data caches, on the shared local daemon that no live instance claims. An orphaned Data
-    // mount sidecar is unmounted even with Data disabled. Instance tracking on local hosting is in-memory,
+    // Instance tracking on local hosting is in-memory,
     // so a worker restart forgets live instances; when their sessions later close,
     // releaseInstance finds nothing to undeploy and the containers leak (they are otherwise never revisited —
     // instanceContainers is scoped to a single instance's names).
@@ -636,8 +617,7 @@ const createDockerInstanceProvisioner = ({
             await deleteContainer(daemon, c.Id)
             removed.push(name)
         }
-        const mounted = config.dataEnabled ? orphans : orphans.filter(isDataMountSidecar)
-        for (const instanceId of new Set(mounted.map(orphanInstanceId).filter(Boolean))) {
+        for (const instanceId of new Set(orphans.map(orphanInstanceId).filter(Boolean))) {
             await unmountData({...daemon, id: instanceId})
         }
         return [

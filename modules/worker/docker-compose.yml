@@ -87,7 +87,6 @@ services:
       # Stopped, disk-warm workers a request starts as whatever instance type it asks for. Released
       # instances are recycled into the pool; warm-up launches fill the rest. 0 = no pool.
       STOPPED_POOL_SIZE: "${AWS_STOPPED_POOL_SIZE:-0}"
-      DATA_ENABLED: "${DATA_ENABLED:-false}"
       DATA_FLUSH_TIMEOUT_SECONDS: "${DATA_FLUSH_TIMEOUT_SECONDS:-600}"
       DATA_MOUNT_ROOT: "${DATA_MOUNT_ROOT:-/var/lib/sepal/data-mounts}"
       DATA_CACHE_MAX_SIZE: "${DATA_CACHE_MAX_SIZE:-20G}"
