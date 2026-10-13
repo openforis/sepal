@@ -471,8 +471,9 @@ const outputStateRead = (declaration, {status, dependencyValidity}) => {
     }
 }
 
-// Names by recipe id from the listing, once per listing.
-const recipeNamesOf = state => {
+// Names by recipe id from the listing, once per listing and shared by everything naming recipes from it: read, never
+// changed.
+export const recipeNamesOf = state => {
     const listing = state.process?.recipes || NO_LISTING
     if (!RECIPE_NAMES.has(listing)) {
         RECIPE_NAMES.set(listing, Object.fromEntries(listing.map(({id, name}) => [id, name])))

@@ -14,6 +14,7 @@ import {
     readLocalRequirements,
     readOutputRequirementsOfState,
     readSourceRequirements,
+    recipeNamesOf,
     SUPPORTED,
     UNAVAILABLE,
     UNFILLED_ROLE,
@@ -91,7 +92,7 @@ const selectedStatusOf = (state, reads, sectionId) => {
     if (!own.some(({selected}) => selected)) {
         return null
     }
-    const names = recipeNames(state)
+    const names = recipeNamesOf(state)
     const blocking = own.filter(isRequired)
         .map(read => statusOf(read, names))
         .filter(Boolean)
@@ -118,7 +119,7 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
     if (!gate) {
         return null
     }
-    const names = recipeNames(state)
+    const names = recipeNamesOf(state)
     const status = statusOf(gate.read, names)
     return status && {
         state: status.state,
@@ -298,6 +299,3 @@ const diagnosis = (diagnostic, declaration, names) => {
 
 const recordText = (record, names) =>
     `${getRecipeType(record.type)?.labels?.name || record.type} '${names[record.id] || record.id}'`
-
-const recipeNames = state =>
-    Object.fromEntries((selectFrom(state, 'process.recipes') || []).map(({id, name}) => [id, name]))
