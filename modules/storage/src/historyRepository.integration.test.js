@@ -90,6 +90,41 @@ describe('HistoryRepository', () => {
         })
     })
 
+    describe('recentlyPurged', () => {
+        test('reports users whose latest event is a purge since the given time', async () => {
+            await givenEvents([
+                {username: OWNER, event: 'NOTIFIED', timestamp: at(1)},
+                {username: OWNER, event: 'PURGED', timestamp: at(3)}
+            ])
+
+            expect(await repository.recentlyPurged(at(2))).toEqual([OWNER])
+        })
+
+        test('leaves out a purge before the given time', async () => {
+            await givenEvents([{username: OWNER, event: 'PURGED', timestamp: at(1)}])
+
+            expect(await repository.recentlyPurged(at(2))).toEqual([])
+        })
+
+        test('leaves out a user active again after the purge', async () => {
+            await givenEvents([
+                {username: OWNER, event: 'PURGED', timestamp: at(3)},
+                {username: OWNER, event: 'ACTIVE', timestamp: at(4)}
+            ])
+
+            expect(await repository.recentlyPurged(at(2))).toEqual([])
+        })
+
+        test('reports every recently purged user', async () => {
+            await givenEvents([
+                {username: OWNER, event: 'PURGED', timestamp: at(3)},
+                {username: ANOTHER_OWNER, event: 'PURGED', timestamp: at(4)}
+            ])
+
+            expect((await repository.recentlyPurged(at(2))).sort()).toEqual([ANOTHER_OWNER, OWNER].sort())
+        })
+    })
+
     describe('getUserEvents', () => {
         test('reports nothing for a user with no events', async () => {
             const events = await repository.getUserEvents(OWNER)

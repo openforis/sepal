@@ -55,6 +55,25 @@ export class HistoryRepository {
         })
     }
 
+    // Users whose latest event is a purge recorded at or after `since`.
+    recentlyPurged(since) {
+        return this.#db.withConnection(async connection => {
+            const [results, _fields] = await connection.query(`
+                SELECT t.username
+                FROM history t
+                INNER JOIN (
+                    SELECT username, MAX(id) AS max_id
+                    FROM history
+                    GROUP BY username
+                ) AS sub
+                ON t.username = sub.username AND t.id = sub.max_id
+                WHERE t.event = 'PURGED'
+                AND t.timestamp >= ?
+            `, [since])
+            return results.map(({username}) => username)
+        })
+    }
+
     getUserEvents(username) {
         log.debug(`Getting events for user: ${username}`)
         return this.#db.withConnection(async connection => {

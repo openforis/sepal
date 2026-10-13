@@ -230,8 +230,8 @@ export class InactivityCheck {
             case STORAGE.INACTIVE_HIGH:
                 log.info(`User ${username} inactive with significant storage, erasing storage`)
                 await erase(username)
-                await this.#repository.addEvent({username, event: 'PURGED'})
                 emitUserStorageErased(username)
+                await this.#repository.addEvent({username, event: 'PURGED'})
                 break
             case STORAGE.INACTIVE_LOW:
                 log.info(`User ${username} still inactive but with negligible storage, not erasing storage`)

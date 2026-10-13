@@ -11,6 +11,7 @@ import {HistoryRepository} from './historyRepository.js'
 import {InactivityCheck} from './inactivityCheck.js'
 import {normalizeCase} from './kvstore.js'
 import {createMessageHandler} from './messageHandler.js'
+import {PurgeAnnouncements} from './purgeAnnouncements.js'
 import {createRoutes} from './routes.js'
 import {scanComplete$, startStorageCheck} from './storageCheck.js'
 
@@ -47,6 +48,7 @@ const main = async () => {
     await server.start({port, routes: createRoutes(repository)})
     await startStorageCheck()
     await inactivityCheck.startInactivityCheck()
+    new PurgeAnnouncements({repository}).start()
 
     log.info('Initialized')
 }
