@@ -43,4 +43,9 @@ services:
       retries: 3
     networks:
       - sepal
+      - sepal-task
     restart: always
+
+networks:
+  sepal-task:
+    external: true

@@ -63,6 +63,11 @@ republishes recent purges daily; a user with no `data_usage` row and nothing sto
   `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` (`/var/run/sepal-data-token`).
 - `GET /attachments/:id/download?path=data/...` — the GUI path of a file in Data. AWS mode answers 302 to a
   15-minute presigned URL; the emulator streams it. Always `Cache-Control: no-store`; an unsafe path answers 400.
+- `GET /attachments/data/files?path=<relative to Data>` — `{items}` as the browser lists it (`{[name]: {dir: true} |
+  {file: true, size, mtime}}`); empty path is the Data root, a missing folder lists as `{items: {}}`. Unsafe path 400,
+  other attachment ids 404, always `no-store`. The GUI export panel uses it to warn about non-empty folders.
+- `POST /attachments/data/changed` — 204; has the user's Data measured soon (debounced). Export tasks call it after
+  uploading.
 
 ## File browser websocket
 
@@ -86,7 +91,8 @@ cached per user and mode and renewed within 15 minutes of expiry.
 
 `docker-compose.override.yml` runs the adapter in emulator mode against its own `s3-emulator` service
 (`rclone serve s3`, bucket `sepal-dev-user-data`, key `sepal-dev` / `sepal-dev-secret`). Emulator mode hands out
-that fixed key: there is no prefix isolation and no read-only mode in dev-env.
+that fixed key: there is no prefix isolation and no read-only mode in dev-env. The emulator also joins the external
+`sepal-task` network so task containers reach `http://s3-emulator:8080`; in AWS tasks reach S3 over the internet.
 
 ## AWS resources
 

@@ -51,7 +51,7 @@ const main = async () => {
     const browserWs$ = moduleWs$(createBrowserWs({browser}))
     await server.start({
         port,
-        routes: createRoutes(access, browser),
+        routes: createRoutes(access, browser, usage),
         wsRoutes: {'/ws': server.wsStream(ctx => browserWs$(ctx.arg$))}
     })
     log.info('Initialized')
