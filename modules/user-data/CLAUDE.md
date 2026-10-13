@@ -60,6 +60,17 @@ republishes recent purges daily; a user with no `data_usage` row and nothing sto
 - `GET /attachments/:id/credentials` — AWS container-credentials JSON (`AccessKeyId`, `SecretAccessKey`, `Token`,
   `Expiration`). Clients authenticate with `Authorization: Basic <base64(":" + api key)>`, read from
   `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` (`/var/run/sepal-data-token`).
+- `GET /attachments/:id/download?path=data/...` — the GUI path of a file in Data. AWS mode answers 302 to a
+  15-minute presigned URL; the emulator streams it. Always `Cache-Control: no-store`; an unsafe path answers 400.
+
+## File browser websocket
+
+`/api/ws` module `user-data` (`/ws` on this module) speaks the `user-files` protocol, so the GUI's file monitor
+works unchanged. Paths are GUI paths: `data` is the Data root, `data/dir` a folder in it. `{monitor, reset?}`
+polls each path every 10 s and sends `{path, items}` when the listing changed; an invalid path sends
+`{path, error: 'INVALID_PATH'}` once and stops. `{unmonitor}` stops a path and its subpaths for that
+subscription only. `{remove: [paths]}` deletes, marks the usage dirty and re-lists at once. Removing `data`
+itself is refused. `DataBrowser` owns the GUI-path validation; the provider validates again.
 
 ## Credentials
 

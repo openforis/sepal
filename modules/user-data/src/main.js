@@ -2,10 +2,13 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
 import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
+import {moduleWs$} from '#sepal/ws/module'
 
 import {Access} from './access.js'
 import {Attachments} from './attachments.js'
+import {createBrowserWs} from './browserWs.js'
 import {amqpUri, port, s3, sepalHost} from './config.js'
+import {DataBrowser} from './dataBrowser.js'
 import {initializeDb} from './db.js'
 import {emitUserDataSize, USER_DATA_PUBLISHERS} from './events.js'
 import {Lifecycle} from './lifecycle.js'
@@ -44,7 +47,13 @@ const main = async () => {
     })
     usage.start()
     lifecycle.start()
-    await server.start({port, routes: createRoutes(access)})
+    const browser = new DataBrowser({attachments, providers, usage})
+    const browserWs$ = moduleWs$(createBrowserWs({browser}))
+    await server.start({
+        port,
+        routes: createRoutes(access, browser),
+        wsRoutes: {'/ws': server.wsStream(ctx => browserWs$(ctx.arg$))}
+    })
     log.info('Initialized')
 }
 
