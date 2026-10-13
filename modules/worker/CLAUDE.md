@@ -66,8 +66,10 @@ A worker authenticates back to SEPAL with Basic auth, empty username, key as pas
 resolves it through `POST /sessions/api-key-authenticate` → `{username, sessionId, workerType}` and
 injects the session as `sepal-session`.
 
-Keys resolve only while the session is PENDING or ACTIVE; closing a session clears `api_key`, so the
-last terminal callback of a session revokes its own credential.
+A key resolves for as long as the row holds it. Closing a session leaves `api_key` in place until the
+instance's release ends, failed or not, and then clears it (`releaseSessionInstance`): the Data mount
+sidecar refreshes its credentials with the key while the release waits for its uploads, and the release
+stops the sandbox first, so by then only the sidecar holds it.
 
 ## Session expiration
 See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by
@@ -139,14 +141,22 @@ On AWS the volume lives on local disk, never on EFS:
   `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
 
 ## Data mount
-With `DATA_ENABLED=true` (default `false`; with it off nothing below happens) each session mounts the user's Data
+With `DATA_ENABLED=true` (default `false`; with it off no session gets a mount, but what one already has is still
+torn down as below) each session mounts the user's Data
 (the `user-data` attachment) at `~/data`. Settings: `DATA_FLUSH_TIMEOUT_SECONDS` (600, how long a release waits for
 uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/` per instance), `DATA_CACHE_MAX_SIZE`
-(`20G`, rclone cache per sandbox). Dev-env leaves it off until the dev sandbox image has `sepal-data`.
+(`20G`, rclone cache per sandbox).
+
+**Rollout requirements.** The worker host's `/` must be a shared mount (systemd hosts mount it so), or the
+sidecar's `rshared` bind cannot propagate the mount to the sandbox and the unmount helper cannot detach it;
+`/dev/fuse` must exist on the worker AMI. The cache volume lives on Docker's volume disk, and
+`DATA_CACHE_MAX_SIZE` is soft for dirty files: rclone never evicts what it has not uploaded yet, so a user
+writing faster than the uploads drain can grow it past the limit.
 
 **Sidecar.** `sandbox.data-mount.{username}.{instanceName}.{instanceId}`, the sandbox image running `sepal-data mount`
-(rclone FUSE; `SYS_ADMIN`, `/dev/fuse`, apparmor unconfined). It binds `{mountRoot}/{instanceId}` at `/mnt/host` as
-`rshared`, mounts at `/mnt/host/data`, and caches in the `sepal-data-cache.{instanceId}` volume. The sandbox binds
+(rclone FUSE; every capability dropped but `SYS_ADMIN`, `no-new-privileges`, `/dev/fuse`, apparmor unconfined). It
+binds `{mountRoot}/{instanceId}` at `/mnt/host` as `rshared`, mounts at `/mnt/host/data`, and caches in the
+`sepal-data-cache.{instanceId}` volume. The sandbox binds
 `{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: if it fails to come up,
 provisioning logs a warning and the sandbox starts with an empty `~/data`.
 
@@ -155,17 +165,29 @@ provisioning logs a warning and the sandbox starts with an empty `~/data`.
 creates and chowns `~/data`; a failure here fails provisioning); then sidecar (waits for `sepal-data wait-mounted`),
 then sandbox.
 
-**Release (`undeploy`).** Stop the sandbox, poll `sepal-data pending-uploads` in the sidecar until empty (or the
-timeout, when the user is emailed the files that never uploaded), stop the sidecar, remove the remaining containers,
-unmount, delete the cache volume. Unmount is a privileged helper chrooted into the host (`/:/host:rshared`) running
+**Release (`undeploy`).** Stop the sandbox, poll `sepal-data pending-uploads` in the sidecar until two consecutive
+answers, one poll apart, are empty (files the killed processes closed can be queued after the first), stop the
+sidecar, remove the remaining containers, unmount, delete the cache volume. At the timeout the user is emailed the
+files that never uploaded. A non-zero exit of `pending-uploads` means "unknown", like a failed check: the last known
+list stands. If no check has ever answered for two minutes (a dead or hung daemon), the release logs a warning and
+tears down without waiting further; a sidecar already gone at the first check is logged as possibly holding files
+that were not uploaded. Unmount is a privileged helper chrooted into the host (`/:/host:rshared`) running
 `umount -l` then `rmdir` (never `rm -rf`). Every step tolerates what an earlier attempt removed and only logs.
 A release in flight is registered in `releaseRegistry.js`, which `ReclaimStaleClaims` skips, so a slow flush is
 not released twice. A session close therefore waits for the Data flush: normally seconds, at most
-`DATA_FLUSH_TIMEOUT_SECONDS`.
+`DATA_FLUSH_TIMEOUT_SECONDS`. Because a release takes that long, `ReclaimStaleClaims` and `ReleaseUnusedInstances`
+re-read each claim or instance just before releasing it and skip it when a new session has taken it since the
+sweep listed it.
+
+**Teardown follows what is deployed.** The release steps run whenever the instance has a sidecar container, even
+with `DATA_ENABLED=false`; so do the unmount and cache delete at provisioning and in the orphan sweep. Turning
+the flag off under running Data sessions therefore still drains and removes their mounts. With the flag off and
+no sidecar, release and provisioning are unchanged.
 
 **Durability.** Writes in `~/data` are durable only once uploaded; a terminated instance loses its cache. Never
 `docker rm -f` a sidecar without the unmount: it leaves a dead FUSE mount at the host path (the provisioner always
-unmounts). The orphan sweep unmounts the mounts and deletes the caches of orphaned instances.
+unmounts). The orphan sweep, which runs on the shared local daemon only (dev; on AWS containers die with their
+instance), unmounts the mounts and deletes the caches of orphaned instances.
 
 ## Stopped-instance pool (AWS)
 `STOPPED_POOL_SIZE` (default 0 = off) keeps that many stopped worker instances whose disk has already
