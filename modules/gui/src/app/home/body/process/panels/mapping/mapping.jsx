@@ -17,7 +17,6 @@ import {LegendItem} from '~/widget/legend/legendItem'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
-import {Tooltip} from '~/widget/tooltip'
 
 import styles from './mapping.module.css'
 
@@ -81,15 +80,13 @@ class _Mapping extends React.Component {
         return (
             <ListItem
                 key={entry.id}
-                error={!!problem}
                 onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>
                 <CrudItem
-                    content={problem
-                        ? <Tooltip msg={problem} placement='top'><div>{legendItem}</div></Tooltip>
-                        : legendItem}
+                    content={legendItem}
+                    error={problem}
                 />
             </ListItem>
         )

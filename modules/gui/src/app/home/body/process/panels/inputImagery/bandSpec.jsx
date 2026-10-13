@@ -18,13 +18,13 @@ export class BandSpec extends React.Component {
         const categorical = type === 'categorical'
         return (
             <ListItem
-                error={!!missing}
                 expansion={categorical ? this.renderLegend() : null}
                 expanded={categorical && expanded}
                 disabled={disabled}
                 onClick={categorical ? () => onToggle(id) : undefined}>
                 <CrudItem
                     content={this.renderHeader()}
+                    error={missing ? this.missingMessage() : null}
                     unsafeRemove
                     onRemove={() => onRemove(id)}
                 />
@@ -32,12 +32,12 @@ export class BandSpec extends React.Component {
         )
     }
 
-    // Its name, saying why where its source lacks it and otherwise naming it in full, however short it is cut.
+    // Its name, named in full however short it is cut.
     renderHeader() {
-        const {spec: {band}, missing} = this.props
+        const {spec: {band}} = this.props
         return (
             <div className={styles.header}>
-                <Tooltip msg={missing ? this.missingMessage() : band}>
+                <Tooltip msg={band}>
                     <div className={styles.name}>{band}</div>
                 </Tooltip>
                 {this.renderTypeSelector()}

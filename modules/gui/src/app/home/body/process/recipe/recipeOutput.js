@@ -71,21 +71,60 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, 
     if (refresh) {
         return {...refresh, assets: graphAssets(graph)}
     }
-    const {explainable, ...session} = sessionAnswer({recipe, product, graph})
+    const reused = sessionReadOf({recipe, product, graph})
+    const {explainable, ...session} = reused.answer
     const kind = session.acquisition || (explain && explainable ? EXPLAIN : null)
-    const acquisition = kind ? {kind, key: acquisitionKey(kind, graph)} : null
+    const acquisition = kind ? {kind, key: reused.keyOf(kind)} : null
     const held = acquisition && heldFor(acquisition.key)
-    const assets = _.uniq([...graphAssets(graph), ...(held?.assets || [])]).sort()
+    const assets = held?.assets?.length ? _.uniq([...reused.assets, ...held.assets]).sort() : reused.assets
+    const read = held ? heldAnswer({recipe, product, session, kind, terminal: held}) : session
     const missing = assets.find(id => isDefinitiveFailure(assetEvidence[id]))
     if (missing) {
-        return {...answer({status: UNAVAILABLE, diagnostics: [{code: ASSET_UNAVAILABLE, assetId: missing}]}), acquisition, assets}
+        return {...withMissingAsset(read, missing), acquisition, assets}
     }
+    return {...read, acquisition, assets}
+}
+
+// An asset found missing or inaccessible leaves the answer unavailable - unless what was read beside it establishes
+// a definitive diagnosis, which outranks it: the answer is then that refusal, the asset named beside it.
+const withMissingAsset = (read, assetId) => {
+    const failure = {code: ASSET_UNAVAILABLE, assetId}
+    return read.status === INVALID
+        ? {...read, diagnostics: [...read.diagnostics, failure]}
+        : answer({status: UNAVAILABLE, diagnostics: [failure]})
+}
+
+// What the session answers for a recipe depends on nothing but the records its graph holds and the declarations of their
+// types, which are pure, so it is reused for as long as they are the very same records - whatever else the store, or
+// another recipe, changed - with the keys and assets derived from them: by every consumer, the runtime's acquisition
+// included. Records are immutable: an edit is another.
+const SESSION_READS = new WeakMap()
+
+const sessionReadOf = ({recipe, product, graph}) => {
+    const productKey = JSON.stringify(product ?? null)
+    const reads = SESSION_READS.get(recipe) || new Map()
+    SESSION_READS.set(recipe, reads)
+    const cached = reads.get(productKey)
+    if (cached && sameRecords(cached.records, graph.recipes)) {
+        return cached
+    }
+    const read = sessionReadFor({recipe, product, graph})
+    reads.set(productKey, read)
+    return read
+}
+
+const sessionReadFor = ({recipe, product, graph}) => {
+    const keys = {}
     return {
-        ...(held ? heldAnswer({recipe, product, session, kind, terminal: held}) : session),
-        acquisition,
-        assets
+        records: graph.recipes,
+        answer: sessionAnswer({recipe, product, graph}),
+        assets: graphAssets(graph),
+        keyOf: kind => keys[kind] || (keys[kind] = acquisitionKey(kind, graph))
     }
 }
+
+const sameRecords = (records, others) =>
+    records.length === others.length && records.every((record, index) => record === others[index])
 
 // The assets the session graph reaches.
 export const graphAssets = graph =>
@@ -93,9 +132,9 @@ export const graphAssets = graph =>
 
 // What a watched question needs loaded, from the same graph and read its consumers render from: the acquisition with
 // the recipe, graph and session records it names, or null when the session answers on its own or holds no such
-// recipe.
-export const outputLoading = ({recipeId, product, explain, catalogue, session}) => {
-    const recipe = catalogue[recipeId]
+// recipe. A question about a candidate reads the recipe it carries, over the session's records.
+export const outputLoading = ({recipeId, product, explain, candidate, catalogue, session}) => {
+    const recipe = candidate || catalogue[recipeId]
     if (!recipe) {
         return null
     }

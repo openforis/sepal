@@ -3,6 +3,7 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {initValues} from '~/app/home/body/process/recipe'
+import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
 import {SourceCandidate} from '~/app/home/body/process/recipe/sourceCandidate'
 import {sourceInputFeedback} from '~/app/home/body/process/recipe/sourceInputFeedback'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -73,6 +74,21 @@ export const recipeFormPanel = (
         return declarations.find(({role, section}) => role && section.id === id)?.section || null
     }
 
+    // A panel a requirement its recipe's output read judges names as the editor of one item (`editor.panel`) judges its
+    // values by that requirement, over the recipe built from that item alone (outputCandidate.js): what it finds is told
+    // to `editor.input` and holds Apply back. Pending or failed, it holds nothing back.
+    const outputEditorOf = props => {
+        const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
+        return declarations.find(({outputDiagnostics, editor}) => outputDiagnostics && editor?.panel === id) || null
+    }
+
+    const outputCandidateOf = (declaration, props, onChange) => {
+        const {recipeId, sourceRuntime} = props
+        return declaration && sourceRuntime
+            ? new OutputCandidate({sourceRuntime, recipeId, declaration, valuesToModel, onChange})
+            : null
+    }
+
     const sourceCandidateOf = (section, props, onChange) => {
         const {recipeId, sourceRuntime} = props
         return section
@@ -96,6 +112,10 @@ export const recipeFormPanel = (
                     this.sourceSection = sourceSectionOf(props)
                     this.sourceCandidate = sourceCandidateOf(this.sourceSection, props, () => this.mounted && this.setState(
                         ({sourceCandidateChanges = 0}) => ({sourceCandidateChanges: sourceCandidateChanges + 1})
+                    ))
+                    this.outputEditor = outputEditorOf(props)
+                    this.outputCandidate = outputCandidateOf(this.outputEditor, props, () => this.mounted && this.setState(
+                        ({outputCandidateChanges = 0}) => ({outputCandidateChanges: outputCandidateChanges + 1})
                     ))
     
                     form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
@@ -124,28 +144,35 @@ export const recipeFormPanel = (
                 componentDidMount() {
                     this.mounted = true
                     this.sourceCandidate?.update(this.props.form.values())
+                    this.outputCandidate?.update(this.props.form.values())
                 }
 
                 componentDidUpdate() {
                     this.sourceCandidate?.update(this.props.form.values())
+                    this.outputCandidate?.update(this.props.form.values())
                 }
 
                 componentWillUnmount() {
                     this.mounted = false
                     this.sourceCandidate?.stop()
+                    this.outputCandidate?.stop()
                 }
 
                 form() {
                     const {form} = this.props
-                    const candidate = this.sourceCandidate
-                    if (!candidate) {
+                    const sourceCandidate = this.sourceCandidate
+                    const outputCandidate = this.outputCandidate
+                    if (!sourceCandidate && !outputCandidate) {
                         return form
                     }
-                    const input = this.sourceSection.input?.(form.values())
-                    const feedback = sourceInputFeedback(candidate.status(), () => candidate.refresh())
+                    const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values())
+                    const sourceFeedback = sourceCandidate && sourceInputFeedback(sourceCandidate.status(), () => sourceCandidate.refresh())
+                    const outputInput = outputCandidate && this.outputEditor.editor.input
+                    const findings = outputCandidate?.findings()
+                    const outputFeedback = findings && {error: findings.message, diagnostics: findings.diagnostics}
                     return withInputFeedback(form, {
-                        feedbackOf: name => name === input ? feedback : null,
-                        blocked: () => candidate.refused()
+                        feedbackOf: name => name === sourceInput ? sourceFeedback : name === outputInput ? outputFeedback : null,
+                        blocked: () => Boolean(sourceCandidate?.refused() || outputCandidate?.refused())
                     })
                 }
             },

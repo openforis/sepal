@@ -22,7 +22,7 @@ import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {retrieveAvailability} from './operationAvailability'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
-import {configurationGate} from './sourceRequirements'
+import {configurationGate, outputRequirementGate} from './sourceRequirements'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
@@ -93,15 +93,16 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, n
     const held = output.acquisition && heldFor(output.acquisition.key)
     const pending = Boolean(output.acquisition) && !held
     // A configuration that does not meet its own requirements is refused for that, whatever its output reads as: the
-    // image it would build is not one it can.
+    // image it would build is not one it can. One its output read refuses is refused for that, naming its section.
     const unmet = configurationGate({recipe, operation: IMAGE_OUTPUT})
+        || outputRequirementGate({recipe, output, operation: IMAGE_OUTPUT})
     if (unmet) {
         return {recipe, graph, output: withheld(output, unmet), pending: false}
     }
     const gate = output.status === READY
         && authorityGate({
             state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null,
-            dependencyValidity: output.dependencyValidity, evidenceOwnerOf, now
+            dependencyValidity: output.dependencyValidity, evidenceOwnerOf, heldFor, now
         })
     return gate
         ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
@@ -205,7 +206,7 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
 
 // Why the description may not authorize an export now, if it may not: {wait, code, recipeId}. A wait comes after
 // every block, so nothing that blocks is reported as pending.
-const authorityGate = ({state, recipe, graph, basis, assets, observedAt, dependencyValidity, evidenceOwnerOf, now}) => {
+const authorityGate = ({state, recipe, graph, basis, assets, observedAt, dependencyValidity, evidenceOwnerOf, heldFor, now}) => {
     const listing = listingAuthority({listingState: selectFrom(state, 'process.recipeListing'), now})
     if (listing !== CURRENT) {
         return listing === WAITING
@@ -245,7 +246,7 @@ const authorityGate = ({state, recipe, graph, basis, assets, observedAt, depende
     // Dependencies known to be unsound already refuse it, with what it describes (unresolvedOutput).
     const requirement = dependencyValidity && dependencyValidity.status !== VALID
         ? null
-        : retrieveAvailability({state, recipe, evidenceOwnerOf, now}).gate
+        : retrieveAvailability({state, recipe, evidenceOwnerOf, heldFor, now}).gate
     const reasons = [...drafts, ...unauthorized, ...(requirement ? [requirement] : [])]
     return reasons.find(({wait}) => !wait) || reasons[0] || null
 }

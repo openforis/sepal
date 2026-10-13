@@ -32,6 +32,8 @@ const LISTING_PATH = ['process', 'recipes']
 const LISTING_STATE_PATH = ['process', 'recipeListing']
 const SAVES_PATH = ['process', 'saveStates']
 const SOURCE_REFRESHES_PATH = ['process', 'sourceRefreshes']
+// How many output answers the runtime has settled: a count, holding none of them.
+const OUTPUT_SETTLEMENTS_PATH = ['process', 'sourceOutputSettlements']
 const USER_ASSETS_PATH = ['assets', 'user']
 const OTHER_ASSETS_PATH = ['assets', 'other']
 const ASSET_MUTATION_PATH = ['assets', 'mutation']
@@ -260,6 +262,15 @@ export const createReduxSourceEnvironment = ({store}) => {
             }
             store.dispatch(actionBuilder('UPDATE_ASSET_EVIDENCE')
                 .set(ASSET_EVIDENCE_PATH, {generation: earthEngineGeneration(state), assets: updated})
+                .build())
+        },
+        // Counts the output answers the runtime settled, so what reads them beside the session reads them again.
+        outputsSettled: () => {
+            if (closed) {
+                return
+            }
+            store.dispatch(actionBuilder('SOURCE_OUTPUTS_SETTLED')
+                .set(OUTPUT_SETTLEMENTS_PATH, (at(store.getState(), OUTPUT_SETTLEMENTS_PATH) || 0) + 1)
                 .build())
         },
         // Counts an explicit refresh of these recipes and assets: what was read from them is read again.

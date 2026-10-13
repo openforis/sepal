@@ -9,6 +9,7 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -187,8 +188,9 @@ const layersButton = () => document.querySelector('svg[data-icon="layer-group"]'
 
 const layersMarked = () => layersButton().classList.contains(toolbarButtonStyles.error)
 
-// The sources whose rows are in their error state, by the description each shows.
-const rowsMarked = () => [...document.getElementsByClassName(listItemStyles.error)]
+// The sources whose rows are marked in error, by the description each shows.
+const rowsMarked = () => [...document.getElementsByClassName(errorIndicatorStyles.indicator)]
+    .map(indicator => indicator.closest(`.${listItemStyles.verticalWrapper}`))
     .map(row => SOURCES.map(({sourceConfig: {description, label}}) => description || label).find(name => row.textContent.includes(name)))
 
 const rowTooltip = name => [...document.querySelectorAll('[data-tooltip]')]

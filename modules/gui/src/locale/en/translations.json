@@ -2324,6 +2324,7 @@
             "indexes": {
               "label": "Indexes"
             },
+            "insufficientBands": "Select at least two available bands.",
             "pairWiseExpression": {
               "ANGLE": {
                 "label": "Angle"
@@ -2340,7 +2341,9 @@
               "RATIO": {
                 "label": "Ratio"
               }
-            }
+            },
+            "unavailableBands": "Source no longer provides {bands}.",
+            "underivableIndexes": "Source no longer provides the bands to derive {indexes}."
           },
           "button": "IMG",
           "derivedBands": {
@@ -2395,6 +2398,9 @@
               "placeholder": "Enter an asset ID...",
               "required": "You must enter an asset ID"
             },
+            "bandSetSpecs": {
+              "required": "Select at least one band"
+            },
             "includedBands": {
               "label": "Included bands"
             },
@@ -2406,6 +2412,11 @@
             "section": {
               "required": "An image must be selected"
             }
+          },
+          "unavailableSelections": {
+            "incompleteCombination": "A band combination needs at least two available bands.",
+            "input": "Some bands or indexes are unavailable. Open this image to review them.",
+            "inputs": "Some bands or indexes are unavailable. Review Input imagery."
           },
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",

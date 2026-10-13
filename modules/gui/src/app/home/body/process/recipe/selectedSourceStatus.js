@@ -6,11 +6,13 @@ import {msg} from '~/translate'
 
 import {
     CHECKED,
+    CHECKING,
     CYCLIC_SOURCE,
     EXPIRED,
     MISSING_SOURCE,
     NOT_A_PRODUCER,
     readLocalRequirements,
+    readOutputRequirementsOfState,
     readSourceRequirements,
     SUPPORTED,
     UNAVAILABLE,
@@ -44,8 +46,9 @@ export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
 export const UNMET_CONFIGURATION = 'UNMET_CONFIGURATION'
 
-export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now()) =>
-    sectionStatusOf(state, readsOf(state, recipeId, evidenceOwnerOf, now), sectionId)
+// `heldFor` is the source runtime's: a type whose requirements its output read judges needs it.
+export const selectedSourceStatusOfState = (state, recipeId, sectionId, evidenceOwnerOf, now = Date.now(), heldFor) =>
+    sectionStatusOf(state, readsOf(state, recipeId, evidenceOwnerOf, now, heldFor), sectionId)
 
 // The same, over reads the caller made - of a selection being edited, say.
 export const sectionStatusOf = (state, reads, sectionId) => {
@@ -55,16 +58,33 @@ export const sectionStatusOf = (state, reads, sectionId) => {
         : configurationStatusOf(reads, sectionId) || sourceStatus
 }
 
-// What each item of a section its local requirements enumerate says, where anything does: {[itemId]: status}.
+// What each item of a section its local requirements enumerate, or its output read refuses, says, where anything does:
+// {[itemId]: status}.
 export const itemStatusesOf = (reads, sectionId) => Object.fromEntries(reads
     .filter(read => read.local && read.item && read.declaration.section.id === sectionId)
     .map(read => [read.item.id, localStatusOf(read)])
     .filter(([_id, status]) => status))
 
-export const itemStatusesOfState = (state, recipeId, sectionId) => {
+export const itemStatusesOfState = (state, recipeId, sectionId, heldFor) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
-    return recipe ? itemStatusesOf(readLocalRequirements(recipe), sectionId) : {}
+    if (!recipe) {
+        return NO_STATUSES
+    }
+    const local = readLocalRequirements(recipe)
+    const output = readOutputRequirementsOfState({state, recipe, heldFor})
+    const bySection = ITEM_STATUSES.get(output) || new Map()
+    ITEM_STATUSES.set(output, bySection)
+    const previous = bySection.get(sectionId)
+    if (previous?.local !== local) {
+        bySection.set(sectionId, {local, statuses: itemStatusesOf([...local, ...output], sectionId)})
+    }
+    return bySection.get(sectionId).statuses
 }
+
+// What a section's items say, while the reads it was said of are the same.
+const ITEM_STATUSES = new WeakMap()
+
+const NO_STATUSES = Object.freeze({})
 
 const selectedStatusOf = (state, reads, sectionId) => {
     const own = reads.filter(({declaration}) => declaration.section.id === sectionId)
@@ -109,17 +129,30 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
 
 // The sections held back by an unavailable or unsuitable source, or by their own configuration, and why:
 // {[sectionId]: message}. An advisory marks nothing.
-export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now()) => {
-    const reads = readsOf(state, recipeId, evidenceOwnerOf, now)
-    return Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
+export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now(), heldFor) => {
+    const reads = readsOf(state, recipeId, evidenceOwnerOf, now, heldFor)
+    const listing = selectFrom(state, 'process.recipes')
+    const previous = SOURCE_PROBLEMS.get(reads)
+    if (previous && previous.listing === listing) {
+        return previous.problems
+    }
+    const problems = sourceProblemsOf(state, reads)
+    SOURCE_PROBLEMS.set(reads, {listing, problems})
+    return problems
+}
+
+// What the sections say, while the reads they were said of, and the names they name, are the same.
+const SOURCE_PROBLEMS = new WeakMap()
+
+const sourceProblemsOf = (state, reads) =>
+    Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
         .map(section => [section, sectionStatusOf(state, reads, section)])
         .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state))
         .map(([section, {message}]) => [section, message]))
-}
 
-const readsOf = (state, recipeId, evidenceOwnerOf, now) => {
+const readsOf = (state, recipeId, evidenceOwnerOf, now, heldFor) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
-    return recipe ? readSourceRequirements({state, recipe, evidenceOwnerOf, now}) : []
+    return recipe ? readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}) : []
 }
 
 const PRECEDENCE = [UNSUITABLE_SOURCE, UNAVAILABLE_SOURCE, CHECKING_SOURCE]
@@ -151,16 +184,25 @@ const operationLabel = ({operations = []}) =>
 
 // What the section's local requirements find, the first item named, and every one in `details`: what they find
 // themselves before what holds them only by their prerequisites, which is said by the prerequisites' names alone.
+// A declaration with a `summary(reads)` says its items' problems in that one sentence, naming none of them.
 const configurationStatusOf = (reads, sectionId) => {
     const unmet = reads.filter(read => read.local && read.declaration.section.id === sectionId && read.verdict.status === UNSUPPORTED)
+    const summarizing = _.uniq(unmet.map(({declaration}) => declaration).filter(({summary}) => summary))
+    const itemized = unmet.filter(({declaration}) => !declaration.summary)
     const problems = [
-        ...unmet.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read)})),
-        ...unmet.filter(read => read.ownVerdict.status !== UNSUPPORTED)
-            .map(read => ({read, message: prerequisitesMessage(read), details: []}))
+        ...summarizing.map(declaration => ({
+            message: declaration.summary(unmet.filter(read => read.declaration === declaration)),
+            details: []
+        })),
+        ...[
+            ...itemized.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read)})),
+            ...itemized.filter(read => read.ownVerdict.status !== UNSUPPORTED)
+                .map(read => ({read, message: prerequisitesMessage(read), details: []}))
+        ]
+            .map(({read, message, details}) => read.item
+                ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
+                : {message, details})
     ]
-        .map(({read, message, details}) => read.item
-            ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
-            : {message, details})
     return problems.length
         ? {
             state: UNMET_CONFIGURATION,
@@ -198,6 +240,9 @@ const statusOf = (read, names) => {
     if (read.local) {
         return localStatusOf(read)
     }
+    if (read.outputState) {
+        return outputStateStatusOf(read)
+    }
     const {selected, selects, acquisition, verdict, declaration, assetId, missing} = read
     if (verdict.status === SUPPORTED || (!selects && verdict.status !== UNSUPPORTED)) {
         return null
@@ -215,6 +260,18 @@ const statusOf = (read, names) => {
     return acquisition === EXPIRED
         ? status(UNAVAILABLE_SOURCE, msg('process.source.status.expired'), true)
         : status(CHECKING_SOURCE, msg('process.source.status.checking'), false)
+}
+
+// What holds an operation while a recipe's output read neither describes it nor refuses a selection
+// (sourceRequirements.js): only gates ask, so it names no selection.
+const outputStateStatusOf = ({acquisition}) => {
+    const status = (state, message, refresh) => ({selected: null, state, message, details: [], refresh})
+    if (acquisition === CHECKING) {
+        return status(CHECKING_SOURCE, msg('process.source.status.checking'), false)
+    }
+    return acquisition === UNAVAILABLE
+        ? status(UNAVAILABLE_SOURCE, msg('process.source.status.unavailable'), true)
+        : status(UNSUITABLE_SOURCE, msg('process.retrieve.error.imageOutput'), false)
 }
 
 const diagnosis = (diagnostic, declaration, names) => {

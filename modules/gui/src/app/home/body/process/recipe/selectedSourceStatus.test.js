@@ -1,12 +1,27 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import {sectionStatusOf} from './selectedSourceStatus'
+import {sectionStatusOf, sourceProblemsOfState} from './selectedSourceStatus'
 import {CHECKED, SUPPORTED, UNSUPPORTED} from './sourceRequirements'
 
 // Whether a section's status advises of other sections' settings no longer suiting its source, over reads of one
 // selection as the requirement reader makes them (sourceRequirements.js).
 
 vi.mock('~/translate', () => ({msg: key => key}))
+// A type requiring something of its own configuration that no recipe of it meets.
+const unmetConfiguration = vi.hoisted(() => ({
+    id: 'CALCULATIONS_COMPLETE',
+    section: {id: 'calculations', label: 'calculations'},
+    requirement: {
+        id: 'CALCULATIONS_COMPLETE',
+        evaluate: () => ({status: 'UNSUPPORTED', diagnostic: {code: 'INCOMPLETE'}}),
+        describe: () => ({message: 'calculations are incomplete', details: []})
+    },
+    localFacts: () => ({}),
+    operations: []
+}))
+vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
+    getRecipeType: type => type === 'CONFIGURED' ? {sourceRequirements: [unmetConfiguration]} : undefined
+}))
 
 describe('a section whose source suits it, while another section\'s setting does not', () => {
     it('advises of that section where the requirement names it to', () => {
@@ -19,6 +34,17 @@ describe('a section whose source suits it, while another section\'s setting does
         const reads = [met(requirementIn('reference')), unmet(requirementIn('sources')), unmet(requirementIn('dates', {advise: ['options']}))]
 
         expect(sectionStatusOf(STATE, reads, 'reference')).toBe(null)
+    })
+})
+
+describe('the problems of a recipe\'s sections', () => {
+    it('are said, and said again, while the session holds no recipe listing', () => {
+        const state = {process: {loadedRecipes: {'recipe-1': {id: 'recipe-1', type: 'CONFIGURED', model: {}}}}}
+
+        const problems = sourceProblemsOfState(state, 'recipe-1')
+
+        expect(problems).toEqual({calculations: 'calculations are incomplete'})
+        expect(sourceProblemsOfState(state, 'recipe-1')).toBe(problems)
     })
 })
 

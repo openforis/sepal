@@ -1,0 +1,18 @@
+/* Usable inside content that ignores the pointer, such as a list item's default content. */
+.indicator {
+    display: inline-flex;
+    flex-shrink: 0;
+    pointer-events: auto;
+}
+
+.target {
+    display: inline-flex;
+    cursor: default;
+    border-radius: var(--border-radius, .25rem);
+}
+
+/* app.css resets outline globally with !important, so a focus ring that renders has to outrank it. */
+.target:focus-visible {
+    outline: 1px solid var(--focus-ring-color) !important;
+    outline-offset: 1px;
+}

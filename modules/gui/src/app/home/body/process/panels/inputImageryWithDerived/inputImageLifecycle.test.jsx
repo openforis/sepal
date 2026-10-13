@@ -7,11 +7,14 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import listItemStyles from '~/widget/listItem.module.css'
 
 // A saved input of Classification, Regression or Unsupervised Classification, as the editor they share learns its
 // source's bands over a real store: its band sets - image bands, and an index derived from them - are the user's, kept
 // while its own source is read, and reconciled only with another source deliberately chosen. Each kind of source keeps
 // its own band sets while the editor is open. Earth Engine answers when a test answers, and not necessarily in order.
+// Whether a selection is one its source provides is judged through the recipe's output read
+// (recipe/classification/inputBandSets.test.jsx).
 
 const fake = vi.hoisted(() => ({requests: []}))
 vi.mock('~/apiRegistry', async () => {
@@ -40,7 +43,12 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async importOriginal => ({
 }))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : `${key}`}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
-vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
+// A tooltip's text is rendered where it is attached, to be read without hovering.
+vi.mock('~/widget/tooltip', () => ({
+    Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
+        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        : children
+}))
 // The panel editing one input is open for the input it was activated with, until it closes.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
@@ -324,10 +332,10 @@ const selectAsset = async id => {
 const removeSelection = name => click([...document.querySelectorAll('button')]
     .find(button => button.textContent === name && button.querySelector('svg[data-icon="xmark"]')))
 
-// A band added to the image bands set, from what its "+" offers.
-const addBand = async name => {
+// A band added to a band set - the image bands set unless another is named by its place - from what its "+" offers.
+const addBand = async (name, set = 0) => {
     if (!options().length) {
-        await click(document.querySelector('svg[data-icon="plus"]').closest('button'))
+        await click(bandSetRows()[set].querySelector('svg[data-icon="plus"]').closest('button'))
     }
     await click(options().find(element => element.textContent === name))
 }
@@ -356,11 +364,14 @@ const cancel = () => click(button('button.cancel'))
 const applyOffered = () => !!button('button.apply') && !button('button.apply').disabled
 
 // What each band set shown selects, in order.
-const bandSets = () => [...document.querySelectorAll('[class*="verticalWrapper"]')]
+const bandSets = () => bandSetRows()
+    .map(row => selectionsIn(row).map(button => button.textContent))
+
+const bandSetRows = () => [...document.querySelectorAll(`.${listItemStyles.verticalWrapper}`)]
     .filter(item => item.textContent.includes('bandSetSpec'))
-    .map(item => [...item.querySelectorAll('button')]
-        .filter(button => button.querySelector('svg[data-icon="xmark"]'))
-        .map(button => button.textContent))
+
+const selectionsIn = row => [...row.querySelectorAll('button')]
+    .filter(button => button.querySelector('svg[data-icon="xmark"]'))
 
 const savedImage = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model', 'inputImagery', 'images'])[0]
 

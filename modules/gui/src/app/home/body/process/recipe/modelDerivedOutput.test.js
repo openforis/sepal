@@ -117,11 +117,35 @@ describe('a regression', () => {
 })
 
 describe('an unsupervised classification', () => {
-    it('is described from its declaration while the imagery it clusters is not even loaded', () => {
-        const {output} = read(clusteringOf({images: [{type: 'RECIPE_REF', id: 'mosaic-1'}]}))
+    it('is described from its declaration once the imagery it clusters is', () => {
+        const {output} = read(clusteringOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
+    })
+
+    it('waits for the imagery it clusters to be described', () => {
+        const {output} = read(clusteringOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'mosaic-1'}]}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+    })
+
+    it('exports to Drive with no pyramiding policy', () => {
+        retrieve(read(clusteringOf()), 'DRIVE', clusteringTask)
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    // Its imagery is read to describe it, so clustering itself is a cycle: it is not described either.
+    it('clustering itself is neither described, previewed nor exported', () => {
+        const answer = read(clusteringOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: ID}]}))
+
+        retrieve(answer, 'GEE', clusteringTask)
+
+        expect(answer.output.status).toBe('INVALID')
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
     })
 
     it('is presented with its label, the cluster range as cursor precision, and its preset style', () => {
@@ -1037,7 +1061,6 @@ describe('a Radar Mosaic', () => {
 
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
-    ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
     ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
     ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
@@ -1073,19 +1096,27 @@ describe.each([
 
 const ID = 'model-1'
 
+// The imagery a model is fit to: an optical mosaic, described from its configuration as soon as it is loaded.
+const COVARIATES = {
+    id: 'covariates-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+const COVARIATES_IMAGE = {imageId: 'image-1', type: 'RECIPE_REF', id: COVARIATES.id}
+
 const regressionOf = ({trainingRecipe} = {}) => ({
     id: ID,
     type: 'REGRESSION',
     title: 'Biomass',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}]},
+        inputImagery: {images: [COVARIATES_IMAGE]},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
             : [{type: 'EE_TABLE', referenceData: []}]}
     }
 })
 
-const clusteringOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}], numberOfClusters = 5} = {}) => ({
+const clusteringOf = ({images = [COVARIATES_IMAGE], numberOfClusters = 5} = {}) => ({
     id: ID,
     type: 'UNSUPERVISED_CLASSIFICATION',
     title: 'Clusters',
@@ -1142,7 +1173,7 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
     type: 'CLASSIFICATION',
     title: 'Land cover',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}]},
+        inputImagery: {images: [COVARIATES_IMAGE]},
         legend: {entries: values.map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
@@ -1356,8 +1387,9 @@ const landTrendrOf = ({classification} = {}) => ({
     }
 })
 
-// The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
-const read = recipe => readAll([recipe])
+// The read a Retrieve panel makes, with nothing but the recipe itself and the imagery a model is fit to loaded, and
+// nothing retained.
+const read = recipe => readAll([recipe, COVARIATES])
 
 // The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
 // recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read

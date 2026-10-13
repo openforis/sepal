@@ -41,7 +41,9 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 vi.mock('~/translate', () => ({msg: key => key}))
 
 // The bands the synthetic type's declaration describes, all scalar. Held outside its recipe, as runtime evidence would
-// be, so they can change while the recipe and its layer config stay the same.
+// be, so they can change while the recipe's content and its layer config stay the same. The session's answer is reused
+// for the same records (recipeOutput.js), so a change while a recipe is shown reaches it as a record read again
+// (`describedAs`).
 const synthetic = vi.hoisted(() => ({bands: []}))
 
 // A declared type for the generic cases, added to the real shared registry.
@@ -140,7 +142,12 @@ const build = ({recipe, visParams, previousLayer, mode = {}}) => {
         }
     }
     const setLayerConfig = layerConfig => instance.props = {...instance.props, layerConfig}
-    return {instance, updates, didUpdate, setRecipe, setLayerConfig}
+    // What the declaration describes changed, the recipe read again unchanged.
+    const describedAs = bands => {
+        synthetic.bands = bands
+        setRecipe({...current})
+    }
+    return {instance, updates, didUpdate, setRecipe, setLayerConfig, describedAs}
 }
 
 const selections = updates => updates.map(({visParams}) => visParams)
@@ -527,17 +534,17 @@ describe('visualization reconciliation', () => {
         })
 
         it('builds a fresh layer when the candidates return, never the cancelled one', () => {
-            const {instance, updates, didUpdate} = build({recipe: styles([VALID]), visParams: VALID})
+            const {instance, updates, didUpdate, describedAs} = build({recipe: styles([VALID]), visParams: VALID})
             const first = instance.maybeCreateLayer()
 
-            // Only the available bands change: same recipe, same layer config, so watchedProps are identical
+            // Only the available bands change: same recipe content, same layer config, so watchedProps are identical
             // and a retained instance would be handed straight back.
-            synthetic.bands = []
+            describedAs([])
             didUpdate()
             expect(instance.layer).toBe(null)
             expect(instance.maybeCreateLayer()).toBe(null)
 
-            synthetic.bands = ['ndvi', 'evi']
+            describedAs(['ndvi', 'evi'])
             didUpdate()
 
             expect(instance.maybeCreateLayer()).not.toBe(first)

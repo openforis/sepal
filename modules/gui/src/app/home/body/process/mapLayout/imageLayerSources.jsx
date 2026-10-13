@@ -92,7 +92,6 @@ export class _ImageLayerSources extends React.Component {
             ? (
                 <ListItem
                     key={source.id}
-                    error={missing}
                     drag$={drag$}
                     dragValue={{
                         id: uuid(),
@@ -103,7 +102,8 @@ export class _ImageLayerSources extends React.Component {
                         <CrudItem
                             key={source.id}
                             title={msg(`imageLayerSources.${source.type}.label`)}
-                            titleTooltip={missing ? missingSourceMessage(source, description) : legacy ? msg('map.layout.legacySource') : null}
+                            error={missing ? missingSourceMessage(source, description) : null}
+                            titleTooltip={legacy ? msg('map.layout.legacySource') : null}
                             description={description}
                         />
                         <SourceActions

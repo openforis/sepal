@@ -10,6 +10,7 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
@@ -323,12 +324,13 @@ const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
     .flatMap(element => JSON.parse(element.dataset.tooltip))
     .join(' | ')
 
-// The output images whose rows in Output bands are in their error state, by the name of the image each is taken from.
+// The output images whose rows in Output bands are marked in error, by the name of the image each is taken from.
 const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])
     const names = [...recipe.model.inputImagery.images, ...recipe.model.calculations.calculations].map(({name}) => name)
         .sort((a, b) => b.length - a.length)
-    return [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
+    return [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]
+        .map(indicator => indicator.closest(`.${classOf(listItemStyles, 'verticalWrapper')}`))
         .map(row => names.find(name => row.textContent.includes(name)))
 }
 

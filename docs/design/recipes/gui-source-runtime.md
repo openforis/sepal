@@ -1031,12 +1031,18 @@ presentation concern.
 - **Masking** inherits its source's answer, and so its status:
   - over an Optical Mosaic the session holds, it is `READY` at once;
   - over an asset, it needs evidence;
-  - over a Regression or Unsupervised Classification the session holds, it is `READY` at once, with the policy each
-    declares;
+  - over a Regression or Unsupervised Classification the session holds, it has that recipe's answer: `READY` with the
+    policy each declares once its input images are described;
   - over a Sampling Design, it is `INVALID`: the design produces no image.
-- **Classification**, **Regression**, **Unsupervised Classification** and **Remapping** resolve synchronously from
-  their declarations, reading none of their sources; only whether those dependencies are sound still needs the
-  closure completed.
+- **Classification**, **Regression** and **Unsupervised Classification** read their input images, and are described
+  once those are: their bands are their declarations', and they are refused where an image's band sets select what
+  its source's description does not provide (`lib/js/shared/src/recipe/bandSets.js`), located at the selection,
+  whatever another input still awaits. Their training data is not read. A finding an observed input establishes is
+  known once the work observing it settles, which waits for every observation that work requested: until the other
+  inputs' observations answer or fail, it is not shown, and Retrieve and new previews are held. A finding the session
+  establishes alone, over a recipe input it describes, is shown at once. **Remapping** resolves synchronously from its
+  declaration, reading none of its sources; only whether those dependencies are sound still needs the closure
+  completed.
 
 ## Alternatives not selected
 

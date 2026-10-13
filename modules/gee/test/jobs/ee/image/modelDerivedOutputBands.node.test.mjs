@@ -262,7 +262,9 @@ const remapping = ({values = [1, 2]} = {}) => ({
     }
 })
 
-const declared = recipe => recipeType(recipe.type).imageOutput.describe({recipe}).bands
+// What the declaration states with every input providing what it selects: those that read their inputs are refused only
+// for what one lacks, which is not what this compares.
+const declared = recipe => recipeType(recipe.type).imageOutput.describe({recipe, inputs: () => [], describedInputs: () => []}).bands
 
 for (const [type, recipe] of [
     ['Regression', REGRESSION],

@@ -101,11 +101,10 @@ class _Constraint extends React.Component {
                 expanded={selected}
                 expansion={this.renderExpansion()}
                 expansionInteractive
-                error={invalid && !selected}
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
-                    titleTooltip={invalid && !selected ? this.errorMessage() : null}
+                    error={invalid && !selected ? this.errorMessage() : null}
                     description={selected ? null : this.toDescription()}
                     unsafeRemove
                     onRemove={() => onRemove()}>

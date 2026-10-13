@@ -1,15 +1,28 @@
+import _ from 'lodash'
+
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
 import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from '#sepal/recipe/requirement/verdict'
+import {VALID} from '#sepal/recipe/source/dependencyValidity'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {
     assetAuthority,
+    assetEvidenceOfState,
     CURRENT as ASSET_CURRENT,
     EXPIRED as ASSET_EXPIRED,
     isDefinitiveFailure,
     WAITING as ASSET_WAITING
 } from '../sourceRuntime/assetEvidence'
 import {FAILED, PENDING} from '../sourceRuntime/evidenceRegistry'
+import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
+import {buildMapDependencyGraph} from './mapDependencyGraph'
+import {
+    IMAGE_OUTPUT,
+    NEEDS_EVIDENCE as OUTPUT_PENDING,
+    readRecipeOutput,
+    READY as OUTPUT_READY,
+    UNAVAILABLE as OUTPUT_UNAVAILABLE
+} from './recipeOutput'
 import {OBSERVED, sourceEdgeOf, sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 
@@ -76,6 +89,30 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // keeps its own diagnosis. `unmetPrerequisites` names them either way, so what a prerequisite's own read says need not
 // be repeated, while the operations it holds stay held. Evidence acquisition never reads these, and they bind no form
 // panel: they judge the configuration applied (recipeFormPanel.jsx).
+//
+// And requirements over its configuration that its own output read judges - what the type's shared declaration refuses
+// its configuration for, over what its sources are described to provide:
+//
+//   {id, section, requirement: {id, describe}, outputDiagnostics: {codes, itemOf}, editor, summary, operations}
+//
+// `codes` are the refusals of the recipe's IMAGE_OUTPUT it states, and `itemOf(diagnostic, recipe, {recipeNames})` the
+// item of the section each is about - {id, path, label}, as a local item, and whatever `describe` needs of it - or null.
+// Each item a refusal this recipe owns is about is read as a local read is, unmet, its diagnosis `{code: id,
+// diagnostics, item}` for `describe`, and its section says them all in `summary(reads)` where it is given
+// (selectedSourceStatus.js); nothing is read of what the output read has not established, pending or failed: the
+// refusal is the evidence, and the output read
+// acquires it (recipeOutput.js), whatever these say of the operations waiting on it. `editor` - {panel, input,
+// candidate(recipe, model)} - binds the panel editing one item, judged before it is applied by the same refusals of
+// the recipe its candidate builds from that item alone (outputCandidate.js). The output read lies below this: it never
+// asks what these say.
+//
+// Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
+// refused for something else, or over dependencies known unsound - one read without an item says so for the
+// declaration (`outputState`): it holds the declaration's operations as the output read does, waiting while it is
+// read, and marks nothing, no selection being known wrong. What an observed input establishes is known once the work
+// observing it settles, which waits for every observation it requested: until its siblings answer or fail, its finding
+// is not shown, and the operations wait. The reads of a recipe are reused while its output read
+// says the same, so every consumer shares them.
 
 export {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED}
 
@@ -107,13 +144,95 @@ export const PIXEL_SEGMENTS = 'PIXEL_SEGMENTS'
 
 // {declaration, selected, acquisition, providerChain, verdict, assetId?, missing?} for each requirement the recipe's type declares.
 // Local reads, in their declaration's place, are {declaration, local: true, item, acquisition, providerChain, ownVerdict,
-// verdict, unmetPrerequisites}.
-export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, now}) => {
+// verdict, unmetPrerequisites}, and so are the reads of requirements its output read judges, with `output: true`. Those
+// are read from the answers the source runtime holds (`heldFor`), which a type declaring them requires.
+export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
+    const declarations = getRecipeType(recipe.type)?.sourceRequirements || []
     const local = readLocalRequirements(recipe)
-    return (getRecipeType(recipe.type)?.sourceRequirements || []).flatMap(declaration => isLocal(declaration)
-        ? local.filter(read => read.declaration === declaration)
-        : [readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})]
-    )
+    const output = readOutputRequirementsOfState({state, recipe, heldFor})
+    // Without a requirement over a selected source, the reads are the recipe's local and output reads alone, each
+    // reused while unchanged, and so is their list.
+    if (!declarations.some(({role}) => role)) {
+        const previous = OWN_READS.get(recipe)
+        if (previous?.local === local && previous.output === output) {
+            return previous.reads
+        }
+        const reads = declarations.flatMap(declaration => [...local, ...output].filter(read => read.declaration === declaration))
+        OWN_READS.set(recipe, {local, output, reads})
+        return reads
+    }
+    return declarations.flatMap(declaration => {
+        if (isLocal(declaration)) {
+            return local.filter(read => read.declaration === declaration)
+        }
+        if (isOutput(declaration)) {
+            return output.filter(read => read.declaration === declaration)
+        }
+        return [readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})]
+    })
+}
+
+// Whether a type declares requirements its recipes' output read judges.
+export const isJudgedByOutput = type =>
+    (getRecipeType(type)?.sourceRequirements || []).some(isOutput)
+
+// The reads of the requirements the recipe's output read judges, from that read: one for each item a refusal it owns,
+// of a code a declaration states, is about.
+export const readOutputRequirements = ({recipe, output, recipeNames = NO_NAMES}) => {
+    const said = {status: output.status, validity: output.dependencyValidity?.status || null, diagnostics: output.diagnostics || []}
+    const byNames = OUTPUT_READS.get(recipe) || new WeakMap()
+    OUTPUT_READS.set(recipe, byNames)
+    const previous = byNames.get(recipeNames)
+    if (previous && previous.status === said.status && previous.validity === said.validity
+        && _.isEqual(previous.diagnostics, said.diagnostics)) {
+        return previous.reads
+    }
+    const reads = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(isOutput)
+        .flatMap(declaration => readOutputDeclaration({recipe, output, recipeNames, declaration}))
+    byNames.set(recipeNames, {...said, reads})
+    return reads
+}
+
+// By recipe, then by the names they were read with: a Retrieve reading without names and a toolbar with them keep
+// their own.
+const OUTPUT_READS = new WeakMap()
+
+const OWN_READS = new WeakMap()
+
+const NO_NAMES = Object.freeze({})
+
+const NO_READS = Object.freeze([])
+
+// The same, over the recipe's IMAGE_OUTPUT as the session and the runtime answer it now - asked to explain a refusal
+// (recipeOutput.js), so a refusal the session establishes alone still has what it does not hold read: one input found
+// lacking a band never keeps another's description from being read, and judged.
+export const readOutputRequirementsOfState = ({state, recipe, heldFor}) => {
+    if (!(getRecipeType(recipe.type)?.sourceRequirements || []).some(isOutput)) {
+        return NO_READS
+    }
+    if (!heldFor) {
+        throw new Error(`Requirements of ${recipe.type} are judged by its output read, which needs the runtime's answers (heldFor)`)
+    }
+    const loadedRecipes = state.process?.loadedRecipes || {}
+    const output = readRecipeOutput({
+        recipe,
+        product: {name: IMAGE_OUTPUT},
+        graph: buildMapDependencyGraph({recipe, loadedRecipes}),
+        heldFor,
+        currency: recordStalenessOfState(state),
+        assetEvidence: assetEvidenceOfState(state),
+        explain: true
+    })
+    return readOutputRequirements({recipe, output, recipeNames: recipeNamesOf(state)})
+}
+
+// Why the requirements the recipe's output read judges refuse an operation, from what that read establishes of an item:
+// as configurationGate.
+export const outputRequirementGate = ({recipe, output, operation}) => {
+    const read = readOutputRequirements({recipe, output}).find(read => read.item && reasonFor(read, operation))
+    return read
+        ? {...reasonOf(read), section: read.declaration.section.label, withdraw: true}
+        : null
 }
 
 // The reads of the requirements over the recipe's own configuration alone: they need nothing of the session.
@@ -131,8 +250,8 @@ export const readKey = ({declaration, item}) => keyOf(declaration.id, item?.id)
 // Why a request for an operation over the recipe may not start, by what it selected, if anything: blocks before waits.
 // Nothing an owner is not reading is waited for: no reader can say whether anything will. Retrieve refuses on any of
 // them; a new request for a preview or a chart is held (requestGate).
-export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf, now}) =>
-    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now}))
+export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
+    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, heldFor, now}))
 
 // Whether a new Earth Engine request for an operation over the recipe may start now: null when it may, otherwise
 // {wait, withdraw, code, section, read} - `read` the requirement's read behind it, as far as the operation is held to it. While a requirement is not known to be met nothing new is requested, and what is
@@ -140,8 +259,8 @@ export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf
 // found not to meet its requirements, also withdraws it.
 // Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
 // so what is held is being read.
-export const requestGate = ({state, recipe, operation, evidenceOwnerOf, now}) =>
-    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, now})
+export const requestGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
+    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, heldFor, now})
         .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)})))
 
 // Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided
@@ -155,8 +274,8 @@ export const configurationGate = ({recipe, operation}) => {
 
 // What the requirement an operation over the recipe is held to establishes, where it is met - the measures a segment
 // chart can plot, say: its SUPPORTED verdict, or null.
-export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, now}) => {
-    const read = readSourceRequirements({state, recipe, evidenceOwnerOf, now})
+export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) => {
+    const read = readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
         .find(({declaration, local}) => !local && declaration.operations?.includes(operation))
     return read?.verdict.status === SUPPORTED ? read.verdict : null
 }
@@ -164,8 +283,8 @@ export const establishedFor = ({state, recipe, operation, evidenceOwnerOf, now})
 // An operation that needs the requirement met is answered by its whole read. One that only resolves the source through
 // its provider chain is refused only where that chain is, and waits only for its records: what the requirement judges
 // of the segments is not its concern.
-const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, now}) =>
-    readSourceRequirements({state, recipe, evidenceOwnerOf, now})
+const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
+    readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
         .map(read => reasonFor(read, operation))
         .filter(Boolean)
         .map(reason => ({...reason, section: reason.declaration.section.label}))
@@ -293,6 +412,77 @@ const assetAuthorityOf = (entry, now) => {
 const unsupported = diagnostic => ({status: UNSUPPORTED, diagnostic})
 
 const isLocal = declaration => Boolean(declaration.localFacts)
+
+const isOutput = declaration => Boolean(declaration.outputDiagnostics)
+
+// A refusal this recipe owns, rather than one an upstream recipe does.
+const ownedBy = ({recipePath = []}, recipe) => recipePath.length === 1 && recipePath[0] === recipe.id
+
+const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
+    const {codes, itemOf} = declaration.outputDiagnostics
+    const byItem = new Map()
+    ;(output?.diagnostics || [])
+        .filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe))
+        .forEach(diagnostic => {
+            const item = itemOf(diagnostic, recipe, {recipeNames})
+            if (item) {
+                const entry = byItem.get(item.id) || {item, diagnostics: []}
+                entry.diagnostics.push(diagnostic)
+                byItem.set(item.id, entry)
+            }
+        })
+    if (!byItem.size) {
+        const state = outputStateRead(declaration, output)
+        return state ? [state] : []
+    }
+    return [...byItem.values()].map(({item, diagnostics}) => {
+        const {id, path, label} = item
+        const verdict = unsupported({code: declaration.requirement.id, diagnostics, item})
+        return {
+            declaration,
+            local: true,
+            output: true,
+            item: {id, path, label},
+            acquisition: CHECKED,
+            providerChain: CHECKED,
+            ownVerdict: verdict,
+            verdict,
+            unmetPrerequisites: []
+        }
+    })
+}
+
+export const OUTPUT_REFUSED = 'OUTPUT_REFUSED'
+
+const outputStateRead = (declaration, {status, dependencyValidity}) => {
+    // A description over dependencies still being completed is the output's own to wait for (retrieveOutput.js).
+    if (status === OUTPUT_READY && (!dependencyValidity || dependencyValidity.status === VALID)) {
+        return null
+    }
+    const acquisition = status === OUTPUT_PENDING ? CHECKING : status === OUTPUT_UNAVAILABLE ? UNAVAILABLE : CHECKED
+    return {
+        declaration,
+        outputState: true,
+        selected: null,
+        selects: false,
+        acquisition,
+        providerChain: CHECKED,
+        verdict: acquisition === CHECKED ? unsupported({code: OUTPUT_REFUSED}) : NEEDS
+    }
+}
+
+// Names by recipe id from the listing, once per listing.
+const recipeNamesOf = state => {
+    const listing = state.process?.recipes || NO_LISTING
+    if (!RECIPE_NAMES.has(listing)) {
+        RECIPE_NAMES.set(listing, Object.fromEntries(listing.map(({id, name}) => [id, name])))
+    }
+    return RECIPE_NAMES.get(listing)
+}
+
+const RECIPE_NAMES = new WeakMap()
+
+const NO_LISTING = Object.freeze([])
 
 const keyOf = (declarationId, itemId) => `${declarationId}|${itemId ?? ''}`
 

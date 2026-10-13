@@ -15,7 +15,10 @@ import {
 //
 // A question is a recipe id, the product its consumer reads, normalized as the common read names it (layerProduct.js),
 // and whether it asks to `explain` a refusal (recipeOutput.js): an editor's question and a layer's over the same
-// product are two questions, each loading only what its own read names. Watching is separate from loading. Every watched question is recomputed from the session whenever
+// product are two questions, each loading only what its own read names. A question may instead be about a `candidate`:
+// the recipe as an editor would have it, never in the session. It is a question of its own, claimed and released by
+// whoever asks it, and its work is keyed by its content like any other, so it shares work only with a question
+// reading the very same records. Watching is separate from loading. Every watched question is recomputed from the session whenever
 // the session changes; the common read decides whether work is needed (recipeOutput.js) and names it by key. A question
 // the session answers alone is still watched, and starts nothing. Its watchers are told when the work answering it
 // changes - withdrawn for other work, settled, or no longer needed because the session answers alone - and not when
@@ -83,6 +86,7 @@ export class OutputRegistry {
     #isCompatible
     #currencyOf
     #onActive
+    #onSettled
     #retention
     #clock
     #questions = []
@@ -102,9 +106,10 @@ export class OutputRegistry {
     // isCompatible(basis, graph)                  whether a terminal read the records its key names
     // currencyOf(session)                         → what the session knows of each source read (sourceCurrency.js)
     // onActive(active)                            told when the first question is watched and when the last is not
+    // onSettled()                                 told when work settles, so what reads `heldFor` can read it again
     constructor({
         session, sessionChanges$, acquisitionOf, operationOf, isCompatible, currencyOf = () => NO_CURRENCY,
-        onActive = () => {},
+        onActive = () => {}, onSettled = () => {},
         retention = DEFAULT_OUTPUT_RETENTION, clock = SYSTEM_CLOCK
     }) {
         this.#session = session
@@ -114,12 +119,13 @@ export class OutputRegistry {
         this.#isCompatible = isCompatible
         this.#currencyOf = currencyOf
         this.#onActive = onActive
+        this.#onSettled = onSettled
         this.#retention = retention
         this.#clock = clock
     }
 
     // Notifies whenever what `heldFor` answers for the question may have changed. Unsubscribing releases the claim.
-    watchOutput$({recipeId, product, explain = false}) {
+    watchOutput$({recipeId, product, explain = false, candidate}) {
         return new Observable(subscriber => {
             this.#listen()
             if (this.#isClosed()) {
@@ -127,7 +133,7 @@ export class OutputRegistry {
                 subscriber.complete()
                 return
             }
-            const question = this.#claim({recipeId, product, explain}, subscriber)
+            const question = this.#claim({recipeId, product, explain, candidate}, subscriber)
             this.#notify(this.#refresh(question), subscriber)
             return () => this.#release(question, subscriber)
         })
@@ -141,8 +147,8 @@ export class OutputRegistry {
         return work?.terminal && this.#isCurrent(work) ? work.terminal : null
     }
 
-    retryOutput({recipeId, product, explain = false}) {
-        const failed = this.#questionFor({recipeId, product, explain})?.work
+    retryOutput({recipeId, product, explain = false, candidate}) {
+        const failed = this.#questionFor({recipeId, product, explain, candidate})?.work
         if (this.#closed || failed?.terminal?.status !== 'UNAVAILABLE') {
             return
         }
@@ -152,8 +158,8 @@ export class OutputRegistry {
     }
 
     // The assets the work answering the question read, records loaded only for it included.
-    assetsRead({recipeId, product, explain = false}) {
-        const work = this.#questionFor({recipeId, product, explain})?.work
+    assetsRead({recipeId, product, explain = false, candidate}) {
+        const work = this.#questionFor({recipeId, product, explain, candidate})?.work
         return work ? work.ledger.filter(({asset}) => asset).map(({asset}) => asset) : []
     }
 
@@ -169,8 +175,9 @@ export class OutputRegistry {
         watchers.forEach(watcher => watcher.complete())
     }
 
-    #claim({recipeId, product, explain}, subscriber) {
-        const question = this.#questionFor({recipeId, product, explain}) || this.#addQuestion({recipeId, product, explain})
+    #claim({recipeId, product, explain, candidate}, subscriber) {
+        const question = this.#questionFor({recipeId, product, explain, candidate})
+            || this.#addQuestion({recipeId, product, explain, candidate})
         question.watchers.add(subscriber)
         return question
     }
@@ -347,6 +354,8 @@ export class OutputRegistry {
         work.terminal = this.#isCompatible(terminal.basis, work.graph)
             ? terminal
             : unavailable(sourceRuntimeError(SOURCE_BASIS_CHANGED), terminal.basis)
+        // The session hears of it first, so a watcher reading the session when told reads it changed.
+        this.#onSettled()
         this.#notify([...work.claims])
     }
 
@@ -464,15 +473,15 @@ export class OutputRegistry {
         return work
     }
 
-    #addQuestion({recipeId, product, explain}) {
-        const question = {recipeId, product, explain, watchers: new Set(), work: null}
+    #addQuestion({recipeId, product, explain, candidate}) {
+        const question = {recipeId, product, explain, ...(candidate && {candidate}), watchers: new Set(), work: null}
         this.#questions.push(question)
         return question
     }
 
-    #questionFor({recipeId, product, explain = false}) {
+    #questionFor({recipeId, product, explain = false, candidate}) {
         return this.#questions.find(question => question.recipeId === recipeId && _.isEqual(question.product, product)
-            && question.explain === explain)
+            && question.explain === explain && _.isEqual(question.candidate, candidate))
     }
 
     #workFor(key) {

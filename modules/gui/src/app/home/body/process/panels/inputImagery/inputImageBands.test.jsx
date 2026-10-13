@@ -7,6 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 
 // The bands of a Stack or Remapping input, as the panel editing it learns its source's, over a real store. What a source is
@@ -670,9 +671,9 @@ const markedBands = () => [...document.querySelectorAll('[data-tooltip]')]
     .filter(text => text.startsWith(MISSING))
     .map(text => JSON.parse(text.slice(MISSING.length)).bands.split(', '))
 
-// The band rows in their error state: each row's parts that show it, counted once per row.
-const bandsInError = () => [...new Set([...document.querySelectorAll(`.${classOf(listItemStyles.error)}`)]
-    .map(element => element.closest(`.${classOf(listItemStyles.verticalWrapper)}`)))]
+// The band rows marked in error.
+const bandsInError = () => [...document.querySelectorAll(`.${classOf(errorIndicatorStyles.indicator)}`)]
+    .map(indicator => indicator.closest(`.${classOf(listItemStyles.verticalWrapper)}`))
 
 // The row of a selected band: what holds its name and its remove button.
 const bandRow = name => {

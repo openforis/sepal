@@ -139,7 +139,6 @@ class _OutputBands extends React.Component {
         return (
             <ListItem
                 key={outputImage.imageId}
-                error={!!problem}
                 expansionClickable
                 expanded
                 expansion={this.renderOutputBands(outputImage)}
@@ -148,7 +147,7 @@ class _OutputBands extends React.Component {
                     title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
                     description={<ImageDescription image={image}/>}
                     metadata={image.name}
-                    titleTooltip={problem}
+                    error={problem}
                     inlineComponents={current ? this.renderAddBandButton(outputImage, current) : null}
                     unsafeRemove
                     onRemove={() => this.removeImage({image})}

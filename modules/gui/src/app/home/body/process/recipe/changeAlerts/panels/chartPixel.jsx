@@ -274,7 +274,7 @@ class _ChartPixel extends React.Component {
 // assesses it, whether its segments may be read and which bands it can plot.
 const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), now: Date.now()
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
     })
     return {
         pixels: pixelGenerationOfState(state, recipeId),

@@ -47,6 +47,19 @@
     flex-shrink: 0;
 }
 
+/* A layout clips what overflows it: room is kept for the focus ring of the error mark at the row's end. */
+.titleRow {
+    max-width: 100%;
+    padding-right: 2px;
+}
+
+/* A long title is cut short, its error mark kept beside it. */
+.titleRowContent > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .title {
     font-size: .8rem;
     font-weight: 800;

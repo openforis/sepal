@@ -11,6 +11,7 @@ import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import buttonSelectStyles from '~/widget/buttonSelect.module.css'
 import crudItemStyles from '~/widget/crudItem.module.css'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {Toolbar} from '~/widget/toolbar/toolbar'
@@ -101,7 +102,7 @@ describe('renaming a layer source derived from an input', () => {
 
         await rename('mask', 'Cloud mask')
 
-        expect(rowTooltip('Cloud mask')).toContain('Cloud mask')
+        expect(rowMark('Cloud mask')).toContain('Cloud mask')
     })
 
     it('keeps its name once another input is applied, saved and reopened', async () => {
@@ -312,6 +313,9 @@ const row = name => sourceRows().find(row => description(row) === name)
 // The row's own button, Edit or Rename, whichever it offers.
 
 const rowTooltip = name => row(name)?.querySelector(`.${crudItemStyles.title}`)?.closest('[data-tooltip]')?.dataset.tooltip
+
+// What a row's error mark explains.
+const rowMark = name => row(name)?.querySelector(`.${errorIndicatorStyles.indicator} [data-tooltip]`)?.dataset.tooltip
 
 const shownOnMap = () => [...document.querySelectorAll(`.${areaStyles.areaContent}`)].map(description)
 

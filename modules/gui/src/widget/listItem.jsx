@@ -144,9 +144,9 @@ class _ListItem extends React.Component {
     }
 
     // The look, on the elements that show it: the item where its expansion is clickable, otherwise its main part and
-    // expansion. An item in error keeps that look, its border in the error colour.
+    // expansion.
     getSharedClassName(clickable) {
-        const {expansionInteractive, hovered, error} = this.props
+        const {expansionInteractive, hovered} = this.props
         return [
             lookStyles.look,
             lookStyles.transparent,
@@ -162,8 +162,7 @@ class _ListItem extends React.Component {
                 ? lookStyles.interactive
                 : null,
             this.isDisabled() ? lookStyles.disabled : null,
-            hovered ? lookStyles.hoverForcedOn : null,
-            error ? styles.error : null
+            hovered ? lookStyles.hoverForcedOn : null
         ]
     }
 
@@ -446,7 +445,6 @@ ListItem.propTypes = {
     dragTarget: PropTypes.oneOf(['handle', 'item']),
     dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
-    error: PropTypes.any,
     expanded: PropTypes.any,
     expansion: PropTypes.any,
     expansionClassName: PropTypes.string,

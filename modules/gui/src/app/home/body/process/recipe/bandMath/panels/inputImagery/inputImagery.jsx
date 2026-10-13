@@ -88,11 +88,10 @@ class _InputImagery extends React.Component {
             ? (
                 <ListItem
                     key={image.imageId}
-                    error={!!problem}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
-                        titleTooltip={problem ? missingBandsMessage(problem) : null}
+                        error={problem ? missingBandsMessage(problem) : null}
                         description={description}
                         metadata={image.name}
                         onRemove={() => this.removeImage(image)}

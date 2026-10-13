@@ -35,6 +35,7 @@ describe('ImageForm band selection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: ['red', 'nir']},
+                currentBands: {value: null},
                 bandSetSpecs: {value: [bandSetSpec], set: vi.fn()}
             }
         })
@@ -53,6 +54,7 @@ describe('ImageForm band selection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: ['red', 'nir']},
+                currentBands: {value: null},
                 bandSetSpecs
             }
         })
@@ -74,6 +76,7 @@ describe('ImageForm band selection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: ['red', 'nir']},
+                currentBands: {value: null},
                 bandSetSpecs: {value: [bandSetSpec], set: vi.fn()}
             }
         })

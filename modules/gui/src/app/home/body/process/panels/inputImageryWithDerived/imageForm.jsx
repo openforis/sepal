@@ -9,16 +9,21 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
 import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
-import {BandSetSpec} from './bandSetSpec'
+import {bandSetProblems, BandSetSpec} from './bandSetSpec'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
 export class ImageForm extends Component {
-    state = {loadingSource: null}
+    state = {
+        loadingSource: null,
+        // The band set whose Add popup is open, and whether it was too short of bands when the popup opened.
+        adding: null
+    }
     render() {
         const {inputs: {bandSetSpecs}} = this.props
         return (
@@ -47,15 +52,22 @@ export class ImageForm extends Component {
         })
     }
 
+    // A band set its source is known not to provide for is marked, saying why, as is each selection it cannot provide.
     renderBandSetSpec(bandSetSpec) {
         const imageBands = bandSetSpec.type === 'IMAGE_BANDS'
+        const {unavailable, insufficient} = this.problemsOf(bandSetSpec)
+        const problems = [
+            ...(unavailable.length ? [BandSetSpec.unavailableMessage(bandSetSpec, unavailable)] : []),
+            ...(insufficient && !this.defersInsufficiency(bandSetSpec) ? [BandSetSpec.insufficientMessage()] : [])
+        ]
         return (
             <ListItem
                 key={bandSetSpec.id}
                 expanded={imageBands || bandSetSpec.included.length}
-                expansion={this.renderSelection(bandSetSpec)}>
+                expansion={this.renderSelection(bandSetSpec, unavailable)}>
                 <CrudItem
                     title={BandSetSpec.renderTitle(bandSetSpec)}
+                    error={problems.length ? problems : null}
                     inlineComponents={this.renderAddButton(bandSetSpec)}
                     unsafeRemove={!imageBands}
                     removeConfirmationLabel={imageBands ? msg('button.removeAll') : undefined}
@@ -68,13 +80,15 @@ export class ImageForm extends Component {
         )
     }
 
-    renderSelection(bandSetSpec) {
+    renderSelection(bandSetSpec, unavailable) {
         return (
             <ButtonGroup>
                 {bandSetSpec.included.length
                     ? bandSetSpec.included.map(value =>
                         <Button
                             key={value}
+                            look={unavailable.includes(value) ? 'cancel' : 'default'}
+                            tooltip={unavailable.includes(value) ? BandSetSpec.unavailableMessage(bandSetSpec, [value]) : undefined}
                             label={value}
                             size='small'
                             air='less'
@@ -110,6 +124,7 @@ export class ImageForm extends Component {
                 icon='plus'
                 noChevron
                 showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
+                onToggle={shown => this.toggleAdding(bandSetSpec, shown)}
                 vPlacement='below'
                 hPlacement='over-left'
                 disabled={!options.length}
@@ -135,6 +150,15 @@ export class ImageForm extends Component {
                 )}
             </ButtonPopup>
         )
+    }
+
+    // A band combination is told it needs more bands once its Add popup closes, not as its first band is added. One already
+    // short of bands when the popup opened stays told.
+    toggleAdding(bandSetSpec, shown) {
+        const {insufficient} = this.problemsOf(bandSetSpec)
+        this.setState(({adding}) => shown
+            ? {adding: {id: bandSetSpec.id, insufficient}}
+            : adding?.id === bandSetSpec.id ? {adding: null} : null)
     }
 
     addSelection(bandSetSpec, value) {
@@ -210,14 +234,32 @@ export class ImageForm extends Component {
         return !!loadingSource && loadingSource !== bandsSource.value
     }
 
+    // What the recipe built from this input alone is refused for, about this band set (outputCandidate.js): told to the
+    // band sets input as its feedback. Pending or failed, nothing.
+    problemsOf(bandSetSpec) {
+        const {form, inputs: {bandSetSpecs}} = this.props
+        const {diagnostics} = inputFeedback(form, bandSetSpecs)
+        const set = (bandSetSpecs.value || []).findIndex(({id}) => id === bandSetSpec.id)
+        return bandSetProblems(bandSetSpecs.value, diagnostics)[set] || NO_PROBLEMS
+    }
+
+    defersInsufficiency(bandSetSpec) {
+        const {adding} = this.state
+        return adding?.id === bandSetSpec.id && !adding.insufficient
+    }
+
     sourceOf(id) {
         const {inputs: {section}} = this.props
         return inputSourceKey({type: section.value, id})
     }
 }
 
+const NO_PROBLEMS = Object.freeze({unavailable: [], insufficient: false})
+
 ImageForm.propTypes = {
     children: PropTypes.any,
+    // The panel's form: its band sets input's feedback says what the recipe built from this input is refused for.
+    form: PropTypes.object,
     inputComponent: PropTypes.any,
     inputs: PropTypes.any,
     // Shown in the source picker's label row: the choice of the kind of source.

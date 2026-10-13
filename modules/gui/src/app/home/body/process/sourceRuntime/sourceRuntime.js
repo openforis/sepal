@@ -119,6 +119,7 @@ export const createSourceRuntime = ({
     loadRecipeListing$,
     updateAssetEvidence = () => {},
     refreshSources = () => {},
+    outputsSettled = () => {},
     loadAssetVersions$,
     wakeups$,
     visible,
@@ -395,7 +396,7 @@ export const createSourceRuntime = ({
     }
     const interest = new AssetInterest({
         claim: ids => assets.claim(ids),
-        assetsOf: question => [...sessionAssetsOf(session().catalogue, question.recipeId), ...outputs.assetsRead(question)],
+        assetsOf: question => [...sessionAssetsOf(session().catalogue, question), ...outputs.assetsRead(question)],
         sessionChanges$
     })
     const outputs = new OutputRegistry({
@@ -415,6 +416,7 @@ export const createSourceRuntime = ({
         isCompatible: compatibleBasis,
         currencyOf,
         onActive: active => listing.watch(active),
+        onSettled: () => closed || outputsSettled(),
         retention,
         ...(clock && {clock})
     })
@@ -422,10 +424,13 @@ export const createSourceRuntime = ({
     return {
         resolveImageOutput$,
         completeDependencies$,
+        // A candidate's question watches no source evidence: that is the recipe's, kept current for what it has applied.
         watchOutput$: question => defer(() => {
             refreshRecipeListing()
             const reads = interest.watch(question)
-            const sourceEvidence = evidence.watch$({recipeId: question.recipeId, operation: question.product?.name}).subscribe()
+            const sourceEvidence = question.candidate
+                ? new Subscription()
+                : evidence.watch$({recipeId: question.recipeId, operation: question.product?.name}).subscribe()
             return outputs.watchOutput$(question).pipe(
                 tap(() => reads.update()),
                 finalize(() => {
@@ -446,7 +451,7 @@ export const createSourceRuntime = ({
         },
         refreshRecipeListing,
         refreshOutput: question => joined(`output:${question.recipeId}:${JSON.stringify(question.product)}:${Boolean(question.explain)}`, () => {
-            const ids = [...sessionAssetsOf(session().catalogue, question.recipeId), ...outputs.assetsRead(question)]
+            const ids = [...sessionAssetsOf(session().catalogue, question), ...outputs.assetsRead(question)]
             return assets.refresh(ids, {force: true})
                 .then(() => closed || refreshSources({recipes: [question.recipeId]}))
         }),
@@ -552,10 +557,13 @@ const reported = (loadRecipesById$, reads) => request => loadRecipesById$(reques
     })
 )
 
-// The assets the session graph of a recipe reaches, computed once per catalogue.
+// The assets the session graph of a question's recipe reaches, computed once per catalogue - a candidate's each time.
 const SESSION_ASSETS = new WeakMap()
 
-const sessionAssetsOf = (catalogue, recipeId) => {
+const sessionAssetsOf = (catalogue, {recipeId, candidate}) => {
+    if (candidate) {
+        return graphAssets(buildMapDependencyGraph({recipe: candidate, loadedRecipes: catalogue || {}}))
+    }
     const recipe = catalogue?.[recipeId]
     if (!recipe) {
         return NONE

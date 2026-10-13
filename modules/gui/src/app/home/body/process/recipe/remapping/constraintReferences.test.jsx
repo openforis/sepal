@@ -10,6 +10,7 @@ import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourc
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
@@ -387,17 +388,18 @@ const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
 const constraintRows = () => [...document.getElementsByClassName(classOf(listItemStyles, 'verticalWrapper'))]
     .filter(row => !['Forest', 'Water'].some(label => row.textContent.includes(label)))
 
-// Whether each constraint's row, or a part of it, is in its error state.
+// Whether each constraint's row is marked in error.
 const constraintsMarked = () => constraintRows()
-    .map(row => row.classList.contains(listItemStyles.error) || !!row.querySelector(`.${listItemStyles.error}`))
+    .map(row => !!row.querySelector(`.${classOf(errorIndicatorStyles, 'indicator')}`))
 
 // What each constraint's summary - its row's main part, not its fields - says of it.
 const summaryTooltips = () => constraintRows()
     .map(row => [...row.querySelector(`.${classOf(listItemStyles, 'main')}`).querySelectorAll('[data-tooltip]')]
         .flatMap(element => JSON.parse(element.dataset.tooltip)))
 
-// The legend entries whose rows in Mapping are in their error state, by label; a constraint's row names none.
-const rowsInError = () => [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
+// The legend entries whose rows in Mapping are marked in error, by label; a constraint's row names none.
+const rowsInError = () => [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]
+    .map(indicator => indicator.closest(`.${classOf(listItemStyles, 'verticalWrapper')}`))
     .map(row => ['Forest', 'Water'].find(label => row.textContent.includes(label)))
     .filter(Boolean)
 

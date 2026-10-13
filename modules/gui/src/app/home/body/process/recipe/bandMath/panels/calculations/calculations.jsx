@@ -79,13 +79,12 @@ class _Calculations extends React.Component {
         return (
             <ListItem
                 key={key}
-                error={!!problem}
                 onClick={() => this.editCalculation(calculation)}>
                 <CrudItem
                     title={msg(`process.bandMath.panel.calculations.form.type.${calculation.type}`)}
                     description={description}
                     metadata={calculation.name}
-                    titleTooltip={problem}
+                    error={problem}
                     onRemove={() => this.removeCalculation(calculation)}
                 />
             </ListItem>

@@ -59,6 +59,7 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}, layerCo
             recipe,
             operation: layerProduct(recipe, layerConfig)?.name,
             evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
+            heldFor: key => sourceRuntime?.heldFor(key),
             now: Date.now()
         })
         : null

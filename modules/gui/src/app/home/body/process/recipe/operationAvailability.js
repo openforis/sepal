@@ -14,8 +14,8 @@ import {establishedFor, PIXEL_SEGMENTS, requestGate, sourceRequirementGate} from
 // chart's observations show - those the type's `observedBands(recipe)` names, where it names any. Established, but with
 // no band to plot (`noChartableBand`), it is not available either; while what can be plotted is not established, that
 // is not known.
-export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, now}) => {
-    const request = {state, recipe, operation: PIXEL_SEGMENTS, evidenceOwnerOf, now}
+export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
+    const request = {state, recipe, operation: PIXEL_SEGMENTS, evidenceOwnerOf, heldFor, now}
     const gate = requestGate(request)
     const chartable = establishedFor(request)
     const bands = chartable ? chartBands(recipe, chartable.measures) : []
@@ -25,8 +25,8 @@ export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, now}) =>
 
 // Retrieve of the recipe's image output: {available, gate}, `gate` being why it may not be retrieved
 // (sourceRequirementGate), as far as its sources decide that.
-export const retrieveAvailability = ({state, recipe, evidenceOwnerOf, now}) => {
-    const gate = sourceRequirementGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, now})
+export const retrieveAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
+    const gate = sourceRequirementGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, heldFor, now})
     return {available: !gate, gate}
 }
 

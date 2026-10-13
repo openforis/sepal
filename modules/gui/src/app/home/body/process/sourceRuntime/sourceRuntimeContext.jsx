@@ -29,6 +29,7 @@ export const SourceRuntimeProvider = ({children}) => {
             replaceCachedRecipe: environment.replaceCachedRecipe,
             updateAssetEvidence: environment.updateAssetEvidence,
             refreshSources: environment.refreshSources,
+            outputsSettled: environment.outputsSettled,
             evidenceSession: environment.evidenceSession,
             recipeCacheClaimant: environment.recipeCacheClaimant,
             writeRecipe: environment.writeRecipe

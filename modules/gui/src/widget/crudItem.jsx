@@ -13,7 +13,9 @@ import {Tooltip} from '~/widget/tooltip'
 
 import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
+import {ErrorIndicator} from './errorIndicator'
 import {Icon} from './icon'
+import {Layout} from './layout'
 
 class _CrudItem extends React.Component {
     render() {
@@ -33,16 +35,23 @@ class _CrudItem extends React.Component {
     renderContent() {
         const content = this.getContent()
         return content
-            ? <div className={styles.content}>{content}</div>
+            ? (
+                <React.Fragment>
+                    {this.renderError()}
+                    <div className={styles.content}>{content}</div>
+                </React.Fragment>
+            )
             : this.renderDefaultContent()
     }
 
     renderDefaultContent() {
+        const {title} = this.props
         return (
             <div className={styles.item}>
                 {this.renderIcon()}
                 {this.renderImage()}
                 {this.renderInfo()}
+                {title ? null : this.renderError()}
                 {this.renderMetadata()}
                 {this.renderTimestamp()}
                 {this.renderInline()}
@@ -92,13 +101,33 @@ class _CrudItem extends React.Component {
             </div>
         )
         // Opt-in full-title tooltip (e.g. for an ellipsized label). Default: no title tooltip, unchanged.
-        return titleTooltip
+        const tooltipped = titleTooltip
             ? (
                 <Tooltip msg={titleTooltip} placement={titleTooltipPlacement} disabled={titleTooltipDisabled}>
                     {titleElement}
                 </Tooltip>
             )
             : titleElement
+        const error = this.renderError()
+        return error
+            ? (
+                <Layout
+                    type='horizontal-nowrap'
+                    spacing='compact'
+                    alignment='left'
+                    className={styles.titleRow}
+                    contentClassName={styles.titleRowContent}>
+                    {tooltipped}
+                    {error}
+                </Layout>
+            )
+            : tooltipped
+    }
+
+    // An item in error is marked beside its title: after it, or ahead of content its caller renders in place of one.
+    renderError() {
+        const {error} = this.props
+        return error ? <ErrorIndicator error={error}/> : null
     }
 
     renderDescription() {
@@ -324,6 +353,8 @@ CrudItem.propTypes = {
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
+    // What is wrong with the item, marked beside its title and explained on hover and focus.
+    error: PropTypes.any,
     editTooltip: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,

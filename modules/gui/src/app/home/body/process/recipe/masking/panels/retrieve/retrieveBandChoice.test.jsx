@@ -358,7 +358,7 @@ describe('retrieving from a Classification whose classifier changes', () => {
     })
 
     it('drops the regression SVM does not provide, keeping the class, which it submits', async () => {
-        await open({recipes: [saved], id: CLASSIFICATION.id, Panel: ClassificationRetrieve})
+        await open({recipes: [saved, MOSAIC], id: CLASSIFICATION.id, Panel: ClassificationRetrieve})
 
         await toSvm()
 
@@ -667,7 +667,7 @@ describe.each([
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
 
-        await open({recipes: [masked, source()], id: masked.id})
+        await open({recipes: [masked, source(), MOSAIC], id: masked.id})
         await click(band)
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -863,12 +863,14 @@ const MASKED_ASSET = {
 }
 
 const COVARIATES = {imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}
+// The imagery a model is fit to, described from its configuration without reading Earth Engine.
+const MODEL_IMAGERY = {imageId: 'image-1', type: 'RECIPE_REF', id: MOSAIC.id}
 
 const REGRESSION = {
     id: 'regression-1',
     type: 'REGRESSION',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: []}]}
     }
 }
@@ -877,7 +879,7 @@ const CLUSTERS = {
     id: 'clusters-1',
     type: 'UNSUPERVISED_CLASSIFICATION',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         clusterer: {type: 'KMEANS', numberOfClusters: 5}
     }
 }
@@ -911,7 +913,7 @@ const CLASSIFICATION = {
     id: 'classification-1',
     type: 'CLASSIFICATION',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         legend: {entries: CLASSES},
         trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
         classifier: {type: 'RANDOM_FOREST'}

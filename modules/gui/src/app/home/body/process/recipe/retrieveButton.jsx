@@ -63,7 +63,7 @@ class _RetrieveButton extends React.Component {
 // Not offered while Retrieve's prerequisites are being checked or are not met (operationAvailability.js).
 const mapStateToProps = (state, {recipe, sourceRuntime, disabled}) => ({
     disabled: disabled || !retrieveAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), now: Date.now()
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
     }).available
 })
 

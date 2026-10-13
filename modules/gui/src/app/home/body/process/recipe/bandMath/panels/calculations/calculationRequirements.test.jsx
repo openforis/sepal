@@ -8,6 +8,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 
 // Calculations as their list and panel show them, judged by what Band Math needs of its configuration as applied, with
@@ -184,9 +185,10 @@ function listTooltips() {
         .filter(lines => lines.some(line => line.startsWith('process.bandMath.requirement') || line.startsWith('process.requirement')))
 }
 
-// The calculations whose rows are in their error state, by expression.
+// The calculations whose rows are marked in error, by expression.
 function rowsInError() {
-    return [...document.getElementsByClassName(listItemStyles.error)]
+    return [...document.getElementsByClassName(errorIndicatorStyles.indicator)]
+        .map(indicator => indicator.closest(`.${listItemStyles.verticalWrapper}`))
         .map(row => ['i1.swir', 'a.a + 1', 'i1.red'].find(expression => row.textContent.includes(expression)))
 }
 

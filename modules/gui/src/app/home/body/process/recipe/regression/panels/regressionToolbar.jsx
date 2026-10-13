@@ -11,6 +11,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery'
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {Classifier} from './classifier/classifier'
 import styles from './regressionToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
@@ -46,7 +47,7 @@ class _RegressionToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}

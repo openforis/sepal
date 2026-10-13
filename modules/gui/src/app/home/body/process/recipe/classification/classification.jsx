@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
+import {inputImageryRequirements} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -98,5 +99,6 @@ export default () => ({
         return null
     },
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: inputImageryRequirements
 })

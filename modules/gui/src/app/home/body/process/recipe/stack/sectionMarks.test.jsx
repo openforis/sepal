@@ -10,6 +10,7 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
@@ -542,8 +543,9 @@ const inputImageryMark = () => {
     return {item, bands: valuesOf(message, MISSING).bands}
 }
 
-// The inputs whose rows are in their list's error state, by the asset each shows.
-const inputsInError = () => [...document.getElementsByClassName(classOf(listItemStyles, 'error'))]
+// The inputs whose rows are marked in error, by the asset each shows.
+const inputsInError = () => [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]
+    .map(indicator => indicator.closest(`.${classOf(listItemStyles, 'verticalWrapper')}`))
     .map(row => inputNames().find(name => row.textContent.includes(name)))
 
 // Whether the Input imagery toolbar button is in its error state.
