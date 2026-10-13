@@ -16,6 +16,7 @@ import {Icon} from '~/widget/icon'
 import {Notification} from '~/widget/notification'
 import {Notifications} from '~/widget/notifications'
 
+import {budgetOf} from './budgetOf'
 import styles from './userBrowser.module.css'
 import {UserDetails} from './userDetails'
 import {UserList} from './userList'
@@ -236,8 +237,8 @@ class _UserBrowser extends React.Component {
                 tap(() => publishEvent('user_updated'))
             )
 
-        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota, dataQuota}) =>
-            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota, dataQuota})
+        const updateUserBudget$ = userDetails =>
+            api.user.updateUserBudget$(budgetOf(userDetails))
 
         // Details first: a save rejected as stale must not write the budget either.
         const update$ = userDetails =>

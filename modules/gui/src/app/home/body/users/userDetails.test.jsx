@@ -23,7 +23,7 @@ vi.mock('~/widget/form', () => {
     const Input = ({input, disabled}) => <input name={input?.name} value={input?.value ?? ''} disabled={disabled} readOnly/>
     return {Form: {Field: FormField, Panel: passthrough, Input, Buttons: () => null, FieldSet: passthrough, PanelButtons: passthrough}}
 })
-vi.mock('~/widget/input', () => ({Input: () => null}))
+vi.mock('~/widget/input', () => ({Input: ({label}) => <input data-request={label} readOnly/>}))
 vi.mock('~/widget/layout', () => ({Layout: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/notifications', () => ({Notifications: {success: () => {}}}))
 vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({children}) => <div>{children}</div>}}))
@@ -103,6 +103,41 @@ describe('the monthly limits', () => {
         expect(container.querySelector('input[name="dataQuota"]').value).toBe('25')
         act(() => root.unmount())
         container.remove()
+    })
+})
+
+describe('a pending budget request', () => {
+    const render = userDetails => {
+        const container = document.createElement('div')
+        document.body.appendChild(container)
+        const root = createRoot(container)
+        act(() => root.render(
+            <UserDetails userDetails={userDetails} onCancel={() => {}} onSave={() => {}} onLock={() => {}} onUnlock={() => {}}/>
+        ))
+        return {container, cleanup: () => { act(() => root.unmount()); container.remove() }}
+    }
+    const requestRow = (container, label) => container.querySelector(`input[data-request="${label}"]`)
+    const dataLabel = 'user.userDetails.form.monthlyBudget.dataQuota.label'
+
+    it('without a Data quota has no Data row to accept or decline', () => {
+        const user = aUser({username: 'bob'})
+        user.quota.budgetUpdateRequest = {message: 'more', instanceSpending: 2, storageSpending: 2, storageQuota: 2}
+
+        const {container, cleanup} = render(user)
+
+        expect(requestRow(container, dataLabel)).toBeNull()
+        expect(requestRow(container, 'user.userDetails.form.monthlyBudget.storageQuota.label')).not.toBeNull()
+        cleanup()
+    })
+
+    it('with a Data quota shows it to accept or decline', () => {
+        const user = aUser({username: 'bob'})
+        user.quota.budgetUpdateRequest = {message: 'more', instanceSpending: 2, storageSpending: 2, storageQuota: 2, dataQuota: 50}
+
+        const {container, cleanup} = render(user)
+
+        expect(requestRow(container, dataLabel)).not.toBeNull()
+        cleanup()
     })
 })
 

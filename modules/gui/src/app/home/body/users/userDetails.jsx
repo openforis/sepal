@@ -68,7 +68,7 @@ const mapStateToProps = (state, ownProps) => {
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
-    const userRequestDataQuotaState = budgetUpdateRequest ? null : false
+    const userRequestDataQuotaState = budgetUpdateRequest?.dataQuota != null ? null : false
     return {
         values: {
             id, revision, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota, dataQuota,
@@ -404,16 +404,18 @@ class _UserDetails extends React.Component {
                         />
                         {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, storageQuota, budgetUpdateRequest.storageQuota)}
                     </Layout>
-                    <Layout type='vertical'>
-                        <Input
-                            label={msg('user.userDetails.form.monthlyBudget.dataQuota.label')}
-                            type='number'
-                            value={budgetUpdateRequest.dataQuota}
-                            readOnly
-                            prefix='GB'
-                        />
-                        {this.renderAcceptDeclineButtons(userRequestDataQuotaState, dataQuota, budgetUpdateRequest.dataQuota)}
-                    </Layout>
+                    {budgetUpdateRequest.dataQuota != null ? (
+                        <Layout type='vertical'>
+                            <Input
+                                label={msg('user.userDetails.form.monthlyBudget.dataQuota.label')}
+                                type='number'
+                                value={budgetUpdateRequest.dataQuota}
+                                readOnly
+                                prefix='GB'
+                            />
+                            {this.renderAcceptDeclineButtons(userRequestDataQuotaState, dataQuota, budgetUpdateRequest.dataQuota)}
+                        </Layout>
+                    ) : null}
                 </Layout>
             </Form.FieldSet>
         )
