@@ -182,13 +182,12 @@ export class S3Provider {
 
     async downloadUrl(attachment, relPath, {expiresSeconds}) {
         const key = this.#fileKey(attachment, relPath)
-        const filename = relPath.split('/').at(-1)
         return getSignedUrl(
             this.#s3,
             new GetObjectCommand({
                 Bucket: this.#bucket,
                 Key: key,
-                ResponseContentDisposition: `attachment; filename="${filename}"`
+                ResponseContentDisposition: contentDisposition(relPath.split('/').at(-1))
             }),
             {expiresIn: expiresSeconds}
         )
@@ -351,8 +350,15 @@ const folderPrefix = ({location: {prefix}}, relPath) =>
 
 const requireRelPath = (relPath, {allowRoot = false} = {}) => {
     const valid = typeof relPath === 'string'
-        && (relPath === '' ? allowRoot : !relPath.includes('\\') && relPath.split('/').every(segment => segment && segment !== '..' && segment !== '.'))
+        && (relPath === '' ? allowRoot : !relPath.includes('\\') && !relPath.includes('\0') && relPath.split('/').every(segment => segment && segment !== '..' && segment !== '.'))
     if (!valid) {
         throw new ClientException(`Not a path inside Data: ${relPath}`)
     }
+}
+
+// ASCII fallback plus the RFC 5987 UTF-8 form, so quotes and non-Latin-1 names cannot break the header.
+const contentDisposition = name => {
+    const fallback = name.replace(/["\\]|[^\x20-\x7e]/g, '_')
+    const encoded = encodeURIComponent(name).replace(/['()*]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+    return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`
 }

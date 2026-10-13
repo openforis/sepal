@@ -101,7 +101,7 @@ describe('erase', () => {
 })
 
 describe('remove', () => {
-    it.each(['../x', '', 'a//b', 'a\\b', '/a', 'a/../b'])('refuses the path %j without any request', async relPath => {
+    it.each(['../x', '', 'a//b', 'a\\b', '/a', 'a/../b', 'a\0b'])('refuses the path %j without any request', async relPath => {
         const s3 = fakeS3({objects: [{Key: 'users/alice/a', LastModified: new Date()}]})
         const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
 
@@ -118,8 +118,18 @@ describe('downloadUrl', () => {
         const url = new URL(await provider.downloadUrl(attachment('alice'), 'dir/report.txt', {expiresSeconds: 60}))
 
         expect(url.pathname).toBe('/users/alice/dir/report.txt')
-        expect(url.searchParams.get('response-content-disposition')).toBe('attachment; filename="report.txt"')
+        expect(url.searchParams.get('response-content-disposition')).toBe('attachment; filename="report.txt"; filename*=UTF-8\'\'report.txt')
         expect(url.searchParams.get('X-Amz-Expires')).toBe('60')
+    })
+
+    it('escapes quotes and non-ASCII characters in the download file name', async () => {
+        const s3 = new S3Client({region: REGION, credentials: {accessKeyId: 'key', secretAccessKey: 'secret'}})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION, roleArn: ROLE_ARN})
+
+        const url = new URL(await provider.downloadUrl(attachment('alice'), 'a"b \u00fc.txt', {expiresSeconds: 60}))
+
+        expect(url.searchParams.get('response-content-disposition'))
+            .toBe('attachment; filename="a_b _.txt"; filename*=UTF-8\'\'a%22b%20%C3%BC.txt')
     })
 
     it('refuses a path that leaves the attachment', async () => {
