@@ -621,13 +621,14 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
-    rememberDestination({assetId, workspacePath}) {
+    // The form keeps a workspace path typed for another destination; only an export to SEPAL used it.
+    rememberDestination({destination, assetId, workspacePath}) {
         const project = this.findProject()
         if (project) {
             updateProject({
                 ...project,
                 defaultAssetFolder: assetId ? dirname(assetId) : project.defaultAssetFolder,
-                defaultWorkspaceFolder: workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
+                defaultWorkspaceFolder: destination === 'SEPAL' && workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
             })
         }
     }

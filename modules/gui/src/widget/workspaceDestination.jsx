@@ -238,8 +238,10 @@ class _WorkspaceDestination extends React.Component {
     }
 
     onError() {
-        const {workspacePathInput} = this.props
-        workspacePathInput.setInvalid(msg('widget.workspaceDestination.loadError'))
+        const {workspacePathInput, destination} = this.props
+        workspacePathInput.setInvalid(destination === 'DATA'
+            ? msg('widget.workspaceDestination.dataLoadError')
+            : msg('widget.workspaceDestination.loadError'))
     }
 
     checkWorkspacePath(path) {

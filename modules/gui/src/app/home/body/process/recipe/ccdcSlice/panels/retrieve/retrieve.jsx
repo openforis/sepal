@@ -636,13 +636,14 @@ class _Retrieve extends React.Component {
         const {recipe, output, pending} = read
         const request = sliceRequest({output, retrieveOptions: values})
         if (submitRetrieve({recipe, output, pending, request, task: retrieveTask})) {
-            const {assetId, workspacePath} = values
+            const {destination, assetId, workspacePath} = values
             const project = this.findProject()
             if (project) {
                 updateProject({
                     ...project,
                     defaultAssetFolder: assetId ? dirname(assetId) : project.defaultAssetFolder,
-                    defaultWorkspaceFolder: workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
+                    // The form keeps a workspace path typed for another destination; only an export to SEPAL used it.
+                    defaultWorkspaceFolder: destination === 'SEPAL' && workspacePath ? dirname(workspacePath) : project.defaultWorkspaceFolder
                 })
             }
         }

@@ -76,6 +76,7 @@ vi.mock('~/widget/form', async importOriginal => {
 })
 
 const {MosaicRetrievePanel} = await import('./retrievePanel')
+const {updateProject} = await import('~/app/home/body/process/recipeList/projects')
 
 const roots = []
 
@@ -86,6 +87,8 @@ const band = (name, arrayDimensions, pyramidingPolicy) => ({
 })
 
 const RECIPE = {id: 'recipe-1', type: 'SYNTHETIC', model: {}}
+
+const PROJECT = {id: 'p1', name: 'Project', defaultWorkspaceFolder: 'downloads/elsewhere'}
 
 const description = bands => ({
     executionReference: {type: 'RECIPE_REF', id: RECIPE.id},
@@ -230,6 +233,7 @@ const passMinimum = () => act(() => vi.advanceTimersByTime(MINIMUM_LOADING_MS + 
 
 beforeEach(() => {
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+    updateProject.mockClear()
     capture.read = resolving()
     capture.rerender = null
     capture.destinationButtons = null
@@ -584,6 +588,18 @@ describe('the Data destination', () => {
         expect(formInputs.destination.set).toHaveBeenCalledWith('DATA')
     })
 
+    it('remembers the workspace folder of an export to SEPAL in the project', () => {
+        mount(baseProps({toData: true, projectId: 'p1', projects: [PROJECT], formInputs: inputs({bands: ['scalar'], destination: 'SEPAL'})}))
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        capture.onApply({
+            bands: ['scalar'], destination: 'SEPAL', workspacePath: 'downloads/mine/recipe', fileDimensionsMultiple: 10, shardSize: 256
+        })
+
+        expect(updateProject).toHaveBeenCalledWith(expect.objectContaining({defaultWorkspaceFolder: 'downloads/mine'}))
+    })
+
     it('leaves SEPAL asking for a workspace folder in the home', () => {
         const formInputs = inputs({bands: ['scalar'], destination: 'SEPAL'})
         mount(baseProps({toData: true, formInputs}))
@@ -593,6 +609,19 @@ describe('the Data destination', () => {
 
         expect(capture.folderFields.at(-1).workspacePathInput).toBe(formInputs.workspacePath)
         expect(capture.folderFields.at(-1).destination).not.toBe('DATA')
+    })
+
+    it('leaves the project\'s workspace folder as it was', () => {
+        mount(baseProps({toData: true, projectId: 'p1', projects: [PROJECT], formInputs: inputs({bands: ['scalar'], destination: 'DATA'})}))
+        answer(ready([band('scalar', 0)]))
+        passMinimum()
+
+        capture.onApply({
+            bands: ['scalar'], destination: 'DATA', dataPath: 'exports/recipe', workspacePath: 'data/stale/recipe',
+            fileDimensionsMultiple: 10, shardSize: 256
+        })
+
+        expect(updateProject).toHaveBeenCalledWith(expect.objectContaining({defaultWorkspaceFolder: PROJECT.defaultWorkspaceFolder}))
     })
 
     it('submits the Data folder with the destination', () => {

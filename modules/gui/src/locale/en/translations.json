@@ -5714,6 +5714,7 @@
     "data": {
       "invalidFolder": "\"{path}\" is not a valid folder in Data.",
       "quotaExceeded": "Your Data is over its quota. Delete files from Data, or ask for a larger quota, then export again.",
+      "uploadFailed": "Saving to Data failed after {uploaded} of {total} files. Delete the folder in Data, or choose another folder, and export again.",
       "upload": {
         "progress": "Saving to Data - {uploaded} of {total} files"
       }
@@ -6454,6 +6455,7 @@
       "taskPending": "A task is already pending in this folder. Please choose a different folder.",
       "notEmpty": "This folder must be completely empty. Please choose a different folder or remove its contents.",
       "loadError": "Unable to load the workspace. Please try again.",
+      "dataLoadError": "Unable to check the folder in Data. Try again later.",
       "dataReserved": "Folder \"data\" is your Data. Choose the Data destination to export there.",
       "invalidDataFolder": "Enter a folder relative to Data, such as exports/my_folder, without empty, \".\" or \"..\" parts or backslashes.",
       "browser": {

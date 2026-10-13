@@ -79,7 +79,8 @@ vi.mock('~/widget/form', async importOriginal => {
     }
 })
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: () => {}}))
+const updateProject = vi.hoisted(() => vi.fn())
+vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({getPreSetVisualizations: () => []})}))
 
 const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
@@ -206,6 +207,33 @@ describe('the Data destination', () => {
     })
 })
 
+describe('the project\'s workspace folder', () => {
+    it('is remembered from an export to SEPAL', () => {
+        show(describedRead(), {destination: 'SEPAL', projectId: PROJECT.id})
+
+        capture.onApply({
+            ...selecting({baseBands: ['ndvi'], bandTypes: ['value'], segmentBands: []}),
+            destination: 'SEPAL',
+            workspacePath: 'downloads/mine/slice'
+        })
+
+        expect(updateProject).toHaveBeenCalledWith(expect.objectContaining({defaultWorkspaceFolder: 'downloads/mine'}))
+    })
+
+    it('is left as it was by an export to Data', () => {
+        show(describedRead(), {destination: 'DATA', projectId: PROJECT.id})
+
+        capture.onApply({
+            ...selecting({baseBands: ['ndvi'], bandTypes: ['value'], segmentBands: []}),
+            destination: 'DATA',
+            dataPath: 'exports/slice',
+            workspacePath: 'data/stale/slice'
+        })
+
+        expect(updateProject).toHaveBeenCalledWith(expect.objectContaining({defaultWorkspaceFolder: PROJECT.defaultWorkspaceFolder}))
+    })
+})
+
 describe('an open panel whose source became unreachable', () => {
     it('cannot be applied', () => {
         expect(panel(unavailableRead(), {baseBands: ['ndvi'], bandTypes: ['value']}).decision().status).toBe('BLOCKED')
@@ -223,6 +251,7 @@ const roots = []
 
 afterEach(() => {
     roots.splice(0).forEach(root => act(() => root.unmount()))
+    updateProject.mockClear()
     capture.destinationButtons = null
     capture.folderFields = []
     capture.googleAccount = true
@@ -242,6 +271,8 @@ const SLICE = {
 }
 
 const SOURCE_BANDS = ['ndvi_coefs', 'ndvi_rmse', 'tStart']
+
+const PROJECT = {id: 'p1', name: 'Project', defaultWorkspaceFolder: 'downloads/elsewhere'}
 
 // The slice's read once its acquisition holds a description: what its own derivation makes of the source's bands.
 const describedRead = () => outputRead(sliceOutputBands(SOURCE_BANDS, SLICE.model))
@@ -312,7 +343,7 @@ const panel = (read, {baseBands = [], bandTypes = [], segmentBands = []} = {}) =
 // What the panel set its selection fields to.
 const changes = instance => instance.changes
 
-const show = (read, {destination}) => {
+const show = (read, {destination, projectId = null}) => {
     submitted.length = 0
     notified.length = 0
     const input = value => ({value, set: () => {}})
@@ -327,11 +358,11 @@ const show = (read, {destination}) => {
     roots.push(root)
     act(() => root.render(
         <Retrieve
-            projectId={null}
+            projectId={projectId}
             retrieveOutput={read}
             readRetrieveOutput={() => read}
             inputs={inputs}
-            projects={[]}
+            projects={[PROJECT]}
             form={{isInvalid: () => false}}
             defaultCrs='EPSG:4326'
             defaultScale={30}

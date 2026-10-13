@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {of} from 'rxjs'
+import {of, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
@@ -105,6 +105,15 @@ describe('a Data folder', () => {
         await validated()
 
         expect(shownError()).toBe(null)
+    })
+
+    it.each([400, 500])('that cannot be checked (%i) says so for Data', async status => {
+        get$.mockImplementation(() => throwError(() => ({status})))
+        show({destination: 'DATA', path: 'exports/x'})
+
+        await validated()
+
+        expect(shownError()).toBe('widget.workspaceDestination.dataLoadError')
     })
 
     it('defaults to exports, under the recipe\'s project, ignoring the project\'s workspace folder', () => {
