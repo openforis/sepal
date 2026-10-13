@@ -301,6 +301,28 @@ program
             .argParser(v => v === 'true')
             .default(false)
     )
+    .addOption(
+        new Option('--data-enabled <boolean>', 'Mount each user\'s Data at ~/data in sandboxes')
+            .env('DATA_ENABLED')
+            .argParser(v => v === 'true')
+            .default(false)
+    )
+    .addOption(
+        new Option('--data-flush-timeout-seconds <number>', 'Time to let the Data mount write back pending changes before it is removed')
+            .env('DATA_FLUSH_TIMEOUT_SECONDS')
+            .argParser(v => parseInt(v))
+            .default(600)
+    )
+    .addOption(
+        new Option('--data-mount-root <path>', 'Host directory holding the per-instance Data mounts')
+            .env('DATA_MOUNT_ROOT')
+            .default('/var/lib/sepal/data-mounts')
+    )
+    .addOption(
+        new Option('--data-cache-max-size <size>', 'Maximum size of the Data mount cache per sandbox')
+            .env('DATA_CACHE_MAX_SIZE')
+            .default('20G')
+    )
 
 ignoreEmptyEnv(program).parse()
 
@@ -349,6 +371,10 @@ const {
     volumeInitializationRate,
     prewarmIdleVolumes,
     stoppedPoolSize,
+    dataEnabled,
+    dataFlushTimeoutSeconds,
+    dataMountRoot,
+    dataCacheMaxSize,
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -363,6 +389,10 @@ export {
     busyNetworkThresholdKbps,
     busyWindowMinutes,
     cartoDbBasemapKey,
+    dataCacheMaxSize,
+    dataEnabled,
+    dataFlushTimeoutSeconds,
+    dataMountRoot,
     dockerEntryPoint,
     dockerPort,
     dockerRegistryHost,
