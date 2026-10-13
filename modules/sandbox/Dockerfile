@@ -97,6 +97,11 @@ ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
 ADD modules/${MODULE_NAME}/script/requirements.txt /script/
 RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
 
+ADD modules/${MODULE_NAME}/script/init_data.sh /script/
+RUN chmod u+x /script/init_data.sh && sync && /script/init_data.sh
+
+ADD --chmod=0755 modules/${MODULE_NAME}/bin/sepal-data /usr/local/bin/sepal-data
+
 ENV USER=sepal-user
 
 ADD modules/${MODULE_NAME}/script/voila.py /usr/local/etc/jupyter/
