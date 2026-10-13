@@ -150,8 +150,10 @@ const createDataMountSidecar = (instance, config, apiKey, data) => makeImage({
     runCommand: ['/usr/local/bin/sepal-data', 'mount'],
     waitCommand: ['/usr/local/bin/sepal-data', 'wait-mounted', '30'],
     hostConfig: {
+        CapDrop: ['ALL'],
         CapAdd: ['SYS_ADMIN'],
-        SecurityOpt: ['apparmor:unconfined'],
+        // apparmor:unconfined matters only on AppArmor hosts, whose default Docker profile denies mount.
+        SecurityOpt: ['apparmor:unconfined', 'no-new-privileges:true'],
         Devices: [{PathOnHost: '/dev/fuse', PathInContainer: '/dev/fuse', CgroupPermissions: 'rwm'}],
     },
     networkAlias: false,

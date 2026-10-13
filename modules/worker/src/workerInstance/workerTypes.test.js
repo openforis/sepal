@@ -88,7 +88,7 @@ describe('with Data enabled', () => {
             .toBe(`sandbox.data-mount.admin.${instanceName(SESSION_ID)}.${instance.id}`)
     })
 
-    it('mounts Data through a shared host directory with FUSE', () => {
+    it('mounts Data through a shared host directory with FUSE and no other privilege', () => {
         const [sidecar] = create().images
 
         expect(sidecar.name).toBe('sandbox')
@@ -97,8 +97,9 @@ describe('with Data enabled', () => {
             [dataCacheVolumeName(instance.id)]: '/cache',
         })
         expect(sidecar.hostConfig).toEqual({
+            CapDrop: ['ALL'],
             CapAdd: ['SYS_ADMIN'],
-            SecurityOpt: ['apparmor:unconfined'],
+            SecurityOpt: ['apparmor:unconfined', 'no-new-privileges:true'],
             Devices: [{PathOnHost: '/dev/fuse', PathInContainer: '/dev/fuse', CgroupPermissions: 'rwm'}],
         })
         expect(sidecar.environment).toEqual({
