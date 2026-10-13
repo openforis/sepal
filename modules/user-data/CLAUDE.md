@@ -31,7 +31,9 @@ npm run test:aws                                           # AWS isolation suite
 
 MySQL database `user_data`, table `data_usage` (size and measurement times per user). `Usage` measures a user within
 an hour after a read-write grant marked them dirty, and every user with Data (or measured before) once a day, then
-publishes `userData.size {username, size}`.
+publishes `userData.size {username, size}`. Every hourly tick also republishes the last recorded size of every
+known user (no S3 call), so events lost while the broker is down heal within an hour; the first tick runs 60 s
+after start, once the broker connection is up.
 
 `QuotaState` holds, in memory, the users whose latest budget verdict has reason `DATA_QUOTA`; they get mode `read`
 (at most an hour stale after a restart, until budget's next hourly verdict).

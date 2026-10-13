@@ -31,6 +31,13 @@ export class UsageRepository {
         return rows.map(({username}) => username)
     }
 
+    async measurements() {
+        const [rows] = await this.#db.withConnection(connection => connection.query(
+            'SELECT username, size FROM data_usage WHERE size IS NOT NULL ORDER BY username'
+        ))
+        return rows.map(({username, size}) => ({username, size: Number(size)}))
+    }
+
     recordMeasurement(username, size) {
         return this.#db.withConnection(connection => connection.query(
             `INSERT INTO data_usage (username, size, measured_at, dirty_since) VALUES (?, ?, ?, NULL)

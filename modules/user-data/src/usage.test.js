@@ -25,7 +25,7 @@ describe('tick', () => {
 
         await harness.usage.tick()
 
-        expect(harness.published).toHaveLength(1)
+        expect(harness.recorded).toHaveLength(1)
     })
 
     it('also re-measures users it measured before but who no longer have Data', async () => {
@@ -43,6 +43,30 @@ describe('tick', () => {
 
         expect(harness.recorded).toEqual([['bob', 2]])
         expect(harness.dirty).toContain('alice')
+    })
+
+    it('republishes the recorded size of every known user each tick', async () => {
+        const harness = usageHarness({measured: {alice: 10, bob: 20}})
+
+        await harness.usage.tick()
+
+        expect(harness.published).toEqual([{username: 'alice', size: 10}, {username: 'bob', size: 20}])
+    })
+
+    it('publishes a user measured in this tick once', async () => {
+        const harness = usageHarness({dirty: ['alice'], measured: {alice: 10, bob: 20}, sizes: {alice: 15}})
+
+        await harness.usage.tick()
+
+        expect(harness.published).toEqual([{username: 'alice', size: 15}, {username: 'bob', size: 20}])
+    })
+
+    it('republishes the others when republishing one user fails', async () => {
+        const harness = usageHarness({measured: {alice: 10, bob: 20}, failingPublish: ['alice']})
+
+        await harness.usage.tick()
+
+        expect(harness.published).toEqual([{username: 'bob', size: 20}])
     })
 
     it('does not run two ticks at once', async () => {
@@ -79,9 +103,9 @@ describe('recordErased', () => {
 
 const HOUR = 60 * 60 * 1000
 
-function usageHarness({dirty = [], owners = [], known = [], sizes = {}, failing = [], slow = false}) {
+function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], slow = false}) {
     let time = Date.parse('2026-10-13T10:00:00Z')
-    const harness = {published: [], recorded: [], dirty: [...dirty]}
+    const harness = {published: [], recorded: [], dirty: [...dirty], measured: {...measured}}
     const repository = {
         markDirty: async username => {
             if (!harness.dirty.includes(username)) {
@@ -90,8 +114,12 @@ function usageHarness({dirty = [], owners = [], known = [], sizes = {}, failing 
         },
         dirtyUsernames: async () => [...harness.dirty],
         knownUsernames: async () => [...known],
+        measurements: async () => Object.entries(harness.measured)
+            .map(([username, size]) => ({username, size}))
+            .sort((a, b) => a.username.localeCompare(b.username)),
         recordMeasurement: async (username, size) => {
             harness.recorded.push([username, size])
+            harness.measured[username] = size
             harness.dirty = harness.dirty.filter(user => user !== username)
         }
     }
@@ -111,7 +139,14 @@ function usageHarness({dirty = [], owners = [], known = [], sizes = {}, failing 
         repository,
         attachments: {get: (owner, id) => ({id, owner, provider: 's3'}), dataProvider: () => 's3'},
         providers: {for: () => provider},
-        events: {emitUserDataSize: (username, size) => harness.published.push({username, size})},
+        events: {
+            emitUserDataSize: (username, size) => {
+                if (failingPublish.includes(username)) {
+                    throw new Error(`cannot publish ${username}`)
+                }
+                harness.published.push({username, size})
+            }
+        },
         now: () => new Date(time)
     })
     harness.advance = ms => {

@@ -51,6 +51,19 @@ describe('dirty users', () => {
     })
 })
 
+describe('measurements', () => {
+    it('are the recorded sizes of the measured users, by username', async () => {
+        await repository.recordMeasurement('carol', 0)
+        await repository.recordMeasurement('alice', 1234)
+        await repository.markDirty('bob')
+
+        expect(await repository.measurements()).toEqual([
+            {username: 'alice', size: 1234},
+            {username: 'carol', size: 0}
+        ])
+    })
+})
+
 describe('erase requests', () => {
     it('are the users purged and not yet erased, oldest first', async () => {
         await repository.requestErase('bob')
