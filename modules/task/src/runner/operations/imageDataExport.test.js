@@ -1,5 +1,5 @@
 import {existsSync} from 'node:fs'
-import {mkdir, mkdtemp, readFile, rm, utimes, writeFile} from 'node:fs/promises'
+import {lstat, lutimes, mkdir, mkdtemp, readFile, rm, stat, symlink, utimes, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
@@ -7,10 +7,12 @@ import {jest} from '@jest/globals'
 import {from, of} from 'rxjs'
 
 let downloaded = true
+let duringExport = async () => {}
 
 jest.unstable_mockModule('../workspaceExport.js', () => ({
     exportToWorkspace: async args => {
         await args.start()
+        await duringExport(args)
         if (downloaded) {
             await writeFile(join(args.downloadDir, 'b.tif'), 'b')
             await writeFile(join(args.downloadDir, 'a.tif'), 'a')
@@ -27,7 +29,7 @@ jest.unstable_mockModule('#sepal/gdal', () => ({
     setBandNames$: () => of(null)
 }))
 
-const {imageDataExport} = await import('./imageDataExport.js')
+const {imageDataExport, STALE_STAGING_MS} = await import('./imageDataExport.js')
 
 const originalHome = process.env.HOME
 const originalTaskId = process.env.TASK_ID
@@ -38,6 +40,7 @@ beforeEach(async () => {
     process.env.HOME = home
     process.env.TASK_ID = 't1'
     downloaded = true
+    duringExport = async () => {}
 })
 
 afterEach(async () => {
@@ -81,11 +84,37 @@ test('does not pass the Data folder on to the Earth Engine export', async () => 
 })
 
 test('fails with the quota message when the user goes over the quota between files, keeping what was uploaded', async () => {
-    const {run, copies} = harness({accesses: [rw, ro]})
+    const {run, copies, sepal} = harness({accesses: [rw, ro]})
 
     await expect(run(params)).rejects.toMatchObject({userMessage: {key: 'tasks.data.quotaExceeded'}})
     expect(copies.map(c => c.remotePath)).toEqual(['exports/r/a.tif'])
+    expect(sepal.changed).toBe(1)
     expect(existsSync(join(home, '.data-staging', 't1'))).toBe(false)
+})
+
+test('fails saying how many files were saved when an upload fails, keeping the cause for the log', async () => {
+    const failure = new Error('rclone: connection reset')
+    const {run, sepal} = harness({accesses: [rw, rw, rw], copy: async ({remotePath}) => {
+        if (remotePath === 'exports/r/b.tif') {
+            throw failure
+        }
+    }})
+
+    const error = await run(params).catch(error => error)
+
+    expect(error).toMatchObject({userMessage: {key: 'tasks.data.uploadFailed', args: {uploaded: 1, total: 3}}})
+    expect(error.cause).toBe(failure)
+    expect(sepal.changed).toBe(1)
+    expect(existsSync(join(home, '.data-staging', 't1'))).toBe(false)
+})
+
+test('does not have Data measured when no file was saved', async () => {
+    const {run, sepal} = harness({accesses: [rw], copy: async () => {
+        throw new Error('rclone: access denied')
+    }})
+
+    await expect(run(params)).rejects.toMatchObject({userMessage: {key: 'tasks.data.uploadFailed', args: {uploaded: 0, total: 3}}})
+    expect(sepal.changed).toBe(0)
 })
 
 test('uploads nothing and succeeds when the export produced no files', async () => {
@@ -144,6 +173,46 @@ test('removes staging folders of other tasks older than a week, keeps recent one
     expect(existsSync(join(root, 'fresh'))).toBe(true)
 })
 
+test('keeps its staging fresh with every progress report, so other tasks never sweep it', async () => {
+    const reportedAt = Date.now()
+    let stagingAge
+    duringExport = async ({downloadDir, report}) => {
+        await utimes(downloadDir, new Date(0), new Date(0))
+        report({messageKey: 'tasks.ee.export.running'})
+        stagingAge = reportedAt - (await stat(downloadDir)).mtimeMs
+    }
+    const {run, reports} = harness({accesses: [rw, rw, rw]})
+
+    await run(params, {now: () => reportedAt})
+
+    expect(stagingAge).toBeLessThan(STALE_STAGING_MS)
+    expect(reports[0]).toEqual({messageKey: 'tasks.ee.export.running'})
+})
+
+test('sweeps every stale entry, dangling links included, even after one that cannot be swept', async () => {
+    const root = join(home, '.data-staging')
+    await mkdir(root, {recursive: true})
+    const link = join(root, 'a-link')
+    await symlink(join(root, 'gone'), link)
+    await lutimes(link, new Date(0), new Date(0))
+    const stale = ['b-old', 'c-old', 'd-stuck', 'e-old']
+    for (const name of stale) {
+        await mkdir(join(root, name))
+        await utimes(join(root, name), new Date(0), new Date(0))
+    }
+    const {run} = harness({accesses: [rw, rw, rw]})
+
+    await run(params, {remove: async (path, options) => {
+        if (path.endsWith('d-stuck')) {
+            throw new Error('EACCES')
+        }
+        await rm(path, options)
+    }})
+
+    expect(await present(link)).toBe(false)
+    expect(await Promise.all(['b-old', 'c-old', 'e-old'].map(name => present(join(root, name))))).toEqual([false, false, false])
+})
+
 test('an export succeeds even when sweeping stale staging fails', async () => {
     const {run, copies} = harness({accesses: [rw, rw, rw]})
     const old = join(home, '.data-staging', 'old')
@@ -159,6 +228,8 @@ test('an export succeeds even when sweeping stale staging fails', async () => {
 
     expect(copies).toHaveLength(3)
 })
+
+const present = path => lstat(path).then(() => true, () => false)
 
 const harness = ({accesses = [], copy}) => {
     const copies = []
