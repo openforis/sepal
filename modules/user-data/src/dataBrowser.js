@@ -28,10 +28,13 @@ export class DataBrowser {
             throw new ClientException('The Data folder cannot be removed')
         }
         const {attachment, provider} = this.#data(username)
-        for (const relPath of relPaths) {
-            await provider.remove(attachment, relPath)
+        try {
+            for (const relPath of relPaths) {
+                await provider.remove(attachment, relPath)
+            }
+        } finally {
+            await this.#usage.markDirty(username)
         }
-        await this.#usage.markDirty(username)
     }
 
     async download(username, guiPath) {

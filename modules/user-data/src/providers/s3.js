@@ -5,6 +5,8 @@ import {getSignedUrl} from '@aws-sdk/s3-request-presigner'
 import {ClientException, ServerException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
 
+import {contentDisposition} from '../contentDisposition.js'
+
 const log = getLogger('s3')
 
 const DURATION_SECONDS = 3600
@@ -354,11 +356,4 @@ const requireRelPath = (relPath, {allowRoot = false} = {}) => {
     if (!valid) {
         throw new ClientException(`Not a path inside Data: ${relPath}`)
     }
-}
-
-// ASCII fallback plus the RFC 5987 UTF-8 form, so quotes and non-Latin-1 names cannot break the header.
-const contentDisposition = name => {
-    const fallback = name.replace(/["\\]|[^\x20-\x7e]/g, '_')
-    const encoded = encodeURIComponent(name).replace(/['()*]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`
 }

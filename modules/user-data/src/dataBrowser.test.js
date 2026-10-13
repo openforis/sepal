@@ -46,6 +46,19 @@ describe('remove', () => {
         expect(usage.dirty).toEqual(['alice'])
     })
 
+    it('has the usage measured again when a later removal fails', async () => {
+        const {browser, provider, usage} = harness({})
+        const failure = new Error('boom')
+        provider.remove = async (_attachment, relPath) => {
+            if (relPath === 'b') {
+                throw failure
+            }
+        }
+
+        await expect(browser.remove('alice', ['data/a', 'data/b'])).rejects.toBe(failure)
+        expect(usage.dirty).toEqual(['alice'])
+    })
+
     it('refuses to remove the Data root', async () => {
         const {browser, provider} = harness({})
 

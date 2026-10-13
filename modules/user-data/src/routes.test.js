@@ -85,7 +85,18 @@ describe('download', () => {
         const response = await fetch(`${base}/attachments/data/download?path=data/x`, {headers: {'sepal-user': USER}})
 
         expect(response.status).toBe(200)
-        expect(response.headers.get('content-disposition')).toContain('filename="a\\"b  c.txt"')
+        expect(response.headers.get('content-disposition')).toContain('filename="a_b__c.txt"')
+    })
+
+    it('streams a non-ASCII filename with the RFC 5987 header', async () => {
+        download = async () => ({stream: Readable.from(['x']), size: 1, filename: '日本.txt'})
+
+        const response = await fetch(`${base}/attachments/data/download?path=data/x`, {headers: {'sepal-user': USER}})
+
+        expect(response.status).toBe(200)
+        expect(response.headers.get('content-disposition')).toBe(
+            'attachment; filename="__.txt"; filename*=UTF-8\'\'%E6%97%A5%E6%9C%AC.txt'
+        )
     })
 
     it('answers 400 for an unsafe path', async () => {

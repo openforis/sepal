@@ -1,3 +1,4 @@
+import {contentDisposition} from './contentDisposition.js'
 import {requireAuth} from './currentUser.js'
 
 // Forwarded explicitly rather than passed as method references: Access reads private state, so its
@@ -31,8 +32,3 @@ export const createRoutes = (access, browser) => router => router
     })
 
 const username = ctx => ctx.state.currentUser.username
-
-const contentDisposition = filename => {
-    const quoted = filename.replace(/[\r\n]/g, ' ').replace(/["\\]/g, '\\$&')
-    return `attachment; filename="${quoted}"; filename*=UTF-8''${encodeURIComponent(filename)}`
-}
