@@ -34,6 +34,12 @@ describe('Attachments', () => {
         expect(attachments.get('alice', DATA_ATTACHMENT_ID).owner).toBe('alice')
     })
 
+    it('name the provider of Data', () => {
+        const attachments = new Attachments({bucket: BUCKET})
+
+        expect(attachments.dataProvider()).toBe(attachments.get('alice', DATA_ATTACHMENT_ID).provider)
+    })
+
     it('refuse an unknown attachment id as not found', () => {
         const attachments = new Attachments({bucket: BUCKET})
 

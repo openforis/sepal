@@ -10,6 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1149.0",
         "@aws-sdk/client-sts": "^3.1149.0",
         "commander": "^15.0.0",
         "log4js": "^6.9.1",
@@ -23,7 +24,6 @@
     },
     "type": "module",
     "devDependencies": {
-        "@aws-sdk/client-s3": "^3.1149.0",
         "@aws-sdk/s3-request-presigner": "^3.1149.0",
         "jest": "^30.5.2"
     }

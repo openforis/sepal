@@ -2,6 +2,8 @@ import {NotFoundException} from '#sepal/exception'
 
 export const DATA_ATTACHMENT_ID = 'data'
 
+const DATA_PROVIDER = 's3'
+
 // Data is the built-in attachment. Attachments users add later get the same shape, from storage.
 export class Attachments {
     #bucket
@@ -22,12 +24,16 @@ export class Attachments {
         return attachment
     }
 
+    dataProvider() {
+        return DATA_PROVIDER
+    }
+
     #data(username) {
         return {
             id: DATA_ATTACHMENT_ID,
             name: 'Data',
             owner: username,
-            provider: 's3',
+            provider: DATA_PROVIDER,
             location: {bucket: this.#bucket, prefix: `users/${username}/`},
             mountPath: 'data',
             quota: true

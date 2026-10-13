@@ -38,6 +38,47 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
         expect(response.status).toBe(200)
         expect(await response.text()).toBe('presigned')
     })
+
+    it('measures the bytes stored under the user prefix only', async () => {
+        const owner = `measure${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+        const attachment = attachmentsFor(owner)
+        const client = await taskClient(provider, attachment)
+        await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}a.txt`, Body: 'x'.repeat(100)}))
+        await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}dir/b.txt`, Body: 'y'.repeat(50)}))
+
+        expect(await provider.measureUsage(attachment)).toBe(150)
+    })
+
+    it('measures nothing for a user without Data', async () => {
+        expect(await provider.measureUsage(attachmentsFor('nodatayet'))).toBe(0)
+    })
+
+    it('lists the users that have Data', async () => {
+        const owner = `owner${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+        const attachment = attachmentsFor(owner)
+        const client = await taskClient(provider, attachment)
+        await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}x.txt`, Body: 'x'}))
+
+        expect(await provider.owners()).toContain(owner)
+    })
+
+    it('erases everything under the user prefix, and nothing else', async () => {
+        const owner = `erase${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+        const other = `keep${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+        for (const user of [owner, other]) {
+            const client = await taskClient(provider, attachmentsFor(user))
+            await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachmentsFor(user).location.prefix}x.txt`, Body: 'x'}))
+        }
+
+        await provider.erase(attachmentsFor(owner))
+
+        expect(await provider.measureUsage(attachmentsFor(owner))).toBe(0)
+        expect(await provider.measureUsage(attachmentsFor(other))).toBe(1)
+    })
+
+    function attachmentsFor(owner) {
+        return new Attachments({bucket: config.bucket}).get(owner, 'data')
+    }
 })
 
 function emulatorConfig() {

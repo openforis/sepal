@@ -1,3 +1,4 @@
+import {DeleteObjectsCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
 import {AssumeRoleCommand, STSClient} from '@aws-sdk/client-sts'
 
 import {ClientException, ServerException} from '#sepal/exception'
@@ -11,27 +12,30 @@ const MODES = ['read', 'readWrite']
 const EMULATOR_SESSION_TOKEN = 'sepal-dev-emulator'
 const USERNAME = /^[a-zA-Z_][a-zA-Z0-9]*$/
 
-export const createS3Provider = ({region, roleArn, accessKeyId, secretAccessKey, endpoint, emulator}) =>
-    emulator
-        ? new S3Provider({region, emulator: {endpoint, accessKeyId, secretAccessKey}})
-        : new S3Provider({
-            region,
-            roleArn,
-            sts: new STSClient({region, credentials: {accessKeyId, secretAccessKey}})
-        })
+export const createS3Provider = ({region, bucket, roleArn, accessKeyId, secretAccessKey, endpoint, emulator}) => {
+    const credentials = {accessKeyId, secretAccessKey}
+    const s3 = new S3Client({region, credentials, ...(emulator ? {endpoint, forcePathStyle: true} : {})})
+    return emulator
+        ? new S3Provider({region, bucket, s3, emulator: {endpoint, accessKeyId, secretAccessKey}})
+        : new S3Provider({region, bucket, s3, roleArn, sts: new STSClient({region, credentials})})
+}
 
 // Data on S3: every user's attachment is a prefix of one shared bucket. Credentials come from a role whose
 // policy names the prefix through the `username` session tag, so they cannot reach another user's objects.
 export class S3Provider {
     #sts
+    #s3
+    #bucket
     #roleArn
     #region
     #emulator
     #now
     #cache = new Map()
 
-    constructor({sts, roleArn, region, emulator, now = () => new Date()}) {
+    constructor({sts, s3, bucket, roleArn, region, emulator, now = () => new Date()}) {
         this.#sts = sts
+        this.#s3 = s3
+        this.#bucket = bucket
         this.#roleArn = roleArn
         this.#region = region
         this.#emulator = emulator
@@ -70,6 +74,48 @@ export class S3Provider {
             Token: sessionToken,
             Expiration: expiration.toISOString()
         }
+    }
+
+    async measureUsage(attachment) {
+        requireUsername(attachment.owner)
+        let bytes = 0
+        for await (const {Contents = []} of this.#listPages({Prefix: attachment.location.prefix})) {
+            bytes += Contents.reduce((sum, {Size}) => sum + Size, 0)
+        }
+        return bytes
+    }
+
+    // The emulator (rclone) reports common prefixes without the trailing slash, so it is optional here.
+    async owners() {
+        const owners = []
+        for await (const {CommonPrefixes = []} of this.#listPages({Prefix: 'users/', Delimiter: '/'})) {
+            owners.push(...CommonPrefixes.map(({Prefix}) => Prefix.slice('users/'.length).replace(/\/$/, '')))
+        }
+        return owners.filter(owner => USERNAME.test(owner))
+    }
+
+    async erase(attachment) {
+        requireUsername(attachment.owner)
+        for await (const {Contents = []} of this.#listPages({Prefix: attachment.location.prefix})) {
+            if (Contents.length) {
+                const {Errors} = await this.#s3.send(new DeleteObjectsCommand({
+                    Bucket: this.#bucket,
+                    Delete: {Objects: Contents.map(({Key}) => ({Key})), Quiet: true}
+                }))
+                if (Errors?.length) {
+                    throw new ServerException(`Cannot erase ${attachment.location.prefix}: ${Errors[0].Message}`)
+                }
+            }
+        }
+    }
+
+    async * #listPages(params) {
+        let ContinuationToken
+        do {
+            const page = await this.#s3.send(new ListObjectsV2Command({Bucket: this.#bucket, ...params, ContinuationToken}))
+            yield page
+            ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined
+        } while (ContinuationToken)
     }
 
     async #credentials(username, mode) {
