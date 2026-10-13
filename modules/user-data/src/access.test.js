@@ -3,6 +3,7 @@ import {ClientException, NotFoundException} from '#sepal/exception'
 import {Access, AUTHORIZATION_TOKEN_FILE} from './access.js'
 import {Attachments} from './attachments.js'
 import {Providers} from './providers/providers.js'
+import {QuotaState} from './quotaState.js'
 
 describe('list', () => {
     it('shows the attachments without their provider-specific location', () => {
@@ -46,6 +47,40 @@ describe('grant', () => {
     })
 })
 
+describe('grant over the Data quota', () => {
+    it('grants read-only access while the user is over the Data quota', async () => {
+        const provider = fakeProvider()
+        const quotaState = new QuotaState()
+        quotaState.onExceeded({username: 'alice', reason: 'DATA_QUOTA'})
+        const access = accessWith(provider, {quotaState})
+
+        const granted = await access.grant('alice', 'data', 'task')
+
+        expect(granted.mode).toBe('read')
+        expect(provider.grants[0].request.mode).toBe('read')
+    })
+
+    it('marks the user for measuring when granting read-write access', async () => {
+        const usage = recordingUsage()
+        const access = accessWith(fakeProvider(), {usage})
+
+        await access.credentials('alice', 'data')
+
+        expect(usage.dirty).toEqual(['alice'])
+    })
+
+    it('does not mark a user granted read-only access', async () => {
+        const usage = recordingUsage()
+        const quotaState = new QuotaState()
+        quotaState.onExceeded({username: 'alice', reason: 'DATA_QUOTA'})
+        const access = accessWith(fakeProvider(), {quotaState, usage})
+
+        await access.grant('alice', 'data', 'sandbox')
+
+        expect(usage.dirty).toEqual([])
+    })
+})
+
 describe('credentials', () => {
     it('are the provider credentials of the user attachment in read-write mode', async () => {
         const provider = fakeProvider()
@@ -60,11 +95,18 @@ describe('credentials', () => {
 
 const SEPAL_HOST = 'sepal.example.org'
 
-const accessWith = provider => new Access({
+const accessWith = (provider, {quotaState = new QuotaState(), usage = recordingUsage()} = {}) => new Access({
     attachments: new Attachments({bucket: 'sepal-test-user-data'}),
     providers: new Providers({s3: provider}),
+    quotaState,
+    usage,
     sepalHost: SEPAL_HOST
 })
+
+const recordingUsage = () => {
+    const usage = {dirty: [], markDirty: async username => usage.dirty.push(username)}
+    return usage
+}
 
 const fakeProvider = () => {
     const provider = {

@@ -66,6 +66,17 @@ describe('markDirty', () => {
     })
 })
 
+describe('recordErased', () => {
+    it('records an erased user as empty and publishes it', async () => {
+        const harness = usageHarness({})
+
+        await harness.usage.recordErased('alice')
+
+        expect(harness.recorded).toEqual([['alice', 0]])
+        expect(harness.published).toEqual([{username: 'alice', size: 0}])
+    })
+})
+
 const HOUR = 60 * 60 * 1000
 
 function usageHarness({dirty = [], owners = [], known = [], sizes = {}, failing = [], slow = false}) {

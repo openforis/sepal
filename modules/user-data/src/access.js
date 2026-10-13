@@ -8,11 +8,15 @@ export const AUTHORIZATION_TOKEN_FILE = '/var/run/sepal-data-token'
 export class Access {
     #attachments
     #providers
+    #quotaState
+    #usage
     #sepalHost
 
-    constructor({attachments, providers, sepalHost}) {
+    constructor({attachments, providers, quotaState, usage, sepalHost}) {
         this.#attachments = attachments
         this.#providers = providers
+        this.#quotaState = quotaState
+        this.#usage = usage
         this.#sepalHost = sepalHost
     }
 
@@ -26,7 +30,7 @@ export class Access {
             throw new ClientException(`Not an access purpose: ${purpose}`)
         }
         const attachment = this.#attachments.get(username, attachmentId)
-        const mode = this.#mode()
+        const mode = await this.#modeFor(username)
         const granted = await this.#providers.for(attachment).grantAccess(attachment, {
             mode,
             purpose,
@@ -38,11 +42,16 @@ export class Access {
 
     async credentials(username, attachmentId) {
         const attachment = this.#attachments.get(username, attachmentId)
-        return this.#providers.for(attachment).credentials(attachment, {mode: this.#mode()})
+        const mode = await this.#modeFor(username)
+        return this.#providers.for(attachment).credentials(attachment, {mode})
     }
 
-    #mode() {
-        return 'readWrite'
+    async #modeFor(username) {
+        const mode = this.#quotaState.mode(username)
+        if (mode === 'readWrite') {
+            await this.#usage.markDirty(username)
+        }
+        return mode
     }
 
     #credentialsUrl({id}) {

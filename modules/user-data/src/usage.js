@@ -40,6 +40,11 @@ export class Usage {
         return this.#repository.markDirty(username)
     }
 
+    async recordErased(username) {
+        await this.#repository.recordMeasurement(username, 0)
+        this.#events.emitUserDataSize(username, 0)
+    }
+
     tick() {
         this.#running ??= this.#tick().finally(() => {
             this.#running = null

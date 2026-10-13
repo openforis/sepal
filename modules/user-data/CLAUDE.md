@@ -1,7 +1,8 @@
 # CLAUDE.md - modules/user-data
 
 Each user's cloud storage attachments ("Data" in the GUI, `~/data` in sandboxes) and the access to them. Issues
-prefix-scoped credentials; holds the only AWS identity that can act on the whole bucket. No database yet.
+prefix-scoped credentials; holds the only AWS identity that can act on the whole bucket. Measures each user's Data and publishes it for
+budget; serves read-only credentials to users over their Data quota.
 
 ## Commands
 
@@ -15,10 +16,24 @@ npm run test:aws                                           # AWS isolation suite
 
 - `attachments.js` — a user's attachments. Only the built-in Data attachment for now: `{id: 'data', name: 'Data',
   owner, provider: 's3', location: {bucket, prefix: 'users/<owner>/'}, mountPath: 'data', quota: true}`.
-- `access.js` — validates the purpose, decides the mode, builds the credentials URL, delegates to the provider.
+- `access.js` — validates the purpose, takes the mode from `QuotaState`, marks the user for measuring on read-write
+  grants, builds the credentials URL, delegates to the provider.
 - `providers/providers.js` — provider registry. A provider implements `grantAccess(attachment, {mode, purpose,
   credentialsUrl, authorizationTokenFile})` and `credentials(attachment, {mode})`.
 - `providers/s3.js` — the only code that knows Data is S3, and the only production user of the AWS SDK.
+
+## Usage, quota and events
+
+MySQL database `user_data`, table `data_usage` (size and measurement times per user). `Usage` measures a user within
+an hour after a read-write grant marked them dirty, and every user with Data (or measured before) once a day, then
+publishes `userData.size {username, size}`.
+
+`QuotaState` holds, in memory, the users whose latest budget verdict has reason `DATA_QUOTA`; they get mode `read`
+(at most an hour stale after a restart, until budget's next hourly verdict).
+
+Subscribed queues: `user-data.budgetExceeded` (`budget.UserBudgetExceeded`), `user-data.budgetCleared`
+(`budget.UserBudgetCleared`), `user-data.userStorageErased` (`storage.UserStorageErased`: erases the user's Data
+and records it as empty).
 
 ## HTTP (through the gateway at `/api/user-data`, as the authenticated user)
 
