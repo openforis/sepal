@@ -36,6 +36,8 @@ Subscribers:
 
 ### Storage Scanning
 `src/storageCheck.js` - Recursively scans user home directories, publishes size changes.
+A home is measured with `diskus`, less its `.data-staging` folder (measured separately and subtracted, never
+below zero): image exports to Data stage files there on their way to Data, where they count once uploaded.
 
 ### Inactivity Detection
 `src/inactivityCheck.js` - Checks last activity, sends email notifications before cleanup. Uses BullMQ for scheduled cleanup jobs.

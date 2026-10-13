@@ -36,13 +36,30 @@ const diskUsage = async path => {
     return Number(result)
 }
 
+// Sees into homes the node user cannot read.
+const sudoIsDirectory = async dir => {
+    const found = await command(
+        () => spawn('sudo', ['find', path.dirname(dir), '-mindepth', '1', '-maxdepth', '1', '-name', path.basename(dir), '-type', 'd'])
+    )
+    return found.trim() !== ''
+}
+
 const userHomePath = username =>
     path.join(homeDir, username)
 
-const calculateUserStorage = async username => {
+// Image exports to Data stage their files in the home on their way to Data, where they count once uploaded.
+// diskus cannot exclude a folder, so the staging is measured on its own and subtracted.
+const DATA_STAGING = '.data-staging'
+
+const calculateUserStorage = async (username, {usage = diskUsage, isDirectory = sudoIsDirectory} = {}) => {
     log.debug(`Calculating storage for user ${username}`)
     const t0 = Date.now()
-    const size = await diskUsage(userHomePath(username))
+    const home = userHomePath(username)
+    const total = await usage(home)
+    const staging = path.join(home, DATA_STAGING)
+    const size = await isDirectory(staging)
+        ? Math.max(0, total - await usage(staging))
+        : total
     const t1 = Date.now()
     log.info(`Calculated storage for user ${username}: ${size} bytes [${t1 - t0} ms]`)
     return size
