@@ -51,22 +51,28 @@ const fields = {
         .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .min(0, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
+    dataQuota: new Form.Field()
+        .notBlank('user.userDetails.form.monthlyBudget.dataQuota.atLeast1')
+        .int('user.userDetails.form.monthlyBudget.dataQuota.atLeast1')
+        .min(0, 'user.userDetails.form.monthlyBudget.dataQuota.atLeast1'),
     userRequestInstanceSpendingState: new Form.Field().notNil(),
     userRequestStorageSpendingState: new Form.Field().notNil(),
-    userRequestStorageQuotaState: new Form.Field().notNil()
+    userRequestStorageQuotaState: new Form.Field().notNil(),
+    userRequestDataQuotaState: new Form.Field().notNil()
 }
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
     const {id, revision, username, name, email, organization, intendedUse, admin = false} = userDetails
-    const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
+    const {quota: {budget: {instanceSpending, storageSpending, storageQuota, dataQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
+    const userRequestDataQuotaState = budgetUpdateRequest ? null : false
     return {
         values: {
-            id, revision, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
-            userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
+            id, revision, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota, dataQuota,
+            userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState, userRequestDataQuotaState
         }
     }
 }
@@ -77,6 +83,7 @@ class _UserDetails extends React.Component {
         this.onChangeInstanceSpending = this.onChangeInstanceSpending.bind(this)
         this.onChangeStorageSpending = this.onChangeStorageSpending.bind(this)
         this.onChangeStorageQuota = this.onChangeStorageQuota.bind(this)
+        this.onChangeDataQuota = this.onChangeDataQuota.bind(this)
     }
 
     // Returns the save observable: the panel waits for the backend, spinning its Apply button, and
@@ -106,7 +113,7 @@ class _UserDetails extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, admin}} = this.props
+        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, dataQuota, admin}} = this.props
         const locked = this.isLocked()
         return (
             <Form.Panel
@@ -182,7 +189,7 @@ class _UserDetails extends React.Component {
                             label={msg('user.userDetails.form.monthlyLimits.label')}
                             tooltip={msg('user.userDetails.form.monthlyLimits.tooltip')}
                             tooltipPlacement='topLeft'
-                            errorMessage={[instanceSpending, storageSpending, storageQuota]}>
+                            errorMessage={[instanceSpending, storageSpending, storageQuota, dataQuota]}>
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'
@@ -212,6 +219,16 @@ class _UserDetails extends React.Component {
                                 prefix='GB'
                                 errorMessage={false}
                                 onChange={this.onChangeStorageQuota}
+                            />
+                            <Form.Input
+                                label={msg('user.userDetails.form.monthlyBudget.dataQuota.label')}
+                                type='number'
+                                input={dataQuota}
+                                disabled={locked}
+                                spellCheck={false}
+                                prefix='GB'
+                                errorMessage={false}
+                                onChange={this.onChangeDataQuota}
                             />
                         </Form.FieldSet>
                         {this.isUserRequest() ? this.renderUserRequest() : null}
@@ -305,6 +322,14 @@ class _UserDetails extends React.Component {
         }
     }
 
+    onChangeDataQuota(dataQuota) {
+        const {userDetails: {quota: {budgetUpdateRequest}}, inputs: {userRequestDataQuotaState}} = this.props
+        if (budgetUpdateRequest) {
+            const approved = dataQuota >= budgetUpdateRequest.dataQuota
+            userRequestDataQuotaState.set(approved)
+        }
+    }
+
     renderStatus() {
         const {userDetails: {status, googleUser}} = this.props
         return (
@@ -339,7 +364,7 @@ class _UserDetails extends React.Component {
 
     renderUserRequest() {
         const {userDetails: {quota: {budgetUpdateRequest}}, inputs} = this.props
-        const {instanceSpending, storageSpending, storageQuota, userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState} = inputs
+        const {instanceSpending, storageSpending, storageQuota, dataQuota, userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState, userRequestDataQuotaState} = inputs
         return (
             <Form.FieldSet
                 className={styles.monthlyLimits}
@@ -378,6 +403,16 @@ class _UserDetails extends React.Component {
                             prefix='GB'
                         />
                         {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, storageQuota, budgetUpdateRequest.storageQuota)}
+                    </Layout>
+                    <Layout type='vertical'>
+                        <Input
+                            label={msg('user.userDetails.form.monthlyBudget.dataQuota.label')}
+                            type='number'
+                            value={budgetUpdateRequest.dataQuota}
+                            readOnly
+                            prefix='GB'
+                        />
+                        {this.renderAcceptDeclineButtons(userRequestDataQuotaState, dataQuota, budgetUpdateRequest.dataQuota)}
                     </Layout>
                 </Layout>
             </Form.FieldSet>

@@ -135,6 +135,7 @@ export class UserList extends React.Component {
             current.instanceSpending >= budget.instanceSpending && budget.instanceSpending > 0
             || current.storageSpending >= budget.storageSpending && budget.storageSpending > 0
             || current.storageQuota >= budget.storageQuota && budget.storageQuota > 0
+            || current.dataQuota > budget.dataQuota && budget.dataQuota != null
         )
     }
 

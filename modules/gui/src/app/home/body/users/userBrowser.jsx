@@ -236,8 +236,8 @@ class _UserBrowser extends React.Component {
                 tap(() => publishEvent('user_updated'))
             )
 
-        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
-            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
+        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota, dataQuota}) =>
+            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota, dataQuota})
 
         // Details first: a save rejected as stale must not write the budget either.
         const update$ = userDetails =>

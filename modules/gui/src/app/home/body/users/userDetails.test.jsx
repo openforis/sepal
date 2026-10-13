@@ -20,7 +20,7 @@ vi.mock('~/user', () => ({currentUser: () => store.currentUser, requestPasswordR
 vi.mock('~/widget/confirm', () => ({Confirm: () => null}))
 vi.mock('~/widget/form', () => {
     const passthrough = ({children}) => <div>{children}</div>
-    const Input = ({input, disabled}) => <input name={input?.name} disabled={disabled}/>
+    const Input = ({input, disabled}) => <input name={input?.name} value={input?.value ?? ''} disabled={disabled} readOnly/>
     return {Form: {Field: FormField, Panel: passthrough, Input, Buttons: () => null, FieldSet: passthrough, PanelButtons: passthrough}}
 })
 vi.mock('~/widget/input', () => ({Input: () => null}))
@@ -89,6 +89,23 @@ describe('lock and unlock buttons', () => {
     })
 })
 
+describe('the monthly limits', () => {
+    it('start from the Data quota the user has', () => {
+        const container = document.createElement('div')
+        document.body.appendChild(container)
+        const root = createRoot(container)
+        const userDetails = aUser({username: 'bob', dataQuota: 25})
+
+        act(() => root.render(
+            <UserDetails userDetails={userDetails} onCancel={() => {}} onSave={() => {}} onLock={() => {}} onUnlock={() => {}}/>
+        ))
+
+        expect(container.querySelector('input[name="dataQuota"]').value).toBe('25')
+        act(() => root.unmount())
+        container.remove()
+    })
+})
+
 describe('a locked record', () => {
     let mounted
 
@@ -132,12 +149,12 @@ describe('a locked record', () => {
     })
 })
 
-const aUser = ({username, status = 'ACTIVE'}) => ({
+const aUser = ({username, status = 'ACTIVE', dataQuota = 10}) => ({
     id: 1,
     username,
     name: 'A User',
     email: `${username}@example.org`,
     organization: 'FAO',
     status,
-    quota: {budget: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}}
+    quota: {budget: {instanceSpending: 1, storageSpending: 1, storageQuota: 1, dataQuota}}
 })
