@@ -19,7 +19,9 @@ export class DataBrowser {
         const relPath = toRelPath(guiPath)
         const {attachment, provider} = this.#data(username)
         const entries = await provider.list(attachment, relPath)
-        return Object.fromEntries(entries.map(({name, ...info}) => [name, info]))
+        return Object.fromEntries(entries
+            .filter(({name}) => !isUnsafe(name))
+            .map(({name, ...info}) => [name, info]))
     }
 
     async remove(username, guiPaths) {
@@ -33,6 +35,7 @@ export class DataBrowser {
                 await provider.remove(attachment, relPath)
             }
         } finally {
+            this.#usage.measureSoon(username)
             await this.#usage.markDirty(username)
         }
     }

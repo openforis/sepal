@@ -19,6 +19,12 @@ describe('list', () => {
         expect(items).toEqual({'a.txt': {file: true, size: 2, mtime: 5}, dir: {dir: true}})
     })
 
+    it.each(['', '.', '..', '%2e%2e', 'a\\b', 'a\0b'])('omits an entry named %j, which cannot be opened or removed', async name => {
+        const {browser} = harness({listing: [{name, dir: true}, {name: 'ok', dir: true}]})
+
+        expect(await browser.list('alice', 'data')).toEqual({ok: {dir: true}})
+    })
+
     it('maps a path below data to the attachment', async () => {
         const {browser, provider} = harness({listing: []})
 
@@ -44,6 +50,7 @@ describe('remove', () => {
 
         expect(provider.calls).toEqual([['remove', 'alice', 'a.txt'], ['remove', 'alice', 'dir']])
         expect(usage.dirty).toEqual(['alice'])
+        expect(usage.measuredSoon).toEqual(['alice'])
     })
 
     it('has the usage measured again when a later removal fails', async () => {
@@ -57,6 +64,7 @@ describe('remove', () => {
 
         await expect(browser.remove('alice', ['data/a', 'data/b'])).rejects.toBe(failure)
         expect(usage.dirty).toEqual(['alice'])
+        expect(usage.measuredSoon).toEqual(['alice'])
     })
 
     it('refuses to remove the Data root', async () => {
@@ -118,7 +126,12 @@ const harness = ({listing = [], emulator = false}) => {
         download: async () => ({stream: Readable.from(['hello']), size: 5, contentType: 'text/plain'}),
         isEmulator: () => emulator
     }
-    const usage = {dirty: [], markDirty: async username => { usage.dirty.push(username) }}
+    const usage = {
+        dirty: [],
+        measuredSoon: [],
+        markDirty: async username => { usage.dirty.push(username) },
+        measureSoon: username => { usage.measuredSoon.push(username) }
+    }
     const browser = new DataBrowser({
         attachments: new Attachments({bucket: 'b'}),
         providers: new Providers({s3: provider}),

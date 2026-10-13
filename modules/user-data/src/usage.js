@@ -7,11 +7,13 @@ const log = getLogger('usage')
 const TICK_MS = 60 * 60 * 1000
 const START_DELAY_MS = 60 * 1000
 const SWEEP_MS = 24 * 60 * 60 * 1000
+const MEASURE_DELAY_MS = 5 * 1000
 
 // Measures users' Data and publishes it for budget. A user is measured within an hour after being marked dirty
 // (credentials issued for writing), and every user with Data, or measured before, once a day. Every tick also
 // republishes the last recorded size of every known user, so events lost while the broker is unreachable heal
-// within an hour.
+// within an hour. A user who deleted Data from the file browser is measured within seconds, so a quota they got
+// under no longer holds them up for the hour.
 export class Usage {
     #repository
     #attachments
@@ -21,16 +23,19 @@ export class Usage {
     #lastSweep = null
     #running = null
     #startDelayMs
+    #measureDelayMs
     #startTimer = null
     #timer = null
+    #soon = new Map()
 
-    constructor({repository, attachments, providers, events, now = () => new Date(), startDelayMs = START_DELAY_MS}) {
+    constructor({repository, attachments, providers, events, now = () => new Date(), startDelayMs = START_DELAY_MS, measureDelayMs = MEASURE_DELAY_MS}) {
         this.#repository = repository
         this.#attachments = attachments
         this.#providers = providers
         this.#events = events
         this.#now = now
         this.#startDelayMs = startDelayMs
+        this.#measureDelayMs = measureDelayMs
     }
 
     start() {
@@ -41,10 +46,21 @@ export class Usage {
     stop() {
         clearTimeout(this.#startTimer)
         clearInterval(this.#timer)
+        this.#soon.forEach(timer => clearTimeout(timer))
+        this.#soon.clear()
     }
 
     markDirty(username) {
         return this.#repository.markDirty(username)
+    }
+
+    // Debounced per user: a burst of requests measures once, after the last one.
+    measureSoon(username) {
+        clearTimeout(this.#soon.get(username))
+        this.#soon.set(username, setTimeout(() => {
+            this.#soon.delete(username)
+            this.#measure(username)
+        }, this.#measureDelayMs))
     }
 
     async recordErased(username) {

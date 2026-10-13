@@ -138,6 +138,42 @@ describe('markDirty', () => {
     })
 })
 
+describe('measureSoon', () => {
+    afterEach(() => harnesses.splice(0).forEach(harness => harness.usage.stop()))
+
+    it('measures and publishes the user shortly after', async () => {
+        const harness = usageHarness({sizes: {alice: 7}, measureDelayMs: 10})
+
+        harness.usage.measureSoon('alice')
+        await wait(40)
+
+        expect(harness.recorded).toEqual([['alice', 7]])
+        expect(harness.published).toEqual([{username: 'alice', size: 7}])
+    })
+
+    it('measures once for a burst of requests', async () => {
+        const harness = usageHarness({sizes: {alice: 7}, measureDelayMs: 20})
+
+        harness.usage.measureSoon('alice')
+        await wait(5)
+        harness.usage.measureSoon('alice')
+        harness.usage.measureSoon('alice')
+        await wait(60)
+
+        expect(harness.recorded).toEqual([['alice', 7]])
+    })
+
+    it('measures each user of a burst', async () => {
+        const harness = usageHarness({sizes: {alice: 7, bob: 8}, measureDelayMs: 10})
+
+        harness.usage.measureSoon('alice')
+        harness.usage.measureSoon('bob')
+        await wait(40)
+
+        expect(harness.recorded).toEqual([['alice', 7], ['bob', 8]])
+    })
+})
+
 describe('recordErased', () => {
     it('records an erased user as empty and publishes it', async () => {
         const harness = usageHarness({})
@@ -151,7 +187,11 @@ describe('recordErased', () => {
 
 const HOUR = 60 * 60 * 1000
 
-function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], failingOwners = 0, measuringTakes = 0, slow = false}) {
+const harnesses = []
+
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], failingOwners = 0, measuringTakes = 0, slow = false, measureDelayMs}) {
     let time = Date.parse('2026-10-13T10:00:00Z')
     let remainingOwnersFailures = failingOwners
     const harness = {published: [], recorded: [], measuredFrom: {}, dirty: [...dirty], measured: {...measured}}
@@ -204,8 +244,10 @@ function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured
                 harness.published.push({username, size})
             }
         },
-        now: () => new Date(time)
+        now: () => new Date(time),
+        measureDelayMs
     })
+    harnesses.push(harness)
     harness.advance = ms => {
         time += ms
     }
