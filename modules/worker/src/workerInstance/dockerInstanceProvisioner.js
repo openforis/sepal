@@ -6,18 +6,32 @@
 //
 // Methods:
 //   provisionInstance(instance, {tmpDevice})  — full provision sequence
-//   undeploy(instance)                        — delete the worker containers and the /tmp volume
+//   undeploy(instance)                        — delete the worker containers and the /tmp volume;
+//                                               with Data, first let pending uploads finish, and
+//                                               afterwards remove the mount and its cache
 //   instanceStatus(instance)                  — liveness probe → PROVISIONED | MISSING | UNKNOWN
 //   removeOrphanedContainers(liveInstanceIds) — shared-daemon sweep for leaked containers and
-//                                               /tmp volumes
+//                                               /tmp volumes (and Data mounts and caches)
 
 import {getLogger} from '#sepal/log'
 
+import {containerName} from '../containerName.js'
 import {instanceName} from '../instanceName.js'
 import {containerTag, instanceTag} from '../tag.js'
 import {dockerFetch} from './dockerApi.js'
+import {dockerExec} from './dockerExec.js'
 import {InstanceStatus} from './instanceStatus.js'
-import {createWorkerType, TMP_VOLUME_PREFIX, tmpVolumeName, WORKER_IMAGE_NAMES} from './workerTypes.js'
+import {
+    createWorkerType,
+    DATA_CACHE_VOLUME_PREFIX,
+    dataCacheVolumeName,
+    dataMountDir,
+    SANDBOX,
+    sidecarContainerName,
+    TMP_VOLUME_PREFIX,
+    tmpVolumeName,
+    WORKER_IMAGE_NAMES,
+} from './workerTypes.js'
 
 const log = getLogger('dockerInstanceProvisioner')
 
@@ -42,7 +56,33 @@ mkfs.xfs -q -f -K "$1"`
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
 const PROBE_TIMEOUT_MS = 10_000
 
-const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, extraHosts = [], defaultDaemonHost = null, dataFolder = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
+// UNMOUNT_SCRIPT — run chrooted into the host after the sidecar is gone. Lazy, because a killed
+// sidecar leaves a dead FUSE mount behind. rmdir, never rm -rf: should the unmount not have taken,
+// the user's files are still beneath it.
+const UNMOUNT_SCRIPT = 'umount -l "$1/data" 2>/dev/null; rmdir "$1/data" "$1" 2>/dev/null; exit 0'
+
+const PENDING_UPLOADS = ['/usr/local/bin/sepal-data', 'pending-uploads']
+const PENDING_UPLOADS_POLL_MS = 5000
+const PENDING_UPLOADS_TIMEOUT_MS = 30_000
+const NOT_UPLOADED_LISTED = 20
+
+// Docker answers 304 for a container already stopped, 404 for one already deleted, and 409 for an
+// exec in one that is not running: each means a retried release has nothing left to do there.
+const CONTAINER_GONE = [304, 404, 409]
+
+const createDockerInstanceProvisioner = ({
+    config,
+    instanceTypes,
+    sandboxSessionApiKey,
+    extraHosts = [],
+    defaultDaemonHost = null,
+    dataFolder = null,
+    notify = () => {},
+    _dockerRetries = 60,
+    _dockerRetryDelayMs = 1000,
+    _sleep = sleep,
+    _now = Date.now,
+}) => {
     const {dockerPort, dockerEntryPoint, dockerRegistryHost, workerAmiVersion, syslogAddress} = config
 
     // normalizeInstance — heal instances that arrive without daemonHost (reconstructed from
@@ -344,7 +384,8 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
-    //   2. removeInstanceContainers (containers and /tmp volume)
+    //   2. removeInstanceContainers (containers and /tmp volume); with Data enabled, also the
+    //      mount and cache a crashed predecessor left, so the new mount never lands on a dead one
     //   3. apiKeyForInstance (with retry)
     //   4. with Data enabled: dataFolder.prepare, the user's ~/data the mount lands on
     //   5. createWorkerType → get images
@@ -356,6 +397,9 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
         await waitUntilDockerIsAvailable(instance)
         await removeInstanceContainers(instance)
+        if (config.dataEnabled) {
+            await removeDataMount(instance)
+        }
 
         const apiKey = await sandboxSessionApiKey.apiKeyForInstance(instance.id)
         log.debug(`ApiKey for ${instanceTag(instance)}: ${apiKey ? '[obtained]' : '[null]'}`)
@@ -405,15 +449,115 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         return {uid, gid}
     }
 
+    // undeploy — retried until it succeeds (ReclaimStaleClaims), and a failure terminates the
+    // instance, so each Data step tolerates what an earlier attempt already removed and only logs
+    // its own failures. With Data, the sandbox stops first so nothing new is written, and the
+    // sidecar stays up until its pending uploads are done.
     const undeploy = async rawInstance => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Undeploying ${instanceTag(instance)}...`)
+        if (config.dataEnabled && instance.reservation?.sessionId) {
+            await flushData(instance)
+        }
         await removeInstanceContainers(instance)
+        if (config.dataEnabled) {
+            await removeDataMount(instance)
+        }
         log.info(`Undeployed ${instanceTag(instance)}`)
     }
 
-    // removeOrphanedContainers — delete worker containers, then their /tmp volumes, on the shared
-    // local daemon that no live instance claims. Instance tracking on local hosting is in-memory,
+    const flushData = async instance => {
+        const sandbox = containerName({
+            image: SANDBOX,
+            username: instance.reservation.username,
+            sessionId: instance.reservation.sessionId,
+            instanceId: instance.id,
+        })
+        const sidecar = sidecarContainerName(instance)
+        await stopContainer(instance, sandbox, {seconds: 10})
+        await waitForPendingUploads(instance, sidecar)
+        await stopContainer(instance, sidecar, {seconds: 30})
+    }
+
+    const stopContainer = async (instance, name, {seconds}) => {
+        try {
+            await dockerFetch(baseUrl(instance), `containers/${name}/stop`, {
+                method: 'POST',
+                query: {t: seconds},
+                timeoutMs: (seconds + 20) * 1000,
+            })
+        } catch (e) {
+            if (!CONTAINER_GONE.includes(e.statusCode)) {
+                log.warn(`Failed to stop ${containerTag(name)} on ${instanceTag(instance)}: ${e.message}`)
+            }
+        }
+    }
+
+    // waitForPendingUploads — on timeout the user is told which files never reached their Data:
+    // the sidecar's cache, the only copy, goes with the instance.
+    const waitForPendingUploads = async (instance, sidecar) => {
+        const deadline = _now() + config.dataFlushTimeoutSeconds * 1000
+        for (;;) {
+            const pending = await pendingUploads(instance, sidecar)
+            if (!pending.length) {
+                return
+            }
+            if (_now() >= deadline) {
+                log.warn(`${instanceTag(instance)}: ${pending.length} Data file(s) not uploaded after ${config.dataFlushTimeoutSeconds}s`)
+                notify({username: instance.reservation.username, ...notUploadedEmail(pending)})
+                return
+            }
+            await _sleep(PENDING_UPLOADS_POLL_MS)
+        }
+    }
+
+    // pendingUploads — the paths still to upload; none when that cannot be told: the sidecar is
+    // gone, or rclone is not up (sepal-data exits non-zero).
+    const pendingUploads = async (instance, sidecar) => {
+        try {
+            const {exitCode, output} = await dockerExec(baseUrl(instance), sidecar, PENDING_UPLOADS, {timeoutMs: PENDING_UPLOADS_TIMEOUT_MS})
+            if (exitCode !== 0) {
+                log.warn(`${instanceTag(instance)}: cannot list pending Data uploads (exit ${exitCode}): ${output.trim()}`)
+                return []
+            }
+            return output.split('\n').map(line => line.trim()).filter(Boolean)
+        } catch (e) {
+            if (!CONTAINER_GONE.includes(e.statusCode)) {
+                log.warn(`${instanceTag(instance)}: cannot list pending Data uploads: ${e.message}`)
+            }
+            return []
+        }
+    }
+
+    const removeDataMount = async instance => {
+        await unmountData(instance)
+        await deleteDataCache(instance)
+    }
+
+    // unmountData — needs only the instance id, so it also serves the orphan sweep.
+    const unmountData = async instance => {
+        try {
+            await runHelper(instance, {name: SANDBOX}, 'data-unmount', {
+                Entrypoint: ['chroot', '/host', '/bin/sh', '-c', UNMOUNT_SCRIPT, 'data-unmount', dataMountDir(config, instance.id)],
+                HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
+            })
+        } catch (e) {
+            log.warn(`Failed to unmount the Data of ${instanceTag(instance)}: ${e.message}`)
+        }
+    }
+
+    const deleteDataCache = async instance => {
+        try {
+            await dockerFetch(baseUrl(instance), `volumes/${dataCacheVolumeName(instance.id)}`, {method: 'DELETE'})
+        } catch (e) {
+            if (e.statusCode !== 404) {
+                log.warn(`Failed to delete the Data cache of ${instanceTag(instance)}: ${e.message}`)
+            }
+        }
+    }
+
+    // removeOrphanedContainers — delete worker containers, then their Data mounts, /tmp volumes
+    // and Data caches, on the shared local daemon that no live instance claims. Instance tracking on local hosting is in-memory,
     // so a worker restart forgets live instances; when their sessions later close,
     // releaseInstance finds nothing to undeploy and the containers leak (they are otherwise never revisited —
     // deleteExistingContainers is scoped to a single instance's names).
@@ -440,18 +584,34 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
             await deleteContainer(daemon, c.Id)
             removed.push(name)
         }
-        return [...removed, ...await removeOrphanedTmpVolumes(daemon, liveInstanceIds)]
+        if (config.dataEnabled) {
+            for (const instanceId of new Set(orphans.map(orphanInstanceId).filter(Boolean))) {
+                await unmountData({...daemon, id: instanceId})
+            }
+        }
+        return [
+            ...removed,
+            ...await removeOrphanedVolumes(daemon, liveInstanceIds, TMP_VOLUME_PREFIX),
+            ...config.dataEnabled ? await removeOrphanedVolumes(daemon, liveInstanceIds, DATA_CACHE_VOLUME_PREFIX) : [],
+        ]
     }
 
-    const removeOrphanedTmpVolumes = async (daemon, liveInstanceIds) => {
+    // orphanInstanceId — the last segment of a current-format name; legacy ".worker" names carry none.
+    const orphanInstanceId = container => {
+        const name = (container.Names ?? [])[0]
+        return name && !name.endsWith('.worker') ? name.split('.').at(-1) : null
+    }
+
+    // removeOrphanedVolumes — the per-instance volumes named {prefix}{instanceId}.
+    const removeOrphanedVolumes = async (daemon, liveInstanceIds, prefix) => {
         const data = await dockerFetch(baseUrl(daemon), 'volumes', {
-            query: {filters: JSON.stringify({name: [TMP_VOLUME_PREFIX]})},
+            query: {filters: JSON.stringify({name: [prefix]})},
             timeoutMs: 5000,
         })
         const minCreated = Date.now() - ORPHAN_GRACE_MS
         const orphans = (data?.Volumes ?? []).filter(({Name, CreatedAt}) =>
-            Name.startsWith(TMP_VOLUME_PREFIX)
-            && !liveInstanceIds.some(id => Name === tmpVolumeName(id))
+            Name.startsWith(prefix)
+            && !liveInstanceIds.some(id => Name === `${prefix}${id}`)
             && Date.parse(CreatedAt) < minCreated
         )
         const removed = []
@@ -505,6 +665,23 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
     return {provisionInstance, undeploy, instanceStatus, removeOrphanedContainers}
 }
+
+const notUploadedEmail = paths => {
+    const listed = paths.slice(0, NOT_UPLOADED_LISTED)
+    const more = paths.length - listed.length
+    return {
+        subject: 'Some Data files were not uploaded',
+        content: '<p>Your session ended before these files in <b>~/data</b> finished uploading, '
+            + 'and they are not in your Data:</p>'
+            + `<ul>${listed.map(path => `<li>${escapeHtml(path)}</li>`).join('')}</ul>`
+            + (more > 0 ? `<p>and ${more} more</p>` : ''),
+    }
+}
+
+const escapeHtml = text => text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
 
 class DockerProvisionerError extends Error {
     constructor(instance, message) {

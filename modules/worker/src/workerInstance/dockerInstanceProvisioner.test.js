@@ -59,6 +59,14 @@ const INSTANCE_TYPE_GPU = {
 
 const INSTANCE_TYPES = [INSTANCE_TYPE_T3A, INSTANCE_TYPE_GPU]
 
+const CONFIG_DATA = {
+    ...CONFIG,
+    dataEnabled: true,
+    dataMountRoot: '/var/lib/sepal/data-mounts',
+    dataCacheMaxSize: '20G',
+    dataFlushTimeoutSeconds: 600,
+}
+
 const makeInstance = (overrides = {}) => ({
     id: 'inst-abc123',
     type: 'T3aSmall',
@@ -67,6 +75,13 @@ const makeInstance = (overrides = {}) => ({
     launchTime: new Date(),
     reservation: {username: 'alice', workerType: 'sandbox', sessionId: 'sess-1'},
     ...overrides,
+})
+
+const sandboxName = instance => containerName({
+    image: 'sandbox',
+    username: instance.reservation.username,
+    sessionId: instance.reservation.sessionId,
+    instanceId: instance.id,
 })
 
 // A helper container (formatting, preparing the tmp volume) ran to completion with this exit code.
@@ -570,6 +585,33 @@ describe('undeploy', () => {
         await expect(provisioner.undeploy(makeInstance())).resolves.toBeUndefined()
     })
 
+    test('undeploys exactly as before with Data disabled', async () => {
+        const requests = []
+        globalThis.fetch = jest.fn(async (url, opts = {}) => {
+            requests.push(`${opts.method ?? 'GET'} ${new URL(url).pathname}`)
+            if (url.includes('/containers/json')) {
+                return {
+                    ok: true, status: 200,
+                    text: async () => JSON.stringify([{Id: 'w-001', Names: ['/sandbox.alice.lofty-reef.inst-abc123']}]),
+                }
+            }
+            return {ok: true, status: 204, text: async () => ''}
+        })
+
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+        })
+        await provisioner.undeploy(makeInstance())
+
+        expect(requests).toEqual([
+            'GET /v1.38/containers/json',
+            'DELETE /v1.38/containers/w-001',
+            'DELETE /v1.38/volumes/sepal-tmp.inst-abc123',
+        ])
+    })
+
     test('undeploy deletes no container when no .worker containers exist', async () => {
         let deleteCallCount = 0
 
@@ -718,7 +760,6 @@ describe('apiKey retry', () => {
 })
 
 describe('provisionInstance with Data', () => {
-    const CONFIG_DATA = {...CONFIG, dataEnabled: true, dataMountRoot: '/var/lib/sepal/data-mounts', dataCacheMaxSize: '20G'}
     const FUSE = {PathOnHost: '/dev/fuse', PathInContainer: '/dev/fuse', CgroupPermissions: 'rwm'}
 
     let calls
@@ -737,7 +778,7 @@ describe('provisionInstance with Data', () => {
         await provisioner().provisionInstance(makeInstance())
 
         expect(prepared).toEqual(['alice'])
-        const firstCreate = calls.findIndex(call => call.startsWith('POST /v1.38/containers/create'))
+        const firstCreate = calls.indexOf(`POST /v1.38/containers/create?name=${sidecarContainerName(makeInstance())}`)
         expect(firstCreate).toBeGreaterThan(calls.indexOf('prepare alice'))
     })
 
@@ -766,6 +807,20 @@ describe('provisionInstance with Data', () => {
         expect(calls.filter(call => expected.includes(call))).toEqual(expected)
     })
 
+    test('unmounts a dead mount before provisioning a reused instance', async () => {
+        const instance = makeInstance()
+        const sidecarCreate = `POST /v1.38/containers/create?name=${sidecarContainerName(instance)}`
+
+        await provisioner().provisionInstance(instance)
+
+        const unmount = calls.indexOf('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
+        const cacheDelete = calls.indexOf('DELETE /v1.38/volumes/sepal-data-cache.inst-abc123')
+        expect(unmount).toBeGreaterThan(-1)
+        expect(unmount).toBeLessThan(calls.indexOf(sidecarCreate))
+        expect(cacheDelete).toBeGreaterThan(-1)
+        expect(cacheDelete).toBeLessThan(calls.indexOf(sidecarCreate))
+    })
+
     // sepal-data mount exits when it cannot fetch access or mount, so the sidecar may be gone by the time it is waited for.
     test('starts the sandbox when the sidecar has already stopped', async () => {
         const instance = makeInstance()
@@ -789,6 +844,7 @@ describe('provisionInstance with Data', () => {
         expect(body.HostConfig.Tmpfs).toBeUndefined()
         expect(body.HostConfig.ShmSize).toBeUndefined()
         expect(body.NetworkingConfig.EndpointsConfig.sepal).toEqual({})
+        expect(created[sandboxName(instance)].NetworkingConfig.EndpointsConfig.sepal).toEqual({Aliases: [instance.host]})
     })
 
     test('binds the mounted Data into the sandbox', async () => {
@@ -837,8 +893,11 @@ describe('provisionInstance with Data', () => {
     test('fails provisioning when the data folder cannot be prepared', async () => {
         const dataFolder = {prepare: async () => { throw new Error('EACCES: permission denied') }}
 
-        await expect(provisioner(CONFIG_DATA, dataFolder).provisionInstance(makeInstance())).rejects.toThrow(/EACCES/)
-        expect(created).toEqual({})
+        const instance = makeInstance()
+
+        await expect(provisioner(CONFIG_DATA, dataFolder).provisionInstance(instance)).rejects.toThrow(/EACCES/)
+        expect(created).not.toHaveProperty([sidecarContainerName(instance)])
+        expect(created).not.toHaveProperty([sandboxName(instance)])
     })
 
     const fakeDataFolder = {
@@ -854,13 +913,6 @@ describe('provisionInstance with Data', () => {
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
         dataFolder,
-    })
-
-    const sandboxName = instance => containerName({
-        image: 'sandbox',
-        username: instance.reservation.username,
-        sessionId: instance.reservation.sessionId,
-        instanceId: instance.id,
     })
 
     // The exec id names its container, so each exec start can be told apart in the call log.
@@ -886,6 +938,163 @@ describe('provisionInstance with Data', () => {
                 return {ok: true, status: 201, text: async () => JSON.stringify({Id: `exec-of-${container}`})}
             }
             return {ok: true, status: 200, text: async () => '{}'}
+        })
+    }
+})
+
+describe('undeploy with Data', () => {
+    const instance = makeInstance()
+    const sandbox = sandboxName(instance)
+    const sidecar = sidecarContainerName(instance)
+    const unmountHelper = 'sandbox.data-unmount.inst-abc123'
+
+    let calls
+    let created
+    let notified
+    let slept
+    let clock
+
+    beforeEach(() => {
+        mockReadFileSync.mockReturnValue('ssh-rsa test')
+        calls = []
+        created = {}
+        notified = []
+        slept = []
+        clock = 0
+    })
+
+    test('waits for pending uploads before stopping the sidecar', async () => {
+        recordFetch({pending: ['out/a.tif\n', 'out/a.tif\n', '']})
+        const expected = [
+            `POST containers/${sandbox}/stop`,
+            `POST containers/${sidecar}/exec`,
+            `POST containers/${sidecar}/exec`,
+            `POST containers/${sidecar}/exec`,
+            `POST containers/${sidecar}/stop`,
+            'DELETE containers/c-sandbox',
+            'DELETE containers/c-sidecar',
+            `POST containers/create?name=${unmountHelper}`,
+            'DELETE volumes/sepal-data-cache.inst-abc123',
+        ]
+
+        await provisioner().undeploy(instance)
+
+        expect(calls.filter(call => expected.includes(call))).toEqual(expected)
+        expect(slept).toEqual([5000, 5000])
+        expect(notified).toEqual([])
+    })
+
+    test('gives up after the flush timeout and tells the user what was not uploaded', async () => {
+        recordFetch({pending: ['out/a.tif\nout/b.tif\n']})
+
+        await provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 10}).undeploy(instance)
+
+        expect(notified).toHaveLength(1)
+        expect(notified[0].username).toBe('alice')
+        expect(notified[0].content).toContain('out/a.tif')
+        expect(notified[0].content).toContain('out/b.tif')
+        expect(calls).toContain(`POST containers/${sidecar}/stop`)
+        expect(calls).toContain('DELETE containers/c-sidecar')
+        expect(calls).toContain(`POST containers/create?name=${unmountHelper}`)
+    })
+
+    test('lists at most 20 of the files that were not uploaded', async () => {
+        const paths = Array.from({length: 23}, (_, i) => `out/${i + 1}.tif`)
+        recordFetch({pending: [`${paths.join('\n')}\n`]})
+
+        await provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 0}).undeploy(instance)
+
+        const {content} = notified[0]
+        expect(content).toContain('out/20.tif')
+        expect(content).not.toContain('out/21.tif')
+        expect(content).toContain('and 3 more')
+    })
+
+    test('cleans up an instance whose sidecar is already gone', async () => {
+        recordFetch({gone: [sidecar], containers: [{Id: 'c-sandbox', Names: [`/${sandbox}`]}]})
+
+        await expect(provisioner().undeploy(instance)).resolves.toBeUndefined()
+
+        expect(slept).toEqual([])
+        expect(calls.filter(call => call === `POST containers/${sidecar}/exec`).length).toBeLessThanOrEqual(1)
+        expect(calls).toContain(`POST containers/create?name=${unmountHelper}`)
+        expect(calls).toContain('DELETE volumes/sepal-data-cache.inst-abc123')
+    })
+
+    test('cleans up again when the instance was already undeployed', async () => {
+        recordFetch({gone: [sandbox, sidecar], containers: [], missingVolumes: true})
+
+        await expect(provisioner().undeploy(instance)).resolves.toBeUndefined()
+
+        expect(calls).toContain(`POST containers/create?name=${unmountHelper}`)
+    })
+
+    test('still removes the containers when the Data cleanup fails', async () => {
+        recordFetch({pending: [''], failing: [`POST containers/${sandbox}/stop`, `POST containers/${sidecar}/stop`, 'POST containers/create', 'DELETE volumes/sepal-data-cache.inst-abc123']})
+
+        await expect(provisioner().undeploy(instance)).resolves.toBeUndefined()
+
+        expect(calls).toEqual(expect.arrayContaining(['DELETE containers/c-sandbox', 'DELETE containers/c-sidecar']))
+    })
+
+    test('runs the unmount helper with umount -l and rmdir only', async () => {
+        recordFetch({pending: ['']})
+
+        await provisioner().undeploy(instance)
+
+        const {Entrypoint, HostConfig, User} = created[unmountHelper]
+        expect(Entrypoint.slice(0, 4)).toEqual(['chroot', '/host', '/bin/sh', '-c'])
+        const script = Entrypoint[4]
+        expect(script).toContain('umount -l')
+        expect(script).toContain('rmdir')
+        expect(script).not.toContain('rm -r')
+        expect(Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/inst-abc123')
+        expect(User).toBe('root')
+        expect(HostConfig).toEqual({Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'})
+    })
+
+    const provisioner = (config = CONFIG_DATA) => createDockerInstanceProvisioner({
+        config,
+        instanceTypes: INSTANCE_TYPES,
+        sandboxSessionApiKey: SESSION_API_KEY,
+        notify: message => notified.push(message),
+        _sleep: async ms => {
+            slept.push(ms)
+            clock += ms
+        },
+        _now: () => clock,
+    })
+
+    // pending: what successive pending-uploads execs print; the last answer repeats. gone: containers
+    // Docker no longer has. failing: calls Docker answers with a 500.
+    const recordFetch = ({
+        pending = [''],
+        gone = [],
+        failing = [],
+        missingVolumes = false,
+        containers = [{Id: 'c-sandbox', Names: [`/${sandbox}`]}, {Id: 'c-sidecar', Names: [`/${sidecar}`]}],
+    } = {}) => {
+        const answers = [...pending]
+        globalThis.fetch = jest.fn(async (url, opts = {}) => {
+            const {pathname, searchParams} = new URL(url)
+            const path = pathname.replace('/v1.38/', '')
+            const name = searchParams.get('name')
+            const call = `${opts.method ?? 'GET'} ${path}${name ? `?name=${name}` : ''}`
+            calls.push(call)
+            const respond = (status, body) => ({ok: status < 300, status, text: async () => body})
+            if (failing.some(failure => call.startsWith(failure))) return respond(500, 'daemon error')
+            if (gone.some(container => path.startsWith(`containers/${container}/`))) return respond(404, 'No such container')
+            if (path === 'containers/json') return respond(200, JSON.stringify(containers))
+            if (path === 'containers/create') {
+                created[name] = JSON.parse(opts.body)
+                return respond(201, JSON.stringify({Id: 'c-new'}))
+            }
+            if (path.endsWith('/wait')) return respond(200, JSON.stringify({StatusCode: 0}))
+            if (path.endsWith('/exec')) return respond(201, JSON.stringify({Id: 'exec-1'}))
+            if (path === 'exec/exec-1/start') return respond(200, answers.length > 1 ? answers.shift() : answers[0])
+            if (path === 'exec/exec-1/json') return respond(200, JSON.stringify({ExitCode: 0}))
+            if (missingVolumes && path.startsWith('volumes/')) return respond(404, 'no such volume')
+            return respond(204, '')
         })
     }
 })
@@ -1002,12 +1211,13 @@ const makeFetch = (containers, volumes = []) => {
     const requests = []
     const fetch = jest.fn(async (url, init = {}) => {
         const method = init.method ?? 'GET'
-        requests.push({url, method})
+        requests.push({url, method, body: init.body})
+        const pathname = new URL(url).pathname
         const body = url.includes('containers/json')
             ? JSON.stringify(containers)
-            : method === 'GET' && new URL(url).pathname.endsWith('/volumes')
+            : method === 'GET' && pathname.endsWith('/volumes')
                 ? JSON.stringify({Volumes: volumes})
-                : ''
+                : pathname.endsWith('/wait') ? JSON.stringify({StatusCode: 0}) : ''
         return {ok: true, status: 200, text: async () => body}
     })
     return {fetch, requests}
@@ -1017,9 +1227,9 @@ const deletedVolumeNames = requests => requests
     .filter(({method, url}) => method === 'DELETE' && url.includes('/volumes/'))
     .map(({url}) => url.match(/volumes\/([^/?]+)/)[1])
 
-const makeProvisioner = ({defaultDaemonHost = 'daemon-host'} = {}) =>
+const makeProvisioner = ({defaultDaemonHost = 'daemon-host', config = ORPHAN_CONFIG} = {}) =>
     createDockerInstanceProvisioner({
-        config: ORPHAN_CONFIG,
+        config,
         instanceTypes: [],
         sandboxSessionApiKey: {apiKeyForInstance: async () => null},
         defaultDaemonHost,
@@ -1156,6 +1366,31 @@ describe('removeOrphanedContainers', () => {
             expect.stringMatching(/containers\/c-orphan$/),
             expect.stringMatching(/volumes\/sepal-tmp\.bbb$/),
         ])
+    })
+
+    it('removes the mount and cache volume of orphaned instances on the shared daemon', async () => {
+        const {fetch, requests} = makeFetch(
+            [
+                {Id: 'c-orphan', Names: ['/sandbox.alice.lofty-reef.bbb'], Created: OLD},
+                {Id: 'c-orphan-sidecar', Names: ['/sandbox.data-mount.alice.lofty-reef.bbb'], Created: OLD},
+                {Id: 'c-live', Names: ['/sandbox.bob.misty-fjord.aaa'], Created: OLD},
+            ],
+            [
+                {Name: 'sepal-data-cache.aaa', CreatedAt: isoDate(OLD)},
+                {Name: 'sepal-data-cache.bbb', CreatedAt: isoDate(OLD)},
+                {Name: 'sepal-data-cache.ccc', CreatedAt: isoDate(YOUNG)},
+            ],
+        )
+        global.fetch = fetch
+        const config = {...ORPHAN_CONFIG, dataEnabled: true, dataMountRoot: '/var/lib/sepal/data-mounts'}
+
+        const removed = await makeProvisioner({config}).removeOrphanedContainers(['aaa'])
+
+        const unmounts = requests.filter(({url}) => url.includes('/containers/create'))
+        expect(unmounts.map(({url}) => new URL(url).searchParams.get('name'))).toEqual(['sandbox.data-unmount.bbb'])
+        expect(JSON.parse(unmounts[0].body).Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/bbb')
+        expect(deletedVolumeNames(requests)).toEqual(['sepal-data-cache.bbb'])
+        expect(removed).toContain('sepal-data-cache.bbb')
     })
 
     it('is a no-op without a defaultDaemonHost (dedicated-host hosting, e.g. AWS)', async () => {

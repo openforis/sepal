@@ -41,6 +41,7 @@ const createHostingService = (config, {sandboxSessionApiKey, sendEmail} = {}) =>
         extraHosts,
         defaultDaemonHost,
         dataFolder: new DataFolder({notify: sendEmail}),
+        notify: sendEmail,
     })
 
     return {
