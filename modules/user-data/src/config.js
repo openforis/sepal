@@ -21,6 +21,8 @@ const mandatory = (flags, envName, description) => new Option(flags, description
 program
     .addOption(new Option('--port <number>').env('HTTP_PORT').argParser(v => parseInt(v)).default(DEFAULT_HTTP_PORT))
     .addOption(mandatory('--sepal-host <host>', 'SEPAL_HOST', 'Public host name of SEPAL'))
+    .addOption(mandatory('--rabbitmq-host <host>', 'RABBITMQ_HOST'))
+    .addOption(new Option('--rabbitmq-port <port>').env('RABBITMQ_PORT').argParser(v => parseInt(v)).default(5672))
     .addOption(mandatory('--region <region>', 'AWS_REGION'))
     .addOption(mandatory('--bucket <name>', 'USER_DATA_BUCKET'))
     .addOption(mandatory('--access-key-id <id>', 'USER_DATA_AWS_ACCESS_KEY_ID'))
@@ -41,6 +43,8 @@ if (options.s3Emulator ? !options.s3Endpoint?.trim() : !options.roleArn?.trim())
 }
 
 export const {port, sepalHost} = options
+
+export const amqpUri = `amqp://${options.rabbitmqHost}:${options.rabbitmqPort}`
 
 export const s3 = {
     region: options.region,

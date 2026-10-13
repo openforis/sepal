@@ -251,7 +251,9 @@
         ],
         "build": {},
         "run": [
-            "logger"
+            "logger",
+            "mysql",
+            "rabbitmq"
         ]
     },
     "user-files": {
