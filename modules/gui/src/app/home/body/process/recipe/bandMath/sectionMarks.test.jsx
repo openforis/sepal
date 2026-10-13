@@ -55,6 +55,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
 const {Sync} = await import('./sync/sync')
+const {configurationGate} = await import('../sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -120,19 +121,31 @@ describe('Output bands without any output image', () => {
     })
 })
 
+// What is wrong is Calculations' to say: Output bands is marked only for what it finds wrong itself.
 describe('an output image of a calculation that is unmet', () => {
-    it('marks Output bands, naming the calculation, while Calculations says what is wrong with it', async () => {
+    it('leaves Output bands unmarked while Calculations says what is wrong, the image output refused, naming Calculations', async () => {
         await open(recipe({
             calculations: [expression('calc-1', 'swirred', 'i1.swir * 2')],
             outputImages: [outputImage('calc-1', ['swirred'])]
         }))
 
-        expect(inError(OUTPUT_BANDS)).toBe(true)
-        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.requirement.prerequisiteUnmet'))
-        expect(buttonTooltip(OUTPUT_BANDS)).not.toEqual(expect.stringContaining('process.bandMath.requirement.unknownBand'))
+        expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(outputRowsInError()).toEqual([])
         expect(inError(CALCULATIONS)).toBe(true)
         expect(buttonTooltip(CALCULATIONS)).toEqual(expect.stringContaining('process.bandMath.requirement.unknownBand'))
-        expect(outputRowsInError()).toEqual(['swirred'])
+        expect(imageOutputGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: CALCULATIONS})
+    })
+
+    it('leaves Output bands marked for what it finds wrong itself, saying only that', async () => {
+        await open(recipe({
+            calculations: [expression('calc-1', 'swirred', 'i1.swir * 2')],
+            outputImages: [outputImage('calc-1', ['swirred']), outputImage('i-1', [])]
+        }))
+
+        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.noOutputBands'))
+        expect(buttonTooltip(OUTPUT_BANDS)).not.toEqual(expect.stringContaining('process.requirement.prerequisiteUnmet'))
+        expect(outputRowsInError()).toEqual(['i1'])
     })
 })
 
@@ -163,7 +176,7 @@ describe('an input lacking a band beside an output image without bands', () => {
 
         expect(inError(INPUT_IMAGERY)).toBe(true)
         expect(inError(OUTPUT_BANDS)).toBe(true)
-        expect(buttonTooltip(INPUT_IMAGERY)).toEqual(expect.stringContaining('process.bandMath.requirement.missingInputBands'))
+        expect(buttonTooltip(INPUT_IMAGERY)).toBe(UNAVAILABLE_BANDS)
     })
 })
 
@@ -181,7 +194,7 @@ describe('an input lacking a band beside a configuration the description refuses
 
         expect(inError(OUTPUT_BANDS)).toBe(true)
         expect(inError(INPUT_IMAGERY)).toBe(true)
-        expect(buttonTooltip(INPUT_IMAGERY)).toEqual(expect.stringContaining('process.bandMath.requirement.missingInputBands'))
+        expect(buttonTooltip(INPUT_IMAGERY)).toBe(UNAVAILABLE_BANDS)
         expect(imageObservations()).toEqual([])
     })
 
@@ -198,6 +211,7 @@ describe('an input lacking a band beside a configuration the description refuses
 const imageObservations = () => earthEngine.requests.filter(({request}) => request.recipe)
 
 const INPUT_IMAGERY = 'process.panels.inputImagery.button'
+const UNAVAILABLE_BANDS = 'process.panels.inputImagery.unavailableBands.inputs'
 const CALCULATIONS = 'process.bandMath.panel.calculations.button'
 const OUTPUT_BANDS = 'process.bandMath.panel.outputBands.button'
 
@@ -325,6 +339,9 @@ const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
     .join(' | ')
 
 // The output images whose rows in Output bands are marked in error, by the name of the image each is taken from.
+// Why Band Math's own requirements refuse its image output, if they do.
+const imageOutputGate = () => configurationGate({recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT'})
+
 const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])
     const names = [...recipe.model.inputImagery.images, ...recipe.model.calculations.calculations].map(({name}) => name)

@@ -8,7 +8,6 @@ import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
 import {Tooltip} from '~/widget/tooltip'
 
-import {missingBandsMessage} from '../../inputBandProblems'
 import styles from './bandSpec.module.css'
 
 // One selected band, named in its header beside the choice of its type. A categorical band's legend is its body, which
@@ -82,7 +81,7 @@ export class BandSpec extends React.Component {
 
     missingMessage() {
         const {spec: {name}} = this.props
-        return missingBandsMessage({bands: [name]})
+        return msg('process.bandMath.requirement.missingInputBands', {bands: name})
     }
 }
 

@@ -6,7 +6,10 @@ configured selection of input and calculated bands under names of the user's cho
 ## Inputs
 
 `inputImagery.images` lists the input images, each a selected recipe or asset (`type`, `id`) with the bands Band Math
-reads from it (`includedBands`) and a variable name. `calculations.calculations` holds expressions and reducers in
+reads from it (`includedBands`) and a variable name. A new input or calculation is named `i<n>` or `c<n>`, one past
+the highest such name an input or calculation has or a calculation reads (`variableName.js`), counted exactly - or,
+where that would be longer than a name may be, the lowest number none has; no existing name changes, and a removed name
+a calculation still reads is not reused. `calculations.calculations` holds expressions and reducers in
 order; each names its bands (`includedBands`) and an optional cast (`dataType`, `auto` for none), and may read the
 inputs and earlier calculations. `outputBands.outputImages` selects the output: per input or calculation, the bands
 it contributes, each with a generated `defaultOutputName` and an optional `outputName`. A calculation no output band
@@ -47,14 +50,26 @@ same-named one is still offered. A choice is checked again when it is added, alo
 includes it then. Two outputs of one band a saved recipe holds are kept as saved. A FUNCTION calculation's band keeps
 its id when the calculation is edited, so its output, and any name given to it, follows.
 
-The forms generate unique default output names - two inputs' `red` become `red` and `red_1`. A calculation whose
+The forms generate unique default output names - two inputs' `red` become `red` and `red_1` - in output order, by
+one rule (`outputImages.js`): custom names are taken first and never renamed, a default nothing earlier takes keeps its
+name, and each other takes its band's name with the lowest free suffix, names given earlier in the same change counting
+as taken - whether shown as a value or a placeholder. A name given automatically stays the band's - another output added
+or removed, saved or reopened, changes none - and the model keeps it apart from a custom one (`defaultOutputName`,
+`outputName`). Output bands shows a saved name, automatic or custom, as the field's value; a default allocated while the
+panel is open - for a band added, a saved collision repaired as it opens, or a band reset - is a suggestion, the
+placeholder of an empty field, which Apply saves and the next opening shows as the value. Typing a name gives a custom
+one; clearing the field resets that band alone to the default now available to it, by the same rule, as the field's
+tooltip says. Typing in one field renames no other band: a name another band is output under, automatically or not, is refused as a duplicate,
+holding Apply back. A calculation whose
 renaming gives several of its bands one name - a pattern matching each whole name - names them apart in order, `x`,
 `x_1`, `x_2`, a repeat taking the suffix after the highest `x_<n>` already among them; each band keeps its identity. A
 band renamed under its id - a calculation's band renamed or derived again - keeps its
 outputs, the sync giving each the new name as its default, made unique as the forms make it against every other
 output's final name: custom names count, and so do names given earlier in the same change, while the old names of the
 bands renamed or removed in it, inputs' and calculations' alike, hold back none. Its custom name is kept, and no other
-output is renamed. Nothing is renamed on opening: a saved recipe whose names collide keeps them until a change. A
+output is renamed; custom names stay taken, those of bands renamed in the change included. A saved recipe outputting
+defaults alike keeps them as saved, and judged so, until Output bands is opened: its draft names them apart, its rows
+no longer marked, Apply saves that and Cancel discards it. Custom names alike are not renamed, and stay marked. A
 custom name is optional; when given it must start with a letter or underscore, continue with letters, digits and
 underscores, and be at most 30 characters long. No two final names may be alike. Output bands checks both rules over
 every configured output, a saved configuration included, and Apply stays unavailable while any fails; each row shows the
@@ -74,15 +89,17 @@ order, over the inputs and the calculations before it, so:
 - At least one image is output, each outputting at least one band, under names that are valid and that no other output
   band has - the rules Output bands applies to its own Apply (`outputImages.js`), so its fields, rows and toolbar
   button agree. An empty section is judged once, for the section; the rest per output image.
-- A calculation reading an unmet calculation depends on it, and so does an output taken from one. It names what it
-  depends on rather than repeating what is wrong there, and still reports its own problems. Its section is marked all
-  the same, its button saying only which item depends on which: a section holding an item that cannot be used is not
-  shown as sound.
+- A calculation reading an unmet calculation depends on it, and so does an output taken from one. A calculation names
+  what it depends on rather than repeating what is wrong there, and still reports its own problems; Calculations is
+  marked all the same. An output held only by an unmet calculation marks nothing in Output bands - the calculation's
+  row and Calculations say what is wrong - which still reports the output's own problems.
 
 Any unmet calculation holds back the image output, whether or not an output reads it: previews, here and on other
 maps, are not requested or are withdrawn, and Retrieve is disabled and refused at submission (`CONFIGURATION_UNMET`,
 naming Calculations), whatever its output reads as. Repair restores them. Calculations and Output bands mark their
-toolbar buttons and the items concerned, with the reason as their tooltip. An output whose image no longer exists is
+toolbar buttons and the items concerned, with the reason as their tooltip. The toolbar buttons judge the recipe as
+applied; Output bands' rows judge its draft by the same checks, the rest of the recipe as applied, so a repair made in
+the panel clears its rows before Apply, and nothing applied holds Apply back. An output whose image no longer exists is
 listed in Output bands as it was saved, marked, to be removed; it offers no bands to add. Deliberately unselecting an
 input band, or removing an input or calculation, removes its outputs ([Inputs](#inputs)); an output image that leaves
 without bands is kept, marked on its row and on Output bands, until it is given a band or removed. Saved `invalid`
@@ -101,18 +118,22 @@ Whether an input's bands exist in the asset or recipe it is taken from is judged
 Engine build what is submitted, and recipes reading Band Math as a source learn of an unmet configuration only when
 Earth Engine refuses its image. Describing such a recipe still asks Earth Engine to observe it.
 
-The editor marks an input found to lack a band it includes: its row in Input imagery, and the Input imagery toolbar
-button, naming the bands, with the reason as their tooltip (`inputBandProblems.js`). The marks come from the output
-read as it stands - the `MISSING_INPUT_BAND` diagnoses this recipe owns, never an upstream recipe's - located in the
-configuration as it is now and shown on the input with that `imageId`. While the read is pending or unavailable,
-nothing is marked, and a later read establishing it again marks it again. The marks change nothing: selections,
-expressions, derived bands, output names and visualizations stay as configured, and previews and Retrieve are held by
-the description as before. A band an input's source no longer has is not replaced or removed: upstream disappearance
-keeps the selection, the outputs passed through from it, the expressions reading it and their output names, marked
-until the source has the band again or the user repairs it. The editor watches its output for as long as it is open
-(`withOutputProblems.jsx`), the loading shared with its map layer and Retrieve, so with its layer hidden it still
-describes the output - observing its running image and its inputs - where nothing else would. The input editor marks
-the band itself, from its own read of the source ([Inputs](#inputs)).
+The editor marks an input found to lack a band it includes: its row in Input imagery says some of its bands are
+unavailable, to be reviewed in it, and the Input imagery toolbar button that some inputs' are; the input's editor names
+the bands, beside each, from its own read of the source ([Inputs](#inputs)). The finding is the output read's as it
+stands - the `MISSING_INPUT_BAND` diagnoses this recipe owns, never an upstream recipe's - located in the configuration
+as it is now and shown on the input with that `imageId`, through the requirement it shares with Stack
+(`panels/inputImagery/inputImageryRequirements.js`), read as any requirement an output read judges
+(`sourceRequirements.js`). While it stands, Retrieve is disabled and refused at submission (`CONFIGURATION_UNMET`,
+naming Input imagery), and previews - here and on other recipes' maps - are not requested or are withdrawn; repair
+restores them. While the read is pending or unavailable nothing is marked, and Retrieve waits, as for any such
+requirement; a later read establishing it again marks it again. The marks change nothing: selections, expressions,
+derived bands, output names and visualizations stay as configured. A band an input's source no longer has is not
+replaced or removed: upstream disappearance keeps the selection, the outputs passed through from it, the expressions
+reading it and their output names, marked until the source has the band again or the user repairs it. The editor
+watches its output for as long as it is open (`selectedSource.jsx`), the loading shared with its map layer and
+Retrieve, so with its layer hidden it still describes the output - observing its running image and its inputs - where
+nothing else would.
 
 Not marked by this: an input's other description failures, an edit before it is applied - the panels keep their own
 validation - and anything the execution boundary would recheck. Where the description refuses the configuration
@@ -188,7 +209,8 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
   input that cannot be described or read, and an input Band Math naming two outputs alike.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
-  marked for a missing band, and not for pending, failed, upstream or superseded reads, the output read shared.
+  marked for a missing band, Retrieve withheld and refused naming Input imagery until the band is back, and nothing
+  marked for pending, failed, upstream or superseded reads, the output read shared.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/inputImagery/inputImageBands.test.jsx` - an input opened
   unchanged, a band its source no longer has kept, marked and refused until removed, another band taken by removing and
   adding, never judged from saved bands, pending or failed reads, edits kept while reading, source switches reconciled,
@@ -208,7 +230,11 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - `modules/gui/src/app/home/body/process/recipe/bandMath/chainRequirements.test.js` - the configuration checks.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/outputBands/outputBandRows.test.jsx` - Output bands:
   copies of one band, output names, orphaned outputs, and the bands offered and added - those the input includes now,
-  never a band removed from it, a same-named replacement offered.
+  never a band removed from it, a same-named replacement offered; saved defaults alike named apart in the draft, applied
+  or cancelled, rows judging the draft while the toolbar and gates judge what is applied, around custom names and unique
+  defaults, custom names alike refused, a custom name taking a saved or suggested name refused; and a name allocated
+  in the panel suggested as a placeholder, kept through another output's removal, saved by Apply and shown as the value
+  on reopening, and a saved name cleared to the default now available.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathLayer.test.jsx` - a layer on another map refused,
   withdrawn and drawn again.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.test.jsx` - a calculation
@@ -219,7 +245,7 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sectionMarks.test.jsx` - the toolbar buttons and Output bands
   rows marked for an output image left without bands by unselecting its band, and cleared once it has one; a section
   without any output image; an output
-  of an unmet calculation marking Output bands by naming it alone; duplicate and invalid output names; an input
+  of an unmet calculation leaving Output bands unmarked, refused naming Calculations, beside its own problems; duplicate and invalid output names; an input
   lacking a band beside an output problem.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames,
   and the output names a rename or added band is given: apart from other outputs, custom names and earlier renames in

@@ -2,6 +2,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {removeInputImage} from '~/app/home/body/process/inputImages'
+import {INPUT_IMAGERY} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
+import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -16,7 +18,6 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {missingBandsMessage} from '../../inputBandProblems'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
 
@@ -79,11 +80,10 @@ class _InputImagery extends React.Component {
     }
 
     renderImage(image) {
-        const {recipeNameById, inputBandProblems = []} = this.props
+        const {recipeNameById, itemProblems} = this.props
         const description = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        const problem = inputBandProblems.find(({imageId}) => imageId === image.imageId)
         return description
             ? (
                 <ListItem
@@ -91,7 +91,7 @@ class _InputImagery extends React.Component {
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
-                        error={problem ? missingBandsMessage(problem) : null}
+                        error={itemProblems[image.imageId]}
                         description={description}
                         metadata={image.name}
                         onRemove={() => this.removeImage(image)}
@@ -136,12 +136,11 @@ const valuesToModel = null
 export const InputImagery = compose(
     _InputImagery,
     connect(mapStateToProps),
+    withItemProblems(INPUT_IMAGERY.id),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('inputImage')
 )
 
 InputImagery.propTypes = {
-    // The inputs found to lack bands they include (inputBandProblems.js).
-    inputBandProblems: PropTypes.array,
     onChange: PropTypes.func
 }

@@ -1137,8 +1137,9 @@ The items below are concrete applications of that broader policy.
   - prerequisites identified by declaration id and item id, never by rule id or path - Change Alerts declares
     `ccdcSegments.monitoredMeasure` twice; a read keeps its own verdict apart from its effective one, a prerequisite
     not read counts as unmet, and a suppressed message never makes its operation available;
-  - section marks, item marks and operation gates aggregating every item - an item held only by a prerequisite marks
-    its section too, by naming what it depends on.
+  - section marks, item marks and operation gates aggregating every item - an item held only by a prerequisite in
+    its own section marks its section too, by naming what it depends on; one held only by prerequisites in another
+    section marks nothing, that section saying what is wrong, while its operations stay held.
 
   Not implemented: judging an edit by these rules before it is applied. A local declaration binds no form panel, so
   each panel's Apply keeps its own validation. Proposed for a later packet: an item panel judged as a candidate by the

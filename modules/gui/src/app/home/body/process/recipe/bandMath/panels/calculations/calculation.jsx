@@ -11,6 +11,7 @@ import {mathOptions} from '~/widget/codeEditor/mathOptions'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
+import {newVariableName} from '../../variableName'
 import styles from './calculation.module.css'
 import {ExpressionSection} from './expressionSection'
 import {FunctionSection} from './functionSection'
@@ -122,9 +123,9 @@ class _Calculation extends React.Component {
     }
 
     setName() {
-        const {calculations, inputs: {name}} = this.props
+        const {images, calculations, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(`c${calculations.length + 1}`)
+            name.set(newVariableName('c', {images, calculations}))
         }
     }
 

@@ -15,7 +15,8 @@ import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What the Stack editor marks about its sections, from its output read: an input lacking a band it maps on the Input
-// imagery button and that input's row in the list Stack and Remapping share, before any input is opened; band names the
+// imagery button and that input's row in the list Stack and Remapping share, each in one sentence, before any input is
+// opened, Retrieve not offered meanwhile; band names the
 // mapping refuses on the Band names button, and on their fields once the panel opens - one section's problem never
 // hiding the other's. The real toolbar, list and Band names panel over a real store and source runtime; Earth Engine
 // answers each asset's bands when a test says so.
@@ -85,15 +86,16 @@ afterEach(async () => {
 })
 
 describe('an input lacking a band it maps', () => {
-    it('is marked on its row and on Input imagery, naming the band; the other input is not', async () => {
+    it('is marked on its row and on Input imagery, and Retrieve is not offered; the other input is not marked', async () => {
         await open(stackOver([input('i-1', ASSET_A, ['red', 'nir']), input('i-2', ASSET_B, ['swir'])]))
 
         await answer({[ASSET_A]: ['red'], [ASSET_B]: ['swir']})
 
         expect(inputsInError()).toEqual([ASSET_A])
         expect(inputImageryInError()).toBe(true)
-        expect(markedInputs()).toEqual([{name: ASSET_A, bands: 'nir'}])
-        expect(inputImageryMark()).toEqual({item: ASSET_A, bands: 'nir'})
+        expect(markedInputs()).toEqual([ASSET_A])
+        expect(inputImageryMark()).toBe(UNAVAILABLE_BANDS)
+        expect(retrieveOffered()).toBe(false)
     })
 
     it('leaves the recipe as it was configured', async () => {
@@ -106,7 +108,7 @@ describe('an input lacking a band it maps', () => {
         expect(selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model'])).toEqual(recipe.model)
     })
 
-    it('is no longer marked once its source has the band again', async () => {
+    it('is no longer marked once its source has the band again, and Retrieve is offered again', async () => {
         await open(stackOver([input('i-1', ASSET_A, ['red', 'nir'])]))
         await answer({[ASSET_A]: ['red']})
 
@@ -117,6 +119,7 @@ describe('an input lacking a band it maps', () => {
         expect(inputsInError()).toEqual([])
         expect(inputImageryInError()).toBe(false)
         expect(inputImageryMark()).toBeNull()
+        expect(retrieveOffered()).toBe(true)
     })
 })
 
@@ -169,7 +172,7 @@ describe('a configuration changed after an input was marked', () => {
         }))
 
         expect(inputsInError()).toEqual([ASSET_B])
-        expect(markedInputs()).toEqual([{name: ASSET_B, bands: 'nir'}])
+        expect(markedInputs()).toEqual([ASSET_B])
     })
 
     it('marks no other input once the marked one is removed', async () => {
@@ -346,7 +349,7 @@ describe('band names saved alike beside an input lacking a band', () => {
         expect(nameFields().map(({error}) => error)).toEqual([null, null, null])
         expect(bandNamesInError()).toBe(false)
         expect(inputImageryInError()).toBe(true)
-        expect(markedInputs()).toEqual([{name: ASSET_A, bands: 'nir'}])
+        expect(markedInputs()).toEqual([ASSET_A])
     })
 
     it('leaves Band names marked, and the names refused in their fields, when the input is repaired', async () => {
@@ -520,28 +523,23 @@ async function settled() {
     }
 }
 
-const MISSING = 'process.panels.inputImagery.form.missingBands'
+const UNAVAILABLE_BAND = 'process.panels.inputImagery.unavailableBands.input'
+const UNAVAILABLE_BANDS = 'process.panels.inputImagery.unavailableBands.inputs'
 
 const tooltipLines = element => [...element.querySelectorAll('[data-tooltip]')]
     .flatMap(tooltip => JSON.parse(tooltip.dataset.tooltip))
 
 const valuesOf = (line, key) => JSON.parse(line.slice(key.length + 1))
 
-// The inputs whose rows say they lack bands, by the asset each row shows, with the bands they name.
+// The inputs whose rows say they lack bands, by the asset each row shows.
 const markedInputs = () => inputNames()
-    .map(name => ({name, line: tooltipLines(rowOf(name)).find(line => line.startsWith(MISSING))}))
-    .filter(({line}) => line)
-    .map(({name, line}) => ({name, bands: valuesOf(line, MISSING).bands}))
+    .filter(name => tooltipLines(rowOf(name)).includes(UNAVAILABLE_BAND))
 
-// What the Input imagery button says of an input lacking bands, or null when it says nothing of one.
-const inputImageryMark = () => {
-    const line = tooltipLines(document).find(line => line.startsWith('process.requirement.itemProblem') && line.includes(MISSING))
-    if (!line) {
-        return null
-    }
-    const {item, message} = valuesOf(line, 'process.requirement.itemProblem')
-    return {item, bands: valuesOf(message, MISSING).bands}
-}
+// What the Input imagery button says of inputs lacking bands, or null when it says nothing of them.
+const inputImageryMark = () => tooltipLines(document).find(line => line === UNAVAILABLE_BANDS) || null
+
+// Whether the Retrieve toolbar button can be pressed.
+const retrieveOffered = () => !document.querySelector('svg[data-icon="cloud-arrow-down"]').closest('button').disabled
 
 // The inputs whose rows are marked in error, by the asset each shows.
 const inputsInError = () => [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]

@@ -13,9 +13,8 @@ import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT, readRecipeOutput} from './recipeOutput'
 
 // Gives a recipe editor what its output, as the common read answers it, says needs repair in each of its sections: one
-// prop per mapper, named as it is, each mapping that read with `mapper({recipe, output, recipeNames})` - the inputs found
-// lacking bands they include (bandMath/inputBandProblems.js, stack/inputBandProblems.js), or what needs repair in
-// Stack's band names (stack/bandNamesProblems.js). It watches that question for as long as the editor is open, asking it to
+// prop per mapper, named as it is, each mapping that read with `mapper({recipe, output, recipeNames})` - what needs
+// repair in Stack's band names (stack/bandNamesProblems.js), say. It watches that question for as long as the editor is open, asking it to
 // explain a refusal (recipeOutput.js): a recipe refused for its own configuration is refused at once, and read for its
 // inputs too. The runtime shares any description with a map layer and a Retrieve, so what the editor adds is a
 // description while neither does - its layer hidden, say - and the explanation, which only it asks.

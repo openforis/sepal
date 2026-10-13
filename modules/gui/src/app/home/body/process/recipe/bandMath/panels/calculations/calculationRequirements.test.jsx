@@ -105,6 +105,20 @@ describe('a calculation edited in its panel', () => {
     })
 })
 
+// Of c1 and c2, c1 was removed: c2 keeps its name.
+describe('a new calculation added once an earlier one is removed', () => {
+    it('takes a name no calculation has, the one left keeping its own', async () => {
+        await open('calc-new', {calculations: [expression('calc-2', 'c2', 'i1.red')]})
+
+        await chooseExpression()
+        await typeExpression('i1.nir * 2')
+        await apply()
+
+        expect(selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.calculations.calculations']).map(({name}) => name))
+            .toEqual(['c2', 'c3'])
+    })
+})
+
 const RED = {id: 'red-id', name: 'red'}
 const NIR = {id: 'nir-id', name: 'nir'}
 const INPUT = {imageId: 'img-1', name: 'i1', type: 'ASSET', id: 'users/x/image', includedBands: [RED, NIR]}
@@ -159,6 +173,13 @@ async function open(imageId, {images = [INPUT], calculations = []}, panel = <Cal
     await linted()
 }
 
+// A new calculation made an expression, as its first section offers.
+async function chooseExpression() {
+    await act(async () => [...document.querySelectorAll('button')]
+        .find(button => button.textContent === 'process.bandMath.panel.calculations.expression.title').click())
+    await linted()
+}
+
 // The expression replaced, as typing it does, and checked.
 async function typeExpression(text) {
     await act(async () => {
@@ -198,5 +219,6 @@ function calculation(imageId) {
 }
 
 function sourceProblems() {
-    return sourceProblemsOfState(store.getState(), ID)
+    // Nothing is held for its output: Earth Engine is not asked here.
+    return sourceProblemsOfState(store.getState(), ID, undefined, Date.now(), () => undefined)
 }

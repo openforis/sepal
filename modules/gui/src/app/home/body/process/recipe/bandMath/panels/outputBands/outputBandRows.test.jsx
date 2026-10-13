@@ -39,6 +39,8 @@ vi.mock('~/widget/tooltip', () => ({
 }))
 
 const {OutputBands} = await import('./outputBands')
+const {sourceProblemsOfState} = await import('../../../selectedSourceStatus')
+const {configurationGate} = await import('../../../sourceRequirements')
 const {findChanges} = await import('../../sync/findChanges')
 const {updateOutputBands} = await import('../../sync/updateOutputBands')
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
@@ -128,12 +130,13 @@ describe('two outputs of one input band', () => {
     })
 })
 
+// A default name gives way to a custom one (see below); two custom names alike do not.
 describe('the names bands are output under', () => {
     it.each([
         ['an invalid name', '1_invalid'],
-        ['the name the other is output under', LEGACY_COPY.defaultOutputName]
+        ['the custom name the other is given', 'given']
     ])('hold back Apply while one is given %s, a band being added, until it is repaired', async (_case, name) => {
-        await openOutputBands()
+        await openOutputBands([{...LEGACY_COPY, outputName: 'given'}, CURRENT_COPY])
         await type(rowOf(CURRENT_COPY), name)
 
         await addBand(NIR.name)
@@ -145,9 +148,9 @@ describe('the names bands are output under', () => {
 
     it.each([
         ['an invalid name', '1_invalid'],
-        ['the name the other is output under', CURRENT_COPY.defaultOutputName]
+        ['the custom name the other is given', 'given']
     ])('hold back Apply where a saved recipe gave one %s, once a band is added', async (_case, name) => {
-        await openOutputBands([{...LEGACY_COPY, outputName: name}, CURRENT_COPY])
+        await openOutputBands([{...LEGACY_COPY, outputName: name}, {...CURRENT_COPY, outputName: 'given'}])
 
         await addBand(NIR.name)
 
@@ -258,6 +261,128 @@ describe('an output image whose input no longer includes a band', () => {
     })
 })
 
+// Derived from a saved recipe whose two inputs output VH and ratio_VV_VH each, under their default names alike.
+describe('default names a saved recipe gives outputs of two inputs alike', () => {
+    it('are named apart in the draft as the panel opens, the later outputs taking the lowest free suffix', async () => {
+        await openOutputBands(...ALIKE)
+
+        expect(drafted()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH_1', 'ratio_VV_VH_1'])
+        expect(fieldValues()).toEqual(['VH', 'ratio_VV_VH', 'VV', '', ''])
+        expect(applyEnabled()).toBe(true)
+        expect(savedDefaults()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH', 'ratio_VV_VH'])
+    })
+
+    it('mark no output image in the panel once named apart, while what is applied stays marked and refused', async () => {
+        await openOutputBands(...ALIKE)
+
+        expect(outputImagesInError()).toEqual([])
+        expect(appliedMark()).toEqual(expect.stringContaining('process.bandMath.requirement.duplicateOutputName'))
+        expect(appliedGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+
+    it('are saved named apart on Apply, each band otherwise as it was, and what is applied is no longer marked or refused', async () => {
+        await openOutputBands(...ALIKE)
+
+        await apply()
+
+        expect(savedOutputImages()).toEqual([
+            {...INPUT, outputBands: ALIKE[0]},
+            {...I2, outputBands: [{...I2_VH, defaultOutputName: 'VH_1'}, {...I2_RATIO, defaultOutputName: 'ratio_VV_VH_1'}]}
+        ])
+        expect(appliedMark()).toBeUndefined()
+        expect(appliedGate()).toBeNull()
+    })
+
+    it('are kept as saved when the panel is cancelled, still marked and refused', async () => {
+        await openOutputBands(...ALIKE)
+
+        await cancel()
+
+        expect(savedDefaults()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH', 'ratio_VV_VH'])
+        expect(appliedMark()).toEqual(expect.stringContaining('process.bandMath.requirement.duplicateOutputName'))
+        expect(appliedGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+
+    it('skip a suffix a custom name takes, the custom name kept', async () => {
+        await openOutputBands([...ALIKE[0].slice(0, 2), {...VV, defaultOutputName: 'VV', outputName: 'VH_1'}], ALIKE[1])
+
+        expect(drafted()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH_2', 'ratio_VV_VH_1'])
+        expect(value(rowsLabelled(VV.name)[0])).toBe('VH_1')
+    })
+
+    it('leave a default already unique as it is, its suffix included', async () => {
+        await openOutputBands(
+            [...ALIKE[0].slice(0, 2), {...VV, defaultOutputName: 'VV_1'}],
+            twoInputs([{...I2_VH, defaultOutputName: 'VH'}, {...I2_RATIO, defaultOutputName: 'ratio_VV_VH_2'}])
+        )
+
+        expect(drafted()).toEqual(['VH', 'ratio_VV_VH', 'VV_1', 'VH_1', 'ratio_VV_VH_2'])
+    })
+
+    it('leave custom names given alike refused, holding back Apply', async () => {
+        await openOutputBands(
+            [{...VH, defaultOutputName: 'VH', outputName: 'same'}, ...ALIKE[0].slice(1)],
+            twoInputs([{...I2_VH, defaultOutputName: 'VH', outputName: 'same'}, {...I2_RATIO, defaultOutputName: 'ratio_VV_VH'}])
+        )
+
+        expect(drafted()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH', 'ratio_VV_VH_1'])
+        expect(rowsLabelled(VH.name).map(value)).toEqual(['same', 'same'])
+        expect(outputImagesInError()).toEqual([INPUT.name, I2.name])
+        expect(applyEnabled()).toBe(false)
+    })
+})
+
+describe('a custom name given in the panel', () => {
+    it.each([
+        ['saved', 'VH'],
+        ['suggested as a placeholder', 'VH_1']
+    ])('is refused where another band is output under it, %s, which keeps its name', async (_case, name) => {
+        await openOutputBands(...ALIKE)
+
+        await type(rowsLabelled(RATIO.name)[0], name)
+        expect(fieldErrors(rowsLabelled(RATIO.name)[0])).toEqual([expect.stringContaining('process.bandMath.panel.outputBands.duplicateBand')])
+        expect(fieldValues()).toEqual(['VH', name, 'VV', '', ''])
+        expect(drafted()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH_1', 'ratio_VV_VH_1'])
+        expect(applyEnabled()).toBe(false)
+
+        await type(rowsLabelled(RATIO.name)[0], 'other')
+        expect(applyEnabled()).toBe(true)
+        await apply()
+        expect(savedDefaults()).toEqual(['VH', 'ratio_VV_VH', 'VV', 'VH_1', 'ratio_VV_VH_1'])
+        expect(savedBand(RATIO).outputName).toBe('other')
+    })
+})
+
+describe('a name allocated while the panel is open', () => {
+    it('is suggested as the placeholder of an empty field, kept while another output is removed, and saved as its value', async () => {
+        await openOutputBands([{...VH, defaultOutputName: 'VH'}, {...VV, defaultOutputName: 'VV'}], twoInputs([{...I2_RATIO, defaultOutputName: 'ratio_VV_VH'}]))
+
+        await addBandTo(I2, I2_VH.name)
+        expect([value(rowsLabelled(VH.name)[1]), placeholder(rowsLabelled(VH.name)[1])]).toEqual(['', 'VH_1'])
+        await remove(rowsLabelled(VH.name)[0])
+        expect([value(rowsLabelled(VH.name)[0]), placeholder(rowsLabelled(VH.name)[0])]).toEqual(['', 'VH_1'])
+        await apply()
+        await reopen()
+
+        expect(value(rowsLabelled(VH.name)[0])).toBe('VH_1')
+        expect(savedBand(I2_VH)).toEqual({...I2_VH, defaultOutputName: 'VH_1'})
+        expect(savedBand(I2_VH)).not.toHaveProperty('outputName')
+    })
+
+    it('is allocated again, for that band alone, once a saved name is cleared', async () => {
+        await openOutputBands([{...VV, defaultOutputName: 'VV'}], twoInputs([{...I2_VH, defaultOutputName: 'VH_1'}]))
+        expect(value(rowsLabelled(VH.name)[0])).toBe('VH_1')
+        expect(hints(rowsLabelled(VH.name)[0])).toEqual([RESET_HINT])
+
+        await type(rowsLabelled(VH.name)[0], '')
+        expect([value(rowsLabelled(VH.name)[0]), placeholder(rowsLabelled(VH.name)[0])]).toEqual(['', 'VH'])
+        expect(value(rowsLabelled(VV.name)[0])).toBe('VV')
+        await apply()
+
+        expect(savedDefaults()).toEqual(['VV', 'VH'])
+    })
+})
+
 // Its input as configured now, the band both copies are taken from no longer included: a saved output image's own copy of
 // the input's bands still lists it.
 const removedFromInput = band => ({...INPUT, includedBands: INPUT.includedBands.filter(({id}) => id !== band.id)})
@@ -273,6 +398,20 @@ const CURRENT_COPY = {...RATIO, defaultOutputName: 'ratio_VV_VH_1'}
 
 const OUTPUT_BANDS = [{...VV, defaultOutputName: 'VV'}, LEGACY_COPY, {...VH, defaultOutputName: 'VH'}, CURRENT_COPY]
 
+// A second input, taken from a recipe, including bands the first does: VH and ratio_VV_VH.
+const I2_VH = {id: 'i2-vh-id', name: 'VH', type: 'continuous', legendEntries: []}
+const I2_RATIO = {id: 'i2-ratio-id', name: 'ratio_VV_VH', type: 'continuous', legendEntries: []}
+const I2 = {imageId: 'input-2', name: 'i2', type: 'RECIPE_REF', id: 'radar-recipe', includedBands: [I2_VH, I2_RATIO]}
+
+// The first input outputting VH, ratio_VV_VH and VV, the second given these outputs.
+const twoInputs = i2OutputBands => ({others: [{...I2, outputBands: i2OutputBands}], otherInputs: [I2]})
+
+// Both inputs outputting VH and ratio_VV_VH under their own names.
+const ALIKE = [
+    [{...VH, defaultOutputName: 'VH'}, {...RATIO, defaultOutputName: 'ratio_VV_VH'}, {...VV, defaultOutputName: 'VV'}],
+    twoInputs([{...I2_VH, defaultOutputName: 'VH'}, {...I2_RATIO, defaultOutputName: 'ratio_VV_VH'}])
+]
+
 // Outputs saved from images since removed: a calculation, and an input selecting a recipe.
 const ORPHANED_CALCULATION = {
     imageId: 'calc-9', name: 'gone', type: 'EXPRESSION', expression: 'i1.VV * 2', includedBands: [{id: 'g-id', name: 'g'}],
@@ -283,13 +422,13 @@ const ORPHANED_RECIPE_INPUT = {
     outputBands: [{id: 'r-id', name: 'r', defaultOutputName: 'r'}]
 }
 
-const sessionState = (outputBands, {others = [], input = INPUT} = {}) => ({
+const sessionState = (outputBands, {others = [], input = INPUT, otherInputs = []} = {}) => ({
     process: {
         loadedRecipes: {
             [ID]: {
                 id: ID, type: 'BAND_MATH', revision: 1,
                 model: {
-                    inputImagery: {images: [input]},
+                    inputImagery: {images: [input, ...otherInputs]},
                     calculations: {calculations: []},
                     outputBands: {outputImages: [{...INPUT, outputBands}, ...others]}
                 },
@@ -307,6 +446,17 @@ const openOutputBands = async (outputBands = OUTPUT_BANDS, configuration) => {
     const initialState = sessionState(outputBands, configuration)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
+    await mount()
+}
+
+// The panel closed and opened again over what was saved.
+const reopen = async () => {
+    await act(async () => root.unmount())
+    container.remove()
+    await mount()
+}
+
+const mount = async () => {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -333,6 +483,29 @@ const rowOf = copy => rows().find(row => placeholder(row) === copy.defaultOutput
 
 const placeholder = row => row.querySelector('input').placeholder
 
+// Every output band's row labelled with the name of the band it is taken from, in the order listed.
+const rowsLabelled = name => [...document.querySelectorAll(`[data-label="${name}"]`)]
+
+const RESET_HINT = 'process.bandMath.panel.outputBands.resetName.tooltip'
+
+const tooltipLines = row => [...row.querySelectorAll('[data-tooltip]')].flatMap(element => JSON.parse(element.dataset.tooltip))
+
+// What a row's field says is wrong with the name in it.
+const fieldErrors = row => tooltipLines(row).filter(line => line !== RESET_HINT)
+
+// What a row's field says of clearing it.
+const hints = row => tooltipLines(row).filter(line => line === RESET_HINT)
+
+// What each output band's field holds, in the order listed.
+const fieldValues = () => [...document.querySelectorAll('[data-label]')]
+    .filter(row => row.querySelector('input'))
+    .map(value)
+
+// The default name each output band is shown under, in the order listed.
+const drafted = () => [...document.querySelectorAll('[data-label]')]
+    .filter(row => row.querySelector('input'))
+    .map(placeholder)
+
 const value = row => row.querySelector('input').value
 
 // A row's remove button, pressed as a user presses it.
@@ -358,6 +531,14 @@ const type = async (row, text) => {
 // The bands an output image can still be given, as its "+" offers them.
 const openBandPicker = async () => {
     await act(async () => document.querySelector('svg[data-icon="plus"]').closest('button').click())
+    await settled()
+}
+
+// A band added to the output image of an image, through that image's "+".
+const addBandTo = async (image, name) => {
+    await act(async () => headerOf(image).querySelector('svg[data-icon="plus"]').closest('button').click())
+    await settled()
+    await act(async () => option(name).click())
     await settled()
 }
 
@@ -420,6 +601,25 @@ const removeImage = async image => {
 const savedOutputNames = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
     .flatMap(({outputBands}) => outputBands)
     .map(({name}) => name)
+
+const savedOutputImages = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
+
+const savedBand = ({id}) => savedOutputImages()
+    .flatMap(({outputBands}) => outputBands)
+    .find(band => band.id === id)
+
+const savedDefaults = () => savedOutputImages()
+    .flatMap(({outputBands}) => outputBands)
+    .map(({defaultOutputName}) => defaultOutputName)
+
+// The output images whose rows say what Band Math's requirements find wrong with them, by name.
+const outputImagesInError = () => [INPUT, I2].filter(image => tooltipsOf(image).length).map(({name}) => name)
+
+// What the Output bands toolbar button says of the recipe as applied, and why Band Math's own requirements refuse its
+// image output, if they do. Nothing is held for its output: Earth Engine is not asked here.
+const appliedMark = () => sourceProblemsOfState(store.getState(), ID, undefined, Date.now(), () => undefined).outputBands
+
+const appliedGate = () => configurationGate({recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT'})
 
 const savedImageIds = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.outputBands.outputImages'])
     .map(({imageId}) => imageId)

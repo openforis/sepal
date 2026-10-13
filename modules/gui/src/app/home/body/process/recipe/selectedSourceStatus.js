@@ -39,9 +39,11 @@ import {
 // report before anyone touched it.
 //
 // A requirement over the recipe's own configuration (a local read, sourceRequirements.js) holds its section back with
-// `UNMET_CONFIGURATION` by what it finds itself, each item's diagnosis named by the item. A read held only by its
-// prerequisites marks its item (itemStatusesOf), naming them, and holds its section back too, by that short summary
-// alone: what is wrong is said where it is, but a section with an item that cannot be used is not shown as sound.
+// `UNMET_CONFIGURATION` by what it finds itself, each item's diagnosis named by the item. A read held only by
+// prerequisites in its own section marks its item (itemStatusesOf), naming them, and holds its section back too, by
+// that short summary alone: what is wrong is said where it is, but a section with an item that cannot be used is not
+// shown as sound. Prerequisites in another section are that section's to say: a read held only by them marks nothing -
+// what it holds back stays held, naming the section the first unmet requirement lies in (sourceRequirements.js).
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
@@ -197,8 +199,8 @@ const configurationStatusOf = (reads, sectionId) => {
         })),
         ...[
             ...itemized.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read)})),
-            ...itemized.filter(read => read.ownVerdict.status !== UNSUPPORTED)
-                .map(read => ({read, message: prerequisitesMessage(read), details: []}))
+            ...itemized.filter(read => read.ownVerdict.status !== UNSUPPORTED && localPrerequisites(read).length)
+                .map(read => ({read, message: prerequisitesMessage(localPrerequisites(read)), details: []}))
         ]
             .map(({read, message, details}) => read.item
                 ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
@@ -215,13 +217,18 @@ const configurationStatusOf = (reads, sectionId) => {
         : null
 }
 
-// What a local read says: its own diagnosis, followed by the prerequisites it waits on, named - not by what they say.
+// What a local read says: its own diagnosis, followed by the prerequisites in its section it waits on, named - not by
+// what they say. Held by nothing else, it says nothing.
 const localStatusOf = read => {
     if (read.verdict.status === SUPPORTED) {
         return null
     }
     const own = read.ownVerdict.status === UNSUPPORTED ? ownDiagnosis(read) : null
-    const prerequisites = read.unmetPrerequisites.length ? prerequisitesMessage(read) : null
+    const local = localPrerequisites(read)
+    const prerequisites = local.length ? prerequisitesMessage(local) : null
+    if (!own && !prerequisites) {
+        return null
+    }
     return {
         state: UNMET_CONFIGURATION,
         message: own ? own.message : prerequisites,
@@ -231,8 +238,12 @@ const localStatusOf = read => {
     }
 }
 
-const prerequisitesMessage = ({unmetPrerequisites}) =>
-    msg('process.requirement.prerequisiteUnmet', {items: unmetPrerequisites.map(({label, item}) => label || item).join(', ')})
+const prerequisitesMessage = prerequisites =>
+    msg('process.requirement.prerequisiteUnmet', {items: prerequisites.map(({label, item}) => label || item).join(', ')})
+
+// The unmet prerequisites of a read not known to lie in another section.
+const localPrerequisites = ({declaration, unmetPrerequisites}) =>
+    unmetPrerequisites.filter(({section}) => !section || section === declaration.section.id)
 
 const ownDiagnosis = ({ownVerdict, declaration}) =>
     declaration.requirement.describe(ownVerdict.diagnostic)

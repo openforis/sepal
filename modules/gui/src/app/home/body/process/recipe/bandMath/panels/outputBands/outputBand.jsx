@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {RemoveButton} from '~/widget/removeButton'
@@ -12,8 +13,12 @@ import {isUniqueOutputName, isValidOutputName, outputNameOf} from './outputImage
 const fields = {
     allOutputBandNames: new Form.Field(),
     defaultOutputName: new Form.Field(),
+    // The name the band was given automatically is shown as it is, unchecked; one typed is checked.
     outputName: new Form.Field()
-        .predicate(isValidOutputName, 'process.bandMath.panel.outputBands.invalidFormat')
+        .predicate(
+            (outputName, {defaultOutputName}) => outputName === defaultOutputName || isValidOutputName(outputName),
+            'process.bandMath.panel.outputBands.invalidFormat'
+        )
 }
 
 const constraints = {
@@ -40,6 +45,7 @@ class _OutputBand extends React.Component {
                 label={band.name}
                 input={outputName}
                 placeholder={band.defaultOutputName}
+                tooltip={outputName.value ? msg('process.bandMath.panel.outputBands.resetName.tooltip') : null}
                 errorMessage={[outputName, 'unique']}
                 autoComplete={false}
                 labelButtons={[this.renderRemoveButton()]}
@@ -62,13 +68,24 @@ class _OutputBand extends React.Component {
     }
     
     componentDidMount() {
-        const {band, inputs: {outputName}} = this.props
-        outputName.set(band.outputName)
+        const {inputs: {outputName}} = this.props
+        outputName.setInitialValue(shownName(this.props))
         this.setOutputNames()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        this.followShownName(prevProps)
         this.setOutputNames()
+    }
+
+    // A field showing the name the band was given follows it as it is given another, or allocated one: one cleared or
+    // typed in is the user's.
+    followShownName(prevProps) {
+        const {band, inputs: {outputName}} = this.props
+        const shown = shownName(this.props)
+        if (!band.outputName && shown !== shownName(prevProps) && outputName.value === shownName(prevProps)) {
+            outputName.setInitialValue(shown)
+        }
     }
 
     // The names the row's feedback is checked against, as the panel holds them: another band's custom name can change
@@ -79,9 +96,12 @@ class _OutputBand extends React.Component {
         allOutputBandNames.set(this.props.allOutputBandNames)
     }
 
-    change(outputName) {
+    // A name typed is the band's own, unless it is the name the band was given; a field cleared resets the band, which
+    // adopts the name now available to it (outputBands.jsx).
+    change(text) {
         const {band, image, onChange} = this.props
-        onChange({image, band: {...band, outputName}})
+        const outputName = text && text !== band.defaultOutputName ? text : undefined
+        onChange({image, band: {...band, outputName}, reset: !text})
     }
 
     remove() {
@@ -90,6 +110,11 @@ class _OutputBand extends React.Component {
     }
 }
 
+// The field shows the name the band is output under where it is saved, typed or given automatically; a default
+// allocated while the panel is open is a suggestion, shown as the placeholder of an empty field.
+const shownName = ({band, allocated}) =>
+    band.outputName || (allocated ? '' : band.defaultOutputName)
+
 export const OutputBand = compose(
     _OutputBand,
     withForm({fields, constraints})
@@ -97,6 +122,7 @@ export const OutputBand = compose(
 
 OutputBand.propTypes = {
     allOutputBandNames: PropTypes.array.isRequired,
+    allocated: PropTypes.bool,
     band: PropTypes.object.isRequired,
     image: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,

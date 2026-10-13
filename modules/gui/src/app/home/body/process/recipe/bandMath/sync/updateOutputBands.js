@@ -1,6 +1,6 @@
 import {compose} from '~/compose'
 
-import {addOutputBand, addOutputImage, createUniqueBandName, isOutputOf} from '../panels/outputBands/outputImages'
+import {addOutputBand, addOutputImage, isOutputOf, namedApart} from '../panels/outputBands/outputImages'
 
 export const updateOutputBands = ({changes, outputImages}) =>
     compose(
@@ -72,18 +72,24 @@ const removeBand = updatedImage =>
         )
     }
 
-// A renamed band takes its new name, made unique among every other output's final name - custom names included, and the
-// names given to bands renamed before it. Until it is named, a renamed band's old name holds back no other.
+// A renamed band takes its new name, made unique among every other output's final name - custom names included - and the
+// names given to bands renamed before it, in output order (namedApart). Until it is named, a renamed band's old name holds
+// back no other.
 const renameBands = updatedImages =>
     outputImages => {
         const renamedImages = updatedImages.filter(({renamedBands}) => renamedBands?.length)
-        return compose(
+        if (!renamedImages.length) {
+            return outputImages
+        }
+        const unnamed = compose(
             outputImages,
-            ...renamedImages.map(updatedImage => updateOutputImage(updatedImage, unnameRenamedBands(updatedImage))),
-            ...renamedImages.flatMap(updatedImage =>
-                updatedImage.renamedBands.map(renamedBand => nameUniquely(updatedImage, renamedBand))
-            )
+            ...renamedImages.map(updatedImage => updateOutputImage(updatedImage, unnameRenamedBands(updatedImage)))
         )
+        return namedApart(unnamed, ({imageIndex, bandIndex}) => {
+            const {imageId, outputBands} = unnamed[imageIndex]
+            const renamedImage = renamedImages.find(updatedImage => updatedImage.imageId === imageId)
+            return Boolean(renamedImage?.renamedBands.some(({id}) => id === outputBands[bandIndex].id))
+        })
     }
 
 const unnameRenamedBands = updatedImage =>
@@ -95,12 +101,3 @@ const unnameRenamedBands = updatedImage =>
             return renamedBand ? {...band, name: renamedBand.name, defaultOutputName: undefined} : band
         })
     })
-
-const nameUniquely = (updatedImage, renamedBand) =>
-    outputImages => updateOutputImage(updatedImage, outputImage => ({
-        ...outputImage,
-        outputBands: outputImage.outputBands.map(band => band.id === renamedBand.id
-            ? {...band, defaultOutputName: createUniqueBandName(updatedImage, renamedBand, outputImages)}
-            : band
-        )
-    }))(outputImages)

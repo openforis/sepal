@@ -502,6 +502,21 @@ describe.each(SOURCES)('a new input of $kind', ({source, section, select}) => {
     })
 })
 
+// Of i1 and i2, i1 was removed: i2 keeps its name.
+describe('a new input added once an earlier one is removed', () => {
+    it('takes a name no input has, the one left keeping its own', async () => {
+        const left = input({type: 'ASSET', id: 'users/x/existing', includedBands: [band('red')], imageId: 'input-b', name: 'i2'})
+        await editInput([left], 'input-new')
+
+        await selectAsset('users/x/image-x')
+        await answer('users/x/image-x', ['swir'])
+        await addBand('swir')
+        await apply()
+
+        expect(savedImages().map(({name}) => name)).toEqual(['i2', 'i3'])
+    })
+})
+
 const MISSING = 'process.bandMath.requirement.missingInputBands'
 const BAND_LABEL = 'process.panels.inputImagery.form.band.label'
 

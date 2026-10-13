@@ -1128,7 +1128,11 @@
           "title": "Image to include"
         },
         "title": "Input imagery",
-        "tooltip": "Select input imagery"
+        "tooltip": "Select input imagery",
+        "unavailableBands": {
+          "input": "Some bands are unavailable. Open this image to review them.",
+          "inputs": "Some bands are unavailable. Review Input imagery."
+        }
       }
     },
     "mapZoom": {
@@ -3093,6 +3097,9 @@
           "noImages": "No images/calculations added to output",
           "noBands": "No bands added to output",
           "missingBands": "An image or calculation outputs no bands.",
+          "resetName": {
+            "tooltip": "Clear to use an available default name."
+          },
           "addImage": {
             "label": "Add",
             "tooltip": "Include bands from image or calculation to output",

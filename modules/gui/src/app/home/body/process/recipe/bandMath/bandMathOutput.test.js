@@ -81,7 +81,7 @@ describe('retrieving a Band Math recipe whose calculation reads a band its input
         const recipe = withExpression('i1.swir * 2')
         const {output, pending} = retrieveRead(recipe, UNOBSERVABLE)
 
-        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(false)
+        expect(retrieveAvailability({state: stateOf(recipe), recipe, heldFor: heldFor(recipe, UNOBSERVABLE)}).available).toBe(false)
         expect(output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: 'process.bandMath.panel.calculations.button'}])
         expect(submitRetrieve({recipe, output, pending, request: request(output), task: bandMathTask})).toBe(false)
         expect(submitted).toEqual([])
@@ -91,7 +91,7 @@ describe('retrieving a Band Math recipe whose calculation reads a band its input
         const recipe = withExpression('i1.elevation * 2')
         const {output, pending} = retrieveRead(recipe)
 
-        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(true)
+        expect(retrieveAvailability({state: stateOf(recipe), recipe, heldFor: heldFor(recipe)}).available).toBe(true)
         expect(submitRetrieve({recipe, output, pending, request: request(output), task: bandMathTask})).toBe(true)
         expect(submitted).toHaveLength(1)
     })
@@ -209,12 +209,15 @@ const stateOf = recipe => ({
     }
 })
 
-// What Retrieve decides from as it submits: the session read at that moment, Band Math's running image observed - or
-// its observation refused.
-const retrieveRead = (recipe, observation = OBSERVED) => {
+// What Retrieve decides from as it submits: the session read at that moment.
+const retrieveRead = (recipe, observation = OBSERVED) =>
+    readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: heldFor(recipe, observation)})
+
+// What the runtime holds for the recipe's output: Band Math's running image observed - or its observation refused.
+const heldFor = (recipe, observation = OBSERVED) => {
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
     const terminal = observation === UNOBSERVABLE ? REFUSED_OBSERVATION : acquired(graph, observation)
-    return readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: () => terminal})
+    return () => terminal
 }
 
 const UNOBSERVABLE = 'UNOBSERVABLE'

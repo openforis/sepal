@@ -7,6 +7,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {inputImageryRequirements} from '../../panels/inputImagery/inputImageryRequirements'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getDefaultModel} from './bandMathRecipe'
@@ -60,7 +61,8 @@ export default () => ({
         recipe: BandMath
     },
     imageSource: true,
-    sourceRequirements: bandMathRequirements,
+    // A band an input includes is refused where it is included: at the input itself.
+    sourceRequirements: [...bandMathRequirements, ...inputImageryRequirements(({path}) => path[3])],
     getDateRange(_recipe) {
         return null
     },

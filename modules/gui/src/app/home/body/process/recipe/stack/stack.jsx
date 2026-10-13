@@ -7,6 +7,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {inputImageryRequirements} from '../../panels/inputImagery/inputImageryRequirements'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {StackToolbar} from './panels/stackToolbar'
@@ -59,6 +60,11 @@ export default () => ({
     components: {
         recipe: Stack
     },
+    // A band an input maps is refused where it is mapped: at its band names entry, which knows its input by imageId.
+    sourceRequirements: inputImageryRequirements(({path}, recipe) => {
+        const entry = recipe.model?.bandNames?.bandNames?.[path[3]]
+        return (recipe.model?.inputImagery?.images || []).findIndex(({imageId}) => imageId === entry?.imageId)
+    }),
     imageSource: true,
     getDateRange(_recipe) {
         return null

@@ -11,6 +11,7 @@ import {mathOptions} from '~/widget/codeEditor/mathOptions'
 import {Form} from '~/widget/form'
 import {Panel} from '~/widget/panel/panel'
 
+import {newVariableName} from '../../variableName'
 import {AssetSection} from './assetSection'
 import {isMissingBand} from './bands'
 import {ImageForm} from './imageForm'
@@ -157,9 +158,9 @@ class _InputImage extends React.Component {
     }
 
     setName() {
-        const {images, inputs: {name}} = this.props
+        const {images, calculations, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(`i${images.length + 1}`)
+            name.set(newVariableName('i', {images, calculations}))
         }
     }
 

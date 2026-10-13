@@ -22,7 +22,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('../bandMath')
 const {Sync} = await import('./sync')
-const {readSourceRequirements, readKey} = await import('../../sourceRequirements')
+const {readLocalRequirements, readKey} = await import('../../sourceRequirements')
 const {hasUniqueOutputNames, outputNameOf} = await import('../panels/outputBands/outputImages')
 
 addRecipeType(bandMath())
@@ -271,7 +271,7 @@ function outputNames() {
 }
 
 function unmet() {
-    return readSourceRequirements({state: store.getState(), recipe: recipe()})
+    return readLocalRequirements(recipe())
         .filter(({verdict}) => verdict.status !== 'SUPPORTED')
         .map(readKey)
 }

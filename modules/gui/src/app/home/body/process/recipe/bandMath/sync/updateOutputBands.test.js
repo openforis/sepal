@@ -199,6 +199,19 @@ describe('naming the output bands a band change gives', () => {
         expect(updated[0].outputBands.map(outputNameOf)).toEqual(['b', 'a'])
     })
 
+    it('names a renamed band apart from the custom name of another band renamed with it, which keeps it', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const prevCalculations = [input('c1', [a, b])]
+        const calculations = [input('c1', [{...a, name: 'y'}, {...b, name: 'x'}])]
+        const outputImages = [output('c1', [{...copied(a), outputName: 'x'}, copied(b)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated[0].outputBands.map(outputNameOf)).toEqual(['x', 'x_1'])
+        expect(updated[0].outputBands[0].outputName).toBe('x')
+    })
+
     it('lets an input band and a calculation band trade names in one change', () => {
         const a = band('a-id', 'a')
         const b = band('b-id', 'b')
@@ -223,6 +236,16 @@ describe('naming the output bands a band change gives', () => {
         const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
 
         expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['red', 'x', 'red_1'])
+    })
+
+    it('names each band of a calculation added apart from those named before it in the same change', () => {
+        const vh = band('vh-id', 'VH')
+        const calculation = input('c1', [band('c-vh-id', 'VH'), band('c-vh-1-id', 'VH_1')])
+        const outputImages = [output('i1', [copied(vh)])]
+
+        const updated = updateOutputBands({changes: changes({addedCalculations: [calculation]}), outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['VH', 'VH_1', 'VH_1_1'])
     })
 })
 

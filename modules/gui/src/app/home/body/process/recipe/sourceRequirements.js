@@ -86,8 +86,8 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 //
 // A local read keeps its own verdict (`ownVerdict`) apart from its effective one (`verdict`): a read met itself, whose
 // prerequisites are not all met - or not read at all - is UNSUPPORTED (`PREREQUISITE_UNMET`), and a read that is not
-// keeps its own diagnosis. `unmetPrerequisites` names them either way, so what a prerequisite's own read says need not
-// be repeated, while the operations it holds stay held. Evidence acquisition never reads these, and they bind no form
+// keeps its own diagnosis. `unmetPrerequisites` names them either way, with the section each lies in, so what a
+// prerequisite's own read says need not be repeated, while the operations it holds stay held. Evidence acquisition never reads these, and they bind no form
 // panel: they judge the configuration applied (recipeFormPanel.jsx).
 //
 // And requirements over its configuration that its own output read judges - what the type's shared declaration refuses
@@ -548,10 +548,10 @@ const unmetPrerequisite = ({declaration, item}, byKey, resolving, resolve) => {
     const key = keyOf(declaration, item)
     const read = byKey.get(key)
     if (!read || resolving.has(key)) {
-        return {declaration, item, label: read?.item?.label || null, read: Boolean(read)}
+        return {declaration, item, label: read?.item?.label || null, section: read?.declaration.section.id || null, read: Boolean(read)}
     }
     const prerequisite = resolve(read)
     return prerequisite.verdict.status === SUPPORTED
         ? null
-        : {declaration, item, label: prerequisite.item?.label || null, read: true}
+        : {declaration, item, label: prerequisite.item?.label || null, section: read.declaration.section.id, read: true}
 }

@@ -33,11 +33,15 @@ chosen answers with bands, none of them selected, the bands to add are offered, 
 dismissed, nor when a draft returns or its source is read again, and never while it loads, after its read fails or when
 it has no bands. An answer about a source no longer selected changes nothing.
 
-The editor marks an input found to lack a band it maps: its row in Input imagery and the Input imagery toolbar button,
-naming the bands (`stack/inputBandProblems.js`). The marks come from the output read as it stands - the
-`MISSING_INPUT_BAND` diagnoses this recipe owns, found at its band names entry, which knows its input by `imageId` -
-and are watched while the editor is open (`withOutputProblems.jsx`), the loading shared with its map layer and
-Retrieve. While the read is pending or unavailable nothing is marked. A band its source no longer has is not replaced
+The editor marks an input found to lack a band it maps: its row in Input imagery says some of its bands are
+unavailable, to be reviewed in it, and the Input imagery toolbar button that some inputs' are; the input's editor names
+the bands. The finding is the output read's as it stands - the `MISSING_INPUT_BAND` diagnoses this recipe owns, found
+at its band names entry, which knows its input by `imageId` - through the requirement it shares with Band Math
+(`panels/inputImagery/inputImageryRequirements.js`, [Band Math](band-math.md#configuration-checks)), watched while the
+editor is open, the loading shared with its map layer and Retrieve. While it stands, Retrieve is disabled and refused
+at submission (`CONFIGURATION_UNMET`, naming Input imagery), and previews are not requested or are withdrawn; repair
+restores them. While the read is pending or unavailable nothing is marked and Retrieve waits; where the output is
+refused for anything else - its band names, say - Retrieve is disabled too, marking no input. A band its source no longer has is not replaced
 or removed: the selection, its band names entry and its output name stay as configured, marked until the source has
 the band again or the user repairs it. Deliberately removing an input or unselecting its band removes its band names
 entry. Where the mapping is refused - an unmapped image, a blank or repeated name - the refusal is what every consumer
@@ -104,7 +108,7 @@ anything.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - encoding recorded under renamed names, and the export refused
   before an input with no image output is read.
 - `modules/gui/src/app/home/body/process/recipe/stack/sectionMarks.test.jsx` - an input lacking a band marked on
-  its row and Input imagery before it is opened, the configuration kept, recovery, pending and failed reads, reordered
+  its row and Input imagery before it is opened, Retrieve withheld meanwhile, the configuration kept, recovery, pending and failed reads, reordered
   and removed inputs; repeated, blank, misspelled and unmapped band names marked on Band names at once and refused in
   their fields when it opens, kept on Cancel and repaired there; each section left marked while the other is repaired; and an upstream Stack's
   diagnoses left with it.

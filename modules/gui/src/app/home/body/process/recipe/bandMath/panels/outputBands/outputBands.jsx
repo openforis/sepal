@@ -15,7 +15,8 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {withItemProblems} from '../../../selectedSource'
+import {itemStatusesOf} from '../../../selectedSourceStatus'
+import {readLocalRequirements} from '../../../sourceRequirements'
 import {ImageDescription} from '../../imageDescription'
 import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
@@ -24,9 +25,10 @@ import {
     addOutputImage,
     allOutputNames,
     bandsToOutput,
-    createUniqueBandName,
     hasUniqueOutputNames,
-    hasValidOutputNames
+    hasValidOutputNames,
+    namedApart,
+    withUniqueDefaultNames
 } from './outputImages'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
@@ -43,6 +45,7 @@ const fields = {
 
 const mapRecipeToProps = recipe => {
     return ({
+        recipe,
         images: selectFrom(recipe, 'model.inputImagery.images'),
         calculations: selectFrom(recipe, 'model.calculations.calculations'),
         outputImages: selectFrom(recipe, 'model.outputBands.outputImages') || []
@@ -50,6 +53,10 @@ const mapRecipeToProps = recipe => {
 }
 
 class _OutputBands extends React.Component {
+    // The bands given a default name while the panel is open - repaired as it opens, added, or reset - by output image
+    // and band: their fields show it as a suggestion, not as a name already saved.
+    allocated = new Set()
+
     constructor(props) {
         super(props)
         this.addImage = this.addImage.bind(this)
@@ -132,10 +139,9 @@ class _OutputBands extends React.Component {
 
     // An output whose image no longer exists is shown as it was saved, to be removed: it offers no bands to add.
     renderOutputImage(outputImage) {
-        const {itemProblems = {}} = this.props
         const current = this.currentImage(outputImage.imageId)
         const image = current || outputImage
-        const problem = itemProblems[outputImage.imageId]
+        const problem = this.draftProblems()[outputImage.imageId]
         return (
             <ListItem
                 key={outputImage.imageId}
@@ -168,6 +174,7 @@ class _OutputBands extends React.Component {
                             key={band.id}
                             image={outputImage}
                             band={band}
+                            allocated={this.allocated.has(keyOf(outputImage, band))}
                             allOutputBandNames={allOutputBandNames}
                             onChange={this.updateBand}
                             onRemove={this.removeBand}/>
@@ -221,14 +228,16 @@ class _OutputBands extends React.Component {
         )
     }
 
+    // A saved recipe can output bands under defaults another takes: the draft names them apart, which Apply saves and
+    // Cancel discards. What was applied is judged as saved until then.
     componentDidMount() {
-        const {outputImages, inputs} = this.props
-        inputs.outputImages.set(outputImages)
+        const {outputImages} = this.props
+        this.setDraft(withUniqueDefaultNames(outputImages), outputImages)
     }
 
     addImage({image}) {
         const {inputs: {outputImages}} = this.props
-        outputImages.set(addOutputImage(image, outputImages.value))
+        this.setDraft(addOutputImage(image, outputImages.value))
     }
 
     removeImage({image}) {
@@ -241,7 +250,7 @@ class _OutputBands extends React.Component {
     addBand({value, image, band, bandOptions}) {
         const {inputs: {outputImages}} = this.props
         const chosen = value === ADD_ALL_BANDS ? bandOptions : [{image, band}]
-        outputImages.set(chosen.reduce(
+        this.setDraft(chosen.reduce(
             (outputImages, {image, band}) => {
                 const current = this.currentImage(image.imageId)
                 const currentBand = bandsToOutput(outputImages.find(({imageId}) => imageId === image.imageId), current)
@@ -254,41 +263,65 @@ class _OutputBands extends React.Component {
         ))
     }
 
-    updateBand({image, band}) {
+    // A name typed changes this band alone: one another band is output under is refused, never taken from it. A band
+    // reset adopts the default now available to it, by the rule a band added is named by; no other band is renamed.
+    updateBand({image, band, reset}) {
         const {inputs: {outputImages}} = this.props
-        // When generating unique defaultBandNames, we need to include the updated band
-        // This temporary array does that
-        const tempOutputImages = [
-            ...outputImages.value.filter(({imageId}) => imageId !== image.imageId),
-            {
-                ...image,
-                outputBands: [
-                    ...image.outputBands.filter(({id}) => id !== band.id),
-                    band
-                ]
+        const imageIndex = outputImages.value.findIndex(({imageId}) => imageId === image.imageId)
+        const bandIndex = outputImages.value[imageIndex].outputBands.findIndex(({id}) => id === band.id)
+        const updated = outputImages.value.map((outputImage, index) => index === imageIndex
+            ? {
+                ...outputImage,
+                outputBands: outputImage.outputBands.map(outputBand => outputBand.id !== band.id
+                    ? outputBand
+                    : reset ? {...band, defaultOutputName: undefined} : band
+                )
             }
-        ]
-        const updatedOutputImages = outputImages.value.map(outputImage =>
-            outputImage.imageId === image.imageId
-                ? {
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.map(b =>
-                        b.id === band.id
-                            ? band
-                            : b
-                    )
-                }
-                : {
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.map(b =>
-                        ({
-                            ...b,
-                            defaultOutputName: createUniqueBandName(outputImage, b, tempOutputImages)
-                        })
-                    )
-                }
+            : outputImage
         )
-        outputImages.set(updatedOutputImages)
+        if (reset) {
+            this.allocated.add(keyOf(image, band))
+        }
+        this.setDraft(reset
+            ? namedApart(updated, at => at.imageIndex === imageIndex && at.bandIndex === bandIndex)
+            : updated
+        )
+    }
+
+    // The draft, each band given a default it did not have before noted as allocated.
+    setDraft(draft, previous = this.props.inputs.outputImages.value || NO_OUTPUT_IMAGES) {
+        const {inputs: {outputImages}} = this.props
+        const previousDefaults = new Map(previous.flatMap(outputImage =>
+            outputImage.outputBands.map(band => [keyOf(outputImage, band), band.defaultOutputName])
+        ))
+        draft.forEach(outputImage => outputImage.outputBands.forEach(band => {
+            const key = keyOf(outputImage, band)
+            if (!previousDefaults.has(key) || previousDefaults.get(key) !== band.defaultOutputName) {
+                this.allocated.add(key)
+            }
+        }))
+        outputImages.set(draft)
+    }
+
+    // What Band Math's own requirements (bandMathRequirements.js) find wrong with each output image as the draft
+    // configures it, the rest of the recipe as applied: its rows follow the draft, while the toolbar and the operations
+    // judge what is applied until Apply.
+    draftProblems() {
+        const {recipe, inputs: {outputImages}} = this.props
+        const draft = outputImages.value || NO_OUTPUT_IMAGES
+        if (this.judged?.model !== recipe.model || this.judged?.draft !== draft) {
+            const candidate = {
+                ...recipe,
+                model: {...recipe.model, outputBands: {...recipe.model.outputBands, outputImages: draft}}
+            }
+            const statuses = itemStatusesOf(readLocalRequirements(candidate), 'outputBands')
+            this.judged = {
+                model: recipe.model,
+                draft,
+                problems: Object.fromEntries(Object.entries(statuses).map(([id, {message}]) => [id, message]))
+            }
+        }
+        return this.judged.problems
     }
 
     // The input or calculation an output image is taken from, as configured now.
@@ -312,9 +345,12 @@ class _OutputBands extends React.Component {
     }
 }
 
+const NO_OUTPUT_IMAGES = Object.freeze([])
+
+const keyOf = ({imageId}, {id}) => `${imageId}|${id}`
+
 export const OutputBands = compose(
     _OutputBands,
-    withItemProblems('outputBands'),
     recipeFormPanel({id: 'outputBands', fields, mapRecipeToProps})
 )
 
