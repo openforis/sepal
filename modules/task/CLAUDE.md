@@ -34,7 +34,7 @@ sepal npm-test task -- --testPathPatterns runner
   `exportToWorkspace` (follow an export, `downloadFiles` it into the workspace, clean up), `forEachInParallel`.
 - `src/runner/operations/` - task operations: `image.GEE` (image and ImageCollection exports to Earth Engine
   assets), `ccdc.GEE` (CCDC export to Earth Engine assets), `image.DRIVE` (image exports to Google Drive),
-  `image.SEPAL` (image exports to the SEPAL workspace), `timeseries.download` (time series downloads to
+  `image.SEPAL` (image exports to the SEPAL workspace), `image.DATA` (image exports to Data: staged in `~/.data-staging/<task id>`, uploaded with rclone, then removed), `timeseries.download` (time series downloads to
   the SEPAL workspace), `samplingDesign.GEE` / `samplingDesign.SEPAL` (sampling design exports: gee runs the
   workflow as steps through `task/samplingDesign/step`; the runner follows each export and has gee clean up
   the temporary assets).

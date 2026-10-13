@@ -1,14 +1,20 @@
-import {mkdir, readdir} from 'node:fs/promises'
+import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 
-import {lastValueFrom} from 'rxjs'
-
-import {createVrt$, setBandNames$} from '#sepal/gdal'
-
+import {isWorkspaceDataPath} from '../dataPath.js'
 import {exportToWorkspace} from '../workspaceExport.js'
+import {buildVrt} from './imageVrt.js'
 
 export const imageSepalExport = async (params, {sepal, report, signal, sleep}) => {
     const {recipe, workspacePath, filenamePrefix, bands} = params.image
+    if (isWorkspaceDataPath(workspacePath)) {
+        throw Object.assign(new Error(`Workspace folder is reserved for Data: ${workspacePath}`), {
+            userMessage: {
+                key: 'tasks.workspace.dataReserved',
+                message: 'Folder "data" in your workspace is your Data. Export to the Data destination instead.'
+            }
+        })
+    }
     const description = recipe.title || recipe.placeholder
     const downloadDir = workspacePath
         ? join(process.env.HOME, workspacePath)
@@ -19,15 +25,6 @@ export const imageSepalExport = async (params, {sepal, report, signal, sleep}) =
         downloadDir, sepal, report, signal, sleep
     })
     if (downloaded) {
-        const vrtPath = join(downloadDir, `${filenamePrefix || description}.vrt`)
-        const inputPaths = await geoTiffs(downloadDir)
-        await lastValueFrom(createVrt$({inputPaths, outputPath: vrtPath}), {defaultValue: null})
-        await lastValueFrom(setBandNames$(vrtPath, bands.selection), {defaultValue: null})
+        await buildVrt({dir: downloadDir, name: filenamePrefix || description, bands})
     }
 }
-
-const geoTiffs = async dir =>
-    (await readdir(dir))
-        .filter(name => name.endsWith('.tif'))
-        .sort()
-        .map(name => join(dir, name))

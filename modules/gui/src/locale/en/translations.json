@@ -5700,6 +5700,16 @@
     }
   },
   "tasks": {
+    "data": {
+      "invalidFolder": "\"{path}\" is not a valid folder in Data.",
+      "quotaExceeded": "Your Data is over its quota. Delete files from Data, or ask for a larger quota, then export again.",
+      "upload": {
+        "progress": "Saving to Data - {uploaded} of {total} files"
+      }
+    },
+    "workspace": {
+      "dataReserved": "Folder \"data\" in your workspace is your Data. Export to the Data destination instead."
+    },
     "download": {
       "progress": "Downloaded {files} {files, plural, one {file} other {files}} / {bytes} left"
     },

@@ -93,6 +93,22 @@ test('an image export cancelled before its download runs no post-processing', as
     expect(gdalCalls).toEqual([])
 })
 
+test('refuses a workspace folder inside data before exporting', async () => {
+    const sepal = fakeSepal()
+    const params = {image: {recipe: {title: 'Mosaic'}, workspacePath: 'data/x', bands: {selection: ['red']}}}
+
+    await expect(imageSepalExport(params, context(sepal))).rejects.toMatchObject({userMessage: {key: 'tasks.workspace.dataReserved'}})
+    expect(sepal.started).toEqual([])
+})
+
+test('still exports to a workspace folder that only starts with data', async () => {
+    const params = {image: {recipe: {title: 'Mosaic'}, workspacePath: 'datax/y', bands: {selection: ['red']}}}
+
+    await imageSepalExport(params, context(fakeSepal()))
+
+    expect(exportCalls[0].downloadDir).toBe(`${home}/datax/y`)
+})
+
 const fakeSepal = () => {
     const started = []
     return {
