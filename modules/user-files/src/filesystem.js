@@ -6,6 +6,7 @@ import Path from 'node:path'
 import {getLogger} from '#sepal/log'
 
 import {DATA_REFUSED_MESSAGE, isDataPath} from './dataPath.js'
+import {moveLegacyDataAside} from './legacyData.js'
 
 const log = getLogger('filesystem')
 
@@ -410,6 +411,9 @@ const listFiles = async (homeDir, ctx) => {
             return
         }
 
+        if (isHomeRoot) {
+            await moveLegacyDataAside(userHomeDir, sepalUser.username)
+        }
         const names = await readdir(absolutePath)
         const visible = names
             .filter(n => !(isHomeRoot && n === 'data'))

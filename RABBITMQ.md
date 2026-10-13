@@ -31,7 +31,7 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `userData.size` | user-data | budget |
 | `storage.UserStorageErased` | storage | user-data |
 | `email.sendToAddress` | user | email |
-| `email.sendToUser` | storage, worker | email |
+| `email.sendToUser` | storage, worker, user-files | email |
 | `files.FilesDeleted` | *(none — legacy)* | storage |
 | `systemEvent` | gateway | storage |
 
@@ -230,6 +230,8 @@ always forces delivery.
   ([email.js](modules/storage/src/email.js))
 - **pub:** worker — session-expiry warnings and close notices, config-gated by
   `SESSION_EXPIRY_MODE` ([email.js](modules/worker/src/workerSession/email.js))
+- **pub:** user-files — a legacy `~/data` moved aside to `~/data.local[.n]`
+  ([email.js](modules/user-files/src/email.js)); the worker sends the same notice when it moves one
 - **sub:** email (queue `email.sendToUser`)
 
 ## `files.FilesDeleted` — file deletion

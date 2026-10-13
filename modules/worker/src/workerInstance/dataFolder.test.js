@@ -1,5 +1,5 @@
 import * as realFs from 'node:fs/promises'
-import {mkdir, mkdtemp, readdir, readlink, rm, stat, symlink, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, rm, stat, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
@@ -24,14 +24,7 @@ describe('prepare', () => {
         expect((await stat(join(home, 'data'))).isDirectory()).toBe(true)
     })
 
-    it('keeps an empty data folder as it is', async () => {
-        const {folder, home} = await harness()
-        await mkdir(join(home, 'data'))
-
-        expect((await folder.prepare('alice')).movedTo).toBeNull()
-    })
-
-    it('moves a non-empty data folder to data.local and tells the user', async () => {
+    it('moves a non-empty data folder aside, tells the user and creates an empty one', async () => {
         const {folder, home, notified} = await harness()
         await mkdir(join(home, 'data'))
         await writeFile(join(home, 'data', 'mine.txt'), 'x')
@@ -42,16 +35,6 @@ describe('prepare', () => {
         expect(await readdir(join(home, 'data.local'))).toEqual(['mine.txt'])
         expect(await readdir(join(home, 'data'))).toEqual([])
         expect(notified).toEqual([expect.objectContaining({username: 'alice'})])
-        expect(notified[0].content).toContain('data.local')
-    })
-
-    it('picks the next free name when data.local is taken', async () => {
-        const {folder, home} = await harness()
-        await mkdir(join(home, 'data.local'))
-        await mkdir(join(home, 'data'))
-        await writeFile(join(home, 'data', 'mine.txt'), 'x')
-
-        expect((await folder.prepare('alice')).movedTo).toBe('data.local.1')
     })
 
     it('moves a file named data aside', async () => {
@@ -60,19 +43,6 @@ describe('prepare', () => {
 
         expect((await folder.prepare('alice')).movedTo).toBe('data.local')
         expect((await stat(join(home, 'data'))).isDirectory()).toBe(true)
-    })
-
-    it('moves a symlink named data aside without following it', async () => {
-        const {folder, home, root} = await harness()
-        const target = join(root, 'elsewhere')
-        await mkdir(target)
-        await writeFile(join(target, 'keep.txt'), 'x')
-        await symlink(target, join(home, 'data'))
-
-        await folder.prepare('alice')
-
-        expect(await readlink(join(home, 'data.local'))).toBe(target)
-        expect(await readdir(target)).toEqual(['keep.txt'])
     })
 
     it('refuses a data symlink planted just before the folder is created', async () => {

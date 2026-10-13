@@ -35,7 +35,8 @@ npm run testWatch     # Jest watch mode
 ## Non-Obvious Conventions
 
 - **`data` belongs to `user-data`**: in the home, `data` is only a mount point here. The root listing omits it, and monitoring, removing, downloading, listing, uploading or creating folders under it is refused (403 `{message: 'Data is managed by user-data'}` on the routes; a logged warning and nothing sent on the websocket). See `src/dataPath.js`.
+- **A legacy `data` is moved aside before the home is listed**: both the `/listFiles` root listing and the websocket's home scan first apply the worker's rule (`#sepal/dataFolder`): an absent or empty `data` stays, anything else becomes the first free `data.local[.n]` and the user is emailed (`email.sendToUser`). A failure is logged and the listing goes on. See `src/legacyData.js`.
 - **File permissions preserved**: Uses `chown`/`chmod` based on looked-up user info
 - **Path traversal protection**: `resolvePath()` validates all paths stay within user's home directory
 - **Polling interval configurable**: `--poll-interval-milliseconds` CLI arg for file watcher
-- **No RabbitMQ or database** - purely filesystem-based
+- **No database**; RabbitMQ only to publish `email.sendToUser`

@@ -24,6 +24,7 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 | `rxjs.js` | Operators: `autoRetry`, `finalizeObservable`, `promise$`, `lastInWindow`, `repeating`, `swallow` |
 | `exception.js` | `Exception` base with `ServerException` (500), `ClientException` (400), `NotFoundException` (404) |
 | `db/mysql.js` | mysql2/promise wrapper: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
+| `dataFolder.js` | `moveDataFolderAside({home, username, notify})`: the rule for a `~/data` the user kept before Data, shared by the worker and user-files |
 | `event/definitions.js` | System event constants used by gateway WebSocket routing |
 | `service/registry.js` | `addServices([...])` registers handlers, `getServiceHandler$(name)` retrieves them |
 

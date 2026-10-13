@@ -262,7 +262,9 @@
         ],
         "build": {},
         "run": [
-            "logger"
+            "logger",
+            "email",
+            "rabbitmq"
         ]
     },
     "user-storage-backup": {

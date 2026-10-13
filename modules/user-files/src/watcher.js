@@ -10,6 +10,7 @@ import {minDuration$} from '#sepal/rxjs'
 import {homeDir, pollIntervalMilliseconds} from './config.js'
 import {isDataPath} from './dataPath.js'
 import {resolvePath} from './filesystem.js'
+import {moveLegacyDataAside} from './legacyData.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -173,7 +174,12 @@ const createWatcher = async ({send, stop$}) => {
         )
 
     const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath, isHomeRoot}) =>
-        from(readdir(absolutePath)).pipe(
+        defer(async () => {
+            if (isHomeRoot) {
+                await moveLegacyDataAside(absolutePath, username)
+            }
+            return readdir(absolutePath)
+        }).pipe(
             switchMap(dir => of(...dir.filter(filename => !(isHomeRoot && filename === 'data')))),
             mergeMap(filename => from(scanFile(absolutePath, filename))),
             filter(fileInfo => !!fileInfo),

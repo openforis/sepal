@@ -163,8 +163,8 @@ provisioning logs a warning and the sandbox starts with an empty `~/data`.
 
 **Provisioning order.** Remove containers, then any mount and cache a crashed predecessor left; get the API key;
 `DataFolder.prepare` (moves a non-empty existing `~/data` aside to `~/data.local[.n]` with an email to the user,
-creates and chowns `~/data`; a failure here fails provisioning); then sidecar (waits for `sepal-data wait-mounted`),
-then sandbox.
+by the rule user-files also applies before listing a home, `#sepal/dataFolder`; creates and chowns `~/data`; a
+failure here fails provisioning); then sidecar (waits for `sepal-data wait-mounted`), then sandbox.
 
 **Release (`undeploy`).** Stop the sandbox, poll `sepal-data pending-uploads` in the sidecar until two consecutive
 answers, one poll apart, are empty (files the killed processes closed can be queued after the first), stop the

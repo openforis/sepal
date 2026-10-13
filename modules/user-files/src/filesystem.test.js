@@ -1,14 +1,16 @@
-import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import Path from 'node:path'
 
 import {configureNoLogging} from '#sepal/log'
 
+import {email$} from './email.js'
 import {createFolder, download, listFiles, setFile} from './filesystem.js'
 
 const MESSAGE = 'Data is managed by user-data'
 
 let homeDir
+let emailSubscription
 
 beforeAll(() => configureNoLogging())
 
@@ -18,15 +20,56 @@ beforeEach(async () => {
     await writeFile(Path.join(homeDir, 'alice', 'docs', 'a.txt'), 'hello')
 })
 
-afterEach(() => rm(homeDir, {recursive: true, force: true}))
+afterEach(async () => {
+    emailSubscription?.unsubscribe()
+    await rm(homeDir, {recursive: true, force: true})
+})
 
 describe('listFiles', () => {
-    it('omits data from the home listing while listing other entries', async () => {
+    it('leaves an empty data folder in place and omits it from the home listing', async () => {
         await mkdir(Path.join(homeDir, 'alice', 'data'))
 
         const ctx = await listing('')
 
         expect(ctx.body.files.map(({name}) => name)).toEqual(['docs'])
+        await expect(readdir(Path.join(homeDir, 'alice', 'data'))).resolves.toEqual([])
+    })
+
+    it('moves a non-empty data folder to data.local, lists it and tells the user', async () => {
+        await mkdir(Path.join(homeDir, 'alice', 'data'))
+        await writeFile(Path.join(homeDir, 'alice', 'data', 'mine.txt'), 'x')
+        const emails = recordEmails()
+
+        const ctx = await listing('')
+
+        expect(ctx.body.files.map(({name}) => name)).toEqual(['data.local', 'docs'])
+        await expect(readdir(Path.join(homeDir, 'alice', 'data.local'))).resolves.toEqual(['mine.txt'])
+        expect(emails).toEqual([expect.objectContaining({username: 'alice', content: expect.stringContaining('~/data.local')})])
+    })
+
+    it('moves a file named data to data.local', async () => {
+        await writeFile(Path.join(homeDir, 'alice', 'data'), 'x')
+
+        const ctx = await listing('')
+
+        expect(ctx.body.files.map(({name}) => name)).toEqual(['docs', 'data.local'])
+    })
+
+    it('moves data to data.local.1 when data.local is taken', async () => {
+        await writeFile(Path.join(homeDir, 'alice', 'data.local'), 'taken')
+        await writeFile(Path.join(homeDir, 'alice', 'data'), 'x')
+
+        const ctx = await listing('')
+
+        expect(ctx.body.files.map(({name}) => name)).toEqual(['docs', 'data.local', 'data.local.1'])
+    })
+
+    it('moves nothing when listing a folder other than the home', async () => {
+        await writeFile(Path.join(homeDir, 'alice', 'data'), 'x')
+
+        await listing('docs')
+
+        await expect(readFile(Path.join(homeDir, 'alice', 'data'), 'utf8')).resolves.toBe('x')
     })
 
     it('still lists an ordinary directory', async () => {
@@ -104,6 +147,12 @@ async function listing(path) {
     const ctx = requestCtx({query: {path}})
     await listFiles(homeDir, ctx)
     return ctx
+}
+
+function recordEmails() {
+    const emails = []
+    emailSubscription = email$.subscribe(email => emails.push(email))
+    return emails
 }
 
 function requestCtx({query, files}) {

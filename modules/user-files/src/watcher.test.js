@@ -19,6 +19,7 @@ beforeAll(async () => {
     homeDir = await mkdtemp(Path.join(tmpdir(), 'user-files-watcher-'))
     process.env.HOME_DIR = homeDir
     process.env.POLL_INTERVAL_MS = '20'
+    process.env.RABBITMQ_HOST = 'rabbitmq'
 })
 
 afterAll(() => rm(homeDir, {recursive: true, force: true}))
@@ -37,7 +38,19 @@ beforeEach(async () => {
 afterEach(() => stop$.next())
 
 describe('monitor', () => {
-    it('omits data from the home scan while listing other entries', async () => {
+    it('moves a non-empty data folder to data.local before scanning the home', async () => {
+        watcher.monitor({...CLIENT, path: '/'})
+
+        await settle()
+
+        expect(Object.keys(sent[0].data.items).sort()).toEqual(['data.local', 'docs'])
+        await expect(access(Path.join(homeDir, 'alice', 'data.local', 'x', 'f.txt'))).resolves.toBeUndefined()
+    })
+
+    it('omits an empty data folder from the home scan', async () => {
+        await rm(Path.join(homeDir, 'alice', 'data'), {recursive: true})
+        await mkdir(Path.join(homeDir, 'alice', 'data'))
+
         watcher.monitor({...CLIENT, path: '/'})
 
         await settle()

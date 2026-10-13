@@ -18,6 +18,11 @@ try {
     program
         .exitOverride()
         .addOption(
+            new Option('--amqp-host <value>')
+                .env('RABBITMQ_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
             new Option('--home-dir <value>')
                 .env('HOME_DIR')
                 .makeOptionMandatory()
@@ -40,14 +45,18 @@ try {
 }
 
 const {
+    amqpHost,
     homeDir,
     port,
     pollIntervalMilliseconds,
 } = program.opts()
 
+const amqpUri = `amqp://${amqpHost}`
+
 log.info('Configuration loaded')
 
 export {
+    amqpUri,
     homeDir,
     pollIntervalMilliseconds,
     port,
