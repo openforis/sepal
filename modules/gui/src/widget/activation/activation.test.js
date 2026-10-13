@@ -234,6 +234,59 @@ it('Given a context with a parent and parent-sibling context, activatables from 
     }, 'root.parentContext.context')).toEqual({activatable})
 })
 
+describe('collecting a context again', () => {
+    it('reuses the result while the activation state is the same, whatever else in the state changed', () => {
+        const activation = {contexts: {root: {activatables: {panel: createActivatable()}}}}
+        const collected = collectActivatables({activation, stream: {load: 'ACTIVE'}}, 'root')
+
+        expect(collectActivatables({activation, stream: {load: 'COMPLETED'}}, 'root')).toBe(collected)
+    })
+
+    it('collects each context of the same activation state on its own', () => {
+        const rootPanel = createActivatable()
+        const recipePanel = createActivatable()
+        const activation = {contexts: {root: {activatables: {rootPanel}, contexts: {recipe: {activatables: {recipePanel}}}}}}
+
+        const ofRecipe = collectActivatables({activation}, 'root.recipe')
+        const ofRoot = collectActivatables({activation}, 'root')
+
+        expect(ofRecipe).toEqual({rootPanel, recipePanel})
+        expect(ofRoot).toEqual({rootPanel, recipePanel})
+        expect(ofRoot).not.toBe(ofRecipe)
+        expect(collectActivatables({activation}, 'root.recipe')).toBe(ofRecipe)
+    })
+
+    it('keeps apart a context whose id reads like a nested path when joined', () => {
+        const flat = createActivatable()
+        const nested = createActivatable()
+        const activation = {contexts: {root: {contexts: {
+            'x,contexts,y': {activatables: {flat}},
+            x: {contexts: {y: {activatables: {nested}}}}
+        }}}}
+        const state = {activation}
+        const root = ['activation', 'contexts', 'root', 'contexts']
+
+        expect(collect(state, [...root, 'x', 'contexts', 'y'])).toEqual({nested})
+        expect(collect(state, [...root, 'x,contexts,y'])).toEqual({flat})
+    })
+
+    it('collects again once the activation state is replaced', () => {
+        const panel = createActivatable()
+        const opened = {...createActivatable(), active: true}
+        const collected = collectActivatables({activation: {contexts: {root: {activatables: {panel}}}}}, 'root')
+
+        const recollected = collectActivatables({activation: {contexts: {root: {activatables: {panel, opened}}}}}, 'root')
+
+        expect(recollected).toEqual({panel, opened})
+        expect(collected).toEqual({panel})
+    })
+
+    it('collects nothing, every time, from a state without activation', () => {
+        expect(collectActivatables({}, 'root')).toEqual({})
+        expect(collectActivatables({}, 'root')).toEqual({})
+    })
+})
+
 const createActivatable = () => ({random: Math.random()})
 
 const collectActivatables = (state, pathString) =>
