@@ -49,11 +49,24 @@ export class ClaimRepository {
             const [rows] = await connection.query(
                 'SELECT instance_id, session_id, claimed_at FROM instance_claim'
             )
-            return rows.map(row => ({
-                instanceId: row.instance_id,
-                sessionId: row.session_id,
-                claimedAt: new Date(row.claimed_at),
-            }))
+            return rows.map(toClaim)
+        })
+    }
+
+    // get — the instance's claim, or null when it has none.
+    get(instanceId) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                'SELECT instance_id, session_id, claimed_at FROM instance_claim WHERE instance_id = ?',
+                [instanceId]
+            )
+            return rows.length ? toClaim(rows[0]) : null
         })
     }
 }
+
+const toClaim = row => ({
+    instanceId: row.instance_id,
+    sessionId: row.session_id,
+    claimedAt: new Date(row.claimed_at),
+})

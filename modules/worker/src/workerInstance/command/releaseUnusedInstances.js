@@ -1,5 +1,8 @@
 // Non-transactional: each release is independent, so one failure does NOT abort the others.
 // Releases reserved instances that are not in usedInstanceIds, not claimed, and older than minAge.
+// A release can take minutes, so an instance listed at the start may meanwhile have been released
+// and reserved by a new session: each is re-read just before its release and left alone unless it
+// still carries the reservation the sweep judged.
 // timeUnit is a Java-style TimeUnit name ('MINUTES', 'SECONDS', …) or a raw ms multiplier.
 
 import {getLogger} from '#sepal/log'
@@ -52,6 +55,10 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
     // Release each independently — one failure must not abort the others.
     for (const instance of toRelease) {
         try {
+            if (!sameReservation(await provider.getInstance(instance.id), instance)) {
+                log.debug(`${instanceTag(instance)} changed since the sweep read it - leaving it`)
+                continue
+            }
             await releaseInstance(instance.id, {claims, provider, provisioner, provisioning, releasing})
         } catch (err) {
             // releaseInstance already emits FailedToReleaseInstance; swallow here to continue
@@ -59,5 +66,10 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
         }
     }
 }
+
+const sameReservation = (current, observed) =>
+    Boolean(current?.reservation)
+    && current.reservation.sessionId === observed.reservation?.sessionId
+    && current.reservation.username === observed.reservation?.username
 
 export {releaseUnusedInstances, TIME_UNIT_MS}

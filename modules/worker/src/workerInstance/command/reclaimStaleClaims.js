@@ -18,6 +18,10 @@
 //
 // A claim whose instance is being released is left alone: that release drops it. Closing a session
 // marks its claim abandoned before the release, which can wait minutes for Data uploads, is done.
+//
+// Each release can take minutes, so the claims read at the start go stale while the sweep runs: an
+// instance released meanwhile can already be claimed by a new session. Every claim is therefore
+// re-read just before acting on it, and left alone unless it is still the one the sweep judged.
 
 import {getLogger} from '#sepal/log'
 
@@ -42,14 +46,18 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
         if (!gone && !abandoned) {
             continue
         }
-        if (releasing?.isReleasing(claim.instanceId)) {
+        if (now - claim.claimedAt.getTime() <= graceMs) {
             continue
         }
-        if (now - claim.claimedAt.getTime() <= graceMs) {
+        if (releasing?.isReleasing(claim.instanceId)) {
             continue
         }
         // Each claim is independent: one failure must not abort the others.
         try {
+            if (!sameClaim(await claims.get(claim.instanceId), claim)) {
+                log.debug(`Claim on ${instanceTag(claim.instanceId)} changed since the sweep read it - leaving it`)
+                continue
+            }
             if (gone) {
                 await claims.release(claim.instanceId)
             } else {
@@ -66,5 +74,9 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
     }
     return reclaimed
 }
+
+const sameClaim = (current, observed) =>
+    current?.sessionId === observed.sessionId
+    && current.claimedAt.getTime() === observed.claimedAt.getTime()
 
 export {reclaimStaleClaims}

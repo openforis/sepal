@@ -107,6 +107,25 @@ describe('ClaimRepository', () => {
         })
     })
 
+    describe('get', () => {
+        test('reports the claim on an instance as all reports it', async () => {
+            await repository.claim(INSTANCE_ID, SESSION_ID)
+            await repository.claim(ANOTHER_INSTANCE_ID, ANOTHER_SESSION_ID)
+
+            const claim = await repository.get(INSTANCE_ID)
+
+            const [listed] = (await repository.all()).filter(({instanceId}) => instanceId === INSTANCE_ID)
+            expect(claim).toEqual(listed)
+            expect(claim.sessionId).toBe(SESSION_ID)
+        })
+
+        test('reports nothing for an instance that is not claimed', async () => {
+            await repository.claim(ANOTHER_INSTANCE_ID, ANOTHER_SESSION_ID)
+
+            expect(await repository.get(INSTANCE_ID)).toBeNull()
+        })
+    })
+
     const byInstanceId = (a, b) => a.instanceId.localeCompare(b.instanceId)
 
     const INSTANCE_ID = 'i-100'

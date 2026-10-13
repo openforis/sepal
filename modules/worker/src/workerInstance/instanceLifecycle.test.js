@@ -888,11 +888,19 @@ describe('reclaimStaleClaims', () => {
         reservedInstances: jest.fn().mockResolvedValue(reserved),
     })
 
-    test('deletes a claim whose instance the hosting service no longer reports', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-gone', 's-1', GRACE_MS + 1000)]),
-            release: jest.fn().mockResolvedValue(true),
+    // claimTable — the claim rows as the repository serves them: all, get and release over one table.
+    const claimTable = (...rows) => {
+        const table = new Map(rows.map(claim => [claim.instanceId, claim]))
+        return {
+            all: jest.fn(async () => [...table.values()]),
+            get: jest.fn(async instanceId => table.get(instanceId) ?? null),
+            release: jest.fn(async instanceId => table.delete(instanceId)),
+            table,
         }
+    }
+
+    test('deletes a claim whose instance the hosting service no longer reports', async () => {
+        const claims = claimTable(claimOn('i-gone', 's-1', GRACE_MS + 1000))
         const reclaimed = await reclaimStaleClaims(['s-1'], GRACE_MS, {claims, provider: makeProvider()})
 
         expect(claims.release).toHaveBeenCalledWith('i-gone')
@@ -900,10 +908,7 @@ describe('reclaimStaleClaims', () => {
     })
 
     test('deletes a claim past grace whose session never appeared', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-missing', GRACE_MS + 1000)]),
-            release: jest.fn().mockResolvedValue(true),
-        }
+        const claims = claimTable(claimOn('i-1', 's-missing', GRACE_MS + 1000))
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
             ...makeProvider([instance]),
@@ -924,10 +929,7 @@ describe('reclaimStaleClaims', () => {
     // flipping to reserved, an instance matches neither filter. Deleting on that alone takes the
     // claim away from a request still in flight.
     test('keeps a fresh claim whose instance neither filter reports yet', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-retagging', 's-pending', 1000)]),
-            release: jest.fn().mockResolvedValue(true),
-        }
+        const claims = claimTable(claimOn('i-retagging', 's-pending', 1000))
 
         expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})).toBe(0)
         expect(claims.release).not.toHaveBeenCalled()
@@ -935,10 +937,7 @@ describe('reclaimStaleClaims', () => {
 
     // The grace must outlast the address wait, or an allocation in flight is reclaimed.
     test('keeps a claim within grace whose session has not appeared yet', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-pending', 1000)]),
-            release: jest.fn().mockResolvedValue(true),
-        }
+        const claims = claimTable(claimOn('i-1', 's-pending', 1000))
         const provider = makeProvider([{id: 'i-1'}])
 
         expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(0)
@@ -949,12 +948,7 @@ describe('reclaimStaleClaims', () => {
     // downstream knows the instance was ever carrying a container, so ReleaseUnusedInstances
     // tags it idle with the previous user's container still running.
     test('an abandoned claim on a live instance is torn down, not just dropped', async () => {
-        const rows = new Map([['i-1', 's-dead']])
-        const claims = {
-            all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
-                ({instanceId, sessionId, claimedAt: new Date(Date.now() - GRACE_MS - 1000)}))),
-            release: jest.fn(async instanceId => rows.delete(instanceId)),
-        }
+        const claims = claimTable(claimOn('i-1', 's-dead', GRACE_MS + 1000))
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
             ...makeProvider(),
@@ -975,14 +969,11 @@ describe('reclaimStaleClaims', () => {
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
         expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(rows.has('i-1')).toBe(false)
+        expect(claims.table.has('i-1')).toBe(false)
     })
 
     test('keeps a claim backed by an open session however old', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-open', 99 * GRACE_MS)]),
-            release: jest.fn().mockResolvedValue(true),
-        }
+        const claims = claimTable(claimOn('i-1', 's-open', 99 * GRACE_MS))
         const provider = makeProvider([], [{id: 'i-1'}])
 
         expect(await reclaimStaleClaims(['s-open'], GRACE_MS, {claims, provider})).toBe(0)
@@ -991,15 +982,13 @@ describe('reclaimStaleClaims', () => {
     // One claim's release rejecting must not abort the batch: the per-claim try/catch is what
     // lets the sweep move on to the remaining claims instead of dying on the first bad row.
     test('a claim that fails to release does not stop the rest of the sweep', async () => {
-        const claims = {
-            all: jest.fn().mockResolvedValue([
-                claimOn('i-1', 's-1', GRACE_MS + 1000),
-                claimOn('i-2', 's-2', GRACE_MS + 1000),
-                claimOn('i-3', 's-3', GRACE_MS + 1000),
-            ]),
-            release: jest.fn(async instanceId =>
-                instanceId === 'i-2' ? Promise.reject(new Error('db down')) : true),
-        }
+        const claims = claimTable(
+            claimOn('i-1', 's-1', GRACE_MS + 1000),
+            claimOn('i-2', 's-2', GRACE_MS + 1000),
+            claimOn('i-3', 's-3', GRACE_MS + 1000),
+        )
+        claims.release = jest.fn(async instanceId =>
+            instanceId === 'i-2' ? Promise.reject(new Error('db down')) : true)
 
         const reclaimed = await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})
 
@@ -1007,6 +996,34 @@ describe('reclaimStaleClaims', () => {
         expect(claims.release).toHaveBeenCalledWith('i-2')
         expect(claims.release).toHaveBeenCalledWith('i-3')
         expect(reclaimed).toBe(2)
+    })
+
+    // A release can wait minutes for Data uploads; by the time the sweep reaches the next claim it
+    // read, that instance may have been released and claimed by a new session.
+    test('leaves a claim a new session took after the sweep read the claims', async () => {
+        const claims = claimTable(
+            claimOn('i-1', 's-dead-1', GRACE_MS + 1000),
+            claimOn('i-2', 's-dead-2', GRACE_MS + 1000),
+        )
+        const newClaim = claimOn('i-2', 's-new', 0)
+        const instances = [makeReservedInstance({id: 'i-1', host: '1.2.3.4'}), makeReservedInstance({id: 'i-2', host: '1.2.3.5'})]
+        const provider = {
+            ...makeProvider([], instances),
+            getInstance: jest.fn(async id => instances.find(instance => instance.id === id)),
+            release: jest.fn(async () => undefined),
+            terminate: jest.fn(async () => undefined),
+            deleteScratchVolume: jest.fn(async () => undefined),
+        }
+        const provisioner = {
+            undeploy: jest.fn(async ({id}) => {
+                if (id === 'i-1') claims.table.set('i-2', newClaim)
+            }),
+        }
+
+        await reclaimStaleClaims(['s-new'], GRACE_MS, {claims, provider, provisioner})
+
+        expect(provisioner.undeploy.mock.calls.map(([{id}]) => id)).toEqual(['i-1'])
+        expect(claims.table.get('i-2')).toBe(newClaim)
     })
 })
 
@@ -1128,6 +1145,28 @@ describe('releaseUnusedInstances', () => {
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
         expect(provider.release).not.toHaveBeenCalled()
+    })
+
+    // A release can wait minutes for Data uploads; by the time the sweep reaches the next instance it
+    // listed, that one may have been released and reserved by a new session.
+    test('leaves an instance a new session reserved after the sweep listed it', async () => {
+        const current = new Map([
+            ['i-a', makeReservedInstance({id: 'i-a', host: '1.2.3.4', launchTime: OLD_TIME, reservation: {username: 'alice', workerType: 'SANDBOX', sessionId: 's-a'}})],
+            ['i-b', makeReservedInstance({id: 'i-b', host: '1.2.3.5', launchTime: OLD_TIME, reservation: {username: 'alice', workerType: 'SANDBOX', sessionId: 's-b'}})],
+        ])
+        const deps = makeFullDeps([])
+        deps.provider.reservedInstances = jest.fn(async () => [...current.values()].map(instance => ({...instance})))
+        deps.provider.getInstance = jest.fn(async id => current.get(id) ?? null)
+        deps.provisioner.undeploy = jest.fn(async ({id}) => {
+            if (id === 'i-a') {
+                current.set('i-b', {...current.get('i-b'), reservation: {username: 'bob', workerType: 'SANDBOX', sessionId: 's-new'}})
+            }
+        })
+
+        await releaseUnusedInstances([], 5, 'MINUTES', deps)
+
+        expect(deps.provisioner.undeploy.mock.calls.map(([{id}]) => id)).toEqual(['i-a'])
+        expect(deps.provider.release.mock.calls.map(([id]) => id)).toEqual(['i-a'])
     })
 
     test('still releases an old unused instance with no claim', async () => {
@@ -1303,9 +1342,9 @@ describe('instanceManager', () => {
     test('reclaimStaleClaims can undeploy — the manager passes the provisioner down', async () => {
         const instance = makeReservedInstance({id: 'i-abandoned', host: '1.2.3.4'})
         const deps = makeManagerDeps()
-        deps.claims.all = jest.fn().mockResolvedValue([
-            {instanceId: 'i-abandoned', sessionId: 's-dead', claimedAt: new Date(0)},
-        ])
+        const claim = {instanceId: 'i-abandoned', sessionId: 's-dead', claimedAt: new Date(0)}
+        deps.claims.all = jest.fn().mockResolvedValue([claim])
+        deps.claims.get = jest.fn().mockResolvedValue(claim)
         deps.provider.idleInstances = jest.fn().mockResolvedValue([instance])
         deps.provider.getInstance = jest.fn().mockResolvedValue(instance)
         const mgr = createInstanceManager(deps)
