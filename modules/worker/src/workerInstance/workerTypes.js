@@ -30,14 +30,20 @@ const dataCacheVolumeName = instanceId => `${DATA_CACHE_VOLUME_PREFIX}${instance
 
 const dataMountDir = (config, instanceId) => `${config.dataMountRoot}/${instanceId}`
 
+const DATA_MOUNT_SIDECAR = 'sandbox.data-mount'
+
 // Usernames cannot contain '-', so this never collides with a sandbox's "sandbox.{username}.…" name,
 // yet still has the "sandbox." prefix and ".{instanceId}" suffix the daemon-wide lookups match on.
 const sidecarContainerName = instance => containerName({
-    image: 'sandbox.data-mount',
+    image: DATA_MOUNT_SIDECAR,
     username: instance.reservation.username,
     sessionId: instance.reservation.sessionId,
     instanceId: instance.id,
 })
+
+// isDataMountSidecar — for a container from Docker's listing, whose names start with '/'.
+const isDataMountSidecar = container =>
+    (container.Names ?? []).some(name => name.startsWith(`/${DATA_MOUNT_SIDECAR}.`))
 
 const makeImage = ({
     name,
@@ -166,6 +172,7 @@ export {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
+    isDataMountSidecar,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,

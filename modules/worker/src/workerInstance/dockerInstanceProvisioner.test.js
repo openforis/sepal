@@ -67,6 +67,9 @@ const CONFIG_DATA = {
     dataFlushTimeoutSeconds: 600,
 }
 
+// Data turned off with the settings it had while on, as the worker's configuration keeps them.
+const DATA_DISABLED = {...CONFIG_DATA, dataEnabled: false}
+
 const makeInstance = (overrides = {}) => ({
     id: 'inst-abc123',
     type: 'T3aSmall',
@@ -888,6 +891,21 @@ describe('provisionInstance with Data', () => {
         expect(sandbox.Env).not.toContain('SEPAL_DATA_ENABLED=true')
         expect(sandbox.HostConfig.Tmpfs).toHaveProperty('/ram')
         expect(sandbox.NetworkingConfig.EndpointsConfig.sepal).toEqual({})
+        expect(calls).not.toContain('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
+    })
+
+    // Data was disabled while a session with a Data mount ran on the instance.
+    test('with Data disabled, unmounts the Data a leftover sidecar mounted before provisioning', async () => {
+        const instance = makeInstance()
+        recordFetch({containers: [{Id: 'c-old-sidecar', Names: ['/sandbox.data-mount.bob.old-name.inst-abc123']}]})
+
+        await provisioner(DATA_DISABLED).provisionInstance(instance)
+
+        const unmount = calls.indexOf('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
+        expect(calls.indexOf('DELETE /v1.38/containers/c-old-sidecar')).toBeLessThan(unmount)
+        expect(unmount).toBeLessThan(calls.indexOf(`POST /v1.38/containers/create?name=${sandboxName(instance)}`))
+        expect(calls).toContain('DELETE /v1.38/volumes/sepal-data-cache.inst-abc123')
+        expect(created).not.toHaveProperty([sidecarContainerName(instance)])
     })
 
     test('fails provisioning when the data folder cannot be prepared', async () => {
@@ -916,7 +934,7 @@ describe('provisionInstance with Data', () => {
     })
 
     // The exec id names its container, so each exec start can be told apart in the call log.
-    const recordFetch = ({stopped = null} = {}) => {
+    const recordFetch = ({stopped = null, containers = []} = {}) => {
         globalThis.fetch = jest.fn(async (url, opts = {}) => {
             const {pathname, searchParams} = new URL(url)
             const method = opts.method ?? 'GET'
@@ -924,7 +942,7 @@ describe('provisionInstance with Data', () => {
             calls.push(`${method} ${pathname}${name ? `?name=${name}` : ''}`)
             if (pathname.endsWith('/wait')) return dockerWaitExit(0)
             if (pathname.endsWith('/containers/json')) {
-                return {ok: true, status: 200, text: async () => '[]'}
+                return {ok: true, status: 200, text: async () => JSON.stringify(containers)}
             }
             if (pathname.endsWith('/containers/create')) {
                 created[name] = JSON.parse(opts.body)
@@ -983,6 +1001,25 @@ describe('undeploy with Data', () => {
         expect(calls.filter(call => expected.includes(call))).toEqual(expected)
         expect(slept).toEqual([5000, 5000, 5000])
         expect(notified).toEqual([])
+    })
+
+    test('with Data disabled, still drains and tears down a sidecar that is deployed', async () => {
+        recordFetch({pending: ['out/a.tif\n', '', '']})
+        const expected = [
+            `POST containers/${sandbox}/stop`,
+            `POST containers/${sidecar}/exec`,
+            `POST containers/${sidecar}/stop`,
+            'DELETE containers/c-sandbox',
+            'DELETE containers/c-sidecar',
+            `POST containers/create?name=${unmountHelper}`,
+            'DELETE volumes/sepal-data-cache.inst-abc123',
+        ]
+
+        await provisioner(DATA_DISABLED).undeploy(instance)
+
+        expect(calls[0]).toBe('GET containers/json')
+        expect(dedupe(calls.filter(call => expected.includes(call)))).toEqual(expected)
+        expect(pendingChecks()).toBe(3)
     })
 
     test('finishes on two consecutive empty answers', async () => {
@@ -1139,6 +1176,9 @@ describe('undeploy with Data', () => {
     })
 
     const pendingChecks = () => calls.filter(call => call === `POST containers/${sidecar}/exec`).length
+
+    // dedupe — consecutive repeats collapsed, so a sequence reads the same however often a step polled.
+    const dedupe = list => list.filter((call, i) => call !== list[i - 1])
 
     // pending: what successive pending-uploads execs print, {exit, output} for a non-zero exit, or the
     // status their start fails with; the last answer repeats. gone: containers
@@ -1473,6 +1513,25 @@ describe('removeOrphanedContainers', () => {
         expect(JSON.parse(unmounts[0].body).Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/bbb')
         expect(deletedVolumeNames(requests)).toEqual(['sepal-data-cache.bbb'])
         expect(removed).toContain('sepal-data-cache.bbb')
+    })
+
+    it('with Data disabled, still unmounts an orphaned sidecar and deletes its cache', async () => {
+        const {fetch, requests} = makeFetch(
+            [
+                {Id: 'c-orphan', Names: ['/sandbox.alice.lofty-reef.bbb'], Created: OLD},
+                {Id: 'c-orphan-sidecar', Names: ['/sandbox.data-mount.alice.lofty-reef.bbb'], Created: OLD},
+                {Id: 'c-orphan-plain', Names: ['/sandbox.carol.quiet-dune.ccc'], Created: OLD},
+            ],
+            [{Name: 'sepal-data-cache.bbb', CreatedAt: isoDate(OLD)}],
+        )
+        global.fetch = fetch
+        const config = {...ORPHAN_CONFIG, dataEnabled: false, dataMountRoot: '/var/lib/sepal/data-mounts'}
+
+        await makeProvisioner({config}).removeOrphanedContainers([])
+
+        const unmounts = requests.filter(({url}) => url.includes('/containers/create'))
+        expect(unmounts.map(({url}) => new URL(url).searchParams.get('name'))).toEqual(['sandbox.data-unmount.bbb'])
+        expect(deletedVolumeNames(requests)).toEqual(['sepal-data-cache.bbb'])
     })
 
     it('is a no-op without a defaultDaemonHost (dedicated-host hosting, e.g. AWS)', async () => {

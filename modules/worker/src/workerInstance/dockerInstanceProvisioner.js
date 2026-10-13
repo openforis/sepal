@@ -7,8 +7,9 @@
 // Methods:
 //   provisionInstance(instance, {tmpDevice})  — full provision sequence
 //   undeploy(instance)                        — delete the worker containers and the /tmp volume;
-//                                               with Data, first let pending uploads finish, and
-//                                               afterwards remove the mount and its cache
+//                                               with Data enabled or a Data mount sidecar deployed,
+//                                               first let pending uploads finish, and afterwards
+//                                               remove the mount and its cache
 //   instanceStatus(instance)                  — liveness probe → PROVISIONED | MISSING | UNKNOWN
 //   removeOrphanedContainers(liveInstanceIds) — shared-daemon sweep for leaked containers and
 //                                               /tmp volumes (and Data mounts and caches)
@@ -26,6 +27,7 @@ import {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
+    isDataMountSidecar,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,
@@ -164,16 +166,19 @@ const createDockerInstanceProvisioner = ({
         log.debug(`Deleted ${containerTag(containerId)} from ${instanceTag(instance)}`)
     }
 
-    // deleteExistingContainers — delete the worker containers on the instance.
+    // instanceContainers — the worker containers on the instance.
     // On a dedicated host (AWS) every worker container belongs to this instance.
     // On the shared local daemon, scope to THIS instance's containers — deleting them
     // all would tear down every other session's sandbox on the dev machine.
-    const deleteExistingContainers = async instance => {
+    const instanceContainers = async instance => {
         const containers = await deployedContainers(instance)
-        const instanceContainers = instance.daemonHost
+        return instance.daemonHost
             ? containers.filter(c => ownedByInstance(c, instance.id))
             : containers
-        for (const c of instanceContainers) {
+    }
+
+    const deleteContainers = async (instance, containers) => {
+        for (const c of containers) {
             await deleteContainer(instance, c.Id)
         }
     }
@@ -192,9 +197,12 @@ const createDockerInstanceProvisioner = ({
         }
     }
 
+    // removeInstanceContainers — the containers it deleted.
     const removeInstanceContainers = async instance => {
-        await deleteExistingContainers(instance)
+        const containers = await instanceContainers(instance)
+        await deleteContainers(instance, containers)
         await deleteTmpVolume(instance)
+        return containers
     }
 
     // createTmpVolume — an empty volume of mode 1777, on tmpDevice when there is one (the session's
@@ -391,8 +399,9 @@ const createDockerInstanceProvisioner = ({
 
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
-    //   2. removeInstanceContainers (containers and /tmp volume); with Data enabled, also the
-    //      mount and cache a crashed predecessor left, so the new mount never lands on a dead one
+    //   2. removeInstanceContainers (containers and /tmp volume); with Data enabled or a Data mount
+    //      sidecar among them, also the mount and cache a crashed predecessor left, so the new mount
+    //      never lands on a dead one
     //   3. apiKeyForInstance (with retry)
     //   4. with Data enabled: dataFolder.prepare, the user's ~/data the mount lands on
     //   5. createWorkerType → get images
@@ -403,8 +412,8 @@ const createDockerInstanceProvisioner = ({
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
         await waitUntilDockerIsAvailable(instance)
-        await removeInstanceContainers(instance)
-        if (config.dataEnabled) {
+        const removed = await removeInstanceContainers(instance)
+        if (config.dataEnabled || removed.some(isDataMountSidecar)) {
             await removeDataMount(instance)
         }
 
@@ -460,14 +469,21 @@ const createDockerInstanceProvisioner = ({
     // instance, so each Data step tolerates what an earlier attempt already removed and only logs
     // its own failures. With Data, the sandbox stops first so nothing new is written, and the
     // sidecar stays up until its pending uploads are done.
+    //
+    // What is deployed decides, not only the flag: a Data mount sidecar still running after Data was
+    // disabled holds the user's only copy of what it has not uploaded.
     const undeploy = async rawInstance => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Undeploying ${instanceTag(instance)}...`)
-        if (config.dataEnabled && instance.reservation?.sessionId) {
-            await flushData(instance)
-        }
-        await removeInstanceContainers(instance)
-        if (config.dataEnabled) {
+        const listed = config.dataEnabled ? null : await instanceContainers(instance)
+        if (listed && !listed.some(isDataMountSidecar)) {
+            await deleteContainers(instance, listed)
+            await deleteTmpVolume(instance)
+        } else {
+            if (instance.reservation?.sessionId) {
+                await flushData(instance)
+            }
+            await removeInstanceContainers(instance)
             await removeDataMount(instance)
         }
         log.info(`Undeployed ${instanceTag(instance)}`)
@@ -592,15 +608,16 @@ const createDockerInstanceProvisioner = ({
     }
 
     // removeOrphanedContainers — delete worker containers, then their Data mounts, /tmp volumes
-    // and Data caches, on the shared local daemon that no live instance claims. Instance tracking on local hosting is in-memory,
+    // and Data caches, on the shared local daemon that no live instance claims. An orphaned Data
+    // mount sidecar is unmounted even with Data disabled. Instance tracking on local hosting is in-memory,
     // so a worker restart forgets live instances; when their sessions later close,
     // releaseInstance finds nothing to undeploy and the containers leak (they are otherwise never revisited —
-    // deleteExistingContainers is scoped to a single instance's names).
+    // instanceContainers is scoped to a single instance's names).
     // Only meaningful with defaultDaemonHost (shared daemon); on dedicated hosts (AWS) the
     // containers die with the instance, so this is a no-op there.
     // liveInstanceIds: instance ids that may legitimately own containers (open sessions +
     // every instance the provider still tracks). Ownership is decided by ownedByInstance, the
-    // same test deleteExistingContainers uses.
+    // same test instanceContainers uses.
     // Containers and volumes younger than ORPHAN_GRACE_MS are kept — they may belong to an
     // instance launched after the caller computed liveInstanceIds.
     const removeOrphanedContainers = async liveInstanceIds => {
@@ -619,15 +636,14 @@ const createDockerInstanceProvisioner = ({
             await deleteContainer(daemon, c.Id)
             removed.push(name)
         }
-        if (config.dataEnabled) {
-            for (const instanceId of new Set(orphans.map(orphanInstanceId).filter(Boolean))) {
-                await unmountData({...daemon, id: instanceId})
-            }
+        const mounted = config.dataEnabled ? orphans : orphans.filter(isDataMountSidecar)
+        for (const instanceId of new Set(mounted.map(orphanInstanceId).filter(Boolean))) {
+            await unmountData({...daemon, id: instanceId})
         }
         return [
             ...removed,
             ...await removeOrphanedVolumes(daemon, liveInstanceIds, TMP_VOLUME_PREFIX),
-            ...config.dataEnabled ? await removeOrphanedVolumes(daemon, liveInstanceIds, DATA_CACHE_VOLUME_PREFIX) : [],
+            ...await removeOrphanedVolumes(daemon, liveInstanceIds, DATA_CACHE_VOLUME_PREFIX),
         ]
     }
 
