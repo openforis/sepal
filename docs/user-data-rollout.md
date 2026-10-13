@@ -83,3 +83,10 @@ the download route changes. The emulator in dev-env streams downloads, so only r
    answers 302 to a presigned HTTPS URL on the bucket, and the browser saves the file under its own name. This also
    shows that the bucket's HTTPS-only policy (`aws:SecureTransport`) lets the presigned URL through.
 2. Copy the URL from the 302 and open it again after 15 minutes: S3 refuses it as expired (403).
+
+## Sessions running across the first rollout
+
+On the rollout that first ships Data, sessions started before the rollout have no Data mount. The new `user-files`
+moves a user's non-empty `~/data` to `~/data.local` and emails the user the first time their home is listed in the
+file browser, which can happen while such a session is still using `~/data`. Close running sessions as part of that
+rollout, or warn users beforehand.
