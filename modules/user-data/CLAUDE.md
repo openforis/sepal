@@ -49,15 +49,9 @@ that fixed key: there is no prefix isolation and no read-only mode in dev-env.
 `sepal-<env>-user-data`, the IAM user `sepal-<env>-user-data` this module runs as, and the role of the same name
 that user credentials are issued for.
 
-**Before the first rollout of a build containing user-data to an environment**, run `provision-user-data.yml`,
-create access keys for the IAM user, and put `USER_DATA_BUCKET`, `USER_DATA_ROLE_ARN`,
-`USER_DATA_AWS_ACCESS_KEY_ID` and `USER_DATA_AWS_SECRET_ACCESS_KEY` in the env file (the playbook prints the bucket
-and role ARN to use). Without them the container exits at boot. `user-data` is the last module in `deploy.yml` so
-that such a failure leaves every other module updated.
-
-On the very first provisioning run, IAM eventual consistency can reject the role's trust policy ("Invalid
-principal") because it names the just-created IAM user; re-running the playbook fixes it.
+Each environment needs these resources and four env-file settings before its first rollout of `user-data`;
+without them the container exits at boot. The steps are in [docs/user-data-rollout.md](../../docs/user-data-rollout.md).
+`user-data` is the last module in `deploy.yml`, so such a failure leaves every other module updated.
 
 `*.aws.integration.test.js` checks prefix isolation and read-only mode on that real bucket. It runs only with
-`USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment:
-`docker exec -e USER_DATA_AWS_ISOLATION_TEST=true user-data npm run test:aws`.
+`USER_DATA_AWS_ISOLATION_TEST=true`, in the test deployment (see the rollout doc).
