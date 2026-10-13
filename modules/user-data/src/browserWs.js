@@ -1,4 +1,4 @@
-import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, from, map, mergeWith, of, Subject, takeWhile, timer} from 'rxjs'
+import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, from, map, of, startWith, Subject, switchMap, takeWhile, timer} from 'rxjs'
 
 import {ClientException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -18,7 +18,7 @@ export const createBrowserWs = ({browser, pollMs = POLL_MS}) =>
             subscriptionDown: ({clientId, subscriptionId}) => watches.stopSubscription(clientId, subscriptionId)
         }
 
-        return message => {
+        const handle = message => {
             const {event, data, user, clientId, subscriptionId} = message
             if (event) {
                 handlers[event]?.({clientId, subscriptionId})
@@ -26,13 +26,22 @@ export const createBrowserWs = ({browser, pollMs = POLL_MS}) =>
                 if (data.reset) {
                     watches.unmonitor(clientId, subscriptionId)
                 }
-                asArray(data.monitor).forEach(path => watches.monitor({username: user.username, clientId, subscriptionId, path}))
+                stringPaths(data.monitor).forEach(path => watches.monitor({username: user.username, clientId, subscriptionId, path}))
             } else if (data?.unmonitor) {
-                asArray(data.unmonitor).forEach(path => watches.unmonitor(clientId, subscriptionId, path))
+                stringPaths(data.unmonitor).forEach(path => watches.unmonitor(clientId, subscriptionId, path))
             } else if (data?.remove) {
-                watches.remove({username: user.username, clientId, subscriptionId, paths: asArray(data.remove)})
+                watches.remove({username: user.username, clientId, subscriptionId, paths: stringPaths(data.remove)})
             } else {
                 log.warn('Unsupported message:', message)
+            }
+        }
+
+        // One connection carries every user's messages: a throw here would end the handling of all of them.
+        return message => {
+            try {
+                handle(message)
+            } catch (error) {
+                log.warn('Dropped a message that could not be handled:', message, error)
             }
         }
     }
@@ -109,9 +118,12 @@ class Watches {
         const removed$ = this.#trigger$.pipe(
             filter(trigger => trigger.clientId === clientId && trigger.subscriptionId === subscriptionId)
         )
-        return timer(0, this.#pollMs).pipe(
-            mergeWith(removed$),
-            exhaustMap(() => this.#list$(username, path)),
+        // A removal restarts the polling, dropping a listing that may have started before the removal finished.
+        return removed$.pipe(
+            startWith(null),
+            switchMap(() => timer(0, this.#pollMs).pipe(
+                exhaustMap(() => this.#list$(username, path))
+            )),
             distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
             takeWhile(data => !data.error, true),
             finalize(() => log.debug(`Stopped monitoring ${path}`))
@@ -134,4 +146,4 @@ class Watches {
 
 const key = (clientId, subscriptionId) => `${clientId}:${subscriptionId}`
 
-const asArray = value => Array.isArray(value) ? value : [value]
+const stringPaths = value => (Array.isArray(value) ? value : [value]).filter(path => typeof path === 'string')

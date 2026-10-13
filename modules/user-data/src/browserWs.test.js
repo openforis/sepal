@@ -2,13 +2,18 @@ import {Subject} from 'rxjs'
 
 import {ClientException} from '#sepal/exception'
 import {configureNoLogging} from '#sepal/log'
+import {moduleWs$} from '#sepal/ws/module'
 
 import {createBrowserWs} from './browserWs.js'
 
 beforeAll(() => configureNoLogging())
 
 const stops = []
-afterEach(() => stops.splice(0).forEach(stop$ => stop$.next()))
+const connections = []
+afterEach(() => {
+    stops.splice(0).forEach(stop$ => stop$.next())
+    connections.splice(0).forEach(subscription => subscription.unsubscribe())
+})
 
 const POLL_MS = 20
 const A = {'a.txt': {file: true, size: 1, mtime: 1}}
@@ -94,6 +99,39 @@ describe('remove', () => {
         expect(browser.removeCalls).toEqual([['alice', ['data/a.txt']]])
         expect(browser.listCalls.length).toBe(listed + 1)
     })
+
+    it('lists again after a removal that finished while a listing was in flight', async () => {
+        const {handle, sent, browser} = await harness({listings: [A, B], listMs: [50, 0], pollMs: 10000})
+        handle(monitor('data'))
+        await wait(10)
+
+        handle({...monitor('data'), data: {remove: ['data/a.txt']}})
+        await wait(80)
+
+        expect(browser.listCalls).toHaveLength(2)
+        expect(sent.at(-1).data).toEqual({path: 'data', items: B})
+    })
+})
+
+describe('malformed messages', () => {
+    it('keeps handling other clients\' messages after one it cannot handle', async () => {
+        const {in$, sent} = await connection({listings: [A]})
+
+        in$.next({data: {unmonitor: [null]}, user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1'})
+        in$.next({...monitor('data'), user: {username: 'bob'}, clientId: 'c2'})
+        await wait(30)
+
+        expect(sent).toContainEqual({clientId: 'c2', subscriptionId: 's1', data: {path: 'data', items: A}})
+    })
+
+    it('ignores paths that are not strings', async () => {
+        const {handle, browser} = await harness({listings: [A]})
+
+        handle(monitor([{}, 42, 'data']))
+        await wait(10)
+
+        expect(browser.listCalls).toEqual([['alice', 'data']])
+    })
 })
 
 describe('events', () => {
@@ -138,26 +176,45 @@ describe('events', () => {
     })
 })
 
-const harness = async ({listings = [A], fail, pollMs = POLL_MS}) => {
+const harness = async ({listings = [A], listMs, fail, pollMs = POLL_MS}) => {
     const sent = []
     const stop$ = new Subject()
     stops.push(stop$)
+    const browser = fakeBrowser({listings, listMs, fail})
+    const handle = await createBrowserWs({browser, pollMs})({send: message => sent.push(message), stop$})
+    return {handle, sent, browser, stop$}
+}
+
+// The protocol behind the module websocket's own message handling, as main.js serves it.
+const connection = async ({listings}) => {
+    const sent = []
+    const in$ = new Subject()
+    const subscription = moduleWs$(createBrowserWs({browser: fakeBrowser({listings}), pollMs: POLL_MS}))(in$)
+        .subscribe(message => sent.push(message))
+    connections.push(subscription)
+    await wait(0)
+    return {in$, sent}
+}
+
+// listMs: how long each successive listing takes; the last one repeats.
+const fakeBrowser = ({listings, listMs = [0], fail}) => {
     const browser = {
         listCalls: [],
         removeCalls: [],
         list: async (username, path) => {
             browser.listCalls.push([username, path])
+            const call = browser.listCalls.length - 1
+            await wait(listMs[Math.min(call, listMs.length - 1)])
             if (fail) {
                 throw fail
             }
-            return listings[Math.min(browser.listCalls.length - 1, listings.length - 1)]
+            return listings[Math.min(call, listings.length - 1)]
         },
         remove: async (username, paths) => {
             browser.removeCalls.push([username, paths])
         }
     }
-    const handle = await createBrowserWs({browser, pollMs})({send: message => sent.push(message), stop$})
-    return {handle, sent, browser, stop$}
+    return browser
 }
 
 const monitor = paths => ({
