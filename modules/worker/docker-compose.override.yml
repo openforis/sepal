@@ -16,8 +16,6 @@ services:
     # with HOSTING_SERVICE=aws the worker uses each instance's own Docker daemon (real EC2 IPs).
     extra_hosts:
       - 'host.docker.internal:host-gateway'
-    environment:
-      DATA_ENABLED: "${DATA_ENABLED:-false}"
 
   # docker-api — exposes the host Docker socket over TCP :2375 for the local (dev) hosting provider.
   # Relocated from sepal-server's dev override as part of its decommission. Dev-only: it is NOT in the

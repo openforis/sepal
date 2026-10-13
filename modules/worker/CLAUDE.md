@@ -144,7 +144,7 @@ With `DATA_ENABLED=true` (default `false`; with it off nothing below happens) ea
 uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/` per instance), `DATA_CACHE_MAX_SIZE`
 (`20G`, rclone cache per sandbox). Dev-env leaves it off until the dev sandbox image has `sepal-data`.
 
-**Sidecar.** `sandbox.data-mount.{username}.{sessionId}.{instanceId}`, the sandbox image running `sepal-data mount`
+**Sidecar.** `sandbox.data-mount.{username}.{instanceName}.{instanceId}`, the sandbox image running `sepal-data mount`
 (rclone FUSE; `SYS_ADMIN`, `/dev/fuse`, apparmor unconfined). It binds `{mountRoot}/{instanceId}` at `/mnt/host` as
 `rshared`, mounts at `/mnt/host/data`, and caches in the `sepal-data-cache.{instanceId}` volume. The sandbox binds
 `{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: if it fails to come up,
