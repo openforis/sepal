@@ -22,7 +22,7 @@ export const eeLimiterTiers = ({limits, sepalProjectId}) => [
     {
         name: 'project',
         key: ({projectId}) => projectId,
-        limits: projectId => projectId === sepalProjectId ? limits.sepalProject : limits.project
+        limits: projectId => projectId === sepalProjectId ? limits.sepalProject : limits.userProject
     },
     {name: 'global', key: () => 'global', limits: () => limits.global}
 ]
