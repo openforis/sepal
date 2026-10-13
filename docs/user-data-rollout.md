@@ -73,3 +73,13 @@ docker exec -e USER_DATA_AWS_ISOLATION_TEST=true user-data npm run test:aws
 
 Every test must pass. The suite works under `users/isolationA/`, `users/isolationA2/` and `users/isolationB/`, and
 deletes what it creates.
+
+## Check downloads (test environment)
+
+Run this once in the test environment, before the first production rollout, and again whenever the bucket policy or
+the download route changes. The emulator in dev-env streams downloads, so only real AWS exercises the presigned URL.
+
+1. In the GUI file browser, download a file from Data. The request to `/api/user-data/attachments/data/download`
+   answers 302 to a presigned HTTPS URL on the bucket, and the browser saves the file under its own name. This also
+   shows that the bucket's HTTPS-only policy (`aws:SecureTransport`) lets the presigned URL through.
+2. Copy the URL from the 302 and open it again after 15 minutes: S3 refuses it as expired (403).
