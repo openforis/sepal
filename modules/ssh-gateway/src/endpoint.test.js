@@ -83,6 +83,10 @@ describe('sandboxInfo$', () => {
         it('never refuses a spending without a Data quota', () => {
             expect(exceededBudgetFor({...withinBudget, dataUsed: 500})).toBe(false)
         })
+
+        it('never refuses a spending whose Data quota is null', () => {
+            expect(exceededBudgetFor({...withinBudget, dataUsed: 500, dataQuota: null})).toBe(false)
+        })
     })
 })
 

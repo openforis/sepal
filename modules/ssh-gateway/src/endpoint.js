@@ -28,7 +28,7 @@ const exceededBudget = info => {
     return exceeded(spending.monthlyInstanceSpending, spending.monthlyInstanceBudget, 'You have spent more than you have been allocated on instances. Please contact a system administrator to increase your allocation.')
         || exceeded(spending.monthlyStorageSpending, spending.monthlyStorageBudget, 'You have spent more than you have been allocated on storage. Please contact a system administrator to increase your allocation.')
         || exceeded(spending.storageUsed, spending.storageQuota, 'You have used up more storage than you are allocated. Please contact a system administrator to increase your allocation.')
-        || exceeded(spending.dataUsed, spending.dataQuota, 'You have used up more Data than you are allocated. Please contact a system administrator to increase your allocation.', {inclusive: false})
+        || (spending.dataQuota != null && exceeded(spending.dataUsed, spending.dataQuota, 'You have used up more Data than you are allocated. Please contact a system administrator to increase your allocation.', {inclusive: false}))
 }
 
 // The budget module owns spending: the worker report does not carry it, so the menu fetches it
