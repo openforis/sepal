@@ -1,10 +1,11 @@
+import {DataFolder} from '../workerInstance/dataFolder.js'
 import {createDockerInstanceProvisioner} from '../workerInstance/dockerInstanceProvisioner.js'
 import {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} from '../workerInstance/sandboxSessionApiKey.js'
 import {createAwsInstanceProvider} from './aws/awsInstanceProvider.js'
 import {INSTANCE_TYPES} from './instanceTypes.js'
 import {createLocalInstanceProvider, LOCAL_HOST} from './local/localInstanceProvider.js'
 
-const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
+const createHostingService = (config, {sandboxSessionApiKey, sendEmail} = {}) => {
     const {hostingService} = config
 
     const instanceTypes = INSTANCE_TYPES
@@ -39,6 +40,7 @@ const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
         sandboxSessionApiKey: resolvedApiKey,
         extraHosts,
         defaultDaemonHost,
+        dataFolder: new DataFolder({notify: sendEmail}),
     })
 
     return {

@@ -42,7 +42,7 @@ mkfs.xfs -q -f -K "$1"`
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
 const PROBE_TIMEOUT_MS = 10_000
 
-const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, extraHosts = [], defaultDaemonHost = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
+const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, extraHosts = [], defaultDaemonHost = null, dataFolder = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
     const {dockerPort, dockerEntryPoint, dockerRegistryHost, workerAmiVersion, syslogAddress} = config
 
     // normalizeInstance — heal instances that arrive without daemonHost (reconstructed from
@@ -228,11 +228,15 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
         const links = Object.entries(image.links).map(([name, alias]) => `${name}:${alias}`)
 
-        const devices = (instanceType.devices ?? []).map(d => ({
-            PathOnHost: d,
-            PathInContainer: d,
-            CgroupPermissions: 'mrw',
-        }))
+        // The instance type's devices (GPUs) belong to the sandbox, not to a helper beside it.
+        const instanceDevices = image.essential
+            ? (instanceType.devices ?? []).map(d => ({
+                PathOnHost: d,
+                PathInContainer: d,
+                CgroupPermissions: 'mrw',
+            }))
+            : []
+        const devices = [...instanceDevices, ...(image.hostConfig.Devices ?? [])]
 
         const logConfig = syslogAddress
             ? {
@@ -259,21 +263,23 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
             Tty: true,
             Cmd: image.runCommand,
             HostConfig: {
+                ...image.hostConfig,
                 Binds: binds,
                 PortBindings: portBindings,
                 Links: links,
-                Tmpfs: {'/ram': `rw,exec,nosuid,size=${tmpfsSize}`},
+                ...(image.tmpfs ? {Tmpfs: {'/ram': `rw,exec,nosuid,size=${tmpfsSize}`}} : {}),
                 LogConfig: logConfig,
                 ExtraHosts: extraHosts,
                 Devices: devices,
-                ShmSize: shmSize,
+                ...(image.tmpfs ? {ShmSize: shmSize} : {}),
             },
             NetworkingConfig: {
                 EndpointsConfig: {
                     // On the shared local daemon, alias the container as instance.host so
                     // the gateway/ssh-gateway/terminal reach it over the sepal network
-                    // (ports aren't host-published there — see portBindings above).
-                    sepal: instance.daemonHost ? {Aliases: [instance.host]} : {},
+                    // (ports aren't host-published there — see portBindings above). Only one
+                    // container may answer to that alias.
+                    sepal: instance.daemonHost && image.networkAlias ? {Aliases: [instance.host]} : {},
                 },
             },
             ExposedPorts: exposedPorts,
@@ -340,10 +346,11 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     //   1. waitUntilDockerIsAvailable
     //   2. removeInstanceContainers (containers and /tmp volume)
     //   3. apiKeyForInstance (with retry)
-    //   4. createWorkerType → get images
-    //   5. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
-    //   6. for each image: createContainer, startContainer
-    //   7. for each image: waitUntilInitialized
+    //   4. with Data enabled: dataFolder.prepare, the user's ~/data the mount lands on
+    //   5. createWorkerType → get images
+    //   6. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
+    //   7. for each image in turn: createContainer, startContainer, waitUntilInitialized — the
+    //      Data mount sidecar is up before the sandbox binds its mount
     const provisionInstance = async (rawInstance, {tmpDevice = null} = {}) => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
@@ -363,17 +370,39 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         if (!instanceType) {
             throw new DockerProvisionerError(instance, `Unknown instance type: ${instance.type}`)
         }
-        const workerType = createWorkerType(instance.reservation.workerType, instance, config, apiKey)
+        const data = await prepareDataFolder(instance)
+        const workerType = createWorkerType(instance.reservation.workerType, instance, config, apiKey, data)
         await createTmpVolume(instance, workerType.images[0], tmpDevice)
 
         for (const image of workerType.images) {
-            await createContainer(instance, image, instanceType)
-            await startContainer(instance, image)
-        }
-        for (const image of workerType.images) {
-            await waitUntilInitialized(instance, image)
+            await runContainer(instance, image, instanceType)
         }
         log.info(`Provisioned ${instanceTag(instance)}`)
+    }
+
+    // runContainer — a container that is not essential (the Data mount sidecar) never fails the
+    // provisioning: its own command may already have exited by the time it is waited for.
+    const runContainer = async (instance, image, instanceType) => {
+        try {
+            await createContainer(instance, image, instanceType)
+            await startContainer(instance, image)
+            await waitUntilInitialized(instance, image)
+        } catch (error) {
+            if (image.essential) {
+                throw error
+            }
+            log.warn(`${containerTag(image.containerName(instance))} on ${instanceTag(instance)} did not come up; continuing without it: ${error.message}`)
+        }
+    }
+
+    // prepareDataFolder — {uid, gid} the Data is mounted as, or null with Data disabled. A home that
+    // could not be prepared fails provisioning: the mount must never land on what the user kept there.
+    const prepareDataFolder = async instance => {
+        if (!config.dataEnabled) {
+            return null
+        }
+        const {uid, gid} = await dataFolder.prepare(instance.reservation.username)
+        return {uid, gid}
     }
 
     const undeploy = async rawInstance => {
@@ -437,10 +466,11 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // instanceStatus — liveness probe for the CloseSessionsWithoutInstance sweep. Called WITHOUT
     // an apiKey.
     //
-    // Inspects each of the instance's containers (GET /containers/{name}/json, bounded by
+    // Inspects each of the instance's essential containers (GET /containers/{name}/json, bounded by
     // PROBE_TIMEOUT_MS) and reports whether Docker CONFIRMED them, DENIED them, or could not be
     // asked. Only a denial is allowed to cost a user their session, so a 404 / not-running is
-    // MISSING while every other failure is UNKNOWN.
+    // MISSING while every other failure is UNKNOWN. The Data mount sidecar is not essential: a
+    // failed mount must never cost a user their session.
     //
     // This replaced an exec of the image's waitCommand. That was strictly more expensive without
     // being more informative: the exec's exit code was never read (Docker returns 200 for
@@ -451,7 +481,7 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         const instance = normalizeInstance(rawInstance)
         try {
             const workerType = createWorkerType(instance.reservation.workerType, instance, config)
-            for (const image of workerType.images) {
+            for (const image of workerType.images.filter(image => image.essential)) {
                 const containerName = image.containerName(instance)
                 const container = await dockerFetch(
                     baseUrl(instance), `containers/${containerName}/json`, {timeoutMs: PROBE_TIMEOUT_MS}

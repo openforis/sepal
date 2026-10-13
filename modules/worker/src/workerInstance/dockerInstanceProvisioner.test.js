@@ -14,6 +14,8 @@ jest.unstable_mockModule('node:fs', () => ({
 const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
 const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
 const {instanceName} = await import('../instanceName.js')
+const {containerName} = await import('../containerName.js')
+const {sidecarContainerName} = await import('./workerTypes.js')
 
 // Provisioning refuses without a key, so this stands in for the session lookup wherever the key
 // itself is not the subject.
@@ -74,7 +76,7 @@ const setupFetchMock = ({captureCreate} = {}) => {
     globalThis.fetch = jest.fn(async (url, opts) => {
         if (url.endsWith('/wait')) return dockerWaitExit(0)
         if (captureCreate && url.includes('/containers/create')) {
-            captureCreate(JSON.parse(opts.body))
+            captureCreate(JSON.parse(opts.body), new URL(url).searchParams.get('name'))
         }
         if (url.includes('/containers/json')) {
             return {ok: true, status: 200, text: async () => '[]'}
@@ -713,6 +715,179 @@ describe('apiKey retry', () => {
         await expect(provisioner.provisionInstance(makeInstance())).rejects.toThrow(/api key/)
         expect(created).toBe(false)
     })
+})
+
+describe('provisionInstance with Data', () => {
+    const CONFIG_DATA = {...CONFIG, dataEnabled: true, dataMountRoot: '/var/lib/sepal/data-mounts', dataCacheMaxSize: '20G'}
+    const FUSE = {PathOnHost: '/dev/fuse', PathInContainer: '/dev/fuse', CgroupPermissions: 'rwm'}
+
+    let calls
+    let prepared
+    let created
+
+    beforeEach(() => {
+        mockReadFileSync.mockReturnValue('ssh-rsa test')
+        calls = []
+        prepared = []
+        created = {}
+        recordFetch()
+    })
+
+    test('prepares the user\'s data folder before creating containers', async () => {
+        await provisioner().provisionInstance(makeInstance())
+
+        expect(prepared).toEqual(['alice'])
+        const firstCreate = calls.findIndex(call => call.startsWith('POST /v1.38/containers/create'))
+        expect(firstCreate).toBeGreaterThan(calls.indexOf('prepare alice'))
+    })
+
+    test('mounts the Data as the owner of the user\'s home', async () => {
+        const instance = makeInstance()
+
+        await provisioner().provisionInstance(instance)
+
+        expect(created[sidecarContainerName(instance)].Env).toEqual(expect.arrayContaining(['DATA_UID=1001', 'DATA_GID=1002']))
+    })
+
+    test('creates, starts and waits for the sidecar before creating the sandbox', async () => {
+        const instance = makeInstance()
+        const sidecar = sidecarContainerName(instance)
+        const sandboxCreate = `POST /v1.38/containers/create?name=${sandboxName(instance)}`
+        const expected = [
+            `POST /v1.38/containers/create?name=${sidecar}`,
+            `POST /v1.38/containers/${sidecar}/start`,
+            `POST /v1.38/containers/${sidecar}/exec`,
+            `POST /v1.38/exec/exec-of-${sidecar}/start`,
+            sandboxCreate,
+        ]
+
+        await provisioner().provisionInstance(instance)
+
+        expect(calls.filter(call => expected.includes(call))).toEqual(expected)
+    })
+
+    // sepal-data mount exits when it cannot fetch access or mount, so the sidecar may be gone by the time it is waited for.
+    test('starts the sandbox when the sidecar has already stopped', async () => {
+        const instance = makeInstance()
+        recordFetch({stopped: sidecarContainerName(instance)})
+
+        await provisioner().provisionInstance(instance)
+
+        expect(calls).toContain(`POST /v1.38/containers/${sandboxName(instance)}/start`)
+    })
+
+    test('gives the sidecar FUSE and the shared mount, and no alias, ports or tmpfs', async () => {
+        const instance = makeInstance({daemonHost: 'host.docker.internal'})
+
+        await provisioner().provisionInstance(instance)
+
+        const body = created[sidecarContainerName(instance)]
+        expect(body.HostConfig.CapAdd).toEqual(['SYS_ADMIN'])
+        expect(body.HostConfig.Devices).toContainEqual(FUSE)
+        expect(body.HostConfig.Binds).toContain('/var/lib/sepal/data-mounts/inst-abc123:/mnt/host:rshared')
+        expect(body.HostConfig.PortBindings).toEqual({})
+        expect(body.HostConfig.Tmpfs).toBeUndefined()
+        expect(body.HostConfig.ShmSize).toBeUndefined()
+        expect(body.NetworkingConfig.EndpointsConfig.sepal).toEqual({})
+    })
+
+    test('binds the mounted Data into the sandbox', async () => {
+        const instance = makeInstance()
+
+        await provisioner().provisionInstance(instance)
+
+        expect(created[sandboxName(instance)].HostConfig.Binds)
+            .toContain('/var/lib/sepal/data-mounts/inst-abc123/data:/home/sepal-user/data:rslave')
+    })
+
+    test('keeps a GPU sandbox\'s devices off the sidecar', async () => {
+        const instance = makeInstance({type: 'G5Xlarge'})
+
+        await provisioner().provisionInstance(instance)
+
+        expect(created[sidecarContainerName(instance)].HostConfig.Devices).toEqual([FUSE])
+        expect(created[sandboxName(instance)].HostConfig.Devices.map(d => d.PathOnHost))
+            .toEqual(['/dev/nvidia0', '/dev/nvidiactl'])
+    })
+
+    test('does not count the sidecar in the instance status', async () => {
+        const instance = makeInstance()
+        const sidecar = sidecarContainerName(instance)
+        globalThis.fetch = jest.fn(async url => url.includes(`/containers/${sidecar}/`)
+            ? {ok: false, status: 404, text: async () => 'No such container'}
+            : {ok: true, status: 200, text: async () => JSON.stringify({State: {Running: true}})})
+
+        expect(await provisioner().instanceStatus(instance)).toBe('PROVISIONED')
+    })
+
+    test('provisions exactly as before with Data disabled', async () => {
+        const instance = makeInstance()
+
+        await provisioner(CONFIG).provisionInstance(instance)
+
+        expect(prepared).toEqual([])
+        expect(created).not.toHaveProperty([sidecarContainerName(instance)])
+        const sandbox = created[sandboxName(instance)]
+        expect(sandbox.HostConfig.Binds.some(bind => bind.includes('/home/sepal-user/data'))).toBe(false)
+        expect(sandbox.Env).not.toContain('SEPAL_DATA_ENABLED=true')
+        expect(sandbox.HostConfig.Tmpfs).toHaveProperty('/ram')
+        expect(sandbox.NetworkingConfig.EndpointsConfig.sepal).toEqual({})
+    })
+
+    test('fails provisioning when the data folder cannot be prepared', async () => {
+        const dataFolder = {prepare: async () => { throw new Error('EACCES: permission denied') }}
+
+        await expect(provisioner(CONFIG_DATA, dataFolder).provisionInstance(makeInstance())).rejects.toThrow(/EACCES/)
+        expect(created).toEqual({})
+    })
+
+    const fakeDataFolder = {
+        prepare: async username => {
+            calls.push(`prepare ${username}`)
+            prepared.push(username)
+            return {uid: 1001, gid: 1002, movedTo: null}
+        },
+    }
+
+    const provisioner = (config = CONFIG_DATA, dataFolder = fakeDataFolder) => createDockerInstanceProvisioner({
+        config,
+        instanceTypes: INSTANCE_TYPES,
+        sandboxSessionApiKey: SESSION_API_KEY,
+        dataFolder,
+    })
+
+    const sandboxName = instance => containerName({
+        image: 'sandbox',
+        username: instance.reservation.username,
+        sessionId: instance.reservation.sessionId,
+        instanceId: instance.id,
+    })
+
+    // The exec id names its container, so each exec start can be told apart in the call log.
+    const recordFetch = ({stopped = null} = {}) => {
+        globalThis.fetch = jest.fn(async (url, opts = {}) => {
+            const {pathname, searchParams} = new URL(url)
+            const method = opts.method ?? 'GET'
+            const name = searchParams.get('name')
+            calls.push(`${method} ${pathname}${name ? `?name=${name}` : ''}`)
+            if (pathname.endsWith('/wait')) return dockerWaitExit(0)
+            if (pathname.endsWith('/containers/json')) {
+                return {ok: true, status: 200, text: async () => '[]'}
+            }
+            if (pathname.endsWith('/containers/create')) {
+                created[name] = JSON.parse(opts.body)
+                return {ok: true, status: 201, text: async () => JSON.stringify({Id: 'c-123', Warnings: []})}
+            }
+            if (pathname.endsWith('/exec')) {
+                const container = pathname.split('/').at(-2)
+                if (container === stopped) {
+                    return {ok: false, status: 409, text: async () => `container ${container} is not running`}
+                }
+                return {ok: true, status: 201, text: async () => JSON.stringify({Id: `exec-of-${container}`})}
+            }
+            return {ok: true, status: 200, text: async () => '{}'}
+        })
+    }
 })
 
 describe('createApiKeyRetryWrapper', () => {

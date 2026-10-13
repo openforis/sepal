@@ -60,7 +60,7 @@ const main = async () => {
 
     // Constructing the hosting service NEVER calls live AWS; that only happens on
     // provider.start()/launch.
-    const hostingService = createHostingService(config, {sandboxSessionApiKey})
+    const hostingService = createHostingService(config, {sandboxSessionApiKey, sendEmail})
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
     const claimRepository = new ClaimRepository(db)
