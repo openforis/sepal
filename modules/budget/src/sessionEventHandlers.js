@@ -28,5 +28,13 @@ export const createSessionEventHandlers = ({openSessionUse, budgetCommands}) => 
         await budgetCommands.updateUserSpendingReport(username)
     }
 
-    return {onWorkerSessionRequested, onWorkerSessionActivated, onWorkerSessionClosed, onUserStorageSize}
+    const onUserDataSize = async ({username, size}) => {
+        if (username == null || size == null) {
+            return
+        }
+        await budgetCommands.updateUserDataUsage(username, size / 1e9) // bytes → GB
+        await budgetCommands.updateUserSpendingReport(username)
+    }
+
+    return {onWorkerSessionRequested, onWorkerSessionActivated, onWorkerSessionClosed, onUserStorageSize, onUserDataSize}
 }

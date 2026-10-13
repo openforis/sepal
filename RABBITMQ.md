@@ -25,9 +25,11 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `workerSession.SessionExpiryNotified` | worker | gateway |
 | `workerSession.SessionExpiryClosed` | worker | gateway |
 | `workerInstance.*` (7 events) | worker | *(none — telemetry/parity)* |
-| `budget.UserBudgetExceeded` | budget | worker |
+| `budget.UserBudgetExceeded` | budget | worker, user-data |
 | `budget.UserBudgetCleared` | budget | worker |
 | `storage.size` | storage | budget |
+| `userData.size` | user-data | budget |
+| `storage.UserStorageErased` | storage | user-data |
 | `email.sendToAddress` | user | email |
 | `email.sendToUser` | storage, worker | email |
 | `files.FilesDeleted` | *(none — legacy)* | storage |
@@ -174,12 +176,15 @@ Published by **budget** ([events.js](modules/budget/src/events.js)). Level-trigg
 carries a user's *current* verdict, re-published for every user on the hourly enforcement cycle, so
 a lost delivery or a consumer restart self-corrects within the hour.
 
-### `budget.UserBudgetExceeded` / `budget.UserBudgetCleared` — `{username}`
+### `budget.UserBudgetExceeded` — `{username, reason}` / `budget.UserBudgetCleared` — `{username}`
+`reason` is the one `GET /budget/check` reports.
 - **pub:** budget — after each enforcement cycle (hourly spending-report rebuild, and on
   storage/session events that change a user's spending)
 - **sub:** worker (queues `worker.budgetExceeded` / `worker.budgetCleared`) — maintains the
   in-process locked-users set that gates new session requests; a *new* lock also closes the user's
   running sessions ([main.js](modules/worker/src/main.js))
+- **sub:** user-data (queues `user-data.budgetExceeded` / `user-data.budgetCleared`) — grants read-only
+  Data access while the reason is `DATA_QUOTA`
 
 ## `storage.size` — storage scan result
 
@@ -188,6 +193,18 @@ a lost delivery or a consumer restart self-corrects within the hour.
   ([storageCheck.js](modules/storage/src/storageCheck.js))
 - **sub:** budget (queue `budget.storage`) — accumulates the month's storage use and refreshes
   the user's cached spending report
+
+### `storage.UserStorageErased` — `{username}`
+- **pub:** storage — after purging an inactive user's home ([inactivityCheck.js](modules/storage/src/inactivityCheck.js))
+- **sub:** user-data (queue `user-data.userStorageErased`) — erases the user's Data
+
+## `userData.*` — Data usage
+
+### `userData.size` — `{username, size}` (bytes)
+- **pub:** user-data — after measuring a user's Data, and with `size: 0` after erasing it
+  ([usage.js](modules/user-data/src/usage.js))
+- **sub:** budget (queue `budget.userData`) — accumulates the month's Data use and refreshes the user's cached
+  spending report
 
 ## `email.*` — outgoing email
 

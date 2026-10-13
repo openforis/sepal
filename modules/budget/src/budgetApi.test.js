@@ -28,6 +28,8 @@ const reportEntry = (overrides = {}) => ({
     storageBudget: 20,
     storageQuota: 100,
     costPerGbMonth: 0,
+    dataUsage: 0,
+    dataQuota: 10,
     budgetUpdateRequest: null,
     ...overrides,
 })
@@ -44,11 +46,13 @@ describe('GET /budget/report serialization', () => {
                     instanceSpending: 1.5,
                     storageSpending: 2.5,
                     storageQuota: 42, // ← storageUsage, NOT the quota (Groovy quirk)
+                    dataQuota: 0, // ← dataUsage
                 },
                 budget: {
                     instanceSpending: 10,
                     storageSpending: 20,
                     storageQuota: 100, // ← the actual quota
+                    dataQuota: 10,
                 },
                 budgetUpdateRequest: null,
             },
@@ -94,9 +98,9 @@ describe('POST /budget updateBudget', () => {
         await makeApi(commands).updateBudget(c)
         expect(commands.updateBudget).toHaveBeenCalledWith({
             username: 'bob',
-            budget: {instanceSpending: 3, storageSpending: 4, storageQuota: 5},
+            budget: {instanceSpending: 3, storageSpending: 4, storageQuota: 5, dataQuota: null},
         })
-        expect(c.body).toEqual({instanceSpending: 3, storageSpending: 4, storageQuota: 5})
+        expect(c.body).toEqual({instanceSpending: 3, storageSpending: 4, storageQuota: 5, dataQuota: null})
         expect(c.status).toBeUndefined()
     })
 
@@ -144,7 +148,7 @@ describe('POST /budget/requestUpdate', () => {
         expect(commands.requestBudgetUpdate).toHaveBeenCalledWith({
             username: 'carol',
             message: 'more',
-            budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3},
+            budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: null},
         })
         expect(c.status).toBe(204)
     })
@@ -171,6 +175,63 @@ describe('POST /budget/requestUpdate', () => {
         await makeApi(commands).requestUpdate(c)
         expect(c.status).toBe(400)
         expect(commands.requestBudgetUpdate).not.toHaveBeenCalled()
+    })
+})
+
+describe('Data quota', () => {
+    test('passes the Data quota of an admin budget update on', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 40}})
+
+        await makeApi(commands).updateBudget(c)
+
+        expect(commands.updateBudget).toHaveBeenCalledWith({
+            username: 'alice',
+            budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 40},
+        })
+    })
+
+    test('leaves the Data quota out of an admin budget update that has none', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3}})
+
+        await makeApi(commands).updateBudget(c)
+
+        expect(commands.updateBudget).toHaveBeenCalledWith({
+            username: 'alice',
+            budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: null},
+        })
+    })
+
+    test('refuses a negative Data quota', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: -1}})
+
+        await makeApi(commands).updateBudget(c)
+
+        expect(c.status).toBe(400)
+        expect(commands.updateBudget).not.toHaveBeenCalled()
+    })
+
+    test('passes a requested Data quota on', async () => {
+        const commands = makeCommands()
+        const c = ctx({body: {message: 'more', instanceSpending: 1, storageSpending: 2, storageQuota: 3, dataQuota: 100}})
+
+        await makeApi(commands).requestUpdate(c)
+
+        expect(commands.requestBudgetUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({budget: expect.objectContaining({dataQuota: 100})})
+        )
+    })
+
+    test('reports the Data quota and Data use per user', async () => {
+        const commands = makeCommands()
+        commands.loadSpendingReport.mockResolvedValue({alice: reportEntry({dataQuota: 10, dataUsage: 4})})
+        const c = ctx()
+
+        await makeApi(commands).report(c)
+
+        expect(c.body.alice).toMatchObject({budget: {dataQuota: 10}, current: {dataQuota: 4}})
     })
 })
 

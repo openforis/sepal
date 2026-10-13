@@ -7,11 +7,13 @@ const spendingAsMap = spending => ({
         instanceSpending: spending.instanceSpending,
         storageSpending: spending.storageSpending,
         storageQuota: spending.storageUsage,
+        dataQuota: spending.dataUsage,
     },
     budget: {
         instanceSpending: spending.instanceBudget,
         storageSpending: spending.storageBudget,
         storageQuota: spending.storageQuota,
+        dataQuota: spending.dataQuota,
     },
     budgetUpdateRequest: spending.budgetUpdateRequest ?? null,
 })
@@ -35,7 +37,7 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
 
     // POST /budget [ADMIN] — set a user's budget; closes any pending update request.
     const updateBudget = async ctx => {
-        const {username, instanceSpending, storageSpending, storageQuota} = ctx.request.body ?? {}
+        const {username, instanceSpending, storageSpending, storageQuota, dataQuota} = ctx.request.body ?? {}
         if (isBlank(username)) {
             ctx.status = 400
             ctx.body = {message: 'username is required'}
@@ -45,10 +47,11 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
             instanceSpending: Number(instanceSpending),
             storageSpending: Number(storageSpending),
             storageQuota: Number(storageQuota),
+            dataQuota: dataQuota == null ? null : Number(dataQuota),
         }
         if (!isValidBudget(budget)) {
             ctx.status = 400
-            ctx.body = {message: 'instanceSpending, storageSpending and storageQuota must be numbers >= 0'}
+            ctx.body = {message: 'instanceSpending, storageSpending, storageQuota and dataQuota (when present) must be numbers >= 0'}
             return
         }
         await commands.updateBudget({username, budget})
@@ -58,7 +61,7 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
 
     // POST /budget/requestUpdate — request a budget change for the current user.
     const requestUpdate = async ctx => {
-        const {message, instanceSpending, storageSpending, storageQuota} = ctx.request.body ?? {}
+        const {message, instanceSpending, storageSpending, storageQuota, dataQuota} = ctx.request.body ?? {}
         if (isBlank(message)) {
             ctx.status = 400
             ctx.body = {message: 'message is required'}
@@ -68,10 +71,11 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
             instanceSpending: Number(instanceSpending),
             storageSpending: Number(storageSpending),
             storageQuota: Number(storageQuota),
+            dataQuota: dataQuota == null ? null : Number(dataQuota),
         }
         if (!isValidBudget(budget)) {
             ctx.status = 400
-            ctx.body = {message: 'instanceSpending, storageSpending and storageQuota must be numbers >= 0'}
+            ctx.body = {message: 'instanceSpending, storageSpending, storageQuota and dataQuota (when present) must be numbers >= 0'}
             return
         }
         await commands.requestBudgetUpdate({
@@ -83,7 +87,7 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
         ctx.status = 204
     }
 
-    // GET /budget/spending/:username [ADMIN, internal] — the 8-field Spending DTO for one user.
+    // GET /budget/spending/:username [ADMIN, internal] — the Spending DTO for one user.
     const spending = async ctx => {
         ctx.body = await budgetManager.userSpending(ctx.params.username)
     }
@@ -108,5 +112,6 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
 const isValidBudget = budget =>
     [budget.instanceSpending, budget.storageSpending, budget.storageQuota]
         .every(value => Number.isFinite(value) && value >= 0)
+    && (budget.dataQuota == null || (Number.isFinite(budget.dataQuota) && budget.dataQuota >= 0))
 
 export {createBudgetApi}

@@ -140,6 +140,32 @@ describe('onUserStorageSize', () => {
     })
 })
 
+describe('onUserDataSize', () => {
+    test('records Data use in GB, then refreshes the spending report', async () => {
+        const calls = []
+        const budgetCommands = {
+            updateUserDataUsage: jest.fn(async (...args) => { calls.push(['updateUserDataUsage', ...args]) }),
+            updateUserSpendingReport: jest.fn(async (...args) => { calls.push(['updateUserSpendingReport', ...args]) }),
+        }
+        const handlers = createSessionEventHandlers({openSessionUse: createMockOpenSessionUse(), budgetCommands})
+
+        await handlers.onUserDataSize({username: 'alice', size: 5e9})
+
+        expect(calls).toEqual([['updateUserDataUsage', 'alice', 5], ['updateUserSpendingReport', 'alice']])
+    })
+
+    test('ignores a message without username or size', async () => {
+        const budgetCommands = createMockBudgetCommands()
+        const handlers = createSessionEventHandlers({openSessionUse: createMockOpenSessionUse(), budgetCommands})
+
+        await handlers.onUserDataSize({username: 'alice'})
+        await handlers.onUserDataSize({size: 1})
+
+        expect(budgetCommands.updateUserDataUsage).not.toHaveBeenCalled()
+        expect(budgetCommands.updateUserSpendingReport).not.toHaveBeenCalled()
+    })
+})
+
 const createMockOpenSessionUse = () => ({
     openSession: jest.fn(),
     closeSession: jest.fn(),
@@ -148,5 +174,6 @@ const createMockOpenSessionUse = () => ({
 
 const createMockBudgetCommands = () => ({
     updateUserStorageUsage: jest.fn(),
+    updateUserDataUsage: jest.fn(),
     updateUserSpendingReport: jest.fn(),
 })

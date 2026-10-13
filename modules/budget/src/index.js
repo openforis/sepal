@@ -123,6 +123,15 @@ const createBudgetComponent = ({budgetManager, handlers, enforcement, reconciler
         },
     }
 
+    const dataSubscriber = {
+        queue: 'budget.userData',
+        topic: 'userData.size',
+        handler: async (key, message) => {
+            await serialize(() => handlers.onUserDataSize(message))
+            await publishSpending(message.username)
+        },
+    }
+
     return {
         start,
         stop,
@@ -131,6 +140,7 @@ const createBudgetComponent = ({budgetManager, handlers, enforcement, reconciler
             workerSessionActivatedSubscriber,
             workerSessionClosedSubscriber,
             storageSubscriber,
+            dataSubscriber,
         ],
         publishSpending,
         BUDGET_PUBLISHERS,
