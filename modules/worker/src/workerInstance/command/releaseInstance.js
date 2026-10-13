@@ -7,6 +7,8 @@
 //      InstanceReleased(release(instance)).
 //   5. On ANY exception → emit FailedToReleaseInstance, terminate the instance (swallowing its
 //      own errors), then claims.release(instanceId).
+//
+// A release of an instance already being released joins it (../releaseRegistry.js).
 
 import {getLogger} from '#sepal/log'
 
@@ -15,12 +17,16 @@ import {
     emitFailedToReleaseInstance,
     emitInstanceReleased,
 } from '../events.js'
+import {createReleaseRegistry} from '../releaseRegistry.js'
 import {release} from '../workerInstance.js'
 
 const log = getLogger('worker/releaseInstance')
 
 // provisioning is optional: callers that never provision have nothing to forget.
-const releaseInstance = async (instanceId, {claims, provider, provisioner, provisioning}) => {
+const releaseInstance = (instanceId, {claims, provider, provisioner, provisioning, releasing = createReleaseRegistry()}) =>
+    releasing.run(instanceId, () => releaseNow(instanceId, {claims, provider, provisioner, provisioning}))
+
+const releaseNow = async (instanceId, {claims, provider, provisioner, provisioning}) => {
     log.debug(`Releasing ${instanceTag(instanceId)}...`)
 
     let instance

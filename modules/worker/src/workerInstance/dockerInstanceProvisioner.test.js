@@ -1010,6 +1010,25 @@ describe('undeploy with Data', () => {
         expect(content).toContain('and 3 more')
     })
 
+    test('keeps waiting through a failed check of the pending uploads', async () => {
+        recordFetch({pending: [500, 'out/a.tif\n', '']})
+
+        await provisioner().undeploy(instance)
+
+        expect(calls.filter(call => call === `POST containers/${sidecar}/exec`)).toHaveLength(3)
+        expect(slept).toEqual([5000, 5000])
+        expect(notified).toEqual([])
+    })
+
+    test('stops waiting at the flush timeout when the pending uploads cannot be checked', async () => {
+        recordFetch({pending: [500]})
+
+        await expect(provisioner({...CONFIG_DATA, dataFlushTimeoutSeconds: 10}).undeploy(instance)).resolves.toBeUndefined()
+
+        expect(slept).toEqual([5000, 5000])
+        expect(calls).toContain(`POST containers/${sidecar}/stop`)
+    })
+
     test('cleans up an instance whose sidecar is already gone', async () => {
         recordFetch({gone: [sidecar], containers: [{Id: 'c-sandbox', Names: [`/${sandbox}`]}]})
 
@@ -1050,7 +1069,7 @@ describe('undeploy with Data', () => {
         expect(script).not.toContain('rm -r')
         expect(Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/inst-abc123')
         expect(User).toBe('root')
-        expect(HostConfig).toEqual({Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'})
+        expect(HostConfig).toEqual({Privileged: true, Binds: ['/:/host:rshared'], NetworkMode: 'none'})
     })
 
     const provisioner = (config = CONFIG_DATA) => createDockerInstanceProvisioner({
@@ -1065,7 +1084,8 @@ describe('undeploy with Data', () => {
         _now: () => clock,
     })
 
-    // pending: what successive pending-uploads execs print; the last answer repeats. gone: containers
+    // pending: what successive pending-uploads execs print, or the status their start fails with; the
+    // last answer repeats. gone: containers
     // Docker no longer has. failing: calls Docker answers with a 500.
     const recordFetch = ({
         pending = [''],
@@ -1091,7 +1111,10 @@ describe('undeploy with Data', () => {
             }
             if (path.endsWith('/wait')) return respond(200, JSON.stringify({StatusCode: 0}))
             if (path.endsWith('/exec')) return respond(201, JSON.stringify({Id: 'exec-1'}))
-            if (path === 'exec/exec-1/start') return respond(200, answers.length > 1 ? answers.shift() : answers[0])
+            if (path === 'exec/exec-1/start') {
+                const answer = answers.length > 1 ? answers.shift() : answers[0]
+                return typeof answer === 'number' ? respond(answer, 'daemon error') : respond(200, answer)
+            }
             if (path === 'exec/exec-1/json') return respond(200, JSON.stringify({ExitCode: 0}))
             if (missingVolumes && path.startsWith('volumes/')) return respond(404, 'no such volume')
             return respond(204, '')

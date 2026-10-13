@@ -56,9 +56,10 @@ mkfs.xfs -q -f -K "$1"`
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
 const PROBE_TIMEOUT_MS = 10_000
 
-// UNMOUNT_SCRIPT — run chrooted into the host after the sidecar is gone. Lazy, because a killed
-// sidecar leaves a dead FUSE mount behind. rmdir, never rm -rf: should the unmount not have taken,
-// the user's files are still beneath it.
+// UNMOUNT_SCRIPT — run chrooted into the host after the sidecar is gone, with the host's root bound
+// rshared, so umount -l detaches the host's mount rather than the helper's private copy of it. Lazy,
+// because a killed sidecar leaves a dead FUSE mount behind. rmdir then removes the empty
+// directories; never rm -rf: should the unmount not have taken, the user's files are beneath it.
 const UNMOUNT_SCRIPT = 'umount -l "$1/data" 2>/dev/null; rmdir "$1/data" "$1" 2>/dev/null; exit 0'
 
 const PENDING_UPLOADS = ['/usr/local/bin/sepal-data', 'pending-uploads']
@@ -494,25 +495,36 @@ const createDockerInstanceProvisioner = ({
     }
 
     // waitForPendingUploads — on timeout the user is told which files never reached their Data:
-    // the sidecar's cache, the only copy, goes with the instance.
+    // the sidecar's cache, the only copy, goes with the instance. A check that failed tells nothing,
+    // so the last known list stands until the next one.
     const waitForPendingUploads = async (instance, sidecar) => {
         const deadline = _now() + config.dataFlushTimeoutSeconds * 1000
+        let pending = null
         for (;;) {
-            const pending = await pendingUploads(instance, sidecar)
-            if (!pending.length) {
+            const checked = await pendingUploads(instance, sidecar)
+            if (checked?.length === 0) {
                 return
             }
+            pending = checked ?? pending
             if (_now() >= deadline) {
-                log.warn(`${instanceTag(instance)}: ${pending.length} Data file(s) not uploaded after ${config.dataFlushTimeoutSeconds}s`)
-                notify({username: instance.reservation.username, ...notUploadedEmail(pending)})
+                notifyNotUploaded(instance, pending)
                 return
             }
             await _sleep(PENDING_UPLOADS_POLL_MS)
         }
     }
 
-    // pendingUploads — the paths still to upload; none when that cannot be told: the sidecar is
-    // gone, or rclone is not up (sepal-data exits non-zero).
+    const notifyNotUploaded = (instance, pending) => {
+        if (!pending) {
+            log.warn(`${instanceTag(instance)}: could not tell whether Data uploads were pending after ${config.dataFlushTimeoutSeconds}s`)
+            return
+        }
+        log.warn(`${instanceTag(instance)}: ${pending.length} Data file(s) not uploaded after ${config.dataFlushTimeoutSeconds}s`)
+        notify({username: instance.reservation.username, ...notUploadedEmail(pending)})
+    }
+
+    // pendingUploads — the paths still to upload, or null when the check failed. None once the
+    // sidecar is gone, or when rclone is not up (sepal-data exits non-zero).
     const pendingUploads = async (instance, sidecar) => {
         try {
             const {exitCode, output} = await dockerExec(baseUrl(instance), sidecar, PENDING_UPLOADS, {timeoutMs: PENDING_UPLOADS_TIMEOUT_MS})
@@ -522,10 +534,11 @@ const createDockerInstanceProvisioner = ({
             }
             return output.split('\n').map(line => line.trim()).filter(Boolean)
         } catch (e) {
-            if (!CONTAINER_GONE.includes(e.statusCode)) {
-                log.warn(`${instanceTag(instance)}: cannot list pending Data uploads: ${e.message}`)
+            if (CONTAINER_GONE.includes(e.statusCode)) {
+                return []
             }
-            return []
+            log.warn(`${instanceTag(instance)}: cannot list pending Data uploads: ${e.message}`)
+            return null
         }
     }
 
@@ -539,7 +552,7 @@ const createDockerInstanceProvisioner = ({
         try {
             await runHelper(instance, {name: SANDBOX}, 'data-unmount', {
                 Entrypoint: ['chroot', '/host', '/bin/sh', '-c', UNMOUNT_SCRIPT, 'data-unmount', dataMountDir(config, instance.id)],
-                HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
+                HostConfig: {Privileged: true, Binds: ['/:/host:rshared'], NetworkMode: 'none'},
             })
         } catch (e) {
             log.warn(`Failed to unmount the Data of ${instanceTag(instance)}: ${e.message}`)

@@ -13,6 +13,15 @@ const makeInstance = (overrides = {}) => ({
 const makeReservedInstance = (overrides = {}) =>
     makeInstance({reservation: {username: 'alice', workerType: 'SANDBOX'}, ...overrides})
 
+// A promise the test settles by hand, to hold an operation open without a timer.
+const deferred = () => {
+    let resolve
+    const promise = new Promise(res => {
+        resolve = res
+    })
+    return {promise, resolve}
+}
+
 describe('events — routing keys and payload shapes', () => {
     let events
     const collected = {}
@@ -1304,6 +1313,58 @@ describe('instanceManager', () => {
         await mgr.reclaimStaleClaims([], 10 * 60 * 1000)
 
         expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
+    })
+
+    // Releasing can wait minutes for Data uploads; a second release of the same instance meanwhile
+    // must not undeploy it again, nor return to the pool an instance that may already be reused.
+    test('concurrent releases of one instance release it once', async () => {
+        const undeployed = deferred()
+        const deps = makeManagerDeps()
+        deps.provider.deleteScratchVolume = jest.fn().mockResolvedValue(undefined)
+        deps.provisioner.undeploy = jest.fn(() => undeployed.promise)
+        const manager = createInstanceManager(deps)
+
+        const first = manager.releaseInstance('i-001')
+        const second = manager.releaseInstance('i-001')
+        undeployed.resolve()
+        await Promise.all([first, second])
+
+        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
+        expect(deps.provider.release).toHaveBeenCalledTimes(1)
+    })
+
+    test('a release after the previous one finished runs again', async () => {
+        const deps = makeManagerDeps()
+        deps.provider.deleteScratchVolume = jest.fn().mockResolvedValue(undefined)
+        const manager = createInstanceManager(deps)
+        await manager.releaseInstance('i-001')
+
+        await manager.releaseInstance('i-001')
+
+        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(2)
+    })
+
+    test('reclaimStaleClaims leaves an instance whose release is in flight alone', async () => {
+        const undeployed = deferred()
+        const instance = makeReservedInstance({id: 'i-releasing', host: '1.2.3.4'})
+        const deps = makeManagerDeps()
+        deps.claims.all = jest.fn().mockResolvedValue([
+            {instanceId: 'i-releasing', sessionId: 's-closed', claimedAt: new Date(0)},
+        ])
+        deps.provider.reservedInstances = jest.fn().mockResolvedValue([instance])
+        deps.provider.getInstance = jest.fn().mockResolvedValue(instance)
+        deps.provider.deleteScratchVolume = jest.fn().mockResolvedValue(undefined)
+        deps.provisioner.undeploy = jest.fn(() => undeployed.promise)
+        const manager = createInstanceManager(deps)
+        const releasing = manager.releaseInstance('i-releasing')
+
+        const reclaimed = await manager.reclaimStaleClaims([], 10 * 60 * 1000)
+
+        expect(reclaimed).toBe(0)
+        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
+        undeployed.resolve()
+        await releasing
+        expect(deps.claims.release).toHaveBeenCalledTimes(1)
     })
 
     test('getInstanceTypes returns instanceTypes array', () => {

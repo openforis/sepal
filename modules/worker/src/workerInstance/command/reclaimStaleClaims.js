@@ -15,6 +15,9 @@
 // an instance that still exists goes through ReleaseInstance instead, which undeploys before
 // dropping the row: deleting it here would leave the container running on an instance
 // ReleaseUnusedInstances then tags idle, with nothing left to record that it was ever there.
+//
+// A claim whose instance is being released is left alone: that release drops it. Closing a session
+// marks its claim abandoned before the release, which can wait minutes for Data uploads, is done.
 
 import {getLogger} from '#sepal/log'
 
@@ -23,7 +26,7 @@ import {releaseInstance} from './releaseInstance.js'
 
 const log = getLogger('worker/reclaimStaleClaims')
 
-const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner, provisioning}) => {
+const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner, provisioning, releasing}) => {
     const [idle, reserved] = await Promise.all([
         provider.idleInstances(),
         provider.reservedInstances(),
@@ -39,6 +42,9 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
         if (!gone && !abandoned) {
             continue
         }
+        if (releasing?.isReleasing(claim.instanceId)) {
+            continue
+        }
         if (now - claim.claimedAt.getTime() <= graceMs) {
             continue
         }
@@ -47,7 +53,7 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
             if (gone) {
                 await claims.release(claim.instanceId)
             } else {
-                await releaseInstance(claim.instanceId, {claims, provider, provisioner, provisioning})
+                await releaseInstance(claim.instanceId, {claims, provider, provisioner, provisioning, releasing})
             }
             reclaimed++
             log.debug(`Reclaimed ${gone ? 'gone' : 'abandoned'} claim on ${instanceTag(claim.instanceId)}`)

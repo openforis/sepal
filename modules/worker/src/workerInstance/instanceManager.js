@@ -32,10 +32,12 @@ import {instanceEvents} from './events.js'
 import {instanceFromSession} from './instanceFromSession.js'
 import {createProvisioningRegistry} from './provisioningRegistry.js'
 import {findMissingInstances} from './query/findMissingInstances.js'
+import {createReleaseRegistry} from './releaseRegistry.js'
 
 const log = getLogger('worker/instanceManager')
 
 const createInstanceManager = ({claims, provider, provisioner, instanceTypes, provisioning = createProvisioningRegistry()}) => {
+    const releasing = createReleaseRegistry()
 
     // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
     // session: { workerType, instanceType, username }.
@@ -48,7 +50,7 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
 
     const _releaseInstance = async instanceId => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, {claims, provider, provisioner, provisioning})
+        return releaseInstance(instanceId, {claims, provider, provisioner, provisioning, releasing})
     }
 
     // releaseUnusedInstances — reclaim instances not bound to any active session.
@@ -58,12 +60,12 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
             .filter(s => s.instance && s.instance.id)
             .map(s => s.instance.id)
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
-        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning})
+        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning, releasing})
     }
 
     // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
     const _reclaimStaleClaims = async (sessions, graceMs) =>
-        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner, provisioning})
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner, provisioning, releasing})
 
     // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
     // the open sessions nor the provider claim (the in-memory local provider forgets instances on
