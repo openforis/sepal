@@ -227,9 +227,10 @@ export class WorkerSessionRepository {
         })
     }
 
-    // findSessionByApiKey — null for a falsy apiKey. A closed session's key still matches until
-    // clearApiKey withdraws it at the end of the instance's release: the Data mount sidecar refreshes
-    // its credentials with it while it uploads what is pending.
+    // findSessionByApiKey — null for a falsy apiKey. A closed session's key matches only while its
+    // instance claim exists, i.e. while the release is in progress: the Data mount sidecar refreshes
+    // its credentials with it while it uploads what is pending. Every release outcome drops the claim,
+    // so a release interrupted by a crash stops authenticating once the reclaim redo finishes it.
     findSessionByApiKey(apiKey) {
         if (!apiKey) {
             return Promise.resolve(null)
@@ -237,7 +238,9 @@ export class WorkerSessionRepository {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `SELECT id, username, worker_type FROM worker_session
-                    WHERE api_key = ?`,
+                    WHERE api_key = ?
+                    AND (state IN ('PENDING', 'ACTIVE')
+                        OR EXISTS (SELECT 1 FROM instance_claim c WHERE c.session_id = worker_session.id))`,
                 [apiKey]
             )
             const row = rows[0]

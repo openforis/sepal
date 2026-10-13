@@ -634,12 +634,29 @@ describe('WorkerSessionRepository', () => {
         })
 
         // Closed but not yet released: the Data mount sidecar still refreshes its credentials.
-        test('still finds a closed session whose key is not revoked yet', async () => {
+        test('still finds a closed session whose instance claim exists', async () => {
             const session = activeSession({id: 'executor-1', apiKey: 'draining-key'})
             await repository.insert(session)
             await repository.update({...session, state: State.CLOSED})
+            await claimInstance(INSTANCE_ID, session.id)
 
             const found = await repository.findSessionByApiKey('draining-key')
+
+            expect(found.sessionId).toBe('executor-1')
+        })
+
+        test('finds nothing for a closed session without an instance claim', async () => {
+            const session = activeSession({id: 'executor-1', apiKey: 'orphan-key'})
+            await repository.insert(session)
+            await repository.update({...session, state: State.CLOSED})
+
+            expect(await repository.findSessionByApiKey('orphan-key')).toBeNull()
+        })
+
+        test('finds an active session without an instance claim', async () => {
+            await repository.insert(activeSession({id: 'executor-1', apiKey: 'live-key'}))
+
+            const found = await repository.findSessionByApiKey('live-key')
 
             expect(found.sessionId).toBe('executor-1')
         })
@@ -832,6 +849,10 @@ describe('WorkerSessionRepository', () => {
     }
 
     const minutesAgo = minutes => new Date(now.getTime() - minutes * 60 * 1000)
+
+    const claimInstance = (instanceId, sessionId) => testDb.db.withConnection(connection =>
+        connection.query('INSERT INTO instance_claim(instance_id, session_id) VALUES(?, ?)', [instanceId, sessionId])
+    )
 
     const activeSession = (over = {}) => aSession({state: State.ACTIVE, ...over})
 

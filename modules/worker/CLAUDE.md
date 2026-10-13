@@ -66,10 +66,13 @@ A worker authenticates back to SEPAL with Basic auth, empty username, key as pas
 resolves it through `POST /sessions/api-key-authenticate` → `{username, sessionId, workerType}` and
 injects the session as `sepal-session`.
 
-A key resolves for as long as the row holds it. Closing a session leaves `api_key` in place until the
-instance's release ends, failed or not, and then clears it (`releaseSessionInstance`): the Data mount
-sidecar refreshes its credentials with the key while the release waits for its uploads, and the release
-stops the sandbox first, so by then only the sidecar holds it.
+An open (PENDING/ACTIVE) session's key always resolves. A closed session's key is valid only while its
+instance release is in progress, i.e. while its `instance_claim` exists (`findSessionByApiKey`). Closing
+leaves `api_key` in place until the release ends, failed or not, and then clears it
+(`releaseSessionInstance`): the Data mount sidecar refreshes its credentials with the key while the release
+waits for its uploads, and the release stops the sandbox first, so by then only the sidecar holds it. Every
+release outcome drops the claim, so a release interrupted by a crash stops authenticating once the reclaim
+redo finishes it, even though the row keeps its key.
 
 ## Session expiration
 See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by

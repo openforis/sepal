@@ -10,8 +10,9 @@ keep-alive signals that prevent it, and how each mechanism behaves across restar
 
 Stopping happens in two stages, and the triggers differ per stage:
 
-1. **Session closed** — the `worker_session` row goes `CLOSED`, the api key is nulled,
-   `workerSession.WorkerSessionClosed` is published.
+1. **Session closed** — the `worker_session` row goes `CLOSED`, `workerSession.WorkerSessionClosed` is
+   published. The api key stays valid only while the instance release is in progress (its claim exists)
+   and is nulled when the release ends.
 2. **Instance released, then terminated** — `releaseInstance` un-reserves the machine; on AWS that
    only re-tags it `State=idle`. Actual termination happens later, in the idle-pool sweep.
 
