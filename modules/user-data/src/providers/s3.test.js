@@ -1,3 +1,5 @@
+import {S3Client} from '@aws-sdk/client-s3'
+
 import {ClientException, ServerException} from '#sepal/exception'
 
 import {Attachments} from '../attachments.js'
@@ -95,6 +97,35 @@ describe('erase', () => {
         await provider.erase(attachment('alice'), {before: new Date('2026-10-13T10:00:00Z')})
 
         expect(s3.deleted).toEqual(['users/alice/old.txt'])
+    })
+})
+
+describe('remove', () => {
+    it.each(['../x', '', 'a//b', 'a\\b', '/a', 'a/../b'])('refuses the path %j without any request', async relPath => {
+        const s3 = fakeS3({objects: [{Key: 'users/alice/a', LastModified: new Date()}]})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        await expect(provider.remove(attachment('alice'), relPath)).rejects.toThrow(ClientException)
+        expect(s3.sent).toEqual([])
+    })
+})
+
+describe('downloadUrl', () => {
+    it('presigns a GET for the exact key, downloading under the file name', async () => {
+        const s3 = new S3Client({region: REGION, credentials: {accessKeyId: 'key', secretAccessKey: 'secret'}})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION, roleArn: ROLE_ARN})
+
+        const url = new URL(await provider.downloadUrl(attachment('alice'), 'dir/report.txt', {expiresSeconds: 60}))
+
+        expect(url.pathname).toBe('/users/alice/dir/report.txt')
+        expect(url.searchParams.get('response-content-disposition')).toBe('attachment; filename="report.txt"')
+        expect(url.searchParams.get('X-Amz-Expires')).toBe('60')
+    })
+
+    it('refuses a path that leaves the attachment', async () => {
+        const provider = new S3Provider({s3: fakeS3(), bucket: BUCKET, region: REGION})
+
+        await expect(provider.downloadUrl(attachment('alice'), '../bob/x', {expiresSeconds: 60})).rejects.toThrow(ClientException)
     })
 })
 
@@ -346,9 +377,11 @@ const fakeClock = () => {
 const fakeS3 = ({headFails = false, objects = []} = {}) => {
     const s3 = {
         requests: [],
+        sent: [],
         deleted: [],
         send: async command => {
             const name = command.constructor.name
+            s3.sent.push(name)
             if (name === 'ListObjectsV2Command') {
                 return {Contents: objects, IsTruncated: false}
             }

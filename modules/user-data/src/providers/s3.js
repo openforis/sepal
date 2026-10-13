@@ -1,5 +1,6 @@
-import {DeleteObjectsCommand, HeadBucketCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
+import {DeleteObjectsCommand, GetObjectCommand, HeadBucketCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
 import {AssumeRoleCommand, GetCallerIdentityCommand, STSClient} from '@aws-sdk/client-sts'
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner'
 
 import {ClientException, ServerException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -159,6 +160,86 @@ export class S3Provider {
         }
     }
 
+    isEmulator() {
+        return !!this.#emulator
+    }
+
+    // Entries directly below relPath; the emulator leaves the trailing slash off common prefixes.
+    async list(attachment, relPath) {
+        requireUsername(attachment.owner)
+        requireRelPath(relPath, {allowRoot: true})
+        const prefix = folderPrefix(attachment, relPath)
+        const entries = []
+        for await (const {Contents = [], CommonPrefixes = []} of this.#listPages({Prefix: prefix, Delimiter: '/'})) {
+            entries.push(...CommonPrefixes.map(({Prefix}) => ({name: Prefix.slice(prefix.length).replace(/\/$/, ''), dir: true})))
+            entries.push(...Contents
+                .filter(({Key}) => Key !== prefix)
+                .map(({Key, Size, LastModified}) => ({name: Key.slice(prefix.length), file: true, size: Size, mtime: LastModified.getTime()}))
+            )
+        }
+        return entries
+    }
+
+    async downloadUrl(attachment, relPath, {expiresSeconds}) {
+        const key = this.#fileKey(attachment, relPath)
+        const filename = relPath.split('/').at(-1)
+        return getSignedUrl(
+            this.#s3,
+            new GetObjectCommand({
+                Bucket: this.#bucket,
+                Key: key,
+                ResponseContentDisposition: `attachment; filename="${filename}"`
+            }),
+            {expiresIn: expiresSeconds}
+        )
+    }
+
+    async download(attachment, relPath) {
+        const {Body, ContentLength, ContentType} = await this.#s3.send(
+            new GetObjectCommand({Bucket: this.#bucket, Key: this.#fileKey(attachment, relPath)})
+        )
+        return {stream: Body, size: ContentLength, contentType: ContentType}
+    }
+
+    // Removes the file at relPath, or the folder and everything under it; both when both exist.
+    async remove(attachment, relPath) {
+        requireUsername(attachment.owner)
+        requireRelPath(relPath)
+        const key = attachment.location.prefix + relPath
+        if (await this.#exists(key)) {
+            await this.#deleteKeys([key], relPath)
+        }
+        for await (const {Contents = []} of this.#listPages({Prefix: folderPrefix(attachment, relPath)})) {
+            await this.#deleteKeys(Contents.map(({Key}) => Key), relPath)
+        }
+    }
+
+    #fileKey(attachment, relPath) {
+        requireUsername(attachment.owner)
+        requireRelPath(relPath)
+        return attachment.location.prefix + relPath
+    }
+
+    // The emulator fails to delete a key that does not exist, so check first. The exact key sorts before any
+    // other key it prefixes.
+    async #exists(key) {
+        const {Contents = []} = await this.#s3.send(new ListObjectsV2Command({Bucket: this.#bucket, Prefix: key, MaxKeys: 1}))
+        return Contents[0]?.Key === key
+    }
+
+    async #deleteKeys(keys, relPath) {
+        if (!keys.length) {
+            return
+        }
+        const {Errors} = await this.#s3.send(new DeleteObjectsCommand({
+            Bucket: this.#bucket,
+            Delete: {Objects: keys.map(Key => ({Key})), Quiet: true}
+        }))
+        if (Errors?.length) {
+            throw new ServerException(`Cannot remove ${relPath}: ${Errors[0].Message}`)
+        }
+    }
+
     async * #listPages(params) {
         let ContinuationToken
         do {
@@ -262,5 +343,16 @@ const requireMode = mode => {
 const requireUsername = username => {
     if (!USERNAME.test(username ?? '')) {
         throw new ClientException(`Not a username Data can be stored for: ${username}`)
+    }
+}
+
+const folderPrefix = ({location: {prefix}}, relPath) =>
+    relPath ? `${prefix}${relPath}/` : prefix
+
+const requireRelPath = (relPath, {allowRoot = false} = {}) => {
+    const valid = typeof relPath === 'string'
+        && (relPath === '' ? allowRoot : !relPath.includes('\\') && relPath.split('/').every(segment => segment && segment !== '..' && segment !== '.'))
+    if (!valid) {
+        throw new ClientException(`Not a path inside Data: ${relPath}`)
     }
 }

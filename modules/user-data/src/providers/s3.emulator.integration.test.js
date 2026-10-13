@@ -101,11 +101,88 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
         expect(await provider.measureUsage(attachment)).toBe(5)
     })
 
+    describe('browsing', () => {
+        it('lists one level: files with size and time, folders from prefixes', async () => {
+            const attachment = attachmentsFor(uniqueUser('list'))
+            await put(attachment, 'a.txt', 'xx')
+            await put(attachment, 'dir/b.txt', 'yyy')
+            await put(attachment, 'dir/sub/c.txt', 'z')
+
+            const root = await provider.list(attachment, '')
+            const dir = await provider.list(attachment, 'dir')
+
+            expect(sortByName(root)).toEqual([
+                {name: 'a.txt', file: true, size: 2, mtime: expect.any(Number)},
+                {name: 'dir', dir: true}
+            ])
+            expect(sortByName(dir)).toEqual([
+                {name: 'b.txt', file: true, size: 3, mtime: expect.any(Number)},
+                {name: 'sub', dir: true}
+            ])
+        })
+
+        it('lists nothing for a folder that does not exist', async () => {
+            expect(await provider.list(attachmentsFor(uniqueUser('none')), 'missing')).toEqual([])
+        })
+
+        it('removes a folder and everything under it, but not a sibling with the same prefix', async () => {
+            const attachment = attachmentsFor(uniqueUser('rmdir'))
+            await put(attachment, 'dir/b.txt', 'y')
+            await put(attachment, 'dir/sub/c.txt', 'z')
+            await put(attachment, 'dirx/keep.txt', 'k')
+
+            await provider.remove(attachment, 'dir')
+
+            expect(sortByName(await provider.list(attachment, ''))).toEqual([{name: 'dirx', dir: true}])
+        })
+
+        it('removes a single file', async () => {
+            const attachment = attachmentsFor(uniqueUser('rmfile'))
+            await put(attachment, 'a.txt', 'x')
+            await put(attachment, 'b.txt', 'y')
+
+            await provider.remove(attachment, 'a.txt')
+
+            expect((await provider.list(attachment, '')).map(({name}) => name)).toEqual(['b.txt'])
+        })
+
+        it('streams a file for download', async () => {
+            const attachment = attachmentsFor(uniqueUser('dl'))
+            await put(attachment, 'dir/b.txt', 'hello')
+
+            const {stream, size} = await provider.download(attachment, 'dir/b.txt')
+
+            expect(size).toBe(5)
+            expect(await streamToString(stream)).toBe('hello')
+        })
+
+        async function put(attachment, rel, body) {
+            const client = await taskClient(provider, attachment)
+            await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}${rel}`, Body: body}))
+        }
+    })
+
     function attachmentsFor(owner) {
         owners.add(owner)
         return new Attachments({bucket: config.bucket}).get(owner, 'data')
     }
 })
+
+function uniqueUser(tag) {
+    return `${tag}${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+}
+
+function sortByName(entries) {
+    return [...entries].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+async function streamToString(stream) {
+    const chunks = []
+    for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk))
+    }
+    return Buffer.concat(chunks).toString()
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
