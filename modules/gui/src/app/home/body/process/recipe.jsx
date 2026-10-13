@@ -339,8 +339,9 @@ const adoptRevision = (recipeId, revision, model) => {
     }
 }
 
-let prevRecipes = []
-let releasedFrom = null
+// The records the autosave last compared. Saving publishes state synchronously and re-enters the listener, so they are
+// replaced before anything is saved or acknowledged, and a nested notification finds nothing changed.
+let comparedRecipes = null
 
 // A copy is a recipe the server has never seen, so it must not inherit the source's revision.
 const recipeCopy = sourceRecipe => ({
@@ -359,43 +360,36 @@ const isToBeSaved = (prevRecipe, recipe) =>
         && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
         && select(['process.tabs', {id: recipe.id}])
 
-// whenever already saved recipes change, save them again
+// Whenever already saved recipes change, save them again. Only a record that is not the one compared before can need
+// saving: a listing or tab change alone changes no record, so it is judged with a record's next change, against the
+// listing and tabs as they are then.
 subscribe('process.loadedRecipes', loadedRecipes => {
-    const recipes = loadedRecipes && Object.values(loadedRecipes)
-    const savedRecipes = select('process.recipes') || []
-    // console.log('loaded recipes listener called', loadedRecipes, recipes)
-    if (recipes && (prevRecipes.length === 0 || prevRecipes !== recipes)) {
-        const previousRecipes = prevRecipes
-        const findPrevRecipe = recipe => previousRecipes.find(previous => previous.id === recipe.id) || {}
-        // Saving publishes state synchronously and re-enters this listener. Record this snapshot before any
-        // save or agreement notification, so that nested dispatch cannot submit the same edit again.
-        prevRecipes = recipes
-        const savedLoaded = recipes
-            .filter(recipe =>
-                savedRecipes.find(({id}) => id === recipe.id)
-            )
-        const recipesToSave = savedLoaded
-            .filter(recipe =>
-                isToBeSaved(findPrevRecipe(recipe), recipe)
-            )
-        if (recipesToSave.length > 0) {
-            recipesToSave.forEach(recipe => {
-                save$.next(recipe)
-            })
-        }
-        // A new model object holding what the previous one held changes nothing persisted.
-        savedLoaded.forEach(recipe => {
-            const previous = findPrevRecipe(recipe).model
-            if (previous && previous !== recipe.model && _.isEqual(previous, recipe.model)) {
-                saveCoordinator.equivalent(recipe.id, previous, recipe.model)
-            }
-        })
+    if (!loadedRecipes || loadedRecipes === comparedRecipes) {
+        return
     }
-    if (loadedRecipes && loadedRecipes !== releasedFrom) {
-        releasedFrom = loadedRecipes
-        forgetReleasedSaveStates(loadedRecipes)
+    const previousRecipes = comparedRecipes || {}
+    comparedRecipes = loadedRecipes
+    const changed = Object.keys(loadedRecipes).filter(id => loadedRecipes[id] !== previousRecipes[id])
+    if (changed.length) {
+        autosave(changed.map(id => loadedRecipes[id]), previousRecipes)
     }
+    forgetReleasedSaveStates(loadedRecipes)
 })
+
+const autosave = (recipes, previousRecipes) => {
+    const listed = new Set((select('process.recipes') || []).map(({id}) => id))
+    const savedLoaded = recipes.filter(({id}) => listed.has(id))
+    savedLoaded
+        .filter(recipe => isToBeSaved(previousRecipes[recipe.id] || {}, recipe))
+        .forEach(recipe => save$.next(recipe))
+    // A new model object holding what the previous one held changes nothing persisted.
+    savedLoaded.forEach(recipe => {
+        const previous = previousRecipes[recipe.id]?.model
+        if (previous && previous !== recipe.model && _.isEqual(previous, recipe.model)) {
+            saveCoordinator.equivalent(recipe.id, previous, recipe.model)
+        }
+    })
+}
 
 export const recipe = RecipeState =>
     WrappedComponent => {

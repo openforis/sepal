@@ -110,6 +110,45 @@ describe('the acknowledged model, as the save state names it', () => {
     })
 })
 
+describe('a notification that changes no recipe', () => {
+    it('reads no recipe, whether the action is unrelated or changes only the listing or the tabs', () => {
+        const {model: other, read} = reading({id: 'other', type: 'BAND_MATH', model: {bands: ['B1']}, ui: {}})
+        store = storeHolding({other})
+        read.length = 0
+
+        actionBuilder('SET_STREAM_STATUS').set(['stream', 'component', 'load'], 'ACTIVE').dispatch()
+        actionBuilder('SET_RECIPE_REVISION').set(['process.recipes', {id: 'other'}, 'revision'], 2).dispatch()
+        actionBuilder('SELECT_TAB').set(['process.tabs', {id: 'other'}, 'selected'], true).dispatch()
+
+        expect(read).toEqual([])
+        expect(server.requests).toHaveLength(0)
+    })
+})
+
+describe('an edit to one recipe', () => {
+    it('is saved without reading the recipes it left unchanged', () => {
+        const {model: other, read} = reading({id: 'other', type: 'BAND_MATH', model: {bands: ['B1']}, ui: {}})
+        store = storeHolding({[loaded.id]: draft(), other})
+        read.length = 0
+
+        edit(['VV', 'VH'])
+
+        expect(server.requests.map(({request}) => request.gzippedContents.model.bands)).toEqual([['VV', 'VH']])
+        expect(read).toEqual([])
+    })
+})
+
+describe('an edit to a recipe storage does not list', () => {
+    it('is not saved, nor once the recipe is listed', () => {
+        actionBuilder('UNLIST').del(['process.recipes', {id: loaded.id}]).dispatch()
+
+        edit(['VV', 'VH'])
+        actionBuilder('LIST').push('process.recipes', {id: loaded.id, revision: 1}).dispatch()
+
+        expect(server.requests).toHaveLength(0)
+    })
+})
+
 describe('a recipe closed once its saves have settled', () => {
     it('is released, with its save state, when its last claimant lets go', async () => {
         const editor = claim()
@@ -272,6 +311,19 @@ const storeListing = recipe => {
         return action.reduce ? action.reduce(state) : state
     }, {process: {loadedRecipes: {}, recipes: [{id: recipe.id, revision: recipe.revision}], tabs: []}})
     initStore(created)
+    return created
+}
+
+// A store already holding these records, listed and open, whose first notification the autosave has compared and
+// saved as new.
+const storeHolding = recipes => {
+    const ids = Object.keys(recipes)
+    const created = createStore((state, action) => action.reduce ? action.reduce(state) : state, {
+        process: {loadedRecipes: recipes, recipes: ids.map(id => ({id, revision: 1})), tabs: ids.map(id => ({id})), saveStates: {}}
+    })
+    initStore(created)
+    actionBuilder('FIRST_NOTIFICATION').set(['stream', 'first'], true).dispatch()
+    server.requests.length = 0
     return created
 }
 
