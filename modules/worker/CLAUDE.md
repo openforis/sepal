@@ -138,6 +138,35 @@ On AWS the volume lives on local disk, never on EFS:
   attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need
   `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
 
+## Data mount
+With `DATA_ENABLED=true` (default `false`; with it off nothing below happens) each session mounts the user's Data
+(the `user-data` attachment) at `~/data`. Settings: `DATA_FLUSH_TIMEOUT_SECONDS` (600, how long a release waits for
+uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/` per instance), `DATA_CACHE_MAX_SIZE`
+(`20G`, rclone cache per sandbox). Dev-env leaves it off until the dev sandbox image has `sepal-data`.
+
+**Sidecar.** `sandbox.data-mount.{username}.{sessionId}.{instanceId}`, the sandbox image running `sepal-data mount`
+(rclone FUSE; `SYS_ADMIN`, `/dev/fuse`, apparmor unconfined). It binds `{mountRoot}/{instanceId}` at `/mnt/host` as
+`rshared`, mounts at `/mnt/host/data`, and caches in the `sepal-data-cache.{instanceId}` volume. The sandbox binds
+`{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: if it fails to come up,
+provisioning logs a warning and the sandbox starts with an empty `~/data`.
+
+**Provisioning order.** Remove containers, then any mount and cache a crashed predecessor left; get the API key;
+`DataFolder.prepare` (moves a non-empty existing `~/data` aside to `~/data.local[.n]` with an email to the user,
+creates and chowns `~/data`; a failure here fails provisioning); then sidecar (waits for `sepal-data wait-mounted`),
+then sandbox.
+
+**Release (`undeploy`).** Stop the sandbox, poll `sepal-data pending-uploads` in the sidecar until empty (or the
+timeout, when the user is emailed the files that never uploaded), stop the sidecar, remove the remaining containers,
+unmount, delete the cache volume. Unmount is a privileged helper chrooted into the host (`/:/host:rshared`) running
+`umount -l` then `rmdir` (never `rm -rf`). Every step tolerates what an earlier attempt removed and only logs.
+A release in flight is registered in `releaseRegistry.js`, which `ReclaimStaleClaims` skips, so a slow flush is
+not released twice. A session close therefore waits for the Data flush: normally seconds, at most
+`DATA_FLUSH_TIMEOUT_SECONDS`.
+
+**Durability.** Writes in `~/data` are durable only once uploaded; a terminated instance loses its cache. Never
+`docker rm -f` a sidecar without the unmount: it leaves a dead FUSE mount at the host path (the provisioner always
+unmounts). The orphan sweep unmounts the mounts and deletes the caches of orphaned instances.
+
 ## Stopped-instance pool (AWS)
 `STOPPED_POOL_SIZE` (default 0 = off) keeps that many stopped worker instances whose disk has already
 been read from the AMI snapshot. A stopped instance costs only its EBS storage and can be started as
