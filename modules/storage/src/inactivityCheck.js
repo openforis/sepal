@@ -8,6 +8,7 @@ import {storedUsername} from '#sepal/username'
 
 import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
 import {sendEmail} from './email.js'
+import {emitUserStorageErased} from './events.js'
 import {eraseUserStorage} from './filesystem.js'
 import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
 import {planJobNormalization} from './jobCase.js'
@@ -230,6 +231,7 @@ export class InactivityCheck {
                 log.info(`User ${username} inactive with significant storage, erasing storage`)
                 await erase(username)
                 await this.#repository.addEvent({username, event: 'PURGED'})
+                emitUserStorageErased(username)
                 break
             case STORAGE.INACTIVE_LOW:
                 log.info(`User ${username} still inactive but with negligible storage, not erasing storage`)
@@ -330,6 +332,8 @@ const getEmailMessage = name => {
         As SEPAL incurs ongoing cloud storage costs for user data, we periodically review inactive accounts. If you wish to retain your existing data, you are required to confirm your continued use of the service by logging in to your SEPAL account.
         <br><br>
         If no login activity is detected within one (1) month from the date of this message, your account data will be permanently deleted. This deletion will occur automatically and without further notification, and the data will not be recoverable.
+        <br><br>
+        This includes the files in your Data folder.
         <br><br>
         To retain your data, simply log in to your account at any time during the grace period.
         <br><br>

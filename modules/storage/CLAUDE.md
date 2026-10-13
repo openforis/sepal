@@ -24,6 +24,7 @@ initialized before the queue, so no subscriber can be handed work that records e
 Publishers:
 - `storage.size` - Publishes `{username, size}` after storage scan
 - `email.sendToUser` - Sends notification emails
+- `storage.UserStorageErased` - Publishes `{username}` when an inactive user's storage is purged (`src/events.js`)
 
 Subscribers:
 - `storage.systemEvent` - System lifecycle events (`CLIENT_UP`, `USER_DOWN`)

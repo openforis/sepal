@@ -6,6 +6,7 @@ import {initMessageQueue} from '#sepal/messageQueue'
 import {amqpUri, port} from './config.js'
 import {initializeDb} from './db.js'
 import {email$} from './email.js'
+import {STORAGE_PUBLISHERS} from './events.js'
 import {HistoryRepository} from './historyRepository.js'
 import {InactivityCheck} from './inactivityCheck.js'
 import {normalizeCase} from './kvstore.js'
@@ -25,7 +26,8 @@ const main = async () => {
     await initMessageQueue(amqpUri, {
         publishers: [
             {key: 'storage.size', publish$: scanComplete$},
-            {key: 'email.sendToUser', publish$: email$}
+            {key: 'email.sendToUser', publish$: email$},
+            ...STORAGE_PUBLISHERS
         ],
         subscribers: [
             {queue: 'storage.systemEvent', topic: 'systemEvent'},
