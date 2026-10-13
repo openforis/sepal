@@ -24,9 +24,17 @@ export class DataFolder {
         const home = join(this.#homeRoot, username)
         const {uid, gid} = await this.#fs.stat(home)
         const movedTo = await this.#moveAside(home)
-        await this.#fs.mkdir(join(home, DATA), {recursive: true})
-        await this.#fs.chown(join(home, DATA), uid, gid).catch(error => {
+        const data = join(home, DATA)
+        await this.#fs.mkdir(data).catch(error => {
+            if (error.code !== 'EEXIST') throw error
+        })
+        if (!(await this.#fs.lstat(data)).isDirectory()) {
+            throw new Error(`${data} is not a directory`)
+        }
+        const chown = this.#fs.lchown ?? this.#fs.chown
+        await chown.call(this.#fs, data, uid, gid).catch(error => {
             if (error.code !== 'EPERM') throw error
+            log.warn(`Could not change owner of ${data} to ${uid}:${gid}`)
         })
         if (movedTo) {
             log.info(`Moved ${username}'s ${DATA} to ${movedTo}`)

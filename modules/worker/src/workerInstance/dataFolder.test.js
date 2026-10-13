@@ -1,10 +1,15 @@
+import * as realFs from 'node:fs/promises'
 import {mkdir, mkdtemp, readdir, readlink, rm, stat, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import {configureNoLogging} from '#sepal/log'
+
 import {DataFolder} from './dataFolder.js'
 
 const roots = []
+
+beforeAll(() => configureNoLogging())
 
 afterAll(() => Promise.all(roots.map(root => rm(root, {recursive: true, force: true}))))
 
@@ -67,6 +72,28 @@ describe('prepare', () => {
         await folder.prepare('alice')
 
         expect(await readlink(join(home, 'data.local'))).toBe(target)
+        expect(await readdir(target)).toEqual(['keep.txt'])
+    })
+
+    it('refuses a data symlink planted just before the folder is created', async () => {
+        const {home, root, notified} = await harness()
+        const target = join(root, 'elsewhere')
+        await mkdir(target)
+        await writeFile(join(target, 'keep.txt'), 'x')
+        const before = await stat(target)
+        const racing = {
+            ...realFs,
+            mkdir: async (path, ...args) => {
+                await symlink(target, path)
+                return realFs.mkdir(path, ...args)
+            }
+        }
+        const folder = new DataFolder({homeRoot: root, fs: racing, notify: email => notified.push(email)})
+
+        await expect(folder.prepare('alice')).rejects.toThrow(join(home, 'data'))
+
+        const after = await stat(target)
+        expect([after.uid, after.gid]).toEqual([before.uid, before.gid])
         expect(await readdir(target)).toEqual(['keep.txt'])
     })
 
