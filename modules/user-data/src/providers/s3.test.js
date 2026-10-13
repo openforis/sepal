@@ -15,23 +15,63 @@ describe('dataBucketName', () => {
 describe('createS3Provider in AWS mode', () => {
     it('issues credentials for the role named after the environment in the keys\' account', async () => {
         const sts = fakeSts({account: '123456789012'})
-        const provider = await createS3Provider(
-            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', bucket: 'sepal-test-user-data', emulator: false},
-            {sts}
-        )
+        const provider = await createS3Provider(AWS_CONFIG, {sts, s3: fakeS3()})
 
         await provider.credentials(attachment('alice'), {mode: 'readWrite'})
 
-        expect(sts.requests).toEqual([expect.objectContaining({RoleArn: ROLE_ARN})])
+        expect(sts.requests.at(-1)).toMatchObject({RoleArn: ROLE_ARN, Tags: [{Key: 'username', Value: 'alice'}]})
     })
 
     it('fails startup with a clear message when the caller identity cannot be resolved', async () => {
         const sts = fakeSts({identityFails: true})
 
-        await expect(createS3Provider(
-            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', emulator: false},
-            {sts}
-        )).rejects.toThrow(/Cannot resolve the AWS account/)
+        await expect(createS3Provider(AWS_CONFIG, {sts, s3: fakeS3()})).rejects.toThrow(/Cannot resolve the AWS account/)
+    })
+
+    it('checks at startup that the bucket can be reached', async () => {
+        const s3 = fakeS3()
+
+        await createS3Provider(AWS_CONFIG, {sts: fakeSts(), s3})
+
+        expect(s3.requests).toEqual([{command: 'HeadBucketCommand', input: {Bucket: BUCKET}}])
+    })
+
+    it('fails startup naming the bucket when it cannot be reached', async () => {
+        const s3 = fakeS3({headFails: true})
+
+        await expect(createS3Provider(AWS_CONFIG, {sts: fakeSts(), s3}))
+            .rejects.toThrow(`Cannot reach the Data bucket ${BUCKET} (NotFound); run a rollout to provision it`)
+    })
+
+    it('checks at startup that the role can be assumed with a short session tagged with a username', async () => {
+        const sts = fakeSts()
+
+        await createS3Provider(AWS_CONFIG, {sts, s3: fakeS3()})
+
+        expect(sts.requests).toEqual([expect.objectContaining({
+            RoleArn: ROLE_ARN,
+            DurationSeconds: 900,
+            Tags: [{Key: 'username', Value: 'sepal-boot-probe'}]
+        })])
+    })
+
+    it('fails startup naming the role when it cannot be assumed', async () => {
+        const sts = fakeSts({failures: 1})
+
+        await expect(createS3Provider(AWS_CONFIG, {sts, s3: fakeS3()}))
+            .rejects.toThrow(`Cannot assume the Data role ${ROLE_ARN} (Throttled); run a rollout to provision it`)
+    })
+})
+
+describe('createS3Provider in emulator mode', () => {
+    it('checks neither bucket nor role at startup', async () => {
+        const sts = fakeSts()
+        const s3 = fakeS3()
+
+        await createS3Provider({...AWS_CONFIG, ...EMULATOR, emulator: true}, {sts, s3})
+
+        expect(s3.requests).toEqual([])
+        expect(sts.requests).toEqual([])
     })
 })
 
@@ -39,10 +79,22 @@ describe('createS3Provider with root credentials', () => {
     it('fails startup because root cannot assume roles', async () => {
         const sts = fakeSts({arn: 'arn:aws:iam::123456789012:root'})
 
-        await expect(createS3Provider(
-            {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', emulator: false},
-            {sts}
-        )).rejects.toThrow('user-data must run with an IAM user\'s keys; root credentials cannot assume roles')
+        await expect(createS3Provider(AWS_CONFIG, {sts, s3: fakeS3()}))
+            .rejects.toThrow('user-data must run with an IAM user\'s keys; root credentials cannot assume roles')
+    })
+})
+
+describe('erase', () => {
+    it('erases only the objects last modified before the given time', async () => {
+        const s3 = fakeS3({objects: [
+            {Key: 'users/alice/old.txt', LastModified: new Date('2026-10-13T09:59:59Z')},
+            {Key: 'users/alice/new.txt', LastModified: new Date('2026-10-13T10:00:00Z')}
+        ]})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        await provider.erase(attachment('alice'), {before: new Date('2026-10-13T10:00:00Z')})
+
+        expect(s3.deleted).toEqual(['users/alice/old.txt'])
     })
 })
 
@@ -268,6 +320,8 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
+const AWS_CONFIG = {region: REGION, accessKeyId: 'key', secretAccessKey: 'secret', deployEnvironment: 'Test', bucket: BUCKET, emulator: false}
+
 const attachment = owner => new Attachments({bucket: BUCKET}).get(owner, 'data')
 
 const request = ({purpose, mode = 'readWrite'}) =>
@@ -287,6 +341,29 @@ const fakeClock = () => {
             time += ms
         }
     }
+}
+
+const fakeS3 = ({headFails = false, objects = []} = {}) => {
+    const s3 = {
+        requests: [],
+        deleted: [],
+        send: async command => {
+            const name = command.constructor.name
+            if (name === 'ListObjectsV2Command') {
+                return {Contents: objects, IsTruncated: false}
+            }
+            if (name === 'DeleteObjectsCommand') {
+                s3.deleted.push(...command.input.Delete.Objects.map(({Key}) => Key))
+                return {}
+            }
+            s3.requests.push({command: name, input: command.input})
+            if (headFails) {
+                throw Object.assign(new Error(''), {name: 'NotFound'})
+            }
+            return {}
+        }
+    }
+    return s3
 }
 
 const fakeSts = ({clock = fakeClock(), failures = 0, account = '123456789012', arn = `arn:aws:iam::${account}:user/deployer`, identityFails = false} = {}) => {

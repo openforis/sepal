@@ -1,4 +1,8 @@
+import {configureNoLogging} from '#sepal/log'
+
 import {Usage} from './usage.js'
+
+beforeAll(() => configureNoLogging())
 
 describe('tick', () => {
     it('measures the dirty users and publishes their size', async () => {
@@ -26,6 +30,50 @@ describe('tick', () => {
         await harness.usage.tick()
 
         expect(harness.recorded).toHaveLength(1)
+    })
+
+    it('sweeps all users again after a day', async () => {
+        const harness = usageHarness({owners: ['alice'], sizes: {alice: 1}})
+        await harness.usage.tick()
+        harness.advance(24 * HOUR)
+
+        await harness.usage.tick()
+
+        expect(harness.recorded).toEqual([['alice', 1], ['alice', 1]])
+    })
+
+    it('measures the dirty users and republishes known sizes when finding the users with Data fails', async () => {
+        const harness = usageHarness({dirty: ['alice'], sizes: {alice: 15}, measured: {bob: 20}, failingOwners: 1})
+
+        await harness.usage.tick()
+
+        expect(harness.published).toEqual([{username: 'alice', size: 15}, {username: 'bob', size: 20}])
+    })
+
+    it('retries the sweep on the next tick after it failed', async () => {
+        const harness = usageHarness({owners: ['carol'], sizes: {carol: 3}, failingOwners: 1})
+        await harness.usage.tick()
+
+        await harness.usage.tick()
+
+        expect(harness.recorded).toEqual([['carol', 3]])
+    })
+
+    it('records when a measurement started', async () => {
+        const harness = usageHarness({dirty: ['alice'], sizes: {alice: 1}, measuringTakes: HOUR})
+
+        await harness.usage.tick()
+
+        expect(harness.measuredFrom).toEqual({alice: new Date('2026-10-13T10:00:00Z')})
+    })
+
+    it('keeps the recorded measurement when publishing it fails', async () => {
+        const harness = usageHarness({dirty: ['alice'], sizes: {alice: 15}, failingPublish: ['alice']})
+
+        await harness.usage.tick()
+
+        expect(harness.recorded).toEqual([['alice', 15]])
+        expect(harness.dirty).toEqual([])
     })
 
     it('also re-measures users it measured before but who no longer have Data', async () => {
@@ -103,9 +151,10 @@ describe('recordErased', () => {
 
 const HOUR = 60 * 60 * 1000
 
-function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], slow = false}) {
+function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured = {}, failing = [], failingPublish = [], failingOwners = 0, measuringTakes = 0, slow = false}) {
     let time = Date.parse('2026-10-13T10:00:00Z')
-    const harness = {published: [], recorded: [], dirty: [...dirty], measured: {...measured}}
+    let remainingOwnersFailures = failingOwners
+    const harness = {published: [], recorded: [], measuredFrom: {}, dirty: [...dirty], measured: {...measured}}
     const repository = {
         markDirty: async username => {
             if (!harness.dirty.includes(username)) {
@@ -117,15 +166,23 @@ function usageHarness({dirty = [], owners = [], known = [], sizes = {}, measured
         measurements: async () => Object.entries(harness.measured)
             .map(([username, size]) => ({username, size}))
             .sort((a, b) => a.username.localeCompare(b.username)),
-        recordMeasurement: async (username, size) => {
+        recordMeasurement: async (username, size, measuredFrom) => {
             harness.recorded.push([username, size])
+            harness.measuredFrom[username] = measuredFrom
             harness.measured[username] = size
             harness.dirty = harness.dirty.filter(user => user !== username)
         }
     }
     const provider = {
-        owners: async () => [...owners],
+        owners: async () => {
+            if (remainingOwnersFailures > 0) {
+                remainingOwnersFailures--
+                throw new Error('cannot list owners')
+            }
+            return [...owners]
+        },
         measureUsage: async ({owner}) => {
+            time += measuringTakes
             if (slow) {
                 await new Promise(resolve => setImmediate(resolve))
             }

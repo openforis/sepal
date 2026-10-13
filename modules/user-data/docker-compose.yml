@@ -11,6 +11,7 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      TZ: "UTC"
       HTTP_PORT: "80"
       SEPAL_HOST: "${SEPAL_HOST}"
       MYSQL_HOST: "mysql"

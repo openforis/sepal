@@ -4,11 +4,13 @@ const DATA_QUOTA = 'DATA_QUOTA'
 
 // Users over their Data quota, from budget's level-triggered verdicts (every user hourly, users with sessions every
 // minute). Held in memory: after a restart a user over the quota can write until budget's next hourly verdict.
+// A verdict names only the first limit exceeded, so its dataQuotaExceeded flag decides; the reason alone covers
+// publishers that predate the flag.
 export class QuotaState {
     #overQuota = new Set()
 
-    onExceeded({username, reason}) {
-        if (reason === DATA_QUOTA) {
+    onExceeded({username, reason, dataQuotaExceeded}) {
+        if (dataQuotaExceeded === true || reason === DATA_QUOTA) {
             this.#overQuota.add(storedUsername(username))
         } else {
             this.#overQuota.delete(storedUsername(username))

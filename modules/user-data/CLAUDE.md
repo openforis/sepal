@@ -33,17 +33,22 @@ MySQL database `user_data`, table `data_usage` (size and measurement times per u
 an hour after a read-write grant marked them dirty, and every user with Data (or measured before) once a day, then
 publishes `userData.size {username, size}`. Every hourly tick also republishes the last recorded size of every
 known user (no S3 call), so events lost while the broker is down heal within an hour; the first tick runs 60 s
-after start, once the broker connection is up.
+after start, once the broker connection is up. A failed daily sweep is retried next tick without holding up the
+measurements or the republish. A measurement clears only marks made before it started (`dirty_since` is the latest
+mark), and a failure to mark never refuses access.
 
-`QuotaState` holds, in memory, the users whose latest budget verdict has reason `DATA_QUOTA`; they get mode `read`
-(at most an hour stale after a restart, until budget's next hourly verdict).
+`QuotaState` holds, in memory, the users whose latest budget verdict has `dataQuotaExceeded` (or, from older
+publishers, reason `DATA_QUOTA`); they get mode `read` (at most an hour stale after a restart, until budget's next
+hourly verdict).
 
 Subscribed queues: `user-data.budgetExceeded` (`budget.UserBudgetExceeded`), `user-data.budgetCleared`
 (`budget.UserBudgetCleared`), `user-data.userStorageErased` (`storage.UserStorageErased`: erases the user's Data
 and records it as empty).
 
 The erase is durable: `Lifecycle` first stores `erase_requested_at` in `data_usage`, erases, then clears it. A failed
-erase stays pending (the message queue retries only once) and `Lifecycle` retries all pending erasures hourly.
+erase stays pending (the message queue retries only once) and `Lifecycle` retries all pending erasures hourly. Only
+objects last modified before `erase_requested_at` are erased, so a retry spares Data written since. storage
+republishes recent purges daily; a user with no `data_usage` row and nothing stored is ignored.
 
 ## HTTP (through the gateway at `/api/user-data`, as the authenticated user)
 
@@ -72,7 +77,8 @@ that fixed key: there is no prefix isolation and no read-only mode in dev-env.
 
 The module runs with the environment's regular AWS keys (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) and derives
 the bucket and role name `sepal-<env>-user-data` from `DEPLOY_ENVIRONMENT`, and the role ARN from the account of
-the keys (`GetCallerIdentity` at startup; a failure there stops the boot).
+the keys (`GetCallerIdentity` at startup). The boot then probes the bucket (`HeadBucket`) and the role (one
+`AssumeRole` tagged `username=sepal-boot-probe`); any failure stops the boot. Emulator mode probes nothing.
 
 `hosting-services/aws/sepal/provision-user-data.yml`, run by every rollout, creates the bucket and the role, which
 trusts the IAM user that ran provisioning. The steps are in [docs/user-data-rollout.md](../../docs/user-data-rollout.md).

@@ -1,9 +1,12 @@
 import {ClientException, NotFoundException} from '#sepal/exception'
+import {configureNoLogging} from '#sepal/log'
 
 import {Access, AUTHORIZATION_TOKEN_FILE} from './access.js'
 import {Attachments} from './attachments.js'
 import {Providers} from './providers/providers.js'
 import {QuotaState} from './quotaState.js'
+
+beforeAll(() => configureNoLogging())
 
 describe('list', () => {
     it('shows the attachments without their provider-specific location', () => {
@@ -67,6 +70,26 @@ describe('grant over the Data quota', () => {
         await access.credentials('alice', 'data')
 
         expect(usage.dirty).toEqual(['alice'])
+    })
+
+    it('grants read-write access even when marking the user for measuring fails', async () => {
+        const provider = fakeProvider()
+        const usage = {markDirty: async () => { throw new Error('db down') }}
+        const access = accessWith(provider, {usage})
+
+        const granted = await access.grant('alice', 'data', 'sandbox')
+
+        expect(granted.mode).toBe('readWrite')
+    })
+
+    it('issues credentials even when marking the user for measuring fails', async () => {
+        const provider = fakeProvider()
+        const usage = {markDirty: async () => { throw new Error('db down') }}
+        const access = accessWith(provider, {usage})
+
+        const credentials = await access.credentials('alice', 'data')
+
+        expect(credentials).toBe(provider.issued)
     })
 
     it('does not mark a user granted read-only access', async () => {

@@ -1,4 +1,7 @@
 import {ClientException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('access')
 
 export const PURPOSES = ['sandbox', 'mount', 'task']
 
@@ -49,9 +52,18 @@ export class Access {
     async #modeFor(username) {
         const mode = this.#quotaState.mode(username)
         if (mode === 'readWrite') {
-            await this.#usage.markDirty(username)
+            await this.#markDirty(username)
         }
         return mode
+    }
+
+    // Measuring is bookkeeping: a failure to mark must not cost the user access to their Data.
+    async #markDirty(username) {
+        try {
+            await this.#usage.markDirty(username)
+        } catch (error) {
+            log.warn(`Cannot mark the Data of ${username} for measuring`, error)
+        }
     }
 
     #credentialsUrl({id}) {

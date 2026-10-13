@@ -13,10 +13,17 @@ const describeWithEmulator = EMULATOR ? describe : describe.skip
 describeWithEmulator('S3 adapter against the dev-env emulator', () => {
     const config = emulatorConfig()
     let provider
-    const attachment = new Attachments({bucket: config.bucket}).get('emulatortest', 'data')
+    const owners = new Set()
+    const attachment = attachmentsFor('emulatortest')
 
     beforeAll(async () => {
         provider = await createS3Provider(config)
+    })
+
+    afterAll(async () => {
+        for (const owner of owners) {
+            await provider.erase(attachmentsFor(owner))
+        }
     })
 
     it('grants task access that writes, lists and reads the user prefix', async () => {
@@ -80,10 +87,29 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
         expect(await provider.measureUsage(attachmentsFor(other))).toBe(1)
     })
 
+    it('erases only what was stored before the given time', async () => {
+        const owner = `before${randomUUID().replaceAll('-', '')}`.slice(0, 30)
+        const attachment = attachmentsFor(owner)
+        const client = await taskClient(provider, attachment)
+        await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}old.txt`, Body: 'x'.repeat(10)}))
+        const [{LastModified}] = (await client.send(new ListObjectsV2Command({Bucket: config.bucket, Prefix: attachment.location.prefix}))).Contents
+        await sleep(1100)
+        await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}new.txt`, Body: 'y'.repeat(5)}))
+
+        await provider.erase(attachment, {before: new Date(LastModified.getTime() + 1)})
+
+        expect(await provider.measureUsage(attachment)).toBe(5)
+    })
+
     function attachmentsFor(owner) {
+        owners.add(owner)
         return new Attachments({bucket: config.bucket}).get(owner, 'data')
     }
 })
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 function emulatorConfig() {
     return {

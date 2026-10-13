@@ -1,4 +1,4 @@
-import {DeleteObjectsCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
+import {DeleteObjectsCommand, HeadBucketCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
 import {AssumeRoleCommand, GetCallerIdentityCommand, STSClient} from '@aws-sdk/client-sts'
 
 import {ClientException, ServerException} from '#sepal/exception'
@@ -7,6 +7,8 @@ import {getLogger} from '#sepal/log'
 const log = getLogger('s3')
 
 const DURATION_SECONDS = 3600
+const PROBE_DURATION_SECONDS = 900
+const PROBE_USERNAME = 'sepal-boot-probe'
 const RENEW_BEFORE_EXPIRY_MS = 15 * 60 * 1000
 const MODES = ['read', 'readWrite']
 const EMULATOR_SESSION_TOKEN = 'sepal-dev-emulator'
@@ -14,18 +16,22 @@ const USERNAME = /^[a-zA-Z_][a-zA-Z0-9]*$/
 
 export const dataBucketName = deployEnvironment => `sepal-${deployEnvironment.toLowerCase()}-user-data`
 
+// In AWS mode the boot fails unless the bucket and the role exist and the keys can use them.
 export const createS3Provider = async (
     {region, bucket, accessKeyId, secretAccessKey, deployEnvironment, endpoint, emulator},
-    {sts} = {}
+    {sts, s3} = {}
 ) => {
     const credentials = {accessKeyId, secretAccessKey}
     if (emulator) {
-        const s3 = new S3Client({region, credentials, endpoint, forcePathStyle: true})
-        return new S3Provider({region, bucket, s3, emulator: {endpoint, accessKeyId, secretAccessKey}})
+        const s3Client = s3 ?? new S3Client({region, credentials, endpoint, forcePathStyle: true})
+        return new S3Provider({region, bucket, s3: s3Client, emulator: {endpoint, accessKeyId, secretAccessKey}})
     }
-    const s3 = new S3Client({region, credentials})
+    const s3Client = s3 ?? new S3Client({region, credentials})
     const stsClient = sts ?? new STSClient({region, credentials})
-    return new S3Provider({region, bucket, s3, sts: stsClient, roleArn: await resolveRoleArn(stsClient, deployEnvironment)})
+    const roleArn = await resolveRoleArn(stsClient, deployEnvironment)
+    await probeBucket(s3Client, bucket)
+    await probeRole(stsClient, roleArn)
+    return new S3Provider({region, bucket, s3: s3Client, sts: stsClient, roleArn})
 }
 
 const resolveRoleArn = async (sts, deployEnvironment) => {
@@ -39,6 +45,27 @@ const resolveRoleArn = async (sts, deployEnvironment) => {
         throw new ServerException('user-data must run with an IAM user\'s keys; root credentials cannot assume roles')
     }
     return `arn:aws:iam::${identity.Account}:role/${dataBucketName(deployEnvironment)}`
+}
+
+const probeBucket = async (s3, bucket) => {
+    try {
+        await s3.send(new HeadBucketCommand({Bucket: bucket}))
+    } catch (error) {
+        throw new ServerException(`Cannot reach the Data bucket ${bucket} (${error.message || error.name}); run a rollout to provision it`)
+    }
+}
+
+const probeRole = async (sts, roleArn) => {
+    try {
+        await sts.send(new AssumeRoleCommand({
+            RoleArn: roleArn,
+            RoleSessionName: 'user-data-boot-probe',
+            DurationSeconds: PROBE_DURATION_SECONDS,
+            Tags: [{Key: 'username', Value: PROBE_USERNAME}]
+        }))
+    } catch (error) {
+        throw new ServerException(`Cannot assume the Data role ${roleArn} (${error.message || error.name}); run a rollout to provision it`)
+    }
 }
 
 // Data on S3: every user's attachment is a prefix of one shared bucket. Credentials come from a role whose
@@ -115,13 +142,15 @@ export class S3Provider {
         return owners.filter(owner => USERNAME.test(owner))
     }
 
-    async erase(attachment) {
+    // With `before`, only objects last modified before then are erased.
+    async erase(attachment, {before} = {}) {
         requireUsername(attachment.owner)
         for await (const {Contents = []} of this.#listPages({Prefix: attachment.location.prefix})) {
-            if (Contents.length) {
+            const objects = Contents.filter(({LastModified}) => !before || LastModified < before)
+            if (objects.length) {
                 const {Errors} = await this.#s3.send(new DeleteObjectsCommand({
                     Bucket: this.#bucket,
-                    Delete: {Objects: Contents.map(({Key}) => ({Key})), Quiet: true}
+                    Delete: {Objects: objects.map(({Key}) => ({Key})), Quiet: true}
                 }))
                 if (Errors?.length) {
                     throw new ServerException(`Cannot erase ${attachment.location.prefix}: ${Errors[0].Message}`)

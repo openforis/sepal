@@ -21,6 +21,22 @@ describe('mode', () => {
         expect(state.mode('alice')).toBe('readWrite')
     })
 
+    it('is read-only when the user is over another budget and the Data quota', () => {
+        const state = new QuotaState()
+
+        state.onExceeded({username: 'alice', reason: 'INSTANCE_BUDGET', dataQuotaExceeded: true})
+
+        expect(state.mode('alice')).toBe('read')
+    })
+
+    it('stays read-write when the user is over another budget only', () => {
+        const state = new QuotaState()
+
+        state.onExceeded({username: 'alice', reason: 'INSTANCE_BUDGET', dataQuotaExceeded: false})
+
+        expect(state.mode('alice')).toBe('readWrite')
+    })
+
     it('is read-write again once the verdict clears', () => {
         const state = new QuotaState()
         state.onExceeded({username: 'alice', reason: 'DATA_QUOTA'})

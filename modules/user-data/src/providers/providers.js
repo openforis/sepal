@@ -5,7 +5,8 @@ import {ServerException} from '#sepal/exception'
 //   credentials(attachment, {mode}) → the provider's client credentials format
 //   measureUsage(attachment) → bytes stored for the attachment
 //   owners() → [username] of the users that have stored anything with this provider
-//   erase(attachment) → removes everything stored for the attachment
+//   erase(attachment, {before}) → removes everything stored for the attachment, or with `before` only what was last
+//     modified before then
 export class Providers {
     #byName
 

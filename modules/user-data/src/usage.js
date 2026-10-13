@@ -48,7 +48,7 @@ export class Usage {
     }
 
     async recordErased(username) {
-        await this.#repository.recordMeasurement(username, 0)
+        await this.#repository.recordMeasurement(username, 0, this.#now())
         this.#events.emitUserDataSize(username, 0)
     }
 
@@ -60,10 +60,10 @@ export class Usage {
     }
 
     async #tick() {
+        if (this.#sweepDue()) {
+            await this.#sweep()
+        }
         try {
-            if (this.#sweepDue()) {
-                await this.#markEveryoneDirty()
-            }
             const published = new Set()
             for (const username of await this.#repository.dirtyUsernames()) {
                 if (await this.#measure(username)) {
@@ -80,6 +80,14 @@ export class Usage {
         return this.#lastSweep === null || this.#now().getTime() - this.#lastSweep >= SWEEP_MS
     }
 
+    async #sweep() {
+        try {
+            await this.#markEveryoneDirty()
+        } catch (error) {
+            log.error('Finding the users with Data failed; retrying next tick', error)
+        }
+    }
+
     async #markEveryoneDirty() {
         const owners = await this.#providers.for({provider: this.#attachments.dataProvider()}).owners()
         const known = await this.#repository.knownUsernames()
@@ -89,28 +97,36 @@ export class Usage {
         this.#lastSweep = this.#now().getTime()
     }
 
+    // measuredFrom lets the repository keep a mark made while the measurement ran.
     async #measure(username) {
+        const measuredFrom = this.#now()
+        let size
         try {
             const attachment = this.#attachments.get(username, DATA_ATTACHMENT_ID)
-            const size = await this.#providers.for(attachment).measureUsage(attachment)
-            await this.#repository.recordMeasurement(username, size)
-            this.#events.emitUserDataSize(username, size)
-            return true
+            size = await this.#providers.for(attachment).measureUsage(attachment)
+            await this.#repository.recordMeasurement(username, size, measuredFrom)
         } catch (error) {
             log.warn(`Cannot measure Data of ${username}; it stays due`, error)
             return false
         }
+        return this.#publish(username, size)
     }
 
     async #republish(alreadyPublished) {
         for (const {username, size} of await this.#repository.measurements()) {
             if (!alreadyPublished.has(username)) {
-                try {
-                    this.#events.emitUserDataSize(username, size)
-                } catch (error) {
-                    log.warn(`Cannot republish Data size of ${username}`, error)
-                }
+                this.#publish(username, size)
             }
+        }
+    }
+
+    #publish(username, size) {
+        try {
+            this.#events.emitUserDataSize(username, size)
+            return true
+        } catch (error) {
+            log.warn(`Cannot publish Data size of ${username}`, error)
+            return false
         }
     }
 }
