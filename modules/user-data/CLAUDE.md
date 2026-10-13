@@ -18,6 +18,11 @@ npm run test:aws                                           # AWS isolation suite
   owner, provider: 's3', location: {bucket, prefix: 'users/<owner>/'}, mountPath: 'data', quota: true}`.
 - `access.js` — validates the purpose, takes the mode from `QuotaState`, marks the user for measuring on read-write
   grants, builds the credentials URL, delegates to the provider.
+- `quotaState.js` — in-memory set of users over their Data quota, from budget verdicts.
+- `usage.js`, `usageRepository.js` — measuring Data per user and the `data_usage` table.
+- `lifecycle.js` — erases the Data of purged users, durably.
+- `events.js` — the published `userData.size` event.
+- `db.js` — creates and migrates the `user_data` database.
 - `providers/providers.js` — provider registry. A provider implements `grantAccess(attachment, {mode, purpose,
   credentialsUrl, authorizationTokenFile})` and `credentials(attachment, {mode})`.
 - `providers/s3.js` — the only code that knows Data is S3, and the only production user of the AWS SDK.
@@ -34,6 +39,9 @@ publishes `userData.size {username, size}`.
 Subscribed queues: `user-data.budgetExceeded` (`budget.UserBudgetExceeded`), `user-data.budgetCleared`
 (`budget.UserBudgetCleared`), `user-data.userStorageErased` (`storage.UserStorageErased`: erases the user's Data
 and records it as empty).
+
+The erase is durable: `Lifecycle` first stores `erase_requested_at` in `data_usage`, erases, then clears it. A failed
+erase stays pending (the message queue retries only once) and `Lifecycle` retries all pending erasures hourly.
 
 ## HTTP (through the gateway at `/api/user-data`, as the authenticated user)
 

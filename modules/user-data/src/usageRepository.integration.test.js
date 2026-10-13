@@ -51,6 +51,37 @@ describe('dirty users', () => {
     })
 })
 
+describe('erase requests', () => {
+    it('are the users purged and not yet erased, oldest first', async () => {
+        await repository.requestErase('bob')
+        now = new Date('2026-10-13T11:00:00Z')
+        await repository.requestErase('alice')
+        await repository.requestErase('carol')
+        await repository.markDirty('dave')
+
+        expect(await repository.eraseRequests()).toEqual(['bob', 'alice', 'carol'])
+    })
+
+    it('keep the first request time when requested again', async () => {
+        await repository.requestErase('alice')
+        now = new Date('2026-10-13T11:00:00Z')
+
+        await repository.requestErase('alice')
+
+        const [rows] = await testDb.query('SELECT erase_requested_at FROM data_usage')
+        expect(rows).toEqual([{erase_requested_at: new Date('2026-10-13T10:00:00Z')}])
+    })
+
+    it('are gone once cleared', async () => {
+        await repository.requestErase('alice')
+        await repository.requestErase('bob')
+
+        await repository.clearEraseRequest('alice')
+
+        expect(await repository.eraseRequests()).toEqual(['bob'])
+    })
+})
+
 describe('measurements', () => {
     it('record the size and time, and make the user known', async () => {
         await repository.recordMeasurement('alice', 1234)

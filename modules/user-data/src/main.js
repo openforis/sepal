@@ -24,14 +24,15 @@ const main = async () => {
     const db = await initializeDb()
     const attachments = new Attachments({bucket: s3.bucket})
     const providers = new Providers({s3: createS3Provider(s3)})
+    const repository = new UsageRepository(db, () => new Date())
     const usage = new Usage({
-        repository: new UsageRepository(db, () => new Date()),
+        repository,
         attachments,
         providers,
         events: {emitUserDataSize}
     })
     const quotaState = new QuotaState()
-    const lifecycle = new Lifecycle({attachments, providers, usage})
+    const lifecycle = new Lifecycle({attachments, providers, usage, repository})
     const access = new Access({attachments, providers, quotaState, usage, sepalHost})
     await initMessageQueue(amqpUri, {
         publishers: USER_DATA_PUBLISHERS,
@@ -42,6 +43,7 @@ const main = async () => {
         ]
     })
     usage.start()
+    lifecycle.start()
     await server.start({port, routes: createRoutes(access)})
     log.info('Initialized')
 }

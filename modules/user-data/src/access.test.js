@@ -82,6 +82,17 @@ describe('grant over the Data quota', () => {
 })
 
 describe('credentials', () => {
+    it('are read-only while the user is over the Data quota', async () => {
+        const provider = fakeProvider()
+        const quotaState = new QuotaState()
+        quotaState.onExceeded({username: 'alice', reason: 'DATA_QUOTA'})
+        const access = accessWith(provider, {quotaState})
+
+        await access.credentials('alice', 'data')
+
+        expect(provider.credentialRequests).toEqual([{owner: 'alice', mode: 'read'}])
+    })
+
     it('are the provider credentials of the user attachment in read-write mode', async () => {
         const provider = fakeProvider()
         const access = accessWith(provider)

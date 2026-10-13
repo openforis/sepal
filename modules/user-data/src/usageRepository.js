@@ -38,4 +38,26 @@ export class UsageRepository {
             [storedUsername(username), size, this.#clock()]
         ))
     }
+
+    requestErase(username) {
+        return this.#db.withConnection(connection => connection.query(
+            `INSERT INTO data_usage (username, erase_requested_at) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE erase_requested_at = IFNULL(erase_requested_at, VALUES(erase_requested_at))`,
+            [storedUsername(username), this.#clock()]
+        ))
+    }
+
+    async eraseRequests() {
+        const [rows] = await this.#db.withConnection(connection => connection.query(
+            'SELECT username FROM data_usage WHERE erase_requested_at IS NOT NULL ORDER BY erase_requested_at, username'
+        ))
+        return rows.map(({username}) => username)
+    }
+
+    clearEraseRequest(username) {
+        return this.#db.withConnection(connection => connection.query(
+            'UPDATE data_usage SET erase_requested_at = NULL WHERE username = ?',
+            [storedUsername(username)]
+        ))
+    }
 }
