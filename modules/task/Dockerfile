@@ -7,9 +7,9 @@ ENV SHARED=/usr/local/src/sepal/lib/js/shared
 # halves a task's memory with no measurable cost to download throughput.
 ENV NODE_OPTIONS=--max-semi-space-size=1
 
-# GDAL tools and Python bindings: image exports build VRTs and name their bands, time series are stacked by a
+# rclone copies exports to the user's Data. GDAL tools and Python bindings: image exports build VRTs and name their bands, time series are stacked by a
 # Python script. su-exec runs the task as the owner of the user's home.
-RUN apk add --no-cache gdal-tools py3-gdal su-exec
+RUN apk add --no-cache gdal-tools py3-gdal rclone su-exec
 
 # install lib/shared packages
 WORKDIR ${SHARED}

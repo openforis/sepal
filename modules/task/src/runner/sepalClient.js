@@ -28,6 +28,15 @@ export class SepalClient {
         return this.#post(`api/tasks/task/${taskId}/progress`, {statusDescription}, NO_RETRY)
     }
 
+    dataAccess() {
+        return this.#post('api/user-data/attachments/data/access', {purpose: 'task'})
+    }
+
+    // Best-effort: callers ignore failure.
+    dataChanged() {
+        return this.#post('api/user-data/attachments/data/changed', {}, NO_RETRY)
+    }
+
     async #post(path, body, retry) {
         try {
             const response = await firstValueFrom(postJson$(`${this.#endpoint}/${path}`, {
