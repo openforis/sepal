@@ -13,11 +13,11 @@ describe('requireDataPath', () => {
 })
 
 describe('isWorkspaceDataPath', () => {
-    it.each(['data', 'data/x', './data/x', '/data/x'])('is true for %p', path => {
+    it.each(['data', 'data/x', './data/x', '/data/x', 'x/../data', 'x/../data/y'])('is true for %p', path => {
         expect(isWorkspaceDataPath(path)).toBe(true)
     })
 
-    it.each(['datax', 'x/data'])('is false for %p', path => {
+    it.each(['datax', 'x/data', 'data/../x', undefined, null, ''])('is false for %p', path => {
         expect(isWorkspaceDataPath(path)).toBe(false)
     })
 })

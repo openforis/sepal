@@ -1,3 +1,5 @@
+import {posix} from 'node:path'
+
 export function requireDataPath(path) {
     const normalized = typeof path === 'string' ? path.replace(/\/$/, '') : ''
     const valid = normalized !== ''
@@ -13,6 +15,9 @@ export function requireDataPath(path) {
 }
 
 export function isWorkspaceDataPath(workspacePath) {
-    const segments = workspacePath.split('/').filter(segment => segment !== '' && segment !== '.')
-    return segments[0] === 'data'
+    if (!workspacePath) {
+        return false
+    }
+    const [first] = posix.normalize(workspacePath.replace(/^\/+/, '')).split('/').filter(segment => segment !== '' && segment !== '.')
+    return first === 'data'
 }
