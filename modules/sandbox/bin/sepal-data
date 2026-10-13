@@ -4,7 +4,8 @@
 #   sepal-data env <purpose> [owner]     KEY=value lines for /etc/environment
 #   sepal-data mount                     (mount sidecar, root) mount Data at $DATA_MOUNT_POINT, in the foreground
 #   sepal-data wait-mounted [seconds]    wait until $DATA_MOUNT_POINT is mounted
-#   sepal-data pending-uploads           paths still waiting to be uploaded, one per line
+#   sepal-data pending-uploads           paths still waiting to be uploaded, one per line; a non-zero exit means
+#                                        "unknown" (rclone not reachable), not "nothing pending"
 set -euo pipefail
 
 TOKEN_FILE=${SEPAL_DATA_TOKEN_FILE:-/var/run/sepal-data-token}
@@ -24,7 +25,7 @@ main() {
 
 data_env() {
     local purpose=$1 owner=$2 response lines
-    write_token "$owner"
+    write_token "$owner" || return 1
     if ! response=$(access "$purpose"); then
         echo "sepal-data: cannot reach user-data; Data is not available in this session" >&2
         return 1
@@ -70,8 +71,8 @@ write_token() {
 }
 
 access() {
-    curl --fail --silent --show-error --max-time 10 \
-        -H "Authorization: $(cat "$TOKEN_FILE")" \
+    printf 'header = "Authorization: %s"\n' "$(cat "$TOKEN_FILE")" | curl -K - \
+        --fail --silent --show-error --max-time 10 \
         -H 'Content-Type: application/json' \
         -d "{\"purpose\":\"$1\"}" \
         "https://${SEPAL_HOST:?}/api/user-data/attachments/data/access"
@@ -81,7 +82,12 @@ access() {
 # with whitespace, quotes or $ would be corrupted: refuse them rather than quote them.
 to_env() {
     jq -re '
-        def line(k; v): if (v | tostring | test("^[^\\s\"'"'"'$\\\\]+$")) then "\(k)=\(v)" else error("unsafe value for \(k)") end;
+        def safe_key: type == "string" and test("^[A-Za-z_][A-Za-z0-9_]*\\z");
+        def safe_value: type == "string" and test("^[^\\s\"'"'"'$\\\\]+\\z");
+        def line(k; v):
+            if (k | safe_key | not) then error("unsafe key \(k)")
+            elif (v | safe_value | not) then error("unsafe value for \(k)")
+            else "\(k)=\(v)" end;
         line("RCLONE_CONFIG_DATAREMOTE_TYPE"; .rclone.type),
         (.rclone.options | to_entries | sort_by(.key)[] | line("RCLONE_CONFIG_DATAREMOTE_\(.key | ascii_upcase)"; .value)),
         line("RCLONE_CONFIG_DATA_TYPE"; "alias"),

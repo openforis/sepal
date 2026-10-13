@@ -23,6 +23,7 @@ fake_curl() { # response body; exit status
     cat > "$WORK/bin/curl" <<EOF
 #!/bin/bash
 printf '%s\n' "\$@" > "$WORK/curl-args"
+cat > "$WORK/curl-stdin"
 printf '%s' '$1'
 exit ${2:-0}
 EOF
@@ -42,7 +43,9 @@ test_env_asks_for_the_purpose_with_the_session_key() {
     "$HELPER" env sandbox > /dev/null
     grep -qx 'https://sepal.example.org/api/user-data/attachments/data/access' "$WORK/curl-args" || fail "wrong URL"
     grep -qx '{"purpose":"sandbox"}' "$WORK/curl-args" || fail "wrong body"
-    grep -qx "Authorization: Basic $(printf ':session-key' | base64 -w0)" "$WORK/curl-args" || fail "wrong Authorization"
+    grep -qxF "header = \"Authorization: Basic $(printf ':session-key' | base64 -w0)\"" "$WORK/curl-stdin" \
+        || fail "Authorization not on stdin"
+    if grep -qF "$(printf ':session-key' | base64 -w0)" "$WORK/curl-args"; then fail "key visible in curl arguments"; fi
 }
 
 test_env_writes_the_token_file_private() {
@@ -71,6 +74,27 @@ test_env_refuses_values_with_spaces_or_dollars() {
     [ ! -s "$WORK/out" ] || fail "printed output for a refused value"
     setup; fake_curl "${ACCESS/eu-west-1\"/\$HOME\"}"
     if "$HELPER" env sandbox > /dev/null 2>&1; then fail "accepted a value with a dollar"; fi
+}
+
+refused() { # description; access response
+    setup; fake_curl "$2"
+    if "$HELPER" env sandbox > "$WORK/out" 2>/dev/null; then fail "accepted $1"; fi
+    [ ! -s "$WORK/out" ] || fail "printed output for $1"
+}
+
+test_env_refuses_unsafe_keys_and_values() {
+    refused "a key with a space" "${ACCESS/\"AWS_REGION\"/\"AWS REGION\"}"
+    refused "a key with a newline" "${ACCESS/\"AWS_REGION\"/\"AWS_REGION\\nX\"}"
+    refused "a quote value" "${ACCESS/eu-west-1\"/eu\\\"west\"}"
+    refused "a backslash value" "${ACCESS/eu-west-1\"/eu\\\\west\"}"
+    refused "a trailing newline value" "${ACCESS/eu-west-1\"/eu-west-1\\n\"}"
+    refused "a null value" "${ACCESS/\"AWS_REGION\":\"eu-west-1\"/\"AWS_REGION\":null}"
+}
+
+test_pending_uploads_fails_when_rclone_fails() {
+    setup
+    printf '#!/bin/bash\nexit 1\n' > "$WORK/bin/rclone"; chmod +x "$WORK/bin/rclone"
+    if "$HELPER" pending-uploads > /dev/null 2>&1; then fail "pending-uploads succeeded when rclone failed"; fi
 }
 
 test_mount_runs_rclone_with_the_spike_flags() {
