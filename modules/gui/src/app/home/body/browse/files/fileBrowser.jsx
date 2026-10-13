@@ -22,12 +22,10 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
-import {isDataPath, splitByOwner, withDataNode} from './dataPaths'
+import {isDataPath, isDataRoot, splitByOwner, withDataNode} from './dataPaths'
 import styles from './fileBrowser.module.css'
 import {FileTree} from './fileTree'
 import {UserFilesMonitor} from './userFilesMonitor'
-
-const DATA_PATH = 'data'
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -376,7 +374,7 @@ class _FileBrowser extends React.Component {
     }
 
     renderName(key, node) {
-        return FileTree.toStringPath(FileTree.getPath(node)) === DATA_PATH
+        return isDataRoot(FileTree.toStringPath(FileTree.getPath(node)))
             ? msg('browse.data.label')
             : key
     }
@@ -386,9 +384,9 @@ class _FileBrowser extends React.Component {
         const {files, directories} = this.countSelectedItems()
         const nothingSelected = files === 0 && directories === 0
         const oneFileSelected = files === 1 && directories === 0
-        const {files: selectedFiles} = FileTree.getSelectedItems(tree)
+        const {files: selectedFiles, directories: selectedDirectories} = FileTree.getSelectedItems(tree)
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const dataSelected = directories.some(directory => FileTree.toStringPath(directory) === DATA_PATH)
+        const dataSelected = selectedDirectories.some(directory => isDataRoot(FileTree.toStringPath(directory)))
         const downloadUrl = selectedFile && this.downloadUrl(FileTree.toStringPath(selectedFile))
         const downloadFilename = selectedFiles.length === 1 && selectedFile.at(-1)
         return (

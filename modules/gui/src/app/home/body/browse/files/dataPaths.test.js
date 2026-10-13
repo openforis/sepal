@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {isDataPath, splitByOwner, withDataNode} from './dataPaths'
+import {isDataPath, isDataRoot, splitByOwner, withDataNode} from './dataPaths'
 
 describe('isDataPath', () => {
     it('is true for the Data folder and everything below it', () => {
@@ -9,6 +9,16 @@ describe('isDataPath', () => {
 
     it('is false for other paths, even with a similar name', () => {
         expect([isDataPath(''), isDataPath('datax'), isDataPath('a/data')]).toEqual([false, false, false])
+    })
+})
+
+describe('isDataRoot', () => {
+    it('is true only for the Data folder itself', () => {
+        expect(isDataRoot('data')).toBe(true)
+    })
+
+    it('is false for paths below Data and for similar names', () => {
+        expect([isDataRoot('data/x'), isDataRoot(''), isDataRoot('datax'), isDataRoot('a/data')]).toEqual([false, false, false, false])
     })
 })
 

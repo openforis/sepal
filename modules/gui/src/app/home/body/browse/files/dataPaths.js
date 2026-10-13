@@ -1,6 +1,9 @@
 export const isDataPath = path =>
     path === 'data' || path.startsWith('data/')
 
+export const isDataRoot = path =>
+    path === 'data'
+
 // The home listing always shows Data, which user-files does not list.
 export const withDataNode = (path, items) =>
     path === ''
