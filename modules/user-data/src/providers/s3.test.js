@@ -100,6 +100,35 @@ describe('erase', () => {
     })
 })
 
+describe('list', () => {
+    const now = new Date()
+
+    it('decodes url-encoded keys and prefixes when the listing says it encoded them', async () => {
+        const s3 = fakeS3({
+            encodingType: 'url',
+            objects: [
+                {Key: 'users/alice/growth_10%25.csv', Size: 1, LastModified: now},
+                {Key: 'users/alice/a+b%2Bc.txt', Size: 1, LastModified: now}
+            ],
+            commonPrefixes: ['users/alice/my%20dir/']
+        })
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        const entries = await provider.list(attachment('alice'), '')
+
+        expect(entries.map(({name}) => name).sort()).toEqual(['a b+c.txt', 'growth_10%.csv', 'my dir'])
+    })
+
+    it('uses keys as they are when the listing is not encoded', async () => {
+        const s3 = fakeS3({objects: [{Key: 'users/alice/growth_10%25.csv', Size: 1, LastModified: now}]})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        const entries = await provider.list(attachment('alice'), '')
+
+        expect(entries.map(({name}) => name)).toEqual(['growth_10%25.csv'])
+    })
+})
+
 describe('remove', () => {
     it('removes a file and leaves a folder of the same name', async () => {
         const s3 = fakeS3({objects: [{Key: 'users/alice/x'}, {Key: 'users/alice/x/y'}]})
@@ -402,7 +431,7 @@ const fakeClock = () => {
     }
 }
 
-const fakeS3 = ({headFails = false, objects = []} = {}) => {
+const fakeS3 = ({headFails = false, objects = [], encodingType, commonPrefixes} = {}) => {
     const s3 = {
         requests: [],
         sent: [],
@@ -413,7 +442,12 @@ const fakeS3 = ({headFails = false, objects = []} = {}) => {
             if (name === 'ListObjectsV2Command') {
                 const {Prefix = '', MaxKeys} = command.input
                 const matching = objects.filter(({Key}) => Key.startsWith(Prefix))
-                return {Contents: MaxKeys ? matching.slice(0, MaxKeys) : matching, IsTruncated: false}
+                return {
+                    Contents: MaxKeys ? matching.slice(0, MaxKeys) : matching,
+                    CommonPrefixes: commonPrefixes?.map(Prefix => ({Prefix})),
+                    EncodingType: encodingType,
+                    IsTruncated: false
+                }
             }
             if (name === 'DeleteObjectsCommand') {
                 s3.deleted.push(...command.input.Delete.Objects.map(({Key}) => Key))

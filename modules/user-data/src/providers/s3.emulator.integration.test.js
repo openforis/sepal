@@ -161,6 +161,23 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
             expect((await provider.list(attachment, '')).map(({name}) => name)).toEqual(['b.txt'])
         })
 
+        it('lists, downloads and removes files whose names need url encoding', async () => {
+            const attachment = attachmentsFor(uniqueUser('enc'))
+            await put(attachment, 'growth_10%.csv', 'pct')
+            await put(attachment, 'a b+c.txt', 'x')
+            await put(attachment, 'my dir/d e%.txt', 'y')
+
+            const root = await provider.list(attachment, '')
+            const {stream} = await provider.download(attachment, 'growth_10%.csv')
+            await provider.remove(attachment, 'my dir')
+
+            expect(sortByName(root).map(({name}) => name)).toEqual(['a b+c.txt', 'growth_10%.csv', 'my dir'])
+            expect(await streamToString(stream)).toBe('pct')
+            expect((await provider.list(attachment, '')).map(({name}) => name).sort()).toEqual(['a b+c.txt', 'growth_10%.csv'])
+            await provider.erase(attachment)
+            expect(await provider.measureUsage(attachment)).toBe(0)
+        })
+
         it('streams a file for download', async () => {
             const attachment = attachmentsFor(uniqueUser('dl'))
             await put(attachment, 'dir/b.txt', 'hello')

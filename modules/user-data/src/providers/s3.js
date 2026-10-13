@@ -247,7 +247,7 @@ export class S3Provider {
         let ContinuationToken
         do {
             const page = await this.#s3.send(new ListObjectsV2Command({Bucket: this.#bucket, ...params, ContinuationToken}))
-            yield page
+            yield page.EncodingType === 'url' ? decodeListing(page) : page
             ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined
         } while (ContinuationToken)
     }
@@ -358,4 +358,17 @@ const requireRelPath = (relPath, {allowRoot = false} = {}) => {
     if (!valid) {
         throw new ClientException(`Not a path inside Data: ${relPath}`)
     }
+}
+
+// Some S3-compatible servers (the dev emulator) url-encode listed names even when the client did not ask for it.
+function decodeListing(page) {
+    return {
+        ...page,
+        Contents: page.Contents?.map(object => ({...object, Key: decodeName(object.Key)})),
+        CommonPrefixes: page.CommonPrefixes?.map(({Prefix}) => ({Prefix: decodeName(Prefix)}))
+    }
+}
+
+function decodeName(name) {
+    return decodeURIComponent(name.replaceAll('+', ' '))
 }
