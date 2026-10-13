@@ -1,6 +1,6 @@
 // Typed errors thrown when a session is refused for budget reasons — one per limit.
 //
-// All three are ClientExceptions carrying statusCode 403, so the shared httpServer answers
+// All four are ClientExceptions carrying statusCode 403, so the shared httpServer answers
 // `POST /sessions/instance-type/:type` with a 403 rather than the default 500 — a refusal is the
 // user's problem to act on, not a server fault.
 
@@ -24,12 +24,16 @@ const StorageBudgetExceeded = budgetException(
 const StorageQuotaExceeded = budgetException(
     'StorageQuotaExceeded', 'Storage quota exceeded', 'error.budget.storageQuotaExceeded')
 
+const DataQuotaExceeded = budgetException(
+    'DataQuotaExceeded', 'Data quota exceeded', 'error.budget.dataQuotaExceeded')
+
 // reason → error. The reason strings are the budget module's wire contract
 // (modules/budget/src/budgetManager.js `Reason`); keep both sides in lockstep.
 const ERROR_BY_REASON = {
     INSTANCE_BUDGET: InstanceBudgetExceeded,
     STORAGE_BUDGET: StorageBudgetExceeded,
     STORAGE_QUOTA: StorageQuotaExceeded,
+    DATA_QUOTA: DataQuotaExceeded,
 }
 
 // budgetErrorFor — an unknown/absent reason still yields an error: the budget module said the user
@@ -37,4 +41,4 @@ const ERROR_BY_REASON = {
 const budgetErrorFor = (reason, username) =>
     new (ERROR_BY_REASON[reason] ?? InstanceBudgetExceeded)(username)
 
-export {budgetErrorFor, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded}
+export {budgetErrorFor, DataQuotaExceeded, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded}

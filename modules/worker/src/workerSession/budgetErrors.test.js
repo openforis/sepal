@@ -3,6 +3,7 @@
 
 import {
     budgetErrorFor,
+    DataQuotaExceeded,
     InstanceBudgetExceeded,
     StorageBudgetExceeded,
     StorageQuotaExceeded,
@@ -34,7 +35,7 @@ test('StorageQuotaExceeded is an Error subclass carrying name + username', () =>
 
 // The status code is the whole point of the typed errors on the /sessions surface: without it the
 // shared httpServer defaults to 500 and an over-budget user looks like a server fault.
-test.each([InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded])(
+test.each([InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded, DataQuotaExceeded])(
     '%p carries statusCode 403 and a user message', Err => {
         const err = new Err('bob')
         expect(err.statusCode).toBe(403)
@@ -42,10 +43,19 @@ test.each([InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded])
     })
 
 describe('budgetErrorFor', () => {
+    test('maps DATA_QUOTA to a DataQuotaExceeded refusal with its own message key', () => {
+        const error = budgetErrorFor('DATA_QUOTA', 'alice')
+
+        expect(error).toBeInstanceOf(DataQuotaExceeded)
+        expect(error.statusCode).toBe(403)
+        expect(error.userMessage.key).toBe('error.budget.dataQuotaExceeded')
+    })
+
     test.each([
         ['INSTANCE_BUDGET', InstanceBudgetExceeded],
         ['STORAGE_BUDGET', StorageBudgetExceeded],
         ['STORAGE_QUOTA', StorageQuotaExceeded],
+        ['DATA_QUOTA', DataQuotaExceeded],
     ])('%s → %p', (reason, Expected) => {
         const err = budgetErrorFor(reason, 'bob')
         expect(err).toBeInstanceOf(Expected)

@@ -355,6 +355,9 @@
   },
   "error": {
     "badRequest": "Bad request",
+    "budget": {
+      "dataQuotaExceeded": "Your Data is over its quota. Delete files in the Data folder of the file browser, or request a larger Data quota."
+    },
     "internal": "Internal error",
     "notFound": "Not found"
   },
