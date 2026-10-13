@@ -101,6 +101,24 @@ describe('erase', () => {
 })
 
 describe('remove', () => {
+    it('removes a file and leaves a folder of the same name', async () => {
+        const s3 = fakeS3({objects: [{Key: 'users/alice/x'}, {Key: 'users/alice/x/y'}]})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        await provider.remove(attachment('alice'), 'x')
+
+        expect(s3.deleted).toEqual(['users/alice/x'])
+    })
+
+    it('removes a folder and everything under it, and not a sibling sharing its name as a prefix', async () => {
+        const s3 = fakeS3({objects: [{Key: 'users/alice/x/y'}, {Key: 'users/alice/x/z/w'}, {Key: 'users/alice/xy'}]})
+        const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
+
+        await provider.remove(attachment('alice'), 'x')
+
+        expect(s3.deleted).toEqual(['users/alice/x/y', 'users/alice/x/z/w'])
+    })
+
     it.each(['../x', '', 'a//b', 'a\\b', '/a', 'a/../b', 'a\0b'])('refuses the path %j without any request', async relPath => {
         const s3 = fakeS3({objects: [{Key: 'users/alice/a', LastModified: new Date()}]})
         const provider = new S3Provider({s3, bucket: BUCKET, region: REGION})
@@ -393,7 +411,9 @@ const fakeS3 = ({headFails = false, objects = []} = {}) => {
             const name = command.constructor.name
             s3.sent.push(name)
             if (name === 'ListObjectsV2Command') {
-                return {Contents: objects, IsTruncated: false}
+                const {Prefix = '', MaxKeys} = command.input
+                const matching = objects.filter(({Key}) => Key.startsWith(Prefix))
+                return {Contents: MaxKeys ? matching.slice(0, MaxKeys) : matching, IsTruncated: false}
             }
             if (name === 'DeleteObjectsCommand') {
                 s3.deleted.push(...command.input.Delete.Objects.map(({Key}) => Key))

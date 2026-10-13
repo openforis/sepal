@@ -30,7 +30,8 @@ npm run test:aws                                           # AWS isolation suite
 ## Usage, quota and events
 
 MySQL database `user_data`, table `data_usage` (size and measurement times per user). `Usage` measures a user within
-an hour after a read-write grant marked them dirty, and every user with Data (or measured before) once a day, then
+an hour after a read-write grant marked them dirty, within seconds after a delete in the file browser (debounced per
+user, so a burst of deletes measures once), and every user with Data (or measured before) once a day, then
 publishes `userData.size {username, size}`. Every hourly tick also republishes the last recorded size of every
 known user (no S3 call), so events lost while the broker is down heal within an hour; the first tick runs 60 s
 after start, once the broker connection is up. A failed daily sweep is retried next tick without holding up the
@@ -69,8 +70,11 @@ republishes recent purges daily; a user with no `data_usage` row and nothing sto
 works unchanged. Paths are GUI paths: `data` is the Data root, `data/dir` a folder in it. `{monitor, reset?}`
 polls each path every 10 s and sends `{path, items}` when the listing changed; an invalid path sends
 `{path, error: 'INVALID_PATH'}` once and stops. `{unmonitor}` stops a path and its subpaths for that
-subscription only. `{remove: [paths]}` deletes, marks the usage dirty and re-lists at once. Removing `data`
-itself is refused. `DataBrowser` owns the GUI-path validation; the provider validates again.
+subscription only. `{remove: [paths]}` deletes, has the usage measured and re-lists at once, dropping a listing
+already in flight. Removing `data` itself is refused; removing a name that is both a file and a folder in S3 removes
+the file only. Listings omit entries whose name the GUI could not send back (empty, `.`, `..`, backslash, NUL).
+`DataBrowser` owns the GUI-path validation; the provider validates again. Paths that are not strings are ignored,
+and a message that fails is logged and dropped: one connection carries every user's messages.
 
 ## Credentials
 

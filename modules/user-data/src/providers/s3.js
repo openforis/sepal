@@ -202,13 +202,15 @@ export class S3Provider {
         return {stream: Body, size: ContentLength, contentType: ContentType}
     }
 
-    // Removes the file at relPath, or the folder and everything under it; both when both exist.
+    // Removes the file at relPath, or else the folder and everything under it. S3 can hold a file and a folder of
+    // the same name, which the file browser shows as one entry: one removal never takes both.
     async remove(attachment, relPath) {
         requireUsername(attachment.owner)
         requireRelPath(relPath)
         const key = attachment.location.prefix + relPath
         if (await this.#exists(key)) {
             await this.#deleteKeys([key], relPath)
+            return
         }
         for await (const {Contents = []} of this.#listPages({Prefix: folderPrefix(attachment, relPath)})) {
             await this.#deleteKeys(Contents.map(({Key}) => Key), relPath)

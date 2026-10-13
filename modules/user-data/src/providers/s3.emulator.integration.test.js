@@ -136,6 +136,21 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
             expect(sortByName(await provider.list(attachment, ''))).toEqual([{name: 'dirx', dir: true}])
         })
 
+        it('removes a folder of more objects than one listing page holds', async () => {
+            const attachment = attachmentsFor(uniqueUser('rmmany'))
+            const names = Array.from({length: 1001}, (_, i) => `big/${String(i).padStart(4, '0')}.txt`)
+            for (let i = 0; i < names.length; i += 50) {
+                await Promise.all(names.slice(i, i + 50).map(name => put(attachment, name, 'x')))
+            }
+            const client = await taskClient(provider, attachment)
+            const firstPage = await client.send(new ListObjectsV2Command({Bucket: config.bucket, Prefix: `${attachment.location.prefix}big/`}))
+            expect(firstPage.IsTruncated).toBe(true)
+
+            await provider.remove(attachment, 'big')
+
+            expect(await provider.measureUsage(attachment)).toBe(0)
+        }, 120000)
+
         it('removes a single file', async () => {
             const attachment = attachmentsFor(uniqueUser('rmfile'))
             await put(attachment, 'a.txt', 'x')
