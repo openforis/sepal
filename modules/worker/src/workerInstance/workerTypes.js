@@ -24,7 +24,36 @@ const tmpMounts = ['/tmp:nocopy', '/var/tmp:nocopy', `/home/${USER_HOME_NAME}/tm
 // these to recognize SEPAL worker containers among everything else on a (shared) daemon.
 const WORKER_IMAGE_NAMES = ['sandbox']
 
-const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, links = {}, environment = {}, runCommand = [], waitCommand = []}) => ({
+const DATA_CACHE_VOLUME_PREFIX = 'sepal-data-cache.'
+
+const dataCacheVolumeName = instanceId => `${DATA_CACHE_VOLUME_PREFIX}${instanceId}`
+
+const dataMountDir = (config, instanceId) => `${config.dataMountRoot}/${instanceId}`
+
+// Usernames cannot contain '-', so this never collides with a sandbox's "sandbox.{username}.…" name,
+// yet still has the "sandbox." prefix and ".{instanceId}" suffix the daemon-wide lookups match on.
+const sidecarContainerName = instance => containerName({
+    image: 'sandbox.data-mount',
+    username: instance.reservation.username,
+    sessionId: instance.reservation.sessionId,
+    instanceId: instance.id,
+})
+
+const makeImage = ({
+    name,
+    exposedPorts = [],
+    publishedPorts = {},
+    volumes = {},
+    links = {},
+    environment = {},
+    runCommand = [],
+    waitCommand = [],
+    containerName: nameOf = null,
+    hostConfig = {},
+    networkAlias = true,
+    essential = true,
+    tmpfs = true,
+}) => ({
     name,
     exposedPorts,
     publishedPorts,
@@ -33,16 +62,20 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
     environment,
     runCommand,
     waitCommand,
-    containerName: instance => containerName({
+    hostConfig,
+    networkAlias,
+    essential,
+    tmpfs,
+    containerName: nameOf ?? (instance => containerName({
         image: name,
         username: instance.reservation.username,
         sessionId: instance.reservation.sessionId,
         instanceId: instance.id,
-    }),
+    })),
 })
 
 // publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.
-const createSandboxWorkerType = (instance, config, apiKey) => {
+const createSandboxWorkerType = (instance, config, apiKey, data) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
     const pubKeyPath = `/var/lib/sepal/user/home/${username}/.ssh/id_rsa.pub`
@@ -55,41 +88,88 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
     // this removes — the terminal must not wait for Jupyter.
     const waitPorts = '22'
 
+    const dataEnabled = Boolean(config.dataEnabled)
+
+    const sandbox = makeImage({
+        name: 'sandbox',
+        exposedPorts: [22, 8787, 3838, 8888],
+        publishedPorts,
+        volumes: {
+            [`${config.sepalHostDataDir}/sepal/shiny`]: '/shiny',
+            [`${config.sepalHostDataDir}/sepal/shared`]: `/home/${USER_HOME_NAME}/shared`,
+            [`${config.sepalHostDataDir}/sepal/jupyter/current-kernels`]: '/usr/local/share/jupyter/kernels/',
+            [userHome]: `/home/${USER_HOME_NAME}`,
+            [tmpVolumeName(instance.id)]: tmpMounts,
+            ...(dataEnabled ? {[`${dataMountDir(config, instance.id)}/data`]: `/home/${USER_HOME_NAME}/data:rslave`} : {}),
+        },
+        environment: {
+            USER_PUBLIC_KEY: userPublicKey,
+            SEPAL_API_KEY: apiKey ?? '',
+            SEPAL_HOST: config.sepalHost,
+            CARTODB_BASEMAP_KEY: config.cartoDbBasemapKey ?? '',
+            NVIDIA_VISIBLE_DEVICES: 'all',
+            NVIDIA_DRIVER_CAPABILITIES: 'all',
+            ...(dataEnabled ? {SEPAL_DATA_ENABLED: 'true'} : {}),
+        },
+        runCommand: ['/script/init_container.sh'],
+        waitCommand: ['/script/wait_until_initialized.sh', waitPorts],
+    })
+
+    // The sidecar comes first: its mount has to exist before the sandbox binds it.
     return {
         id: SANDBOX,
-        images: [
-            makeImage({
-                name: 'sandbox',
-                exposedPorts: [22, 8787, 3838, 8888],
-                publishedPorts,
-                volumes: {
-                    [`${config.sepalHostDataDir}/sepal/shiny`]: '/shiny',
-                    [`${config.sepalHostDataDir}/sepal/shared`]: `/home/${USER_HOME_NAME}/shared`,
-                    [`${config.sepalHostDataDir}/sepal/jupyter/current-kernels`]: '/usr/local/share/jupyter/kernels/',
-                    [userHome]: `/home/${USER_HOME_NAME}`,
-                    [tmpVolumeName(instance.id)]: tmpMounts,
-                },
-                environment: {
-                    USER_PUBLIC_KEY: userPublicKey,
-                    SEPAL_API_KEY: apiKey ?? '',
-                    SEPAL_HOST: config.sepalHost,
-                    CARTODB_BASEMAP_KEY: config.cartoDbBasemapKey ?? '',
-                    NVIDIA_VISIBLE_DEVICES: 'all',
-                    NVIDIA_DRIVER_CAPABILITIES: 'all',
-                },
-                runCommand: ['/script/init_container.sh'],
-                waitCommand: ['/script/wait_until_initialized.sh', waitPorts],
-            }),
-        ],
+        images: dataEnabled
+            ? [createDataMountSidecar(instance, config, apiKey, data), sandbox]
+            : [sandbox],
     }
 }
 
-// createWorkerType — throws if workerTypeId is unknown.
-const createWorkerType = (workerTypeId, instance, config, apiKey = null) => {
+// Same image as the sandbox, so it needs no pull of its own. Not part of instance liveness
+// (essential: false): a failed mount must never fail the session.
+const createDataMountSidecar = (instance, config, apiKey, data) => makeImage({
+    name: 'sandbox',
+    containerName: sidecarContainerName,
+    volumes: {
+        [dataMountDir(config, instance.id)]: '/mnt/host:rshared',
+        [dataCacheVolumeName(instance.id)]: '/cache',
+    },
+    environment: {
+        SEPAL_API_KEY: apiKey ?? '',
+        SEPAL_HOST: config.sepalHost,
+        DATA_UID: data?.uid ?? '',
+        DATA_GID: data?.gid ?? '',
+        DATA_CACHE_MAX_SIZE: config.dataCacheMaxSize,
+        DATA_MOUNT_POINT: '/mnt/host/data',
+    },
+    runCommand: ['/usr/local/bin/sepal-data', 'mount'],
+    waitCommand: ['/usr/local/bin/sepal-data', 'wait-mounted', '30'],
+    hostConfig: {
+        CapAdd: ['SYS_ADMIN'],
+        SecurityOpt: ['apparmor:unconfined'],
+        Devices: [{PathOnHost: '/dev/fuse', PathInContainer: '/dev/fuse', CgroupPermissions: 'rwm'}],
+    },
+    networkAlias: false,
+    essential: false,
+    tmpfs: false,
+})
+
+// createWorkerType — throws if workerTypeId is unknown. data is {uid, gid} from DataFolder.prepare, or null.
+const createWorkerType = (workerTypeId, instance, config, apiKey = null, data = null) => {
     if (workerTypeId === SANDBOX) {
-        return createSandboxWorkerType(instance, config, apiKey)
+        return createSandboxWorkerType(instance, config, apiKey, data)
     }
     throw new Error(`No worker type with id: ${workerTypeId}`)
 }
 
-export {createWorkerType, SANDBOX, TMP_VOLUME_PREFIX, tmpVolumeName, USER_HOME_NAME, WORKER_IMAGE_NAMES}
+export {
+    createWorkerType,
+    DATA_CACHE_VOLUME_PREFIX,
+    dataCacheVolumeName,
+    dataMountDir,
+    SANDBOX,
+    sidecarContainerName,
+    TMP_VOLUME_PREFIX,
+    tmpVolumeName,
+    USER_HOME_NAME,
+    WORKER_IMAGE_NAMES,
+}
