@@ -4,7 +4,7 @@ ports=$(echo $1 | tr ";" "\n")
 for port in $ports;
 do
     available=false
-    for i in {1..30}; do
+    for _ in {1..30}; do
         if netstat -ntlp | grep ":$port" >/dev/null 2>&1; then
             available=true
             break

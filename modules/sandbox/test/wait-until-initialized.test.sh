@@ -1,8 +1,11 @@
 #!/bin/bash
-# Tests for wait_until_initialized.sh, with fake netstat and sleep on PATH.
+# Tests for wait_until_initialized.sh, with fake netstat and sleep on PATH. The script sleeps with
+# /bin/sleep, so a copy of it that sleeps with the fake runs instead.
 set -u
 cd "$(dirname "$0")" || exit 1
-SCRIPT=$(realpath ../script/wait_until_initialized.sh)
+SCRIPT=$(mktemp)
+sed 's|/bin/sleep|sleep|' ../script/wait_until_initialized.sh > "$SCRIPT"
+grep -q '/bin/sleep' "$SCRIPT" && { echo "wait-until-initialized: the copy still sleeps"; exit 1; }
 failures=0
 
 fail() { echo "FAIL: $1"; failures=$((failures + 1)); }
