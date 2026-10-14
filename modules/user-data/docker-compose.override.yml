@@ -26,7 +26,8 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
-    image: "pgsty/minio:RELEASE.2026-06-18T00-00-00Z"
+    # MinIO no longer publishes images anonymously, so this is a pinned community build (dev only).
+    image: "pgsty/minio:RELEASE.2026-06-18T00-00-00Z@sha256:dacff8306a6e0a734518533992dbdcca26bc1ca47f77cf47cb9945725f92b29b"
     container_name: s3-emulator
     init: true
     environment:
