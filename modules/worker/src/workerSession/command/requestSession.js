@@ -39,9 +39,10 @@ const budgetVerdict = async (username, {budgetClient, lockedUsers}) => {
             log.warn(`Budget check failed for ${userTag(username)}; falling back to the locked-users set`, error)
         }
     }
+    const exceeded = lockedUsers?.isLocked(username) === true
     return {
-        exceeded: lockedUsers?.isLocked(username) === true,
-        reason: 'INSTANCE_BUDGET',
+        exceeded,
+        reason: (exceeded && lockedUsers.lockReason(username)) || 'INSTANCE_BUDGET',
     }
 }
 

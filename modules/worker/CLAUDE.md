@@ -228,7 +228,8 @@ Instances of any other version are therefore stale, newer ones included, and are
 (`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
 error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configures the base URL.
 The event-fed `lockedUsers` set is only the FALLBACK for when that call fails — it is empty after a
-restart, so it must not be the authoritative gate. It remains what closes an over-budget user's
+restart, so it must not be the authoritative gate. It keeps the limit each event named, so a fallback
+refusal names it too (`INSTANCE_BUDGET` when none was given). It remains what closes an over-budget user's
 running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 
 ## Database Schemas

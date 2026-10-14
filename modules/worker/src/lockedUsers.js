@@ -1,4 +1,4 @@
-// In-memory set of over-budget users, fed level-triggered by the budget module's
+// In-memory set of over-budget users (and the limit each exceeded), fed level-triggered by the budget module's
 // budget.UserBudgetExceeded / budget.UserBudgetCleared events (re-published every enforcement
 // cycle). requestSession asks the budget module for a live verdict and only falls back to
 // isLocked() when that call fails, so this set is the fallback gate, not the authoritative one.
@@ -19,7 +19,8 @@
 // and synchronous throws are both swallowed here, so a misbehaving close can't escape into the
 // message-queue subscriber.
 export const createLockedUsers = ({closeUserSessions}) => {
-    const locked = new Set()
+    // username → the limit the latest Exceeded named (budget's Reason), so a fallback refusal names it too.
+    const locked = new Map()
     // username → the in-flight close promise (present only while a close is running).
     const closing = new Map()
 
@@ -33,8 +34,8 @@ export const createLockedUsers = ({closeUserSessions}) => {
         }
     }
 
-    const onExceeded = ({username}) => {
-        locked.add(username)
+    const onExceeded = ({username, reason}) => {
+        locked.set(username, reason ?? null)
         if (closing.has(username)) {
             return Promise.resolve() // a close is already running for this user — drop
         }
@@ -49,5 +50,7 @@ export const createLockedUsers = ({closeUserSessions}) => {
 
     const isLocked = username => locked.has(username)
 
-    return {onExceeded, onCleared, isLocked}
+    const lockReason = username => locked.get(username) ?? null
+
+    return {onExceeded, onCleared, isLocked, lockReason}
 }

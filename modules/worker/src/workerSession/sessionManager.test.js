@@ -98,6 +98,14 @@ describe('requestSession', () => {
             expect(repo.insert).not.toHaveBeenCalled()
         })
 
+        test('locked in the fallback set → the error of the limit it was locked for', async () => {
+            const lockedUsers = makeLockedUsers(['a'], {a: 'STORAGE_QUOTA'})
+            const {mgr, repo} = build({lockedUsers, budgetClient: unreachable()})
+            await expect(mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}))
+                .rejects.toThrow(StorageQuotaExceeded)
+            expect(repo.insert).not.toHaveBeenCalled()
+        })
+
         test('not locked in the fallback set → session granted (degrade, never block)', async () => {
             const lockedUsers = makeLockedUsers()
             const {mgr, repo} = build({lockedUsers, budgetClient: unreachable()})
@@ -965,11 +973,13 @@ const makeEvents = () => ({
 })
 
 // makeLockedUsers — a fake of the event-fed gate (../lockedUsers.js). `locked` seeds the
-// initially-locked usernames; isLocked is a jest.fn so tests can assert the call.
-const makeLockedUsers = (locked = []) => {
+// initially-locked usernames, `reasons` the limits they were locked for; isLocked is a jest.fn so
+// tests can assert the call.
+const makeLockedUsers = (locked = [], reasons = {}) => {
     const set = new Set(locked)
     return {
         isLocked: jest.fn(username => set.has(username)),
+        lockReason: username => set.has(username) ? reasons[username] ?? null : null,
         onExceeded: jest.fn(({username}) => set.add(username)),
         onCleared: jest.fn(({username}) => set.delete(username)),
     }

@@ -64,6 +64,20 @@ test('re-delivered Cleared for an already-unlocked (or never-locked) user is a n
     expect(lu.isLocked('a')).toBe(false)
 })
 
+test('remembers the limit the latest Exceeded named', () => {
+    const lu = createLockedUsers({closeUserSessions: () => {}})
+    lu.onExceeded({username: 'a', reason: 'STORAGE_QUOTA'})
+    lu.onExceeded({username: 'a', reason: 'DATA_QUOTA'})
+    expect(lu.lockReason('a')).toBe('DATA_QUOTA')
+})
+
+test('has no lock reason for an unlocked user', () => {
+    const lu = createLockedUsers({closeUserSessions: () => {}})
+    lu.onExceeded({username: 'a', reason: 'DATA_QUOTA'})
+    lu.onCleared({username: 'a'})
+    expect(lu.lockReason('a')).toBeNull()
+})
+
 test('isLocked is false for a user that was never mentioned', () => {
     const lu = createLockedUsers({closeUserSessions: () => {}})
     expect(lu.isLocked('nobody')).toBe(false)
