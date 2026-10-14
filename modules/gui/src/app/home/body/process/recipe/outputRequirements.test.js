@@ -164,21 +164,22 @@ describe('a recipe whose output read refuses nothing', () => {
     })
 })
 
+// Classification's Training data button does not say it has no training data; what holds it says so all the same.
 describe('a Classification without training data', () => {
-    it('is marked on its Training data section, and Retrieve and its previews are held, naming that section', () => {
+    it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: NO_TRAINING_DATA}))
 
-        expect(sourceProblems(state)).toEqual({trainingData: MISSING_TRAINING_DATA})
+        expect(sourceProblems(state)).toEqual({})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
         expect(heldSourceStatusOfState(state, recipeOf(state), previewGate(state))).toMatchObject({section: TRAINING_DATA_SECTION})
         expect(retrieveRead(state).output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}])
     })
 
-    it('beside an input lacking a band, is marked in each section', () => {
+    it('beside an input lacking a band, is marked on its input imagery alone', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['elevation'])], {trainingData: NO_TRAINING_DATA}))
 
-        expect(sourceProblems(state)).toEqual({inputImagery: UNAVAILABLE_SUMMARY, trainingData: MISSING_TRAINING_DATA})
+        expect(sourceProblems(state)).toEqual({inputImagery: UNAVAILABLE_SUMMARY})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET'}})
     })
 
@@ -191,6 +192,16 @@ describe('a Classification without training data', () => {
         expect(sourceProblems(state)).toEqual({})
         expect(retrieve(state)).toEqual({available: true, gate: null})
         expect(previewGate(state)).toBeNull()
+    })
+})
+
+describe('a Regression without training data', () => {
+    it('is marked on its Training data section, and Retrieve and its previews are held, naming that section', () => {
+        const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: {dataSets: []}}), {type: 'REGRESSION'})
+
+        expect(sourceProblems(state)).toEqual({trainingData: MISSING_TRAINING_DATA})
+        expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
+        expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
     })
 })
 
@@ -284,9 +295,9 @@ const modelOf = (images, model = {}) => ({
 
 const NO_TRAINING_DATA = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: []}]}
 
-const sessionWith = (model, {assets = {}} = {}) => ({
+const sessionWith = (model, {assets = {}, type = 'CLASSIFICATION'} = {}) => ({
     process: {
-        loadedRecipes: {[ID]: {id: ID, type: 'CLASSIFICATION', model}, [MOSAIC.id]: MOSAIC},
+        loadedRecipes: {[ID]: {id: ID, type, model}, [MOSAIC.id]: MOSAIC},
         recipes: [{id: ID, name: 'Land cover'}, {id: MOSAIC.id, name: 'Covariates'}],
         recipeListing: {checkedAt: Date.now()},
         assetEvidence: {generation: 0, assets}

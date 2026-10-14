@@ -1133,7 +1133,7 @@ const regressionOf = ({trainingRecipe} = {}) => ({
         inputImagery: {images: [COVARIATES_IMAGE]},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
-            : [{type: 'EE_TABLE', referenceData: []}]}
+            : [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, value: 112.4}]}]}
     }
 })
 

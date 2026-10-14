@@ -491,6 +491,48 @@ describe('exporting a recipe over a Classification without training data', () =>
     })
 })
 
+// Regression without training data cannot run, nor can a recipe whose image builds it.
+describe('exporting a Regression without training data', () => {
+    const regression = referenceData => ({
+        id: 'regression-1',
+        type: 'REGRESSION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+            trainingData: {dataSets: [{type: 'EE_TABLE', eeTable: 'users/x/biomass_plots', valueColumn: 'agb', referenceData}]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const remapping = {
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'regression-1'}]},
+            legend: {entries: [{value: 1, constraints: [{image: 'r-1', band: 'regression', operator: '>', value: 150}]}]}
+        }
+    }
+    const PLOTS = [{x: 1, y: 1, value: 212.4}, {x: 2, y: 2, value: 87.9}]
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it.each([
+        ['itself', () => regression([]), ['regression']],
+        ['a Remapping of its predictions', () => remapping, ['class']]
+    ])('fails the export of %s, saying why', async (_case, recipeOf, bands) => {
+        state.catalogue = {'regression-1': regression([])}
+
+        await expect(submit({recipe: recipeOf(), bands})).rejects.toThrow(/cannot run: NO_TRAINING_DATA$/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('exports a Remapping of its predictions once a data set stores points', async () => {
+        state.catalogue = {'regression-1': regression(PLOTS)}
+
+        await submit({recipe: remapping, bands: ['class']})
+    })
+})
+
 describe('exporting a Masking whose mask cannot be had', () => {
     it('fails the export of one selecting no mask, as incomplete', async () => {
         const recipe = masking({primary: {type: 'ASSET', id: MASK_ASSET}, mask: null})

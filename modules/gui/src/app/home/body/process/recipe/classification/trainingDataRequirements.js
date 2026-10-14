@@ -2,10 +2,10 @@ import {NO_TRAINING_DATA} from '#sepal/recipe/output/diagnostic'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 
-// What Classification needs of its training data, as its shared output declaration refuses it
-// (lib/js/shared/src/recipe/type/classification.js): a classifier that is trained has something to train on. The
-// output read judges it (sourceRequirements.js), so the Training data section and the operations over the output say
-// what that read establishes, of the training data as a whole.
+// What Classification and Regression need of their training data, as their shared output declarations refuse it
+// (lib/js/shared/src/recipe/trainingData.js): a classifier that is trained has something to train on. The output read
+// judges it (sourceRequirements.js), so the Training data section and the operations over the output say what that read
+// establishes, of the training data as a whole.
 
 export const TRAINING_DATA = {id: 'trainingData', label: 'process.classification.panel.trainingData.button'}
 
@@ -26,5 +26,10 @@ export const trainingDataRequirements = [
         operations: [IMAGE_OUTPUT]
     }
 ]
+
+// Classification's, whose TRN button does not say that it has no training data: its layer, Retrieve and every recipe
+// over it still do, as they hold it. Regression's TRN does say it.
+export const unmarkedTrainingDataRequirements = trainingDataRequirements
+    .map(declaration => ({...declaration, toolbarMark: false}))
 
 const missingMessage = () => msg('process.classification.panel.trainingData.missing')

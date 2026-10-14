@@ -521,7 +521,10 @@ decides when the answer can be trusted and what it does to the UI.
   never in place of what holds the section back: a requirement of one operation only (the chart, in REF), by what it
   says; and, while nothing holds the section back, one advisory naming each other section whose settings no longer
   suit the source and whose requirements name this section to advise (Sources, in REF), whose own status says why. A diagnosis is said once per section. Toolbar marks
-  count only what holds a section back (REF and Sources alike).
+  count only what holds a section back (REF and Sources alike). While a recipe's wizard sets it up, a section it has
+  not reached is not marked yet (`SectionButton`, `PanelWizard`'s `reached`): a section is reached once its panel has
+  been open, and every section is once the wizard is done. Only the toolbar mark waits; what holds the section back
+  holds the recipe all along, and a panel says what it says once open.
 - **Input feedback** (`sourceInputFeedback.jsx`, `inputFeedback.js`). Inside REF, the section's status is said on the
   input its source is selected in, which the section's declaration names (`input`: the asset or recipe input), as that input's
   field validation rather than messages of its own. What holds the section back is the input's error, with every
@@ -809,13 +812,15 @@ rule today:
 | --- | --- | --- |
 | Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
 | GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
-| GUI-only execution rule | Regression's training-data layer guard (`dataSets.length`); at-least-one-input layer guards (Classification family, Stack, Band Math, Remapping); Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
+| GUI-only execution rule | at-least-one-input layer guards (Classification family, Stack, Band Math, Remapping); Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
 | Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
 | Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
 | Presentation policy, not validity | the collecting UI's two-class safeguard on the Classification layer | Stays a GUI rule over the editor's state. It is not readiness. |
 
-"Has training data" is a configuration requirement of Classification for `IMAGE_OUTPUT`, not a checklist item.
+"Has training data" is a configuration requirement of Classification and Regression for `IMAGE_OUTPUT`, not a
+checklist item. Both declare it through `trainingDataRequirement` (`lib/js/shared/src/recipe/trainingData.js`), each
+with its own condition, over one `noTrainingData` predicate.
 
 A **configuration requirement** is part of the type's definition:
 
@@ -826,10 +831,12 @@ configurationRequirements: [
 ```
 
 It reads only the recipe's own model: no input, record or evidence. It returns located findings or none, and it is
-evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Two are
-declared:
+evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Three
+are declared:
 - Classification's `NO_TRAINING_DATA`, for trained classifiers (`requiresTraining`, `noTrainingData`). The
   Classification stays described.
+- Regression's `NO_TRAINING_DATA`, whatever its classifier (`noTrainingData`): its execution trains the classifier
+  configured, and uses no supplied tree as given. The Regression stays described.
 - Masking's `MISSING_ROLE` at `['model', 'imageMask']` when no mask is selected. The Masking is refused as incomplete,
   not turned into a pass-through recipe. Its MSK section says "Select a mask" (`maskRequirements.js`).
 
@@ -913,7 +920,10 @@ One read answers every consumer, so they cannot disagree:
 - **Marks.** Output declarations (`sourceRequirements.js`) read the findings this recipe owns, from description and
   readiness alike, and mark its item and section. A finding owned upstream marks nothing on a dependent; the
   dependent's held status names the owning recipe (`refusedBy`). Readiness's `UNAVAILABLE` and `NEEDS_EVIDENCE` add no
-  mark, and leave definitive missing-source marks as they are.
+  mark, and leave definitive missing-source marks as they are. A declaration may leave its section's toolbar button
+  unmarked (`toolbarMark: false`), a presentation choice: its finding still holds the operations, which still name the
+  section, and the section's other declarations still mark it. Classification's `NO_TRAINING_DATA` is declared so
+  (`unmarkedTrainingDataRequirements`); Regression's is not.
 - **Drafts.** An editor's candidate (`outputCandidate.js`) is read through the same rules, apart from the applied
   recipe. Its findings guide the panel and its Apply, and never change the applied recipe's availability. Form field
   rules stay entry-level.
@@ -973,6 +983,10 @@ or unavailable is never dropped.
 - The Classification layer's `canClassify` and the family's layer guards become redundant with the read, and go once
   their rules are shared. The collecting safeguard stays.
 - Saved recipes keep their model: readiness reads configuration and evidence, and stores nothing.
+- A Regression whose data sets store no point, and read none from another recipe, cannot run, and its TRN section is
+  marked. Before, its own layer was withheld only when it had no data set at all, and an empty one - an Earth Engine
+  table read as empty, a sampled image with no samples - was drawn, retrieved and exported until Earth Engine failed
+  to train.
 
 #### First packet (implemented)
 
@@ -1002,6 +1016,20 @@ and recovery. It does not migrate every outstanding rule.
      - a `RECIPE` training set staying unknown;
      - a refused candidate leaving the applied recipe available;
      - an unclassified role.
+
+#### Regression training data (implemented)
+
+- **Shared.** `trainingData.js` holds `noTrainingData` and `trainingDataRequirement`. Classification uses them with
+  `requiresTraining`; Regression uses `noTrainingData` alone. A `RECIPE` data set counts as training data, its points
+  unknown until execution reads them. Every other data set - an Earth Engine table, image samples - runs on the points
+  it stores, so none stored is none at all. Whether enough points survive masking, or lie within the imagery, is not
+  judged.
+- **GUI.** Regression declares `trainingDataRequirements` beside `inputImageryRequirements`, its TRN button is a
+  `SectionButton` saying "Add training data", and its layer's `dataSets.length` guard is gone: the output read withholds
+  the layer. The data set editor keeps its own draft rules (a name, a table or image, reference data), which never
+  change the applied recipe's readiness; the data set list's Apply stays held while it lists no data set.
+- **Tests.** `regression.test.js` (shared), `trainingDataReadiness.test.jsx` (TRN, layer and Retrieve agreeing, a
+  Remapping of the predictions, a reloaded table cancelled and applied), `imageAssetExport.test.js`.
 
 **Recorded follow-ups:**
 - the `TRAINING_DATA` and geometry operations;

@@ -870,7 +870,7 @@ const REGRESSION = {
     type: 'REGRESSION',
     model: {
         inputImagery: {images: [MODEL_IMAGERY]},
-        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: []}]}
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, value: 112.4}]}]}
     }
 }
 

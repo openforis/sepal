@@ -53,7 +53,7 @@ class _RegressionToolbar extends React.Component {
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
                         tooltip={msg('process.classification.panel.trainingData.tooltip')}

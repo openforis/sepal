@@ -96,7 +96,8 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // And requirements over its configuration that its own output read judges - what the type's shared declaration refuses
 // its configuration for, over what its sources are described to provide:
 //
-//   {id, section, requirement: {id, describe}, outputDiagnostics: {codes, itemOf}, editor, summary, operations}
+//   {id, section, requirement: {id, describe}, outputDiagnostics: {codes, itemOf}, editor, summary, operations,
+//    toolbarMark}
 //
 // `codes` are the refusals of the recipe's IMAGE_OUTPUT it states. `references`, where a declaration names any, are the
 // roles of the recipe's own declared edges whose source is found gone: the recipe the edge names, where its own read is
@@ -112,7 +113,9 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // candidate(recipe, model)}, `input` the name of the panel's form input or a function of a finding and the panel's values
 // naming one, with `describe(findings, values)` - binds the panel editing one item, judged before it is applied by the same refusals of
 // the recipe its candidate builds from that item alone (outputCandidate.js). The output read lies below this: it never
-// asks what these say.
+// asks what these say. `toolbarMark: false` is presentation alone: what the declaration finds holds its operations and
+// is said wherever they are held, but its section's toolbar button does not say it (selectedSourceStatus.js), while
+// what other declarations of the section find still does.
 //
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the

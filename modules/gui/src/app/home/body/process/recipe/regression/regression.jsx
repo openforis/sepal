@@ -9,6 +9,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
+import {trainingDataRequirements} from '../classification/trainingDataRequirements'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {RegressionToolbar} from './panels/regressionToolbar'
@@ -67,5 +68,5 @@ export default () => ({
     },
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: inputImageryRequirements
+    sourceRequirements: [...inputImageryRequirements, ...trainingDataRequirements]
 })

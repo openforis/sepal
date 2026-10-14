@@ -12,6 +12,7 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 - [Band Math](band-math.md)
 - [Stack](stack.md)
 - [Remapping](remapping.md)
+- [Regression](regression.md)
 - [Planet Mosaic](planet-mosaic.md)
 - [BAYTS Historical](bayts-historical.md)
 - [BAYTS Alerts](bayts-alerts.md)

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
-import {noTrainingData, requiresTraining} from '#sepal/recipe/type/classification'
+import {noTrainingData} from '#sepal/recipe/trainingData'
+import {requiresTraining} from '#sepal/recipe/type/classification'
 import {removeInputImage} from '~/app/home/body/process/inputImages'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'

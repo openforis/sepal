@@ -13,8 +13,8 @@ import {initStore} from '~/store'
 // A Classification whose classifier is trained, saved without training data, and the recipes whose running builds its
 // image: a Stack that a Class Change selects as both its images, a Remapping, and a Masking by it and of it. What the
 // Classification's configuration lacks keeps every one of them from running, whether or not its description reads the
-// Classification, and is said where it can be repaired (#sepal/recipe/output/readiness). A Stack layer on the Class
-// Change's map is taken away while it holds, and drawn again once training data is added. What is not yet observed is
+// Classification, and is said where the operations it holds are (#sepal/recipe/output/readiness). A Stack layer on the
+// Class Change's map is taken away while it holds, and drawn again once training data is added. What is not yet observed is
 // waited for, never found; what an asset is found to lack goes once it is observed again holding it; a finding settles
 // what is watched, while an editor's explanation reads the rest; and an asset found missing is said as that, finding
 // nothing of a configuration. Over a real store, source runtime and recipe types;
@@ -111,10 +111,10 @@ afterEach(async () => {
 })
 
 describe('a Classification without training data', () => {
-    it('is marked on its Training data section, holding its own Retrieve and previews', async () => {
+    it('holds its own Retrieve and previews, naming its Training data section, which its toolbar leaves unmarked', async () => {
         await onChangeMap()
 
-        expect(sectionProblems(CLASSIFICATION)).toEqual({trainingData: 'process.classification.panel.trainingData.missing'})
+        expect(sectionProblems(CLASSIFICATION)).toEqual({})
         expect(retrieveAvailable(CLASSIFICATION)).toBe(false)
         expect(previewGate(CLASSIFICATION)).toMatchObject({withdraw: true, section: 'process.classification.panel.trainingData.button'})
     })

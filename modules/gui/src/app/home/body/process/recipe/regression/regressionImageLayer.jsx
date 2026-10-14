@@ -9,7 +9,6 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {hasTrainingData} from './regressionRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -54,7 +53,7 @@ class _RegressionImageLayer extends React.Component {
     canRender() {
         const {recipe} = this.props
         const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length && hasTrainingData(recipe)
+        return inputImagery.length
     }
 }
 
