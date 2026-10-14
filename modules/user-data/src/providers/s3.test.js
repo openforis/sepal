@@ -312,7 +312,7 @@ describe('grantAccess', () => {
         expect(access.rclone).toEqual({
             type: 's3',
             root: `${BUCKET}/users/alice`,
-            options: {provider: 'AWS', region: REGION, env_auth: 'true', no_check_bucket: 'true'}
+            options: {provider: 'AWS', region: REGION, env_auth: 'true', no_check_bucket: 'true', directory_markers: 'true'}
         })
         expect(access.env).toMatchObject({
             AWS_CONTAINER_CREDENTIALS_FULL_URI: CREDENTIALS_URL,
@@ -343,6 +343,7 @@ describe('grantAccess', () => {
             region: REGION,
             env_auth: 'false',
             no_check_bucket: 'true',
+            directory_markers: 'true',
             access_key_id: issued.AccessKeyId,
             secret_access_key: issued.SecretAccessKey,
             session_token: issued.SessionToken
@@ -361,6 +362,14 @@ describe('grantAccess', () => {
 
         expect(sts.requests).toHaveLength(2)
         expect(access.rclone.options.access_key_id).toBe(sts.issued[1].AccessKeyId)
+    })
+
+    it.each(['sandbox', 'mount', 'task'])('has rclone keep empty folders, as directory markers, for purpose %s', async purpose => {
+        const provider = awsProvider({sts: fakeSts()})
+
+        const {rclone} = await provider.grantAccess(attachment('alice'), request({purpose}))
+
+        expect(rclone.options.directory_markers).toBe('true')
     })
 
     it.each([undefined, 'readonly'])('refuses the unknown mode %s without a role session', async mode => {

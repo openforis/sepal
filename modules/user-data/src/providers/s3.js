@@ -297,10 +297,12 @@ export class S3Provider {
         }
     }
 
+    // S3 has no folders: directory markers (zero-byte `name/` objects) keep a folder made in the mount while empty.
     #rcloneOptions(envAuth) {
+        const common = {region: this.#region, env_auth: envAuth, no_check_bucket: 'true', directory_markers: 'true'}
         return this.#emulator
-            ? {provider: 'Other', endpoint: this.#emulator.endpoint, region: this.#region, env_auth: envAuth, no_check_bucket: 'true'}
-            : {provider: 'AWS', region: this.#region, env_auth: envAuth, no_check_bucket: 'true'}
+            ? {provider: 'Other', endpoint: this.#emulator.endpoint, ...common}
+            : {provider: 'AWS', ...common}
     }
 
     // GDAL takes the endpoint as host:port plus separate flags; the AWS CLI and SDKs take the URL.

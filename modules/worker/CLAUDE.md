@@ -146,7 +146,9 @@ On AWS the volume lives on local disk, never on EFS:
 ## Data mount
 Each session mounts the user's Data (the `user-data` attachment) at `~/data`. Settings: `DATA_FLUSH_TIMEOUT_SECONDS`
 (600, how long a release waits for uploads), `DATA_MOUNT_ROOT` (`/var/lib/sepal/data-mounts`, holds `{instanceId}/`
-per instance), `DATA_CACHE_MAX_SIZE` (`20G`, rclone cache per sandbox).
+per instance), `DATA_CACHE_MAX_SIZE` (`20G`, rclone cache per sandbox). The S3 options, including the directory
+markers that keep an empty folder, come from user-data's access response; `sepal-data mount` adds only the mount
+and cache flags.
 
 **Rollout requirements.** The worker host's `/` must be a shared mount (systemd hosts mount it so), or the
 sidecar's `rshared` bind cannot propagate the mount to the sandbox and the unmount helper cannot detach it;
