@@ -1,7 +1,7 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -10,6 +10,9 @@ import {Panel} from '~/widget/panel/panel'
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './source.module.css'
+
+// A reference not yet selected is a recipe to select.
+const NEW_REFERENCE_KIND = 'RECIPE_REF'
 
 const fields = {
     section: new Form.Field()
@@ -49,12 +52,13 @@ class _Source extends React.Component {
 
     renderSource() {
         const {inputs} = this.props
-        const labelButtons = [
-            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
-        ]
-        return inputs.section.value === 'ASSET'
-            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
-            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+        return (
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_REFERENCE_KIND} onChange={this.clearSource}>
+                {({recipe, labelButtons}) => recipe
+                    ? <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+                    : <AssetSection inputs={inputs} labelButtons={labelButtons}/>}
+            </SourceKind>
+        )
     }
 
     // A source of the other type starts over: nothing selected or configured for the previous one carries across.
@@ -70,10 +74,9 @@ class _Source extends React.Component {
 // the source - its bands, base bands, dates, templates - is evidence read from the source while the recipe
 // is open, never written here; a copy an older GUI saved beside the reference is left as it is until the
 // selection is applied again, and dropped then, because it described a source that may no longer be this.
-// Nothing selected yet is a recipe to select.
 const modelToValues = ({id, type, dateFormat}) => {
     const values = {
-        section: type || 'RECIPE_REF',
+        section: type,
         dateFormat
     }
     switch (type) {

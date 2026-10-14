@@ -1,7 +1,7 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -10,6 +10,9 @@ import {Panel} from '~/widget/panel/panel'
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
+
+// A reference not yet selected is a recipe to select.
+const NEW_REFERENCE_KIND = 'RECIPE_REF'
 
 const fields = {
     section: new Form.Field()
@@ -46,19 +49,19 @@ class _Reference extends React.Component {
     // only the kind shown is applied.
     renderSource() {
         const {inputs} = this.props
-        const labelButtons = [
-            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF'/>
-        ]
-        return inputs.section.value === 'ASSET'
-            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
-            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+        return (
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_REFERENCE_KIND}>
+                {({recipe, labelButtons}) => recipe
+                    ? <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+                    : <AssetSection inputs={inputs} labelButtons={labelButtons}/>}
+            </SourceKind>
+        )
     }
 }
 
-// Nothing selected yet is a recipe to select.
 const modelToValues = ({id, type, dateFormat}) => {
     const values = {
-        section: type || 'RECIPE_REF',
+        section: type,
         dateFormat
     }
     switch (type) {

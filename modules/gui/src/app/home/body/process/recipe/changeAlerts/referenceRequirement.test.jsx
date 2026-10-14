@@ -10,6 +10,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import lookStyles from '~/style/look.module.css'
 import widgetStyles from '~/widget/widget.module.css'
 
 // Whether Change Alerts' reference authorizes Retrieve, composed as its editor composes it: the evidence lifecycle
@@ -701,6 +702,8 @@ describe('the kind of a reference chosen in REF', () => {
 
         expect(field(RECIPE_INPUT)).not.toBeNull()
         expect(field(ASSET_INPUT)).toBeNull()
+        expect(panelButton('process.sourceType.RECIPE').classList.contains(lookStyles.highlight)).toBe(true)
+        expect(panelButton('process.sourceType.ASSET').classList.contains(lookStyles.highlight)).toBe(false)
         expect(panelButton('button.apply')).toBeUndefined()
     })
 

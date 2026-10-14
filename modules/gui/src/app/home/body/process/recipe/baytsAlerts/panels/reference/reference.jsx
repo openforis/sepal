@@ -1,7 +1,7 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -10,6 +10,9 @@ import {Panel} from '~/widget/panel/panel'
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
+
+// A reference not yet selected is a recipe to select.
+const NEW_REFERENCE_KIND = 'RECIPE_REF'
 
 const fields = {
     section: new Form.Field()
@@ -46,12 +49,13 @@ class _Reference extends React.Component {
 
     renderSource() {
         const {inputs} = this.props
-        const labelButtons = [
-            <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
-        ]
-        return inputs.section.value === 'ASSET'
-            ? <AssetSection inputs={inputs} labelButtons={labelButtons}/>
-            : <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+        return (
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_REFERENCE_KIND} onChange={this.clearSource}>
+                {({recipe, labelButtons}) => recipe
+                    ? <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+                    : <AssetSection inputs={inputs} labelButtons={labelButtons}/>}
+            </SourceKind>
+        )
     }
 
     // A source of the other type starts over: nothing selected for the previous one carries across.
@@ -64,10 +68,9 @@ class _Reference extends React.Component {
 
 // Only the selection. What the statistics hold, and the options they were built with, are read from the source while
 // the recipe is shown (referenceObservation.js); a description an older GUI saved beside the selection - its bands,
-// dates and visualizations - is read by nothing, and is dropped once the reference is applied again. Nothing selected
-// yet is a recipe to select.
+// dates and visualizations - is read by nothing, and is dropped once the reference is applied again.
 const modelToValues = ({id, type}) => {
-    const values = {section: type || 'RECIPE_REF'}
+    const values = {section: type}
     switch (type) {
         case 'RECIPE_REF':
             return {...values, recipe: id}

@@ -103,8 +103,4 @@ describe('sources with nothing to restore', () => {
         expect(modelToValues(model).visualizations).toBeUndefined()
         expect(valuesToModel(modelToValues(model)).visualizations).toBeUndefined()
     })
-
-    it('starts a new input as an asset', () => {
-        expect(modelToValues({}).section).toBe('ASSET')
-    })
 })

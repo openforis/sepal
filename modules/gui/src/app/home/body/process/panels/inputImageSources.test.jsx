@@ -7,6 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import lookStyles from '~/style/look.module.css'
 
 // The source of an input chosen in the panel editing it, as each input imagery form offers it, over a real store: a
 // source another input of the recipe uses is not offered, or is refused where it is typed. A saved recipe whose inputs
@@ -110,8 +111,8 @@ describe.each(FORMS)('an input in the form of $form', ({InputImage, assetLabel, 
         await editInput(InputImage, {images: [], imageId: 'input-new'})
 
         expect(field(assetLabel)).not.toBeNull()
-        expect(panelButton('process.sourceType.ASSET')).toBeDefined()
-        expect(panelButton('process.sourceType.RECIPE')).toBeDefined()
+        expect(panelButton('process.sourceType.ASSET').classList.contains(lookStyles.highlight)).toBe(true)
+        expect(panelButton('process.sourceType.RECIPE').classList.contains(lookStyles.highlight)).toBe(false)
         expect(applyEnabled()).toBe(false)
     })
 

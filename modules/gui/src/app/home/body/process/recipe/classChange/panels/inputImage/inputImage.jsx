@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {RecipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {Form} from '~/widget/form'
 import {Panel} from '~/widget/panel/panel'
 
@@ -12,6 +12,9 @@ import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
 
 const MAX_LEGEND_ENTRIES = 10
+
+// A new input starts as an asset.
+const NEW_INPUT_KIND = 'ASSET'
 
 export const fields = {
     section: new Form.Field()
@@ -61,16 +64,17 @@ export class InputImage extends React.Component {
 
     renderImageForm() {
         const {inputs} = this.props
-        const recipe = inputs.section.value === 'RECIPE_REF'
         return (
-            <ImageForm
-                {...this.props}
-                inputComponent={recipe ? RecipeSection : AssetSection}
-                input={recipe ? inputs.recipe : inputs.asset}
-                labelButtons={[
-                    <SourceTypeButtons key='section' input={inputs.section} recipe='RECIPE_REF' onChange={this.clearSource}/>
-                ]}
-            />
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_INPUT_KIND} onChange={this.clearSource}>
+                {({recipe, labelButtons}) =>
+                    <ImageForm
+                        {...this.props}
+                        inputComponent={recipe ? RecipeSection : AssetSection}
+                        input={recipe ? inputs.recipe : inputs.asset}
+                        labelButtons={labelButtons}
+                    />
+                }
+            </SourceKind>
         )
     }
 
@@ -90,7 +94,7 @@ export class InputImage extends React.Component {
 
 export const modelToValues = model => {
     const values = {
-        section: model.type || 'ASSET',
+        section: model.type,
         bands: model.bands,
         band: model.band,
         legendEntries: model.legendEntries

@@ -3,7 +3,7 @@ import React from 'react'
 
 import {adoptOtherSources, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SourceTypeButtons} from '~/app/home/body/process/sourceTypeButtons'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -17,6 +17,9 @@ import {isMissingBand} from './bands'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
+
+// A new input starts as an asset.
+const NEW_INPUT_KIND = 'ASSET'
 
 const fields = {
     otherNames: new Form.Field(),
@@ -92,22 +95,22 @@ class _InputImage extends React.Component {
     // The kind of source is chosen beside its picker, each kind showing its own draft.
     renderImageForm() {
         const {inputs} = this.props
-        const recipe = inputs.section.value === 'RECIPE_REF'
         return (
-            <ImageForm
-                key={inputs.section.value}
-                {...this.props}
-                inputComponent={recipe ? RecipeSection : AssetSection}
-                input={recipe ? inputs.recipe : inputs.asset}
-                labelButtons={[
-                    <SourceTypeButtons
-                        key='section'
-                        input={inputs.section}
-                        recipe='RECIPE_REF'
-                        onChange={kind => this.switchKind(kind)}
+            <SourceKind
+                input={inputs.section}
+                recipe='RECIPE_REF'
+                defaultKind={NEW_INPUT_KIND}
+                onChange={kind => this.switchKind(kind)}>
+                {({recipe, labelButtons}) =>
+                    <ImageForm
+                        key={inputs.section.value}
+                        {...this.props}
+                        inputComponent={recipe ? RecipeSection : AssetSection}
+                        input={recipe ? inputs.recipe : inputs.asset}
+                        labelButtons={labelButtons}
                     />
-                ]}
-            />
+                }
+            </SourceKind>
         )
     }
 
@@ -135,13 +138,10 @@ class _InputImage extends React.Component {
         this.shownKind = kind
     }
 
-    // A new input starts as an asset: where its form starts, not an edit.
+    // The kind shown first: the one saved, or the one a new input starts as (SourceKind).
     setSection() {
         const {inputs: {section}} = this.props
-        if (!section.value) {
-            section.setInitialValue('ASSET')
-        }
-        this.shownKind = section.value || 'ASSET'
+        this.shownKind = section.value || NEW_INPUT_KIND
     }
 
     // The sources of the recipe's other inputs, which this one may not take.
@@ -227,7 +227,7 @@ const modelToValues = model => {
     const values = {
         imageId: model.imageId,
         name: model.name,
-        section: model.type || 'ASSET',
+        section: model.type,
         asset: model.asset,
         bands: model.bands,
         visualizations: model.visualizations,
