@@ -49,15 +49,24 @@ printf '%s\n' \
 #
 # Colors follow the skeleton's own rule, so a terminal that never had a colored prompt still
 # doesn't: green name, blue directory, on the same TERM test it used.
+#
+# The same hook warns when ~/data exists but nothing is mounted on it, i.e. the session's Data mount
+# failed. Without mountpoint the check stays silent.
 cat >> /etc/bash.bashrc <<'EOF'
+sepal_data_warning() {
+    if [ -d "$HOME/data" ] && command -v mountpoint >/dev/null 2>&1 && ! mountpoint -q "$HOME/data"; then
+        echo "Your Data folder (~/data) is not available in this session. Start a new session to get it back." >&2
+    fi
+}
 sepal_prompt() {
+    sepal_data_warning
     local name="\h${SEPAL_INSTANCE_TYPE:+($SEPAL_INSTANCE_TYPE)}"
     case "$TERM" in
         xterm-color|*-256color) PS1="\[\033[01;32m\]$name\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\\$ ";;
         *) PS1="$name:\w\\\$ ";;
     esac
     unset PROMPT_COMMAND
-    unset -f sepal_prompt
+    unset -f sepal_prompt sepal_data_warning
 }
 PROMPT_COMMAND=sepal_prompt
 EOF

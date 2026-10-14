@@ -895,15 +895,17 @@ describe('provisionInstance with Data', () => {
         },
     }
 
-    const provisioner = (config = CONFIG, dataFolder = fakeDataFolder) => createDockerInstanceProvisioner({
+    const provisioner = (config = CONFIG, dataFolder = fakeDataFolder, notify = () => {}) => createDockerInstanceProvisioner({
         config,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
         dataFolder,
+        notify,
     })
 
     // The exec id names its container, so each exec start can be told apart in the call log.
-    const recordFetch = ({stopped = null, containers = []} = {}) => {
+    // waitFails names a container whose wait command exits 1.
+    const recordFetch = ({stopped = null, containers = [], waitFails = null} = {}) => {
         globalThis.fetch = jest.fn(async (url, opts = {}) => {
             const {pathname, searchParams} = new URL(url)
             const method = opts.method ?? 'GET'
@@ -924,9 +926,63 @@ describe('provisionInstance with Data', () => {
                 }
                 return {ok: true, status: 201, text: async () => JSON.stringify({Id: `exec-of-${container}`})}
             }
+            if (pathname.endsWith('/json') && pathname.includes('/exec/')) {
+                const container = pathname.split('/').at(-2).replace('exec-of-', '')
+                return {ok: true, status: 200, text: async () => JSON.stringify({ExitCode: container === waitFails ? 1 : 0})}
+            }
             return {ok: true, status: 200, text: async () => '{}'}
         })
     }
+
+    describe('when the Data mount does not come up', () => {
+        const SUBJECT = 'Your Data folder is not available in this session'
+
+        test('still starts the sandbox and tells the user once', async () => {
+            const instance = makeInstance()
+            const notify = jest.fn()
+            recordFetch({waitFails: sidecarContainerName(instance)})
+
+            await provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(instance)
+
+            expect(calls).toContain(`POST /v1.38/containers/${sandboxName(instance)}/start`)
+            expect(notify).toHaveBeenCalledTimes(1)
+            expect(notify).toHaveBeenCalledWith({
+                username: 'alice',
+                subject: SUBJECT,
+                content: expect.stringContaining('~/data.local'),
+            })
+        })
+
+        test('does not tell the user when the mount comes up', async () => {
+            const notify = jest.fn()
+
+            await provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(makeInstance())
+
+            expect(notify).not.toHaveBeenCalled()
+        })
+
+        test('tells the user once when provisioning the same instance is retried', async () => {
+            const instance = makeInstance()
+            const notify = jest.fn()
+            recordFetch({waitFails: sidecarContainerName(instance)})
+            const subject = provisioner(CONFIG, fakeDataFolder, notify)
+
+            await subject.provisionInstance(instance)
+            await subject.provisionInstance(instance)
+
+            expect(notify).toHaveBeenCalledTimes(1)
+        })
+
+        test('fails provisioning when an essential container does not initialize', async () => {
+            const instance = makeInstance()
+            const notify = jest.fn()
+            recordFetch({waitFails: sandboxName(instance)})
+
+            await expect(provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(instance))
+                .rejects.toThrow(/did not initialize \(exit 1\)/)
+            expect(notify).not.toHaveBeenCalled()
+        })
+    })
 })
 
 describe('undeploy with Data', () => {

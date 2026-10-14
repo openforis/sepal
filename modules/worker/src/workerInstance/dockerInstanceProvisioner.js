@@ -77,6 +77,10 @@ const SIDECAR_GONE = Symbol('sidecar gone')
 // exec in one that is not running: each means a retried release has nothing left to do there.
 const CONTAINER_GONE = [304, 404, 409]
 
+const DATA_UNAVAILABLE_EMAIL = 'SEPAL could not mount your Data at ~/data for this session. Files you save in ~/data during this session stay in your home folder; your next session moves them to ~/data.local. Start a new session to get your Data back.'
+
+const lastLine = output => output.trim().split('\n').at(-1)
+
 const createDockerInstanceProvisioner = ({
     config,
     instanceTypes,
@@ -99,6 +103,9 @@ const createDockerInstanceProvisioner = ({
         defaultDaemonHost && !instance.daemonHost
             ? {...instance, daemonHost: defaultDaemonHost}
             : instance
+
+    // Instances whose user was told the Data mount failed: a retried provisioning must not repeat the email.
+    const dataUnavailableNotified = new Set()
 
     const instanceTypeById = Object.fromEntries(instanceTypes.map(t => [t.id, t]))
 
@@ -366,30 +373,15 @@ const createDockerInstanceProvisioner = ({
     }
 
     // waitUntilInitialized — exec the image's waitCommand inside the container and wait for it to
-    // exit. No timeout on the exec calls: provisioning can take minutes.
+    // exit; a non-zero exit means the container did not initialize. No timeout on the exec calls:
+    // provisioning can take minutes.
     const waitUntilInitialized = async (instance, image) => {
         const containerName = image.containerName(instance)
         log.debug(`Waiting until initialized: ${containerTag(containerName)} on ${instanceTag(instance)}...`)
-
-        const execResponse = await dockerFetch(baseUrl(instance), `containers/${containerName}/exec`, {
-            method: 'POST',
-            body: {
-                AttachStdin: false,
-                AttachStdout: true,
-                AttachStderr: true,
-                Tty: false,
-                Cmd: image.waitCommand,
-            },
-        })
-
-        const execId = execResponse.Id
-        log.debug(`Exec created: ${execId} for ${containerTag(containerName)} on ${instanceTag(instance)}`)
-
-        await dockerFetch(baseUrl(instance), `exec/${execId}/start`, {
-            method: 'POST',
-            body: {Detach: false, Tty: true},
-        })
-
+        const {exitCode, output} = await dockerExec(baseUrl(instance), containerName, image.waitCommand)
+        if (exitCode) {
+            throw new Error(`${containerName} did not initialize (exit ${exitCode}): ${lastLine(output)}`)
+        }
         log.debug(`Initialized ${containerTag(containerName)} on ${instanceTag(instance)}`)
     }
 
@@ -445,7 +437,22 @@ const createDockerInstanceProvisioner = ({
                 throw error
             }
             log.warn(`${containerTag(image.containerName(instance))} on ${instanceTag(instance)} did not come up; continuing without it: ${error.message}`)
+            if (image.containerName === sidecarContainerName) {
+                notifyDataUnavailable(instance)
+            }
         }
+    }
+
+    const notifyDataUnavailable = instance => {
+        if (dataUnavailableNotified.has(instance.id)) {
+            return
+        }
+        dataUnavailableNotified.add(instance.id)
+        notify({
+            username: instance.reservation.username,
+            subject: 'Your Data folder is not available in this session',
+            content: DATA_UNAVAILABLE_EMAIL,
+        })
     }
 
     // prepareDataFolder — {uid, gid} the Data is mounted as. A home that could not be prepared fails
@@ -467,6 +474,7 @@ const createDockerInstanceProvisioner = ({
         }
         await removeInstanceContainers(instance)
         await removeDataMount(instance)
+        dataUnavailableNotified.delete(instance.id)
         log.info(`Undeployed ${instanceTag(instance)}`)
     }
 
