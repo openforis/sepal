@@ -354,6 +354,75 @@ describe('per-user limit', () => {
     })
 })
 
+describe('local processing slots', () => {
+    test('an active task is granted a free slot, and refused once all are taken', async () => {
+        const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(true)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+    })
+
+    test('a task asking again keeps the slot it holds', async () => {
+        const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        await supervisor.requestSlot(await repository.getTask('t-1'))
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(true)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+    })
+
+    test('a task that is not active is refused', async () => {
+        const {supervisor, repository} = await withRunningTasks()
+        await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(false)
+    })
+
+    test('a released slot goes to the next task', async () => {
+        const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        await supervisor.requestSlot(await repository.getTask('t-1'))
+        await supervisor.requestSlot(await repository.getTask('t-2'))
+
+        await supervisor.releaseSlot(await repository.getTask('t-1'))
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+    })
+
+    test('a task cancelled while holding a slot keeps it until its container exits', async () => {
+        const {supervisor, repository, docker} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        await supervisor.requestSlot(await repository.getTask('t-1'))
+        await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+        docker.exit('task.alice.t-1', 0)
+        await supervisor.idle()
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+    })
+
+    test('a stalled container that is killed frees its slot', async () => {
+        const {supervisor, repository, clock} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        await supervisor.requestSlot(await repository.getTask('t-1'))
+        clock.advance(16 * 60 * 1000)
+        await repository.recordProgress(await repository.getTask('t-2'), '{}')
+
+        await supervisor.enforceTimeouts()
+        await supervisor.idle()
+
+        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+    })
+
+    test('slots held before a restart still count', async () => {
+        const {supervisor, newSupervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        await supervisor.requestSlot(await repository.getTask('t-1'))
+
+        const restarted = newSupervisor()
+        await restarted.reconcile()
+
+        expect(await restarted.requestSlot(await repository.getTask('t-2'))).toBe(false)
+    })
+})
+
 describe('stopping', () => {
     test('stopping a container asks Docker to stop it with a grace period, without waiting for it to exit', async () => {
         const {supervisor, repository, docker} = setup()
@@ -382,12 +451,20 @@ describe('stopping', () => {
 
 // --- harness ---
 
+const withRunningTasks = async options => {
+    const context = setup(options)
+    await context.repository.add(aTask({id: 't-1', creationTime: new Date(1000)}))
+    await context.repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
+    await context.supervisor.dispatch()
+    return context
+}
+
 const aTask = overrides => createTask({
     id: 't-1', state: State.PENDING, username: 'alice', operation: 'image.GEE', params: {},
     creationTime: new Date(1000), updateTime: new Date(1000), ...overrides
 })
 
-const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUser = 10} = {}) => {
+const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUser = 10, maxConcurrentLocalProcessing = 10} = {}) => {
     const clock = fakeClock()
     const repository = new InMemoryRepository(clock)
     const docker = new FakeDocker()
@@ -397,7 +474,7 @@ const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUse
         docker,
         workspace,
         spec: ({task, apiKey}) => ({name: containerName(task), taskId: task.id, apiKey}),
-        config: {maxConcurrent, maxConcurrentLocal, maxConcurrentPerUser, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
+        config: {maxConcurrent, maxConcurrentLocal, maxConcurrentPerUser, maxConcurrentLocalProcessing, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
     })
     return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}
 }

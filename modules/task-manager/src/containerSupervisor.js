@@ -3,6 +3,7 @@ import {tag} from '#sepal/tag'
 
 import {generateApiKey, hashApiKey} from './apiKey.js'
 import {containerName} from './containerSpec.js'
+import {LocalProcessingSlots} from './localProcessingSlots.js'
 import {isLocalWork, LOCAL_OPERATIONS} from './operations.js'
 import {RUNNING_STATES, State, statusDescriptionOf} from './task.js'
 
@@ -39,6 +40,7 @@ export class ContainerSupervisor {
     #queue = Promise.resolve()
     #watched = new Set()
     #timer = null
+    #slots = new LocalProcessingSlots()
 
     constructor({repository, docker, workspace, spec, config}) {
         this.#repository = repository
@@ -69,6 +71,14 @@ export class ContainerSupervisor {
 
     enforceTimeouts() {
         return this.#enqueue('timeouts', () => this.#enforceTimeouts())
+    }
+
+    requestSlot(task) {
+        return this.#enqueue('slot request', () => this.#requestSlot(task))
+    }
+
+    releaseSlot(task) {
+        return this.#enqueue('slot release', () => this.#releaseSlot(task))
     }
 
     // The container cancels its own work on SIGTERM and exits; collecting it ends the task. Waiting for queued
@@ -132,6 +142,30 @@ export class ContainerSupervisor {
         return [...runningByUser]
             .filter(([_username, count]) => count >= this.#config.maxConcurrentPerUser)
             .map(([username]) => username)
+    }
+
+    // A task already holding a slot is granted again, so a container that lost the answer keeps it.
+    async #requestSlot(task) {
+        const holders = await this.#repository.slotHolders()
+        if (holders.some(({id}) => id === task.id)) {
+            return true
+        }
+        const current = await this.#repository.getTask(task.id)
+        if (current?.state !== State.ACTIVE) {
+            return false
+        }
+        const inTurn = this.#slots.request({
+            task: current,
+            free: this.#config.maxConcurrentLocalProcessing - holders.length,
+            heldByUser: countByUser(holders),
+            now: this.#config.clock().getTime()
+        })
+        return inTurn && await this.#repository.grantSlot(current)
+    }
+
+    async #releaseSlot(task) {
+        this.#slots.remove(task.id)
+        await this.#repository.releaseSlot(task)
     }
 
     async #launch(task) {
@@ -254,7 +288,16 @@ export class ContainerSupervisor {
     async #discard(task) {
         await this.#docker.remove(containerName(task))
         await this.#workspace.remove(task.id)
+        await this.#releaseSlot(task)
     }
 }
 
 const taskTag = task => tag('Task', task.id, task.username)
+
+const countByUser = holders => {
+    const counts = new Map()
+    for (const {username} of holders) {
+        counts.set(username, (counts.get(username) ?? 0) + 1)
+    }
+    return counts
+}
