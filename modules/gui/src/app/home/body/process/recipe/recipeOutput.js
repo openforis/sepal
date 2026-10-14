@@ -78,20 +78,22 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, 
     const held = acquisition && heldFor(acquisition.key)
     const assets = held?.assets?.length ? _.uniq([...reused.assets, ...held.assets]).sort() : reused.assets
     const read = held ? heldAnswer({recipe, product, session, kind, terminal: held}) : session
-    const missing = assets.find(id => isDefinitiveFailure(assetEvidence[id]))
-    if (missing) {
+    const missing = assets.filter(id => isDefinitiveFailure(assetEvidence[id]))
+    if (missing.length) {
         return {...withMissingAsset(read, missing), acquisition, assets}
     }
     return {...read, acquisition, assets}
 }
 
 // An asset found missing or inaccessible leaves the answer unavailable - unless what was read beside it establishes
-// a definitive diagnosis, which outranks it: the answer is then that refusal, the asset named beside it.
-const withMissingAsset = (read, assetId) => {
-    const failure = {code: ASSET_UNAVAILABLE, assetId}
-    return read.status === INVALID
-        ? {...read, diagnostics: [...read.diagnostics, failure]}
-        : answer({status: UNAVAILABLE, diagnostics: [failure]})
+// a definitive diagnosis, which outranks it: the answer is then that refusal, the assets named beside it. Each is
+// named, so whatever selects one can say so. What the read established of its references - the failure naming the
+// record it could not read, and the closure's validity - is kept beside them.
+const withMissingAsset = (read, assetIds) => {
+    const failures = assetIds.map(assetId => ({code: ASSET_UNAVAILABLE, assetId}))
+    return [INVALID, UNAVAILABLE].includes(read.status)
+        ? {...read, diagnostics: [...read.diagnostics, ...failures]}
+        : answer({status: UNAVAILABLE, diagnostics: failures, error: read.error, validity: read.dependencyValidity})
 }
 
 // What the session answers for a recipe depends on nothing but the records its graph holds and the declarations of their

@@ -8,7 +8,7 @@ import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, labelButtons, onLoading} = this.props
+        const {input, labelButtons, onLoading, onError} = this.props
         return (
             <RecipeInput
                 label={msg('process.indexChange.panel.inputImage.image.label')}
@@ -16,7 +16,9 @@ export class RecipeSection extends React.Component {
                 input={input}
                 filter={isImageSource}
                 autoFocus
+                keepSelection
                 onLoading={onLoading}
+                onError={onError}
                 onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
@@ -34,5 +36,6 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
-    labelButtons: PropTypes.array
+    labelButtons: PropTypes.array,
+    onError: PropTypes.func
 }

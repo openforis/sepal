@@ -332,7 +332,7 @@ describe('completing the operation-local recipe closure', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('nested-1', failure),
             dependencyValidity: unknownWithMissing('nested-1')
         }))
         expect(observed.latest().diagnostics).toEqual([])
@@ -511,7 +511,7 @@ describe('structural dependency validity', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('gone', failure),
             dependencyValidity: {
                 status: 'INVALID',
                 diagnostics: [
@@ -588,7 +588,7 @@ describe('completing dependencies without describing', () => {
 
         expect(completed.latest()).toEqual({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('gone', failure),
             dependencyValidity: expect.objectContaining({status: 'INVALID'}),
             basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}],
             assets: expect.any(Array),
@@ -845,3 +845,6 @@ describe('runtime invalidation', () => {
         expect(error.message).toBe('Source runtime: SOURCE_IDENTITY_CHANGED')
     })
 })
+
+// A failed read of a record as the loader reports it: naming the record, the failure its cause.
+const failedRead = (recipeId, failure) => expect.objectContaining({recipeId, status: failure.status, cause: failure})

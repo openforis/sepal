@@ -173,8 +173,8 @@ describe('an index change', () => {
         ['error bands on both images', {errorBands: true}, ['difference', 'normalized_difference', 'ratio', 'error', 'confidence', 'change']],
         ['an error band on one image only', {errorBands: 'from'}, ['difference', 'normalized_difference', 'ratio', 'change']],
         ['an empty legend', {entries: []}, ['difference', 'normalized_difference', 'ratio']]
-    ])('with %s is described with the bands execution builds, reading neither image', (_case, configuration, names) => {
-        const {output} = read(indexChangeOf({images: RECIPE_IMAGES, ...configuration}))
+    ])('with %s is described with the bands execution builds, once its images are', (_case, configuration, names) => {
+        const {output} = read(indexChangeOf(configuration))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(names)
@@ -227,11 +227,34 @@ describe('an index change', () => {
     })
 })
 
+// Its images are read to describe it, so comparing itself is a cycle: it is not described either.
+describe.each([
+    ['an index change', images => indexChangeOf(images && {images}), indexChangeTask, () => IMAGERY],
+    ['a class change', images => classChangeOf(images && {images}), classChangeTask, () => LAND_COVER_IMAGE]
+])('%s', (_type, changeOf, task, image) => {
+    it('exports to Drive with no pyramiding policy', () => {
+        retrieve(read(changeOf()), 'DRIVE', task)
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('comparing itself is neither described, previewed nor exported', () => {
+        const answer = read(changeOf([{type: 'RECIPE_REF', id: ID}, image()]))
+
+        retrieve(answer, 'GEE', task)
+
+        expect(answer.output.status).toBe('INVALID')
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
+    })
+})
+
 describe('a class change', () => {
     // Confidence is measured from both images' probability bands, and masked where either has none; the band is
     // there either way, whatever the snapshots saved when the images were selected say.
     it('is described with its transition and confidence, though neither saved snapshot holds a probability band', () => {
-        const {output} = read(classChangeOf({images: RECIPE_IMAGES}))
+        const {output} = read(classChangeOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name, dataType}) => [name, dataType.arrayDimensions]))
@@ -1061,8 +1084,6 @@ describe('a Radar Mosaic', () => {
 
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
-    ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
-    ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
     ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe, includedBands: [{band: 'class'}]}]}), remappingTask],
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
@@ -1126,8 +1147,8 @@ const clusteringOf = ({images = [COVARIATES_IMAGE], numberOfClusters = 5} = {}) 
     }
 })
 
-const ASSET_IMAGE = {type: 'ASSET', id: 'users/x/ndvi'}
-const RECIPE_IMAGES = [{type: 'RECIPE_REF', id: 'before-1'}, {type: 'RECIPE_REF', id: 'after-1'}]
+// The images an index change compares: the optical mosaic, whose NDVI and bands are described from its configuration.
+const IMAGERY = {type: 'RECIPE_REF', id: COVARIATES.id}
 
 const legendEntry = (value, operator) => ({
     value,
@@ -1137,14 +1158,14 @@ const legendEntry = (value, operator) => ({
     constraints: [{image: 'this-recipe', band: 'difference', operator, value: 0}]
 })
 
-const indexChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE], errorBands, entries} = {}) => ({
+const indexChangeOf = ({images: [from, to] = [IMAGERY, IMAGERY], errorBands, entries} = {}) => ({
     id: ID,
     type: 'INDEX_CHANGE',
     title: 'Greening',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {...from, band: 'ndvi', ...(errorBands && {errorBand: 'ndvi_error'})},
-        toImage: {...to, band: 'ndvi', ...(errorBands === true && {errorBand: 'ndvi_error'})},
+        fromImage: {...from, band: 'ndvi', ...(errorBands && {errorBand: 'nir'})},
+        toImage: {...to, band: 'ndvi', ...(errorBands === true && {errorBand: 'nir'})},
         legend: {entries: entries || [legendEntry(1, '<'), legendEntry(2, '='), legendEntry(3, '>')]},
         options: {minConfidence: 2.5}
     }
@@ -1155,14 +1176,14 @@ const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
 // A snapshot as the input panel saves it: each band with the class values its categorical style names.
 const classImage = (image, band) => ({...image, band, bands: {[band]: {values: [1, 2]}}, legendEntries: CLASSES})
 
-const classChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE]} = {}) => ({
+const classChangeOf = ({images: [from, to] = [LAND_COVER_IMAGE, LAND_COVER_IMAGE]} = {}) => ({
     id: ID,
     type: 'CLASS_CHANGE',
     title: 'Deforestation',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
         fromImage: classImage(from, 'class'),
-        toImage: classImage(to, 'landcover'),
+        toImage: classImage(to, 'class'),
         legend: {entries: [1, 2, 3, 4].map(value => ({value, label: `transition ${value}`, color: '#000000'}))},
         options: {minConfidence: 0}
     }
@@ -1181,6 +1202,10 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
         classifier: {type: classifier}
     }
 })
+
+// The classified images a class change compares: a classification, described once its imagery is, from its configuration.
+const LAND_COVER = {...classificationOf(), id: 'land-cover-1'}
+const LAND_COVER_IMAGE = {type: 'RECIPE_REF', id: LAND_COVER.id}
 
 const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes', includedBands: [{band: 'class'}]}], values = [1, 2, 3]} = {}) => ({
     id: ID,
@@ -1389,7 +1414,7 @@ const landTrendrOf = ({classification} = {}) => ({
 
 // The read a Retrieve panel makes, with nothing but the recipe itself and the imagery a model is fit to loaded, and
 // nothing retained.
-const read = recipe => readAll([recipe, COVARIATES])
+const read = recipe => readAll([recipe, COVARIATES, LAND_COVER])
 
 // The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
 // recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read

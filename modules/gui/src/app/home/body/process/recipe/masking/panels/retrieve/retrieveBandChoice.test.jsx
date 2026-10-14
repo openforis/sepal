@@ -667,7 +667,7 @@ describe.each([
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
 
-        await open({recipes: [masked, source(), MOSAIC], id: masked.id})
+        await open({recipes: [masked, source(), MOSAIC, CLASSIFICATION], id: masked.id})
         await click(band)
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -889,25 +889,14 @@ const INDEX_CHANGE = {
     type: 'INDEX_CHANGE',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'ndvi'},
-        toImage: {type: 'ASSET', id: 'users/x/after', band: 'ndvi'},
+        fromImage: {type: 'RECIPE_REF', id: MOSAIC.id, band: 'ndvi'},
+        toImage: {type: 'RECIPE_REF', id: MOSAIC.id, band: 'ndvi'},
         legend: {entries: [{value: 1, booleanOperator: 'and', constraints: [{image: 'this-recipe', band: 'difference', operator: '>', value: 0}]}]},
         options: {minConfidence: 2.5}
     }
 }
 
 const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
-
-const CLASS_CHANGE = {
-    id: 'class-change-1',
-    type: 'CLASS_CHANGE',
-    model: {
-        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
-        toImage: {type: 'ASSET', id: 'users/x/after', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
-        options: {minConfidence: 0}
-    }
-}
 
 const CLASSIFICATION = {
     id: 'classification-1',
@@ -917,6 +906,17 @@ const CLASSIFICATION = {
         legend: {entries: CLASSES},
         trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
         classifier: {type: 'RANDOM_FOREST'}
+    }
+}
+
+const CLASS_CHANGE = {
+    id: 'class-change-1',
+    type: 'CLASS_CHANGE',
+    model: {
+        dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
+        fromImage: {type: 'RECIPE_REF', id: CLASSIFICATION.id, band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        toImage: {type: 'RECIPE_REF', id: CLASSIFICATION.id, band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        options: {minConfidence: 0}
     }
 }
 

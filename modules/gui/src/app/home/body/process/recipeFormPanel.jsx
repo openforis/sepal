@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -76,7 +77,9 @@ export const recipeFormPanel = (
 
     // A panel a requirement its recipe's output read judges names as the editor of one item (`editor.panel`) judges its
     // values by that requirement, over the recipe built from that item alone (outputCandidate.js): what it finds is told
-    // to `editor.input` and holds Apply back. Pending or failed, it holds nothing back.
+    // to `editor.input` and holds Apply back - or, where `editor.input` is a function of a finding and the values, to the
+    // input it names for each, as `editor.describe(findings, values)` says them. Pending or failed, it holds nothing
+    // back.
     const outputEditorOf = props => {
         const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
         return declarations.find(({outputDiagnostics, editor}) => outputDiagnostics && editor?.panel === id) || null
@@ -167,11 +170,10 @@ export const recipeFormPanel = (
                     }
                     const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values())
                     const sourceFeedback = sourceCandidate && sourceInputFeedback(sourceCandidate.status(), () => sourceCandidate.refresh())
-                    const outputInput = outputCandidate && this.outputEditor.editor.input
                     const findings = outputCandidate?.findings()
-                    const outputFeedback = findings && {error: findings.message, diagnostics: findings.diagnostics}
+                    const outputFeedback = findings ? outputFeedbackOf(this.outputEditor.editor, findings, form.values()) : {}
                     return withInputFeedback(form, {
-                        feedbackOf: name => name === sourceInput ? sourceFeedback : name === outputInput ? outputFeedback : null,
+                        feedbackOf: name => name === sourceInput ? sourceFeedback : outputFeedback[name] || null,
                         blocked: () => Boolean(sourceCandidate?.refused() || outputCandidate?.refused())
                     })
                 }
@@ -270,4 +272,14 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
     actionBuilder('SET_DIRTY', {evaluatedPath, dirty})
         .setIfChanged([statePath, 'ui', evaluatedPath, 'dirty'], dirty)
         .dispatch()
+}
+
+// What a candidate's findings tell each input of the panel: all of them to the editor's one input, or each to the input
+// the editor names for it.
+const outputFeedbackOf = (editor, findings, values) => {
+    if (typeof editor.input !== 'function') {
+        return {[editor.input]: {error: findings.message, diagnostics: findings.diagnostics}}
+    }
+    const byInput = _.groupBy(findings.diagnostics, diagnostic => editor.input(diagnostic, values))
+    return _.mapValues(byInput, diagnostics => ({error: editor.describe(diagnostics, values), diagnostics}))
 }

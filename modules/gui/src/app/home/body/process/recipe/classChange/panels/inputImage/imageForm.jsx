@@ -7,29 +7,30 @@ import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 
+import {bandOptionsOf, showLoadError} from '../../../changeImageSelection'
 import styles from './inputImage.module.css'
 
+// The image's source, its class band and the legend of its classes. A read of the source the image was saved with
+// changes nothing saved - its band, legend and band list stay as they are, a band the source no longer provides
+// included, offered beside the bands it does and refused beside its field (changeImageRequirements.js). Only a source
+// the user selects is taken up: the bands it provides become the image's, its band kept, or chosen where none is.
 export class ImageForm extends Component {
-    state = {entries: [], loadedRecipe: null}
+    // What the latest read of the selected source answered, never saved: null while none has.
+    state = {available: null, loadedRecipe: null}
 
     render() {
-        const {input, inputComponent, labelButtons, inputs: {band, bands, legendEntries}} = this.props
-        const {loadedRecipe} = this.state
-        const bandOptions = (Object.keys(bands.value) || [])
-            .map(bandName => ({
-                value: bandName,
-                label: bandName
-            }))
+        const {input, inputComponent, labelButtons, inputs: {band, legendEntries}} = this.props
+        const {available, loadedRecipe} = this.state
+        const bandOptions = bandOptionsOf(Object.keys(available || {}), band.value)
         return (
             <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
                         labelButtons,
-                        onLoading: () => {
-                            bands.set({})
-                        },
-                        onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe)
+                        onLoading: () => this.setState({available: null}),
+                        onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe),
+                        onError: error => showLoadError(input, error)
                     })}
                 </div>
                 <FormCombo
@@ -59,9 +60,14 @@ export class ImageForm extends Component {
         }
     }
 
+    // Another band chosen: its legend starts from the categorical style its source gives it.
     bandSelected(band) {
         const {inputs: {bands, legendEntries}} = this.props
-        const visualization = bands.value[band]
+        const {available} = this.state
+        const visualization = (available || bands.value || {})[band]
+        if (available) {
+            bands.set(available)
+        }
         const entries = ((visualization && visualization.values) || [])
             .map((value, i) => {
                 return {
@@ -75,26 +81,24 @@ export class ImageForm extends Component {
     }
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations, loadedRecipe) {
-        const {form, inputs: {band, bands, metadata, visualizations, recipe}} = this.props
-        if (!id || !form.isDirty()) {
+        const {input, inputs: {band, bands, metadata, visualizations}} = this.props
+        if (!id) {
+            return
+        }
+        this.setState({available: loadedBands, loadedRecipe})
+        if (!input.isDirty()) {
+            metadata.setInitialValue(loadedMetadata)
+            visualizations.setInitialValue(loadedVisualizations)
             return
         }
         bands.set(loadedBands)
-        const bandNames = Object.keys(loadedBands)
-        const selectedBand = band.value
-        if (!selectedBand || !bandNames.includes(selectedBand)) {
-            const defaultBand = bandNames
-                .find(bandName => {
-                    const values = loadedBands[bandName].values
-                    return values && values.length
-                })
-                || bandNames[0]
+        if (!band.value) {
+            const bandNames = Object.keys(loadedBands)
+            const defaultBand = bandNames.find(bandName => loadedBands[bandName].values?.length) || bandNames[0]
             band.set(defaultBand)
         }
         metadata.set(loadedMetadata)
         visualizations.set(loadedVisualizations)
-        recipe.set(loadedRecipe.id)
-        this.setState({loadedRecipe})
     }
 }
 

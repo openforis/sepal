@@ -9,6 +9,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import styles from './classChangeToolbar.module.css'
 import {FromImage} from './inputImage/fromImage'
 import {ToImage} from './inputImage/toImage'
@@ -47,13 +48,13 @@ class _ClassChangeToolbar extends React.Component {
                     vertical
                     placement="bottom-right"
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id="fromImage"
                         label={msg('process.classChange.panel.inputImage.from.button.label')}
                         tooltip={msg('process.classChange.panel.inputImage.from.button.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id="toImage"
                         label={msg('process.classChange.panel.inputImage.to.button.label')}
                         tooltip={msg('process.classChange.panel.inputImage.to.button.tooltip')}

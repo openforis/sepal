@@ -5770,6 +5770,16 @@
       }
     },
     "requirement": {
+      "inputImage": {
+        "field": {
+          "missingAsset": "This asset no longer exists or is not accessible.",
+        "missingRecipe": "This recipe no longer exists or is not accessible.",
+          "unavailableBand": "Source no longer provides {band}."
+        },
+        "missingAsset": "The selected asset no longer exists or is not accessible.",
+      "missingRecipe": "The selected recipe no longer exists or is not accessible.",
+        "unavailableBands": "Selected bands are unavailable. Open this image to review them."
+      },
       "itemProblem": "{item}: {message}",
       "prerequisiteUnmet": "Depends on {items}, which need attention."
     },
@@ -6772,6 +6782,7 @@
       "ownRecipe": {
         "invalid": "A recipe cannot be used as its own input"
       },
+      "loadError": "Unable to load recipe",
       "selection": "Selected",
       "unlisted": "Unavailable recipe"
     },

@@ -17,6 +17,7 @@ import {FAILED, PENDING} from '../sourceRuntime/evidenceRegistry'
 import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {
+    ASSET_UNAVAILABLE,
     IMAGE_OUTPUT,
     NEEDS_EVIDENCE as OUTPUT_PENDING,
     readRecipeOutput,
@@ -95,14 +96,19 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 //
 //   {id, section, requirement: {id, describe}, outputDiagnostics: {codes, itemOf}, editor, summary, operations}
 //
-// `codes` are the refusals of the recipe's IMAGE_OUTPUT it states, and `itemOf(diagnostic, recipe, {recipeNames})` the
-// item of the section each is about - {id, path, label}, as a local item, and whatever `describe` needs of it - or null.
+// `codes` are the refusals of the recipe's IMAGE_OUTPUT it states. `references`, where a declaration names any, are the
+// roles of the recipe's own declared edges whose source is found gone: the recipe the edge names, where its own read is
+// answered not there, or not the user's (404, 403) - the read's failure names the recipe it was about, so a sibling
+// still being read, or failing otherwise, is not taken for it - or the asset it names, where the asset's evidence finds
+// it missing (assetEvidence.js). The finding is the edge's own, located at the edge; one further up the closure stays
+// with the recipe whose edge it is. A declaration naming none reads no such finding. `itemOf(diagnostic, recipe, {recipeNames})` is the item of the section each is about - {id, path, label}, as a local item, and whatever `describe` needs of it - or null.
 // Each item a refusal this recipe owns is about is read as a local read is, unmet, its diagnosis `{code: id,
 // diagnostics, item}` for `describe`, and its section says them all in `summary(reads)` where it is given
 // (selectedSourceStatus.js); nothing is read of what the output read has not established, pending or failed: the
 // refusal is the evidence, and the output read
 // acquires it (recipeOutput.js), whatever these say of the operations waiting on it. `editor` - {panel, input,
-// candidate(recipe, model)} - binds the panel editing one item, judged before it is applied by the same refusals of
+// candidate(recipe, model)}, `input` the name of the panel's form input or a function of a finding and the panel's values
+// naming one, with `describe(findings, values)` - binds the panel editing one item, judged before it is applied by the same refusals of
 // the recipe its candidate builds from that item alone (outputCandidate.js). The output read lies below this: it never
 // asks what these say.
 //
@@ -179,12 +185,21 @@ export const isJudgedByOutput = type =>
 // The reads of the requirements the recipe's output read judges, from that read: one for each item a refusal it owns,
 // of a code a declaration states, is about.
 export const readOutputRequirements = ({recipe, output, recipeNames = NO_NAMES}) => {
-    const said = {status: output.status, validity: output.dependencyValidity?.status || null, diagnostics: output.diagnostics || []}
+    const said = {
+        status: output.status,
+        validity: output.dependencyValidity?.status || null,
+        validityDiagnostics: output.dependencyValidity?.diagnostics || NO_DIAGNOSTICS,
+        errorStatus: output.error?.status ?? null,
+        errorRecipe: output.error?.recipeId ?? null,
+        diagnostics: output.diagnostics || NO_DIAGNOSTICS
+    }
     const byNames = OUTPUT_READS.get(recipe) || new WeakMap()
     OUTPUT_READS.set(recipe, byNames)
     const previous = byNames.get(recipeNames)
     if (previous && previous.status === said.status && previous.validity === said.validity
-        && _.isEqual(previous.diagnostics, said.diagnostics)) {
+        && previous.errorStatus === said.errorStatus && previous.errorRecipe === said.errorRecipe
+        && _.isEqual(previous.diagnostics, said.diagnostics)
+        && _.isEqual(previous.validityDiagnostics, said.validityDiagnostics)) {
         return previous.reads
     }
     const reads = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(isOutput)
@@ -202,6 +217,8 @@ const OWN_READS = new WeakMap()
 const NO_NAMES = Object.freeze({})
 
 const NO_READS = Object.freeze([])
+
+const NO_DIAGNOSTICS = Object.freeze([])
 
 // The same, over the recipe's IMAGE_OUTPUT as the session and the runtime answer it now - asked to explain a refusal
 // (recipeOutput.js), so a refusal the session establishes alone still has what it does not hold read: one input found
@@ -428,10 +445,12 @@ const isOutput = declaration => Boolean(declaration.outputDiagnostics)
 const ownedBy = ({recipePath = []}, recipe) => recipePath.length === 1 && recipePath[0] === recipe.id
 
 const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
-    const {codes, itemOf} = declaration.outputDiagnostics
+    const {codes, itemOf, references = []} = declaration.outputDiagnostics
     const byItem = new Map()
-    ;(output?.diagnostics || [])
-        .filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe))
+    ;[
+        ...(output?.diagnostics || []).filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe)),
+        ...missingReferences(output, recipe, references)
+    ]
         .forEach(diagnostic => {
             const item = itemOf(diagnostic, recipe, {recipeNames})
             if (item) {
@@ -460,6 +479,28 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
         }
     })
 }
+
+// The sources the recipe's own edges in the `references` roles name that are found gone, each located at its edge.
+const missingReferences = (output, recipe, references) => references.flatMap(role => {
+    const edge = sourceEdgeOf(recipe, role)
+    const reference = edge?.reference
+    if (!reference) {
+        return []
+    }
+    if (reference.type === 'ASSET') {
+        return (output?.diagnostics || [])
+            .filter(({code, assetId}) => code === ASSET_UNAVAILABLE && assetId === reference.id)
+            .map(({code, assetId}) => ({code, assetId, role, path: edge.path, recipePath: [recipe.id]}))
+    }
+    const failure = output?.error
+    return DEFINITIVELY_MISSING.includes(failure?.status) && failure.recipeId === reference.id
+        ? (output.dependencyValidity?.diagnostics || []).filter(diagnostic =>
+            diagnostic.code === MISSING_SOURCE && diagnostic.role === role && _.isEqual(diagnostic.path, edge.path)
+            && _.isEqual(diagnostic.recipePath, [recipe.id, reference.id]))
+        : []
+})
+
+const DEFINITIVELY_MISSING = [403, 404]
 
 export const OUTPUT_REFUSED = 'OUTPUT_REFUSED'
 

@@ -79,7 +79,9 @@ where a family still needs observation.
      optional-band conditions come from the declaration. Index Change declares `error` and `confidence` only when
      both images name an error band, and `change` only when its legend has entries. Class Change always declares
      `transition` and `confidence`; confidence is measured from both images' probability bands and is masked where
-     either image holds none, while the transition is still computed. Classification declares `class` (mode), then
+     either image holds none, while the transition is still computed. Both are described only once both images are,
+     and refused (`MISSING_INPUT_BAND`, at the field) where an image names a band, or Index Change an error band,
+     that its source's current description does not provide. Classification declares `class` (mode), then
      `class_probability` for classifiers that support probabilities, `regression` for those that support
      regression, and one `probability_<value>` per legend entry in the legend's stored order (all mean); an export
      returns its selected bands in the order requested, which Retrieve makes the output's order. Without legend entries its schema is unchanged, but Earth

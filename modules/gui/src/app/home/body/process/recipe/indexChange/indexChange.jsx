@@ -10,6 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
+import {changeImageRequirements} from '../changeImageRequirements'
 import {bandPresentation} from './bands'
 import {defaultModel} from './indexChangeRecipe'
 import {IndexChangeToolbar} from './panels/indexChangeToolbar'
@@ -64,6 +65,10 @@ export default () => ({
     components: {
         recipe: IndexChange
     },
+    sourceRequirements: changeImageRequirements([
+        {section: {id: 'fromImage', label: 'process.indexChange.panel.inputImage.from.button.label'}, role: FROM_IMAGE, key: 'fromImage'},
+        {section: {id: 'toImage', label: 'process.indexChange.panel.inputImage.to.button.label'}, role: TO_IMAGE, key: 'toImage'}
+    ]),
     imageSource: true,
     getDateRange,
     bandPresentation,
