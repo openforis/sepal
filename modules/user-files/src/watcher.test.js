@@ -1,4 +1,4 @@
-import {access, mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {access, chmod, mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import Path from 'node:path'
 
@@ -90,7 +90,33 @@ describe('remove', () => {
         await settle()
 
         await expect(access(Path.join(homeDir, 'alice', 'docs'))).rejects.toThrow()
+        expect(removeFailures()).toEqual([])
+    })
+
+    it('reports data as failed', async () => {
+        watcher.remove({...CLIENT, path: 'data'})
+
+        await settle()
+
+        expect(removeFailures()).toEqual([['data']])
+    })
+
+    it('reports a path that cannot be removed', async () => {
+        const locked = Path.join(homeDir, 'alice', 'docs')
+        await writeFile(Path.join(locked, 'f.txt'), 'f')
+        await chmod(locked, 0o555)
+
+        try {
+            watcher.remove({...CLIENT, path: ['docs/f.txt']})
+            await settle()
+        } finally {
+            await chmod(locked, 0o755)
+        }
+
+        expect(removeFailures()).toEqual([['docs/f.txt']])
     })
 })
+
+const removeFailures = () => sent.filter(({data}) => data.removeFailed).map(({data}) => data.removeFailed)
 
 const settle = () => new Promise(resolve => setTimeout(resolve, SETTLE_MS))

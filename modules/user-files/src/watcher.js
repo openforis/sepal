@@ -2,7 +2,7 @@ import {readdir, realpath, rm, stat} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
-import {catchError, defer, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+import {catchError, defer, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, tap, throttleTime, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
@@ -105,7 +105,9 @@ const createWatcher = async ({send, stop$}) => {
     remove$.pipe(
         mergeMap(({username, clientId, subscriptionId, remove}) =>
             minDuration$(
-                from(removePath({username, clientId, subscriptionId, path: remove})),
+                from(removePaths({username, clientId, subscriptionId, path: remove})).pipe(
+                    tap(failed => failed.length && send({clientId, subscriptionId, data: {removeFailed: failed}}))
+                ),
                 REMOVE_COMFORT_DELAY_MS
             ).pipe(
                 map(() => ({username, clientId, subscriptionId}))
@@ -225,32 +227,34 @@ const createWatcher = async ({send, stop$}) => {
         }
     }
 
+    const removePaths = async ({username, clientId, subscriptionId, path}) => {
+        const paths = _.isArray(path) ? path : [path]
+        const removed = await Promise.all(paths.map(path => removePath({username, clientId, subscriptionId, path})))
+        return paths.filter((_path, index) => !removed[index])
+    }
+
     const removePath = async ({username, clientId, subscriptionId, path}) => {
-        if (_.isArray(path)) {
-            return Promise.all(
-                path.map(path => removePath({username, clientId, subscriptionId, path}))
-            )
-        } else {
-            unmonitor({username, clientId, subscriptionId, path})
-            if (isDataPath(path)) {
+        unmonitor({username, clientId, subscriptionId, path})
+        if (isDataPath(path)) {
+            warnDataRefused({username, clientId, subscriptionId, path})
+            return false
+        }
+        try {
+            const {absolutePath, relativePath} = resolvePath(await userHomeDir(username), path)
+            if (isDataPath(relativePath)) {
                 warnDataRefused({username, clientId, subscriptionId, path})
-                return
+                return false
             }
-            try {
-                const {absolutePath, relativePath} = resolvePath(await userHomeDir(username), path)
-                if (isDataPath(relativePath)) {
-                    warnDataRefused({username, clientId, subscriptionId, path})
-                    return
-                }
-                await rm(absolutePath, {recursive: true})
-                log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
-            } catch (error) {
-                if (error.code === 'ENOENT') {
-                    log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} ignored non-existing path: ${path}`)
-                } else {
-                    log.error(`${subscriptionTag({username, clientId, subscriptionId})} error while removing path: ${path}`, error)
-                }
+            await rm(absolutePath, {recursive: true})
+            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
+            return true
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} ignored non-existing path: ${path}`)
+                return true
             }
+            log.error(`${subscriptionTag({username, clientId, subscriptionId})} error while removing path: ${path}`, error)
+            return false
         }
     }
 
