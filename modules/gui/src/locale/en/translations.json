@@ -252,6 +252,7 @@
     "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again."
   },
   "browse": {
+    "removeFailed": "{count, plural, one {Could not delete {path}.} other {Could not delete {count} items.}}",
     "data": {
       "label": "Data"
     },

@@ -15,12 +15,12 @@ export class UserFilesMonitor {
         this.#api = getApi
     }
 
-    subscribe(onUpdate) {
+    subscribe(onUpdate, {onRemoveFailed} = {}) {
         this.#userFiles = this.#api().ws()
         return this.#userFiles.downstream$.subscribe({
             next: ({ready, data}) => {
                 ready !== undefined && this.#onReady(ready)
-                data !== undefined && this.#onData(data, onUpdate)
+                data !== undefined && this.#onData(data, onUpdate, onRemoveFailed)
             },
             error: error => log.error('downstream$ error', error)
         })
@@ -46,8 +46,10 @@ export class UserFilesMonitor {
         this.#send({monitor: this.#paths, reset: true})
     }
 
-    #onData({path, items}, onUpdate) {
-        if (items && this.#paths.includes(path)) {
+    #onData({path, items, removeFailed}, onUpdate, onRemoveFailed) {
+        if (removeFailed) {
+            onRemoveFailed?.(removeFailed)
+        } else if (items && this.#paths.includes(path)) {
             onUpdate({path, items})
         }
     }

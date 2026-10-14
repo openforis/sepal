@@ -4,6 +4,7 @@ import {Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {setApi} from '~/apiRegistry'
+import {Notifications} from '~/widget/notifications'
 
 vi.mock('~/enabled', () => ({
     withEnableDetector: () => Component => props =>
@@ -14,12 +15,13 @@ vi.mock('~/subscription', () => ({
         <Component {...props} addSubscription={() => {}}/>
 }))
 vi.mock('~/translate', () => ({msg: key => key}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 vi.mock('~/widget/button', () => ({
     Button: ({icon, disabled, label, onClick}) =>
         <button data-icon={icon} disabled={disabled} onClick={onClick}>{label}</button>
 }))
 vi.mock('~/widget/removeButton', () => ({
-    RemoveButton: ({disabled}) => <button data-icon='remove' disabled={disabled}/>
+    RemoveButton: ({disabled, onRemove}) => <button data-icon='remove' disabled={disabled} onClick={onRemove}/>
 }))
 vi.mock('~/widget/toggleButton', () => ({ToggleButton: () => null}))
 vi.mock('~/widget/sortButtons', () => ({SortButtons: () => null}))
@@ -79,15 +81,29 @@ describe('FileBrowser toolbar', () => {
         expect(button('remove').disabled).toBe(false)
     })
 
+    it('stops showing a file as being removed and says so when it could not be deleted', () => {
+        render()
+        select('report.txt')
+        act(() => button('remove').click())
+        expect(row('report.txt').className).toContain('removing')
+
+        act(() => ws.removeFailed(['report.txt']))
+
+        expect(row('report.txt').className).not.toContain('removing')
+        expect(Notifications.error).toHaveBeenCalledWith({message: 'browse.removeFailed'})
+    })
+
     const render = () => {
         act(() => root.render(<FileBrowser/>))
         act(() => ws.ready(true))
         act(() => ws.update({path: '', items: {'report.txt': {file: true, size: 1, mtime: 2}}}))
     }
 
+    const row = name =>
+        [...container.querySelectorAll('li > div')].find(div => div.textContent.includes(name))
+
     const select = name => {
-        const row = [...container.querySelectorAll('li > div')].find(div => div.textContent.includes(name))
-        act(() => row.click())
+        act(() => row(name).click())
     }
 
     const button = icon =>
@@ -101,6 +117,7 @@ const fakeUserFilesWs = () => {
         upstream$,
         downstream$,
         ready: ready => downstream$.next({ready}),
-        update: data => downstream$.next({data})
+        update: data => downstream$.next({data}),
+        removeFailed: removeFailed => downstream$.next({data: {removeFailed}})
     }
 }

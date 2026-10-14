@@ -13,6 +13,19 @@ describe('UserFilesMonitor', () => {
         setApi({userFiles: {ws: () => ws}})
     })
 
+    describe('remove failures', () => {
+        it('reports the paths that could not be removed, not as a listing', () => {
+            const onUpdate = vi.fn()
+            const onRemoveFailed = vi.fn()
+            subscribed(onUpdate, {onRemoveFailed})
+
+            ws.update({removeFailed: ['data/a']})
+
+            expect(onRemoveFailed).toHaveBeenCalledWith(['data/a'])
+            expect(onUpdate).not.toHaveBeenCalled()
+        })
+    })
+
     describe('watch', () => {
         it('starts watching the requested folders once the module is ready', () => {
             const monitor = subscribed()
@@ -130,9 +143,9 @@ describe('UserFilesMonitor', () => {
         expect(onUpdate).not.toHaveBeenCalled()
     })
 
-    const subscribed = (onUpdate = () => {}) => {
+    const subscribed = (onUpdate = () => {}, options) => {
         const monitor = new UserFilesMonitor()
-        monitor.subscribe(onUpdate)
+        monitor.subscribe(onUpdate, options)
         return monitor
     }
 })

@@ -16,6 +16,7 @@ import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
+import {Notifications} from '~/widget/notifications'
 import {RemoveButton} from '~/widget/removeButton'
 import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
@@ -98,8 +99,9 @@ class _FileBrowser extends React.Component {
     componentDidMount() {
         const {enableDetector: {onChange}, addSubscription} = this.props
         onChange(() => this.updateMonitoring())
-        addSubscription(this.monitor.subscribe(this.onUpdate))
-        addSubscription(this.dataMonitor.subscribe(this.onUpdate))
+        const onRemoveFailed = paths => this.onRemoveFailed(paths)
+        addSubscription(this.monitor.subscribe(this.onUpdate, {onRemoveFailed}))
+        addSubscription(this.dataMonitor.subscribe(this.onUpdate, {onRemoveFailed}))
         this.updateMonitoring()
     }
 
@@ -128,6 +130,11 @@ class _FileBrowser extends React.Component {
 
     onUpdate({path, items}) {
         this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), withDataNode(path, items))}))
+    }
+
+    onRemoveFailed(paths) {
+        this.setState(({tree}) => ({tree: FileTree.clearRemoving(tree, paths)}))
+        Notifications.error({message: msg('browse.removeFailed', {count: paths.length, path: paths[0]})})
     }
 
     expandDirectory(node) {

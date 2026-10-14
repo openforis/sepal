@@ -77,6 +77,16 @@ const setRemoving = (tree, paths) =>
         )
     )
 
+const clearRemoving = (tree, paths) =>
+    STree.alter(tree, tree =>
+        paths.forEach(path => {
+            const node = STree.traverse(tree, fromStringPath(path))
+            node && STree.updateValue(node, ({removing: _removing, ...value} = {}) =>
+                Object.keys(value).length ? value : undefined
+            )
+        })
+    )
+
 const updateItem = (tree, path, items) =>
     STree.alter(tree, tree => {
         const node = STree.traverse(tree, path)
@@ -166,6 +176,6 @@ const isRemoving = node =>
     
 export const FileTree = {
     create, expandDirectory, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
-    setRemoving, updateItem, addDirectory, getSelectedItems, getExpandedDirectories, getNode, toStringPath, fromStringPath, getPath,
+    setRemoving, clearRemoving, updateItem, addDirectory, getSelectedItems, getExpandedDirectories, getNode, toStringPath, fromStringPath, getPath,
     getDepth, getChildNodes, getMTime, getSize, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
 }

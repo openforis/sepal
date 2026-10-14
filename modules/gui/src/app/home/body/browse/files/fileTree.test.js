@@ -30,6 +30,17 @@ describe('updateItem', () => {
     })
 })
 
+describe('clearRemoving', () => {
+    it('stops only the given paths from showing as removing', () => {
+        const removing = FileTree.setRemoving(withDirectories(['a', 'b']), [['a'], ['b']])
+
+        const tree = FileTree.clearRemoving(removing, ['a'])
+
+        expect(FileTree.isRemoving(FileTree.getNode(tree, ['a']))).toBeFalsy()
+        expect(FileTree.isRemoving(FileTree.getNode(tree, ['b']))).toBe(true)
+    })
+})
+
 describe('addDirectory', () => {
     it('adds a directory and any missing parents', () => {
         const tree = FileTree.addDirectory(withDirectories(['a']), ['a', 'b', 'c'])
