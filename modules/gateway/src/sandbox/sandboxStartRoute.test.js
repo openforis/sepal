@@ -83,6 +83,27 @@ describe('sandboxStartRoute', () => {
         expect(res.body).toEqual({error: 'Failed to start sandbox session', code: 'INSTANCE_UNAVAILABLE'})
     })
 
+    test('a budget refusal keeps the worker\'s 403 and body', async () => {
+        const body = {code: 'BUDGET_EXCEEDED', reason: 'STORAGE_QUOTA', messageKey: 'error.budget.storageQuotaExceeded'}
+        const error = Object.assign(new Error('worker POST → 403'), {statusCode: 403, body})
+        const mgr = {startApp: jest.fn().mockRejectedValue(error)}
+        const {handler} = sandboxStartRoute(mgr)
+        const res = mockRes()
+        await handler(reqWithUser('POST', {endpoint: 'rstudio'}), res)
+        expect(res.statusCode).toBe(403)
+        expect(res.body).toEqual(body)
+    })
+
+    test('any other 403 gets the generic body', async () => {
+        const error = Object.assign(new Error('worker POST → 403'), {statusCode: 403, body: {code: 'SOMETHING_ELSE'}})
+        const mgr = {startApp: jest.fn().mockRejectedValue(error)}
+        const {handler} = sandboxStartRoute(mgr)
+        const res = mockRes()
+        await handler(reqWithUser('POST', {endpoint: 'rstudio'}), res)
+        expect(res.statusCode).toBe(403)
+        expect(res.body).toEqual({error: 'Failed to start sandbox session'})
+    })
+
     test('an unclassified worker 503 stays a plain 500', async () => {
         const error = Object.assign(new Error('worker POST → 503'), {statusCode: 503, body: null})
         const mgr = {startApp: jest.fn().mockRejectedValue(error)}

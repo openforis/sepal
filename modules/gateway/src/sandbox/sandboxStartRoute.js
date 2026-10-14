@@ -35,6 +35,11 @@ const sandboxStartRoute = sandboxSessionManager => {
                 {username, endpoint, appPath, appLabel, sessionId, instanceType, clientId, reassert})
             res.json(result)
         } catch (error) {
+            // A budget refusal keeps its body: the GUI says which limit refused the session.
+            if (error.statusCode === 403 && error.body?.code === 'BUDGET_EXCEEDED') {
+                res.status(403).json(error.body)
+                return
+            }
             // A launch AWS refused (no capacity, type not offered, account quota) keeps the worker's
             // 503 and code, so the GUI can say why instead of reporting a generic failure.
             const launchFailure = error.statusCode === 503 && error.body?.code
