@@ -76,6 +76,35 @@ describe('progress from a container', () => {
     })
 })
 
+describe('local processing from a container', () => {
+    test('a slot is asked for and given back for the task whose key calls', async () => {
+        const {tasks, supervisor} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
+
+        expect(await tasks.requestLocalProcessing({taskId: task.id, callerTaskId: task.id})).toBe(true)
+        await tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id})
+
+        expect(supervisor.slotRequests).toEqual([task.id])
+        expect(supervisor.slotReleases).toEqual([task.id])
+    })
+
+    test('a call with a different task\'s key is refused', async () => {
+        const {tasks, supervisor} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
+
+        await expect(tasks.requestLocalProcessing({taskId: task.id, callerTaskId: 'other'})).rejects.toThrow(Unauthorized)
+        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: 'other'})).rejects.toThrow(Unauthorized)
+        expect(supervisor.slotRequests).toEqual([])
+        expect(supervisor.slotReleases).toEqual([])
+    })
+
+    test('a call for a task that does not exist is not found', async () => {
+        const {tasks} = setup()
+
+        await expect(tasks.requestLocalProcessing({taskId: 'gone', callerTaskId: 'gone'})).rejects.toThrow(NotFound)
+    })
+})
+
 describe('authenticating a container\'s key', () => {
     test('names the user and task of a running task\'s key', async () => {
         const {tasks, repository} = setup()
@@ -127,8 +156,18 @@ const setup = () => {
             this.dispatched++
             return Promise.resolve()
         },
+        slotRequests: [],
+        slotReleases: [],
         stopContainer(task) {
             this.stopped.push(task.id)
+            return Promise.resolve()
+        },
+        requestSlot(task) {
+            this.slotRequests.push(task.id)
+            return Promise.resolve(true)
+        },
+        releaseSlot(task) {
+            this.slotReleases.push(task.id)
             return Promise.resolve()
         }
     }

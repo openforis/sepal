@@ -83,14 +83,18 @@ export class Tasks {
     }
 
     async reportProgress({taskId, callerTaskId, statusDescription}) {
-        if (callerTaskId !== taskId) {
-            throw new Unauthorized(`Progress for task ${taskId} sent with the key of task ${callerTaskId}`)
-        }
-        const task = await this.#repository.getTask(taskId)
-        if (!task) {
-            throw new NotFound(`No such task: ${taskId}`)
-        }
+        const task = await this.#callerTask({taskId, callerTaskId})
         await this.#repository.recordProgress(task, statusDescriptionOf(statusDescription))
+    }
+
+    async requestLocalProcessing({taskId, callerTaskId}) {
+        const task = await this.#callerTask({taskId, callerTaskId})
+        return await this.#supervisor.requestSlot(task) === true
+    }
+
+    async releaseLocalProcessing({taskId, callerTaskId}) {
+        const task = await this.#callerTask({taskId, callerTaskId})
+        await this.#supervisor.releaseSlot(task)
     }
 
     async authenticateApiKey(apiKey) {
@@ -102,6 +106,17 @@ export class Tasks {
         const task = await this.getTask({taskId, username})
         if (!isFinished(task)) {
             throw new InvalidCommand(`Only canceled, failed and completed tasks can be ${action}`)
+        }
+        return task
+    }
+
+    async #callerTask({taskId, callerTaskId}) {
+        if (callerTaskId !== taskId) {
+            throw new Unauthorized(`Task ${taskId} called with the key of task ${callerTaskId}`)
+        }
+        const task = await this.#repository.getTask(taskId)
+        if (!task) {
+            throw new NotFound(`No such task: ${taskId}`)
         }
         return task
     }

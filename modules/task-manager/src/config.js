@@ -33,6 +33,7 @@ program
     .addOption(new Option('--task-max-concurrent <number>').env('TASK_MAX_CONCURRENT').argParser(positiveNumber('TASK_MAX_CONCURRENT')).default(30))
     .addOption(new Option('--task-max-concurrent-local <number>').env('TASK_MAX_CONCURRENT_LOCAL').argParser(positiveNumber('TASK_MAX_CONCURRENT_LOCAL')).default(4))
     .addOption(new Option('--task-max-concurrent-per-user <number>').env('TASK_MAX_CONCURRENT_PER_USER').argParser(positiveNumber('TASK_MAX_CONCURRENT_PER_USER')).default(5))
+    .addOption(new Option('--task-max-concurrent-local-processing <number>').env('TASK_MAX_CONCURRENT_LOCAL_PROCESSING').argParser(positiveNumber('TASK_MAX_CONCURRENT_LOCAL_PROCESSING')).default(4))
     .addOption(new Option('--task-local-memory-mb <number>').env('TASK_LOCAL_MEMORY_MB').argParser(positiveNumber('TASK_LOCAL_MEMORY_MB')).default(4096))
     .addOption(new Option('--task-memory-mb <number>').env('TASK_MEMORY_MB').argParser(positiveNumber('TASK_MEMORY_MB')).default(2048))
     .addOption(new Option('--task-cpus <number>').env('TASK_CPUS').argParser(positiveNumber('TASK_CPUS')).default(1))

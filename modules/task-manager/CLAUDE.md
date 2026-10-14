@@ -17,6 +17,11 @@ API-key check, and the task-list websocket.
 - It reports progress with `POST /tasks/task/:id/progress` and writes its outcome to `/task/result.json`
   before exiting; the supervisor settles the task state from that file. A container that exits without one
   has failed, and a CANCELED result counts only for a task being cancelled (any other stop interrupted it).
+- Before each local processing step (a download into the workspace, stacking a time-series tile) it polls
+  `POST /tasks/task/:id/local-processing` every 10 seconds until `{granted: true}`, and after the last step in
+  progress calls `POST /tasks/task/:id/local-processing/release`. At most `TASK_MAX_CONCURRENT_LOCAL_PROCESSING`
+  slots are held at once. Holders are stored in `task.slot_time`; the waiting line is in memory, and a waiter not
+  heard from for 30 seconds loses its place. Removing a container frees its slot.
 
 ## Supervisor
 
@@ -50,5 +55,6 @@ and tasks the user had removed are skipped. The worker's `task` table is only th
 - `POST /tasks`, `GET /tasks/task/:id`, `GET /tasks/task/:id/details` (auth)
 - `POST /tasks/task/:id/{cancel,remove,execute}`, `POST /tasks/remove` (auth)
 - `POST /tasks/task/:id/progress` (task key)
+- `POST /tasks/task/:id/local-processing`, `POST /tasks/task/:id/local-processing/release` (task key)
 - `POST /tasks/api-key-authenticate` (admin)
 - `/ws` - gateway virtual-websocket endpoint (module `task-manager/task`)

@@ -53,6 +53,14 @@ export const createTasksApi = tasks => {
             await tasks.reportProgress({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId, statusDescription})
             noContent(ctx)
         }),
+        requestLocalProcessing: ctx => run(ctx, async () => {
+            const granted = await tasks.requestLocalProcessing({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId})
+            ctx.body = {granted}
+        }),
+        releaseLocalProcessing: ctx => run(ctx, async () => {
+            await tasks.releaseLocalProcessing({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId})
+            noContent(ctx)
+        }),
         authenticateApiKey: ctx => run(ctx, async () => {
             const caller = await tasks.authenticateApiKey(ctx.request.body?.apiKey)
             ctx.status = caller ? 200 : 401
