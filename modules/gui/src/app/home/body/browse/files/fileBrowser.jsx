@@ -372,7 +372,7 @@ class _FileBrowser extends React.Component {
                     onClick={() => this.toggleSelected(node)}
                 >
                     {this.renderIcon(key, node)}
-                    <span className={styles.fileName}>{this.renderName(key, node)}</span>
+                    <span className={[styles.fileName, this.isDataRoot(node) ? styles.dataRoot : null].join(' ')}>{key}</span>
                     {this.renderNodeInfo(node)}
                 </div>
                 {this.renderList(node)}
@@ -380,10 +380,8 @@ class _FileBrowser extends React.Component {
         )
     }
 
-    renderName(key, node) {
+    isDataRoot(node) {
         return isDataRoot(FileTree.toStringPath(FileTree.getPath(node)))
-            ? msg('browse.data.label')
-            : key
     }
 
     renderActionButtons() {

@@ -67,9 +67,24 @@ describe('FileBrowser toolbar', () => {
     it('cannot remove the Data folder', () => {
         render()
 
-        select('browse.data.label')
+        select('data')
 
         expect(button('remove').disabled).toBe(true)
+    })
+
+    it('shows the root data folder by its name, in bold', () => {
+        render()
+
+        expect(nameOf('data').className).toContain('dataRoot')
+    })
+
+    it('does not make a nested data folder bold', () => {
+        render()
+        act(() => ws.update({path: '', items: {x: {dir: true}}}))
+        act(() => row('x').querySelector('span').click())
+        act(() => ws.update({path: 'x', items: {data: {dir: true}}}))
+
+        expect(nameOf('data', 1).className).not.toContain('dataRoot')
     })
 
     it('can download a single selected file', () => {
@@ -101,6 +116,9 @@ describe('FileBrowser toolbar', () => {
 
     const row = name =>
         [...container.querySelectorAll('li > div')].find(div => div.textContent.includes(name))
+
+    const nameOf = (name, index = 0) =>
+        [...container.querySelectorAll('li > div > span')].filter(span => span.textContent === name)[index]
 
     const select = name => {
         act(() => row(name).click())

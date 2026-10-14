@@ -84,6 +84,10 @@
     padding-left: var(--icon-width);
 }
 
+.dataRoot {
+    font-weight: bold;
+}
+
 .fileInfo {
     display: inline-block;
     color: var(--text-faint-color);
