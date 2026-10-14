@@ -6066,8 +6066,7 @@
       "update": {
         "success": "Quota update request has been submitted.",
         "error": "Quota update request error."
-      },
-      "info": "Your SEPAL budget is not sufficient for this functionality. Please request additional resources using the button highlighted below."
+      }
     },
     "status": {
       "label": "Status",
