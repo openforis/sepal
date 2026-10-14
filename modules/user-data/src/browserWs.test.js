@@ -111,6 +111,37 @@ describe('remove', () => {
         expect(browser.listCalls).toHaveLength(2)
         expect(sent.at(-1).data).toEqual({path: 'data', items: B})
     })
+
+    it('reports the paths that failed to be removed, and lists again', async () => {
+        const {handle, sent, browser} = await harness({listings: [A], pollMs: 10000, removeResult: {failed: ['data/b']}})
+        handle(monitor('data'))
+        await wait(30)
+        const listed = browser.listCalls.length
+
+        handle({...monitor('data'), data: {remove: ['data/a', 'data/b']}})
+        await wait(30)
+
+        expect(sent).toContainEqual({clientId: 'c1', subscriptionId: 's1', data: {removeFailed: ['data/b']}})
+        expect(browser.listCalls.length).toBe(listed + 1)
+    })
+
+    it('reports every path as failed when the request is refused', async () => {
+        const {handle, sent} = await harness({listings: [A], removeFailure: new ClientException('The Data folder cannot be removed')})
+
+        handle({...monitor('data'), data: {remove: ['data']}})
+        await wait(30)
+
+        expect(sent).toContainEqual({clientId: 'c1', subscriptionId: 's1', data: {removeFailed: ['data']}})
+    })
+
+    it('reports nothing when every path was removed', async () => {
+        const {handle, sent} = await harness({listings: [A]})
+
+        handle({...monitor('data'), data: {remove: ['data/a']}})
+        await wait(30)
+
+        expect(sent.filter(({data}) => data.removeFailed)).toEqual([])
+    })
 })
 
 describe('malformed messages', () => {
@@ -176,11 +207,11 @@ describe('events', () => {
     })
 })
 
-const harness = async ({listings = [A], listMs, fail, pollMs = POLL_MS}) => {
+const harness = async ({listings = [A], listMs, fail, pollMs = POLL_MS, removeResult = {failed: []}, removeFailure}) => {
     const sent = []
     const stop$ = new Subject()
     stops.push(stop$)
-    const browser = fakeBrowser({listings, listMs, fail})
+    const browser = fakeBrowser({listings, listMs, fail, removeResult, removeFailure})
     const handle = await createBrowserWs({browser, pollMs})({send: message => sent.push(message), stop$})
     return {handle, sent, browser, stop$}
 }
@@ -197,7 +228,7 @@ const connection = async ({listings}) => {
 }
 
 // listMs: how long each successive listing takes; the last one repeats.
-const fakeBrowser = ({listings, listMs = [0], fail}) => {
+const fakeBrowser = ({listings, listMs = [0], fail, removeResult = {failed: []}, removeFailure}) => {
     const browser = {
         listCalls: [],
         removeCalls: [],
@@ -212,6 +243,10 @@ const fakeBrowser = ({listings, listMs = [0], fail}) => {
         },
         remove: async (username, paths) => {
             browser.removeCalls.push([username, paths])
+            if (removeFailure) {
+                throw removeFailure
+            }
+            return removeResult
         }
     }
     return browser

@@ -1,4 +1,7 @@
 import {ClientException, NotFoundException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('dataBrowser')
 
 const ROOT = 'data'
 const DOWNLOAD_URL_SECONDS = 15 * 60
@@ -30,10 +33,17 @@ export class DataBrowser {
             throw new ClientException('The Data folder cannot be removed')
         }
         const {attachment, provider} = this.#data(username)
+        const failed = []
         try {
-            for (const relPath of relPaths) {
-                await provider.remove(attachment, relPath)
+            for (const [index, relPath] of relPaths.entries()) {
+                try {
+                    await provider.remove(attachment, relPath)
+                } catch (error) {
+                    log.warn(`Cannot remove ${guiPaths[index]}:`, error.message)
+                    failed.push(guiPaths[index])
+                }
             }
+            return {failed}
         } finally {
             this.#usage.measureSoon(username)
             await this.#usage.markDirty(username)

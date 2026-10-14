@@ -79,10 +79,9 @@ class Watches {
     }
 
     async remove({username, clientId, subscriptionId, paths}) {
-        try {
-            await this.#browser.remove(username, paths)
-        } catch (error) {
-            log.warn(`Cannot remove ${paths}:`, error.message)
+        const failed = await this.#remove(username, paths)
+        if (failed.length) {
+            this.#send({clientId, subscriptionId, data: {removeFailed: failed}})
         }
         this.#trigger$.next({clientId, subscriptionId})
     }
@@ -104,6 +103,15 @@ class Watches {
     stopAll() {
         this.#subscriptions.forEach(paths => paths.forEach(subscription => subscription.unsubscribe()))
         this.#subscriptions.clear()
+    }
+
+    async #remove(username, paths) {
+        try {
+            return (await this.#browser.remove(username, paths)).failed
+        } catch (error) {
+            log.warn(`Cannot remove ${paths}:`, error.message)
+            return paths
+        }
     }
 
     #paths(clientId, subscriptionId) {

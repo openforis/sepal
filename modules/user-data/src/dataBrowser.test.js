@@ -60,8 +60,9 @@ describe('remove', () => {
     it('removes each path and has the usage measured again', async () => {
         const {browser, provider, usage} = harness({})
 
-        await browser.remove('alice', ['data/a.txt', 'data/dir'])
+        const result = await browser.remove('alice', ['data/a.txt', 'data/dir'])
 
+        expect(result).toEqual({failed: []})
         expect(provider.calls).toEqual([['remove', 'alice', 'a.txt'], ['remove', 'alice', 'dir']])
         expect(usage.dirty).toEqual(['alice'])
         expect(usage.measuredSoon).toEqual(['alice'])
@@ -75,16 +76,17 @@ describe('remove', () => {
         expect(provider.calls).toEqual([['remove', 'alice', 'growth_10%.csv'], ['remove', 'alice', '%zz']])
     })
 
-    it('has the usage measured again when a later removal fails', async () => {
+    it('reports the paths that failed, removes the others and has the usage measured again', async () => {
         const {browser, provider, usage} = harness({})
-        const failure = new Error('boom')
         provider.remove = async (_attachment, relPath) => {
             if (relPath === 'b') {
-                throw failure
+                throw new Error('boom')
             }
         }
 
-        await expect(browser.remove('alice', ['data/a', 'data/b'])).rejects.toBe(failure)
+        const result = await browser.remove('alice', ['data/a', 'data/b', 'data/c'])
+
+        expect(result).toEqual({failed: ['data/b']})
         expect(usage.dirty).toEqual(['alice'])
         expect(usage.measuredSoon).toEqual(['alice'])
     })
