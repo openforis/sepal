@@ -7,6 +7,7 @@
 import {jest} from '@jest/globals'
 
 import {instanceName} from '../instanceName.js'
+import {budgetErrorFor} from './budgetErrors.js'
 import {createSessionsApi} from './sessionsApi.js'
 
 const sessionManager = {
@@ -92,6 +93,23 @@ test('requestSessionSelf → 503 {code: QUOTA_EXCEEDED} when the account limit i
     await api.requestSessionSelf(c)
     expect(c.status).toBe(503)
     expect(c.body).toEqual({code: 'QUOTA_EXCEEDED', message: 'vCPU limit exceeded.'})
+})
+
+test('requestSessionSelf → 403 names the Data quota when the user is over it', async () => {
+    sessionManager.requestSession.mockRejectedValue(budgetErrorFor('DATA_QUOTA', 'alice'))
+    const c = ctx({params: {instanceType: 'T3aMedium'}})
+    await api.requestSessionSelf(c)
+    expect(c.status).toBe(403)
+    expect(c.body).toEqual({code: 'BUDGET_EXCEEDED', reason: 'DATA_QUOTA', messageKey: 'error.budget.dataQuotaExceeded'})
+})
+
+test('requestSessionSelf → 403 names the instance budget when the verdict falls back to the locked list', async () => {
+    // requestSession raises this when the budget service is unreachable and the user is locked
+    sessionManager.requestSession.mockRejectedValue(budgetErrorFor(undefined, 'alice'))
+    const c = ctx({params: {instanceType: 'T3aMedium'}})
+    await api.requestSessionSelf(c)
+    expect(c.status).toBe(403)
+    expect(c.body.reason).toBe('INSTANCE_BUDGET')
 })
 
 test('requestSessionSelf rethrows unclassified errors', async () => {

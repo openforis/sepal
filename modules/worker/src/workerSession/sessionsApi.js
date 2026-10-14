@@ -19,6 +19,7 @@ import {storedUsername} from '#sepal/username'
 import {launchFailureCode} from '../hostingService/instanceLaunchErrors.js'
 import {instanceName} from '../instanceName.js'
 import {round2} from '../round.js'
+import {budgetRefusal} from './budgetErrors.js'
 import {State} from './workerSession.js'
 
 const SANDBOX = 'sandbox'
@@ -399,6 +400,12 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
             ctx.status = 201
             ctx.body = sessionResponse(session, username, forCurrentUser)
         } catch (error) {
+            const refusal = budgetRefusal(error)
+            if (refusal) {
+                ctx.status = 403
+                ctx.body = refusal
+                return
+            }
             const code = launchFailureCode(error)
             if (!code) {
                 throw error

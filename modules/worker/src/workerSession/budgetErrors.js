@@ -6,26 +6,27 @@
 
 import {ClientException} from '#sepal/exception'
 
-const budgetException = (name, message, key) =>
+const budgetException = (name, reason, message, key) =>
     class extends ClientException {
         constructor(username) {
             super(message, {statusCode: 403, userMessage: {message, key}})
             this.name = name
+            this.reason = reason
             this.username = username
         }
     }
 
 const InstanceBudgetExceeded = budgetException(
-    'InstanceBudgetExceeded', 'Instance budget exceeded', 'error.budget.instanceBudgetExceeded')
+    'InstanceBudgetExceeded', 'INSTANCE_BUDGET', 'Instance budget exceeded', 'error.budget.instanceBudgetExceeded')
 
 const StorageBudgetExceeded = budgetException(
-    'StorageBudgetExceeded', 'Storage budget exceeded', 'error.budget.storageBudgetExceeded')
+    'StorageBudgetExceeded', 'STORAGE_BUDGET', 'Storage budget exceeded', 'error.budget.storageBudgetExceeded')
 
 const StorageQuotaExceeded = budgetException(
-    'StorageQuotaExceeded', 'Storage quota exceeded', 'error.budget.storageQuotaExceeded')
+    'StorageQuotaExceeded', 'STORAGE_QUOTA', 'Storage quota exceeded', 'error.budget.storageQuotaExceeded')
 
 const DataQuotaExceeded = budgetException(
-    'DataQuotaExceeded', 'Data quota exceeded', 'error.budget.dataQuotaExceeded')
+    'DataQuotaExceeded', 'DATA_QUOTA', 'Data quota exceeded', 'error.budget.dataQuotaExceeded')
 
 // reason → error. The reason strings are the budget module's wire contract
 // (modules/budget/src/budgetManager.js `Reason`); keep both sides in lockstep.
@@ -41,4 +42,12 @@ const ERROR_BY_REASON = {
 const budgetErrorFor = (reason, username) =>
     new (ERROR_BY_REASON[reason] ?? InstanceBudgetExceeded)(username)
 
-export {budgetErrorFor, DataQuotaExceeded, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded}
+// budgetRefusal — the client-facing form of a budget error, or null for any other error. The GUI
+// and the gateway recognise a refusal by `code`; `reason` names the limit and `messageKey` is the
+// GUI translation key.
+const budgetRefusal = error =>
+    Object.values(ERROR_BY_REASON).some(type => error instanceof type)
+        ? {code: 'BUDGET_EXCEEDED', reason: error.reason, messageKey: error.userMessage.key}
+        : null
+
+export {budgetErrorFor, budgetRefusal, DataQuotaExceeded, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded}
