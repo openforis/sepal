@@ -374,14 +374,20 @@ const createDockerInstanceProvisioner = ({
     }
 
     // waitUntilInitialized — exec the image's waitCommand inside the container and wait for it to
-    // exit; a non-zero exit means the container did not initialize. No timeout on the exec calls:
-    // provisioning can take minutes.
+    // exit. No timeout on the exec calls: provisioning can take minutes. A non-zero exit fails only a
+    // non-essential container (the Data mount sidecar, which then falls back): an essential one may
+    // merely be slow (sshd behind a heavy ~/.bashrc or a cold disk), and failing it would retry the
+    // whole provisioning into a failed session.
     const waitUntilInitialized = async (instance, image) => {
         const containerName = image.containerName(instance)
         log.debug(`Waiting until initialized: ${containerTag(containerName)} on ${instanceTag(instance)}...`)
         const {exitCode, output} = await dockerExec(baseUrl(instance), containerName, image.waitCommand)
-        if (exitCode) {
+        if (exitCode && !image.essential) {
             throw new Error(`${containerName} did not initialize (exit ${exitCode}): ${lastLine(output)}`)
+        }
+        if (exitCode) {
+            log.warn(`${containerTag(containerName)} on ${instanceTag(instance)} did not report initialized (exit ${exitCode}); continuing: ${lastLine(output)}`)
+            return
         }
         log.debug(`Initialized ${containerTag(containerName)} on ${instanceTag(instance)}`)
     }

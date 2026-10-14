@@ -10,6 +10,11 @@ jest.unstable_mockModule('node:fs', () => ({
     readFileSync: mockReadFileSync,
 }))
 
+// Some outcomes show only as the provisioner's warnings.
+const mockLog = {trace: jest.fn(), debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn()}
+
+jest.unstable_mockModule('#sepal/log', () => ({getLogger: () => mockLog}))
+
 // Import the modules AFTER mocking (ESM: dynamic import after jest.unstable_mockModule).
 const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
 const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
@@ -1002,16 +1007,18 @@ describe('provisionInstance with Data', () => {
             expect(created[sandboxName(instance)].HostConfig.Binds.filter(bind => bind.includes('/data:')))
                 .toEqual([])
         })
+    })
 
-        test('fails provisioning when an essential container does not initialize', async () => {
-            const instance = makeInstance()
-            const notify = jest.fn()
-            recordFetch({waitFails: sandboxName(instance)})
+    // A slow sshd (a heavy ~/.bashrc, a cold disk) must not turn into a failed provisioning.
+    test('provisions, with a warning, when an essential container\'s wait command fails', async () => {
+        const instance = makeInstance()
+        recordFetch({waitFails: sandboxName(instance)})
+        mockLog.warn.mockClear()
 
-            await expect(provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(instance))
-                .rejects.toThrow(/did not initialize \(exit 1\)/)
-            expect(notify).not.toHaveBeenCalled()
-        })
+        await provisioner().provisionInstance(instance)
+
+        expect(calls).toContain(`POST /v1.38/containers/${sandboxName(instance)}/start`)
+        expect(mockLog.warn).toHaveBeenCalledWith(expect.stringMatching(/did not report initialized \(exit 1\)/))
     })
 })
 
