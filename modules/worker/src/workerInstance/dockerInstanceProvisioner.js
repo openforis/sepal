@@ -30,6 +30,7 @@ import {
     sidecarContainerName,
     TMP_VOLUME_PREFIX,
     tmpVolumeName,
+    withoutDataMount,
     WORKER_IMAGE_NAMES,
 } from './workerTypes.js'
 
@@ -263,7 +264,7 @@ const createDockerInstanceProvisioner = ({
         const tmpfsSize = Math.floor(instanceType.ramBytes / 2)
 
         // Binds: flatten the volume map to ["hostPath:containerPath", ...].
-        const binds = Object.entries(image.volumes).flatMap(([hostDir, mountedDirs]) => {
+        const binds = Object.entries({...image.volumes, ...image.dataVolumes}).flatMap(([hostDir, mountedDirs]) => {
             const dirs = Array.isArray(mountedDirs) ? mountedDirs : [mountedDirs]
             return dirs.map(dir => `${hostDir}:${dir}`)
         })
@@ -419,8 +420,12 @@ const createDockerInstanceProvisioner = ({
         const workerType = createWorkerType(instance.reservation.workerType, instance, config, apiKey, data)
         await createTmpVolume(instance, workerType.images[0], tmpDevice)
 
+        let dataMounted = true
         for (const image of workerType.images) {
-            await runContainer(instance, image, instanceType)
+            const ran = await runContainer(instance, dataMounted ? image : withoutDataMount(image), instanceType)
+            if (!ran && image.containerName === sidecarContainerName) {
+                dataMounted = false
+            }
         }
         log.info(`Provisioned ${instanceTag(instance)}`)
     }
@@ -432,6 +437,7 @@ const createDockerInstanceProvisioner = ({
             await createContainer(instance, image, instanceType)
             await startContainer(instance, image)
             await waitUntilInitialized(instance, image)
+            return true
         } catch (error) {
             if (image.essential) {
                 throw error
@@ -440,6 +446,7 @@ const createDockerInstanceProvisioner = ({
             if (image.containerName === sidecarContainerName) {
                 notifyDataUnavailable(instance)
             }
+            return false
         }
     }
 

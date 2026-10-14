@@ -161,7 +161,9 @@ binds `{mountRoot}/{instanceId}` at `/mnt/host` as `rshared`, mounts at `/mnt/ho
 `{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: if it fails to come up,
 provisioning logs a warning and the sandbox starts with an empty `~/data`. `waitUntilInitialized` fails on a
 non-zero exit of the wait command; for the sidecar the user is also emailed once per instance (a Set cleared on
-undeploy), and a new terminal prints a one-shot warning when `~/data` is not a mount point.
+undeploy), and the sandbox is created without the `~/data` bind (`withoutDataMount`), so `~/data` stays the placeholder in
+the user's home (the next session moves what was saved there to `~/data.local`) and nothing is written into the
+unmounted host directory. A new terminal prints a one-shot warning when `~/data` is not a mount point.
 
 **Provisioning order.** Remove containers, then any mount and cache a crashed predecessor left; get the API key;
 `DataFolder.prepare` (moves a non-empty existing `~/data` aside to `~/data.local[.n]` with an email to the user,

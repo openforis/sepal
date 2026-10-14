@@ -46,6 +46,7 @@ const makeImage = ({
     exposedPorts = [],
     publishedPorts = {},
     volumes = {},
+    dataVolumes = {},
     links = {},
     environment = {},
     runCommand = [],
@@ -60,6 +61,7 @@ const makeImage = ({
     exposedPorts,
     publishedPorts,
     volumes,
+    dataVolumes,
     links,
     environment,
     runCommand,
@@ -75,6 +77,10 @@ const makeImage = ({
         instanceId: instance.id,
     })),
 })
+
+// withoutDataMount — the image as it starts when the Data mount failed: no ~/data bind, so ~/data stays
+// the placeholder in the user's home and nothing is written into the unmounted host directory.
+const withoutDataMount = image => ({...image, dataVolumes: {}})
 
 // publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.
 const createSandboxWorkerType = (instance, config, apiKey, data) => {
@@ -100,6 +106,8 @@ const createSandboxWorkerType = (instance, config, apiKey, data) => {
             [`${config.sepalHostDataDir}/sepal/jupyter/current-kernels`]: '/usr/local/share/jupyter/kernels/',
             [userHome]: `/home/${USER_HOME_NAME}`,
             [tmpVolumeName(instance.id)]: tmpMounts,
+        },
+        dataVolumes: {
             [`${dataMountDir(config, instance.id)}/data`]: `/home/${USER_HOME_NAME}/data:rslave`,
         },
         environment: {
@@ -170,5 +178,6 @@ export {
     TMP_VOLUME_PREFIX,
     tmpVolumeName,
     USER_HOME_NAME,
+    withoutDataMount,
     WORKER_IMAGE_NAMES,
 }

@@ -116,7 +116,7 @@ describe('Data mount', () => {
     it('binds the mounted Data into the sandbox home', () => {
         const [, sandbox] = create().images
 
-        expect(sandbox.volumes[`${dataMountDir(config(), instance.id)}/data`]).toBe('/home/sepal-user/data:rslave')
+        expect(sandbox.dataVolumes[`${dataMountDir(config(), instance.id)}/data`]).toBe('/home/sepal-user/data:rslave')
         expect(sandbox).toMatchObject({essential: true, networkAlias: true, tmpfs: true, hostConfig: {}})
     })
 })

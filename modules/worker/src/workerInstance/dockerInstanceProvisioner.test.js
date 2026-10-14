@@ -953,24 +953,54 @@ describe('provisionInstance with Data', () => {
             })
         })
 
-        test('does not tell the user when the mount comes up', async () => {
+        test('does not tell the user when the mount comes up, and binds the Data into the sandbox', async () => {
+            const instance = makeInstance()
             const notify = jest.fn()
 
-            await provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(makeInstance())
+            await provisioner(CONFIG, fakeDataFolder, notify).provisionInstance(instance)
 
             expect(notify).not.toHaveBeenCalled()
+            expect(created[sandboxName(instance)].HostConfig.Binds)
+                .toContain('/var/lib/sepal/data-mounts/inst-abc123/data:/home/sepal-user/data:rslave')
         })
 
-        test('tells the user once when provisioning the same instance is retried', async () => {
+        test('tells the user once when provisioning the same instance is retried after a failed attempt', async () => {
+            const instance = makeInstance()
+            const notify = jest.fn()
+            const failingDataFolder = {prepare: jest.fn()
+                .mockRejectedValueOnce(new Error('EACCES'))
+                .mockImplementation(fakeDataFolder.prepare)}
+            const subject = provisioner(CONFIG, failingDataFolder, notify)
+            recordFetch({waitFails: sidecarContainerName(instance)})
+
+            await expect(subject.provisionInstance(instance)).rejects.toThrow(/EACCES/)
+            await subject.provisionInstance(instance)
+            await subject.provisionInstance(instance)
+
+            expect(notify).toHaveBeenCalledTimes(1)
+        })
+
+        test('tells the user again in a later session on the same instance', async () => {
             const instance = makeInstance()
             const notify = jest.fn()
             recordFetch({waitFails: sidecarContainerName(instance)})
             const subject = provisioner(CONFIG, fakeDataFolder, notify)
 
             await subject.provisionInstance(instance)
+            await subject.undeploy({...instance, reservation: {...instance.reservation, sessionId: null}})
             await subject.provisionInstance(instance)
 
-            expect(notify).toHaveBeenCalledTimes(1)
+            expect(notify).toHaveBeenCalledTimes(2)
+        })
+
+        test('starts the sandbox without the Data bind', async () => {
+            const instance = makeInstance()
+            recordFetch({waitFails: sidecarContainerName(instance)})
+
+            await provisioner().provisionInstance(instance)
+
+            expect(created[sandboxName(instance)].HostConfig.Binds.filter(bind => bind.includes('/data:')))
+                .toEqual([])
         })
 
         test('fails provisioning when an essential container does not initialize', async () => {
