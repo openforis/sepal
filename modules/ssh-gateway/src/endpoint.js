@@ -2,6 +2,7 @@ import {catchError, filter, first, forkJoin, interval, map, of, switchMap} from 
 
 import {delete$, get$, post$} from '#sepal/httpClient'
 
+import {BUDGET_EXCEEDED_MESSAGES} from './budgetMessages.js'
 import {endpoint, endpointPassword, username} from './config.js'
 import {println} from './console.js'
 
@@ -25,10 +26,10 @@ const exceededBudget = info => {
             return false
         }
     }
-    return exceeded(spending.monthlyInstanceSpending, spending.monthlyInstanceBudget, 'You have spent more than you have been allocated on instances. Please contact a system administrator to increase your allocation.')
-        || exceeded(spending.monthlyStorageSpending, spending.monthlyStorageBudget, 'You have spent more than you have been allocated on storage. Please contact a system administrator to increase your allocation.')
-        || exceeded(spending.storageUsed, spending.storageQuota, 'You have used up more storage than you are allocated. Please contact a system administrator to increase your allocation.')
-        || (spending.dataQuota != null && exceeded(spending.dataUsed, spending.dataQuota, 'You have used up more Data than you are allocated. Please contact a system administrator to increase your allocation.', {inclusive: false}))
+    return exceeded(spending.monthlyInstanceSpending, spending.monthlyInstanceBudget, BUDGET_EXCEEDED_MESSAGES.INSTANCE_BUDGET)
+        || exceeded(spending.monthlyStorageSpending, spending.monthlyStorageBudget, BUDGET_EXCEEDED_MESSAGES.STORAGE_BUDGET)
+        || exceeded(spending.storageUsed, spending.storageQuota, BUDGET_EXCEEDED_MESSAGES.STORAGE_QUOTA)
+        || (spending.dataQuota != null && exceeded(spending.dataUsed, spending.dataQuota, BUDGET_EXCEEDED_MESSAGES.DATA_QUOTA, {inclusive: false}))
 }
 
 // The budget module owns spending: the worker report does not carry it, so the menu fetches it
@@ -66,21 +67,25 @@ const sandboxInfo$ = () => {
     )
 }
 
-const parsedCode = body => {
+const parsedBody = body => {
     try {
-        return JSON.parse(body)?.code
+        return JSON.parse(body)
     } catch (_error) {
         return undefined
     }
 }
 
-// failureReason — the worker answers a rejected create with 503 {code} for launch failures
-// the user can act on (see the worker's instanceLaunchErrors.js); anything else is FAILED.
-// Called with both a response, whose body `responseType: 'json'` has already parsed, and a
-// thrown error, whose body the http client always leaves as raw text.
-const failureReason = ({body} = {}) => {
-    const code = typeof body === 'string' ? parsedCode(body) : body?.code
-    return ['INSTANCE_UNAVAILABLE', 'QUOTA_EXCEEDED'].includes(code) ? code : 'FAILED'
+// unavailable — the {unavailable, reason} sentinel for a rejected create. The worker answers 503
+// {code} for launch failures the user can act on (see the worker's instanceLaunchErrors.js), and 403
+// {code: 'BUDGET_EXCEEDED', reason} when a budget limit refuses the session, kept as `limit`; anything
+// else is FAILED. Called with both a response, whose body `responseType: 'json'` has already parsed,
+// and a thrown error, whose body the http client always leaves as raw text.
+const unavailable = ({body} = {}) => {
+    const {code, reason} = (typeof body === 'string' ? parsedBody(body) : body) ?? {}
+    if (code === 'BUDGET_EXCEEDED') {
+        return {unavailable: true, reason: code, limit: reason}
+    }
+    return {unavailable: true, reason: ['INSTANCE_UNAVAILABLE', 'QUOTA_EXCEEDED'].includes(code) ? code : 'FAILED'}
 }
 
 // joinSession$ — emits the session once it leaves STARTING, or an {unavailable, reason}
@@ -122,16 +127,16 @@ const terminalOpened$ = session =>
     )
 
 // createSession$ — the {unavailable, reason} sentinel covers both a rejected create request
-// (reason from the worker's 503 {code}, FAILED otherwise) and a session the worker closed
+// (see unavailable) and a session the worker closed
 // while it was starting (see joinSession$). The 503 must arrive as a response, not an error:
 // httpClient retries >=500 errors with backoff, which would delay a capacity failure that
 // retrying cannot fix.
 const createSession$ = instanceType => {
     return post$(`${endpoint}${instanceType.path}`, {...endpointConfig, responseType: 'json', validStatuses: [503]}).pipe(
         switchMap(response => response.statusCode === 503
-            ? of({unavailable: true, reason: failureReason(response)})
+            ? of(unavailable(response))
             : joinSession$(response.body)),
-        catchError(error => of({unavailable: true, reason: failureReason(error)}))
+        catchError(error => of(unavailable(error)))
     )
 }
 

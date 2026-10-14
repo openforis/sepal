@@ -26,7 +26,7 @@ const nonInteractive$ = () => {
             if (session?.unavailable) {
                 // No menu to fall back to here (scp/one-off command) — report and end the
                 // connection without writing a session script.
-                println(failureMessage(session.reason))
+                println(failureMessage(session))
                 return of()
             }
             return of(session)

@@ -182,6 +182,16 @@ describe('createSession$', () => {
         expect(results).toEqual([{unavailable: true, reason: 'QUOTA_EXCEEDED'}])
     })
 
+    it('maps a budget refusal (403) to BUDGET_EXCEEDED, keeping the limit it names', () => {
+        post$.mockReturnValue(throwError(() => Object.assign(new Error('Forbidden'), {
+            statusCode: 403,
+            body: '{"code":"BUDGET_EXCEEDED","reason":"DATA_QUOTA","messageKey":"error.budget.dataQuotaExceeded"}'
+        })))
+        const results = []
+        createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
+        expect(results).toEqual([{unavailable: true, reason: 'BUDGET_EXCEEDED', limit: 'DATA_QUOTA'}])
+    })
+
     it('falls back to FAILED when an error body is not json', () => {
         post$.mockReturnValue(throwError(() => Object.assign(new Error('boom'), {
             statusCode: 502,

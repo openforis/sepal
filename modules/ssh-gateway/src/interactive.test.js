@@ -185,6 +185,18 @@ describe('interactive$', () => {
         }
     })
 
+    it('names the budget limit that refused the session', async () => {
+        const {of} = await import('rxjs')
+        createSession$.mockReturnValue(of({unavailable: true, reason: 'BUDGET_EXCEEDED', limit: 'DATA_QUOTA'}))
+        readLineQueue.push('t1')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        await flushPromises()
+        expect(println.mock.calls.some(([text]) => `${text}`.includes('You have used up more Data than you are allocated'))).toBe(true)
+        expect(println.mock.calls.some(([text]) => `${text}`.includes('having trouble starting'))).toBe(false)
+        subscription.unsubscribe()
+    })
+
     it('shows the trouble-starting message when joining a session that dies mid-start', async () => {
         const {of} = await import('rxjs')
         joinSession$.mockReturnValue(of({unavailable: true, reason: 'FAILED'}))

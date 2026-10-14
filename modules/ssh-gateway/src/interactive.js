@@ -3,6 +3,7 @@ import moment from 'moment'
 import {defer, EMPTY, first, interval, map, merge, NEVER, of, race, switchMap, tap} from 'rxjs'
 
 import {table, td, th, tr} from './asciiTable.js'
+import {budgetExceededMessage} from './budgetMessages.js'
 import {format, highlight, print, println, prompt, readLine$} from './console.js'
 import {fromNow} from './date.js'
 import {createSession$, joinSession$, sandboxInfo$, terminateSession$} from './endpoint.js'
@@ -212,14 +213,19 @@ const stop$ = (session, sessionEvent$) => {
     )
 }
 
-// failureMessage — only two messages are exposed to the user:
+// failureMessage — for an {unavailable} sentinel:
+//   BUDGET_EXCEEDED → the message of the budget limit that refused the session;
 //   INSTANCE_UNAVAILABLE (AWS capacity / type not offered in the availability zone) → the
 //   type-specific message; every other launch failure (account quota, unclassified errors,
 //   a session dying mid-start) → the generic trouble-starting message.
-const failureMessage = (reason, tag) =>
-    reason === 'INSTANCE_UNAVAILABLE'
+const failureMessage = ({reason, limit}, tag) => {
+    if (reason === 'BUDGET_EXCEEDED') {
+        return budgetExceededMessage(limit)
+    }
+    return reason === 'INSTANCE_UNAVAILABLE'
         ? `This instance type${tag ? ` (${tag})` : ''} is currently unavailable from the cloud provider.`
         : 'The cloud provider is having trouble starting a new instance. Please try again.'
+}
 
 // notice$ — back to a freshly drawn menu carrying a one-off message. A selection clears the
 // screen, so anything that hands the user back to the menu has to redraw it.
@@ -235,13 +241,13 @@ const notice$ = (sessionEvent$, message, defaultSelection) =>
 // unavailable$ — the launch/join could not complete: tell the user why (as far as the worker
 // could classify it) and return to the menu, defaulting the prompt to the failed type so
 // Enter retries and any tag picks another.
-const unavailable$ = (sessionEvent$, reason, {tag, defaultSelection} = {}) =>
-    notice$(sessionEvent$, failureMessage(reason, tag), defaultSelection)
+const unavailable$ = (sessionEvent$, session, {tag, defaultSelection} = {}) =>
+    notice$(sessionEvent$, failureMessage(session, tag), defaultSelection)
 
 const orUnavailable$ = (session$, sessionEvent$, retry) =>
     session$.pipe(
         switchMap(session => session?.unavailable
-            ? unavailable$(sessionEvent$, session.reason, retry)
+            ? unavailable$(sessionEvent$, session, retry)
             : of(session))
     )
 
