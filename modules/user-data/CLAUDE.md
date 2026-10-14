@@ -92,9 +92,12 @@ cached per user and mode and renewed within 15 minutes of expiry.
 
 ## Dev-env emulator
 
-`docker-compose.override.yml` runs the adapter in emulator mode against its own `s3-emulator` service
-(`rclone serve s3`, bucket `sepal-dev-user-data`, key `sepal-dev` / `sepal-dev-secret`). Emulator mode hands out
-that fixed key: there is no prefix isolation and no read-only mode in dev-env. The emulator also joins the external
+`docker-compose.override.yml` runs the adapter in emulator mode against its own `s3-emulator` service: MinIO
+(the community `pgsty/minio` build, since MinIO publishes no images), data in `${SEPAL_DATA_DIR}/s3-emulator-minio`,
+bucket `sepal-dev-user-data` created at start, root key `sepal-dev` / `sepal-dev-secret`. It answers like S3,
+directory markers and common prefixes included; an emulator mapping keys onto a filesystem would list a marker as a
+file. Emulator mode hands out that fixed key with an empty session token, as MinIO refuses its
+root key with one: there is no prefix isolation and no read-only mode in dev-env. The emulator also joins the external
 `sepal-task` network so task containers reach `http://s3-emulator:8080`; in AWS tasks reach S3 over the internet.
 `*.emulator.integration.test.js` runs only with `USER_DATA_S3_EMULATOR=true`, which the override sets, so CI skips it.
 

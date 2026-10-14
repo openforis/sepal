@@ -296,8 +296,7 @@ describe('credentials', () => {
         const credentials = await provider.credentials(attachment('alice'), {mode: 'readWrite'})
 
         expect(credentials).toMatchObject({AccessKeyId: EMULATOR.accessKeyId, SecretAccessKey: EMULATOR.secretAccessKey})
-        expect(credentials.Token).toEqual(expect.any(String))
-        expect(credentials.Token).not.toBe('')
+        expect(credentials.Token).toBe('')
         expect(Date.parse(credentials.Expiration)).toBeGreaterThan(Date.parse(NOW))
     })
 })

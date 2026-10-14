@@ -43,6 +43,24 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
         expect(await read.Body.transformToString()).toBe('hello')
     })
 
+    it('issues container credentials that reach the user prefix', async () => {
+        const credentials = await provider.credentials(attachment, {mode: 'readWrite'})
+        const client = new S3Client({
+            region: config.region,
+            endpoint: config.endpoint,
+            forcePathStyle: true,
+            credentials: {
+                accessKeyId: credentials.AccessKeyId,
+                secretAccessKey: credentials.SecretAccessKey,
+                sessionToken: credentials.Token
+            }
+        })
+
+        const listed = await client.send(new ListObjectsV2Command({Bucket: config.bucket, Prefix: attachment.location.prefix}))
+
+        expect(listed.$metadata.httpStatusCode).toBe(200)
+    })
+
     it('serves presigned downloads', async () => {
         const client = await taskClient(provider, attachment)
         const key = `${attachment.location.prefix}${randomUUID()}.txt`
@@ -183,6 +201,23 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
             expect(await provider.measureUsage(attachment)).toBe(0)
         })
 
+        it('lists a directory marker as a folder, and removes it with the folder', async () => {
+            const attachment = attachmentsFor(uniqueUser('marker'))
+            await put(attachment, 'empty/', '')
+            await put(attachment, 'a.txt', 'x')
+
+            const root = await provider.list(attachment, '')
+            const folder = await provider.list(attachment, 'empty')
+            await provider.remove(attachment, 'empty')
+
+            expect(sortByName(root)).toEqual([
+                {name: 'a.txt', file: true, size: 1, mtime: expect.any(Number)},
+                {name: 'empty', dir: true}
+            ])
+            expect(folder).toEqual([])
+            expect(await keys(attachment)).toEqual([`${attachment.location.prefix}a.txt`])
+        })
+
         it('streams a file for download', async () => {
             const attachment = attachmentsFor(uniqueUser('dl'))
             await put(attachment, 'dir/b.txt', 'hello')
@@ -192,6 +227,12 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
             expect(size).toBe(5)
             expect(await streamToString(stream)).toBe('hello')
         })
+
+        async function keys(attachment) {
+            const client = await taskClient(provider, attachment)
+            const {Contents = []} = await client.send(new ListObjectsV2Command({Bucket: config.bucket, Prefix: attachment.location.prefix}))
+            return Contents.map(({Key}) => Key)
+        }
 
         async function put(attachment, rel, body) {
             const client = await taskClient(provider, attachment)

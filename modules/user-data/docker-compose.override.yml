@@ -21,21 +21,28 @@ services:
       # module
       - ${SEPAL_PROJECT_DIR}/modules/user-data:/usr/local/src/sepal/modules/user-data
 
-  # An S3 server standing in for AWS behind the S3 adapter, with one fixed key and the dev bucket.
+  # MinIO standing in for AWS S3 behind the S3 adapter, with one fixed key and the dev bucket, created at start.
   s3-emulator:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
-    image: "rclone/rclone:1.68.2"
+    image: "pgsty/minio:RELEASE.2026-06-18T00-00-00Z"
     container_name: s3-emulator
+    init: true
+    environment:
+      MINIO_ROOT_USER: "sepal-dev"
+      MINIO_ROOT_PASSWORD: "sepal-dev-secret"
+      MC_HOST_local: "http://sepal-dev:sepal-dev-secret@localhost:8080"
     entrypoint:
       - /bin/sh
       - -c
-      - mkdir -p /data/sepal-dev-user-data && exec rclone serve s3 /data --addr :8080 --auth-key sepal-dev,sepal-dev-secret
+      - |
+        ( (until mc mb --ignore-existing local/sepal-dev-user-data > /dev/null 2>&1; do sleep 1; done) & )
+        exec minio server /data --address :8080
     volumes:
-      - "${SEPAL_DATA_DIR}/s3-emulator:/data"
+      - "${SEPAL_DATA_DIR}/s3-emulator-minio:/data"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      test: ["CMD", "mc", "stat", "local/sepal-dev-user-data"]
       start_period: 30s
       start_interval: 1s
       interval: 20s

@@ -14,7 +14,6 @@ const PROBE_DURATION_SECONDS = 900
 const PROBE_USERNAME = 'sepal-boot-probe'
 const RENEW_BEFORE_EXPIRY_MS = 15 * 60 * 1000
 const MODES = ['read', 'readWrite']
-const EMULATOR_SESSION_TOKEN = 'sepal-dev-emulator'
 const USERNAME = /^[a-zA-Z_][a-zA-Z0-9]*$/
 
 export const dataBucketName = deployEnvironment => `sepal-${deployEnvironment.toLowerCase()}-user-data`
@@ -136,11 +135,10 @@ export class S3Provider {
         return bytes
     }
 
-    // The emulator (rclone) reports common prefixes without the trailing slash, so it is optional here.
     async owners() {
         const owners = []
         for await (const {CommonPrefixes = []} of this.#listPages({Prefix: 'users/', Delimiter: '/'})) {
-            owners.push(...CommonPrefixes.map(({Prefix}) => Prefix.slice('users/'.length).replace(/\/$/, '')))
+            owners.push(...CommonPrefixes.map(({Prefix}) => Prefix.slice('users/'.length, -1)))
         }
         return owners.filter(owner => USERNAME.test(owner))
     }
@@ -166,14 +164,14 @@ export class S3Provider {
         return !!this.#emulator
     }
 
-    // Entries directly below relPath; the emulator leaves the trailing slash off common prefixes.
+    // Entries directly below relPath. A folder's directory marker, the zero-byte object `relPath/`, is no entry.
     async list(attachment, relPath) {
         requireUsername(attachment.owner)
         requireRelPath(relPath, {allowRoot: true})
         const prefix = folderPrefix(attachment, relPath)
         const entries = []
         for await (const {Contents = [], CommonPrefixes = []} of this.#listPages({Prefix: prefix, Delimiter: '/'})) {
-            entries.push(...CommonPrefixes.map(({Prefix}) => ({name: Prefix.slice(prefix.length).replace(/\/$/, ''), dir: true})))
+            entries.push(...CommonPrefixes.map(({Prefix}) => ({name: Prefix.slice(prefix.length, -1), dir: true})))
             entries.push(...Contents
                 .filter(({Key}) => Key !== prefix)
                 .map(({Key, Size, LastModified}) => ({name: Key.slice(prefix.length), file: true, size: Size, mtime: LastModified.getTime()}))
@@ -223,8 +221,7 @@ export class S3Provider {
         return attachment.location.prefix + relPath
     }
 
-    // The emulator fails to delete a key that does not exist, so check first. The exact key sorts before any
-    // other key it prefixes.
+    // The exact key sorts before any other key it prefixes.
     async #exists(key) {
         const {Contents = []} = await this.#s3.send(new ListObjectsV2Command({Bucket: this.#bucket, Prefix: key, MaxKeys: 1}))
         return Contents[0]?.Key === key
@@ -292,7 +289,9 @@ export class S3Provider {
         return {
             accessKeyId: this.#emulator.accessKeyId,
             secretAccessKey: this.#emulator.secretAccessKey,
-            sessionToken: EMULATOR_SESSION_TOKEN,
+            // The emulator's key is a long-term one, which it refuses with any session token. The JS SDK takes
+            // container credentials only with a string Token, and no client signs an empty one.
+            sessionToken: '',
             expiration: new Date(this.#now().getTime() + DURATION_SECONDS * 1000)
         }
     }
@@ -362,7 +361,7 @@ const requireRelPath = (relPath, {allowRoot = false} = {}) => {
     }
 }
 
-// Some S3-compatible servers (the dev emulator) url-encode listed names even when the client did not ask for it.
+// Some S3-compatible servers url-encode listed names even when the client did not ask for it.
 function decodeListing(page) {
     return {
         ...page,
