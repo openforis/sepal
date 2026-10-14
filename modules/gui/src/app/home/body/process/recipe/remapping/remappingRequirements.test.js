@@ -78,7 +78,7 @@ describe('retrieving a Remapping recipe', () => {
         const recipe = remappingOf([entry('l-1', [constraint('i-1', 'ndvi')])])
         const {output, pending} = retrieveRead(recipe)
 
-        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(false)
+        expect(retrieveAvailability({state: stateOf(recipe), recipe, heldFor: describedFor(recipe)}).available).toBe(false)
         expect(output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: MAPPING}])
         expect(submitRetrieve({recipe, output, pending, request: request(output), task: retrieveTask})).toBe(false)
         expect(submitted).toEqual([])
@@ -88,7 +88,7 @@ describe('retrieving a Remapping recipe', () => {
         const recipe = remappingOf([entry('l-1', [constraint('i-1', 'class')])])
         const {output, pending} = retrieveRead(recipe)
 
-        expect(retrieveAvailability({state: stateOf(recipe), recipe}).available).toBe(true)
+        expect(retrieveAvailability({state: stateOf(recipe), recipe, heldFor: describedFor(recipe)}).available).toBe(true)
         expect(submitRetrieve({recipe, output, pending, request: request(output), task: retrieveTask})).toBe(true)
         expect(submitted).toHaveLength(1)
     })
@@ -123,7 +123,11 @@ const stateOf = recipe => ({
 })
 
 // What Retrieve decides from as it submits: the session read at that moment, its input asset described.
-const retrieveRead = recipe => {
+const retrieveRead = recipe =>
+    readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: describedFor(recipe)})
+
+// What the runtime holds once the recipe was described: its input asset observed.
+const describedFor = recipe => {
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
     const {description, diagnostics, readiness} = readImageOutput({
         graph,
@@ -134,7 +138,7 @@ const retrieveRead = recipe => {
             : undefined
     })
     const terminal = {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}, readiness}
-    return readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: () => terminal})
+    return () => terminal
 }
 
 const request = output =>

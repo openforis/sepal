@@ -491,6 +491,50 @@ describe('exporting a recipe over a Classification without training data', () =>
     })
 })
 
+// A recipe zipping no input image cannot run, nor can a recipe whose image builds it.
+describe('exporting a recipe without input imagery', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const classification = images => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [{type: 'COLLECTED', referenceData: POINTS}]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const demInput = () => ({imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]})
+    const remapping = {
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'classification-1'}]},
+            legend: {entries: [{value: 1, constraints: [{image: 'r-1', band: 'class', operator: '=', value: 1}]}]}
+        }
+    }
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it.each([
+        ['itself', () => classification([]), ['class']],
+        ['a Remapping of it', () => remapping, ['class']]
+    ])('fails the export of %s, saying why', async (_case, recipeOf, bands) => {
+        state.catalogue = {'classification-1': classification([])}
+
+        await expect(submit({recipe: recipeOf(), bands})).rejects.toThrow(/cannot run: MISSING_ROLE$/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('exports a Remapping of it once it has an input image', async () => {
+        state.catalogue = {'classification-1': classification([demInput()])}
+
+        await submit({recipe: remapping, bands: ['class']})
+    })
+})
+
 // Regression without training data cannot run, nor can a recipe whose image builds it.
 describe('exporting a Regression without training data', () => {
     const regression = referenceData => ({

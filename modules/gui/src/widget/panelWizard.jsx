@@ -12,7 +12,8 @@ export const withPanelWizard = withContext(Context, 'panelWizard')
 
 // Leads a recipe being set up through its panels in order, until done. While it does, it knows which panels have been
 // opened - its steps reached so far, and any other panel opened meanwhile - so what the toolbar says about a section
-// can wait until it is reached (`reached`). That progress is the wizard's alone, kept while it is shown and never saved;
+// can wait until it is reached (`reached`), and which step is open (`step`), so what is said of it while it is being
+// set up can wait too. That progress is the wizard's alone, kept while it is shown and never saved;
 // once done, or for a recipe already set up, every panel counts as reached.
 class _PanelWizard extends React.Component {
     constructor(props) {
@@ -61,7 +62,7 @@ class _PanelWizard extends React.Component {
         }
 
         return (
-            <Context.Provider value={{wizard, back, next, done, reached}}>
+            <Context.Provider value={{wizard, back, next, done, reached, step: currentId || null}}>
                 {children}
             </Context.Provider>
         )

@@ -55,21 +55,46 @@ vi.mock('~/app/home/body/process/recipe/classification/panels/retrieve/retrieve'
 vi.mock('~/app/home/body/process/recipe/regression/panels/trainingData/trainingData', async () => ({TrainingData: await stub.panel('trainingData')}))
 vi.mock('~/app/home/body/process/recipe/regression/panels/classifier/classifier', async () => ({Classifier: await stub.panel('classifier')}))
 vi.mock('~/app/home/body/process/recipe/regression/panels/retrieve/retrieve', () => ({Retrieve: () => null}))
+vi.mock('~/app/home/body/process/panels/inputImagery/inputImagery', async () => ({InputImagery: await stub.panel('inputImagery')}))
+vi.mock('~/app/home/body/process/panels/mapping/mapping', async () => ({Mapping: await stub.panel('mapping')}))
+vi.mock('~/app/home/body/process/recipe/remapping/legend/legend', async () => ({Legend: await stub.panel('legend')}))
+vi.mock('~/app/home/body/process/recipe/remapping/panels/retrieve/retrieve', () => ({Retrieve: () => null}))
+vi.mock('~/app/home/body/process/recipe/bandMath/panels/inputImagery/inputImagery', async () => ({InputImagery: await stub.panel('inputImagery')}))
+vi.mock('~/app/home/body/process/recipe/bandMath/panels/calculations/calculations', async () => ({Calculations: await stub.panel('calculations')}))
+vi.mock('~/app/home/body/process/recipe/bandMath/panels/outputBands/outputBands', async () => ({OutputBands: await stub.panel('outputBands')}))
+vi.mock('~/app/home/body/process/recipe/bandMath/panels/retrieve/retrieve', () => ({Retrieve: () => null}))
 vi.mock('~/app/home/body/process/recipe/retrieveButton', () => ({RetrieveButton: () => null}))
+// The recipes whose requirements are read, in the order they are read.
+const requirementReads = vi.hoisted(() => ({recipeIds: []}))
+vi.mock('~/app/home/body/process/recipe/sourceRequirements', async importOriginal => {
+    const original = await importOriginal()
+    return {...original, readSourceRequirements: (...args) => {
+        requirementReads.recipeIds.push(args[0].recipe.id)
+        return original.readSourceRequirements(...args)
+    }}
+})
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: classification} = await import('./classification/classification')
 const {default: regression} = await import('./regression/regression')
 const {ClassificationToolbar} = await import('./classification/panels/classificationToolbar')
 const {RegressionToolbar} = await import('./regression/panels/regressionToolbar')
+const {default: bandMath} = await import('./bandMath/bandMath')
+const {default: remapping} = await import('./remapping/remapping')
+const {BandMathToolbar} = await import('./bandMath/panels/bandMathToolbar')
+const {RemappingToolbar} = await import('./remapping/panels/remappingToolbar')
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
 const {retrieveAvailability} = await import('./operationAvailability')
 const {readRetrieveOutput} = await import('./retrieveOutput')
 const {TRAINING_DATA: TRAINING_DATA_SECTION} = await import('./classification/trainingDataRequirements')
 const {SUPPORTED, unsupported} = await import('#sepal/recipe/requirement/verdict')
 const {requestGate} = await import('./sourceRequirements')
-const {sourceProblemsOfState} = await import('./selectedSourceStatus')
+const {sectionProblemsOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
+const {PanelWizard} = await import('~/widget/panelWizard')
+const {Toolbar} = await import('~/widget/toolbar/toolbar')
+const {SectionButton} = await import('./sectionButton')
+const {sliceRequirements} = await import('./ccdcSlice/sourceRequirement')
 
 // Stands in for a problem found in a training data set the Classification configures - it declares none today: a data
 // set without a name.
@@ -87,6 +112,9 @@ const UNNAMED_DATA_SET = {
 
 addRecipeType({...classification(), sourceRequirements: [...classification().sourceRequirements, UNNAMED_DATA_SET]})
 addRecipeType(regression())
+addRecipeType({id: 'CCDC_SLICE', imageSource: true, sourceRequirements: sliceRequirements})
+addRecipeType(bandMath())
+addRecipeType(remapping())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -195,11 +223,64 @@ describe('a Classification without training data alone, once its wizard is done'
     })
 })
 
+// What Input imagery says while it lists no image: nothing while the wizard has it open, being filled - its form holds
+// Next meanwhile - and that one is needed once it has moved on, or for a recipe already set up. What holds the recipe
+// back holds it all along.
+describe('an empty Input imagery', () => {
+    it.each(TOOLBARS)('of a %s is not marked while the wizard has it open, and holds the recipe back', async (_type, toolbar) => {
+        await open(toolbar.recipe({initialized: false}), toolbar.Toolbar)
+
+        expect(openPanels()).toEqual(['inputImagery'])
+        expect(markedSections()).toEqual({})
+        expect(findings()).toContain('MISSING_ROLE')
+        expect(retrieveAvailable()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true})
+    })
+
+    it.each(TOOLBARS)('of a %s is marked, saying to add an image, once the wizard is done', async (_type, toolbar) => {
+        await open(toolbar.recipe({initialized: false}), toolbar.Toolbar)
+
+        await finishWizard()
+
+        expect(markedSections()[toolbar.imagery]).toEqual([NO_IMAGERY])
+        expect(retrieveAvailable()).toBe(false)
+    })
+
+    it.each(TOOLBARS)('of a %s already set up is marked at once', async (_type, toolbar) => {
+        await open(toolbar.recipe({initialized: true}), toolbar.Toolbar)
+
+        expect(markedSections()[toolbar.imagery]).toEqual([NO_IMAGERY])
+    })
+})
+
+// What the toolbar says is read from the recipe's requirements once each time the store notifies it, whatever the wizard
+// leaves unsaid - here over requirements that read their source's evidence, which are read anew each time.
+describe('a section button over requirements reading source evidence, while the wizard leads', () => {
+    it('reads the recipe\'s requirements once each time the store notifies it', async () => {
+        await open(SLICE, SliceSection)
+        const before = readsOf(SLICE.id)
+
+        await act(async () => store.dispatch({type: 'NOTIFY', reduce: state => ({...state})}))
+
+        expect(readsOf(SLICE.id) - before).toBe(1)
+    })
+
+    it('says the same at the wizard\'s step as elsewhere, nothing of its requirements waiting for the wizard', async () => {
+        await open(SLICE, SliceSection)
+
+        const {sourceProblems, wizardStepProblems} = sectionProblemsOfState(store.getState(), SLICE.id, () => null, Date.now(), heldFor)
+
+        expect(wizardStepProblems).toBe(sourceProblems)
+    })
+})
+
 const ID = 'recipe-1'
 const MISSING = 'process.classification.panel.trainingData.missing'
 const TRAINING_DATA = 'process.classification.panel.trainingData.button'
 const INPUT_IMAGERY = 'process.classification.panel.inputImagery.button'
 const UNNAMED = 'Name each training data set'
+const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
+const IMAGERY = 'process.panels.inputImagery.button'
 const UNAVAILABLE_SELECTIONS = 'process.classification.panel.inputImagery.unavailableSelections.inputs'
 
 // A Landsat composite, described from its configuration.
@@ -235,6 +316,58 @@ const classificationOf = ({included = ['red', 'nir'], dataSetName = 'Collected'}
         classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
     }
 })
+
+const emptyImagery = (recipe, initialized) =>
+    ({...recipe, ui: {initialized}, model: {...recipe.model, inputImagery: {images: []}}})
+
+// Each toolbar, over a recipe of its type listing no input image, and the label of its Input imagery button.
+const TOOLBARS = [
+    ['Classification', {
+        Toolbar: ClassificationToolbar, imagery: INPUT_IMAGERY,
+        recipe: ({initialized}) => emptyImagery(classificationOf(), initialized)
+    }],
+    ['Regression', {
+        Toolbar: RegressionToolbar, imagery: INPUT_IMAGERY,
+        recipe: ({initialized}) => emptyImagery(regressionOf(), initialized)
+    }],
+    ['Band Math', {
+        Toolbar: BandMathToolbar, imagery: IMAGERY,
+        recipe: ({initialized}) => emptyImagery({
+            id: ID, type: 'BAND_MATH', revision: 1,
+            model: {calculations: {calculations: []}, outputBands: {outputImages: []}}
+        }, initialized)
+    }],
+    ['Remapping', {
+        Toolbar: RemappingToolbar, imagery: IMAGERY,
+        recipe: ({initialized}) => emptyImagery({
+            id: ID, type: 'REMAPPING', revision: 1,
+            model: {legend: {entries: [{id: 'l-1', value: 1, label: 'Forest', color: '#006400', constraints: []}]}}
+        }, initialized)
+    }]
+]
+
+// Every step of the wizard taken, then done.
+const finishWizard = async () => {
+    while (button('wizard.next')) {
+        await click(button('wizard.next'))
+    }
+    await click(button('wizard.done'))
+}
+
+// A CCDC Slice of a segments asset, being set up, and its Source button.
+const SLICE = {
+    id: ID, type: 'CCDC_SLICE', revision: 1, ui: {initialized: false},
+    model: {source: {type: 'ASSET', id: 'users/x/segments'}, date: {dateType: 'SINGLE', date: '2020-06-01'}, options: {}}
+}
+
+const SliceSection = () =>
+    <PanelWizard panels={['source']} initialized={false}>
+        <Toolbar vertical placement='bottom-right'>
+            <SectionButton id='source' label='process.ccdcSlice.panel.source.button' panel/>
+        </Toolbar>
+    </PanelWizard>
+
+const readsOf = recipeId => requirementReads.recipeIds.filter(id => id === recipeId).length
 
 async function open(recipe, RecipeToolbar) {
     const initialState = {

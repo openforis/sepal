@@ -8,17 +8,16 @@ import {select} from '~/store'
 
 import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT} from './recipeOutput'
-import {itemStatusesOfState, sourceProblemsOfState} from './selectedSourceStatus'
+import {itemStatusesOfState, sectionProblemsOfState} from './selectedSourceStatus'
 import {isJudgedByOutput} from './sourceRequirements'
 
 // `sourceProblems`: {[sectionId]: message} for the sections whose selected source is unavailable or unsuitable, or whose
-// own configuration does not meet its requirements, for a toolbar to mark them. Needs the recipe's id, as a recipe-connected component has it.
+// own configuration does not meet its requirements, for a toolbar to mark them; `wizardStepProblems` the same, for the
+// section a wizard has open as its step. Needs the recipe's id, as a recipe-connected component has it.
 export const withSourceProblems = () => composeHoC(
-    connect((state, {recipeId, sourceRuntime}) => ({
-        sourceProblems: sourceProblemsOfState(
-            state, recipeId, id => sourceRuntime?.evidenceOwnerOf(id), Date.now(), key => sourceRuntime?.heldFor(key)
-        )
-    })),
+    connect((state, {recipeId, sourceRuntime}) => sectionProblemsOfState(
+        state, recipeId, id => sourceRuntime?.evidenceOwnerOf(id), Date.now(), key => sourceRuntime?.heldFor(key)
+    )),
     withOutputRequirementWatch(),
     withSourceRuntime()
 )

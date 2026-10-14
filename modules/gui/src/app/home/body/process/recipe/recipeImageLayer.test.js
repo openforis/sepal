@@ -770,6 +770,37 @@ describe('acquiring what the layer shows', () => {
         })
     })
 
+    // Running it builds its input images, so without one it is not drawn, whatever its description says.
+    it.each([
+        ['a Classification', 'CLASSIFICATION', {legend: {entries: [{value: 1}, {value: 2}]}, trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}],
+        ['a Regression', 'REGRESSION', {trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}],
+        ['an Unsupervised Classification', 'UNSUPERVISED_CLASSIFICATION', {clusterer: {type: 'KMEANS', numberOfClusters: 5}}],
+        ['a Stack', 'STACK', {bandNames: {bandNames: []}}],
+        ['a Band Math', 'BAND_MATH', {calculations: {calculations: []}, outputBands: {outputImages: []}}],
+        ['a Remapping', 'REMAPPING', {legend: {entries: [{value: 1, constraints: []}]}}]
+    ])('withholds %s without input imagery, acquiring nothing', (_case, type, model) => {
+        const {instance, runtime} = shown({
+            recipe: {id: 'empty-1', type, model: {...model, inputImagery: {images: []}}, ...ownStyles([CLASS_STYLE])},
+            visParams: CLASS_STYLE
+        })
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(runtime.operations).toEqual([])
+    })
+
+    it('draws a Classification once an input image is added to it', () => {
+        const empty = {
+            id: 'classification-1', type: 'CLASSIFICATION', ...ownStyles([CLASS_STYLE]),
+            model: {inputImagery: {images: []}, legend: {entries: [{value: 1}, {value: 2}]}, trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}
+        }
+        const {instance, setRecipe} = shown({recipe: empty, records: [mosaic()], visParams: CLASS_STYLE})
+        expect(instance.maybeCreateLayer()).toBe(null)
+
+        setRecipe({...empty, model: {...empty.model, inputImagery: {images: [MOSAIC_INPUT]}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(null)
+    })
+
     it('keeps the display precision the optical mosaic presents for the cursor', () => {
         const {instance} = shown({recipe: {...mosaic(), ...ownStyles([BLUE_STYLE])}, visParams: BLUE_STYLE})
 
@@ -1059,6 +1090,15 @@ const mosaic = () => ({
         compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
     }
 })
+
+const CLASS_STYLE = {id: 'class-style', bands: ['class'], type: 'continuous'}
+
+const TRAINED = {dataSets: [{type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}, {x: 0.6, y: 0.6, class: 2}]}]}
+
+const MOSAIC_INPUT = {
+    imageId: 'image-1', type: 'RECIPE_REF', id: 'mosaic-1',
+    bandSetSpecs: [{id: 'image-bands', type: 'IMAGE_BANDS', included: ['red', 'nir']}]
+}
 
 const masking = ({mask, styles}) => ({
     id: 'masked-1',

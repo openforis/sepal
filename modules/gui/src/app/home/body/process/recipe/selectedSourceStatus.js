@@ -135,14 +135,26 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
 // The sections held back by an unavailable or unsuitable source, or by their own configuration, and why:
 // {[sectionId]: message}, for a toolbar to mark them. An advisory marks nothing, and neither does a declaration whose
 // type chooses not to mark it there (`toolbarMark: false`, sourceRequirements.js).
-export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now(), heldFor) => {
+export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now(), heldFor) =>
+    sectionProblemsOfState(state, recipeId, evidenceOwnerOf, now, heldFor).sourceProblems
+
+// The same from one read of the requirements, beside what a toolbar says of the section a wizard has open as its step
+// (`wizardStepProblems`): without what a declaration waits to say until the wizard has moved on from it
+// (`wizardStepMark: false`, sourceRequirements.js) - the same object where no declaration waits.
+export const sectionProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now(), heldFor) => {
     const reads = readsOf(state, recipeId, evidenceOwnerOf, now, heldFor)
     const listing = selectFrom(state, 'process.recipes')
     const previous = SOURCE_PROBLEMS.get(reads)
     if (previous && previous.listing === listing) {
         return previous.problems
     }
-    const problems = sourceProblemsOf(state, reads)
+    const marked = reads.filter(({declaration}) => declaration.toolbarMark !== false)
+    const atStep = marked.filter(({declaration}) => declaration.wizardStepMark !== false)
+    const sourceProblems = sourceProblemsOf(state, marked)
+    const problems = {
+        sourceProblems,
+        wizardStepProblems: atStep.length === marked.length ? sourceProblems : sourceProblemsOf(state, atStep)
+    }
     SOURCE_PROBLEMS.set(reads, {listing, problems})
     return problems
 }
@@ -150,8 +162,7 @@ export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Da
 // What the sections say, while the reads they were said of, and the names they name, are the same.
 const SOURCE_PROBLEMS = new WeakMap()
 
-const sourceProblemsOf = (state, allReads) => {
-    const reads = allReads.filter(({declaration}) => declaration.toolbarMark !== false)
+const sourceProblemsOf = (state, reads) => {
     return Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
         .map(section => [section, sectionStatusOf(state, reads, section)])
         .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state))

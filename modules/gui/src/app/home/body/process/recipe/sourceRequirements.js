@@ -115,7 +115,8 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // the recipe its candidate builds from that item alone (outputCandidate.js). The output read lies below this: it never
 // asks what these say. `toolbarMark: false` is presentation alone: what the declaration finds holds its operations and
 // is said wherever they are held, but its section's toolbar button does not say it (selectedSourceStatus.js), while
-// what other declarations of the section find still does.
+// what other declarations of the section find still does. `wizardStepMark: false` is the same while a set-up wizard
+// has the section open as its step - where the panel's own form says what is missing - and no longer once it is not.
 //
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the

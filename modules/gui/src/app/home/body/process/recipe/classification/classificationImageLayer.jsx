@@ -60,8 +60,7 @@ class _ClassificationImageLayer extends React.Component {
 
     canRender() {
         const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length && canClassify(recipe)
+        return canClassify(recipe)
     }
 }
 

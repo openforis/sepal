@@ -30,6 +30,9 @@ const {addRecipeType, getRecipeType} = await import('../recipeTypeRegistry')
 const {default: classification} = await import('./classification/classification')
 const {default: regression} = await import('./regression/regression')
 const {default: unsupervisedClassification} = await import('./unsupervisedClassification/unsupervisedClassification')
+const {default: stack} = await import('./stack/stack')
+const {default: bandMath} = await import('./bandMath/bandMath')
+const {default: remapping} = await import('./remapping/remapping')
 const {inputImageryRequirements} = await import('../panels/inputImageryWithDerived/inputImageryRequirements')
 const {retrieveAvailability} = await import('./operationAvailability')
 const {readRetrieveOutput} = await import('./retrieveOutput')
@@ -43,6 +46,9 @@ const {IMAGE_OUTPUT} = await import('./recipeOutput')
 addRecipeType(classification())
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
+addRecipeType(stack())
+addRecipeType(bandMath())
+addRecipeType(remapping())
 
 describe('the requirement on input band sets', () => {
     it.each(['CLASSIFICATION', 'REGRESSION', 'UNSUPERVISED_CLASSIFICATION'])('is registered by %s', type => {
@@ -205,6 +211,57 @@ describe('a Regression without training data', () => {
     })
 })
 
+// Every recipe zipping its input images needs one at least: none is said on Input imagery, and holds what the output
+// read finds it keeps from running, there and in every recipe over it. An input whose source is found gone is said as
+// that instead.
+describe('a recipe without input imagery', () => {
+    it.each([
+        ['CLASSIFICATION', SECTION],
+        ['REGRESSION', SECTION],
+        ['UNSUPERVISED_CLASSIFICATION', SECTION],
+        ['STACK', IMAGERY_SECTION],
+        // Its output bands, which it has none of either, are what its type declares first.
+        ['BAND_MATH', 'process.bandMath.panel.outputBands.button'],
+        ['REMAPPING', IMAGERY_SECTION]
+    ])('of type %s is marked on Input imagery, saying to add an image, and Retrieve and its previews are held, naming %s', (type, section) => {
+        const state = sessionWith(emptyModels[type](), {type})
+
+        expect(sourceProblems(state)).toMatchObject({inputImagery: NO_IMAGERY})
+        expect(retrieve(state).available).toBe(false)
+        expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET'})
+        expect(retrieveRead(state).output.readiness.findings).toContainEqual(expect.objectContaining({code: 'MISSING_ROLE'}))
+        expect(retrieve(state).gate.section).toBe(section)
+    })
+
+    it('of type BAND_MATH keeps its Output bands marked for having none, beside it', () => {
+        const state = sessionWith(emptyModels.BAND_MATH(), {type: 'BAND_MATH'})
+
+        expect(Object.keys(sourceProblems(state)).sort()).toEqual(['inputImagery', 'outputBands'])
+    })
+
+    it('holds a Remapping over it, which is marked nowhere: the recipe it remaps says why', () => {
+        const over = remappingOver(ID)
+        const state = {...sessionWith(emptyModels.CLASSIFICATION()), process: {
+            ...sessionWith(emptyModels.CLASSIFICATION()).process,
+            loadedRecipes: {...sessionWith(emptyModels.CLASSIFICATION()).process.loadedRecipes, [over.id]: over}
+        }}
+
+        expect(retrieveAvailability({state, recipe: over, heldFor, now: Date.now()}).available).toBe(false)
+        expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor, now: Date.now()})).toMatchObject({withdraw: true})
+        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({})
+    })
+
+    it('is not what an input whose asset is found missing is said to be', () => {
+        const state = sessionWith(modelOf([image('image-1', ASSET, ['elevation'])]), {
+            assets: {[ASSET.id]: {version: 'v1', checkedAt: 0, failure: {kind: 'DEFINITIVE', code: 'NOT_FOUND'}}}
+        })
+
+        expect(sourceProblems(state).inputImagery).not.toBe(NO_IMAGERY)
+        expect(retrieveRead(state).output.diagnostics).toContainEqual({code: 'ASSET_UNAVAILABLE', assetId: ASSET.id})
+        expect(retrieveRead(state).output.readiness?.findings || []).not.toContainEqual(expect.objectContaining({code: 'MISSING_ROLE'}))
+    })
+})
+
 // A finding one declaration locates at an item holds the operations that declaration does. Another declaration, finding
 // nothing of its own, holds them again only where the located finding does not: its hold on any other operation stays.
 describe('a finding one declaration locates, beside another declaration', () => {
@@ -266,6 +323,8 @@ const MISSING = 'process.classification.panel.inputImagery.unavailableSelections
 const UNAVAILABLE_SUMMARY = 'process.classification.panel.inputImagery.unavailableSelections.inputs'
 const INCOMPLETE = 'process.classification.panel.inputImagery.unavailableSelections.incompleteCombination'
 const TRAINING_DATA_SECTION = 'process.classification.panel.trainingData.button'
+const IMAGERY_SECTION = 'process.panels.inputImagery.button'
+const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
 const MISSING_TRAINING_DATA = 'process.classification.panel.trainingData.missing'
 
 const MOSAIC = {
@@ -294,6 +353,27 @@ const modelOf = (images, model = {}) => ({
 })
 
 const NO_TRAINING_DATA = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: []}]}
+
+// Each type's configuration, its input list empty.
+const emptyModels = {
+    CLASSIFICATION: () => modelOf([]),
+    REGRESSION: () => modelOf([], {trainingData: {dataSets: [{dataSetId: 'plots', type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, value: 112.4}]}]}}),
+    UNSUPERVISED_CLASSIFICATION: () => ({inputImagery: {images: []}, clusterer: {type: 'KMEANS', numberOfClusters: 5}}),
+    STACK: () => ({inputImagery: {images: []}, bandNames: {bandNames: []}}),
+    BAND_MATH: () => ({inputImagery: {images: []}, calculations: {calculations: []}, outputBands: {outputImages: []}}),
+    REMAPPING: () => ({inputImagery: {images: []}, legend: {entries: [{id: 'l-1', value: 1, label: 'Forest', color: '#000000', constraints: []}]}})
+}
+
+// Forest, where the recipe it remaps classifies 1.
+const remappingOver = id => ({
+    id: 'remapping-1',
+    type: 'REMAPPING',
+    model: {
+        inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id, includedBands: [{id: 'b-class', band: 'class'}]}]},
+        legend: {entries: [{id: 'l-1', value: 1, label: 'Forest', color: '#000000', booleanOperator: 'and',
+            constraints: [{id: 'c-1', image: 'r-1', band: 'class', operator: '=', value: 1}]}]}
+    }
+})
 
 const sessionWith = (model, {assets = {}, type = 'CLASSIFICATION'} = {}) => ({
     process: {

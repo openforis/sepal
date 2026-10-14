@@ -86,6 +86,11 @@ order, over the inputs and the calculations before it, so:
   by image id and physical band name, as execution selects them. A missing variable or band, a removed calculation, a
   later calculation and the calculation itself are each diagnosed.
 - An output band must be a band of the image it is taken from, by physical name, and that image must exist.
+- At least one input image is listed: running it zips them, and builds nothing from none. Without one, Input imagery
+  says "Please add at least one image." beside what Output bands says of having none - except while the set-up
+  wizard has Input imagery open, where its list holds Next until it has one - and its layer, Retrieve and the asset
+  export are held, as for every recipe over it
+  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)).
 - At least one image is output, each outputting at least one band, under names that are valid and that no other output
   band has - the rules Output bands applies to its own Apply (`outputImages.js`), so its fields, rows and toolbar
   button agree. An empty section is judged once, for the section; the rest per output image.

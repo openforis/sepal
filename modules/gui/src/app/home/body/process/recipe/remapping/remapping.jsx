@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
+import {INPUT_IMAGERY, missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -62,5 +63,5 @@ export default () => ({
     },
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: remappingRequirements
+    sourceRequirements: [missingInputImageryRequirement(INPUT_IMAGERY), ...remappingRequirements]
 })

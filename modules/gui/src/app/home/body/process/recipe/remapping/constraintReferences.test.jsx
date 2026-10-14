@@ -18,11 +18,12 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // toolbar, Mapping panel and constraint modal show them over a real store: marked on the Mapping button, the legend
 // entry's row and the constraint's field, Retrieve not offered, never rewritten until repaired and applied. An edit not
 // yet applied is judged by the modal alone. Index Change, sharing the constraint editor without asking it to check
-// references, judges its constraints as before. Earth Engine never answers.
+// references, judges its constraints as before. Earth Engine answers only what the input asset's image holds, which
+// running the Remapping builds.
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: () => NEVER,
+        bands$: ({asset}) => asset === ASSET ? of([{name: 'class', arrayDimensions: 0}]) : NEVER,
         assetMetadata$: () => NEVER,
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})

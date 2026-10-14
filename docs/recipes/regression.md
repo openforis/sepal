@@ -36,7 +36,9 @@ readiness finding ([Execution readiness](../design/recipes/source-resolution.md#
   the Regression, though its own description reads nothing of it;
 - the asset export refuses it: `Recipe X cannot run: NO_TRAINING_DATA`.
 
-Applying a data set that stores points, or reads them from another recipe, clears all of these. The Regression stays
+Applying a data set that stores points, or reads them from another recipe, clears all of these. Input imagery is
+judged the same way: a Regression listing no input image cannot run, and its IMG button says "Please add at least one
+image." once its wizard has moved on from it, or at once for a Regression already set up. The Regression stays
 described meanwhile: its single band is known from its declaration.
 
 The data set editor keeps its own draft rules - a name, a table and value column or an image to sample, and reference

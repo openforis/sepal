@@ -28,6 +28,12 @@ input is built with every band it stores, so a constraint reading one its input 
 ([Output](#output)) - since the configuration no longer says what the constraint reads. An edit not yet applied is
 judged by its modal alone: it keeps Apply unavailable, and leaves the applied configuration as it was judged.
 
+Running it needs one input image at least: a Remapping listing none cannot run, though its class is described from
+its legend ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). Input imagery says
+"Please add at least one image." - except while the set-up wizard has it open, where its list holds Next until it has
+one - its layer is not drawn, Retrieve is held and the asset export is refused. While what its image builds is being
+read, Retrieve waits.
+
 Not checked: whether an input's source holds its bands, and a model submitted to Task directly, which Earth Engine
 builds as above. The constraint editor checks references only where Remapping asks it to (`checkReferences`); its other
 users judge their constraints as before.

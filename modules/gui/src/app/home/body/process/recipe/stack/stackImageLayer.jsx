@@ -25,7 +25,7 @@ class _StackImageLayer extends React.Component {
         const {layer, map} = this.props
         return (
             <MapAreaLayout
-                layer={this.canRender() ? layer : null}
+                layer={layer}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -51,12 +51,6 @@ class _StackImageLayer extends React.Component {
                 selectedVisParams={layerConfig.visParams}
             />
         )
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length
     }
 }
 

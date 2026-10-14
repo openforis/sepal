@@ -6,7 +6,6 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {getPreSetVisualizations} from './visualizations'
@@ -20,7 +19,7 @@ class _RegressionImageLayer extends React.Component {
         const {layer, map} = this.props
         return (
             <MapAreaLayout
-                layer={this.canRender() ? layer : null}
+                layer={layer}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -48,12 +47,6 @@ class _RegressionImageLayer extends React.Component {
                 selectedVisParams={layerConfig.visParams}
             />
         )
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length
     }
 }
 

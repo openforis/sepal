@@ -350,11 +350,12 @@ describe('a classification', () => {
 })
 
 describe('a remapping', () => {
-    it('is described with its class while the imagery it remaps is not even loaded', () => {
-        const {output} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1', includedBands: [{band: 'class'}]}]}))
+    // Its class is described from its legend alone, but whether it can run needs the imagery its image builds.
+    it('waits for the imagery it remaps to be loaded before Retrieve offers its class', () => {
+        const {output, pending} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1', includedBands: [{band: 'class'}]}]}))
 
-        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
-        expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(pending).toBe(true)
     })
 
     // Execution builds an image without bands when there is no rule to remap by.

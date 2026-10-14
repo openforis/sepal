@@ -11,7 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-import {withSourceProblems} from '../../selectedSource'
+import {SectionButton} from '../../sectionButton'
 import {Legend} from '../legend/legend'
 import styles from './remappingToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
@@ -24,7 +24,7 @@ const mapRecipeToProps = recipe => ({
 
 class _RemappingToolbar extends React.Component {
     render() {
-        const {recipeId, initialized, sourceProblems} = this.props
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend', 'mapping']}
@@ -45,7 +45,7 @@ class _RemappingToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
@@ -57,11 +57,10 @@ class _RemappingToolbar extends React.Component {
                         tooltip={msg('process.remapping.panel.legend.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='mapping'
-                        error={!!sourceProblems.mapping}
                         label={msg('process.remapping.panel.mapping.button.label')}
-                        tooltip={sourceProblems.mapping || msg('process.remapping.panel.mapping.button.tooltip')}
+                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}
                         disabled={!initialized}
                         panel/>
                 </Toolbar>
@@ -72,7 +71,6 @@ class _RemappingToolbar extends React.Component {
 
 export const RemappingToolbar = compose(
     _RemappingToolbar,
-    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )
 

@@ -1,5 +1,6 @@
 import {bandSetLocation} from '#sepal/recipe/bandSets'
 import {INSUFFICIENT_INPUT_BANDS, MISSING_INPUT_BAND, UNDERIVABLE_INPUT_INDEX} from '#sepal/recipe/output/diagnostic'
+import {missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 
@@ -15,6 +16,7 @@ export const INPUT_IMAGERY = {id: 'inputImagery', label: 'process.classification
 export const INPUT_BAND_SETS = 'INPUT_BAND_SETS'
 
 export const inputImageryRequirements = [
+    missingInputImageryRequirement(INPUT_IMAGERY),
     {
         id: INPUT_BAND_SETS,
         section: INPUT_IMAGERY,

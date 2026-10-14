@@ -181,6 +181,49 @@ describe('a Classification without training data', () => {
     })
 })
 
+// Running it needs one input image at least: without one, Input imagery says to add one, and Retrieve is held.
+describe('a Classification whose last input is removed', () => {
+    it('is marked on Input imagery, saying to add an image, and holds Retrieve, until an input is added and applied', async () => {
+        await open([image('image-a', ASSET_A, ['red', 'nir'])])
+        await answer(ASSET_A, ['red', 'nir', 'swir1'])
+        expect(retrieveAvailable()).toBe(true)
+
+        await removeInput()
+        expect(savedImages()).toEqual([])
+        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(retrieveAvailable()).toBe(false)
+
+        await click(button('button.add'))
+        await chooseAsset(ASSET_B)
+        await addBand('red', 0)
+        await apply()
+        await answer(ASSET_B, ['red', 'swir1'])
+
+        expect(savedImages().map(({id}) => id)).toEqual([ASSET_B])
+        expect(sectionMark()).toEqual([])
+        expect(retrieveAvailable()).toBe(true)
+    })
+})
+
+describe('a Classification without input imagery, an input being added', () => {
+    it('stays marked and held while the input is only in its editor, and once it is cancelled', async () => {
+        await open([])
+        expect(sectionMark()).toEqual([NO_IMAGERY])
+
+        await click(button('button.add'))
+        await chooseAsset(ASSET_B)
+        await addBand('red', 0)
+        expect(applyEnabled()).toBe(true)
+        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(retrieveAvailable()).toBe(false)
+        await click(button('button.cancel'))
+
+        expect(savedImages()).toEqual([])
+        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(retrieveAvailable()).toBe(false)
+    })
+})
+
 describe('a band combination given its first band in its editor', () => {
     it('is told it needs another once its Add popup closes, Apply held meanwhile and the applied recipe unaffected', async () => {
         await open([image('image-a', ASSET_A, ['red', 'nir'])])
@@ -212,6 +255,7 @@ const MOSAIC = {
 }
 const BANDS = {[ASSET_A]: ['red', 'nir', 'swir1'], [ASSET_B]: ['red', 'swir1']}
 const INSUFFICIENT = 'process.classification.panel.inputImagery.bandSetSpec.insufficientBands'
+const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
 
 const INPUT = 'process.classification.panel.inputImagery.unavailableSelections.input'
 const SECTION = 'process.classification.panel.inputImagery.unavailableSelections.inputs'
@@ -306,6 +350,26 @@ const edit = async asset => {
 
 const apply = () => click(button('button.apply'))
 
+// The only input's remove button pressed, and the removal confirmed, as a user does.
+const removeInput = async () => {
+    await press(document.querySelector('svg[data-icon="trash"]').closest('button'))
+    await press(button('button.remove'))
+}
+
+// An asset chosen in a new input's editor, by typing its id and picking it.
+const chooseAsset = async asset => {
+    const input = document.querySelector('[data-label="process.classification.panel.inputImagery.form.asset.label"] input')
+    await act(async () => input.click())
+    await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, asset)
+        input.dispatchEvent(new Event('input', {bubbles: true}))
+    })
+    await settled()
+    await click(options().find(option => option.textContent.includes(asset)))
+}
+
+const savedImages = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model', 'inputImagery', 'images'])
+
 const applyEnabled = () => button('button.apply')?.disabled === false
 
 const addDerived = async operation => {
@@ -378,6 +442,14 @@ const markOf = row => {
 const button = label => [...document.querySelectorAll('button')].find(button => button.textContent === label)
 
 const options = () => [...document.querySelectorAll('[data-hook="option"]')]
+
+// A press as a user makes it, which a button asking for confirmation listens to.
+async function press(element) {
+    expect(element).toBeDefined()
+    await act(async () => ['mouseenter', 'mousedown', 'mouseup', 'click']
+        .forEach(type => element.dispatchEvent(new MouseEvent(type, {bubbles: true}))))
+    await settled()
+}
 
 async function click(element) {
     expect(element).toBeDefined()

@@ -812,7 +812,7 @@ rule today:
 | --- | --- | --- |
 | Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
 | GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
-| GUI-only execution rule | at-least-one-input layer guards (Classification family, Stack, Band Math, Remapping); Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
+| GUI-only execution rule | Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
 | Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
 | Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
@@ -831,7 +831,7 @@ configurationRequirements: [
 ```
 
 It reads only the recipe's own model: no input, record or evidence. It returns located findings or none, and it is
-evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Three
+evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Four
 are declared:
 - Classification's `NO_TRAINING_DATA`, for trained classifiers (`requiresTraining`, `noTrainingData`). The
   Classification stays described.
@@ -839,6 +839,10 @@ are declared:
   configured, and uses no supplied tree as given. The Regression stays described.
 - Masking's `MISSING_ROLE` at `['model', 'imageMask']` when no mask is selected. The Masking is refused as incomplete,
   not turned into a pass-through recipe. Its MSK section says "Select a mask" (`maskRequirements.js`).
+- `MISSING_ROLE` at `['model', 'inputImagery', 'images']` when the input list holds no image, for Classification,
+  Regression, Unsupervised Classification, Stack, Band Math and Remapping (`inputImageryRequirement`,
+  `source/inputImagery.js`): execution zips the images and builds nothing from none. Their descriptions stay as they
+  are: Band Math keeps `NO_OUTPUT_BANDS` beside it.
 
 #### Operation scope
 
@@ -923,7 +927,8 @@ One read answers every consumer, so they cannot disagree:
   mark, and leave definitive missing-source marks as they are. A declaration may leave its section's toolbar button
   unmarked (`toolbarMark: false`), a presentation choice: its finding still holds the operations, which still name the
   section, and the section's other declarations still mark it. Classification's `NO_TRAINING_DATA` is declared so
-  (`unmarkedTrainingDataRequirements`); Regression's is not.
+  (`unmarkedTrainingDataRequirements`); Regression's is not. `wizardStepMark: false` waits only while a set-up wizard has
+  the section open as its step (`missingInputImageryRequirement`).
 - **Drafts.** An editor's candidate (`outputCandidate.js`) is read through the same rules, apart from the applied
   recipe. Its findings guide the panel and its Apply, and never change the applied recipe's availability. Form field
   rules stay entry-level.
@@ -980,13 +985,18 @@ or unavailable is never dropped.
 - A Masking without a mask is refused as incomplete.
 - The asset export refuses a recipe that cannot run with `Recipe X cannot run: CODES`, or, where what it needs could
   not be read, `Recipe X cannot run: what it needs could not be read`.
-- The Classification layer's `canClassify` and the family's layer guards become redundant with the read, and go once
-  their rules are shared. The collecting safeguard stays.
+- The Classification layer's `canClassify` saved-data branch is redundant with the read. The at-least-one-input layer
+  guards are gone; the collecting safeguard stays.
 - Saved recipes keep their model: readiness reads configuration and evidence, and stores nothing.
 - A Regression whose data sets store no point, and read none from another recipe, cannot run, and its TRN section is
   marked. Before, its own layer was withheld only when it had no data set at all, and an empty one - an Earth Engine
   table read as empty, a sampled image with no samples - was drawn, retrieved and exported until Earth Engine failed
   to train.
+- A recipe listing no input image cannot run, and its IMG section says "Please add at least one image." Before, its
+  own layer was withheld by a GUI guard, while Retrieve, the asset export and every recipe over it ran until Earth
+  Engine built nothing.
+- Remapping now declares a requirement its output read judges, as the Classification family does, so while what its
+  image builds is being read its Retrieve waits rather than offering its class, and its toolbar watches its output.
 
 #### First packet (implemented)
 
@@ -1030,6 +1040,25 @@ and recovery. It does not migrate every outstanding rule.
   change the applied recipe's readiness; the data set list's Apply stays held while it lists no data set.
 - **Tests.** `regression.test.js` (shared), `trainingDataReadiness.test.jsx` (TRN, layer and Retrieve agreeing, a
   Remapping of the predictions, a reloaded table cancelled and applied), `imageAssetExport.test.js`.
+
+#### Required input imagery (implemented)
+
+- **Shared.** `inputImageryRequirement` finds an empty input list, for `IMAGE_OUTPUT` only: a recipe trained on one
+  that lists none, or a named map product, is not judged by it. An input selected but not yet read, failing, gone or
+  lacking a band it selects is not this finding: the closure, the description and the input's evidence say what it is.
+- **GUI.** `missingInputImageryRequirement` (`panels/inputImagery/inputImageryRequirements.js`) says it on IMG for
+  every type listing input images - through both input imagery declarations, and Remapping's own - with the list's own
+  wording, "Please add at least one image." It is `wizardStepMark: false`: while the set-up wizard has IMG open as its
+  step, where the list's form holds Next and Apply until it lists an image, the toolbar does not say it; a section not
+  yet reached is not marked either, and once the wizard moves on it is marked. Band Math's and Remapping's toolbars use
+  `SectionButton`, so their marks follow the wizard as the others' do. The layers' at-least-one-input guards are gone.
+  The outline of a recipe without an area of interest of its own (`RecipeGeometryLayer`) is its first input image's
+  geometry, so it is withdrawn, its request cancelled, while the list holds none - not while it cannot run for another
+  reason, such as missing training data.
+- **Tests.** `inputImageryRequirement.test.js` (shared), `outputRequirements.test.js` (IMG, Retrieve and previews
+  agreeing for each type, a Remapping over an empty Classification, a missing asset said as that),
+  `recipeImageLayer.test.js`, `wizardSectionMarks.test.jsx`, `inputBandSets.test.jsx` (the last input removed, one
+  added in the editor, cancelled and applied), `imageAssetExport.test.js`.
 
 **Recorded follow-ups:**
 - the `TRAINING_DATA` and geometry operations;
