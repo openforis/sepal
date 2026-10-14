@@ -51,6 +51,7 @@ export class ContainerSupervisor {
     async start() {
         await this.#repository.resetProgressClock()
         await this.reconcile()
+        await this.#enqueue('leftovers', () => this.#removeLeftovers())
         await this.dispatch()
         this.#timer = setInterval(() => this.#tick(), TICK_MS)
     }
@@ -213,6 +214,12 @@ export class ContainerSupervisor {
                 await this.#workspace.remove(container.taskId)
             }
         }
+    }
+
+    // task-manager can stop between killing a container and removing the task's directories.
+    async #removeLeftovers() {
+        const running = await this.#repository.runningTasks()
+        await this.#workspace.removeAllExcept(running.map(({id}) => id))
     }
 
     async #taskContainers() {

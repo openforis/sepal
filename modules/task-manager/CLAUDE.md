@@ -8,7 +8,7 @@ API-key check, and the task-list websocket.
 ## Container contract
 
 - The container image is `openforis/task`. It receives `/task` (the task's workspace directory, holding the
-  task description) and the user's home directory.
+  task description) and the user's home directory; an export to Data (`image.DATA`) also receives `/staging`.
 - It authenticates with a per-task API key, prefixed `task_` and stored only as a SHA-256 hash. The gateway
   resolves the key through `POST /tasks/api-key-authenticate` and sets `sepal-session` to
   `{"workerType":"task","taskId":"<id>"}`.
@@ -22,6 +22,21 @@ API-key check, and the task-list websocket.
 
 All supervisor work (dispatch, stop, supervision ticks, recovery) goes through its queue; never act on
 containers or task state from outside it.
+
+## Task directories
+
+`TaskWorkspace` owns a task's directories: `${SEPAL_HOST_DATA_DIR}/task-manager/tasks/<id>` (mounted at `/task`)
+and, for operations that stage files (`usesStaging`: `image.DATA`), `${SEPAL_HOST_DATA_DIR}/sepal/task-staging/<id>`
+(mounted at `/staging`). The staging folder lies outside the user's home, where sandboxes never see it and storage
+never measures it; in production it is its own EFS directory, mounted by the `aws-mount-efs` deploy role (root,
+0711).
+
+- task-manager creates both before the container starts, the staging folder empty with mode 0700; the container's
+  `start.sh` hands it to the user's uid and gid.
+- Every way a task ends removes both (`#discard`): collection after the container exits, a failed launch, and the
+  stall and cancel timeouts' kill. A staging folder that cannot be removed is logged, never fatal.
+- At startup, once reconciled, the directories of every task that is not ACTIVE or CANCELING are removed: task-manager
+  can stop between killing a container and removing its directories.
 
 ## Deployment
 

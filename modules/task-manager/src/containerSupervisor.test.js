@@ -25,8 +25,8 @@ describe('launching', () => {
         expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
     })
 
-    test('a task whose container cannot be started fails', async () => {
-        const {supervisor, repository, docker} = setup()
+    test('a task whose container cannot be started fails, and its directories are removed', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
         docker.failRun = true
         await repository.add(aTask())
 
@@ -35,6 +35,7 @@ describe('launching', () => {
         const task = await repository.getTask('t-1')
         expect(task.state).toBe(State.FAILED)
         expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.launchFailed'})
+        expect(workspace.removed).toEqual(['t-1'])
     })
 
     test('a task whose container cannot be started does not take a slot from the next pending task', async () => {
@@ -232,8 +233,8 @@ describe('reconciling after a restart', () => {
 })
 
 describe('timeouts', () => {
-    test('a container silent for too long is killed and its task fails', async () => {
-        const {supervisor, repository, docker, clock} = setup()
+    test('a container silent for too long is killed, its task fails, and its directories are removed', async () => {
+        const {supervisor, repository, docker, workspace, clock} = setup()
         await repository.add(aTask())
         await supervisor.dispatch()
 
@@ -245,10 +246,11 @@ describe('timeouts', () => {
         expect(task.state).toBe(State.FAILED)
         expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.stalled'})
         expect(docker.killed).toEqual(['task.alice.t-1'])
+        expect(workspace.removed).toContain('t-1')
     })
 
-    test('a cancellation the container does not finish in time is forced', async () => {
-        const {supervisor, repository, docker, clock} = setup()
+    test('a cancellation the container does not finish in time is forced, and its directories are removed', async () => {
+        const {supervisor, repository, docker, workspace, clock} = setup()
         await repository.add(aTask())
         await supervisor.dispatch()
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
@@ -259,6 +261,7 @@ describe('timeouts', () => {
 
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
         expect(docker.killed).toEqual(['task.alice.t-1'])
+        expect(workspace.removed).toContain('t-1')
     })
 })
 
@@ -276,6 +279,23 @@ describe('starting', () => {
 
         expect((await repository.getTask('t-1')).state).toBe(State.CANCELING)
         expect(docker.killed).toEqual([])
+    })
+
+    test('directories left by tasks that no longer run are removed; those of running tasks are kept', async () => {
+        const {repository, docker, workspace, newSupervisor} = setup()
+        await repository.add(aTask({id: 't-1', state: State.ACTIVE}))
+        await repository.add(aTask({id: 't-2', state: State.CANCELING}))
+        await repository.add(aTask({id: 't-3', state: State.FAILED}))
+        for (const id of ['t-1', 't-2']) {
+            docker.containers.set(`task.alice.${id}`, {taskId: id, running: true})
+        }
+        workspace.existing = new Set(['t-1', 't-2', 't-3', 'unknown'])
+        const supervisor = newSupervisor()
+
+        await supervisor.start()
+        supervisor.stop()
+
+        expect([...workspace.existing].sort()).toEqual(['t-1', 't-2'])
     })
 })
 
@@ -489,11 +509,11 @@ class FakeDocker {
 
 class FakeWorkspace {
     results = new Map()
-    prepared = []
+    existing = new Set()
     removed = []
 
     async prepare(task) {
-        this.prepared.push(task.id)
+        this.existing.add(task.id)
     }
 
     async readResult(taskId) {
@@ -505,6 +525,11 @@ class FakeWorkspace {
         if (typeof taskId !== 'string') {
             throw new TypeError(`The "path" argument must be of type string. Received ${taskId}`)
         }
+        this.existing.delete(taskId)
         this.removed.push(taskId)
+    }
+
+    async removeAllExcept(taskIds) {
+        this.existing = new Set([...this.existing].filter(id => taskIds.includes(id)))
     }
 }

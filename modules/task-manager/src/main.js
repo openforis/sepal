@@ -4,7 +4,7 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
 import {configureServer, getLogger} from '#sepal/log'
 
-import {config, TASK_DIR} from './config.js'
+import {config, STAGING_DIR, TASK_DIR} from './config.js'
 import {containerSpec} from './containerSpec.js'
 import {ContainerSupervisor} from './containerSupervisor.js'
 import {initializeDb} from './db.js'
@@ -29,7 +29,7 @@ const main = async () => {
     const supervisor = new ContainerSupervisor({
         repository,
         docker: new DockerEngine(new Docker()),
-        workspace: new TaskWorkspace({dir: TASK_DIR}),
+        workspace: new TaskWorkspace({dir: TASK_DIR, stagingDir: STAGING_DIR}),
         spec: ({task, apiKey}) => containerSpec({task, apiKey, config}),
         config: {
             maxConcurrent: config.taskMaxConcurrent,

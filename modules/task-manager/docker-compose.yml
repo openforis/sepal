@@ -13,6 +13,8 @@ services:
       # Root-equivalent access to the main host: task containers are started on its daemon.
       - /var/run/docker.sock:/var/run/docker.sock
       - "${SEPAL_DATA_DIR}/task-manager:/var/lib/sepal/task-manager"
+      # Exports to Data stage here, outside the user's home (an EFS directory in production).
+      - "${SEPAL_DATA_DIR}/sepal/task-staging:/var/lib/sepal/task-staging"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       MYSQL_HOST: "mysql"

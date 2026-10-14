@@ -1,4 +1,4 @@
-import {isLocalWork} from './operations.js'
+import {isLocalWork, usesStaging} from './operations.js'
 
 export const LABELS = Object.freeze({
     MANAGED: 'org.openforis.sepal.task-manager',
@@ -23,6 +23,10 @@ export const containerName = ({id, username}) => `task.${username}.${id}`
 
 export const taskDirectory = (sepalHostDataDir, taskId) =>
     `${sepalHostDataDir}/task-manager/tasks/${taskId}`
+
+// On the same file system as the homes, but outside them: sandboxes never see it, and storage never measures it.
+export const stagingDirectory = (sepalHostDataDir, taskId) =>
+    `${sepalHostDataDir}/sepal/task-staging/${taskId}`
 
 // The container mounts files its user can write, so it is kept off the sepal network, whose services trust the
 // sepal-user header. Its own network holds only the gateway, which authenticates the task's key.
@@ -52,6 +56,7 @@ export const containerSpec = ({task, apiKey, config}) => {
             Binds: [
                 `${config.sepalHostDataDir}/sepal/home/${task.username}:${CONTAINER_HOME}`,
                 `${taskDirectory(config.sepalHostDataDir, task.id)}:/task`,
+                ...(usesStaging(task.operation) ? [`${stagingDirectory(config.sepalHostDataDir, task.id)}:/staging`] : []),
                 ...(dev ? sourceBinds(config.sepalHostProjectDir) : [])
             ],
             Init: true,

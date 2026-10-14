@@ -36,6 +36,16 @@ test('mounts only its user\'s home and its own task directory', () => {
     expect(Binds).toEqual(['/data/sepal/home/alice:/home/sepal-user', '/data/task-manager/tasks/t-1:/task'])
 })
 
+test('an export to Data also mounts its own staging folder, outside its user\'s home', () => {
+    const task = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'image.DATA'})
+
+    const {HostConfig: {Binds}} = containerSpec({task, apiKey: 'task_key', config: CONFIG})
+
+    expect(Binds).toEqual([
+        '/data/sepal/home/alice:/home/sepal-user', '/data/task-manager/tasks/t-1:/task', '/data/sepal/task-staging/t-1:/staging'
+    ])
+})
+
 test('reaches SEPAL only through the gateway, on a network of its own, with the task\'s key', () => {
     const {Env, HostConfig} = containerSpec({task: TASK, apiKey: 'task_key', config: CONFIG})
 

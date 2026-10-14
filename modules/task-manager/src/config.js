@@ -44,4 +44,7 @@ export const config = program.opts()
 // Where task-manager itself sees ${SEPAL_HOST_DATA_DIR}/task-manager/tasks.
 export const TASK_DIR = '/var/lib/sepal/task-manager/tasks'
 
+// Where task-manager itself sees ${SEPAL_HOST_DATA_DIR}/sepal/task-staging.
+export const STAGING_DIR = '/var/lib/sepal/task-staging'
+
 log.info('Configuration loaded')
