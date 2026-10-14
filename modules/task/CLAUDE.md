@@ -14,7 +14,8 @@ sepal npm-test task -- --testPathPatterns runner
 
 - Input: `/task/task.json` (`{id, operation, params}`), written by task-manager. Env: `TASK_ID`, `TASK_API_KEY`
   (`task_...`), `SEPAL_ENDPOINT` (`http://gateway`), `USERNAME`, `DEPLOY_ENVIRONMENT`. The user's home is
-  bound at `/home/$USERNAME`, the task directory at `/task`.
+  bound at `/home/$USERNAME`, the task directory at `/task`, and, for `image.DATA` only, an empty staging folder
+  at `/staging`.
 - Output: `/task/result.json` (`{state, statusDescription}`, state `COMPLETED`, `FAILED` or `CANCELED`),
   written atomically just before exit. The file, not progress, is the authority on how the task ended.
 - Network: the container joins only `sepal-task` and talks to the gateway, authenticating with `TASK_API_KEY`
@@ -39,7 +40,8 @@ sepal npm-test task -- --testPathPatterns runner
   `timeseries.download` (time series downloads to the SEPAL workspace), `samplingDesign.GEE` /
   `samplingDesign.SEPAL` (sampling design exports: gee runs the workflow as steps through
   `task/samplingDesign/step`; the runner follows each export and has gee clean up the temporary assets).
-- `start.sh` - runs `node src/run.js` as the uid and gid that own the mounted home (`su-exec`).
+- `start.sh` - hands `/task` (and `/staging`, when mounted) to the uid and gid that own the mounted home, and runs
+  `node src/run.js` as them (`su-exec`).
 - Image: `node:26-alpine` with GDAL's tools and Python bindings (`gdalbuildvrt`, band names,
   `sepal-stack-time-series`); nothing from the sandbox images. `NODE_OPTIONS=--max-semi-space-size=1` keeps
   the heap small: without it V8 sizes the young generation from the container's limit and peaks near twice
@@ -47,12 +49,12 @@ sepal npm-test task -- --testPathPatterns runner
 
 ## Exports to Data
 
-`image.DATA` stages the export in `~/.data-staging/<task id>`, builds the VRT there, uploads each file with
-rclone, then removes the staging. It asks user-data for access before each file and uploads the file with those
-one-hour credentials, so each file's upload must finish within the hour: a single file whose upload takes longer
-fails the task with `tasks.data.uploadFailed`. The staging folder is touched on every progress report; each task
-removes other tasks' staging folders a week old (left by killed tasks) when it starts. storage leaves
-`~/.data-staging` out of the home's size.
+`image.DATA` stages the export in `/staging`, builds the VRT there, and uploads each file with rclone. The folder
+lies outside the user's home, so staging never counts against the home's quota, and sandboxes never see it.
+task-manager creates it before the container starts and removes it once the task has ended, however it ended,
+so the task leaves its staged files in place. It asks user-data for access before each file and uploads the
+file with those one-hour credentials, so each file's upload must finish within the hour: a single file whose
+upload takes longer fails the task with `tasks.data.uploadFailed`.
 
 ## Release compatibility
 

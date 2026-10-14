@@ -12,6 +12,10 @@ if [ "$USER_ID" -eq 0 ]; then
 fi
 
 chown "$USER_ID:$GROUP_ID" /task
+# Exports to Data get an empty folder to stage files in, outside the home.
+if [ -d /staging ]; then
+    chown "$USER_ID:$GROUP_ID" /staging
+fi
 
 # The task runs as the owner of the mounted home, so everything it writes there is theirs.
 cd /usr/local/src/sepal/modules/task
