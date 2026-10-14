@@ -9,6 +9,9 @@ import {configureNoLogging} from '#sepal/log'
 const CLIENT = {username: 'alice', clientId: 'c', subscriptionId: 's'}
 const SETTLE_MS = 300
 
+// Permissions do not stop root, so a locked path is removable when the tests run as root.
+const itUnlessRoot = process.getuid?.() === 0 ? it.skip : it
+
 let homeDir
 let sent
 let stop$
@@ -101,7 +104,7 @@ describe('remove', () => {
         expect(removeFailures()).toEqual([['data']])
     })
 
-    it('reports a path that cannot be removed', async () => {
+    itUnlessRoot('reports a path that cannot be removed', async () => {
         const locked = Path.join(homeDir, 'alice', 'docs')
         await writeFile(Path.join(locked, 'f.txt'), 'f')
         await chmod(locked, 0o555)
@@ -114,6 +117,23 @@ describe('remove', () => {
         }
 
         expect(removeFailures()).toEqual([['docs/f.txt']])
+    })
+
+    itUnlessRoot('removes the other paths when one cannot be removed, and reports only that one', async () => {
+        const locked = Path.join(homeDir, 'alice', 'docs')
+        await writeFile(Path.join(locked, 'f.txt'), 'f')
+        await mkdir(Path.join(homeDir, 'alice', 'other'))
+        await chmod(locked, 0o555)
+
+        try {
+            watcher.remove({...CLIENT, path: ['docs/f.txt', 'other']})
+            await settle()
+        } finally {
+            await chmod(locked, 0o755)
+        }
+
+        expect(removeFailures()).toEqual([['docs/f.txt']])
+        await expect(access(Path.join(homeDir, 'alice', 'other'))).rejects.toThrow()
     })
 })
 
