@@ -24,8 +24,10 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
     })
 
     afterAll(async () => {
-        for (const owner of owners) {
-            await provider.erase(attachmentsFor(owner))
+        await eraseAllOwners()
+        const leftover = (await provider.owners()).filter(owner => owners.has(owner))
+        if (leftover.length) {
+            throw new Error(`Emulator users left behind by the tests: ${leftover.join(', ')}`)
         }
     })
 
@@ -196,6 +198,21 @@ describeWithEmulator('S3 adapter against the dev-env emulator', () => {
             await client.send(new PutObjectCommand({Bucket: config.bucket, Key: `${attachment.location.prefix}${rel}`, Body: body}))
         }
     })
+
+    // Every owner passes through attachmentsFor, so none created by a test can escape cleanup.
+    async function eraseAllOwners() {
+        const failures = []
+        for (const owner of owners) {
+            try {
+                await provider.erase(attachmentsFor(owner))
+            } catch (error) {
+                failures.push(`${owner}: ${error.message}`)
+            }
+        }
+        if (failures.length) {
+            throw new Error(`Cannot erase emulator users: ${failures.join('; ')}`)
+        }
+    }
 
     function attachmentsFor(owner) {
         owners.add(owner)
