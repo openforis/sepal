@@ -25,6 +25,17 @@ describe('launching', () => {
         expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
     })
 
+    test('exports to SEPAL start like any other export, up to the limit', async () => {
+        const {supervisor, repository, docker} = setup({maxConcurrent: 2})
+        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
+        await repository.insert(aTask({id: 't-2', operation: 'timeseries.download', creationTime: new Date(2000)}))
+        await repository.insert(aTask({id: 't-3', operation: 'image.GEE', creationTime: new Date(3000)}))
+
+        await supervisor.dispatch()
+
+        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.alice.t-2'])
+    })
+
     test('a task whose container cannot be started fails', async () => {
         const {supervisor, repository, docker} = setup()
         docker.failRun = true
@@ -279,44 +290,6 @@ describe('starting', () => {
     })
 })
 
-describe('local work', () => {
-    test('a pending export to SEPAL waits for a local slot while a later asset export starts', async () => {
-        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
-        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
-        await repository.insert(aTask({id: 't-2', operation: 'timeseries.download', creationTime: new Date(2000)}))
-        await repository.insert(aTask({id: 't-3', operation: 'image.GEE', creationTime: new Date(3000)}))
-
-        await supervisor.dispatch()
-
-        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.alice.t-3'])
-        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
-    })
-
-    test('a finished local task lets the next local one start', async () => {
-        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
-        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
-        await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
-        await supervisor.dispatch()
-
-        docker.exit('task.alice.t-1', 1)
-        await supervisor.idle()
-
-        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
-    })
-
-    test('a local task whose container cannot be started does not take the local slot', async () => {
-        const {supervisor, repository, docker} = setup({maxConcurrentLocal: 1})
-        docker.failingRuns.add('task.alice.t-1')
-        await repository.insert(aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date(1000)}))
-        await repository.insert(aTask({id: 't-2', operation: 'image.SEPAL', creationTime: new Date(2000)}))
-
-        await supervisor.dispatch()
-
-        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
-    })
-})
-
 describe('per-user limit', () => {
     test('a user at the limit waits while a later task of another user starts', async () => {
         const {supervisor, repository, docker} = setup({maxConcurrentPerUser: 1})
@@ -464,7 +437,7 @@ const aTask = overrides => createTask({
     creationTime: new Date(1000), updateTime: new Date(1000), ...overrides
 })
 
-const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUser = 10, maxConcurrentLocalProcessing = 10} = {}) => {
+const setup = ({maxConcurrent = 10, maxConcurrentPerUser = 10, maxConcurrentLocalProcessing = 10} = {}) => {
     const clock = fakeClock()
     const repository = new InMemoryRepository(clock)
     const docker = new FakeDocker()
@@ -474,7 +447,7 @@ const setup = ({maxConcurrent = 10, maxConcurrentLocal = 10, maxConcurrentPerUse
         docker,
         workspace,
         spec: ({task, apiKey}) => ({name: containerName(task), taskId: task.id, apiKey}),
-        config: {maxConcurrent, maxConcurrentLocal, maxConcurrentPerUser, maxConcurrentLocalProcessing, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
+        config: {maxConcurrent, maxConcurrentPerUser, maxConcurrentLocalProcessing, stallTimeoutMs: 15 * 60 * 1000, cancelTimeoutMs: 5 * 60 * 1000, stopGraceSeconds: 120, clock: clock.now}
     })
     return {supervisor: newSupervisor(), newSupervisor, repository, docker, workspace, clock}
 }

@@ -119,16 +119,13 @@ describe('TaskRepository', () => {
         expect((await repository.userTasks('alice')).map(({id}) => id)).toEqual(['t-1'])
     })
 
-    test('counts running tasks of given operations and leaves others out of pending', async () => {
-        const local = aTask({id: 't-1', operation: 'image.SEPAL', creationTime: new Date('2026-10-06T09:00:00.000Z')})
-        const remote = aTask({id: 't-2', operation: 'image.GEE', creationTime: new Date('2026-10-06T09:00:01.000Z')})
-        await repository.insert(local)
-        await repository.insert(remote)
+    test('counts running tasks', async () => {
+        const running = aTask({id: 't-1'})
+        await repository.insert(running)
+        await repository.insert(aTask({id: 't-2'}))
 
-        expect((await repository.pendingTasks(10, {excludeOperations: ['image.SEPAL']})).map(({id}) => id)).toEqual(['t-2'])
-        await repository.activate(local, 'a'.repeat(64))
-        expect(await repository.countRunning({operations: ['image.SEPAL']})).toBe(1)
-        expect(await repository.countRunning({operations: ['image.GEE']})).toBe(0)
+        await repository.activate(running, 'a'.repeat(64))
+
         expect(await repository.countRunning()).toBe(1)
     })
 

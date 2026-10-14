@@ -4,7 +4,6 @@ import {tag} from '#sepal/tag'
 import {generateApiKey, hashApiKey} from './apiKey.js'
 import {containerName} from './containerSpec.js'
 import {LocalProcessingSlots} from './localProcessingSlots.js'
-import {isLocalWork, LOCAL_OPERATIONS} from './operations.js'
 import {RUNNING_STATES, State, statusDescriptionOf} from './task.js'
 
 const log = getLogger('supervisor')
@@ -113,17 +112,13 @@ export class ContainerSupervisor {
         return this.#queue
     }
 
-    // Oldest first, except that local work waits for a local slot, and a user at the per-user limit waits for one
-    // of their own tasks to finish, without holding up anything else.
+    // Oldest first, except that a user at the per-user limit waits for one of their own tasks to finish, without
+    // holding up anything else.
     async #dispatchPending() {
         let free = this.#config.maxConcurrent - await this.#repository.countRunning()
-        let freeLocal = this.#config.maxConcurrentLocal - await this.#repository.countRunning({operations: LOCAL_OPERATIONS})
         const runningByUser = await this.#repository.countRunningByUser()
         while (free > 0) {
-            const [task] = await this.#repository.pendingTasks(1, {
-                excludeOperations: freeLocal > 0 ? [] : LOCAL_OPERATIONS,
-                excludeUsernames: this.#usersAtLimit(runningByUser)
-            })
+            const [task] = await this.#repository.pendingTasks(1, {excludeUsernames: this.#usersAtLimit(runningByUser)})
             if (!task) {
                 return
             }
@@ -131,9 +126,6 @@ export class ContainerSupervisor {
                 continue
             }
             free--
-            if (isLocalWork(task.operation)) {
-                freeLocal--
-            }
             runningByUser.set(task.username, (runningByUser.get(task.username) ?? 0) + 1)
         }
     }

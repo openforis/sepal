@@ -9,7 +9,6 @@ const CONFIG = {
     deployEnvironment: 'PROD',
     syslogAddress: 'udp://172.20.128.2',
     taskMemoryMb: 2048,
-    taskLocalMemoryMb: 4096,
     taskCpus: 1
 }
 const TASK = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'image.GEE'})
@@ -22,10 +21,10 @@ test('runs the image of the release that launched it, under a name and labels th
     expect(spec.Labels).toEqual({[LABELS.MANAGED]: 'true', [LABELS.TASK_ID]: 't-1', [LABELS.USERNAME]: 'alice'})
 })
 
-test('local work gets the larger memory limit', () => {
+test('every operation gets the same memory limit', () => {
     const task = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'timeseries.download'})
 
-    const {HostConfig} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskLocalMemoryMb: 4096}})
+    const {HostConfig} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskMemoryMb: 4096}})
 
     expect(HostConfig.Memory).toBe(4096 * 1024 * 1024)
 })
@@ -76,7 +75,7 @@ test('cannot swap beyond its memory limit or exhaust the host\'s processes', () 
 test('sizes GDAL\'s cache and threads to the container', () => {
     const task = createTask({id: 't-1', state: State.ACTIVE, username: 'alice', operation: 'timeseries.download'})
 
-    const {Env} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskLocalMemoryMb: 4096, taskCpus: 2}})
+    const {Env} = containerSpec({task, apiKey: 'task_key', config: {...CONFIG, taskMemoryMb: 4096, taskCpus: 2}})
 
     expect(Env).toEqual(expect.arrayContaining(['GDAL_CACHEMAX=1024', 'GDAL_NUM_THREADS=2']))
 })
