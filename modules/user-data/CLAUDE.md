@@ -60,7 +60,9 @@ republishes recent purges daily; a user with no `data_usage` row and nothing sto
   endpoint. Tasks reach the gateway over plain HTTP, which the AWS SDKs refuse for credential endpoints, so their
   `rclone.options` carry one-hour credentials inline. For every purpose they turn on rclone's `directory_markers`:
   S3 has no folders, so an empty folder made through rclone is kept as a zero-byte `name/` object, which the listings
-  show as a folder (and a folder removal deletes).
+  show as a folder. `rclone rmdir` (and `rmdirs`) on that folder never deletes the marker, so the empty folder stays;
+  `rmdir ~/data/<folder>` through the mount, the file browser, `rclone purge data:<folder>` or
+  `rclone rmdirs data:<parent>` remove it.
 - `GET /attachments/:id/credentials` — AWS container-credentials JSON (`AccessKeyId`, `SecretAccessKey`, `Token`,
   `Expiration`). Clients authenticate with `Authorization: Basic <base64(":" + api key)>`, read from
   `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` (`/var/run/sepal-data-token`).
