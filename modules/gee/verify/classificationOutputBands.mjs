@@ -4,7 +4,8 @@
 // classifiers of each family, a legend not stored in value order, and a Remapping with and without legend entries. An
 // export's arguments are checked to build and return the requested bands in the requested order. Without legend
 // entries, a probability-capable Classification's default output must fail with Earth Engine's refusal to reduce no
-// bands, while a request for its class alone still runs.
+// bands, while a request for its class alone still runs. Each declared band asked for alone keeps a bounded footprint,
+// which Index Change clips its output to.
 //
 // Remapping's inputs. Execution passes the bands each input includes as its `selection`, which an asset input does
 // not read: an asset is built with every band it stores, and only the bands a constraint reads are selected from it.
@@ -157,6 +158,18 @@ const built = async (recipe, args) => {
     }
 }
 
+// Whether the image a factory builds with these arguments has a bounded footprint, or the failure to build it.
+const bounded = async (recipe, args) => {
+    try {
+        return {bounded: !await firstValueFrom(ImageFactory(recipe, args).getImage$().pipe(
+            switchMap(image => ee.getInfo$(image.geometry().isUnbounded(), 'footprint')),
+            timeout(READ_TIMEOUT_MS)
+        ))}
+    } catch (error) {
+        return {error: error.message}
+    }
+}
+
 // The value of the image a factory builds at one pixel inside the scene, or the failure to compute it.
 const sampled = async recipe => {
     try {
@@ -222,6 +235,11 @@ const main = async () => {
         'Classification exported with a mixed selection, in the order requested',
         {requested, built: exported.bands?.map(({name}) => name) || exported.error}
     )
+
+    for (const {name: band} of classificationBands(classification().model)) {
+        const alone = await bounded(classification(), withOutputBands({selection: [band]}))
+        report(alone.bounded === true, `Classification's ${band}, asked for alone, keeps a bounded footprint`, alone)
+    }
 
     const withoutLegend = classification({values: []})
     const defaultOutput = await built(withoutLegend)
