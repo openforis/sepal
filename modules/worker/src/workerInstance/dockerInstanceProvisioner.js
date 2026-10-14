@@ -26,11 +26,12 @@ import {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
+    dataUnavailableDir,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,
     tmpVolumeName,
-    withoutDataMount,
+    withDataUnavailable,
     WORKER_IMAGE_NAMES,
 } from './workerTypes.js'
 
@@ -61,7 +62,11 @@ const PROBE_TIMEOUT_MS = 10_000
 // rshared, so umount -l detaches the host's mount rather than the helper's private copy of it. Lazy,
 // because a killed sidecar leaves a dead FUSE mount behind. rmdir then removes the empty
 // directories; never rm -rf: should the unmount not have taken, the user's files are beneath it.
-const UNMOUNT_SCRIPT = 'umount -l "$1/data" 2>/dev/null; rmdir "$1/data" "$1" 2>/dev/null; exit 0'
+const UNMOUNT_SCRIPT = 'umount -l "$1/data" 2>/dev/null; rmdir "$1/data" "$1/unavailable" "$1" 2>/dev/null; exit 0'
+
+// UNAVAILABLE_SCRIPT — run chrooted into the host: the directory bound read-only at ~/data when the
+// mount failed. It must be empty, so a sandbox never sees anything through it.
+const UNAVAILABLE_SCRIPT = 'mkdir -p "$1" && chown 0:0 "$1" && chmod 555 "$1" && [ -z "$(ls -A "$1")" ]'
 
 const PENDING_UPLOADS = ['/usr/local/bin/sepal-data', 'pending-uploads']
 const PENDING_UPLOADS_POLL_MS = 5000
@@ -78,7 +83,8 @@ const SIDECAR_GONE = Symbol('sidecar gone')
 // exec in one that is not running: each means a retried release has nothing left to do there.
 const CONTAINER_GONE = [304, 404, 409]
 
-const DATA_UNAVAILABLE_EMAIL = 'SEPAL could not mount your Data at ~/data for this session. Files you save in ~/data during this session stay in your home folder; your next session moves them to ~/data.local. Start a new session to get your Data back.'
+const DATA_UNAVAILABLE_EMAIL = '<p>SEPAL could not mount your Data at <b>~/data</b> for this session, so <b>~/data</b> is '
+    + 'read-only and empty. Start a new session to get your Data back.</p>'
 
 const lastLine = output => output.trim().split('\n').at(-1)
 
@@ -107,6 +113,9 @@ const createDockerInstanceProvisioner = ({
 
     // Instances whose user was told the Data mount failed: a retried provisioning must not repeat the email.
     const dataUnavailableNotified = new Set()
+    // Instances provisioned without their Data mount: their sidecar holds no uploads to wait for. A restart
+    // forgets them, and a release then merely waits for a sidecar that has nothing pending.
+    const dataNotMounted = new Set()
 
     const instanceTypeById = Object.fromEntries(instanceTypes.map(t => [t.id, t]))
 
@@ -401,7 +410,8 @@ const createDockerInstanceProvisioner = ({
     //   5. createWorkerType → get images
     //   6. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
     //   7. for each image in turn: createContainer, startContainer, waitUntilInitialized — the
-    //      Data mount sidecar is up before the sandbox binds its mount
+    //      Data mount sidecar is up before the sandbox binds its mount; when it is not, the sandbox
+    //      binds an empty read-only directory instead, and the user is told once it started
     const provisionInstance = async (rawInstance, {tmpDevice = null} = {}) => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
@@ -428,12 +438,28 @@ const createDockerInstanceProvisioner = ({
 
         let dataMounted = true
         for (const image of workerType.images) {
-            const ran = await runContainer(instance, dataMounted ? image : withoutDataMount(image), instanceType)
-            if (!ran && image.containerName === sidecarContainerName) {
-                dataMounted = false
+            const ran = await runContainer(instance, dataMounted ? image : withDataUnavailable(image, config, instance.id), instanceType)
+            if (image.containerName === sidecarContainerName) {
+                dataMounted = ran
+                await recordDataMount(instance, dataMounted)
             }
         }
+        if (!dataMounted) {
+            notifyDataUnavailable(instance)
+        }
         log.info(`Provisioned ${instanceTag(instance)}`)
+    }
+
+    const recordDataMount = async (instance, mounted) => {
+        if (mounted) {
+            dataNotMounted.delete(instance.id)
+            return
+        }
+        dataNotMounted.add(instance.id)
+        await runHelper(instance, {name: SANDBOX}, 'data-unavailable', {
+            Entrypoint: ['chroot', '/host', '/bin/sh', '-c', UNAVAILABLE_SCRIPT, 'data-unavailable', dataUnavailableDir(config, instance.id)],
+            HostConfig: {Privileged: true, Binds: ['/:/host'], NetworkMode: 'none'},
+        })
     }
 
     // runContainer — a container that is not essential (the Data mount sidecar) never fails the
@@ -449,9 +475,6 @@ const createDockerInstanceProvisioner = ({
                 throw error
             }
             log.warn(`${containerTag(image.containerName(instance))} on ${instanceTag(instance)} did not come up; continuing without it: ${error.message}`)
-            if (image.containerName === sidecarContainerName) {
-                notifyDataUnavailable(instance)
-            }
             return false
         }
     }
@@ -482,12 +505,13 @@ const createDockerInstanceProvisioner = ({
     const undeploy = async rawInstance => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Undeploying ${instanceTag(instance)}...`)
-        if (instance.reservation?.sessionId) {
+        if (instance.reservation?.sessionId && !dataNotMounted.has(instance.id)) {
             await flushData(instance)
         }
         await removeInstanceContainers(instance)
         await removeDataMount(instance)
         dataUnavailableNotified.delete(instance.id)
+        dataNotMounted.delete(instance.id)
         log.info(`Undeployed ${instanceTag(instance)}`)
     }
 

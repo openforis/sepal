@@ -50,13 +50,17 @@ printf '%s\n' \
 # Colors follow the skeleton's own rule, so a terminal that never had a colored prompt still
 # doesn't: green name, blue directory, on the same TERM test it used.
 #
-# The same hook warns when ~/data exists but nothing is mounted on it, i.e. the session's Data mount
-# failed. Without mountpoint the check stays silent.
+# The same hook warns when ~/data exists but is not the Data's FUSE mount, i.e. the session's Data mount
+# failed and the worker bound an empty read-only directory there instead. Without stat the check stays silent.
 cat >> /etc/bash.bashrc <<'EOF'
 sepal_data_warning() {
-    if [ -d "$HOME/data" ] && command -v mountpoint >/dev/null 2>&1 && ! mountpoint -q "$HOME/data"; then
-        echo "Your Data folder (~/data) is not available in this session. Start a new session to get it back." >&2
-    fi
+    local fs
+    [ -d "$HOME/data" ] || return 0
+    fs=$(stat -f -c %T "$HOME/data" 2>/dev/null) || return 0
+    case "$fs" in
+        fuse*) ;;
+        *) echo "Your Data folder (~/data) is not available in this session. Start a new session to get it back." >&2;;
+    esac
 }
 sepal_prompt() {
     sepal_data_warning

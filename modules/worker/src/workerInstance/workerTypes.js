@@ -30,6 +30,9 @@ const dataCacheVolumeName = instanceId => `${DATA_CACHE_VOLUME_PREFIX}${instance
 
 const dataMountDir = (config, instanceId) => `${config.dataMountRoot}/${instanceId}`
 
+// Bound read-only at ~/data instead of the mount when the mount failed. Beside the mount, so the unmount removes it too.
+const dataUnavailableDir = (config, instanceId) => `${dataMountDir(config, instanceId)}/unavailable`
+
 const DATA_MOUNT_SIDECAR = 'sandbox.data-mount'
 
 // Usernames cannot contain '-', so this never collides with a sandbox's "sandbox.{username}.…" name,
@@ -78,9 +81,14 @@ const makeImage = ({
     })),
 })
 
-// withoutDataMount — the image as it starts when the Data mount failed: no ~/data bind, so ~/data stays
-// the placeholder in the user's home and nothing is written into the unmounted host directory.
-const withoutDataMount = image => ({...image, dataVolumes: {}})
+// withDataUnavailable — the image as it starts when the Data mount failed: ~/data is the empty, read-only
+// dataUnavailableDir, so writes fail instead of landing in the user's home or in the unmounted host directory.
+const withDataUnavailable = (image, config, instanceId) => ({
+    ...image,
+    dataVolumes: Object.fromEntries(Object.values(image.dataVolumes).map(target =>
+        [dataUnavailableDir(config, instanceId), `${target.split(':')[0]}:ro`]
+    )),
+})
 
 // publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.
 const createSandboxWorkerType = (instance, config, apiKey, data) => {
@@ -173,11 +181,12 @@ export {
     DATA_CACHE_VOLUME_PREFIX,
     dataCacheVolumeName,
     dataMountDir,
+    dataUnavailableDir,
     SANDBOX,
     sidecarContainerName,
     TMP_VOLUME_PREFIX,
     tmpVolumeName,
     USER_HOME_NAME,
-    withoutDataMount,
+    withDataUnavailable,
     WORKER_IMAGE_NAMES,
 }

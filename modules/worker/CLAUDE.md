@@ -158,12 +158,15 @@ writing faster than the uploads drain can grow it past the limit.
 (rclone FUSE; every capability dropped but `SYS_ADMIN`, `no-new-privileges`, `/dev/fuse`, apparmor unconfined). It
 binds `{mountRoot}/{instanceId}` at `/mnt/host` as `rshared`, mounts at `/mnt/host/data`, and caches in the
 `sepal-data-cache.{instanceId}` volume. The sandbox binds
-`{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: if it fails to come up,
-provisioning logs a warning and the sandbox starts with an empty `~/data`. `waitUntilInitialized` fails on a
-non-zero exit of the wait command; for the sidecar the user is also emailed once per instance (a Set cleared on
-undeploy), and the sandbox is created without the `~/data` bind (`withoutDataMount`), so `~/data` stays the placeholder in
-the user's home (the next session moves what was saved there to `~/data.local`) and nothing is written into the
-unmounted host directory. A new terminal prints a one-shot warning when `~/data` is not a mount point.
+`{mountRoot}/{instanceId}/data` at `~/data` as `rslave`. The sidecar is non-essential: when its wait command
+exits non-zero (`waitUntilInitialized` fails only non-essential containers on that; for the sandbox it logs a
+warning and carries on, as sshd may merely be slow), provisioning logs a warning, creates the empty, root-owned
+`{mountRoot}/{instanceId}/unavailable` and binds it read-only at `~/data` (`withDataUnavailable`). Writes to
+`~/data` then fail with "Read-only file system", the home's own `~/data` stays empty (so user-files never moves it
+aside), and nothing lands in the unmounted host directory. Once the provisioning has succeeded the user is emailed
+once per instance (a Set cleared on undeploy): "SEPAL could not mount your Data at ~/data for this session, so
+~/data is read-only and empty. Start a new session to get your Data back." The release skips waiting for uploads
+for such an instance. A new terminal prints a one-shot warning when `~/data` is not on a FUSE filesystem.
 
 **Provisioning order.** Remove containers, then any mount and cache a crashed predecessor left; get the API key;
 `DataFolder.prepare` (moves a non-empty existing `~/data` aside to `~/data.local[.n]` with an email to the user,
@@ -177,7 +180,8 @@ files that never uploaded. A non-zero exit of `pending-uploads` means "unknown",
 list stands. If no check has ever answered for two minutes (a dead or hung daemon), the release logs a warning and
 tears down without waiting further; a sidecar already gone at the first check is logged as possibly holding files
 that were not uploaded. Unmount is a privileged helper chrooted into the host (`/:/host:rshared`) running
-`umount -l` then `rmdir` (never `rm -rf`). Every step tolerates what an earlier attempt removed and only logs.
+`umount -l` then `rmdir` of the mount, `unavailable` and instance directories (never `rm -rf`). Every step
+tolerates what an earlier attempt removed and only logs.
 A release in flight is registered in `releaseRegistry.js`, which `ReclaimStaleClaims` skips, so a slow flush is
 not released twice. A session close therefore waits for the Data flush: normally seconds, at most
 `DATA_FLUSH_TIMEOUT_SECONDS`. Because a release takes that long, `ReclaimStaleClaims` and `ReleaseUnusedInstances`

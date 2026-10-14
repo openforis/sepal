@@ -906,11 +906,12 @@ describe('provisionInstance with Data', () => {
         sandboxSessionApiKey: SESSION_API_KEY,
         dataFolder,
         notify,
+        ...instantClock(),
     })
 
     // The exec id names its container, so each exec start can be told apart in the call log.
-    // waitFails names a container whose wait command exits 1.
-    const recordFetch = ({stopped = null, containers = [], waitFails = null} = {}) => {
+    // waitFails names a container whose wait command exits 1; createFails one Docker refuses to create.
+    const recordFetch = ({stopped = null, containers = [], waitFails = null, createFails = null} = {}) => {
         globalThis.fetch = jest.fn(async (url, opts = {}) => {
             const {pathname, searchParams} = new URL(url)
             const method = opts.method ?? 'GET'
@@ -919,6 +920,9 @@ describe('provisionInstance with Data', () => {
             if (pathname.endsWith('/wait')) return dockerWaitExit(0)
             if (pathname.endsWith('/containers/json')) {
                 return {ok: true, status: 200, text: async () => JSON.stringify(containers)}
+            }
+            if (pathname.endsWith('/containers/create') && name === createFails) {
+                return {ok: false, status: 500, text: async () => 'daemon error'}
             }
             if (pathname.endsWith('/containers/create')) {
                 created[name] = JSON.parse(opts.body)
@@ -941,8 +945,10 @@ describe('provisionInstance with Data', () => {
 
     describe('when the Data mount does not come up', () => {
         const SUBJECT = 'Your Data folder is not available in this session'
+        const UNAVAILABLE_DIR = '/var/lib/sepal/data-mounts/inst-abc123/unavailable'
+        const UNAVAILABLE_HELPER = 'sandbox.data-unavailable.inst-abc123'
 
-        test('still starts the sandbox and tells the user once', async () => {
+        test('still starts the sandbox and tells the user once that ~/data is read-only and empty', async () => {
             const instance = makeInstance()
             const notify = jest.fn()
             recordFetch({waitFails: sidecarContainerName(instance)})
@@ -954,7 +960,7 @@ describe('provisionInstance with Data', () => {
             expect(notify).toHaveBeenCalledWith({
                 username: 'alice',
                 subject: SUBJECT,
-                content: expect.stringContaining('~/data.local'),
+                content: expect.stringMatching(/^<p>.*read-only and empty.*<\/p>$/),
             })
         })
 
@@ -967,6 +973,7 @@ describe('provisionInstance with Data', () => {
             expect(notify).not.toHaveBeenCalled()
             expect(created[sandboxName(instance)].HostConfig.Binds)
                 .toContain('/var/lib/sepal/data-mounts/inst-abc123/data:/home/sepal-user/data:rslave')
+            expect(created).not.toHaveProperty([UNAVAILABLE_HELPER])
         })
 
         test('tells the user once when provisioning the same instance is retried after a failed attempt', async () => {
@@ -985,6 +992,19 @@ describe('provisionInstance with Data', () => {
             expect(notify).toHaveBeenCalledTimes(1)
         })
 
+        test('does not tell the user when a retry after a failed attempt mounts the Data', async () => {
+            const instance = makeInstance()
+            const notify = jest.fn()
+            const subject = provisioner(CONFIG, fakeDataFolder, notify)
+            recordFetch({waitFails: sidecarContainerName(instance), createFails: sandboxName(instance)})
+            await expect(subject.provisionInstance(instance)).rejects.toThrow()
+            recordFetch()
+
+            await subject.provisionInstance(instance)
+
+            expect(notify).not.toHaveBeenCalled()
+        })
+
         test('tells the user again in a later session on the same instance', async () => {
             const instance = makeInstance()
             const notify = jest.fn()
@@ -998,14 +1018,42 @@ describe('provisionInstance with Data', () => {
             expect(notify).toHaveBeenCalledTimes(2)
         })
 
-        test('starts the sandbox without the Data bind', async () => {
+        // Writes to ~/data then fail loudly, and nothing lands in the user's home or on the worker's disk.
+        test('binds an empty read-only directory at ~/data instead of the mount', async () => {
             const instance = makeInstance()
             recordFetch({waitFails: sidecarContainerName(instance)})
 
             await provisioner().provisionInstance(instance)
 
-            expect(created[sandboxName(instance)].HostConfig.Binds.filter(bind => bind.includes('/data:')))
-                .toEqual([])
+            expect(created[sandboxName(instance)].HostConfig.Binds.filter(bind => bind.includes(':/home/sepal-user/data')))
+                .toEqual([`${UNAVAILABLE_DIR}:/home/sepal-user/data:ro`])
+        })
+
+        test('creates the read-only directory, empty and owned by root, before creating the sandbox', async () => {
+            const instance = makeInstance()
+            recordFetch({waitFails: sidecarContainerName(instance)})
+
+            await provisioner().provisionInstance(instance)
+
+            const {Entrypoint, User} = created[UNAVAILABLE_HELPER]
+            expect(Entrypoint.slice(0, 4)).toEqual(['chroot', '/host', '/bin/sh', '-c'])
+            expect(Entrypoint.at(-1)).toBe(UNAVAILABLE_DIR)
+            expect(User).toBe('root')
+            expect(calls.indexOf(`POST /v1.38/containers/create?name=${UNAVAILABLE_HELPER}`))
+                .toBeLessThan(calls.indexOf(`POST /v1.38/containers/create?name=${sandboxName(instance)}`))
+        })
+
+        test('releases the instance without waiting for uploads', async () => {
+            const instance = makeInstance()
+            recordFetch({waitFails: sidecarContainerName(instance)})
+            const subject = provisioner()
+            await subject.provisionInstance(instance)
+            calls.length = 0
+
+            await subject.undeploy(instance)
+
+            expect(calls.filter(call => call.includes('/exec'))).toEqual([])
+            expect(calls).toContain('POST /v1.38/containers/create?name=sandbox.data-unmount.inst-abc123')
         })
     })
 
@@ -1200,6 +1248,7 @@ describe('undeploy with Data', () => {
         const script = Entrypoint[4]
         expect(script).toContain('umount -l')
         expect(script).toContain('rmdir')
+        expect(script).toContain('"$1/unavailable"')
         expect(script).not.toContain('rm -r')
         expect(Entrypoint.at(-1)).toBe('/var/lib/sepal/data-mounts/inst-abc123')
         expect(User).toBe('root')
