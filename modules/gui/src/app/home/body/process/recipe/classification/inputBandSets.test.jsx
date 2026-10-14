@@ -162,6 +162,25 @@ describe('a band its source no longer provides, selected in Image bands and a Ra
     })
 })
 
+// An editor judges the input it edits: what keeps the applied recipe from running elsewhere neither holds its Apply nor
+// changes because of it.
+describe('a Classification without training data', () => {
+    it('applies an input repaired in its editor, and still cannot run', async () => {
+        await open([image('image-a', ASSET_A, ['red', 'nir'])], [], {trainingData: {dataSets: []}})
+        await answer(ASSET_A, ['nir'])
+        await edit(ASSET_A)
+        expect(markedSelections()).toEqual([['red', missing('red')]])
+
+        await removeSelection('red')
+        expect(applyEnabled()).toBe(true)
+        await apply()
+
+        expect(savedImage('image-a').bandSetSpecs[0].included).toEqual(['nir'])
+        expect(markedInputs()).toEqual({})
+        expect(retrieveAvailable()).toBe(false)
+    })
+})
+
 describe('a band combination given its first band in its editor', () => {
     it('is told it needs another once its Add popup closes, Apply held meanwhile and the applied recipe unaffected', async () => {
         await open([image('image-a', ASSET_A, ['red', 'nir'])])
@@ -178,6 +197,8 @@ describe('a band combination given its first band in its editor', () => {
         expect(rowProblems()[1]).toEqual([INSUFFICIENT])
     })
 })
+
+const TRAINED = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]}
 
 const ID = 'classification-1'
 const ASSET_A = 'users/x/covariates-a'
@@ -202,7 +223,8 @@ const image = (imageId, source, included, otherSets = []) => ({
     bandSetSpecs: [{id: `${imageId}-bands`, type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included}, ...otherSets]
 })
 
-const open = async (images, recipes = []) => {
+// Trained on a collected point, unless a test says otherwise.
+const open = async (images, recipes = [], {trainingData = TRAINED} = {}) => {
     const initialState = {
         process: {
             loadedRecipes: {
@@ -211,7 +233,7 @@ const open = async (images, recipes = []) => {
                     model: {
                         inputImagery: {images},
                         legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}]},
-                        trainingData: {dataSets: []},
+                        trainingData,
                         classifier: {type: 'RANDOM_FOREST'}
                     }
                 },

@@ -9,6 +9,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {ImageMask} from './inputImage/imageMask'
 import {ImageToMask} from './inputImage/imageToMask'
 import styles from './maskingToolbar.module.css'
@@ -49,7 +50,7 @@ class _MaskingToolbar extends React.Component {
                         tooltip={msg('process.masking.panel.inputImage.imageToMask.button.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id="imageMask"
                         label={msg('process.masking.panel.inputImage.imageMask.button.label')}
                         tooltip={msg('process.masking.panel.inputImage.imageMask.button.tooltip')}

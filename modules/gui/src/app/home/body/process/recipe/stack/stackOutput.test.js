@@ -134,12 +134,13 @@ const RECORDS = Object.fromEntries([OVER_ASSETS, MASKING, OVER_DESIGN, DUPLICATE
 // observed.
 const readOf = recipe => {
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: RECORDS})
-    const {status, description, diagnostics} = readImageOutput({
+    const {status, description, diagnostics, readiness} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        readinessFor: ({type}) => recipeType(type),
         observationFor: ({type, id}) => type === 'ASSET' ? {bands: ASSET_BANDS[id], evidence: []} : undefined
     })
-    const terminal = {status, description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
+    const terminal = {status, description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}, readiness}
     return readRecipeOutput({recipe, product: {name: 'IMAGE_OUTPUT'}, graph, heldFor: () => terminal})
 }
 

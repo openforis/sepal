@@ -26,15 +26,18 @@ export const observeImageBands$ = ({reference, recipe, observes}) => reference.t
 
 const declarationFor = recipe => recipeType(recipe.type)?.imageOutput
 
-// What observing once can add to a refusal of the graph's root, for an editor saying what needs repair
-// (explainImageOutput$).
+// What running a recipe's image needs is declared by its type (readiness.js), so whatever is observed for it is too.
+const readinessFor = recipe => recipeType(recipe.type)
+
+// What observing once can add to a refusal of the graph's root - to describe it or to run it - for an editor saying what
+// needs repair (explainImageOutput$).
 export const explainRecipeImageOutput$ = ({graph, observeBands$ = observeImageBands$}) =>
-    explainImageOutput$({graph, observeBands$, declarationFor})
+    explainImageOutput$({graph, observeBands$, declarationFor, readinessFor})
 
 // `observeBands$` is what a request goes through: Earth Engine itself unless a caller shares requests
 // (sourceRuntime/observationRegistry.js).
 export const createRecipeImageOutputObserver = ({observeBands$ = observeImageBands$} = {}) => {
-    const observer = createImageOutputObserver({observeBands$, declarationFor})
+    const observer = createImageOutputObserver({observeBands$, declarationFor, readinessFor})
 
     return {
         state$: observer.state$,

@@ -115,7 +115,7 @@ describe('an editor reading a recipe refused for its own configuration', () => {
         expect(codes(session.read({explain: true}))).toEqual(['NO_OUTPUT_BANDS', 'MISSING_INPUT_BAND'])
     })
 
-    // A cold editor: the session does not hold the recipe its input selects.
+    // A cold editor: the session does not hold the recipe its input selects. Running it builds that Masking's mask too.
     it('loads the records its inputs read before reading them, then has what they establish', () => {
         const session = sessionHolding([duplicated(recipeInput(MASKING.id))])
         session.watchEditor()
@@ -123,6 +123,7 @@ describe('an editor reading a recipe refused for its own configuration', () => {
 
         answerRecipe(MASKING)
         answerAsset(DEM, SLOPE_ONLY)
+        answerAsset(MASK, ELEVATION)
 
         expect(codes(session.read({explain: true}))).toEqual(['DUPLICATE_BAND_NAME', 'MISSING_INPUT_BAND'])
         expect(versionReads().flat()).toContain(DEM)
@@ -137,6 +138,7 @@ describe('an editor reading a recipe refused for its own configuration', () => {
         session.runtime.retryOutput(EDITOR)
         answerRecipe(MASKING)
         answerAsset(DEM, SLOPE_ONLY)
+        answerAsset(MASK, ELEVATION)
 
         expect(codes(session.read({explain: true}))).toEqual(['DUPLICATE_BAND_NAME', 'MISSING_INPUT_BAND'])
     })
@@ -282,7 +284,26 @@ describe('an explanation read', () => {
     })
 })
 
+// A finding of what keeps a recipe from running is a refusal an editor's question explains alike, though its description
+// reads nothing of what it found the finding in.
+describe('an editor reading a Remapping over a Classification without training data, whose input the session does not hold', () => {
+    it('loads that input and reads it, finding the band the Classification selects missing beside its training data', () => {
+        const session = sessionHolding([REMAPPING, untrained(recipeInput(MASKING.id))], {root: REMAPPING.id})
+        expect(session.read({explain: true}).readiness).toMatchObject({status: 'NOT_READY', findings: [{code: 'NO_TRAINING_DATA'}]})
+
+        session.watchEditor()
+        answerRecipe(MASKING)
+        answerAsset(DEM, SLOPE_ONLY)
+        answerAsset(MASK, ELEVATION)
+
+        const output = session.read({explain: true})
+        expect(output.readiness.findings.map(({code}) => code).sort()).toEqual(['MISSING_INPUT_BAND', 'NO_TRAINING_DATA'])
+        expect(output.dependencyValidity).toMatchObject({status: 'VALID'})
+    })
+})
+
 const DEM = 'users/x/dem'
+const MASK = 'users/x/mask'
 const WATER = 'users/x/water'
 const ELEVATION = [{name: 'elevation', arrayDimensions: 0}]
 const SLOPE_ONLY = [{name: 'slope', arrayDimensions: 0}]
@@ -319,11 +340,34 @@ const MASKING = {
     id: 'masking-1',
     type: 'MASKING',
     revision: 1,
-    model: {imageToMask: asset(DEM), imageMask: asset('users/x/mask')}
+    model: {imageToMask: asset(DEM), imageMask: asset(MASK)}
 }
 
-// A real store holding these records, the runtime over it, and a clock the test moves.
-const sessionHolding = records => {
+// A Classification of its source's band `elevation`, trained by a classifier, without training data.
+const untrained = source => ({
+    id: 'classification-1',
+    type: 'CLASSIFICATION',
+    revision: 1,
+    model: {
+        inputImagery: {images: [{imageId: 'i-0', ...source, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+        legend: {entries: [{value: 1}, {value: 2}]},
+        trainingData: {dataSets: [{type: 'COLLECTED', referenceData: []}]},
+        classifier: {type: 'RANDOM_FOREST'}
+    }
+})
+
+const REMAPPING = {
+    id: 'remapping-1',
+    type: 'REMAPPING',
+    revision: 1,
+    model: {
+        inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'classification-1', includedBands: [{band: 'class'}]}]},
+        legend: {entries: [{value: 1, constraints: [{image: 'r-1', band: 'class', operator: '=', value: 1}]}]}
+    }
+}
+
+// A real store holding these records, the runtime over it, and a clock the test moves. Its questions are about `root`.
+const sessionHolding = (records, {root = LAYER.recipeId} = {}) => {
     let now = 0
     let timers = []
     const store = createStore((state, action) => 'reduce' in action ? action.reduce(state) : state, {
@@ -364,7 +408,7 @@ const sessionHolding = records => {
         read: ({explain = false} = {}) => {
             const state = store.getState()
             const loadedRecipes = state.process.loadedRecipes
-            const recipe = loadedRecipes['band-math-1']
+            const recipe = loadedRecipes[root]
             return readRecipeOutput({
                 recipe,
                 product: {name: 'IMAGE_OUTPUT'},
@@ -375,8 +419,8 @@ const sessionHolding = records => {
                 explain
             })
         },
-        watchEditor: () => runtime.watchOutput$(EDITOR).subscribe(),
-        watchLayer: () => runtime.watchOutput$(LAYER).subscribe(),
+        watchEditor: () => runtime.watchOutput$({...EDITOR, recipeId: root}).subscribe(),
+        watchLayer: () => runtime.watchOutput$({...LAYER, recipeId: root}).subscribe(),
         replaceCredentials: () => store.dispatch({
             type: 'CREDENTIALS',
             reduce: state => ({...state, user: {currentUser: {googleTokens: {}}}})

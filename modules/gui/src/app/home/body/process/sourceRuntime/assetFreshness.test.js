@@ -41,39 +41,39 @@ beforeEach(() => {
 })
 
 describe('the assets an output reads', () => {
-    it('are read when it is watched, though it is described from its configuration alone', () => {
-        const session = sessionHolding([remapping('users/x/landcover')])
+    it('are read when it is watched, though it is described from its configuration alone and runs observing nothing', () => {
+        const session = sessionHolding([aoiMosaic('users/x/landcover')])
 
-        session.watch('remapping-1')
+        session.watch('mosaic-1')
 
         expect(fake.bands).toHaveLength(0)
         expect(versionReads()).toEqual([['users/x/landcover']])
     })
 
     it('are read once for a map layer and a Retrieve watching the same output', () => {
-        const session = sessionHolding([remapping('users/x/landcover')])
+        const session = sessionHolding([aoiMosaic('users/x/landcover')])
 
-        session.watch('remapping-1')
-        session.watch('remapping-1')
+        session.watch('mosaic-1')
+        session.watch('mosaic-1')
 
         expect(versionReads()).toEqual([['users/x/landcover']])
     })
 
     it('are read once for two outputs reading the same asset', () => {
-        const session = sessionHolding([remapping('users/x/landcover'), remapping('users/x/landcover', 'remapping-2')])
+        const session = sessionHolding([aoiMosaic('users/x/landcover'), aoiMosaic('users/x/landcover', 'mosaic-2')])
 
-        session.watch('remapping-1')
-        session.watch('remapping-2')
+        session.watch('mosaic-1')
+        session.watch('mosaic-2')
 
         expect(versionReads()).toEqual([['users/x/landcover']])
     })
 
     it('change with the configuration: an asset no longer read is let go, and one read anew is read', () => {
-        const session = sessionHolding([remapping('users/x/landcover')])
-        session.watch('remapping-1')
+        const session = sessionHolding([aoiMosaic('users/x/landcover')])
+        session.watch('mosaic-1')
         answerVersions({'users/x/landcover': 'v1'})
 
-        session.edit(remapping('users/x/forest'))
+        session.edit(aoiMosaic('users/x/forest'))
 
         expect(versionReads()).toEqual([['users/x/landcover'], ['users/x/forest']])
         answerVersions({'users/x/forest': 'v1'})
@@ -82,8 +82,8 @@ describe('the assets an output reads', () => {
     })
 
     it('are no longer read once nothing watches them', () => {
-        const session = sessionHolding([remapping('users/x/landcover')])
-        const watch = session.watch('remapping-1')
+        const session = sessionHolding([aoiMosaic('users/x/landcover')])
+        const watch = session.watch('mosaic-1')
         answerVersions({'users/x/landcover': 'v1'})
 
         watch.unsubscribe()
@@ -272,7 +272,7 @@ describe('an explicit refresh', () => {
         session.watch(second.id)
         answerVersions(versions)
         answerBands(['elevation'])
-        expect(fake.bands).toHaveLength(1)
+        expect(observationsOf('users/x/collection')).toHaveLength(1)
         const refreshedFirst = session.runtime.refreshOutput({recipeId: first.id, product: {name: 'IMAGE_OUTPUT'}})
         answerVersions(versions)
         await refreshedFirst
@@ -282,7 +282,7 @@ describe('an explicit refresh', () => {
         answerVersions(versions)
         await refreshedSecond
 
-        expect(fake.bands).toHaveLength(3)
+        expect(observationsOf('users/x/collection')).toHaveLength(3)
     })
 
     it('settles when the runtime closes before its reads answer, counting no refresh and reading nothing more', async () => {
@@ -312,16 +312,16 @@ describe('an explicit refresh', () => {
     })
 
     it('of an answer described from configuration alone reads its assets again and is counted, for its preview', async () => {
-        const session = sessionHolding([remapping('users/x/landcover')])
-        session.watch('remapping-1')
+        const session = sessionHolding([aoiMosaic('users/x/landcover')])
+        session.watch('mosaic-1')
         answerVersions({'users/x/landcover': 'v1'})
 
-        const refreshed = session.runtime.refreshOutput({recipeId: 'remapping-1', product: {name: 'IMAGE_OUTPUT'}})
+        const refreshed = session.runtime.refreshOutput({recipeId: 'mosaic-1', product: {name: 'IMAGE_OUTPUT'}})
         answerVersions({'users/x/landcover': 'v1'})
         await refreshed
 
         expect(versionReads()).toEqual([['users/x/landcover'], ['users/x/landcover']])
-        expect(session.store.getState().process.sourceRefreshes.recipes).toEqual({'remapping-1': 1})
+        expect(session.store.getState().process.sourceRefreshes.recipes).toEqual({'mosaic-1': 1})
         expect(fake.bands).toHaveLength(0)
     })
 })
@@ -355,7 +355,7 @@ describe('an asset this session changed', () => {
         answerVersions({'users/x/collection': 'v1'})
         await settled()
         expect(session.decide('masking-1')).toBe('RESOLVING')
-        expect(fake.bands).toHaveLength(1)
+        expect(observationsOf('users/x/collection')).toHaveLength(1)
         session.advance(3000)
         answerVersions({'users/x/collection': 'v2'})
         answerBands(['slope'])
@@ -389,7 +389,7 @@ describe('an asset this session changed', () => {
         session.advance(0)
         answerVersions({'users/x/collection': 'v-partial'})
 
-        expect(fake.bands).toHaveLength(2)
+        expect(observationsOf('users/x/collection')).toHaveLength(2)
         answerBands(['elevation'])
         expect(session.retrieveRead('masking-1').output).toMatchObject({status: 'READY', diagnostics: []})
     })
@@ -748,6 +748,9 @@ const answerBands = names => fake.bands.filter(request => !request.answered).for
 // What Earth Engine was asked of the images recipes build, apart from what it was asked of assets.
 const imageObservations = () => fake.bands.filter(({request}) => request.recipe)
 
+// What Earth Engine was asked of one asset; a Masking's mask is observed beside its image.
+const observationsOf = assetId => fake.bands.filter(({request}) => request.asset === assetId)
+
 const unansweredFor = assetId => fake.bands.filter(request => !request.answered && request.request.asset === assetId)
 
 // Answers what is still waiting to be observed of one asset.
@@ -811,6 +814,19 @@ const bandMath = assetId => ({
         outputBands: {outputImages: [
             {imageId: 'c-1', outputBands: [{id: 'd', name: 'scaled', defaultOutputName: 'scaled'}]}
         ]}
+    }
+})
+
+// Described from its configuration, over an area of interest an asset holds: running it observes nothing of it.
+const aoiMosaic = (assetId, id = 'mosaic-1') => ({
+    id,
+    type: 'MOSAIC',
+    revision: 1,
+    ui: {initialized: true},
+    model: {
+        aoi: {type: 'EE_TABLE', id: assetId},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100},
+        compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
     }
 })
 

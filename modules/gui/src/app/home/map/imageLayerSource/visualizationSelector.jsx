@@ -259,12 +259,15 @@ class _VisualizationSelector extends React.Component {
 // Every recipe layer's form shows this selector, so it is where a layer says what is known of its sources, as the
 // selector's own feedback: what it reads being checked is its busy indicator, explained by its label's tooltip. A
 // requirement holding what it shows says why in the recipe that holds it, on the section's fields and toolbar; a layer
-// of another recipe says only which recipe, and which section of it, to review.
+// of another recipe says only which recipe, and which section of it, to review - or, held by a recipe further up, that
+// recipe.
 const sourceFeedback = ({checking, describing, unavailable, failing, heldSource} = {}, {elsewhere}) => {
     const held = heldSource && heldSource.state !== CHECKING_SOURCE && elsewhere
     const errors = [
         unavailable && msg('map.layerSource.unavailable', {asset: unavailable}),
-        held && msg('map.layerSource.held', {recipe: heldSource.recipe, section: heldSource.section})
+        held && (heldSource.refusedBy
+            ? msg('map.layerSource.heldUpstream', {recipe: heldSource.recipe, source: heldSource.refusedBy})
+            : msg('map.layerSource.held', {recipe: heldSource.recipe, section: heldSource.section}))
     ].filter(Boolean)
     return {
         busy: heldSource?.state === CHECKING_SOURCE

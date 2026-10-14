@@ -862,7 +862,6 @@ const MASKED_ASSET = {
     ui: {}
 }
 
-const COVARIATES = {imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}
 // The imagery a model is fit to, described from its configuration without reading Earth Engine.
 const MODEL_IMAGERY = {imageId: 'image-1', type: 'RECIPE_REF', id: MOSAIC.id}
 
@@ -904,7 +903,7 @@ const CLASSIFICATION = {
     model: {
         inputImagery: {images: [MODEL_IMAGERY]},
         legend: {entries: CLASSES},
-        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
+        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]},
         classifier: {type: 'RANDOM_FOREST'}
     }
 }
@@ -920,11 +919,12 @@ const CLASS_CHANGE = {
     }
 }
 
+// Over imagery described from its configuration: running it builds that imagery, which is judged without Earth Engine.
 const REMAPPING = {
     id: 'remapping-1',
     type: 'REMAPPING',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         legend: {entries: [{value: 1, booleanOperator: 'and', constraints: []}]}
     }
 }

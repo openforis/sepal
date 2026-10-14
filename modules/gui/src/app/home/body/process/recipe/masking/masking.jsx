@@ -12,6 +12,7 @@ import {msg} from '~/translate'
 import {Aoi} from '../aoi'
 import {defaultModel} from './maskingRecipe'
 import {maskingObservation} from './maskingSourceEvidence'
+import {maskRequirements} from './maskRequirements'
 import {MaskingToolbar} from './panels/maskingToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -58,5 +59,6 @@ export default () => ({
         recipe: Masking
     },
     imageSource: true,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: maskRequirements
 })

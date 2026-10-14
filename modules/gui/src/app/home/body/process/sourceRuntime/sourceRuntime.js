@@ -52,8 +52,8 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // `explainOutput$` is the same operation explaining a refusal instead of describing: once its closure is complete it
 // observes, once, what the refusal still names, each observation failing on its own, and settles COMPLETE with the
-// diagnoses that evidence establishes beside the refusal's (`diagnostics`) and the observations that failed
-// (`failures`) - even where it establishes nothing more. It settles UNAVAILABLE where its closure or its environment
+// diagnoses that evidence establishes beside the refusal's (`diagnostics`), what it finds to keep the output from
+// running (`findings`), and the observations that failed (`failures`) - even where it establishes nothing more. It settles UNAVAILABLE where its closure or its environment
 // failed, or every observation did, so it is retried and never retained as an answer. Every record and asset it read
 // is reported before it settles, as a description's are.
 //
@@ -238,9 +238,9 @@ export const createSourceRuntime = ({
 
         const explain = graph => {
             const explanation = new Subscriber({
-                next: ({diagnostics, failures, observed}) => terminate(failures.length && !observed
-                    ? {status: 'UNAVAILABLE', description: null, diagnostics: [], failures, error: failures[0]}
-                    : {status: 'COMPLETE', description: null, diagnostics, failures, error: null}),
+                next: ({diagnostics, findings, failures, observed}) => terminate(failures.length && !observed
+                    ? {status: 'UNAVAILABLE', description: null, diagnostics: [], findings: [], failures, error: failures[0]}
+                    : {status: 'COMPLETE', description: null, diagnostics, findings, failures, error: null}),
                 error: unavailable
             })
             work.add(explanation)

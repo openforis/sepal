@@ -2,6 +2,7 @@ import _ from 'lodash'
 
 import {UNAVAILABLE_DESCRIPTION} from '#sepal/recipe/output/diagnostic'
 import {NEEDS_EVIDENCE, readImageOutput, READY} from '#sepal/recipe/output/readImageOutput'
+import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
@@ -25,6 +26,9 @@ import {recipeContent} from './recipeContent'
 //                       only for bands the answer holds, never deciding which exist
 //   availableBands      the two joined by name, in the shape selectors and presets filter against
 //   dependencyValidity  whether the whole closure is structurally sound; null while unknown
+//   readiness           whether running the canonical output is possible (#sepal/recipe/output/readiness):
+//                       {status: READY | NEEDS_EVIDENCE | UNAVAILABLE | NOT_READY, findings, needs}; null for a map
+//                       product, whose readiness is not judged, and while no read has answered it
 //   acquisition         {kind, key} of the description loading the answer still needs, or null
 //   assets              every asset the answer reads: those its session graph reaches, and those the held terminal's
 //                       closure read
@@ -44,14 +48,21 @@ import {recipeContent} from './recipeContent'
 // including its runtime evidence - so the terminal's basis proves it read that same root.
 //
 // A question asked to `explain` - an editor's, saying what needs repair - is answered the same way, except where the
-// session refuses the output while its read still names records or observations it did not hold. That refusal is the
-// answer at once, and stays the answer: EXPLAIN loads the closure those records complete and observes once what the
-// refusal names, and a COMPLETE terminal of it only adds the diagnoses that evidence establishes. One pending, failed or
-// withdrawn adds nothing; nothing it could not read is a diagnosis. Questions not asked to explain never load it.
+// session refuses the output, or finds it cannot run, while its read still names records or observations it did not
+// hold. That refusal is the answer at once, and stays the answer: EXPLAIN loads the closure those records complete and
+// observes once what the refusal names, and a COMPLETE terminal of it only adds the diagnoses and readiness findings that
+// evidence establishes. One pending, failed or withdrawn adds nothing; nothing it could not read is a diagnosis.
+// Questions not asked to explain never load it, and a read that finds the output cannot run acquires nothing more for
+// it: a finding settles readiness, as a definitive diagnosis settles the description.
 //
 // An asset the answer reads that a read found missing, or unreadable under these credentials (assetEvidence.js), makes
 // it UNAVAILABLE, naming the asset - an answer described from configuration alone included, since its pixels are
 // still read from it. The assets read are those the session graph reaches and those the held terminal's closure read.
+//
+// Whether the output can run is answered beside its description, by the same read. A description the session holds
+// whose readiness still needs a record or an observation is acquired as one still being described is: the one-shot
+// description settles both. What it finds stays found beside what it waits for; what it could not have is UNAVAILABLE,
+// which finds nothing.
 
 export {IMAGE_OUTPUT, layerProduct, productArgs} from './layerProduct'
 export {NEEDS_EVIDENCE, READY} from '#sepal/recipe/output/readImageOutput'
@@ -73,7 +84,7 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, 
     }
     const reused = sessionReadOf({recipe, product, graph})
     const {explainable, ...session} = reused.answer
-    const kind = session.acquisition || (explain && explainable ? EXPLAIN : null)
+    const kind = explain && explainable ? EXPLAIN : session.acquisition || null
     const acquisition = kind ? {kind, key: reused.keyOf(kind)} : null
     const held = acquisition && heldFor(acquisition.key)
     const assets = held?.assets?.length ? _.uniq([...reused.assets, ...held.assets]).sort() : reused.assets
@@ -88,12 +99,16 @@ export const readRecipeOutput = ({recipe, product, graph, heldFor = () => null, 
 // An asset found missing or inaccessible leaves the answer unavailable - unless what was read beside it establishes
 // a definitive diagnosis, which outranks it: the answer is then that refusal, the assets named beside it. Each is
 // named, so whatever selects one can say so. What the read established of its references - the failure naming the
-// record it could not read, and the closure's validity - is kept beside them.
+// record it could not read, and the closure's validity - is kept beside them, and so is whatever was found to keep it
+// from running.
 const withMissingAsset = (read, assetIds) => {
     const failures = assetIds.map(assetId => ({code: ASSET_UNAVAILABLE, assetId}))
+    const readiness = read.readiness && read.readiness.status !== NOT_READY
+        ? {...read.readiness, status: UNAVAILABLE}
+        : read.readiness
     return [INVALID, UNAVAILABLE].includes(read.status)
-        ? {...read, diagnostics: [...read.diagnostics, ...failures]}
-        : answer({status: UNAVAILABLE, diagnostics: failures, error: read.error, validity: read.dependencyValidity})
+        ? {...read, diagnostics: [...read.diagnostics, ...failures], readiness}
+        : answer({status: UNAVAILABLE, diagnostics: failures, error: read.error, validity: read.dependencyValidity, readiness})
 }
 
 // What the session answers for a recipe depends on nothing but the records its graph holds and the declarations of their
@@ -146,10 +161,11 @@ export const outputLoading = ({recipeId, product, explain, candidate, catalogue,
     return acquisition && {acquisition, recipe, graph, records: acquisition.kind === REFRESH ? [] : graph.recipes}
 }
 
-// Drawn only from a description over dependencies known to be sound. A failed description withholds the preview
-// even over a valid closure.
-export const canPreview = ({status, bands, dependencyValidity}) =>
+// Drawn only from a description over dependencies known to be sound, of an output that can run. A failed description
+// withholds the preview even over a valid closure. A map product's readiness is not judged.
+export const canPreview = ({status, bands, dependencyValidity, readiness}) =>
     status === READY && bands.length > 0 && dependencyValidity?.status === VALID
+    && (!readiness || readiness.status === READY)
 
 // Display precision by band, in the shape the cursor reads.
 export const displayTypes = ({presentation}) =>
@@ -204,23 +220,30 @@ const sessionAnswer = ({recipe, product, graph}) => {
     }
     let read
     try {
-        read = readImageOutput({graph, declarationFor})
+        read = readImageOutput({graph, declarationFor, readinessFor})
     } catch (error) {
         return answer({status: INVALID, error, validity})
     }
-    const {status, description, diagnostics} = read
+    const {status, description, diagnostics, readiness} = read
     if (status === READY) {
-        const result = described({recipe, product, description, validity})
-        return {...result, acquisition: pending(DESCRIBE, result)}
+        const result = described({recipe, product, description, validity, readiness})
+        return {
+            ...result,
+            acquisition: readiness.status === NEEDS_EVIDENCE ? DESCRIBE : pending(DESCRIBE, result),
+            explainable: readiness.status === NOT_READY && hasNeeds(readiness.needs)
+        }
     }
     return status === NEEDS_EVIDENCE
-        ? {...answer({status: NEEDS_EVIDENCE, diagnostics, validity}), acquisition: DESCRIBE}
+        ? {...answer({status: NEEDS_EVIDENCE, diagnostics, validity, readiness}), acquisition: DESCRIBE}
         // An observation the refusal names but the session does not hold is a question, not a diagnosis.
         : {
-            ...answer({status: INVALID, diagnostics: diagnostics.filter(({code}) => code !== UNAVAILABLE_DESCRIPTION), validity}),
-            explainable: read.needs.records.length + read.needs.observations.length > 0
+            ...answer({status: INVALID, diagnostics: diagnostics.filter(({code}) => code !== UNAVAILABLE_DESCRIPTION), validity, readiness}),
+            explainable: hasNeeds(read.needs)
         }
 }
+
+const hasNeeds = ({records, observations}) =>
+    records.length + observations.length > 0
 
 // A map product is described from its root's configuration alone, so the session answers it and only validity is
 // acquired. Whatever its declaration refuses is invalid, as is a product its type does not declare.
@@ -241,21 +264,40 @@ const mapProduct = ({recipe, product, graph, validity, pending}) => {
 const heldAnswer = ({recipe, product, session, kind, terminal}) => {
     const validity = terminal.dependencyValidity || null
     if (kind === EXPLAIN) {
-        return terminal.status === 'COMPLETE'
-            ? {...session, diagnostics: _.uniqWith([...session.diagnostics, ...terminal.diagnostics], _.isEqual)}
-            : session
+        return terminal.status === 'COMPLETE' ? explained(session, terminal) : session
     }
     if (kind === DEPENDENCIES) {
         return {...session, dependencyValidity: validity, error: terminal.error || null}
     }
     const {status, description, diagnostics = [], error = null} = terminal
+    const readiness = terminal.readiness || unsettled(session.readiness)
     if (status === READY) {
-        return described({recipe, product, description, validity})
+        return described({recipe, product, description, validity, readiness})
     }
-    return answer({status: status === INVALID ? INVALID : UNAVAILABLE, diagnostics, error, validity})
+    return answer({status: status === INVALID ? INVALID : UNAVAILABLE, diagnostics, error, validity, readiness})
 }
 
-const described = ({recipe, product, description, validity}) => {
+// The session's refusal, with what explaining it established beside it. The closure it completed is the session's
+// validity where the session did not know it.
+const explained = (session, {diagnostics, findings = [], dependencyValidity}) => ({
+    ...session,
+    diagnostics: _.uniqWith([...session.diagnostics, ...diagnostics], _.isEqual),
+    dependencyValidity: session.dependencyValidity || dependencyValidity || null,
+    readiness: session.readiness && withFindings(session.readiness, findings)
+})
+
+const withFindings = (readiness, more) => {
+    const findings = _.uniqWith([...readiness.findings, ...more], _.isEqual)
+    return {...readiness, status: findings.length ? NOT_READY : readiness.status, findings}
+}
+
+// What a terminal that settled nothing of readiness leaves of the session's: what it found or established, and nothing it
+// waited for.
+const unsettled = readiness => readiness?.status === NEEDS_EVIDENCE
+    ? {...readiness, status: UNAVAILABLE}
+    : readiness
+
+const described = ({recipe, product, description, validity, readiness = null}) => {
     const {bandPresentation} = getRecipeType(recipe.type) || {}
     const table = bandPresentation?.(recipe, product) || {}
     const bands = description.output.bands
@@ -271,7 +313,8 @@ const described = ({recipe, product, description, validity}) => {
             ...(dataType && {dataType}),
             ...(encoding && {encoding})
         }])),
-        validity
+        validity,
+        readiness
     })
 }
 
@@ -283,14 +326,17 @@ const displayed = entry => {
 
 const answer = ({
     status, authority = null, description = null, bands = [], presentation = {}, availableBands = {}, validity = null,
-    diagnostics = [], error = null
+    diagnostics = [], error = null, readiness = null
 }) => ({
-    status, authority, description, bands, presentation, availableBands, dependencyValidity: validity, diagnostics, error
+    status, authority, description, bands, presentation, availableBands, dependencyValidity: validity, diagnostics, error,
+    readiness
 })
 
 const isComplete = graph =>
     !graph.diagnostics.some(({code}) => code === MISSING_SOURCE)
 
 const declarationFor = recipe => recipeType(recipe.type)?.imageOutput
+
+const readinessFor = recipe => recipeType(recipe.type)
 
 const productFor = (recipe, name) => recipeType(recipe.type)?.mapProducts?.[name]

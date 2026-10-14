@@ -231,7 +231,9 @@ families remain.
   A description being `READY` and a closure being `VALID` do not establish that the recipe can execute. Requirements
   must be evaluated through wrappers and at execution boundaries, with their evidence and freshness explicit; they
   must not become empty schemas or independent panel guards. This brings forward contract review, while requirement
-  validation remains a separate implementation packet below.
+  validation remains a separate implementation packet below. Reviewed, and its first packet implemented for
+  `IMAGE_OUTPUT`: [execution readiness](source-resolution.md#execution-readiness) states the contract, rule ownership,
+  dependency needs, the routes outside its guarantee and the rule migrations still to do.
 
 #### Preparation packets
 

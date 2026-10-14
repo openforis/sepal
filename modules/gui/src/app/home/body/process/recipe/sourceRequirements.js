@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
+import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
 
@@ -19,6 +20,7 @@ import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {
     ASSET_UNAVAILABLE,
     IMAGE_OUTPUT,
+    INVALID as OUTPUT_INVALID,
     NEEDS_EVIDENCE as OUTPUT_PENDING,
     readRecipeOutput,
     READY as OUTPUT_READY,
@@ -115,7 +117,9 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the
 // declaration (`outputState`): it holds the declaration's operations as the output read does, waiting while it is
-// read, and marks nothing, no selection being known wrong. What an observed input establishes is known once the work
+// read, and marks nothing, no selection being known wrong. Refused by a recipe further up the closure, it names that
+// recipe (`refusedBy`), whose own sections say why. Refused for what another declaration locates at an item, it is not
+// read where those items hold every operation it would hold. What an observed input establishes is known once the work
 // observing it settles, which waits for every observation it requested: until its siblings answer or fail, its finding
 // is not shown, and the operations wait. The reads of a recipe are reused while its output read
 // says the same, so every consumer shares them.
@@ -163,27 +167,48 @@ export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, heldFor,
         if (previous?.local === local && previous.output === output) {
             return previous.reads
         }
-        const reads = declarations.flatMap(declaration => [...local, ...output].filter(read => read.declaration === declaration))
+        const reads = [
+            ...declarations.flatMap(declaration => [...local, ...output].filter(read => read.declaration === declaration)),
+            ...undeclared(output)
+        ]
         OWN_READS.set(recipe, {local, output, reads})
         return reads
     }
-    return declarations.flatMap(declaration => {
-        if (isLocal(declaration)) {
-            return local.filter(read => read.declaration === declaration)
-        }
-        if (isOutput(declaration)) {
-            return output.filter(read => read.declaration === declaration)
-        }
-        return [readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})]
-    })
+    return [
+        ...declarations.flatMap(declaration => {
+            if (isLocal(declaration)) {
+                return local.filter(read => read.declaration === declaration)
+            }
+            if (isOutput(declaration)) {
+                return output.filter(read => read.declaration === declaration)
+            }
+            return [readSourceRequirement({state, recipe, declaration, evidenceOwner: evidenceOwnerOf?.(recipe.id), now})]
+        }),
+        ...undeclared(output)
+    ]
 }
+
+// What holds a recipe's image where nothing its type declares does: a finding that keeps it from running, which every
+// type's output read judges (#sepal/recipe/output/readiness), whatever its type declares to explain it. It marks
+// nothing, and names the recipe further up whose finding it is, where it is one. Pending or unavailable evidence is not
+// it: the output itself does not hold the action that would start watching it.
+export const OUTPUT_READINESS = {
+    id: 'OUTPUT_READINESS',
+    section: {id: 'output', label: 'process.requirement.output'},
+    requirement: {id: 'OUTPUT_READINESS'},
+    outputDiagnostics: {codes: [], itemOf: () => null},
+    operations: [IMAGE_OUTPUT]
+}
+
+const undeclared = reads => reads.filter(read => read.declaration === OUTPUT_READINESS)
 
 // Whether a type declares requirements its recipes' output read judges.
 export const isJudgedByOutput = type =>
     (getRecipeType(type)?.sourceRequirements || []).some(isOutput)
 
 // The reads of the requirements the recipe's output read judges, from that read: one for each item a refusal it owns,
-// of a code a declaration states, is about.
+// of a code a declaration states, is about. What keeps the output from running is judged alike: a finding of readiness
+// is a refusal of the operations over it (#sepal/recipe/output/readiness).
 export const readOutputRequirements = ({recipe, output, recipeNames = NO_NAMES}) => {
     const said = {
         status: output.status,
@@ -191,21 +216,52 @@ export const readOutputRequirements = ({recipe, output, recipeNames = NO_NAMES})
         validityDiagnostics: output.dependencyValidity?.diagnostics || NO_DIAGNOSTICS,
         errorStatus: output.error?.status ?? null,
         errorRecipe: output.error?.recipeId ?? null,
-        diagnostics: output.diagnostics || NO_DIAGNOSTICS
+        diagnostics: output.diagnostics || NO_DIAGNOSTICS,
+        readiness: output.readiness?.status || null,
+        findings: output.readiness?.findings || NO_DIAGNOSTICS
     }
     const byNames = OUTPUT_READS.get(recipe) || new WeakMap()
     OUTPUT_READS.set(recipe, byNames)
     const previous = byNames.get(recipeNames)
     if (previous && previous.status === said.status && previous.validity === said.validity
         && previous.errorStatus === said.errorStatus && previous.errorRecipe === said.errorRecipe
+        && previous.readiness === said.readiness
         && _.isEqual(previous.diagnostics, said.diagnostics)
+        && _.isEqual(previous.findings, said.findings)
         && _.isEqual(previous.validityDiagnostics, said.validityDiagnostics)) {
         return previous.reads
     }
-    const reads = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(isOutput)
-        .flatMap(declaration => readOutputDeclaration({recipe, output, recipeNames, declaration}))
+    const reads = heldUnlessDeclared(locatedRefusals((getRecipeType(recipe.type)?.sourceRequirements || []).filter(isOutput)
+        .flatMap(declaration => readOutputDeclaration({recipe, output, recipeNames, declaration}))), output)
     byNames.set(recipeNames, {...said, reads})
     return reads
+}
+
+// A refusal one of the recipe's declarations locates at an item is said there, and holds the operations there: another,
+// finding nothing of its own, does not hold them again as refused for something else - where, and only where, the
+// located reads hold every operation it would hold, by the gate each operation asks (reasonFor). A generic read waiting
+// or unavailable is never one.
+const locatedRefusals = reads => {
+    const located = reads.filter(({item}) => item)
+    return located.length
+        ? reads.filter(read => !(read.outputState && read.acquisition === CHECKED && heldByAll(located, read)))
+        : reads
+}
+
+// A finding keeping the image from running holds it, though no read declared does.
+const heldUnlessDeclared = (reads, output) => {
+    if (output.readiness?.status !== NOT_READY || reads.some(read => reasonFor(read, IMAGE_OUTPUT))) {
+        return reads
+    }
+    const held = outputStateRead(OUTPUT_READINESS, output)
+    return held ? [...reads, held] : reads
+}
+
+const heldByAll = (located, read) => {
+    const {operations = [], providerOperations = []} = read.declaration
+    return [...operations, ...providerOperations]
+        .filter(operation => reasonFor(read, operation))
+        .every(operation => located.some(other => reasonFor(other, operation)))
 }
 
 // By recipe, then by the names they were read with: a Retrieve reading without names and a toolbar with them keep
@@ -224,7 +280,8 @@ const NO_DIAGNOSTICS = Object.freeze([])
 // (recipeOutput.js), so a refusal the session establishes alone still has what it does not hold read: one input found
 // lacking a band never keeps another's description from being read, and judged.
 export const readOutputRequirementsOfState = ({state, recipe, heldFor}) => {
-    if (!(getRecipeType(recipe.type)?.sourceRequirements || []).some(isOutput)) {
+    // Whatever its type declares, its image is held by what keeps it from running - judged from the runtime's answers.
+    if (!heldFor && !isJudgedByOutput(recipe.type)) {
         return NO_READS
     }
     if (!heldFor) {
@@ -448,7 +505,7 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
     const {codes, itemOf, references = []} = declaration.outputDiagnostics
     const byItem = new Map()
     ;[
-        ...(output?.diagnostics || []).filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe)),
+        ...findingsOf(output).filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe)),
         ...missingReferences(output, recipe, references)
     ]
         .forEach(diagnostic => {
@@ -504,12 +561,15 @@ const DEFINITIVELY_MISSING = [403, 404]
 
 export const OUTPUT_REFUSED = 'OUTPUT_REFUSED'
 
-const outputStateRead = (declaration, {status, dependencyValidity}) => {
+const outputStateRead = (declaration, output) => {
+    const {status, dependencyValidity, readiness} = output
     // A description over dependencies still being completed is the output's own to wait for (retrieveOutput.js).
-    if (status === OUTPUT_READY && (!dependencyValidity || dependencyValidity.status === VALID)) {
+    if (status === OUTPUT_READY && (!dependencyValidity || dependencyValidity.status === VALID)
+        && (!readiness || readiness.status === OUTPUT_READY)) {
         return null
     }
-    const acquisition = status === OUTPUT_PENDING ? CHECKING : status === OUTPUT_UNAVAILABLE ? UNAVAILABLE : CHECKED
+    const acquisition = outputStateAcquisition(output)
+    const refusedBy = acquisition === CHECKED ? upstreamRefuser(findingsOf(output)) : null
     return {
         declaration,
         outputState: true,
@@ -517,9 +577,42 @@ const outputStateRead = (declaration, {status, dependencyValidity}) => {
         selects: false,
         acquisition,
         providerChain: CHECKED,
-        verdict: acquisition === CHECKED ? unsupported({code: OUTPUT_REFUSED}) : NEEDS
+        verdict: acquisition === CHECKED ? unsupported({code: OUTPUT_REFUSED}) : NEEDS,
+        ...(refusedBy && {refusedBy})
     }
 }
+
+// Found keeping it from running outranks what is still read; otherwise a description being read, or unreadable, is that.
+// A described output over dependencies known unsound is refused; one whose readiness waits, or could not be had, is that.
+const outputStateAcquisition = ({status, dependencyValidity, readiness}) => {
+    if (readiness?.status === NOT_READY) {
+        return CHECKED
+    }
+    if (status === OUTPUT_PENDING) {
+        return CHECKING
+    }
+    if (status === OUTPUT_UNAVAILABLE) {
+        return UNAVAILABLE
+    }
+    if (status === OUTPUT_INVALID || (dependencyValidity && dependencyValidity.status !== VALID)) {
+        return CHECKED
+    }
+    return readiness?.status === OUTPUT_PENDING ? CHECKING
+        : readiness?.status === OUTPUT_UNAVAILABLE ? UNAVAILABLE
+            : CHECKED
+}
+
+// What an output read refuses, described or not: its description's diagnoses and what keeps it from running, each once.
+const findingsOf = output => {
+    const findings = output?.readiness?.findings
+    return findings?.length
+        ? _.uniqWith([...(output.diagnostics || []), ...findings], _.isEqual)
+        : output?.diagnostics || NO_DIAGNOSTICS
+}
+
+// The recipe further up the closure whose own refusal refuses this one, if one does: where its repair lies.
+const upstreamRefuser = (diagnostics = []) =>
+    diagnostics.find(({recipePath = []}) => recipePath.length > 1)?.recipePath.at(-1) || null
 
 // Names by recipe id from the listing, once per listing and shared by everything naming recipes from it: read, never
 // changed.

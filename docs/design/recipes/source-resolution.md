@@ -731,6 +731,285 @@ refuses on it whatever the output reads as. Extending availability to other oper
 [declarative validation roadmap](data-sources.md#declarative-validation-across-model-properties), not to this
 assessment's current scope.
 
+### Execution readiness
+
+Implemented for `IMAGE_OUTPUT` (`lib/js/shared/src/recipe/output/readiness.js`); the other operations, and the rule
+migrations listed below, remain to do. It closes the gap [dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)
+leave open: a description that is `READY` over a `VALID` closure is not permission to run. One rule produces findings,
+shared readiness combines them, and GUI declarations explain them; no rule is copied. It adds no validation framework:
+it reuses the declarations, the closure, the output read and its acquisition, its caches, and the requirement reads
+consumers already share.
+
+**The gap it closes.** Read for its description alone, a Remapping over a Random Forest Classification with no
+training data, and a Masking using that Classification as its mask, were `READY`. Remapping describes its class band
+from its legend and reads no input, and Masking's preserving provider reads only its primary image. Both execute
+their inputs, and Earth Engine failed training on an empty collection. A Masking whose mask is unselected has no mask
+edge at all, and failed in Earth Engine (`lib/js/ee/src/masking.js`). Readiness refuses all of these, and adding
+training data or a mask restores them.
+
+#### Description and readiness
+
+They answer different questions, and neither stands in for the other:
+
+- **Description** - which bands a configured recipe provides, and what is established about them. Unchanged: only
+  what its provider reads can fail it, and a refusal there means the schema itself cannot be stated.
+- **Readiness** - whether one operation over the recipe can run. It combines:
+  1. the recipe's own **configuration requirements** for that operation;
+  2. its description, where the operation builds its image: a description refusal is also a readiness finding;
+  3. the description and readiness of every dependency the operation needs an image from - whether or not the
+     provider read it;
+  4. structural soundness, `dependencyValidity`, unchanged and still required beside it.
+
+A Classification without training data is described, with its classifier's bands, and is not ready. Its bands still
+serve styling, presets and band choices, and nothing draws or exports it.
+
+#### Result contract
+
+Readiness is `{status, findings, needs}`, answered by the same read as the description and in the same vocabulary as
+its acquisition:
+
+| Status | Meaning | Who answers it |
+| --- | --- | --- |
+| `READY` | Every requirement is met, over everything the operation needs | the pure read |
+| `NEEDS_EVIDENCE` | No finding, and some record or observation the operation needs is not held; `needs` names them | the pure read |
+| `UNAVAILABLE` | No finding, and what it needs could not be had: a closure that failed, an observation that failed, an asset found missing | the settled read, the GUI runtime's terminal, or Task's settled read |
+| `NOT_READY` | At least one confirmed finding | the pure read, kept by every later answer |
+
+- `findings` are `{code, path, recipePath}`: the originating recipe is the tail of `recipePath`, the location its own
+  model path, however far up the closure.
+- A confirmed finding outranks missing or failed evidence and is never lost to it. `NOT_READY` keeps every finding
+  established so far, and its `needs` still name what it waits for. Within one evaluation, evidence settling can only
+  add findings. A finding lasts only while the records and evidence it was found in are current: a repair, an
+  explicit refresh, a new revision or a changed asset version is another evaluation, and a finding it no longer
+  establishes is gone.
+- A failed read that settles nothing - a transient or inconclusive failure - blocks new execution as `UNAVAILABLE`.
+  It is never a finding, and marks no section as wrong. Pending evidence is `NEEDS_EVIDENCE`, never a finding; an
+  unknown stays unknown.
+- A recipe or asset found definitively missing or inaccessible keeps what establishes that today. A change image's
+  FROM/TO edge read as gone is marked on its section, and an asset found missing is named (`ASSET_UNAVAILABLE`); both
+  withdraw the layer. Readiness's `UNAVAILABLE` for the same answer changes neither.
+- `needs` joins the description's `needs`. The existing acquisition loop - the GUI runtime's DESCRIBE/EXPLAIN keys and
+  Task's settled read - requests what either names. A read whose description is `READY` but whose readiness needs
+  evidence still names its acquisition.
+- A finding settles readiness as a definitive diagnosis settles a description: a settled read that finds one refuses at
+  once, requesting nothing more for it, so an export names what it found first. An editor's question explains it as it
+  explains a refused description: `EXPLAIN` loads the closure, observes once what readiness and the description still
+  need, and adds the findings that evidence establishes beside those already found. A Remapping over a Classification
+  without training data, of an asset lacking a band it selects, is explained with both findings.
+- Readiness is recomputed from the current records and evidence. No flag is stored or cleared: adding training data
+  restores every recipe over the Classification at the next read.
+
+#### Rule ownership
+
+A rule that execution needs lives once, in the type's shared definition (`lib/js/shared/src/recipe/type/`), and every
+consumer reads its finding. It is not restated in a layer guard, a panel or Earth Engine. What else holds an execution
+rule today:
+
+| Kind | Examples | Direction |
+| --- | --- | --- |
+| Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
+| GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
+| GUI-only execution rule | Regression's training-data layer guard (`dataSets.length`); at-least-one-input layer guards (Classification family, Stack, Band Math, Remapping); Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
+| GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
+| Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
+| Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
+| Presentation policy, not validity | the collecting UI's two-class safeguard on the Classification layer | Stays a GUI rule over the editor's state. It is not readiness. |
+
+"Has training data" is a configuration requirement of Classification for `IMAGE_OUTPUT`, not a checklist item.
+
+A **configuration requirement** is part of the type's definition:
+
+```js
+configurationRequirements: [
+    {code: NO_TRAINING_DATA, operations: [IMAGE_OUTPUT], findings: model => [{path: ['model', 'trainingData', 'dataSets']}]}
+]
+```
+
+It reads only the recipe's own model: no input, record or evidence. It returns located findings or none, and it is
+evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Two are
+declared:
+- Classification's `NO_TRAINING_DATA`, for trained classifiers (`requiresTraining`, `noTrainingData`). The
+  Classification stays described.
+- Masking's `MISSING_ROLE` at `['model', 'imageMask']` when no mask is selected. The Masking is refused as incomplete,
+  not turned into a pass-through recipe. Its MSK section says "Select a mask" (`maskRequirements.js`).
+
+#### Operation scope
+
+Requirements and needs are declared per operation, and an operation inherits nothing:
+
+- `IMAGE_OUTPUT` is the recipe's canonical image, which Preview draws and Retrieve exports.
+- A named map product (LandTrendr's annual mosaic, BAYTS Alerts' radar observation, Change Alerts' collection mosaic)
+  declares its own requirements and needs, reusing common declarations by reference where they apply. It does not take
+  every requirement of the final image: an intermediate observation or mosaic may legitimately run before that image
+  is configured.
+- An operation a type does not declare readiness for keeps today's behaviour. The first slice declares `IMAGE_OUTPUT`
+  only, so products are unchanged by it.
+
+#### Dependency semantics
+
+Edges stay `{reference, role, path}`; the graph stays the only authority for loading, closure and cycles. Each type
+declares, per operation, what that operation needs from each role it emits:
+
+```js
+executionNeeds: {[IMAGE_OUTPUT]: {[PRIMARY_IMAGE]: IMAGE_OUTPUT, [MASK_IMAGE]: IMAGE_OUTPUT}}       // Masking
+executionNeeds: {[IMAGE_OUTPUT]: {[INPUT_IMAGE]: IMAGE_OUTPUT, [TRAINING_DATA_SOURCE]: REFERENCE}}  // Classification
+```
+
+- `IMAGE_OUTPUT`: the operation builds the source's image. The source's description - its refusals included - and its
+  readiness for `IMAGE_OUTPUT` count, as if the provider had read it. A recipe source that cannot yet be described
+  makes the parent `NEEDS_EVIDENCE` and names what it needs. An asset source counts through its description - its
+  observation, which also establishes that it exists - and a missing one is `UNAVAILABLE`.
+
+  This can need evidence the parent's description never asked for. A Remapping over a Classification over an asset
+  is not `READY` until that asset is observed and the Classification's band checks pass. The existing acquisition
+  requests it and the runtime shares it. Correctness takes precedence over acquiring less.
+- `REFERENCE`: only the source's resolution is checked, which `dependencyValidity` already does. This is an explicitly
+  limited check during migration, and it does not establish readiness for what is read.
+
+  A Classification trained from another recipe runs that recipe's `getTrainingData$()`. That builds the referenced
+  recipe's input imagery and samples its points over it. Its classified output need not be ready, but its imagery
+  matters, and so do its points. A dedicated `TRAINING_DATA` operation is the recorded follow-up. Until then a `RECIPE`
+  training set counts as present for `NO_TRAINING_DATA`, and its imagery is not checked. An `AOI` edge is `REFERENCE`
+  until geometry is an operation.
+- **Unclassified roles.** A role must be classified for the operation it is evaluated in. When readiness evaluates an
+  actual edge whose role the type does not classify, it is a definitive finding (`UNCLASSIFIED_ROLE`) at that edge. It
+  is found once per edge, in the same memoized traversal, with no rescan per consumer. The structural audit over
+  representative models stays as a migration guard. It cannot prove that a dynamically emitted role is classified;
+  the check above does. Registration requires a type with an image to declare `executionNeeds.IMAGE_OUTPUT`.
+- **As declared now.**
+  - `IMAGE_OUTPUT`: every image-input role whose provider already reads it (the Classification family's, Stack's,
+    Band Math's, the change recipes' images, CCDC Slice's and Asset Mosaic's sources, Masking's primary image), plus
+    Remapping's inputs and Masking's mask.
+  - `REFERENCE`, a recorded limitation: `AOI`; the collection recipes' `CLASSIFICATION_SOURCE` and `SOURCE_IMAGERY`;
+    the training sources; the BAYTS Alerts reference, previous alerts and wetland mask; and Change Alerts' reference,
+    whose segments and statistics its source requirements already judge.
+- Editor-only and display-only references are not edges and never block. Classification's sampled provenance
+  (`recipeIdToSample`, `assetToSample`), Masking's copied band snapshots, imported legends and Sampling Design's
+  `displaySources` keep that status ([non-edges](#structured-source-edges)).
+
+What a type needs of a source is its own declaration. A consumer never asks what type its source is.
+
+#### Consumers
+
+One read answers every consumer, so they cannot disagree:
+
+- **Rendering.** `canPreview` requires readiness `READY` beside `READY` and `VALID`:
+  - `NOT_READY` withdraws the layer, on its own map or another's;
+  - `NEEDS_EVIDENCE` waits;
+  - `NEEDS_EVIDENCE` and `UNAVAILABLE` withhold new drawing. A drawing already shown stays while nothing it was drawn
+    from changed and the answer is transient: readiness being read again or not had for now, over dependencies not
+    found invalid and no asset found missing. A finding, invalid dependencies or a missing asset take it away.
+- **Request gates and Retrieve's action.**
+  - Output declarations hold their operations as before.
+  - Where no read a type declares holds `IMAGE_OUTPUT`, a confirmed finding still does (`OUTPUT_READINESS` in
+    `sourceRequirements.js`). A Remapping is held whatever its type declares to explain it.
+  - Pending or unavailable readiness does not hold Retrieve's action of a type that declares nothing over its output.
+    The action is what starts watching the output, so holding it on evidence nobody watches would keep it closed.
+    The layer and the submission still wait for that evidence.
+- **Retrieve.** Availability and submission (`retrieveDecision`) require it:
+  - `NOT_READY` is `BLOCKED`, naming the section or the upstream recipe;
+  - `UNAVAILABLE` is `BLOCKED` as unavailable, not as a configuration error;
+  - `NEEDS_EVIDENCE` is resolving.
+- **Marks.** Output declarations (`sourceRequirements.js`) read the findings this recipe owns, from description and
+  readiness alike, and mark its item and section. A finding owned upstream marks nothing on a dependent; the
+  dependent's held status names the owning recipe (`refusedBy`). Readiness's `UNAVAILABLE` and `NEEDS_EVIDENCE` add no
+  mark, and leave definitive missing-source marks as they are.
+- **Drafts.** An editor's candidate (`outputCandidate.js`) is read through the same rules, apart from the applied
+  recipe. Its findings guide the panel and its Apply, and never change the applied recipe's availability. Form field
+  rules stay entry-level.
+- **Backend.** Task's image asset export (`modules/gee/src/jobs/task/export/imageOutput.js`, single images and image
+  collections) resolves the closure itself and already requires `VALID` and `READY`. It requires readiness through the
+  same shared function, from the same closure, and refuses the export otherwise. It builds the image beside that check
+  (`forkJoin`), so a refused export may already have started Earth Engine work. What is promised is that the export is
+  refused.
+
+**Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
+Engine:
+- Preview (`/preview`), guarded only by the client's `canPreview`.
+- Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
+- The CCDC, LandTrendr and time-series chart loaders, and `nextReferenceDataPoints`.
+- The Drive and SEPAL workspace image exports, and the CCDC asset export.
+- Time-series downloads, and Sampling Design steps and stratum areas.
+
+Drive and workspace exports follow separately. Preview and the chart routes stay as they are for now.
+
+#### Performance
+
+- Readiness is computed inside the shared output read, after the description and with the same per-recipe and
+  per-asset memoization, into a diagnostic list of its own. A source the description already resolved is not resolved
+  again. It is not a second pass per consumer.
+- The GUI keeps it in the session read already cached by records and identity (`readRecipeOutput`). Request gates,
+  marks, layers and Retrieve read that one answer, and `readOutputRequirements` keeps its cache.
+- Configuration requirements are pure over one record.
+- Evidence a needed dependency requires is acquired by the runtime's existing operations and shared observations,
+  never in `mapStateToProps`.
+- Added acquisition:
+  - A Masking observes its mask: an asset's typed bands, or a recipe's description.
+  - A Remapping observes its inputs, and what their descriptions need.
+  - A recipe's request gate now reads its output for every type, whatever it declares. It is the session read the
+    layer reads already.
+  - Recipes whose providers already read their inputs - the Classification family, Stack, Band Math, the change
+    recipes, CCDC Slice - observe nothing more.
+
+#### Located findings and other declarations
+
+`sourceRequirements.js` drops a declaration's generic refused read (`outputState`) where another of the recipe's output
+declarations locates the refusal at an item, so the gates name that item's section. It is dropped only where it would
+add no protection: for each operation it actually holds - by the gate each operation asks (`reasonFor`), through
+`operations` or `providerOperations` - a located read holds it too. A refusal does not hold a `providerOperations`
+operation, which only a provider refusal does, so naming one is no reason to keep it. A generic read that is pending
+or unavailable is never dropped.
+
+#### Compatibility
+
+- Classification's `NO_TRAINING_DATA` is a configuration requirement, not a description refusal. The Classification
+  is described; a Stack over it is described and not ready, rather than `INVALID`.
+- A Remapping or Masking over a recipe that is not ready, through any role its image needs, is withdrawn from the map,
+  cannot be retrieved, and has its asset export refused. Before, all three failed in Earth Engine.
+- Such wrappers wait for observations of inputs their description never read.
+- A Masking without a mask is refused as incomplete.
+- The asset export refuses a recipe that cannot run with `Recipe X cannot run: CODES`, or, where what it needs could
+  not be read, `Recipe X cannot run: what it needs could not be read`.
+- The Classification layer's `canClassify` and the family's layer guards become redundant with the read, and go once
+  their rules are shared. The collecting safeguard stays.
+- Saved recipes keep their model: readiness reads configuration and evidence, and stores nothing.
+
+#### First packet (implemented)
+
+It covers the shared mechanism and the Classification → Stack, Remapping and Masking cases: evidence waiting, refusal
+and recovery. It does not migrate every outstanding rule.
+
+1. **Shared.**
+   - `configurationRequirements` and `executionNeeds` per operation in `defineRecipeType`, for `IMAGE_OUTPUT`, with
+     roles classified for every registered type;
+   - readiness in `readImageOutput` and in the settled read, with its needs joining the description's;
+   - `UNCLASSIFIED_ROLE` at evaluated edges;
+   - Classification's `NO_TRAINING_DATA` as a requirement scoped to trained classifiers;
+   - Masking's `MASK_IMAGE` needing `IMAGE_OUTPUT`, and its missing mask refused.
+2. **GUI.**
+   - `readRecipeOutput` carries readiness and names an acquisition while it needs evidence;
+   - `canPreview` and `retrieveDecision` require it;
+   - output declarations read its findings, with a message for Masking's missing mask;
+   - the `outputState` filter covers `operations` and `providerOperations`.
+3. **Backend.** `imageOutput.js` requires readiness.
+4. **Tests.**
+   - extended where they are today: `inputBandSets.test.js`, `outputRequirements.test.js`, `trainingDataChain.test.jsx`
+     (Remapping and Masking beside Stack), `imageAssetExport.test.js`;
+   - cases:
+     - a Remapping waiting for its Classification's input observation;
+     - a confirmed finding kept beside pending and failed evidence;
+     - repair restoring the chain;
+     - a `RECIPE` training set staying unknown;
+     - a refused candidate leaving the applied recipe available;
+     - an unclassified role.
+
+**Recorded follow-ups:**
+- the `TRAINING_DATA` and geometry operations;
+- readiness for named map products;
+- the remaining GUI-only and Earth Engine-only rules, one type per packet;
+- Drive and workspace exports;
+- whether Preview and the chart routes adopt the check.
+
 ## Source description
 
 Names remain open, but the contract needs these separations:

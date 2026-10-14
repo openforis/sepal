@@ -25,7 +25,7 @@ vi.mock('~/apiRegistry', async () => {
                 }),
                 bands$: params => {
                     state.bandsCalls.push(params)
-                    const key = `RECIPE_REF:${params.recipe?.id}`
+                    const key = params.asset ? `ASSET:${params.asset}` : `RECIPE_REF:${params.recipe?.id}`
                     return new Observable(subscriber => {
                         state.subscribers.set(key, subscriber)
                         return () => state.torndown.push(key)
@@ -73,6 +73,9 @@ const masking = ({primary}) => ({
     type: 'MASKING',
     model: {imageToMask: primary, imageMask: {type: 'ASSET', id: 'users/x/mask'}}
 })
+
+// Running a Masking builds its mask, so its mask asset is observed beside what describes it.
+const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true}
 
 const initialState = () => ({
     process: {loadedRecipes: {}},
@@ -159,7 +162,7 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: withLoaded(store.getState(), [inner])})
         runtime.resolveImageOutput$({recipe}).subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}, MASK_CALL])
     })
 
     it('applies a catalogue dispatched after creation but before subscription', () => {
@@ -171,7 +174,7 @@ describe('the lazy Redux adapter', () => {
         store.dispatch({type: 'SET', state: withLoaded(store.getState(), [inner])})
         operation$.subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}, MASK_CALL])
     })
 
     // Deliberately conservative: a replaced credential container invalidates, because the runtime may not inspect
@@ -551,25 +554,29 @@ describe('watching output over the store', () => {
         const {store, runtime} = watchedTwice()
 
         emitBands('RECIPE_REF:ccdc-1', ['tStart', 'ndvi_coefs'])
+        emitBands('ASSET:users/x/mask', [{name: 'mask', arrayDimensions: 0}])
 
-        expect(state.bandsCalls).toHaveLength(1)
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}, MASK_CALL])
         expect(readOutput(store, runtime, MASKED.id).status).toBe('READY')
     })
 
+    // An edit to its source observes that source again, its mask's observation still standing; replaced credentials
+    // observe both again.
     it.each([
         ['an edit to its source', store => store.dispatch({
             type: 'SET',
             state: withLoaded(store.getState(), [{...ccdc(), model: {revised: true}}, MASKED])
-        })],
-        ['replaced credentials', replaceCredentials]
-    ])('withdraws the answer in the dispatch that makes %s, and loads it once again', (_change, change) => {
+        }), [{recipe: {...ccdc(), model: {revised: true}}}]],
+        ['replaced credentials', replaceCredentials, [{recipe: ccdc()}, MASK_CALL]]
+    ])('withdraws the answer in the dispatch that makes %s, and loads it once again', (_change, change, observedAgain) => {
         const {store, runtime} = watchedTwice()
         emitBands('RECIPE_REF:ccdc-1', ['tStart', 'ndvi_coefs'])
+        emitBands('ASSET:users/x/mask', [{name: 'mask', arrayDimensions: 0}])
 
         change(store)
 
         expect(readOutput(store, runtime, MASKED.id).status).toBe('NEEDS_EVIDENCE')
-        expect(state.bandsCalls).toHaveLength(2)
+        expect(state.bandsCalls.slice(2)).toEqual(observedAgain)
     })
 
     it('loads an edited question again when a store subscriber ahead of the runtime watches another in that dispatch', () => {
@@ -693,7 +700,7 @@ describe('the provider', () => {
             observedAt: expect.anything()
         })
         expect(completed).toBe(true)
-        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
 
         // A runtime kept past unmount is not a way back in.
         state.bandsCalls = []
@@ -721,8 +728,8 @@ describe('the provider', () => {
         sourceRuntime.watchOutput$(question).subscribe({complete: () => reopened = true})
 
         expect([completed, reopened]).toEqual([true, true])
-        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
-        expect(state.bandsCalls).toHaveLength(1)
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}, MASK_CALL])
         expect(readOutput(store, sourceRuntime, recipe.id)).toMatchObject({
             status: 'UNAVAILABLE',
             error: expect.objectContaining({code: 'SOURCE_RUNTIME_UNAVAILABLE'})

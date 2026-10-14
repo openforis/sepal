@@ -15,12 +15,22 @@ import {OutputRegistry} from './outputRegistry'
 
 describe('watching a question', () => {
     it('loads nothing for a question the session answers alone', () => {
-        const session = sessionOf([remappingOverAsset()])
+        const session = sessionOf(remappingOverMosaic())
 
         session.watch(canonical('remapping-1'))
 
         expect(session.operations).toEqual([])
         expect(session.read(canonical('remapping-1')).status).toBe('READY')
+    })
+
+    // Its bands are its legend's, but running it builds the asset's image, which has to be observed to be judged.
+    it('loads the description of a question whose running needs what the session has not observed', () => {
+        const session = sessionOf([remappingOverAsset()])
+
+        session.watch(canonical('remapping-1'))
+
+        expect(session.operations.map(({kind}) => kind)).toEqual(['DESCRIBE'])
+        expect(session.read(canonical('remapping-1')).readiness.status).toBe('NEEDS_EVIDENCE')
     })
 
     it('shares one load between a map layer and Retrieve asking the same question', () => {
@@ -396,7 +406,24 @@ const bandMath = (id = 'band-math-1') => ({
 
 const edited = recipe => ({...recipe, model: {...recipe.model, edited: true}})
 
-// Described from its configuration, over an asset nothing needs loaded to read.
+// Described from its configuration, over a mosaic the session describes from its own: nothing needs loading to run it.
+const remappingOverMosaic = () => [
+    {
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: 'mosaic-1'}]},
+            legend: {entries: [{value: 1, label: 'forest', color: '#000000'}]}
+        }
+    },
+    {
+        id: 'mosaic-1',
+        type: 'MOSAIC',
+        model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+    }
+]
+
+// Described from its configuration, over an asset whose image running it builds.
 const remappingOverAsset = () => ({
     id: 'remapping-1',
     type: 'REMAPPING',
@@ -432,6 +459,7 @@ const described = (recipe, {basis = basisOf(recipe)} = {}) => ({
     diagnostics: [],
     error: null,
     dependencyValidity: {status: 'VALID', diagnostics: []},
+    readiness: {status: 'READY', findings: [], needs: {records: [], observations: []}},
     basis
 })
 

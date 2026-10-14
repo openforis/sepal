@@ -71,7 +71,7 @@ class _ClassificationToolbar extends React.Component {
                         tooltip={msg('process.classification.panel.legend.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
                         tooltip={msg('process.classification.panel.trainingData.tooltip')}

@@ -3,8 +3,10 @@ import {describe, expect, it, vi} from 'vitest'
 // A requirement a recipe's output read judges (sourceRequirements.js), through the real registrations of the types
 // declaring one and the shared declarations refusing their output: one refusal marks the item and the section it is
 // about, holds Retrieve and withdraws previews, wherever the recipe is shown - and once repaired, none of them does.
-// What the output read has not established marks and holds nothing of its own. The output of each recipe here is
-// described from the session alone: its input is an optical mosaic, described from its configuration.
+// What the output read has not established marks and holds nothing of its own. A Classification whose classifier is
+// trained is refused, too, while it holds no training data, and that is said of its Training data section. The output
+// of each recipe here is described from the session alone: its input is an optical mosaic, described from its
+// configuration.
 
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const name = Array.isArray(key) ? key.join('.') : key
@@ -35,7 +37,7 @@ const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {compatibleBasis, outputLoading} = await import('./recipeOutput')
 const {NEVER, Subject} = await import('rxjs')
 const {heldSourceStatusOfState, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
-const {readOutputRequirementsOfState, requestGate} = await import('./sourceRequirements')
+const {readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
 const {IMAGE_OUTPUT} = await import('./recipeOutput')
 
 addRecipeType(classification())
@@ -162,6 +164,56 @@ describe('a recipe whose output read refuses nothing', () => {
     })
 })
 
+describe('a Classification without training data', () => {
+    it('is marked on its Training data section, and Retrieve and its previews are held, naming that section', () => {
+        const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: NO_TRAINING_DATA}))
+
+        expect(sourceProblems(state)).toEqual({trainingData: MISSING_TRAINING_DATA})
+        expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
+        expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
+        expect(heldSourceStatusOfState(state, recipeOf(state), previewGate(state))).toMatchObject({section: TRAINING_DATA_SECTION})
+        expect(retrieveRead(state).output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}])
+    })
+
+    it('beside an input lacking a band, is marked in each section', () => {
+        const state = sessionWith(modelOf([image('image-1', MOSAIC, ['elevation'])], {trainingData: NO_TRAINING_DATA}))
+
+        expect(sourceProblems(state)).toEqual({inputImagery: UNAVAILABLE_SUMMARY, trainingData: MISSING_TRAINING_DATA})
+        expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET'}})
+    })
+
+    it('is held by nothing where its classifier is a supplied decision tree', () => {
+        const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {
+            trainingData: NO_TRAINING_DATA,
+            classifier: {type: 'DECISION_TREE', decisionTree: '1) root 9 0 0 (0 1) *'}
+        }))
+
+        expect(sourceProblems(state)).toEqual({})
+        expect(retrieve(state)).toEqual({available: true, gate: null})
+        expect(previewGate(state)).toBeNull()
+    })
+})
+
+// A finding one declaration locates at an item holds the operations that declaration does. Another declaration, finding
+// nothing of its own, holds them again only where the located finding does not: its hold on any other operation stays.
+describe('a finding one declaration locates, beside another declaration', () => {
+    it.each([
+        ['holding only what the located finding holds, is not held again', 'ONLY_IMAGE', {operations: ['IMAGE_OUTPUT']}, []],
+        ['holding another operation too, still holds it', 'ALSO_SEGMENTS', {operations: ['IMAGE_OUTPUT', 'PIXEL_SEGMENTS']}, ['OTHER']],
+        ['naming another only through its provider, which no finding holds, is not held again', 'PROVIDER_SEGMENTS',
+            {operations: ['IMAGE_OUTPUT'], providerOperations: ['PIXEL_SEGMENTS']}, []]
+    ])('%s', (_case, type, holds, generic) => {
+        addRecipeType({id: type, imageSource: true, sourceRequirements: [LOCATING, {...OTHER, ...holds}]})
+        const recipe = {id: 'located-1', type, model: {}}
+
+        const reads = readOutputRequirements({recipe, output: LOCATED_FINDING})
+
+        expect(reads.filter(({outputState}) => outputState).map(({declaration}) => declaration.id)).toEqual(generic)
+        expect(requestGateOf(reads, 'IMAGE_OUTPUT')).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'located'})
+        expect(Boolean(requestGateOf(reads, 'PIXEL_SEGMENTS'))).toBe(generic.length > 0)
+    })
+})
+
 describe('the requirements of a type its output read judges', () => {
     it('are not read without the source runtime\'s answers', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])]))
@@ -170,11 +222,40 @@ describe('the requirements of a type its output read judges', () => {
     })
 })
 
+const declaration = (id, codes, itemOf) => ({
+    id,
+    section: {id: id.toLowerCase(), label: id.toLowerCase()},
+    requirement: {id, describe: () => ({message: id, details: []})},
+    outputDiagnostics: {codes, itemOf}
+})
+
+const LOCATING = {
+    ...declaration('LOCATED', ['LOCATED_CODE'], () => ({id: 'item-1', path: ['model', 'located'], label: 'Item'})),
+    operations: ['IMAGE_OUTPUT']
+}
+
+const OTHER = declaration('OTHER', ['ELSEWHERE_CODE'], () => null)
+
+// An output described and kept from running by what one declaration locates.
+const LOCATED_FINDING = {
+    status: 'READY',
+    diagnostics: [],
+    error: null,
+    dependencyValidity: {status: 'VALID', diagnostics: []},
+    readiness: {
+        status: 'NOT_READY',
+        findings: [{code: 'LOCATED_CODE', path: ['model', 'located'], recipePath: ['located-1']}],
+        needs: {records: [], observations: []}
+    }
+}
+
 const ID = 'classification-1'
 const SECTION = 'process.classification.panel.inputImagery.button'
 const MISSING = 'process.classification.panel.inputImagery.unavailableSelections.input'
 const UNAVAILABLE_SUMMARY = 'process.classification.panel.inputImagery.unavailableSelections.inputs'
 const INCOMPLETE = 'process.classification.panel.inputImagery.unavailableSelections.incompleteCombination'
+const TRAINING_DATA_SECTION = 'process.classification.panel.trainingData.button'
+const MISSING_TRAINING_DATA = 'process.classification.panel.trainingData.missing'
 
 const MOSAIC = {
     id: 'mosaic-1',
@@ -192,12 +273,16 @@ const image = (imageId, source, included, otherSets = []) => ({
 
 const ratio = (...included) => ({id: 'ratio', type: 'PAIR_WISE_EXPRESSION', operation: 'RATIO', included})
 
-const modelOf = images => ({
+// Trained on points collected on the map, unless a test says otherwise.
+const modelOf = (images, model = {}) => ({
     inputImagery: {images},
     legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}]},
-    trainingData: {dataSets: []},
-    classifier: {type: 'RANDOM_FOREST'}
+    trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]},
+    classifier: {type: 'RANDOM_FOREST'},
+    ...model
 })
+
+const NO_TRAINING_DATA = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: []}]}
 
 const sessionWith = (model, {assets = {}} = {}) => ({
     process: {

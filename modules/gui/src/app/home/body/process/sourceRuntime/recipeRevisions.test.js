@@ -295,6 +295,8 @@ describe('an observation', () => {
             ...process.loadedRecipes['masking-1'],
             model: {...masking().model, imageMask: {type: 'ASSET', id: 'users/x/other-mask'}}
         }}}))
+        // Running it builds the mask it now selects, which is observed: the image it masks is not observed again.
+        answerBands()
 
         expect(imageObservations()).toHaveLength(1)
         expect(session.read('masking-1').status).toBe('READY')

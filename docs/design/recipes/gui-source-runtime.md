@@ -867,13 +867,14 @@ configuration-only product - while canonical output and products remain distinct
   other work, settled, or released because the session now answers alone. An edit leaving its key as it was tells
   it nothing.
 
-- A question asked to explain, whose read the session refuses while still naming records or observations it does not
-  hold, names `EXPLAIN`: the closure those records complete, then one pass observing what the refusal names, each
-  observation failing alone, settling `COMPLETE` with the diagnoses that evidence establishes, even where it adds none
-  - recorded, like any work's reads, before it settles. Where every observation fails it settles `UNAVAILABLE` on
-  those failures, so it is retried and never retained. The refusal answers at once and stays the answer; a held
-  `COMPLETE` explanation only adds diagnoses, and one pending, failed or withdrawn adds nothing. Questions not asked to
-  explain never load it.
+- A question asked to explain, whose read the session refuses - its description, or whether it can run - while still
+  naming records or observations it does not hold, names `EXPLAIN`, ahead of any other work its read names: the
+  closure those records complete, then one pass observing what the refusal and readiness name, each observation
+  failing alone, settling `COMPLETE` with the diagnoses and readiness findings that evidence establishes, even where
+  it adds none - recorded, like any work's reads, before it settles. Where every observation fails it settles
+  `UNAVAILABLE` on those failures, so it is retried and never retained. The refusal answers at once and stays the
+  answer; a held `COMPLETE` explanation only adds diagnoses and findings, and the validity of its closure where the
+  session had none, and one pending, failed or withdrawn adds nothing. Questions not asked to explain never load it.
 - Unfinished work is cancelled and discarded when the last question claiming it is released. A consumer watches a
   changed question before releasing the previous one, so switching a layer's product keeps loading the two share.
 - A settled `READY`, `INVALID` or `COMPLETE` answer is retained for 60 seconds after its last release, and at most 32
@@ -993,7 +994,10 @@ monitoring period or a reference is described with its nine change bands. Nothin
 The recipe's own layer and Retrieve wait for it to be initialized, its change styles are offered only once it states
 a period, and execution refuses it with its own error. A wrapper over it - Masking over an unfinished Change Alerts -
 has none of those gates: it is offered the bands, a style a user defines over them can request a preview, and an
-export is accepted and fails in Earth Engine. That exposure is accepted until requirements are validated.
+export is accepted and fails in Earth Engine. That exposure is accepted until Change Alerts declares those requirements:
+[execution readiness](source-resolution.md#execution-readiness) judges the declared configuration requirements and the
+needs of every executed dependency beside the description, so a Remapping, or a Masking by or of a Classification
+without training data, is no longer drawn or exported.
 
 **Mandatory output contracts.** Every registered type states its output, as it states its sources: an image output
 provider, or `NO_IMAGE_OUTPUT` for a type whose recipes produce no image - Sampling Design, whose samples its own tasks

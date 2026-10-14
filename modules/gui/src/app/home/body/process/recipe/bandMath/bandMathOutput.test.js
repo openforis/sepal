@@ -161,21 +161,23 @@ const readOf = (recipe, observed) => {
     return readRecipeOutput({recipe, product: {name: 'IMAGE_OUTPUT'}, graph, heldFor: () => terminal})
 }
 
-// Its input assets hold the bands it includes of them.
+// Its input assets hold the bands it includes of them, and a Masking over it masks by an asset that is observed too.
 const INPUT_ASSETS = {
     'users/x/dem': [{name: 'elevation', dataType: {arrayDimensions: 0}}],
-    'users/x/segments': [{name: 'coefs', dataType: {arrayDimensions: 1}}]
+    'users/x/segments': [{name: 'coefs', dataType: {arrayDimensions: 1}}],
+    'users/x/mask': [{name: 'mask', dataType: {arrayDimensions: 0}}]
 }
 
 const acquired = (graph, observed) => {
-    const {description, diagnostics} = readImageOutput({
+    const {description, diagnostics, readiness} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        readinessFor: ({type}) => recipeType(type),
         observationFor: ({type, id}) => type === 'ASSET'
             ? INPUT_ASSETS[id] && {bands: INPUT_ASSETS[id], evidence: []}
             : id === BAND_MATH.id ? {bands: observed} : undefined
     })
-    return {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
+    return {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}, readiness}
 }
 
 const retrieve = (recipe, task, destination) => {

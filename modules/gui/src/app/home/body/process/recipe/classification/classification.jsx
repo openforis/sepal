@@ -15,6 +15,7 @@ import {getDefaultModel, RecipeActions} from './classificationRecipe'
 import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {ClassificationToolbar} from './panels/classificationToolbar'
 import {CollectPanel} from './panels/collect/collectPanel'
+import {trainingDataRequirements} from './trainingDataRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -100,5 +101,5 @@ export default () => ({
     },
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: inputImageryRequirements
+    sourceRequirements: [...inputImageryRequirements, ...trainingDataRequirements]
 })

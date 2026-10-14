@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
 
+import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {CursorValueContext} from '~/app/home/map/cursorValue'
 import {EarthEngineImageLayer} from '~/app/home/map/layer/earthEngineImageLayer'
 import {LayerSourceStatus} from '~/app/home/map/layerSourceStatus'
@@ -360,13 +361,16 @@ RecipeImageLayer.propTypes = {
     map: PropTypes.object
 }
 
-// An answer being loaded again - its validity included - or one that could not be had for now: not one found invalid,
-// over unsound dependencies, or over an asset found missing.
-const isTransient = ({status, diagnostics = [], dependencyValidity}) =>
-    status === NEEDS_EVIDENCE
-    || (status === READY && !dependencyValidity)
-    || (status === UNAVAILABLE && dependencyValidity?.status !== INVALID
-        && !diagnostics.some(({code}) => code === ASSET_UNAVAILABLE))
+// An answer being loaded again - its validity and whether it can run included - or one that could not be had for now:
+// not one found invalid or unable to run, over unsound dependencies, or over an asset found missing.
+const isTransient = ({status, diagnostics = [], dependencyValidity, readiness}) =>
+    readiness?.status !== NOT_READY && (
+        status === NEEDS_EVIDENCE
+        || (status === READY && (!dependencyValidity
+            || (dependencyValidity.status !== INVALID && [NEEDS_EVIDENCE, UNAVAILABLE].includes(readiness?.status))))
+        || (status === UNAVAILABLE && dependencyValidity?.status !== INVALID
+            && !diagnostics.some(({code}) => code === ASSET_UNAVAILABLE))
+    )
 
 const sameDrawing = (drawn, current) =>
     _.isEqual(drawn.recipes, current.recipes)

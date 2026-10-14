@@ -114,19 +114,21 @@ const selectedStatusOf = (state, reads, sectionId) => {
 }
 
 // What a consumer of an operation over a recipe, wherever the recipe is shown, says about the requirement holding that
-// operation (`requestGate`): null when none holds it, otherwise {state, recipe, section} - the recipe's name and the
-// section to review in it. Why is that section's to say, in the recipe. A source not selected holds it as much as an
-// unsuitable one.
+// operation (`requestGate`): null when none holds it, otherwise {state, recipe, section, refusedBy} - the recipe's name
+// and the section to review in it, or the name of the recipe further up whose own refusal holds it, to review instead.
+// Why is that section's to say, in the recipe. A source not selected holds it as much as an unsuitable one.
 export const heldSourceStatusOfState = (state, recipe, gate) => {
     if (!gate) {
         return null
     }
     const names = recipeNamesOf(state)
     const status = statusOf(gate.read, names)
+    const refusedBy = gate.read.refusedBy
     return status && {
         state: status.state,
         recipe: names[recipe.id] || recipe.title || recipe.placeholder || recipe.id,
-        section: msg(gate.section)
+        section: msg(gate.section),
+        ...(refusedBy && {refusedBy: names[refusedBy] || refusedBy})
     }
 }
 

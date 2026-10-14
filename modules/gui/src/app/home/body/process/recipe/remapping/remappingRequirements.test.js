@@ -125,14 +125,15 @@ const stateOf = recipe => ({
 // What Retrieve decides from as it submits: the session read at that moment, its input asset described.
 const retrieveRead = recipe => {
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
-    const {description, diagnostics} = readImageOutput({
+    const {description, diagnostics, readiness} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        readinessFor: ({type}) => recipeType(type),
         observationFor: ({type, id}) => type === 'ASSET' && id === ASSET
             ? {bands: ['class', 'ndvi'].map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []}
             : undefined
     })
-    const terminal = {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
+    const terminal = {status: 'READY', description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}, readiness}
     return readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: () => terminal})
 }
 

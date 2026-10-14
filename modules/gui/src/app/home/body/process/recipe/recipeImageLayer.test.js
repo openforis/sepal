@@ -53,6 +53,8 @@ vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
     const declared = {
         type: 'SYNTHETIC',
         directSources: () => [],
+        // What it reads it reads for something other than an image, so running it observes none of it.
+        executionNeeds: {IMAGE_OUTPUT: {INPUT_IMAGE: 'REFERENCE'}},
         imageOutput: imageOutputProvider({
             describe: () => ({bands: synthetic.bands.map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []})
         })
@@ -707,13 +709,65 @@ describe('acquiring what the layer shows', () => {
 
     it('draws masking over an optical mosaic the session holds at once, acquiring nothing', () => {
         const {instance, runtime} = shown({
-            recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+            recipe: masking({mask: {type: 'RECIPE_REF', id: 'mosaic-1'}, styles: [BLUE_STYLE]}),
             records: [mosaic()],
             visParams: BLUE_STYLE
         })
 
         expect(instance.maybeCreateLayer()).not.toBe(null)
         expect(runtime.operations).toEqual([])
+    })
+
+    // Running it builds the mask, which is observed before anything is drawn.
+    it('waits for a mask asset to be observed before drawing masking over an optical mosaic', () => {
+        const {instance, runtime} = shown({
+            recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+            records: [mosaic()],
+            visParams: BLUE_STYLE
+        })
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(runtime.operations.map(({kind}) => kind)).toEqual(['DESCRIBE'])
+    })
+
+    // Whether it can run is read again as its description is: what was drawn stays while that is loaded again or cannot
+    // be had for now, and goes once something is found to keep it from running.
+    describe('masking drawn once its mask asset was observed', () => {
+        const drawnMasking = () => {
+            const shownMasking = shown({
+                recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+                records: [mosaic()],
+                visParams: BLUE_STYLE
+            })
+            const {instance, runtime, settle} = shownMasking
+            settle(runtime.operations[0], maskingDescribed(instance.props.recipe, readiness('READY')))
+            return {...shownMasking, drawn: instance.maybeCreateLayer()}
+        }
+
+        it('keeps its drawing while the mask is observed again, and when it cannot be for now', () => {
+            const {instance, runtime, settle, drawn} = drawnMasking()
+            expect(drawn).not.toBe(null)
+
+            runtime.changeCredentials()
+            expect(instance.imageOutput().readiness.status).toBe('NEEDS_EVIDENCE')
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            settle(runtime.operations[1], maskingDescribed(instance.props.recipe, readiness('UNAVAILABLE')))
+
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            expect(state.constructed).toHaveLength(1)
+        })
+
+        it.each([
+            ['described', recipe => maskingDescribed(recipe, readiness('NOT_READY', [MASK_FINDING]))],
+            ['not described for now', recipe => ({...unreadable(recipe), readiness: readiness('NOT_READY', [MASK_FINDING])})]
+        ])('is withheld once observed unable to run, %s', (_case, terminal) => {
+            const {instance, runtime, settle} = drawnMasking()
+
+            runtime.changeCredentials()
+            settle(runtime.operations[1], terminal(instance.props.recipe))
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
     })
 
     it('keeps the display precision the optical mosaic presents for the cursor', () => {
@@ -1082,6 +1136,19 @@ const described = recipe => ({
     description: {output: {kind: 'IMAGE', bands: radarMosaicBands(recipe.model)}},
     diagnostics: []
 })
+
+// Masking described as the optical mosaic it masks, and whether it can run as `readiness` says.
+const maskingDescribed = (recipe, readiness) => ({
+    ...completed(recipe),
+    status: 'READY',
+    description: {output: {kind: 'IMAGE', bands: [{name: 'blue', dataType: {arrayDimensions: 0}}]}},
+    diagnostics: [],
+    readiness
+})
+
+const readiness = (status, findings = []) => ({status, findings, needs: {records: [], observations: []}})
+
+const MASK_FINDING = {code: 'MISSING_INPUT_BAND', path: ['model', 'imageMask'], recipePath: ['masked-1']}
 
 const unreadable = recipe => ({
     status: 'UNAVAILABLE',

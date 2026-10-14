@@ -1198,7 +1198,7 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
         legend: {entries: values.map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
-            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
+            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: values[0]}]}]},
         classifier: {type: classifier}
     }
 })
@@ -1207,7 +1207,8 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
 const LAND_COVER = {...classificationOf(), id: 'land-cover-1'}
 const LAND_COVER_IMAGE = {type: 'RECIPE_REF', id: LAND_COVER.id}
 
-const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes', includedBands: [{band: 'class'}]}], values = [1, 2, 3]} = {}) => ({
+// Over imagery the session describes from its own configuration, so whether it can run is known without observing.
+const remappingOf = ({images = [{...COVARIATES_IMAGE, includedBands: [{band: 'class'}]}], values = [1, 2, 3]} = {}) => ({
     id: ID,
     type: 'REMAPPING',
     title: 'Forest',

@@ -64,6 +64,8 @@ export const RETRIEVABLE = 'RETRIEVABLE'
 
 export const UNRESOLVED_OUTPUT = 'UNRESOLVED_OUTPUT'
 export const UNSOUND_DEPENDENCIES = 'UNSOUND_DEPENDENCIES'
+// Described, and unable to run (#sepal/recipe/output/readiness): its bands are known, and none is exported.
+export const UNREADY_OUTPUT = 'UNREADY_OUTPUT'
 export const NO_SELECTION = 'NO_SELECTION'
 export const MISSING_SELECTION = 'MISSING_SELECTION'
 export const UNRECOGNIZED_SELECTION = 'UNRECOGNIZED_SELECTION'
@@ -267,10 +269,10 @@ const decision = (status, reason = null, {missingBandNames = [], destinations = 
     ({status, reason, missingBandNames, destinations})
 
 // Dependencies not known to be sound are no answer, whichever of the two is missing; a read still being loaded
-// is not yet one.
-const unresolvedOutput = ({status, dependencyValidity}, pending) => {
+// is not yet one. Nor is an output that cannot run, or whose readiness is not yet known.
+const unresolvedOutput = ({status, dependencyValidity, readiness}, pending) => {
     if (status === READY && dependencyValidity?.status === VALID) {
-        return null
+        return unreadyOutput(readiness, pending)
     }
     if (dependencyValidity && dependencyValidity.status !== VALID) {
         return decision(BLOCKED, UNSOUND_DEPENDENCIES)
@@ -281,6 +283,15 @@ const unresolvedOutput = ({status, dependencyValidity}, pending) => {
     return pending
         ? decision(RESOLVING)
         : decision(BLOCKED, status === READY ? UNSOUND_DEPENDENCIES : UNRESOLVED_OUTPUT)
+}
+
+const unreadyOutput = (readiness, pending) => {
+    if (!readiness || readiness.status === READY) {
+        return null
+    }
+    return readiness.status === NEEDS_EVIDENCE && pending
+        ? decision(RESOLVING)
+        : decision(BLOCKED, UNREADY_OUTPUT)
 }
 
 // The destinations these bands can be exported to, by the requirements submission itself validates; null when a

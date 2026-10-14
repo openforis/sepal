@@ -424,8 +424,8 @@ function ref(id) {
 }
 
 const RECORDS = [
-    {id: 'masking-ccdc', name: 'Masked CCDC', type: 'MASKING', model: {imageToMask: ref('ccdc-1')}},
-    {id: 'masking-mosaic', name: 'Forest mask', type: 'MASKING', model: {imageToMask: ref('mosaic-1')}},
+    {id: 'masking-ccdc', name: 'Masked CCDC', type: 'MASKING', model: {imageToMask: ref('ccdc-1'), imageMask: ref('mosaic-1')}},
+    {id: 'masking-mosaic', name: 'Forest mask', type: 'MASKING', model: {imageToMask: ref('mosaic-1'), imageMask: ref('mosaic-1')}},
     {id: 'mosaic-1', name: 'Sentinel 2021', type: 'MOSAIC', model: {}},
     {
         id: 'ccdc-1', name: 'CCDC', type: 'CCDC',

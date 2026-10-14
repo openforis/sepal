@@ -161,7 +161,8 @@ const outputRead = names => readOf({
     },
     diagnostics: [],
     error: null,
-    dependencyValidity: {status: 'VALID', diagnostics: []}
+    dependencyValidity: {status: 'VALID', diagnostics: []},
+    readiness: {status: 'READY', findings: [], needs: {records: [], observations: []}}
 })
 
 const unavailableRead = () => readOf({

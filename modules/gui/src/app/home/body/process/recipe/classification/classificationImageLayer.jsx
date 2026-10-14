@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {hasTrainingData} from './classificationRecipe'
+import {canClassify} from './classificationRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -61,7 +61,7 @@ class _ClassificationImageLayer extends React.Component {
     canRender() {
         const {recipe} = this.props
         const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length && hasTrainingData(recipe)
+        return inputImagery.length && canClassify(recipe)
     }
 }
 

@@ -1002,6 +1002,7 @@
       "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
       "failing": "Earth Engine could not be reached. The drawing may be out of date.",
     "held": "Cannot render ''{recipe}''. Review {section} in that recipe.",
+    "heldUpstream": "Cannot render ''{recipe}''. Review ''{source}'', which it reads.",
     "checkingSection": "Checking the source selected in {section} of ''{recipe}''…"
     }
   },
@@ -2635,6 +2636,7 @@
               }
             }
           },
+          "missing": "Add training data",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
@@ -3401,6 +3403,7 @@
               "label": "MSK",
               "tooltip": "Select mask to use"
             },
+            "missing": "Select a mask",
             "title": "Mask to use"
           },
           "imageToMask": {
@@ -5781,6 +5784,7 @@
         "unavailableBands": "Selected bands are unavailable. Open this image to review them."
       },
       "itemProblem": "{item}: {message}",
+      "output": "its settings",
       "prerequisiteUnmet": "Depends on {items}, which need attention."
     },
     "source": {

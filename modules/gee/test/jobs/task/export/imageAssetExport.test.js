@@ -449,6 +449,64 @@ describe('exporting a recipe that produces no image', () => {
     })
 })
 
+// Running an image builds every image its roles need, whether or not its description reads them: a recipe over a
+// Classification without training data cannot run, whichever role it takes that Classification in.
+describe('exporting a recipe over a Classification without training data', () => {
+    const classification = referenceData => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [{type: 'COLLECTED', referenceData}]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const remapping = {
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'classification-1'}]}, legend: {entries: [{value: 1, constraints: []}]}}
+    }
+    const point = (x, y, value) => ({x, y, class: value})
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it.each([
+        ['a Remapping over it', () => remapping, ['class']],
+        ['a Masking masked by it', () => masking({primary: {type: 'ASSET', id: DEM_ASSET}, mask: {type: 'RECIPE_REF', id: 'classification-1'}}), ['elevation']]
+    ])('fails the export of %s, saying why', async (_case, recipeOf, bands) => {
+        state.catalogue = {'classification-1': classification([])}
+        const recipe = recipeOf()
+
+        await expect(submit({recipe, bands})).rejects.toThrow(/cannot run: NO_TRAINING_DATA$/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('exports a Remapping over it once it has points of two classes', async () => {
+        state.catalogue = {'classification-1': classification([point(1, 1, 1), point(1, 2, 1), point(2, 1, 2), point(2, 2, 2)])}
+
+        await submit({recipe: remapping, bands: ['class']})
+    })
+})
+
+describe('exporting a Masking whose mask cannot be had', () => {
+    it('fails the export of one selecting no mask, as incomplete', async () => {
+        const recipe = masking({primary: {type: 'ASSET', id: MASK_ASSET}, mask: null})
+
+        await expect(submit({recipe, bands: ['mask']})).rejects.toThrow(/cannot run: MISSING_ROLE$/)
+        expect(state.exported).toEqual([])
+    })
+
+    it('fails the export as unreadable, not as a finding, where its mask cannot be read', async () => {
+        const recipe = masking({primary: {type: 'ASSET', id: MASK_ASSET}, mask: {type: 'ASSET', id: 'users/x/unreachable'}})
+
+        await expect(submit({recipe, bands: ['mask']})).rejects.toThrow(/cannot run: what it needs could not be read/)
+        expect(state.exported).toEqual([])
+    })
+})
+
 describe('an output that cannot be described', () => {
     it('fails the export when a recipe it depends on cannot be read', async () => {
         const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}})
@@ -521,7 +579,11 @@ const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     }
 })
 
-const masking = ({primary, mask = {type: 'ASSET', id: 'users/x/mask'}}) => ({
+const DEM_ASSET = 'users/x/dem'
+const MASK_ASSET = 'users/x/mask'
+
+// Masked, unless a test says otherwise, by an asset that can be read.
+const masking = ({primary, mask = {type: 'ASSET', id: MASK_ASSET}}) => ({
     id: 'masking-1',
     type: 'MASKING',
     model: {imageToMask: primary, imageMask: mask}
@@ -610,7 +672,7 @@ jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
 
 beforeEach(() => {
     state.catalogue = {}
-    state.assets = {}
+    state.assets = {[MASK_ASSET]: {bands: [{name: 'mask', arrayDimensions: 0}], properties: {}}}
     state.recipeImages = {}
     state.recipeBands = {}
     state.recipeReads = []
