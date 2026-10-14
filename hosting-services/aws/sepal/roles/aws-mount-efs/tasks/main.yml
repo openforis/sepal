@@ -37,6 +37,40 @@
     dump: 0
     passno: 0
 
+# Exports to Data stage here, outside the homes, where sandboxes never see it. EFS only mounts a directory that
+# exists, and no other mount holds this one, so the first deploy creates it through a temporary mount of the
+# file system's root.
+- name: Create EFS task staging directory
+  shell: |
+    mountpoint -q /data/sepal/task-staging && exit 0
+    set -e
+    root=$(mktemp -d)
+    trap 'umount "$root" 2>/dev/null; rmdir "$root"' EXIT
+    mount -t efs {{ lookup('env', 'AWS_EFS_ID') }}:/ "$root"
+    mkdir -p "$root/data/sepal/task-staging"
+    echo created
+  register: task_staging_directory
+  changed_when: task_staging_directory.stdout == 'created'
+
+- name: Mount EFS task staging
+  mount:
+    name: "/data/sepal/task-staging"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/task-staging"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
+
+# task-manager, as root, creates each task's folder; the task's container hands it to the user.
+- name: Restrict EFS task staging
+  file:
+    path: "/data/sepal/task-staging"
+    state: directory
+    owner: root
+    group: root
+    mode: '0711'
+
 - name: Mount /data/sepal/jupyter
   mount:
     name: "/data/sepal/jupyter"

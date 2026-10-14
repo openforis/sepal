@@ -18,6 +18,10 @@ repeat, so the first rollout creates these resources and later rollouts keep the
 
 `<env>` is `DEPLOY_ENVIRONMENT` from the env file, in lower case.
 
+Exports to Data stage their files in `/data/sepal/task-staging`, a directory on the homes' EFS file system but outside
+the homes. The deploy step (role `aws-mount-efs`) creates it on EFS the first time and mounts it on the main host;
+there is nothing to do by hand.
+
 When a user's tools (the `~/data` mount, export tasks) need S3 access, they ask `user-data` for credentials.
 `user-data` assumes the role on that user's behalf, tagging the session with their username. AWS returns temporary
 keys, valid for an hour, that can only read, write, delete and list `users/<username>/` in the bucket.
