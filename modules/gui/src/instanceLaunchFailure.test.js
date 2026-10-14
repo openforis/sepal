@@ -21,6 +21,30 @@ describe('launchFailureMessage', () => {
     })
 })
 
+describe('launchFailureMessage for a budget refusal', () => {
+    const refusal = messageKey => ({status: 403, response: {code: 'BUDGET_EXCEEDED', reason: 'X', messageKey}})
+
+    it('says which limit refused the session', () => {
+        for (const key of ['instanceBudgetExceeded', 'storageBudgetExceeded', 'storageQuotaExceeded', 'dataQuotaExceeded']) {
+            expect(launchFailureMessage(refusal(`error.budget.${key}`))).toBe(`error.budget.${key}`)
+        }
+    })
+
+    it('falls back to the instance budget message for a key the GUI does not know', () => {
+        expect(launchFailureMessage(refusal('error.budget.fromTheFuture'))).toBe('error.budget.instanceBudgetExceeded')
+        expect(launchFailureMessage(refusal(undefined))).toBe('error.budget.instanceBudgetExceeded')
+    })
+
+    it('leaves any other 403 to the generic message', () => {
+        expect(launchFailureMessage({status: 403, response: {error: 'nope'}})).toBeNull()
+        expect(launchFailureMessage({status: 403, response: null})).toBeNull()
+    })
+
+    it('does not retry a refusal', () => {
+        expect(launchFailureRetry.skip(refusal('error.budget.dataQuotaExceeded'))).toBe(true)
+    })
+})
+
 describe('launchFailureRetry', () => {
     it('does not retry a launch AWS refused', () => {
         expect(launchFailureRetry.skip(launchFailure('INSTANCE_UNAVAILABLE'))).toBe(true)

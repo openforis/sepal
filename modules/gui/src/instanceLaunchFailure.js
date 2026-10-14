@@ -1,4 +1,5 @@
 import {msg} from '~/translate'
+import {budgetMessageKey, budgetMessageKeys} from '~/widget/budgetRules'
 
 // A launch AWS refused comes back as a 503 with a code (the worker's instanceLaunchErrors.js, passed
 // on by the gateway for app starts): INSTANCE_UNAVAILABLE when AWS has no capacity for the instance
@@ -14,9 +15,18 @@ export const launchFailureRetry = {
     skip: error => (error.status && error.status < 500) || !!launchFailureCode(error)
 }
 
+const isBudgetRefusal = error =>
+    error?.status === 403 && error.response?.code === 'BUDGET_EXCEEDED'
+
 // Only AWS being unable to provide the type is the user's to know about: they can pick another type
 // or wait. Anything else, the account quota included, is ours, and keeps the caller's generic message.
-export const launchFailureMessage = error =>
-    launchFailureCode(error) === 'INSTANCE_UNAVAILABLE'
+// A budget refusal is the user's own limit, and names which one.
+export const launchFailureMessage = error => {
+    if (isBudgetRefusal(error)) {
+        const {messageKey} = error.response
+        return msg(budgetMessageKeys.includes(messageKey) ? messageKey : budgetMessageKey())
+    }
+    return launchFailureCode(error) === 'INSTANCE_UNAVAILABLE'
         ? msg('instanceLaunch.unavailable')
         : null
+}

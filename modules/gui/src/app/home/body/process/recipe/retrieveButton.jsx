@@ -6,13 +6,15 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
+import {budgetMessageKey} from '~/widget/budgetRules'
 import {ToolbarActivationButton} from '~/widget/toolbar/toolbarActivationButton'
 
 import {withRecipe} from '../recipeContext'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    budgetExceeded: select('user.budgetExceeded')
+    budgetExceeded: select('user.budgetExceeded'),
+    budgetReason: select('user.budgetExceededReason')
 })
 
 class _RetrieveButton extends React.Component {
@@ -42,10 +44,10 @@ class _RetrieveButton extends React.Component {
     }
 
     getTooltip() {
-        const {tooltip} = this.props
+        const {tooltip, budgetReason} = this.props
         return [
             (tooltip || msg('process.retrieve.tooltip')),
-            (this.isBudgetExceeded() ? msg('user.quotaUpdate.info') : null)
+            (this.isBudgetExceeded() ? msg(budgetMessageKey(budgetReason)) : null)
         ]
     }
 

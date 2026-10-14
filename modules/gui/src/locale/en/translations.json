@@ -359,6 +359,9 @@
   "error": {
     "badRequest": "Bad request",
     "budget": {
+      "instanceBudgetExceeded": "Your instance spending budget is used up. Ask for a larger budget in Usage.",
+      "storageBudgetExceeded": "Your storage spending budget is used up. Delete files or ask for a larger budget in Usage.",
+      "storageQuotaExceeded": "Your home folder is over its quota. Delete files or ask for a larger quota in Usage.",
       "dataQuotaExceeded": "Your Data is over its quota. Delete files in the Data folder of the file browser, or request a larger Data quota."
     },
     "internal": "Internal error",

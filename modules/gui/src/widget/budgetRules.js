@@ -10,7 +10,9 @@ export const hasBudget = (spending = {}) =>
         || spending.monthlyStorageBudget > 0
         || spending.storageQuota > 0
 
-export const isBudgetExceeded = (spending = {}) => {
+// The first limit the spending is over, in the budget module's check order, so the reason shown
+// here is the one the budget module refuses a session with.
+export const exceededLimit = (spending = {}) => {
     const {
         monthlyInstanceBudget, monthlyInstanceSpending,
         monthlyStorageBudget, monthlyStorageSpending,
@@ -19,11 +21,35 @@ export const isBudgetExceeded = (spending = {}) => {
     } = spending
     // Same thresholds as the budget module's verdict: a budget is spent once reached, a quota only
     // once passed.
-    return monthlyInstanceSpending >= monthlyInstanceBudget
-        || monthlyStorageSpending >= monthlyStorageBudget
-        || storageUsed > storageQuota
-        || (dataQuota != null && dataUsed > dataQuota)
+    if (monthlyInstanceSpending >= monthlyInstanceBudget) {
+        return 'INSTANCE_BUDGET'
+    }
+    if (monthlyStorageSpending >= monthlyStorageBudget) {
+        return 'STORAGE_BUDGET'
+    }
+    if (storageUsed > storageQuota) {
+        return 'STORAGE_QUOTA'
+    }
+    if (dataQuota != null && dataUsed > dataQuota) {
+        return 'DATA_QUOTA'
+    }
+    return null
 }
+
+export const isBudgetExceeded = spending =>
+    exceededLimit(spending) !== null
+
+const MESSAGE_KEY_BY_REASON = {
+    INSTANCE_BUDGET: 'error.budget.instanceBudgetExceeded',
+    STORAGE_BUDGET: 'error.budget.storageBudgetExceeded',
+    STORAGE_QUOTA: 'error.budget.storageQuotaExceeded',
+    DATA_QUOTA: 'error.budget.dataQuotaExceeded'
+}
+
+export const budgetMessageKeys = Object.values(MESSAGE_KEY_BY_REASON)
+
+export const budgetMessageKey = reason =>
+    MESSAGE_KEY_BY_REASON[reason] ?? MESSAGE_KEY_BY_REASON.INSTANCE_BUDGET
 
 export const projectStorageSpending = ({storageUsed, costPerGbMonth, monthlyStorageSpending}, fraction = fractionLeftOfMonth()) =>
     monthlyStorageSpending + storageUsed * costPerGbMonth * fraction

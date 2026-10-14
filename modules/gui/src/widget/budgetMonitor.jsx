@@ -6,7 +6,7 @@ import {compose} from '~/compose'
 import {getLogger} from '~/log'
 import {withSubscriptions} from '~/subscription'
 
-import {isBudgetExceeded, projectStorageSpending} from './budgetRules'
+import {exceededLimit, projectStorageSpending} from './budgetRules'
 
 const log = getLogger('budgetMonitor')
 
@@ -48,13 +48,15 @@ class _BudgetMonitor extends React.Component {
     // warning is not: it is one button's styling, derived from spending and the running sessions
     // together, and the button already re-renders on both.
     onData({spending, budgetUpdateRequest}) {
+        const reason = exceededLimit(spending)
         actionBuilder('UPDATE_USER_SPENDING')
             .set('user.currentUserReport.spending', {
                 ...spending,
                 projectedStorageSpending: projectStorageSpending(spending)
             })
             .set('user.currentUserReport.budgetUpdateRequest', budgetUpdateRequest)
-            .set('user.budgetExceeded', isBudgetExceeded(spending))
+            .set('user.budgetExceeded', reason !== null)
+            .set('user.budgetExceededReason', reason)
             .dispatch()
     }
 }

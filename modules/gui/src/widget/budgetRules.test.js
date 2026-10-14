@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {hasBudget, hourlyInstanceSpending, isBudgetExceeded, isBudgetWarning} from './budgetRules'
+import {budgetMessageKey, exceededLimit, hasBudget, hourlyInstanceSpending, isBudgetExceeded, isBudgetWarning} from './budgetRules'
 
 const session = hourlyCost => ({instanceType: {hourlyCost}})
 
@@ -130,5 +130,39 @@ describe('isBudgetExceeded', () => {
 
     it('copes with a snapshot that has not arrived yet', () => {
         expect(isBudgetExceeded(undefined)).toBe(false)
+    })
+})
+
+describe('exceededLimit', () => {
+    const withinLimits = {instanceBudget: 10, storageBudget: 10, storageQuota: 10}
+
+    it('names the limit that is over', () => {
+        expect(exceededLimit(spending({...withinLimits, instanceSpending: 10}))).toBe('INSTANCE_BUDGET')
+        expect(exceededLimit(spending({...withinLimits, storageSpending: 10}))).toBe('STORAGE_BUDGET')
+        expect(exceededLimit(spending({...withinLimits, storageUsed: 11}))).toBe('STORAGE_QUOTA')
+        expect(exceededLimit(spending({...withinLimits, dataUsed: 11, dataQuota: 10}))).toBe('DATA_QUOTA')
+    })
+
+    it('reports the first limit in the budget module\'s check order when several are over', () => {
+        expect(exceededLimit(spending({...withinLimits, storageSpending: 10, dataUsed: 11, dataQuota: 10}))).toBe('STORAGE_BUDGET')
+        expect(exceededLimit(spending({...withinLimits, instanceSpending: 10, storageSpending: 10}))).toBe('INSTANCE_BUDGET')
+    })
+
+    it('is null while every limit still has room', () => {
+        expect(exceededLimit(spending({...withinLimits}))).toBeNull()
+    })
+})
+
+describe('budgetMessageKey', () => {
+    it('gives each limit its own message', () => {
+        expect(budgetMessageKey('INSTANCE_BUDGET')).toBe('error.budget.instanceBudgetExceeded')
+        expect(budgetMessageKey('STORAGE_BUDGET')).toBe('error.budget.storageBudgetExceeded')
+        expect(budgetMessageKey('STORAGE_QUOTA')).toBe('error.budget.storageQuotaExceeded')
+        expect(budgetMessageKey('DATA_QUOTA')).toBe('error.budget.dataQuotaExceeded')
+    })
+
+    it('falls back to the instance budget message for an unknown reason', () => {
+        expect(budgetMessageKey('SOMETHING_NEW')).toBe('error.budget.instanceBudgetExceeded')
+        expect(budgetMessageKey(undefined)).toBe('error.budget.instanceBudgetExceeded')
     })
 })
