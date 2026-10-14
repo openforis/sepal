@@ -145,6 +145,34 @@ describe('TaskRepository', () => {
         expect((await repository.pendingTasks(10, {excludeUsernames: ['alice']})).map(({id}) => id)).toEqual(['t-3'])
     })
 
+    test('grants a slot only to an active task that holds none', async () => {
+        const task = aTask()
+        await repository.insert(task)
+
+        expect(await repository.grantSlot(task)).toBe(false)
+        await repository.activate(task, 'a'.repeat(64))
+        expect(await repository.grantSlot(task)).toBe(true)
+        expect(await repository.grantSlot(task)).toBe(false)
+        expect(await repository.slotHolders()).toEqual([{id: task.id, username: 'alice'}])
+    })
+
+    test('a slot is held through a cancel until released or the task ends', async () => {
+        const released = aTask({id: 't-1'})
+        const canceled = aTask({id: 't-2'})
+        for (const task of [released, canceled]) {
+            await repository.insert(task)
+            await repository.activate(task, task.id === 't-1' ? 'a'.repeat(64) : 'b'.repeat(64))
+            await repository.grantSlot(task)
+        }
+
+        await repository.releaseSlot(released)
+        await repository.transition(canceled, {from: [State.ACTIVE], to: State.CANCELING})
+        expect(await repository.slotHolders()).toEqual([{id: 't-2', username: 'alice'}])
+
+        await repository.transition(canceled, {from: [State.CANCELING], to: State.CANCELED})
+        expect(await repository.slotHolders()).toEqual([])
+    })
+
     test('announces every write for the task\'s owner', async () => {
         const task = aTask()
 

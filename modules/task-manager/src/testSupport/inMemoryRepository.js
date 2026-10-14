@@ -47,7 +47,8 @@ export class InMemoryRepository {
     }
 
     async transition(task, {from, to, statusDescription = StateDescription[to]}) {
-        return this.#update(task.id, from, {state: to, statusDescription})
+        const slot = RUNNING_STATES.includes(to) ? {} : {slotTime: null}
+        return this.#update(task.id, from, {state: to, statusDescription, ...slot})
     }
 
     async stalledTasks(before) {
@@ -70,6 +71,28 @@ export class InMemoryRepository {
 
     async recordProgress(task, statusDescription) {
         return this.#update(task.id, [State.ACTIVE], {statusDescription, progressTime: this.#clock.now()})
+    }
+
+    async grantSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (stored?.state !== State.ACTIVE || stored.slotTime) {
+            return false
+        }
+        this.#tasks.set(task.id, {...stored, slotTime: this.#clock.now()})
+        return true
+    }
+
+    async releaseSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (stored) {
+            this.#tasks.set(task.id, {...stored, slotTime: null})
+        }
+    }
+
+    async slotHolders() {
+        return (await this.runningTasks())
+            .filter(({slotTime}) => slotTime)
+            .map(({id, username}) => ({id, username}))
     }
 
     async resetProgressClock() {

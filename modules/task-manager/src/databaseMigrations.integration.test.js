@@ -18,7 +18,7 @@ describe('importing the worker\'s task history', () => {
             id: task.id, state: 'COMPLETED', username: 'alice', operation: 'image.GEE', params: task.params,
             status_description: COMPLETED_DESCRIPTION, recipe_id: task.recipe_id,
             creation_time: task.creation_time, update_time: task.update_time, removed: 0,
-            api_key_hash: null, progress_time: null
+            api_key_hash: null, progress_time: null, slot_time: null
         }])
     })
 

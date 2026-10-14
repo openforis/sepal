@@ -89,9 +89,10 @@ export class TaskRepository {
     transition(task, {from, to, statusDescription = StateDescription[to]}) {
         return this.#change(task,
             `UPDATE task SET state = ?, status_description = ?, update_time = ?,
-                api_key_hash = IF(? IN (?), api_key_hash, NULL)
+                api_key_hash = IF(? IN (?), api_key_hash, NULL),
+                slot_time = IF(? IN (?), slot_time, NULL)
                 WHERE id = ? AND state IN (?)`,
-            [to, statusDescription, this.#clock(), to, RUNNING_STATES, task.id, from]
+            [to, statusDescription, this.#clock(), to, RUNNING_STATES, to, RUNNING_STATES, task.id, from]
         )
     }
 
@@ -101,6 +102,26 @@ export class TaskRepository {
             'UPDATE task SET status_description = ?, update_time = ?, progress_time = ? WHERE id = ? AND state = ?',
             [statusDescription, now, now, task.id, State.ACTIVE]
         )
+    }
+
+    async grantSlot(task) {
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET slot_time = ? WHERE id = ? AND state = ? AND slot_time IS NULL',
+            [this.#clock(), task.id, State.ACTIVE]
+        )
+        return affectedRows > 0
+    }
+
+    async releaseSlot(task) {
+        await this.#query('UPDATE task SET slot_time = NULL WHERE id = ?', [task.id])
+    }
+
+    async slotHolders() {
+        const rows = await this.#select(
+            'SELECT id, username FROM task WHERE slot_time IS NOT NULL AND state IN (?)',
+            [RUNNING_STATES]
+        )
+        return rows.map(({id, username}) => ({id, username}))
     }
 
     // task-manager's own downtime must not count as a container falling silent, nor against a cancellation,
