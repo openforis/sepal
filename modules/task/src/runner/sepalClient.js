@@ -28,6 +28,14 @@ export class SepalClient {
         return this.#post(`api/tasks/task/${taskId}/progress`, {statusDescription}, NO_RETRY)
     }
 
+    requestLocalProcessing(taskId) {
+        return this.#post(`api/tasks/task/${taskId}/local-processing`, {})
+    }
+
+    releaseLocalProcessing(taskId) {
+        return this.#post(`api/tasks/task/${taskId}/local-processing/release`, {})
+    }
+
     async #post(path, body, retry) {
         try {
             const response = await firstValueFrom(postJson$(`${this.#endpoint}/${path}`, {

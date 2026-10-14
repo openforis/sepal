@@ -23,6 +23,31 @@ test('a failed request keeps its status and body but not the task key', async ()
     expect(logged).not.toContain(basic)
 })
 
+test('asks for and gives back its task\'s local processing slot through the gateway', async () => {
+    const requests = []
+    const endpoint = await new Promise(resolve => {
+        server = http.createServer((req, res) => {
+            requests.push(`${req.method} ${req.url}`)
+            if (req.url.endsWith('/release')) {
+                res.writeHead(204)
+                res.end()
+            } else {
+                res.writeHead(200, {'Content-Type': 'application/json'})
+                res.end('{"granted":true}')
+            }
+        }).listen(0, () => resolve(`http://localhost:${server.address().port}`))
+    })
+    const client = new SepalClient({endpoint, apiKey: API_KEY})
+
+    expect(await client.requestLocalProcessing('t-1')).toEqual({granted: true})
+    await client.releaseLocalProcessing('t-1')
+
+    expect(requests).toEqual([
+        'POST /api/tasks/task/t-1/local-processing',
+        'POST /api/tasks/task/t-1/local-processing/release'
+    ])
+})
+
 const serve = (status, body) => new Promise(resolve => {
     server = http.createServer((_req, res) => {
         res.writeHead(status, {'Content-Type': 'application/json'})
