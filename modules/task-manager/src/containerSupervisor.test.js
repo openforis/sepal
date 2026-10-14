@@ -385,6 +385,19 @@ describe('local processing slots', () => {
         expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
     })
 
+    test('a slot request or release that fails reaches the caller, so the container can try again', async () => {
+        const {supervisor, repository} = await withRunningTasks()
+        repository.slotHolders = async () => {
+            throw new Error('connection lost')
+        }
+        repository.releaseSlot = async () => {
+            throw new Error('connection lost')
+        }
+
+        await expect(supervisor.requestSlot(await repository.getTask('t-1'))).rejects.toThrow('connection lost')
+        await expect(supervisor.releaseSlot(await repository.getTask('t-1'))).rejects.toThrow('connection lost')
+    })
+
     test('slots held before a restart still count', async () => {
         const {supervisor, newSupervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
         await supervisor.requestSlot(await repository.getTask('t-1'))

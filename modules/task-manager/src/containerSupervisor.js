@@ -73,11 +73,11 @@ export class ContainerSupervisor {
     }
 
     requestSlot(task) {
-        return this.#enqueue('slot request', () => this.#requestSlot(task))
+        return this.#enqueueAnswering('slot request', () => this.#requestSlot(task))
     }
 
     releaseSlot(task) {
-        return this.#enqueue('slot release', () => this.#releaseSlot(task))
+        return this.#enqueueAnswering('slot release', () => this.#releaseSlot(task))
     }
 
     // The container cancels its own work on SIGTERM and exits; collecting it ends the task. Waiting for queued
@@ -110,6 +110,13 @@ export class ContainerSupervisor {
             .then(work)
             .catch(error => log.error(`Supervisor ${name} failed`, error))
         return this.#queue
+    }
+
+    // A container retries a slot request or release that failed, so the failure reaches it; the queue goes on.
+    #enqueueAnswering(name, work) {
+        const answer = this.#queue.then(work)
+        this.#queue = answer.catch(error => log.error(`Supervisor ${name} failed`, error))
+        return answer
     }
 
     // Oldest first, except that a user at the per-user limit waits for one of their own tasks to finish, without
