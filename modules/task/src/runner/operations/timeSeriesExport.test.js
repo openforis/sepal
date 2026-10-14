@@ -28,9 +28,9 @@ beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), 'time-series-'))
     process.env.HOME = home
     events.length = 0
-    exportImpl = async ({start, downloadDir}) => {
+    exportImpl = async ({start, downloadDir, localProcessing: received}) => {
         await start()
-        events.push({download: downloadDir})
+        events.push({download: downloadDir, localProcessing: received})
         return {downloaded: true}
     }
 })
@@ -93,6 +93,19 @@ test('a tile without imagery is skipped, and nothing is stacked for it', async (
     expect(events.filter(({stack}) => stack).map(({stack}) => stack[1])).toEqual([[`${home}/downloads/series/1`]])
 })
 
+test('stacks each tile as a local processing step, and hands the chunks the same local processing', async () => {
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await timeSeriesExport(params, context(sepal))
+
+    expect(events.filter(({download}) => download).map(event => event.localProcessing)).toEqual([localProcessing])
+    expect(events.filter(event => event.stack || typeof event.localProcessing === 'string')).toMatchObject([
+        {localProcessing: 'begins'},
+        {stack: ['sepal-stack-time-series', [`${home}/downloads/series/0`]]},
+        {localProcessing: 'ends'}
+    ])
+})
+
 test('the tile directory reaches the stacker as one argument, not through a shell', async () => {
     const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
 
@@ -142,4 +155,15 @@ const fakeSepal = ({tileIds, ranges}) => {
     }
 }
 
-const context = sepal => ({sepal, report: () => {}, signal: new AbortController().signal, sleep: async () => {}})
+const localProcessing = {
+    run: async work => {
+        events.push({localProcessing: 'begins'})
+        try {
+            return await work()
+        } finally {
+            events.push({localProcessing: 'ends'})
+        }
+    }
+}
+
+const context = sepal => ({sepal, report: () => {}, signal: new AbortController().signal, sleep: async () => {}, localProcessing})

@@ -5,14 +5,17 @@ import {followEEExport} from './eeExport.js'
 
 const log = getLogger('workspace')
 
-export const exportToWorkspace = async ({start, downloadDir, sepal, report, signal, sleep, fetchFn}) => {
+export const exportToWorkspace = async ({start, downloadDir, sepal, report, signal, sleep, fetchFn, localProcessing}) => {
     const {eeTaskId, destination} = await start()
     try {
         await followEEExport({eeTaskId, sepal, report, signal, sleep})
         if (signal.aborted) {
             return {downloaded: false}
         }
-        await downloadFiles({destination, dir: downloadDir, sepal, report, signal, sleep, fetchFn})
+        await localProcessing.run(
+            () => downloadFiles({destination, dir: downloadDir, sepal, report, signal, sleep, fetchFn}),
+            signal
+        )
         return {downloaded: !signal.aborted}
     } finally {
         await cleanup(destination, sepal)

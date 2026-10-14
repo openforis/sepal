@@ -30,19 +30,29 @@ test('a task stopped while it runs is canceled, whatever the operation then thro
     expect(result.state).toBe('CANCELED')
 })
 
+test('an operation gets the task\'s local processing', async () => {
+    const localProcessing = {run: async work => work()}
+    let received
+
+    await run({localProcessing, operation: async (_params, context) => received = context.localProcessing})
+
+    expect(received).toBe(localProcessing)
+})
+
 test('an operation this release does not know fails the task', async () => {
     const {result} = await run({name: 'image.UNKNOWN', operation: async () => {}})
 
     expect(result.state).toBe('FAILED')
 })
 
-const run = ({operation, signal = new AbortController().signal, name = 'image.GEE'}) => {
+const run = ({operation, signal = new AbortController().signal, name = 'image.GEE', localProcessing = {}}) => {
     const reported = []
     return runTask({
         task: {id: 't-1', operation: name, params: {a: 1}},
         operations: {'image.GEE': operation},
         sepal: {},
         report: description => reported.push(description),
-        signal
+        signal,
+        localProcessing
     }).then(result => ({result, reported}))
 }

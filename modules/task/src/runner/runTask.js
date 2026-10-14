@@ -8,7 +8,7 @@ const EXECUTING = {messageKey: 'tasks.status.executing', defaultMessage: 'Execut
 const COMPLETED = {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}}
 const CANCELED = {state: 'CANCELED', statusDescription: {messageKey: 'tasks.status.canceled', defaultMessage: 'Canceled.'}}
 
-export const runTask = async ({task, operations, sepal, report, signal}) => {
+export const runTask = async ({task, operations, sepal, report, signal, localProcessing}) => {
     const operation = operations[task.operation]
     if (!operation) {
         log.error(`Unknown operation ${task.operation}`)
@@ -16,7 +16,7 @@ export const runTask = async ({task, operations, sepal, report, signal}) => {
     }
     report(EXECUTING)
     try {
-        await operation(task.params, {sepal, report, signal})
+        await operation(task.params, {sepal, report, signal, localProcessing})
         return signal.aborted ? CANCELED : COMPLETED
     } catch (error) {
         if (signal.aborted) {

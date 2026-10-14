@@ -8,7 +8,7 @@ const workspaceCalls = []
 
 jest.unstable_mockModule('../workspaceExport.js', () => ({
     exportToWorkspace: async args => {
-        workspaceCalls.push({downloadDir: args.downloadDir, started: await args.start()})
+        workspaceCalls.push({downloadDir: args.downloadDir, started: await args.start(), localProcessing: args.localProcessing})
         return {downloaded: true}
     }
 }))
@@ -115,7 +115,7 @@ test('a workspace step downloads into the workspace path', async () => {
 
     await samplingDesignExport('SEPAL')({description: 'Design', workspacePath: 'out'}, context(sepal))
 
-    expect(workspaceCalls).toEqual([{downloadDir: `${home}/out`, started: {eeTaskId: 'T', destination}}])
+    expect(workspaceCalls).toEqual([{downloadDir: `${home}/out`, started: {eeTaskId: 'T', destination}, localProcessing: LOCAL_PROCESSING}])
     expect((await stat(`${home}/out`)).isDirectory()).toBe(true)
 })
 
@@ -243,10 +243,13 @@ const fakeSepal = (answers, {onStep, cleanupError, exportState = 'COMPLETED', ex
     return sepal
 }
 
+const LOCAL_PROCESSING = {run: work => work()}
+
 const context = (sepal, overrides = {}) => ({
     sepal,
     report: () => {},
     signal: new AbortController().signal,
     sleep: async () => {},
+    localProcessing: LOCAL_PROCESSING,
     ...overrides
 })

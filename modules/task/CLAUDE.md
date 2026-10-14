@@ -22,6 +22,9 @@ sepal npm-test task -- --testPathPatterns runner
   `/api/gee/...`, never directly to Earth Engine.
 - Progress: `POST /api/tasks/task/<id>/progress` with `{statusDescription}`, best-effort, repeated every
   60 s as a heartbeat. A lost report never fails the task.
+- Local processing: downloads into the workspace and time-series stacking run through `LocalProcessing`, which
+  holds one of task-manager's slots for the container (`POST /api/tasks/task/<id>/local-processing`, polled
+  every 10 s while refused, released with `.../local-processing/release` after the last step in progress).
 - Cancel: SIGTERM aborts the `AbortSignal` given to the operation; the operation returns, and the result is
   `CANCELED`.
 - Export starts are never retried (`retry: {maxRetries: 0}`).
@@ -30,7 +33,7 @@ sepal npm-test task -- --testPathPatterns runner
 
 - `src/run.js` - entry point: read task, run it, write result, exit.
 - `src/runner/` - `runTask` (outcome mapping), `operations` (operation name to
-  `async (params, {sepal, report, signal})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`,
+  `async (params, {sepal, report, signal, localProcessing})`), `SepalClient`, `ProgressReporter`, `failureStatus`, `taskFiles`,
   `exportToWorkspace` (follow an export, `downloadFiles` it into the workspace, clean up), `forEachInParallel`.
 - `src/runner/operations/` - task operations: `image.GEE` (image and ImageCollection exports to Earth Engine
   assets), `ccdc.GEE` (CCDC export to Earth Engine assets), `image.DRIVE` (image exports to Google Drive),

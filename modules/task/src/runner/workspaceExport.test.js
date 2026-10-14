@@ -33,6 +33,24 @@ test('starts the export, follows it, downloads it and cleans up', async () => {
     expect(await readFile(join(downloadDir, 'a.tif'), 'utf8')).toBe('aaa')
 })
 
+test('downloads as a local processing step once the export has completed', async () => {
+    server = await FileServer.start(serving({'a.tif': 'aaa'}))
+    const sepal = fakeSepal({states: [{state: 'COMPLETED'}], contents: {'a.tif': 'aaa'}})
+    const localProcessing = {
+        run: async work => {
+            sepal.calls.push({path: 'local processing begins'})
+            await work()
+            sepal.calls.push({path: 'local processing ends'})
+        }
+    }
+
+    await exportTo({sepal, localProcessing})
+
+    expect(sepal.calls.map(({path}) => path)).toEqual([
+        'start', 'task/operation/status', 'local processing begins', 'task/download/files', 'local processing ends', 'task/download/cleanup'
+    ])
+})
+
 test('an export that fails still cleans up and fails', async () => {
     const sepal = fakeSepal({states: [{state: 'FAILED', errorMessage: 'Quota exceeded'}]})
 
@@ -71,8 +89,10 @@ test('a cleanup that fails does not fail the export', async () => {
     await expect(exportTo({sepal})).resolves.toEqual({downloaded: true})
 })
 
-const exportTo = ({sepal, signal = new AbortController().signal, sleep = async () => {}, fetchFn}) =>
-    exportToWorkspace({start: sepal.start, downloadDir, sepal, report: () => {}, signal, sleep, fetchFn})
+const PASS_THROUGH = {run: work => work()}
+
+const exportTo = ({sepal, signal = new AbortController().signal, sleep = async () => {}, fetchFn, localProcessing = PASS_THROUGH}) =>
+    exportToWorkspace({start: sepal.start, downloadDir, sepal, report: () => {}, signal, sleep, fetchFn, localProcessing})
 
 const fakeSepal = ({states, contents = {}, cleanupFails = false}) => {
     const calls = []

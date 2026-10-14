@@ -58,6 +58,7 @@ test('exports into the workspace path, then builds a VRT named for the prefix wi
     await imageSepalExport(params, context(sepal))
 
     expect(exportCalls[0].downloadDir).toBe(`${home}/out`)
+    expect(exportCalls[0].localProcessing).toBe(LOCAL_PROCESSING)
     expect(sepal.started).toEqual([{path: 'task/export/image/sepal', body: params}])
     expect(gdalCalls).toEqual([
         {createVrt: {inputPaths: [`${home}/out/p-1.tif`, `${home}/out/p-2.tif`], outputPath: `${home}/out/p.vrt`}},
@@ -104,4 +105,6 @@ const fakeSepal = () => {
     }
 }
 
-const context = sepal => ({sepal, report: () => {}, signal: new AbortController().signal, sleep: async () => {}})
+const LOCAL_PROCESSING = {run: work => work()}
+
+const context = sepal => ({sepal, report: () => {}, signal: new AbortController().signal, sleep: async () => {}, localProcessing: LOCAL_PROCESSING})

@@ -13,7 +13,7 @@ const PREPARE = {messageKey: 'tasks.samplingDesign.progress.prepare', defaultMes
 
 // gee runs the workflow one stage at a time and owns its state; this only follows what each stage started and
 // always lets gee delete the temporary assets.
-export const samplingDesignExport = destination => async (params, {sepal, report, signal, sleep}) => {
+export const samplingDesignExport = destination => async (params, {sepal, report, signal, sleep, localProcessing}) => {
     let state = null
     try {
         report(PREPARE)
@@ -24,7 +24,7 @@ export const samplingDesignExport = destination => async (params, {sepal, report
             if (step.action === 'done') {
                 return
             }
-            await followStep(step, {params, sepal, report, signal, sleep})
+            await followStep(step, {params, sepal, report, signal, sleep, localProcessing})
             if (!signal.aborted && step.next) {
                 report(step.next)
             }
@@ -34,12 +34,12 @@ export const samplingDesignExport = destination => async (params, {sepal, report
     }
 }
 
-const followStep = async (step, {params, sepal, report, signal, sleep}) => {
+const followStep = async (step, {params, sepal, report, signal, sleep, localProcessing}) => {
     const {action, eeTaskId} = step
     if (action === 'workspace') {
         await exportToWorkspace({
             start: async () => ({eeTaskId, destination: step.destination}),
-            downloadDir: await downloadDir(params), sepal, report, signal, sleep
+            downloadDir: await downloadDir(params), sepal, report, signal, sleep, localProcessing
         })
     } else if (action === 'export') {
         await followEEExport({eeTaskId, sepal, report, signal, sleep})
