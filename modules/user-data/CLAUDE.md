@@ -94,6 +94,7 @@ cached per user and mode and renewed within 15 minutes of expiry.
 (`rclone serve s3`, bucket `sepal-dev-user-data`, key `sepal-dev` / `sepal-dev-secret`). Emulator mode hands out
 that fixed key: there is no prefix isolation and no read-only mode in dev-env. The emulator also joins the external
 `sepal-task` network so task containers reach `http://s3-emulator:8080`; in AWS tasks reach S3 over the internet.
+`*.emulator.integration.test.js` runs only with `USER_DATA_S3_EMULATOR=true`, which the override sets, so CI skips it.
 
 ## AWS resources
 

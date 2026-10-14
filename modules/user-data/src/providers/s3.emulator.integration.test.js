@@ -8,7 +8,10 @@ import {createS3Provider, dataBucketName} from './s3.js'
 
 const EMULATOR = process.env.USER_DATA_S3_EMULATOR === 'true'
 
-const describeWithEmulator = EMULATOR ? describe : describe.skip
+// describe.skip would still run the suite's body, which reads the emulator's settings.
+const describeWithEmulator = EMULATOR
+    ? describe
+    : name => describe.skip(name, () => it('runs with USER_DATA_S3_EMULATOR=true', () => {}))
 
 describeWithEmulator('S3 adapter against the dev-env emulator', () => {
     const config = emulatorConfig()

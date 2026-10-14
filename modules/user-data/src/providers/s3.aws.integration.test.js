@@ -8,7 +8,10 @@ import {createS3Provider, dataBucketName} from './s3.js'
 // Runs on a real bucket only (the test deployment): no emulator evaluates IAM policies.
 const ENABLED = process.env.USER_DATA_AWS_ISOLATION_TEST === 'true'
 
-const describeOnAws = ENABLED ? describe : describe.skip
+// describe.skip would still run the suite's body, which reads the AWS settings.
+const describeOnAws = ENABLED
+    ? describe
+    : name => describe.skip(name, () => it('runs with USER_DATA_AWS_ISOLATION_TEST=true', () => {}))
 
 describeOnAws('prefix isolation on AWS', () => {
     const config = awsConfig()

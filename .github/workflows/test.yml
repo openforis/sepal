@@ -67,6 +67,10 @@ jobs:
             libs: lib/js/shared
           - module: modules/user
             libs: lib/js/shared
+          - module: modules/user-data
+            libs: lib/js/shared
+          - module: modules/user-files
+            libs: lib/js/shared
           - module: modules/worker
             libs: lib/js/shared
     steps:
