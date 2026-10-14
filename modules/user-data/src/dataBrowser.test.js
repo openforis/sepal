@@ -91,6 +91,17 @@ describe('remove', () => {
         expect(usage.measuredSoon).toEqual(['alice'])
     })
 
+    it('reports the removes as done when the usage cannot be marked for measuring', async () => {
+        const {browser, usage} = harness({})
+        usage.markDirty = async () => {
+            throw new Error('database down')
+        }
+
+        const result = await browser.remove('alice', ['data/a.txt'])
+
+        expect(result).toEqual({failed: []})
+    })
+
     it('refuses to remove the Data root', async () => {
         const {browser, provider} = harness({})
 

@@ -34,20 +34,16 @@ export class DataBrowser {
         }
         const {attachment, provider} = this.#data(username)
         const failed = []
-        try {
-            for (const [index, relPath] of relPaths.entries()) {
-                try {
-                    await provider.remove(attachment, relPath)
-                } catch (error) {
-                    log.warn(`Cannot remove ${guiPaths[index]}:`, error.message)
-                    failed.push(guiPaths[index])
-                }
+        for (const [index, relPath] of relPaths.entries()) {
+            try {
+                await provider.remove(attachment, relPath)
+            } catch (error) {
+                log.warn(`Cannot remove ${guiPaths[index]}:`, error.message)
+                failed.push(guiPaths[index])
             }
-            return {failed}
-        } finally {
-            this.#usage.measureSoon(username)
-            await this.#usage.markDirty(username)
         }
+        await this.#remeasure(username)
+        return {failed}
     }
 
     async download(username, guiPath) {
@@ -60,6 +56,16 @@ export class DataBrowser {
             return {...await this.#open(provider, attachment, relPath), filename: relPath.split('/').pop()}
         }
         return {redirect: await provider.downloadUrl(attachment, relPath, {expiresSeconds: DOWNLOAD_URL_SECONDS})}
+    }
+
+    // The removes are done whatever happens here: the daily sweep measures the user anyway.
+    async #remeasure(username) {
+        try {
+            this.#usage.measureSoon(username)
+            await this.#usage.markDirty(username)
+        } catch (error) {
+            log.warn(`Cannot have the Data of ${username} measured:`, error.message)
+        }
     }
 
     async #open(provider, attachment, relPath) {
