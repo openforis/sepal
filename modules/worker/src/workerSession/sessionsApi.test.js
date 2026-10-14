@@ -103,9 +103,8 @@ test('requestSessionSelf → 403 names the Data quota when the user is over it',
     expect(c.body).toEqual({code: 'BUDGET_EXCEEDED', reason: 'DATA_QUOTA', messageKey: 'error.budget.dataQuotaExceeded'})
 })
 
-test('requestSessionSelf → 403 names the instance budget when the verdict falls back to the locked list', async () => {
-    // requestSession raises this when the budget service is unreachable and the user is locked
-    sessionManager.requestSession.mockRejectedValue(budgetErrorFor(undefined, 'alice'))
+test('requestSessionSelf → 403 names the instance budget when the user is over it', async () => {
+    sessionManager.requestSession.mockRejectedValue(budgetErrorFor('INSTANCE_BUDGET', 'alice'))
     const c = ctx({params: {instanceType: 'T3aMedium'}})
     await api.requestSessionSelf(c)
     expect(c.status).toBe(403)
