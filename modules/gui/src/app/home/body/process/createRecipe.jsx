@@ -56,6 +56,7 @@ const setTabType = ({projectId, recipeId, type, tabPlaceholder}) => {
         id: recipeId,
         projectId,
         type,
+        title: select(['process.tabs', {id: recipeId}, 'title']),
         placeholder,
         ui: {unsaved: true}
     }
