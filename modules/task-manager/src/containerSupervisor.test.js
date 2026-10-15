@@ -331,33 +331,66 @@ describe('local processing slots', () => {
     test('an active task is granted a free slot, and refused once all are taken', async () => {
         const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(true)
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).not.toBeNull()
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
     })
 
-    test('a task asking again keeps the slot it holds', async () => {
-        const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+    test('a task asking again keeps its slot, under a new grant', async () => {
+        const {supervisor, repository, clock} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        const first = await supervisor.requestSlot(await repository.getTask('t-1'))
+        clock.advance(1000)
+
+        const again = await supervisor.requestSlot(await repository.getTask('t-1'))
+
+        expect(again).not.toBeNull()
+        expect(again).not.toEqual(first)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+    })
+
+    test('a release naming an earlier grant leaves the newer one in place', async () => {
+        const {supervisor, repository, clock} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
+        const earlier = await supervisor.requestSlot(await repository.getTask('t-1'))
+        clock.advance(1000)
         await supervisor.requestSlot(await repository.getTask('t-1'))
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(true)
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+        await supervisor.releaseSlot(await repository.getTask('t-1'), earlier)
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+    })
+
+    test('a release of a slot no longer held keeps a waiting task\'s place in line', async () => {
+        const {supervisor, repository, clock} = setup({maxConcurrentLocalProcessing: 1})
+        for (const id of ['t-1', 't-2', 't-3']) {
+            await repository.add(aTask({id}))
+        }
+        await supervisor.dispatch()
+        const held = await supervisor.requestSlot(await repository.getTask('t-1'))
+        await supervisor.requestSlot(await repository.getTask('t-2'))
+        clock.advance(1000)
+        await supervisor.requestSlot(await repository.getTask('t-3'))
+
+        await supervisor.releaseSlot(await repository.getTask('t-2'), new Date(0))
+        await supervisor.releaseSlot(await repository.getTask('t-1'), held)
+
+        expect(await supervisor.requestSlot(await repository.getTask('t-3'))).toBeNull()
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
     })
 
     test('a task that is not active is refused', async () => {
         const {supervisor, repository} = await withRunningTasks()
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBe(false)
+        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBeNull()
     })
 
     test('a released slot goes to the next task', async () => {
         const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
-        await supervisor.requestSlot(await repository.getTask('t-1'))
+        const held = await supervisor.requestSlot(await repository.getTask('t-1'))
         await supervisor.requestSlot(await repository.getTask('t-2'))
 
-        await supervisor.releaseSlot(await repository.getTask('t-1'))
+        await supervisor.releaseSlot(await repository.getTask('t-1'), held)
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
     })
 
     test('a task cancelled while holding a slot keeps it until its container exits', async () => {
@@ -365,11 +398,11 @@ describe('local processing slots', () => {
         await supervisor.requestSlot(await repository.getTask('t-1'))
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(false)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
     })
 
     test('a stalled container that is killed frees its slot', async () => {
@@ -382,7 +415,7 @@ describe('local processing slots', () => {
         await supervisor.idle()
 
         expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBe(true)
+        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
     })
 
     test('a slot request or release that fails reaches the caller, so the container can try again', async () => {
@@ -395,7 +428,7 @@ describe('local processing slots', () => {
         }
 
         await expect(supervisor.requestSlot(await repository.getTask('t-1'))).rejects.toThrow('connection lost')
-        await expect(supervisor.releaseSlot(await repository.getTask('t-1'))).rejects.toThrow('connection lost')
+        await expect(supervisor.releaseSlot(await repository.getTask('t-1'), new Date(0))).rejects.toThrow('connection lost')
     })
 
     test('slots held before a restart still count', async () => {
@@ -405,7 +438,7 @@ describe('local processing slots', () => {
         const restarted = newSupervisor()
         await restarted.reconcile()
 
-        expect(await restarted.requestSlot(await repository.getTask('t-2'))).toBe(false)
+        expect(await restarted.requestSlot(await repository.getTask('t-2'))).toBeNull()
     })
 })
 

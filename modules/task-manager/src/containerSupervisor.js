@@ -76,8 +76,8 @@ export class ContainerSupervisor {
         return this.#enqueueAnswering('slot request', () => this.#requestSlot(task))
     }
 
-    releaseSlot(task) {
-        return this.#enqueueAnswering('slot release', () => this.#releaseSlot(task))
+    releaseSlot(task, slot) {
+        return this.#enqueueAnswering('slot release', () => this.#releaseSlot(task, slot))
     }
 
     // The container cancels its own work on SIGTERM and exits; collecting it ends the task. Waiting for queued
@@ -143,16 +143,17 @@ export class ContainerSupervisor {
             .map(([username]) => username)
     }
 
-    // A task already holding a slot is granted again, so a container that lost the answer keeps it.
+    // A task already holding a slot is granted it again, so a container that lost the answer keeps it, under a new
+    // grant that a late release of the old one cannot clear.
     async #requestSlot(task) {
         const holders = await this.#repository.slotHolders()
         log.debug(() => `${taskTag(task)} local processing slot requested, ${holders.length}/${this.#config.maxConcurrentLocalProcessing} in use`)
         if (holders.some(({id}) => id === task.id)) {
-            return true
+            return this.#repository.renewSlot(task)
         }
         const current = await this.#repository.getTask(task.id)
         if (current?.state !== State.ACTIVE) {
-            return false
+            return null
         }
         const alreadyWaiting = this.#slots.isWaiting(current.id)
         const inTurn = this.#slots.request({
@@ -163,17 +164,17 @@ export class ContainerSupervisor {
         })
         if (!inTurn) {
             alreadyWaiting || log.info(`${taskTag(current)} waiting for a local processing slot`)
-            return false
+            return null
         }
-        const granted = await this.#repository.grantSlot(current)
-        granted && log.info(`${taskTag(current)} local processing slot granted, ${holders.length + 1}/${this.#config.maxConcurrentLocalProcessing} in use`)
-        return granted
+        const slot = await this.#repository.grantSlot(current)
+        slot && log.info(`${taskTag(current)} local processing slot granted, ${holders.length + 1}/${this.#config.maxConcurrentLocalProcessing} in use`)
+        return slot
     }
 
-    // A task that ended still holds its slot until its container is removed, so this logs every release.
-    async #releaseSlot(task) {
-        this.#slots.remove(task.id)
-        if (await this.#repository.releaseSlot(task)) {
+    // A release names its grant, so a late one cannot clear a newer grant; a container's own releases may arrive
+    // while it waits for its next slot, so they leave its place in line.
+    async #releaseSlot(task, slot) {
+        if (await this.#repository.releaseSlot(task, slot)) {
             const inUse = (await this.#repository.slotHolders()).length
             log.info(`${taskTag(task)} local processing slot released, ${inUse}/${this.#config.maxConcurrentLocalProcessing} in use`)
         }
@@ -244,7 +245,7 @@ export class ContainerSupervisor {
                 const {state, statusDescription} = this.#interrupted(task)
                 await this.#repository.transition(task, {from: RUNNING_STATES, to: state, statusDescription})
                 await this.#workspace.remove(task.id)
-                await this.#releaseSlot(task)
+                await this.#forgetSlot(task)
             } else if (container.running) {
                 this.#watch(task)
             } else {
@@ -300,6 +301,12 @@ export class ContainerSupervisor {
     async #discard(task) {
         await this.#docker.remove(containerName(task))
         await this.#workspace.remove(task.id)
+        await this.#forgetSlot(task)
+    }
+
+    // A task that ended still holds its slot until its container is gone, so every slot is released, and logged, here.
+    async #forgetSlot(task) {
+        this.#slots.remove(task.id)
         await this.#releaseSlot(task)
     }
 }

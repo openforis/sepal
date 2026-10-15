@@ -20,11 +20,14 @@ sepal npm-test task -- --testPathPatterns runner
 - Network: the container joins only `sepal-task` and talks to the gateway, authenticating with `TASK_API_KEY`
   as Basic auth (empty username). The gateway injects the user; Earth Engine work goes to gee under
   `/api/gee/...`, never directly to Earth Engine.
-- Progress: `POST /api/tasks/task/<id>/progress` with `{statusDescription}`, best-effort, repeated every
-  60 s as a heartbeat. A lost report never fails the task.
+- Progress: `POST /api/tasks/task/<id>/progress` with `{statusDescription, releasedSlot}`, best-effort, repeated
+  every 60 s as a heartbeat. A lost report never fails the task.
 - Local processing: downloads into the workspace and time-series stacking run through `LocalProcessing`, which
   holds one of task-manager's slots for the container (`POST /api/tasks/task/<id>/local-processing`, polled
-  every 10 s while refused, released with `.../local-processing/release` after the last step in progress).
+  every 10 s while refused, released with `.../local-processing/release {slot}` after the last step in
+  progress). Each grant carries a `slot` naming it; the release names the grant it gives back, and every
+  progress report repeats it as `releasedSlot`, so a release that never arrived is made up for within 60 s.
+  Steps do not wait for a release.
 - Cancel: SIGTERM aborts the `AbortSignal` given to the operation; the operation returns, and the result is
   `CANCELED`.
 - Export starts are never retried (`retry: {maxRetries: 0}`).

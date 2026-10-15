@@ -95,18 +95,30 @@ export class TaskRepository {
         )
     }
 
+    // A slot's grant time identifies the grant: a release naming an earlier grant leaves a later one alone.
     async grantSlot(task) {
+        const slot = this.#clock()
         const [{affectedRows}] = await this.#query(
             'UPDATE task SET slot_time = ? WHERE id = ? AND state = ? AND slot_time IS NULL',
-            [this.#clock(), task.id, State.ACTIVE]
+            [slot, task.id, State.ACTIVE]
         )
-        return affectedRows > 0
+        return affectedRows ? slot : null
     }
 
-    async releaseSlot(task) {
+    async renewSlot(task) {
+        const slot = this.#clock()
         const [{affectedRows}] = await this.#query(
-            'UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time IS NOT NULL',
-            [task.id]
+            'UPDATE task SET slot_time = ? WHERE id = ? AND state IN (?) AND slot_time IS NOT NULL',
+            [slot, task.id, RUNNING_STATES]
+        )
+        return affectedRows ? slot : null
+    }
+
+    // Without a slot, releases whatever grant the task holds.
+    async releaseSlot(task, slot) {
+        const [{affectedRows}] = await this.#query(
+            `UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time ${slot ? '= ?' : 'IS NOT NULL'}`,
+            slot ? [task.id, slot] : [task.id]
         )
         return affectedRows > 0
     }

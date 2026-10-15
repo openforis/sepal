@@ -11,11 +11,11 @@ test('steps running at once share one slot, given back after the last', async ()
     await settle()
 
     await localProcessing.run(async () => {}, aSignal())
-    expect(sepal.calls).toEqual([['request', 't-1']])
+    expect(sepal.calls).toEqual([['request']])
     finishFirst()
     await first
 
-    expect(sepal.calls).toEqual([['request', 't-1'], ['release', 't-1']])
+    expect(sepal.calls).toEqual([['request'], ['release', 'slot-1']])
 })
 
 test('a refused step waits, says so, then shows again what it showed before', async () => {
@@ -28,7 +28,7 @@ test('a refused step waits, says so, then shows again what it showed before', as
     expect(ran).toBe(true)
     expect(sleeps).toEqual([10_000])
     expect(sent).toEqual([EXPORTING, WAITING, EXPORTING])
-    expect(sepal.calls).toEqual([['request', 't-1'], ['request', 't-1'], ['release', 't-1']])
+    expect(sepal.calls).toEqual([['request'], ['request'], ['release', 'slot-1']])
 })
 
 test('a step cancelled while waiting does not run and asks no more', async () => {
@@ -39,7 +39,7 @@ test('a step cancelled while waiting does not run and asks no more', async () =>
     await localProcessing.run(async () => ran = true, abort.signal)
 
     expect(ran).toBe(false)
-    expect(sepal.calls).toEqual([['request', 't-1']])
+    expect(sepal.calls).toEqual([['request']])
 })
 
 test('a request that fails counts as a refusal', async () => {
@@ -58,29 +58,33 @@ test('a failing step still gives the slot back', async () => {
         throw new Error('disk full')
     }, aSignal())).rejects.toThrow('disk full')
 
-    expect(sepal.calls.at(-1)).toEqual(['release', 't-1'])
+    expect(sepal.calls.at(-1)).toEqual(['release', 'slot-1'])
 })
 
-test('a step starting while the slot is being given back asks again only after it is', async () => {
+test('the slot last given back is kept for the progress reports, even when its release fails', async () => {
     const {localProcessing, sepal} = setup()
-    let finishFirstRelease
-    let releases = 0
-    sepal.releaseLocalProcessing = async taskId => {
-        sepal.calls.push(['release', taskId])
-        if (++releases === 1) {
-            await new Promise(resolve => finishFirstRelease = resolve)
-        }
+    sepal.releaseLocalProcessing = async () => {
+        throw new Error('connect ECONNREFUSED')
     }
-    const first = localProcessing.run(async () => {}, aSignal())
+    expect(localProcessing.releasedSlot).toBeNull()
+
+    await localProcessing.run(async () => {}, aSignal())
     await settle()
 
-    const second = localProcessing.run(async () => {}, aSignal())
-    await settle()
-    expect(sepal.calls).toEqual([['request', 't-1'], ['release', 't-1']])
-    finishFirstRelease()
-    await Promise.all([first, second])
+    expect(localProcessing.releasedSlot).toBe('slot-1')
+})
 
-    expect(sepal.calls).toEqual([['request', 't-1'], ['release', 't-1'], ['request', 't-1'], ['release', 't-1']])
+test('a step starting while the last release is on its way asks at once, for a new grant', async () => {
+    const {localProcessing, sepal} = setup()
+    sepal.releaseLocalProcessing = (_taskId, slot) => {
+        sepal.calls.push(['release', slot])
+        return slot === 'slot-1' ? new Promise(() => {}) : Promise.resolve()
+    }
+    await localProcessing.run(async () => {}, aSignal())
+
+    await localProcessing.run(async () => {}, aSignal())
+
+    expect(sepal.calls).toEqual([['request'], ['release', 'slot-1'], ['request'], ['release', 'slot-2']])
 })
 
 const setup = ({answers = [], sleep} = {}) => {
@@ -99,18 +103,19 @@ const setup = ({answers = [], sleep} = {}) => {
 
 const fakeSepal = answers => {
     const calls = []
+    let grants = 0
     return {
         calls,
-        requestLocalProcessing: async taskId => {
-            calls.push(['request', taskId])
+        requestLocalProcessing: async () => {
+            calls.push(['request'])
             const answer = answers.length ? answers.shift() : true
             if (answer instanceof Error) {
                 throw answer
             }
-            return {granted: answer}
+            return answer ? {granted: true, slot: `slot-${++grants}`} : {granted: false}
         },
-        releaseLocalProcessing: async taskId => {
-            calls.push(['release', taskId])
+        releaseLocalProcessing: async (_taskId, slot) => {
+            calls.push(['release', slot])
         }
     }
 }

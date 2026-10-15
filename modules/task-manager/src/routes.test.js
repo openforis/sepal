@@ -10,6 +10,7 @@ import {createTasksApi} from './tasksApi.js'
 const ALICE = JSON.stringify({username: 'alice', roles: []})
 const ADMIN = JSON.stringify({username: 'sepal-gateway', roles: ['application_admin']})
 const TASK_SESSION = JSON.stringify({workerType: 'task', taskId: 't-1'})
+const GRANTED = new Date('2026-10-15T08:00:00.000Z')
 
 const tasks = {
     submit: jest.fn(async ({username, operation, params}) => ({id: 't-1', username, operation, params, state: 'PENDING', statusDescription: '{}'})),
@@ -23,7 +24,7 @@ const tasks = {
         if (taskId !== callerTaskId) {
             throw new Unauthorized('wrong key')
         }
-        return true
+        return GRANTED
     }),
     releaseLocalProcessing: jest.fn(async () => {}),
     authenticateApiKey: jest.fn(async apiKey => apiKey === 'task_k' ? {username: 'alice', taskId: 't-1'} : null)
@@ -55,10 +56,13 @@ test('a request without a user is refused', async () => {
     expect((await post('/tasks', {body: {operation: 'image.GEE'}})).status).toBe(401)
 })
 
-test('a container reports progress for its own task', async () => {
-    const response = await post('/tasks/task/t-1/progress', {user: ALICE, session: TASK_SESSION, body: {statusDescription: {messageKey: 'k'}}})
+test('a container reports progress for its own task, with the slot it last released', async () => {
+    const body = {statusDescription: {messageKey: 'k'}, releasedSlot: GRANTED.toISOString()}
+
+    const response = await post('/tasks/task/t-1/progress', {user: ALICE, session: TASK_SESSION, body})
 
     expect(response.status).toBe(204)
+    expect(tasks.reportProgress).toHaveBeenCalledWith({taskId: 't-1', callerTaskId: 't-1', ...body})
 })
 
 test('progress without a task session is refused', async () => {
@@ -75,8 +79,16 @@ test('a container asks for a local processing slot for its own task', async () =
     const response = await post('/tasks/task/t-1/local-processing', {user: ALICE, session: TASK_SESSION})
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({granted: true})
+    expect(await response.json()).toEqual({granted: true, slot: GRANTED.toISOString()})
     expect(tasks.requestLocalProcessing).toHaveBeenCalledWith({taskId: 't-1', callerTaskId: 't-1'})
+})
+
+test('a container told no slot is free is not granted one', async () => {
+    tasks.requestLocalProcessing.mockResolvedValueOnce(null)
+
+    const response = await post('/tasks/task/t-1/local-processing', {user: ALICE, session: TASK_SESSION})
+
+    expect(await response.json()).toEqual({granted: false})
 })
 
 test('a local processing slot asked for with another task\'s key is refused', async () => {
@@ -84,10 +96,12 @@ test('a local processing slot asked for with another task\'s key is refused', as
 })
 
 test('a container gives its local processing slot back', async () => {
-    const response = await post('/tasks/task/t-1/local-processing/release', {user: ALICE, session: TASK_SESSION})
+    const body = {slot: GRANTED.toISOString()}
+
+    const response = await post('/tasks/task/t-1/local-processing/release', {user: ALICE, session: TASK_SESSION, body})
 
     expect(response.status).toBe(204)
-    expect(tasks.releaseLocalProcessing).toHaveBeenCalledWith({taskId: 't-1', callerTaskId: 't-1'})
+    expect(tasks.releaseLocalProcessing).toHaveBeenCalledWith({taskId: 't-1', callerTaskId: 't-1', slot: body.slot})
 })
 
 test('local processing without a task session is refused', async () => {

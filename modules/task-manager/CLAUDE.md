@@ -18,10 +18,12 @@ API-key check, and the task-list websocket.
   before exiting; the supervisor settles the task state from that file. A container that exits without one
   has failed, and a CANCELED result counts only for a task being cancelled (any other stop interrupted it).
 - Before each local processing step (a download into the workspace, stacking a time-series tile) it polls
-  `POST /tasks/task/:id/local-processing` every 10 seconds until `{granted: true}`, and after the last step in
-  progress calls `POST /tasks/task/:id/local-processing/release`. At most `TASK_MAX_CONCURRENT_LOCAL_PROCESSING`
-  slots are held at once. Holders are stored in `task.slot_time`; the waiting line is in memory, and a waiter not
-  heard from for 30 seconds loses its place. Removing a container frees its slot.
+  `POST /tasks/task/:id/local-processing` every 10 seconds until `{granted: true, slot}`, and after the last step
+  in progress calls `POST /tasks/task/:id/local-processing/release {slot}`. At most
+  `TASK_MAX_CONCURRENT_LOCAL_PROCESSING` slots are held at once. A grant is named by its `task.slot_time`, renewed
+  when a holder asks again, and a release (or a progress report's `releasedSlot`) frees only the grant it names,
+  so late or repeated releases are harmless. The waiting line is in memory, and a waiter not heard from for
+  30 seconds loses its place. Removing a container frees its slot.
 
 ## Supervisor
 

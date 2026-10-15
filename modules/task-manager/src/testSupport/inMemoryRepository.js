@@ -74,18 +74,25 @@ export class InMemoryRepository {
     async grantSlot(task) {
         const stored = this.#tasks.get(task.id)
         if (stored?.state !== State.ACTIVE || stored.slotTime) {
-            return false
+            return null
         }
-        this.#tasks.set(task.id, {...stored, slotTime: this.#clock.now()})
-        return true
+        return this.#setSlot(stored, this.#clock.now())
     }
 
-    async releaseSlot(task) {
+    async renewSlot(task) {
         const stored = this.#tasks.get(task.id)
-        if (!stored?.slotTime) {
+        if (!RUNNING_STATES.includes(stored?.state) || !stored.slotTime) {
+            return null
+        }
+        return this.#setSlot(stored, this.#clock.now())
+    }
+
+    async releaseSlot(task, slot) {
+        const stored = this.#tasks.get(task.id)
+        if (!stored?.slotTime || (slot && stored.slotTime.getTime() !== new Date(slot).getTime())) {
             return false
         }
-        this.#tasks.set(task.id, {...stored, slotTime: null})
+        this.#setSlot(stored, null)
         return true
     }
 
@@ -120,6 +127,11 @@ export class InMemoryRepository {
                 this.#tasks.set(task.id, {...task, removed: true})
             }
         }
+    }
+
+    #setSlot(task, slotTime) {
+        this.#tasks.set(task.id, {...task, slotTime})
+        return slotTime
     }
 
     #update(id, from, changes) {

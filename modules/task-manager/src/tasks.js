@@ -82,19 +82,24 @@ export class Tasks {
         return this.submit({username, operation: task.operation, params: task.params, recipeId: task.recipeId})
     }
 
-    async reportProgress({taskId, callerTaskId, statusDescription}) {
+    // Every report repeats the slot the container last released, so a release that never arrived is made up for.
+    async reportProgress({taskId, callerTaskId, statusDescription, releasedSlot}) {
         const task = await this.#callerTask({taskId, callerTaskId})
         await this.#repository.recordProgress(task, statusDescriptionOf(statusDescription))
+        if (releasedSlot) {
+            await this.#supervisor.releaseSlot(task, slotOf(releasedSlot))
+        }
     }
 
     async requestLocalProcessing({taskId, callerTaskId}) {
         const task = await this.#callerTask({taskId, callerTaskId})
-        return await this.#supervisor.requestSlot(task) === true
+        const slot = await this.#supervisor.requestSlot(task)
+        return slot instanceof Date ? slot : null
     }
 
-    async releaseLocalProcessing({taskId, callerTaskId}) {
+    async releaseLocalProcessing({taskId, callerTaskId, slot}) {
         const task = await this.#callerTask({taskId, callerTaskId})
-        await this.#supervisor.releaseSlot(task)
+        await this.#supervisor.releaseSlot(task, slotOf(slot))
     }
 
     async authenticateApiKey(apiKey) {
@@ -120,4 +125,12 @@ export class Tasks {
         }
         return task
     }
+}
+
+const slotOf = value => {
+    const slot = new Date(value ?? NaN)
+    if (Number.isNaN(slot.getTime())) {
+        throw new InvalidCommand(`Not a local processing slot: ${value}`)
+    }
+    return slot
 }

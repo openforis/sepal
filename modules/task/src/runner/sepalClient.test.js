@@ -23,28 +23,29 @@ test('a failed request keeps its status and body but not the task key', async ()
     expect(logged).not.toContain(basic)
 })
 
-test('asks for and gives back its task\'s local processing slot through the gateway', async () => {
-    const requests = []
-    const endpoint = await new Promise(resolve => {
-        server = http.createServer((req, res) => {
-            requests.push(`${req.method} ${req.url}`)
-            if (req.url.endsWith('/release')) {
-                res.writeHead(204)
-                res.end()
-            } else {
-                res.writeHead(200, {'Content-Type': 'application/json'})
-                res.end('{"granted":true}')
-            }
-        }).listen(0, () => resolve(`http://localhost:${server.address().port}`))
-    })
+test('asks for its task\'s local processing slot and gives back the grant it names, through the gateway', async () => {
+    const {endpoint, requests} = await recording(req => req.url.endsWith('/release')
+        ? [204]
+        : [200, '{"granted":true,"slot":"2026-10-15T08:00:00.000Z"}'])
     const client = new SepalClient({endpoint, apiKey: API_KEY})
 
-    expect(await client.requestLocalProcessing('t-1')).toEqual({granted: true})
-    await client.releaseLocalProcessing('t-1')
+    const {slot} = await client.requestLocalProcessing('t-1')
+    await client.releaseLocalProcessing('t-1', slot)
 
     expect(requests).toEqual([
-        'POST /api/tasks/task/t-1/local-processing',
-        'POST /api/tasks/task/t-1/local-processing/release'
+        {url: '/api/tasks/task/t-1/local-processing', body: {}},
+        {url: '/api/tasks/task/t-1/local-processing/release', body: {slot: '2026-10-15T08:00:00.000Z'}}
+    ])
+})
+
+test('reports progress with the slot it last gave back', async () => {
+    const {endpoint, requests} = await recording(() => [204])
+    const client = new SepalClient({endpoint, apiKey: API_KEY})
+
+    await client.reportProgress('t-1', {messageKey: 'k'}, '2026-10-15T08:00:00.000Z')
+
+    expect(requests).toEqual([
+        {url: '/api/tasks/task/t-1/progress', body: {statusDescription: {messageKey: 'k'}, releasedSlot: '2026-10-15T08:00:00.000Z'}}
     ])
 })
 
@@ -53,4 +54,18 @@ const serve = (status, body) => new Promise(resolve => {
         res.writeHead(status, {'Content-Type': 'application/json'})
         res.end(body)
     }).listen(0, () => resolve(`http://localhost:${server.address().port}`))
+})
+
+const recording = answer => new Promise(resolve => {
+    const requests = []
+    server = http.createServer((req, res) => {
+        let body = ''
+        req.on('data', chunk => body += chunk)
+        req.on('end', () => {
+            requests.push({url: req.url, body: JSON.parse(body)})
+            const [status, responseBody] = answer(req)
+            res.writeHead(status, responseBody ? {'Content-Type': 'application/json'} : {})
+            res.end(responseBody)
+        })
+    }).listen(0, () => resolve({endpoint: `http://localhost:${server.address().port}`, requests}))
 })

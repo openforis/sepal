@@ -19,7 +19,9 @@ const main = async () => {
     const task = await readTask(TASK_DIR)
     log.info(`${task.operation} started`)
     const sepal = new SepalClient({endpoint: process.env.SEPAL_ENDPOINT, apiKey: process.env.TASK_API_KEY})
-    const reporter = new ProgressReporter({send: statusDescription => sepal.reportProgress(task.id, statusDescription)})
+    const reporter = new ProgressReporter({
+        send: statusDescription => sepal.reportProgress(task.id, statusDescription, localProcessing.releasedSlot)
+    })
     const localProcessing = new LocalProcessing({sepal, taskId: task.id, reporter})
     const abort = new AbortController()
     process.once('SIGTERM', () => {

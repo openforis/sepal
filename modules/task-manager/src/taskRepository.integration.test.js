@@ -146,11 +146,34 @@ describe('TaskRepository', () => {
         const task = aTask()
         await repository.insert(task)
 
-        expect(await repository.grantSlot(task)).toBe(false)
+        expect(await repository.grantSlot(task)).toBeNull()
         await repository.activate(task, 'a'.repeat(64))
-        expect(await repository.grantSlot(task)).toBe(true)
-        expect(await repository.grantSlot(task)).toBe(false)
+        expect(await repository.grantSlot(task)).toEqual(now)
+        expect(await repository.grantSlot(task)).toBeNull()
         expect(await repository.slotHolders()).toEqual([{id: task.id, username: 'alice'}])
+    })
+
+    test('a renewed slot is held under its new grant, which a release of the earlier one leaves alone', async () => {
+        const task = aTask()
+        await repository.insert(task)
+        await repository.activate(task, 'a'.repeat(64))
+        const earlier = await repository.grantSlot(task)
+        now = new Date('2026-10-06T10:01:00.000Z')
+
+        const renewed = await repository.renewSlot(task)
+
+        expect(renewed).toEqual(now)
+        expect(await repository.releaseSlot(task, earlier)).toBe(false)
+        expect(await repository.releaseSlot(task, renewed)).toBe(true)
+        expect(await repository.slotHolders()).toEqual([])
+    })
+
+    test('only a task holding a slot has it renewed', async () => {
+        const task = aTask()
+        await repository.insert(task)
+        await repository.activate(task, 'a'.repeat(64))
+
+        expect(await repository.renewSlot(task)).toBeNull()
     })
 
     test('a release reports whether the task held a slot', async () => {

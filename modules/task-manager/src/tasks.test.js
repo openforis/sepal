@@ -4,6 +4,8 @@ import {State} from './task.js'
 import {Tasks} from './tasks.js'
 import {InMemoryRepository} from './testSupport/inMemoryRepository.js'
 
+const GRANTED = new Date('2026-10-15T08:00:00.000Z')
+
 describe('submitting', () => {
     test('stores a pending task for the user and asks for it to be launched', async () => {
         const {tasks, supervisor} = setup()
@@ -68,6 +70,26 @@ describe('progress from a container', () => {
         expect(JSON.parse((await repository.getTask(task.id)).statusDescription)).toEqual(statusDescription)
     })
 
+    test('naming the slot the container last released releases that grant', async () => {
+        const {tasks, repository, supervisor} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
+        await repository.activate(task, hashApiKey('task_k'))
+
+        await tasks.reportProgress({taskId: task.id, callerTaskId: task.id, statusDescription: {}, releasedSlot: GRANTED.toISOString()})
+
+        expect(supervisor.slotReleases).toEqual([[task.id, GRANTED]])
+    })
+
+    test('without a released slot, releases nothing', async () => {
+        const {tasks, repository, supervisor} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
+        await repository.activate(task, hashApiKey('task_k'))
+
+        await tasks.reportProgress({taskId: task.id, callerTaskId: task.id, statusDescription: {}})
+
+        expect(supervisor.slotReleases).toEqual([])
+    })
+
     test('progress from a different task\'s key is refused', async () => {
         const {tasks} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
@@ -81,11 +103,21 @@ describe('local processing from a container', () => {
         const {tasks, supervisor} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
 
-        expect(await tasks.requestLocalProcessing({taskId: task.id, callerTaskId: task.id})).toBe(true)
-        await tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id})
+        const slot = await tasks.requestLocalProcessing({taskId: task.id, callerTaskId: task.id})
+        await tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id, slot: slot.toISOString()})
 
+        expect(slot).toEqual(GRANTED)
         expect(supervisor.slotRequests).toEqual([task.id])
-        expect(supervisor.slotReleases).toEqual([task.id])
+        expect(supervisor.slotReleases).toEqual([[task.id, GRANTED]])
+    })
+
+    test('a release that does not name a valid grant is refused', async () => {
+        const {tasks, supervisor} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
+
+        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id})).rejects.toThrow(InvalidCommand)
+        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id, slot: 'soon'})).rejects.toThrow(InvalidCommand)
+        expect(supervisor.slotReleases).toEqual([])
     })
 
     test('a call with a different task\'s key is refused', async () => {
@@ -93,7 +125,7 @@ describe('local processing from a container', () => {
         const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
 
         await expect(tasks.requestLocalProcessing({taskId: task.id, callerTaskId: 'other'})).rejects.toThrow(Unauthorized)
-        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: 'other'})).rejects.toThrow(Unauthorized)
+        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: 'other', slot: GRANTED.toISOString()})).rejects.toThrow(Unauthorized)
         expect(supervisor.slotRequests).toEqual([])
         expect(supervisor.slotReleases).toEqual([])
     })
@@ -164,10 +196,10 @@ const setup = () => {
         },
         requestSlot(task) {
             this.slotRequests.push(task.id)
-            return Promise.resolve(true)
+            return Promise.resolve(GRANTED)
         },
-        releaseSlot(task) {
-            this.slotReleases.push(task.id)
+        releaseSlot(task, slot) {
+            this.slotReleases.push([task.id, slot])
             return Promise.resolve()
         }
     }
