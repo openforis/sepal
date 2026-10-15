@@ -509,7 +509,7 @@ describe('exporting a recipe without input imagery', () => {
         id: 'remapping-1',
         type: 'REMAPPING',
         model: {
-            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'classification-1'}]},
+            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'classification-1', includedBands: [{band: 'class'}]}]},
             legend: {entries: [{value: 1, constraints: [{image: 'r-1', band: 'class', operator: '=', value: 1}]}]}
         }
     }
@@ -550,7 +550,7 @@ describe('exporting a Regression without training data', () => {
         id: 'remapping-1',
         type: 'REMAPPING',
         model: {
-            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'regression-1'}]},
+            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: 'regression-1', includedBands: [{band: 'regression'}]}]},
             legend: {entries: [{value: 1, constraints: [{image: 'r-1', band: 'regression', operator: '>', value: 150}]}]}
         }
     }
@@ -574,6 +574,63 @@ describe('exporting a Regression without training data', () => {
         state.catalogue = {'regression-1': regression(PLOTS)}
 
         await submit({recipe: remapping, bands: ['class']})
+    })
+})
+
+// A Remapping whose constraint reads an input it no longer lists, or a band its input does not include, cannot run, nor
+// can a recipe whose image builds it.
+describe('exporting a Remapping whose constraint no longer resolves', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const CLASSIFICATION = 'classification-1'
+    const classification = () => ({
+        id: CLASSIFICATION,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [{type: 'COLLECTED', referenceData: POINTS}]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    // Forest, where the Classification it remaps classifies 1.
+    const remappingReading = (image, band) => ({
+        id: 'remapping-1',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: CLASSIFICATION, includedBands: [{band: 'class'}]}]},
+            legend: {entries: [{value: 1, constraints: [{image, band, operator: '=', value: 1}]}]}
+        }
+    })
+    const remappingOf = id => ({
+        id: 'remapping-2',
+        type: 'REMAPPING',
+        model: {
+            inputImagery: {images: [{imageId: 'f-1', type: 'RECIPE_REF', id, includedBands: [{band: 'class'}]}]},
+            legend: {entries: [{value: 1, constraints: [{image: 'f-1', band: 'class', operator: '=', value: 1}]}]}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it.each([
+        ['an input since removed', 'r-gone', 'class', 'MISSING_CONSTRAINT_INPUT'],
+        ['a band its input does not include', 'r-1', 'probability', 'CONSTRAINT_BAND_NOT_INCLUDED']
+    ])('fails the export of one reading %s, and of a Remapping of it, saying why', async (_case, image, band, code) => {
+        const remapping = remappingReading(image, band)
+        state.catalogue = {[CLASSIFICATION]: classification(), [remapping.id]: remapping}
+
+        await expect(submit({recipe: remapping, bands: ['class']})).rejects.toThrow(new RegExp(`cannot run: ${code}$`))
+        await expect(submit({recipe: remappingOf(remapping.id), bands: ['class']})).rejects.toThrow(new RegExp(`cannot run: ${code}$`))
+        expect(state.exported).toEqual([])
+    })
+
+    it('exports a Remapping of it once the constraint is repaired', async () => {
+        const remapping = remappingReading('r-1', 'class')
+        state.catalogue = {[CLASSIFICATION]: classification(), [remapping.id]: remapping}
+
+        await submit({recipe: remappingOf(remapping.id), bands: ['class']})
     })
 })
 

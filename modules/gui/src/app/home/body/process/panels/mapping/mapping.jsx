@@ -2,6 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {reconcileConstraintInputs} from '~/app/home/body/process/inputImages'
 import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
@@ -144,9 +145,9 @@ class _Mapping extends React.Component {
     }
 
     updateConstraints(id, constraints, booleanOperator) {
-        const {recipeActionBuilder} = this.props
+        const {recipeActionBuilder, inputImagery} = this.props
         recipeActionBuilder('UPDATE_LEGEND_ENTRY_CONSTRAINTS', {constraints, booleanOperator})
-            .assign(['model.legend.entries', {id}], {constraints, booleanOperator})
+            .assign(['model.legend.entries', {id}], {constraints: reconcileConstraintInputs(constraints, inputImagery), booleanOperator})
             .dispatch()
     }
 

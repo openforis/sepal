@@ -17,7 +17,7 @@ export class LegendItem extends React.Component {
                     <div className={styles.label}>{label}</div>
                     <div className={styles.value}>({value})</div>
                 </div>
-                {onClick
+                {onClick && selected !== undefined
                     ? selected
                         ? <Icon name={'check'}/>
                         : <div style={{visibility: 'hidden'}}><Icon name={'check'}/></div>

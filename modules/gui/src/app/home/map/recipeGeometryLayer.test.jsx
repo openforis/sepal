@@ -97,6 +97,17 @@ describe('the outline of a Classification without training data', () => {
     })
 })
 
+describe('the outline of a Remapping whose constraint reads an input since removed', () => {
+    it('is requested from its input', () => {
+        const map = mapOf()
+
+        shown(map)(remapping([DEM_INPUT], {image: 'image-gone', band: 'elevation', operator: '>', value: 100}))
+
+        expect(requests).toHaveLength(1)
+        expect(map.getLayer(ID)).toBeDefined()
+    })
+})
+
 const ID = 'aoi'
 const DEM_INPUT = {imageId: 'image-1', type: 'ASSET', id: 'users/x/dem', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}
 const POINTS = [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]
@@ -110,6 +121,16 @@ const classification = (images, referenceData = POINTS) => ({
         legend: {entries: [{value: 1}, {value: 2}]},
         trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData}]},
         classifier: {type: 'RANDOM_FOREST'}
+    }
+})
+
+const remapping = (images, constraint) => ({
+    id: 'remapping-1',
+    type: 'REMAPPING',
+    ui: {initialized: true},
+    model: {
+        inputImagery: {images},
+        legend: {entries: [{id: 'l-1', value: 1, label: 'High', booleanOperator: 'and', constraints: [constraint]}]}
     }
 })
 

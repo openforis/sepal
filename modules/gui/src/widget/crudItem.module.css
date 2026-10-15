@@ -8,6 +8,12 @@
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    overflow: hidden;
+}
+
+/* Long names must not widen the row and displace its diagnostic or actions. */
+.content, .info {
+    contain: inline-size;
 }
 
 .inline {

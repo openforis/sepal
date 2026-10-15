@@ -6,7 +6,6 @@ import {Buttons} from '~/widget/buttons'
 import {CrudItem} from '~/widget/crudItem'
 import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
-import {Tooltip} from '~/widget/tooltip'
 
 import styles from './bandSpec.module.css'
 
@@ -14,7 +13,7 @@ import styles from './bandSpec.module.css'
 // can be collapsed; a continuous band has none.
 export class BandSpec extends React.Component {
     render() {
-        const {spec: {id, type}, expanded, missing, disabled, onToggle, onRemove} = this.props
+        const {spec: {id, type, band}, expanded, missing, disabled, onToggle, onRemove} = this.props
         const categorical = type === 'categorical'
         return (
             <ListItem
@@ -23,7 +22,10 @@ export class BandSpec extends React.Component {
                 disabled={disabled}
                 onClick={categorical ? () => onToggle(id) : undefined}>
                 <CrudItem
-                    content={this.renderHeader()}
+                    title={band}
+                    titleTooltip={band}
+                    titleClassName={styles.name}
+                    inlineComponents={this.renderTypeSelector()}
                     error={missing ? this.missingMessage() : null}
                     unsafeRemove
                     onRemove={() => onRemove(id)}
@@ -32,25 +34,11 @@ export class BandSpec extends React.Component {
         )
     }
 
-    // Its name, named in full however short it is cut.
-    renderHeader() {
-        const {spec: {band}} = this.props
-        return (
-            <div className={styles.header}>
-                <Tooltip msg={band}>
-                    <div className={styles.name}>{band}</div>
-                </Tooltip>
-                {this.renderTypeSelector()}
-            </div>
-        )
-    }
-
     // Its buttons keep their clicks from the row, which a type choice neither expands nor collapses.
     renderTypeSelector() {
         const {spec: {type}, disabled, onTypeChange} = this.props
         return (
             <Buttons
-                className={styles.type}
                 size='x-small'
                 shape='pill'
                 spacing='none'

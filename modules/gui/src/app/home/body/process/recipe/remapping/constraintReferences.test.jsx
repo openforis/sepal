@@ -2,11 +2,12 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {NEVER, of} from 'rxjs'
+import {asapScheduler, NEVER, observeOn, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {deserialize, serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
@@ -23,12 +24,16 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: ({asset}) => asset === ASSET ? of([{name: 'class', arrayDimensions: 0}]) : NEVER,
-        assetMetadata$: () => NEVER,
+        bands$: ({asset, recipe}) => of(recipe ? ['class'] : assetBands(asset).map(name => ({name, arrayDimensions: 0}))),
+        // The input editor's picker reads an asset's bands after the asynchronous metadata request answers.
+        assetMetadata$: ({asset}) => of({
+            type: 'Image', bandNames: assetBands(asset),
+            bands: assetBands(asset).map(id => ({id, data_type: {type: 'PixelType', precision: 'float'}})), properties: {}
+        }).pipe(observeOn(asapScheduler)),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of([])}
+    recipe: {save$: () => NEVER, load$: id => of(sourceRecipe(id)), loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
@@ -48,13 +53,17 @@ const {defaultModel: indexChangeModel} = await import('../indexChange/indexChang
 const {IndexChangeToolbar} = await import('../indexChange/panels/indexChangeToolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
+const {requestGate} = await import('../sourceRequirements')
+const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
+const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
+const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 
 addRecipeType(remapping())
 addRecipeType(indexChange())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-let root, container, store
+let root, container, store, runtime
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -146,7 +155,7 @@ describe('a mapping whose constraints read an input since removed and a band no 
         await choose(BAND, 'class')
         await press('button.apply')
 
-        expect(constraint('c-1')).toMatchObject({image: 'i-1', band: 'class', operator: '>', value: 100})
+        expect(constraint('c-1')).toMatchObject({image: 'i-1', imageSource: `ASSET:${ASSET}`, band: 'class', operator: '>', value: 100})
         expect(constraint('c-2')).toMatchObject({image: 'i-1', band: 'class', operator: '<', value: 0.3})
         expect(inError(MAPPING)).toBe(false)
         expect(rowsInError()).toEqual([])
@@ -174,6 +183,191 @@ describe('a mapping whose constraints read an input since removed and a band no 
 
         expect(model()).toEqual(saved.model)
         expect(inError(MAPPING)).toBe(true)
+    })
+})
+
+// A reduced optical/radar fixture from .vscode/remapping_A.json, starting before the radar input was removed.
+describe('restoring a Remapping input by its exact source', () => {
+    it('restores VV_med < -7 only when the same asset is added and applied', async () => {
+        const saved = opticalRadarRecipe()
+        await open(saved, <RemappingToolbar/>)
+        expect(retrieveOffered()).toBe(true)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+        expect(constraint('radar-rule')).toEqual({...RADAR_RULE, imageSource: `ASSET:${RADAR}`})
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+
+        await press(IMAGERY)
+        const removed = model()
+        await draftAssetInput(RADAR, 'VV_med')
+        expect(model()).toEqual(removed)
+        expect(retrieveOffered()).toBe(false)
+        await press('button.apply')
+
+        const restored = savedImages().find(image => image.id === RADAR)
+        expect(restored.imageId).not.toBe(RADAR_RULE.image)
+        expect(constraint('radar-rule')).toEqual({...RADAR_RULE, image: restored.imageId, imageSource: `ASSET:${RADAR}`})
+        expect(constraint('optical-rule')).toMatchObject(saved.model.legend.entries[0].constraints[0])
+        await expectMappingReady()
+    })
+
+    it('retains the source identity through saving and reopening after removal', async () => {
+        await open(opticalRadarRecipe(), <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+        const persisted = serialize({id: 'remapping-1', type: 'REMAPPING', model: model()})
+        await act(async () => root.unmount())
+        container.remove()
+        await open(deserialize(persisted), <RemappingToolbar/>)
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+
+        await press(IMAGERY)
+        await addAssetInput(RADAR, 'VV_med')
+
+        expect(constraint('radar-rule')).toMatchObject({band: 'VV_med', operator: '<', value: -7})
+        await expectMappingReady()
+    })
+
+    it('reconnects without changing the band, and stays blocked until that band is included', async () => {
+        await open(opticalRadarRecipe(), <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+        await addAssetInput(RADAR, 'VH_med')
+        expect(constraint('radar-rule')).toEqual({
+            ...RADAR_RULE, image: savedImages().find(image => image.id === RADAR).imageId, imageSource: `ASSET:${RADAR}`
+        })
+        await expectMappingBlocked(['B'], 'CONSTRAINT_BAND_NOT_INCLUDED')
+
+        await press(IMAGERY)
+        await click(innermost(RADAR))
+        await click(document.querySelector('svg[data-icon="plus"]').closest('button'))
+        await click(option('VV_med'))
+        expect(retrieveOffered()).toBe(false)
+        await press('button.apply')
+        await expectMappingReady()
+    })
+
+    it('does not reconnect a different asset offering the same band names', async () => {
+        await open(opticalRadarRecipe(), <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+        await addAssetInput(OTHER_RADAR, 'VV_med')
+
+        expect(constraint('radar-rule')).toEqual({...RADAR_RULE, imageSource: `ASSET:${RADAR}`})
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+    })
+
+    it('does not repair the applied recipe when re-adding the source is cancelled', async () => {
+        await open(opticalRadarRecipe(), <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+        const removed = model()
+        await draftAssetInput(RADAR, 'VV_med')
+        await press('button.cancel')
+
+        expect(model()).toEqual(removed)
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+    })
+
+    it('uses the same identity rule for recipe references, preserving all constraint settings', async () => {
+        const saved = recipeInputMapping()
+        const original = saved.model.legend.entries[1].constraints
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput('Radar recipe')
+        await press('button.add')
+        await press('process.sourceType.RECIPE')
+        await choose('widget.recipeInput.label', 'Radar recipe')
+        await click(option('class'))
+        expect(constraint('radar-rule').image).toBe('radar-old')
+        await press('button.apply')
+
+        const added = savedImages().find(image => image.type === 'RECIPE_REF')
+        expect(entry('B').constraints).toEqual(original.map(rule => ({...rule, image: added.imageId, imageSource: `RECIPE_REF:${RADAR}`})))
+        await expectMappingReady()
+    })
+
+    it('does not confuse an asset with a recipe having the exact same ID and band', async () => {
+        await open(recipeInputMapping(), <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput('Radar recipe')
+        await addAssetInput(RADAR, 'class')
+
+        expect(constraint('radar-rule').image).toBe('radar-old')
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+    })
+
+    it('leaves retained identity unchanged when a source change is cancelled', async () => {
+        const saved = opticalRadarRecipe()
+        saved.model.legend.entries[1].constraints[0].imageSource = `ASSET:${RADAR}`
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await click(innermost(RADAR))
+        await selectAsset(OTHER_RADAR)
+        expect(constraint('radar-rule').imageSource).toBe(`ASSET:${RADAR}`)
+        await press('button.cancel')
+        expect(model()).toEqual(saved.model)
+    })
+
+    it('refreshes retained identity when applying a changed input source', async () => {
+        const saved = opticalRadarRecipe()
+        saved.model.legend.entries[1].constraints[0].imageSource = `ASSET:${RADAR}`
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await click(innermost(RADAR))
+        await selectAsset(OTHER_RADAR)
+        expect(constraint('radar-rule').imageSource).toBe(`ASSET:${RADAR}`)
+        expect(applyEnabled()).toBe(true)
+        await press('button.apply')
+        expect(constraint('radar-rule')).toEqual({...RADAR_RULE, imageSource: `ASSET:${OTHER_RADAR}`})
+        await removeInput(OTHER_RADAR)
+        await addAssetInput(RADAR, 'VV_med')
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+        await press(IMAGERY)
+        await addAssetInput(OTHER_RADAR, 'VV_med')
+        await expectMappingReady()
+    })
+
+    it.each([
+        ['no retained identity', {image: 'radar-old'}],
+        ['malformed retained identity', {image: 'radar-old', imageSource: {type: 'ASSET', id: RADAR}}],
+        ['malformed image reference', {image: null, imageSource: `ASSET:${RADAR}`}]
+    ])('leaves a legacy orphan with %s invalid', async (_case, reference) => {
+        const saved = opticalRadarRecipe()
+        saved.model.inputImagery.images.pop()
+        saved.model.legend.entries[1].constraints = [{...RADAR_RULE, ...reference}]
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await addAssetInput(RADAR, 'VV_med')
+
+        expect(constraint('radar-rule').image).toBe(reference.image)
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+    })
+
+    it('does not retarget a removed duplicate source to its surviving sibling', async () => {
+        const saved = opticalRadarRecipe()
+        saved.model.inputImagery.images.push({...saved.model.inputImagery.images[1], imageId: 'radar-duplicate'})
+        saved.model.legend.entries[1].constraints[0].image = 'radar-duplicate'
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await removeInput(RADAR)
+
+        expect(constraint('radar-rule').image).toBe('radar-duplicate')
+        expect(constraint('radar-rule').imageSource).toBeUndefined()
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
+    })
+
+    it('does not choose between duplicate legacy sources when another input is applied', async () => {
+        const saved = opticalRadarRecipe()
+        saved.model.inputImagery.images.push({...saved.model.inputImagery.images[1], imageId: 'radar-duplicate'})
+        saved.model.inputImagery.images[1].imageId = 'radar-replacement'
+        saved.model.legend.entries[1].constraints[0] = {...RADAR_RULE, imageSource: `ASSET:${RADAR}`}
+        await open(saved, <RemappingToolbar/>)
+        await press(IMAGERY)
+        await addAssetInput(OTHER_RADAR, 'VV_med')
+
+        expect(constraint('radar-rule').image).toBe('radar-old')
+        await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
     })
 })
 
@@ -214,7 +408,12 @@ describe('Index Change\'s mapping, not checking references', () => {
 })
 
 const ASSET = 'users/x/a'
+const OPTICAL = 'projects/wiell-testing/assets/costa-rica/optical'
+const RADAR = 'projects/wiell-testing/assets/costa-rica/radar'
+const OTHER_RADAR = 'projects/wiell-testing/assets/costa-rica/other-radar'
+const assetBands = asset => asset === ASSET ? ['class'] : asset === OPTICAL ? ['nbr'] : ['VV_med', 'VH_med', 'class']
 const MAPPING = 'process.remapping.panel.mapping.button.label'
+const IMAGERY = 'process.panels.inputImagery.button'
 const IMAGE = 'widget.imageConstraints.image.label'
 const BAND = 'widget.imageConstraints.band.label'
 const VALUE = 'widget.imageConstraints.value.label'
@@ -246,6 +445,38 @@ const remappingRecipe = (forest = [REMOVED_INPUT, NOT_INCLUDED]) => ({
     }
 })
 
+const RADAR_RULE = constraintOf('radar-rule', 'radar-old', 'VV_med', '<', -7)
+const inputOf = (imageId, id, band, type = 'ASSET') => ({
+    imageId, type, id, includedBands: [{id: `band-${imageId}`, band, type: 'continuous', legendEntries: []}]
+})
+const opticalRadarRecipe = () => ({
+    id: 'remapping-1', type: 'REMAPPING', model: {
+        inputImagery: {images: [inputOf('optical', OPTICAL, 'nbr'), inputOf('radar-old', RADAR, 'VV_med')]},
+        legend: {entries: [
+            {id: 'a', value: 1, color: '#FFB300', label: 'A', constraints: [constraintOf('optical-rule', 'optical', 'nbr', '<', 500)]},
+            {id: 'b', value: 2, color: '#803E75', label: 'B', constraints: [{...RADAR_RULE}]}
+        ]}
+    }
+})
+const sourceRecipe = id => ({
+    id, type: 'REMAPPING', revision: 1,
+    model: {
+        inputImagery: {images: [inputOf('source-optical', OPTICAL, 'nbr')]},
+        legend: {entries: [{id: 'source-class', value: 1, label: 'Class', color: '#000000'}]}
+    }
+})
+const recipeInputMapping = () => {
+    const saved = opticalRadarRecipe()
+    saved.model.inputImagery.images[1] = inputOf('radar-old', RADAR, 'class', 'RECIPE_REF')
+    saved.model.legend.entries[1].constraints = [
+        {...RADAR_RULE, band: 'class'},
+        {...RADAR_RULE, id: 'classes', band: 'class', operator: 'class', selectedClasses: [1, 4]},
+        {...RADAR_RULE, id: 'range', band: 'class', operator: 'range', from: -7, to: 2, fromInclusive: false, toInclusive: true,
+            bit: true, fromBit: 1, toBit: 3, extension: {keep: true}}
+    ]
+    return saved
+}
+
 const indexChangeRecipe = constraints => ({
     id: 'index-change-1',
     type: 'INDEX_CHANGE',
@@ -254,6 +485,53 @@ const indexChangeRecipe = constraints => ({
         legend: {entries: [{id: 'l-1', color: '#d73027', value: 1, label: 'Decrease', booleanOperator: 'and', constraints}]}
     }
 })
+
+async function expectMappingBlocked(labels, code) {
+    expect(inError(MAPPING)).toBe(true)
+    expect(retrieveOffered()).toBe(false)
+    expect(previewGate()).toMatchObject({code: 'CONFIGURATION_UNMET', withdraw: true})
+    expect(sharedFindings().map(finding => finding.code)).toContain(code)
+    await press(MAPPING)
+    expect(rowsInError()).toEqual(labels)
+}
+
+async function expectMappingReady() {
+    expect(inError(MAPPING)).toBe(false)
+    expect(retrieveOffered()).toBe(true)
+    expect(previewGate()).toBeNull()
+    expect(sharedFindings()).toEqual([])
+    await press(MAPPING)
+    expect(rowsInError()).toEqual([])
+}
+
+// An input removed from Input imagery by its row's remove button, confirmed.
+async function removeInput(source) {
+    let element = innermost(source)
+    while (!element.querySelector('svg[data-icon="trash"]')) {
+        element = element.parentElement
+    }
+    await pressFully(element.querySelector('svg[data-icon="trash"]').closest('button'))
+    await pressFully(button('button.remove'))
+}
+
+// An asset input added through the real editor. Its draft changes no applied mapping.
+async function draftAssetInput(asset, band) {
+    await press('button.add')
+    await selectAsset(asset)
+    await click(option(band))
+}
+
+async function selectAsset(asset) {
+    const input = field('process.classChange.panel.inputImage.asset.label').querySelector('input')
+    await click(input)
+    await typeInto(input, asset)
+    await click(option(asset))
+}
+
+async function addAssetInput(asset, band) {
+    await draftAssetInput(asset, band)
+    await press('button.apply')
+}
 
 // Forest's constraints opened from its row in Mapping.
 async function openForest(saved = remappingRecipe()) {
@@ -266,14 +544,14 @@ async function open(recipe, toolbar) {
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
-            recipes: [{id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}],
+            loadedRecipes: {[RADAR]: sourceRecipe(RADAR), [recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
+            recipes: [{id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}, {id: RADAR, name: 'Radar recipe', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
             tabs: [{id: recipe.id}]
         },
-        assets: {user: [], other: []},
+        assets: {user: [ASSET, OPTICAL, RADAR, OTHER_RADAR].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
@@ -285,6 +563,7 @@ async function open(recipe, toolbar) {
         <Provider store={store}>
             <ActivationContext id='root'>
                 <SourceRuntimeProvider>
+                    <Runtime/>
                     <Recipe id={recipe.id}>
                         <EventShield>
                             <PortalContainer/>
@@ -307,6 +586,13 @@ async function press(label) {
     await settled()
 }
 
+// A button pressed as a pointer presses it, from entering it to clicking it.
+async function pressFully(element) {
+    await act(async () => ['mouseenter', 'mousedown', 'mouseup', 'click']
+        .forEach(type => element.dispatchEvent(new MouseEvent(type, {bubbles: true}))))
+    await settled()
+}
+
 // A legend entry's constraints opened from its row.
 async function openEntry(label) {
     await click(innermost(label))
@@ -322,10 +608,12 @@ async function clickConstraint(index) {
     await click(constraintRows()[index].firstElementChild)
 }
 
-async function choose(label, option) {
+async function choose(label, offered) {
     await click(field(label).querySelector('input'))
-    await click([...document.querySelectorAll('[data-hook="option"]')].find(element => element.textContent.includes(option)))
+    await click(option(offered))
 }
+
+const option = label => [...document.querySelectorAll('[data-hook="option"]')].find(element => element.textContent.includes(label))
 
 // A constraint removed from the modal, its trash button pressed briefly, as a click.
 async function removeConstraint(description) {
@@ -360,9 +648,39 @@ async function settled() {
 
 const model = () => selectFrom(store.getState(), ['process.loadedRecipes', 'remapping-1', 'model'])
 
+const savedImages = () => model().inputImagery.images
+
+const sharedFindings = () => {
+    const state = store.getState()
+    const recipe = selectFrom(state, ['process.loadedRecipes', 'remapping-1'])
+    return readImageOutput({
+        graph: buildMapDependencyGraph({recipe, loadedRecipes: state.process.loadedRecipes}),
+        declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        readinessFor: ({type}) => recipeType(type),
+        observationFor: ({type, id}) => type === 'ASSET'
+            ? {bands: assetBands(id).map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []}
+            : undefined
+    }).readiness.findings
+}
+
+const Runtime = withSourceRuntime()(({sourceRuntime}) => {
+    runtime = sourceRuntime
+    return null
+})
+
+// Why a new preview of the Remapping may not be requested, as a layer showing it asks.
+const previewGate = () => requestGate({
+    state: store.getState(),
+    recipe: selectFrom(store.getState(), ['process.loadedRecipes', 'remapping-1']),
+    operation: 'IMAGE_OUTPUT',
+    evidenceOwnerOf: id => runtime.evidenceOwnerOf(id),
+    heldFor: key => runtime.heldFor(key),
+    now: Date.now()
+})
+
 const entry = label => model().legend.entries.find(entry => entry.label === label)
 
-const constraint = id => entry('Forest').constraints.find(constraint => constraint.id === id)
+const constraint = id => model().legend.entries.flatMap(entry => entry.constraints || []).find(constraint => constraint.id === id)
 
 // The deepest element showing exactly this text.
 const innermost = text => [...document.querySelectorAll('*')]
@@ -401,7 +719,7 @@ const summaryTooltips = () => constraintRows()
 // The legend entries whose rows in Mapping are marked in error, by label; a constraint's row names none.
 const rowsInError = () => [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]
     .map(indicator => indicator.closest(`.${classOf(listItemStyles, 'verticalWrapper')}`))
-    .map(row => ['Forest', 'Water'].find(label => row.textContent.includes(label)))
+    .map(row => model().legend.entries.map(entry => entry.label).find(label => [...row.querySelectorAll('*')].some(element => element.textContent === label)))
     .filter(Boolean)
 
 const field = label => document.querySelector(`[data-label="${label}"]`)

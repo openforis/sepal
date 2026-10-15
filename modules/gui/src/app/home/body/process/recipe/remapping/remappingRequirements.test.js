@@ -1,10 +1,11 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // What Remapping's mapping needs of its own configuration as applied - each constraint reads an input still there, and a
-// band that input includes - and what holds its image output back by it: Retrieve, offered and submitted, through the
-// real registration, shared declaration, common read and generic submission. Only the task API is replaced.
+// band that input includes - as its shared definition finds it, and what holds its image output back by it: its
+// previews and Retrieve, offered and submitted, and those of a Remapping of it, through the real registration, shared
+// declaration, common read and generic submission. Only the task API is replaced.
 
-vi.mock('~/translate', () => ({msg: key => key}))
+vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
@@ -28,12 +29,12 @@ const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: remapping} = await import('./remapping')
 const {retrieveTask} = await import('./remappingRecipe')
-const {BAND_NOT_INCLUDED, MISSING_INPUT} = await import('./remappingRequirements')
 const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 const {IMAGE_OUTPUT} = await import('../recipeOutput')
 const {physicalRequest, readRetrieveOutput, submitRetrieve} = await import('../retrieveOutput')
 const {retrieveAvailability} = await import('../operationAvailability')
-const {configurationGate, readLocalRequirements, SUPPORTED} = await import('../sourceRequirements')
+const {itemStatusesOfState, sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {requestGate} = await import('../sourceRequirements')
 
 addRecipeType(remapping())
 
@@ -42,18 +43,26 @@ beforeEach(() => {
 })
 
 describe('a legend entry\'s constraints', () => {
-    it('are each judged by the input they read and the bands that input includes', () => {
+    it('are said of their entry, each problem once, by what the constraints read', () => {
         const recipe = remappingOf([
             entry('valid', [constraint('i-1', 'class')]),
-            entry('removed', [constraint('i-gone', 'class')]),
+            entry('removed', [constraint('i-gone', 'class'), constraint('i-gone', 'ndvi')]),
             entry('notIncluded', [constraint('i-1', 'ndvi'), constraint('i-1', 'class')])
         ])
+        const state = stateOf(recipe)
 
-        const verdicts = Object.fromEntries(readLocalRequirements(recipe).map(read => [read.item.id, read.verdict]))
+        expect(entryProblems(state, recipe)).toEqual({
+            removed: {message: MISSING_INPUT, details: []},
+            notIncluded: {message: `${BAND_NOT_INCLUDED} {"band":"ndvi"}`, details: []}
+        })
+    })
 
-        expect(verdicts.valid.status).toEqual(SUPPORTED)
-        expect(verdicts.removed.diagnostic.problems).toEqual([{code: MISSING_INPUT}])
-        expect(verdicts.notIncluded.diagnostic.problems).toEqual([{code: BAND_NOT_INCLUDED, band: 'ndvi'}])
+    it('say every problem of their entry, in the order of the constraints', () => {
+        const recipe = remappingOf([entry('l-1', [constraint('i-1', 'ndvi'), constraint('i-gone', 'class')])])
+
+        expect(entryProblems(stateOf(recipe), recipe)).toEqual({
+            'l-1': {message: `${BAND_NOT_INCLUDED} {"band":"ndvi"}`, details: [MISSING_INPUT]}
+        })
     })
 
     it.each([
@@ -62,14 +71,14 @@ describe('a legend entry\'s constraints', () => {
     ])('hold back the image output while one reads %s, by Mapping', (_case, image, band) => {
         const recipe = remappingOf([entry('l-1', [constraint(image, band)])])
 
-        expect(configurationGate({recipe, operation: IMAGE_OUTPUT}))
+        expect(requestGate({state: stateOf(recipe), recipe, operation: IMAGE_OUTPUT, heldFor: describedFor(recipe)}))
             .toMatchObject({code: 'CONFIGURATION_UNMET', section: MAPPING, withdraw: true})
     })
 
     it('hold back nothing once each reads a band its input includes', () => {
         const recipe = remappingOf([entry('l-1', [constraint('i-1', 'class')])])
 
-        expect(configurationGate({recipe, operation: IMAGE_OUTPUT})).toBeNull()
+        expect(requestGate({state: stateOf(recipe), recipe, operation: IMAGE_OUTPUT, heldFor: describedFor(recipe)})).toBeNull()
     })
 })
 
@@ -94,7 +103,36 @@ describe('retrieving a Remapping recipe', () => {
     })
 })
 
+// Its description reads nothing of the Remapping it remaps: its class is its own legend's.
+describe('a Remapping of a Remapping whose constraint no longer resolves', () => {
+    it.each([
+        ['an input since removed', 'i-gone', 'class'],
+        ['a band its input does not include', 'i-1', 'ndvi']
+    ])('reading %s is held, marked nowhere: the Remapping it remaps says why', (_case, image, band) => {
+        const remapped = remappingOf([entry('l-1', [constraint(image, band)])])
+        const over = remappingOver(remapped)
+        const state = stateOf(over, remapped)
+        const heldFor = describedFor(over, remapped)
+
+        expect(retrieveAvailability({state, recipe: over, heldFor})).toMatchObject({available: false, gate: {read: {refusedBy: remapped.id}}})
+        expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor})).toMatchObject({withdraw: true})
+        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({})
+    })
+
+    it('is offered once that constraint is repaired', () => {
+        const remapped = remappingOf([entry('l-1', [constraint('i-1', 'class')])])
+        const over = remappingOver(remapped)
+        const state = stateOf(over, remapped)
+        const heldFor = describedFor(over, remapped)
+
+        expect(retrieveAvailability({state, recipe: over, heldFor}).available).toBe(true)
+        expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor})).toBeNull()
+    })
+})
+
 const MAPPING = 'process.remapping.panel.mapping.button.label'
+const MISSING_INPUT = 'process.remapping.requirement.missingInput'
+const BAND_NOT_INCLUDED = 'process.remapping.requirement.bandNotIncluded'
 const ASSET = 'users/x/a'
 
 const constraint = (image, band) => ({id: `${image}-${band}`, image, band, operator: '>', value: 1})
@@ -112,23 +150,39 @@ const remappingOf = entries => ({
     }
 })
 
-const stateOf = recipe => ({
+// Where the Remapping it remaps assigns class 1.
+const remappingOver = remapped => ({
+    id: 'remapping-2',
+    type: 'REMAPPING',
+    model: {
+        inputImagery: {images: [{imageId: 'r-1', type: 'RECIPE_REF', id: remapped.id, includedBands: [{id: 'b-class', band: 'class'}]}]},
+        legend: {entries: [entry('l-1', [constraint('r-1', 'class')])]}
+    }
+})
+
+const stateOf = (...recipes) => ({
     process: {
-        loadedRecipes: {[recipe.id]: recipe},
-        recipes: [{id: recipe.id, revision: 1}],
+        loadedRecipes: Object.fromEntries(recipes.map(recipe => [recipe.id, recipe])),
+        recipes: recipes.map(({id}) => ({id, revision: 1})),
         recipeListing: {checkedAt: Date.now()},
         saveStates: {},
         tabs: []
     }
 })
 
+const entryProblems = (state, recipe) => Object.fromEntries(
+    Object.entries(itemStatusesOfState(state, recipe.id, 'mapping', describedFor(recipe)))
+        .map(([id, {message, details}]) => [id, {message, details}])
+)
+
 // What Retrieve decides from as it submits: the session read at that moment, its input asset described.
 const retrieveRead = recipe =>
     readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: describedFor(recipe)})
 
-// What the runtime holds once the recipe was described: its input asset observed.
-const describedFor = recipe => {
-    const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
+// What the runtime holds once the recipe was described over these records: its input asset observed.
+const describedFor = (recipe, ...records) => {
+    const loadedRecipes = Object.fromEntries([recipe, ...records].map(record => [record.id, record]))
+    const graph = buildMapDependencyGraph({recipe, loadedRecipes})
     const {description, diagnostics, readiness} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,

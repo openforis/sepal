@@ -22,9 +22,17 @@ afterEach(async () => {
     container?.remove()
 })
 
-describe('a list item in error', () => {
+describe.each([
+    ['title', {title: 'Image bands'}],
+    ['custom content', {content: <span>Forest</span>}],
+    ['custom content with removal', {
+        content: <span>A long band name repeated to exercise the custom header</span>,
+        removeConfirmationLabel: 'Remove',
+        onRemove: () => {}
+    }]
+])('a list item in error: %s', (_name, props) => {
     it('explains its error when its mark is reached from the keyboard', async () => {
-        await mount()
+        await mount({props})
 
         await act(async () => mark().focus())
 
@@ -35,7 +43,7 @@ describe('a list item in error', () => {
     it('is neither opened nor dragged by using its mark', async () => {
         const opened = vi.fn()
         const pressed = vi.fn()
-        await mount({onClick: opened})
+        await mount({props, onClick: opened})
         row().addEventListener('pointerdown', pressed)
 
         await act(async () => {
@@ -48,7 +56,7 @@ describe('a list item in error', () => {
     })
 })
 
-const mount = async ({onClick = () => {}} = {}) => {
+const mount = async ({props, onClick = () => {}} = {}) => {
     const store = createStore((state = {dimensions: {width: 1024, height: 768}}, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -58,7 +66,7 @@ const mount = async ({onClick = () => {}} = {}) => {
         <Provider store={store}>
             <PortalContainer/>
             <ListItem onClick={onClick} drag$={{next: () => {}}}>
-                <CrudItem title='Image bands' error='Its source no longer has red.'/>
+                <CrudItem {...props} error='Its source no longer has red.'/>
             </ListItem>
         </Provider>
     ))

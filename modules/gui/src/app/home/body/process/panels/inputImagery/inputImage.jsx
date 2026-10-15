@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {adoptOtherSources, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
+import {adoptOtherSources, appliedInputImageUpdates, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
@@ -63,10 +63,12 @@ class _InputImage extends React.Component {
     }
 
     render() {
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
+                additionalUpdates={values => appliedInputImageUpdates(recipeId, valuesToModel(values))}
                 onApply={this.notifyChange}>
                 <Panel.Header icon='image' title={msg('process.panels.inputImagery.sections.title')}/>
                 <Panel.Content>

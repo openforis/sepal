@@ -1,78 +1,50 @@
 import _ from 'lodash'
 
-import {SUPPORTED, unsupported} from '#sepal/recipe/requirement/verdict'
-import {selectFrom} from '~/stateUtils'
+import {CONSTRAINT_BAND_NOT_INCLUDED, MISSING_CONSTRAINT_INPUT} from '#sepal/recipe/output/diagnostic'
+import {LEGEND_ENTRIES_PATH} from '#sepal/recipe/type/remapping'
 import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
 
-// What Remapping's mapping needs of its own configuration as applied, judged from the model alone: each constraint reads
-// a band of one input by its imageId, so the input must still be there and include the band, as the constraint editor
-// offers it. Any constraint that does not holds the image output back - its previews and Retrieve alike - even where
-// Earth Engine would build it: execution (lib/js/ee/src/remapping/remapping.js) builds an asset input with every band it
-// stores, so a constraint reading one its input does not include would still execute. Whether an input's source holds
-// its bands is not judged here.
+// What Remapping's mapping needs of its own configuration as applied, as its shared definition finds it
+// (lib/js/shared/src/recipe/type/remapping.js): each constraint reads an input still there, and a band that input
+// includes. Its output read judges that (sourceRequirements.js), so each legend entry holding such a constraint, the
+// Mapping section and the operations over the output say what that read establishes, and so does every recipe whose
+// image builds it. The constraint editor judges an edit itself, against the inputs and bands it offers, before it is
+// applied (imageConstraints.jsx).
 
 export const CONSTRAINT_REFERENCES_REQUIREMENT = 'remapping.constraintReferences'
-export const UNRESOLVED_CONSTRAINTS = 'UNRESOLVED_CONSTRAINTS'
-export const MISSING_INPUT = 'MISSING_INPUT'
-export const BAND_NOT_INCLUDED = 'BAND_NOT_INCLUDED'
 
 const MAPPING = {id: 'mapping', label: 'process.remapping.panel.mapping.button.label'}
-
-export const constraintFacts = recipe => ({
-    images: selectFrom(recipe, 'model.inputImagery.images') || [],
-    entries: selectFrom(recipe, 'model.legend.entries') || []
-})
-
-// One item per legend entry, with the bands each input includes, by imageId.
-export const constraintItems = ({images, entries}) => {
-    const includedBands = Object.fromEntries(images.map(({imageId, includedBands = []}) =>
-        [imageId, includedBands.map(({band}) => band)]
-    ))
-    return entries.map(entry => ({
-        id: entry.id,
-        path: ['legend.entries', {id: entry.id}],
-        label: entry.label,
-        facts: {
-            constraints: (entry.constraints || []).map(({image, band}) => ({image, band})),
-            includedBands
-        }
-    }))
-}
-
-// UNRESOLVED_CONSTRAINTS with every problem, each once: MISSING_INPUT or BAND_NOT_INCLUDED.
-export const CONSTRAINT_REFERENCES = {
-    id: CONSTRAINT_REFERENCES_REQUIREMENT,
-    evaluate: ({constraints, includedBands}) => {
-        const problems = _.uniqWith(constraints.flatMap(({image, band}) =>
-            !includedBands[image]
-                ? [{code: MISSING_INPUT}]
-                : includedBands[image].includes(band) ? [] : [{code: BAND_NOT_INCLUDED, band}]
-        ), _.isEqual)
-        return problems.length
-            ? unsupported({code: UNRESOLVED_CONSTRAINTS, problems})
-            : {status: SUPPORTED}
-    }
-}
 
 export const remappingRequirements = [
     {
         id: CONSTRAINT_REFERENCES_REQUIREMENT,
         section: MAPPING,
-        requirement: {...CONSTRAINT_REFERENCES, describe: diagnostic => describeProblems(diagnostic)},
-        localFacts: constraintFacts,
-        items: constraintItems,
+        requirement: {id: CONSTRAINT_REFERENCES_REQUIREMENT, describe: diagnostic => describeProblems(diagnostic)},
+        outputDiagnostics: {
+            codes: [MISSING_CONSTRAINT_INPUT, CONSTRAINT_BAND_NOT_INCLUDED],
+            itemOf: (diagnostic, recipe) => entryOf(diagnostic, recipe)
+        },
         operations: [IMAGE_OUTPUT]
     }
 ]
 
-const describeProblems = ({problems}) => {
-    const messages = problems.map(problem => msg(`process.remapping.requirement.${MESSAGES[problem.code]}`, problem))
-    return {message: messages[0], details: messages.slice(1)}
+// The legend entry a finding's constraint lies in, with its constraints, to name what they read.
+const entryOf = ({path = []}, recipe) => {
+    const isConstraint = path.length === LEGEND_ENTRIES_PATH.length + 3
+        && LEGEND_ENTRIES_PATH.every((step, index) => path[index] === step)
+    const entry = isConstraint ? recipe.model?.legend?.entries?.[path[LEGEND_ENTRIES_PATH.length]] : null
+    return entry
+        ? {id: entry.id, path: path.slice(0, LEGEND_ENTRIES_PATH.length + 1), label: entry.label, constraints: entry.constraints || []}
+        : null
 }
 
-const MESSAGES = {
-    [MISSING_INPUT]: 'missingInput',
-    [BAND_NOT_INCLUDED]: 'bandNotIncluded'
+// Every problem of the entry, each once, in the order of its constraints.
+const describeProblems = ({diagnostics, item}) => {
+    const messages = _.uniq(_.sortBy(diagnostics, ({path}) => path.at(-1))
+        .map(({code, path}) => code === CONSTRAINT_BAND_NOT_INCLUDED
+            ? msg('process.remapping.requirement.bandNotIncluded', {band: item.constraints[path.at(-1)]?.band})
+            : msg('process.remapping.requirement.missingInput')))
+    return {message: messages[0], details: messages.slice(1)}
 }

@@ -811,8 +811,8 @@ rule today:
 | Kind | Examples | Direction |
 | --- | --- | --- |
 | Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
-| GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
-| GUI-only execution rule | Remapping's constraint references (local requirement); PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
+| GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements`, `remappingRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
+| GUI-only execution rule | PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
 | Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
 | Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
@@ -831,7 +831,7 @@ configurationRequirements: [
 ```
 
 It reads only the recipe's own model: no input, record or evidence. It returns located findings or none, and it is
-evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Four
+evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Five
 are declared:
 - Classification's `NO_TRAINING_DATA`, for trained classifiers (`requiresTraining`, `noTrainingData`). The
   Classification stays described.
@@ -843,6 +843,10 @@ are declared:
   Regression, Unsupervised Classification, Stack, Band Math and Remapping (`inputImageryRequirement`,
   `source/inputImagery.js`): execution zips the images and builds nothing from none. Their descriptions stay as they
   are: Band Math keeps `NO_OUTPUT_BANDS` beside it.
+- Remapping's `MISSING_CONSTRAINT_INPUT` and `CONSTRAINT_BAND_NOT_INCLUDED`, at each constraint
+  (`['model', 'legend', 'entries', i, 'constraints', j]`) naming an input the list no longer holds, or a band its input
+  does not include (`constraintInputRequirement`, `constraintBandRequirement`, `type/remapping.js`). The Remapping stays
+  described.
 
 #### Operation scope
 
@@ -997,6 +1001,12 @@ or unavailable is never dropped.
   Engine built nothing.
 - Remapping now declares a requirement its output read judges, as the Classification family does, so while what its
   image builds is being read its Retrieve waits rather than offering its class, and its toolbar watches its output.
+- A Remapping whose constraint reads a removed input or a band its input does not include has its asset export refused,
+  and so has every recipe whose image builds it, which is withdrawn and cannot be retrieved. Before, only the Remapping's
+  own layer and Retrieve were held, by a GUI local requirement: the export and every recipe over it ran, until Earth
+  Engine failed on a removed input - or, for a band an asset input stores but does not include, built the image. Such a
+  Remapping that exported before is now refused. Where its input list is empty too, Retrieve names Input imagery before
+  Mapping.
 
 #### First packet (implemented)
 
@@ -1059,6 +1069,24 @@ and recovery. It does not migrate every outstanding rule.
   agreeing for each type, a Remapping over an empty Classification, a missing asset said as that),
   `recipeImageLayer.test.js`, `wizardSectionMarks.test.jsx`, `inputBandSets.test.jsx` (the last input removed, one
   added in the editor, cancelled and applied), `imageAssetExport.test.js`.
+
+#### Remapping constraint references (implemented)
+
+- **Shared.** `constraintInputRequirement` and `constraintBandRequirement` (`type/remapping.js`) carry the rule the GUI
+  held as a local requirement, with the same semantics: a constraint's `image` must be the `imageId` of a listed input,
+  and its `band` one that input's `includedBands` names. Each finding is located at its constraint. They read the
+  configuration alone: an input not yet loaded or unreadable is never a broken reference, and whether a source still
+  holds a band its input includes is not judged - Remapping's description reads no input, so that gap remains
+  ([Remapping](../../recipes/remapping.md#open-issues)).
+- **GUI.** `remappingRequirements` is an output declaration over both codes: each finding's legend entry is its item,
+  named with the first problem and the others listed, each once in constraint order, as the local read said them. The
+  local predicate is gone. The constraint editor keeps its own draft check of the inputs and bands it offers, which never
+  changes the applied recipe's readiness; Cancel writes nothing, and a repair can be applied while the applied recipe is
+  refused. The outline (`RecipeGeometryLayer`) is not held by it.
+- **Tests.** `type/remapping.test.js` (shared), `remappingRequirements.test.js` (entry messages, gates, Retrieve, a
+  Remapping of it held and restored), `constraintReferences.test.jsx` (including automatic reconnection on applying the
+  same source again, saving/reopening, source changes, missing bands, ambiguous legacy references and Cancel), `remappingLayer.test.jsx` unchanged,
+  `recipeGeometryLayer.test.jsx`, `imageAssetExport.test.js`.
 
 **Recorded follow-ups:**
 - the `TRAINING_DATA` and geometry operations;

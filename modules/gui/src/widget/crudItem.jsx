@@ -35,12 +35,7 @@ class _CrudItem extends React.Component {
     renderContent() {
         const content = this.getContent()
         return content
-            ? (
-                <React.Fragment>
-                    {this.renderError()}
-                    <div className={styles.content}>{content}</div>
-                </React.Fragment>
-            )
+            ? <div className={styles.content}>{this.renderWithError(<div>{content}</div>)}</div>
             : this.renderDefaultContent()
     }
 
@@ -108,6 +103,10 @@ class _CrudItem extends React.Component {
                 </Tooltip>
             )
             : titleElement
+        return this.renderWithError(tooltipped)
+    }
+
+    renderWithError(content) {
         const error = this.renderError()
         return error
             ? (
@@ -117,14 +116,14 @@ class _CrudItem extends React.Component {
                     alignment='left'
                     className={styles.titleRow}
                     contentClassName={styles.titleRowContent}>
-                    {tooltipped}
+                    {content}
                     {error}
                 </Layout>
             )
-            : tooltipped
+            : content
     }
 
-    // An item in error is marked beside its title: after it, or ahead of content its caller renders in place of one.
+    // Titles and custom content share the same adjacent diagnostic indicator.
     renderError() {
         const {error} = this.props
         return error ? <ErrorIndicator error={error}/> : null
@@ -353,7 +352,7 @@ CrudItem.propTypes = {
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
-    // What is wrong with the item, marked beside its title and explained on hover and focus.
+    // What is wrong with the item, marked beside its title, or at the end of its content, and explained on hover and focus.
     error: PropTypes.any,
     editTooltip: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),

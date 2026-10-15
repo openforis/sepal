@@ -10,9 +10,12 @@ vi.mock('~/widget/tooltip', () => ({
         return children
     }
 }))
+vi.mock('~/widget/userAgent', () => ({isMobile: () => false}))
 
 import {CopyButton} from './copyButton'
 import {CrudItem} from './crudItem'
+import styles from './crudItem.module.css'
+import {LegendItem} from './legend/legendItem'
 import {RemoveButton} from './removeButton'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -115,4 +118,58 @@ describe('CrudItem timestamp', () => {
         const container = mount({title: 'My label'})
         expect(container.querySelector('[class*="timestamp"]')).toBeNull()
     })
+})
+
+describe('CrudItem error mark', () => {
+    const FOLLOWS = Node.DOCUMENT_POSITION_FOLLOWING
+
+    it.each([undefined, false, true])('reserves a legend selection mark only when selection is specified: %s', selected => {
+        const container = mount({
+            content: <LegendItem color='#228833' label='Forest' value={1} selected={selected} onClick={vi.fn()}/>,
+            error: 'Reads a removed input'
+        })
+        expect(!!container.querySelector('[data-icon="check"]')).toBe(selected !== undefined)
+    })
+
+    it.each([false, true])('marks custom content beside it, with remove action: %s', withAction => {
+        const props = {
+            content: <span data-content>Forest</span>,
+            removeConfirmationLabel: 'Remove',
+            onRemove: withAction ? vi.fn() : undefined
+        }
+        const unmarked = mount(props)
+        const marked = mount({...props, error: 'Reads a removed input'})
+        const [content, mark, remove] = [
+            marked.querySelector('[data-content]'),
+            marked.querySelector('[data-feedback="error"]'),
+            marked.querySelector('button')
+        ]
+
+        expect(content.compareDocumentPosition(mark) & FOLLOWS).toBeTruthy()
+        if (withAction) {
+            expect(mark.compareDocumentPosition(remove) & FOLLOWS).toBeTruthy()
+        } else {
+            expect(remove).toBeNull()
+        }
+        // Content and its indicator share the title layout, separately from the action group.
+        const indicator = mark.parentElement
+        expect(indicator.previousElementSibling.contains(content)).toBe(true)
+        expect(indicator.nextElementSibling).toBeNull()
+        expect(mark.closest(`.${styles.titleRow}`)).not.toBeNull()
+        expect(leadingElement(marked).contains(mark)).toBe(true)
+        expect(leadingElement(marked).nextElementSibling.contains(mark)).toBe(false)
+        expect(mark.getAttribute('role')).toBe('img')
+        expect(leadingElement(marked).contains(content)).toBe(true)
+        expect(leadingElement(unmarked).contains(unmarked.querySelector('[data-content]'))).toBe(true)
+    })
+
+    it('marks a title after it', () => {
+        const container = mount({title: 'Image bands', error: 'Band missing'})
+        const title = container.querySelector(`.${styles.title}`)
+
+        expect(title.compareDocumentPosition(container.querySelector('[data-feedback="error"]')) & FOLLOWS).toBeTruthy()
+    })
+
+    // The row's first element: what a reader meets first, at the row's start.
+    const leadingElement = container => container.querySelector(`.${styles.content}`)
 })
