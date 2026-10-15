@@ -51,3 +51,14 @@ test('nobody is granted while more slots are held than allowed', () => {
 
     expect(slots.request({task: ALICE, free: -1, heldByUser: NONE_HELD, now: 0})).toBe(false)
 })
+
+test('a refused task is waiting until it is granted', () => {
+    const slots = new LocalProcessingSlots()
+    expect(slots.isWaiting(ALICE.id)).toBe(false)
+
+    slots.request({task: ALICE, free: 0, heldByUser: NONE_HELD, now: 0})
+    expect(slots.isWaiting(ALICE.id)).toBe(true)
+
+    slots.request({task: ALICE, free: 1, heldByUser: NONE_HELD, now: 1000})
+    expect(slots.isWaiting(ALICE.id)).toBe(false)
+})

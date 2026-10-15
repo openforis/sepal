@@ -146,6 +146,7 @@ export class ContainerSupervisor {
     // A task already holding a slot is granted again, so a container that lost the answer keeps it.
     async #requestSlot(task) {
         const holders = await this.#repository.slotHolders()
+        log.debug(() => `${taskTag(task)} local processing slot requested, ${holders.length}/${this.#config.maxConcurrentLocalProcessing} in use`)
         if (holders.some(({id}) => id === task.id)) {
             return true
         }
@@ -153,18 +154,29 @@ export class ContainerSupervisor {
         if (current?.state !== State.ACTIVE) {
             return false
         }
+        const alreadyWaiting = this.#slots.isWaiting(current.id)
         const inTurn = this.#slots.request({
             task: current,
             free: this.#config.maxConcurrentLocalProcessing - holders.length,
             heldByUser: countByUser(holders),
             now: this.#config.clock().getTime()
         })
-        return inTurn && await this.#repository.grantSlot(current)
+        if (!inTurn) {
+            alreadyWaiting || log.info(`${taskTag(current)} waiting for a local processing slot`)
+            return false
+        }
+        const granted = await this.#repository.grantSlot(current)
+        granted && log.info(`${taskTag(current)} local processing slot granted, ${holders.length + 1}/${this.#config.maxConcurrentLocalProcessing} in use`)
+        return granted
     }
 
+    // A task that ended still holds its slot until its container is removed, so this logs every release.
     async #releaseSlot(task) {
         this.#slots.remove(task.id)
-        await this.#repository.releaseSlot(task)
+        if (await this.#repository.releaseSlot(task)) {
+            const inUse = (await this.#repository.slotHolders()).length
+            log.info(`${taskTag(task)} local processing slot released, ${inUse}/${this.#config.maxConcurrentLocalProcessing} in use`)
+        }
     }
 
     async #launch(task) {
@@ -232,6 +244,7 @@ export class ContainerSupervisor {
                 const {state, statusDescription} = this.#interrupted(task)
                 await this.#repository.transition(task, {from: RUNNING_STATES, to: state, statusDescription})
                 await this.#workspace.remove(task.id)
+                await this.#releaseSlot(task)
             } else if (container.running) {
                 this.#watch(task)
             } else {

@@ -153,6 +153,28 @@ describe('TaskRepository', () => {
         expect(await repository.slotHolders()).toEqual([{id: task.id, username: 'alice'}])
     })
 
+    test('a release reports whether the task held a slot', async () => {
+        const task = aTask()
+        await repository.insert(task)
+        await repository.activate(task, 'a'.repeat(64))
+        await repository.grantSlot(task)
+
+        expect(await repository.releaseSlot(task)).toBe(true)
+        expect(await repository.releaseSlot(task)).toBe(false)
+    })
+
+    test('a finished task\'s slot no longer counts, and is freed by the release that follows', async () => {
+        const task = aTask()
+        await repository.insert(task)
+        await repository.activate(task, 'a'.repeat(64))
+        await repository.grantSlot(task)
+
+        await repository.transition(task, {from: [State.ACTIVE], to: State.FAILED})
+
+        expect(await repository.slotHolders()).toEqual([])
+        expect(await repository.releaseSlot(task)).toBe(true)
+    })
+
     test('a slot is held through a cancel until released or the task ends', async () => {
         const released = aTask({id: 't-1'})
         const canceled = aTask({id: 't-2'})

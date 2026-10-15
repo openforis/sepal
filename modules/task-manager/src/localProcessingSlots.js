@@ -16,6 +16,10 @@ export class LocalProcessingSlots {
         return false
     }
 
+    isWaiting(taskId) {
+        return this.#waiters.has(taskId)
+    }
+
     remove(taskId) {
         this.#waiters.delete(taskId)
     }

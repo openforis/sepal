@@ -2,9 +2,15 @@
     "port": 5000,
     "categories": {
         "config": "info",
-        "crypto": "info",
+        "currentUser": "info",
         "database": "info",
-        "http": "info",
-        "main": "info"
+        "http/server": "info",
+        "logger": "info",
+        "main": "info",
+        "rxjs": "info",
+        "supervisor": "info",
+        "tasks": "info",
+        "taskWs": "info",
+        "ws": "info"
     }
 }

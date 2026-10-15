@@ -81,10 +81,9 @@ export class TaskRepository {
     transition(task, {from, to, statusDescription = StateDescription[to]}) {
         return this.#change(task,
             `UPDATE task SET state = ?, status_description = ?, update_time = ?,
-                api_key_hash = IF(? IN (?), api_key_hash, NULL),
-                slot_time = IF(? IN (?), slot_time, NULL)
+                api_key_hash = IF(? IN (?), api_key_hash, NULL)
                 WHERE id = ? AND state IN (?)`,
-            [to, statusDescription, this.#clock(), to, RUNNING_STATES, to, RUNNING_STATES, task.id, from]
+            [to, statusDescription, this.#clock(), to, RUNNING_STATES, task.id, from]
         )
     }
 
@@ -105,7 +104,11 @@ export class TaskRepository {
     }
 
     async releaseSlot(task) {
-        await this.#query('UPDATE task SET slot_time = NULL WHERE id = ?', [task.id])
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time IS NOT NULL',
+            [task.id]
+        )
+        return affectedRows > 0
     }
 
     async slotHolders() {
