@@ -78,7 +78,7 @@ RUN chmod u+x /script/init_jupyter.sh && sync && /script/init_jupyter.sh
 ADD modules/${MODULE_NAME}/script /script
 RUN chmod -R 500 /script
 
-ADD lib /usr/local/lib/sepal
+ADD lib/python /usr/local/lib/sepal/python
 RUN chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py && \
     ln -s /usr/local/lib/sepal/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
 
