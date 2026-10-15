@@ -27,6 +27,7 @@ function usage() {
     echo "  -o, --operation   operation to execute (provision|deploy|rollout). Cannot be used with --script."
     echo "  -s, --script      project/hosting-services relative path to script to execute. Cannot be used with --operation or --platform."
     echo "  -l, --local       deploy using the local working tree instead of the sources the build was made from."
+    echo "  -w, --wait        wait for a build that doesn't exist yet, checking every minute."
     echo "  -h, --help        print this usage."
     echo ""
     if [ ! -z "$ERROR" ]; then
@@ -55,9 +56,13 @@ function execute_from_build_sources() {
     fi
 
     local COMMIT
-    if ! COMMIT=$(git -C $PROJECT_DIR rev-parse --quiet --verify refs/tags/$TAG^{commit}); then
-        usage "No sources found for build $BUILD_NUMBER: tag $TAG doesn't exist. Either the build didn't complete, or it predates build tagging. Use --local to deploy using the local working tree."
-    fi
+    while ! COMMIT=$(git -C $PROJECT_DIR rev-parse --quiet --verify refs/tags/$TAG^{commit}); do
+        if [ -z "$WAIT" ]; then
+            usage "No sources found for build $BUILD_NUMBER: tag $TAG doesn't exist. Either the build didn't complete, or it predates build tagging. Use --local to deploy using the local working tree, or --wait to wait for the build."
+        fi
+        wait_for_build "tag $TAG doesn't exist yet"
+        git -C $PROJECT_DIR fetch --quiet --tags origin || echo "Cannot fetch from origin, retrying in a minute"
+    done
 
     git -C $PROJECT_DIR worktree prune
     if [ -d "$WORKTREE_DIR" ]; then
@@ -69,6 +74,15 @@ function execute_from_build_sources() {
     echo "Deploying build $BUILD_NUMBER from commit $(git -C $PROJECT_DIR rev-parse --short $COMMIT)"
     # Both signals: whichever of the two the checked out version understands stops it re-pinning
     exec env GIT_COMMIT=$COMMIT $WORKTREE_DIR/bin/deploy --local "${ARGS[@]}"
+}
+
+function wait_for_build() {
+    local REASON=$1
+    if [ -z "$WAITING" ]; then
+        WAITING=true
+        echo "Waiting for build $BUILD_NUMBER ($REASON), checking every minute since $(date +%H:%M)..."
+    fi
+    sleep 60
 }
 
 function warn_local() {
@@ -119,44 +133,50 @@ function verify_images() {
     IMAGES=$(echo $IMAGES | tr ' ' '\n' | sort -u)
 
     echo "Verifying images for build $BUILD_NUMBER in $DOCKER_REGISTRY_HOST..."
-    local MISSING=""
-    local VERIFIED=0
-    local IMAGE
-    for IMAGE in $IMAGES; do
-        local STATUS=$(curl --silent --head --output /dev/null --write-out '%{http_code}' \
-            --user "$DOCKER_REGISTRY_USERNAME:$DOCKER_REGISTRY_PASSWORD" \
-            --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
-            --header 'Accept: application/vnd.oci.image.manifest.v1+json' \
-            --header 'Accept: application/vnd.oci.image.index.v1+json' \
-            https://$DOCKER_REGISTRY_HOST/v2/$IMAGE/manifests/$BUILD_NUMBER || true)
-        case $STATUS in
-            200)
-            VERIFIED=$((VERIFIED + 1))
-            ;;
-            404)
-            MISSING="$MISSING $IMAGE"
-            ;;
-            401|403)
-            echo "Error: registry rejected the credentials in $CONFIG_DIR/env (HTTP $STATUS)"
-            exit 1
-            ;;
-            *)
-            echo "Error: cannot reach registry $DOCKER_REGISTRY_HOST (HTTP $STATUS)"
-            exit 1
-            ;;
-        esac
-    done
-
-    if [ -n "$MISSING" ]; then
-        echo ""
-        echo "Error: build $BUILD_NUMBER is missing images the deployment needs:"
-        for IMAGE in $MISSING; do
-            echo "  $DOCKER_REGISTRY_HOST/$IMAGE:$BUILD_NUMBER"
+    local MISSING VERIFIED IMAGE
+    while true; do
+        MISSING=""
+        VERIFIED=0
+        for IMAGE in $IMAGES; do
+            local STATUS=$(curl --silent --head --output /dev/null --write-out '%{http_code}' \
+                --user "$DOCKER_REGISTRY_USERNAME:$DOCKER_REGISTRY_PASSWORD" \
+                --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
+                --header 'Accept: application/vnd.oci.image.manifest.v1+json' \
+                --header 'Accept: application/vnd.oci.image.index.v1+json' \
+                https://$DOCKER_REGISTRY_HOST/v2/$IMAGE/manifests/$BUILD_NUMBER || true)
+            case $STATUS in
+                200)
+                VERIFIED=$((VERIFIED + 1))
+                ;;
+                404)
+                MISSING="$MISSING $IMAGE"
+                ;;
+                401|403)
+                echo "Error: registry rejected the credentials in $CONFIG_DIR/env (HTTP $STATUS)"
+                exit 1
+                ;;
+                *)
+                echo "Error: cannot reach registry $DOCKER_REGISTRY_HOST (HTTP $STATUS)"
+                exit 1
+                ;;
+            esac
         done
-        echo ""
-        echo "Either the build didn't complete, or the module is missing from build-and-push-images.sh."
-        exit 1
-    fi
+
+        if [ -z "$MISSING" ]; then
+            break
+        fi
+        if [ -z "$WAIT" ]; then
+            echo ""
+            echo "Error: build $BUILD_NUMBER is missing images the deployment needs:"
+            for IMAGE in $MISSING; do
+                echo "  $DOCKER_REGISTRY_HOST/$IMAGE:$BUILD_NUMBER"
+            done
+            echo ""
+            echo "Either the build didn't complete, or the module is missing from build-and-push-images.sh."
+            exit 1
+        fi
+        wait_for_build "$(echo $MISSING | wc -w | tr -d ' ') images missing"
+    done
 
     echo "Verified $VERIFIED images"
 )
@@ -221,6 +241,10 @@ case $key in
     ;;
     -l|--local)
     LOCAL=true
+    shift # past argument
+    ;;
+    -w|--wait)
+    WAIT=true
     shift # past argument
     ;;
     -h|--help)
