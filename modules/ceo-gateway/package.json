@@ -4,8 +4,8 @@
     "description": "",
     "main": "src/main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --test \"**/*.test.js\"",
+        "testWatch": "node --test --watch \"**/*.test.js\""
     },
     "dependencies": {
         "commander": "^15.0.0",
