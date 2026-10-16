@@ -12,6 +12,7 @@ import {Tabs} from '~/widget/tabs/tabs'
 
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
+import {MoveRecipe} from './moveRecipe'
 import {ProcessMenu} from './processMenu'
 import {hasUnsavedWork, loadFolders$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {RecipeHome} from './recipeHome'
@@ -48,6 +49,7 @@ class _Process extends React.Component {
                 </Tabs>
                 <CloseRecipe/>
                 <SaveRecipe/>
+                <MoveRecipe/>
             </React.Fragment>
         )
     }
