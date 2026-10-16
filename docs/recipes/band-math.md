@@ -104,6 +104,27 @@ underscores, and be at most 30 characters long. No two final names may be alike.
 every configured output, a saved configuration included, and Apply stays unavailable while any fails; each row shows the
 same rules as its own feedback.
 
+## Output boundary
+
+Band Math keeps its first-input geometry policy. `getGeometry$()` resolves that input through `imageFactory`; the
+geometry map endpoint uses it for the AOI outline, and the bounds endpoint uses it for map fitting. The GUI's `Aoi`
+component watches the first input. Image construction now uses that same `getGeometry$()` to clip the final image,
+after calculation, output naming and output-band selection. The policy applies to full output and selected-band
+builds, including direct bands, expressions and reducers. No AOI section or additional boundary model is introduced.
+
+Previously the output was clipped to the union of bounded input and calculation footprints, which could extend
+beyond the outline. Pixels from other inputs outside the first input's finite geometry are now intentionally excluded,
+including in existing recipes. Other inputs can still supply values inside that geometry, even where the first input
+has masked pixels. Band selection, output names, casts and projections are unchanged. Clipping retains interior
+values and masks; boundary-straddling pixels receive Earth Engine's normal clipping coverage.
+
+There is no fallback region. A failed geometry resolution propagates its error; a null geometry refuses image
+construction. Earth Engine rejects an empty geometry when clipping. An unbounded reported geometry imposes no
+restriction and skips clipping, because EE refuses `clip` on an unbounded geometry. Previously a bounded later input
+could restrict such a recipe through the union; that incidental restriction is removed. With no inputs, image
+construction still completes without emitting an image, and a direct geometry request still fails; the normal GUI
+and shared configuration gates prevent executing that configuration.
+
 ## Configuration checks
 
 Applied calculation-reference rules belong to shared execution readiness (`lib/js/shared/src/recipe/bandMath/calculationReferences.js`,
@@ -267,6 +288,19 @@ for the audit evidence, completed packets and remaining boundaries.
 
 ## Verification
 
+- `modules/gee/test/jobs/ee/bandMath/bandMathGeometry.test.js` checks geometry-resolution wiring for full and selected
+  direct/expression/reducer outputs, resolution failures, null/unbounded/empty geometry and existing empty-input behavior.
+- `modules/gee/verify/bandMathGeometry.mjs` is a live, read-only check over two in-memory Asset Mosaic recipes using
+  public SRTM imagery, different polygon extents and different elevation masks. It checks full output and each single
+  output band on the native grid: reported geometry equals the first input, interior values/masks and band projections
+  match an independent reference, no pixels are valid outside the boundary, and edge coverage matches an explicitly
+  clipped reference. No recipes, assets or export tasks are written. Run with
+  `docker exec -w /usr/local/src/sepal/modules/gee gee node verify/bandMathGeometry.mjs`.
+  On 2026-10-16 the live check reproduced outside pixels before the fix for full output and the second-input,
+  expression and reducer selections. After the fix all five builds passed: no outside pixels or interior
+  value/mask differences, unchanged projections, and matching clipped edge coverage. Browser tiles were not checked.
+
+
 - `modules/gee/verify/bandMathOutputBands.mjs` - on live Earth Engine: the catalogue, the running image asked for
   nothing, an empty selection and a subset out of order, the description from an observed running image, an
   expression cast over CCDC's coefficients and its segment starts passed through, observed as arrays and sampled,
@@ -370,3 +404,14 @@ Manual missing-selection editor check:
    Add disabled. Remove individual chips or use Remove all; keep at least one valid selection from another group
    before applying. Cancel must preserve the missing references and blocking. Re-add the exact source with the
    required bands and Apply: automatic recovery must keep the reducer settings and clear its chips' errors.
+
+
+Manual output-boundary check:
+
+1. Create two Asset Mosaic recipes from an overlapping image, with a small AOI on the first and a larger AOI on the
+   second. Add them to Band Math in that order as `i1` and `i2`; include a scalar band in each.
+2. Output a direct band from each, an expression such as `i2.elevation * 2`, and a mean reducer reading both inputs.
+   Give the outputs distinct custom names. Display each output, especially those using `i2`: all must stop at the
+   first-input outline. Values inside it, custom names and data types should remain unchanged.
+3. Check a single-band display/Retrieve selection as well as the full output. Where the first input has masked pixels
+   inside its AOI, the second input may still supply values; its extent must not expand the output beyond the outline.

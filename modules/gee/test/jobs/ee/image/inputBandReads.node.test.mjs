@@ -33,7 +33,7 @@ const eeImage = bands => ({
     expression: () => eeImage(['expression']),
     cast: () => eeImage(bands),
     clip: () => eeImage(bands),
-    geometry: () => ({})
+    geometry: () => ({isUnbounded: () => true})
 })
 
 const unbounded = {map: () => unbounded, size: () => 0, iterate: () => ({}), get: () => ({})}
@@ -47,7 +47,7 @@ mock.module('#sepal/ee/ee', {
             Dictionary: {fromLists: () => ({})},
             List: () => unbounded,
             Algorithms: {
-                If: (_condition, _whenTrue, whenFalse) => whenFalse,
+                If: (condition, whenTrue, whenFalse) => condition ? whenTrue : whenFalse,
                 TemporalSegmentation: {
                     Ccdc: ({collection}) => eeImage([
                         ...SEGMENT_BANDS,
@@ -59,7 +59,7 @@ mock.module('#sepal/ee/ee', {
     }
 })
 
-mock.module('#sepal/ee/aoi', {exports: {toGeometry$: () => of({})}})
+mock.module('#sepal/ee/aoi', {exports: {toGeometry$: () => of({isUnbounded: () => true})}})
 
 mock.module('#sepal/ee/timeSeries/collection', {
     exports: {
