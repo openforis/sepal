@@ -1,7 +1,6 @@
 import React from 'react'
 
 import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
-import {INPUT_IMAGERY, missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -13,7 +12,7 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {RemappingToolbar} from './panels/remappingToolbar'
 import {getDefaultModel} from './remappingRecipe'
-import {remappingRequirements} from './remappingRequirements'
+import {remappingInputRequirements, remappingRequirements} from './remappingRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -63,5 +62,5 @@ export default () => ({
     },
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: [missingInputImageryRequirement(INPUT_IMAGERY), ...remappingRequirements]
+    sourceRequirements: [...remappingInputRequirements, ...remappingRequirements]
 })

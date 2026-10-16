@@ -1261,16 +1261,40 @@ These are follow-ups, not additions to the current suitability packet. Coordinat
 
 ### Recipe-scoped modals
 
-Investigation, not yet scheduled; a prerequisite for [opening the selected recipe](#open-selected-recipe). Modals
-are application-wide today: while one is shown, neither recipe tabs nor application sections can be reached.
-Investigate modals that block interaction only within their own recipe, leaving recipe-tab and application-section
-navigation available.
+Separate UI workstream, starting with inspection; implementation is not yet scheduled. This is a prerequisite for
+[opening the selected recipe](#open-selected-recipe), not an expansion of the current validation packets.
+Application-wide modals prevent switching recipe tabs and application sections. The intended direction is for an
+ordinary recipe editor to block interaction only within its owning recipe, leaving that navigation available.
 
-- Preserve pending form edits when leaving a tab or section with a modal open and returning to it. Nothing is
-  applied, cleared or reset by navigating away.
-- Define the backdrop's extent and what clicking it does, where focus goes on opening, on leaving and on returning,
-  which keyboard shortcuts reach the modal, its recipe and the rest of the application, and how a modal is
-  dismissed - including when its recipe's tab is closed.
+Audit the existing modal panels before deciding which to migrate. For each caller, record why it needs blocking,
+whether it needs map interaction, its nested editors, and its draft/Apply/Cancel lifecycle. Distinguish recipe-scoped
+editors, panels that must remain interactive with the map, and operations that genuinely need application-wide
+blocking. Do not convert every panel to a non-modal floating panel: overlapping panels on smaller screens would make
+editing crowded. Scene-area selection is acceptable as it stands and is not a reported layout defect.
+
+Inspect the shared Panel, activation, portal, backdrop, focus and keyboard mechanisms. Prefer a small shared scoping
+change with an explicit caller choice over per-recipe exceptions or a new panel framework. Reuse existing layout
+components and styling. Check hidden-tab behaviour and selector costs; scope changes must not add repeated work to
+every store notification or leave hidden panels handling input.
+
+The proposed first implementation slice is visualization parameters in two recipe tabs. It should let a user open
+an editor in each recipe and switch between them to compare settings, without dismissing either editor or showing
+both over the same map. Simultaneous side-by-side editors are not required. Review the interaction contract before
+implementing this pilot, then migrate other suitable callers in small groups.
+
+- Preserve pending form edits when leaving a tab or application section and returning. Navigation alone never
+  applies, clears or resets a draft. Keep existing Apply/Cancel and activation-policy protections.
+- Only the active recipe's editor and backdrop are visible and interactive. Hidden editors must not capture focus,
+  pointer events, Escape or other keyboard shortcuts. Define focus on opening, leaving, returning and dismissal.
+- Define backdrop extent and click behaviour, nested-dialog ownership, and how recipe-tab closure handles an
+  unapplied draft. Tab switching and tab closure are different operations; closing must retain the appropriate
+  unsaved-edit protection.
+- Verify two recipes with open drafts, navigation to another application section and back, Apply/Cancel isolation,
+  nested dialogs, keyboard interaction and a smaller viewport. Use focused lifecycle tests and manual browser checks;
+  do not rely on screenshots alone to establish focus or shortcut behaviour.
+
+After the pilot is accepted, add the shared recipe-selector open action. Opening the referenced recipe must preserve
+the originating editor and its draft, including when the selector is inside a recipe-scoped modal.
 
 ### Open selected recipe
 

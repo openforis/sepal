@@ -3,8 +3,8 @@ import {INPUT_IMAGERY_PATH} from '#sepal/recipe/source/inputImagery'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 
-// What Stack and Band Math need of their input images' bands, as their shared output declarations refuse them: each
-// band they take from an input is one its source's current description provides. The output read judges it
+// What Stack, Band Math and Remapping need of their input images' bands, as their shared output/readiness declarations
+// judge them: each required band is one its source's current description provides. The output read judges it
 // (sourceRequirements.js), so the input, its section and the operations over the output all say what that read
 // establishes - the input and the section in one sentence each; the editor of one input reads its source itself and
 // says which bands it no longer has, beside them (inputImage.jsx).

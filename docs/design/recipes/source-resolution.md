@@ -830,9 +830,13 @@ configurationRequirements: [
 ]
 ```
 
-It reads only the recipe's own model: no input, record or evidence. It returns located findings or none, and it is
-evaluated whatever the provider reads. Facts that need evidence stay in `describe` or in a source requirement. Five
-are declared:
+It returns located findings or none, and is evaluated whatever the provider reads. Most requirements read only the
+recipe's model. A requirement over configured source references can additionally use `describedInputs(role)` from
+the same readiness resolution pass: only successful current descriptions, resolved with the existing per-read
+memoization. Missing evidence remains the traversal's pending/unavailable result, never an invented missing band.
+This keeps evidence-dependent execution failures separate from output descriptions that are already known.
+The declarations include:
+
 - Classification's `NO_TRAINING_DATA`, for trained classifiers (`requiresTraining`, `noTrainingData`). The
   Classification stays described.
 - Regression's `NO_TRAINING_DATA`, whatever its classifier (`noTrainingData`): its execution trains the classifier
@@ -847,6 +851,8 @@ are declared:
   (`['model', 'legend', 'entries', i, 'constraints', j]`) naming an input the list no longer holds, or a band its input
   does not include (`constraintInputRequirement`, `constraintBandRequirement`, `type/remapping.js`). The Remapping stays
   described.
+- Remapping's `MISSING_INPUT_BAND`, at an included input band that a constraint reads but its successfully described
+  source does not provide (`constraintSourceBandRequirement`). Unused selections are not checked by this rule.
 
 #### Operation scope
 
@@ -1075,9 +1081,8 @@ and recovery. It does not migrate every outstanding rule.
 - **Shared.** `constraintInputRequirement` and `constraintBandRequirement` (`type/remapping.js`) carry the rule the GUI
   held as a local requirement, with the same semantics: a constraint's `image` must be the `imageId` of a listed input,
   and its `band` one that input's `includedBands` names. Each finding is located at its constraint. They read the
-  configuration alone: an input not yet loaded or unreadable is never a broken reference, and whether a source still
-  holds a band its input includes is not judged - Remapping's description reads no input, so that gap remains
-  ([Remapping](../../recipes/remapping.md#open-issues)).
+  configuration alone: an input not yet loaded or unreadable is never a broken reference. The later source-band
+  requirement below checks source descriptions separately, without repeating these configuration diagnoses.
 - **GUI.** `remappingRequirements` is an output declaration over both codes: each finding's legend entry is its item,
   named with the first problem and the others listed, each once in constraint order, as the local read said them. The
   local predicate is gone. The constraint editor keeps its own draft check of the inputs and bands it offers, which never
@@ -1091,7 +1096,7 @@ and recovery. It does not migrate every outstanding rule.
 #### Validation and source recovery roadmap (2026-10-15)
 
 The source-recovery audit reported mounted GUI probes, including save/reopen and downstream checks; it did not run
-live Earth Engine or browser tests. Both Band Math packets below are implemented; the remaining follow-ups are listed
+live Earth Engine or browser tests. Both Band Math packets and the used-source-band Remapping packet below are implemented; the remaining follow-ups are listed
 separately:
 
 1. **Band Math calculation references in shared readiness (implemented).** The audit found that successful synthetic
@@ -1128,16 +1133,30 @@ separately:
    whole-image expressions, calculated output stability, downstream preview recovery and Retrieve/readiness agreement.
    Deleted direct outputs, their custom names, deleted calculations and Stack aliases are not restored.
 
+3. **Remapping used source bands (implemented).** `constraintSourceBandRequirement` uses the existing readiness
+   traversal's successful input descriptions. A constraint reading an included band its source no longer provides
+   produces `MISSING_INPUT_BAND` at the input's included band. Existing missing-input/not-included findings stay
+   distinct. The output's known `class` description is unchanged; rendering, Retrieve and existing asset exports
+   are blocked for the Remapping and its consumers. Returning bands clear the finding on current evidence without
+   changing constraints or automatic recovery metadata. Pending, failed and superseded evidence produces no missing
+   band. No new acquisition type, cache, saved validity or assessment work type was added.
+   The existing input requirements bridge supplies concise row/IMG feedback. The constraint modal reads its actual
+   draft through `OutputCandidate` and presents the shared finding beside the selected band; no error is copied to
+   MAP or downstream sections. A repair is applicable independently of other entries; draft edits and Cancel leave
+   applied readiness unchanged. Tests cover assets, upstream recipe output removal, downstream preview/availability,
+   asset exports, evidence currency and repair. A live read-only EE probe confirms used-band failure downstream and
+   the differing unused-selection cases below.
+
 Keep these additional items visible, outside the completed packets:
 
-- **Remapping: source loses a band a constraint uses.** The completed reference checks establish membership in the
-  configured inputs and included bands, not whether the source still provides the band. Use successful current
-  source descriptions to establish a missing band, propagate it through readiness, and recover when it returns.
-  Pending or failed evidence is not a missing-band finding. Reuse the existing observation and readiness machinery.
-- **Remapping: input row and IMG feedback.** Its editor marks missing selected bands, but the applied input row and
-  IMG do not. Decide presentation alongside the source-band check above. Keep unused selections distinct from bands
-  constraints actually read: live probes documented in [Remapping](../../recipes/remapping.md#output) show some
-  missing unused bands do not prevent execution. Do not make every such mark an execution block without evidence.
+- **Remapping unused selections: source-type policy.** The new check covers bands constraints read. Live sampling in
+  `remappingSourceBands.mjs` shows an unused missing asset selection executes, as does one through Stack (requested
+  names filter its mappings). An Asset recipe explicitly selects all requested names and fails for the same unused
+  selection. Decide that compatibility policy before adding broader validation or changing execution. Do not revive
+  the rejected editor-assessment framework merely to mark unused selections.
+- **Refresh scope.** An explicit source-asset refresh restores all dependent questions even when the asset token is
+  unchanged. Refreshing only a downstream output refreshes its question, not independently held upstream output
+  questions. That existing refresh policy was observed during this packet and was not broadened.
 - **Class Change legends.** Migrate the required FROM/TO legend configuration into shared readiness; this remains
   separate from source-reference recovery.
 - **Stack aliases and Band Math deleted outputs: policy decision, not reference repair.** The audit found Stack

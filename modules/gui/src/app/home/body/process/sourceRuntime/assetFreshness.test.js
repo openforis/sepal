@@ -40,6 +40,102 @@ beforeEach(() => {
     fake.versionReads = []
 })
 
+describe('Remapping constraints and current source-band evidence', () => {
+    const reading = (id, type, source, band) => ({
+        ...remapping(source, id),
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type, id: source, includedBands: [{band}]}]},
+            legend: {entries: [{id: 'e', value: 1, constraints: [{image: 'i-1', band, operator: '>', value: 0}]}]}
+        }
+    })
+    const records = () => [
+        reading('remapping-1', 'ASSET', 'users/x/dem', 'elevation'),
+        reading('remapping-2', 'RECIPE_REF', 'remapping-1', 'class')
+    ]
+    const watch = () => {
+        const session = sessionHolding(records())
+        session.watch('remapping-1')
+        session.watch('remapping-2')
+        answerVersions({'users/x/dem': 'v1'})
+        return session
+    }
+
+    it('finds nothing from pending or failed evidence, keeping both known class descriptions', () => {
+        const session = watch()
+        for (const id of ['remapping-1', 'remapping-2']) {
+            expect(session.read(id).readiness).toMatchObject({status: 'NEEDS_EVIDENCE', findings: []})
+        }
+        failAsset('users/x/dem', eeFailure('Temporary source failure'))
+        for (const id of ['remapping-1', 'remapping-2']) {
+            expect(session.read(id).readiness).toMatchObject({status: 'UNAVAILABLE', findings: []})
+            expect(session.choices(id)).toEqual(['class'])
+        }
+        session.runtime.close()
+    })
+
+    it('blocks downstream at the originating input, and restores both on refreshing the returned band', async () => {
+        const session = watch()
+        answerBands(['slope'])
+        expect(session.read('remapping-2').readiness).toMatchObject({status: 'NOT_READY', findings: [{
+            code: 'MISSING_INPUT_BAND', recipePath: ['remapping-2', 'remapping-1'],
+            path: ['model', 'inputImagery', 'images', 0, 'includedBands', 0]
+        }]})
+        const refreshed = session.runtime.refreshAsset('users/x/dem')
+        answerVersions({'users/x/dem': 'v1'})
+        await refreshed
+        expect(session.read('remapping-2').readiness.findings).toEqual([])
+        answerBands(['elevation'])
+        for (const id of ['remapping-1', 'remapping-2']) {
+            expect(session.read(id).readiness).toMatchObject({status: 'READY', findings: []})
+            expect(session.decide(id)).toBe('RETRIEVABLE')
+        }
+        session.runtime.close()
+    })
+
+    it('discards a missing-band answer observed under a superseded asset token', () => {
+        const session = watch()
+        const previous = unansweredFor('users/x/dem')
+        session.advance(270000)
+        answerVersions({'users/x/dem': 'v2'})
+        previous.forEach(request => {
+            request.answered = true
+            request.subscriber.next([{name: 'slope', arrayDimensions: 0}])
+            request.subscriber.complete()
+        })
+        expect(session.read('remapping-2').readiness).toMatchObject({status: 'NEEDS_EVIDENCE', findings: []})
+        answerBands(['elevation'])
+        expect(session.read('remapping-2').readiness.status).toBe('READY')
+        session.runtime.close()
+    })
+
+    it('follows applied upstream recipe output changes without rewriting either Remapping constraint', async () => {
+        const stack = stackOver('users/x/dem')
+        const source = reading('remapping-1', 'RECIPE_REF', stack.id, 'elevation_0')
+        const downstream = records()[1]
+        const session = sessionHolding([stack, source, downstream])
+        session.watch(source.id)
+        session.watch(downstream.id)
+        answerVersions({'users/x/dem': 'v1'})
+        answerBands(['elevation'])
+        expect(session.read(downstream.id).readiness.status).toBe('READY')
+        session.edit({...stack, model: {...stack.model, bandNames: {bandNames: [{
+            imageId: 'i-0', bands: [{id: 'b-0', originalName: 'elevation', outputName: 'renamed'}]
+        }]}}})
+        await settled()
+        answerBands(['elevation'])
+        expect(session.read(downstream.id).readiness).toMatchObject({status: 'NOT_READY', findings: [{
+            code: 'MISSING_INPUT_BAND', recipePath: ['remapping-2', 'remapping-1']
+        }]})
+        session.edit(stack)
+        await settled()
+        answerBands(['elevation'])
+        expect(session.read(downstream.id).readiness.status).toBe('READY')
+        expect(session.decide(downstream.id)).toBe('RETRIEVABLE')
+        expect(session.store.getState().process.loadedRecipes[source.id]).toEqual(source)
+        session.runtime.close()
+    })
+})
+
 describe('the assets an output reads', () => {
     it('are read when it is watched, though it is described from its configuration alone and runs observing nothing', () => {
         const session = sessionHolding([aoiMosaic('users/x/landcover')])

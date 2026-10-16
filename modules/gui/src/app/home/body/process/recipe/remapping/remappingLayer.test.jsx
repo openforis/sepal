@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
 
 // A Remapping recipe drawn on another recipe's map, its editor closed: whether its constraints read inputs and bands its
@@ -60,11 +60,12 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const REMAPPING = 'remapping-1'
 const HOST = 'host-1'
 
-let root, store
+let root, store, runtime
 
 beforeEach(() => {
     previews.constructed = []
     previews.shown = undefined
+    ASSET_BANDS['users/x/dem'] = ['elevation']
 })
 
 afterEach(async () => {
@@ -73,6 +74,21 @@ afterEach(async () => {
 })
 
 describe('a Remapping layer on another map', () => {
+    it.each([false, true])('withdraws and restores the preview when a used source band disappears and returns (downstream: %s)', async downstream => {
+        await onAnotherMap(reading('i-2', 'elevation'), downstream)
+        expect(previews.shown).toBeTruthy()
+        ASSET_BANDS['users/x/dem'] = ['slope']
+        await act(async () => runtime.refreshAsset('users/x/dem'))
+        await settled()
+        expect(previews.shown).toBeNull()
+        const builds = previews.constructed.length
+        ASSET_BANDS['users/x/dem'] = ['elevation']
+        await act(async () => runtime.refreshAsset('users/x/dem'))
+        await settled()
+        expect(previews.constructed.length).toBeGreaterThan(builds)
+        expect(previews.shown).toBe(previews.constructed.at(-1))
+    })
+
     it('is drawn while every constraint reads a band its input includes', async () => {
         await onAnotherMap(reading('i-2', 'elevation'))
 
@@ -126,16 +142,21 @@ const remappingModel = constraint => ({
 })
 
 // Drawn in the style Remapping offers for its legend.
-async function onAnotherMap(constraint) {
+async function onAnotherMap(constraint, downstream = false) {
     const remapping = {id: REMAPPING, type: 'REMAPPING', revision: 1, model: remappingModel(constraint), ui: {initialized: true}}
+    const dependent = {...remapping, id: 'remapping-2', model: {
+        inputImagery: {images: [{imageId: 'upstream', type: 'RECIPE_REF', id: REMAPPING, includedBands: [{band: 'class'}]}]},
+        legend: {entries: [{id: 'downstream', value: 1, label: 'Class', color: '#00ff00', constraints: [reading('upstream', 'class')]}]}
+    }}
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
             loadedRecipes: {
                 [REMAPPING]: remapping,
+                [dependent.id]: dependent,
                 [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}}
             },
-            recipes: LISTING,
+            recipes: [...LISTING, {id: dependent.id, name: 'Downstream', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
@@ -150,11 +171,12 @@ async function onAnotherMap(constraint) {
     await act(async () => root.render(
         <Provider store={store}>
             <SourceRuntimeProvider>
+                <Runtime/>
                 <Recipe id={HOST}>
                     <TabContext id={HOST} busyIn$={new Subject()}>
                         <RecipeImageLayer
-                            source={{id: 'remapping-layer', sourceConfig: {recipeId: REMAPPING}}}
-                            layerConfig={{visParams: getPreSetVisualizations(remapping)[0]}}
+                            source={{id: 'remapping-layer', sourceConfig: {recipeId: downstream ? dependent.id : REMAPPING}}}
+                            layerConfig={{visParams: getPreSetVisualizations(downstream ? dependent : remapping)[0]}}
                             map={{}}
                         />
                     </TabContext>
@@ -164,6 +186,11 @@ async function onAnotherMap(constraint) {
     ))
     await settled()
 }
+
+const Runtime = withSourceRuntime()(({sourceRuntime}) => {
+    runtime = sourceRuntime
+    return null
+})
 
 // A change applied to the recipe, as its panel applies it, and everything that follows settled.
 async function applied(change) {

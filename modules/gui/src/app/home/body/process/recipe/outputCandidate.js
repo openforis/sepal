@@ -53,6 +53,10 @@ export class OutputCandidate {
         return this.#reads().length > 0
     }
 
+    diagnostics() {
+        return this.#reads().flatMap(read => read.ownVerdict.diagnostic.diagnostics)
+    }
+
     stop() {
         this.#watch.stop()
     }

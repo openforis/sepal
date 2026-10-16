@@ -27,7 +27,7 @@ export class ImageForm extends Component {
 
     render() {
         return (
-            <Layout type={'vertical'}>
+            <Layout type={'vertical'} shrink>
                 {this.renderImageSelector()}
                 {this.renderIncludedBands()}
             </Layout>
@@ -89,7 +89,7 @@ export class ImageForm extends Component {
                 onRemove={id => this.removeBandSpec(id)}/>
         )
         return (
-            <Layout type='vertical' spacing='tight'>
+            <Layout type='vertical' spacing='tight' shrink>
                 {bandSpecs.length
                     ? bandSpecs
                     : <NoData message={msg('process.panels.inputImagery.form.noBands')}/>

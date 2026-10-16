@@ -94,7 +94,7 @@ class _Constraint extends React.Component {
 
     // Collapsed, marked as its form judges it, saying why on its title; expanded, its fields say it.
     render() {
-        const {selected, onClick, onRemove} = this.props
+        const {selected, onClick, onRemove, sourceError} = this.props
         const {imageSpec, invalid} = this.state
         return (
             <ListItem
@@ -104,7 +104,7 @@ class _Constraint extends React.Component {
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
-                    error={invalid && !selected ? this.errorMessage() : null}
+                    error={!selected ? (invalid ? this.errorMessage() : sourceError) : null}
                     description={selected ? null : this.toDescription()}
                     unsafeRemove
                     onRemove={() => onRemove()}>
@@ -154,7 +154,7 @@ class _Constraint extends React.Component {
     }
 
     renderBand() {
-        const {images, inputs: {image, band, bit}} = this.props
+        const {images, sourceError, inputs: {image, band, bit}} = this.props
         const bitButton = (
             <Form.Buttons
                 key={'bit'}
@@ -179,6 +179,7 @@ class _Constraint extends React.Component {
             <Form.Combo
                 label={msg('widget.imageConstraints.band.label')}
                 input={band}
+                errorMessage={sourceError ? {error: sourceError} : true}
                 options={bandOptions}
                 className={styles.band}
                 buttons={[bitButton]}

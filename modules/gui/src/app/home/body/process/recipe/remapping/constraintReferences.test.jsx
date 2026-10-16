@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
 import {asapScheduler, NEVER, observeOn, of} from 'rxjs'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
@@ -64,11 +64,101 @@ addRecipeType(indexChange())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
+let sourceBands = {}
+
+beforeEach(() => sourceBands = {})
 
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     container?.remove()
+})
+
+describe('a constraint whose included band is missing from its source', () => {
+    const saved = () => {
+        const recipe = remappingRecipe([constraintOf('used', 'i-1', 'missing', '>', 5)])
+        recipe.model.inputImagery.images[0].includedBands.push({id: 'missing', band: 'missing', type: 'continuous'})
+        return recipe
+    }
+
+    it('marks IMG and the input row, explains the constraint, and isolates a cancelled or applied repair', async () => {
+        const recipe = saved()
+        await open(recipe, <RemappingToolbar/>)
+        expect(inError(IMAGERY)).toBe(true)
+        expect(inError(MAPPING)).toBe(false)
+        expect(retrieveOffered()).toBe(false)
+        expect(previewGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: IMAGERY})
+        await press(IMAGERY)
+        const inputRow = [...document.getElementsByClassName(classOf(listItemStyles, 'verticalWrapper'))]
+            .find(row => row.textContent.includes(ASSET))
+        expect(inputRow.querySelector(`.${classOf(errorIndicatorStyles, 'indicator')}`)).not.toBeNull()
+        await click(innermost(ASSET))
+        expect(applyEnabled()).toBe(false)
+        expect([...document.querySelectorAll('[data-tooltip]')].some(element =>
+            element.dataset.tooltip.includes('missingBands') && element.dataset.tooltip.includes('missing'))).toBe(true)
+        await click([...document.querySelectorAll('button')].filter(button => button.textContent.includes('button.close')).at(-1))
+        await press(MAPPING)
+        expect(rowsInError()).toEqual([])
+        await openEntry('Forest')
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(recipe.model)
+        await expand('missing > 5')
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('sourceBandMissing')])
+        await choose(BAND, 'class')
+        expect(applyEnabled()).toBe(true)
+        expect(retrieveOffered()).toBe(false)
+        await press('button.cancel')
+        expect(model()).toEqual(recipe.model)
+        await openEntry('Forest')
+        await expand('missing > 5')
+        await choose(BAND, 'class')
+        await press('button.apply')
+        expect(inError(IMAGERY)).toBe(false)
+        expect(retrieveOffered()).toBe(true)
+        expect(previewGate()).toBeNull()
+    })
+
+    it('recovers on refreshing restored evidence, without editing the constraint, including an open modal', async () => {
+        const recipe = saved()
+        await openForest(recipe)
+        expect(applyEnabled()).toBe(false)
+        sourceBands[ASSET] = ['class', 'missing']
+        await act(async () => runtime.refreshAsset(ASSET))
+        await settled()
+        expect(applyEnabled()).toBe(true)
+        expect(inError(IMAGERY)).toBe(false)
+        expect(retrieveOffered()).toBe(true)
+        expect(previewGate()).toBeNull()
+        expect(model()).toEqual(recipe.model)
+    })
+
+    it('does not block an unused missing selection, but checks it if selected in a draft', async () => {
+        const recipe = saved()
+        recipe.model.legend.entries[0].constraints[0].band = 'class'
+        recipe.model.legend.entries[0].constraints[0].description = 'class > 5'
+        await openForest(recipe)
+        expect(retrieveOffered()).toBe(true)
+        await expand('class > 5')
+        await choose(BAND, 'missing')
+        expect(applyEnabled()).toBe(false)
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('sourceBandMissing')])
+        expect(retrieveOffered()).toBe(true)
+        await press('button.cancel')
+        expect(model()).toEqual(recipe.model)
+    })
+
+    it('allows a valid repair while another entry still reads the missing source band', async () => {
+        const recipe = saved()
+        recipe.model.legend.entries[1].constraints = [constraintOf('other', 'i-1', 'missing', '<', 2)]
+        await openForest(recipe)
+        await expand('missing > 5')
+        await choose(BAND, 'class')
+        expect(applyEnabled()).toBe(true)
+        await press('button.apply')
+        expect(entry('Forest').constraints[0].band).toBe('class')
+        expect(entry('Water').constraints).toEqual(recipe.model.legend.entries[1].constraints)
+        expect(retrieveOffered()).toBe(false)
+    })
 })
 
 describe('a mapping whose constraints read an input since removed and a band no longer included', () => {
@@ -411,7 +501,7 @@ const ASSET = 'users/x/a'
 const OPTICAL = 'projects/wiell-testing/assets/costa-rica/optical'
 const RADAR = 'projects/wiell-testing/assets/costa-rica/radar'
 const OTHER_RADAR = 'projects/wiell-testing/assets/costa-rica/other-radar'
-const assetBands = asset => asset === ASSET ? ['class'] : asset === OPTICAL ? ['nbr'] : ['VV_med', 'VH_med', 'class']
+const assetBands = asset => sourceBands[asset] || (asset === ASSET ? ['class'] : asset === OPTICAL ? ['nbr'] : ['VV_med', 'VH_med', 'class'])
 const MAPPING = 'process.remapping.panel.mapping.button.label'
 const IMAGERY = 'process.panels.inputImagery.button'
 const IMAGE = 'widget.imageConstraints.image.label'

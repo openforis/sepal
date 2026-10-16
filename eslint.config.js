@@ -16,7 +16,8 @@ const baseConfig = {
         'modules/gee/verify/bandEncodingPersistence.mjs',
         'modules/gee/verify/filteredCollectionEvidence.mjs',
         'modules/gee/verify/ccdcOutputBandSelection.mjs',
-        'modules/gee/verify/bandMathGeometry.mjs'
+        'modules/gee/verify/bandMathGeometry.mjs',
+        'modules/gee/verify/remappingSourceBands.mjs'
     ],
     languageOptions: {
         ecmaVersion: 'latest',

@@ -11,9 +11,9 @@
     overflow: hidden;
 }
 
-/* Long names must not widen the row and displace its diagnostic or actions. */
-.content, .info {
-    contain: inline-size;
+/* Allow constrained rows to shrink without hiding their intrinsic width from content-sized popups. */
+.container, .item, .content, .info {
+    min-width: 0;
 }
 
 .inline {

@@ -73,7 +73,7 @@ class _InputImagery extends React.Component {
 
     renderImages(images) {
         return (
-            <Layout type='vertical' spacing='tight'>
+            <Layout type='vertical' spacing='tight' shrink>
                 {images.map(image => this.renderImage(image))}
             </Layout>
         )

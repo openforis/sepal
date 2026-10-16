@@ -60,6 +60,11 @@
     flex-shrink: 1;
 }
 
+/* Let nested row content shrink while retaining its intrinsic size when the list sizes to its contents. */
+.horizontalWrapper, .main, .content {
+    min-width: 0;
+}
+
 .expansion {
     position: relative;
     display: flex;

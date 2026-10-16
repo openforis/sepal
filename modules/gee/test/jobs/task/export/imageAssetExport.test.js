@@ -655,6 +655,21 @@ describe('exporting a Remapping whose constraint no longer resolves', () => {
 
         await submit({recipe: remappingOf(remapping.id), bands: ['class']})
     })
+
+    it('refuses a used band absent from asset evidence, also downstream, and exports when the band returns', async () => {
+        const remapping = remappingReading('r-1', 'elevation')
+        remapping.model.inputImagery.images = [{imageId: 'r-1', type: 'ASSET', id: DEM_ASSET, includedBands: [{band: 'elevation'}]}]
+        state.catalogue = {[remapping.id]: remapping}
+        state.assets[DEM_ASSET].bands = [{name: 'other', arrayDimensions: 0}]
+        for (const recipe of [remapping, remappingOf(remapping.id)]) {
+            await expect(submit({recipe, bands: ['class']})).rejects.toThrow(/cannot run: MISSING_INPUT_BAND$/)
+        }
+        expect(state.exported).toEqual([])
+        state.assets[DEM_ASSET].bands = [{name: 'elevation', arrayDimensions: 0}]
+        await submit({recipe: remapping, bands: ['class']})
+        state.exported = []
+        await submit({recipe: remappingOf(remapping.id), bands: ['class']})
+    })
 })
 
 describe('exporting a Masking whose mask cannot be had', () => {

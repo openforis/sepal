@@ -3,8 +3,11 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {reconcileConstraintInputs} from '~/app/home/body/process/inputImages'
+import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
+import {constraintSourceErrors, constraintSourceRequirement} from '~/app/home/body/process/recipe/remapping/remappingRequirements'
 import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -60,7 +63,7 @@ class _Mapping extends React.Component {
     renderContent() {
         const {legendEntries} = this.props
         return (
-            <Layout type='vertical' spacing='tight'>
+            <Layout type='vertical' spacing='tight' shrink>
                 {legendEntries.map(entry => this.renderEntryMapping(entry))}
             </Layout>
         )
@@ -94,7 +97,7 @@ class _Mapping extends React.Component {
     }
 
     renderMappingOverview({id, color, value, label, constraints = [], booleanOperator}) {
-        const {recipeNameById, inputImagery} = this.props
+        const {recipeNameById, inputImagery, recipeId, sourceRuntime} = this.props
         const images = inputImagery.map(inputImage => {
             const id = inputImage.imageId
             const description = inputImage.type === 'RECIPE_REF'
@@ -119,6 +122,11 @@ class _Mapping extends React.Component {
                     constraints={constraints}
                     applyOn={'bands'}
                     checkReferences
+                    createCandidate={onChange => new OutputCandidate({
+                        recipeId, sourceRuntime, declaration: constraintSourceRequirement,
+                        valuesToModel: constraints => ({entryId: id, constraints}), onChange
+                    })}
+                    candidateErrors={(diagnostics, constraints) => constraintSourceErrors(diagnostics, constraints, inputImagery)}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />
                 {constraints.length
@@ -158,6 +166,7 @@ export const Mapping = compose(
     connect(mapStateToProps),
     withItemProblems('mapping'),
     recipeFormPanel({id: 'mapping', mapRecipeToProps}),
+    withSourceRuntime(),
     withActivators()
 )
 

@@ -65,10 +65,22 @@ its legend. Input imagery says "Please add at least one image." - except while t
 list holds Next until it has one - its layer is not drawn, Retrieve is held and the asset export is refused. Its
 constraints, reading inputs no longer listed, are found too. While what its image builds is being read, Retrieve waits.
 
-Not checked: whether an input's source still holds a band the input includes - an asset whose band was since removed,
-say. That is not a constraint reading a band its input does not include, and Remapping's description reads no input, so
-nothing establishes it before Earth Engine fails ([Open issues](#open-issues)). The constraint editor checks references
-only where Remapping asks it to; its other users judge their constraints as before.
+A successful current source description is also checked for each included band a constraint actually reads.
+If the source no longer provides it, shared readiness reports `MISSING_INPUT_BAND` at that input's included band.
+This blocks rendering, Retrieve and the existing asset-export route, including downstream recipes. The known `class`
+description remains available. Missing inputs and bands not included still have their separate constraint findings;
+pending, failed or superseded evidence never establishes a missing source band.
+
+The affected input row and IMG button use the existing unavailable-band feedback. MAP and its legend entries do not
+repeat that originating input error. The input editor retains its detailed unavailable selections, and the constraint
+editor explains which selected band the source no longer provides. Its actual draft is read through `OutputCandidate`
+and the same shared rule: Apply is disabled for that draft's missing source bands, a valid repair can be applied even
+while another entry remains invalid, and Cancel changes no applied availability. No saved validity or extra assessment
+work type is introduced. Other callers of the constraint editor keep their existing behaviour.
+
+Restoring the source band and refreshing its evidence restores the chain without editing the constraints or their
+retained source identity. For an asset whose version token has not changed, refresh the **source asset**: refreshing
+only a downstream output refreshes that question but does not also refresh separately held upstream output answers.
 
 ## Output
 
@@ -91,23 +103,23 @@ it stores; a recipe input applies it as its type does. On live Earth Engine
 So a band no constraint reads need not prevent execution, and refusing every missing selected band in the
 description would refuse recipes that execute.
 
+The read-only probe `modules/gee/verify/remappingSourceBands.mjs` also samples a public DEM through recipe inputs.
+An unused missing selection executes through Stack, which filters its output mappings to the requested names. The
+same selection fails through an Asset recipe (`ASSET_MOSAIC`), which explicitly selects every requested name. A used
+missing asset band fails both the first Remapping and a second Remapping over it. These live checks are distinct from
+the mocked readiness, GUI and export tests. This packet covers bands constraints read; it does not impose a uniform
+unused-selection policy across recipe types.
+
 ## Open issues
 
 The [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
-tracks the remaining work below. Automatic recovery when the same input source returns is implemented; checking
-whether that source still provides a constraint's band is the separate outstanding gap.
+tracks the remaining work below. Automatic source recovery and checking used bands against current source
+descriptions are implemented.
 
-- **Its inputs are not marked above their editor.** The input editor marks a selected band its source no longer
-  has, but nothing marks the input's row in Input imagery or the Input imagery button, as Stack and Band Math do
-  from their output reads: Remapping's description reads no input, so its output read establishes nothing about
-  them. A design was prototyped and set aside: an editor-only assessment of the bands the inputs select, apart from
-  the output - a provider `assess`, a resolver assessment mode, an `ASSESS` runtime work type and a second editor
-  question - marking every established missing band at all three levels while leaving the output, Retrieve and
-  asset export unchanged, pending or failed evidence counting as unknown. It was judged too broad to land for this
-  gap alone, and is better taken up as a foundation for editor validation across recipes, if at all.
-- **An included band its source no longer holds is not judged.** The constraint reads a band its input includes, so
-  it is not a broken reference, and Remapping's description reads no input, so its output read does not establish that
-  the source lost the band. Earth Engine fails when it builds the image; the input editor marks the band (above).
+- **Unused missing selections on recipe inputs.** Execution differs by source type, as described above. Decide whether
+  to preserve those selection semantics and add type-specific requirements, or change execution to select only used
+  bands, before broadening validation. Unused missing asset selections remain distinct and do not block readiness.
+  The previously rejected editor-assessment framework has not been revived to mark them.
 - **Routes that build the image unchecked.** The asset export refuses a broken constraint, but Preview, the Drive and
   workspace exports and the other image routes build it as before
   ([Execution readiness](../design/recipes/source-resolution.md#consumers)): a constraint naming a removed input fails
@@ -115,6 +127,30 @@ whether that source still provides a constraint's band is the separate outstandi
   applies `selection` - only asset inputs are verified live.
 
 ## Verification
+
+The source-band packet adds shared used-band/downstream cases, mounted constraint draft repair and Cancel cases,
+input-row/IMG feedback, preview withdrawal/restoration, runtime pending/failed/superseded evidence and source refresh,
+and mocked asset-export refusal/recovery. `remappingSourceBands.mjs` is the separate live EE check described above.
+
+### Manual source-band sequence
+
+1. Create a working Band Math with two output bands, `used` and `spare`. Add it to Remapping A, include both bands,
+   and give an entry a constraint on `used`. Create Remapping B using A's `class` output. Confirm both render and
+   offer Retrieve.
+2. In the upstream Band Math output editor, remove `used` while keeping `spare`. Cancel first: both Remappings should
+   remain available. Repeat and Apply: A's IMG and input row should be marked; its input editor should explain the
+   missing selection. Both Remappings should stop rendering and refuse Retrieve/asset export, with B attributing
+   the failure upstream. A's MAP and B's own sections should not acquire copies of the source error.
+3. Open A's constraint. Its selected `used` band should explain the source problem and Apply should be disabled.
+   Select `spare`: Apply should become available, but applied availability should remain blocked. Cancel to keep the
+   original constraint.
+4. Restore the upstream output with the exact name `used` and Apply. With current source evidence, A and B should
+   render and offer Retrieve again. No constraint band, operator, value or retained source identity should change.
+   For external asset changes, refresh the source asset's evidence after restoring its band.
+5. As a separate check, leave an unused missing selection on an asset input while every constraint reads an available
+   band. It should not block rendering/Retrieve. Recipe-input differences are the open policy described above.
+
+### Automated coverage
 
 - `modules/gee/verify/classificationOutputBands.mjs` - on live Earth Engine: the declared band against the image
   built, with and without legend entries, and each case of a missing input band above, built and at one pixel; an asset
@@ -140,7 +176,7 @@ whether that source still provides a constraint's band is the separate outstandi
 - `modules/gui/src/app/home/body/process/recipe/remapping/panelActivation.test.jsx` - which of its panels open and
   give way, an edited legend or input holding the others closed, and the set-up wizard.
 
-Manual recovery check:
+### Manual source recovery check
 
 1. Start with A reading optical `nbr < 500` and B reading radar `VV_med < -7`. For the supplied already-broken recipe,
    first repair B's input and band in Mapping and Apply.

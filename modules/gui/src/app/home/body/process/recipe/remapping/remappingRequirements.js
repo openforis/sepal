@@ -2,6 +2,7 @@ import _ from 'lodash'
 
 import {CONSTRAINT_BAND_NOT_INCLUDED, MISSING_CONSTRAINT_INPUT} from '#sepal/recipe/output/diagnostic'
 import {LEGEND_ENTRIES_PATH} from '#sepal/recipe/type/remapping'
+import {INPUT_BANDS, inputImageryRequirements} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
@@ -16,6 +17,27 @@ import {IMAGE_OUTPUT} from '../recipeOutput'
 export const CONSTRAINT_REFERENCES_REQUIREMENT = 'remapping.constraintReferences'
 
 const MAPPING = {id: 'mapping', label: 'process.remapping.panel.mapping.button.label'}
+
+export const remappingInputRequirements = inputImageryRequirements(({path}) => path[3])
+
+export const constraintSourceRequirement = remappingInputRequirements.find(({id}) => id === INPUT_BANDS)
+constraintSourceRequirement.editor = {
+    candidate: (recipe, {entryId, constraints}) => ({
+        ...recipe,
+        model: {...recipe.model, legend: {...recipe.model.legend, entries: recipe.model.legend.entries.map(entry =>
+            entry.id === entryId ? {...entry, constraints} : entry)}}
+    })
+}
+
+// Present the input findings only on draft constraints reading those bands. Other entries' failures do not prevent
+// applying this entry's repair. The candidate uses the same rule, observations and currency as the applied output.
+export const constraintSourceErrors = (diagnostics, constraints, images) => Object.fromEntries(constraints.flatMap(constraint => {
+    const missing = diagnostics.some(({path}) => {
+        const image = images[path[3]]
+        return image?.imageId === constraint.image && image.includedBands?.[path[5]]?.band === constraint.band
+    })
+    return missing ? [[constraint.id, msg('process.remapping.requirement.sourceBandMissing', {band: constraint.band})]] : []
+}))
 
 export const remappingRequirements = [
     {

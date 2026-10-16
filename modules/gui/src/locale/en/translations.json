@@ -4973,7 +4973,8 @@
       },
       "requirement": {
         "bandNotIncluded": "A constraint reads band \"{band}\", which its input does not include.",
-        "missingInput": "A constraint reads an input that has been removed."
+        "missingInput": "A constraint reads an input that has been removed.",
+        "sourceBandMissing": "The input source no longer provides band \"{band}\". Restore it or select another band."
       },
       "tabPlaceholder": "Remapping"
     },
