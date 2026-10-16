@@ -1,17 +1,27 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
-
-import {jest} from '@jest/globals'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 // userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before importing the chain.
-jest.unstable_mockModule('./config.js', () => ({
-    amqpUri: 'amqp://localhost', googleOauthCallbackBaseUrl: '', googleOauthClientId: '',
-    googleOauthClientSecret: '', googleProjectId: '', port: 80, recaptchaApiKey: '',
-    recaptchaMinScore: 0.7, recaptchaOptional: true, recaptchaSiteKey: '', sepalHost: 'sepal.example.org'
-}))
+mock.module('./config.js', {
+    exports: {
+        amqpUri: 'amqp://localhost',
+        googleOauthCallbackBaseUrl: '',
+        googleOauthClientId: '',
+        googleOauthClientSecret: '',
+        googleProjectId: '',
+        port: 80,
+        recaptchaApiKey: '',
+        recaptchaMinScore: 0.7,
+        recaptchaOptional: true,
+        recaptchaSiteKey: '',
+        sepalHost: 'sepal.example.org'
+    }
+})
 
 const {hashPassword} = await import('./crypto.js')
 const {UserApi} = await import('./userApi.js')
@@ -25,7 +35,7 @@ describe('UserApi', () => {
     let repository
     let api
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
     })
@@ -41,7 +51,7 @@ describe('UserApi', () => {
         })
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     test('reports the current user from the database', async () => {
         await givenActiveUser()
@@ -49,8 +59,8 @@ describe('UserApi', () => {
 
         await api.current(ctx)
 
-        expect(ctx.body.username).toBe(USERNAME)
-        expect(ctx.body.email).toBe(EMAIL)
+        assert.equal(ctx.body.username, USERNAME)
+        assert.equal(ctx.body.email, EMAIL)
     })
 
     test('renders the nss snapshot from the stored identities', async () => {
@@ -60,9 +70,9 @@ describe('UserApi', () => {
         await api.nssSnapshot(ctx)
 
         const identities = await repository.listIdentities()
-        expect(identities).toHaveLength(1)
-        expect(ctx.body.passwd).toContain(`${USERNAME}:x:${identities[0].uid}:`)
-        expect(ctx.body.group).toContain(`${USERNAME}:x:${identities[0].gid}:`)
+        assert.equal(identities.length, 1)
+        assert.ok(ctx.body.passwd.includes(`${USERNAME}:x:${identities[0].uid}:`))
+        assert.ok(ctx.body.group.includes(`${USERNAME}:x:${identities[0].gid}:`))
     })
 
     test('records the login time when authentication succeeds', async () => {
@@ -72,8 +82,8 @@ describe('UserApi', () => {
         await api.authenticate(ctx)
 
         const login = await repository.mostRecentLogin(USERNAME)
-        expect(ctx.body.username).toBe(USERNAME)
-        expect(login.timestamp).toEqual(expect.any(String))
+        assert.equal(ctx.body.username, USERNAME)
+        assert.equal(typeof login.timestamp, 'string')
     })
 
     test('rejects authentication without recording a login time', async () => {
@@ -83,8 +93,8 @@ describe('UserApi', () => {
         await api.authenticate(ctx)
 
         const login = await repository.mostRecentLogin(USERNAME)
-        expect(ctx.status).toBe(401)
-        expect(login).toEqual({})
+        assert.equal(ctx.status, 401)
+        assert.deepEqual(login, {})
     })
 
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,

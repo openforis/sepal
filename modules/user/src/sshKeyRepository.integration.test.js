@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -10,7 +12,7 @@ describe('SshKeyRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'ssh_key_repository', migrations: MIGRATIONS_PATH})
     })
@@ -20,7 +22,7 @@ describe('SshKeyRepository', () => {
         repository = new SshKeyRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('add', () => {
         test('stores a key and answers it as it will be listed', async () => {
@@ -28,9 +30,9 @@ describe('SshKeyRepository', () => {
 
             const added = await repository.add(ALICE, key)
 
-            expect(added).toMatchObject(key)
-            expect(added.creationTime).toMatch(ISO_TIMESTAMP)
-            expect(await repository.list(ALICE)).toEqual([added])
+            assert.partialDeepStrictEqual(added, key)
+            assert.match(added.creationTime, ISO_TIMESTAMP)
+            assert.deepEqual(await repository.list(ALICE), [added])
         })
 
         test('answers null when the user already has a key with that fingerprint', async () => {
@@ -39,8 +41,8 @@ describe('SshKeyRepository', () => {
 
             const added = await repository.add(ALICE, {...key, name: 'Again'})
 
-            expect(added).toBeNull()
-            expect(await repository.count(ALICE)).toBe(1)
+            assert.equal(added, null)
+            assert.equal(await repository.count(ALICE), 1)
         })
 
         test('lets two users register the same key', async () => {
@@ -49,14 +51,14 @@ describe('SshKeyRepository', () => {
 
             const added = await repository.add(BOB, key)
 
-            expect(added).toMatchObject(key)
+            assert.partialDeepStrictEqual(added, key)
         })
 
         test('stores a name with characters outside the basic multilingual plane', async () => {
             const added = await repository.add(ALICE, aKey({name: 'Laptop 🔑'}))
 
-            expect((await repository.list(ALICE))[0].name).toBe(added.name)
-            expect(added.name).toBe('Laptop 🔑')
+            assert.equal((await repository.list(ALICE))[0].name, added.name)
+            assert.equal(added.name, 'Laptop 🔑')
         })
     })
 
@@ -67,19 +69,19 @@ describe('SshKeyRepository', () => {
 
             const listed = await repository.list(ALICE)
 
-            expect(listed.map(({id}) => id)).toEqual([first.id, second.id])
+            assert.deepEqual(listed.map(({id}) => id), [first.id, second.id])
         })
 
         test('lists only the user\'s own keys', async () => {
             await repository.add(BOB, aKey())
 
-            expect(await repository.list(ALICE)).toEqual([])
+            assert.deepEqual(await repository.list(ALICE), [])
         })
 
         test('matches the username regardless of case', async () => {
             const added = await repository.add(ALICE, aKey())
 
-            expect(await repository.list(ALICE.toUpperCase())).toEqual([added])
+            assert.deepEqual(await repository.list(ALICE.toUpperCase()), [added])
         })
     })
 
@@ -89,8 +91,8 @@ describe('SshKeyRepository', () => {
 
             const removed = await repository.remove(ALICE.toUpperCase(), added.id)
 
-            expect(removed).toBe(true)
-            expect(await repository.list(ALICE)).toEqual([])
+            assert.equal(removed, true)
+            assert.deepEqual(await repository.list(ALICE), [])
         })
 
         test('leaves another user\'s key in place', async () => {
@@ -98,8 +100,8 @@ describe('SshKeyRepository', () => {
 
             const removed = await repository.remove(BOB, added.id)
 
-            expect(removed).toBe(false)
-            expect(await repository.list(ALICE)).toEqual([added])
+            assert.equal(removed, false)
+            assert.deepEqual(await repository.list(ALICE), [added])
         })
     })
 

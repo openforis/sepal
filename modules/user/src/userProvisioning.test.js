@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {createEnsureProvisioned} from './userProvisioning.js'
 
 // Lazy provisioning, run when a user leaves PENDING. It must never fail the web request that triggered
@@ -15,8 +18,8 @@ describe('ensureProvisioned', () => {
     test('provisions the user and reports them back with the key it stored', async () => {
         const provisionedUser = await ensureProvisioned()(aUser())
 
-        expect(provisioned).toEqual([[USERNAME, UID, GID]])
-        expect(provisionedUser.sshPublicKey).toBe(PUBLIC_KEY)
+        assert.deepEqual(provisioned, [[USERNAME, UID, GID]])
+        assert.equal(provisionedUser.sshPublicKey, PUBLIC_KEY)
     })
 
     // The script is idempotent, and a stored key is no proof the filesystem still has the home it
@@ -25,8 +28,8 @@ describe('ensureProvisioned', () => {
         await ensureProvisioned()(aUser({sshPublicKey: 'ssh-rsa EXISTING'}))
 
         const stored = await repository.findByUsername(USERNAME)
-        expect(provisioned).toEqual([[USERNAME, UID, GID]])
-        expect(stored.sshPublicKey).toBe(PUBLIC_KEY)
+        assert.deepEqual(provisioned, [[USERNAME, UID, GID]])
+        assert.equal(stored.sshPublicKey, PUBLIC_KEY)
     })
 
     // Chowning with a made-up uid/gid could orphan files that already exist.
@@ -35,8 +38,8 @@ describe('ensureProvisioned', () => {
 
         const unchanged = await ensureProvisioned()(user)
 
-        expect(provisioned).toEqual([])
-        expect(unchanged).toBe(user)
+        assert.deepEqual(provisioned, [])
+        assert.equal(unchanged, user)
     })
 
     // Web access must not depend on provisioning; the next activate or reset tries again.
@@ -50,8 +53,8 @@ describe('ensureProvisioned', () => {
         })(user)
 
         const stored = await repository.findByUsername(USERNAME)
-        expect(unchanged).toBe(user)
-        expect(stored.sshPublicKey).toBeNull()
+        assert.equal(unchanged, user)
+        assert.equal(stored.sshPublicKey, null)
     })
 
     test('stores no key when provisioning produced none', async () => {
@@ -60,8 +63,8 @@ describe('ensureProvisioned', () => {
         const unchanged = await ensureProvisioned({provision: async () => ''})(user)
 
         const stored = await repository.findByUsername(USERNAME)
-        expect(unchanged).toBe(user)
-        expect(stored.sshPublicKey).toBeNull()
+        assert.equal(unchanged, user)
+        assert.equal(stored.sshPublicKey, null)
     })
 
     const ensureProvisioned = (over = {}) => createEnsureProvisioned({

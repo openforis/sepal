@@ -4,8 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
@@ -23,14 +23,7 @@
         "#config/*.json": "./config/*.json"
     },
     "type": "module",
-    "jest": {
-        "setupFilesAfterEnv": [
-            "jest-expect-message"
-        ]
-    },
     "devDependencies": {
-        "amqplib": "^2.2.0",
-        "jest": "^30.5.2",
-        "jest-expect-message": "^1.1.3"
+        "amqplib": "^2.2.0"
     }
 }

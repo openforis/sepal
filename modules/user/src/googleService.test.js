@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {InvalidTokenError} from './googleOAuth.js'
 import {GoogleService} from './googleService.js'
 
@@ -23,8 +26,8 @@ describe('GoogleService', () => {
             const refreshed = await service().refreshGoogleTokens(USERNAME, null)
 
             const stored = await storedTokens()
-            expect(refreshed).toBeNull()
-            expect(stored).toBeNull()
+            assert.equal(refreshed, null)
+            assert.equal(stored, null)
         })
 
         test('leaves a token with plenty of life left alone', async () => {
@@ -32,24 +35,25 @@ describe('GoogleService', () => {
 
             const result = await service({googleOAuth: refusingToRefresh()}).refreshGoogleTokens(USERNAME, tokens)
 
-            expect(result).toBe(tokens)
+            assert.equal(result, tokens)
         })
 
         test('refreshes a token that is about to expire', async () => {
             const result = await service().refreshGoogleTokens(USERNAME, tokensExpiringIn(9 * MINUTE))
 
             const stored = await storedTokens()
-            expect(result).toEqual(REFRESHED_TOKENS)
-            expect(stored).toEqual(REFRESHED_TOKENS)
-            expect(credentialsFile[USERNAME]).toEqual(REFRESHED_TOKENS)
-            expect(published).toEqual([expect.objectContaining({googleTokens: REFRESHED_TOKENS})])
+            assert.deepEqual(result, REFRESHED_TOKENS)
+            assert.deepEqual(stored, REFRESHED_TOKENS)
+            assert.deepEqual(credentialsFile[USERNAME], REFRESHED_TOKENS)
+            assert.equal(published.length, 1)
+            assert.partialDeepStrictEqual(published, [{googleTokens: REFRESHED_TOKENS}])
         })
 
         // Ten minutes is the boundary, and it counts as due.
         test('refreshes a token expiring exactly ten minutes from now', async () => {
             const result = await service().refreshGoogleTokens(USERNAME, tokensExpiringIn(10 * MINUTE))
 
-            expect(result).toEqual(REFRESHED_TOKENS)
+            assert.deepEqual(result, REFRESHED_TOKENS)
         })
 
         test('takes the user\'s stored tokens when the caller passes none', async () => {
@@ -57,7 +61,7 @@ describe('GoogleService', () => {
 
             const result = await service().refreshGoogleTokens(USERNAME)
 
-            expect(result).toEqual(REFRESHED_TOKENS)
+            assert.deepEqual(result, REFRESHED_TOKENS)
         })
 
         // Google has told us the refresh token is no good; keeping it would fail on every attempt.
@@ -68,10 +72,11 @@ describe('GoogleService', () => {
             const result = await service({googleOAuth: rejecting}).refreshGoogleTokens(USERNAME)
 
             const stored = await storedTokens()
-            expect(result).toBeNull()
-            expect(stored).toBeNull()
-            expect(credentialsFile[USERNAME]).toBeNull()
-            expect(published).toEqual([expect.objectContaining({googleTokens: null})])
+            assert.equal(result, null)
+            assert.equal(stored, null)
+            assert.equal(credentialsFile[USERNAME], null)
+            assert.equal(published.length, 1)
+            assert.partialDeepStrictEqual(published, [{googleTokens: null}])
         })
 
         // Anything else is an outage, not a verdict on the token: the caller must see it.
@@ -80,11 +85,14 @@ describe('GoogleService', () => {
             await repository.updateGoogleTokens(USERNAME, stored)
             const failing = failingToRefresh(new Error('google is down'))
 
-            await expect(service({googleOAuth: failing}).refreshGoogleTokens(USERNAME)).rejects.toThrow('google is down')
+            await assert.rejects(
+                service({googleOAuth: failing}).refreshGoogleTokens(USERNAME),
+                /google is down/
+            )
 
             const kept = await storedTokens()
-            expect(kept).toEqual(stored)
-            expect(published).toEqual([])
+            assert.deepEqual(kept, stored)
+            assert.deepEqual(published, [])
         })
     })
 
@@ -93,10 +101,10 @@ describe('GoogleService', () => {
             const user = await service().saveTokens(USERNAME, REFRESHED_TOKENS)
 
             const stored = await storedTokens()
-            expect(stored).toEqual(REFRESHED_TOKENS)
-            expect(credentialsFile[USERNAME]).toEqual(REFRESHED_TOKENS)
-            expect(user.googleTokens).toEqual(REFRESHED_TOKENS)
-            expect(published).toEqual([user])
+            assert.deepEqual(stored, REFRESHED_TOKENS)
+            assert.deepEqual(credentialsFile[USERNAME], REFRESHED_TOKENS)
+            assert.deepEqual(user.googleTokens, REFRESHED_TOKENS)
+            assert.deepEqual(published, [user])
         })
 
         test('clears them when given none', async () => {
@@ -105,8 +113,8 @@ describe('GoogleService', () => {
             await service().saveTokens(USERNAME, null)
 
             const stored = await storedTokens()
-            expect(stored).toBeNull()
-            expect(credentialsFile[USERNAME]).toBeNull()
+            assert.equal(stored, null)
+            assert.equal(credentialsFile[USERNAME], null)
         })
 
         // The database is the source of truth, and the gee module reads tokens off the user as well as
@@ -119,9 +127,9 @@ describe('GoogleService', () => {
             }).saveTokens(USERNAME, REFRESHED_TOKENS)
 
             const stored = await storedTokens()
-            expect(stored).toEqual(REFRESHED_TOKENS)
-            expect(user.googleTokens).toEqual(REFRESHED_TOKENS)
-            expect(published).toEqual([user])
+            assert.deepEqual(stored, REFRESHED_TOKENS)
+            assert.deepEqual(user.googleTokens, REFRESHED_TOKENS)
+            assert.deepEqual(published, [user])
         })
     })
 

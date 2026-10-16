@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {publishUserLocked, publishUserUnlocked, publishUserUpdated, userChanged$, userToEventMap, userUpdated$} from './events.js'
 
 const user = {
@@ -20,7 +23,7 @@ const user = {
 }
 
 test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-field googleTokens)', () => {
-    expect(userToEventMap(user)).toEqual({
+    assert.deepEqual(userToEventMap(user), {
         id: 10006,
         name: 'Look One',
         username: 'lookap1',
@@ -40,13 +43,13 @@ test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-f
 })
 
 test('userToEventMap nulls googleTokens when absent', () => {
-    expect(userToEventMap({...user, googleTokens: null}).googleTokens).toBeNull()
+    assert.equal(userToEventMap({...user, googleTokens: null}).googleTokens, null)
 })
 
 test('userToEventMap omits googleUser and admin (not in the event payload)', () => {
     const map = userToEventMap(user)
-    expect('googleUser' in map).toBe(false)
-    expect('admin' in map).toBe(false)
+    assert.equal('googleUser' in map, false)
+    assert.equal('admin' in map, false)
 })
 
 describe('userChanged$', () => {
@@ -59,7 +62,7 @@ describe('userChanged$', () => {
         publishUserUnlocked(user)
 
         subscription.unsubscribe()
-        expect(changed).toEqual([user, user, user])
+        assert.deepEqual(changed, [user, user, user])
     })
 
     test('an unlock is not published as UserUpdated', () => {
@@ -69,6 +72,6 @@ describe('userChanged$', () => {
         publishUserUnlocked(user)
 
         subscription.unsubscribe()
-        expect(updated).toEqual([])
+        assert.deepEqual(updated, [])
     })
 })
