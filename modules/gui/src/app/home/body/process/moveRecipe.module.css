@@ -1,0 +1,8 @@
+.panel {
+    width: 24rem;
+}
+
+/* The picker keeps its own width in a popup; here it takes the dialog's. */
+.panel .picker {
+    width: auto;
+}
