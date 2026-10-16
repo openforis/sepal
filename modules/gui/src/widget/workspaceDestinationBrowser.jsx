@@ -153,7 +153,7 @@ class _WorkspaceDestinationBrowser extends React.Component {
         return (
             <ButtonPopup
                 look='add'
-                icon='plus'
+                icon='folder-plus'
                 label={msg('widget.workspaceDestination.browser.createFolder.label')}
                 vPlacement='below'
                 hPlacement='over-right'>
