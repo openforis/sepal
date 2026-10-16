@@ -41,6 +41,9 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` only)
 - `lib/python/shared` - Shared Python utilities
 
+The Node.js libraries carry no lockfile of their own: each module locks the dependencies of the libraries it installs in
+`modules/<module>/lib/<library>/package-lock.json`, which its image, its dev container and CI install from.
+
 **Import mechanism:** The shared library is accessed via Node.js import maps (`#sepal/*`). In the shared lib's own `package.json`: `"#sepal/*": "./src/*.js"`. In consuming modules, it's linked as a dependency (`"sepal": "../../lib/js/shared"`) and mapped as `"#sepal/*": "sepal/src/*.js"`. Code imports look like `import {something} from '#sepal/httpServer'`.
 
 ### Inter-Service Communication

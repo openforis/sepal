@@ -28,6 +28,7 @@ RUN npm install -g nodemon
 
 # Install shared node.js lib
 ADD lib/js/shared ${SHARED}
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json ${SHARED}/
 WORKDIR ${SHARED}
 USER root
 RUN chown -R node: ${SHARED}

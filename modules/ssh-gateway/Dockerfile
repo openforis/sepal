@@ -40,7 +40,7 @@ RUN /usr/local/bin/init_image.sh
 # install lib packages
 WORKDIR ${SHARED}
 ADD lib/js/shared .
-ADD modules/${MODULE_NAME}/package-lock.json .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
 RUN npm install --omit=dev
 
 # install module packages
