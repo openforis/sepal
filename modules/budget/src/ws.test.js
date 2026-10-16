@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {Subject} from 'rxjs'
 
 import {createBudgetWsProtocol} from './ws.js'
@@ -49,7 +52,7 @@ describe('budget ws protocol', () => {
         const {sent, handler} = setup()
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: PAYLOAD}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: PAYLOAD}])
     })
 
     it('forwards a spending$ emission to all tabs of a subscribed user', async () => {
@@ -58,7 +61,7 @@ describe('budget ws protocol', () => {
         await flush()
         sent.length = 0
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([{username: 'alice', data: PAYLOAD}])
+        assert.deepEqual(sent, [{username: 'alice', data: PAYLOAD}])
     })
 
     it('ignores spending$ emissions for users without a subscription', async () => {
@@ -67,7 +70,7 @@ describe('budget ws protocol', () => {
         await flush()
         sent.length = 0
         spending$.next({username: 'bob', spending: DTO})
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('forwards one multicast per emission even with multiple subscriptions', async () => {
@@ -77,7 +80,7 @@ describe('budget ws protocol', () => {
         await flush()
         sent.length = 0
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([{username: 'alice', data: PAYLOAD}])
+        assert.deepEqual(sent, [{username: 'alice', data: PAYLOAD}])
     })
 
     it('stops forwarding after subscriptionDown', async () => {
@@ -87,7 +90,7 @@ describe('budget ws protocol', () => {
         handler({event: 'subscriptionDown', user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1'})
         sent.length = 0
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('drops all of a client\'s subscriptions on clientDown', async () => {
@@ -98,7 +101,7 @@ describe('budget ws protocol', () => {
         handler({event: 'clientDown', user: {username: 'alice'}, clientId: 'c1'})
         sent.length = 0
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('drops all of a user\'s subscriptions on userDown', async () => {
@@ -109,7 +112,7 @@ describe('budget ws protocol', () => {
         handler({event: 'userDown', user: {username: 'alice'}})
         sent.length = 0
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('unicasts a fresh snapshot on a {refresh: true} data message', async () => {
@@ -119,7 +122,7 @@ describe('budget ws protocol', () => {
         sent.length = 0
         handler({user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1', data: {refresh: true}})
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: PAYLOAD}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: PAYLOAD}])
     })
 
     it('swallows snapshot failures without sending or crashing', async () => {
@@ -130,7 +133,7 @@ describe('budget ws protocol', () => {
         })
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('unsubscribes from spending$ on stop$', async () => {
@@ -140,6 +143,6 @@ describe('budget ws protocol', () => {
         sent.length = 0
         stop$.next()
         spending$.next({username: 'alice', spending: DTO})
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 })

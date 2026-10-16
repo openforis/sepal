@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -9,14 +11,14 @@ describe('budget database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -26,8 +28,8 @@ describe('budget database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.user_budget WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             user_budget: 'ascii_general_ci',
             user_monthly_storage: 'ascii_general_ci',
             user_spending: 'ascii_general_ci',
@@ -43,10 +45,10 @@ describe('budget database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining([
+            assert.ok(new Set([
                 'budget_update_request', 'default_user_budget', 'open_session_use',
                 'user_budget', 'user_monthly_storage', 'user_spending'
-            ]))
+            ]).isSubsetOf(new Set(tables)))
         })
 
         test('create them empty, importing nothing', async () => {
@@ -55,7 +57,7 @@ describe('budget database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const budgets = await userBudgetUsernames(dbName)
-            expect(budgets).toEqual([])
+            assert.deepEqual(budgets, [])
         })
     })
 
