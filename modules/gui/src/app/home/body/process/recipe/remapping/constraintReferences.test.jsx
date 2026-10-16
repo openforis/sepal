@@ -24,7 +24,14 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: ({asset, recipe}) => of(recipe ? ['class'] : assetBands(asset).map(name => ({name, arrayDimensions: 0}))),
+        bands$: ({asset, recipe, includeDataTypes}) => {
+            const names = recipe
+                ? recipe.type === 'BAND_MATH'
+                    ? recipe.model.outputBands.outputImages.flatMap(({outputBands}) => outputBands.map(({outputName, defaultOutputName}) => outputName || defaultOutputName))
+                    : ['class']
+                : assetBands(asset)
+            return of(includeDataTypes || asset ? names.map(name => ({name, arrayDimensions: 0})) : names)
+        },
         // The input editor's picker reads an asset's bands after the asynchronous metadata request answers.
         assetMetadata$: ({asset}) => of({
             type: 'Image', bandNames: assetBands(asset),
@@ -47,6 +54,7 @@ vi.mock('~/widget/tooltip', () => ({
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: remapping} = await import('./remapping')
+const {default: bandMath} = await import('../bandMath/bandMath')
 const {RemappingToolbar} = await import('./panels/remappingToolbar')
 const {default: indexChange} = await import('../indexChange/indexChange')
 const {defaultModel: indexChangeModel} = await import('../indexChange/indexChangeRecipe')
@@ -54,11 +62,14 @@ const {IndexChangeToolbar} = await import('../indexChange/panels/indexChangeTool
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {requestGate} = await import('../sourceRequirements')
+const {withSourceProblems} = await import('../selectedSource')
+const ProblemProbe = withSourceProblems()(({sourceProblems}) => <div data-upstream-problems={JSON.stringify(sourceProblems)}/>)
 const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 
 addRecipeType(remapping())
+addRecipeType(bandMath())
 addRecipeType(indexChange())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -72,6 +83,57 @@ afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     container?.remove()
+})
+
+describe('a reference to a recipe that cannot run', () => {
+    it('marks only the reference to Remapping A in B, then clears it when Band Math restores the band', async () => {
+        const math = {
+            id: 'math', type: 'BAND_MATH', title: 'Band Math', revision: 1,
+            model: {
+                inputImagery: {images: [{imageId: 'asset', name: 'i1', type: 'ASSET', id: ASSET,
+                    includedBands: [{id: 'class', name: 'class'}]}]},
+                calculations: {calculations: []},
+                outputBands: {outputImages: [{imageId: 'asset', name: 'i1',
+                    outputBands: [{id: 'class', name: 'class', defaultOutputName: 'class'}]}]}
+            }
+        }
+        const a = {...remappingRecipe([constraintOf('used', 'math-input', 'removed', '>', 5)]),
+            id: 'a', title: 'Remapping A', revision: 1}
+        a.model.legend.entries = a.model.legend.entries.slice(0, 1)
+        a.model.inputImagery.images = [inputOf('math-input', 'math', 'removed', 'RECIPE_REF')]
+        const b = remappingRecipe([constraintOf('uses-a', 'a-input', 'class', '>', 0)])
+        b.model.legend.entries = b.model.legend.entries.slice(0, 1)
+        // Put the healthy reference first: no attribution by list position or first diagnostic.
+        b.model.inputImagery.images = [inputOf('healthy', RADAR, 'class', 'RECIPE_REF'), inputOf('a-input', 'a', 'class', 'RECIPE_REF')]
+        await open(b, <><RemappingToolbar/><ProblemProbe recipeId='a'/></>, [math, a])
+        expect(retrieveOffered()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true, read: {refusedBy: 'a'}})
+        expect(JSON.parse(document.querySelector('[data-upstream-problems]').dataset.upstreamProblems))
+            .toEqual({inputImagery: 'process.panels.inputImagery.unavailableBands.inputs'})
+        expect(inError(IMAGERY)).toBe(true)
+        expect(inError(MAPPING)).toBe(false)
+        await press(IMAGERY)
+        const markedRows = () => [...document.getElementsByClassName(classOf(listItemStyles, 'verticalWrapper'))]
+            .filter(row => row.querySelector(`.${classOf(errorIndicatorStyles, 'indicator')}`))
+        expect(markedRows()).toHaveLength(1)
+        expect(markedRows()[0].textContent).toContain('Remapping A')
+        expect([...markedRows()[0].querySelectorAll('[data-tooltip]')].some(element =>
+            element.dataset.tooltip.includes('recipeNeedsAttention') && element.dataset.tooltip.includes('Remapping A'))).toBe(true)
+
+        // A configured output returns, with its successful observation, without editing either constraint.
+        await act(async () => store.dispatch({type: 'RESTORE_OUTPUT', reduce: state => ({...state, process: {
+            ...state.process, loadedRecipes: {...state.process.loadedRecipes, math: {...math, model: {
+                ...math.model, outputBands: {outputImages: [{imageId: 'asset', name: 'i1',
+                    outputBands: [{id: 'class', name: 'class', outputName: 'removed', defaultOutputName: 'class'}]}]}
+            }}}
+        }})}))
+        await settled()
+        expect(inError(IMAGERY)).toBe(false)
+        expect(markedRows()).toEqual([])
+        expect(JSON.parse(document.querySelector('[data-upstream-problems]').dataset.upstreamProblems)).toEqual({})
+        expect(retrieveOffered()).toBe(true)
+        expect(previewGate()).toBeNull()
+    })
 })
 
 describe('a constraint whose included band is missing from its source', () => {
@@ -630,12 +692,12 @@ async function openForest(saved = remappingRecipe()) {
     await openEntry('Forest')
 }
 
-async function open(recipe, toolbar) {
+async function open(recipe, toolbar, sources = []) {
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[RADAR]: sourceRecipe(RADAR), [recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
-            recipes: [{id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}, {id: RADAR, name: 'Radar recipe', type: 'REMAPPING', revision: 1}],
+            loadedRecipes: {...Object.fromEntries(sources.map(source => [source.id, source])), [RADAR]: sourceRecipe(RADAR), [recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
+            recipes: [...sources.map(({id, type, title}) => ({id, type, name: title, revision: 1})), {id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}, {id: RADAR, name: 'Radar recipe', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],

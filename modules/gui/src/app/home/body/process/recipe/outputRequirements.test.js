@@ -39,7 +39,7 @@ const {readRetrieveOutput} = await import('./retrieveOutput')
 const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {compatibleBasis, outputLoading} = await import('./recipeOutput')
 const {NEVER, Subject} = await import('rxjs')
-const {heldSourceStatusOfState, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
+const {heldSourceStatusOfState, itemStatusesOf, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
 const {readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
 const {IMAGE_OUTPUT} = await import('./recipeOutput')
 
@@ -54,6 +54,25 @@ describe('the requirement on input band sets', () => {
     it.each(['CLASSIFICATION', 'REGRESSION', 'UNSUPERVISED_CLASSIFICATION'])('is registered by %s', type => {
         expect(getRecipeType(type).sourceRequirements).toEqual(expect.arrayContaining(inputImageryRequirements))
     })
+})
+
+describe('shared recipe-input feedback', () => {
+    it.each(['STACK', 'BAND_MATH', 'REMAPPING', 'CLASSIFICATION', 'REGRESSION', 'UNSUPERVISED_CLASSIFICATION'])(
+        'locates the affected reference for %s using its declared input edge', type => {
+            const recipe = {id: 'dependent', type, model: {inputImagery: {images: [
+                {imageId: 'healthy-row', type: 'RECIPE_REF', id: 'healthy'},
+                {imageId: 'broken-row', type: 'RECIPE_REF', id: 'broken'}
+            ]}}}
+            const output = {status: 'READY', diagnostics: [], readiness: {status: 'NOT_READY', findings: [
+                {code: 'INVALID_CALCULATION', recipePath: ['dependent', 'broken'], path: ['model', 'calculations', 'calculations', 0]}
+            ]}}
+            const reads = readOutputRequirements({recipe, output, recipeNames: {broken: 'Broken calculation'}})
+            expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+                'broken-row': expect.objectContaining({message: 'process.source.status.recipeNeedsAttention {"recipe":"Broken calculation"}'})
+            })
+            expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {outputState: true, refusedBy: 'broken'}})
+        }
+    )
 })
 
 describe('a recipe whose output read refuses an input\'s band set', () => {
@@ -239,7 +258,7 @@ describe('a recipe without input imagery', () => {
         expect(Object.keys(sourceProblems(state)).sort()).toEqual(['inputImagery', 'outputBands'])
     })
 
-    it('holds a Remapping over it, which is marked nowhere: the recipe it remaps says why', () => {
+    it('holds a Remapping over it and marks its input reference, keeping the diagnosis upstream', () => {
         const over = remappingOver(ID)
         const state = {...sessionWith(emptyModels.CLASSIFICATION()), process: {
             ...sessionWith(emptyModels.CLASSIFICATION()).process,
@@ -248,7 +267,9 @@ describe('a recipe without input imagery', () => {
 
         expect(retrieveAvailability({state, recipe: over, heldFor, now: Date.now()}).available).toBe(false)
         expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor, now: Date.now()})).toMatchObject({withdraw: true})
-        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({})
+        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({
+            inputImagery: 'process.source.status.recipeNeedsAttention {"recipe":"Land cover"}'
+        })
     })
 
     it('is not what an input whose asset is found missing is said to be', () => {

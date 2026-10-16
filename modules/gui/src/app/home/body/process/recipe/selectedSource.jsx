@@ -22,8 +22,8 @@ export const withSourceProblems = () => composeHoC(
     withSourceRuntime()
 )
 
-// `itemProblems`: {[itemId]: message} for the items of a section its own configuration's requirements mark, for a list to
-// mark them. Needs the recipe's id.
+// `itemProblems`: {[itemId]: message} for a section's items, including references to recipes with confirmed upstream
+// problems. The requirements bridge locates each mark. Needs the recipe's id.
 export const withItemProblems = sectionId => composeHoC(
     connect((state, {recipeId, sourceRuntime}) => ({
         itemProblems: _.mapValues(

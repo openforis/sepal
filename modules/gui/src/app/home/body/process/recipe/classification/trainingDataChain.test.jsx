@@ -135,7 +135,9 @@ describe('a Classification without training data', () => {
         })
         expect(retrieveAvailable(id)).toBe(false)
         expect(previewGate(id)).toMatchObject({withdraw: true})
-        expect(sectionProblems(id)).toEqual({})
+        expect(sectionProblems(id)).toEqual([STACK, REMAPPING].includes(id)
+            ? {inputImagery: 'process.source.status.recipeNeedsAttention {"recipe":"Land cover"}'}
+            : {})
     })
 
     it('refuses to submit the Remapping\'s Retrieve', async () => {

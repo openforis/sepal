@@ -191,14 +191,16 @@ describe('a configuration changed after an input was marked', () => {
 })
 
 describe('an input Stack lacking a band of its own input', () => {
-    it('leaves the diagnosis with that recipe, marking none of this one\'s inputs', async () => {
+    it('leaves the diagnosis upstream and marks this recipe\'s declaring input', async () => {
         const inner = {...stackOver([input('i-1', ASSET_A, ['red', 'nir'])]), id: 'inner'}
         await open(stackOver([recipeInput('i-1', inner.id, ['red', 'nir'])]), [inner])
 
         await answer({[ASSET_A]: ['red']})
 
-        expect(inputsInError()).toEqual([])
-        expect(inputImageryInError()).toBe(false)
+        expect(inputsInError()).toEqual(['Inner'])
+        expect(tooltipLines(rowOf('Inner'))).toContain('process.source.status.recipeNeedsAttention {"recipe":"Inner"}')
+        expect(markedInputs()).toEqual([])
+        expect(inputImageryInError()).toBe(true)
     })
 })
 
@@ -372,14 +374,16 @@ describe('band names saved alike beside an input lacking a band', () => {
 })
 
 describe('an input Stack whose own band names are refused', () => {
-    it('leaves the diagnosis with that recipe, marking neither section of this one', async () => {
+    it('marks the input reference, leaving its own Band names section unmarked', async () => {
         const inner = {...named(stackOver([input('i-1', ASSET_A, ['red', 'nir'])]), {'i-1-nir': 'red'}), id: 'inner'}
         await open(stackOver([recipeInput('i-1', inner.id, ['red'])]), [inner])
 
         await answer({[ASSET_A]: ['red', 'nir']})
 
         expect(bandNamesInError()).toBe(false)
-        expect(inputImageryInError()).toBe(false)
+        expect(inputImageryInError()).toBe(true)
+        expect(inputsInError()).toEqual(['Inner'])
+        expect(tooltipLines(rowOf('Inner'))).toContain('process.source.status.recipeNeedsAttention {"recipe":"Inner"}')
     })
 })
 
@@ -559,7 +563,7 @@ const classOf = (styles, name) => {
 }
 
 const inputNames = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.inputImagery.images'])
-    .map(({id}) => id)
+    .map(({type, id}) => type === 'RECIPE_REF' ? LISTING.find(recipe => recipe.id === id)?.name || id : id)
 
 // The row showing an input: the element around the asset's id holding one remove button.
 const rowOf = name => [...document.querySelectorAll('svg[data-icon="trash"]')]

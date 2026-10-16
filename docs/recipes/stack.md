@@ -62,7 +62,11 @@ too, judged from the configuration by the rule the fields apply (`stack/bandName
 do not refuse it. Each is repaired in Band names, whose fields check the names as they stand when it opens - unique
 among the names the mapping gives, not blank, that rule - without waiting for an edit; Cancel keeps the names saved. The panel finds each input's entry by `imageId`, as the
 declaration does; an input without one is offered its bands to name, blank, and gets its entry only once the user
-names them and applies. A refusal of an input recipe stays with that recipe. Opening the panel changes nothing.
+names them and applies. A refusal of an input recipe stays with that recipe: its detailed diagnosis does not mark this Stack's Band names.
+Shared reference feedback instead marks IMG and the declaring input row, naming the referenced recipe that needs
+attention. It uses confirmed readiness findings, never pending or transiently failed evidence, and changes no gates
+or drafts. As with other input-list recipes, only reported dependency routes can be marked; a second route through
+a shared node in a diamond graph may be absent. Opening the panel changes nothing.
 
 Input imagery keeps the mapping following the bands each input includes (`toBandNames`). A band keeps the name it was
 given, even one another band also has, until the user edits it there; a band newly included takes its own name,
@@ -121,7 +125,7 @@ anything.
   its row and Input imagery before it is opened, Retrieve withheld meanwhile, the configuration kept, recovery, pending and failed reads, reordered
   and removed inputs; repeated, blank, misspelled and unmapped band names marked on Band names at once and refused in
   their fields when it opens, kept on Cancel and repaired there; each section left marked while the other is repaired; and an upstream Stack's
-  diagnoses left with it.
+  diagnoses left with it while its declaring reference is marked on this Stack's IMG and input row.
 - `modules/gui/src/app/home/body/process/recipe/stack/panels/bandNames/bandNamesUpdate.test.js` - the mapping following
   the bands included, names given kept and new ones named apart.
 - `modules/gui/src/app/home/body/process/panels/inputImagery/inputImageBands.test.jsx` - the input editor Stack and

@@ -3,6 +3,14 @@
 Evaluates calculations over its input images - expressions, and reducers across chosen bands - and outputs a
 configured selection of input and calculated bands under names of the user's choosing.
 
+## Referenced recipes needing attention
+
+Shared input feedback marks IMG and the exact recipe-reference row when a current readiness finding confirms an
+upstream problem, naming the directly referenced recipe. The detailed diagnosis remains in that recipe. This does
+not copy a local CALC error onto OUT, add marks for pending/transiently failed evidence, or change execution gates
+and draft isolation. Repair clears the reference feedback with current evidence. It uses reported recipe paths;
+a second route to the same dependency in a diamond graph may not be reported and is not guessed.
+
 ## Inputs
 
 `inputImagery.images` lists the input images, each a selected recipe or asset (`type`, `id`) with the bands Band Math
@@ -321,7 +329,8 @@ for the audit evidence, completed packets and remaining boundaries.
   here and through Remapping, exported after repair.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
   marked for a missing band, Retrieve withheld and refused naming Input imagery until the band is back, and nothing
-  marked for pending, failed, upstream or superseded reads, the output read shared.
+  marked for pending, failed or superseded reads, the output read shared. Confirmed upstream failures
+  additionally mark their declaring recipe input through shared reference feedback.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/inputImagery/inputImageBands.test.jsx` - an input opened
   unchanged, a band its source no longer has kept, marked and refused until removed, another band taken by removing and
   adding, never judged from saved bands, pending or failed reads, edits kept while reading, source switches reconciled,

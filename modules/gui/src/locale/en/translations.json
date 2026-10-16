@@ -5791,6 +5791,8 @@
     "source": {
       "status": {
         "checking": "Checking the selected source…",
+        "recipeNeedsAttention": "Referenced recipe needs attention: {recipe}. Open it to review the problem.",
+        "recipesNeedAttention": "Referenced recipes need attention: {recipe}. Open them to review the problems.",
         "unavailable": "The selected source is missing or unavailable. Refresh, or choose another source.",
         "assetUnavailable": "Asset {asset} could not be checked. Refresh, or choose another source.",
         "assetMissing": "Asset {asset} is missing or unavailable. Refresh, or choose another source.",

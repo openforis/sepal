@@ -34,7 +34,8 @@ const {IMAGE_OUTPUT} = await import('../recipeOutput')
 const {physicalRequest, readRetrieveOutput, submitRetrieve} = await import('../retrieveOutput')
 const {retrieveAvailability} = await import('../operationAvailability')
 const {itemStatusesOfState, sourceProblemsOfState} = await import('../selectedSourceStatus')
-const {requestGate} = await import('../sourceRequirements')
+const {readOutputRequirements, requestGate, requestGateOf} = await import('../sourceRequirements')
+const {itemStatusesOf, sectionStatusOf} = await import('../selectedSourceStatus')
 
 addRecipeType(remapping())
 
@@ -108,7 +109,7 @@ describe('a Remapping of a Remapping whose constraint no longer resolves', () =>
     it.each([
         ['an input since removed', 'i-gone', 'class'],
         ['a band its input does not include', 'i-1', 'ndvi']
-    ])('reading %s is held, marked nowhere: the Remapping it remaps says why', (_case, image, band) => {
+    ])('reading %s is held and marks its reference, leaving the diagnosis in the Remapping it remaps', (_case, image, band) => {
         const remapped = remappingOf([entry('l-1', [constraint(image, band)])])
         const over = remappingOver(remapped)
         const state = stateOf(over, remapped)
@@ -116,7 +117,8 @@ describe('a Remapping of a Remapping whose constraint no longer resolves', () =>
 
         expect(retrieveAvailability({state, recipe: over, heldFor})).toMatchObject({available: false, gate: {read: {refusedBy: remapped.id}}})
         expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor})).toMatchObject({withdraw: true})
-        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({})
+        expect(sourceProblemsOfState(state, over.id, () => null, Date.now(), heldFor)).toEqual({inputImagery: attention(remapped.id)})
+        expect(itemStatusesOfState(state, over.id, 'inputImagery', heldFor)).toMatchObject({'r-1': {message: attention(remapped.id)}})
     })
 
     it('is offered once that constraint is repaired', () => {
@@ -129,6 +131,50 @@ describe('a Remapping of a Remapping whose constraint no longer resolves', () =>
         expect(requestGate({state, recipe: over, operation: IMAGE_OUTPUT, heldFor})).toBeNull()
     })
 })
+
+describe('reference feedback from shared readiness', () => {
+    const over = () => {
+        const recipe = remappingOver({id: 'a'})
+        recipe.model.inputImagery.images.unshift({imageId: 'healthy', type: 'RECIPE_REF', id: 'healthy', includedBands: []})
+        // Same ID in a different source kind must not be marked.
+        recipe.model.inputImagery.images.push({imageId: 'asset-a', type: 'ASSET', id: 'a', includedBands: []})
+        return recipe
+    }
+    const output = (status, findings = []) => ({status: 'READY', readiness: {status, findings}, diagnostics: []})
+    const finding = (via, origin = via) => ({code: 'INVALID_CALCULATION', recipePath: ['remapping-2', ...new Set([via, origin])], path: ['model', 'calculations', 'calculations', 0]})
+    const reads = (recipe, result) => readOutputRequirements({recipe, output: result, recipeNames: {a: 'Remapping A', healthy: 'Other recipe'}})
+
+    it.each(['NEEDS_EVIDENCE', 'UNAVAILABLE'])('does not mark %s evidence, and leaves the gate unchanged', status => {
+        const result = reads(over(), output(status))
+        expect(itemStatusesOf(result, 'inputImagery')).toEqual({})
+        expect(sectionStatusOf({}, result, 'inputImagery')).toBeNull()
+        expect(requestGateOf(result, IMAGE_OUTPUT)).toMatchObject({code: status === 'NEEDS_EVIDENCE' ? 'SOURCE_PENDING' : 'SOURCE_UNAVAILABLE'})
+    })
+
+    it('uses every reported route, naming the direct reference rather than its deeper origin', () => {
+        const recipe = over()
+        const result = reads(recipe, output('NOT_READY', [finding('a', 'math'), finding('healthy')]))
+        expect(itemStatusesOf(result, 'inputImagery')).toMatchObject({
+            'r-1': {message: attention('Remapping A')}, healthy: {message: attention('Other recipe')}
+        })
+        expect(Object.keys(itemStatusesOf(result, 'inputImagery'))).toEqual(['healthy', 'r-1'])
+        expect(sectionStatusOf({}, result, 'inputImagery')).toMatchObject({
+            message: 'process.source.status.recipesNeedAttention {"recipe":"Other recipe, Remapping A"}'
+        })
+        // The original execution gate, including its attribution, is unchanged.
+        expect(requestGateOf(result, IMAGE_OUTPUT)).toMatchObject({
+            code: 'SOURCE_UNSUITABLE', read: {outputState: true, refusedBy: 'math'}, withdraw: true
+        })
+        expect(itemStatusesOf(reads(recipe, output('READY')), 'inputImagery')).toEqual({})
+    })
+
+    it.each([{recipePath: ['remapping-2']}, {recipePath: ['another-root', 'a']}])('does not guess a reference from a local or unrelated path $recipePath', ({recipePath}) => {
+        const result = reads(over(), output('NOT_READY', [{...finding('a'), recipePath}]))
+        expect(itemStatusesOf(result, 'inputImagery')).toEqual({})
+    })
+})
+
+const attention = recipe => `process.source.status.recipeNeedsAttention ${JSON.stringify({recipe})}`
 
 const MAPPING = 'process.remapping.panel.mapping.button.label'
 const MISSING_INPUT = 'process.remapping.requirement.missingInput'

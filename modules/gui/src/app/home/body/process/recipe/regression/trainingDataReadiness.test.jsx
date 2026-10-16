@@ -149,7 +149,9 @@ describe('a Regression without training data', () => {
         expect(retrieveRead(REMAPPING).output.readiness.findings).toEqual([
             expect.objectContaining({code: 'NO_TRAINING_DATA', recipePath: [REMAPPING, REGRESSION]})
         ])
-        expect(sectionProblems(REMAPPING)).toEqual({})
+        expect(sectionProblems(REMAPPING)).toEqual({
+            inputImagery: 'process.source.status.recipeNeedsAttention {"recipe":"Biomass"}'
+        })
     })
 })
 

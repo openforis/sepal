@@ -213,7 +213,7 @@ describe('a configuration changed after an input was marked', () => {
 })
 
 describe('an input Band Math lacking a band of its own input', () => {
-    it('leaves the diagnosis with that recipe, marking none of this one\'s inputs', async () => {
+    it('leaves the diagnosis upstream and marks this recipe\'s declaring input', async () => {
         const inner = {...recipeOver([input('i-1', 'i1', 'users/x/a', ['red', 'nir'])]), id: 'inner'}
         await open(recipeOver([recipeInput('i-1', 'i1', inner.id, ['red', 'nir'])]), [inner])
 
@@ -222,8 +222,9 @@ describe('an input Band Math lacking a band of its own input', () => {
         expect(read().diagnostics).toEqual([expect.objectContaining({code: 'MISSING_INPUT_BAND', recipePath: [ID, inner.id]})])
         expect(markedInputs()).toEqual([])
         expect(inputImageryMark()).toBeNull()
-        expect(inputsInError()).toEqual([])
-        expect(inputImageryInError()).toBe(false)
+        expect(inputsInError()).toEqual(['i1'])
+        expect(tooltipLines(rowOf('i1'))).toContain('process.source.status.recipeNeedsAttention {"recipe":"Inner"}')
+        expect(inputImageryInError()).toBe(true)
     })
 })
 

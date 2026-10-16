@@ -110,6 +110,20 @@ missing asset band fails both the first Remapping and a second Remapping over it
 the mocked readiness, GUI and export tests. This packet covers bands constraints read; it does not impose a uniform
 unused-selection policy across recipe types.
 
+## Feedback for a blocked recipe input
+
+A confirmed upstream readiness finding marks IMG and the input row declaring that recipe reference. For
+Band Math → Remapping A → Remapping B, a missing source band used by A remains A's detailed input diagnosis;
+B says “Referenced recipe needs attention: Remapping A. Open it to review the problem.” With another healthy input,
+only A's row is marked. The shared input presentation also applies to Band Math, Stack and the classification
+family; it adds no validation rule, execution gate, evidence acquisition or styling. Pending or temporarily failed
+evidence adds no reference validation mark. Repair and current evidence clear both marks without editing B.
+Drafts and Cancel retain the applied state; dependent sections within the same recipe still do not repeat errors.
+
+Only routes present in readiness findings can be marked. A shared dependency visited once in a diamond graph may
+leave another affected route without a mark; execution remains blocked. See the design's
+[marks and attribution limit](../design/recipes/source-resolution.md#consumers).
+
 ## Open issues
 
 The [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
@@ -136,11 +150,12 @@ and mocked asset-export refusal/recovery. `remappingSourceBands.mjs` is the sepa
 
 1. Create a working Band Math with two output bands, `used` and `spare`. Add it to Remapping A, include both bands,
    and give an entry a constraint on `used`. Create Remapping B using A's `class` output. Confirm both render and
-   offer Retrieve.
+   offer Retrieve. Add a second, healthy recipe input to B to check row attribution.
 2. In the upstream Band Math output editor, remove `used` while keeping `spare`. Cancel first: both Remappings should
    remain available. Repeat and Apply: A's IMG and input row should be marked; its input editor should explain the
    missing selection. Both Remappings should stop rendering and refuse Retrieve/asset export, with B attributing
-   the failure upstream. A's MAP and B's own sections should not acquire copies of the source error.
+   the failure upstream. B's IMG and only its reference to A should say that Remapping A needs attention;
+   its tooltip should name A without repeating the missing-band diagnosis. A's MAP and B's MAP stay unmarked.
 3. Open A's constraint. Its selected `used` band should explain the source problem and Apply should be disabled.
    Select `spare`: Apply should become available, but applied availability should remain blocked. Cancel to keep the
    original constraint.
@@ -162,8 +177,8 @@ and mocked asset-export refusal/recovery. `remappingSourceBands.mjs` is the sepa
   removed input or a band not included, and for a Remapping of it, and exported once repaired.
 - `modules/gui/src/app/home/body/process/recipe/remapping/remappingRequirements.test.js` - each entry said by what its
   constraints read, every problem once in constraint order; the image output held back by Mapping, Retrieve not offered
-  and refused at submission until the constraint is repaired; a Remapping of it held, marked nowhere, and offered once
-  repaired.
+  and refused at submission until the constraint is repaired; a Remapping of it held, its input
+  reference marked with the upstream recipe name, and offered once repaired.
 - `modules/gui/src/app/home/body/process/recipe/remapping/remappingLayer.test.jsx` - a layer on another map not
   requested while a constraint reads a removed input or a band not included, withdrawn once one is applied, and drawn
   again once repaired, though its assets store every band read.

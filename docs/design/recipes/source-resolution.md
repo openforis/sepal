@@ -932,13 +932,28 @@ One read answers every consumer, so they cannot disagree:
   - `UNAVAILABLE` is `BLOCKED` as unavailable, not as a configuration error;
   - `NEEDS_EVIDENCE` is resolving.
 - **Marks.** Output declarations (`sourceRequirements.js`) read the findings this recipe owns, from description and
-  readiness alike, and mark its item and section. A finding owned upstream marks nothing on a dependent; the
-  dependent's held status names the owning recipe (`refusedBy`). Readiness's `UNAVAILABLE` and `NEEDS_EVIDENCE` add no
+  readiness alike, and mark its item and section. Within one recipe, dependent sections do not repeat an originating
+  error (for example, CALC does not mark OUT). Across recipes, input-list declarations additionally mark IMG and each
+  affected recipe-reference row with a short translated message naming the directly referenced recipe and asking
+  the user to open it. The detailed diagnosis stays in its originating recipe. The dependent's held status still names
+  the owning recipe (`refusedBy`). Readiness's `UNAVAILABLE` and `NEEDS_EVIDENCE` add no
   mark, and leave definitive missing-source marks as they are. A declaration may leave its section's toolbar button
   unmarked (`toolbarMark: false`), a presentation choice: its finding still holds the operations, which still name the
   section, and the section's other declarations still mark it. Classification's `NO_TRAINING_DATA` is declared so
   (`unmarkedTrainingDataRequirements`); Regression's is not. `wizardStepMark: false` waits only while a set-up wizard has
   the section open as its step (`missingInputImageryRequirement`).
+  Reference feedback (`referenceFeedback.js`) is a presentation-only output declaration: `upstreamReferences`
+  names declared source roles, and `itemOf` maps their actual edge locations to rows. It has no operations or editor
+  binding. The bridge matches every confirmed finding's first recipe hop to the declared recipe edges; it never
+  guesses from the first diagnostic, uses an origin's field path as a local input path, or marks an asset with the
+  same bare ID. Reads reuse the existing output-requirement memoization. The shared input helpers register this for
+  Stack, Band Math, Remapping, Classification, Regression and Unsupervised Classification. Other source-section
+  editors have not been opted into this feedback.
+
+  Attribution limit: readiness visits each shared recipe once. In a diamond graph, a finding may contain only one
+  route to the origin. Only the reported route is marked; other routes are not guessed. Complete feedback for all
+  converging routes needs a separate attribution decision. This packet does not change readiness traversal or
+  acquisition to manufacture those routes. All existing execution blocking remains in force.
 - **Drafts.** An editor's candidate (`outputCandidate.js`) is read through the same rules, apart from the applied
   recipe. Its findings guide the panel and its Apply, and never change the applied recipe's availability. Form field
   rules stay entry-level.
@@ -1107,8 +1122,9 @@ separately:
    references, syntax, function arity and whole-image band counts. Cycles remain invalid through their self/forward
    references. The editor and synchronization reuse those same utilities; the parser versions match the existing GUI.
    GUI calculation declarations now present shared findings instead of evaluating local applied predicates. Only
-   originating problems are marked; dependent outputs and recipes are blocked through readiness without acquiring
-   an error of their own. Descriptions remain available where known, and pending/failed source evidence is never a
+   originating problems are diagnosed; dependent outputs and recipes are blocked through readiness without copying
+   that diagnosis. Dependent input-list recipes now mark their declaring reference with the upstream recipe's name,
+   as described under Marks above. Descriptions remain available where known, and pending/failed source evidence is never a
    fabricated missing-reference finding. Repairs restore downstream rendering, Retrieve and the existing asset-export
    path. Draft edits remain isolated until Apply; Cancel changes nothing. Asset exports with broken references are
    now refused deterministically, including exports of a Remapping over Band Math.

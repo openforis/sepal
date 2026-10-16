@@ -4,6 +4,7 @@ import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} fr
 import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
+import {directSourceEdges} from '#sepal/recipe/source/directSources'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {
@@ -118,11 +119,18 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // what other declarations of the section find still does. `wizardStepMark: false` is the same while a set-up wizard
 // has the section open as its step - where the panel's own form says what is missing - and no longer once it is not.
 //
+// A presentation-only declaration may name `outputDiagnostics.upstreamReferences`: the roles whose directly
+// referenced recipes need attention according to confirmed readiness findings. Each reported recipe path's first
+// hop is matched to the recipe's declared edges, and `itemOf` receives that edge's path and reference. The original
+// diagnosis remains upstream. Such a declaration has no operations and no editor binding: it marks the reference
+// without changing gates, acquisition or draft validity. Nothing is read for it without a located finding.
+//
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the
 // declaration (`outputState`): it holds the declaration's operations as the output read does, waiting while it is
 // read, and marks nothing, no selection being known wrong. Refused by a recipe further up the closure, it names that
-// recipe (`refusedBy`), whose own sections say why. Refused for what another declaration locates at an item, it is not
+// recipe (`refusedBy`), whose own sections say why; reference feedback can separately mark the input that selects it.
+// Refused for what another declaration locates at an item, it is not
 // read where those items hold every operation it would hold. What an observed input establishes is known once the work
 // observing it settles, which waits for every observation it requested: until its siblings answer or fail, its finding
 // is not shown, and the operations wait. The reads of a recipe are reused while its output read
@@ -506,11 +514,12 @@ const isOutput = declaration => Boolean(declaration.outputDiagnostics)
 const ownedBy = ({recipePath = []}, recipe) => recipePath.length === 1 && recipePath[0] === recipe.id
 
 const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
-    const {codes, itemOf, references = []} = declaration.outputDiagnostics
+    const {codes, itemOf, references = [], upstreamReferences = []} = declaration.outputDiagnostics
     const byItem = new Map()
     ;[
         ...findingsOf(output).filter(diagnostic => codes.includes(diagnostic.code) && ownedBy(diagnostic, recipe)),
-        ...missingReferences(output, recipe, references)
+        ...missingReferences(output, recipe, references),
+        ...refusedReferences(output, recipe, upstreamReferences)
     ]
         .forEach(diagnostic => {
             const item = itemOf(diagnostic, recipe, {recipeNames})
@@ -521,6 +530,10 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
             }
         })
     if (!byItem.size) {
+        // Reference feedback is presentation alone. It neither waits for evidence nor holds an operation.
+        if (upstreamReferences.length) {
+            return []
+        }
         const state = outputStateRead(declaration, output)
         return state ? [state] : []
     }
@@ -539,6 +552,25 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
             unmetPrerequisites: []
         }
     })
+}
+
+// A confirmed finding's first hop identifies the directly referenced recipe that needs attention. The finding's
+// field path belongs to its origin, not this input: use the declared edge's location instead. Read every reported
+// route, never an arbitrary first diagnostic. Readiness may visit a shared dependency only once; routes it did not
+// report cannot be inferred here. Pending and failed evidence are needs, not readiness findings.
+const refusedReferences = (output, recipe, roles) => {
+    if (!roles.length) {
+        return []
+    }
+    const refused = new Set((output.readiness?.findings || [])
+        .filter(({recipePath = []}) => recipePath[0] === recipe.id && recipePath.length > 1)
+        .map(({recipePath}) => recipePath[1]))
+    if (!refused.size) {
+        return []
+    }
+    return directSourceEdges(recipe).edges
+        .filter(({role, reference}) => roles.includes(role) && reference.type === 'RECIPE_REF' && refused.has(reference.id))
+        .map(({role, path, reference}) => ({role, path, reference, recipePath: [recipe.id]}))
 }
 
 // The sources the recipe's own edges in the `references` roles name that are found gone, each located at its edge.

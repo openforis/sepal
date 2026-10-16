@@ -1,6 +1,7 @@
 import {MISSING_INPUT_BAND, MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
-import {INPUT_IMAGERY_PATH} from '#sepal/recipe/source/inputImagery'
+import {INPUT_IMAGE, INPUT_IMAGERY_PATH} from '#sepal/recipe/source/inputImagery'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
+import {referenceFeedback} from '~/app/home/body/process/recipe/referenceFeedback'
 import {msg} from '~/translate'
 
 // What Stack, Band Math and Remapping need of their input images' bands, as their shared output/readiness declarations
@@ -40,6 +41,7 @@ export const missingInputImageryRequirement = section => ({
 
 export const inputImageryRequirements = imageIndexOf => [
     missingInputImageryRequirement(INPUT_IMAGERY),
+    inputRecipeFeedback(INPUT_IMAGERY),
     {
         id: INPUT_BANDS,
         section: INPUT_IMAGERY,
@@ -55,6 +57,12 @@ export const inputImageryRequirements = imageIndexOf => [
         operations: [IMAGE_OUTPUT]
     }
 ]
+
+export const inputRecipeFeedback = section => referenceFeedback({
+    section,
+    roles: [INPUT_IMAGE],
+    itemOf: ({path}, recipe, {recipeNames}) => itemOf(path[3], recipe, recipeNames)
+})
 
 const isImageryPath = (path = []) =>
     path.length === INPUT_IMAGERY_PATH.length && path.every((step, index) => step === INPUT_IMAGERY_PATH[index])
