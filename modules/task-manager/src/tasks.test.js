@@ -172,6 +172,23 @@ describe('resubmitting and removing', () => {
         await expect(tasks.remove({taskId: task.id, username: 'alice'})).rejects.toThrow(InvalidCommand)
     })
 
+    test('removing in bulk removes only the given tasks that have finished', async () => {
+        const {tasks, repository} = setup()
+        const running = await tasks.submit({username: 'alice', operation: 'image.GEE'})
+        const finished = await tasks.submit({username: 'alice', operation: 'image.GEE'})
+        const otherFinished = await tasks.submit({username: 'alice', operation: 'image.GEE'})
+        await tasks.cancel({taskId: finished.id, username: 'alice'})
+        await tasks.cancel({taskId: otherFinished.id, username: 'alice'})
+
+        await tasks.removeFinished({taskIds: [running.id, finished.id], username: 'alice'})
+
+        expect((await repository.userTasks('alice')).map(({id}) => id)).toEqual([running.id, otherFinished.id])
+    })
+
+    test('removing in bulk requires the tasks to remove', async () => {
+        await expect(setup().tasks.removeFinished({username: 'alice'})).rejects.toThrow(InvalidCommand)
+    })
+
     test('a task that does not exist is not found', async () => {
         await expect(setup().tasks.getTask({taskId: 'nope', username: 'alice'})).rejects.toThrow(NotFound)
     })

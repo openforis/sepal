@@ -176,12 +176,17 @@ export class TaskRepository {
         return this.#change(task, 'UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
     }
 
-    async removeFinishedUserTasks(username) {
-        await this.#query(
-            'UPDATE task SET removed = TRUE WHERE username = ? AND state IN (?)',
-            [username, [State.COMPLETED, State.CANCELED, State.FAILED]]
+    async removeFinishedUserTasks(username, taskIds) {
+        if (!taskIds.length) {
+            return
+        }
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET removed = TRUE WHERE username = ? AND id IN (?) AND state IN (?)',
+            [username, taskIds, [State.COMPLETED, State.CANCELED, State.FAILED]]
         )
-        this.#onChange(username)
+        if (affectedRows) {
+            this.#onChange(username)
+        }
     }
 
     async #change(task, sql, values) {

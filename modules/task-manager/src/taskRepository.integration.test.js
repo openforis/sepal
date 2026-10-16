@@ -106,17 +106,21 @@ describe('TaskRepository', () => {
         expect((await repository.getTask(task.id)).state).toBe(State.CANCELING)
     })
 
-    test('lists a user\'s tasks until removed, and removes only finished ones in bulk', async () => {
+    test('lists a user\'s tasks until removed, and removes only the given finished ones in bulk', async () => {
         const running = aTask({id: 't-1'})
         const done = aTask({id: 't-2'})
-        await repository.insert(running)
-        await repository.insert(done)
-        await repository.activate(done, 'c'.repeat(64))
-        await repository.transition(done, {from: [State.ACTIVE], to: State.FAILED})
+        const otherDone = aTask({id: 't-3'})
+        for (const task of [running, done, otherDone]) {
+            await repository.insert(task)
+        }
+        for (const task of [done, otherDone]) {
+            await repository.activate(task, task.id.padEnd(64, 'c'))
+            await repository.transition(task, {from: [State.ACTIVE], to: State.FAILED})
+        }
 
-        await repository.removeFinishedUserTasks('alice')
+        await repository.removeFinishedUserTasks('alice', [running.id, done.id])
 
-        expect((await repository.userTasks('alice')).map(({id}) => id)).toEqual(['t-1'])
+        expect((await repository.userTasks('alice')).map(({id}) => id).sort()).toEqual([running.id, otherDone.id])
     })
 
     test('counts running tasks', async () => {

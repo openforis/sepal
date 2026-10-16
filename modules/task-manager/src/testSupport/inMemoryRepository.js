@@ -122,9 +122,10 @@ export class InMemoryRepository {
         return true
     }
 
-    async removeFinishedUserTasks(username) {
+    async removeFinishedUserTasks(username, taskIds) {
         for (const task of this.#tasks.values()) {
-            if (task.username === username && [State.COMPLETED, State.CANCELED, State.FAILED].includes(task.state)) {
+            if (task.username === username && taskIds.includes(task.id)
+                && [State.COMPLETED, State.CANCELED, State.FAILED].includes(task.state)) {
                 this.#tasks.set(task.id, {...task, removed: true})
             }
         }

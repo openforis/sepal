@@ -27,6 +27,7 @@ const tasks = {
         return GRANTED
     }),
     releaseLocalProcessing: jest.fn(async () => {}),
+    removeFinished: jest.fn(async () => {}),
     authenticateApiKey: jest.fn(async apiKey => apiKey === 'task_k' ? {username: 'alice', taskId: 't-1'} : null)
 }
 
@@ -107,6 +108,13 @@ test('a container gives its local processing slot back', async () => {
 test('local processing without a task session is refused', async () => {
     expect((await post('/tasks/task/t-1/local-processing', {user: ALICE})).status).toBe(403)
     expect((await post('/tasks/task/t-1/local-processing/release', {user: ALICE})).status).toBe(403)
+})
+
+test('a user removes the finished tasks they name', async () => {
+    const response = await post('/tasks/remove', {user: ALICE, body: {taskIds: ['t-1', 't-2']}})
+
+    expect(response.status).toBe(204)
+    expect(tasks.removeFinished).toHaveBeenCalledWith({taskIds: ['t-1', 't-2'], username: 'alice'})
 })
 
 test('the gateway learns whose task a key belongs to', async () => {

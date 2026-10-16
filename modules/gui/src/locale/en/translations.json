@@ -5808,7 +5808,14 @@
     },
     "removeAll": {
       "label": "Clear inactive tasks",
-      "tooltip": "Remove all completed, failed, or stopped tasks"
+      "tooltip": "Remove all completed, failed, or stopped tasks",
+      "filteredTooltip": {
+        "search": "Remove tasks matching the current filter",
+        "completed": "Remove completed tasks",
+        "completedSearch": "Remove completed tasks matching the current filter",
+        "failed": "Remove failed or canceled tasks",
+        "failedSearch": "Remove failed or canceled tasks matching the current filter"
+      }
     },
     "stop": {
       "tooltip": "Stop task"

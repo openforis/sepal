@@ -72,8 +72,11 @@ export class Tasks {
         await this.#repository.remove(task)
     }
 
-    removeFinished(username) {
-        return this.#repository.removeFinishedUserTasks(username)
+    async removeFinished({taskIds, username}) {
+        if (!Array.isArray(taskIds)) {
+            throw new InvalidCommand('taskIds required')
+        }
+        await this.#repository.removeFinishedUserTasks(username, taskIds)
     }
 
     async resubmit({taskId, username}) {

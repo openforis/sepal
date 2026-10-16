@@ -4908,7 +4908,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": ""
+      "tooltip": "",
+      "filteredTooltip": {
+        "search": "",
+        "completed": "",
+        "completedSearch": "",
+        "failed": "",
+        "failedSearch": ""
+      }
     },
     "stop": {
       "tooltip": ""

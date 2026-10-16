@@ -45,7 +45,8 @@ export const createTasksApi = tasks => {
             noContent(ctx)
         }),
         removeFinished: ctx => run(ctx, async () => {
-            await tasks.removeFinished(username(ctx))
+            const {taskIds} = ctx.request.body ?? {}
+            await tasks.removeFinished({taskIds, username: username(ctx)})
             noContent(ctx)
         }),
         progress: ctx => run(ctx, async () => {
