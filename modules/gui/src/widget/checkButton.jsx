@@ -14,11 +14,11 @@ export class CheckButton extends React.Component {
         return (
             <Button
                 chromeless={chromeless && !checked}
-                look={checked ? 'selected' : 'default'}
+                look={checked ? 'highlight' : 'default'}
                 shape={shape}
                 size={size}
                 icon='check'
-                iconSize={checked ? '2xs' : undefined}
+                iconSize='xs'
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
