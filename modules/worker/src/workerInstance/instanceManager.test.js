@@ -1,10 +1,7 @@
-// instanceManager.sessionsWithoutInstance must hand the provisioner a RECONSTRUCTED
-// WorkerInstance (id, type, host, reservation: {username, workerType}), not the session's
-// {id, host} projection: dockerInstanceProvisioner reads instance.reservation.workerType, so a
-// bare projection makes the probe throw → every healthy session gets closed as "without
-// instance".
+import assert from 'node:assert/strict'
+import {describe, it, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createInstanceManager} from './instanceManager.js'
 
@@ -24,7 +21,7 @@ describe('removeOrphanedContainers', () => {
     const instance = id => ({id, type: 'T3aSmall', host: id, reservation: null})
 
     it('passes session instance ids plus every provider-tracked instance id to the provisioner', async () => {
-        const provisioner = {removeOrphanedContainers: jest.fn(async () => [])}
+        const provisioner = {removeOrphanedContainers: mock.fn(async () => [])}
         const provider = {
             idleInstances: async () => [instance('i-idle')],
             reservedInstances: async () => [instance('i-reserved')],
@@ -33,11 +30,14 @@ describe('removeOrphanedContainers', () => {
 
         await manager.removeOrphanedContainers([session({id: 's-1', instanceId: 'i-1'})])
 
-        expect(provisioner.removeOrphanedContainers).toHaveBeenCalledWith(['i-1', 'i-idle', 'i-reserved'])
+        assert.deepEqual(
+            callsOf(provisioner.removeOrphanedContainers),
+            [[['i-1', 'i-idle', 'i-reserved']]]
+        )
     })
 
     it('skips sessions without an instance and returns the removed container names', async () => {
-        const provisioner = {removeOrphanedContainers: jest.fn(async () => ['/sandbox.admin.bbb'])}
+        const provisioner = {removeOrphanedContainers: mock.fn(async () => ['/sandbox.admin.bbb'])}
         const provider = {
             idleInstances: async () => [],
             reservedInstances: async () => [],
@@ -49,19 +49,19 @@ describe('removeOrphanedContainers', () => {
             {id: 's-2', username: 'admin', instance: null},
         ])
 
-        expect(provisioner.removeOrphanedContainers).toHaveBeenCalledWith(['i-1'])
-        expect(removed).toEqual(['/sandbox.admin.bbb'])
+        assert.deepEqual(callsOf(provisioner.removeOrphanedContainers), [[['i-1']]])
+        assert.deepEqual(removed, ['/sandbox.admin.bbb'])
     })
 })
 
 describe('sessionsWithoutInstance', () => {
     it('passes fully-reconstructed instances to the provisioner (Groovy adapter parity)', async () => {
-        const provisioner = {instanceStatus: jest.fn(async () => 'PROVISIONED')}
+        const provisioner = {instanceStatus: mock.fn(async () => 'PROVISIONED')}
         const manager = makeManager(provisioner)
 
         await manager.sessionsWithoutInstance([session({id: 's-1', instanceId: 'i-1'})])
 
-        expect(provisioner.instanceStatus).toHaveBeenCalledWith({
+        assert.deepEqual(callsOf(provisioner.instanceStatus), [[{
             id: 'i-1',
             type: 'T3aSmall',
             host: 'host-1',
@@ -69,7 +69,7 @@ describe('sessionsWithoutInstance', () => {
             launchTime: new Date('2024-01-01T00:00:00Z'),
             reservation: {username: 'admin', workerType: 'SANDBOX', sessionId: 's-1'},
             daemonHost: null,
-        })
+        }]])
     })
 
     it('does not report sessions whose instance is provisioned', async () => {
@@ -78,7 +78,7 @@ describe('sessionsWithoutInstance', () => {
 
         const result = await manager.sessionsWithoutInstance([session({id: 's-1', instanceId: 'i-1'})])
 
-        expect(result).toEqual([])
+        assert.deepEqual(result, [])
     })
 
     it('reports only sessions whose instance is missing', async () => {
@@ -91,7 +91,7 @@ describe('sessionsWithoutInstance', () => {
         const s2 = session({id: 's-2', instanceId: 'i-2'})
         const result = await manager.sessionsWithoutInstance([s1, s2])
 
-        expect(result).toEqual([{session: s2, status: 'MISSING'}])
+        assert.deepEqual(result, [{session: s2, status: 'MISSING'}])
     })
 })
 
@@ -106,14 +106,14 @@ describe('reprovisionInstance', () => {
     }
 
     test('provisions the instance rebuilt from the session', async () => {
-        const provisioner = {provisionInstance: jest.fn(async () => {})}
+        const provisioner = {provisionInstance: mock.fn(async () => {})}
         const manager = makeManager(provisioner)
 
-        expect(await manager.reprovisionInstance(pendingSession)).toBe(true)
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
-        const provisioned = provisioner.provisionInstance.mock.calls[0][0]
-        expect(provisioned.id).toBe('i-1')
-        expect(provisioned.reservation.sessionId).toBe('s-1')
+        assert.equal(await manager.reprovisionInstance(pendingSession), true)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
+        const provisioned = provisioner.provisionInstance.mock.calls[0].arguments[0]
+        assert.equal(provisioned.id, 'i-1')
+        assert.equal(provisioned.reservation.sessionId, 's-1')
     })
 
     // Releasing hands the instance back to the pool, so its provisioning entry must go with it:
@@ -123,8 +123,8 @@ describe('reprovisionInstance', () => {
     test('a released instance is provisioned again for the session that gets it next', async () => {
         const started = []
         const provisioner = {
-            provisionInstance: jest.fn(() => new Promise(resolve => started.push(resolve))),
-            undeploy: jest.fn(async () => {}),
+            provisionInstance: mock.fn(() => new Promise(resolve => started.push(resolve))),
+            undeploy: mock.fn(async () => {}),
         }
         const instance = {
             id: 'i-1',
@@ -132,54 +132,57 @@ describe('reprovisionInstance', () => {
             host: '10.0.0.1',
             reservation: {username: 'alice', workerType: 'sandbox', sessionId: 's-1'},
         }
-        const claims = {release: jest.fn(async () => true)}
+        const claims = {release: mock.fn(async () => true)}
         const provider = {
-            getInstance: jest.fn(async () => instance),
-            release: jest.fn(async () => {}),
-            terminate: jest.fn(async () => {}),
-            attachScratchVolume: jest.fn(async () => null),
-            deleteScratchVolume: jest.fn(async () => {}),
+            getInstance: mock.fn(async () => instance),
+            release: mock.fn(async () => {}),
+            terminate: mock.fn(async () => {}),
+            attachScratchVolume: mock.fn(async () => null),
+            deleteScratchVolume: mock.fn(async () => {}),
         }
         const manager = createInstanceManager({claims, provider, provisioner, instanceTypes: []})
 
         const first = manager.reprovisionInstance(pendingSession)
-        expect(manager.isProvisioning('i-1')).toBe(true)
+        assert.equal(manager.isProvisioning('i-1'), true)
 
         await manager.releaseInstance('i-1')
-        expect(manager.isProvisioning('i-1')).toBe(false)
+        assert.equal(manager.isProvisioning('i-1'), false)
 
         const successor = {...pendingSession, id: 's-2', username: 'bob'}
         const second = manager.reprovisionInstance(successor)
         await new Promise(resolve => setImmediate(resolve))
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(2)
-        expect(provisioner.provisionInstance.mock.calls[1][0].reservation.sessionId).toBe('s-2')
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 2)
+        assert.equal(
+            provisioner.provisionInstance.mock.calls[1].arguments[0].reservation.sessionId,
+            's-2'
+        )
 
         // The abandoned provision settling must not take the successor's entry with it.
         started[0]()
-        expect(await first).toBe(true)
-        expect(manager.isProvisioning('i-1')).toBe(true)
+        assert.equal(await first, true)
+        assert.equal(manager.isProvisioning('i-1'), true)
 
         started[1]()
-        expect(await second).toBe(true)
+        assert.equal(await second, true)
     })
 
     // The sweep re-entering an in-flight provision would delete the containers it is creating.
     test('is dropped while the same instance is already being provisioned', async () => {
         let release
         const provisioner = {
-            provisionInstance: jest.fn(() => new Promise(resolve => {
+            provisionInstance: mock.fn(() => new Promise(resolve => {
                 release = resolve
             })),
         }
         const manager = makeManager(provisioner)
 
         const running = manager.reprovisionInstance(pendingSession)
-        expect(manager.isProvisioning('i-1')).toBe(true)
-        expect(await manager.reprovisionInstance(pendingSession)).toBe(false)
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
+        assert.equal(manager.isProvisioning('i-1'), true)
+        assert.equal(await manager.reprovisionInstance(pendingSession), false)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
 
         release()
         await running
-        expect(manager.isProvisioning('i-1')).toBe(false)
+        assert.equal(manager.isProvisioning('i-1'), false)
     })
 })

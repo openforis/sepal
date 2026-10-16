@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {execFile} from 'node:child_process'
 import {dirname} from 'node:path'
+import {describe, test} from 'node:test'
 import {fileURLToPath} from 'node:url'
 import {promisify} from 'node:util'
 
@@ -8,19 +10,19 @@ describe('config', () => {
     test('uses the default for an option whose variable is empty', async () => {
         const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: ''})
 
-        expect(config.usageSamplingIntervalSeconds).toBe(60)
+        assert.equal(config.usageSamplingIntervalSeconds, 60)
     })
 
     test('leaves an option without a default unset when its variable is empty', async () => {
         const config = await loadConfig({SESSION_EXPIRY_SECRET: ''})
 
-        expect(config).not.toHaveProperty('sessionExpirySecret')
+        assert.ok(!('sessionExpirySecret' in Object(config)))
     })
 
     test('parses a variable that has a value', async () => {
         const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: '30', SESSION_EXPIRY_SECRET: 'secret'})
 
-        expect(config).toMatchObject({usageSamplingIntervalSeconds: 30, sessionExpirySecret: 'secret'})
+        assert.partialDeepStrictEqual(config, {usageSamplingIntervalSeconds: 30, sessionExpirySecret: 'secret'})
     })
 })
 

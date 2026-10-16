@@ -1,6 +1,9 @@
 // Unit tests for the WorkerSession domain: state machine mutators, Timeout, ApiKeyGenerator.
 // No database needed.
 
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {
     activate,
     close,
@@ -31,21 +34,21 @@ const baseSession = () => createWorkerSession({
 describe('createWorkerSession', () => {
     test('maps instance and mirrors instance.host into top-level host', () => {
         const s = baseSession()
-        expect(s.instance).toEqual({id: 'i-1', host: 'host-1'})
-        expect(s.host).toBe('host-1')
+        assert.deepEqual(s.instance, {id: 'i-1', host: 'host-1'})
+        assert.equal(s.host, 'host-1')
     })
 
     test('predicates reflect state', () => {
         const s = baseSession()
-        expect(isPending(s)).toBe(true)
-        expect(isActive(s)).toBe(false)
-        expect(isClosed(s)).toBe(false)
+        assert.equal(isPending(s), true)
+        assert.equal(isActive(s), false)
+        assert.equal(isClosed(s), false)
     })
 
     test('is immutable (frozen)', () => {
         const s = baseSession()
-        expect(Object.isFrozen(s)).toBe(true)
-        expect(Object.isFrozen(s.instance)).toBe(true)
+        assert.equal(Object.isFrozen(s), true)
+        assert.equal(Object.isFrozen(s.instance), true)
     })
 })
 
@@ -53,30 +56,30 @@ describe('mutators', () => {
     test('activate → ACTIVE, original unchanged, other fields preserved', () => {
         const s = baseSession()
         const a = activate(s)
-        expect(a.state).toBe(State.ACTIVE)
-        expect(isActive(a)).toBe(true)
-        expect(s.state).toBe(State.PENDING)
-        expect(a.id).toBe('s-1')
-        expect(a.apiKey).toBe('secret-key')
-        expect(a.instance).toEqual({id: 'i-1', host: 'host-1'})
+        assert.equal(a.state, State.ACTIVE)
+        assert.equal(isActive(a), true)
+        assert.equal(s.state, State.PENDING)
+        assert.equal(a.id, 's-1')
+        assert.equal(a.apiKey, 'secret-key')
+        assert.deepEqual(a.instance, {id: 'i-1', host: 'host-1'})
     })
 
     test('close → CLOSED (domain does NOT null api_key; that is the repo update variant)', () => {
         const c = close(baseSession())
-        expect(c.state).toBe(State.CLOSED)
-        expect(isClosed(c)).toBe(true)
-        expect(c.apiKey).toBe('secret-key')
+        assert.equal(c.state, State.CLOSED)
+        assert.equal(isClosed(c), true)
+        assert.equal(c.apiKey, 'secret-key')
     })
 
     test('withInstance replaces instance and host', () => {
         const s = withInstance(baseSession(), {id: 'i-2', host: 'host-2'})
-        expect(s.instance).toEqual({id: 'i-2', host: 'host-2'})
-        expect(s.host).toBe('host-2')
+        assert.deepEqual(s.instance, {id: 'i-2', host: 'host-2'})
+        assert.equal(s.host, 'host-2')
     })
 
     test('withApiKey sets the api key', () => {
         const s = withApiKey(baseSession(), 'new-key')
-        expect(s.apiKey).toBe('new-key')
+        assert.equal(s.apiKey, 'new-key')
     })
 })
 
@@ -85,33 +88,36 @@ describe('Timeout', () => {
 
     test('lastValidUpdate(now) = now - 10min', () => {
         const now = new Date('2026-01-01T12:00:00Z')
-        expect(Timeout.PENDING.lastValidUpdate(now)).toEqual(new Date(now.getTime() - TEN_MIN))
+        assert.deepEqual(Timeout.PENDING.lastValidUpdate(now), new Date(now.getTime() - TEN_MIN))
     })
 
     test('get(now) = now - 10min', () => {
         const now = new Date('2026-01-01T12:00:00Z')
-        expect(Timeout.PENDING.get(now)).toEqual(new Date(now.getTime() - TEN_MIN))
+        assert.deepEqual(Timeout.PENDING.get(now), new Date(now.getTime() - TEN_MIN))
     })
 
     test('willTimeout(date) = date + 10min + 1ms', () => {
         const d = new Date('2026-01-01T12:00:00Z')
-        expect(Timeout.PENDING.willTimeout(d)).toEqual(new Date(d.getTime() + TEN_MIN + 1))
+        assert.deepEqual(Timeout.PENDING.willTimeout(d), new Date(d.getTime() + TEN_MIN + 1))
     })
 
     // ACTIVE is deliberately absent: an ACTIVE session's lifetime is its stored timeout_time, and
     // a derived ACTIVE timeout left here would be a second, competing source of truth.
     test('has no ACTIVE timeout', () => {
-        expect(Timeout.ACTIVE).toBeUndefined()
+        assert.equal(Timeout.ACTIVE, undefined)
     })
 })
 
 describe('NotificationState', () => {
     test('defaults to NONE', () => {
-        expect(baseSession().notificationState).toBe(NotificationState.NONE)
+        assert.equal(baseSession().notificationState, NotificationState.NONE)
     })
 
     test('covers the whole expiry cycle', () => {
-        expect(Object.keys(NotificationState)).toEqual(['NONE', 'NOTIFIED', 'DISMISSED', 'EMAILED'])
+        assert.deepEqual(
+            Object.keys(NotificationState),
+            ['NONE', 'NOTIFIED', 'DISMISSED', 'EMAILED']
+        )
     })
 })
 
@@ -121,15 +127,15 @@ describe('ApiKeyGenerator', () => {
     test('produces URL-safe base64, no padding, of the expected length', () => {
         const key = gen.generate()
         // 32 bytes → 43 base64url chars (ceil(32*4/3) with no padding)
-        expect(key).toHaveLength(43)
-        expect(key).toMatch(/^[A-Za-z0-9_-]+$/)
-        expect(key).not.toContain('=')
-        expect(key).not.toContain('+')
-        expect(key).not.toContain('/')
+        assert.equal(key.length, 43)
+        assert.match(key, /^[A-Za-z0-9_-]+$/)
+        assert.ok(!key.includes('='))
+        assert.ok(!key.includes('+'))
+        assert.ok(!key.includes('/'))
     })
 
     test('produces distinct keys', () => {
         const keys = new Set(Array.from({length: 50}, () => gen.generate()))
-        expect(keys.size).toBe(50)
+        assert.equal(keys.size, 50)
     })
 })

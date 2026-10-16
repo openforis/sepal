@@ -1,8 +1,8 @@
-// Tests for the session component's scheduling, driven through the REAL sessionManager over a
-// mocked repo. Only the immediate (initial-delay-0) run of each job is exercised — the 1-minute
-// intervals never fire within a test, and stop() clears them.
+import assert from 'node:assert/strict'
+import {mock, test} from 'node:test'
+import {isDeepStrictEqual} from 'node:util'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createSessionComponent} from './index.js'
 import {createSessionManager} from './sessionManager.js'
@@ -22,40 +22,40 @@ const timedOutSession = createWorkerSession({
 })
 
 const makeRepo = () => ({
-    update: jest.fn(async () => {}),
-    getSession: jest.fn(async () => timedOutSession),
-    sessionOnInstance: jest.fn(async () => null),
-    sessions: jest.fn(async () => []),
-    timedOutSessions: jest.fn(async () => [timedOutSession]),
+    update: mock.fn(async () => {}),
+    getSession: mock.fn(async () => timedOutSession),
+    sessionOnInstance: mock.fn(async () => null),
+    sessions: mock.fn(async () => []),
+    timedOutSessions: mock.fn(async () => [timedOutSession]),
 })
 
 const makeInstanceManager = () => ({
-    releaseInstance: jest.fn(async () => undefined),
-    releaseUnusedInstances: jest.fn(async () => undefined),
-    reclaimStaleClaims: jest.fn(async () => undefined),
-    sessionsWithoutInstance: jest.fn(async () => []),
-    isProvisioning: jest.fn(() => false),
-    reprovisionInstance: jest.fn(async () => true),
-    removeOrphanedContainers: jest.fn(async () => []),
-    getInstanceTypes: jest.fn(() => []),
-    onInstanceActivated: jest.fn(),
-    onFailedToProvisionInstance: jest.fn(),
+    releaseInstance: mock.fn(async () => undefined),
+    releaseUnusedInstances: mock.fn(async () => undefined),
+    reclaimStaleClaims: mock.fn(async () => undefined),
+    sessionsWithoutInstance: mock.fn(async () => []),
+    isProvisioning: mock.fn(() => false),
+    reprovisionInstance: mock.fn(async () => true),
+    removeOrphanedContainers: mock.fn(async () => []),
+    getInstanceTypes: mock.fn(() => []),
+    onInstanceActivated: mock.fn(),
+    onFailedToProvisionInstance: mock.fn(),
 })
 
 const build = clock => {
     const repo = makeRepo()
     const instanceManager = makeInstanceManager()
     const events = {
-        emitWorkerSessionRequested: jest.fn(),
-        emitWorkerSessionActivated: jest.fn(),
-        emitWorkerSessionClosed: jest.fn(),
-        emitSessionAppAssociated: jest.fn(),
-        emitSessionAppDissociated: jest.fn(),
-        emitSessionChanged: jest.fn(),
+        emitWorkerSessionRequested: mock.fn(),
+        emitWorkerSessionActivated: mock.fn(),
+        emitWorkerSessionClosed: mock.fn(),
+        emitSessionAppAssociated: mock.fn(),
+        emitSessionAppDissociated: mock.fn(),
+        emitSessionChanged: mock.fn(),
     }
     const sessionManager = createSessionManager({
         repo,
-        appRepo: {userAppSessions: jest.fn(async () => []), deleteForSession: jest.fn(async () => {})},
+        appRepo: {userAppSessions: mock.fn(async () => []), deleteForSession: mock.fn(async () => {})},
         instanceManager,
         lockedUsers: {isLocked: () => false},
         expiryPolicy: {mode: 'off', startupLeaseMinutes: 30},
@@ -65,7 +65,7 @@ const build = clock => {
     const component = createSessionComponent({
         sessionManager,
         repo,
-        googleOAuthGateway: {refreshTokens: jest.fn(async () => {})},
+        googleOAuthGateway: {refreshTokens: mock.fn(async () => {})},
         instanceManager,
         homeDir: '/nonexistent-scratch-home', // listDirs() yields [] — no filesystem side effects
         clock,
@@ -82,16 +82,27 @@ const flush = () => new Promise(resolve => setImmediate(resolve))
 // same tick, not after a wall-clock grace that a crash loop can starve forever.
 test('the timed-out sweep runs on the first tick, after the reconcile sweep', async () => {
     const {component, repo, events} = build(() => STARTED_AT)
+    const sweeps = []
+    repo.sessions.mock.mockImplementation(async states => {
+        if (isDeepStrictEqual(states, [State.PENDING])) sweeps.push('reconcile')
+        return []
+    })
+    repo.timedOutSessions.mock.mockImplementation(async () => {
+        sweeps.push('timed out')
+        return [timedOutSession]
+    })
 
     component.start()
     await flush()
     component.stop()
 
-    expect(repo.timedOutSessions).toHaveBeenCalled()
-    expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
-    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
-    expect(repo.sessions.mock.invocationCallOrder[0])
-        .toBeLessThan(repo.timedOutSessions.mock.invocationCallOrder[0])
+    assert.ok(repo.timedOutSessions.mock.callCount() > 0)
+    assert.deepEqual(
+        callsOf(events.emitWorkerSessionClosed),
+        [[{username: 'alice', sessionId: 's-1'}]]
+    )
+    assert.ok(callsOf(repo.sessions).some(([states]) => isDeepStrictEqual(states, [State.PENDING])))
+    assert.deepEqual(sweeps.slice(0, 2), ['reconcile', 'timed out'])
 })
 
 // Both sweeps are pure scheduling: nothing else calls them, and ReclaimStaleClaims is the only
@@ -103,7 +114,7 @@ test('the claim sweep runs with the claim grace', async () => {
     await flush()
     component.stop()
 
-    expect(instanceManager.reclaimStaleClaims).toHaveBeenCalledWith([], 10 * 60_000)
+    assert.deepEqual(callsOf(instanceManager.reclaimStaleClaims), [[[], 10 * 60_000]])
 })
 
 test('the unused-instance sweep runs with the release min age', async () => {
@@ -113,7 +124,7 @@ test('the unused-instance sweep runs with the release min age', async () => {
     await flush()
     component.stop()
 
-    expect(instanceManager.releaseUnusedInstances).toHaveBeenCalledWith([], 5, 'MINUTES')
+    assert.deepEqual(callsOf(instanceManager.releaseUnusedInstances), [[[], 5, 'MINUTES']])
 })
 
 // The recovery sweep is the only thing that finishes a PENDING session whose provisioning nobody
@@ -124,13 +135,13 @@ test('the reconcile sweep runs over the PENDING sessions', async () => {
     const pendingSession = createWorkerSession({
         ...timedOutSession, id: 's-pending', state: State.PENDING,
     })
-    repo.sessions.mockImplementation(async states =>
+    repo.sessions.mock.mockImplementation(async states =>
         states.length === 1 && states[0] === State.PENDING ? [pendingSession] : [])
 
     component.start()
     await flush()
     component.stop()
 
-    expect(repo.sessions).toHaveBeenCalledWith([State.PENDING])
-    expect(instanceManager.sessionsWithoutInstance).toHaveBeenCalledWith([pendingSession])
+    assert.ok(callsOf(repo.sessions).some(([states]) => isDeepStrictEqual(states, [State.PENDING])))
+    assert.ok(callsOf(instanceManager.sessionsWithoutInstance).some(([sessions]) => isDeepStrictEqual(sessions, [pendingSession])))
 })

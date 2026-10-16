@@ -1,4 +1,7 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
+import {callsOf, inSequence} from '#sepal/testSupport/mock'
 
 import {createSandboxServerManager} from './sandboxServerManager.js'
 
@@ -11,7 +14,7 @@ const activeSession = {
 }
 
 const makeRepo = (session = activeSession) => ({
-    getSession: jest.fn(async id =>
+    getSession: mock.fn(async id =>
         id === session.id ? session : Promise.reject(new Error('no such session'))),
 })
 
@@ -26,72 +29,82 @@ const deferred = () => {
 
 describe('ensureServerStarted', () => {
     it('starts the endpoint on the session instance', async () => {
-        const control = {startServer: jest.fn(async () => {})}
+        const control = {startServer: mock.fn(async () => {})}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
-        expect(control.startServer).toHaveBeenCalledWith(activeSession, 'jupyter')
+        assert.deepEqual(callsOf(control.startServer), [[activeSession, 'jupyter']])
     })
 
     it('starts an already started pair again, so a dead server can be revived', async () => {
-        const control = {startServer: jest.fn(async () => {})}
+        const control = {startServer: mock.fn(async () => {})}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'jupyter'})
-        expect(control.startServer).toHaveBeenCalledTimes(2)
+        assert.equal(control.startServer.mock.callCount(), 2)
     })
 
     it('shares one start between concurrent callers', async () => {
         const gate = deferred()
-        const control = {startServer: jest.fn(() => gate.promise)}
+        const control = {startServer: mock.fn(() => gate.promise)}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
         const first = manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
         const second = manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
         gate.resolve()
         await Promise.all([first, second])
-        expect(control.startServer).toHaveBeenCalledTimes(1)
+        assert.equal(control.startServer.mock.callCount(), 1)
     })
 
     it('does not cache a failed start', async () => {
-        const control = {startServer: jest.fn()
-            .mockRejectedValueOnce(new Error('boom'))
-            .mockResolvedValueOnce(undefined)}
+        const control = {startServer: mock.fn(inSequence([async () => {
+            throw new Error('boom')
+        }, async () => undefined]))}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
-        await expect(manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'}))
-            .rejects.toThrow('boom')
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'}),
+            /boom/
+        )
         await manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'})
-        expect(control.startServer).toHaveBeenCalledTimes(2)
+        assert.equal(control.startServer.mock.callCount(), 2)
     })
 
     it('rejects an unknown endpoint without touching the repo', async () => {
         const repo = makeRepo()
-        const control = {startServer: jest.fn()}
+        const control = {startServer: mock.fn()}
         const manager = createSandboxServerManager({repo, control})
-        await expect(manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'sshd'}))
-            .rejects.toThrow(/Unknown endpoint/)
-        expect(repo.getSession).not.toHaveBeenCalled()
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'sshd'}),
+            /Unknown endpoint/
+        )
+        assert.equal(repo.getSession.mock.callCount(), 0)
     })
 
     it('rejects a session owned by another user', async () => {
-        const control = {startServer: jest.fn()}
+        const control = {startServer: mock.fn()}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
-        await expect(manager.ensureServerStarted({username: 'bob', sessionId: 'sess-1', endpoint: 'shiny'}))
-            .rejects.toThrow(/not owned/i)
-        expect(control.startServer).not.toHaveBeenCalled()
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'bob', sessionId: 'sess-1', endpoint: 'shiny'}),
+            /not owned/i
+        )
+        assert.equal(control.startServer.mock.callCount(), 0)
     })
 
     it('rejects a session that is not ACTIVE', async () => {
-        const control = {startServer: jest.fn()}
+        const control = {startServer: mock.fn()}
         const manager = createSandboxServerManager({
             repo: makeRepo({...activeSession, state: 'PENDING'}), control})
-        await expect(manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'}))
-            .rejects.toThrow(/not active/i)
-        expect(control.startServer).not.toHaveBeenCalled()
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'alice', sessionId: 'sess-1', endpoint: 'shiny'}),
+            /not active/i
+        )
+        assert.equal(control.startServer.mock.callCount(), 0)
     })
 
     it('rejects a non-existing session', async () => {
-        const control = {startServer: jest.fn()}
+        const control = {startServer: mock.fn()}
         const manager = createSandboxServerManager({repo: makeRepo(), control})
-        await expect(manager.ensureServerStarted({username: 'alice', sessionId: 'nope', endpoint: 'shiny'}))
-            .rejects.toThrow(/Non-existing session/)
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'alice', sessionId: 'nope', endpoint: 'shiny'}),
+            /Non-existing session/
+        )
     })
 })

@@ -1,26 +1,32 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {launchFailureCode} from './instanceLaunchErrors.js'
 
 const namedError = name => Object.assign(new Error(name), {name})
 
 describe('launchFailureCode', () => {
     it('classifies AZ capacity errors as INSTANCE_UNAVAILABLE', () => {
-        expect(launchFailureCode(namedError('InsufficientInstanceCapacity'))).toBe('INSTANCE_UNAVAILABLE')
-        expect(launchFailureCode(namedError('Unsupported'))).toBe('INSTANCE_UNAVAILABLE')
+        assert.equal(
+            launchFailureCode(namedError('InsufficientInstanceCapacity')),
+            'INSTANCE_UNAVAILABLE'
+        )
+        assert.equal(launchFailureCode(namedError('Unsupported')), 'INSTANCE_UNAVAILABLE')
     })
 
     it('classifies account limit errors as QUOTA_EXCEEDED', () => {
-        expect(launchFailureCode(namedError('InstanceLimitExceeded'))).toBe('QUOTA_EXCEEDED')
-        expect(launchFailureCode(namedError('VcpuLimitExceeded'))).toBe('QUOTA_EXCEEDED')
+        assert.equal(launchFailureCode(namedError('InstanceLimitExceeded')), 'QUOTA_EXCEEDED')
+        assert.equal(launchFailureCode(namedError('VcpuLimitExceeded')), 'QUOTA_EXCEEDED')
     })
 
     it('finds the code through a cause chain (wrapped errors)', () => {
         const wrapped = new Error('FailedToTagInstance: ...', {cause: namedError('InsufficientInstanceCapacity')})
-        expect(launchFailureCode(wrapped)).toBe('INSTANCE_UNAVAILABLE')
+        assert.equal(launchFailureCode(wrapped), 'INSTANCE_UNAVAILABLE')
     })
 
     it('returns null for unrelated errors', () => {
-        expect(launchFailureCode(new Error('boom'))).toBe(null)
-        expect(launchFailureCode(namedError('UnauthorizedOperation'))).toBe(null)
-        expect(launchFailureCode(null)).toBe(null)
+        assert.equal(launchFailureCode(new Error('boom')), null)
+        assert.equal(launchFailureCode(namedError('UnauthorizedOperation')), null)
+        assert.equal(launchFailureCode(null), null)
     })
 })

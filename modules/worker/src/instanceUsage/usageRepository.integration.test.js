@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -13,7 +15,7 @@ describe('UsageRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'worker_usage', migrations: MIGRATIONS_PATH})
     })
@@ -23,7 +25,7 @@ describe('UsageRepository', () => {
         repository = new UsageRepository(testDb.db, () => NOW)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('latestForSessions', () => {
         test('reports the newest sample of each session', async () => {
@@ -33,9 +35,9 @@ describe('UsageRepository', () => {
 
             const latest = await repository.latestForSessions([SESSION_ID, ANOTHER_SESSION_ID])
 
-            expect(latest.get(SESSION_ID).cpuPct).toBe(20)
-            expect(latest.get(SESSION_ID).sampleTime).toEqual(at('09:11'))
-            expect(latest.get(ANOTHER_SESSION_ID).cpuPct).toBe(99)
+            assert.equal(latest.get(SESSION_ID).cpuPct, 20)
+            assert.deepEqual(latest.get(SESSION_ID).sampleTime, at('09:11'))
+            assert.equal(latest.get(ANOTHER_SESSION_ID).cpuPct, 99)
         })
 
         // The report shows rx+tx summed, matching what the busy verdict thresholds. A sample with no
@@ -49,14 +51,14 @@ describe('UsageRepository', () => {
 
             const latest = await repository.latestForSessions([SESSION_ID, ANOTHER_SESSION_ID])
 
-            expect(latest.get(SESSION_ID).netBytesPerS).toBe(300)
-            expect(latest.get(ANOTHER_SESSION_ID).netBytesPerS).toBeNull()
+            assert.equal(latest.get(SESSION_ID).netBytesPerS, 300)
+            assert.equal(latest.get(ANOTHER_SESSION_ID).netBytesPerS, null)
         })
 
         test('reports nothing for no sessions at all', async () => {
             const latest = await repository.latestForSessions([])
 
-            expect(latest.size).toBe(0)
+            assert.equal(latest.size, 0)
         })
     })
 
@@ -69,14 +71,14 @@ describe('UsageRepository', () => {
             await repository.rollupHours(2)
 
             const rows = await storedHourlyRows()
-            expect(rows).toHaveLength(1)
-            expect(rows[0].session_id).toBe(SESSION_ID)
-            expect(new Date(rows[0].hour)).toEqual(at('09:00'))
-            expect(rows[0].sample_count).toBe(2)
-            expect(Number(rows[0].cpu_avg)).toBe(20)
-            expect(Number(rows[0].cpu_max)).toBe(30)
-            expect(Number(rows[0].gpu_max)).toBe(60)
-            expect(Number(rows[0].net_avg_bytes_per_s)).toBe(300)
+            assert.equal(rows.length, 1)
+            assert.equal(rows[0].session_id, SESSION_ID)
+            assert.deepEqual(new Date(rows[0].hour), at('09:00'))
+            assert.equal(rows[0].sample_count, 2)
+            assert.equal(Number(rows[0].cpu_avg), 20)
+            assert.equal(Number(rows[0].cpu_max), 30)
+            assert.equal(Number(rows[0].gpu_max), 60)
+            assert.equal(Number(rows[0].net_avg_bytes_per_s), 300)
         })
 
         test('leaves out samples from outside the window it heals', async () => {
@@ -86,7 +88,10 @@ describe('UsageRepository', () => {
             await repository.rollupHours(2)
 
             const rows = await storedHourlyRows()
-            expect(rows.map(row => new Date(row.hour).toISOString())).toEqual([at('09:00').toISOString()])
+            assert.deepEqual(
+                rows.map(row => new Date(row.hour).toISOString()),
+                [at('09:00').toISOString()]
+            )
         })
     })
 
@@ -107,14 +112,14 @@ describe('UsageRepository', () => {
 
             const cpuOnly = rollup.find(({instanceType}) => instanceType === INSTANCE_TYPE)
             const withGpu = rollup.find(({instanceType}) => instanceType === GPU_INSTANCE_TYPE)
-            expect(cpuOnly.hours).toBe(2)
-            expect(cpuOnly.cpuWeight).toBe(3)
-            expect(cpuOnly.cpuSum).toBe(2 * 10 + 1 * 40)
-            expect(cpuOnly.cpuMax).toBe(40)
-            expect(withGpu.hours).toBe(2)
-            expect(withGpu.gpuWeight).toBe(1)
-            expect(withGpu.gpuSum).toBe(1 * 80)
-            expect(withGpu.gpuMax).toBe(80)
+            assert.equal(cpuOnly.hours, 2)
+            assert.equal(cpuOnly.cpuWeight, 3)
+            assert.equal(cpuOnly.cpuSum, 2 * 10 + 1 * 40)
+            assert.equal(cpuOnly.cpuMax, 40)
+            assert.equal(withGpu.hours, 2)
+            assert.equal(withGpu.gpuWeight, 1)
+            assert.equal(withGpu.gpuSum, 1 * 80)
+            assert.equal(withGpu.gpuMax, 80)
         })
 
         test('leaves out hours before the window and hours of other users', async () => {
@@ -124,13 +129,14 @@ describe('UsageRepository', () => {
 
             const rollup = await repository.userUsageRollup(USERNAME, FROM_TIME)
 
-            expect(rollup).toEqual([expect.objectContaining({instanceType: INSTANCE_TYPE, hours: 1})])
+            assert.equal(rollup.length, 1)
+            assert.partialDeepStrictEqual(rollup, [{instanceType: INSTANCE_TYPE, hours: 1}])
         })
 
         test('reports nothing for a user with no recorded hours', async () => {
             const rollup = await repository.userUsageRollup('nobody', FROM_TIME)
 
-            expect(rollup).toEqual([])
+            assert.deepEqual(rollup, [])
         })
     })
 
@@ -151,14 +157,17 @@ describe('UsageRepository', () => {
 
             const stats = await repository.busyWindowStats([SESSION_ID, ANOTHER_SESSION_ID], at('09:35'))
 
-            expect(stats.get(SESSION_ID)).toEqual({samples: 2, cpuAvg: 3, gpuSamples: 2, gpuAvg: 2, netAvg: 300})
-            expect(stats.get(ANOTHER_SESSION_ID).samples).toBe(0)
+            assert.deepEqual(
+                stats.get(SESSION_ID),
+                {samples: 2, cpuAvg: 3, gpuSamples: 2, gpuAvg: 2, netAvg: 300}
+            )
+            assert.equal(stats.get(ANOTHER_SESSION_ID).samples, 0)
         })
 
         test('reports nothing for no sessions at all', async () => {
             const stats = await repository.busyWindowStats([], NOW)
 
-            expect(stats.size).toBe(0)
+            assert.equal(stats.size, 0)
         })
     })
 
@@ -170,8 +179,8 @@ describe('UsageRepository', () => {
             const deleted = await repository.pruneSamples(30)
 
             const latest = await repository.latestForSessions([SESSION_ID])
-            expect(deleted).toBe(1)
-            expect(latest.get(SESSION_ID).sampleTime).toEqual(new Date('2026-07-31T00:00:00Z'))
+            assert.equal(deleted, 1)
+            assert.deepEqual(latest.get(SESSION_ID).sampleTime, new Date('2026-07-31T00:00:00Z'))
         })
     })
 
@@ -183,8 +192,8 @@ describe('UsageRepository', () => {
             const deleted = await repository.pruneHourly(365)
 
             const rows = await storedHourlyRows()
-            expect(deleted).toBe(1)
-            expect(rows.map(({session_id}) => session_id)).toEqual(['recent'])
+            assert.equal(deleted, 1)
+            assert.deepEqual(rows.map(({session_id}) => session_id), ['recent'])
         })
     })
 

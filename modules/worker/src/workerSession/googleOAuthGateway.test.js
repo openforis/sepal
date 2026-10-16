@@ -1,7 +1,7 @@
-// Tests for the Google OAuth gateway + RefreshGoogleTokens command. fetch is mocked — the user
-// module is never contacted.
+import assert from 'node:assert/strict'
+import {afterEach, describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf, inSequence} from '#sepal/testSupport/mock'
 
 import {refreshGoogleTokens} from './command/refreshGoogleTokens.js'
 import {createGoogleOAuthGateway} from './googleOAuthGateway.js'
@@ -9,69 +9,83 @@ import {State} from './workerSession.js'
 
 describe('createGoogleOAuthGateway.refreshTokens', () => {
     afterEach(() => {
-        jest.restoreAllMocks()
+        mock.restoreAll()
     })
 
     test('POSTs JSON to <endpoint>refresh-access-token with an admin sepal-user header', async () => {
-        const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
+        const fetchMock = mock.fn(async () => ({
+            ok: true,
+            text: async () => ''
+        }))
         global.fetch = fetchMock
         const gateway = createGoogleOAuthGateway({googleOAuthEndpoint: 'http://user/google/'})
 
         await gateway.refreshTokens('alice')
 
-        expect(fetchMock).toHaveBeenCalledTimes(1)
-        const [url, init] = fetchMock.mock.calls[0]
-        expect(url).toBe('http://user/google/refresh-access-token')
-        expect(init.method).toBe('POST')
-        expect(init.headers['Content-Type']).toMatch(/application\/json/)
-        expect(JSON.parse(init.headers['sepal-user'])).toEqual({
+        assert.equal(fetchMock.mock.callCount(), 1)
+        const [url, init] = fetchMock.mock.calls[0].arguments
+        assert.equal(url, 'http://user/google/refresh-access-token')
+        assert.equal(init.method, 'POST')
+        assert.match(init.headers['Content-Type'], /application\/json/)
+        assert.deepEqual(JSON.parse(init.headers['sepal-user']), {
             username: 'alice',
             roles: ['application_admin'],
         })
     })
 
     test('falls back to the default user-module endpoint when config omits it', async () => {
-        const fetchMock = jest.fn().mockResolvedValue({ok: true, text: async () => ''})
+        const fetchMock = mock.fn(async () => ({
+            ok: true,
+            text: async () => ''
+        }))
         global.fetch = fetchMock
         const gateway = createGoogleOAuthGateway({})
         await gateway.refreshTokens('bob')
-        expect(fetchMock.mock.calls[0][0]).toBe('http://user/google/refresh-access-token')
+        assert.equal(
+            fetchMock.mock.calls[0].arguments[0],
+            'http://user/google/refresh-access-token'
+        )
     })
 
     test('throws on a non-2xx response', async () => {
-        global.fetch = jest.fn().mockResolvedValue({ok: false, status: 500, text: async () => 'boom'})
+        global.fetch = mock.fn(async () => ({
+            ok: false,
+            status: 500,
+            text: async () => 'boom'
+        }))
         const gateway = createGoogleOAuthGateway({googleOAuthEndpoint: 'http://user/google/'})
-        await expect(gateway.refreshTokens('carol')).rejects.toThrow(/carol.*500/)
+        await assert.rejects(gateway.refreshTokens('carol'), /carol.*500/)
     })
 })
 
 describe('refreshGoogleTokens command', () => {
     test('dedupes usernames — refreshes once per user across PENDING+ACTIVE sessions', async () => {
         const repo = {
-            sessions: jest.fn().mockResolvedValue([
+            sessions: mock.fn(async () => [
                 {username: 'alice'},
                 {username: 'bob'},
                 {username: 'alice'},
             ]),
         }
-        const refreshTokens = jest.fn().mockResolvedValue(undefined)
+        const refreshTokens = mock.fn(async () => undefined)
         await refreshGoogleTokens({repo, googleOAuthGateway: {refreshTokens}})
 
-        expect(repo.sessions).toHaveBeenCalledWith([State.PENDING, State.ACTIVE])
-        expect(refreshTokens).toHaveBeenCalledTimes(2)
-        expect(refreshTokens.mock.calls.map(c => c[0]).sort()).toEqual(['alice', 'bob'])
+        assert.deepEqual(callsOf(repo.sessions), [[[State.PENDING, State.ACTIVE]]])
+        assert.equal(refreshTokens.mock.callCount(), 2)
+        assert.deepEqual(callsOf(refreshTokens).map(c => c[0]).sort(), ['alice', 'bob'])
     })
 
     test('per-user isolation — one failure does not abort the rest', async () => {
         const repo = {
-            sessions: jest.fn().mockResolvedValue([{username: 'alice'}, {username: 'bob'}]),
+            sessions: mock.fn(async () => [{username: 'alice'}, {username: 'bob'}]),
         }
-        const refreshTokens = jest.fn()
-            .mockRejectedValueOnce(new Error('alice failed'))
-            .mockResolvedValueOnce(undefined)
-        await expect(
-            refreshGoogleTokens({repo, googleOAuthGateway: {refreshTokens}})
-        ).resolves.toBeNull()
-        expect(refreshTokens).toHaveBeenCalledTimes(2)
+        const refreshTokens = mock.fn(inSequence([async () => {
+            throw new Error('alice failed')
+        }, async () => undefined]))
+        assert.equal(
+            await refreshGoogleTokens({repo, googleOAuthGateway: {refreshTokens}}),
+            null
+        )
+        assert.equal(refreshTokens.mock.callCount(), 2)
     })
 })

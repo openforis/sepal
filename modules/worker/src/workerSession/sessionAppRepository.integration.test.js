@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -16,7 +18,7 @@ describe('SessionAppRepository', () => {
     let workerSessionRepository
     let now
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'worker_session_app', migrations: MIGRATIONS_PATH})
     })
@@ -28,7 +30,7 @@ describe('SessionAppRepository', () => {
         workerSessionRepository = new WorkerSessionRepository(testDb.db, () => now, repository)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('associate', () => {
         test('associates an app with a session, recording the client that owns the tab', async () => {
@@ -38,11 +40,11 @@ describe('SessionAppRepository', () => {
 
             const associated = await repository.userAppSessions(USERNAME)
             const owner = await repository.dissociate({username: USERNAME, appPath: APP_PATH})
-            expect(associated).toEqual([{
+            assert.deepEqual(associated, [{
                 path: APP_PATH, label: 'Some app', sessionId: SESSION_ID,
                 host: HOST, status: State.PENDING, instanceType: INSTANCE_TYPE,
             }])
-            expect(owner).toEqual({sessionId: SESSION_ID, clientId: CLIENT_ID})
+            assert.deepEqual(owner, {sessionId: SESSION_ID, clientId: CLIENT_ID})
         })
 
         // The column compares without regard to case, so only the stored string shows the
@@ -53,7 +55,7 @@ describe('SessionAppRepository', () => {
             await repository.associate(anAssociation({username: 'Bob'}))
 
             const stored = await storedUsernames()
-            expect(stored).toEqual([USERNAME])
+            assert.deepEqual(stored, [USERNAME])
         })
 
         test('leaves an association without an owning client', async () => {
@@ -62,7 +64,7 @@ describe('SessionAppRepository', () => {
             await repository.associate(anAssociation({clientId: undefined}))
 
             const dissociated = await repository.dissociate({username: USERNAME, appPath: APP_PATH})
-            expect(dissociated).toEqual({sessionId: SESSION_ID, clientId: null})
+            assert.deepEqual(dissociated, {sessionId: SESSION_ID, clientId: null})
         })
 
         // One app, one session: re-associating moves the app rather than adding a second row.
@@ -74,9 +76,9 @@ describe('SessionAppRepository', () => {
             await repository.associate(anAssociation({sessionId: ANOTHER_SESSION_ID, label: 'Moved'}))
 
             const associated = await repository.userAppSessions(USERNAME)
-            expect(associated).toHaveLength(1)
-            expect(associated[0].sessionId).toBe(ANOTHER_SESSION_ID)
-            expect(associated[0].label).toBe('Moved')
+            assert.equal(associated.length, 1)
+            assert.equal(associated[0].sessionId, ANOTHER_SESSION_ID)
+            assert.equal(associated[0].label, 'Moved')
         })
     })
 
@@ -88,7 +90,7 @@ describe('SessionAppRepository', () => {
             await repository.setClient({username: USERNAME, appPath: APP_PATH, clientId: ANOTHER_CLIENT_ID})
 
             const dissociated = await repository.dissociate({username: USERNAME, appPath: APP_PATH})
-            expect(dissociated).toEqual({sessionId: SESSION_ID, clientId: ANOTHER_CLIENT_ID})
+            assert.deepEqual(dissociated, {sessionId: SESSION_ID, clientId: ANOTHER_CLIENT_ID})
         })
     })
 
@@ -101,7 +103,7 @@ describe('SessionAppRepository', () => {
 
             const associated = await repository.userAppSessions(USERNAME)
 
-            expect(associated.map(({path}) => path)).toEqual([APP_PATH])
+            assert.deepEqual(associated.map(({path}) => path), [APP_PATH])
         })
 
         test('reports only the given user\'s associations', async () => {
@@ -112,7 +114,7 @@ describe('SessionAppRepository', () => {
 
             const associated = await repository.userAppSessions(USERNAME)
 
-            expect(associated.map(({sessionId}) => sessionId)).toEqual([SESSION_ID])
+            assert.deepEqual(associated.map(({sessionId}) => sessionId), [SESSION_ID])
         })
     })
 
@@ -128,11 +130,11 @@ describe('SessionAppRepository', () => {
 
             const apps = await repository.appsForSessions([SESSION_ID, ANOTHER_SESSION_ID])
 
-            expect(apps.get(SESSION_ID)).toEqual([
+            assert.deepEqual(apps.get(SESSION_ID), [
                 {path: APP_PATH, label: 'First'},
                 {path: ANOTHER_APP_PATH, label: 'Second'},
             ])
-            expect(apps.get(ANOTHER_SESSION_ID)).toEqual([{path: APP_PATH, label: 'Other'}])
+            assert.deepEqual(apps.get(ANOTHER_SESSION_ID), [{path: APP_PATH, label: 'Other'}])
         })
 
         // Answered while the suite's only connection is held: with no session ids there is nothing to
@@ -140,7 +142,7 @@ describe('SessionAppRepository', () => {
         test('reports nothing for no sessions at all, without reaching the database', async () => {
             const apps = await testDb.db.withConnection(() => repository.appsForSessions([]))
 
-            expect(apps.size).toBe(0)
+            assert.equal(apps.size, 0)
         })
     })
 
@@ -154,7 +156,7 @@ describe('SessionAppRepository', () => {
             await repository.deleteForSession(SESSION_ID)
 
             const associated = await repository.userAppSessions(USERNAME)
-            expect(associated.map(({sessionId}) => sessionId)).toEqual([ANOTHER_SESSION_ID])
+            assert.deepEqual(associated.map(({sessionId}) => sessionId), [ANOTHER_SESSION_ID])
         })
     })
 
@@ -166,14 +168,14 @@ describe('SessionAppRepository', () => {
             const dissociated = await repository.dissociate({username: USERNAME, appPath: APP_PATH})
 
             const associated = await repository.userAppSessions(USERNAME)
-            expect(dissociated).toEqual({sessionId: SESSION_ID, clientId: CLIENT_ID})
-            expect(associated).toEqual([])
+            assert.deepEqual(dissociated, {sessionId: SESSION_ID, clientId: CLIENT_ID})
+            assert.deepEqual(associated, [])
         })
 
         test('reports nothing for an app that was never associated', async () => {
             const dissociated = await repository.dissociate({username: USERNAME, appPath: APP_PATH})
 
-            expect(dissociated).toBeNull()
+            assert.equal(dissociated, null)
         })
     })
 
@@ -187,9 +189,12 @@ describe('SessionAppRepository', () => {
             const dissociated = await repository.dissociateForClient({username: USERNAME, clientId: CLIENT_ID})
 
             const associated = await repository.userAppSessions(USERNAME)
-            expect(dissociated.map(({appPath}) => appPath).sort()).toEqual([ANOTHER_APP_PATH, APP_PATH].sort())
-            expect(dissociated.every(({sessionId}) => sessionId === SESSION_ID)).toBe(true)
-            expect(associated.map(({path}) => path)).toEqual(['/apps/kept'])
+            assert.deepEqual(
+                dissociated.map(({appPath}) => appPath).sort(),
+                [ANOTHER_APP_PATH, APP_PATH].sort()
+            )
+            assert.equal(dissociated.every(({sessionId}) => sessionId === SESSION_ID), true)
+            assert.deepEqual(associated.map(({path}) => path), ['/apps/kept'])
         })
 
         test('reports nothing when the client owned no association', async () => {
@@ -199,8 +204,8 @@ describe('SessionAppRepository', () => {
             const dissociated = await repository.dissociateForClient({username: USERNAME, clientId: ANOTHER_CLIENT_ID})
 
             const associated = await repository.userAppSessions(USERNAME)
-            expect(dissociated).toEqual([])
-            expect(associated).toHaveLength(1)
+            assert.deepEqual(dissociated, [])
+            assert.equal(associated.length, 1)
         })
     })
 
