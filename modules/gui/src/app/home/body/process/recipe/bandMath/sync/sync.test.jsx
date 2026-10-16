@@ -22,7 +22,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('../bandMath')
 const {Sync} = await import('./sync')
-const {readLocalRequirements, readKey} = await import('../../sourceRequirements')
+const {readSourceRequirements, readKey} = await import('../../sourceRequirements')
 const {hasUniqueOutputNames, outputNameOf} = await import('../panels/outputBands/outputImages')
 
 addRecipeType(bandMath())
@@ -45,7 +45,7 @@ describe('an input band a chain of calculations reads', () => {
 
         await setInputBands([RED])
 
-        expect(unmet()).toEqual(['bandMath.calculations|calc-1', 'bandMath.calculations|calc-2', 'bandMath.calculations|calc-3', 'bandMath.outputs|calc-3'])
+        expect(unmet()).toEqual(['bandMath.calculations|calc-1'])
         expect(model().calculations).toEqual(before.calculations)
         expect(model().outputBands).toEqual(before.outputBands)
 
@@ -271,7 +271,7 @@ function outputNames() {
 }
 
 function unmet() {
-    return readLocalRequirements(recipe())
-        .filter(({verdict}) => verdict.status !== 'SUPPORTED')
+    return readSourceRequirements({state: store.getState(), recipe: recipe(), heldFor: () => undefined})
+        .filter(({item, verdict}) => item && verdict.status !== 'SUPPORTED')
         .map(readKey)
 }

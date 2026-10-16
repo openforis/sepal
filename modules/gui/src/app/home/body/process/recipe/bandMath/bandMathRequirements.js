@@ -1,9 +1,8 @@
+import {INVALID_CALCULATION} from '#sepal/recipe/output/diagnostic'
 import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
 import {
-    CALCULATION_REFERENCES,
-    calculationItems,
     CALCULATIONS_REQUIREMENT,
     chainFacts,
     DUPLICATE_OUTPUT_NAME,
@@ -25,9 +24,9 @@ import {
     UNKNOWN_VARIABLE
 } from './chainRequirements'
 
-// What Band Math needs of its own configuration as applied (chainRequirements.js), said on the sections and items it
-// concerns. Every calculation is built whenever its output is, read by an output or not, so any not met holds the
-// output back - its previews and Retrieve alike.
+// Applied calculation problems come from shared readiness. Output-selection rules remain local.
+// Both are said on the sections and items they concern. Every calculation is built whenever its output is, read by
+// an output or not, so any not met holds the output back - its previews and Retrieve alike.
 
 const CALCULATIONS = {id: 'calculations', label: 'process.bandMath.panel.calculations.button'}
 const OUTPUT_BANDS = {id: 'outputBands', label: 'process.bandMath.panel.outputBands.button'}
@@ -36,9 +35,14 @@ export const bandMathRequirements = [
     {
         id: CALCULATIONS_REQUIREMENT,
         section: CALCULATIONS,
-        requirement: {...CALCULATION_REFERENCES, describe: diagnostic => describeProblems(diagnostic)},
-        localFacts: chainFacts,
-        items: calculationItems,
+        requirement: {id: CALCULATIONS_REQUIREMENT, describe: ({diagnostics}) => describeProblems({problems: diagnostics.flatMap(({problems}) => problems)})},
+        outputDiagnostics: {
+            codes: [INVALID_CALCULATION],
+            itemOf: ({path}, recipe) => {
+                const calculation = recipe.model?.calculations?.calculations?.[path[3]]
+                return calculation ? {id: calculation.imageId, path, label: calculation.name} : null
+            }
+        },
         operations: [IMAGE_OUTPUT]
     },
     {

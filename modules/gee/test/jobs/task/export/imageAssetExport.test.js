@@ -206,6 +206,29 @@ describe('exporting a Band Math recipe', () => {
         state.assets['users/x/dem'] = DEM
     })
 
+    it.each([
+        ['expression', {type: 'EXPRESSION', expression: 'gone.elevation * 2'}],
+        ['reducer', {type: 'FUNCTION', reducer: 'mean', usedBands: [{imageId: 'gone', imageName: 'gone', name: 'elevation'}]}],
+        ['unselected band', {type: 'EXPRESSION', expression: 'i1.nir'}]
+    ])('refuses broken %s references here and downstream, then exports after repair', async (_case, fields) => {
+        const recipe = bandMath()
+        recipe.model.calculations.calculations = [{imageId: 'calc', name: 'c1', includedBands: [{name: 'result'}], ...fields}]
+        const over = {id: 'over-math', type: 'REMAPPING', model: {
+            inputImagery: {images: [{imageId: 'math', type: 'RECIPE_REF', id: recipe.id, includedBands: [{band: 'dem2'}]}]},
+            legend: {entries: [{value: 1}]}
+        }}
+        state.catalogue = {[recipe.id]: recipe}
+        state.recipeImages[recipe.id] = RUNNING_IMAGE
+        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/cannot run: INVALID_CALCULATION$/)
+        await expect(submit({recipe: over, bands: ['class']})).rejects.toThrow(/cannot run: INVALID_CALCULATION$/)
+        expect(state.exported).toEqual([])
+
+        recipe.model.calculations.calculations[0] = {imageId: 'calc', name: 'c1', type: 'EXPRESSION', expression: 'i1.elevation * 2', includedBands: [{name: 'result'}]}
+        expect((await submit({recipe, bands: ['dem2']})).image.builtFrom).toBe(recipe.id)
+        state.exported = []
+        expect((await submit({recipe: over, bands: ['class']})).image.builtFrom).toBe(over.id)
+    })
+
     it('exports once its own running image is observed, recording that nothing is known about its values', async () => {
         const recipe = bandMath()
         state.recipeImages[recipe.id] = RUNNING_IMAGE

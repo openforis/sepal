@@ -42,17 +42,22 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 }))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
+const {default: remapping} = await import('../remapping/remapping')
+const {getPreSetVisualizations} = await import('../remapping/visualizations')
 const {default: bandMath} = await import('./bandMath')
 const {RecipeImageLayer} = await import('../recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 
 addRecipeType(bandMath())
+addRecipeType(remapping())
 // Band Math's own layer form is replaced by one that reports the layer it is given to draw.
-addRecipeImageLayer('BAND_MATH', ({layer}) => {
+const showLayer = ({layer}) => {
     previews.shown = layer
     return null
-})
+}
+addRecipeImageLayer('BAND_MATH', showLayer)
+addRecipeImageLayer('REMAPPING', showLayer)
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -99,6 +104,19 @@ describe('a Band Math layer on another map', () => {
     })
 })
 
+describe('a Remapping over Band Math on another map', () => {
+    it('is withdrawn for an upstream broken reference and restored when repaired', async () => {
+        await onAnotherMap('i1.nir * 2', true)
+        expect(previews.constructed).toHaveLength(1)
+        await setExpression('gone.nir * 2')
+        expect(previews.shown).toBe(null)
+        expect(previews.constructed).toHaveLength(1)
+        await setExpression('i1.nir * 2')
+        expect(previews.constructed).toHaveLength(2)
+        expect(previews.shown).toBe(previews.constructed[1])
+    })
+})
+
 const RED = {id: 'red-id', name: 'red'}
 const NIR = {id: 'nir-id', name: 'nir'}
 const STYLE = {type: 'continuous', bands: ['red'], min: [0], max: [1], palette: ['#000000', '#FFFFFF']}
@@ -109,6 +127,7 @@ const INPUT = {
 
 const LISTING = [
     {id: BAND_MATH, name: 'Math', type: 'BAND_MATH', revision: 1},
+    {id: 'over-math', name: 'Remapping', type: 'REMAPPING', revision: 1},
     {id: HOST, name: 'Host', type: 'MOSAIC', revision: 1}
 ]
 
@@ -121,12 +140,16 @@ const bandMathModel = expression => ({
     outputBands: {outputImages: [{...INPUT, outputBands: [{...RED, defaultOutputName: 'red'}]}]}
 })
 
-async function onAnotherMap(expression) {
+async function onAnotherMap(expression, downstream = false) {
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
             loadedRecipes: {
                 [BAND_MATH]: {id: BAND_MATH, type: 'BAND_MATH', revision: 1, model: bandMathModel(expression), ui: {initialized: true}},
+                'over-math': {id: 'over-math', type: 'REMAPPING', revision: 1, ui: {initialized: true}, model: {
+                    inputImagery: {images: [{imageId: 'math', type: 'RECIPE_REF', id: BAND_MATH, includedBands: [{band: 'red'}]}]},
+                    legend: {entries: [{id: 'class', value: 1, label: 'Class', color: '#123456'}]}
+                }},
                 [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}}
             },
             recipes: LISTING,
@@ -147,8 +170,8 @@ async function onAnotherMap(expression) {
                 <Recipe id={HOST}>
                     <TabContext id={HOST} busyIn$={new Subject()}>
                         <RecipeImageLayer
-                            source={{id: 'band-math-layer', sourceConfig: {recipeId: BAND_MATH}}}
-                            layerConfig={{visParams: STYLE}}
+                            source={{id: 'band-math-layer', sourceConfig: {recipeId: downstream ? 'over-math' : BAND_MATH}}}
+                            layerConfig={{visParams: downstream ? getPreSetVisualizations(initialState.process.loadedRecipes['over-math'])[0] : STYLE}}
                             map={{}}
                         />
                     </TabContext>

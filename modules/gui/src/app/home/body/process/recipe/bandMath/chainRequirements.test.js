@@ -1,11 +1,15 @@
 import {describe, expect, it, vi} from 'vitest'
 
 // What Band Math's configuration is found to need of itself, read through the shared requirement reader as every
-// consumer reads it: each calculation and each output image by its own read, keyed by declaration and item.
+// consumer reads it: calculations from shared findings, output selections from their local rule.
 
 vi.mock('~/translate', () => ({msg: key => key}))
 const registry = vi.hoisted(() => ({}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
+
+const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
+const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
+const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
 
 const {bandMathRequirements} = await import('./bandMathRequirements')
 const {readSourceRequirements, readKey, requestGate} = await import('../sourceRequirements')
@@ -80,29 +84,29 @@ describe('a calculation', () => {
 
         expect(readOf(model, CALCULATIONS, 'calc-2')).toMatchObject({
             own: [{code: 'UNKNOWN_BAND', variable: 'i1', band: 'nir'}],
-            unmet: [`${CALCULATIONS}|calc-1`],
+            unmet: [],
             status: 'UNSUPPORTED'
         })
     })
 
-    it('met itself but reading an unmet calculation is unmet, by that calculation alone', () => {
+    it('leaves a dependent calculation without an invented problem of its own', () => {
         const model = recipe({
             images: [input(['red'])],
             calculations: [NDVI, func('calc-2', 'mx', [['calc-1', 'ndvi', 'ndvi']])]
         })
 
         expect(readOf(model, CALCULATIONS, 'calc-2')).toMatchObject({
-            own: [], unmet: [`${CALCULATIONS}|calc-1`], status: 'UNSUPPORTED', code: 'PREREQUISITE_UNMET'
+            own: [], unmet: [], status: 'SUPPORTED'
         })
     })
 
-    it('reading through a chain is held by the calculation it reads, however far back the problem lies', () => {
+    it('locates a chain failure only at its originating calculation', () => {
         const model = recipe({
             images: [input(['red'])],
             calculations: [NDVI, expression('calc-2', 'a', 'ndvi.ndvi * 2', ['a']), expression('calc-3', 'b', 'a.a + 1', ['b'])]
         })
 
-        expect(readOf(model, CALCULATIONS, 'calc-3')).toMatchObject({own: [], unmet: [`${CALCULATIONS}|calc-2`], status: 'UNSUPPORTED'})
+        expect(readOf(model, CALCULATIONS, 'calc-3')).toMatchObject({own: [], unmet: [], status: 'SUPPORTED'})
     })
 
     it('not reading an unmet calculation is met', () => {
@@ -128,10 +132,10 @@ describe('an output image', () => {
         expect(readOf(model, OUTPUTS, 'calc-9').own).toEqual([{code: 'MISSING_IMAGE', variable: 'gone'}])
     })
 
-    it('taken from an unmet calculation is held by it without a problem of its own', () => {
+    it('leaves an output of an unmet calculation without a problem of its own', () => {
         const model = recipe({images: [input(['red'])]})
 
-        expect(readOf(model, OUTPUTS, 'calc-2')).toMatchObject({own: [], unmet: [`${CALCULATIONS}|calc-2`], status: 'UNSUPPORTED'})
+        expect(readOf(model, OUTPUTS, 'calc-2')).toMatchObject({own: [], unmet: [], status: 'SUPPORTED'})
     })
 })
 
@@ -143,12 +147,13 @@ describe('the image output', () => {
             outputImages: [{imageId: 'calc-2', name: 'r', outputBands: [{id: 'r', name: 'r'}]}]
         })
 
-        expect(requestGate({state: {}, recipe: model, operation: 'IMAGE_OUTPUT'}))
+        expect(requestGate({state: {}, recipe: model, operation: 'IMAGE_OUTPUT', heldFor: heldFor(model)}))
             .toMatchObject({code: 'CONFIGURATION_UNMET', withdraw: true, wait: false, section: 'process.bandMath.panel.calculations.button'})
     })
 
     it('is requested once every calculation and output is met', () => {
-        expect(requestGate({state: {}, recipe: recipe(), operation: 'IMAGE_OUTPUT'})).toBe(null)
+        const valid = recipe()
+        expect(requestGate({state: {}, recipe: valid, operation: 'IMAGE_OUTPUT', heldFor: heldFor(valid)})).toBe(null)
     })
 })
 
@@ -189,20 +194,32 @@ function recipe({
     return {
         id: 'band-math-1',
         type: 'BAND_MATH',
-        model: {inputImagery: {images}, calculations: {calculations}, outputBands: {outputImages}}
+        model: {inputImagery: {images}, calculations: {calculations}, outputBands: {outputImages: outputImages.map(image => ({...image, outputBands: image.outputBands.map(band => ({defaultOutputName: band.name, ...band}))}))}}
     }
 }
 
-const readsOf = recipe => readSourceRequirements({state: {}, recipe})
+const readsOf = recipe => readSourceRequirements({state: {}, recipe, heldFor: heldFor(recipe)})
+
+const heldFor = recipe => {
+    const result = readImageOutput({
+        graph: buildRecipeDependencyGraph({rootRecipe: recipe, recipesById: new Map()}),
+        declarationFor: ({type}) => recipeType(type)?.imageOutput,
+        readinessFor: ({type}) => recipeType(type),
+        observationFor: ({type}) => ({bands: (type === 'ASSET' ? ['red', 'nir', 'a', 'b', 'c']
+            : recipe.model.outputBands.outputImages.flatMap(image => image.outputBands.map(band => band.outputName || band.defaultOutputName)))
+            .map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []})
+    })
+    return () => result
+}
 
 // A read's own problems, the reads it waits on by key, and its effective verdict.
 function readOf(recipe, declaration, item) {
     const read = readsOf(recipe).find(read => readKey(read) === `${declaration}|${item}`)
     return {
-        own: read.ownVerdict.diagnostic?.problems || [],
-        unmet: read.unmetPrerequisites.map(({declaration, item}) => `${declaration}|${item}`),
-        status: read.verdict.status,
-        code: read.verdict.diagnostic?.code
+        own: read?.ownVerdict.diagnostic?.problems || read?.ownVerdict.diagnostic?.diagnostics?.flatMap(({problems}) => problems) || [],
+        unmet: (read?.unmetPrerequisites || []).map(({declaration, item}) => `${declaration}|${item}`),
+        status: read?.verdict.status || 'SUPPORTED',
+        code: read?.verdict.diagnostic?.code
     }
 }
 

@@ -55,7 +55,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
 const {Sync} = await import('./sync/sync')
-const {configurationGate} = await import('../sourceRequirements')
+const {requestGate} = await import('../sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -340,7 +340,7 @@ const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
 
 // The output images whose rows in Output bands are marked in error, by the name of the image each is taken from.
 // Why Band Math's own requirements refuse its image output, if they do.
-const imageOutputGate = () => configurationGate({recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT'})
+const imageOutputGate = () => requestGate({state: store.getState(), recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT', heldFor: () => undefined})
 
 const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])

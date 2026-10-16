@@ -93,6 +93,10 @@ description would refuse recipes that execute.
 
 ## Open issues
 
+The [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
+tracks the remaining work below. Automatic recovery when the same input source returns is implemented; checking
+whether that source still provides a constraint's band is the separate outstanding gap.
+
 - **Its inputs are not marked above their editor.** The input editor marks a selected band its source no longer
   has, but nothing marks the input's row in Input imagery or the Input imagery button, as Stack and Band Math do
   from their output reads: Remapping's description reads no input, so its output read establishes nothing about

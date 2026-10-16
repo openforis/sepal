@@ -27,6 +27,10 @@ const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
+const {default: remapping} = await import('../remapping/remapping')
+const {retrieveTask: remappingTask} = await import('../remapping/remappingRecipe')
+const {requestGate} = await import('../sourceRequirements')
+const {sourceProblemsOfState} = await import('../selectedSourceStatus')
 const {default: masking} = await import('../masking/masking')
 const {retrieveTask: bandMathTask} = await import('./bandMathRecipe')
 const {retrieveTask: maskingTask} = await import('../masking/maskingRecipe')
@@ -37,6 +41,7 @@ const {retrieveAvailability} = await import('../operationAvailability')
 
 addRecipeType(bandMath())
 addRecipeType(masking())
+addRecipeType(remapping())
 
 beforeEach(() => {
     submitted.length = 0
@@ -105,6 +110,35 @@ describe('retrieving a Masking recipe over Band Math', () => {
         expect(submitted.map(({params: {image}}) => image.pyramidingPolicy)).toEqual([
             {dem2: 'mean', change: 'mean', coefs: 'sample'}
         ])
+    })
+})
+
+describe('a Remapping over Band Math with broken calculation references', () => {
+    it.each(['expression', 'reducer', 'calculation band'])('holds Retrieve and preview for %s, without marking the dependent, and recovers', kind => {
+        const broken = withExpression(kind === 'expression' ? 'gone.elevation * 2' : 'i1.elevation * 2')
+        if (kind === 'reducer') broken.model.calculations.calculations = broken.model.calculations.calculations.map(calc =>
+            calc.imageId === 'c-2' ? {...calc, usedBands: [{imageId: 'gone', imageName: 'gone', name: 'elevation'}]} : calc)
+        if (kind === 'calculation band') broken.model.calculations.calculations = broken.model.calculations.calculations.map(calc =>
+            calc.imageId === 'c-3' ? {...calc, expression: 'c1.gone'} : calc)
+        const over = {id: 'over-math', type: 'REMAPPING', model: {
+            inputImagery: {images: [{imageId: 'math', type: 'RECIPE_REF', id: BAND_MATH.id, includedBands: [{band: 'dem2'}]}]},
+            legend: {entries: [{value: 1}]}
+        }}
+        const state = stateOf(over, broken)
+        const held = heldFor(over, OBSERVED, broken)
+        expect(sourceProblemsOfState(state, over.id, undefined, Date.now(), held)).toEqual({})
+        expect(requestGate({state, recipe: over, operation: 'IMAGE_OUTPUT', heldFor: held})).toMatchObject({withdraw: true})
+        expect(retrieveAvailability({state, recipe: over, heldFor: held}).available).toBe(false)
+        const {output, pending} = readRetrieveOutput({state, recipeId: over.id, heldFor: held})
+        expect(submitRetrieve({recipe: over, output, pending, request: request(output), task: remappingTask})).toBe(false)
+        expect(submitted).toEqual([])
+
+        const repairedState = stateOf(over, BAND_MATH)
+        const repairedHeld = heldFor(over, OBSERVED, BAND_MATH)
+        expect(requestGate({state: repairedState, recipe: over, operation: 'IMAGE_OUTPUT', heldFor: repairedHeld})).toBeNull()
+        expect(retrieveAvailability({state: repairedState, recipe: over, heldFor: repairedHeld}).available).toBe(true)
+        const repaired = readRetrieveOutput({state: repairedState, recipeId: over.id, heldFor: repairedHeld})
+        expect(submitRetrieve({recipe: over, ...repaired, request: request(repaired.output), task: remappingTask})).toBe(true)
     })
 })
 
@@ -201,10 +235,10 @@ const withExpression = expression => ({
     }
 })
 
-const stateOf = recipe => ({
+const stateOf = (recipe, ...records) => ({
     process: {
-        loadedRecipes: {[recipe.id]: recipe},
-        recipes: [{id: recipe.id, revision: 1}],
+        loadedRecipes: Object.fromEntries([recipe, ...records].map(record => [record.id, record])),
+        recipes: [recipe, ...records].map(({id}) => ({id, revision: 1})),
         recipeListing: {checkedAt: Date.now()},
         saveStates: {},
         tabs: []
@@ -216,8 +250,8 @@ const retrieveRead = (recipe, observation = OBSERVED) =>
     readRetrieveOutput({state: stateOf(recipe), recipeId: recipe.id, heldFor: heldFor(recipe, observation)})
 
 // What the runtime holds for the recipe's output: Band Math's running image observed - or its observation refused.
-const heldFor = (recipe, observation = OBSERVED) => {
-    const graph = buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}})
+const heldFor = (recipe, observation = OBSERVED, ...records) => {
+    const graph = buildMapDependencyGraph({recipe, loadedRecipes: Object.fromEntries([recipe, ...records].map(record => [record.id, record]))})
     const terminal = observation === UNOBSERVABLE ? REFUSED_OBSERVATION : acquired(graph, observation)
     return () => terminal
 }

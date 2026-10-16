@@ -811,7 +811,7 @@ rule today:
 | Kind | Examples | Direction |
 | --- | --- | --- |
 | Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
-| GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements`, `remappingRequirements` | Stays. It supplies messages, items, sections and editors, and no predicate. |
+| GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements`, `remappingRequirements`, Band Math's calculation declaration | Stays. It supplies messages, items, sections and editors, and no predicate. |
 | GUI-only execution rule | PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
 | Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
@@ -1088,7 +1088,62 @@ and recovery. It does not migrate every outstanding rule.
   same source again, saving/reopening, source changes, missing bands, ambiguous legacy references and Cancel), `remappingLayer.test.jsx` unchanged,
   `recipeGeometryLayer.test.jsx`, `imageAssetExport.test.js`.
 
-**Recorded follow-ups:**
+#### Validation and source recovery roadmap (2026-10-15)
+
+The source-recovery audit reported mounted GUI probes, including save/reopen and downstream checks; it did not run
+live Earth Engine or browser tests. The first packet below is implemented; source recovery is next:
+
+1. **Band Math calculation references in shared readiness (implemented).** The audit found that successful synthetic
+   observations could make a broken Band Math and its dependent report READY. That demonstrated a validation gap,
+   not successful Earth Engine execution. `INVALID_CALCULATION` findings now locate
+   the originating calculation and carry the existing reference/syntax details. The shared analyzer and scope rules
+   check expression variables and physical bands, reducer input IDs and bands, removed calculations, self/forward
+   references, syntax, function arity and whole-image band counts. Cycles remain invalid through their self/forward
+   references. The editor and synchronization reuse those same utilities; the parser versions match the existing GUI.
+   GUI calculation declarations now present shared findings instead of evaluating local applied predicates. Only
+   originating problems are marked; dependent outputs and recipes are blocked through readiness without acquiring
+   an error of their own. Descriptions remain available where known, and pending/failed source evidence is never a
+   fabricated missing-reference finding. Repairs restore downstream rendering, Retrieve and the existing asset-export
+   path. Draft edits remain isolated until Apply; Cancel changes nothing. Asset exports with broken references are
+   now refused deterministically, including exports of a Remapping over Band Math.
+   Verified by shared reference/readiness tests, GUI marks and Apply/Cancel tests, a downstream preview layer and
+   Retrieve checks, and the mocked asset-export path. Output-selection validation beyond existing shared checks and
+   additional backend routes remain separate work.
+2. **Band Math recovery of preserved input references.** Retain exact source kind and ID using `inputSourceKey`.
+   An unambiguous returning source may reclaim its former variable name only while that name is unused; other
+   sources keep the existing name-allocation guard. Reconnect reducer input IDs without changing calculation
+   settings or expressions. Apply must be atomic, Cancel must leave the applied recipe unchanged, and recovery
+   must survive save/reopen. Do not silently rename another input or calculation. Legacy ambiguity may remain
+   invalid; it must not crash or choose an arbitrary replacement.
+
+Keep these additional items visible, without expanding either packet:
+
+- **Remapping: source loses a band a constraint uses.** The completed reference checks establish membership in the
+  configured inputs and included bands, not whether the source still provides the band. Use successful current
+  source descriptions to establish a missing band, propagate it through readiness, and recover when it returns.
+  Pending or failed evidence is not a missing-band finding. Reuse the existing observation and readiness machinery.
+- **Remapping: input row and IMG feedback.** Its editor marks missing selected bands, but the applied input row and
+  IMG do not. Decide presentation alongside the source-band check above. Keep unused selections distinct from bands
+  constraints actually read: live probes documented in [Remapping](../../recipes/remapping.md#output) show some
+  missing unused bands do not prevent execution. Do not make every such mark an execution block without evidence.
+- **Class Change legends.** Migrate the required FROM/TO legend configuration into shared readiness; this remains
+  separate from source-reference recovery.
+- **Stack aliases and Band Math deleted outputs: policy decision, not reference repair.** The audit found Stack
+  excludes removed inputs from output immediately and discards their unreachable mappings on the next input Apply;
+  re-adding a source can replace `custom_red` with `red`, leaving downstream consumers of the alias blocked.
+  Band Math deletes direct output selections and custom names when their input, band or calculation is removed,
+  while dependent calculations survive. Restoring discarded configuration requires an explicit retention policy.
+  Neither behaviour is covered by reconnecting preserved references, and no restoration policy is agreed yet.
+- **Other constraint editors: no reconnection work identified.** Inspection found Index Change targets fixed
+  comparison bands, Asset Mask targets the current image, and Asset Filter targets its properties. They do not
+  reference removable input UUIDs. Missing-band/property compatibility is a separate question; no mounted audit
+  was performed for these callers.
+
+Remapping's source-identity recovery and shared constraint-reference validation are complete, including manual
+verification of blocking and recovery through a second Remapping. Already-broken constraints with no retained
+identity still need one explicit repair; this is an accepted limitation, not a request for historical reconstruction.
+
+**Other recorded follow-ups:**
 - the `TRAINING_DATA` and geometry operations;
 - readiness for named map products;
 - the remaining GUI-only and Earth Engine-only rules, one type per packet;

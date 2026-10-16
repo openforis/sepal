@@ -69,17 +69,15 @@ afterEach(async () => {
 })
 
 describe('the list of calculations', () => {
-    it('marks each calculation that needs attention, saying why, a calculation held by another by naming it', async () => {
+    it('marks the originating calculation, leaving a dependent calculation without its own error', async () => {
         await open(null, {calculations: [
             expression('calc-1', 'a', 'i1.swir'), expression('calc-2', 'b', 'a.a + 1'), expression('calc-3', 'c', 'i1.red')
         ]}, <Calculations/>)
 
         expect(listTooltips()).toEqual([
-            [expect.stringContaining('process.bandMath.requirement.unknownBand')],
-            [expect.stringContaining('process.requirement.prerequisiteUnmet')]
+            [expect.stringContaining('process.bandMath.requirement.unknownBand')]
         ])
-        expect(listTooltips()[1][0]).toContain('a')
-        expect(rowsInError()).toEqual(['i1.swir', 'a.a + 1'])
+        expect(rowsInError()).toEqual(['i1.swir'])
     })
 })
 
@@ -102,6 +100,30 @@ describe('a calculation edited in its panel', () => {
         await apply()
 
         expect(calculation('calc-2').expression).toBe('a.a + 2')
+    })
+})
+
+describe('a draft calculation repair', () => {
+    it.each(['button.apply', 'button.cancel'])('keeps applied findings until %s', async action => {
+        await open('calc-1', {calculations: [expression('calc-1', 'c1', 'gone.red * 2')]})
+        expect(Object.keys(sourceProblems())).toEqual(['calculations'])
+
+        await typeExpression('i1.red * 2')
+        expect(calculation('calc-1').expression).toBe('gone.red * 2')
+        expect(Object.keys(sourceProblems())).toEqual(['calculations'])
+        expect([...document.querySelectorAll('button')].find(button => button.textContent === 'button.apply').disabled).toBe(false)
+        await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === action).click())
+        await linted()
+
+        expect(calculation('calc-1').expression).toBe(action === 'button.apply' ? 'i1.red * 2' : 'gone.red * 2')
+        expect(Object.keys(sourceProblems())).toEqual(action === 'button.apply' ? [] : ['calculations'])
+    })
+
+    it('keeps an unapplied broken expression from invalidating a valid saved calculation', async () => {
+        await open('calc-1', {calculations: [expression('calc-1', 'c1', 'i1.red * 2')]})
+        await typeExpression('gone.red * 2')
+        expect(calculation('calc-1').expression).toBe('i1.red * 2')
+        expect(sourceProblems()).toEqual({})
     })
 })
 

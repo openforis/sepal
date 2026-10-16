@@ -77,12 +77,16 @@ same rules as its own feedback.
 
 ## Configuration checks
 
-Band Math judges its configuration as applied through the shared requirement reader (`bandMathRequirements.js`, pure
-rules in `chainRequirements.js`), one read per calculation and per output image. Execution builds every calculation in
-order, over the inputs and the calculations before it, so:
+Applied calculation-reference rules belong to shared execution readiness (`lib/js/shared/src/recipe/bandMath/calculationReferences.js`,
+registered by `type/bandMath.js`). Each `INVALID_CALCULATION` finding locates its originating calculation at
+`['model', 'calculations', 'calculations', index]` and carries the existing problem codes and reference details.
+`bandMathRequirements.js` presents those findings on CALC and the originating rows; it no longer evaluates an applied
+calculation predicate. Output-selection checks remain GUI-local in `chainRequirements.js`.
+
+Execution builds every calculation in order, over the inputs and the calculations before it, so:
 
 - An expression may read only those, by variable name and physical band name. It is analysed as its editor analyses
-  it (`expressionAnalysis.js`): the same syntax, functions, argument counts and band-count rule. A function reads them
+  it (the shared `bandMath/expressionAnalysis.js`): the same syntax, functions, argument counts and band-count rule. A function reads them
   by image id and physical band name, as execution selects them. A missing variable or band, a removed calculation, a
   later calculation and the calculation itself are each diagnosed.
 - An output band must be a band of the image it is taken from, by physical name, and that image must exist.
@@ -94,14 +98,17 @@ order, over the inputs and the calculations before it, so:
 - At least one image is output, each outputting at least one band, under names that are valid and that no other output
   band has - the rules Output bands applies to its own Apply (`outputImages.js`), so its fields, rows and toolbar
   button agree. An empty section is judged once, for the section; the rest per output image.
-- A calculation reading an unmet calculation depends on it, and so does an output taken from one. A calculation names
-  what it depends on rather than repeating what is wrong there, and still reports its own problems; Calculations is
-  marked all the same. An output held only by an unmet calculation marks nothing in Output bands - the calculation's
-  row and Calculations say what is wrong - which still reports the output's own problems.
+- A calculation reading an unmet calculation, and an output taken from one, remain blocked by the recipe's shared
+  readiness. Only originating problems produce calculation findings and row marks; dependent rows do not repeat them.
+  Output bands stays unmarked for calculation failures, but still reports its own output-selection problems.
+  Self and forward references remain invalid, so a calculation cycle cannot become valid.
 
 Any unmet calculation holds back the image output, whether or not an output reads it: previews, here and on other
 maps, are not requested or are withdrawn, and Retrieve is disabled and refused at submission (`CONFIGURATION_UNMET`,
-naming Calculations), whatever its output reads as. Repair restores them. Calculations and Output bands mark their
+naming Calculations), whatever its output reads as. This also holds for dependent recipes, including a Remapping whose
+own class description reads none of those calculations, and for asset exports through the existing readiness check.
+Repair restores the chain. Descriptions remain available wherever they can be established; it is execution readiness
+that carries the configuration refusal. Calculations and Output bands mark their
 toolbar buttons and the items concerned, with the reason as their tooltip. The toolbar buttons judge the recipe as
 applied; Output bands' rows judge its draft by the same checks, the rest of the recipe as applied, so a repair made in
 the panel clears its rows before Apply, and nothing applied holds Apply back. An output whose image no longer exists is
@@ -119,9 +126,15 @@ the names its outputs were given. Renamed inputs, calculations and bands are sti
 outputs and visualizations.
 
 Whether an input's bands exist in the asset or recipe it is taken from is judged by its output description
-([Output](#output)), not by these checks. Not checked yet: anything here at the execution boundary - Task and Earth
-Engine build what is submitted, and recipes reading Band Math as a source learn of an unmet configuration only when
-Earth Engine refuses its image. Describing such a recipe still asks Earth Engine to observe it.
+([Output](#output)), not by calculation-reference checks. Configured inputs and calculation bands are read from the
+model, independently of source evidence: pending or failed source loading never fabricates a missing reference.
+Descriptions still need their normal observations; a known calculation failure can block execution before those
+observations succeed. The editor and synchronization reuse the same analyzer and scope rules, with the existing
+JavaScript grammar and `jsep` versions pinned in the shared package. No new parser or validity flag is introduced.
+
+Compatibility: asset exports and dependent recipes with broken calculation references are now refused
+deterministically with `INVALID_CALCULATION`, even if source observations succeed. Output-selection rules beyond the shared checks already in
+place remain GUI-local. Drive/workspace exports and other backend routes have not gained new checks in this packet.
 
 The editor marks an input found to lack a band it includes: its row in Input imagery says some of its bands are
 unavailable, to be reviewed in it, and the Input imagery toolbar button that some inputs' are; the input's editor names
@@ -198,6 +211,13 @@ the bands selected, in the order selected. The catalogue answers the configured 
 
 ## Open issues
 
+Calculation-reference validation now participates in shared execution readiness. Automatic recovery of preserved
+input references when the exact source returns remains the next packet. The former variable name may be reclaimed
+only if unused; current naming behaviour is unchanged. Deleted output selections and custom names require a separate
+retention decision. See the
+[validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
+for the audit evidence, ordering and boundaries. Re-adding a source still does not reconnect calculations automatically.
+
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.
 
@@ -209,10 +229,14 @@ the bands selected, in the order selected. The catalogue answers the configured 
   the dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
   declaration and Earth Engine each answer them, an input band the asset lacks as Earth Engine refuses it, the
   dimensionality of every band of representative input assets, and one pixel value.
+- `lib/js/shared/test/recipe/output/type/bandMathReferences.test.js` - applied reference, syntax, arity and band-count
+  findings, self/forward references and cycles, preserved descriptions, pending/failed evidence, downstream attribution
+  through Remapping and repair.
 - `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes, through the read and the
   observer, over asset, declared-recipe, Masking and nested Band Math inputs.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
-  input that cannot be described or read, and an input Band Math naming two outputs alike.
+  input that cannot be described or read, an input Band Math naming two outputs alike, and broken calculation references
+  here and through Remapping, exported after repair.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
   marked for a missing band, Retrieve withheld and refused naming Input imagery until the band is back, and nothing
   marked for pending, failed, upstream or superseded reads, the output read shared.
@@ -246,7 +270,7 @@ the bands selected, in the order selected. The catalogue answers the configured 
   edited in its panel keeping its bands' identities, bands renamed alike named apart beside suffixed names of any
   length, and one saved with names alike opened unchanged and named apart once applied, its custom output name kept.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculationRequirements.test.jsx` - the
-  calculations' marks, and their panel's Apply left as it was.
+  originating calculation marks, a saved failure repaired while Apply stays available, and draft Apply/Cancel isolation.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sectionMarks.test.jsx` - the toolbar buttons and Output bands
   rows marked for an output image left without bands by unselecting its band, and cleared once it has one; a section
   without any output image; an output
@@ -255,3 +279,14 @@ the bands selected, in the order selected. The catalogue answers the configured 
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames,
   and the output names a rename or added band is given: apart from other outputs, custom names and earlier renames in
   the same change, a custom name kept, and a saved collision left as saved on opening.
+
+Manual calculation-readiness check:
+
+1. In Band Math, include `red` and `nir` from an input named `i1`, create `c1 = i1.red * 2`, and keep a valid output.
+   Create a Remapping using that Band Math output and display both recipes.
+2. In Band Math's input editor, remove `red`, keep `nir`, and Apply. CALC and `c1` should be marked; both previews and
+   both Retrieve actions should be blocked. The Remapping should have no misleading MAP error of its own.
+3. Edit `c1` to use `i1.nir * 2`. Before Apply, the saved chain stays blocked. Cancel keeps it blocked; Apply repairs it
+   and restores both recipes' availability.
+4. Repeat with a reducer reading `red`, or with a calculation reading another calculation that is then removed.
+   Repair the reducer's selection or the expression explicitly. Automatic source reconnection is still pending.
