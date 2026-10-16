@@ -124,8 +124,10 @@
     user-select: none;
 }
 
+/* The copy keeps the size of the item it copies, even where a line may not wrap. */
 .draggableClone > * {
     flex-grow: 1;
+    min-width: 0;
 }
 
 .dragCursor,

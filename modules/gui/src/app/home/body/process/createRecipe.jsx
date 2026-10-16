@@ -345,6 +345,7 @@ class RecipeType extends React.Component {
                     className={styles.recipe}
                     title={title}
                     description={creationDescription}
+                    descriptionTooltip={creationDescription}
                     highlight={highlight}
                 />
             </ListItem>
