@@ -7,10 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {initStore} from '~/store'
 
-// Passthrough tooltip avoids the real Tooltip's store deps; scrollable stub replaces
-// the Scrollable context the handle uses to scroll itself into view on mount.
+// The tooltip stub shows what it would say instead of the real Tooltip's store deps; scrollable stub
+// replaces the Scrollable context the handle uses to scroll itself into view on mount.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({children}) => children
+    Tooltip: ({msg, children}) => <>{children}{msg ? <span data-tooltip>{msg}</span> : null}</>
 }))
 vi.mock('~/widget/scrollable', () => ({
     withScrollable: () => Component =>
@@ -71,5 +71,11 @@ describe('TabHandle prefix', () => {
     it('renders no prefix element when there is no prefix', () => {
         const container = mount({})
         expect(container.querySelector('[class*="prefix"]')).toBe(null)
+    })
+
+    it('gives the tooltip it is handed', () => {
+        const container = mount({tooltip: '/ Kenya / My app'})
+
+        expect(container.querySelector('[data-tooltip]').textContent).toBe('/ Kenya / My app')
     })
 })
