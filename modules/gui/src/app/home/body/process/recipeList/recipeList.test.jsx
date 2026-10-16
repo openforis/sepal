@@ -2,8 +2,9 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-const {crudItems, dispatched, listItems, notifications, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
-    crudItems: [], dispatched: [], listItems: [], notifications: [], removeFolder$: vi.fn(), updateFolder: vi.fn(), warnings: []
+const {crudItems, dispatched, folderForms, listItems, notifications, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
+    crudItems: [], dispatched: [], folderForms: [], listItems: [], notifications: [], removeFolder$: vi.fn(), updateFolder: vi.fn(),
+    warnings: []
 }))
 
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
@@ -17,7 +18,12 @@ vi.mock('../recipeTypeRegistry', () => ({
     listRecipeTypes: () => []
 }))
 // The folder form and the confirmation list pull in the whole form stack, which this test never uses.
-vi.mock('./folderForm', () => ({FolderForm: () => null}))
+vi.mock('./folderForm', () => ({
+    FolderForm: props => {
+        folderForms.push(props)
+        return null
+    }
+}))
 vi.mock('./folderActions', () => ({updateFolder}))
 vi.mock('./recipeListConfirm', () => ({RecipeListConfirm: () => null}))
 vi.mock('../recipe', () => ({loadFolders$: () => ({}), loadRecipes$: () => ({})}))
@@ -112,7 +118,7 @@ const mount = (props = {}) => {
     })
 }
 
-// A folder row and a recipe row both carry their name in the description; the title names only the type.
+// A folder row and a recipe row both carry their name in the description; only a recipe row has a title.
 const rowNames = () => [...container.querySelectorAll('[data-name]')].map(row => row.textContent)
 
 const rowFor = name => crudItems.find(props => props.description === name)
@@ -133,6 +139,7 @@ const undoLastMove = () => {
 beforeEach(() => {
     mounted = []
     crudItems.length = 0
+    folderForms.length = 0
     dispatched.length = 0
     listItems.length = 0
     warnings.length = 0
@@ -325,6 +332,28 @@ describe('drag and drop', () => {
         expect(updateFolder).toHaveBeenCalledWith(expect.objectContaining({id: Y2024.id, parentId: null}))
     })
 
+    // Two folders of one name cannot sit side by side, and nothing tells them apart if they do.
+    it('keeps a folder where it is when the destination has one of the same name, and says so', () => {
+        const emptyAtHome = {id: 'empty-home', name: 'EMPTY', parentId: null}
+        mount({folderId: KENYA.id, folders: [...folders, emptyAtHome]})
+
+        drop(EMPTY.id, container.querySelector('[data-drop-home]'))
+
+        expect(updateFolder).not.toHaveBeenCalled()
+        expect(warnings.map(({message}) => message)).toEqual(['process.folder.move.nameTaken'])
+        expect(notifications).toEqual([])
+    })
+
+    it('still moves what was dragged with a folder that stays', () => {
+        const emptyAtHome = {id: 'empty-home', name: 'EMPTY', parentId: null}
+        mount({folderId: KENYA.id, folders: [...folders, emptyAtHome], selectedIds: [EMPTY.id, Y2024.id]})
+
+        drop(EMPTY.id, container.querySelector('[data-drop-home]'))
+
+        expect(updateFolder.mock.calls.map(([folder]) => folder.id)).toEqual([Y2024.id])
+        expect(notifications).toHaveLength(1)
+    })
+
     it('moves no folder into one of its own subfolders', () => {
         mount({filterValue: '2024', filterValues: ['2024']})
 
@@ -452,3 +481,24 @@ describe('drag and drop', () => {
         expect(listItems.some(({drag$, dragValue}) => drag$ && dragValue?.kind === 'recipe')).toBe(true)
     })
 })
+
+// Folders are told apart by where they are, as files are: only a folder beside it can make a name taken.
+describe('naming a folder', () => {
+    it('takes a new folder\'s name as taken only by the folders beside it', () => {
+        mount({folderId: KENYA.id})
+
+        act(() => button('process.folder.add').click())
+
+        expect(takenNames()).toEqual(['empty', 'kenya_2024'])
+    })
+
+    it('leaves a folder its own name, and checks a new one against the folders beside it', () => {
+        mount()
+
+        act(() => rowFor('Kenya').onEdit())
+
+        expect(takenNames()).toEqual(['mozambique'])
+    })
+})
+
+const takenNames = () => [...folderForms[folderForms.length - 1].folderNames].sort()

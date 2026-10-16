@@ -1,25 +1,44 @@
-/* A path wider than the row it is given scrolls inside it. Without the min-width it would instead set
-   the width of whatever holds it: a flex item never shrinks below its content unless it is told it may,
-   and a deep path then pushed the sort buttons away and left the move popup. */
+/* The path never scrolls: the folders above the ones the row holds gather behind one button, and only a
+   current folder too long for the row on its own is cut with an ellipsis. The root and that button keep
+   their size. The breadcrumb takes all the width it is given, and the containment keeps the path from
+   asking for more, even of a Layout that would grow to fit its content: that width is the room the path
+   is fitted to. Without the min-widths below a flex item would not shrink below its content. */
+.breadcrumb {
+    flex-grow: 1;
+    contain: inline-size;
+}
+
 .segments {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
     min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
 }
 
-.segments::-webkit-scrollbar {
-    display: none;
+.fixed,
+.segment {
+    display: flex;
+    align-items: center;
+}
+
+.fixed {
+    flex-shrink: 0;
+}
+
+.segment {
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 /* The segments carry the spacing around the separator in their own padding, which the hover needs
    anyway; adding more here would set them twice as far apart as the buttons beside them. */
 .separator {
     opacity: .4;
-    align-self: center;
 }
 
 .link,
@@ -27,7 +46,9 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    align-self: center;
+    min-width: 0;
+    /* The smallest target WCAG 2.2 asks a pointer to hit (2.5.8). */
+    min-height: 24px;
     white-space: nowrap;
     font: inherit;
     /* After the shorthand, which resets the size: these match the buttons beside the breadcrumb. */
@@ -40,7 +61,43 @@
     padding: .1rem .35rem;
 }
 
+.name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The folders a path leaves out run on over as many lines as they need, where the path itself is cut:
+   between the folders, and inside a name too long for a line of its own. */
+.wrapping {
+    flex-wrap: wrap;
+    row-gap: .25rem;
+}
+
+.wrapping .link {
+    white-space: normal;
+}
+
+.wrapping .name {
+    overflow-wrap: anywhere;
+}
+
+/* The underline sits below the line, where the name's own overflow would cut it: the padding makes room
+   for it inside the name, and the margin takes that room back out of the row. */
 .label {
     text-decoration: underline dotted;
     text-underline-offset: .25em;
+    padding-bottom: .35em;
+    margin-bottom: -.35em;
+}
+
+/* The read-only path keeps the case of the names, even under a heading in capitals. Without the links'
+   padding, the gap is what spaces the slashes. */
+.readOnly {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+    min-width: 0;
+    white-space: nowrap;
+    text-transform: none;
 }

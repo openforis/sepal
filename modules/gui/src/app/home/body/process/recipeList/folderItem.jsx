@@ -8,7 +8,7 @@ import {ListItem} from '~/widget/listItem'
 import {DropTargetContext} from './dropTargetContext'
 
 // Direct children only, so what the row claims and what removal allows never disagree.
-export const folderContents = ({folders, recipes}) =>
+export const folderDescription = ({folders, recipes}) =>
     [
         folders ? msg('process.folder.folderCount', {count: folders}) : null,
         msg('process.folder.description', {count: recipes})
@@ -29,11 +29,12 @@ export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, 
                     icon='folder-open'
                     iconSize='lg'
                     iconVariant='info'
-                    title={msg('process.folder.title')}
+                    // As tall as a recipe row, which has its type over its name: the list places every row by one
+                    // row's height.
+                    lines={2}
                     description={folder.name}
-                    metadata={folderContents(counts)}
+                    metadata={folderDescription(counts)}
                     highlight={highlight}
-                    highlightTitle={false}
                     editTooltip={msg('process.folder.edit.tooltip')}
                     removeTooltip={msg('process.folder.remove.tooltip')}
                     removeTitle={msg('process.folder.remove.title')}

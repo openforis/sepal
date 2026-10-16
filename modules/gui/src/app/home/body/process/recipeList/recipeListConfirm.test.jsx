@@ -47,7 +47,8 @@ const mount = props => {
 
 const itemFor = title => crudItems.find(props => props.title === title)
 
-const folderRow = () => itemFor('process.folder.title')
+// A folder row is the only one without a title: a recipe row names its type there.
+const folderRow = () => crudItems.find(props => !props.title)
 
 beforeEach(() => {
     mounted = []
@@ -62,13 +63,13 @@ describe('RecipeListConfirm', () => {
     it('names the type, and gives the whole path down to the recipe', () => {
         mount({items: [recipeItem(IN_2024)]})
 
-        expect(itemFor('MOSAIC recipe').description).toBe('Kenya / 2024 / nairobi_mosaic')
+        expect(itemFor('MOSAIC recipe').description).toBe('/ Kenya / 2024 / nairobi_mosaic')
     })
 
-    it('calls the root Home for a recipe that is in no folder', () => {
+    it('starts the path of a recipe in no folder with the root alone', () => {
         mount({items: [recipeItem(AT_ROOT)]})
 
-        expect(itemFor('MOSAIC recipe').description).toBe('process.recipeList.root / loose_draft')
+        expect(itemFor('MOSAIC recipe').description).toBe('/ loose_draft')
     })
 
     it('shows a folder with what it holds', () => {

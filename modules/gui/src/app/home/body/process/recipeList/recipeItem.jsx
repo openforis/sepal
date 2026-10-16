@@ -24,6 +24,8 @@ export const RecipeItem = ({
             <CrudItem
                 icon='globe'
                 iconSize='lg'
+                // Two lines even when the type is unknown, so it stands as tall as every other row of the list.
+                lines={2}
                 title={typeName}
                 description={[path, recipe.name].filter(part => part).join(PATH_SEPARATOR)}
                 timestamp={recipe.updateTime}

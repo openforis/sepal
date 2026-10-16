@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     canDropInto, childFolders, folderCounts, folderPath, folderPathLabel, folderRecipes,
-    isSelfOrDescendant, parentFolderId, ROOT, searchTree
+    isSelfOrDescendant, locationLabel, locationPath, parentFolderId, ROOT, searchTree, splitByNameClash
 } from './recipeTree'
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
@@ -101,6 +101,32 @@ describe('folderPathLabel', () => {
     it('reads relative to the folder given', () => {
         expect(folderPathLabel(folders, 'mosaics', 'kenya')).toBe('2024 / Mosaics')
         expect(folderPathLabel(folders, 'kenya', 'kenya')).toBe('')
+    })
+})
+
+describe('locationLabel', () => {
+    it('is a bare slash at the root', () => {
+        expect(locationLabel(folders, ROOT)).toBe('/')
+    })
+
+    it('starts the path of a folder from the root', () => {
+        expect(locationLabel(folders, 'mosaics')).toBe('/ Kenya / 2024 / Mosaics')
+    })
+
+    it('ends with the names it is given, below the folder', () => {
+        expect(locationLabel(folders, 'kenya', 'nairobi')).toBe('/ Kenya / nairobi')
+        expect(locationLabel(folders, ROOT, 'loose_draft')).toBe('/ loose_draft')
+    })
+})
+
+describe('locationPath', () => {
+    it('is a bare slash at the root', () => {
+        expect(locationPath(folders, ROOT)).toBe('/')
+    })
+
+    it('leaves out the spaces around the slashes, but not those in a name', () => {
+        expect(locationPath(folders, 'mosaics', 'rift timeseries')).toBe('/Kenya/2024/Mosaics/rift timeseries')
+        expect(locationPath(folders, ROOT, 'loose_draft')).toBe('/loose_draft')
     })
 })
 
@@ -206,5 +232,32 @@ describe('canDropInto', () => {
 
     it('accepts a folder into another branch of the tree', () => {
         expect(canDropInto({folders, dragged: folder, targetFolderId: 'mozambique'})).toBe(true)
+    })
+})
+
+describe('splitByNameClash', () => {
+    it('keeps back a folder whose name the destination already holds, whatever the case', () => {
+        const kenyaElsewhere = {id: 'kenya-2', name: 'KENYA', parentId: 'mozambique'}
+
+        const [movable, clashing] = splitByNameClash({folders: [...folders, kenyaElsewhere], moving: [kenyaElsewhere], targetFolderId: ROOT})
+
+        expect(ids(movable)).toEqual([])
+        expect(ids(clashing)).toEqual([kenyaElsewhere.id])
+    })
+
+    it('keeps back the second of two folders of one name moving to the same place', () => {
+        const first = {id: 'q1-a', name: 'Q1', parentId: 'kenya'}
+        const second = {id: 'q1-b', name: 'q1', parentId: '2024'}
+
+        const [movable, clashing] = splitByNameClash({folders: [...folders, first, second], moving: [first, second], targetFolderId: 'mozambique'})
+
+        expect(ids(movable)).toEqual([first.id])
+        expect(ids(clashing)).toEqual([second.id])
+    })
+
+    it('lets a folder be moved to where it already is', () => {
+        const [movable] = splitByNameClash({folders, moving: [Y2024], targetFolderId: 'kenya'})
+
+        expect(ids(movable)).toEqual([Y2024.id])
     })
 })

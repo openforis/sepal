@@ -9,7 +9,6 @@ import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
-import {simplifyString, splitString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
@@ -35,14 +34,15 @@ import {updateFolder} from './folderActions'
 import {FolderForm} from './folderForm'
 import {FolderItem} from './folderItem'
 import {FolderPicker} from './folderPicker'
-import {MoveNotification} from './moveNotification'
+import {offerMoveUndo} from './moveNotification'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {canDropInto, childFolders, folderCounts, folderPathLabel, folderRecipes, ROOT, searchTree} from './recipeTree'
+import {
+    canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems, ROOT, searchHighlight,
+    searchValues, splitByNameClash
+} from './recipeTree'
 
 const EMPTY_ARRAY = []
-
-const UNDO_TIMEOUT_SECONDS = 15
 
 const mapStateToProps = () => ({
     folders: select('process.folders') ?? EMPTY_ARRAY,
@@ -55,11 +55,7 @@ const mapStateToProps = () => ({
     selectedIds: select('process.selectedIds') ?? EMPTY_ARRAY
 })
 
-const getHighlightMatcher = memoizeOne(
-    filterValues => filterValues.length
-        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        : ''
-)
+const getHighlightMatcher = memoizeOne(searchHighlight)
 
 // Called only when at least one count is nonzero, so `parts` is never empty.
 const notEmptyCounts = ({folders, recipes}) => {
@@ -80,21 +76,9 @@ const asDragged = item => item.kind === 'folder'
     ? {kind: 'folder', id: item.folder.id, folderId: item.folder.parentId, folder: item.folder}
     : {kind: 'recipe', id: item.recipe.id, folderId: item.recipe.folderId}
 
-const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) => {
-    const searching = filterValues.length > 0
-    const matched = searching ? searchTree({folders, recipes, filterValues, folderId}) : null
-    const shown = matched ? matched.folders : childFolders(folders, folderId)
-    const found = matched ? matched.recipes : folderRecipes(recipes, folderId)
-    const sorted = _.orderBy(
-        found,
-        recipe => sortingOrder === 'name' ? recipe.name.toUpperCase() : recipe.updateTime,
-        sortingDirection === 1 ? 'asc' : 'desc'
-    )
-    return [
-        ...shown.map(folder => ({kind: 'folder', id: folder.id, folder})),
-        ...sorted.map(recipe => ({kind: 'recipe', id: recipe.id, recipe}))
-    ]
-})
+const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) =>
+    navigatorItems({folders, recipes, folderId, filterValues, sortingOrder, sortingDirection})
+)
 
 class _RecipeList extends React.Component {
     drag$ = new Subject()
@@ -198,18 +182,36 @@ class _RecipeList extends React.Component {
     moveItems(items, folderId) {
         const {onMove} = this.props
         const recipes = items.filter(({kind}) => kind === 'recipe')
-        const folders = items.filter(({kind}) => kind === 'folder')
+        const folders = this.foldersFreeToMove(items.filter(({kind}) => kind === 'folder'), folderId)
+        if (!recipes.length && !folders.length) {
+            return
+        }
         if (recipes.length) {
             onMove(recipes.map(({id}) => id), folderId)
         }
         folders.forEach(({folder}) => updateFolder({...folder, parentId: folderId}))
-        this.offerUndo(this.movedMessage(items, folderId), () => {
+        offerMoveUndo(this.movedMessage([...recipes, ...folders], folderId), () => {
             _.forEach(
                 _.groupBy(recipes, ({folderId}) => folderId ?? ROOT),
                 moved => onMove(moved.map(({id}) => id), moved[0].folderId ?? ROOT)
             )
             folders.forEach(({folder}) => updateFolder({...folder, parentId: folder.parentId ?? ROOT}))
         })
+    }
+
+    // A folder the destination already has a namesake of stays, and says so; the rest of the move goes on.
+    foldersFreeToMove(items, folderId) {
+        const {folders} = this.props
+        const [movable, clashing] = splitByNameClash({folders, moving: items.map(({folder}) => folder), targetFolderId: folderId})
+        if (clashing.length) {
+            Notifications.warning({
+                message: msg('process.folder.move.nameTaken', {
+                    folder: this.folderLabel(folderId),
+                    names: clashing.map(({name}) => name).join(', ')
+                })
+            })
+        }
+        return items.filter(({id}) => movable.some(folder => folder.id === id))
     }
 
     movedMessage(items, folderId) {
@@ -222,25 +224,9 @@ class _RecipeList extends React.Component {
             : msg('process.recipeList.moved', {count: items.length, folder})
     }
 
-    offerUndo(message, undo) {
-        Notifications.info({
-            timeout: UNDO_TIMEOUT_SECONDS,
-            content: dismiss =>
-                <MoveNotification
-                    message={message}
-                    onUndo={() => {
-                        undo()
-                        dismiss()
-                    }}
-                />
-        })
-    }
-
     folderLabel(folderId) {
         const {folders} = this.props
-        return folderId
-            ? folderPathLabel(folders, folderId)
-            : msg('process.recipeList.root')
+        return locationLabel(folders, folderId)
     }
 
     renderList() {
@@ -302,8 +288,8 @@ class _RecipeList extends React.Component {
             <Layout type='horizontal' spacing='compact'>
                 {this.renderSearch()}
                 <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
-                {this.renderNewFolderButton()}
                 <Layout.Spacer/>
+                {this.renderNewFolderButton()}
                 {this.renderEditButtons()}
             </Layout>
         )
@@ -318,7 +304,6 @@ class _RecipeList extends React.Component {
                     folderId={folderId ?? ROOT}
                     onNavigate={folderId => this.navigateTo(folderId)}
                 />
-                <Layout.Spacer/>
                 <Layout type='horizontal' spacing='compact' alignment='right'>
                     {this.renderSortButtons()}
                 </Layout>
@@ -329,7 +314,7 @@ class _RecipeList extends React.Component {
     renderNewFolderButton() {
         return (
             <Button
-                look='default'
+                look='add'
                 shape='pill'
                 icon='folder-plus'
                 label={msg('process.folder.add')}
@@ -348,7 +333,10 @@ class _RecipeList extends React.Component {
         return (
             <FolderForm
                 folder={editFolder}
-                folderNames={folders.filter(({id}) => id !== editFolder.id).map(({name}) => name.toLowerCase())}
+                // A name is taken only beside the folder, as a file's is: the same name elsewhere is another place.
+                folderNames={childFolders(folders, editFolder.parentId)
+                    .filter(({id}) => id !== editFolder.id)
+                    .map(({name}) => name.toLowerCase())}
                 // The form leaves the placement alone, so the folder keeps the parent it was given.
                 onApply={folder => {
                     updateFolder({...editFolder, ...folder})
@@ -435,9 +423,7 @@ class _RecipeList extends React.Component {
                         onSelect={folderId => {
                             this.setMove({
                                 folderId: folderId,
-                                folderName: folderId
-                                    ? folderPathLabel(this.props.folders, folderId)
-                                    : msg('process.folder.parent.root')
+                                folderName: this.folderLabel(folderId)
                             })
                             onBlur()
                         }}
@@ -661,7 +647,7 @@ class _RecipeList extends React.Component {
     }
 
     setFilter(filterValue) {
-        const filterValues = splitString(simplifyString(filterValue))
+        const filterValues = searchValues(filterValue)
         actionBuilder('SET_FILTER_VALUES', {filterValue, filterValues})
             .set(['process.filterValue'], filterValue)
             .set(['process.filterValues'], filterValues)
