@@ -4,6 +4,7 @@ import React from 'react'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {CrudItem} from '~/widget/crudItem'
+import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
@@ -14,23 +15,34 @@ import styles from './folderPicker.module.css'
 import {at, childFolders, isSelfOrDescendant, parentFolderId, ROOT} from './recipeTree'
 
 export class FolderPicker extends React.Component {
-    state = {folderId: ROOT}
+    state = {folderId: at(this.props.folderId)}
 
     render() {
-        const {folderId} = this.state
+        const {className} = this.props
         return (
-            <div className={styles.picker}>
+            <div className={[styles.picker, className].join(' ')}>
                 {this.renderCurrentFolder()}
                 {this.renderOptions()}
+                {this.renderSelectButton()}
+            </div>
+        )
+    }
+
+    // A dialog around the picker may carry the action among its own buttons instead.
+    renderSelectButton() {
+        const {onSelect} = this.props
+        const {folderId} = this.state
+        return onSelect
+            ? (
                 <Button
                     look='apply'
                     icon='check'
                     additionalClassName={styles.select}
                     label={msg('process.folder.selectHere')}
-                    onClick={() => this.props.onSelect(folderId)}
+                    onClick={() => onSelect(folderId)}
                 />
-            </div>
-        )
+            )
+            : null
     }
 
     // A box this narrow has no room for a path, so it names the folder you are in and offers the way
@@ -47,13 +59,33 @@ export class FolderPicker extends React.Component {
                     icon='arrow-left'
                     tooltip={msg('process.folder.parent.tooltip')}
                     disabled={at(folderId) === ROOT}
-                    onClick={() => this.setState({folderId: parentFolderId(folders, folderId)})}
+                    onClick={() => this.open(parentFolderId(folders, folderId))}
                 />
-                <Tooltip msg={this.currentFolderName()}>
-                    <div className={styles.folder}>{this.currentFolderName()}</div>
-                </Tooltip>
+                {this.renderCurrentFolderName()}
             </Layout>
         )
+    }
+
+    // The root is the house and the chevron that marks it a folder, as in the breadcrumb, so a screen reader
+    // is told what it stands for.
+    renderCurrentFolderName() {
+        const {folders} = this.props
+        const {folderId} = this.state
+        const folder = folders.find(({id}) => id === at(folderId))
+        return folder
+            ? (
+                <Tooltip msg={folder.name}>
+                    <div className={styles.folder}>{folder.name}</div>
+                </Tooltip>
+            )
+            : (
+                <div className={styles.folder} aria-label={msg('process.recipeList.root')}>
+                    <Icon name='house'/>
+                    <span className={styles.separator} aria-hidden='true'>
+                        <Icon name='chevron-right' size='xs'/>
+                    </span>
+                </div>
+            )
     }
 
     // One box of one size, whatever the open folder holds, so walking the tree never moves the
@@ -77,7 +109,7 @@ export class FolderPicker extends React.Component {
 
     renderOption(folder) {
         return (
-            <ListItem key={folder.id} onClick={() => this.setState({folderId: folder.id})}>
+            <ListItem key={folder.id} onClick={() => this.open(folder.id)}>
                 <CrudItem
                     icon='folder-open'
                     iconVariant='info'
@@ -88,10 +120,10 @@ export class FolderPicker extends React.Component {
         )
     }
 
-    currentFolderName() {
-        const {folders} = this.props
-        const {folderId} = this.state
-        return folders.find(({id}) => id === at(folderId))?.name ?? msg('process.recipeList.root')
+    open(folderId) {
+        const {onNavigate} = this.props
+        this.setState({folderId})
+        onNavigate && onNavigate(folderId)
     }
 
     // Nothing inside a folder being moved can be its own destination, so those never appear.
@@ -105,6 +137,9 @@ export class FolderPicker extends React.Component {
 
 FolderPicker.propTypes = {
     folders: PropTypes.array.isRequired,
-    onSelect: PropTypes.func.isRequired,
-    excludeFolderIds: PropTypes.array
+    className: PropTypes.string,
+    excludeFolderIds: PropTypes.array,
+    folderId: PropTypes.string,
+    onNavigate: PropTypes.func,
+    onSelect: PropTypes.func
 }

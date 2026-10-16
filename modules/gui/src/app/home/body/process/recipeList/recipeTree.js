@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import {simplifyString} from '~/string'
+import {simplifyString, splitString} from '~/string'
 
-import {PATH_SEPARATOR} from './recipeListConstants'
+import {PATH_SEPARATOR, ROOT_LABEL} from './recipeListConstants'
 
 // A folder with no parent, and a recipe with no folder, both live here.
 export const ROOT = null
@@ -50,6 +50,20 @@ export const folderPathLabel = (folders, folderId, fromFolderId = ROOT) =>
         .map(({name}) => name)
         .join(PATH_SEPARATOR)
 
+// Where a folder is, or what is in it, from the root: "/" alone, "/ Kenya", "/ Kenya / 2024 / mosaic".
+export const locationLabel = (folders = [], folderId, ...names) =>
+    [ROOT_LABEL, locationNames(folders, folderId, names).join(PATH_SEPARATOR)]
+        .filter(part => part)
+        .join(' ')
+
+// The same place without the spacing that makes it readable, to be pasted where a path is expected:
+// "/Kenya/2024/mosaic".
+export const locationPath = (folders = [], folderId, ...names) =>
+    ROOT_LABEL + locationNames(folders, folderId, names).join(ROOT_LABEL)
+
+const locationNames = (folders, folderId, names) =>
+    [...folderPath(folders, folderId).map(({name}) => name), ...names]
+
 export const folderCounts = (folders, recipes, folderId) => ({
     folders: childFolders(folders, folderId).length,
     recipes: folderRecipes(recipes, folderId).length
@@ -63,6 +77,26 @@ export const isSelfOrDescendant = (folders, candidateId, folderId) =>
 export const canDropInto = ({folders, dragged, targetFolderId}) =>
     at(dragged.folderId) !== at(targetFolderId)
         && !(dragged.kind === 'folder' && isSelfOrDescendant(folders, targetFolderId, dragged.id))
+
+// Two folders of one name cannot sit side by side: nothing would tell them apart. A folder whose name the
+// destination already holds, or one moving with it has just claimed there, stays where it is. Returns
+// [movable, clashing].
+export const splitByNameClash = ({folders, moving, targetFolderId}) => {
+    const movingIds = moving.map(({id}) => id)
+    const taken = new Set(
+        childFolders(folders, targetFolderId)
+            .filter(({id}) => !movingIds.includes(id))
+            .map(({name}) => name.toLowerCase())
+    )
+    return _.partition(moving, ({name}) => {
+        const key = name.toLowerCase()
+        if (taken.has(key)) {
+            return false
+        }
+        taken.add(key)
+        return true
+    })
+}
 
 const searchable = value => simplifyString(value ?? '', {removeNonAlphanumeric: true, removeAccents: true})
 
@@ -92,4 +126,30 @@ export const searchTree = ({folders, recipes, filterValues, folderId = ROOT}) =>
             && matchesEvery(matchers, [recipe.name, folderPathLabel(folders, recipe.folderId, folderId)])
         )
     }
+}
+
+// What a search box holds, as the separate words searchTree and searchHighlight look for.
+export const searchValues = filterValue =>
+    splitString(simplifyString(filterValue))
+
+export const searchHighlight = filterValues =>
+    filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : ''
+
+// The rows a navigator shows: the folders in the open folder, or every match below it while searching,
+// then the recipes, sorted.
+export const navigatorItems = ({folders, recipes, folderId, filterValues, sortingOrder = 'updateTime', sortingDirection = -1}) => {
+    const matched = filterValues.length ? searchTree({folders, recipes, filterValues, folderId}) : null
+    const shown = matched ? matched.folders : childFolders(folders, folderId)
+    const found = matched ? matched.recipes : folderRecipes(recipes, folderId)
+    const sorted = _.orderBy(
+        found,
+        recipe => sortingOrder === 'name' ? recipe.name.toUpperCase() : recipe.updateTime,
+        sortingDirection === 1 ? 'asc' : 'desc'
+    )
+    return [
+        ...shown.map(folder => ({kind: 'folder', id: folder.id, folder})),
+        ...sorted.map(recipe => ({kind: 'recipe', id: recipe.id, recipe}))
+    ]
 }

@@ -44,11 +44,10 @@ const clickOption = name => act(() => {
     option.click()
 })
 
-const clickSelectHere = () => act(() => {
-    const button = [...container.querySelectorAll('button')]
-        .find(el => el.textContent === 'process.folder.selectHere')
-    button.click()
-})
+const selectHereButton = () => [...container.querySelectorAll('button')]
+    .find(el => el.textContent === 'process.folder.selectHere')
+
+const clickSelectHere = () => act(() => selectHereButton().click())
 
 // The way back up is the only button here that carries an icon instead of a label.
 const backButton = () => [...container.querySelectorAll('button')].find(el => !el.textContent.trim())
@@ -82,10 +81,23 @@ describe('FolderPicker', () => {
         expect(onSelect).toHaveBeenCalledWith(null)
     })
 
-    it('names the folder it is in, and home at the root', () => {
+    it('opens at the folder it is given', () => {
+        mount({folders, folderId: A.id, onSelect: () => {}})
+
+        expect(currentFolder()).toBe('A')
+        expect(names()).toEqual(['C'])
+    })
+
+    it('shows the root as the breadcrumb does, the house and a chevron a screen reader is given a name for', () => {
         mount({folders, onSelect: () => {}})
 
-        expect(currentFolder()).toBe('process.recipeList.root')
+        expect([...backButton().nextElementSibling.querySelectorAll('[data-icon]')].map(icon => icon.getAttribute('data-icon')))
+            .toEqual(['house', 'chevron-right'])
+        expect(backButton().nextElementSibling.getAttribute('aria-label')).toBe('process.recipeList.root')
+    })
+
+    it('names the folder it is in', () => {
+        mount({folders, onSelect: () => {}})
 
         clickOption('A')
 
@@ -115,6 +127,23 @@ describe('FolderPicker', () => {
         mount({folders, onSelect: () => {}})
 
         expect(backButton().disabled).toBe(true)
+    })
+
+    it('tells where it has gone, as it goes', () => {
+        const onNavigate = vi.fn()
+        mount({folders, onNavigate})
+
+        clickOption('A')
+        clickBack()
+
+        expect(onNavigate.mock.calls).toEqual([['a'], [null]])
+    })
+
+    // A dialog around the picker may carry the action in its own buttons.
+    it('offers no button of its own without a selection to hand over', () => {
+        mount({folders, onNavigate: () => {}})
+
+        expect(selectHereButton()).toBeUndefined()
     })
 
     it('selects the folder that was navigated into', () => {

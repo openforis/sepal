@@ -20,6 +20,12 @@
     white-space: nowrap;
 }
 
+/* As faint, and as far from the house, as the breadcrumb's. */
+.separator {
+    margin-left: .35rem;
+    opacity: .4;
+}
+
 /* Same reason as the box above: a vertical Layout here would hold the rows at their full width. */
 .rows {
     display: flex;

@@ -9,10 +9,9 @@ import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
-import {folderContents} from './folderItem'
+import {folderDescription} from './folderItem'
 import styles from './recipeListConfirm.module.css'
-import {PATH_SEPARATOR} from './recipeListConstants'
-import {folderCounts, folderPathLabel} from './recipeTree'
+import {folderCounts, locationLabel} from './recipeTree'
 
 const mapStateToProps = () => ({
     folders: select('process.folders'),
@@ -39,11 +38,10 @@ class _RecipeListConfirm extends React.Component {
                 <CrudItem
                     icon='folder-open'
                     iconSize='lg'
-                    title={msg('process.folder.title')}
                     description={this.isDisabled(folder.id)
                         ? [folder.name, msg('process.folder.remove.stays')].join(' · ')
                         : folder.name}
-                    metadata={folderContents(counts)}
+                    metadata={folderDescription(counts)}
                     {...this.selection(folder.id)}
                 />
             </ListItem>
@@ -83,8 +81,7 @@ class _RecipeListConfirm extends React.Component {
     // The whole path, because two folders of the same name can sit in different branches.
     getRecipePath(recipe) {
         const {folders} = this.props
-        const path = folderPathLabel(folders || [], recipe.folderId) || msg('process.recipeList.root')
-        return [path, recipe.name].join(PATH_SEPARATOR)
+        return locationLabel(folders, recipe.folderId, recipe.name)
     }
 
     getRecipeTypeName(type) {
