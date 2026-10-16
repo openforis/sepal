@@ -20,6 +20,7 @@ const auditModulePackages = async (module, {fix}) => {
             'npm',
             'audit',
             fix ? 'fix' : '',
+            '--omit=dev',
             '--install-links=false'
         ],
         showStdOut: true

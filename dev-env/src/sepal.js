@@ -156,7 +156,7 @@ const main = async () => {
         .action(npmInstall)
 
     program.command('npm-audit')
-        .description('Audit npm modules')
+        .description('Audit production npm dependencies')
         .option('-f, --fix', 'Fix')
         .argument('[module...]', 'Modules to audit')
         .action(npmAudit)
