@@ -77,11 +77,13 @@ jobs:
           cache: npm
           cache-dependency-path: |
             ${{matrix.module}}/package-lock.json
-            lib/js/*/package-lock.json
+            ${{matrix.module}}/lib/*/package-lock.json
+      # With the module's own lock of each library, as its image installs it
       - name: Install shared libraries
         if: matrix.libs
         run: |
           for lib in ${{matrix.libs}}; do
+            cp "${{matrix.module}}/lib/$(basename "$lib")/package-lock.json" "$lib/"
             (cd "$lib" && npm install --no-audit --no-fund)
           done
       - run: npm ci
