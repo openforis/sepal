@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {table, td, th, tr} from './asciiTable.js'
 import {format} from './console.js'
 
@@ -11,7 +14,7 @@ test('pads a styled value by the width it takes on screen', () => {
         tr([td({value: 'column'}), td({value: 'other column'})])
     ])
     const widths = visible(rendered).trim().split('\n').map(line => line.length)
-    expect(new Set(widths).size).toBe(1)
+    assert.equal(new Set(widths).size, 1)
 })
 
 test('sizes a column by the visible width of its styled values', () => {
@@ -19,5 +22,5 @@ test('sizes a column by the visible width of its styled values', () => {
         tr([td({value: format('wide value', 'YELLOW')}), td({value: 'x'})]),
         tr([td({value: 'a'}), td({value: 'b'})])
     ])
-    expect(visible(rendered)).toContain('┃ a          │ b ┃')
+    assert.ok(visible(rendered).includes('┃ a          │ b ┃'))
 })
