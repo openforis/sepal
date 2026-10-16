@@ -67,7 +67,7 @@ const describeProblems = ({problems}) => {
     return {message: messages[0], details: messages.slice(1)}
 }
 
-const describeProblem = problem => msg(`process.bandMath.requirement.${MESSAGES[problem.code]}`, problem)
+export const describeProblem = problem => msg(`process.bandMath.requirement.${MESSAGES[problem.code]}`, problem)
 
 const MESSAGES = {
     [SYNTAX_ERROR]: 'syntaxError',

@@ -1091,7 +1091,8 @@ and recovery. It does not migrate every outstanding rule.
 #### Validation and source recovery roadmap (2026-10-15)
 
 The source-recovery audit reported mounted GUI probes, including save/reopen and downstream checks; it did not run
-live Earth Engine or browser tests. The first packet below is implemented; source recovery is next:
+live Earth Engine or browser tests. Both Band Math packets below are implemented; the remaining follow-ups are listed
+separately:
 
 1. **Band Math calculation references in shared readiness (implemented).** The audit found that successful synthetic
    observations could make a broken Band Math and its dependent report READY. That demonstrated a validation gap,
@@ -1109,14 +1110,25 @@ live Earth Engine or browser tests. The first packet below is implemented; sourc
    Verified by shared reference/readiness tests, GUI marks and Apply/Cancel tests, a downstream preview layer and
    Retrieve checks, and the mocked asset-export path. Output-selection validation beyond existing shared checks and
    additional backend routes remain separate work.
-2. **Band Math recovery of preserved input references.** Retain exact source kind and ID using `inputSourceKey`.
-   An unambiguous returning source may reclaim its former variable name only while that name is unused; other
-   sources keep the existing name-allocation guard. Reconnect reducer input IDs without changing calculation
-   settings or expressions. Apply must be atomic, Cancel must leave the applied recipe unchanged, and recovery
-   must survive save/reopen. Do not silently rename another input or calculation. Legacy ambiguity may remain
-   invalid; it must not crash or choose an arbitrary replacement.
+2. **Band Math recovery of preserved input references (implemented).** Applied input changes/removal retain
+   `imageSource` on calculations' existing `usedBands`, using `inputSourceKey` and Remapping's reconciliation helper.
+   The existing input ID, variable name and band IDs supply the remaining identity; no historical-input registry is
+   added. Existing working references acquire metadata before removal or on input Apply, and source changes refresh
+   it. Valid expression snapshots use the existing shared analysis, including bands added by whole-image derivation;
+   unresolved snapshots stay intact. Metadata survives save/reopen.
+   An unambiguous returning source is offered its former variable name only while unused by inputs/calculations and
+   not claimed by conflicting retained references. Other sources keep the name-allocation guard; explicit draft names
+   are respected. Apply reconnects reducer/expression reference IDs atomically with the input, without rewriting
+   expression text or calculation settings. Referenced band IDs are retained so Sync preserves calculated output
+   selections and custom names. Missing selected bands still block shared readiness until included and applied.
+   Cancel changes no applied references. Occupied names are not stolen; unresolved reducer IDs remain invalid.
+   Expressions keep their existing variable-name semantics, including any explicit reassignment the user already made.
+   Older orphans without retained identity require explicit repair; ambiguous legacy sources are not chosen arbitrarily.
+   Mounted add/remove/apply tests cover both source kinds, save/reopen, source changes, missing bands, Cancel, collisions,
+   whole-image expressions, calculated output stability, downstream preview recovery and Retrieve/readiness agreement.
+   Deleted direct outputs, their custom names, deleted calculations and Stack aliases are not restored.
 
-Keep these additional items visible, without expanding either packet:
+Keep these additional items visible, outside the completed packets:
 
 - **Remapping: source loses a band a constraint uses.** The completed reference checks establish membership in the
   configured inputs and included bands, not whether the source still provides the band. Use successful current

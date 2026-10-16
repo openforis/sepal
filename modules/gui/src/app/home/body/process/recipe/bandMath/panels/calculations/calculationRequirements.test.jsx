@@ -5,9 +5,11 @@ import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import lookStyles from '~/style/look.module.css'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 
@@ -47,6 +49,12 @@ vi.mock('~/widget/tooltip', () => ({
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('../../bandMath')
+const {default: remapping} = await import('../../../remapping/remapping')
+const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
+const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
+const {buildMapDependencyGraph} = await import('../../../mapDependencyGraph')
+const {requestGate} = await import('../../../sourceRequirements')
+const {retrieveAvailability} = await import('../../../operationAvailability')
 const {Calculation} = await import('./calculation')
 const {Calculations} = await import('./calculations')
 const {Sync} = await import('../../sync/sync')
@@ -55,6 +63,7 @@ const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
 addRecipeType(bandMath())
+addRecipeType(remapping())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -126,6 +135,196 @@ describe('a draft calculation repair', () => {
         expect(sourceProblems()).toEqual({})
     })
 })
+
+describe('function selections in the calculation editor', () => {
+    it.each(['firstNonNull', 'lastNonNull'])('keeps configured band order when adding to %s', async functionName => {
+        const nir = {...selected(NIR), imageSource: 'ASSET:users/x/image', custom: 'kept'}
+        const saved = {...reducer([nir]), reducer: functionName}
+        await open('calc-1', {calculations: [saved]})
+        await click(group('i1').querySelector('[data-icon="plus"]').closest('button'))
+        await click([...document.querySelectorAll('[data-hook="option"]')].find(option => option.textContent === 'red'))
+        expect(calculation('calc-1')).toEqual(saved)
+        await apply()
+        expect(calculation('calc-1').reducer).toBe(functionName)
+        expect(calculation('calc-1').usedBands).toEqual([selected(RED), nir])
+    })
+
+    it.each(['firstNonNull', 'lastNonNull'])('orders available bands on removal from %s without losing missing metadata', async functionName => {
+        const blue = {id: 'blue-id', name: 'blue'}
+        const missing = {...selected(MISSING), imageSource: 'ASSET:users/x/image', custom: {kept: true}}
+        const nir = {...selected(NIR), imageSource: 'ASSET:users/x/image'}
+        const saved = {...reducer([nir, missing, selected(RED), selected(blue)]), reducer: functionName}
+        await open('calc-1', {images: [{...INPUT, includedBands: [...INPUT.includedBands, blue]}], calculations: [saved]})
+        // Opening alone leaves the saved order intact. A selection change uses the established configured order.
+        expect(calculation('calc-1')).toEqual(saved)
+        await click(chip('blue'))
+        expect(chip('swir')).toBeTruthy()
+        expect(button('button.apply').disabled).toBe(true)
+        await setImages([{...INPUT, includedBands: [...INPUT.includedBands, {...MISSING, id: 'restored-swir'}]}])
+        await apply()
+        expect(calculation('calc-1').reducer).toBe(functionName)
+        expect(calculation('calc-1').usedBands).toEqual([selected(RED), nir, missing])
+    })
+
+    it('keeps a missing band visible, marked and removable, and refuses Apply', async () => {
+        const saved = reducer([selected(RED), selected(MISSING)])
+        await open('calc-1', {calculations: [saved]})
+        expect(chip('swir')).toBeTruthy()
+        expect(chip('swir').className).toContain(lookStyles.cancel)
+        expect(chip('swir').closest('[data-tooltip]').dataset.tooltip).toContain('unknownBand')
+        expect(group('i1').querySelector(`.${errorIndicatorStyles.indicator}`)).toBeTruthy()
+        expect(button('button.apply').disabled).toBe(true)
+        expect(calculation('calc-1')).toEqual(saved)
+        expectAvailable(false)
+        await click(chip('swir'))
+        expect(button('button.apply').disabled).toBe(false)
+        expect(Object.keys(sourceProblems())).toEqual(['calculations'])
+        expectAvailable(false)
+        await apply()
+        expect(calculation('calc-1').usedBands).toEqual([selected(RED)])
+        expect(sourceProblems()).toEqual({})
+        expectAvailable(true)
+    })
+
+    it.each(['input', 'calculation'])('retains a missing %s group by its saved name', async kind => {
+        const missing = selected(MISSING, {imageId: 'gone', name: kind === 'input' ? 'i2' : 'c0'})
+        await open('calc-1', {calculations: [reducer([selected(RED), missing])]})
+        const row = group(missing.imageName)
+        expect(row).toBeTruthy()
+        expect(row.querySelector(`.${errorIndicatorStyles.indicator}`)).toBeTruthy()
+        expect(chip('swir').closest('[data-tooltip]').dataset.tooltip).toContain('missingImage')
+        expect(row.querySelector('[data-icon="plus"]').closest('button').disabled).toBe(true)
+        expect(button('button.apply').disabled).toBe(true)
+        await act(async () => ['mouseenter', 'mousedown', 'mouseup', 'click'].forEach(type =>
+            row.querySelector('[data-icon="trash"]').closest('button').dispatchEvent(new MouseEvent(type, {bubbles: true}))))
+        await linted()
+        await click(button('button.removeAll'))
+        expect(chip('swir')).toBeFalsy()
+        expect(button('button.apply').disabled).toBe(false)
+        await apply()
+        expect(sourceProblems()).toEqual({})
+    })
+
+    it.each(['nir', 'all'])('preserves missing references and their metadata when adding %s and removing other selections', async choice => {
+        const missing = {...selected(MISSING), imageSource: 'ASSET:users/x/image', custom: {retained: true}}
+        const kept = {...selected(RED), imageSource: 'ASSET:users/x/image', custom: 'keep'}
+        const saved = reducer([kept, missing])
+        await open('calc-1', {images: [{...INPUT, includedBands: [...INPUT.includedBands, {id: 'blue-id', name: 'blue'}]}], calculations: [saved]})
+        await click(group('i1').querySelector('[data-icon="plus"]').closest('button'))
+        expect([...document.querySelectorAll('[data-hook="option"]')].map(option => option.textContent)).not.toContain('swir')
+        await click([...document.querySelectorAll('[data-hook="option"]')].find(option => option.textContent === (choice === 'all'
+            ? 'process.classification.panel.inputImagery.bandSetSpec.addBands.all.label' : 'nir')))
+        expect(chip('swir')).toBeTruthy()
+        await click(chip('nir'))
+        if (choice === 'all') await click(chip('blue'))
+        expect(chip('swir')).toBeTruthy()
+        expect(button('button.apply').disabled).toBe(true)
+        expect(calculation('calc-1')).toEqual(saved)
+        // A configured band returns while the editor is mounted: keep the selected reference, including its old ID.
+        await setImages([{...INPUT, includedBands: [...INPUT.includedBands, {...MISSING, id: 'new-swir-id'}]}])
+        expect(chip('swir').className).not.toContain(lookStyles.cancel)
+        expect(button('button.apply').disabled).toBe(false)
+        await apply()
+        expect(calculation('calc-1').usedBands).toEqual([kept, missing])
+    })
+
+    it('keeps an empty function invalid after removing its last missing chip', async () => {
+        await open('calc-1', {calculations: [reducer([selected(MISSING)])]})
+        await click(chip('swir'))
+        expect(button('button.apply').disabled).toBe(true)
+        expect(calculation('calc-1').usedBands).toEqual([selected(MISSING)])
+    })
+
+    it('cancels a draft repair without changing applied references or findings', async () => {
+        const saved = reducer([selected(RED), selected(MISSING)])
+        await open('calc-1', {calculations: [saved]})
+        await click(chip('swir'))
+        await click(button('button.cancel'))
+        expect(calculation('calc-1')).toEqual(saved)
+        expect(Object.keys(sourceProblems())).toEqual(['calculations'])
+    })
+
+    it('allows a valid repair while another calculation remains invalid', async () => {
+        await open('calc-1', {calculations: [expression('other', 'c0', 'i1.swir'), reducer([selected(RED), selected(MISSING)])]})
+        await click(chip('swir'))
+        expect(button('button.apply').disabled).toBe(false)
+        await apply()
+        expect(calculation('calc-1').usedBands).toEqual([selected(RED)])
+        expect(Object.keys(sourceProblems())).toEqual(['calculations'])
+    })
+
+    it('updates groups and feedback when a referenced input becomes configured while mounted', async () => {
+        const returning = {...INPUT, imageId: 'returning', name: 'i2'}
+        await open('calc-1', {calculations: [reducer([selected(RED, returning)])]})
+        expect(button('button.apply').disabled).toBe(true)
+        await setImages([INPUT, returning])
+        expect(button('button.apply').disabled).toBe(false)
+        expect(chip('red').className).not.toContain(lookStyles.cancel)
+        expect(group('i2').querySelector(`.${errorIndicatorStyles.indicator}`)).toBeFalsy()
+        expect(group('i2').querySelector('[data-icon="plus"]').closest('button').disabled).toBe(false)
+        await setImages([INPUT])
+        expect(chip('red').className).toContain(lookStyles.cancel)
+        expect(button('button.apply').disabled).toBe(true)
+    })
+
+    it('matches physical band names even when internal band IDs change', async () => {
+        await open('calc-1', {images: [{...INPUT, includedBands: [{...RED, id: 'regenerated'}]}], calculations: [reducer([selected(RED)])]})
+        expect(chip('red')).toBeTruthy()
+        expect(chip('red').className).not.toContain(lookStyles.cancel)
+        expect(button('button.apply').disabled).toBe(false)
+        expect(group('i1').querySelector('[data-icon="plus"]').closest('button').disabled).toBe(true)
+    })
+
+    it.each(['self', 'later'])('uses shared scope for a %s calculation reference', async relation => {
+        const referenced = relation === 'self' ? {imageId: 'calc-1', name: 'c1'} : {imageId: 'later', name: 'c2'}
+        await open('calc-1', {calculations: [reducer([selected(RED, referenced)]), expression('later', 'c2', 'i1.red')]})
+        expect(chip('red').closest('[data-tooltip]').dataset.tooltip).toContain(relation === 'self' ? 'selfReference' : 'forwardReference')
+        expect(button('button.apply').disabled).toBe(true)
+    })
+})
+
+// Successful synthetic source descriptions isolate the configuration gate, including a dependent whose
+// description does not read the calculation. No Earth Engine work is involved.
+function expectAvailable(available) {
+    const recipe = store.getState().process.loadedRecipes[ID]
+    const downstream = {id: 'over', type: 'REMAPPING', revision: 1, model: {
+        inputImagery: {images: [{imageId: 'math', type: 'RECIPE_REF', id: ID, includedBands: [{band: 'red'}]}]},
+        legend: {entries: [{id: 'one', value: 1, label: 'One', color: '#123456', constraints: []}]}
+    }}
+    for (const target of [recipe, downstream]) {
+        const output = readImageOutput({
+            graph: buildMapDependencyGraph({recipe: target, loadedRecipes: {...store.getState().process.loadedRecipes, over: downstream}}),
+            declarationFor: ({type}) => recipeType(type)?.imageOutput,
+            readinessFor: ({type}) => recipeType(type),
+            observationFor: ({type}) => ({bands: (type === 'ASSET' ? ['red', 'nir', 'swir'] : ['red']).map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []})
+        })
+        const context = {state: store.getState(), recipe: target, heldFor: () => output}
+        expect(output.readiness.status, JSON.stringify({target: target.id, readiness: output.readiness})).toBe(available ? 'READY' : 'NOT_READY')
+        expect(retrieveAvailability(context).available).toBe(available)
+        expect(Boolean(requestGate({...context, operation: 'IMAGE_OUTPUT'}))).toBe(!available)
+    }
+}
+
+const MISSING = {id: 'swir-id', name: 'swir'}
+const selected = (band, input = INPUT) => ({...band, imageId: input.imageId, imageName: input.name})
+const reducer = usedBands => ({
+    imageId: 'calc-1', name: 'c1', type: 'FUNCTION', reducer: 'mean', dataType: 'auto', usedBands,
+    includedBands: [{id: 'mean-band', name: 'mean'}]
+})
+const button = label => [...document.querySelectorAll('button')].find(button => button.textContent === label)
+const chip = label => [...document.querySelectorAll('button')].find(button => button.textContent === label && button.querySelector('[data-icon="xmark"]'))
+const group = name => [...document.querySelectorAll(`.${listItemStyles.verticalWrapper}`)]
+    .find(row => [...row.querySelectorAll('*')].some(element => element.textContent === name))
+async function click(element) {
+    expect(element).toBeTruthy()
+    await act(async () => element.click())
+    await linted()
+}
+async function setImages(images) {
+    await act(async () => actionBuilder('TEST_CONFIGURE_INPUTS')
+        .set(['process.loadedRecipes', ID, 'model.inputImagery.images'], images).dispatch())
+    await linted()
+}
 
 // Of c1 and c2, c1 was removed: c2 keeps its name.
 describe('a new calculation added once an earlier one is removed', () => {

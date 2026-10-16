@@ -9,7 +9,8 @@ configured selection of input and calculated bands under names of the user's cho
 reads from it (`includedBands`) and a variable name. A new input or calculation is named `i<n>` or `c<n>`, one past
 the highest such name an input or calculation has or a calculation reads (`variableName.js`), counted exactly - or,
 where that would be longer than a name may be, the lowest number none has; no existing name changes, and a removed name
-a calculation still reads is not reused. `calculations.calculations` holds expressions and reducers in
+a calculation still reads is not given to another source. An exact returning source can reclaim its unused former
+name as described below. `calculations.calculations` holds expressions and reducers in
 order; each names its bands (`includedBands`) and an optional cast (`dataType`, `auto` for none), and may read the
 inputs and earlier calculations. `outputBands.outputImages` selects the output: per input or calculation, the bands
 it contributes, each with a generated `defaultOutputName` and an optional `outputName`. A calculation no output band
@@ -20,13 +21,41 @@ Inputs are told apart by their `imageId`, never by their source. A source - its 
 input only: one another input uses is not offered, or refused where it is typed. A saved recipe whose inputs already
 share a source keeps them, each edited and removed alone.
 
+Applied input changes and removal retain `imageSource` on each calculation's `usedBands` references, using
+`inputSourceKey` (source kind plus exact asset/recipe ID). The existing `imageName`, `imageId` and band `id` retain the
+former variable name and identities. `inputImages.js` reuses Remapping's source reconciliation: a reference whose
+input still exists refreshes its source identity, including an applied change to that input's source. Removal
+captures identity before the input disappears. No separate input history is kept, and these fields survive normal
+save/reopen. Existing working recipes acquire this metadata on their next applied input change or removal; opening
+one alone changes nothing. For a valid expression, the existing shared analysis refreshes its reference snapshot
+before the input change, including bands gained by whole-image derivation. An unresolved snapshot is preserved.
+
+When the same unambiguous source is added back, the new-input form suggests its former variable name only if no
+other input or calculation uses it and no conflicting retained reference claims it. Other sources keep the existing
+name-allocation guard. A name explicitly typed in the draft is respected. Applying with the former name reconnects
+preserved references to the new input's `imageId`; expression text, reducer settings, selected physical band names,
+casts and calculated output names remain unchanged. Referenced selected bands reuse their retained band IDs so
+normal synchronization preserves outputs still taken from calculations. A required band not yet selected stays
+invalid under shared readiness; selecting it and applying clears that finding. Input and reference updates are
+published in one action. Draft source changes, name suggestions and Cancel do not repair the saved recipe.
+
+An occupied name is never stolen, and expressions are never rewritten to avoid a collision. Reducer references
+then remain unresolved. Expressions retain their existing variable-name semantics: if a user has manually assigned
+that name to a different input, the expression already reads that input; recovery does not reinterpret or undo that
+explicit edit. A different name deliberately entered for the returning input also leaves automatic recovery undone.
+Already-orphaned references without retained source identity need explicit repair; there is no reconstruction from
+band names or list position. Ambiguous legacy source identities are not chosen as replacements. Reconnecting these
+preserved calculations does not restore deleted direct output selections, custom names from those deleted outputs,
+deleted calculations, or Stack aliases.
+
 The input editor works as Stack's does ([Stack](stack.md#inputs)). The kind of source - an asset or a recipe - is chosen
 beside its picker, a new input starting as an asset; each kind keeps a draft of its own while the editor is open - its
 source and the bands selected for it - so switching back restores it, and no band crosses from one kind to the other. A
 kind not yet shown starts with nothing selected. It learns what a source holds by reading it, and nothing it learns is
 an edit: opening a saved input leaves it unchanged, offering no Apply. Each selected band is a row of its own, named in
-its header and chosen when it is added: another band is taken by removing the row and adding one, which takes nothing of
-the removed band, not its id. The header chooses the band's type, continuous or categorical, over its source's default
+its header and chosen when it is added: a different band is taken by removing the row and adding one, which takes
+nothing of the removed band. Re-including a band still referenced by a preserved calculation can reclaim its retained
+id at Apply, as described above; deleted direct output selections stay deleted. The header chooses the band's type, continuous or categorical, over its source's default
 either way, without opening or closing the row. A categorical band shows its legend, open until its row collapses it and
 opened when the band is switched to categorical; a continuous band has none. A legend set aside by switching its band to
 continuous returns if the band is switched back while the editor is open; the configuration keeps no legend for a
@@ -117,8 +146,25 @@ input band, or removing an input or calculation, removes its outputs ([Inputs](#
 without bands is kept, marked on its row and on Output bands, until it is given a band or removed. Saved `invalid`
 flags from earlier versions are ignored.
 
-These checks do not bind the panels: a panel's Apply is decided by its own validation, as before - an expression by
-its editor's lint, over the inputs and the calculations before it.
+Draft calculation validation is local to the calculation being edited: expressions use the editor's lint, and
+functions use the shared `CALCULATION_REFERENCES` rule and `calculationItem` scope. A function's Apply is disabled
+while any selected reference is invalid, or no bands are selected. Another saved calculation's failure does not
+prevent applying a valid repair here.
+
+The function editor shows available choices together with all draft selections. An unavailable selected band remains
+as a red, removable chip with the shared diagnostic as its tooltip. A removed input or calculation retains a group
+under its saved name, with its selected chips and the standard row-error indicator. Remove a chip individually or
+use the group's Remove all action; unavailable selections are never offered by Add or Add all. Changing another
+selection preserves the references kept, including `imageSource` and other metadata. Selection changes order available
+bands by configured input/calculation order, as before, preserving the behavior of `first` and `last`; missing references
+follow them in their existing relative order. Opening neither reorders selections nor writes an applied calculation;
+draft changes and Cancel leave applied findings and gates unchanged.
+
+Groups and diagnostics follow current configuration while the editor is open. Matching uses input/calculation identity
+and physical band name, just as shared readiness does, so regenerating a band's internal ID alone does not invalidate
+its chip. Restoring a configured band clears the existing chip's error. The source-recovery flow above reconnects a
+returning source before the calculation is reopened; no chip needs to be removed and added again. This editor work
+neither restores deleted calculations nor changes the source-recovery identity/name policy.
 
 After a change, the sync derives each expression's bands again, in order, from the calculations before it as just
 derived, but only where everything it reads is met. One that is not keeps the bands it was derived with, and with them
@@ -211,12 +257,10 @@ the bands selected, in the order selected. The catalogue answers the configured 
 
 ## Open issues
 
-Calculation-reference validation now participates in shared execution readiness. Automatic recovery of preserved
-input references when the exact source returns remains the next packet. The former variable name may be reclaimed
-only if unused; current naming behaviour is unchanged. Deleted output selections and custom names require a separate
-retention decision. See the
+Shared calculation-reference validation and automatic recovery of preserved input references are implemented.
+Deleted output selections and their custom names still require a separate retention decision. See the
 [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
-for the audit evidence, ordering and boundaries. Re-adding a source still does not reconnect calculations automatically.
+for the audit evidence, completed packets and remaining boundaries.
 
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.
@@ -229,6 +273,10 @@ for the audit evidence, ordering and boundaries. Re-adding a source still does n
   the dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
   declaration and Earth Engine each answer them, an input band the asset lacks as Earth Engine refuses it, the
   dimensionality of every band of representative input assets, and one pixel value.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/inputRecovery.test.jsx` - real input add/remove/apply with
+  Sync, expressions and reducers, asset/recipe identity, save/reopen, missing bands, Cancel, source changes, name
+  collisions, legacy ambiguity, whole-image reference capture, preserved calculated output names and deleted direct
+  outputs staying deleted; shared findings, Retrieve and a mounted downstream Remapping preview recover together.
 - `lib/js/shared/test/recipe/output/type/bandMathReferences.test.js` - applied reference, syntax, arity and band-count
   findings, self/forward references and cycles, preserved descriptions, pending/failed evidence, downstream attribution
   through Remapping and repair.
@@ -270,7 +318,8 @@ for the audit evidence, ordering and boundaries. Re-adding a source still does n
   edited in its panel keeping its bands' identities, bands renamed alike named apart beside suffixed names of any
   length, and one saved with names alike opened unchanged and named apart once applied, its custom output name kept.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculationRequirements.test.jsx` - the
-  originating calculation marks, a saved failure repaired while Apply stays available, and draft Apply/Cancel isolation.
+  originating calculation marks, isolated draft Apply/Cancel, missing function bands and groups kept visible/removable,
+  shared-scope validation, live configuration updates, metadata preservation and repairs beside another invalid calculation.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/sectionMarks.test.jsx` - the toolbar buttons and Output bands
   rows marked for an output image left without bands by unselecting its band, and cleared once it has one; a section
   without any output image; an output
@@ -289,4 +338,35 @@ Manual calculation-readiness check:
 3. Edit `c1` to use `i1.nir * 2`. Before Apply, the saved chain stays blocked. Cancel keeps it blocked; Apply repairs it
    and restores both recipes' availability.
 4. Repeat with a reducer reading `red`, or with a calculation reading another calculation that is then removed.
-   Repair the reducer's selection or the expression explicitly. Automatic source reconnection is still pending.
+   Repair the reducer's selection or the expression explicitly; deleted calculations are not restored automatically.
+
+Manual source-recovery check:
+
+1. Start with a working Band Math: `i1` includes `red`, another input remains available, `c1 = i1.red * 2`, and a
+   reducer `c2` reads `i1.red`. Output both calculations under custom names. Create and display a Remapping over one
+   of those outputs. Record the expression, reducer settings and output names.
+2. Remove `i1` in IMG. Both calculations and their calculated output selections/names must remain. CALC should
+   identify the broken references; previews and Retrieve for both recipes should be blocked. Save and reopen.
+3. Add the exact source back and select `red`. Its name should be suggested as `i1` if still free. Before Apply,
+   saved references and blocking remain unchanged; Cancel must leave that state intact.
+4. Add it again and Apply. Both calculations should recover without editing their text or settings, the calculated
+   output names should remain unchanged, and both recipes' previews/Retrieve should become available.
+5. Repeat, returning with only another band selected. The input can reconnect, but `red` findings must remain.
+   Include `red` and Apply to recover. A different source with a `red` band must not reconnect anything.
+6. In a separate copy, occupy `i1` before restoring its source. The occupying input/calculation must keep its name,
+   expressions must remain unchanged, and unresolved reducer references must remain invalid. Repair this collision
+   explicitly. Direct outputs removed with the old input must stay absent throughout all these steps.
+
+
+Manual missing-selection editor check:
+
+1. Start with a valid reducer selecting `i1.red` and `i1.nir`, and a downstream recipe. In IMG, remove `red` and
+   Apply. Open the reducer: `red` must remain as a red chip with an explanatory tooltip, its group must have an
+   error indicator, and Apply must be disabled. Adding/removing other chips must keep `red` until explicitly removed.
+2. Remove the red chip. Apply should enable while `nir` remains; removing every chip must disable it again. Cancel
+   must keep the applied error. Repeat the repair and Apply: the calculation and downstream gates should recover
+   if nothing else blocks them. Alternatively, Cancel and restore `red` in IMG: the existing chip should recover.
+3. Remove the entire `i1` input and reopen the reducer. Its `i1` group and selected chips must remain, marked, with
+   Add disabled. Remove individual chips or use Remove all; keep at least one valid selection from another group
+   before applying. Cancel must preserve the missing references and blocking. Re-add the exact source with the
+   required bands and Apply: automatic recovery must keep the reducer settings and clear its chips' errors.

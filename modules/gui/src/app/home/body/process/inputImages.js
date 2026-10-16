@@ -1,5 +1,7 @@
 import _ from 'lodash'
 
+import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/calculationReferences'
+import {SUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
 import {select} from '~/store'
 
@@ -88,6 +90,87 @@ const remappingInputUpdates = (recipe, images) => recipe.type === 'REMAPPING' &&
     }]
     : []
 
+// Band Math already retains usedBands when an input disappears. Keep the same imageSource convention there; the
+// existing imageName and band id are needed to recover expressions and their calculated output identities too.
+const captureCalculationSources = (calculations, images, previousImages) => calculations.map((calculation, index) => {
+    if (!Array.isArray(calculation?.usedBands) && calculation?.type !== 'EXPRESSION') return calculation
+    let usedBands = Array.isArray(calculation.usedBands) ? calculation.usedBands : []
+    // Whole-image expressions may have gained bands since their editor last saved usedBands. Refresh from the same
+    // analysis as readiness, before changing inputs. Keep broken snapshots, including references whose name another
+    // input now occupies: resolving that expression by name must not silently retarget its retained source identity.
+    if (calculation.type === 'EXPRESSION') {
+        const item = calculationItem({images: previousImages, calculations}, index)
+        if (CALCULATION_REFERENCES.evaluate(item.facts).status === SUPPORTED
+            && usedBands.every(band => item.facts.scope.some(image => image.imageId === band?.imageId))) {
+            usedBands = item.facts.analysis.usedBands.map(band => ({
+                ...usedBands.find(previous => previous.imageId === band.imageId && previous.name === band.name), ...band
+            }))
+        }
+    }
+    const sources = reconcileConstraintInputs(usedBands.map(band => band && ({
+        image: band.imageId, imageSource: band.imageSource
+    })), images, previousImages)
+    return {...calculation, usedBands: usedBands.map((band, index) => {
+        if (!band || typeof band.imageId !== 'string') return band
+        const {imageSource: _source, ...reference} = band
+        return {...reference, ...(sources[index]?.imageSource ? {imageSource: sources[index].imageSource} : {})}
+    })}
+})
+
+const calculationBands = calculations => calculations.flatMap(calculation =>
+    Array.isArray(calculation?.usedBands) ? calculation.usedBands.filter(band => band && typeof band.imageId === 'string') : [])
+
+// Only one former input/name may claim a source. A name occupied by another input or calculation, or retained for
+// another missing source, is never reclaimed. This is also the new-input form's suggestion, not a saved repair.
+export const restoredInputName = (image, images, calculations) => {
+    const source = sourceOf(image)
+    if (!source || images.some(other => other.imageId !== image.imageId && sourceOf(other) === source)) return null
+    const missing = calculationBands(calculations).filter(band =>
+        ![...images, ...calculations].some(other => other.imageId === band.imageId))
+    const references = missing.filter(band => band.imageSource === source)
+    const identities = _.uniqBy(references, band => JSON.stringify([band.imageId, band.imageName]))
+    if (identities.length !== 1) return null
+    const {imageName: name, imageId} = identities[0]
+    return typeof name === 'string' && /^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/.test(name)
+        && ![...images.filter(other => other.imageId !== image.imageId), ...calculations].some(other => other.name === name)
+        && !missing.some(band => band.imageName === name && (band.imageSource !== source || band.imageId !== imageId))
+        ? name : null
+}
+
+const bandMathInputUpdates = (recipe, images) => {
+    if (recipe.type !== 'BAND_MATH') return []
+    const previousImages = recipe.model.inputImagery?.images || []
+    const calculations = captureCalculationSources(recipe.model.calculations?.calculations || [], images, previousImages)
+    const byId = uniqueInputs(images, image => image?.imageId)
+    const bySource = uniqueInputs(images, sourceOf)
+    const reconnected = calculations.map(calculation => !Array.isArray(calculation?.usedBands) ? calculation : {
+        ...calculation,
+        usedBands: calculation.usedBands.map(band => {
+            if (!band || byId.has(band.imageId) || calculations.some(other => other.imageId === band.imageId)) return band
+            const replacement = bySource.get(band.imageSource)
+            return replacement && byId.get(replacement.imageId) === replacement
+                && replacement.name === band.imageName && restoredInputName(replacement, images, calculations) === band.imageName
+                ? {...band, imageId: replacement.imageId} : band
+        })
+    })
+    const references = calculationBands(reconnected)
+    // A returning selected band keeps the id still used by preserved calculations. Otherwise normal Sync would
+    // replace expression output bands and discard their custom names. No deleted output selection is recreated.
+    const restored = images.map(image => ({...image, includedBands: (image.includedBands || []).map(band => {
+        const previous = previousImages.find(previous => previous.imageId === image.imageId)
+        if (previous?.includedBands?.some(old => old.name === band.name)) return band
+        const ids = _.uniq(references.filter(reference => reference.imageId === image.imageId
+            && reference.imageSource === sourceOf(image) && reference.name === band.name).map(({id}) => id))
+        return ids.length === 1 && typeof ids[0] === 'string' ? {...band, id: ids[0]} : band
+    })}))
+    return [
+        {path: 'model.inputImagery.images', value: restored},
+        {path: 'model.calculations.calculations', value: reconnected}
+    ]
+}
+
+const inputUpdates = (recipe, images) => [...remappingInputUpdates(recipe, images), ...bandMathInputUpdates(recipe, images)]
+
 // Applied atomically with the input by RecipeFormPanel.additionalUpdates, never while editing or cancelling it.
 export const appliedInputImageUpdates = (recipeId, image) => {
     const recipe = select(recipePath(recipeId))
@@ -95,14 +178,14 @@ export const appliedInputImageUpdates = (recipeId, image) => {
     const updated = images.some(({imageId}) => imageId === image.imageId)
         ? images.map(input => input.imageId === image.imageId ? image : input)
         : [...images, image]
-    return remappingInputUpdates(recipe, updated)
+    return inputUpdates(recipe, updated)
 }
 
 export const removeInputImage = (recipeId, imageToRemove) => {
     const recipe = select(recipePath(recipeId))
     const images = (recipe.model.inputImagery?.images || []).filter(image => image.imageId !== imageToRemove.imageId)
     const builder = recipeActionBuilder(recipeId)('REMOVE_INPUT_IMAGE', {imageToRemove})
-    remappingInputUpdates(recipe, images).forEach(({path, value}) => builder.set(path, value))
+    inputUpdates(recipe, images).forEach(({path, value}) => builder.set(path, value))
     return builder
         .del(['model.inputImagery.images', {imageId: imageToRemove.imageId}])
         .del(['ui.inputImagery.images', {imageId: imageToRemove.imageId}])

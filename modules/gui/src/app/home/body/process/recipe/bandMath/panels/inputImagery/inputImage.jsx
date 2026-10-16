@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {adoptOtherSources, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
+import {adoptOtherSources, appliedInputImageUpdates, DUPLICATE_SOURCE, inputSourceKey, isFreeSource, restoredInputName} from '~/app/home/body/process/inputImages'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
@@ -78,10 +78,12 @@ class _InputImage extends React.Component {
     }
 
     render() {
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
+                additionalUpdates={values => appliedInputImageUpdates(recipeId, valuesToModel(values))}
                 onApply={this.notifyChange}>
                 <Panel.Header icon='image' title={msg('process.panels.inputImagery.sections.title')}/>
                 <Panel.Content>
@@ -160,7 +162,19 @@ class _InputImage extends React.Component {
     setName() {
         const {images, calculations, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(newVariableName('i', {images, calculations}))
+            this.suggestedName = newVariableName('i', {images, calculations})
+            name.set(this.suggestedName)
+        }
+    }
+
+    componentDidUpdate() {
+        const {images, calculations, inputs: {name, imageId, section}} = this.props
+        if (!['ASSET', 'RECIPE_REF'].includes(section.value) || !this.suggestedName || name.value !== this.suggestedName || images.some(image => image.imageId === imageId.value)) return
+        const image = {...this.getSelectedImage(), imageId: imageId.value}
+        const suggestion = restoredInputName(image, images, calculations) || newVariableName('i', {images, calculations})
+        if (suggestion !== this.suggestedName) {
+            this.suggestedName = suggestion
+            name.set(suggestion)
         }
     }
 
