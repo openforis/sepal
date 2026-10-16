@@ -26,6 +26,7 @@
 
 .item {
     --item-spacing: .75rem;
+    --line-height: 1.5rem;
     position: relative;
     align-items: center;
     display: flex;
@@ -38,10 +39,13 @@
     margin-left: var(--item-spacing);
 }
 
+/* Room for as many lines as the item asks, so an item without a title can stand as tall as one with it. */
 .info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
+    min-height: calc(var(--lines, 0) * var(--line-height));
     overflow: hidden;
     flex-grow: 1;
     flex-shrink: 1;
@@ -54,6 +58,11 @@
     word-break: break-word;
     overflow: hidden;
     max-width: 100%;
+}
+
+.info.nowrap>* {
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .inline {
@@ -76,7 +85,7 @@
 .title {
     font-size: .8rem;
     font-weight: 800;
-    line-height: 1.5rem;
+    line-height: var(--line-height);
     text-transform: uppercase;
     color: var(--text-muted-color);
     white-space: nowrap;
@@ -86,7 +95,7 @@
 
 .description {
     font-size: .9rem;
-    line-height: 1.5rem;
+    line-height: var(--line-height);
     white-space: normal;
     word-wrap: break-word;
     text-align: left;
