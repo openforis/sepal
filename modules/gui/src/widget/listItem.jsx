@@ -432,8 +432,10 @@ class _ListItem extends React.Component {
         )
     }
 
+    // Only the item being dragged may reset the cursor: a virtual list unmounts other rows as the drag scrolls it.
     componentWillUnmount() {
-        this.showDragCursor(false)
+        const {dragging} = this.state
+        dragging && this.showDragCursor(false)
     }
 
     componentDidMount() {

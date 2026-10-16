@@ -66,6 +66,30 @@ afterEach(async () => {
 })
 
 describe('a dragged item', () => {
+    it('keeps the drag cursor when another item unmounts', async () => {
+        await mount()
+        const otherContainer = document.createElement('div')
+        document.body.appendChild(otherContainer)
+        const otherRoot = createRoot(otherContainer)
+        await act(async () => otherRoot.render(<ListItem onDragStart={() => {}}>Other</ListItem>))
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => otherRoot.unmount())
+        otherContainer.remove()
+
+        expect(document.body.className).toContain('dragCursor')
+    })
+
+    it('resets the drag cursor when the dragged item unmounts', async () => {
+        await mount()
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => root.unmount())
+        root = null
+
+        expect(document.body.className).not.toContain('dragCursor')
+    })
+
     it('is held where it was pressed, however far the pointer had moved when the drag was recognised', async () => {
         await mount()
 
