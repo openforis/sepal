@@ -4787,11 +4787,11 @@
         "parentNotFound": "Cannot update folder: the parent folder no longer exists"
       },
       "parent": {
-        "root": "Home",
         "tooltip": "Go up one folder"
       },
       "move": {
-        "done": "Moved {name} to {folder}."
+        "done": "Moved {name} to {folder}.",
+        "nameTaken": "Not moved: {folder} already has a folder named {names}."
       },
       "selectHere": "Move here",
       "none": "No folders"
@@ -5653,7 +5653,9 @@
       }
     },
     "recipeList.noMatch": "No folders or recipes match \"{search}\"",
-    "recipeList.empty": "No folders or recipes here yet"
+    "recipeList.empty": "No folders or recipes here yet",
+    "recipeList.breadcrumb.label": "Folder path",
+    "recipeList.breadcrumb.hidden": "{count} more {count, plural, one {folder} other {folders}}"
   },
   "sources": {
     "dataSets": {

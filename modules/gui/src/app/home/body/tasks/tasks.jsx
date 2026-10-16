@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {PATH_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
+import {locationLabel} from '~/app/home/body/process/recipeList/recipeTree'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -224,8 +224,7 @@ class _Tasks extends React.Component {
             const destination = task.taskInfo?.destination
             // Tasks made before the rename hold the old key.
             const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
-            const folder = folders?.find(({id}) => id === folderId)
-            const folderName = folder?.name ?? msg('process.recipeList.root')
+            const folderName = locationLabel(folders, folderId)
             const searchable = [
                 task.name,
                 task.description,
@@ -357,10 +356,7 @@ class _Tasks extends React.Component {
     getRecipePath(task) {
         const {folders} = this.props
         const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
-        const folder = folders?.find(({id}) => id === folderId)
-        const folderName = folder?.name ?? msg('process.recipeList.root')
-        const recipeName = task.description || task.name
-        return [folderName, recipeName].join(PATH_SEPARATOR)
+        return locationLabel(folders, folderId, task.description || task.name)
     }
 
     // Right-side one-line row metadata: current localized status/progress for a running task, or the final
