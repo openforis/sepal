@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {Subject} from 'rxjs'
 
 import {createUserWsProtocol} from './ws.js'
@@ -9,7 +12,7 @@ describe('user ws protocol', () => {
 
         userUpdated$.next(eventUser)
 
-        expect(sent).toEqual([{event: 'userUpdated', user: eventUser}])
+        assert.deepEqual(sent, [{event: 'userUpdated', user: eventUser}])
     })
 
     test('unicasts a changed user to each admin subscription', () => {
@@ -20,9 +23,10 @@ describe('user ws protocol', () => {
 
         userChanged$.next(bob)
 
-        expect(sent).toEqual([
-            {clientId: 'c1', subscriptionId: 's1', data: {user: expect.objectContaining({username: 'bob', status: 'LOCKED'})}},
-            {clientId: 'c2', subscriptionId: 's2', data: {user: expect.objectContaining({username: 'bob', status: 'LOCKED'})}}
+        assert.equal(sent.length, 2)
+        assert.partialDeepStrictEqual(sent, [
+            {clientId: 'c1', subscriptionId: 's1', data: {user: {username: 'bob', status: 'LOCKED'}}},
+            {clientId: 'c2', subscriptionId: 's2', data: {user: {username: 'bob', status: 'LOCKED'}}}
         ])
     })
 
@@ -33,9 +37,9 @@ describe('user ws protocol', () => {
         userChanged$.next(aUser({googleTokens: {accessToken: 'a', refreshToken: 'r'}, passwordHash: 'h', token: 't'}))
 
         const [{data: {user}}] = sent
-        expect(user).toMatchObject({googleUser: true, googleTokens: null, admin: false})
-        expect(user).not.toHaveProperty('passwordHash')
-        expect(user).not.toHaveProperty('token')
+        assert.partialDeepStrictEqual(user, {googleUser: true, googleTokens: null, admin: false})
+        assert.ok(!('passwordHash' in Object(user)))
+        assert.ok(!('token' in Object(user)))
     })
 
     test('ignores a subscription from a non-admin', () => {
@@ -44,7 +48,7 @@ describe('user ws protocol', () => {
 
         userChanged$.next(aUser())
 
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     test('stops pushing after subscriptionDown', () => {
@@ -54,7 +58,7 @@ describe('user ws protocol', () => {
         handler({event: 'subscriptionDown', clientId: 'c1', subscriptionId: 's1'})
         userChanged$.next(aUser())
 
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     test('drops every subscription of a client that went down', () => {
@@ -65,7 +69,7 @@ describe('user ws protocol', () => {
         handler({event: 'clientDown', clientId: 'c1'})
         userChanged$.next(aUser())
 
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     test('drops every subscription of a user that went down', () => {
@@ -76,7 +80,7 @@ describe('user ws protocol', () => {
         handler({event: 'userDown', user: {username: 'admin'}})
         userChanged$.next(aUser())
 
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     test('stops pushing once the connection is torn down', () => {
@@ -86,7 +90,7 @@ describe('user ws protocol', () => {
         stop$.next()
         userChanged$.next(aUser())
 
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 })
 

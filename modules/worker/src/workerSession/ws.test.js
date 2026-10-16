@@ -1,5 +1,9 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {Subject} from 'rxjs'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createSessionWsProtocol} from './ws.js'
 
@@ -34,7 +38,7 @@ describe('session ws protocol', () => {
         const {sent, handler} = setup()
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: REPORT}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: REPORT}])
     })
 
     it('multicasts to a subscribed user on sessionChanged$', async () => {
@@ -44,7 +48,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([{username: 'alice', data: REPORT}])
+        assert.deepEqual(sent, [{username: 'alice', data: REPORT}])
     })
 
     it('ignores sessionChanged$ for users without a subscription', async () => {
@@ -54,7 +58,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'bob'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('sends one multicast per change even with several tabs open', async () => {
@@ -65,7 +69,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([{username: 'alice', data: REPORT}])
+        assert.deepEqual(sent, [{username: 'alice', data: REPORT}])
     })
 
     it('debounces a burst of changes for the same user into one push', async () => {
@@ -77,7 +81,7 @@ describe('session ws protocol', () => {
         sessionChanged$.next({username: 'alice'})
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([{username: 'alice', data: REPORT}])
+        assert.deepEqual(sent, [{username: 'alice', data: REPORT}])
     })
 
     it('debounces per user, so one user does not suppress another', async () => {
@@ -89,7 +93,7 @@ describe('session ws protocol', () => {
         sessionChanged$.next({username: 'alice'})
         sessionChanged$.next({username: 'bob'})
         await flush()
-        expect(sent).toEqual([
+        assert.deepEqual(sent, [
             {username: 'alice', data: REPORT},
             {username: 'bob', data: REPORT},
         ])
@@ -102,7 +106,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         handler({user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1', data: {refresh: true}})
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: REPORT}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: REPORT}])
     })
 
     it('stops pushing to a subscription after subscriptionDown', async () => {
@@ -113,7 +117,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('drops every subscription of a client on clientDown', async () => {
@@ -127,23 +131,28 @@ describe('session ws protocol', () => {
         sessionChanged$.next({username: 'alice'})
         await flush()
         // c2 still subscribed for the same user → still multicast once
-        expect(sent).toEqual([{username: 'alice', data: REPORT}])
+        assert.deepEqual(sent, [{username: 'alice', data: REPORT}])
     })
 
     it('dissociates the client\'s apps on clientDown (tabs died with the client)', async () => {
-        const sessionManager = {dissociateAppsForClient: jest.fn(async () => [])}
+        const sessionManager = {dissociateAppsForClient: mock.fn(async () => [])}
         const {handler} = setup({sessionManager})
         handler({event: 'clientDown', user: {username: 'alice'}, clientId: 'c1'})
-        expect(sessionManager.dissociateAppsForClient).toHaveBeenCalledWith({username: 'alice', clientId: 'c1'})
+        assert.deepEqual(
+            callsOf(sessionManager.dissociateAppsForClient),
+            [[{username: 'alice', clientId: 'c1'}]]
+        )
     })
 
     it('tolerates clientDown without a sessionManager or username', async () => {
-        const sessionManager = {dissociateAppsForClient: jest.fn(async () => [])}
+        const sessionManager = {dissociateAppsForClient: mock.fn(async () => [])}
         const {handler} = setup() // no sessionManager wired
-        expect(() => handler({event: 'clientDown', user: {username: 'alice'}, clientId: 'c1'})).not.toThrow()
+        assert.doesNotThrow(
+            () => handler({event: 'clientDown', user: {username: 'alice'}, clientId: 'c1'})
+        )
         const {handler: handler2} = setup({sessionManager})
         handler2({event: 'clientDown', clientId: 'c1'}) // no user on the event
-        expect(sessionManager.dissociateAppsForClient).not.toHaveBeenCalled()
+        assert.equal(sessionManager.dissociateAppsForClient.mock.callCount(), 0)
     })
 
     it('drops every subscription of a user on userDown', async () => {
@@ -155,7 +164,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('stops listening to sessionChanged$ once the connection stops', async () => {
@@ -166,7 +175,7 @@ describe('session ws protocol', () => {
         sent.length = 0
         sessionChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('survives a failing report query without sending anything', async () => {
@@ -175,13 +184,13 @@ describe('session ws protocol', () => {
         }})
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('ignores unknown events', async () => {
         const {sent, handler} = setup()
         handler({event: 'userUp', user: {username: 'alice'}})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 })

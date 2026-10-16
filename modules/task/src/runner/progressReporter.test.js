@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {ProgressReporter} from './progressReporter.js'
 
 test('sends a status once, and again only when it changes', () => {
@@ -8,7 +11,7 @@ test('sends a status once, and again only when it changes', () => {
     reporter.report({messageKey: 'a'})
     reporter.report({messageKey: 'b'})
 
-    expect(sent).toEqual([{messageKey: 'a'}, {messageKey: 'b'}])
+    assert.deepEqual(sent, [{messageKey: 'a'}, {messageKey: 'b'}])
 })
 
 test('a heartbeat repeats the last status, so task-manager knows the container is alive', () => {
@@ -19,11 +22,11 @@ test('a heartbeat repeats the last status, so task-manager knows the container i
     reporter.report({messageKey: 'a'})
     reporter.heartbeat()
 
-    expect(sent).toEqual([{messageKey: 'a'}, {messageKey: 'a'}])
+    assert.deepEqual(sent, [{messageKey: 'a'}, {messageKey: 'a'}])
 })
 
 test('a status that cannot be delivered does not stop the task', () => {
     const reporter = new ProgressReporter({send: () => Promise.reject(new Error('gateway down'))})
 
-    expect(() => reporter.report({messageKey: 'a'})).not.toThrow()
+    assert.doesNotThrow(() => reporter.report({messageKey: 'a'}))
 })

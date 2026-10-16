@@ -20,7 +20,6 @@ const baseConfig = {
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {
-            ...globals.jest,
             ...globals.node,
         }
     },

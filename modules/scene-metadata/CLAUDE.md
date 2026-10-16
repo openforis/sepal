@@ -9,8 +9,8 @@ Maintains scene metadata database for Landsat and Sentinel-2 satellite imagery. 
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

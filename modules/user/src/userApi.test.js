@@ -1,4 +1,7 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, mock, test} from 'node:test'
+
+import {assertMatches} from '#sepal/testSupport/assert'
 
 const users = new Map()
 
@@ -17,15 +20,27 @@ const repository = {
     }
 }
 // config.js parses argv at import time and exits on missing mandatory options
-jest.unstable_mockModule('./config.js', () => ({
-    amqpUri: '', googleOauthCallbackBaseUrl: '', googleOauthClientId: '', googleOauthClientSecret: '',
-    googleProjectId: '', port: 0, recaptchaApiKey: '', recaptchaMinScore: 0, recaptchaOptional: true,
-    recaptchaSiteKey: '', sepalHost: 'sepal.test'
-}))
-jest.unstable_mockModule('./email.js', () => ({
-    sendInvite: () => {},
-    sendPasswordReset: () => {}
-}))
+mock.module('./config.js', {
+    exports: {
+        amqpUri: '',
+        googleOauthCallbackBaseUrl: '',
+        googleOauthClientId: '',
+        googleOauthClientSecret: '',
+        googleProjectId: '',
+        port: 0,
+        recaptchaApiKey: '',
+        recaptchaMinScore: 0,
+        recaptchaOptional: true,
+        recaptchaSiteKey: '',
+        sepalHost: 'sepal.test'
+    }
+})
+mock.module('./email.js', {
+    exports: {
+        sendInvite: () => {},
+        sendPasswordReset: () => {}
+    }
+})
 
 const {UserApi} = await import('./userApi.js')
 const {userChanged$} = await import('./events.js')
@@ -40,8 +55,8 @@ describe('POST /lock', () => {
 
         await api.lock(ctx)
 
-        expect(ctx.status).toBe(400)
-        expect(users.get(admin.username).status).toBe('ACTIVE')
+        assert.equal(ctx.status, 400)
+        assert.equal(users.get(admin.username).status, 'ACTIVE')
     })
 
     test('an admin can lock another user', async () => {
@@ -51,8 +66,8 @@ describe('POST /lock', () => {
 
         await api.lock(ctx)
 
-        expect(users.get(other.username).status).toBe('LOCKED')
-        expect(ctx.body).toMatchObject({username: other.username, status: 'LOCKED'})
+        assert.equal(users.get(other.username).status, 'LOCKED')
+        assert.partialDeepStrictEqual(ctx.body, {username: other.username, status: 'LOCKED'})
     })
 })
 
@@ -64,7 +79,7 @@ describe('POST /details', () => {
 
         await api.updateDetails(ctx)
 
-        expect(ctx.body).toMatchObject({username: 'bob', name: 'Robert', revision: bob.revision + 1})
+        assert.partialDeepStrictEqual(ctx.body, {username: 'bob', name: 'Robert', revision: bob.revision + 1})
     })
 
     test('rejects a stale revision with the current record, changing nothing', async () => {
@@ -75,10 +90,10 @@ describe('POST /details', () => {
 
         await api.updateDetails(ctx)
 
-        expect(ctx.status).toBe(409)
-        expect(ctx.body.user).toMatchObject({username: 'bob', name: bob.name, revision: bob.revision})
-        expect(users.get('bob').name).toBe(bob.name)
-        expect(changed()).toEqual([])
+        assert.equal(ctx.status, 409)
+        assert.partialDeepStrictEqual(ctx.body.user, {username: 'bob', name: bob.name, revision: bob.revision})
+        assert.equal(users.get('bob').name, bob.name)
+        assert.deepEqual(changed(), [])
     })
 
     test('writes the details unchecked when no revision is given', async () => {
@@ -88,7 +103,7 @@ describe('POST /details', () => {
 
         await api.updateDetails(ctx)
 
-        expect(ctx.body).toMatchObject({name: 'Robert'})
+        assert.partialDeepStrictEqual(ctx.body, {name: 'Robert'})
     })
 })
 
@@ -101,7 +116,7 @@ describe('POST /unlock', () => {
 
         await api.unlock(ctx)
 
-        expect(changed()).toMatchObject([{username: locked.username, status: 'PENDING'}])
+        assertMatches(changed(), [{username: locked.username, status: 'PENDING'}])
     })
 })
 

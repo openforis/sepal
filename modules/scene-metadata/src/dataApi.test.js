@@ -1,12 +1,15 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, mock, test} from 'node:test'
 
-const mockFindBestScenes = jest.fn()
-const mockFindScenesInSceneArea = jest.fn()
+const mockFindBestScenes = mock.fn()
+const mockFindScenesInSceneArea = mock.fn()
 
-jest.unstable_mockModule('./config.js', () => ({
-    googleMapsApiKey: 'test-google-key',
-    nicfiPlanetApiKey: 'test-planet-key',
-}))
+mock.module('./config.js', {
+    exports: {
+        googleMapsApiKey: 'test-google-key',
+        nicfiPlanetApiKey: 'test-planet-key'
+    }
+})
 
 const {DataApi} = await import('./dataApi.js')
 
@@ -23,15 +26,17 @@ const USER = {username: 'alice', roles: ['user']}
 const TARGET_DOY = 196
 
 beforeEach(() => {
-    mockFindBestScenes.mockReset()
-    mockFindScenesInSceneArea.mockReset()
+    mockFindBestScenes.mock.resetCalls()
+    mockFindBestScenes.mock.mockImplementation(() => undefined)
+    mockFindScenesInSceneArea.mock.resetCalls()
+    mockFindScenesInSceneArea.mock.mockImplementation(() => undefined)
 })
 
 describe('mapApiKeys', () => {
     test('sets ctx.body to {google, nicfiPlanet} from config', async () => {
         const ctx = makeCtx()
         await mapApiKeys(ctx)
-        expect(ctx.body).toEqual({
+        assert.deepEqual(ctx.body, {
             google: 'test-google-key',
             nicfiPlanet: 'test-planet-key',
         })
@@ -40,62 +45,68 @@ describe('mapApiKeys', () => {
 
 describe('bestScenes', () => {
     test('calls repository.findBestScenes with parsed query', async () => {
-        mockFindBestScenes.mockResolvedValue({'SA_042': []})
+        mockFindBestScenes.mock.mockImplementation(async () => ({
+            'SA_042': []
+        }))
         const ctx = makeCtx({
             body: {query: JSON.stringify(CLIENT_BEST_SCENES_QUERY)},
         })
         await bestScenes(ctx)
-        expect(mockFindBestScenes).toHaveBeenCalledTimes(1)
-        const q = mockFindBestScenes.mock.calls[0][0]
-        expect(q.source).toBe('LANDSAT')
-        expect(q.dataSets).toEqual(['LANDSAT_8', 'LANDSAT_9'])
-        expect(q.targetDayOfYear).toBe(TARGET_DOY)
-        expect(q.sceneAreaIds).toEqual(['SA_042'])
+        assert.equal(mockFindBestScenes.mock.callCount(), 1)
+        const q = mockFindBestScenes.mock.calls[0].arguments[0]
+        assert.equal(q.source, 'LANDSAT')
+        assert.deepEqual(q.dataSets, ['LANDSAT_8', 'LANDSAT_9'])
+        assert.equal(q.targetDayOfYear, TARGET_DOY)
+        assert.deepEqual(q.sceneAreaIds, ['SA_042'])
     })
 
     test('responds with object keyed by sceneAreaId containing sceneData arrays', async () => {
         const row = makeSceneRow()
-        mockFindBestScenes.mockResolvedValue({'SA_042': [row]})
+        mockFindBestScenes.mock.mockImplementation(async () => ({
+            'SA_042': [row]
+        }))
         const ctx = makeCtx({
             body: {query: JSON.stringify(CLIENT_BEST_SCENES_QUERY)},
         })
         await bestScenes(ctx)
-        expect(ctx.body).toHaveProperty('SA_042')
+        assert.ok('SA_042' in Object(ctx.body))
         const scenes = ctx.body['SA_042']
-        expect(scenes).toHaveLength(1)
+        assert.equal(scenes.length, 1)
         const s = scenes[0]
-        expect(s.id).toBe('SC001')
-        expect(s.dataSet).toBe('LANDSAT_8')
-        expect(s.cloudCover).toBe(15)
-        expect(s.date).toBe('2020-07-15')
+        assert.equal(s.id, 'SC001')
+        assert.equal(s.dataSet, 'LANDSAT_8')
+        assert.equal(s.cloudCover, 15)
+        assert.equal(s.date, '2020-07-15')
         // daysFromTarget: daysFromDayOfYear(2020-07-15, 196)
         // raw doy of 2020-07-15 = 197; |197-196|=1; min(1, 364)=1
-        expect(s.daysFromTarget).toBe(1)
+        assert.equal(s.daysFromTarget, 1)
     })
 
     test('responds with multiple areas', async () => {
         const row042 = makeSceneRow({id: 'SC001', sceneAreaId: 'SA_042'})
         const row043 = makeSceneRow({id: 'SC002', sceneAreaId: 'SA_043'})
-        mockFindBestScenes.mockResolvedValue({
+        mockFindBestScenes.mock.mockImplementation(async () => ({
             'SA_042': [row042],
-            'SA_043': [row043],
-        })
+            'SA_043': [row043]
+        }))
         const query = {...CLIENT_BEST_SCENES_QUERY, sceneAreaIds: ['SA_042', 'SA_043']}
         const ctx = makeCtx({body: {query: JSON.stringify(query)}})
         await bestScenes(ctx)
-        expect(Object.keys(ctx.body)).toEqual(expect.arrayContaining(['SA_042', 'SA_043']))
-        expect(ctx.body['SA_042'][0].id).toBe('SC001')
-        expect(ctx.body['SA_043'][0].id).toBe('SC002')
+        assert.ok(new Set(['SA_042', 'SA_043']).isSubsetOf(new Set(Object.keys(ctx.body))))
+        assert.equal(ctx.body['SA_042'][0].id, 'SC001')
+        assert.equal(ctx.body['SA_043'][0].id, 'SC002')
     })
 
     test('sceneData has id, dataSet, date, cloudCover, daysFromTarget — no extra top-level fields', async () => {
         const row = makeSceneRow()
-        mockFindBestScenes.mockResolvedValue({'SA_042': [row]})
+        mockFindBestScenes.mock.mockImplementation(async () => ({
+            'SA_042': [row]
+        }))
         const ctx = makeCtx({body: {query: JSON.stringify(CLIENT_BEST_SCENES_QUERY)}})
         await bestScenes(ctx)
         const s = ctx.body['SA_042'][0]
         const keys = Object.keys(s).sort()
-        expect(keys).toEqual(['cloudCover', 'dataSet', 'date', 'daysFromTarget', 'id'])
+        assert.deepEqual(keys, ['cloudCover', 'dataSet', 'date', 'daysFromTarget', 'id'])
     })
 })
 
@@ -117,47 +128,47 @@ describe('scenesForArea', () => {
     }
 
     test('calls repository.findScenesInSceneArea with sceneAreaId from params', async () => {
-        mockFindScenesInSceneArea.mockResolvedValue([])
+        mockFindScenesInSceneArea.mock.mockImplementation(async () => [])
         const ctx = makeCtx({
             params: {sceneAreaId: 'SA_042'},
             query: {query: JSON.stringify(SCENE_AREA_CLIENT_QUERY)},
         })
         await scenesForArea(ctx)
-        expect(mockFindScenesInSceneArea).toHaveBeenCalledTimes(1)
-        const q = mockFindScenesInSceneArea.mock.calls[0][0]
-        expect(q.sceneAreaId).toBe('SA_042')
-        expect(q.dataSets).toEqual(['LANDSAT_8'])
-        expect(q.targetDayOfYear).toBe(TARGET_DOY)
+        assert.equal(mockFindScenesInSceneArea.mock.callCount(), 1)
+        const q = mockFindScenesInSceneArea.mock.calls[0].arguments[0]
+        assert.equal(q.sceneAreaId, 'SA_042')
+        assert.deepEqual(q.dataSets, ['LANDSAT_8'])
+        assert.equal(q.targetDayOfYear, TARGET_DOY)
     })
 
     test('responds with array of sceneData objects', async () => {
         const row = makeSceneRow()
-        mockFindScenesInSceneArea.mockResolvedValue([row])
+        mockFindScenesInSceneArea.mock.mockImplementation(async () => [row])
         const ctx = makeCtx({
             params: {sceneAreaId: 'SA_042'},
             query: {query: JSON.stringify(SCENE_AREA_CLIENT_QUERY)},
         })
         await scenesForArea(ctx)
-        expect(Array.isArray(ctx.body)).toBe(true)
-        expect(ctx.body).toHaveLength(1)
+        assert.equal(Array.isArray(ctx.body), true)
+        assert.equal(ctx.body.length, 1)
         const s = ctx.body[0]
-        expect(s.id).toBe('SC001')
-        expect(s.dataSet).toBe('LANDSAT_8')
-        expect(s.date).toBe('2020-07-15')
-        expect(s.cloudCover).toBe(15)
-        expect(s.daysFromTarget).toBe(1)
+        assert.equal(s.id, 'SC001')
+        assert.equal(s.dataSet, 'LANDSAT_8')
+        assert.equal(s.date, '2020-07-15')
+        assert.equal(s.cloudCover, 15)
+        assert.equal(s.daysFromTarget, 1)
     })
 
     test('reads query from ctx.query.query (query param, not body)', async () => {
-        mockFindScenesInSceneArea.mockResolvedValue([])
+        mockFindScenesInSceneArea.mock.mockImplementation(async () => [])
         const ctx = makeCtx({
             params: {sceneAreaId: 'SA_042'},
             query: {query: JSON.stringify(SCENE_AREA_CLIENT_QUERY)},
             body: {query: '{"wrong": true}'},  // body should NOT be read
         })
         await scenesForArea(ctx)
-        const q = mockFindScenesInSceneArea.mock.calls[0][0]
-        expect(q.dataSets).toEqual(['LANDSAT_8'])  // from SCENE_AREA_CLIENT_QUERY, not body
+        const q = mockFindScenesInSceneArea.mock.calls[0].arguments[0]
+        assert.deepEqual(q.dataSets, ['LANDSAT_8'])  // from SCENE_AREA_CLIENT_QUERY, not body
     })
 })
 const mapApiKeys = ctx => api.mapApiKeys(ctx)
@@ -169,7 +180,7 @@ const makeCtx = ({body = {}, query = {}, params = {}, user = USER} = {}) => ({
     query,
     params,
     state: {currentUser: user},
-    throw: jest.fn((status, msg) => {
+    throw: mock.fn((status, msg) => {
         const err = new Error(msg || String(status))
         err.status = status
         throw err

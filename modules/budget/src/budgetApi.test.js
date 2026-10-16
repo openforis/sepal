@@ -1,14 +1,17 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createBudgetApi} from './budgetApi.js'
 
 const makeCommands = () => ({
-    loadSpendingReport: jest.fn(),
-    updateBudget: jest.fn().mockResolvedValue(undefined),
-    requestBudgetUpdate: jest.fn().mockResolvedValue(undefined),
+    loadSpendingReport: mock.fn(),
+    updateBudget: mock.fn(async () => undefined),
+    requestBudgetUpdate: mock.fn(async () => undefined),
 })
 
-const makeApi = (commands, userSpending = jest.fn(), verdict = jest.fn()) =>
+const makeApi = (commands, userSpending = mock.fn(), verdict = mock.fn()) =>
     createBudgetApi({budgetManager: {commands, userSpending, verdict}})
 
 const ctx = ({body = {}, currentUser = {username: 'alice', roles: []}, params = {}} = {}) => ({
@@ -35,10 +38,12 @@ const reportEntry = (overrides = {}) => ({
 describe('GET /budget/report serialization', () => {
     test('maps each user with the spendingAsMap shape; current.storageQuota carries storageUSAGE', async () => {
         const commands = makeCommands()
-        commands.loadSpendingReport.mockResolvedValue({alice: reportEntry()})
+        commands.loadSpendingReport.mock.mockImplementation(async () => ({
+            alice: reportEntry()
+        }))
         const c = ctx()
         await makeApi(commands).report(c)
-        expect(c.body).toEqual({
+        assert.deepEqual(c.body, {
             alice: {
                 current: {
                     instanceSpending: 1.5,
@@ -58,32 +63,32 @@ describe('GET /budget/report serialization', () => {
     test('budgetUpdateRequest present as an object when set', async () => {
         const commands = makeCommands()
         const request = {message: 'more please', instanceSpending: 5, storageSpending: 5, storageQuota: 5}
-        commands.loadSpendingReport.mockResolvedValue({
-            alice: reportEntry({budgetUpdateRequest: request}),
-        })
+        commands.loadSpendingReport.mock.mockImplementation(async () => ({
+            alice: reportEntry({budgetUpdateRequest: request})
+        }))
         const c = ctx()
         await makeApi(commands).report(c)
-        expect(c.body.alice.budgetUpdateRequest).toEqual(request)
+        assert.deepEqual(c.body.alice.budgetUpdateRequest, request)
     })
 
     test('budgetUpdateRequest normalised to null (key present, not missing) when absent', async () => {
         const commands = makeCommands()
-        commands.loadSpendingReport.mockResolvedValue({
-            alice: reportEntry({budgetUpdateRequest: undefined}),
-        })
+        commands.loadSpendingReport.mock.mockImplementation(async () => ({
+            alice: reportEntry({budgetUpdateRequest: undefined})
+        }))
         const c = ctx()
         await makeApi(commands).report(c)
-        expect(c.body.alice.budgetUpdateRequest).toBeNull()
+        assert.equal(c.body.alice.budgetUpdateRequest, null)
         // the key must survive JSON.stringify (undefined would be dropped)
-        expect(JSON.parse(JSON.stringify(c.body)).alice).toHaveProperty('budgetUpdateRequest', null)
+        assert.deepEqual(JSON.parse(JSON.stringify(c.body)).alice['budgetUpdateRequest'], null)
     })
 
     test('empty report → empty map', async () => {
         const commands = makeCommands()
-        commands.loadSpendingReport.mockResolvedValue({})
+        commands.loadSpendingReport.mock.mockImplementation(async () => ({}))
         const c = ctx()
         await makeApi(commands).report(c)
-        expect(c.body).toEqual({})
+        assert.deepEqual(c.body, {})
     })
 })
 
@@ -92,44 +97,44 @@ describe('POST /budget updateBudget', () => {
         const commands = makeCommands()
         const c = ctx({body: {username: 'bob', instanceSpending: 3, storageSpending: 4, storageQuota: 5}})
         await makeApi(commands).updateBudget(c)
-        expect(commands.updateBudget).toHaveBeenCalledWith({
+        assert.deepEqual(callsOf(commands.updateBudget), [[{
             username: 'bob',
             budget: {instanceSpending: 3, storageSpending: 4, storageQuota: 5},
-        })
-        expect(c.body).toEqual({instanceSpending: 3, storageSpending: 4, storageQuota: 5})
-        expect(c.status).toBeUndefined()
+        }]])
+        assert.deepEqual(c.body, {instanceSpending: 3, storageSpending: 4, storageQuota: 5})
+        assert.equal(c.status, undefined)
     })
 
     test('blank username → 400, updateBudget not called', async () => {
         const commands = makeCommands()
         const c = ctx({body: {username: '   ', instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).updateBudget(c)
-        expect(c.status).toBe(400)
-        expect(commands.updateBudget).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.updateBudget.mock.callCount(), 0)
     })
 
     test('missing username → 400', async () => {
         const commands = makeCommands()
         const c = ctx({body: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).updateBudget(c)
-        expect(c.status).toBe(400)
-        expect(commands.updateBudget).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.updateBudget.mock.callCount(), 0)
     })
 
     test('negative spending → 400, updateBudget not called', async () => {
         const commands = makeCommands()
         const c = ctx({body: {username: 'bob', instanceSpending: -1, storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).updateBudget(c)
-        expect(c.status).toBe(400)
-        expect(commands.updateBudget).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.updateBudget.mock.callCount(), 0)
     })
 
     test('non-numeric spending → 400', async () => {
         const commands = makeCommands()
         const c = ctx({body: {username: 'bob', instanceSpending: 'x', storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).updateBudget(c)
-        expect(c.status).toBe(400)
-        expect(commands.updateBudget).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.updateBudget.mock.callCount(), 0)
     })
 })
 
@@ -141,36 +146,36 @@ describe('POST /budget/requestUpdate', () => {
             currentUser: {username: 'carol', roles: []},
         })
         await makeApi(commands).requestUpdate(c)
-        expect(commands.requestBudgetUpdate).toHaveBeenCalledWith({
+        assert.deepEqual(callsOf(commands.requestBudgetUpdate), [[{
             username: 'carol',
             message: 'more',
             budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3},
-        })
-        expect(c.status).toBe(204)
+        }]])
+        assert.equal(c.status, 204)
     })
 
     test('blank message → 400, requestBudgetUpdate not called', async () => {
         const commands = makeCommands()
         const c = ctx({body: {message: '  ', instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).requestUpdate(c)
-        expect(c.status).toBe(400)
-        expect(commands.requestBudgetUpdate).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.requestBudgetUpdate.mock.callCount(), 0)
     })
 
     test('missing message → 400', async () => {
         const commands = makeCommands()
         const c = ctx({body: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await makeApi(commands).requestUpdate(c)
-        expect(c.status).toBe(400)
-        expect(commands.requestBudgetUpdate).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.requestBudgetUpdate.mock.callCount(), 0)
     })
 
     test('negative spending → 400', async () => {
         const commands = makeCommands()
         const c = ctx({body: {message: 'ok', instanceSpending: 1, storageSpending: -5, storageQuota: 1}})
         await makeApi(commands).requestUpdate(c)
-        expect(c.status).toBe(400)
-        expect(commands.requestBudgetUpdate).not.toHaveBeenCalled()
+        assert.equal(c.status, 400)
+        assert.equal(commands.requestBudgetUpdate.mock.callCount(), 0)
     })
 })
 
@@ -178,7 +183,7 @@ describe('publishSpending notifications', () => {
     const makePublishingApi = commands => {
         const published = []
         const publishSpending = async username => published.push(username)
-        const api = createBudgetApi({budgetManager: {commands, userSpending: jest.fn()}, publishSpending})
+        const api = createBudgetApi({budgetManager: {commands, userSpending: mock.fn()}, publishSpending})
         return {api, published}
     }
 
@@ -187,7 +192,7 @@ describe('publishSpending notifications', () => {
         const {api, published} = makePublishingApi(commands)
         const c = ctx({body: {username: 'alice', instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await api.updateBudget(c)
-        expect(published).toEqual(['alice'])
+        assert.deepEqual(published, ['alice'])
     })
 
     test('does not publish when POST /budget validation fails', async () => {
@@ -195,7 +200,7 @@ describe('publishSpending notifications', () => {
         const {api, published} = makePublishingApi(commands)
         const c = ctx({body: {username: '', instanceSpending: 1, storageSpending: 1, storageQuota: 1}})
         await api.updateBudget(c)
-        expect(published).toEqual([])
+        assert.deepEqual(published, [])
     })
 
     test('publishes the current user\'s spending after a successful POST /budget/requestUpdate', async () => {
@@ -206,7 +211,7 @@ describe('publishSpending notifications', () => {
             currentUser: {username: 'bob', roles: []},
         })
         await api.requestUpdate(c)
-        expect(published).toEqual(['bob'])
+        assert.deepEqual(published, ['bob'])
     })
 })
 
@@ -223,27 +228,35 @@ describe('GET /budget/spending/:username', () => {
             costPerGbMonth: 0.33,
             budgetUpdateRequest: null,
         }
-        const userSpending = jest.fn().mockResolvedValue(spendingDto)
+        const userSpending = mock.fn(async () => spendingDto)
         const c = ctx({params: {username: 'bob'}})
         await makeApi(commands, userSpending).spending(c)
-        expect(userSpending).toHaveBeenCalledWith('bob')
-        expect(c.body).toEqual(spendingDto)
+        assert.deepEqual(callsOf(userSpending), [['bob']])
+        assert.deepEqual(c.body, spendingDto)
     })
 })
 
 describe('GET /budget/check/:username', () => {
     test('returns budgetManager.verdict(username) verbatim', async () => {
-        const verdict = jest.fn().mockResolvedValue({username: 'bob', exceeded: true, reason: 'STORAGE_QUOTA'})
+        const verdict = mock.fn(async () => ({
+            username: 'bob',
+            exceeded: true,
+            reason: 'STORAGE_QUOTA'
+        }))
         const c = ctx({params: {username: 'bob'}})
-        await makeApi(makeCommands(), jest.fn(), verdict).check(c)
-        expect(verdict).toHaveBeenCalledWith('bob')
-        expect(c.body).toEqual({username: 'bob', exceeded: true, reason: 'STORAGE_QUOTA'})
+        await makeApi(makeCommands(), mock.fn(), verdict).check(c)
+        assert.deepEqual(callsOf(verdict), [['bob']])
+        assert.deepEqual(c.body, {username: 'bob', exceeded: true, reason: 'STORAGE_QUOTA'})
     })
 
     test('a user under budget answers {exceeded: false, reason: null}', async () => {
-        const verdict = jest.fn().mockResolvedValue({username: 'alice', exceeded: false, reason: null})
+        const verdict = mock.fn(async () => ({
+            username: 'alice',
+            exceeded: false,
+            reason: null
+        }))
         const c = ctx({params: {username: 'alice'}})
-        await makeApi(makeCommands(), jest.fn(), verdict).check(c)
-        expect(c.body).toEqual({username: 'alice', exceeded: false, reason: null})
+        await makeApi(makeCommands(), mock.fn(), verdict).check(c)
+        assert.deepEqual(c.body, {username: 'alice', exceeded: false, reason: null})
     })
 })

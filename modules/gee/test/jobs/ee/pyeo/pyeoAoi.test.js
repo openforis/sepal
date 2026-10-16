@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // PyEO Alerts over a recipe whose area of interest has never been configured.
@@ -8,9 +10,9 @@ import {firstValueFrom, of} from 'rxjs'
 
 const resolvedGeometry = {type: () => 'Polygon'}
 
-const getRecipe$ = jest.fn()
-const loadRecipe$ = jest.fn()
-const getCollection$ = jest.fn()
+const getRecipe$ = mock.fn()
+const loadRecipe$ = mock.fn()
+const getCollection$ = mock.fn()
 
 const assetGeometry = {
     getImage$: () => of('asset-image'),
@@ -18,10 +20,26 @@ const assetGeometry = {
     getGeometry$: () => of(resolvedGeometry)
 }
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: () => assetGeometry}))
-jest.unstable_mockModule('#sepal/ee/recipeRef', () => ({default: () => ({getRecipe$})}))
-jest.unstable_mockModule('#sepal/ee/recipe', () => ({loadRecipe$}))
-jest.unstable_mockModule('#sepal/ee/timeSeries/collection', () => ({getCollection$}))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: () => assetGeometry
+    }
+})
+mock.module('#sepal/ee/recipeRef', {
+    exports: {
+        default: () => ({getRecipe$})
+    }
+})
+mock.module('#sepal/ee/recipe', {
+    exports: {
+        loadRecipe$
+    }
+})
+mock.module('#sepal/ee/timeSeries/collection', {
+    exports: {
+        getCollection$
+    }
+})
 
 const {default: pyeoAlerts} = await import('#sepal/ee/pyeo/pyeoAlerts')
 
@@ -32,42 +50,49 @@ const NO_AOI = {
     key: 'process.pyeoAlerts.error.noAoi'
 }
 
-describe.each([
+for (const [state, aoi] of [
     ['is absent', undefined],
     ['is the empty object older recipes were saved with', {}]
-])('an area of interest that %s', (_state, aoi) => {
-    it.each([
-        ['the image operation', pyeo => pyeo.getImage$()],
-        ['the geometry operation', pyeo => pyeo.getGeometry$()]
-    ])('is what %s reports, before anything is read or built', async (_operation, operate) => {
-        const error = await failureOf(operate(pyeoAlerts(recipe({aoi}))))
+]) {
+    describe(`an area of interest that ${state}`, () => {
+        for (const [operation, operate] of [
+            ['the image operation', pyeo => pyeo.getImage$()],
+            ['the geometry operation', pyeo => pyeo.getGeometry$()]
+        ]) {
+            it(
+                `is what ${operation} reports, before anything is read or built`,
+                async () => {
+                    const error = await failureOf(operate(pyeoAlerts(recipe({aoi}))))
 
-        expect(error.userMessage).toEqual(NO_AOI)
-        expect(error.statusCode).toBe(400)
-        expect(getRecipe$).not.toHaveBeenCalled()
-        expect(loadRecipe$).not.toHaveBeenCalled()
-        expect(getCollection$).not.toHaveBeenCalled()
+                    assert.deepEqual(error.userMessage, NO_AOI)
+                    assert.equal(error.statusCode, 400)
+                    assert.equal(getRecipe$.mock.callCount(), 0)
+                    assert.equal(loadRecipe$.mock.callCount(), 0)
+                    assert.equal(getCollection$.mock.callCount(), 0)
+                }
+            )
+        }
+
+        it('does not stop the recipe saying which bands it produces', async () => {
+            const bands = await firstValueFrom(pyeoAlerts(recipe({aoi})).getBands$())
+
+            assert.ok(bands.includes('binary_decision_from_to_map'))
+        })
     })
-
-    it('does not stop the recipe saying which bands it produces', async () => {
-        const bands = await firstValueFrom(pyeoAlerts(recipe({aoi})).getBands$())
-
-        expect(bands).toContain('binary_decision_from_to_map')
-    })
-})
+}
 
 describe('an area of interest that was configured', () => {
     it('resolves through the shared resolver', async () => {
         const geometry = await firstValueFrom(pyeoAlerts(recipe({aoi: AOI})).getGeometry$())
 
-        expect(geometry).toBe(resolvedGeometry)
+        assert.equal(geometry, resolvedGeometry)
     })
 
     it('is still rejected by that resolver when its type is not one it knows', async () => {
         const error = await failureOf(pyeoAlerts(recipe({aoi: {type: 'NOT_A_TYPE'}})).getGeometry$())
 
-        expect(error.message).toContain('Unsupported aoi type: NOT_A_TYPE')
-        expect(error.userMessage?.key).toBeUndefined()
+        assert.ok(error.message.includes('Unsupported aoi type: NOT_A_TYPE'))
+        assert.equal(error.userMessage?.key, undefined)
     })
 })
 
@@ -102,7 +127,10 @@ const failureOf = stream$ => firstValueFrom(stream$).then(
 )
 
 beforeEach(() => {
-    getRecipe$.mockReset()
-    loadRecipe$.mockReset()
-    getCollection$.mockReset()
+    getRecipe$.mock.resetCalls()
+    getRecipe$.mock.mockImplementation(() => undefined)
+    loadRecipe$.mock.resetCalls()
+    loadRecipe$.mock.mockImplementation(() => undefined)
+    getCollection$.mock.resetCalls()
+    getCollection$.mock.mockImplementation(() => undefined)
 })

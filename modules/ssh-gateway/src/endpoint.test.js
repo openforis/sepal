@@ -1,39 +1,49 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, describe, it, mock} from 'node:test'
+
 import {of, throwError} from 'rxjs'
 
-const post$ = jest.fn()
-const get$ = jest.fn()
+import {callsOf} from '#sepal/testSupport/mock'
 
-jest.unstable_mockModule('#sepal/httpClient', () => ({
-    get$,
-    post$,
-    delete$: jest.fn()
-}))
+const post$ = mock.fn()
+const get$ = mock.fn()
 
-jest.unstable_mockModule('./config.js', () => ({
-    endpoint: 'http://worker/',
-    endpointPassword: 'pw',
-    username: 'admin'
-}))
+mock.module('#sepal/httpClient', {
+    exports: {
+        get$,
+        post$,
+        delete$: mock.fn()
+    }
+})
+
+mock.module('./config.js', {
+    exports: {
+        endpoint: 'http://worker/',
+        endpointPassword: 'pw',
+        username: 'admin'
+    }
+})
 
 const {createSession$, joinSession$, sandboxInfo$, sessionLabel$} = await import('./endpoint.js')
 
 const session = {id: 's-1', path: 'sessions/admin/session/s-1', status: 'STARTING'}
 
 beforeEach(() => {
-    post$.mockReset()
-    get$.mockReset()
-    jest.useFakeTimers()
+    post$.mock.resetCalls()
+    post$.mock.mockImplementation(() => undefined)
+    get$.mock.resetCalls()
+    get$.mock.mockImplementation(() => undefined)
+    mock.timers.enable()
 })
 
-afterEach(() => jest.useRealTimers())
+afterEach(() => mock.timers.reset())
 
 describe('sandboxInfo$', () => {
     // The worker report does not carry spending — the budget module owns it and pushes it over its
     // websocket for the GUI — so the menu fetches it from the budget module directly.
     it('merges spending from the budget module into the report', () => {
         // bodies arrive parsed — these calls ask for responseType: 'json'
-        get$.mockImplementation(url => url.includes('/report')
+        get$.mock.mockImplementation(url => url.includes('/report')
             ? of({statusCode: 200, body: {sessions: [], instanceTypes: [{tag: 't1'}]}})
             : of({statusCode: 200, body: {
                 monthlyInstanceSpending: 1, monthlyInstanceBudget: 10,
@@ -42,11 +52,11 @@ describe('sandboxInfo$', () => {
             }}))
         const results = []
         sandboxInfo$().subscribe(result => results.push(result))
-        expect(get$).toHaveBeenCalledTimes(2)
-        expect(get$.mock.calls.some(([url]) => url.includes('budget/spending/admin'))).toBe(true)
-        expect(results[0].spending.monthlyInstanceBudget).toBe(10)
-        expect(results[0].instanceTypes).toEqual([{tag: 't1'}])
-        expect(results[0].exceededBudget).toBe(false)
+        assert.equal(get$.mock.callCount(), 2)
+        assert.equal(callsOf(get$).some(([url]) => url.includes('budget/spending/admin')), true)
+        assert.equal(results[0].spending.monthlyInstanceBudget, 10)
+        assert.deepEqual(results[0].instanceTypes, [{tag: 't1'}])
+        assert.equal(results[0].exceededBudget, false)
     })
 })
 
@@ -57,115 +67,115 @@ describe('sessionLabel$', () => {
     const report = sessions => of({statusCode: 200, body: {sessions, instanceTypes: []}})
 
     it('is the session\'s menu ID and name', () => {
-        get$.mockReturnValue(report([
+        get$.mock.mockImplementation(() => report([
             {id: 's-0', name: 'bold-otter'},
             {id: 's-1', name: 'lazy-paper'}
         ]))
         const results = []
         sessionLabel$(session).subscribe(result => results.push(result))
-        expect(results).toEqual(['2: lazy-paper'])
+        assert.deepEqual(results, ['2: lazy-paper'])
     })
 
     // Nothing downstream can act on a missing label, and a wrong one would leave the user's tab
     // named after somebody else's session — so both failures resolve to "no label".
     it('has no label for a session missing from the report', () => {
-        get$.mockReturnValue(report([{id: 's-other', name: 'bold-otter'}]))
+        get$.mock.mockImplementation(() => report([{id: 's-other', name: 'bold-otter'}]))
         const results = []
         sessionLabel$(session).subscribe(result => results.push(result))
-        expect(results).toEqual([null])
+        assert.deepEqual(results, [null])
     })
 
     it('has no label when the report cannot be fetched', () => {
-        get$.mockReturnValue(throwError(() => new Error('worker down')))
+        get$.mock.mockImplementation(() => throwError(() => new Error('worker down')))
         const results = []
         sessionLabel$(session).subscribe(result => results.push(result))
-        expect(results).toEqual([null])
+        assert.deepEqual(results, [null])
     })
 })
 
 describe('joinSession$', () => {
     it('polls until the session leaves STARTING', () => {
-        post$
-            .mockReturnValueOnce(of({statusCode: 200, body: {...session, status: 'STARTING'}}))
-            .mockReturnValueOnce(of({statusCode: 200, body: {...session, status: 'ACTIVE'}}))
+        post$.mock.mockImplementationOnce(() => of({statusCode: 200, body: {...session, status: 'STARTING'}}), 0)
+        post$.mock.mockImplementationOnce(() => of({statusCode: 200, body: {...session, status: 'ACTIVE'}}), 1)
         const results = []
         joinSession$(session).subscribe(result => results.push(result))
-        jest.advanceTimersByTime(2000)
-        expect(results).toEqual([expect.objectContaining({status: 'ACTIVE'})])
+        mock.timers.tick(2000)
+        assert.deepEqual(results.map(({status}) => status), ['ACTIVE'])
     })
 
     it('emits the unavailable sentinel when the session disappears mid-start (404)', () => {
-        post$.mockReturnValue(of({statusCode: 404, body: {message: 'Session not open: s-1'}}))
+        post$.mock.mockImplementation(() => of({statusCode: 404, body: {message: 'Session not open: s-1'}}))
         const results = []
         joinSession$(session).subscribe(result => results.push(result))
-        jest.advanceTimersByTime(1000)
-        expect(results).toEqual([{unavailable: true, reason: 'FAILED'}]) // cause unknown — generic message
-        const [, options] = post$.mock.calls[0]
-        expect(options.validStatuses).toContain(404) // 404 must arrive as a response, not an error
-        expect(options.responseType).toBe('json')
+        mock.timers.tick(1000)
+        assert.deepEqual(results, [{unavailable: true, reason: 'FAILED'}]) // cause unknown — generic message
+        const [, options] = post$.mock.calls[0].arguments
+        assert.ok(options.validStatuses.includes(404)) // 404 must arrive as a response, not an error
+        assert.equal(options.responseType, 'json')
     })
 })
 
 describe('createSession$', () => {
     it('maps a classified 503 (AZ capacity) to the INSTANCE_UNAVAILABLE reason, without retrying', () => {
-        post$.mockReturnValue(of({
+        post$.mock.mockImplementation(() => of({
             statusCode: 503,
             body: {code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'}
         }))
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        expect(results).toEqual([{unavailable: true, reason: 'INSTANCE_UNAVAILABLE'}])
-        const [, options] = post$.mock.calls[0]
-        expect(options.validStatuses).toContain(503) // a response, not an error — httpClient must not retry it
-        expect(options.responseType).toBe('json')
+        assert.deepEqual(results, [{unavailable: true, reason: 'INSTANCE_UNAVAILABLE'}])
+        const [, options] = post$.mock.calls[0].arguments
+        assert.ok(options.validStatuses.includes(503)) // a response, not an error — httpClient must not retry it
+        assert.equal(options.responseType, 'json')
     })
 
     it('maps a classified 503 (account quota) to the QUOTA_EXCEEDED reason', () => {
-        post$.mockReturnValue(of({
+        post$.mock.mockImplementation(() => of({
             statusCode: 503,
             body: {code: 'QUOTA_EXCEEDED', message: 'vCPU limit exceeded.'}
         }))
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        expect(results).toEqual([{unavailable: true, reason: 'QUOTA_EXCEEDED'}])
+        assert.deepEqual(results, [{unavailable: true, reason: 'QUOTA_EXCEEDED'}])
     })
 
     // failureReason sees two body shapes: a response body, parsed by responseType 'json', and a
     // thrown error's body, which httpClient always leaves as raw text. Both must yield the code.
     it('reads the reason from a thrown error, whose body stays raw text', () => {
-        post$.mockReturnValue(throwError(() => Object.assign(new Error('boom'), {
+        post$.mock.mockImplementation(() => throwError(() => Object.assign(new Error('boom'), {
             statusCode: 503,
             body: '{"code":"QUOTA_EXCEEDED","message":"vCPU limit exceeded."}'
         })))
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        expect(results).toEqual([{unavailable: true, reason: 'QUOTA_EXCEEDED'}])
+        assert.deepEqual(results, [{unavailable: true, reason: 'QUOTA_EXCEEDED'}])
     })
 
     it('falls back to FAILED when an error body is not json', () => {
-        post$.mockReturnValue(throwError(() => Object.assign(new Error('boom'), {
+        post$.mock.mockImplementation(() => throwError(() => Object.assign(new Error('boom'), {
             statusCode: 502,
             body: '<html>bad gateway</html>'
         })))
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        expect(results).toEqual([{unavailable: true, reason: 'FAILED'}])
+        assert.deepEqual(results, [{unavailable: true, reason: 'FAILED'}])
     })
 
     it('maps any other create failure to the FAILED reason', () => {
-        post$.mockReturnValue(throwError(() => Object.assign(new Error('boom'), {statusCode: 500})))
+        post$.mock.mockImplementation(
+            () => throwError(() => Object.assign(new Error('boom'), {statusCode: 500}))
+        )
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        expect(results).toEqual([{unavailable: true, reason: 'FAILED'}])
+        assert.deepEqual(results, [{unavailable: true, reason: 'FAILED'}])
     })
 
     it('polls the created session until it starts', () => {
-        post$
-            .mockReturnValueOnce(of({statusCode: 201, body: session}))
-            .mockReturnValueOnce(of({statusCode: 200, body: {...session, status: 'ACTIVE'}}))
+        post$.mock.mockImplementationOnce(() => of({statusCode: 201, body: session}), 0)
+        post$.mock.mockImplementationOnce(() => of({statusCode: 200, body: {...session, status: 'ACTIVE'}}), 1)
         const results = []
         createSession$({path: 'sessions/admin/instance-type/T3aSmall'}).subscribe(result => results.push(result))
-        jest.advanceTimersByTime(1000)
-        expect(results).toEqual([expect.objectContaining({status: 'ACTIVE'})])
+        mock.timers.tick(1000)
+        assert.deepEqual(results.map(({status}) => status), ['ACTIVE'])
     })
 })

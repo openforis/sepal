@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {samplingDesignPreflightError} from '#gee/jobs/task/samplingDesign/samplingPreflight'
 
 // By default the configured strata mirror the allocated strata, so membership passes and each test exercises the
@@ -26,9 +29,9 @@ const key = error => error?.userMessage?.key
 
 describe('samplingDesignPreflightError', () => {
     it('accepts a design where every stratum requests at least the effective minimum', () => {
-        expect(samplingDesignPreflightError(recipe({
+        assert.equal(samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}, {stratum: 2, label: 'b', sampleSize: 2}]
-        }))).toBeNull()
+        })), null)
     })
 
     it('rejects a required seed of zero before any EE work', () => {
@@ -36,7 +39,7 @@ describe('samplingDesignPreflightError', () => {
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}],
             sampleArrangement: {arrangementStrategy: 'RANDOM', seed: 0}
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.seedInvalid')
+        assert.equal(key(error), 'tasks.samplingDesign.preflight.seedInvalid')
     })
 
     it('rejects an allocation when the stratification has no configured strata, before any EE work', () => {
@@ -44,7 +47,7 @@ describe('samplingDesignPreflightError', () => {
             strata: [],
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}]
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.noStrata')
+        assert.equal(key(error), 'tasks.samplingDesign.preflight.noStrata')
     })
 
     it('rejects an allocation whose strata do not match the stratification, before any EE work', () => {
@@ -52,35 +55,46 @@ describe('samplingDesignPreflightError', () => {
             strata: [{stratum: 1, value: 1}, {stratum: 2, value: 2}],
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}, {stratum: 2, label: 'b', sampleSize: 10}, {stratum: 3, label: 'c', sampleSize: 10}]
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.strataMismatch')
+        assert.equal(key(error), 'tasks.samplingDesign.preflight.strataMismatch')
     })
 
     it('rejects a stratum requesting fewer than 2 samples, whatever the configured minimum', () => {
         const error = samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}, {stratum: 2, label: 'snow', sampleSize: 1}]
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.belowStatisticalMinimum.samples')
-        expect(error.userMessage.args).toEqual({floor: 2, strata: 'snow (1)'})
+        assert.equal(
+            key(error),
+            'tasks.samplingDesign.preflight.belowStatisticalMinimum.samples'
+        )
+        assert.deepEqual(error.userMessage.args, {floor: 2, strata: 'snow (1)'})
     })
 
     it('gives mode-specific actions when an allocation is below the statistical floor', () => {
         const allocation = [{stratum: 1, label: 'snow', sampleSize: 1}]
         const errorMode = samplingDesignPreflightError(recipe({allocation, estimateSampleSize: true}))
-        expect(key(errorMode)).toBe('tasks.samplingDesign.preflight.belowStatisticalMinimum.error')
-        expect(errorMode.message).toContain('decrease Target margin of error')
+        assert.equal(
+            key(errorMode),
+            'tasks.samplingDesign.preflight.belowStatisticalMinimum.error'
+        )
+        assert.ok(errorMode.message.includes('decrease Target margin of error'))
 
         const manualMode = samplingDesignPreflightError(recipe({allocation, manual: [true]}))
-        expect(key(manualMode)).toBe('tasks.samplingDesign.preflight.belowStatisticalMinimum.manual')
-        expect(manualMode.message).toContain('increase the sample count for each affected stratum')
+        assert.equal(
+            key(manualMode),
+            'tasks.samplingDesign.preflight.belowStatisticalMinimum.manual'
+        )
+        assert.ok(
+            manualMode.message.includes('increase the sample count for each affected stratum')
+        )
     })
 
     it('rejects a configured minimum below the statistical floor', () => {
-        expect(key(samplingDesignPreflightError(recipe({
+        assert.equal(key(samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}], minSamplesPerStratum: 1
-        })))).toBe('tasks.samplingDesign.preflight.invalidMinimum')
-        expect(key(samplingDesignPreflightError(recipe({
+        }))), 'tasks.samplingDesign.preflight.invalidMinimum')
+        assert.equal(key(samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}], minSamplesPerStratum: 0
-        })))).toBe('tasks.samplingDesign.preflight.invalidMinimum')
+        }))), 'tasks.samplingDesign.preflight.invalidMinimum')
     })
 
     it('rejects an automatic allocation that does not satisfy its own configured minimum', () => {
@@ -88,8 +102,14 @@ describe('samplingDesignPreflightError', () => {
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}, {stratum: 2, label: 'snow', sampleSize: 4}],
             minSamplesPerStratum: 5
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.belowConfiguredMinimum.samples')
-        expect(error.userMessage.args).toEqual({minimum: 5, strata: 'snow (4)', value: 4, floor: 2})
+        assert.equal(
+            key(error),
+            'tasks.samplingDesign.preflight.belowConfiguredMinimum.samples'
+        )
+        assert.deepEqual(
+            error.userMessage.args,
+            {minimum: 5, strata: 'snow (4)', value: 4, floor: 2}
+        )
     })
 
     it('tells Error mode to decrease the target margin when a larger total is needed', () => {
@@ -98,19 +118,25 @@ describe('samplingDesignPreflightError', () => {
             minSamplesPerStratum: 5,
             estimateSampleSize: true
         }))
-        expect(key(error)).toBe('tasks.samplingDesign.preflight.belowConfiguredMinimum.error')
-        expect(error.message).toContain('decrease Target margin of error')
+        assert.equal(key(error), 'tasks.samplingDesign.preflight.belowConfiguredMinimum.error')
+        assert.ok(error.message.includes('decrease Target margin of error'))
     })
 
     it('ignores a configured minimum for EQUAL and manual allocation, which floor at 2', () => {
         const allocation = [{stratum: 1, label: 'a', sampleSize: 2}]
-        expect(samplingDesignPreflightError(recipe({allocation, allocationStrategy: 'EQUAL', minSamplesPerStratum: 1}))).toBeNull()
-        expect(samplingDesignPreflightError(recipe({allocation, manual: [true], minSamplesPerStratum: 1}))).toBeNull()
+        assert.equal(
+            samplingDesignPreflightError(recipe({allocation, allocationStrategy: 'EQUAL', minSamplesPerStratum: 1})),
+            null
+        )
+        assert.equal(
+            samplingDesignPreflightError(recipe({allocation, manual: [true], minSamplesPerStratum: 1})),
+            null
+        )
     })
 
     it('requires at least 2 total samples for an unstratified design', () => {
-        expect(key(samplingDesignPreflightError(recipe({
+        assert.equal(key(samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'all', sampleSize: 1}], skip: [true]
-        })))).toBe('tasks.samplingDesign.preflight.unstratifiedBelowMinimum')
+        }))), 'tasks.samplingDesign.preflight.unstratifiedBelowMinimum')
     })
 })

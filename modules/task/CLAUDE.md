@@ -6,8 +6,8 @@ that task and exits. It is not a service: nothing listens, and nothing runs insi
 ## Commands
 
 ```bash
-sepal npm-test task                         # Jest
-sepal npm-test task -- --testPathPatterns runner
+sepal npm-test task                         # Node test runner
+sepal npm-test task -- --test-name-pattern '<test name regex>'
 ```
 
 ## Contract

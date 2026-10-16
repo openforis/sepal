@@ -7,8 +7,8 @@ SSH entry point to SEPAL. `ssh alice@<gateway>` opens the menu (a Node CLI manag
 ## Commands
 
 ```bash
-npm test              # Jest (src/*.test.js)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner (src/*.test.js)
+npm run testWatch     # Node test runner watch mode
 ```
 
 The Go plugin (`router/`) has no toolchain in dev-env; its tests run in the image build (`sepal build ssh-gateway`),

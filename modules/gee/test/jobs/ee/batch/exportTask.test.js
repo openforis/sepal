@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, mock, test} from 'node:test'
+
 import {defer, of, Subject} from 'rxjs'
 
 // Who an abandoned export is cancelled as. Cleanup starts on unsubscription, which is decided outside the
@@ -13,14 +15,16 @@ const eeCall = (operation, result$) => defer(() => {
     return result$
 })
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({
-    default: {
-        batch: {Export: {table: {toDrive: () => ({})}}},
-        startTableExport$: () => eeCall('start', start$),
-        getTaskStatus$: () => eeCall('status', of({state: 'RUNNING'})),
-        cancelTask$: () => eeCall('cancel', of(undefined))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            batch: {Export: {table: {toDrive: () => ({})}}},
+            startTableExport$: () => eeCall('start', start$),
+            getTaskStatus$: () => eeCall('status', of({state: 'RUNNING'})),
+            cancelTask$: () => eeCall('cancel', of(undefined))
+        }
     }
-}))
+})
 
 const {currentEEContext, inEEContext} = await import('#sepal/ee/eeContext')
 currentContext = currentEEContext
@@ -45,7 +49,7 @@ test('an export abandoned while it runs is cancelled as the user who started it'
 
     subscription.unsubscribe()
 
-    expect(calls).toEqual([
+    assert.deepEqual(calls, [
         {operation: 'start', username: 'alice'},
         {operation: 'status', username: 'alice'},
         {operation: 'cancel', username: 'alice'}
@@ -59,7 +63,7 @@ test('an export whose id arrives after it was abandoned is cancelled as the user
 
     start$.next('T2')
 
-    expect(calls).toEqual([
+    assert.deepEqual(calls, [
         {operation: 'start', username: 'alice'},
         {operation: 'status', username: 'alice'},
         {operation: 'cancel', username: 'alice'}

@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {nestedLevel} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 
 // stratifiedSystematicExactCandidates computes the nested level from a 512-entry lookup indexed by
@@ -35,22 +38,22 @@ describe('nested-level contract (invariants the lookup encodes)', () => {
                 }
             }
         }
-        expect(mismatches).toBe(0)
+        assert.equal(mismatches, 0)
     })
 
     it('includes the exact half-level values of the contract', () => {
-        expect(nestedLevel(0, 0)).toBe(4.5)
-        expect(nestedLevel(8, 16)).toBe(4)
-        expect(nestedLevel(2, 4)).toBe(2)
-        expect(nestedLevel(1, 3)).toBe(0)
-        expect(table.filter(value => value === 0.5).length).toBeGreaterThan(0)
-        expect(table.every(value => value >= 0)).toBe(true)
+        assert.equal(nestedLevel(0, 0), 4.5)
+        assert.equal(nestedLevel(8, 16), 4)
+        assert.equal(nestedLevel(2, 4), 2)
+        assert.equal(nestedLevel(1, 3), 0)
+        assert.ok(table.filter(value => value === 0.5).length > 0)
+        assert.equal(table.every(value => value >= 0), true)
     })
 
     it('all odd-j rows are level 0 (no cell/half qualifies)', () => {
         for (let j = 1; j < 32; j += 2) {
             for (let i = 0; i < 16; i++) {
-                expect(nestedLevel(i, j)).toBe(0)
+                assert.equal(nestedLevel(i, j), 0)
             }
         }
     })
@@ -58,7 +61,7 @@ describe('nested-level contract (invariants the lookup encodes)', () => {
     it('negative i/j select the same lookup cell as their positive residues', () => {
         const cases = [[-1, -1], [-17, -33], [-16, -32], [123, -77], [-2500, 9001]]
         for (const [i, j] of cases) {
-            expect(nestedLevel(i, j)).toBe(table[lookupIndex(i, j)])
+            assert.equal(nestedLevel(i, j), table[lookupIndex(i, j)])
         }
     })
 })

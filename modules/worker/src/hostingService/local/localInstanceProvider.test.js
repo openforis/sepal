@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {createLocalInstanceProvider, LOCAL_HOST} from './localInstanceProvider.js'
 
 const INSTANCE_TYPE = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, hourlyCost: 0.0204}
@@ -5,7 +8,7 @@ const INSTANCE_TYPE = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1
 const RESERVATION = {username: 'alice', workerType: 'SANDBOX'}
 
 test('LOCAL_HOST is host.docker.internal', () => {
-    expect(LOCAL_HOST).toBe('host.docker.internal')
+    assert.equal(LOCAL_HOST, 'host.docker.internal')
 })
 
 // Instances on the shared dev daemon cost nothing idle, so there is nothing to stop into a pool.
@@ -14,16 +17,16 @@ describe('stopped pool', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         provider.launchIdle('T3aSmall', 1)
 
-        expect(await provider.pooledInstances()).toEqual([])
-        expect(await provider.pooledInstances({ready: true})).toEqual([])
+        assert.deepEqual(await provider.pooledInstances(), [])
+        assert.deepEqual(await provider.pooledInstances({ready: true}), [])
     })
 
     test('refuses to fill the pool', async () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [idle] = provider.launchIdle('T3aSmall', 1)
 
-        await expect(provider.launchPooled(1)).rejects.toThrow(/not supported/)
-        await expect(provider.pool(idle.id)).rejects.toThrow(/not supported/)
+        await assert.rejects(provider.launchPooled(1), /not supported/)
+        await assert.rejects(provider.pool(idle.id), /not supported/)
     })
 })
 
@@ -31,45 +34,45 @@ describe('launchIdle', () => {
     test('returns an array containing exactly 1 instance regardless of count', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const result = provider.launchIdle('T3aSmall', 5)
-        expect(result).toHaveLength(1)
+        assert.equal(result.length, 1)
     })
 
     test('always launches 1 even when count=0', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const result = provider.launchIdle('T3aSmall', 0)
-        expect(result).toHaveLength(1)
+        assert.equal(result.length, 1)
     })
 
     test('launched instance has correct fields', () => {
         const before = new Date()
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [inst] = provider.launchIdle('T3aSmall', 1)
-        expect(inst.id).toMatch(/^[0-9a-f-]{36}$/)
-        expect(inst.type).toBe('T3aSmall')
+        assert.match(inst.id, /^[0-9a-f-]{36}$/)
+        assert.equal(inst.type, 'T3aSmall')
         // host is a per-instance network alias on the shared dev daemon; the daemon
         // itself is addressed via daemonHost (multi-instance isolation on one host)
-        expect(inst.host).toBe(inst.id)
-        expect(inst.daemonHost).toBe(LOCAL_HOST)
-        expect(inst.running).toBe(true)
-        expect(inst.launchTime).toBeInstanceOf(Date)
-        expect(inst.launchTime.getTime()).toBeGreaterThanOrEqual(before.getTime())
-        expect(inst.reservation).toBeNull()
+        assert.equal(inst.host, inst.id)
+        assert.equal(inst.daemonHost, LOCAL_HOST)
+        assert.equal(inst.running, true)
+        assert.ok(inst.launchTime instanceof Date)
+        assert.ok(inst.launchTime.getTime() >= before.getTime())
+        assert.equal(inst.reservation, null)
     })
 
     test('instance appears in idleInstances after launchIdle', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [inst] = provider.launchIdle('T3aSmall', 1)
         const idle = provider.idleInstances('T3aSmall')
-        expect(idle).toHaveLength(1)
-        expect(idle[0].id).toBe(inst.id)
+        assert.equal(idle.length, 1)
+        assert.equal(idle[0].id, inst.id)
     })
 
     test('multiple launchIdle calls each create a distinct instance', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [a] = provider.launchIdle('T3aSmall', 1)
         const [b] = provider.launchIdle('T3aSmall', 1)
-        expect(a.id).not.toBe(b.id)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(2)
+        assert.notEqual(a.id, b.id)
+        assert.equal(provider.idleInstances('T3aSmall').length, 2)
     })
 })
 
@@ -77,26 +80,26 @@ describe('launchReserved', () => {
     test('returns a single reserved instance', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const inst = provider.launchReserved('T3aSmall', RESERVATION)
-        expect(inst.id).toMatch(/^[0-9a-f-]{36}$/)
-        expect(inst.type).toBe('T3aSmall')
-        expect(inst.host).toBe(inst.id) // per-instance alias — see launchIdle test
-        expect(inst.daemonHost).toBe(LOCAL_HOST)
-        expect(inst.running).toBe(true)
-        expect(inst.reservation).toEqual(RESERVATION)
+        assert.match(inst.id, /^[0-9a-f-]{36}$/)
+        assert.equal(inst.type, 'T3aSmall')
+        assert.equal(inst.host, inst.id) // per-instance alias — see launchIdle test
+        assert.equal(inst.daemonHost, LOCAL_HOST)
+        assert.equal(inst.running, true)
+        assert.deepEqual(inst.reservation, RESERVATION)
     })
 
     test('launchReserved instance appears in reservedInstances', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const inst = provider.launchReserved('T3aSmall', RESERVATION)
         const reserved = provider.reservedInstances()
-        expect(reserved).toHaveLength(1)
-        expect(reserved[0].id).toBe(inst.id)
+        assert.equal(reserved.length, 1)
+        assert.equal(reserved[0].id, inst.id)
     })
 
     test('launchReserved instance does NOT appear in idleInstances', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         provider.launchReserved('T3aSmall', RESERVATION)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
     })
 })
 
@@ -106,10 +109,10 @@ describe('reserve', () => {
         const [inst] = provider.launchIdle('T3aSmall', 1)
         const reservedInst = {...inst, reservation: RESERVATION}
         provider.reserve(reservedInst)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
         const reserved = provider.reservedInstances()
-        expect(reserved).toHaveLength(1)
-        expect(reserved[0].reservation).toEqual(RESERVATION)
+        assert.equal(reserved.length, 1)
+        assert.deepEqual(reserved[0].reservation, RESERVATION)
     })
 })
 
@@ -118,16 +121,16 @@ describe('release', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const inst = provider.launchReserved('T3aSmall', RESERVATION)
         provider.release(inst.id)
-        expect(provider.reservedInstances()).toHaveLength(0)
+        assert.equal(provider.reservedInstances().length, 0)
         const idle = provider.idleInstances('T3aSmall')
-        expect(idle).toHaveLength(1)
-        expect(idle[0].id).toBe(inst.id)
-        expect(idle[0].reservation).toBeNull()
+        assert.equal(idle.length, 1)
+        assert.equal(idle[0].id, inst.id)
+        assert.equal(idle[0].reservation, null)
     })
 
     test('release on non-existent id is a no-op (no error)', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(() => provider.release('no-such-id')).not.toThrow()
+        assert.doesNotThrow(() => provider.release('no-such-id'))
     })
 })
 
@@ -136,21 +139,21 @@ describe('terminate', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [inst] = provider.launchIdle('T3aSmall', 1)
         provider.terminate(inst.id)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
-        expect(provider.getInstance(inst.id)).toBeNull()
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
+        assert.equal(provider.getInstance(inst.id), null)
     })
 
     test('terminate removes instance from reserved pool', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const inst = provider.launchReserved('T3aSmall', RESERVATION)
         provider.terminate(inst.id)
-        expect(provider.reservedInstances()).toHaveLength(0)
-        expect(provider.getInstance(inst.id)).toBeNull()
+        assert.equal(provider.reservedInstances().length, 0)
+        assert.equal(provider.getInstance(inst.id), null)
     })
 
     test('terminate on non-existent id is a no-op', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(() => provider.terminate('no-such-id')).not.toThrow()
+        assert.doesNotThrow(() => provider.terminate('no-such-id'))
     })
 })
 
@@ -159,13 +162,13 @@ describe('getInstance', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         const [inst] = provider.launchIdle('T3aSmall', 1)
         const found = provider.getInstance(inst.id)
-        expect(found).not.toBeNull()
-        expect(found.id).toBe(inst.id)
+        assert.notEqual(found, null)
+        assert.equal(found.id, inst.id)
     })
 
     test('returns null for unknown id', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(provider.getInstance('unknown-id')).toBeNull()
+        assert.equal(provider.getInstance('unknown-id'), null)
     })
 })
 
@@ -175,7 +178,7 @@ describe('idleInstances', () => {
         provider.launchIdle('T3aSmall', 1)
         provider.launchIdle('M6aLarge', 1)  // different type, but still idle
         const idle = provider.idleInstances('T3aSmall')
-        expect(idle).toHaveLength(2)
+        assert.equal(idle.length, 2)
     })
 
     test('idleInstances() with no arg returns only idle instances, not reserved', () => {
@@ -185,7 +188,7 @@ describe('idleInstances', () => {
         // idleInstances() must return ONLY idle instances: including reserved ones makes sizeIdlePool
         // terminate them as pool surplus.
         const result = provider.idleInstances()
-        expect(result.map(({id}) => id)).toEqual([idle.id])
+        assert.deepEqual(result.map(({id}) => id), [idle.id])
     })
 
     test('idleInstances(type) excludes reserved instances', () => {
@@ -193,14 +196,14 @@ describe('idleInstances', () => {
         provider.launchIdle('T3aSmall', 1)
         provider.launchReserved('T3aSmall', RESERVATION)
         const idle = provider.idleInstances('T3aSmall')
-        expect(idle).toHaveLength(1)
-        expect(idle[0].reservation).toBeNull()
+        assert.equal(idle.length, 1)
+        assert.equal(idle[0].reservation, null)
     })
 
     test('empty when no instances launched', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
-        expect(provider.idleInstances()).toHaveLength(0)
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
+        assert.equal(provider.idleInstances().length, 0)
     })
 })
 
@@ -210,14 +213,14 @@ describe('reservedInstances', () => {
         provider.launchIdle('T3aSmall', 1)
         const res = provider.launchReserved('T3aSmall', RESERVATION)
         const reserved = provider.reservedInstances()
-        expect(reserved).toHaveLength(1)
-        expect(reserved[0].id).toBe(res.id)
+        assert.equal(reserved.length, 1)
+        assert.equal(reserved[0].id, res.id)
     })
 
     test('empty when no instances are reserved', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
         provider.launchIdle('T3aSmall', 1)
-        expect(provider.reservedInstances()).toHaveLength(0)
+        assert.equal(provider.reservedInstances().length, 0)
     })
 })
 
@@ -227,10 +230,10 @@ describe('onInstanceLaunched', () => {
         const received = []
         provider.onInstanceLaunched(inst => received.push(inst))
         const [inst] = provider.launchIdle('T3aSmall', 1)
-        expect(received).toHaveLength(0)
+        assert.equal(received.length, 0)
         await new Promise(resolve => setImmediate(resolve))
-        expect(received).toHaveLength(1)
-        expect(received[0].id).toBe(inst.id)
+        assert.equal(received.length, 1)
+        assert.equal(received[0].id, inst.id)
     })
 
     test('callback fires after launchReserved', async () => {
@@ -239,8 +242,8 @@ describe('onInstanceLaunched', () => {
         provider.onInstanceLaunched(inst => received.push(inst))
         const inst = provider.launchReserved('T3aSmall', RESERVATION)
         await new Promise(resolve => setImmediate(resolve))
-        expect(received).toHaveLength(1)
-        expect(received[0].id).toBe(inst.id)
+        assert.equal(received.length, 1)
+        assert.equal(received[0].id, inst.id)
     })
 
     test('multiple listeners all receive the callback', async () => {
@@ -250,8 +253,8 @@ describe('onInstanceLaunched', () => {
         provider.onInstanceLaunched(inst => b.push(inst))
         provider.launchIdle('T3aSmall', 1)
         await new Promise(resolve => setImmediate(resolve))
-        expect(a).toHaveLength(1)
-        expect(b).toHaveLength(1)
+        assert.equal(a.length, 1)
+        assert.equal(b.length, 1)
     })
 
     test('no callback for reserve (only launches trigger it)', async () => {
@@ -263,7 +266,7 @@ describe('onInstanceLaunched', () => {
         const reservedInst = {...inst, reservation: RESERVATION}
         provider.reserve(reservedInst)
         await new Promise(resolve => setImmediate(resolve))
-        expect(received).toHaveLength(0)
+        assert.equal(received.length, 0)
     })
 })
 
@@ -272,33 +275,33 @@ describe('full lifecycle: launchIdle → reserve → release → terminate', () 
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
 
         const [inst] = provider.launchIdle('T3aSmall', 1)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(1)
-        expect(provider.reservedInstances()).toHaveLength(0)
+        assert.equal(provider.idleInstances('T3aSmall').length, 1)
+        assert.equal(provider.reservedInstances().length, 0)
 
         const reservedInst = {...inst, reservation: RESERVATION}
         provider.reserve(reservedInst)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
-        expect(provider.reservedInstances()).toHaveLength(1)
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
+        assert.equal(provider.reservedInstances().length, 1)
 
         provider.release(inst.id)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(1)
-        expect(provider.reservedInstances()).toHaveLength(0)
+        assert.equal(provider.idleInstances('T3aSmall').length, 1)
+        assert.equal(provider.reservedInstances().length, 0)
 
         provider.terminate(inst.id)
-        expect(provider.idleInstances('T3aSmall')).toHaveLength(0)
-        expect(provider.getInstance(inst.id)).toBeNull()
+        assert.equal(provider.idleInstances('T3aSmall').length, 0)
+        assert.equal(provider.getInstance(inst.id), null)
     })
 })
 
 describe('start/stop', () => {
     test('start is a no-op (does not throw)', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(() => provider.start()).not.toThrow()
+        assert.doesNotThrow(() => provider.start())
     })
 
     test('stop is a no-op (does not throw)', () => {
         const provider = createLocalInstanceProvider(INSTANCE_TYPE)
-        expect(() => provider.stop()).not.toThrow()
+        assert.doesNotThrow(() => provider.stop())
     })
 })
 
@@ -321,8 +324,8 @@ describe('restore', () => {
 
         provider.restore([restored()])
 
-        expect(provider.getInstance('i-restored').reservation.sessionId).toBe('s-1')
-        expect(provider.reservedInstances().map(i => i.id)).toEqual(['i-restored'])
+        assert.equal(provider.getInstance('i-restored').reservation.sessionId, 's-1')
+        assert.deepEqual(provider.reservedInstances().map(i => i.id), ['i-restored'])
     })
 
     test('a restored instance keeps its launch time, so it can age out', () => {
@@ -330,8 +333,10 @@ describe('restore', () => {
 
         provider.restore([restored()])
 
-        expect(provider.getInstance('i-restored').launchTime)
-            .toEqual(new Date('2026-01-01T00:00:00Z'))
+        assert.deepEqual(
+            provider.getInstance('i-restored').launchTime,
+            new Date('2026-01-01T00:00:00Z')
+        )
     })
 
     // Every local instance lives on the one dev daemon; without this the provisioner cannot
@@ -341,7 +346,7 @@ describe('restore', () => {
 
         provider.restore([restored({daemonHost: null})])
 
-        expect(provider.getInstance('i-restored').daemonHost).toBe(LOCAL_HOST)
+        assert.equal(provider.getInstance('i-restored').daemonHost, LOCAL_HOST)
     })
 
     // Anything already in the Map was launched by THIS process and is more current than a row
@@ -352,7 +357,7 @@ describe('restore', () => {
 
         provider.restore([restored({id: launched.id, reservation: {username: 'stale', workerType: 'sandbox', sessionId: 's-old'}})])
 
-        expect(provider.getInstance(launched.id).reservation.username).toBe('bob')
+        assert.equal(provider.getInstance(launched.id).reservation.username, 'bob')
     })
 
     test('an idle instance is never conjured out of a restore', () => {
@@ -360,7 +365,7 @@ describe('restore', () => {
 
         provider.restore([restored()])
 
-        expect(provider.idleInstances()).toEqual([])
+        assert.deepEqual(provider.idleInstances(), [])
     })
 })
 
@@ -368,18 +373,18 @@ describe('createHostingService integration', () => {
     test('createHostingService(local) returns an instanceProvider with expected methods', async () => {
         const {createHostingService} = await import('../index.js')
         const svc = createHostingService({hostingService: 'local'})
-        expect(svc.instanceProvider).not.toBeNull()
-        expect(typeof svc.instanceProvider.launchIdle).toBe('function')
-        expect(typeof svc.instanceProvider.launchReserved).toBe('function')
-        expect(typeof svc.instanceProvider.terminate).toBe('function')
-        expect(typeof svc.instanceProvider.reserve).toBe('function')
-        expect(typeof svc.instanceProvider.release).toBe('function')
-        expect(typeof svc.instanceProvider.idleInstances).toBe('function')
-        expect(typeof svc.instanceProvider.reservedInstances).toBe('function')
-        expect(typeof svc.instanceProvider.getInstance).toBe('function')
-        expect(typeof svc.instanceProvider.onInstanceLaunched).toBe('function')
-        expect(typeof svc.instanceProvider.start).toBe('function')
-        expect(typeof svc.instanceProvider.stop).toBe('function')
+        assert.notEqual(svc.instanceProvider, null)
+        assert.equal(typeof svc.instanceProvider.launchIdle, 'function')
+        assert.equal(typeof svc.instanceProvider.launchReserved, 'function')
+        assert.equal(typeof svc.instanceProvider.terminate, 'function')
+        assert.equal(typeof svc.instanceProvider.reserve, 'function')
+        assert.equal(typeof svc.instanceProvider.release, 'function')
+        assert.equal(typeof svc.instanceProvider.idleInstances, 'function')
+        assert.equal(typeof svc.instanceProvider.reservedInstances, 'function')
+        assert.equal(typeof svc.instanceProvider.getInstance, 'function')
+        assert.equal(typeof svc.instanceProvider.onInstanceLaunched, 'function')
+        assert.equal(typeof svc.instanceProvider.start, 'function')
+        assert.equal(typeof svc.instanceProvider.stop, 'function')
     })
 
     test('createHostingService(aws) instanceProvider is not null (Task 4 implemented)', async () => {
@@ -393,7 +398,7 @@ describe('createHostingService integration', () => {
             accessKey: 'test-key',
             secretKey: 'test-secret',
         })
-        expect(svc.instanceProvider).not.toBeNull()
-        expect(typeof svc.instanceProvider.launchIdle).toBe('function')
+        assert.notEqual(svc.instanceProvider, null)
+        assert.equal(typeof svc.instanceProvider.launchIdle, 'function')
     })
 })

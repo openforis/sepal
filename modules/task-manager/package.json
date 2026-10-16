@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "test": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest"
+        "test": "TZ=UTC node --test \"**/*.test.js\""
     },
     "dependencies": {
         "commander": "^15.0.0",
@@ -16,7 +16,6 @@
     },
     "devDependencies": {
         "@koa/router": "^15.7.0",
-        "jest": "^30.5.2",
         "koa": "^3.2.1",
         "koa-bodyparser": "^4.4.1"
     },

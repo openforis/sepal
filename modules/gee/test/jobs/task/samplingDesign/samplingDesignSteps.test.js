@@ -1,13 +1,29 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, mock, test} from 'node:test'
+
 import {lastValueFrom, of, throwError} from 'rxjs'
 
-const systematicStep$ = jest.fn(request => of({via: 'systematic', request}))
-const randomStep$ = jest.fn(request => of({via: 'random', request}))
-const deleteAsset$ = jest.fn(() => of(null))
+import {callsOf} from '#sepal/testSupport/mock'
 
-jest.unstable_mockModule('#gee/jobs/task/samplingDesign/systematicSteps', () => ({systematicStep$}))
-jest.unstable_mockModule('#gee/jobs/task/samplingDesign/randomSteps', () => ({randomStep$}))
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: {deleteAsset$}}))
+const systematicStep$ = mock.fn(request => of({via: 'systematic', request}))
+const randomStep$ = mock.fn(request => of({via: 'random', request}))
+const deleteAsset$ = mock.fn(() => of(null))
+
+mock.module('#gee/jobs/task/samplingDesign/systematicSteps', {
+    exports: {
+        systematicStep$
+    }
+})
+mock.module('#gee/jobs/task/samplingDesign/randomSteps', {
+    exports: {
+        randomStep$
+    }
+})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {deleteAsset$}
+    }
+})
 
 const {samplingDesignStep$, cleanupTempAssets$} = await import('#gee/jobs/task/samplingDesign/samplingDesignSteps')
 
@@ -17,64 +33,80 @@ const TEMP = 'projects/alice/assets/samples_tmp_20261007101010101'
 const recipe = arrangementStrategy => ({model: {sampleArrangement: {arrangementStrategy}}})
 const step = params => lastValueFrom(samplingDesignStep$(params, {sepalUser}))
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => {
+    for (const fn of [systematicStep$, randomStep$, deleteAsset$]) fn.mock.resetCalls()
+})
 
 describe('samplingDesignStep$ dispatch', () => {
     test('SYSTEMATIC arrangement runs the systematic step', async () => {
         const result = await step({destination: 'ASSET', assetId: 'a', recipe: recipe('SYSTEMATIC')})
 
-        expect(result.via).toBe('systematic')
-        expect(randomStep$).not.toHaveBeenCalled()
+        assert.equal(result.via, 'systematic')
+        assert.equal(randomStep$.mock.callCount(), 0)
     })
 
     test('RANDOM arrangement runs the random step', async () => {
         const result = await step({destination: 'ASSET', assetId: 'a', recipe: recipe('RANDOM')})
 
-        expect(result.via).toBe('random')
+        assert.equal(result.via, 'random')
     })
 
     test('unknown arrangement is a 400', async () => {
-        await expect(step({destination: 'ASSET', recipe: recipe('HEX')})).rejects.toMatchObject({statusCode: 400})
+        await assert.rejects(step({destination: 'ASSET', recipe: recipe('HEX')}), {statusCode: 400})
     })
 
     test('unknown destination is a 400', async () => {
-        await expect(step({destination: 'DRIVE', recipe: recipe('RANDOM')})).rejects.toMatchObject({statusCode: 400})
+        await assert.rejects(step({destination: 'DRIVE', recipe: recipe('RANDOM')}), {statusCode: 400})
     })
 
-    test.each([
+    for (const [strategy, kind] of [
         ['SYSTEMATIC', 'random'],
         ['RANDOM', 'systematic']
-    ])('%s arrangement refuses a %s state with a 400', async (strategy, kind) => {
-        await expect(step({destination: 'ASSET', recipe: recipe(strategy), state: {kind, stage: 'final'}}))
-            .rejects.toMatchObject({statusCode: 400})
-    })
+    ]) {
+        test(
+            `${strategy} arrangement refuses a ${kind} state with a 400`,
+            async () => {
+                await assert.rejects(
+                    step({destination: 'ASSET', recipe: recipe(strategy), state: {kind, stage: 'final'}}),
+                    {statusCode: 400}
+                )
+            }
+        )
+    }
 
     test('a state of the matching kind is passed through', async () => {
         const state = {kind: 'random', stage: 'candidates'}
 
         await step({destination: 'ASSET', recipe: recipe('RANDOM'), state})
 
-        expect(randomStep$).toHaveBeenCalledWith(expect.objectContaining({state}), {sepalUser})
+        const [[request, context]] = callsOf(randomStep$)
+        assert.equal(request.state, state)
+        assert.deepEqual(context, {sepalUser})
     })
 })
 
 describe('samplingDesignStep$ names', () => {
-    test.each(['RANDOM', 'SYSTEMATIC'])('sanitizes the task name and complete asset path for %s', async strategy => {
-        const result = await step({
-            description: 'Sudan sample design',
-            assetId: 'projects/my-project/assets/Sudan samples/result 1',
-            strategy: 'create',
-            destination: 'ASSET',
-            recipe: recipe(strategy)
-        })
+    for (const strategy of ['RANDOM', 'SYSTEMATIC']) {
+        test(
+            `sanitizes the task name and complete asset path for ${strategy}`,
+            async () => {
+                const result = await step({
+                    description: 'Sudan sample design',
+                    assetId: 'projects/my-project/assets/Sudan samples/result 1',
+                    strategy: 'create',
+                    destination: 'ASSET',
+                    recipe: recipe(strategy)
+                })
 
-        expect(result.request).toEqual(expect.objectContaining({
-            description: 'Sudan_sample_design',
-            assetId: 'projects/my-project/assets/Sudan_samples/result_1',
-            strategy: 'create',
-            destination: 'ASSET'
-        }))
-    })
+                assert.partialDeepStrictEqual(result.request, {
+                    description: 'Sudan_sample_design',
+                    assetId: 'projects/my-project/assets/Sudan_samples/result_1',
+                    strategy: 'create',
+                    destination: 'ASSET'
+                })
+            }
+        )
+    }
 
     test('SEPAL sanitizes the file prefix and passes no assetId or strategy', async () => {
         const {request} = await step({
@@ -88,15 +120,15 @@ describe('samplingDesignStep$ names', () => {
             recipe: recipe('RANDOM')
         })
 
-        expect(request).toEqual(expect.objectContaining({
+        assert.partialDeepStrictEqual(request, {
             description: 'Sudan_sample_design',
             filenamePrefix: 'sample_locations_2024',
             workspacePath: 'results',
             fileFormat: 'CSV',
             destination: 'SEPAL'
-        }))
-        expect(request).not.toHaveProperty('assetId')
-        expect(request).not.toHaveProperty('strategy')
+        })
+        assert.ok(!('assetId' in Object(request)))
+        assert.ok(!('strategy' in Object(request)))
     })
 
     test('SEPAL falls back to the sanitized task name as file prefix', async () => {
@@ -108,10 +140,10 @@ describe('samplingDesignStep$ names', () => {
             recipe: recipe('SYSTEMATIC')
         })
 
-        expect(request).toEqual(expect.objectContaining({
+        assert.partialDeepStrictEqual(request, {
             description: 'Sudan_sample_design',
             filenamePrefix: 'Sudan_sample_design'
-        }))
+        })
     })
 })
 
@@ -119,22 +151,24 @@ describe('cleanupTempAssets$', () => {
     test('refuses ids without a temp marker', async () => {
         const result = await lastValueFrom(cleanupTempAssets$({state: {tempAssetIds: ['projects/alice/assets/samples', TEMP]}}))
 
-        expect(deleteAsset$).toHaveBeenCalledTimes(1)
-        expect(deleteAsset$).toHaveBeenCalledWith(TEMP)
-        expect(result).toEqual({deleted: [TEMP]})
+        assert.equal(deleteAsset$.mock.callCount(), 1)
+        assert.deepEqual(callsOf(deleteAsset$), [[TEMP]])
+        assert.deepEqual(result, {deleted: [TEMP]})
     })
 
     test('a missing asset does not fail the cleanup', async () => {
         const other = `${TEMP}_candidates`
-        deleteAsset$.mockImplementationOnce(() => throwError(() => new Error('not found')))
+        deleteAsset$.mock.mockImplementationOnce(() => throwError(() => new Error('not found')))
 
         const result = await lastValueFrom(cleanupTempAssets$({state: {tempAssetIds: [TEMP, other]}}))
 
-        expect(result).toEqual({deleted: [other]})
+        assert.deepEqual(result, {deleted: [other]})
     })
 
-    test.each([undefined, null, {}, {tempAssetIds: 'x'}])('invalid state %j deletes nothing', async state => {
-        expect(await lastValueFrom(cleanupTempAssets$({state}))).toEqual({deleted: []})
-        expect(deleteAsset$).not.toHaveBeenCalled()
-    })
+    for (const state of [undefined, null, {}, {tempAssetIds: 'x'}]) {
+        test(`invalid state ${state} deletes nothing`, async () => {
+            assert.deepEqual(await lastValueFrom(cleanupTempAssets$({state})), {deleted: []})
+            assert.equal(deleteAsset$.mock.callCount(), 0)
+        })
+    }
 })

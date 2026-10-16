@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {generateUserUsageReport} from './generateUserUsageReport.js'
 
 const NOW = new Date('2026-08-01T12:00:00Z')
@@ -30,9 +33,9 @@ const deps = rows => {
 test('window is days back from now; per-type rows carry weighted averages and maxima', async () => {
     const {calls, deps: d} = deps([row()])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
-    expect(calls[0]).toEqual(['alice', new Date(NOW.getTime() - 30 * DAY_MS)])
-    expect(report.days).toBe(30)
-    expect(report.byInstanceType).toEqual([{
+    assert.deepEqual(calls[0], ['alice', new Date(NOW.getTime() - 30 * DAY_MS)])
+    assert.equal(report.days, 30)
+    assert.deepEqual(report.byInstanceType, [{
         instanceType: 'T3aSmall', name: 't3a.small', tag: 't1', hours: 2,
         cpu: {avg: 20, max: 90},
         ram: {avg: 10, max: 40},
@@ -53,37 +56,37 @@ test('overall re-weights across types; gpu present only where measured', async (
     ])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
     const {overall} = report
-    expect(overall.hours).toBe(3)
-    expect(overall.cpu).toEqual({avg: 27, max: 95})     // (1800+900)/100
-    expect(overall.ram).toEqual({avg: 17, max: 85})     // (900+800)/100
-    expect(overall.gpu).toEqual({avg: 70, max: 100})    // 700/10 — GPU hours only
-    expect(overall.netBytesPerS).toBe(1000)             // (90000+10000)/100
-    expect(report.byInstanceType[1].gpu).toEqual({avg: 70, max: 100})
+    assert.equal(overall.hours, 3)
+    assert.deepEqual(overall.cpu, {avg: 27, max: 95})     // (1800+900)/100
+    assert.deepEqual(overall.ram, {avg: 17, max: 85})     // (900+800)/100
+    assert.deepEqual(overall.gpu, {avg: 70, max: 100})    // 700/10 — GPU hours only
+    assert.equal(overall.netBytesPerS, 1000)             // (90000+10000)/100
+    assert.deepEqual(report.byInstanceType[1].gpu, {avg: 70, max: 100})
 })
 
 test('each type is priced at its hourly rate, and overall sums them', async () => {
     const {deps: d} = deps([row({hours: 10}), row({instanceType: 'G5Xlarge', hours: 3})])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
-    expect(report.byInstanceType.map(({cost}) => cost)).toEqual([0.2, 3.37])
-    expect(report.overall.cost).toBe(3.57)
+    assert.deepEqual(report.byInstanceType.map(({cost}) => cost), [0.2, 3.37])
+    assert.equal(report.overall.cost, 3.57)
 })
 
 test('a retired type has no cost and adds none to overall', async () => {
     const {deps: d} = deps([row({hours: 10}), row({instanceType: 'Retired9000', hours: 5})])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
-    expect(report.byInstanceType[1].cost).toBeNull()
-    expect(report.overall.cost).toBe(0.2)
+    assert.equal(report.byInstanceType[1].cost, null)
+    assert.equal(report.overall.cost, 0.2)
 })
 
 test('no data → overall null, empty byInstanceType', async () => {
     const {deps: d} = deps([])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
-    expect(report).toEqual({days: 30, overall: null, byInstanceType: []})
+    assert.deepEqual(report, {days: 30, overall: null, byInstanceType: []})
 })
 
 test('unknown instance type falls back to its id as name, with no tag', async () => {
     const {deps: d} = deps([row({instanceType: 'Retired9000'})])
     const report = await generateUserUsageReport({username: 'alice', days: 30}, d)
-    expect(report.byInstanceType[0].name).toBe('Retired9000')
-    expect(report.byInstanceType[0].tag).toBeNull()
+    assert.equal(report.byInstanceType[0].name, 'Retired9000')
+    assert.equal(report.byInstanceType[0].tag, null)
 })

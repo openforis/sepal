@@ -1,9 +1,12 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {mock, test} from 'node:test'
 
 // Mock config before importing email.js (which reads sepalHost from config at module load).
-jest.unstable_mockModule('./config.js', () => ({
-    sepalHost: 'sepal.example.org'
-}))
+mock.module('./config.js', {
+    exports: {
+        sepalHost: 'sepal.example.org'
+    }
+})
 
 const {email$, sendInvite, sendPasswordReset, sendSshKeyAdded} = await import('./email.js')
 
@@ -22,13 +25,17 @@ const capture = fn => {
 
 test('sendPasswordReset forces email delivery, bypassing the notification preference', () => {
     const msg = capture(() => sendPasswordReset(user, 'tok'))
-    expect(msg.to).toBe('lookap+28@gmail.com')
-    expect(msg.forceEmailNotificationEnabled, 'transactional reset email must be force-delivered').toBe(true)
+    assert.equal(msg.to, 'lookap+28@gmail.com')
+    assert.equal(
+        msg.forceEmailNotificationEnabled,
+        true,
+        'transactional reset email must be force-delivered'
+    )
 })
 
 test('sendInvite forces email delivery', () => {
     const msg = capture(() => sendInvite(user, 'tok'))
-    expect(msg.forceEmailNotificationEnabled).toBe(true)
+    assert.equal(msg.forceEmailNotificationEnabled, true)
 })
 
 test('sendSshKeyAdded force-delivers a security notice to the user', () => {
@@ -36,7 +43,11 @@ test('sendSshKeyAdded force-delivers a security notice to the user', () => {
 
     const msg = capture(() => sendSshKeyAdded(user, key))
 
-    expect(msg.to).toBe(user.email)
-    expect(msg.subject).toBe('SEPAL: SSH key added')
-    expect(msg.forceEmailNotificationEnabled, 'a security notice must not be opted out of').toBe(true)
+    assert.equal(msg.to, user.email)
+    assert.equal(msg.subject, 'SEPAL: SSH key added')
+    assert.equal(
+        msg.forceEmailNotificationEnabled,
+        true,
+        'a security notice must not be opted out of'
+    )
 })

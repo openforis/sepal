@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -14,7 +16,7 @@ describe('HistoryRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'storage_history', migrations: MIGRATIONS_PATH})
     })
@@ -24,21 +26,21 @@ describe('HistoryRepository', () => {
         repository = new HistoryRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('addEvent', () => {
         test('records an event for a user', async () => {
             await repository.addEvent({username: OWNER, event: 'ACTIVE'})
 
             const events = await repository.getUserEvents(OWNER)
-            expect(events.map(({event}) => event)).toEqual(['ACTIVE'])
+            assert.deepEqual(events.map(({event}) => event), ['ACTIVE'])
         })
 
         test('stores the username in lowercase', async () => {
             await repository.addEvent({username: 'Bob', event: 'ACTIVE'})
 
             const stored = await storedEvents('bob')
-            expect(stored).toEqual([{username: 'bob', event: 'ACTIVE'}])
+            assert.deepEqual(stored, [{username: 'bob', event: 'ACTIVE'}])
         })
 
         // The read collapses repetitions, so only the rows themselves show that the second one was
@@ -49,7 +51,7 @@ describe('HistoryRepository', () => {
             await repository.addEvent({username: OWNER, event: 'ACTIVE'})
 
             const stored = await storedEvents(OWNER)
-            expect(stored.map(({event}) => event)).toEqual(['ACTIVE'])
+            assert.deepEqual(stored.map(({event}) => event), ['ACTIVE'])
         })
 
         test('records an event that differs from the one already recorded', async () => {
@@ -58,7 +60,7 @@ describe('HistoryRepository', () => {
             await repository.addEvent({username: OWNER, event: 'INACTIVE_LOW'})
 
             const stored = await storedEvents(OWNER)
-            expect(stored.map(({event}) => event)).toEqual(['ACTIVE', 'INACTIVE_LOW'])
+            assert.deepEqual(stored.map(({event}) => event), ['ACTIVE', 'INACTIVE_LOW'])
         })
 
         test('treats a differently cased name as the same user', async () => {
@@ -67,7 +69,7 @@ describe('HistoryRepository', () => {
             await repository.addEvent({username: 'BOB', event: 'ACTIVE'})
 
             const stored = await storedEvents('bob')
-            expect(stored.map(({event}) => event)).toEqual(['ACTIVE'])
+            assert.deepEqual(stored.map(({event}) => event), ['ACTIVE'])
         })
     })
 
@@ -75,7 +77,7 @@ describe('HistoryRepository', () => {
         test('reports nothing when nothing has been recorded', async () => {
             const recent = await repository.getMostRecentEvents()
 
-            expect(recent).toEqual({})
+            assert.deepEqual(recent, {})
         })
 
         test('reports the latest event of each user', async () => {
@@ -85,8 +87,8 @@ describe('HistoryRepository', () => {
 
             const recent = await repository.getMostRecentEvents()
 
-            expect(recent[OWNER]).toMatchObject({event: 'NOTIFIED'})
-            expect(recent[ANOTHER_OWNER]).toMatchObject({event: 'PURGED'})
+            assert.partialDeepStrictEqual(recent[OWNER], {event: 'NOTIFIED'})
+            assert.partialDeepStrictEqual(recent[ANOTHER_OWNER], {event: 'PURGED'})
         })
     })
 
@@ -94,7 +96,7 @@ describe('HistoryRepository', () => {
         test('reports nothing for a user with no events', async () => {
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events).toEqual([])
+            assert.deepEqual(events, [])
         })
 
         test('reports the user\'s events, newest first', async () => {
@@ -106,7 +108,7 @@ describe('HistoryRepository', () => {
 
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events.map(({event}) => event)).toEqual(['PURGED', 'NOTIFIED', 'ACTIVE'])
+            assert.deepEqual(events.map(({event}) => event), ['PURGED', 'NOTIFIED', 'ACTIVE'])
         })
 
         test('reports only the user\'s own events', async () => {
@@ -115,7 +117,7 @@ describe('HistoryRepository', () => {
 
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events.map(({event}) => event)).toEqual(['ACTIVE'])
+            assert.deepEqual(events.map(({event}) => event), ['ACTIVE'])
         })
 
         test('leaves out the unknown-storage retries', async () => {
@@ -127,7 +129,7 @@ describe('HistoryRepository', () => {
 
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events.map(({event}) => event)).toEqual(['NOTIFIED', 'ACTIVE'])
+            assert.deepEqual(events.map(({event}) => event), ['NOTIFIED', 'ACTIVE'])
         })
 
         test('collapses a run of one repeated event into its most recent occurrence', async () => {
@@ -140,8 +142,8 @@ describe('HistoryRepository', () => {
 
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events.map(({event}) => event)).toEqual(['ACTIVE', 'INACTIVE_LOW', 'ACTIVE'])
-            expect(events.map(({timestamp}) => timestamp)).toEqual([at(4), at(3), at(2)])
+            assert.deepEqual(events.map(({event}) => event), ['ACTIVE', 'INACTIVE_LOW', 'ACTIVE'])
+            assert.deepEqual(events.map(({timestamp}) => timestamp), [at(4), at(3), at(2)])
         })
 
         test('reports at most ten', async () => {
@@ -154,8 +156,8 @@ describe('HistoryRepository', () => {
 
             const events = await repository.getUserEvents(OWNER)
 
-            expect(events).toHaveLength(10)
-            expect(events[0].timestamp).toEqual(at(12))
+            assert.equal(events.length, 10)
+            assert.deepEqual(events[0].timestamp, at(12))
         })
     })
 

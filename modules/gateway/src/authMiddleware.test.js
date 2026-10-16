@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
 import {of} from 'rxjs'
 
 // Credentials presented on a request win over the user the session holds: a login submitted from a
@@ -6,13 +8,16 @@ import {of} from 'rxjs'
 // The user module's authenticate call is faked to accept `accounts`.
 
 const accounts = {alice: 'alice-pw', bob: 'bob-pw'}
-jest.unstable_mockModule('#sepal/httpClient', () => ({
-    post$: (_url, {body: {username, password}}) =>
-        of(accounts[username] === password
-            ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: []}}
-            : {statusCode: 401, body: {}}),
-    get$: () => of({statusCode: 401, body: {}})
-}))
+mock.module('#sepal/httpClient', {
+    exports: {
+        post$: (_url, {body: {username, password}}) =>
+            of(accounts[username] === password
+                ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: []}}
+                : {statusCode: 401, body: {}}),
+
+        get$: () => of({statusCode: 401, body: {}})
+    }
+})
 
 const {AuthMiddleware} = await import('./authMiddleware.js')
 
@@ -23,10 +28,10 @@ describe('a gui request carrying credentials', () => {
 
         const {status} = await run(authMiddleware, req)
 
-        expect(status).toBe('next')
-        expect(JSON.parse(req.headers['sepal-user']).username).toBe('bob')
-        expect(req.session.username).toBe('bob')
-        expect(sessionsEnsured).toEqual(['bob'])
+        assert.equal(status, 'next')
+        assert.equal(JSON.parse(req.headers['sepal-user']).username, 'bob')
+        assert.equal(req.session.username, 'bob')
+        assert.deepEqual(sessionsEnsured, ['bob'])
     })
 
     test('is refused when the credentials are wrong, whoever the session holds', async () => {
@@ -35,7 +40,7 @@ describe('a gui request carrying credentials', () => {
 
         const {status} = await run(authMiddleware, req)
 
-        expect(status).toBe(401)
+        assert.equal(status, 401)
     })
 })
 
@@ -46,8 +51,8 @@ describe('a gui request without credentials', () => {
 
         const {status} = await run(authMiddleware, req)
 
-        expect(status).toBe('next')
-        expect(JSON.parse(req.headers['sepal-user']).username).toBe('alice')
+        assert.equal(status, 'next')
+        assert.equal(JSON.parse(req.headers['sepal-user']).username, 'alice')
     })
 
     test('is refused without a session', async () => {
@@ -56,7 +61,7 @@ describe('a gui request without credentials', () => {
 
         const {status} = await run(authMiddleware, req)
 
-        expect(status).toBe(401)
+        assert.equal(status, 401)
     })
 })
 

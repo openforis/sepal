@@ -1,3 +1,7 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+import {isDeepStrictEqual} from 'node:util'
+
 import {createBusyRegistry} from './busyRegistry.js'
 import {sampleInstances} from './sampleInstances.js'
 
@@ -79,25 +83,25 @@ describe('sampleInstances', () => {
             statsBySession: {s1: statsPayload({cpuTotal: 0, systemTotal: 0, rx: 0, tx: 0})},
         })
         await sampleInstances({...d, clock: () => t0})
-        expect(inserted).toHaveLength(0)
-        expect(d.samplerState.get('s1')).toBeDefined()
+        assert.equal(inserted.length, 0)
+        assert.notEqual(d.samplerState.get('s1'), undefined)
 
         // Second tick: container used 12s CPU of 120s system (2 cpus → 60s wall)
         // → 0.2 cores → 10% of a 2-cpu instance; 60_000 rx bytes over 60s → 1000 B/s.
         d.stats.containerStats = async () =>
             statsPayload({cpuTotal: 12e9, systemTotal: 120e9, rx: 60_000, tx: 6_000})
         await sampleInstances({...d, clock: () => t1})
-        expect(inserted).toHaveLength(1)
+        assert.equal(inserted.length, 1)
         const sample = inserted[0]
-        expect(sample.sessionId).toBe('s1')
-        expect(sample.username).toBe('alice')
-        expect(sample.instanceType).toBe('T3aSmall')
-        expect(sample.sampleTime).toEqual(t1)
-        expect(sample.cpuPct).toBe(10)
-        expect(sample.ramPct).toBe(50)
-        expect(sample.netRxBytesPerS).toBe(1000)
-        expect(sample.netTxBytesPerS).toBe(100)
-        expect(sample.gpuPct).toBeNull()
+        assert.equal(sample.sessionId, 's1')
+        assert.equal(sample.username, 'alice')
+        assert.equal(sample.instanceType, 'T3aSmall')
+        assert.deepEqual(sample.sampleTime, t1)
+        assert.equal(sample.cpuPct, 10)
+        assert.equal(sample.ramPct, 50)
+        assert.equal(sample.netRxBytesPerS, 1000)
+        assert.equal(sample.netTxBytesPerS, 100)
+        assert.equal(sample.gpuPct, null)
     })
 
     it('samples GPU only for GPU instance types and tolerates nvidia-smi failure', async () => {
@@ -110,8 +114,8 @@ describe('sampleInstances', () => {
         await sampleInstances({...d, clock: () => t(0)})
         d.stats.containerStats = async () => statsPayload({cpuTotal: 1e9, systemTotal: 100e9})
         await sampleInstances({...d, clock: () => t(60_000)})
-        expect(inserted[0].gpuPct).toBe(45)
-        expect(inserted[0].gpuRamBytes).toBe(1024 * 1024 * 1024)
+        assert.equal(inserted[0].gpuPct, 45)
+        assert.equal(inserted[0].gpuRamBytes, 1024 * 1024 * 1024)
 
         // nvidia-smi failure → gpu fields null, sample still recorded.
         d.stats.gpuStats = async () => {
@@ -119,8 +123,8 @@ describe('sampleInstances', () => {
         }
         d.stats.containerStats = async () => statsPayload({cpuTotal: 2e9, systemTotal: 200e9})
         await sampleInstances({...d, clock: () => t(120_000)})
-        expect(inserted[1].gpuPct).toBeNull()
-        expect(inserted[1].cpuPct).not.toBeNull()
+        assert.equal(inserted[1].gpuPct, null)
+        assert.notEqual(inserted[1].cpuPct, null)
     })
 
     it('isolates per-session failures and drops state for gone sessions', async () => {
@@ -140,14 +144,14 @@ describe('sampleInstances', () => {
             return statsPayload({cpuTotal: 1e9, systemTotal: 100e9})
         }
         await sampleInstances({...d, clock: () => t(60_000)})
-        expect(inserted).toHaveLength(1)
-        expect(inserted[0].sessionId).toBe('ok')
+        assert.equal(inserted.length, 1)
+        assert.equal(inserted[0].sessionId, 'ok')
 
         // Session gone → its baseline is dropped and metrics updated without it.
         d.sessionRepo.sessions = async () => [good]
         await sampleInstances({...d, clock: () => t(120_000)})
-        expect(d.samplerState.has('bad')).toBe(false)
-        expect(metricUpdates.at(-1).every(({instanceId}) => instanceId === 'i-ok')).toBe(true)
+        assert.equal(d.samplerState.has('bad'), false)
+        assert.equal(metricUpdates.at(-1).every(({instanceId}) => instanceId === 'i-ok'), true)
     })
 })
 
@@ -174,15 +178,17 @@ describe('the interaction signal from pty atime', () => {
     // drops input landing near a tick boundary or during a slow sample.
     it('an advanced atime is an interaction', async () => {
         const extensions = await twoTicks({firstAtime: t0s - 300, secondAtime: t0s - 5})
-        expect(extensions).toContainEqual(
-            {sessionId: 's1', minutes: 16, interaction: true, reason: 'pty-input'})
+        assert.ok(extensions.some(item => isDeepStrictEqual(
+            item,
+            {sessionId: 's1', minutes: 16, interaction: true, reason: 'pty-input'}
+        )))
     })
 
     // Program output advances mtime, never atime — a job printing a thousand log lines to an
     // abandoned terminal buys no time.
     it('a frozen atime is not', async () => {
         const extensions = await twoTicks({firstAtime: t0s - 300, secondAtime: t0s - 300})
-        expect(extensions.filter(e => e.interaction)).toHaveLength(0)
+        assert.equal(extensions.filter(e => e.interaction).length, 0)
     })
 
     // A broken exec means terminals have NO interaction signal — there is no browser-side backstop
@@ -195,8 +201,8 @@ describe('the interaction signal from pty atime', () => {
         })
         await sampleInstances({...d, policy, clock: () => t0})
         d.stats.containerStats = async () => statsPayload({cpuTotal: 12e9, systemTotal: 120e9})
-        await expect(sampleInstances({...d, policy, clock: () => t1})).resolves.toBeNull()
-        expect(inserted).toHaveLength(1)
+        assert.equal(await sampleInstances({...d, policy, clock: () => t1}), null)
+        assert.equal(inserted.length, 1)
     })
 
     // Only sandboxes have user terminals; an exec per tick on anything else would be pure waste.
@@ -208,7 +214,7 @@ describe('the interaction signal from pty atime', () => {
         })
         d.stats.ptyStats = async () => { execs++; return '' }
         await sampleInstances({...d, policy, clock: () => t0})
-        expect(execs).toBe(0)
+        assert.equal(execs, 0)
     })
 })
 
@@ -242,13 +248,15 @@ describe('the busy ratchet', () => {
     // the entire mechanism by which load alone cannot keep a session alive forever.
     it('extends with the cap applied and without re-anchoring it', async () => {
         const {extensions} = await twoTicksWith(covered({cpuAvg: 50}))
-        expect(extensions).toContainEqual(
-            {sessionId: 's1', minutes: 17, interaction: false, capHours: 12, reason: 'busy'})
+        assert.ok(extensions.some(item => isDeepStrictEqual(
+            item,
+            {sessionId: 's1', minutes: 17, interaction: false, capHours: 12, reason: 'busy'}
+        )))
     })
 
     it('a quiet session is not extended', async () => {
         const {extensions} = await twoTicksWith(covered())
-        expect(extensions).toHaveLength(0)
+        assert.equal(extensions.length, 0)
     })
 
     // Regression, found in live simulation: a session whose stats call THREW was dropped from the
@@ -268,8 +276,10 @@ describe('the busy ratchet', () => {
         await sampleInstances({...d, policy, clock: () => t0})
         d.stats.containerStats = async () => { throw new Error('fetch failed') }
         await sampleInstances({...d, policy, clock: () => t1})
-        expect(extensions).toContainEqual(
-            {sessionId: 's1', minutes: 17, interaction: false, capHours: 12, reason: 'coverage-grace'})
+        assert.ok(extensions.some(item => isDeepStrictEqual(
+            item,
+            {sessionId: 's1', minutes: 17, interaction: false, capHours: 12, reason: 'coverage-grace'}
+        )))
     })
 
     // A Docker-API blip must not close a computing instance, so missing coverage reads as busy —
@@ -289,7 +299,7 @@ describe('the busy ratchet', () => {
         })
         await sampleInstances({...d, policy, clock: () => t0})
         await sampleInstances({...d, policy, clock: () => t1})
-        expect(extensions).toEqual([])
+        assert.deepEqual(extensions, [])
     })
 
     // The reason distinguishes a real verdict from the fail-safe, which matters when reading logs:
@@ -298,7 +308,7 @@ describe('the busy ratchet', () => {
         const {extensions, d} = await twoTicksWith(covered())
         goBlind(d)
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:02:00Z')})
-        expect(extensions[0].reason).toBe('coverage-grace')
+        assert.equal(extensions[0].reason, 'coverage-grace')
     })
 
     // The count starts on tick ONE: a session is evaluated from the moment it exists, even though
@@ -307,13 +317,13 @@ describe('the busy ratchet', () => {
     // sane startup lease.
     it('blindness is busy for the grace ticks, then stops', async () => {
         const {extensions, d} = await twoTicksWith(covered())
-        expect(extensions).toHaveLength(0) // visible and quiet — nothing bought
+        assert.equal(extensions.length, 0) // visible and quiet — nothing bought
         goBlind(d)
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:02:00Z')})
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:03:00Z')})
-        expect(extensions).toHaveLength(2) // the two configured grace ticks
+        assert.equal(extensions.length, 2) // the two configured grace ticks
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:04:00Z')})
-        expect(extensions).toHaveLength(2) // grace exhausted; a dead instance still expires
+        assert.equal(extensions.length, 2) // grace exhausted; a dead instance still expires
     })
 
     // The same verdict that decides the ratchet is what the session report labels the instance
@@ -327,11 +337,11 @@ describe('the busy ratchet', () => {
             windowStats: covered({cpuAvg: 50}),
         })
         await sampleInstances({...d, policy, verdicts, clock: () => t0})
-        expect(verdicts.get('s1')).toBe('busy')
+        assert.equal(verdicts.get('s1'), 'busy')
 
         d.usageRepo.busyWindowStats = async () => covered()
         await sampleInstances({...d, policy, verdicts, clock: () => t1})
-        expect(verdicts.get('s1')).toBe('unused')
+        assert.equal(verdicts.get('s1'), 'unused')
     })
 
     // Missing coverage extends the session (the fail-safe) but says NOTHING about whether it is
@@ -347,11 +357,11 @@ describe('the busy ratchet', () => {
         await sampleInstances({...d, policy, verdicts, clock: () => t0})
         d.usageRepo.busyWindowStats = async () => new Map()
         await sampleInstances({...d, policy, verdicts, clock: () => t1})
-        expect(verdicts.get('s1')).toBe('unknown')
+        assert.equal(verdicts.get('s1'), 'unknown')
     })
 
     it('a session with no verdict at all reads as unknown', () => {
-        expect(createBusyRegistry().get('never-sampled')).toBe('unknown')
+        assert.equal(createBusyRegistry().get('never-sampled'), 'unknown')
     })
 
     it('drops the verdict of a session that is gone', async () => {
@@ -365,7 +375,7 @@ describe('the busy ratchet', () => {
         await sampleInstances({...d, policy, verdicts, clock: () => t0})
         d.sessionRepo.sessions = async () => []
         await sampleInstances({...d, policy, verdicts, clock: () => t1})
-        expect(verdicts.get('s1')).toBe('unknown')
+        assert.equal(verdicts.get('s1'), 'unknown')
     })
 
     it('regaining sight resets the grace counter', async () => {
@@ -373,7 +383,7 @@ describe('the busy ratchet', () => {
         goBlind(d)
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:02:00Z')})
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:03:00Z')})
-        expect(extensions).toHaveLength(2)
+        assert.equal(extensions.length, 2)
 
         // Sight returns, the window answers again — and the budget is refilled for the next blip.
         d.stats.containerStats = async () => statsPayload({cpuTotal: 12e9, systemTotal: 120e9})
@@ -382,7 +392,7 @@ describe('the busy ratchet', () => {
         goBlind(d)
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:05:00Z')})
         await sampleInstances({...d, policy, clock: () => new Date('2026-08-01T10:06:00Z')})
-        expect(extensions).toHaveLength(4)
+        assert.equal(extensions.length, 4)
     })
 })
 
@@ -399,7 +409,7 @@ describe('without an expiry policy', () => {
         await sampleInstances({...d, clock: () => t0})
         d.stats.containerStats = async () => statsPayload({cpuTotal: 12e9, systemTotal: 120e9})
         await sampleInstances({...d, clock: () => t1})
-        expect(inserted).toHaveLength(1)
-        expect(extensions).toHaveLength(0)
+        assert.equal(inserted.length, 1)
+        assert.equal(extensions.length, 0)
     })
 })

@@ -1,7 +1,9 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {cp, mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -11,14 +13,14 @@ describe('recipe database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -28,8 +30,8 @@ describe('recipe database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.recipe WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             recipe: 'ascii_general_ci',
             project: 'ascii_general_ci'
         })
@@ -42,9 +44,9 @@ describe('recipe database migrations', () => {
             const {created} = await initDb(dbName, SCHEMA_PATH)
 
             ownIfCreated(dbName, created)
-            expect(created).toBe(true)
+            assert.equal(created, true)
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['project', 'recipe']))
+            assert.ok(new Set(['project', 'recipe']).isSubsetOf(new Set(tables)))
         })
 
         test('build the recipe and project tables in an existing database', async () => {
@@ -53,7 +55,7 @@ describe('recipe database migrations', () => {
             await migrateDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['project', 'recipe']))
+            assert.ok(new Set(['project', 'recipe']).isSubsetOf(new Set(tables)))
         })
 
         test('refuse to migrate a database that does not exist', async () => {
@@ -61,9 +63,9 @@ describe('recipe database migrations', () => {
 
             const migration = migrateDb(dbName, SCHEMA_PATH)
 
-            await expect(migration).rejects.toThrow()
+            await assert.rejects(migration)
             const exists = await databaseExists(dbName)
-            expect(exists).toBe(false)
+            assert.equal(exists, false)
         })
 
         test('reject altered history even when no migration is pending', async () => {
@@ -73,9 +75,9 @@ describe('recipe database migrations', () => {
 
             const migration = migrateDb(dbName, SCHEMA_PATH)
 
-            await expect(migration).rejects.toThrow(/MD5 checksum failed/)
+            await assert.rejects(migration, /MD5 checksum failed/)
             const [history] = await admin.query('SELECT md5 FROM ??.schema_version WHERE version = 1', [dbName])
-            expect(history).toEqual([{md5: 'previous-file-checksum'}])
+            assert.deepEqual(history, [{md5: 'previous-file-checksum'}])
         })
 
         test('create empty recipe and project tables', async () => {
@@ -84,7 +86,7 @@ describe('recipe database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const counts = await rowCounts(dbName)
-            expect(counts).toEqual({recipes: 0, projects: 0})
+            assert.deepEqual(counts, {recipes: 0, projects: 0})
         })
     })
 
@@ -101,7 +103,7 @@ describe('recipe database migrations', () => {
             const [rows] = await admin.query(
                 'SELECT id, revision, contents FROM ??.recipe ORDER BY id', [dbName]
             )
-            expect(rows).toEqual([
+            assert.deepEqual(rows, [
                 {id: first.id, revision: 1, contents: first.contents},
                 {id: second.id, revision: 1, contents: second.contents}
             ])

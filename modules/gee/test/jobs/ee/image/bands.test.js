@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 import {ENCODING_PROPERTY, encodingPropertyKeys} from '#sepal/recipe/output/bandEncoding'
@@ -108,21 +110,31 @@ const ee = {
     }
 }
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
-jest.unstable_mockModule('#gee/jobs/job', () => ({job: config => config}))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: ee
+    }
+})
+mock.module('#gee/jobs/job', {
+    exports: {
+        job: config => config
+    }
+})
 // An asset is read directly, never as the image execution builds from it.
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: source => {
-        factoryCalls.push(source)
-        if (source.type === 'ASSET') {
-            throw new Error('read an asset through the image execution builds')
-        }
-        return {
-            getBands$: () => of(recipeBands),
-            getImage$: () => of(imageFor(source.id, recipePhysicalBands, recipeProperties))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: source => {
+            factoryCalls.push(source)
+            if (source.type === 'ASSET') {
+                throw new Error('read an asset through the image execution builds')
+            }
+            return {
+                getBands$: () => of(recipeBands),
+                getImage$: () => of(imageFor(source.id, recipePhysicalBands, recipeProperties))
+            }
         }
     }
-}))
+})
 
 const {default: bandsJob} = await import('#gee/jobs/ee/image/bands')
 const {worker$} = bandsJob
@@ -153,16 +165,16 @@ describe('the existing response contract', () => {
             {name: 'scalar', arrayDimensions: 0}
         ]
 
-        await expect(run({asset: 'users/x/image'})).resolves.toEqual(['array', 'scalar'])
+        assert.deepEqual(await run({asset: 'users/x/image'}), ['array', 'scalar'])
     })
 
     it('keeps an ordinary recipe request as the existing string array', async () => {
         const recipe = {id: 'recipe-1', type: 'CCDC', model: {}}
         recipeBands = ['tStart', 'ndvi_coefs']
 
-        await expect(run({recipe})).resolves.toEqual(recipeBands)
-        expect(factoryCalls).toEqual([recipe])
-        expect(getInfoCalls).toEqual([])
+        assert.deepEqual(await run({recipe}), recipeBands)
+        assert.deepEqual(factoryCalls, [recipe])
+        assert.deepEqual(getInfoCalls, [])
     })
 })
 
@@ -176,7 +188,7 @@ describe('typed physical evidence', () => {
     it('returns ordered normalized dimensions for an asset', async () => {
         assetBands = physicalBands
 
-        await expect(run({asset: 'users/x/image', includeDataTypes: true})).resolves.toEqual(physicalBands)
+        assert.deepEqual(await run({asset: 'users/x/image', includeDataTypes: true}), physicalBands)
     })
 
     it('returns the same typed contract for a recipe', async () => {
@@ -184,8 +196,8 @@ describe('typed physical evidence', () => {
         recipeBands = physicalBands.map(({name}) => name)
         recipePhysicalBands = physicalBands
 
-        await expect(run({recipe, includeDataTypes: true})).resolves.toEqual(physicalBands)
-        expect(factoryCalls).toEqual([recipe])
+        assert.deepEqual(await run({recipe, includeDataTypes: true}), physicalBands)
+        assert.deepEqual(factoryCalls, [recipe])
     })
 
     it('normalizes PixelType.dimensions() before the single metadata evaluation', async () => {
@@ -193,42 +205,47 @@ describe('typed physical evidence', () => {
 
         await run({asset: 'users/x/image', includeDataTypes: true})
 
-        expect(getInfoCalls).toHaveLength(1)
-        expect(bandTypesCalls).toHaveLength(1)
-        expect(pixelTypeCalls).toHaveLength(physicalBands.length)
-        expect(dimensionsCalls.map(({name}) => name)).toEqual(physicalBands.map(({name}) => name))
+        assert.equal(getInfoCalls.length, 1)
+        assert.equal(bandTypesCalls.length, 1)
+        assert.equal(pixelTypeCalls.length, physicalBands.length)
+        assert.deepEqual(dimensionsCalls.map(({name}) => name), physicalBands.map(({name}) => name))
         const evaluatedImage = getInfoCalls[0].value.values.bands.image
-        expect(bandTypesCalls[0]).toBe(evaluatedImage)
-        expect(pixelTypeCalls.every(({image}) => image === evaluatedImage)).toBe(true)
+        assert.equal(bandTypesCalls[0], evaluatedImage)
+        assert.equal(pixelTypeCalls.every(({image}) => image === evaluatedImage), true)
     })
 
-    it.each([
+    for (const [source, count] of [
         ['asset', 1],
         ['asset', 3],
         ['asset', 8],
         ['recipe', 1],
         ['recipe', 3],
         ['recipe', 8]
-    ])('uses exactly one complete metadata evaluation for a %s with %i bands', async (source, count) => {
-        const bands = Array.from({length: count}, (_value, index) => ({
-            name: `b${index}`,
-            arrayDimensions: index % 3
-        }))
-        const request = source === 'asset'
-            ? {asset: 'users/x/image', includeDataTypes: true}
-            : {recipe: {id: 'recipe-1', type: 'CCDC', model: {}}, includeDataTypes: true}
-        if (source === 'asset') {
-            assetBands = bands
-        } else {
-            recipePhysicalBands = bands
-        }
+    ]) {
+        it(
+            `uses exactly one complete metadata evaluation for a ${source} with ${count} bands`,
+            async () => {
+                const bands = Array.from({length: count}, (_value, index) => ({
+                    name: `b${index}`,
+                    arrayDimensions: index % 3
+                }))
+                const request = source === 'asset'
+                    ? {asset: 'users/x/image', includeDataTypes: true}
+                    : {recipe: {id: 'recipe-1', type: 'CCDC', model: {}}, includeDataTypes: true}
+                if (source === 'asset') {
+                    assetBands = bands
+                } else {
+                    recipePhysicalBands = bands
+                }
 
-        await run(request)
+                await run(request)
 
-        expect(getInfoCalls).toHaveLength(1)
-        expect(pixelTypeCalls).toHaveLength(count)
-        expect(dimensionsCalls).toHaveLength(count)
-    })
+                assert.equal(getInfoCalls.length, 1)
+                assert.equal(pixelTypeCalls.length, count)
+                assert.equal(dimensionsCalls.length, count)
+            }
+        )
+    }
 })
 
 describe('stored band encoding', () => {
@@ -249,7 +266,7 @@ describe('stored band encoding', () => {
     it('carries what the asset states, per band', async () => {
         assetProperties = storing({red: REFLECTANCE, thermal: THERMAL})
 
-        await expect(readAsset()).resolves.toEqual([
+        assert.deepEqual(await readAsset(), [
             {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
             {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
         ])
@@ -261,7 +278,7 @@ describe('stored band encoding', () => {
 
         const [red] = await readAsset()
 
-        expect(red.encoding).toEqual(OFFSET)
+        assert.deepEqual(red.encoding, OFFSET)
     })
 
     it('completes an omitted offset rather than leaving it open', async () => {
@@ -269,37 +286,42 @@ describe('stored band encoding', () => {
 
         const [red] = await readAsset()
 
-        expect(red.encoding).toEqual({scale: 0.0001, offset: 0, unit: '1'})
+        assert.deepEqual(red.encoding, {scale: 0.0001, offset: 0, unit: '1'})
     })
 
     it('leaves a legacy asset with no metadata unknown', async () => {
         assetProperties = {}
 
-        await expect(readAsset()).resolves.toEqual([
+        assert.deepEqual(await readAsset(), [
             {name: 'red', arrayDimensions: 0},
             {name: 'thermal', arrayDimensions: 0}
         ])
     })
 
-    it.each([
+    for (const [scenario, stored] of [
         ['unparseable', 'not json at all'],
         ['not an object', JSON.stringify(['red'])],
         ['an unsupported version', JSON.stringify({version: 9, bands: {red: REFLECTANCE}})],
         ['explicitly empty', JSON.stringify({version: 1, bands: {}})],
         ['a manifest whose parts are absent', JSON.stringify({version: 2, parts: 2})]
-    ])('leaves every band unknown when the property is %s, and still describes the asset', async (_case, stored) => {
-        assetProperties = {[ENCODING_PROPERTY]: stored}
+    ]) {
+        it(
+            `leaves every band unknown when the property is ${scenario}, and still describes the asset`,
+            async () => {
+                assetProperties = {[ENCODING_PROPERTY]: stored}
 
-        await expect(readAsset()).resolves.toEqual([
-            {name: 'red', arrayDimensions: 0},
-            {name: 'thermal', arrayDimensions: 0}
-        ])
-    })
+                assert.deepEqual(await readAsset(), [
+                    {name: 'red', arrayDimensions: 0},
+                    {name: 'thermal', arrayDimensions: 0}
+                ])
+            }
+        )
+    }
 
     it('withholds only the bands it cannot read', async () => {
         assetProperties = storing({red: {scale: 0}, thermal: THERMAL, absent: REFLECTANCE})
 
-        await expect(readAsset()).resolves.toEqual([
+        assert.deepEqual(await readAsset(), [
             {name: 'red', arrayDimensions: 0},
             {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
         ])
@@ -316,13 +338,13 @@ describe('stored band encoding', () => {
         it('leaves them unknown when the asset states nothing', async () => {
             assetProperties = {}
 
-            await expect(readAsset()).resolves.toEqual(assetBands)
+            assert.deepEqual(await readAsset(), assetBands)
         })
 
         it('carries what the asset states for them', async () => {
             assetProperties = storing({constructor: REFLECTANCE, toString: THERMAL})
 
-            await expect(readAsset()).resolves.toEqual([
+            assert.deepEqual(await readAsset(), [
                 {name: 'constructor', arrayDimensions: 0, encoding: REFLECTANCE},
                 {name: 'toString', arrayDimensions: 0, encoding: THERMAL}
             ])
@@ -336,7 +358,7 @@ describe('stored band encoding', () => {
             sepal_band_encoding_2: JSON.stringify({thermal: THERMAL})
         }
 
-        await expect(readAsset()).resolves.toEqual([
+        assert.deepEqual(await readAsset(), [
             {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
             {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
         ])
@@ -353,8 +375,8 @@ describe('stored band encoding', () => {
 
         await readAsset()
 
-        expect(getInfoCalls).toHaveLength(1)
-        expect(toDictionaryCalls).toEqual([
+        assert.equal(getInfoCalls.length, 1)
+        assert.deepEqual(toDictionaryCalls, [
             {image: getInfoCalls[0].value.values.bands.image, keys: encodingPropertyKeys()}
         ])
     })
@@ -364,7 +386,7 @@ describe('stored band encoding', () => {
         assetProperties = storing({red: REFLECTANCE})
         firstImageProperties = storing({red: THERMAL, thermal: THERMAL})
 
-        await expect(readAsset()).resolves.toEqual([
+        assert.deepEqual(await readAsset(), [
             {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
             {name: 'thermal', arrayDimensions: 0}
         ])
@@ -376,8 +398,8 @@ describe('stored band encoding', () => {
 
         const bands = await run({recipe: {id: 'recipe-1', type: 'MOSAIC', model: {}}, includeDataTypes: true})
 
-        expect(bands).toEqual([{name: 'red', arrayDimensions: 0}])
-        expect(toDictionaryCalls).toEqual([])
+        assert.deepEqual(bands, [{name: 'red', arrayDimensions: 0}])
+        assert.deepEqual(toDictionaryCalls, [])
     })
 })
 
@@ -393,17 +415,23 @@ describe('a collection asset', () => {
     })
 
     it('is described by its first image\'s bands and their dimensionality, in one evaluation', async () => {
-        await expect(run({asset: 'users/x/collection', includeDataTypes: true})).resolves.toEqual(assetBands)
-        expect(getInfoCalls).toHaveLength(1)
+        assert.deepEqual(
+            await run({asset: 'users/x/collection', includeDataTypes: true}),
+            assetBands
+        )
+        assert.equal(getInfoCalls.length, 1)
     })
 
     it('is named by its first image\'s bands', async () => {
-        await expect(run({asset: 'users/x/collection'})).resolves.toEqual(['label', 'probabilities'])
+        assert.deepEqual(await run({asset: 'users/x/collection'}), ['label', 'probabilities'])
     })
 
     it('fails when it holds no images, rather than answering with no bands', async () => {
         collectionSize = 0
 
-        await expect(run({asset: 'users/x/collection', includeDataTypes: true})).rejects.toThrow(/holds no images/)
+        await assert.rejects(
+            run({asset: 'users/x/collection', includeDataTypes: true}),
+            /holds no images/
+        )
     })
 })

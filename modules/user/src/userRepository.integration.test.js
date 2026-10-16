@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -13,7 +15,7 @@ describe('UserRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'user_repository', migrations: MIGRATIONS_PATH})
     })
@@ -23,20 +25,20 @@ describe('UserRepository', () => {
         repository = new UserRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('insertUser', () => {
         test('stores a new user as pending, with the username in lowercase', async () => {
             await repository.insertUser(aUser({username: 'Bob', name: 'Bob Bobson', organization: 'FAO'}))
 
             const stored = await repository.findByUsername('bob')
-            expect(stored.username).toBe('bob')
-            expect(stored.name).toBe('Bob Bobson')
-            expect(stored.organization).toBe('FAO')
-            expect(stored.status).toBe('PENDING')
-            expect(stored.emailNotificationsEnabled).toBe(true)
-            expect(stored.admin).toBe(false)
-            expect(stored.systemUser).toBe(false)
+            assert.equal(stored.username, 'bob')
+            assert.equal(stored.name, 'Bob Bobson')
+            assert.equal(stored.organization, 'FAO')
+            assert.equal(stored.status, 'PENDING')
+            assert.equal(stored.emailNotificationsEnabled, true)
+            assert.equal(stored.admin, false)
+            assert.equal(stored.systemUser, false)
         })
 
         test('starts a new user at revision 1', async () => {
@@ -44,16 +46,16 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByUsername(USERNAME)
 
-            expect(stored.revision).toBe(1)
+            assert.equal(stored.revision, 1)
         })
 
         test('gives the new user a posix identity derived from the id it returns', async () => {
             const id = await repository.insertUser(aUser())
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.id).toBe(id)
-            expect(stored.uid).toBe(id)
-            expect(stored.gid).toBe(id)
+            assert.equal(stored.id, id)
+            assert.equal(stored.uid, id)
+            assert.equal(stored.gid, id)
         })
     })
 
@@ -64,8 +66,8 @@ describe('UserRepository', () => {
             await repository.assignDerivedPosixIds(imported.id)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.uid).toBe(imported.id)
-            expect(stored.gid).toBe(imported.id)
+            assert.equal(stored.uid, imported.id)
+            assert.equal(stored.gid, imported.id)
         })
 
         // The uid and gid migrated from LDAP own the files on disk; overwriting either would orphan them.
@@ -75,8 +77,8 @@ describe('UserRepository', () => {
             await repository.assignDerivedPosixIds(imported.id)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.uid).toBe(10001)
-            expect(stored.gid).toBe(10002)
+            assert.equal(stored.uid, 10001)
+            assert.equal(stored.gid, 10002)
         })
     })
 
@@ -86,13 +88,13 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByUsername(USERNAME.toUpperCase())
 
-            expect(stored.username).toBe(USERNAME)
+            assert.equal(stored.username, USERNAME)
         })
 
         test('reports nothing for a name it does not know', async () => {
             const stored = await repository.findByUsername('nobody')
 
-            expect(stored).toBeNull()
+            assert.equal(stored, null)
         })
     })
 
@@ -102,8 +104,8 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByEmail('bob@example.ORG')
 
-            expect(stored.username).toBe(USERNAME)
-            expect(stored.email).toBe('Bob@Example.org')
+            assert.equal(stored.username, USERNAME)
+            assert.equal(stored.email, 'Bob@Example.org')
         })
     })
 
@@ -113,7 +115,7 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByToken('the-token')
 
-            expect(stored.username).toBe(USERNAME)
+            assert.equal(stored.username, USERNAME)
         })
 
         test('stops finding the user once the token is invalidated, keeping the user', async () => {
@@ -123,8 +125,8 @@ describe('UserRepository', () => {
 
             const byToken = await repository.findByToken('the-token')
             const byUsername = await repository.findByUsername(USERNAME)
-            expect(byToken).toBeNull()
-            expect(byUsername.token).toBeNull()
+            assert.equal(byToken, null)
+            assert.equal(byUsername.token, null)
         })
     })
 
@@ -135,8 +137,8 @@ describe('UserRepository', () => {
             await repository.updateToken(USERNAME, 'new-token')
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.token).toBe('new-token')
-            expect(stored.tokenGenerationTime).toBeGreaterThan(LONG_AGO.getTime())
+            assert.equal(stored.token, 'new-token')
+            assert.ok(stored.tokenGenerationTime > LONG_AGO.getTime())
         })
     })
 
@@ -147,7 +149,7 @@ describe('UserRepository', () => {
 
             const users = await repository.listUsers()
 
-            expect(users.map(({username}) => username)).toEqual(['newer', 'older'])
+            assert.deepEqual(users.map(({username}) => username), ['newer', 'older'])
         })
 
         test('leaves out system users', async () => {
@@ -156,7 +158,7 @@ describe('UserRepository', () => {
 
             const users = await repository.listUsers()
 
-            expect(users.map(({username}) => username)).toEqual([USERNAME])
+            assert.deepEqual(users.map(({username}) => username), [USERNAME])
         })
     })
 
@@ -167,10 +169,13 @@ describe('UserRepository', () => {
 
             const identities = await repository.listIdentities()
 
-            expect(identities.map(({username, uid, gid, name}) => ({username, uid, gid, name}))).toEqual([
-                {username: 'first', uid: 10001, gid: 10001, name: 'First'},
-                {username: 'second', uid: 10002, gid: 10002, name: 'Second'}
-            ])
+            assert.deepEqual(
+                identities.map(({username, uid, gid, name}) => ({username, uid, gid, name})),
+                [
+                    {username: 'first', uid: 10001, gid: 10001, name: 'First'},
+                    {username: 'second', uid: 10002, gid: 10002, name: 'Second'}
+                ]
+            )
         })
 
         // A pending user has no home directory yet, and uids below the POSIX range belong to the host.
@@ -182,7 +187,7 @@ describe('UserRepository', () => {
 
             const identities = await repository.listIdentities()
 
-            expect(identities.map(({username}) => username)).toEqual(['locked'])
+            assert.deepEqual(identities.map(({username}) => username), ['locked'])
         })
     })
 
@@ -194,14 +199,14 @@ describe('UserRepository', () => {
             await repository.updateUserDetails(details({emailNotificationsEnabled: false}))
             const afterOptOut = await repository.emailNotificationsEnabled(EMAIL)
 
-            expect(beforeOptOut).toBe(true)
-            expect(afterOptOut).toBe(false)
+            assert.equal(beforeOptOut, true)
+            assert.equal(afterOptOut, false)
         })
 
         test('reports false for an address it does not know', async () => {
             const enabled = await repository.emailNotificationsEnabled('nobody@example.org')
 
-            expect(enabled).toBe(false)
+            assert.equal(enabled, false)
         })
     })
 
@@ -211,8 +216,8 @@ describe('UserRepository', () => {
 
             const login = await repository.mostRecentLogin(USERNAME)
             const logins = await repository.mostRecentLoginByUser()
-            expect(login).toEqual({})
-            expect(logins).toEqual({})
+            assert.deepEqual(login, {})
+            assert.deepEqual(logins, {})
         })
 
         test('reports when the user last logged in', async () => {
@@ -222,8 +227,8 @@ describe('UserRepository', () => {
 
             const login = await repository.mostRecentLogin(USERNAME)
             const stored = await repository.findByUsername(USERNAME)
-            expect(Date.parse(login.timestamp)).toBe(stored.lastLoginTime)
-            expect(login.timestamp).toBe(new Date(stored.lastLoginTime).toISOString())
+            assert.equal(Date.parse(login.timestamp), stored.lastLoginTime)
+            assert.equal(login.timestamp, new Date(stored.lastLoginTime).toISOString())
         })
 
         // A login records activity, not a change to the record, so it must not invalidate an edit
@@ -234,7 +239,7 @@ describe('UserRepository', () => {
             await repository.setLastLoginTime(USERNAME)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.revision).toBe(1)
+            assert.equal(stored.revision, 1)
         })
 
         test('reports the login times of every non-system user that has logged in', async () => {
@@ -245,7 +250,7 @@ describe('UserRepository', () => {
 
             const logins = await repository.mostRecentLoginByUser()
 
-            expect(Object.keys(logins)).toEqual([USERNAME])
+            assert.deepEqual(Object.keys(logins), [USERNAME])
         })
     })
 
@@ -256,7 +261,7 @@ describe('UserRepository', () => {
             await repository.updateGoogleTokens(USERNAME, GOOGLE_TOKENS)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.googleTokens).toEqual({
+            assert.deepEqual(stored.googleTokens, {
                 accessToken: GOOGLE_TOKENS.accessToken,
                 accessTokenExpiryDate: GOOGLE_TOKENS.accessTokenExpiryDate,
                 refreshToken: GOOGLE_TOKENS.refreshToken,
@@ -272,7 +277,7 @@ describe('UserRepository', () => {
             await repository.updateGoogleTokens(USERNAME, null)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.googleTokens).toBeNull()
+            assert.equal(stored.googleTokens, null)
         })
     })
 
@@ -286,13 +291,13 @@ describe('UserRepository', () => {
             }))
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.name).toBe('Renamed')
-            expect(stored.email).toBe('renamed@example.org')
-            expect(stored.organization).toBe('FAO')
-            expect(stored.intendedUse).toBe('research')
-            expect(stored.manualMapRenderingEnabled).toBe(true)
-            expect(stored.admin).toBe(true)
-            expect(stored.roles).toEqual(['application_admin'])
+            assert.equal(stored.name, 'Renamed')
+            assert.equal(stored.email, 'renamed@example.org')
+            assert.equal(stored.organization, 'FAO')
+            assert.equal(stored.intendedUse, 'research')
+            assert.equal(stored.manualMapRenderingEnabled, true)
+            assert.equal(stored.admin, true)
+            assert.deepEqual(stored.roles, ['application_admin'])
         })
 
         test('reports the write and bumps the revision when the caller holds the current one', async () => {
@@ -301,8 +306,8 @@ describe('UserRepository', () => {
             const updated = await repository.updateUserDetails(details({name: 'Robert', revision: 1}))
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(updated).toBe(true)
-            expect(stored).toMatchObject({name: 'Robert', revision: 2})
+            assert.equal(updated, true)
+            assert.partialDeepStrictEqual(stored, {name: 'Robert', revision: 2})
         })
 
         test('writes nothing when the caller holds a stale revision', async () => {
@@ -312,8 +317,8 @@ describe('UserRepository', () => {
             const updated = await repository.updateUserDetails(details({name: 'Bobby', revision: 1}))
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(updated).toBe(false)
-            expect(stored).toMatchObject({name: 'Robert', revision: 2})
+            assert.equal(updated, false)
+            assert.partialDeepStrictEqual(stored, {name: 'Robert', revision: 2})
         })
 
         test('writes unconditionally when no revision is given', async () => {
@@ -323,8 +328,8 @@ describe('UserRepository', () => {
             const updated = await repository.updateUserDetails(details({name: 'Bobby'}))
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(updated).toBe(true)
-            expect(stored).toMatchObject({name: 'Bobby', revision: 3})
+            assert.equal(updated, true)
+            assert.partialDeepStrictEqual(stored, {name: 'Bobby', revision: 3})
         })
     })
 
@@ -335,7 +340,7 @@ describe('UserRepository', () => {
             await repository.updatePassword(USERNAME, '{SCRYPT}hash')
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.passwordHash).toBe('{SCRYPT}hash')
+            assert.equal(stored.passwordHash, '{SCRYPT}hash')
         })
     })
 
@@ -346,7 +351,7 @@ describe('UserRepository', () => {
             await repository.updateStatus(USERNAME, 'ACTIVE')
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.status).toBe('ACTIVE')
+            assert.equal(stored.status, 'ACTIVE')
         })
 
         // Optimistic locking covers the whole record, not just the details endpoint that checks it.
@@ -356,7 +361,7 @@ describe('UserRepository', () => {
             await repository.updateStatus(USERNAME, 'LOCKED')
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored).toMatchObject({status: 'LOCKED', revision: 2})
+            assert.partialDeepStrictEqual(stored, {status: 'LOCKED', revision: 2})
         })
     })
 
@@ -367,7 +372,7 @@ describe('UserRepository', () => {
             await repository.acceptPrivacyPolicy(USERNAME)
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.privacyPolicyAccepted).toBe(true)
+            assert.equal(stored.privacyPolicyAccepted, true)
         })
     })
 
@@ -378,7 +383,7 @@ describe('UserRepository', () => {
             await repository.updateSshPublicKey(USERNAME, 'ssh-ed25519 AAAA')
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(stored.sshPublicKey).toBe('ssh-ed25519 AAAA')
+            assert.equal(stored.sshPublicKey, 'ssh-ed25519 AAAA')
         })
     })
 
@@ -393,9 +398,9 @@ describe('UserRepository', () => {
             const byEmail = await repository.findByEmail(NOT_A_STRING)
             const byToken = await repository.findByToken(NOT_A_STRING)
 
-            expect(byUsername).toBeNull()
-            expect(byEmail).toBeNull()
-            expect(byToken).toBeNull()
+            assert.equal(byUsername, null)
+            assert.equal(byEmail, null)
+            assert.equal(byToken, null)
         })
 
         test('reads as an address and a name that are not stored', async () => {
@@ -405,8 +410,8 @@ describe('UserRepository', () => {
             const enabled = await repository.emailNotificationsEnabled(NOT_A_STRING)
             const login = await repository.mostRecentLogin(NOT_A_STRING)
 
-            expect(enabled).toBe(false)
-            expect(login).toEqual({})
+            assert.equal(enabled, false)
+            assert.deepEqual(login, {})
         })
 
         // The failure has to be the repository's own. MySQL refuses the coerced comparison in an UPDATE
@@ -416,27 +421,27 @@ describe('UserRepository', () => {
             await repository.insertUser(aUser())
             const before = await repository.findByUsername(USERNAME)
 
-            await expect(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash')).rejects.toThrow(REFUSED)
-            await expect(repository.updateStatus(NOT_A_STRING, 'ACTIVE')).rejects.toThrow(REFUSED)
-            await expect(repository.updateToken(NOT_A_STRING, 'new-token')).rejects.toThrow(REFUSED)
-            await expect(repository.invalidateToken(NOT_A_STRING)).rejects.toThrow(REFUSED)
+            await assert.rejects(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash'), REFUSED)
+            await assert.rejects(repository.updateStatus(NOT_A_STRING, 'ACTIVE'), REFUSED)
+            await assert.rejects(repository.updateToken(NOT_A_STRING, 'new-token'), REFUSED)
+            await assert.rejects(repository.invalidateToken(NOT_A_STRING), REFUSED)
 
             const after = await repository.findByUsername(USERNAME)
-            expect(after).toEqual(before)
+            assert.deepEqual(after, before)
         })
 
         test('refuses every other write that selects a user, leaving the account as it was', async () => {
             await repository.insertUser(aUser())
             const before = await repository.findByUsername(USERNAME)
 
-            await expect(repository.setLastLoginTime(NOT_A_STRING)).rejects.toThrow(REFUSED)
-            await expect(repository.updateUserDetails(details({username: NOT_A_STRING}))).rejects.toThrow(REFUSED)
-            await expect(repository.acceptPrivacyPolicy(NOT_A_STRING)).rejects.toThrow(REFUSED)
-            await expect(repository.updateGoogleTokens(NOT_A_STRING, GOOGLE_TOKENS)).rejects.toThrow(REFUSED)
-            await expect(repository.updateSshPublicKey(NOT_A_STRING, 'ssh-ed25519 AAAA')).rejects.toThrow(REFUSED)
+            await assert.rejects(repository.setLastLoginTime(NOT_A_STRING), REFUSED)
+            await assert.rejects(repository.updateUserDetails(details({username: NOT_A_STRING})), REFUSED)
+            await assert.rejects(repository.acceptPrivacyPolicy(NOT_A_STRING), REFUSED)
+            await assert.rejects(repository.updateGoogleTokens(NOT_A_STRING, GOOGLE_TOKENS), REFUSED)
+            await assert.rejects(repository.updateSshPublicKey(NOT_A_STRING, 'ssh-ed25519 AAAA'), REFUSED)
 
             const after = await repository.findByUsername(USERNAME)
-            expect(after).toEqual(before)
+            assert.deepEqual(after, before)
         })
     })
 
@@ -444,7 +449,7 @@ describe('UserRepository', () => {
         let concurrent
         let concurrentRepository
 
-        beforeAll(async () => {
+        before(async () => {
             concurrent = await createTestDb({
                 name: 'user_repository_concurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
             })
@@ -453,7 +458,7 @@ describe('UserRepository', () => {
 
         beforeEach(() => concurrent.reset())
 
-        afterAll(() => concurrent?.remove())
+        after(() => concurrent?.remove())
 
         // Both updates are in flight together; MySQL decides how they interleave. The claim is only
         // that one of them loses, whichever order it settles on — a caller told nothing happened is
@@ -467,9 +472,9 @@ describe('UserRepository', () => {
             ])
 
             const stored = await concurrentRepository.findByUsername(USERNAME)
-            expect(outcomes.filter(Boolean)).toHaveLength(1)
-            expect(stored.revision).toBe(2)
-            expect(['First', 'Second']).toContain(stored.name)
+            assert.equal(outcomes.filter(Boolean).length, 1)
+            assert.equal(stored.revision, 2)
+            assert.ok(['First', 'Second'].includes(stored.name))
         })
     })
 
@@ -499,7 +504,7 @@ describe('UserRepository', () => {
 
     // How the coercion arrives over HTTP: a one-element JSON array, which the driver formats as `0`.
     const NOT_A_STRING = [0]
-    const REFUSED = 'Invalid selector'
+    const REFUSED = /Invalid selector/
 
     // Enough connections for every writer the concurrency scenario starts at once; queueing stays
     // off, so one more acquisition than this would fail rather than wait.

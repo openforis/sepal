@@ -4,8 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --test \"**/*.test.js\"",
+        "testWatch": "node --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
@@ -18,9 +18,6 @@
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "koa-static": "^5.0.0"
-    },
-    "devDependencies": {
-        "jest": "^30.5.2"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

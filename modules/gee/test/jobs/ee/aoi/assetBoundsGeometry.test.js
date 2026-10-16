@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {firstValueFrom, tap} from 'rxjs'
 
 // Keep the AOI conversion authority real so these tests exercise the production descriptor boundary.
@@ -11,33 +14,41 @@ const resolvedGeometry = {
 
 describe('toGeometry$ with a runtime geometry aoi', () => {
     it('emits the exact Earth Engine geometry carried by the wrapper', async () => {
-        expect(typeof resolvedGeometry.type).toBe('function')
-        await expect(
-            firstValueFrom(toGeometry$({type: 'GEOMETRY', geometry: resolvedGeometry}))
-        ).resolves.toBe(resolvedGeometry)
+        assert.equal(typeof resolvedGeometry.type, 'function')
+        assert.equal(
+            await firstValueFrom(toGeometry$({type: 'GEOMETRY', geometry: resolvedGeometry})),
+            resolvedGeometry
+        )
     })
 
-    it.each([
+    for (const [scenario, aoi] of [
         ['absent', {type: 'GEOMETRY'}],
         ['null', {type: 'GEOMETRY', geometry: null}]
-    ])('rejects a wrapper with %s geometry instead of emitting it', async (_case, aoi) => {
-        const emitted = []
+    ]) {
+        it(
+            `rejects a wrapper with ${scenario} geometry instead of emitting it`,
+            async () => {
+                const emitted = []
 
-        await expect(
-            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value))))
-        ).rejects.toThrow(/GEOMETRY.*requires.*geometry/i)
+                await assert.rejects(
+                    firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value)))),
+                    /GEOMETRY.*requires.*geometry/i
+                )
 
-        expect(emitted).toEqual([])
-    })
+                assert.deepEqual(emitted, [])
+            }
+        )
+    }
 
     it('keeps a raw Earth Engine-shaped geometry unsupported', async () => {
         const emitted = []
 
-        await expect(
-            firstValueFrom(toGeometry$(resolvedGeometry).pipe(tap(value => emitted.push(value))))
-        ).rejects.toThrow(/Unsupported aoi type:/)
+        await assert.rejects(
+            firstValueFrom(toGeometry$(resolvedGeometry).pipe(tap(value => emitted.push(value)))),
+            /Unsupported aoi type:/
+        )
 
-        expect(emitted).toEqual([])
+        assert.deepEqual(emitted, [])
     })
 })
 
@@ -47,15 +58,16 @@ describe('toGeometry$ with an ASSET_BOUNDS aoi', () => {
         const aoi = {type: 'ASSET_BOUNDS'}
         const emitted = []
 
-        await expect(
-            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value))))
-        ).rejects.toThrow(/source.image context/i)
+        await assert.rejects(
+            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value)))),
+            /source.image context/i
+        )
 
-        expect(emitted).toEqual([])
+        assert.deepEqual(emitted, [])
     })
 
     it('still resolves the aoi types it does support', async () => {
-        expect(await firstValueFrom(toGeometry$(null))).toBe(null)
+        assert.equal(await firstValueFrom(toGeometry$(null)), null)
     })
 })
 
@@ -64,10 +76,11 @@ describe('toGeometry$ with an unrecognised aoi', () => {
         const aoi = {type: 'SOMETHING_NEW'}
         const emitted = []
 
-        await expect(
-            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value))))
-        ).rejects.toThrow(/SOMETHING_NEW/)
+        await assert.rejects(
+            firstValueFrom(toGeometry$(aoi).pipe(tap(value => emitted.push(value)))),
+            /SOMETHING_NEW/
+        )
 
-        expect(emitted).toEqual([])
+        assert.deepEqual(emitted, [])
     })
 })

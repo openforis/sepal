@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {containerName} from './containerSpec.js'
 import {ContainerSupervisor} from './containerSupervisor.js'
 import {createTask, State} from './task.js'
@@ -10,8 +13,8 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect(docker.containers.get('task.alice.t-1')).toMatchObject({running: true, taskId: 't-1'})
-        expect(await repository.getTask(task.id)).toMatchObject({state: State.ACTIVE})
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-1'), {running: true, taskId: 't-1'})
+        assert.partialDeepStrictEqual(await repository.getTask(task.id), {state: State.ACTIVE})
     })
 
     test('no more containers run than allowed; the oldest pending task goes first', async () => {
@@ -21,8 +24,8 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect([...docker.containers.keys()]).toEqual(['task.alice.t-1'])
-        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+        assert.deepEqual([...docker.containers.keys()], ['task.alice.t-1'])
+        assert.equal((await repository.getTask('t-2')).state, State.PENDING)
     })
 
     test('exports to SEPAL start like any other export, up to the limit', async () => {
@@ -33,7 +36,7 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.alice.t-2'])
+        assert.deepEqual([...docker.containers.keys()].sort(), ['task.alice.t-1', 'task.alice.t-2'])
     })
 
     test('a task whose container cannot be started fails', async () => {
@@ -44,8 +47,11 @@ describe('launching', () => {
         await supervisor.dispatch()
 
         const task = await repository.getTask('t-1')
-        expect(task.state).toBe(State.FAILED)
-        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.launchFailed'})
+        assert.equal(task.state, State.FAILED)
+        assert.partialDeepStrictEqual(
+            JSON.parse(task.statusDescription),
+            {messageKey: 'tasks.status.launchFailed'}
+        )
     })
 
     test('a task whose container cannot be started does not take a slot from the next pending task', async () => {
@@ -56,8 +62,8 @@ describe('launching', () => {
 
         await supervisor.dispatch()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
+        assert.equal((await repository.getTask('t-1')).state, State.FAILED)
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-2'), {running: true})
     })
 })
 
@@ -71,12 +77,12 @@ describe('collecting', () => {
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect(await repository.getTask('t-1')).toMatchObject({
+        assert.partialDeepStrictEqual(await repository.getTask('t-1'), {
             state: State.COMPLETED,
             statusDescription: JSON.stringify({messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'})
         })
-        expect(docker.containers.has('task.alice.t-1')).toBe(false)
-        expect(workspace.removed).toEqual(['t-1'])
+        assert.equal(docker.containers.has('task.alice.t-1'), false)
+        assert.deepEqual(workspace.removed, ['t-1'])
     })
 
     test('a container that exits without a result fails its task', async () => {
@@ -88,8 +94,11 @@ describe('collecting', () => {
         await supervisor.idle()
 
         const task = await repository.getTask('t-1')
-        expect(task.state).toBe(State.FAILED)
-        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.exitedUnexpectedly'})
+        assert.equal(task.state, State.FAILED)
+        assert.partialDeepStrictEqual(
+            JSON.parse(task.statusDescription),
+            {messageKey: 'tasks.status.exitedUnexpectedly'}
+        )
     })
 
     test('a container being cancelled that exits without a result is canceled', async () => {
@@ -101,7 +110,7 @@ describe('collecting', () => {
         docker.exit('task.alice.t-1', 143)
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELED)
     })
 
     test('a container stopped while its task was not being cancelled was interrupted, whatever its result says', async () => {
@@ -114,8 +123,11 @@ describe('collecting', () => {
         await supervisor.idle()
 
         const task = await repository.getTask('t-1')
-        expect(task.state).toBe(State.FAILED)
-        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.interrupted'})
+        assert.equal(task.state, State.FAILED)
+        assert.partialDeepStrictEqual(
+            JSON.parse(task.statusDescription),
+            {messageKey: 'tasks.status.interrupted'}
+        )
     })
 
     test('a container being cancelled that reports itself canceled is canceled', async () => {
@@ -128,7 +140,7 @@ describe('collecting', () => {
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELED)
     })
 
     test('a finished container frees its slot for the next pending task', async () => {
@@ -140,7 +152,7 @@ describe('collecting', () => {
         docker.exit('task.alice.t-1', 1)
         await supervisor.idle()
 
-        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-2'), {running: true})
     })
 })
 
@@ -156,7 +168,7 @@ describe('reconciling after a restart', () => {
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
+        assert.equal((await repository.getTask('t-1')).state, State.COMPLETED)
     })
 
     test('an exited container found after a restart is collected', async () => {
@@ -167,8 +179,8 @@ describe('reconciling after a restart', () => {
 
         await newSupervisor().reconcile()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(docker.containers.has('task.alice.t-1')).toBe(false)
+        assert.equal((await repository.getTask('t-1')).state, State.FAILED)
+        assert.equal(docker.containers.has('task.alice.t-1'), false)
     })
 
     test('an active task without a container was interrupted by a server restart', async () => {
@@ -178,8 +190,11 @@ describe('reconciling after a restart', () => {
         await newSupervisor().reconcile()
 
         const task = await repository.getTask('t-1')
-        expect(task.state).toBe(State.FAILED)
-        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.interrupted'})
+        assert.equal(task.state, State.FAILED)
+        assert.partialDeepStrictEqual(
+            JSON.parse(task.statusDescription),
+            {messageKey: 'tasks.status.interrupted'}
+        )
     })
 
     test('a canceling task without a container is canceled', async () => {
@@ -188,7 +203,7 @@ describe('reconciling after a restart', () => {
 
         await newSupervisor().reconcile()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELED)
     })
 
     test('a container whose wait was interrupted is watched again', async () => {
@@ -204,7 +219,7 @@ describe('reconciling after a restart', () => {
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.COMPLETED)
+        assert.equal((await repository.getTask('t-1')).state, State.COMPLETED)
     })
 
     test('a container no task is running in is removed', async () => {
@@ -213,7 +228,7 @@ describe('reconciling after a restart', () => {
 
         await newSupervisor().reconcile()
 
-        expect(docker.containers.has('task.alice.gone')).toBe(false)
+        assert.equal(docker.containers.has('task.alice.gone'), false)
     })
 
     test('a container without a task id is removed, and does not stop the rest of the reconcile', async () => {
@@ -224,7 +239,7 @@ describe('reconciling after a restart', () => {
 
         await newSupervisor().reconcile()
 
-        expect([...docker.containers.keys()]).toEqual([])
+        assert.deepEqual([...docker.containers.keys()], [])
     })
 
     test('reconcile does not fail a task whose launch is in progress', async () => {
@@ -238,7 +253,7 @@ describe('reconciling after a restart', () => {
         docker.releaseRun()
         await Promise.all([launch, reconcile])
 
-        expect((await repository.getTask('t-1')).state).toBe(State.ACTIVE)
+        assert.equal((await repository.getTask('t-1')).state, State.ACTIVE)
     })
 })
 
@@ -253,9 +268,9 @@ describe('timeouts', () => {
         await supervisor.idle()
 
         const task = await repository.getTask('t-1')
-        expect(task.state).toBe(State.FAILED)
-        expect(JSON.parse(task.statusDescription)).toMatchObject({messageKey: 'tasks.status.stalled'})
-        expect(docker.killed).toEqual(['task.alice.t-1'])
+        assert.equal(task.state, State.FAILED)
+        assert.partialDeepStrictEqual(JSON.parse(task.statusDescription), {messageKey: 'tasks.status.stalled'})
+        assert.deepEqual(docker.killed, ['task.alice.t-1'])
     })
 
     test('a cancellation the container does not finish in time is forced', async () => {
@@ -268,8 +283,8 @@ describe('timeouts', () => {
         await supervisor.enforceTimeouts()
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.CANCELED)
-        expect(docker.killed).toEqual(['task.alice.t-1'])
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELED)
+        assert.deepEqual(docker.killed, ['task.alice.t-1'])
     })
 })
 
@@ -285,8 +300,8 @@ describe('starting', () => {
         await supervisor.enforceTimeouts()
         supervisor.stop()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.CANCELING)
-        expect(docker.killed).toEqual([])
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELING)
+        assert.deepEqual(docker.killed, [])
     })
 })
 
@@ -299,8 +314,8 @@ describe('per-user limit', () => {
 
         await supervisor.dispatch()
 
-        expect([...docker.containers.keys()].sort()).toEqual(['task.alice.t-1', 'task.bob.t-3'])
-        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+        assert.deepEqual([...docker.containers.keys()].sort(), ['task.alice.t-1', 'task.bob.t-3'])
+        assert.equal((await repository.getTask('t-2')).state, State.PENDING)
     })
 
     test('a finished task lets the same user\'s next one start', async () => {
@@ -312,7 +327,7 @@ describe('per-user limit', () => {
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect(docker.containers.get('task.alice.t-2')).toMatchObject({running: true})
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-2'), {running: true})
     })
 
     test('tasks still running from before a restart count towards the limit', async () => {
@@ -323,7 +338,7 @@ describe('per-user limit', () => {
 
         await newSupervisor().dispatch()
 
-        expect((await repository.getTask('t-2')).state).toBe(State.PENDING)
+        assert.equal((await repository.getTask('t-2')).state, State.PENDING)
     })
 })
 
@@ -331,8 +346,8 @@ describe('local processing slots', () => {
     test('an active task is granted a free slot, and refused once all are taken', async () => {
         const {supervisor, repository} = await withRunningTasks({maxConcurrentLocalProcessing: 1})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).not.toBeNull()
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+        assert.notEqual(await supervisor.requestSlot(await repository.getTask('t-1')), null)
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a task asking again keeps its slot, under a new grant', async () => {
@@ -342,9 +357,9 @@ describe('local processing slots', () => {
 
         const again = await supervisor.requestSlot(await repository.getTask('t-1'))
 
-        expect(again).not.toBeNull()
-        expect(again).not.toEqual(first)
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+        assert.notEqual(again, null)
+        assert.notDeepEqual(again, first)
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a release naming an earlier grant leaves the newer one in place', async () => {
@@ -355,7 +370,7 @@ describe('local processing slots', () => {
 
         await supervisor.releaseSlot(await repository.getTask('t-1'), earlier)
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a release of a slot no longer held keeps a waiting task\'s place in line', async () => {
@@ -372,15 +387,15 @@ describe('local processing slots', () => {
         await supervisor.releaseSlot(await repository.getTask('t-2'), new Date(0))
         await supervisor.releaseSlot(await repository.getTask('t-1'), held)
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-3'))).toBeNull()
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-3')), null)
+        assert.notEqual(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a task that is not active is refused', async () => {
         const {supervisor, repository} = await withRunningTasks()
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-1'))).toBeNull()
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-1')), null)
     })
 
     test('a released slot goes to the next task', async () => {
@@ -390,7 +405,7 @@ describe('local processing slots', () => {
 
         await supervisor.releaseSlot(await repository.getTask('t-1'), held)
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
+        assert.notEqual(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a task cancelled while holding a slot keeps it until its container exits', async () => {
@@ -398,11 +413,11 @@ describe('local processing slots', () => {
         await supervisor.requestSlot(await repository.getTask('t-1'))
         await repository.transition(await repository.getTask('t-1'), {from: [State.ACTIVE], to: State.CANCELING})
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).toBeNull()
+        assert.equal(await supervisor.requestSlot(await repository.getTask('t-2')), null)
         docker.exit('task.alice.t-1', 0)
         await supervisor.idle()
 
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
+        assert.notEqual(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a stalled container that is killed frees its slot', async () => {
@@ -414,8 +429,8 @@ describe('local processing slots', () => {
         await supervisor.enforceTimeouts()
         await supervisor.idle()
 
-        expect((await repository.getTask('t-1')).state).toBe(State.FAILED)
-        expect(await supervisor.requestSlot(await repository.getTask('t-2'))).not.toBeNull()
+        assert.equal((await repository.getTask('t-1')).state, State.FAILED)
+        assert.notEqual(await supervisor.requestSlot(await repository.getTask('t-2')), null)
     })
 
     test('a slot request or release that fails reaches the caller, so the container can try again', async () => {
@@ -427,8 +442,11 @@ describe('local processing slots', () => {
             throw new Error('connection lost')
         }
 
-        await expect(supervisor.requestSlot(await repository.getTask('t-1'))).rejects.toThrow('connection lost')
-        await expect(supervisor.releaseSlot(await repository.getTask('t-1'), new Date(0))).rejects.toThrow('connection lost')
+        await assert.rejects(supervisor.requestSlot(await repository.getTask('t-1')), /connection lost/)
+        await assert.rejects(
+            supervisor.releaseSlot(await repository.getTask('t-1'), new Date(0)),
+            /connection lost/
+        )
     })
 
     test('slots held before a restart still count', async () => {
@@ -438,7 +456,7 @@ describe('local processing slots', () => {
         const restarted = newSupervisor()
         await restarted.reconcile()
 
-        expect(await restarted.requestSlot(await repository.getTask('t-2'))).toBeNull()
+        assert.equal(await restarted.requestSlot(await repository.getTask('t-2')), null)
     })
 })
 
@@ -450,7 +468,7 @@ describe('stopping', () => {
 
         await supervisor.stopContainer(await repository.getTask('t-1'))
 
-        expect(docker.stopped).toEqual([{name: 'task.alice.t-1', seconds: 120}])
+        assert.deepEqual(docker.stopped, [{name: 'task.alice.t-1', seconds: 120}])
     })
 
     test('a container whose launch is in progress is stopped once it runs', async () => {
@@ -464,7 +482,7 @@ describe('stopping', () => {
         docker.releaseRun()
         await Promise.all([launch, stopping])
 
-        expect(docker.stopped).toEqual([{name: 'task.alice.t-1', seconds: 120}])
+        assert.deepEqual(docker.stopped, [{name: 'task.alice.t-1', seconds: 120}])
     })
 })
 

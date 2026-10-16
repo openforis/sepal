@@ -1,45 +1,63 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, describe, mock, test} from 'node:test'
+
 import {lastValueFrom, toArray} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'
+import {callsOf} from '#sepal/testSupport/mock'
 
-const download = jest.fn()
-const processCSV = jest.fn()
-jest.unstable_mockModule('./filesystem.js', () => ({download}))
-jest.unstable_mockModule('./csv.js', () => ({processCSV}))
+const download = mock.fn()
+const processCSV = mock.fn()
+mock.module('./filesystem.js', {
+    exports: {
+        download
+    }
+})
+mock.module('./csv.js', {
+    exports: {
+        processCSV
+    }
+})
 const {downloadLandsat$, loadLandsat$} = await import('./landsatCsv.js')
 const {downloadSentinel2$} = await import('./sentinel2Csv.js')
 
 describe('CSV source subscriptions', () => {
     beforeEach(() => {
         configureNoLogging()
-        jest.useFakeTimers()
-        download.mockReset()
-        processCSV.mockReset()
+        mock.timers.enable({apis: ['setTimeout', 'setInterval', 'Date']})
+        download.mock.resetCalls()
+        download.mock.mockImplementation(() => undefined)
+        processCSV.mock.resetCalls()
+        processCSV.mock.mockImplementation(() => undefined)
     })
 
-    afterEach(() => jest.useRealTimers())
+    afterEach(() => mock.timers.reset())
 
-    test.each([
+    for (const [name, download$, collections] of [
         ['Landsat', downloadLandsat$, ['landsat-tm', 'landsat-etm', 'landsat-ot']],
         ['Sentinel-2', downloadSentinel2$, ['sentinel-2']]
-    ])('%s defers downloads, starts its collections together and emits success once', async (_name, download$, collections) => {
-        const pending = Promise.withResolvers()
-        const started = []
-        download.mockImplementation(({collection}) => {
-            started.push(collection)
-            return pending.promise
-        })
+    ]) {
+        test(
+            `${name} defers downloads, starts its collections together and emits success once`,
+            async () => {
+                const pending = Promise.withResolvers()
+                const started = []
+                download.mock.mockImplementation(({collection}) => {
+                    started.push(collection)
+                    return pending.promise
+                })
 
-        const source$ = download$()
-        expect(started).toEqual([])
-        const completion = lastValueFrom(source$.pipe(toArray()))
-        expect(started).toEqual(collections)
-        pending.resolve()
-        const emissions = await completion
+                const source$ = download$()
+                assert.deepEqual(started, [])
+                const completion = lastValueFrom(source$.pipe(toArray()))
+                assert.deepEqual(started, collections)
+                pending.resolve()
+                const emissions = await completion
 
-        expect(emissions).toEqual([undefined])
-    })
+                assert.deepEqual(emissions, [undefined])
+            }
+        )
+    }
 
     test('Landsat drains the remaining downloads before reporting a collection failure', async () => {
         const pending = Promise.withResolvers()
@@ -47,40 +65,42 @@ describe('CSV source subscriptions', () => {
         const failed = Promise.withResolvers()
         const error = new Error('Download failed')
         const downloads = {'landsat-tm': failed.promise, 'landsat-etm': pending.promise, 'landsat-ot': last.promise}
-        download.mockImplementation(({collection}) => downloads[collection])
-        const failure = jest.fn()
+        download.mock.mockImplementation(({collection}) => downloads[collection])
+        const failure = mock.fn()
 
         const completion = lastValueFrom(downloadLandsat$()).catch(failure)
         failed.reject(error)
-        await jest.advanceTimersByTimeAsync(0)
-        expect(failure).not.toHaveBeenCalled()
+        await settle()
+        assert.equal(failure.mock.callCount(), 0)
         pending.resolve()
-        await jest.advanceTimersByTimeAsync(0)
-        expect(failure).not.toHaveBeenCalled()
+        await settle()
+        assert.equal(failure.mock.callCount(), 0)
         last.resolve()
         await completion
 
-        expect(failure).toHaveBeenCalledWith(error)
+        assert.deepEqual(callsOf(failure), [[error]])
     })
 
     test('cancellation lets the active Landsat CSV operation finish without starting another collection or emitting checkpoints', async () => {
         const pending = Promise.withResolvers()
         const started = []
         const emissions = []
-        processCSV.mockImplementation(({collection}) => {
+        processCSV.mock.mockImplementation(({collection}) => {
             started.push(collection)
             return pending.promise
         })
         const source$ = loadLandsat$({database: {}, timestamp: new Date()})
-        expect(started).toEqual([])
+        assert.deepEqual(started, [])
 
         const subscription = source$.subscribe(checkpoints => emissions.push(checkpoints))
-        expect(started).toEqual(['landsat-tm'])
+        assert.deepEqual(started, ['landsat-tm'])
         subscription.unsubscribe()
         pending.resolve({LANDSAT_5: '2021-07-15T00:00:00.000Z'})
         await pending.promise
 
-        expect(started).toEqual(['landsat-tm'])
-        expect(emissions).toEqual([])
+        assert.deepEqual(started, ['landsat-tm'])
+        assert.deepEqual(emissions, [])
     })
 })
+
+const settle = () => new Promise(resolve => setImmediate(resolve))

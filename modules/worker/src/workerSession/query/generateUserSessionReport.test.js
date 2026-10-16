@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {generateUserSessionReport} from './generateUserSessionReport.js'
 
 const session = overrides => ({
@@ -24,8 +27,8 @@ describe('generateUserSessionReport', () => {
             apps: new Map([['s1', [{path: '/sandbox/shiny/foo', label: 'Foo'}]]]),
             usage: new Map([['s1', {cpuPct: 12, netBytesPerS: 300}]]),
         }))
-        expect(report.sessions[0].apps).toEqual([{path: '/sandbox/shiny/foo', label: 'Foo'}])
-        expect(report.sessions[0].usage).toEqual({cpuPct: 12, netBytesPerS: 300})
+        assert.deepEqual(report.sessions[0].apps, [{path: '/sandbox/shiny/foo', label: 'Foo'}])
+        assert.deepEqual(report.sessions[0].usage, {cpuPct: 12, netBytesPerS: 300})
     })
 
     // Both live in the sampler's in-memory registries; the report is the only path by which they
@@ -36,15 +39,15 @@ describe('generateUserSessionReport', () => {
             terminals: {get: id => id === 's1' ? 2 : 0},
             verdicts: {get: id => id === 's1' ? 'busy' : 'unknown'},
         }))
-        expect(report.sessions[0].terminals).toBe(2)
-        expect(report.sessions[0].verdict).toBe('busy')
+        assert.equal(report.sessions[0].terminals, 2)
+        assert.equal(report.sessions[0].verdict, 'busy')
     })
 
     // The registries are optional collaborators (a worker started without the sampler still serves
     // the report), and their absence must read as "nothing observed" rather than as a verdict.
     it('reports no terminals and an unknown verdict without the sampler registries', async () => {
         const report = await generateUserSessionReport(query, deps({sessions: [session()]}))
-        expect(report.sessions[0].terminals).toBe(0)
-        expect(report.sessions[0].verdict).toBe('unknown')
+        assert.equal(report.sessions[0].terminals, 0)
+        assert.equal(report.sessions[0].verdict, 'unknown')
     })
 })

@@ -1,16 +1,20 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, mock, test} from 'node:test'
+
 import {lastValueFrom} from 'rxjs'
 
 // What a Drive folder listing returns. The Drive API is substituted by an in-memory tree.
 
 const state = {}
 
-jest.unstable_mockModule('googleapis', () => ({
-    google: {
-        auth: {OAuth2: class {setCredentials() {}}},
-        drive: () => ({files: {list: async params => ({data: list(params)})}})
+mock.module('googleapis', {
+    exports: {
+        google: {
+            auth: {OAuth2: class {setCredentials() {}}},
+            drive: () => ({files: {list: async params => ({data: list(params)})}})
+        }
     }
-}))
+})
 
 const {drive} = await import('#gee/jobs/ee/batch/drive')
 
@@ -33,7 +37,10 @@ test('a folder listing gathers the files of every page', async () => {
 
     const files = await lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/f1'}))
 
-    expect(files).toEqual([{id: 'a', name: 'a.tif', size: '1'}, {id: 'b', name: 'b.tif', size: '2'}])
+    assert.deepEqual(
+        files,
+        [{id: 'a', name: 'a.tif', size: '1'}, {id: 'b', name: 'b.tif', size: '2'}]
+    )
 })
 
 test('an empty folder lists no files', async () => {
@@ -41,13 +48,16 @@ test('an empty folder lists no files', async () => {
 
     const files = await lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/f1'}))
 
-    expect(files).toEqual([])
+    assert.deepEqual(files, [])
 })
 
 test('a path with an empty name in it matches no folder', async () => {
     state.pages.f1 = [{files: [{id: 'a', name: 'a.tif', size: '1'}]}]
 
-    await expect(lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/'}))).rejects.toMatchObject({statusCode: 404})
+    await assert.rejects(
+        lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/'})),
+        {statusCode: 404}
+    )
 })
 
 // A query without a name condition matches every folder under the parent, as Drive does.

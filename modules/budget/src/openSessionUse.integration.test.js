@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -13,7 +15,7 @@ describe('OpenSessionUseRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'budget_session_use', migrations: MIGRATIONS_PATH})
     })
@@ -23,7 +25,7 @@ describe('OpenSessionUseRepository', () => {
         repository = new OpenSessionUseRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('openSession', () => {
         test('records one session however often it is delivered', async () => {
@@ -32,7 +34,7 @@ describe('OpenSessionUseRepository', () => {
             await repository.openSession(aSession())
 
             const count = await repository.count()
-            expect(count).toBe(1)
+            assert.equal(count, 1)
         })
     })
 
@@ -44,8 +46,8 @@ describe('OpenSessionUseRepository', () => {
 
             const open = await repository.openSessionIds()
             const stored = await storedSession(SESSION_ID)
-            expect(open).toEqual([])
-            expect(stored.to_time.getTime()).toBe(at('07-03').getTime())
+            assert.deepEqual(open, [])
+            assert.equal(stored.to_time.getTime(), at('07-03').getTime())
         })
 
         test('leaves the user and instance type of the session it closes', async () => {
@@ -55,8 +57,8 @@ describe('OpenSessionUseRepository', () => {
 
             const stored = await storedSession(SESSION_ID)
             const count = await repository.count()
-            expect(stored).toMatchObject({username: USERNAME, instance_type: INSTANCE_TYPE})
-            expect(count).toBe(1)
+            assert.partialDeepStrictEqual(stored, {username: USERNAME, instance_type: INSTANCE_TYPE})
+            assert.equal(count, 1)
         })
 
         // WorkerSessionClosed can arrive before WorkerSessionActivated.
@@ -66,9 +68,9 @@ describe('OpenSessionUseRepository', () => {
             const count = await repository.count()
             const open = await repository.openSessionIds()
             const stored = await storedSession(SESSION_ID)
-            expect(count).toBe(1)
-            expect(open).toEqual([])
-            expect(stored.to_time.getTime()).toBe(at('07-02').getTime())
+            assert.equal(count, 1)
+            assert.deepEqual(open, [])
+            assert.equal(stored.to_time.getTime(), at('07-02').getTime())
         })
 
         test('keeps that close to one session however often it is delivered', async () => {
@@ -78,8 +80,8 @@ describe('OpenSessionUseRepository', () => {
 
             const count = await repository.count()
             const stored = await storedSession(SESSION_ID)
-            expect(count).toBe(1)
-            expect(stored.to_time.getTime()).toBe(at('07-04').getTime())
+            assert.equal(count, 1)
+            assert.equal(stored.to_time.getTime(), at('07-04').getTime())
         })
 
         test('lets a later open fill in the session it closed, keeping the close time', async () => {
@@ -89,10 +91,10 @@ describe('OpenSessionUseRepository', () => {
 
             const count = await repository.count()
             const stored = await storedSession(SESSION_ID)
-            expect(count).toBe(1)
-            expect(stored).toMatchObject({username: USERNAME, instance_type: INSTANCE_TYPE})
-            expect(stored.from_time.getTime()).toBe(at('07-01').getTime())
-            expect(stored.to_time.getTime()).toBe(at('07-02').getTime())
+            assert.equal(count, 1)
+            assert.partialDeepStrictEqual(stored, {username: USERNAME, instance_type: INSTANCE_TYPE})
+            assert.equal(stored.from_time.getTime(), at('07-01').getTime())
+            assert.equal(stored.to_time.getTime(), at('07-02').getTime())
         })
     })
 
@@ -104,13 +106,13 @@ describe('OpenSessionUseRepository', () => {
 
             const count = await repository.count()
 
-            expect(count).toBe(2)
+            assert.equal(count, 2)
         })
 
         test('counts nothing when nothing has been recorded', async () => {
             const count = await repository.count()
 
-            expect(count).toBe(0)
+            assert.equal(count, 0)
         })
     })
 
@@ -122,7 +124,7 @@ describe('OpenSessionUseRepository', () => {
 
             const open = await repository.openSessionIds()
 
-            expect(open).toEqual(['still-open'])
+            assert.deepEqual(open, ['still-open'])
         })
     })
 
@@ -135,7 +137,7 @@ describe('OpenSessionUseRepository', () => {
 
             const users = await repository.usersWithOpenSessions()
 
-            expect(users).toEqual([USERNAME])
+            assert.deepEqual(users, [USERNAME])
         })
     })
 
@@ -147,7 +149,7 @@ describe('OpenSessionUseRepository', () => {
             await repository.removeUser(USERNAME)
 
             const open = await repository.openSessionIds()
-            expect(open).toEqual(['another'])
+            assert.deepEqual(open, ['another'])
         })
     })
 

@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -15,7 +17,7 @@ describe('SceneRepository', () => {
     let repository
     let now
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'scene_metadata', migrations: MIGRATIONS_PATH})
     })
@@ -26,7 +28,7 @@ describe('SceneRepository', () => {
         repository = new SceneRepository(testDb.db, () => now)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('findScenesInSceneArea', () => {
         test('reports the scenes of that area alone', async () => {
@@ -35,7 +37,7 @@ describe('SceneRepository', () => {
 
             const found = await repository.findScenesInSceneArea(aQuery())
 
-            expect(found.map(({id}) => id)).toEqual(['here'])
+            assert.deepEqual(found.map(({id}) => id), ['here'])
         })
 
         test('reports a scene as the client describes it', async () => {
@@ -46,7 +48,9 @@ describe('SceneRepository', () => {
 
             const [scene] = await repository.findScenesInSceneArea(aQuery())
 
-            expect(scene).toEqual({
+            const {updateTime, ...rest} = scene
+            assert.ok(updateTime instanceof Date)
+            assert.deepEqual(rest, {
                 id: 'SC001',
                 source: SOURCE,
                 sceneAreaId: SCENE_AREA_ID,
@@ -55,7 +59,6 @@ describe('SceneRepository', () => {
                 cloudCover: 15,
                 sunAzimuth: 130.5,
                 sunElevation: 55.25,
-                updateTime: expect.any(Date),
                 cloud_cover: 15,
             })
         })
@@ -67,7 +70,7 @@ describe('SceneRepository', () => {
 
             const found = await repository.findScenesInSceneArea(aQuery({dataSets: ['LANDSAT_8', 'LANDSAT_9']}))
 
-            expect(found.map(({id}) => id).sort()).toEqual(['also-asked-for', 'asked-for'])
+            assert.deepEqual(found.map(({id}) => id).sort(), ['also-asked-for', 'asked-for'])
         })
 
         // Every scene here is mid-season and long settled, so the requested years are the only thing
@@ -80,7 +83,7 @@ describe('SceneRepository', () => {
 
             const found = await repository.findScenesInSceneArea(aQuery())
 
-            expect(found.map(({id}) => id)).toEqual(['within'])
+            assert.deepEqual(found.map(({id}) => id), ['within'])
         })
 
         // Metadata for a scene keeps arriving for days after it was taken, so the most recent ten days
@@ -93,7 +96,7 @@ describe('SceneRepository', () => {
                 fromDate: '2021-01-01', toDate: '2021-12-31', targetDayOfYear: 260
             }))
 
-            expect(found.map(({id}) => id)).toEqual(['settled'])
+            assert.deepEqual(found.map(({id}) => id), ['settled'])
         })
 
         describe('the season', () => {
@@ -104,7 +107,7 @@ describe('SceneRepository', () => {
 
                 const found = await repository.findScenesInSceneArea(aQuery())
 
-                expect(found.map(({id}) => id)).toEqual(['in-season'])
+                assert.deepEqual(found.map(({id}) => id), ['in-season'])
             })
 
             // A season running from November to February is two ranges, not one.
@@ -117,7 +120,7 @@ describe('SceneRepository', () => {
                     fromDate: '2018-11-01', toDate: '2021-02-28', targetDayOfYear: 350
                 }))
 
-                expect(found.map(({id}) => id).sort()).toEqual(['january', 'november'])
+                assert.deepEqual(found.map(({id}) => id).sort(), ['january', 'november'])
             })
         })
 
@@ -129,7 +132,7 @@ describe('SceneRepository', () => {
 
                 const found = await repository.findScenesInSceneArea(aQuery({targetDayOfYearWeight: 0}))
 
-                expect(found.map(({id}) => id)).toEqual(['clear', 'hazy', 'cloudy'])
+                assert.deepEqual(found.map(({id}) => id), ['clear', 'hazy', 'cloudy'])
             })
 
             test('prefers the scene nearest the target date when only the date counts', async () => {
@@ -138,7 +141,7 @@ describe('SceneRepository', () => {
 
                 const found = await repository.findScenesInSceneArea(aQuery({targetDayOfYearWeight: 1}))
 
-                expect(found.map(({id}) => id)).toEqual(['near', 'far'])
+                assert.deepEqual(found.map(({id}) => id), ['near', 'far'])
             })
 
             // Half the weight on each: a scene 74 days off the target loses to one as clear as it is
@@ -150,7 +153,7 @@ describe('SceneRepository', () => {
 
                 const found = await repository.findScenesInSceneArea(aQuery({targetDayOfYearWeight: 0.5}))
 
-                expect(found.map(({id}) => id)).toEqual(['on-target', 'off-target', 'very-cloudy'])
+                assert.deepEqual(found.map(({id}) => id), ['on-target', 'off-target', 'very-cloudy'])
             })
 
             test('breaks a tie in score by distance from the target date', async () => {
@@ -159,7 +162,7 @@ describe('SceneRepository', () => {
 
                 const found = await repository.findScenesInSceneArea(aQuery({targetDayOfYearWeight: 0}))
 
-                expect(found.map(({id}) => id)).toEqual(['nearer', 'further'])
+                assert.deepEqual(found.map(({id}) => id), ['nearer', 'further'])
             })
 
             // The distance is measured around the year, so a scene late in December is close to a target
@@ -173,7 +176,7 @@ describe('SceneRepository', () => {
                     targetDayOfYearWeight: 1
                 }))
 
-                expect(found.map(({id}) => id)).toEqual(['late-december', 'february'])
+                assert.deepEqual(found.map(({id}) => id), ['late-december', 'february'])
             })
         })
     })
@@ -186,15 +189,15 @@ describe('SceneRepository', () => {
 
             const byArea = await repository.findBestScenes(aBestScenesQuery())
 
-            expect(Object.keys(byArea).sort()).toEqual([SCENE_AREA_ID, ANOTHER_SCENE_AREA_ID].sort())
-            expect(byArea[SCENE_AREA_ID].map(({id}) => id)).toEqual(['first-clear'])
-            expect(byArea[ANOTHER_SCENE_AREA_ID].map(({id}) => id)).toEqual(['second-clear'])
+            assert.deepEqual(Object.keys(byArea).sort(), [SCENE_AREA_ID, ANOTHER_SCENE_AREA_ID].sort())
+            assert.deepEqual(byArea[SCENE_AREA_ID].map(({id}) => id), ['first-clear'])
+            assert.deepEqual(byArea[ANOTHER_SCENE_AREA_ID].map(({id}) => id), ['second-clear'])
         })
 
         test('reports an area with no scenes as having none', async () => {
             const byArea = await repository.findBestScenes(aBestScenesQuery())
 
-            expect(byArea).toEqual({[SCENE_AREA_ID]: [], [ANOTHER_SCENE_AREA_ID]: []})
+            assert.deepEqual(byArea, {[SCENE_AREA_ID]: [], [ANOTHER_SCENE_AREA_ID]: []})
         })
 
         // Scenes are accumulated until they are jointly likely to show the ground: one scene at 5%
@@ -212,8 +215,8 @@ describe('SceneRepository', () => {
                 minScenes: 1, maxScenes: 5, cloudCoverTarget: 0.1
             }))
 
-            expect(byArea[SCENE_AREA_ID]).toHaveLength(1)
-            expect(byArea[ANOTHER_SCENE_AREA_ID]).toHaveLength(2)
+            assert.equal(byArea[SCENE_AREA_ID].length, 1)
+            assert.equal(byArea[ANOTHER_SCENE_AREA_ID].length, 2)
         })
     })
 

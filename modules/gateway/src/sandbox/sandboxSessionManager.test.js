@@ -1,4 +1,7 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock, test} from 'node:test'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createSandboxSessionManager, PORT_BY_ENDPOINT, toClientStatus} from './sandboxSessionManager.js'
 
@@ -20,7 +23,7 @@ const errorResponse = status => ({
 })
 
 // The bodies of the heartbeat POSTs, in order — `undefined` is a bare beat, which extends nothing.
-const heartbeatBodies = fetch => fetch.mock.calls
+const heartbeatBodies = fetch => callsOf(fetch)
     .filter(([url, options]) => url.includes('/session/') && options?.method === 'POST')
     .map(([, options]) => options.body)
 
@@ -36,7 +39,7 @@ const create = fetch => createSandboxSessionManager({
 // URL. Every request is recorded; an unmatched route → 404. This copes with the non-deterministic
 // call ORDER the attribution logic produces (unlike the sequential mockResolvedValueOnce style).
 const fetchStub = routes => {
-    const fn = jest.fn(async (url, options = {}) => {
+    const fn = mock.fn(async (url, options = {}) => {
         const method = options.method ?? 'GET'
         const path = url.startsWith('http://worker') ? new URL(url).pathname : url
         const key = `${method} ${path}`
@@ -60,7 +63,7 @@ const legacyAppSession = ({endpoint, sessionId, host, status = 'ACTIVE'}) =>
 // Any request under the endpoint; resolveTarget attributes by path, so tests must pass a real one.
 const pathUnder = endpoint => `/api/sandbox/${endpoint}/some/path`
 
-const associateBody = fetch => fetch.mock.calls
+const associateBody = fetch => callsOf(fetch)
     .filter(([url, options]) => url.endsWith('/app') && options?.method === 'POST')
     .map(([, options]) => JSON.parse(options.body))
 
@@ -75,8 +78,8 @@ const createManager = ({fetch, defaultInstanceType = 'T3aSmall'} = {}) =>
 
 describe('toClientStatus', () => {
     test('ACTIVE → STARTED, STARTING → STARTING', () => {
-        expect(toClientStatus('ACTIVE')).toBe('STARTED')
-        expect(toClientStatus('STARTING')).toBe('STARTING')
+        assert.equal(toClientStatus('ACTIVE'), 'STARTED')
+        assert.equal(toClientStatus('STARTING'), 'STARTING')
     })
 })
 
@@ -91,12 +94,14 @@ describe('legacy endpoint start (no appPath)', () => {
 
         const result = await mgr.startApp({username: 'alice', endpoint: 'rstudio'})
 
-        expect(result).toEqual({id: 's1', status: 'STARTING'})
+        assert.deepEqual(result, {id: 's1', status: 'STARTING'})
         // The association is what survives a gateway restart — without it the binding would live
         // only here, and closed-session traffic would have nothing to attribute itself to.
-        expect(associateBody(fetch)).toEqual([{path: '/sandbox/rstudio', label: 'RStudio'}])
-        expect(mgr._cache.get('alice').get('/sandbox/rstudio'))
-            .toMatchObject({sessionId: 's1', host: 'h1', status: 'STARTING', endpoint: 'rstudio'})
+        assert.deepEqual(associateBody(fetch), [{path: '/sandbox/rstudio', label: 'RStudio'}])
+        assert.partialDeepStrictEqual(
+            mgr._cache.get('alice').get('/sandbox/rstudio'),
+            {sessionId: 's1', host: 'h1', status: 'STARTING', endpoint: 'rstudio'}
+        )
     })
 
     test('reuses the cached association without creating', async () => {
@@ -109,10 +114,13 @@ describe('legacy endpoint start (no appPath)', () => {
         const mgr = createManager({fetch})
 
         await mgr.startApp({username: 'bob', endpoint: 'shiny'})
-        fetch.mockClear()
+        fetch.mock.resetCalls()
 
-        expect(await mgr.startApp({username: 'bob', endpoint: 'shiny'})).toEqual({id: 's1', status: 'STARTED'})
-        expect(fetch).not.toHaveBeenCalled()
+        assert.deepEqual(
+            await mgr.startApp({username: 'bob', endpoint: 'shiny'}),
+            {id: 's1', status: 'STARTED'}
+        )
+        assert.equal(fetch.mock.callCount(), 0)
     })
 
     test('a cold gateway reuses the association the worker still holds', async () => {
@@ -122,14 +130,20 @@ describe('legacy endpoint start (no appPath)', () => {
         })
         const mgr = createManager({fetch})
 
-        expect(await mgr.startApp({username: 'carol', endpoint: 'jupyter'})).toEqual({id: 's9', status: 'STARTED'})
-        expect(fetch.requested('POST /sessions/instance-type/T3aSmall')).toBe(false)
-        expect(mgr._cache.get('carol').get('/sandbox/jupyter')).toMatchObject({sessionId: 's9', host: 'h9'})
+        assert.deepEqual(
+            await mgr.startApp({username: 'carol', endpoint: 'jupyter'}),
+            {id: 's9', status: 'STARTED'}
+        )
+        assert.equal(fetch.requested('POST /sessions/instance-type/T3aSmall'), false)
+        assert.partialDeepStrictEqual(
+            mgr._cache.get('carol').get('/sandbox/jupyter'),
+            {sessionId: 's9', host: 'h9'}
+        )
     })
 
     test('per-instance-type lock: concurrent starts of different endpoints create only ONE session', async () => {
         let createCalls = 0
-        const fetch = jest.fn(async (url, opts) => {
+        const fetch = mock.fn(async (url, opts) => {
             if (url.endsWith('/sessions/app-sessions')) {
                 return jsonResponse([])
             }
@@ -150,8 +164,8 @@ describe('legacy endpoint start (no appPath)', () => {
             mgr.startApp({username: 'dan', endpoint: 'shiny'}),
             mgr.startApp({username: 'dan', endpoint: 'jupyter'})
         ])
-        expect(createCalls).toBe(1)
-        expect([a.id, b.id, c.id]).toEqual(['once', 'once', 'once'])
+        assert.equal(createCalls, 1)
+        assert.deepEqual([a.id, b.id, c.id], ['once', 'once', 'once'])
     })
 })
 
@@ -168,8 +182,8 @@ describe('status', () => {
         await mgr.startApp({username: 'gia', endpoint: 'rstudio'})
 
         routes['GET /sessions/app-sessions'] = [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})]
-        expect(await mgr.status('gia', 'rstudio')).toEqual({id: 's1', status: 'STARTED'})
-        expect(mgr._cache.get('gia').get('/sandbox/rstudio')).toMatchObject({status: 'ACTIVE'})
+        assert.deepEqual(await mgr.status('gia', 'rstudio'), {id: 's1', status: 'STARTED'})
+        assert.partialDeepStrictEqual(mgr._cache.get('gia').get('/sandbox/rstudio'), {status: 'ACTIVE'})
     })
 
     test('a cached STARTING session the worker no longer knows is dropped (null status)', async () => {
@@ -181,8 +195,8 @@ describe('status', () => {
         const mgr = createManager({fetch})
         await mgr.startApp({username: 'hal', endpoint: 'rstudio'})
 
-        expect(await mgr.status('hal', 'rstudio')).toBeNull()
-        expect(mgr._cache.get('hal')).toBeUndefined()
+        assert.equal(await mgr.status('hal', 'rstudio'), null)
+        assert.equal(mgr._cache.get('hal'), undefined)
     })
 
     test('cached hit returns {id, status}', async () => {
@@ -194,10 +208,10 @@ describe('status', () => {
         })
         const mgr = createManager({fetch})
         await mgr.startApp({username: 'eve', endpoint: 'shiny'})
-        fetch.mockClear()
+        fetch.mock.resetCalls()
 
-        expect(await mgr.status('eve', 'shiny')).toEqual({id: 's1', status: 'STARTED'})
-        expect(fetch).not.toHaveBeenCalled()
+        assert.deepEqual(await mgr.status('eve', 'shiny'), {id: 's1', status: 'STARTED'})
+        assert.equal(fetch.mock.callCount(), 0)
     })
 
     test('cache-miss → worker association lookup', async () => {
@@ -207,30 +221,34 @@ describe('status', () => {
             ]
         })
         const mgr = createManager({fetch})
-        expect(await mgr.status('frank', 'rstudio')).toEqual({id: 's2', status: 'STARTING'})
+        assert.deepEqual(await mgr.status('frank', 'rstudio'), {id: 's2', status: 'STARTING'})
     })
 
     test('none → null', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': []})
         const mgr = createManager({fetch})
-        expect(await mgr.status('grace', 'rstudio')).toBeNull()
+        assert.equal(await mgr.status('grace', 'rstudio'), null)
     })
 })
 
 describe('resolveTarget', () => {
-    test.each([
+    for (const [endpoint, port] of [
         ['rstudio', 8787],
         ['shiny', 3838],
         ['jupyter', 8888]
-    ])('cached hit for %s → correct port', async (endpoint, port) => {
-        const fetch = fetchStub({
-            'GET /sessions/app-sessions': [legacyAppSession({endpoint, sessionId: 's1', host: 'the-host'})]
+    ]) {
+        test(`cached hit for ${endpoint} → correct port`, async () => {
+            const fetch = fetchStub({
+                'GET /sessions/app-sessions': [legacyAppSession({endpoint, sessionId: 's1', host: 'the-host'})]
+            })
+            const mgr = createManager({fetch})
+            assert.deepEqual(
+                await mgr.resolveTarget('h', endpoint, pathUnder(endpoint)),
+                {host: 'the-host', port, sessionId: 's1'}
+            )
+            assert.equal(PORT_BY_ENDPOINT[endpoint], port)
         })
-        const mgr = createManager({fetch})
-        expect(await mgr.resolveTarget('h', endpoint, pathUnder(endpoint)))
-            .toEqual({host: 'the-host', port, sessionId: 's1'})
-        expect(PORT_BY_ENDPOINT[endpoint]).toBe(port)
-    })
+    }
 
     test('a restarted gateway resolves a legacy binding from the worker', async () => {
         // The whole point of associating the legacy start: an empty cache is not an empty answer.
@@ -238,14 +256,16 @@ describe('resolveTarget', () => {
             'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'shiny', sessionId: 's3', host: 'remote'})]
         })
         const mgr = createManager({fetch})
-        expect(await mgr.resolveTarget('ivan', 'shiny', pathUnder('shiny')))
-            .toEqual({host: 'remote', port: 3838, sessionId: 's3'})
+        assert.deepEqual(
+            await mgr.resolveTarget('ivan', 'shiny', pathUnder('shiny')),
+            {host: 'remote', port: 3838, sessionId: 's3'}
+        )
     })
 
     test('none → null', async () => {
-        const fetch = jest.fn().mockResolvedValueOnce(jsonResponse([]))
+        const fetch = mock.fn(() => undefined, async () => jsonResponse([]), {times: 1})
         const mgr = create(fetch)
-        expect(await mgr.resolveTarget('judy', 'shiny')).toBeNull()
+        assert.equal(await mgr.resolveTarget('judy', 'shiny'), null)
     })
 
     test('endpoint never bound → null, not an unrelated open session of the same user', async () => {
@@ -258,7 +278,10 @@ describe('resolveTarget', () => {
         })
         const mgr = createManager({fetch})
 
-        expect(await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/lab/api/status')).toBeNull()
+        assert.equal(
+            await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/lab/api/status'),
+            null
+        )
     })
 
     test('a kernel websocket on a cold gateway probes the hosts the worker knows', async () => {
@@ -275,15 +298,17 @@ describe('resolveTarget', () => {
         })
         const mgr = createManager({fetch})
 
-        expect(await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1/channels'))
-            .toEqual({host: 'host-b', port: 8888, sessionId: 's-b'})
+        assert.deepEqual(
+            await mgr.resolveTarget('admin', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1/channels'),
+            {host: 'host-b', port: 8888, sessionId: 's-b'}
+        )
     })
 
     test('unknown endpoint → null (no worker call)', async () => {
-        const fetch = jest.fn()
+        const fetch = mock.fn()
         const mgr = create(fetch)
-        expect(await mgr.resolveTarget('ken', 'bogus')).toBeNull()
-        expect(fetch).not.toHaveBeenCalled()
+        assert.equal(await mgr.resolveTarget('ken', 'bogus'), null)
+        assert.equal(fetch.mock.callCount(), 0)
     })
 })
 
@@ -297,13 +322,13 @@ describe('heartbeat', () => {
         })
         const mgr = createManager({fetch})
         await mgr.status('leo', 'rstudio')
-        fetch.mockClear()
+        fetch.mock.resetCalls()
 
         await mgr.heartbeatOnce()
-        expect(fetch).toHaveBeenCalledTimes(1)
-        expect(fetch.mock.calls[0][0]).toBe('http://worker/sessions/session/s1')
-        expect(fetch.mock.calls[0][1].method).toBe('POST')
-        expect(mgr._cache.get('leo').get('/sandbox/rstudio').status).toBe('ACTIVE')
+        assert.equal(fetch.mock.callCount(), 1)
+        assert.equal(fetch.mock.calls[0].arguments[0], 'http://worker/sessions/session/s1')
+        assert.equal(fetch.mock.calls[0].arguments[1].method, 'POST')
+        assert.equal(mgr._cache.get('leo').get('/sandbox/rstudio').status, 'ACTIVE')
     })
 
     test('dedupes multiple endpoints sharing one session into a single heartbeat', async () => {
@@ -317,11 +342,11 @@ describe('heartbeat', () => {
         const mgr = createManager({fetch})
         await mgr.status('mia', 'rstudio')
         await mgr.status('mia', 'shiny')
-        fetch.mockClear()
+        fetch.mock.resetCalls()
 
         await mgr.heartbeatOnce()
-        const hbCalls = fetch.mock.calls.filter(c => c[0].includes('/session/'))
-        expect(hbCalls).toHaveLength(1)
+        const hbCalls = callsOf(fetch).filter(c => c[0].includes('/session/'))
+        assert.equal(hbCalls.length, 1)
     })
 
     // THIS TEST IS THE FILTER'S GUARANTEE. JupyterLab and RStudio poll their backends
@@ -336,9 +361,9 @@ describe('heartbeat', () => {
         await mgr.status('leo', 'rstudio')
 
         const target = await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
-        expect(target).toEqual({host: 'h1', port: PORT_BY_ENDPOINT.rstudio, sessionId: 's1'})
+        assert.deepEqual(target, {host: 'h1', port: PORT_BY_ENDPOINT.rstudio, sessionId: 's1'})
         await mgr.heartbeatOnce()
-        expect(heartbeatBodies(fetch)).toEqual([undefined])
+        assert.deepEqual(heartbeatBodies(fetch), [undefined])
     })
 
     test('carries interaction only after the GUI reports one, then resets', async () => {
@@ -351,16 +376,19 @@ describe('heartbeat', () => {
 
         // 1) nothing reported yet → bodiless heartbeat
         await mgr.heartbeatOnce()
-        expect(heartbeatBodies(fetch)).toEqual([undefined])
+        assert.deepEqual(heartbeatBodies(fetch), [undefined])
 
         // 2) the GUI observed real input in an app iframe → next heartbeat carries it
         mgr.recordInteraction({username: 'leo', sessionId: 's1'})
         await mgr.heartbeatOnce()
-        expect(heartbeatBodies(fetch)).toEqual([undefined, JSON.stringify({interaction: true})])
+        assert.deepEqual(heartbeatBodies(fetch), [undefined, JSON.stringify({interaction: true})])
 
         // 3) no further input → bodiless again
         await mgr.heartbeatOnce()
-        expect(heartbeatBodies(fetch)).toEqual([undefined, JSON.stringify({interaction: true}), undefined])
+        assert.deepEqual(
+            heartbeatBodies(fetch),
+            [undefined, JSON.stringify({interaction: true}), undefined]
+        )
     })
 
     describe('the observable declaration (§4c rule 1)', () => {
@@ -382,7 +410,7 @@ describe('heartbeat', () => {
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
             await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
-            expect(heartbeatBodies(fetch)).toEqual([JSON.stringify({interaction: true})])
+            assert.deepEqual(heartbeatBodies(fetch), [JSON.stringify({interaction: true})])
         })
 
         // The default with NO report is observable — a deliberate exception to fail-open, chosen
@@ -392,7 +420,7 @@ describe('heartbeat', () => {
             const {fetch, mgr} = await setup()
             await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
-            expect(heartbeatBodies(fetch)).toEqual([undefined])
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
         })
 
         test('the declaration expires unless refreshed', async () => {
@@ -411,7 +439,7 @@ describe('heartbeat', () => {
             mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
             await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
-            expect(heartbeatBodies(fetch)).toEqual([undefined])
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
         })
 
         test('an observable report clears a previous unobservable one', async () => {
@@ -421,50 +449,58 @@ describe('heartbeat', () => {
             await mgr.heartbeatOnce() // consumes the interaction the observable report recorded
             await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
             await mgr.heartbeatOnce()
-            expect(heartbeatBodies(fetch)).toEqual([JSON.stringify({interaction: true}), undefined])
+            assert.deepEqual(heartbeatBodies(fetch), [JSON.stringify({interaction: true}), undefined])
         })
 
         test('a report without a session is ignored', async () => {
             const {mgr} = await setup()
-            expect(mgr.recordInteraction({username: 'leo'})).toBe(false)
-            expect(mgr.recordInteraction({sessionId: 's1'})).toBe(false)
+            assert.equal(mgr.recordInteraction({username: 'leo'}), false)
+            assert.equal(mgr.recordInteraction({sessionId: 's1'}), false)
         })
     })
 
     // A worker that is down must not look like a worker that closed the session: the cache has to
     // SURVIVE the outage so heartbeats — and any interaction they carry — resume when it is back.
     test('keeps the cache entry when the worker is unreachable', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))
+        const fetch = mock.fn(
+            () => undefined,
+            async () => jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]),
+            {times: 1}
+        )
         const mgr = create(fetch)
         await mgr.status('nina', 'shiny')
-        fetch.mockClear()
+        fetch.mock.resetCalls()
 
         // A whole outage's worth of failed beats: connection refused, then 503.
-        fetch.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+        fetch.mock.mockImplementationOnce(async () => {
+            throw new Error('ECONNREFUSED')
+        })
         await mgr.heartbeatOnce()
-        expect(mgr._cache.has('nina')).toBe(true)
-        fetch.mockResolvedValueOnce(errorResponse(503))
+        assert.equal(mgr._cache.has('nina'), true)
+        fetch.mock.mockImplementationOnce(async () => errorResponse(503))
         await mgr.heartbeatOnce()
-        expect(mgr._cache.has('nina')).toBe(true)
+        assert.equal(mgr._cache.has('nina'), true)
 
         // Worker back: the very next beat re-asserts the session and refreshes it.
-        fetch.mockResolvedValueOnce(jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
+        fetch.mock.mockImplementationOnce(async () => jsonResponse({id: 's1', host: 'h1', status: 'ACTIVE'}))
         await mgr.heartbeatOnce()
-        expect(mgr._cache.has('nina')).toBe(true)
-        expect(fetch.mock.calls.at(-1)[0]).toContain('/sessions/session/s1')
+        assert.equal(mgr._cache.has('nina'), true)
+        assert.ok(fetch.mock.calls.at(-1).arguments[0].includes('/sessions/session/s1'))
     })
 
     test('drops cache entry when worker reports 404 (closed)', async () => {
-        const fetch = jest.fn()
-            .mockResolvedValueOnce(jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]))
+        const fetch = mock.fn(
+            () => undefined,
+            async () => jsonResponse([legacyAppSession({endpoint: 'shiny', sessionId: 's1', host: 'h1'})]),
+            {times: 1}
+        )
         const mgr = create(fetch)
         await mgr.status('nina', 'shiny')
-        fetch.mockClear()
-        fetch.mockResolvedValueOnce(errorResponse(404))
+        fetch.mock.resetCalls()
+        fetch.mock.mockImplementationOnce(async () => errorResponse(404))
 
         await mgr.heartbeatOnce()
-        expect(mgr._cache.has('nina')).toBe(false)
+        assert.equal(mgr._cache.has('nina'), false)
     })
 })
 
@@ -479,10 +515,10 @@ describe('onSessionClosed', () => {
         const mgr = createManager({fetch})
         await mgr.status('oscar', 'rstudio')
         await mgr.status('oscar', 'shiny')
-        expect(mgr._cache.get('oscar').size).toBe(2)
+        assert.equal(mgr._cache.get('oscar').size, 2)
 
         mgr.onSessionClosed({username: 'oscar', sessionId: 'sX'})
-        expect(mgr._cache.has('oscar')).toBe(false)
+        assert.equal(mgr._cache.has('oscar'), false)
     })
 
     test('host fallback removes matching entries when username absent', async () => {
@@ -492,7 +528,7 @@ describe('onSessionClosed', () => {
         const mgr = createManager({fetch})
         await mgr.status('paul', 'jupyter')
         mgr.onSessionClosed({host: 'hostY'})
-        expect(mgr._cache.has('paul')).toBe(false)
+        assert.equal(mgr._cache.has('paul'), false)
     })
 
     test('does not touch a different session', async () => {
@@ -502,7 +538,7 @@ describe('onSessionClosed', () => {
         const mgr = createManager({fetch})
         await mgr.status('quinn', 'shiny')
         mgr.onSessionClosed({username: 'quinn', sessionId: 'other'})
-        expect(mgr._cache.get('quinn').size).toBe(1)
+        assert.equal(mgr._cache.get('quinn').size, 1)
     })
 })
 
@@ -514,8 +550,8 @@ describe('startApp', () => {
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', instanceType: 'M6aXlarge'})
         // the explicit instanceType pick was overridden by the live association → reused
-        expect(result).toEqual({id: 's-1', status: 'STARTED', reused: true})
-        expect(fetch.requested('POST /sessions/instance-type/M6aXlarge')).toBe(false)
+        assert.deepEqual(result, {id: 's-1', status: 'STARTED', reused: true})
+        assert.equal(fetch.requested('POST /sessions/instance-type/M6aXlarge'), false)
     })
 
     it('bare re-open of an associated app (no pick) does not flag reused', async () => {
@@ -524,7 +560,7 @@ describe('startApp', () => {
         })
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo'})
-        expect(result).toEqual({id: 's-1', status: 'STARTED'}) // exact: no reused key
+        assert.deepEqual(result, {id: 's-1', status: 'STARTED'}) // exact: no reused key
     })
 
     it('joins a chosen running session and associates the app', async () => {
@@ -535,15 +571,17 @@ describe('startApp', () => {
         })
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
-        expect(result).toEqual({id: 's-2', status: 'STARTED'})
-        expect(fetch.requested('POST /sessions/session/s-2/app')).toBe(true)
+        assert.deepEqual(result, {id: 's-2', status: 'STARTED'})
+        assert.equal(fetch.requested('POST /sessions/session/s-2/app'), true)
     })
 
     it('rejects joining a session the worker does not report', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': [], 'GET /sessions/active': []})
         const manager = createManager({fetch})
-        await expect(manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', sessionId: 'ghost'}))
-            .rejects.toMatchObject({statusCode: 404})
+        await assert.rejects(
+            manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', sessionId: 'ghost'}),
+            {statusCode: 404}
+        )
     })
 
     it('does not start the endpoint server — that is the GUI\'s explicit next step', async () => {
@@ -552,7 +590,7 @@ describe('startApp', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', endpoint: 'jupyter', appPath: '/sandbox/jupyter/foo'})
-        expect(fetch.requested('POST /sessions/session/s-1/server/jupyter')).toBe(false)
+        assert.equal(fetch.requested('POST /sessions/session/s-1/server/jupyter'), false)
     })
 
     it('creates a session of the requested type and associates the app', async () => {
@@ -563,7 +601,7 @@ describe('startApp', () => {
         })
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', instanceType: 'M6aXlarge'})
-        expect(result).toEqual({id: 's-3', status: 'STARTING'})
+        assert.deepEqual(result, {id: 's-3', status: 'STARTING'})
     })
 
     it('parallel creates for different apps with different instance types do not share a lock', async () => {
@@ -579,10 +617,10 @@ describe('startApp', () => {
             manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/small', instanceType: 'T3aSmall'}),
             manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/big', instanceType: 'M6aXlarge'})
         ])
-        expect(a).toEqual({id: 's-a', status: 'STARTING'})
-        expect(b).toEqual({id: 's-b', status: 'STARTING'})
-        expect(fetch.requested('POST /sessions/instance-type/T3aSmall')).toBe(true)
-        expect(fetch.requested('POST /sessions/instance-type/M6aXlarge')).toBe(true)
+        assert.deepEqual(a, {id: 's-a', status: 'STARTING'})
+        assert.deepEqual(b, {id: 's-b', status: 'STARTING'})
+        assert.equal(fetch.requested('POST /sessions/instance-type/T3aSmall'), true)
+        assert.equal(fetch.requested('POST /sessions/instance-type/M6aXlarge'), true)
     })
 
     it('adopts the worker-returned association when it differs from the pick, flagging reused', async () => {
@@ -597,7 +635,7 @@ describe('startApp', () => {
         })
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
-        expect(result).toEqual({id: 's-OTHER', status: 'STARTED', reused: true})
+        assert.deepEqual(result, {id: 's-OTHER', status: 'STARTED', reused: true})
     })
 })
 
@@ -608,7 +646,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/shiny/foobar', sessionId: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'shiny', '/api/sandbox/shiny/foobar/x')
-        expect(target).toEqual({host: 'h2', port: 3838, sessionId: 's-2'})
+        assert.deepEqual(target, {host: 'h2', port: 3838, sessionId: 's-2'})
     })
 
     it('falls back to Referer attribution', async () => {
@@ -617,7 +655,7 @@ describe('resolveTarget per app', () => {
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/sessions',
             'https://sepal.io/api/sandbox/jupyter/voila/render/foo.ipynb?x=1')
-        expect(target).toEqual({host: 'h1', port: 8888, sessionId: 's-1'})
+        assert.deepEqual(target, {host: 'h1', port: 8888, sessionId: 's-1'})
     })
 
     it('falls back to the single candidate session', async () => {
@@ -625,7 +663,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/jupyter/voila/render/foo.ipynb', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-1/channels')
-        expect(target).toEqual({host: 'h1', port: 8888, sessionId: 's-1'})
+        assert.deepEqual(target, {host: 'h1', port: 8888, sessionId: 's-1'})
     })
 
     it('does not count a cross-endpoint app as a single-candidate for another endpoint', async () => {
@@ -637,7 +675,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/jupyter/voila/render/b.ipynb', sessionId: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/sessions')
-        expect(target).toEqual({host: 'h2', port: 8888, sessionId: 's-2'})
+        assert.deepEqual(target, {host: 'h2', port: 8888, sessionId: 's-2'})
     })
 
     it('probes candidate instances for an unknown kernel id when several sessions exist', async () => {
@@ -653,11 +691,11 @@ describe('resolveTarget per app', () => {
         // prime the app-path entries (kernel probe candidates come from cached entries)
         await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/voila/render/a.ipynb')
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
-        expect(target).toEqual({host: 'h2', port: 8888, sessionId: 's-2'})
-        const probeCallsBefore = fetch.mock.calls.filter(([url]) => url.includes('/api/kernels/k-9')).length
+        assert.deepEqual(target, {host: 'h2', port: 8888, sessionId: 's-2'})
+        const probeCallsBefore = callsOf(fetch).filter(([url]) => url.includes('/api/kernels/k-9')).length
         await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
-        const probeCallsAfter = fetch.mock.calls.filter(([url]) => url.includes('/api/kernels/k-9')).length
-        expect(probeCallsAfter).toBe(probeCallsBefore) // cached — no re-probe
+        const probeCallsAfter = callsOf(fetch).filter(([url]) => url.includes('/api/kernels/k-9')).length
+        assert.equal(probeCallsAfter, probeCallsBefore) // cached — no re-probe
     })
 })
 
@@ -672,10 +710,10 @@ describe('releaseApp', () => {
         const manager = createManager({fetch})
         seedAppEntry(manager, 'bob', '/sandbox/shiny/foo', 's-1')
         await manager.releaseApp({username: 'bob', appPath: '/sandbox/shiny/foo'})
-        expect(fetch.requested('DELETE /sessions/app')).toBe(true)
-        const [url] = fetch.mock.calls.find(([, options]) => options?.method === 'DELETE')
-        expect(url).toBe('http://worker/sessions/app?path=%2Fsandbox%2Fshiny%2Ffoo')
-        expect(manager._cache.get('bob')).toBeUndefined()
+        assert.equal(fetch.requested('DELETE /sessions/app'), true)
+        const [url] = callsOf(fetch).find(([, options]) => options?.method === 'DELETE')
+        assert.equal(url, 'http://worker/sessions/app?path=%2Fsandbox%2Fshiny%2Ffoo')
+        assert.equal(manager._cache.get('bob'), undefined)
     })
 
     it('tolerates a worker 404 (no association) and still drops the cache entry', async () => {
@@ -683,35 +721,39 @@ describe('releaseApp', () => {
         const manager = createManager({fetch})
         seedAppEntry(manager, 'bob', '/sandbox/shiny/foo', 's-1')
         await manager.releaseApp({username: 'bob', appPath: '/sandbox/shiny/foo'})
-        expect(manager._cache.get('bob')).toBeUndefined()
+        assert.equal(manager._cache.get('bob'), undefined)
     })
 
     // The worker's classified launch failure travels with the error, for the start route to pass on.
     it('carries what the worker said about a failed launch', async () => {
-        const fetch = jest.fn(async () => ({
+        const fetch = mock.fn(async () => ({
             ok: false,
             status: 503,
             text: async () => JSON.stringify({code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'})
         }))
         const manager = createManager({fetch})
-        await expect(manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo'}))
-            .rejects.toMatchObject({statusCode: 503, body: {code: 'INSTANCE_UNAVAILABLE'}})
+        await assert.rejects(
+            manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo'}),
+            {statusCode: 503, body: {code: 'INSTANCE_UNAVAILABLE', message: 'Insufficient capacity.'}}
+        )
     })
 
     it('propagates a non-404 worker error and keeps the cache entry', async () => {
-        const fetch = jest.fn(async () => errorResponse(500))
+        const fetch = mock.fn(async () => errorResponse(500))
         const manager = createManager({fetch})
         seedAppEntry(manager, 'bob', '/sandbox/shiny/foo', 's-1')
-        await expect(manager.releaseApp({username: 'bob', appPath: '/sandbox/shiny/foo'}))
-            .rejects.toMatchObject({statusCode: 500})
-        expect(manager._cache.get('bob')?.get('/sandbox/shiny/foo')).toBeDefined()
+        await assert.rejects(
+            manager.releaseApp({username: 'bob', appPath: '/sandbox/shiny/foo'}),
+            {statusCode: 500}
+        )
+        assert.notEqual(manager._cache.get('bob')?.get('/sandbox/shiny/foo'), undefined)
     })
 
     it('is a no-op without an appPath', async () => {
-        const fetch = jest.fn()
+        const fetch = mock.fn()
         const manager = createManager({fetch})
         await manager.releaseApp({username: 'bob'})
-        expect(fetch).not.toHaveBeenCalled()
+        assert.equal(fetch.mock.callCount(), 0)
     })
 })
 
@@ -719,7 +761,7 @@ describe('app ownership (clientId passthrough)', () => {
     const APP_SESSIONS = [{path: '/sandbox/shiny/foo', label: 'Foo', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}]
 
     const associateBody = fetch => {
-        const call = fetch.mock.calls.find(([url, options]) =>
+        const call = callsOf(fetch).find(([url, options]) =>
             options?.method === 'POST' && url.includes('/app'))
         return call ? JSON.parse(call[1].body) : null
     }
@@ -732,7 +774,10 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', clientId: 'c-1'})
-        expect(associateBody(fetch)).toEqual({path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1'})
+        assert.deepEqual(
+            associateBody(fetch),
+            {path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1'}
+        )
     })
 
     it('join path passes clientId to the worker associate', async () => {
@@ -743,7 +788,10 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2', clientId: 'c-1'})
-        expect(associateBody(fetch)).toEqual({path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1'})
+        assert.deepEqual(
+            associateBody(fetch),
+            {path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1'}
+        )
     })
 
     it('an existing association still triggers a worker associate to refresh ownership', async () => {
@@ -753,23 +801,26 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', clientId: 'c-2'})
-        expect(result).toEqual({id: 's-1', status: 'STARTED'})
-        expect(fetch.requested('POST /sessions/session/s-1/app')).toBe(true)
-        expect(associateBody(fetch)).toEqual({path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-2'})
+        assert.deepEqual(result, {id: 's-1', status: 'STARTED'})
+        assert.equal(fetch.requested('POST /sessions/session/s-1/app'), true)
+        assert.deepEqual(
+            associateBody(fetch),
+            {path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-2'}
+        )
     })
 
     it('an existing association skips the ownership refresh without a clientId', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': APP_SESSIONS})
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo'})
-        expect(fetch.requested('POST /sessions/session/s-1/app')).toBe(false)
+        assert.equal(fetch.requested('POST /sessions/session/s-1/app'), false)
     })
 
     it('a failing ownership refresh does not break the start (best-effort)', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': APP_SESSIONS}) // associate POST → 404
         const manager = createManager({fetch})
         const result = await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo', clientId: 'c-2'})
-        expect(result).toEqual({id: 's-1', status: 'STARTED'})
+        assert.deepEqual(result, {id: 's-1', status: 'STARTED'})
     })
 
     // A ws reconnect replays every open tab's association. It refreshes ownership and must extend
@@ -781,7 +832,10 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', clientId: 'c-2', reassert: true})
-        expect(associateBody(fetch)).toEqual({path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-2', reassert: true})
+        assert.deepEqual(
+            associateBody(fetch),
+            {path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-2', reassert: true}
+        )
     })
 
     // The old clientId's clientDown usually sweeps the association first, so the re-assert lands on
@@ -794,7 +848,10 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2', clientId: 'c-1', reassert: true})
-        expect(associateBody(fetch)).toEqual({path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1', reassert: true})
+        assert.deepEqual(
+            associateBody(fetch),
+            {path: '/sandbox/shiny/foo', label: 'Foo', clientId: 'c-1', reassert: true}
+        )
     })
 
     it('an ordinary start sends no reassert flag', async () => {
@@ -804,30 +861,33 @@ describe('app ownership (clientId passthrough)', () => {
         })
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', clientId: 'c-2'})
-        expect(associateBody(fetch)).not.toHaveProperty('reassert')
+        assert.ok(!('reassert' in Object(associateBody(fetch))))
     })
 
     it('releaseApp forwards the requesting clientId to the worker DELETE', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': APP_SESSIONS, 'DELETE /sessions/app': null})
         const manager = createManager({fetch})
         await manager.releaseApp({username: 'bob', appPath: '/sandbox/shiny/foo', clientId: 'c-1'})
-        const [url] = fetch.mock.calls.find(([, options]) => options?.method === 'DELETE')
-        expect(url).toBe('http://worker/sessions/app?path=%2Fsandbox%2Fshiny%2Ffoo&clientId=c-1')
+        const [url] = callsOf(fetch).find(([, options]) => options?.method === 'DELETE')
+        assert.equal(
+            url,
+            'http://worker/sessions/app?path=%2Fsandbox%2Fshiny%2Ffoo&clientId=c-1'
+        )
     })
 
     it('onAppDissociated drops the cached app entry (worker-initiated dissociation)', async () => {
         const fetch = fetchStub({'GET /sessions/app-sessions': APP_SESSIONS})
         const manager = createManager({fetch})
         await manager.startApp({username: 'bob', appPath: '/sandbox/shiny/foo'})
-        expect(manager._cache.get('bob').get('/sandbox/shiny/foo')).toBeDefined()
+        assert.notEqual(manager._cache.get('bob').get('/sandbox/shiny/foo'), undefined)
         manager.onAppDissociated({username: 'bob', appPath: '/sandbox/shiny/foo'})
-        expect(manager._cache.get('bob')).toBeUndefined()
+        assert.equal(manager._cache.get('bob'), undefined)
     })
 
     it('onAppDissociated tolerates a malformed payload', async () => {
         const manager = createManager({fetch: fetchStub({})})
-        expect(() => manager.onAppDissociated({})).not.toThrow()
-        expect(() => manager.onAppDissociated()).not.toThrow()
+        assert.doesNotThrow(() => manager.onAppDissociated({}))
+        assert.doesNotThrow(() => manager.onAppDissociated())
     })
 })
 
@@ -839,7 +899,7 @@ describe('ensureServerStarted', () => {
         const manager = createManager({fetch})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
-        expect(fetch.keys.filter(key => key === startKey)).toHaveLength(1)
+        assert.equal(fetch.keys.filter(key => key === startKey).length, 1)
     })
 
     it('starts a second endpoint on the same session separately', async () => {
@@ -850,19 +910,24 @@ describe('ensureServerStarted', () => {
         const manager = createManager({fetch})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'})
-        expect(fetch.requested(startKey)).toBe(true)
-        expect(fetch.requested('POST /sessions/session/s-1/server/shiny')).toBe(true)
+        assert.equal(fetch.requested(startKey), true)
+        assert.equal(fetch.requested('POST /sessions/session/s-1/server/shiny'), true)
     })
 
     it('does not cache a failed ensure', async () => {
         // No route registered → the stub answers 404 → workerRequest throws.
         const fetch = fetchStub({})
         const manager = createManager({fetch})
-        await expect(manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'}))
-            .rejects.toThrow()
-        await expect(manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'}))
-            .rejects.toThrow()
-        expect(fetch.keys.filter(key => key === 'POST /sessions/session/s-1/server/shiny')).toHaveLength(2)
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'})
+        )
+        await assert.rejects(
+            manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'})
+        )
+        assert.equal(
+            fetch.keys.filter(key => key === 'POST /sessions/session/s-1/server/shiny').length,
+            2
+        )
     })
 
     it('starts a forgotten server again', async () => {
@@ -871,7 +936,7 @@ describe('ensureServerStarted', () => {
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
         manager.forgetServerStarted({sessionId: 's-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
-        expect(fetch.keys.filter(key => key === startKey)).toHaveLength(2)
+        assert.equal(fetch.keys.filter(key => key === startKey).length, 2)
     })
 
     it('is a no-op without a sessionId, and for an unknown endpoint', async () => {
@@ -879,6 +944,6 @@ describe('ensureServerStarted', () => {
         const manager = createManager({fetch})
         await manager.ensureServerStarted({username: 'bob', sessionId: null, endpoint: 'shiny'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'sshd'})
-        expect(fetch.keys).toEqual([])
+        assert.deepEqual(fetch.keys, [])
     })
 })

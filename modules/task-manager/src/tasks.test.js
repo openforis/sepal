@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {hashApiKey} from './apiKey.js'
 import {InvalidCommand, NotFound, Unauthorized} from './errors.js'
 import {State} from './task.js'
@@ -12,8 +15,11 @@ describe('submitting', () => {
 
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE', params: {title: 'Mosaic'}, recipeId: 'r-1'})
 
-        expect(task).toMatchObject({username: 'alice', operation: 'image.GEE', state: State.PENDING, recipeId: 'r-1'})
-        expect(supervisor.dispatched).toBe(1)
+        assert.partialDeepStrictEqual(
+            task,
+            {username: 'alice', operation: 'image.GEE', state: State.PENDING, recipeId: 'r-1'}
+        )
+        assert.equal(supervisor.dispatched, 1)
     })
 
     test('accepts params sent as a JSON string', async () => {
@@ -21,11 +27,11 @@ describe('submitting', () => {
 
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE', params: JSON.stringify({title: 'Mosaic'})})
 
-        expect(task.params).toEqual({title: 'Mosaic'})
+        assert.deepEqual(task.params, {title: 'Mosaic'})
     })
 
     test('refuses a task without an operation', async () => {
-        await expect(setup().tasks.submit({username: 'alice', params: {}})).rejects.toThrow(InvalidCommand)
+        await assert.rejects(setup().tasks.submit({username: 'alice', params: {}}), InvalidCommand)
     })
 })
 
@@ -36,7 +42,7 @@ describe('cancelling', () => {
 
         await tasks.cancel({taskId: task.id, username: 'alice'})
 
-        expect((await repository.getTask(task.id)).state).toBe(State.CANCELED)
+        assert.equal((await repository.getTask(task.id)).state, State.CANCELED)
     })
 
     test('a running task is marked canceling and its container is stopped', async () => {
@@ -46,15 +52,15 @@ describe('cancelling', () => {
 
         await tasks.cancel({taskId: task.id, username: 'alice'})
 
-        expect((await repository.getTask(task.id)).state).toBe(State.CANCELING)
-        expect(supervisor.stopped).toEqual([task.id])
+        assert.equal((await repository.getTask(task.id)).state, State.CANCELING)
+        assert.deepEqual(supervisor.stopped, [task.id])
     })
 
     test('another user\'s task cannot be cancelled', async () => {
         const {tasks} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
 
-        await expect(tasks.cancel({taskId: task.id, username: 'bob'})).rejects.toThrow(Unauthorized)
+        await assert.rejects(tasks.cancel({taskId: task.id, username: 'bob'}), Unauthorized)
     })
 })
 
@@ -67,7 +73,10 @@ describe('progress from a container', () => {
 
         await tasks.reportProgress({taskId: task.id, callerTaskId: task.id, statusDescription})
 
-        expect(JSON.parse((await repository.getTask(task.id)).statusDescription)).toEqual(statusDescription)
+        assert.deepEqual(
+            JSON.parse((await repository.getTask(task.id)).statusDescription),
+            statusDescription
+        )
     })
 
     test('naming the slot the container last released releases that grant', async () => {
@@ -77,7 +86,7 @@ describe('progress from a container', () => {
 
         await tasks.reportProgress({taskId: task.id, callerTaskId: task.id, statusDescription: {}, releasedSlot: GRANTED.toISOString()})
 
-        expect(supervisor.slotReleases).toEqual([[task.id, GRANTED]])
+        assert.deepEqual(supervisor.slotReleases, [[task.id, GRANTED]])
     })
 
     test('without a released slot, releases nothing', async () => {
@@ -87,14 +96,17 @@ describe('progress from a container', () => {
 
         await tasks.reportProgress({taskId: task.id, callerTaskId: task.id, statusDescription: {}})
 
-        expect(supervisor.slotReleases).toEqual([])
+        assert.deepEqual(supervisor.slotReleases, [])
     })
 
     test('progress from a different task\'s key is refused', async () => {
         const {tasks} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
 
-        await expect(tasks.reportProgress({taskId: task.id, callerTaskId: 'other', statusDescription: {}})).rejects.toThrow(Unauthorized)
+        await assert.rejects(
+            tasks.reportProgress({taskId: task.id, callerTaskId: 'other', statusDescription: {}}),
+            Unauthorized
+        )
     })
 })
 
@@ -106,34 +118,49 @@ describe('local processing from a container', () => {
         const slot = await tasks.requestLocalProcessing({taskId: task.id, callerTaskId: task.id})
         await tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id, slot: slot.toISOString()})
 
-        expect(slot).toEqual(GRANTED)
-        expect(supervisor.slotRequests).toEqual([task.id])
-        expect(supervisor.slotReleases).toEqual([[task.id, GRANTED]])
+        assert.deepEqual(slot, GRANTED)
+        assert.deepEqual(supervisor.slotRequests, [task.id])
+        assert.deepEqual(supervisor.slotReleases, [[task.id, GRANTED]])
     })
 
     test('a release that does not name a valid grant is refused', async () => {
         const {tasks, supervisor} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
 
-        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id})).rejects.toThrow(InvalidCommand)
-        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id, slot: 'soon'})).rejects.toThrow(InvalidCommand)
-        expect(supervisor.slotReleases).toEqual([])
+        await assert.rejects(
+            tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id}),
+            InvalidCommand
+        )
+        await assert.rejects(
+            tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: task.id, slot: 'soon'}),
+            InvalidCommand
+        )
+        assert.deepEqual(supervisor.slotReleases, [])
     })
 
     test('a call with a different task\'s key is refused', async () => {
         const {tasks, supervisor} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL'})
 
-        await expect(tasks.requestLocalProcessing({taskId: task.id, callerTaskId: 'other'})).rejects.toThrow(Unauthorized)
-        await expect(tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: 'other', slot: GRANTED.toISOString()})).rejects.toThrow(Unauthorized)
-        expect(supervisor.slotRequests).toEqual([])
-        expect(supervisor.slotReleases).toEqual([])
+        await assert.rejects(
+            tasks.requestLocalProcessing({taskId: task.id, callerTaskId: 'other'}),
+            Unauthorized
+        )
+        await assert.rejects(
+            tasks.releaseLocalProcessing({taskId: task.id, callerTaskId: 'other', slot: GRANTED.toISOString()}),
+            Unauthorized
+        )
+        assert.deepEqual(supervisor.slotRequests, [])
+        assert.deepEqual(supervisor.slotReleases, [])
     })
 
     test('a call for a task that does not exist is not found', async () => {
         const {tasks} = setup()
 
-        await expect(tasks.requestLocalProcessing({taskId: 'gone', callerTaskId: 'gone'})).rejects.toThrow(NotFound)
+        await assert.rejects(
+            tasks.requestLocalProcessing({taskId: 'gone', callerTaskId: 'gone'}),
+            NotFound
+        )
     })
 })
 
@@ -143,11 +170,14 @@ describe('authenticating a container\'s key', () => {
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
         await repository.activate(task, hashApiKey('task_k'))
 
-        expect(await tasks.authenticateApiKey('task_k')).toEqual({username: 'alice', taskId: task.id})
+        assert.deepEqual(
+            await tasks.authenticateApiKey('task_k'),
+            {username: 'alice', taskId: task.id}
+        )
     })
 
     test('names nobody for an unknown key', async () => {
-        expect(await setup().tasks.authenticateApiKey('task_unknown')).toBeNull()
+        assert.equal(await setup().tasks.authenticateApiKey('task_unknown'), null)
     })
 })
 
@@ -159,17 +189,20 @@ describe('resubmitting and removing', () => {
 
         const again = await tasks.resubmit({taskId: task.id, username: 'alice'})
 
-        expect(again).toMatchObject({operation: 'image.GEE', params: {title: 'Mosaic'}, state: State.PENDING})
-        expect(again.id).not.toBe(task.id)
-        expect((await repository.userTasks('alice')).map(({id}) => id)).toEqual([again.id])
+        assert.partialDeepStrictEqual(
+            again,
+            {operation: 'image.GEE', params: {title: 'Mosaic'}, state: State.PENDING}
+        )
+        assert.notEqual(again.id, task.id)
+        assert.deepEqual((await repository.userTasks('alice')).map(({id}) => id), [again.id])
     })
 
     test('an unfinished task can be neither resubmitted nor removed', async () => {
         const {tasks} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
 
-        await expect(tasks.resubmit({taskId: task.id, username: 'alice'})).rejects.toThrow(InvalidCommand)
-        await expect(tasks.remove({taskId: task.id, username: 'alice'})).rejects.toThrow(InvalidCommand)
+        await assert.rejects(tasks.resubmit({taskId: task.id, username: 'alice'}), InvalidCommand)
+        await assert.rejects(tasks.remove({taskId: task.id, username: 'alice'}), InvalidCommand)
     })
 
     test('removing in bulk removes only the given tasks that have finished', async () => {
@@ -182,15 +215,18 @@ describe('resubmitting and removing', () => {
 
         await tasks.removeFinished({taskIds: [running.id, finished.id], username: 'alice'})
 
-        expect((await repository.userTasks('alice')).map(({id}) => id)).toEqual([running.id, otherFinished.id])
+        assert.deepEqual(
+            (await repository.userTasks('alice')).map(({id}) => id),
+            [running.id, otherFinished.id]
+        )
     })
 
     test('removing in bulk requires the tasks to remove', async () => {
-        await expect(setup().tasks.removeFinished({username: 'alice'})).rejects.toThrow(InvalidCommand)
+        await assert.rejects(setup().tasks.removeFinished({username: 'alice'}), InvalidCommand)
     })
 
     test('a task that does not exist is not found', async () => {
-        await expect(setup().tasks.getTask({taskId: 'nope', username: 'alice'})).rejects.toThrow(NotFound)
+        await assert.rejects(setup().tasks.getTask({taskId: 'nope', username: 'alice'}), NotFound)
     })
 })
 

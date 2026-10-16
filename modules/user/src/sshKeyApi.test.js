@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {SshKeyApi} from './sshKeyApi.js'
 
 describe('POST /current/ssh-keys', () => {
@@ -7,12 +10,11 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(ctx.status).toBe(201)
-        expect(ctx.body).toEqual({
-            id: expect.any(Number), name: 'alice@laptop', type: 'ssh-ed25519',
-            fingerprint: ED25519_FINGERPRINT, creationTime: CREATION_TIME
-        })
-        expect(await listed(alice)).toEqual([ctx.body])
+        assert.equal(ctx.status, 201)
+        const {id, ...key} = ctx.body
+        assert.equal(typeof id, 'number')
+        assert.deepEqual(key, {name: 'alice@laptop', type: 'ssh-ed25519', fingerprint: ED25519_FINGERPRINT, creationTime: CREATION_TIME})
+        assert.deepEqual(await listed(alice), [ctx.body])
     })
 
     test('emails the user a notice naming the added key', async () => {
@@ -21,7 +23,8 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(notices).toEqual([{user: alice, key: expect.objectContaining({id: ctx.body.id, name: 'Laptop'})}])
+        assert.equal(notices.length, 1)
+        assert.partialDeepStrictEqual(notices[0], {user: alice, key: {id: ctx.body.id, name: 'Laptop'}})
     })
 
     test('keeps the key when the notice cannot be sent', async () => {
@@ -31,8 +34,8 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(ctx.status).toBe(201)
-        expect(await listed(alice)).toHaveLength(1)
+        assert.equal(ctx.status, 201)
+        assert.equal((await listed(alice)).length, 1)
     })
 
     test('refuses an invalid key with its code, storing nothing', async () => {
@@ -41,10 +44,10 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(ctx.status).toBe(400)
-        expect(ctx.body).toEqual({code: 'INVALID_KEY'})
-        expect(await listed(alice)).toEqual([])
-        expect(notices).toEqual([])
+        assert.equal(ctx.status, 400)
+        assert.deepEqual(ctx.body, {code: 'INVALID_KEY'})
+        assert.deepEqual(await listed(alice), [])
+        assert.deepEqual(notices, [])
     })
 
     test('refuses a key the user already has', async () => {
@@ -54,9 +57,9 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(ctx.status).toBe(400)
-        expect(ctx.body).toEqual({code: 'DUPLICATE_KEY'})
-        expect(await listed(alice)).toHaveLength(1)
+        assert.equal(ctx.status, 400)
+        assert.deepEqual(ctx.body, {code: 'DUPLICATE_KEY'})
+        assert.equal((await listed(alice)).length, 1)
     })
 
     test('refuses a key beyond the twentieth', async () => {
@@ -66,9 +69,9 @@ describe('POST /current/ssh-keys', () => {
 
         await api.add(ctx)
 
-        expect(ctx.status).toBe(400)
-        expect(ctx.body).toEqual({code: 'TOO_MANY_KEYS'})
-        expect(await listed(alice)).toHaveLength(20)
+        assert.equal(ctx.status, 400)
+        assert.deepEqual(ctx.body, {code: 'TOO_MANY_KEYS'})
+        assert.equal((await listed(alice)).length, 20)
     })
 })
 
@@ -81,7 +84,7 @@ describe('GET /current/ssh-keys', () => {
 
         await api.list(ctx)
 
-        expect(ctx.body).toEqual([])
+        assert.deepEqual(ctx.body, [])
     })
 })
 
@@ -94,8 +97,8 @@ describe('DELETE /current/ssh-keys/:id', () => {
 
         await api.remove(ctx)
 
-        expect(ctx.status).toBe(204)
-        expect(await listed(alice)).toEqual([])
+        assert.equal(ctx.status, 204)
+        assert.deepEqual(await listed(alice), [])
     })
 
     test('answers not found for another user\'s key, leaving it in place', async () => {
@@ -107,8 +110,8 @@ describe('DELETE /current/ssh-keys/:id', () => {
 
         await api.remove(ctx)
 
-        expect(ctx.status).toBe(404)
-        expect(await listed(alice)).toHaveLength(1)
+        assert.equal(ctx.status, 404)
+        assert.equal((await listed(alice)).length, 1)
     })
 
     test('answers not found for an id that is not a number', async () => {
@@ -116,7 +119,7 @@ describe('DELETE /current/ssh-keys/:id', () => {
 
         await api.remove(ctx)
 
-        expect(ctx.status).toBe(404)
+        assert.equal(ctx.status, 404)
     })
 })
 
@@ -128,8 +131,8 @@ describe('GET /auth/authorized-keys', () => {
 
         await api.authorizedKeys(ctx)
 
-        expect(ctx.type).toBe('text/plain')
-        expect(ctx.body).toBe(`${SEPAL_KEY}\nssh-ed25519 ${ED25519}\n`)
+        assert.equal(ctx.type, 'text/plain')
+        assert.equal(ctx.body, `${SEPAL_KEY}\nssh-ed25519 ${ED25519}\n`)
     })
 
     test('lists the user keys when there is no SEPAL key', async () => {
@@ -139,7 +142,7 @@ describe('GET /auth/authorized-keys', () => {
 
         await api.authorizedKeys(ctx)
 
-        expect(ctx.body).toBe(`ssh-ed25519 ${ED25519}\n`)
+        assert.equal(ctx.body, `ssh-ed25519 ${ED25519}\n`)
     })
 
     test('lists nothing for a user who is not active', async () => {
@@ -150,7 +153,7 @@ describe('GET /auth/authorized-keys', () => {
 
         await api.authorizedKeys(ctx)
 
-        expect(ctx.body).toBe('')
+        assert.equal(ctx.body, '')
     })
 
     test('lists nothing for an unknown user', async () => {
@@ -158,7 +161,7 @@ describe('GET /auth/authorized-keys', () => {
 
         await api.authorizedKeys(ctx)
 
-        expect(ctx.body).toBe('')
+        assert.equal(ctx.body, '')
     })
 })
 

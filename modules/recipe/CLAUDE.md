@@ -11,7 +11,7 @@ Serves the existing `/api/processing-recipes` routes. The recipe-content migrati
 [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
-- `npm test` — Jest (ESM)
+- `npm test` — Node test runner (`node --test`)
 - `sepal build recipe` / `sepal start recipe` / `sepal logs recipe -r`
 
 ## Routes (served without the `/api/processing-recipes` gateway prefix)

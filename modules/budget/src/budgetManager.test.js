@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {createBudgetCommands} from './budgetCommands.js'
 import {createBudgetManager, InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetManager.js'
 
@@ -59,10 +62,10 @@ describe('BudgetManager.check', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.check('u')).resolves.toBeUndefined()
-        expect(events.emitted.instanceBudget).toHaveLength(0)
-        expect(events.emitted.storageSpending).toHaveLength(0)
-        expect(events.emitted.storageQuota).toHaveLength(0)
+        assert.equal(await mgr.check('u'), undefined)
+        assert.equal(events.emitted.instanceBudget.length, 0)
+        assert.equal(events.emitted.storageSpending.length, 0)
+        assert.equal(events.emitted.storageQuota.length, 0)
     })
 
     test('throws InstanceBudgetExceeded when instance spending >= budget and does NOT check storage', async () => {
@@ -72,10 +75,10 @@ describe('BudgetManager.check', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.check('u')).rejects.toBeInstanceOf(InstanceBudgetExceeded)
-        expect(events.emitted.instanceBudget).toHaveLength(1)
-        expect(events.emitted.storageSpending).toHaveLength(0)
-        expect(events.emitted.storageQuota).toHaveLength(0)
+        await assert.rejects(mgr.check('u'), InstanceBudgetExceeded)
+        assert.equal(events.emitted.instanceBudget.length, 1)
+        assert.equal(events.emitted.storageSpending.length, 0)
+        assert.equal(events.emitted.storageQuota.length, 0)
     })
 
     test('throws StorageBudgetExceeded when storage spending >= budget (instance under budget)', async () => {
@@ -86,9 +89,9 @@ describe('BudgetManager.check', () => {
             storageRows: {u: {gbHours: 1000, gb: 10, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.check('u')).rejects.toBeInstanceOf(StorageBudgetExceeded)
-        expect(events.emitted.instanceBudget).toHaveLength(0)
-        expect(events.emitted.storageSpending).toHaveLength(1)
+        await assert.rejects(mgr.check('u'), StorageBudgetExceeded)
+        assert.equal(events.emitted.instanceBudget.length, 0)
+        assert.equal(events.emitted.storageSpending.length, 1)
     })
 
     test('throws StorageQuotaExceeded when use > quota (strict), storage budget not exceeded', async () => {
@@ -99,8 +102,8 @@ describe('BudgetManager.check', () => {
             storageRows: {u: {gbHours: 0, gb: 11, updateTime: new Date('2026-07-14T00:00:00Z')}}, // use 11 > quota 10
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.check('u')).rejects.toBeInstanceOf(StorageQuotaExceeded)
-        expect(events.emitted.storageQuota).toHaveLength(1)
+        await assert.rejects(mgr.check('u'), StorageQuotaExceeded)
+        assert.equal(events.emitted.storageQuota.length, 1)
     })
 
     test('quota threshold is STRICT: use == quota does NOT throw', async () => {
@@ -111,8 +114,8 @@ describe('BudgetManager.check', () => {
             storageRows: {u: {gbHours: 0, gb: 11, updateTime: new Date('2026-07-14T00:00:00Z')}}, // use 11 == quota 11
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.check('u')).resolves.toBeUndefined()
-        expect(events.emitted.storageQuota).toHaveLength(0)
+        assert.equal(await mgr.check('u'), undefined)
+        assert.equal(events.emitted.storageQuota.length, 0)
     })
 })
 
@@ -123,7 +126,7 @@ describe('BudgetManager.verdict', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: false, reason: null})
+        assert.deepEqual(await mgr.verdict('u'), {username: 'u', exceeded: false, reason: null})
     })
 
     test('instance spending >= budget → INSTANCE_BUDGET, storage never evaluated', async () => {
@@ -133,10 +136,13 @@ describe('BudgetManager.verdict', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'INSTANCE_BUDGET'})
+        assert.deepEqual(
+            await mgr.verdict('u'),
+            {username: 'u', exceeded: true, reason: 'INSTANCE_BUDGET'}
+        )
         // Short-circuits like check(): storage checks must not have run.
-        expect(events.emitted.storageSpending).toHaveLength(0)
-        expect(events.emitted.storageQuota).toHaveLength(0)
+        assert.equal(events.emitted.storageSpending.length, 0)
+        assert.equal(events.emitted.storageQuota.length, 0)
     })
 
     test('storage spending >= budget → STORAGE_BUDGET', async () => {
@@ -146,7 +152,10 @@ describe('BudgetManager.verdict', () => {
             storageRows: {u: {gbHours: 1000, gb: 10, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_BUDGET'})
+        assert.deepEqual(
+            await mgr.verdict('u'),
+            {username: 'u', exceeded: true, reason: 'STORAGE_BUDGET'}
+        )
     })
 
     test('use > quota → STORAGE_QUOTA', async () => {
@@ -156,7 +165,10 @@ describe('BudgetManager.verdict', () => {
             storageRows: {u: {gbHours: 0, gb: 11, updateTime: new Date('2026-07-14T00:00:00Z')}},
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
-        await expect(mgr.verdict('u')).resolves.toEqual({username: 'u', exceeded: true, reason: 'STORAGE_QUOTA'})
+        assert.deepEqual(
+            await mgr.verdict('u'),
+            {username: 'u', exceeded: true, reason: 'STORAGE_QUOTA'}
+        )
     })
 
     test('check() throws the error matching verdict()\'s reason — one shared decision path', async () => {
@@ -167,8 +179,8 @@ describe('BudgetManager.verdict', () => {
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
         const {reason} = await mgr.verdict('u')
-        expect(reason).toBe('STORAGE_QUOTA')
-        await expect(mgr.check('u')).rejects.toBeInstanceOf(StorageQuotaExceeded)
+        assert.equal(reason, 'STORAGE_QUOTA')
+        await assert.rejects(mgr.check('u'), StorageQuotaExceeded)
     })
 })
 
@@ -182,17 +194,17 @@ describe('BudgetManager.userSpending', () => {
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events, clock: CLOCK})
         const spending = await mgr.userSpending('u')
-        expect(Object.keys(spending).sort()).toEqual([
+        assert.deepEqual(Object.keys(spending).sort(), [
             'budgetUpdateRequest', 'costPerGbMonth', 'monthlyInstanceBudget', 'monthlyInstanceSpending',
             'monthlyStorageBudget', 'monthlyStorageSpending', 'storageQuota', 'storageUsed',
         ])
-        expect(spending.monthlyInstanceBudget).toBe(50)
-        expect(spending.monthlyInstanceSpending).toBe(24)
-        expect(spending.monthlyStorageBudget).toBe(20)
-        expect(spending.storageQuota).toBe(30)
-        expect(spending.storageUsed).toBe(7)
-        expect(spending.costPerGbMonth).toBe(0.33)
-        expect(spending.budgetUpdateRequest).toBeNull()
+        assert.equal(spending.monthlyInstanceBudget, 50)
+        assert.equal(spending.monthlyInstanceSpending, 24)
+        assert.equal(spending.monthlyStorageBudget, 20)
+        assert.equal(spending.storageQuota, 30)
+        assert.equal(spending.storageUsed, 7)
+        assert.equal(spending.costPerGbMonth, 0.33)
+        assert.equal(spending.budgetUpdateRequest, null)
     })
 
     test('passes budgetUpdateRequest through when present', async () => {
@@ -203,7 +215,7 @@ describe('BudgetManager.userSpending', () => {
         })
         const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
         const spending = await mgr.userSpending('u')
-        expect(spending.budgetUpdateRequest).toEqual(request)
+        assert.deepEqual(spending.budgetUpdateRequest, request)
     })
 })
 
@@ -227,9 +239,9 @@ describe('BudgetManager.usersExceedingBudget', () => {
             events, clock: CLOCK,
         })
         const exceeding = await mgr.usersExceedingBudget()
-        expect(exceeding.sort()).toEqual(['over_instance', 'over_storage_quota'])
-        expect(events.emitted.instanceBudget.map(d => d.username)).toEqual(['over_instance'])
-        expect(events.emitted.storageQuota.map(d => d.username)).toEqual(['over_storage_quota'])
+        assert.deepEqual(exceeding.sort(), ['over_instance', 'over_storage_quota'])
+        assert.deepEqual(events.emitted.instanceBudget.map(d => d.username), ['over_instance'])
+        assert.deepEqual(events.emitted.storageQuota.map(d => d.username), ['over_storage_quota'])
     })
 })
 
@@ -239,21 +251,30 @@ describe('budget commands', () => {
     test('updateBudget with username → repo.updateBudget (closes pending request)', async () => {
         const repo = createFakeRepo()
         await mk(repo).updateBudget({username: 'u', budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3}})
-        expect(repo.calls.updateBudget).toEqual([{username: 'u', budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3}}])
-        expect(repo.calls.updateDefaultBudget).toHaveLength(0)
+        assert.deepEqual(
+            repo.calls.updateBudget,
+            [{username: 'u', budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3}}]
+        )
+        assert.equal(repo.calls.updateDefaultBudget.length, 0)
     })
 
     test('updateBudget without username → repo.updateDefaultBudget', async () => {
         const repo = createFakeRepo()
         await mk(repo).updateBudget({budget: {instanceSpending: 1, storageSpending: 2, storageQuota: 3}})
-        expect(repo.calls.updateDefaultBudget).toEqual([{instanceSpending: 1, storageSpending: 2, storageQuota: 3}])
-        expect(repo.calls.updateBudget).toHaveLength(0)
+        assert.deepEqual(
+            repo.calls.updateDefaultBudget,
+            [{instanceSpending: 1, storageSpending: 2, storageQuota: 3}]
+        )
+        assert.equal(repo.calls.updateBudget.length, 0)
     })
 
     test('requestBudgetUpdate → repo.requestBudgetUpdate upsert', async () => {
         const repo = createFakeRepo()
         await mk(repo).requestBudgetUpdate({username: 'u', message: 'hi', budget: {instanceSpending: 9, storageSpending: 8, storageQuota: 7}})
-        expect(repo.calls.requestBudgetUpdate).toEqual([{username: 'u', message: 'hi', budget: {instanceSpending: 9, storageSpending: 8, storageQuota: 7}}])
+        assert.deepEqual(
+            repo.calls.requestBudgetUpdate,
+            [{username: 'u', message: 'hi', budget: {instanceSpending: 9, storageSpending: 8, storageQuota: 7}}]
+        )
     })
 
     test('updateUserSpendingReport → live report → repo.updateSpendingReport, returns report', async () => {
@@ -262,31 +283,31 @@ describe('budget commands', () => {
             instanceUses: {u: oneDayInJuly()},
         })
         const report = await mk(repo).updateUserSpendingReport('u')
-        expect(report.username).toBe('u')
-        expect(report.instanceSpending).toBe(24)
-        expect(repo.calls.updateSpendingReport).toHaveLength(1)
-        expect(repo.calls.updateSpendingReport[0].username).toBe('u')
+        assert.equal(report.username, 'u')
+        assert.equal(report.instanceSpending, 24)
+        assert.equal(repo.calls.updateSpendingReport.length, 1)
+        assert.equal(repo.calls.updateSpendingReport[0].username, 'u')
     })
 
     test('updateSpendingReport → full rebuild → repo.saveSpendingReport with a report per user', async () => {
         const repo = createFakeRepo({budgets: {a: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}, b: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}}})
         const commands = createBudgetCommands({repo, hostingService: pricing, userClient: userClientOf('a', 'b'), events: createEvents(), clock: CLOCK})
         await commands.updateSpendingReport()
-        expect(repo.calls.saveSpendingReport).toHaveLength(1)
-        expect(Object.keys(repo.calls.saveSpendingReport[0]).sort()).toEqual(['a', 'b'])
+        assert.equal(repo.calls.saveSpendingReport.length, 1)
+        assert.deepEqual(Object.keys(repo.calls.saveSpendingReport[0]).sort(), ['a', 'b'])
     })
 
     test('updateUserStorageUsage → storageUseService upsert (repo.updateUserStorageUse)', async () => {
         const repo = createFakeRepo()
         await mk(repo).updateUserStorageUsage('u', 12)
-        expect(repo.calls.updateUserStorageUse).toHaveLength(1)
-        expect(repo.calls.updateUserStorageUse[0].username).toBe('u')
-        expect(repo.calls.updateUserStorageUse[0].storageUse.gb).toBe(12)
+        assert.equal(repo.calls.updateUserStorageUse.length, 1)
+        assert.equal(repo.calls.updateUserStorageUse[0].username, 'u')
+        assert.equal(repo.calls.updateUserStorageUse[0].storageUse.gb, 12)
     })
 
     test('loadSpendingReport → repo.spendingReport (from cache)', async () => {
         const repo = createFakeRepo()
         const report = await mk(repo).loadSpendingReport()
-        expect(report).toEqual({cached: {username: 'cached', instanceSpending: 1}})
+        assert.deepEqual(report, {cached: {username: 'cached', instanceSpending: 1}})
     })
 })

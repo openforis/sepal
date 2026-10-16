@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -13,7 +15,7 @@ describe('recipe repository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
@@ -21,7 +23,7 @@ describe('recipe repository', () => {
 
     beforeEach(() => testDb.reset())
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('saveRecipe', () => {
         test('stores a lowercase owner and accepts an update using another spelling of its case', async () => {
@@ -33,36 +35,44 @@ describe('recipe repository', () => {
             const result = await repository.saveRecipe(updated)
 
             const found = await repository.findRecipe(recipe.id)
-            expect(created.owner).toBe('alice')
-            expect(result).toEqual({outcome: 'saved', revision: revision + 1})
-            expect(found).toEqual({
+            assert.equal(created.owner, 'alice')
+            assert.deepEqual(result, {outcome: 'saved', revision: revision + 1})
+            assert.deepEqual(found, {
                 owner: 'alice', recipe: {...updated.content, projectId: recipe.projectId, revision: revision + 1}
             })
         })
 
-        test.each([
+        for (const {outcome, ...change} of [
             {expectedRevision: null, outcome: 'conflict'},
             {expectedRevision: 0, outcome: 'conflict'},
             {expectedRevision: 1, type: 'CLASSIFICATION', outcome: 'typeMismatch'}
-        ])('reports $outcome instead of hiding a recipe from its mixed-case owner', async ({outcome, ...change}) => {
-            const recipe = aRecipe({owner: 'Alice'})
-            const {revision} = await repository.saveRecipe(recipe)
+        ]) {
+            test(
+                `reports ${outcome} instead of hiding a recipe from its mixed-case owner`,
+                async () => {
+                    const recipe = aRecipe({owner: 'Alice'})
+                    const {revision} = await repository.saveRecipe(recipe)
 
-            const result = await repository.saveRecipe({...recipe, ...change, owner: 'ALICE'})
+                    const result = await repository.saveRecipe({...recipe, ...change, owner: 'ALICE'})
 
-            expect(result).toEqual({outcome, currentRevision: revision})
-            const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
-        })
+                    assert.deepEqual(result, {outcome, currentRevision: revision})
+                    const found = await repository.findRecipe(recipe.id)
+                    assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
+                }
+            )
+        }
 
         test('creates at column revision 1, storing the content it was given', async () => {
             const recipe = aRecipe()
 
             const result = await repository.saveRecipe(recipe)
 
-            expect(result).toEqual({outcome: 'saved', revision: 1})
+            assert.deepEqual(result, {outcome: 'saved', revision: 1})
             const found = await repository.findRecipe(recipe.id)
-            expect(found).toEqual({owner: recipe.owner, recipe: {...recipe.content, projectId: recipe.projectId, revision: 1}})
+            assert.deepEqual(
+                found,
+                {owner: recipe.owner, recipe: {...recipe.content, projectId: recipe.projectId, revision: 1}}
+            )
         })
 
         // A client may echo back the placement and revision a load injected; neither may reach the column.
@@ -73,7 +83,7 @@ describe('recipe repository', () => {
             await repository.saveRecipe(recipe)
 
             const stored = await storedRow(recipe.id)
-            expect(stored.contents).toEqual(content)
+            assert.deepEqual(stored.contents, content)
         })
 
         test('strips server metadata a client echoed back when updating', async () => {
@@ -87,14 +97,16 @@ describe('recipe repository', () => {
             await repository.saveRecipe(updatedRecipe)
 
             const stored = await storedRow(recipe.id)
-            expect(stored.contents).toEqual(content)
+            assert.deepEqual(stored.contents, content)
         })
 
-        test.each([['a string'], [[1, 2]]])('refuses %p, which is not a recipe object', async content => {
-            const notAnObject = repository.saveRecipe(aRecipe({content}))
+        for (const [content] of [['a string'], [[1, 2]]]) {
+            test(`refuses ${content}, which is not a recipe object`, async () => {
+                const notAnObject = repository.saveRecipe(aRecipe({content}))
 
-            await expect(notAnObject).rejects.toThrow(/JSON object/)
-        })
+                await assert.rejects(notAnObject, /JSON object/)
+            })
+        }
 
         test('advances the column exactly once on a matching update', async () => {
             const recipe = aRecipe()
@@ -103,9 +115,12 @@ describe('recipe repository', () => {
 
             const result = await repository.saveRecipe(updatedRecipe)
 
-            expect(result).toEqual({outcome: 'saved', revision: revision + 1})
+            assert.deepEqual(result, {outcome: 'saved', revision: revision + 1})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...updatedRecipe.content, projectId: recipe.projectId, revision: revision + 1})
+            assert.deepEqual(
+                found.recipe,
+                {...updatedRecipe.content, projectId: recipe.projectId, revision: revision + 1}
+            )
         })
 
         test('changes neither the contents nor the column on a stale update', async () => {
@@ -117,9 +132,9 @@ describe('recipe repository', () => {
 
             const result = await repository.saveRecipe(staleRecipe)
 
-            expect(result).toEqual({outcome: 'conflict', currentRevision: revision + 1})
+            assert.deepEqual(result, {outcome: 'conflict', currentRevision: revision + 1})
             const found = await repository.findRecipe(recipe.id)
-            expect(found).toEqual(before)
+            assert.deepEqual(found, before)
         })
 
         test('reports a create against an existing id as a conflict, so a lost acknowledgement is recoverable', async () => {
@@ -128,7 +143,7 @@ describe('recipe repository', () => {
 
             const result = await repository.saveRecipe(recipe)
 
-            expect(result).toEqual({outcome: 'conflict', currentRevision: revision})
+            assert.deepEqual(result, {outcome: 'conflict', currentRevision: revision})
         })
 
         test('reports a foreign recipe as missing, and leaves it alone', async () => {
@@ -140,9 +155,9 @@ describe('recipe repository', () => {
 
             const result = await repository.saveRecipe(foreignRecipe)
 
-            expect(result).toEqual({outcome: 'notFound'})
+            assert.deepEqual(result, {outcome: 'notFound'})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+            assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
         })
 
         test('can never resurrect a removed recipe', async () => {
@@ -154,9 +169,9 @@ describe('recipe repository', () => {
                 aRecipe({expectedRevision: revision, content: aRecipeContent({resurrected: true})})
             )
 
-            expect(result).toEqual({outcome: 'notFound'})
+            assert.deepEqual(result, {outcome: 'notFound'})
             const found = await repository.findRecipe(recipe.id)
-            expect(found).toBeNull()
+            assert.equal(found, null)
         })
 
         test('rejects a type change on an existing id distinctly', async () => {
@@ -167,9 +182,9 @@ describe('recipe repository', () => {
                 aRecipe({expectedRevision: revision, type: 'CLASSIFICATION'})
             )
 
-            expect(result).toEqual({outcome: 'typeMismatch', currentRevision: revision})
+            assert.deepEqual(result, {outcome: 'typeMismatch', currentRevision: revision})
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe.revision).toBe(revision)
+            assert.equal(found.recipe.revision, revision)
         })
 
         // A retry at the unchanged revision must not write stale project placement back.
@@ -185,7 +200,7 @@ describe('recipe repository', () => {
             }))
 
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe.projectId).toBe(DESTINATION_PROJECT_ID)
+            assert.equal(found.recipe.projectId, DESTINATION_PROJECT_ID)
         })
     })
 
@@ -196,7 +211,7 @@ describe('recipe repository', () => {
 
             const found = await repository.findRecipe(recipe.id)
 
-            expect(found).toEqual({
+            assert.deepEqual(found, {
                 owner: recipe.owner,
                 recipe: {...recipe.content, projectId: recipe.projectId, revision}
             })
@@ -208,7 +223,7 @@ describe('recipe repository', () => {
             await repository.removeRecipes([recipe.id], OWNER)
 
             const found = await repository.findRecipe(recipe.id)
-            expect(found).toBeNull()
+            assert.equal(found, null)
         })
 
         // Documents stored before placement and revision were stripped must lose to the columns.
@@ -221,7 +236,7 @@ describe('recipe repository', () => {
 
             const found = await repository.findRecipe(recipe.id)
 
-            expect(found.recipe).toEqual({...recipe.content, projectId: recipe.projectId, revision})
+            assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
         })
 
         test('injects the new project after a move, which advances no revision', async () => {
@@ -233,7 +248,7 @@ describe('recipe repository', () => {
 
             const found = await repository.findRecipe(recipe.id)
 
-            expect(found.recipe).toEqual({
+            assert.deepEqual(found.recipe, {
                 ...recipe.content, projectId: DESTINATION_PROJECT_ID, revision
             })
         })
@@ -247,10 +262,10 @@ describe('recipe repository', () => {
 
             const [summary] = await repository.listRecipes(OWNER)
 
-            expect(summary).toEqual({
-                id: recipe.id, projectId: recipe.projectId, name: recipe.name, type: recipe.type,
-                revision, creationTime: expect.any(Date), updateTime: expect.any(Date)
-            })
+            const {creationTime, updateTime, ...rest} = summary
+            assert.deepEqual(rest, {id: recipe.id, projectId: recipe.projectId, name: recipe.name, type: recipe.type, revision})
+            assert.ok(creationTime instanceof Date)
+            assert.ok(updateTime instanceof Date)
         })
 
         test('is scoped to its owner and excludes removed recipes', async () => {
@@ -263,7 +278,7 @@ describe('recipe repository', () => {
 
             const summaries = await repository.listRecipes(OWNER)
 
-            expect(summaries.map(({id}) => id)).toEqual([owned.id])
+            assert.deepEqual(summaries.map(({id}) => id), [owned.id])
         })
     })
 
@@ -278,8 +293,8 @@ describe('recipe repository', () => {
 
             const ownRecipe = await repository.findRecipe(owned.id)
             const anothersRecipe = await repository.findRecipe(anothers.id)
-            expect(ownRecipe).toBeNull()
-            expect(anothersRecipe).not.toBeNull()
+            assert.equal(ownRecipe, null)
+            assert.notEqual(anothersRecipe, null)
         })
     })
 
@@ -297,7 +312,7 @@ describe('recipe repository', () => {
 
             const found = await repository.findRecipesToMigrate(staleRecipe.type, CURRENT_TYPE_VERSION)
 
-            expect(found).toEqual([{
+            assert.deepEqual(found, [{
                 id: staleRecipe.id, owner: staleRecipe.owner,
                 typeVersion: staleRecipe.typeVersion, content: staleRecipe.content
             }])
@@ -314,7 +329,10 @@ describe('recipe repository', () => {
             await repository.saveMigratedRecipe(migration)
 
             const found = await repository.findRecipe(recipe.id)
-            expect(found.recipe).toEqual({...migration.content, projectId: recipe.projectId, revision: revision + 1})
+            assert.deepEqual(
+                found.recipe,
+                {...migration.content, projectId: recipe.projectId, revision: revision + 1}
+            )
         })
 
         test('strips server metadata a migration would otherwise write back', async () => {
@@ -327,13 +345,13 @@ describe('recipe repository', () => {
             }))
 
             const stored = await storedRow(recipe.id)
-            expect(stored.contents).toEqual(content)
+            assert.deepEqual(stored.contents, content)
         })
 
         test('fails instead of reporting success when it matches no row', async () => {
             const unmatched = repository.saveMigratedRecipe(aRecipeMigration())
 
-            await expect(unmatched).rejects.toThrow(A_RECIPE_ID)
+            await assert.rejects(unmatched, error => error.message.includes(A_RECIPE_ID))
         })
     })
 
@@ -346,7 +364,7 @@ describe('recipe repository', () => {
             await repository.saveProject(renamed)
 
             const projects = await repository.listProjects('Alice')
-            expect(projects).toEqual([{
+            assert.deepEqual(projects, [{
                 id: project.id, username: 'alice', name: renamed.name,
                 defaultAssetFolder: project.defaultAssetFolder,
                 defaultWorkspaceFolder: project.defaultWorkspaceFolder
@@ -361,7 +379,7 @@ describe('recipe repository', () => {
             await repository.saveProject(renamedProject)
 
             const projects = await repository.listProjects(OWNER)
-            expect(projects).toEqual([{
+            assert.deepEqual(projects, [{
                 id: renamedProject.id, username: OWNER, name: renamedProject.name,
                 defaultAssetFolder: renamedProject.defaultAssetFolder,
                 defaultWorkspaceFolder: renamedProject.defaultWorkspaceFolder
@@ -380,11 +398,11 @@ describe('recipe repository', () => {
 
             const owners = await repository.listProjects(OWNER)
             const hijackers = await repository.listProjects(ANOTHER_OWNER)
-            expect(owners).toEqual([{
+            assert.deepEqual(owners, [{
                 id: project.id, username: OWNER, name: project.name,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
-            expect(hijackers).toEqual([])
+            assert.deepEqual(hijackers, [])
         })
     })
 
@@ -398,9 +416,9 @@ describe('recipe repository', () => {
             await repository.removeProject(project.id, OWNER)
 
             const projects = await repository.listProjects(OWNER)
-            expect(projects).toEqual([])
+            assert.deepEqual(projects, [])
             const found = await repository.findRecipe(held.id)
-            expect(found).toBeNull()
+            assert.equal(found, null)
         })
 
         test('rolls back when the recipe soft-delete fails', async () => {
@@ -414,11 +432,11 @@ describe('recipe repository', () => {
 
             const interrupted = refusingTheSoftDelete.removeProject(project.id, OWNER)
 
-            await expect(interrupted).rejects.toThrow('soft delete refused')
+            await assert.rejects(interrupted, /soft delete refused/)
             const projects = await repository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
+            assert.deepEqual(projects.map(({id}) => id), [project.id])
             const found = await repository.findRecipe(held.id)
-            expect(found).not.toBeNull()
+            assert.notEqual(found, null)
         })
 
         test('leaves another user\'s project alone', async () => {
@@ -428,7 +446,7 @@ describe('recipe repository', () => {
             await repository.removeProject(project.id, ANOTHER_OWNER)
 
             const projects = await repository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
+            assert.deepEqual(projects.map(({id}) => id), [project.id])
         })
     })
 
@@ -436,7 +454,7 @@ describe('recipe repository', () => {
         let concurrent
         let concurrentRepository
 
-        beforeAll(async () => {
+        before(async () => {
             concurrent = await createTestDb({
                 name: 'reciperepositoryconcurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
             })
@@ -445,7 +463,7 @@ describe('recipe repository', () => {
 
         beforeEach(() => concurrent.reset())
 
-        afterAll(() => concurrent?.remove())
+        after(() => concurrent?.remove())
 
         // Both saves are in flight together; MySQL decides how they interleave. The claim is only that
         // exactly one can win from a given base revision, whichever order it settles on.
@@ -458,9 +476,9 @@ describe('recipe repository', () => {
                 concurrentRepository.saveRecipe(aRecipe({expectedRevision: revision, content: aRecipeContent({writer: 'second'})}))
             ])
 
-            expect(results.map(({outcome}) => outcome).sort()).toEqual(['conflict', 'saved'])
+            assert.deepEqual(results.map(({outcome}) => outcome).sort(), ['conflict', 'saved'])
             const stored = await concurrentRepository.findRecipe(recipe.id)
-            expect(stored.recipe.revision).toBe(revision + 1)
+            assert.equal(stored.recipe.revision, revision + 1)
         })
 
         // Two browsers creating the same project must converge, not surface a duplicate-key failure.
@@ -471,9 +489,12 @@ describe('recipe repository', () => {
                 Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveProject(project))
             )
 
-            expect(results.map(({status}) => status)).toEqual(Array(COMPETING_WRITERS).fill('fulfilled'))
+            assert.deepEqual(
+                results.map(({status}) => status),
+                Array(COMPETING_WRITERS).fill('fulfilled')
+            )
             const projects = await concurrentRepository.listProjects(OWNER)
-            expect(projects.map(({id}) => id)).toEqual([project.id])
+            assert.deepEqual(projects.map(({id}) => id), [project.id])
         })
     })
 

@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {authorizedKeysLine, keyName, parsePublicKey} from './sshKeys.js'
 
 // Above the specifications, not below: test.each tables are built while the suite is collected.
@@ -34,7 +37,7 @@ describe('parsePublicKey', () => {
     test('accepts an ed25519 key with its comment and fingerprints it as ssh-keygen does', () => {
         const parsed = parsePublicKey(`ssh-ed25519 ${ED25519.base64} alice@laptop`)
 
-        expect(parsed).toEqual({
+        assert.deepEqual(parsed, {
             type: 'ssh-ed25519', publicKey: ED25519.base64, comment: 'alice@laptop', fingerprint: ED25519.fingerprint
         })
     })
@@ -42,43 +45,48 @@ describe('parsePublicKey', () => {
     test('accepts an ecdsa key and fingerprints it as ssh-keygen does', () => {
         const parsed = parsePublicKey(`ecdsa-sha2-nistp384 ${ECDSA_384.base64}`)
 
-        expect(parsed).toMatchObject({type: 'ecdsa-sha2-nistp384', comment: '', fingerprint: ECDSA_384.fingerprint})
+        assert.partialDeepStrictEqual(
+            parsed,
+            {type: 'ecdsa-sha2-nistp384', comment: '', fingerprint: ECDSA_384.fingerprint}
+        )
     })
 
     test('accepts a 2048-bit rsa key', () => {
         const parsed = parsePublicKey(`ssh-rsa ${RSA_2048.base64} laptop`)
 
-        expect(parsed).toMatchObject({type: 'ssh-rsa', fingerprint: RSA_2048.fingerprint})
+        assert.partialDeepStrictEqual(parsed, {type: 'ssh-rsa', fingerprint: RSA_2048.fingerprint})
     })
 
-    test.each([
+    for (const [type, base64] of [
         ['ecdsa-sha2-nistp256', wire('ecdsa-sha2-nistp256', 'nistp256', point(65))],
         ['ecdsa-sha2-nistp521', wire('ecdsa-sha2-nistp521', 'nistp521', point(133))],
         ['sk-ssh-ed25519@openssh.com', wire('sk-ssh-ed25519@openssh.com', Buffer.alloc(32, 1), 'ssh:')],
         ['sk-ecdsa-sha2-nistp256@openssh.com', wire('sk-ecdsa-sha2-nistp256@openssh.com', 'nistp256', point(65), 'ssh:')]
-    ])('accepts a %s key', (type, base64) => {
-        const parsed = parsePublicKey(`${type} ${base64}`)
+    ]) {
+        test(`accepts a ${type} key`, () => {
+            const parsed = parsePublicKey(`${type} ${base64}`)
 
-        expect(parsed).toMatchObject({type, publicKey: base64})
-    })
+            assert.partialDeepStrictEqual(parsed, {type, publicKey: base64})
+        })
+    }
 
     test('accepts a line pasted with surrounding blanks and a Windows line ending', () => {
         const parsed = parsePublicKey(`  ssh-ed25519 ${ED25519.base64} alice@laptop\r\n`)
 
-        expect(parsed).toMatchObject({type: 'ssh-ed25519', comment: 'alice@laptop'})
+        assert.partialDeepStrictEqual(parsed, {type: 'ssh-ed25519', comment: 'alice@laptop'})
     })
 
     test('refuses an rsa key under 2048 bits as too weak', () => {
-        expect(parsePublicKey(`ssh-rsa ${RSA_1024.base64}`)).toEqual({error: 'KEY_TOO_WEAK'})
+        assert.deepEqual(parsePublicKey(`ssh-rsa ${RSA_1024.base64}`), {error: 'KEY_TOO_WEAK'})
     })
 
     test('refuses a well-formed key of a type it does not accept', () => {
         const dsa = wire('ssh-dss', Buffer.alloc(128, 1), Buffer.alloc(20, 1), Buffer.alloc(128, 1), Buffer.alloc(128, 1))
 
-        expect(parsePublicKey(`ssh-dss ${dsa}`)).toEqual({error: 'UNSUPPORTED_TYPE'})
+        assert.deepEqual(parsePublicKey(`ssh-dss ${dsa}`), {error: 'UNSUPPORTED_TYPE'})
     })
 
-    test.each([
+    for (const [description, line] of [
         ['options before the key', `command="/bin/sh" ssh-ed25519 ${ED25519.base64}`],
         ['a bare option before the key', `no-pty ssh-ed25519 ${ED25519.base64}`],
         ['a type that differs from the blob', `ssh-rsa ${ED25519.base64}`],
@@ -92,32 +100,48 @@ describe('parsePublicKey', () => {
         ['a private key', '-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA\n-----END OPENSSH PRIVATE KEY-----'],
         ['an empty value', '   '],
         ['a value that is not a string', ['ssh-ed25519']]
-    ])('refuses %s as an invalid key', (_description, line) => {
-        expect(parsePublicKey(line)).toEqual({error: 'INVALID_KEY'})
-    })
+    ]) {
+        test(`refuses ${description} as an invalid key`, () => {
+            assert.deepEqual(parsePublicKey(line), {error: 'INVALID_KEY'})
+        })
+    }
 })
 
 describe('keyName', () => {
     test('uses the given name, trimmed', () => {
-        expect(keyName({name: '  Laptop  ', comment: 'alice@laptop', type: 'ssh-ed25519'})).toBe('Laptop')
+        assert.equal(
+            keyName({name: '  Laptop  ', comment: 'alice@laptop', type: 'ssh-ed25519'}),
+            'Laptop'
+        )
     })
 
     test('falls back to the key comment when no name is given', () => {
-        expect(keyName({name: ' ', comment: 'alice@laptop', type: 'ssh-ed25519'})).toBe('alice@laptop')
+        assert.equal(
+            keyName({name: ' ', comment: 'alice@laptop', type: 'ssh-ed25519'}),
+            'alice@laptop'
+        )
     })
 
     test('falls back to the key type when there is neither name nor comment', () => {
-        expect(keyName({name: undefined, comment: '', type: 'ssh-ed25519'})).toBe('ssh-ed25519 key')
+        assert.equal(
+            keyName({name: undefined, comment: '', type: 'ssh-ed25519'}),
+            'ssh-ed25519 key'
+        )
     })
 
     test('truncates a name to 255 characters', () => {
-        expect(keyName({name: 'x'.repeat(300), comment: '', type: 'ssh-ed25519'})).toHaveLength(255)
+        assert.equal(
+            keyName({name: 'x'.repeat(300), comment: '', type: 'ssh-ed25519'}).length,
+            255
+        )
     })
 })
 
 describe('authorizedKeysLine', () => {
     test('is the type and the key, nothing else', () => {
-        expect(authorizedKeysLine({type: 'ssh-ed25519', publicKey: ED25519.base64, name: 'x', comment: 'y'}))
-            .toBe(`ssh-ed25519 ${ED25519.base64}`)
+        assert.equal(
+            authorizedKeysLine({type: 'ssh-ed25519', publicKey: ED25519.base64, name: 'x', comment: 'y'}),
+            `ssh-ed25519 ${ED25519.base64}`
+        )
     })
 })

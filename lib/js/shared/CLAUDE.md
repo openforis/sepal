@@ -4,9 +4,9 @@ Shared Node.js library used by most SEPAL microservices. Imported via `#sepal/*`
 
 ## Tests
 
-`cd lib/js/shared && npm test`, from the dev-env container — the package declares no jest of its own and
-borrows the repo root's. Never run it inside a module's service container: those carry a copy of the repo
-baked into the image, so the suite silently runs stale sources.
+`cd lib/js/shared && npm test` runs the Node test runner, from the dev-env container. Never run it inside a
+module's service container: those carry a copy of the repo baked into the image, so the suite silently runs
+stale sources.
 
 The `*.integration.test.js` files under `src/db` and `src/testSupport/db` need a reachable MySQL and
 credentials that can create databases and accounts. `src/gdal` shells out to Python 3 with GDAL.
@@ -41,6 +41,11 @@ and test-support modules are exempt.
 - `testSupport/db/faultyConnection.js` — `failingDb(db, {when, error})` fails the first statement matching
   `when(sql, params)` in each decorated callback, leaving real MySQL and the production transaction handling
   in place.
+- `testSupport/mock.js` — `callsOf(fn)` lists the arguments of each call to a `node:test` mock;
+  `inSequence(implementations, otherwise)` answers successive calls in turn.
+- `testSupport/assert.js` — `assertMatches(actual, pattern)` checks only the properties the pattern names,
+  but arrays element for element; `assert.partialDeepStrictEqual` also accepts an array that merely contains
+  the pattern's elements in order.
 
 ## Constraints
 

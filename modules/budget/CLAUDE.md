@@ -8,7 +8,7 @@ instance + storage spending and enforces monthly budgets; owns the `budget` MySQ
 `migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
-- `npm test` — Jest (ESM, TZ=UTC)
+- `npm test` — Node test runner (TZ=UTC)
 - `sepal build budget` / `sepal start budget` / `sepal logs budget -r`
 
 ## Routes

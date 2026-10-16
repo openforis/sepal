@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {instanceName} from '../instanceName.js'
 import {createDockerInstanceStats} from './dockerInstanceStats.js'
 
@@ -19,12 +22,12 @@ describe('containerStats', () => {
         }
         const stats = createDockerInstanceStats({config, fetcher})
         const result = await stats.containerStats(session)
-        expect(result).toEqual({cpu_stats: {}})
+        assert.deepEqual(result, {cpu_stats: {}})
         const [baseUrl, path, options] = calls[0]
-        expect(baseUrl).toBe('http://1.2.3.4:2375/v1.44')
-        expect(path).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/stats`)
-        expect(options.query).toEqual({stream: false, 'one-shot': true})
-        expect(options.timeoutMs).toBe(5000)
+        assert.equal(baseUrl, 'http://1.2.3.4:2375/v1.44')
+        assert.equal(path, `containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/stats`)
+        assert.deepEqual(options.query, {stream: false, 'one-shot': true})
+        assert.equal(options.timeoutMs, 5000)
     })
 
     it('uses defaultDaemonHost when set (local hosting) and strips the instance- prefix', async () => {
@@ -40,8 +43,11 @@ describe('containerStats', () => {
             instance: {id: '3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3', host: 'alias-42'},
         })
         const [baseUrl, path] = calls[0]
-        expect(baseUrl).toBe('http://host.docker.internal:2375/v1.44')
-        expect(path).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3/stats`)
+        assert.equal(baseUrl, 'http://host.docker.internal:2375/v1.44')
+        assert.equal(
+            path,
+            `containers/sandbox.alice.${instanceName('sess-1')}.3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3/stats`
+        )
     })
 })
 
@@ -54,10 +60,15 @@ describe('gpuStats', () => {
         }
         const stats = createDockerInstanceStats({config, fetcher})
         const result = await stats.gpuStats(session)
-        expect(result).toBe('45, 1024\r\n')
-        expect(calls[0][1]).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/exec`)
-        expect(calls[0][2].body.Cmd).toEqual(
-            ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used', '--format=csv,noheader,nounits'])
-        expect(calls[1][1]).toBe('exec/exec-1/start')
+        assert.equal(result, '45, 1024\r\n')
+        assert.equal(
+            calls[0][1],
+            `containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/exec`
+        )
+        assert.deepEqual(
+            calls[0][2].body.Cmd,
+            ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used', '--format=csv,noheader,nounits']
+        )
+        assert.equal(calls[1][1], 'exec/exec-1/start')
     })
 })

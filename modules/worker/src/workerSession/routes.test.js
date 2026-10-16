@@ -1,13 +1,5 @@
-// routes tests — verify the /sessions routes are registered with the correct HTTP method, path,
-// auth guard (requireAuth vs requireAdmin), and handler, and that the middleware chain enforces auth
-// (missing header → 401; non-admin on an [ADMIN] route → 403).
-//
-// Rather than boot the real Koa http server (koa lives in the shared lib's node_modules, imported
-// transitively via #sepal/httpServer), we drive a fake @koa/router-shaped recorder that captures
-// each registration, then execute the captured middleware chain against a synthetic ctx. This
-// exercises the real currentUser guards + real handler dispatch.
-
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, mock, test} from 'node:test'
 
 import {requireAdmin, requireAuth} from './currentUser.js'
 import {registerSessionRoutes} from './routes.js'
@@ -28,34 +20,34 @@ const makeRouter = () => {
     return router
 }
 
-// Build a stub sessionsApi where every handler is a distinct jest.fn so we can assert dispatch.
+// Build a stub sessionsApi where every handler is a distinct mock.fn so we can assert dispatch.
 const makeApi = () => ({
-    generateReportSelf: jest.fn(),
-    generateReportOther: jest.fn(),
-    userUsageSelf: jest.fn(),
-    userUsageOther: jest.fn(),
-    mostRecentlyClosedByUser: jest.fn(),
-    mostRecentlyClosed: jest.fn(),
-    activeSessions: jest.fn(),
-    associateApp: jest.fn(),
-    startServer: jest.fn(),
-    dissociateApp: jest.fn(),
-    appSessions: jest.fn(),
-    openSessions: jest.fn(),
-    requestSessionSelf: jest.fn(),
-    requestSessionOther: jest.fn(),
-    heartbeatSelf: jest.fn(),
-    heartbeatOther: jest.fn(),
-    setKeepAlive: jest.fn(),
-    extendNow: jest.fn(),
-    openExtension: jest.fn(),
-    dismissExpiry: jest.fn(),
-    expiryPage: jest.fn(),
-    redeemExpiryToken: jest.fn(),
-    closeSessionSelf: jest.fn(),
-    closeSessionOther: jest.fn(),
-    closeUserSessions: jest.fn(),
-    apiKeyAuthenticate: jest.fn(),
+    generateReportSelf: mock.fn(),
+    generateReportOther: mock.fn(),
+    userUsageSelf: mock.fn(),
+    userUsageOther: mock.fn(),
+    mostRecentlyClosedByUser: mock.fn(),
+    mostRecentlyClosed: mock.fn(),
+    activeSessions: mock.fn(),
+    associateApp: mock.fn(),
+    startServer: mock.fn(),
+    dissociateApp: mock.fn(),
+    appSessions: mock.fn(),
+    openSessions: mock.fn(),
+    requestSessionSelf: mock.fn(),
+    requestSessionOther: mock.fn(),
+    heartbeatSelf: mock.fn(),
+    heartbeatOther: mock.fn(),
+    setKeepAlive: mock.fn(),
+    extendNow: mock.fn(),
+    openExtension: mock.fn(),
+    dismissExpiry: mock.fn(),
+    expiryPage: mock.fn(),
+    redeemExpiryToken: mock.fn(),
+    closeSessionSelf: mock.fn(),
+    closeSessionOther: mock.fn(),
+    closeUserSessions: mock.fn(),
+    apiKeyAuthenticate: mock.fn(),
 })
 
 const find = (routes, method, path) => routes.find(r => r.method === method && r.path === path)
@@ -98,7 +90,7 @@ const expected = [
 ]
 
 test('registers exactly 26 routes', () => {
-    expect(router.routes).toHaveLength(26)
+    assert.equal(router.routes.length, 26)
 })
 
 // The email links are clicked from a mail client, typically on a phone with no SEPAL session, so
@@ -106,9 +98,9 @@ test('registers exactly 26 routes', () => {
 test('the email action routes carry no auth guard', () => {
     for (const method of ['get', 'post']) {
         const route = find(router.routes, method, '/sessions/expiry/:token')
-        expect(route).toBeDefined()
-        expect(route.middleware).not.toContain(requireAuth)
-        expect(route.middleware).not.toContain(requireAdmin)
+        assert.notEqual(route, undefined)
+        assert.ok(!route.middleware.includes(requireAuth))
+        assert.ok(!route.middleware.includes(requireAdmin))
     }
 })
 
@@ -117,68 +109,82 @@ test('the email action routes carry no auth guard', () => {
 // means destroying an instance nobody asked to destroy. ONE route pair for both actions: the
 // action is inside the signed token, so there is no path segment to disagree with the signature.
 test('the expiry GET renders and the POST redeems', () => {
-    expect(find(router.routes, 'get', '/sessions/expiry/:token').middleware.at(-1)).toBe(api.expiryPage)
-    expect(find(router.routes, 'post', '/sessions/expiry/:token').middleware.at(-1)).toBe(api.redeemExpiryToken)
+    assert.equal(
+        find(router.routes, 'get', '/sessions/expiry/:token').middleware.at(-1),
+        api.expiryPage
+    )
+    assert.equal(
+        find(router.routes, 'post', '/sessions/expiry/:token').middleware.at(-1),
+        api.redeemExpiryToken
+    )
 })
 
 test('the unauthenticated expiry routes are registered before every guarded route', () => {
-    expect(router.routes[0].path).toBe('/sessions/expiry/:token')
+    assert.equal(router.routes[0].path, '/sessions/expiry/:token')
 })
 
-test.each(expected)('route %s %s wired with correct guard + handler', (method, path, guard, handler) => {
-    const route = find(router.routes, method, path)
-    expect(route).toBeDefined()
-    expect(route.middleware).toContain(guard)
-    expect(route.middleware[route.middleware.length - 1]).toBe(api[handler])
-})
+for (const [method, path, guard, handler] of expected) {
+    test(`route ${method} ${path} wired with correct guard + handler`, () => {
+        const route = find(router.routes, method, path)
+        assert.notEqual(route, undefined)
+        assert.ok(route.middleware.includes(guard))
+        assert.equal(route.middleware[route.middleware.length - 1], api[handler])
+    })
+}
 
 // literal / self routes must precede the :username wildcards so :username can't swallow them
 test('literal routes registered before :username wildcards (same method)', () => {
     const posts = router.routes.filter(r => r.method === 'post').map(r => r.path)
-    expect(posts.indexOf('/sessions/session/:sessionId'))
-        .toBeLessThan(posts.indexOf('/sessions/:username/session/:sessionId'))
+    assert.ok(
+        posts.indexOf('/sessions/session/:sessionId') < posts.indexOf('/sessions/:username/session/:sessionId')
+    )
     const deletes = router.routes.filter(r => r.method === 'delete').map(r => r.path)
-    expect(deletes.indexOf('/sessions/app'))
-        .toBeLessThan(deletes.indexOf('/sessions/:username'))
+    assert.ok(deletes.indexOf('/sessions/app') < deletes.indexOf('/sessions/:username'))
     const gets = router.routes.filter(r => r.method === 'get').map(r => r.path)
-    expect(gets.indexOf('/sessions/mostRecentlyClosed'))
-        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
+    assert.ok(
+        gets.indexOf('/sessions/mostRecentlyClosed') < gets.indexOf('/sessions/:username/report')
+    )
     // /sessions/active is a literal and must precede the :username wildcard so it can't be swallowed
-    expect(gets.indexOf('/sessions/active'))
-        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
+    assert.ok(
+        gets.indexOf('/sessions/active') < gets.indexOf('/sessions/:username/report')
+    )
     // /sessions/open is likewise a literal and must precede the :username wildcard
-    expect(gets.indexOf('/sessions/open'))
-        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
-    expect(gets.indexOf('/sessions/usage'))
-        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
+    assert.ok(
+        gets.indexOf('/sessions/open') < gets.indexOf('/sessions/:username/report')
+    )
+    assert.ok(
+        gets.indexOf('/sessions/usage') < gets.indexOf('/sessions/:username/report')
+    )
 })
 
 // /sessions/active does not collide with any other GET /sessions/* literal, and there is no bare
 // GET /sessions/:username route it could clash with.
 test('/sessions/active is a distinct GET route with no colliding literal', () => {
     const active = router.routes.filter(r => r.method === 'get' && r.path === '/sessions/active')
-    expect(active).toHaveLength(1)
+    assert.equal(active.length, 1)
     const bareUsername = router.routes.find(r => r.method === 'get' && r.path === '/sessions/:username')
-    expect(bareUsername).toBeUndefined()
+    assert.equal(bareUsername, undefined)
 })
 
 // /sessions/open is likewise a distinct, non-colliding literal — and admin-guarded (unlike /active).
 test('/sessions/open is a distinct GET route, admin-guarded', () => {
     const open = router.routes.filter(r => r.method === 'get' && r.path === '/sessions/open')
-    expect(open).toHaveLength(1)
-    expect(open[0].middleware).toContain(requireAdmin)
+    assert.equal(open.length, 1)
+    assert.ok(open[0].middleware.includes(requireAdmin))
 })
 
 test('registers GET /sessions/app-sessions before the :username wildcard', () => {
     const gets = router.routes.filter(r => r.method === 'get').map(r => r.path)
-    expect(gets.indexOf('/sessions/app-sessions'))
-        .toBeLessThan(gets.indexOf('/sessions/:username/report'))
+    assert.ok(
+        gets.indexOf('/sessions/app-sessions') < gets.indexOf('/sessions/:username/report')
+    )
 })
 
 test('registers POST /sessions/session/:sessionId/app before the heartbeat route', () => {
     const posts = router.routes.filter(r => r.method === 'post').map(r => r.path)
-    expect(posts.indexOf('/sessions/session/:sessionId/app'))
-        .toBeLessThan(posts.indexOf('/sessions/session/:sessionId'))
+    assert.ok(
+        posts.indexOf('/sessions/session/:sessionId/app') < posts.indexOf('/sessions/session/:sessionId')
+    )
 })
 
 // ── auth enforcement by executing the captured middleware chain ────────────────
@@ -202,49 +208,49 @@ test('auth route with no sepal-user header → 401, handler not called', async (
     const route = find(router.routes, 'get', '/sessions/report')
     const c = ctx()
     await runChain(route, c)
-    expect(c.status).toBe(401)
-    expect(api.generateReportSelf).not.toHaveBeenCalled()
+    assert.equal(c.status, 401)
+    assert.equal(api.generateReportSelf.mock.callCount(), 0)
 })
 
 test('auth route with a valid header → handler called', async () => {
     const route = find(router.routes, 'get', '/sessions/report')
     const c = ctx({'sepal-user': JSON.stringify({username: 'u', roles: []})})
     await runChain(route, c)
-    expect(api.generateReportSelf).toHaveBeenCalledTimes(1)
-    expect(c.state.currentUser.username).toBe('u')
+    assert.equal(api.generateReportSelf.mock.callCount(), 1)
+    assert.equal(c.state.currentUser.username, 'u')
 })
 
 test('admin route hit by a non-admin user → 403, handler not called', async () => {
     const route = find(router.routes, 'get', '/sessions/:username/report')
     const c = ctx({'sepal-user': JSON.stringify({username: 'u', roles: []})})
     await runChain(route, c)
-    expect(c.status).toBe(403)
-    expect(api.generateReportOther).not.toHaveBeenCalled()
+    assert.equal(c.status, 403)
+    assert.equal(api.generateReportOther.mock.callCount(), 0)
 })
 
 test('admin route hit by an application_admin → handler called', async () => {
     const route = find(router.routes, 'delete', '/sessions/:username')
     const c = ctx({'sepal-user': JSON.stringify({username: 'admin', roles: ['application_admin']})})
     await runChain(route, c)
-    expect(api.closeUserSessions).toHaveBeenCalledTimes(1)
+    assert.equal(api.closeUserSessions.mock.callCount(), 1)
 })
 
 test('admin route with no header → 401', async () => {
     const route = find(router.routes, 'post', '/sessions/api-key-authenticate')
     const c = ctx()
     await runChain(route, c)
-    expect(c.status).toBe(401)
-    expect(api.apiKeyAuthenticate).not.toHaveBeenCalled()
+    assert.equal(c.status, 401)
+    assert.equal(api.apiKeyAuthenticate.mock.callCount(), 0)
 })
 
 test('GET /sessions/open → 403 for a non-admin, called for an admin', async () => {
     const route = find(router.routes, 'get', '/sessions/open')
     const nonAdmin = ctx({'sepal-user': JSON.stringify({username: 'u', roles: []})})
     await runChain(route, nonAdmin)
-    expect(nonAdmin.status).toBe(403)
-    expect(api.openSessions).not.toHaveBeenCalled()
+    assert.equal(nonAdmin.status, 403)
+    assert.equal(api.openSessions.mock.callCount(), 0)
 
     const admin = ctx({'sepal-user': JSON.stringify({username: 'admin', roles: ['application_admin']})})
     await runChain(route, admin)
-    expect(api.openSessions).toHaveBeenCalledTimes(1)
+    assert.equal(api.openSessions.mock.callCount(), 1)
 })

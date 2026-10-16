@@ -1,8 +1,11 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {lastValueFrom, of} from 'rxjs'
 
 import {MAX_ASSET_PROPERTY_BYTES} from '#sepal/earthEngineAssetProperties'
 import {ENCODING_PROPERTY, encodingFromProperties} from '#sepal/recipe/output/bandEncoding'
+import {assertMatches} from '#sepal/testSupport/assert'
 
 // What a single-image asset export submits. Earth Engine's data API and the export start are substituted; the
 // property assembly and the encoding representation are the real ones.
@@ -45,7 +48,11 @@ const ee = {
     }
 }
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: ee
+    }
+})
 
 const {inEEContext} = await import('#sepal/ee/eeContext')
 const {startImageToAssetExport$} = await import('#gee/jobs/task/export/toAsset')
@@ -77,20 +84,23 @@ beforeEach(() => {
 
 describe('exporting a single image', () => {
     it('answers the Earth Engine task it started and the asset it writes', async () => {
-        expect(await exportImage({bandEncoding: {red: REFLECTANCE}})).toEqual({eeTaskId: 'T1', assetId: ASSET})
+        assert.deepEqual(
+            await exportImage({bandEncoding: {red: REFLECTANCE}}),
+            {eeTaskId: 'T1', assetId: ASSET}
+        )
     })
 
     it('writes the export\'s own encoding over one the source image carries', async () => {
         await exportImage({image: sourceImage({[ENCODING_PROPERTY]: storedInline({red: THERMAL})}), bandEncoding: {red: REFLECTANCE}})
 
-        expect(encodingOf(submittedImage())).toEqual({red: REFLECTANCE})
+        assert.deepEqual(encodingOf(submittedImage()), {red: REFLECTANCE})
     })
 
     it('states that nothing is known where the export establishes no encoding', async () => {
         await exportImage({image: sourceImage({[ENCODING_PROPERTY]: storedInline({red: THERMAL})}), bandEncoding: undefined})
 
-        expect(encodingOf(submittedImage())).toEqual({})
-        expect(JSON.parse(submittedImage()[ENCODING_PROPERTY])).toEqual({version: 2, parts: 0})
+        assert.deepEqual(encodingOf(submittedImage()), {})
+        assert.deepEqual(JSON.parse(submittedImage()[ENCODING_PROPERTY]), {version: 2, parts: 0})
     })
 
     it('writes no part of an encoding the submitted properties claim', async () => {
@@ -102,8 +112,8 @@ describe('exporting a single image', () => {
             }
         })
 
-        expect(encodingOf(submittedImage())).toEqual({red: REFLECTANCE})
-        expect(submittedImage().sepal_band_encoding_2).toBeUndefined()
+        assert.deepEqual(encodingOf(submittedImage()), {red: REFLECTANCE})
+        assert.equal(submittedImage().sepal_band_encoding_2, undefined)
     })
 
     it('removes every part of an encoding the source image carried that it does not replace', async () => {
@@ -117,43 +127,50 @@ describe('exporting a single image', () => {
             bandEncoding: {red: REFLECTANCE}
         })
 
-        expect(encodingOf(submittedImage())).toEqual({red: REFLECTANCE})
-        expect(submittedImage().sepal_band_encoding_2).toBe(removed)
-        expect(submittedImage().sepal_band_encoding_3).toBe(removed)
+        assert.deepEqual(encodingOf(submittedImage()), {red: REFLECTANCE})
+        assert.equal(submittedImage().sepal_band_encoding_2, removed)
+        assert.equal(submittedImage().sepal_band_encoding_3, removed)
     })
 
     it('submits the default projection, pixel limit and shard size where the export names none', async () => {
         await exportImage({bandEncoding: {}})
 
-        expect(state.submitted[0]).toMatchObject({crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
-        expect(state.submitted[0].crsTransform).toBeUndefined()
+        assert.partialDeepStrictEqual(state.submitted[0], {crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
+        assert.equal(state.submitted[0].crsTransform, undefined)
     })
 
     it('deletes the existing asset before starting, when replacing', async () => {
         await exportImage({bandEncoding: {}, strategy: 'replace'})
 
-        expect(state.deleted).toEqual([ASSET])
-        expect(state.submitted).toHaveLength(1)
+        assert.deepEqual(state.deleted, [ASSET])
+        assert.equal(state.submitted.length, 1)
     })
 
     it('is refused for a user without a Google account, before anything is submitted', async () => {
-        await expect(exportImage({bandEncoding: {}, context: SERVICE_ACCOUNT})).rejects.toThrow(/service account/)
-        expect(state.submitted).toEqual([])
+        await assert.rejects(
+            exportImage({bandEncoding: {}, context: SERVICE_ACCOUNT}),
+            /service account/
+        )
+        assert.deepEqual(state.submitted, [])
     })
 
     it('is refused for an image collection, which is exported tile by tile', async () => {
-        await expect(lastValueFrom(inEEContext(USER, startImageToAssetExport$({
+        await assert.rejects(lastValueFrom(inEEContext(USER, startImageToAssetExport$({
             image: sourceImage(), description: 'mosaic', assetId: ASSET, assetType: 'ImageCollection', region, scale: 30, properties: {}
-        })))).rejects.toThrow(/ImageCollection/)
-        expect(state.submitted).toEqual([])
+        }))), /ImageCollection/)
+        assert.deepEqual(state.submitted, [])
     })
 
     it('refuses an encoding that cannot be stored, before anything is submitted', async () => {
         const unrepresentable = {[`b${'x'.repeat(MAX_ASSET_PROPERTY_BYTES)}`]: REFLECTANCE}
 
-        await expect(exportImage({bandEncoding: unrepresentable})).rejects.toMatchObject({
-            userMessage: {key: 'tasks.ee.export.asset.encodingTooLarge', args: {assetId: ASSET}}
+        await assert.rejects(exportImage({bandEncoding: unrepresentable}), error => {
+            assertMatches(error, {
+                userMessage: {key: 'tasks.ee.export.asset.encodingTooLarge', args: {assetId: ASSET}}
+            })
+
+            return true
         })
-        expect(state.submitted).toEqual([])
+        assert.deepEqual(state.submitted, [])
     })
 })

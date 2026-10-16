@@ -1,9 +1,7 @@
-// The sweep must never close a session on an inconclusive probe: a transient Docker blip used to
-// close the row, after which ReleaseUnusedInstances terminated the still-live machine 5 minutes
-// later. Nothing closes until the tracker agrees — on a confirmed MISSING, or on an UNKNOWN that has
-// outlasted its backstop.
+import assert from 'node:assert/strict'
+import {mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createMissingInstanceTracker} from '../missingInstanceTracker.js'
 import {createWorkerSession, State} from '../workerSession.js'
@@ -14,15 +12,18 @@ const NOW = new Date('2026-01-01T12:00:00Z')
 test('a single MISSING sweep does not close the session', async () => {
     const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
     await closeSessionsWithoutInstance(deps)
-    expect(deps.repo.update).not.toHaveBeenCalled()
-    expect(deps.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    assert.equal(deps.repo.update.mock.callCount(), 0)
+    assert.equal(deps.emitWorkerSessionClosed.mock.callCount(), 0)
 })
 
 test('MISSING confirmed on a second sweep closes the session', async () => {
     const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
     await closeSessionsWithoutInstance(deps)
     await closeSessionsWithoutInstance(deps)
-    expect(deps.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
+    assert.deepEqual(
+        callsOf(deps.emitWorkerSessionClosed),
+        [[{username: 'alice', sessionId: 's-1'}]]
+    )
 })
 
 // Sustained unreachability does eventually close, on the tracker's backstop — missingInstanceTracker.test.js.
@@ -31,7 +32,7 @@ test('an UNKNOWN probe is never on its own enough to close the session', async (
     for (let i = 0; i < 10; i++) {
         await closeSessionsWithoutInstance(deps)
     }
-    expect(deps.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    assert.equal(deps.emitWorkerSessionClosed.mock.callCount(), 0)
 })
 
 test('a session that recovers between two MISSING sweeps is not closed', async () => {
@@ -42,15 +43,15 @@ test('a session that recovers between two MISSING sweeps is not closed', async (
     await closeSessionsWithoutInstance(deps)
     statuses['s-1'] = 'MISSING'
     await closeSessionsWithoutInstance(deps)
-    expect(deps.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    assert.equal(deps.emitWorkerSessionClosed.mock.callCount(), 0)
 })
 
 test('loads ACTIVE sessions only and never releases the instance', async () => {
     const deps = build({sessions: [session('s-1')], statuses: {'s-1': 'MISSING'}})
     await closeSessionsWithoutInstance(deps)
     await closeSessionsWithoutInstance(deps)
-    expect(deps.repo.sessions).toHaveBeenCalledWith([State.ACTIVE])
-    expect(deps.instanceManager.releaseInstance).toBeUndefined()
+    assert.deepEqual(callsOf(deps.repo.sessions), [[[State.ACTIVE]], [[State.ACTIVE]]])
+    assert.equal(deps.instanceManager.releaseInstance, undefined)
 })
 
 test('one close failing does not abort the rest', async () => {
@@ -58,12 +59,15 @@ test('one close failing does not abort the rest', async () => {
         sessions: [session('s-1'), session('s-2')],
         statuses: {'s-1': 'MISSING', 's-2': 'MISSING'},
     })
-    deps.repo.update = jest.fn(async s => {
+    deps.repo.update = mock.fn(async s => {
         if (s.id === 's-1') throw new Error('boom')
     })
     await closeSessionsWithoutInstance(deps)
     await closeSessionsWithoutInstance(deps)
-    expect(deps.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-2'})
+    assert.deepEqual(
+        callsOf(deps.emitWorkerSessionClosed),
+        [[{username: 'alice', sessionId: 's-2'}]]
+    )
 })
 
 const session = id => createWorkerSession({
@@ -80,15 +84,15 @@ const session = id => createWorkerSession({
 const build = ({sessions, statuses}) => {
     const deps = {
         repo: {
-            sessions: jest.fn(async () => sessions),
-            update: jest.fn(async () => {}),
+            sessions: mock.fn(async () => sessions),
+            update: mock.fn(async () => {}),
         },
         instanceManager: {
-            sessionsWithoutInstance: jest.fn(async probed => probed
+            sessionsWithoutInstance: mock.fn(async probed => probed
                 .filter(s => statuses[s.id] && statuses[s.id] !== 'PROVISIONED')
                 .map(s => ({session: s, status: statuses[s.id]}))),
         },
-        emitWorkerSessionClosed: jest.fn(),
+        emitWorkerSessionClosed: mock.fn(),
         // Time stands still across a sweep here, so the tracker's backstop never elapses: these tests
         // are about what one probe result is worth, not about how long an instance may stay unreachable.
         tracker: createMissingInstanceTracker({

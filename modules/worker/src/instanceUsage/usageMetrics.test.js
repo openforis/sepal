@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {createUsageMetrics} from './usageMetrics.js'
 
 const fakeGauge = () => {
@@ -25,10 +28,10 @@ describe('usageMetrics', () => {
         }])
         const byName = Object.fromEntries(gauges.map(gauge => [gauge.name, gauge]))
         const labels = {username: 'alice', instance_type: 'T3aSmall', instance_id: 'i-1'}
-        expect(byName.sepal_instance_cpu_pct.calls.set).toEqual([{labels, value: 12}])
-        expect(byName.sepal_instance_ram_pct.calls.set).toEqual([{labels, value: 50}])
-        expect(byName.sepal_instance_gpu_pct.calls.set).toEqual([])
-        expect(byName.sepal_instance_net_rx_bytes_per_s.calls.set).toEqual([{labels, value: 100}])
+        assert.deepEqual(byName.sepal_instance_cpu_pct.calls.set, [{labels, value: 12}])
+        assert.deepEqual(byName.sepal_instance_ram_pct.calls.set, [{labels, value: 50}])
+        assert.deepEqual(byName.sepal_instance_gpu_pct.calls.set, [])
+        assert.deepEqual(byName.sepal_instance_net_rx_bytes_per_s.calls.set, [{labels, value: 100}])
     })
 
     it('removes label sets for instances that disappeared', () => {
@@ -47,7 +50,7 @@ describe('usageMetrics', () => {
         metrics.update([sample('i-1'), sample('i-2')])
         metrics.update([sample('i-1')])
         for (const gauge of gauges) {
-            expect(gauge.calls.remove).toEqual([
+            assert.deepEqual(gauge.calls.remove, [
                 {username: 'alice', instance_type: 'T3aSmall', instance_id: 'i-2'},
             ])
         }

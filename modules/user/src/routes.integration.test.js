@@ -1,13 +1,24 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 
 // routes -> userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before the chain.
-jest.unstable_mockModule('./config.js', () => ({
-    amqpUri: 'amqp://localhost', googleOauthCallbackBaseUrl: '', googleOauthClientId: '',
-    googleOauthClientSecret: '', googleProjectId: '', port: 80, recaptchaApiKey: '',
-    recaptchaMinScore: 0.7, recaptchaOptional: true, recaptchaSiteKey: '', sepalHost: 'sepal.example.org'
-}))
+mock.module('./config.js', {
+    exports: {
+        amqpUri: 'amqp://localhost',
+        googleOauthCallbackBaseUrl: '',
+        googleOauthClientId: '',
+        googleOauthClientSecret: '',
+        googleProjectId: '',
+        port: 80,
+        recaptchaApiKey: '',
+        recaptchaMinScore: 0.7,
+        recaptchaOptional: true,
+        recaptchaSiteKey: '',
+        sepalHost: 'sepal.example.org'
+    }
+})
 
 const server = await import('#sepal/httpServer')
 const {hashPassword} = await import('./crypto.js')
@@ -24,7 +35,7 @@ describe('the user routes', () => {
     let users
     let keys
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         running = await startServer()
         url = path => `http://127.0.0.1:${running.address().port}${path}`
@@ -35,27 +46,27 @@ describe('the user routes', () => {
         keys = []
     })
 
-    afterAll(() => running && new Promise(resolve => running.close(resolve)))
+    after(() => running && new Promise(resolve => running.close(resolve)))
 
     test('answer a healthcheck', async () => {
         const response = await request('GET', '/healthcheck')
 
-        expect(response.status).toBe(200)
-        expect(response.body).toEqual({status: 'ok'})
+        assert.equal(response.status, 200)
+        assert.deepEqual(response.body, {status: 'ok'})
     })
 
     describe('without authentication', () => {
         test('authenticate a user against their password', async () => {
             const response = await request('POST', '/authenticate', {body: {username: 'bob', password: PASSWORD}})
 
-            expect(response.status).toBe(200)
-            expect(response.body.username).toBe('bob')
+            assert.equal(response.status, 200)
+            assert.equal(response.body.username, 'bob')
         })
 
         test('refuse a wrong password', async () => {
             const response = await request('POST', '/authenticate', {body: {username: 'bob', password: 'wrong'}})
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
     })
 
@@ -63,22 +74,22 @@ describe('the user routes', () => {
         test('report who they are', async () => {
             const response = await request('GET', '/current', {user: someone('bob')})
 
-            expect(response.status).toBe(200)
-            expect(response.body.username).toBe('bob')
+            assert.equal(response.status, 200)
+            assert.equal(response.body.username, 'bob')
         })
 
         // /login is an alias for the same handler; the GUI posts to it after the gateway signs the user in.
         test('report who they are on login as well', async () => {
             const response = await request('POST', '/login', {user: someone('bob')})
 
-            expect(response.status).toBe(200)
-            expect(response.body.username).toBe('bob')
+            assert.equal(response.status, 200)
+            assert.equal(response.body.username, 'bob')
         })
 
         test('refuse a request carrying no user', async () => {
             const response = await request('GET', '/current')
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
     })
 
@@ -86,21 +97,21 @@ describe('the user routes', () => {
         test('list the users', async () => {
             const response = await request('GET', '/list', {user: someone('bob', ADMIN_ROLES)})
 
-            expect(response.status).toBe(200)
-            expect(response.body.map(({username}) => username).sort()).toEqual(['alice', 'bob'])
+            assert.equal(response.status, 200)
+            assert.deepEqual(response.body.map(({username}) => username).sort(), ['alice', 'bob'])
         })
 
         test('report one user by name', async () => {
             const response = await request('GET', '/info?username=alice', {user: someone('bob', ADMIN_ROLES)})
 
-            expect(response.status).toBe(200)
-            expect(response.body.username).toBe('alice')
+            assert.equal(response.status, 200)
+            assert.equal(response.body.username, 'alice')
         })
 
         test('refuse a user without the admin role', async () => {
             const response = await request('GET', '/list', {user: someone('bob')})
 
-            expect(response.status).toBe(403)
+            assert.equal(response.status, 403)
         })
     })
 
@@ -108,7 +119,7 @@ describe('the user routes', () => {
         test('refuse a request carrying no user', async () => {
             const response = await request('GET', '/current/ssh-keys')
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
 
         test('add, list and remove a key', async () => {
@@ -117,10 +128,10 @@ describe('the user routes', () => {
             const removed = await request('DELETE', `/current/ssh-keys/${added.body.id}`, {user: someone('bob')})
             const remaining = await request('GET', '/current/ssh-keys', {user: someone('bob')})
 
-            expect(added.status).toBe(201)
-            expect(listed.body).toEqual([added.body])
-            expect(removed.status).toBe(204)
-            expect(remaining.body).toEqual([])
+            assert.equal(added.status, 201)
+            assert.deepEqual(listed.body, [added.body])
+            assert.equal(removed.status, 204)
+            assert.deepEqual(remaining.body, [])
         })
 
         test('serve a user\'s authorized keys as plain text, without authentication', async () => {
@@ -128,8 +139,8 @@ describe('the user routes', () => {
 
             const response = await request('GET', '/auth/authorized-keys?username=bob')
 
-            expect(response.status).toBe(200)
-            expect(response.body).toBe(`${ED25519_LINE}\n`)
+            assert.equal(response.status, 200)
+            assert.equal(response.body, `${ED25519_LINE}\n`)
         })
     })
 

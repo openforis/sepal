@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {spawnSync} from 'node:child_process'
 import {join} from 'node:path'
+import {describe, test} from 'node:test'
 
 import {dirName} from '#sepal/path'
 
@@ -7,9 +9,9 @@ describe('ssh-bootstrap', () => {
     test('prints the routing error and exits without starting the menu', () => {
         const result = runBootstrap({SEPAL_ROUTING_ERROR: 'No running instance named funky-name.'})
 
-        expect(result.stderr).toBe('No running instance named funky-name.\n')
-        expect(result.stdout).toBe('')
-        expect(result.status).toBe(1)
+        assert.equal(result.stderr, 'No running instance named funky-name.\n')
+        assert.equal(result.stdout, '')
+        assert.equal(result.status, 1)
     })
 })
 

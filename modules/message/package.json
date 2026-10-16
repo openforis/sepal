@@ -4,7 +4,7 @@
     "description": "SEPAL message service",
     "main": "main.js",
     "scripts": {
-        "test": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest"
+        "test": "TZ=UTC node --test \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
@@ -19,8 +19,5 @@
         "#sepal/*.json": "sepal/src/*.json",
         "#config/*.json": "./config/*.json"
     },
-    "type": "module",
-    "devDependencies": {
-        "jest": "^30.5.2"
-    }
+    "type": "module"
 }

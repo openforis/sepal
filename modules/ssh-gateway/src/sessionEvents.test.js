@@ -1,22 +1,25 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {isRelevantEvent} from './sessionEvents.js'
 
 describe('isRelevantEvent', () => {
     it('matches an event for the logged-in user', () => {
-        expect(isRelevantEvent('admin', {username: 'admin', sessionId: 'abc'})).toBe(true)
+        assert.equal(isRelevantEvent('admin', {username: 'admin', sessionId: 'abc'}), true)
     })
 
     it('matches case-insensitively', () => {
-        expect(isRelevantEvent('Admin', {username: 'admin'})).toBe(true)
-        expect(isRelevantEvent('admin', {username: 'ADMIN'})).toBe(true)
+        assert.equal(isRelevantEvent('Admin', {username: 'admin'}), true)
+        assert.equal(isRelevantEvent('admin', {username: 'ADMIN'}), true)
     })
 
     it('ignores an event for another user', () => {
-        expect(isRelevantEvent('admin', {username: 'someoneElse'})).toBe(false)
+        assert.equal(isRelevantEvent('admin', {username: 'someoneElse'}), false)
     })
 
     it('ignores a payload without a username', () => {
-        expect(isRelevantEvent('admin', {})).toBe(false)
-        expect(isRelevantEvent('admin', {username: 42})).toBe(false)
-        expect(isRelevantEvent('admin', null)).toBe(false)
+        assert.equal(isRelevantEvent('admin', {}), false)
+        assert.equal(isRelevantEvent('admin', {username: 42}), false)
+        assert.equal(isRelevantEvent('admin', null), false)
     })
 })

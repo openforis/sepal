@@ -1,11 +1,12 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {after, describe, it, mock} from 'node:test'
 
 import {closeConsole, prompt, readLine$, setTitle} from './console.js'
 
 // The shared readline interface reads process.stdin; emitting 'data' drives its
 // line parser synchronously, so prompts can be tested without a real terminal.
 describe('readLine$', () => {
-    afterAll(() => closeConsole())
+    after(() => closeConsole())
 
     it('delivers input to sequential prompts (menu → confirmation regression)', () => {
         const received = []
@@ -18,7 +19,7 @@ describe('readLine$', () => {
         })
         process.stdin.emit('data', '1s\n')
         process.stdin.emit('data', 'y\n')
-        expect(received).toEqual(['first:1s', 'second:y'])
+        assert.deepEqual(received, ['first:1s', 'second:y'])
     })
 
     it('releases the prompt when unsubscribed before any input (race loser)', () => {
@@ -26,22 +27,22 @@ describe('readLine$', () => {
         const subscription = readLine$().subscribe(line => received.push(line))
         subscription.unsubscribe()
         process.stdin.emit('data', 'ignored\n')
-        expect(received).toEqual([])
+        assert.deepEqual(received, [])
     })
 })
 
 describe('prompt', () => {
-    afterAll(() => closeConsole())
+    after(() => closeConsole())
 
     it('renders the prompt text through readline', () => {
         const writes = []
-        const spy = jest.spyOn(process.stdout, 'write').mockImplementation(chunk => {
+        const spy = mock.method(process.stdout, 'write', chunk => {
             writes.push(String(chunk))
             return true
         })
         prompt('Select (1): ')
-        spy.mockRestore()
-        expect(writes.join('')).toContain('Select (1): ')
+        spy.mock.restore()
+        assert.ok(writes.join('').includes('Select (1): '))
     })
 })
 
@@ -50,22 +51,23 @@ describe('prompt', () => {
 describe('setTitle', () => {
     const captureWrites = fn => {
         const writes = []
-        const spy = jest.spyOn(process.stdout, 'write').mockImplementation(chunk => {
+        const spy = mock.method(process.stdout, 'write', chunk => {
             writes.push(String(chunk))
             return true
         })
         fn()
-        spy.mockRestore()
+        spy.mock.restore()
         return writes.join('')
     }
 
     it('writes the title as an OSC 0 sequence', () => {
-        expect(captureWrites(() => setTitle('1: lazy-paper')))
-            .toBe('\u001B]0;1: lazy-paper\u0007')
+        assert.equal(
+            captureWrites(() => setTitle('1: lazy-paper')),
+            '\u001B]0;1: lazy-paper\u0007'
+        )
     })
 
     it('clears the title with an empty string', () => {
-        expect(captureWrites(() => setTitle('')))
-            .toBe('\u001B]0;\u0007')
+        assert.equal(captureWrites(() => setTitle('')), '\u001B]0;\u0007')
     })
 })

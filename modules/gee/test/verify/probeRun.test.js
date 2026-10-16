@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {cleanupScratch, createDeletionGuard, isTerminal, runMode} from '../../verify/probeRun.mjs'
 
 // A probe's cleanup and its reruns are fresh processes: whatever the run that started the exports knew about
@@ -11,7 +14,7 @@ describe('what a probe run may delete', () => {
     it('allows deletion once every task of this run has reached a terminal state', async () => {
         const guard = guardOver([[task({name: 'image', state: 'COMPLETED'}), task({name: 'tile', state: 'FAILED'})]])
 
-        expect(await guard()).toEqual({allowed: true, tasks: []})
+        assert.deepEqual(await guard(), {allowed: true, tasks: []})
     })
 
     it('blocks deletion while a task of this run has not', async () => {
@@ -19,16 +22,17 @@ describe('what a probe run may delete', () => {
 
         const decision = await guard()
 
-        expect(decision.allowed).toBe(false)
-        expect(decision.tasks).toEqual([expect.objectContaining({state: 'RUNNING', description: 'run1_image'})])
+        assert.equal(decision.allowed, false)
+        assert.equal(decision.tasks.length, 1)
+        assert.partialDeepStrictEqual(decision.tasks, [{state: 'RUNNING', description: 'run1_image'}])
     })
 
     it('blocks deletion on a task state it does not recognise', async () => {
         const unrecognised = await guardOver([[task({name: 'image', state: 'PENDING_SOMETHING'})]])()
         const absent = await guardOver([[task({name: 'image', state: undefined})]])()
 
-        expect(unrecognised.allowed).toBe(false)
-        expect(absent.allowed).toBe(false)
+        assert.equal(unrecognised.allowed, false)
+        assert.equal(absent.allowed, false)
     })
 
     it('blocks deletion when the task states cannot be established', async () => {
@@ -36,8 +40,8 @@ describe('what a probe run may delete', () => {
 
         const decision = await guard()
 
-        expect(decision.allowed).toBe(false)
-        expect(decision.failure).toEqual({status: 'TRANSPORT', error: 'socket hang up'})
+        assert.equal(decision.allowed, false)
+        assert.deepEqual(decision.failure, {status: 'TRANSPORT', error: 'socket hang up'})
     })
 
     // A limit given to listOperations truncates the result and stops the SDK following nextPageToken, so a probe
@@ -48,13 +52,13 @@ describe('what a probe run may delete', () => {
             [task({name: 'image', state: 'RUNNING'})]
         ])
 
-        expect((await guard()).allowed).toBe(false)
+        assert.equal((await guard()).allowed, false)
     })
 
     it('unwraps the shape the Earth Engine client returns operations in', async () => {
         const guard = guardOver([[serializable(task({name: 'image', state: 'RUNNING'}))]])
 
-        expect((await guard()).allowed).toBe(false)
+        assert.equal((await guard()).allowed, false)
     })
 
     it('is not blocked by another run\'s unfinished task, but reports it', async () => {
@@ -63,17 +67,17 @@ describe('what a probe run may delete', () => {
             task({run: 'run10', name: 'image', state: 'RUNNING'})
         ]])
 
-        expect(await guard()).toEqual({
-            allowed: true,
-            tasks: [expect.objectContaining({description: 'run10_image'})]
-        })
+        const {tasks, ...rest} = await guard()
+        assert.deepEqual(rest, {allowed: true})
+        assert.equal(tasks.length, 1)
+        assert.equal(tasks[0].description, 'run10_image')
     })
 
     it('recognises only explicitly terminal states as finished', () => {
-        expect(isTerminal('COMPLETED')).toBe(true)
-        expect(isTerminal('CANCELLED')).toBe(true)
-        expect(isTerminal('CANCEL_REQUESTED')).toBe(false)
-        expect(isTerminal(undefined)).toBe(false)
+        assert.equal(isTerminal('COMPLETED'), true)
+        assert.equal(isTerminal('CANCELLED'), true)
+        assert.equal(isTerminal('CANCEL_REQUESTED'), false)
+        assert.equal(isTerminal(undefined), false)
     })
 })
 
@@ -83,13 +87,13 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets})
 
-        expect(result.status).toBe('DONE')
-        expect(result.deleted.sort()).toEqual([
+        assert.equal(result.status, 'DONE')
+        assert.deepEqual(result.deleted.sort(), [
             `${PARENT}/run1_collection`, `${PARENT}/run1_collection/0`, `${PARENT}/run1_image`
         ])
-        expect(result.skipped).toEqual([`${PARENT}/run2_image`])
-        expect(assets.ids()).toEqual([`${PARENT}/run2_image`])
-        expect(result.remainingListed).toBe(0)
+        assert.deepEqual(result.skipped, [`${PARENT}/run2_image`])
+        assert.deepEqual(assets.ids(), [`${PARENT}/run2_image`])
+        assert.equal(result.remainingListed, 0)
     })
 
     it('deletes nothing while a task of this run is unfinished', async () => {
@@ -99,10 +103,10 @@ describe('removing what a probe run created', () => {
             allowed: false, reason: 'still writing', tasks: [{description: 'run1_image', state: 'RUNNING'}]
         })})
 
-        expect(result.status).toBe('SKIPPED')
-        expect(result.reason).toBe('still writing')
-        expect(assets.ids()).toHaveLength(4)
-        expect(result.remainingListed).toBe('UNKNOWN')
+        assert.equal(result.status, 'SKIPPED')
+        assert.equal(result.reason, 'still writing')
+        assert.equal(assets.ids().length, 4)
+        assert.equal(result.remainingListed, 'UNKNOWN')
     })
 
     it('deletes nothing when the task states cannot be established', async () => {
@@ -111,8 +115,8 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets, guard: createDeletionGuard({runId: RUN, data})})
 
-        expect(result.status).toBe('SKIPPED')
-        expect(assets.ids()).toHaveLength(4)
+        assert.equal(result.status, 'SKIPPED')
+        assert.equal(assets.ids().length, 4)
     })
 
     it('reports what it could not delete rather than reporting nothing left', async () => {
@@ -121,11 +125,11 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets})
 
-        expect(result.status).toBe('INCOMPLETE')
-        expect(result.failures).toEqual([
+        assert.equal(result.status, 'INCOMPLETE')
+        assert.deepEqual(result.failures, [
             {assetId: `${PARENT}/run1_image`, status: 'PERMISSION_DENIED', error: 'Permission denied'}
         ])
-        expect(result.remainingListed).toBe(1)
+        assert.equal(result.remainingListed, 1)
     })
 
     // Earth Engine answers a delete it will not perform the same way it answers one for an asset that is not
@@ -140,13 +144,12 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets})
 
-        expect(result.status).toBe('INCOMPLETE')
-        expect(result.deleted).not.toContain(`${PARENT}/run1_image`)
-        expect(result.failures).toEqual([expect.objectContaining({
-            assetId: `${PARENT}/run1_image`,
-            status: 'NOT_VISIBLE',
-            error: expect.stringContaining('does not exist or doesn\'t allow this operation')
-        })])
+        assert.equal(result.status, 'INCOMPLETE')
+        assert.ok(!result.deleted.includes(`${PARENT}/run1_image`))
+        assert.equal(result.failures.length, 1)
+        const [{assetId, status, error}] = result.failures
+        assert.deepEqual({assetId, status}, {assetId: `${PARENT}/run1_image`, status: 'NOT_VISIBLE'})
+        assert.ok(error.includes('does not exist or doesn\'t allow this operation'))
     })
 
     it('reports the remainder as unknown when the listing cannot be repeated', async () => {
@@ -158,8 +161,8 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets, listAssets})
 
-        expect(result.remainingListed).toBe('UNKNOWN')
-        expect(result.remainingFailure).toEqual({status: 'TRANSPORT', error: 'socket hang up'})
+        assert.equal(result.remainingListed, 'UNKNOWN')
+        assert.deepEqual(result.remainingFailure, {status: 'TRANSPORT', error: 'socket hang up'})
     })
 
     it('leaves a collection in place when its tiles cannot be listed', async () => {
@@ -168,12 +171,15 @@ describe('removing what a probe run created', () => {
 
         const result = await cleanup({assets})
 
-        expect(result.status).toBe('INCOMPLETE')
-        expect(result.failures).toEqual([expect.objectContaining({
+        assert.equal(result.status, 'INCOMPLETE')
+        assert.equal(result.failures.length, 1)
+
+        assert.partialDeepStrictEqual(result.failures, [{
             assetId: `${PARENT}/run1_collection`, phase: 'LIST_CHILDREN'
-        })])
-        expect(assets.ids()).toContain(`${PARENT}/run1_collection`)
-        expect(assets.ids()).toContain(`${PARENT}/run1_collection/0`)
+        }])
+
+        assert.ok(assets.ids().includes(`${PARENT}/run1_collection`))
+        assert.ok(assets.ids().includes(`${PARENT}/run1_collection/0`))
     })
 
     it('reports nothing deleted when the scratch folder cannot be listed', async () => {
@@ -182,9 +188,9 @@ describe('removing what a probe run created', () => {
             listAssets: async () => ({status: 'PERMISSION_DENIED', error: 'Permission denied'})
         })
 
-        expect(result.status).toBe('LISTING_FAILED')
-        expect(result.deleted).toEqual([])
-        expect(result.remainingListed).toBe('UNKNOWN')
+        assert.equal(result.status, 'LISTING_FAILED')
+        assert.deepEqual(result.deleted, [])
+        assert.equal(result.remainingListed, 'UNKNOWN')
     })
 })
 
@@ -192,15 +198,15 @@ describe('what a mode is allowed to do', () => {
     it('provisions scratch storage for a mode that writes fixtures', async () => {
         const harness = modeHarness()
 
-        expect(await runMode({...harness, mode: 'image'})).toEqual({status: 'WROTE'})
-        expect(harness.calls).toEqual(['authenticate', 'provisionStorage'])
+        assert.deepEqual(await runMode({...harness, mode: 'image'}), {status: 'WROTE'})
+        assert.deepEqual(harness.calls, ['authenticate', 'provisionStorage'])
     })
 
     it('authenticates a read-only mode without provisioning storage', async () => {
         const harness = modeHarness()
 
-        expect(await runMode({...harness, mode: 'read'})).toEqual({status: 'READ'})
-        expect(harness.calls).toEqual(['authenticate'])
+        assert.deepEqual(await runMode({...harness, mode: 'read'}), {status: 'READ'})
+        assert.deepEqual(harness.calls, ['authenticate'])
     })
 
     it('does not provision storage to delete', async () => {
@@ -208,22 +214,24 @@ describe('what a mode is allowed to do', () => {
 
         await runMode({...harness, mode: 'cleanup'})
 
-        expect(harness.calls).toEqual(['authenticate'])
+        assert.deepEqual(harness.calls, ['authenticate'])
     })
 
     it('neither authenticates nor provisions an offline mode', async () => {
         const harness = modeHarness()
 
-        expect(await runMode({...harness, mode: 'plan'})).toEqual({status: 'PLANNED'})
-        expect(harness.calls).toEqual([])
+        assert.deepEqual(await runMode({...harness, mode: 'plan'}), {status: 'PLANNED'})
+        assert.deepEqual(harness.calls, [])
     })
 
     it('names the modes it knows when given one it does not', async () => {
         const harness = modeHarness()
 
-        await expect(runMode({...harness, mode: 'nonsense'}))
-            .rejects.toThrow(/Unknown mode 'nonsense'.*plan, read, image, cleanup/)
-        expect(harness.calls).toEqual([])
+        await assert.rejects(
+            runMode({...harness, mode: 'nonsense'}),
+            /Unknown mode 'nonsense'.*plan, read, image, cleanup/
+        )
+        assert.deepEqual(harness.calls, [])
     })
 })
 

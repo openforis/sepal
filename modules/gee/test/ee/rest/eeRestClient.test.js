@@ -1,13 +1,17 @@
+import assert from 'node:assert/strict'
+import {before, describe, test} from 'node:test'
+
 import {firstValueFrom, lastValueFrom, Observable, of, throwError, toArray} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {DEFAULT_EE_ENDPOINT, inEEContext} from '#sepal/ee/eeContext'
 import {EERestClient, exponentialBackoff} from '#sepal/ee/rest/eeRestClient'
 import {ERROR_CODES} from '#sepal/exception'
+import {assertMatches} from '#sepal/testSupport/assert'
 
 import {initializeOfflineEE, TEST_PROJECT} from '../../support/eeOffline.js'
 
-beforeAll(() => initializeOfflineEE())
+before(() => initializeOfflineEE())
 
 describe('who a call is made as', () => {
     test('a user with a Google account calls as themselves, in their own project', async () => {
@@ -15,11 +19,13 @@ describe('who a call is made as', () => {
 
         await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(http.calls).toEqual([expect.objectContaining({
+        assert.equal(http.calls.length, 1)
+        const [{method, url, headers}] = http.calls
+        assert.deepEqual({method, url, headers}, {
             method: 'POST',
             url: `${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/value:compute`,
             headers: {'Authorization': 'Bearer alice-token', 'x-goog-user-project': 'alice-project'}
-        })])
+        })
     })
 
     test('a user without a Google account calls as the service account, in the SEPAL project', async () => {
@@ -27,17 +33,22 @@ describe('who a call is made as', () => {
 
         await call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(http.calls).toEqual([expect.objectContaining({
+        assert.equal(http.calls.length, 1)
+        const [{url, headers}] = http.calls
+        assert.deepEqual({url, headers}, {
             url: `${DEFAULT_EE_ENDPOINT}/v1/projects/${TEST_PROJECT}/value:compute`,
             headers: {'Authorization': 'Bearer service-account-token', 'x-goog-user-project': TEST_PROJECT}
-        })])
+        })
     })
 
     test('a call made outside any request is refused, and nothing is sent', async () => {
         const {client, http} = setup()
 
-        await expect(firstValueFrom(client.getInfo$(ee.Image('image'), 'probe'))).rejects.toThrow('No Earth Engine context')
-        expect(http.calls).toEqual([])
+        await assert.rejects(
+            firstValueFrom(client.getInfo$(ee.Image('image'), 'probe')),
+            /No Earth Engine context/
+        )
+        assert.deepEqual(http.calls, [])
     })
 
     test('each call passes the limiter as its user, project and origin', async () => {
@@ -45,7 +56,10 @@ describe('who a call is made as', () => {
 
         await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(limited).toEqual([{username: 'alice', projectId: 'alice-project', origin: 'interactive'}])
+        assert.deepEqual(
+            limited,
+            [{username: 'alice', projectId: 'alice-project', origin: 'interactive'}]
+        )
     })
 })
 
@@ -54,21 +68,30 @@ describe('what a call answers', () => {
         const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/c', type: 'IMAGE_COLLECTION'})]})
         const properties = {recipe_id: 'r-1'}
 
-        expect(await call(alice(), client.createImageCollection$('projects/alice-project/assets/c', properties))).toEqual([undefined])
-        expect(http.calls[0]).toMatchObject({method: 'POST', body: {type: 'IMAGE_COLLECTION', properties}})
+        assert.deepEqual(
+            await call(alice(), client.createImageCollection$('projects/alice-project/assets/c', properties)),
+            [undefined]
+        )
+        assert.partialDeepStrictEqual(
+            http.calls[0],
+            {method: 'POST', body: {type: 'IMAGE_COLLECTION', properties}}
+        )
     })
 
     test('nothing, once asset properties are set', async () => {
         const {client, http} = setup({answers: [ok({name: 'projects/alice-project/assets/i'})]})
 
-        expect(await call(alice(), client.setAssetProperties$('projects/alice-project/assets/i', {a: 1}))).toEqual([undefined])
-        expect(http.calls[0].method).toBe('PATCH')
+        assert.deepEqual(
+            await call(alice(), client.setAssetProperties$('projects/alice-project/assets/i', {a: 1})),
+            [undefined]
+        )
+        assert.equal(http.calls[0].method, 'PATCH')
     })
 
     test('a computed value', async () => {
         const {client} = setup({answers: [ok({result: 42})]})
 
-        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).toEqual([42])
+        assert.deepEqual(await call(alice(), client.getInfo$(ee.Image('image'), 'probe')), [42])
     })
 
     test('a map, with the template its tiles are fetched from', async () => {
@@ -77,7 +100,7 @@ describe('what a call answers', () => {
 
         const [map] = await call(alice(), client.getMap$(ee.Image('image'), visParams, 'preview'))
 
-        expect(map).toEqual({
+        assert.deepEqual(map, {
             mapId: 'projects/alice-project/maps/m1',
             token: '',
             urlTemplate: `${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/maps/m1/tiles/{z}/{x}/{y}`,
@@ -91,7 +114,7 @@ describe('what a call answers', () => {
 
         const [asset] = await call(alice(), client.getAsset$(name))
 
-        expect(asset).toMatchObject({type: 'Image', id: name, properties: {a: 1}})
+        assert.partialDeepStrictEqual(asset, {type: 'Image', id: name, properties: {a: 1}})
     })
 
     test('every page of operations', async () => {
@@ -101,15 +124,18 @@ describe('what a call answers', () => {
 
         const [operations] = await call(alice(), client.listOperations$())
 
-        expect(operations).toEqual([first, second])
-        expect(http.calls[1].query).toEqual({pageSize: 500, pageToken: 'page-2'})
+        assert.deepEqual(operations, [first, second])
+        assert.deepEqual(http.calls[1].query, {pageSize: 500, pageToken: 'page-2'})
     })
 
     test('the id of an export it starts', async () => {
         const task = ee.batch.Export.table.toDrive(ee.FeatureCollection('projects/alice-project/assets/table'), 'd', 'f', 'p', 'CSV')
         const {client} = setup({answers: [ok({name: 'projects/alice-project/operations/T9', metadata: {}})]})
 
-        expect(await call(alice(), client.startTableExport$(task, 'start export'))).toEqual(['T9'])
+        assert.deepEqual(
+            await call(alice(), client.startTableExport$(task, 'start export')),
+            ['T9']
+        )
     })
 
     test('the id of an image export it starts', async () => {
@@ -117,17 +143,26 @@ describe('what a call answers', () => {
         const task = ee.batch.Export.image.toAsset(image, 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
         const {client, http} = setup({answers: [ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
 
-        expect(await call(alice(), client.startImageExport$(task, 'start export'))).toEqual(['T7'])
-        expect(http.calls[0].url).toBe(`${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/image:export`)
+        assert.deepEqual(
+            await call(alice(), client.startImageExport$(task, 'start export')),
+            ['T7']
+        )
+        assert.equal(
+            http.calls[0].url,
+            `${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/image:export`
+        )
     })
 
     test('an export start Earth Engine fails to answer is retried as the same request, which Earth Engine deduplicates', async () => {
         const task = ee.batch.Export.image.toAsset(ee.Image('image'), 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
         const {client, http} = setup({answers: [failure(502, {}), ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
 
-        expect(await call(alice(), client.startImageExport$(task, 'start export'))).toEqual(['T7'])
-        expect(http.calls[1].body).toEqual(http.calls[0].body)
-        expect(http.calls[0].body.requestId).toEqual(expect.any(String))
+        assert.deepEqual(
+            await call(alice(), client.startImageExport$(task, 'start export')),
+            ['T7']
+        )
+        assert.deepEqual(http.calls[1].body, http.calls[0].body)
+        assert.equal(typeof http.calls[0].body.requestId, 'string')
     })
 
     test('nothing, for a folder that exists already', async () => {
@@ -135,12 +170,14 @@ describe('what a call answers', () => {
 
         const values = await call(alice(), client.ensureAssetFolder$('projects/alice-project/assets', 'folder'))
 
-        expect(values).toEqual([])
-        expect(http.calls).toEqual([expect.objectContaining({
+        assert.deepEqual(values, [])
+        assert.equal(http.calls.length, 1)
+        const [{url, query, body}] = http.calls
+        assert.deepEqual({url, query, body}, {
             url: `${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/assets`,
             query: {assetId: 'folder'},
             body: {type: 'FOLDER'}
-        })])
+        })
     })
 })
 
@@ -148,79 +185,98 @@ describe('failures', () => {
     test('a call Earth Engine refuses as over quota is retried', async () => {
         const {client, http, delays} = setup({answers: [failure(429, {message: 'Too many requests'}), ok({result: 42})]})
 
-        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).toEqual([42])
-        expect(http.calls).toHaveLength(2)
-        expect(delays).toEqual([1])
+        assert.deepEqual(await call(alice(), client.getInfo$(ee.Image('image'), 'probe')), [42])
+        assert.equal(http.calls.length, 2)
+        assert.deepEqual(delays, [1])
     })
 
     test('a call refused as over quota is retried on a budget of its own, whatever retries the call allows', async () => {
         const tooManyRequests = failure(429, {message: 'Too many requests'})
         const {client, delays} = setup({answers: [tooManyRequests, tooManyRequests, ok({result: 42})]})
 
-        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).toEqual([42])
-        expect(delays).toEqual([1, 2])
+        assert.deepEqual(await call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0)), [42])
+        assert.deepEqual(delays, [1, 2])
     })
 
     test('a call still refused as over quota after ten retries fails', async () => {
         const {client, http} = setup({answers: Array(11).fill(failure(429, {message: 'Too many requests'}))})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toThrow('Too many requests')
-        expect(http.calls).toHaveLength(11)
+        await assert.rejects(
+            call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0)),
+            /Too many requests/
+        )
+        assert.equal(http.calls.length, 11)
     })
 
     test('a call that allows no retries is not retried when Earth Engine is unavailable', async () => {
         const {client, http} = setup({answers: [failure(503, {}), ok({result: 42})]})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toThrow('Failed to probe')
-        expect(http.calls).toHaveLength(1)
+        await assert.rejects(
+            call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0)),
+            /Failed to probe/
+        )
+        assert.equal(http.calls.length, 1)
     })
 
     test('a retry waits twice as long as the one before, up to 30 seconds', () => {
         const withoutJitter = exponentialBackoff(() => 0.5)
 
-        expect([1, 2, 3, 7, 10].map(withoutJitter)).toEqual([500, 1000, 2000, 30000, 30000])
+        assert.deepEqual([1, 2, 3, 7, 10].map(withoutJitter), [500, 1000, 2000, 30000, 30000])
     })
 
     test('a request Earth Engine rejects is not retried, and fails with what Earth Engine said', async () => {
         const {client, http} = setup({answers: [failure(400, {message: 'Image.load: Image asset \'image\' not found.'})]})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe')))
-            .rejects.toThrow('Failed to probe: Image.load: Image asset \'image\' not found.')
-        expect(http.calls).toHaveLength(1)
+        await assert.rejects(
+            call(alice(), client.getInfo$(ee.Image('image'), 'probe')),
+            /Failed to probe: Image\.load: Image asset 'image' not found\./
+        )
+        assert.equal(http.calls.length, 1)
     })
 
     test('a failure Earth Engine gives no reason for is reported without its HTTP status', async () => {
         const {client} = setup({answers: [unexplainedFailure(502)]})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toMatchObject({
-            userMessage: {
-                key: 'gee.error.earthEngineException',
-                args: {earthEngineMessage: 'Google Earth Engine failed to handle the request. Try again later.'}
-            }
+        await assert.rejects(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0)), error => {
+            assertMatches(error, {
+                userMessage: {
+                    key: 'gee.error.earthEngineException',
+                    args: {earthEngineMessage: 'Google Earth Engine failed to handle the request. Try again later.'}
+                }
+            })
+
+            return true
         })
     })
 
     test('a call is given up after its retries', async () => {
         const {client, http, delays} = setup({answers: [failure(503, {}), failure(503, {}), failure(503, {})]})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 2))).rejects.toThrow('Failed to probe')
-        expect(http.calls).toHaveLength(3)
-        expect(delays).toEqual([1, 2])
+        await assert.rejects(
+            call(alice(), client.getInfo$(ee.Image('image'), 'probe', 2)),
+            /Failed to probe/
+        )
+        assert.equal(http.calls.length, 3)
+        assert.deepEqual(delays, [1, 2])
     })
 
     test('an expired user token is a missing Google account, reported as a client error rather than a lost SEPAL session, and is not retried', async () => {
         const {client, http} = setup({answers: [failure(401, {message: 'Request had invalid authentication credentials.'})]})
 
-        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).rejects.toMatchObject({
-            errorCode: ERROR_CODES.MISSING_GOOGLE_TOKENS,
-            statusCode: 400,
-            userMessage: {
-                message: 'Earth Engine: Request had invalid authentication credentials.',
-                key: 'gee.error.earthEngineException',
-                args: {earthEngineMessage: 'Request had invalid authentication credentials.'}
-            }
+        await assert.rejects(call(alice(), client.getInfo$(ee.Image('image'), 'probe')), error => {
+            assertMatches(error, {
+                errorCode: ERROR_CODES.MISSING_GOOGLE_TOKENS,
+                statusCode: 400,
+                userMessage: {
+                    message: 'Earth Engine: Request had invalid authentication credentials.',
+                    key: 'gee.error.earthEngineException',
+                    args: {earthEngineMessage: 'Request had invalid authentication credentials.'}
+                }
+            })
+
+            return true
         })
-        expect(http.calls).toHaveLength(1)
+        assert.equal(http.calls.length, 1)
     })
 
     test('a service-account token that cannot be obtained is retried, then fails saying so', async () => {
@@ -228,10 +284,12 @@ describe('failures', () => {
             serviceAccountToken$: () => throwError(() => new Error('invalid_grant: Invalid JWT Signature.'))
         })
 
-        await expect(call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe', 1)))
-            .rejects.toThrow('Failed to probe: Could not obtain the service-account access token: invalid_grant: Invalid JWT Signature.')
-        expect(delays).toEqual([1])
-        expect(http.calls).toEqual([])
+        await assert.rejects(
+            call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe', 1)),
+            /Failed to probe: Could not obtain the service-account access token: invalid_grant: Invalid JWT Signature\./
+        )
+        assert.deepEqual(delays, [1])
+        assert.deepEqual(http.calls, [])
     })
 
     test('abandoning a call aborts its request', () => {
@@ -239,7 +297,7 @@ describe('failures', () => {
 
         inEEContext(alice(), client.getInfo$(ee.Image('image'), 'probe')).subscribe().unsubscribe()
 
-        expect(http.calls[0].aborted).toBe(true)
+        assert.equal(http.calls[0].aborted, true)
     })
 })
 
@@ -250,7 +308,7 @@ describe('what is counted', () => {
         await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))
         await call(bobWithoutGoogleAccount(), client.getInfo$(ee.Image('image'), 'probe'))
 
-        expect(recorded).toEqual([
+        assert.deepEqual(recorded, [
             {auth: 'user', status: '429'},
             {auth: 'user', status: '2xx'},
             {auth: 'serviceAccount', status: '2xx'}
@@ -265,7 +323,7 @@ describe('what is counted', () => {
             }
         })
 
-        expect(await call(alice(), client.getInfo$(ee.Image('image'), 'probe'))).toEqual([42])
+        assert.deepEqual(await call(alice(), client.getInfo$(ee.Image('image'), 'probe')), [42])
     })
 })
 

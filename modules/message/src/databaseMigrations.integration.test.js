@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -9,14 +11,14 @@ describe('message database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -26,8 +28,8 @@ describe('message database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.message WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             message: 'ascii_general_ci',
             notification: 'ascii_general_ci'
         })
@@ -40,7 +42,7 @@ describe('message database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['message', 'notification']))
+            assert.ok(new Set(['message', 'notification']).isSubsetOf(new Set(tables)))
         })
 
         test('create empty message and notification tables', async () => {
@@ -49,7 +51,7 @@ describe('message database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const counts = await rowCounts(dbName)
-            expect(counts).toEqual({messages: 0, notifications: 0})
+            assert.deepEqual(counts, {messages: 0, notifications: 0})
         })
     })
 

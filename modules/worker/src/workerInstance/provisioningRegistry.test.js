@@ -1,8 +1,5 @@
-// provisionInstance opens by deleting the instance's existing containers, so two overlapping
-// provisions of one instance destroy each other's work. The registry is what makes the
-// reconcile sweep safe to run next to the event-driven provisioning path.
-
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {mock, test} from 'node:test'
 
 import {createProvisioningRegistry} from './provisioningRegistry.js'
 
@@ -20,14 +17,14 @@ const deferred = () => {
 test('a second provision of the same instance while the first is in flight is dropped', async () => {
     const registry = createProvisioningRegistry()
     const first = deferred()
-    const fn = jest.fn(() => first.promise)
+    const fn = mock.fn(() => first.promise)
 
     const running = registry.run('i-1', 's-1', fn)
-    expect(await registry.run('i-1', 's-2', fn)).toBe(false)
-    expect(fn).toHaveBeenCalledTimes(1)
+    assert.equal(await registry.run('i-1', 's-2', fn), false)
+    assert.equal(fn.mock.callCount(), 1)
 
     first.resolve()
-    expect(await running).toBe(true)
+    assert.equal(await running, true)
 })
 
 test('isProvisioning reports the in-flight instance and nothing else', async () => {
@@ -35,23 +32,23 @@ test('isProvisioning reports the in-flight instance and nothing else', async () 
     const first = deferred()
 
     const running = registry.run('i-1', 's-1', () => first.promise)
-    expect(registry.isProvisioning('i-1')).toBe(true)
-    expect(registry.isProvisioning('i-2')).toBe(false)
+    assert.equal(registry.isProvisioning('i-1'), true)
+    assert.equal(registry.isProvisioning('i-2'), false)
 
     first.resolve()
     await running
-    expect(registry.isProvisioning('i-1')).toBe(false)
+    assert.equal(registry.isProvisioning('i-1'), false)
 })
 
 test('the entry clears when the provision fails, so the next sweep may retry', async () => {
     const registry = createProvisioningRegistry()
 
-    await expect(registry.run('i-1', 's-1', async () => {
+    await assert.rejects(registry.run('i-1', 's-1', async () => {
         throw new Error('boom')
-    })).rejects.toThrow('boom')
+    }), /boom/)
 
-    expect(registry.isProvisioning('i-1')).toBe(false)
-    expect(await registry.run('i-1', 's-2', async () => {})).toBe(true)
+    assert.equal(registry.isProvisioning('i-1'), false)
+    assert.equal(await registry.run('i-1', 's-2', async () => {}), true)
 })
 
 test('different instances provision concurrently', async () => {
@@ -62,13 +59,13 @@ test('different instances provision concurrently', async () => {
     const runningA = registry.run('i-a', 's-a', () => a.promise)
     const runningB = registry.run('i-b', 's-b', () => b.promise)
 
-    expect(registry.isProvisioning('i-a')).toBe(true)
-    expect(registry.isProvisioning('i-b')).toBe(true)
+    assert.equal(registry.isProvisioning('i-a'), true)
+    assert.equal(registry.isProvisioning('i-b'), true)
 
     a.resolve()
     b.resolve()
-    expect(await runningA).toBe(true)
-    expect(await runningB).toBe(true)
+    assert.equal(await runningA, true)
+    assert.equal(await runningB, true)
 })
 
 // An instance handed back to the pool takes its entry with it: provisioning retries for up to
@@ -80,24 +77,24 @@ test('a forgotten instance may be provisioned again while the abandoned provisio
 
     const first = registry.run('i-1', 's-1', () => abandoned.promise)
     registry.forget('i-1')
-    expect(registry.isProvisioning('i-1')).toBe(false)
+    assert.equal(registry.isProvisioning('i-1'), false)
 
     const second = registry.run('i-1', 's-2', () => successor.promise)
-    expect(registry.isProvisioning('i-1')).toBe(true)
+    assert.equal(registry.isProvisioning('i-1'), true)
 
     // The abandoned provision settling must not clear the successor's entry.
     abandoned.resolve()
-    expect(await first).toBe(true)
-    expect(registry.isProvisioning('i-1')).toBe(true)
+    assert.equal(await first, true)
+    assert.equal(registry.isProvisioning('i-1'), true)
 
     successor.resolve()
-    expect(await second).toBe(true)
-    expect(registry.isProvisioning('i-1')).toBe(false)
+    assert.equal(await second, true)
+    assert.equal(registry.isProvisioning('i-1'), false)
 })
 
 test('forgetting an instance nobody is provisioning is harmless', () => {
     const registry = createProvisioningRegistry()
 
-    expect(registry.forget('i-1')).toBe(false)
-    expect(registry.isProvisioning('i-1')).toBe(false)
+    assert.equal(registry.forget('i-1'), false)
+    assert.equal(registry.isProvisioning('i-1'), false)
 })

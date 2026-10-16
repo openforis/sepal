@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {systematicStratumMaxOffset} from '#sepal/ee/samplingDesign/samples'
 import {MAX_DENSITY_OFFSETS} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 
@@ -20,40 +23,48 @@ describe('systematicStratumMaxOffset reads the Stratification grid', () => {
 
     // diameter 14714.15 -> floor(log2) = 13; minExponent(60, 2*10) = 6; 13 - 6 = 7.
     it('derives the offset from the Stratification pixel size', () => {
-        expect(systematicStratumMaxOffset(stratum, arrangement({scale: 10}))).toBe(7)
+        assert.equal(systematicStratumMaxOffset(stratum, arrangement({scale: 10})), 7)
     })
 
     // Same diameter, but 2*scale = 2000 raises the floor: minExponent = 11; 13 - 11 = 2.
     it('raises the spacing floor with the Stratification pixel size, lowering the offset', () => {
-        expect(systematicStratumMaxOffset(stratum, arrangement({scale: 1000}))).toBe(2)
+        assert.equal(systematicStratumMaxOffset(stratum, arrangement({scale: 1000})), 2)
     })
 
     // minDistance 5000 exceeds 2*scale, so it sets the floor: minExponent = 12; 13 - 12 = 1.
     it('lets an explicit minimum distance above the floor set the exponent', () => {
-        expect(systematicStratumMaxOffset(stratum, arrangement({scale: 10, minDistance: 5000}))).toBe(1)
+        assert.equal(
+            systematicStratumMaxOffset(stratum, arrangement({scale: 10, minDistance: 5000})),
+            1
+        )
     })
 
     // diameter 46.53 -> floor(log2) = 5; minExponent = 6; negative, so clamped to 0.
     it('clamps to zero when the base grid is already at the spacing floor', () => {
-        expect(systematicStratumMaxOffset({area: 1e6, sampleSize: 100}, arrangement({scale: 30}))).toBe(0)
+        assert.equal(
+            systematicStratumMaxOffset({area: 1e6, sampleSize: 100}, arrangement({scale: 30})),
+            0
+        )
     })
 
     // diameter 3.2902e8 -> floor(log2) = 28; minExponent(unset, 2*1) = 1; raw 27, capped at MAX_DENSITY_OFFSETS.
     it('clamps to the densification ceiling when the raw offset exceeds it', () => {
-        expect(systematicStratumMaxOffset(
+        assert.equal(systematicStratumMaxOffset(
             {area: 1e18, sampleSize: 2},
             {stratificationGrid: {crs: 'EPSG:32636', scale: 1}, arrangementGrid: {crs: 'EPSG:6933'}}
-        )).toBe(MAX_DENSITY_OFFSETS)
+        ), MAX_DENSITY_OFFSETS)
     })
 
     it('ignores the Arrangement CRS', () => {
-        expect(systematicStratumMaxOffset(stratum, arrangement({scale: 10, arrangementCrs: 'EPSG:6931'})))
-            .toBe(systematicStratumMaxOffset(stratum, arrangement({scale: 10, arrangementCrs: 'EPSG:6933'})))
+        assert.equal(
+            systematicStratumMaxOffset(stratum, arrangement({scale: 10, arrangementCrs: 'EPSG:6931'})),
+            systematicStratumMaxOffset(stratum, arrangement({scale: 10, arrangementCrs: 'EPSG:6933'}))
+        )
     })
 
     // Guards the NaN collapse: reading a pixel size off the wrong grid makes every offset 0, which no
     // relative assertion between two such calls can detect.
     it('returns a non-zero offset for a grid that warrants densification', () => {
-        expect(systematicStratumMaxOffset(stratum, arrangement({scale: 10}))).toBeGreaterThan(0)
+        assert.ok(systematicStratumMaxOffset(stratum, arrangement({scale: 10})) > 0)
     })
 })

@@ -1,17 +1,21 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // Who a job's Earth Engine calls are made as: established by the job boundary from the request's credentials,
 // for every task the job runs.
 
-jest.unstable_mockModule('#gee/config', () => ({
-    googleProjectId: 'sepal-test-project',
-    instances: 1,
-    port: 80,
-    recipeEndpoint: 'http://recipe',
-    sepalEndpoint: 'http://test',
-    serviceAccountCredentials: {}
-}))
+mock.module('#gee/config', {
+    exports: {
+        googleProjectId: 'sepal-test-project',
+        instances: 1,
+        port: 80,
+        recipeEndpoint: 'http://recipe',
+        sepalEndpoint: 'http://test',
+        serviceAccountCredentials: {}
+    }
+})
 
 const {WORKER} = await import('#sepal/worker/factory')
 const {currentEEContext, DEFAULT_EE_ENDPOINT} = await import('#sepal/ee/eeContext')
@@ -35,7 +39,7 @@ describe('the Earth Engine context a job runs in', () => {
 
         const context = await contextOf({sepalUser: {username: 'alice', googleTokens}})
 
-        expect(context).toEqual({
+        assert.deepEqual(context, {
             requestId: 'request-1',
             username: 'alice',
             origin: 'interactive',
@@ -49,65 +53,79 @@ describe('the Earth Engine context a job runs in', () => {
     test('is in the SEPAL project for a user whose Google account names no project', async () => {
         const context = await contextOf({sepalUser: {username: 'alice', googleTokens: tokens()}})
 
-        expect(context).toMatchObject({auth: {type: 'user'}, projectId: SEPAL_PROJECT})
+        assert.partialDeepStrictEqual(context, {auth: {type: 'user'}, projectId: SEPAL_PROJECT})
     })
 
     test('is the service account\'s, in the SEPAL project, for a user without a Google account', async () => {
         const context = await contextOf({sepalUser: {username: 'bob'}})
 
-        expect(context).toMatchObject({username: 'bob', auth: {type: 'serviceAccount'}, projectId: SEPAL_PROJECT})
+        assert.partialDeepStrictEqual(
+            context,
+            {username: 'bob', auth: {type: 'serviceAccount'}, projectId: SEPAL_PROJECT}
+        )
     })
 
     test('is the service account\'s for a request without a user', async () => {
         const context = await contextOf({})
 
-        expect(context).toMatchObject({username: null, auth: {type: 'serviceAccount'}, projectId: SEPAL_PROJECT})
+        assert.partialDeepStrictEqual(
+            context,
+            {username: null, auth: {type: 'serviceAccount'}, projectId: SEPAL_PROJECT}
+        )
     })
 
     test('is refused for a user whose Google token has expired', async () => {
         const expired = tokens({accessTokenExpiryDate: Date.now() - 1000})
 
-        await expect(contextOf({sepalUser: {username: 'alice', googleTokens: expired}})).rejects.toThrow(/Token expired/)
+        await assert.rejects(
+            contextOf({sepalUser: {username: 'alice', googleTokens: expired}}),
+            /Token expired/
+        )
     })
 
     test('goes to the endpoint the job asks for', async () => {
         const context = await contextOf({sepalUser: {username: 'bob'}}, {eeEndpoint: HIGH_VOLUME_ENDPOINT})
 
-        expect(context.endpoint).toBe(HIGH_VOLUME_ENDPOINT)
+        assert.equal(context.endpoint, HIGH_VOLUME_ENDPOINT)
     })
 
     test('is task traffic for a request authenticated with a task container\'s key', async () => {
         const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'task', taskId: 't-1'}})
 
-        expect(context.origin).toBe('task')
+        assert.equal(context.origin, 'task')
     })
 
     test('is interactive for a sandbox session\'s request', async () => {
         const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'sandbox', sessionId: 's-1'}})
 
-        expect(context.origin).toBe('interactive')
+        assert.equal(context.origin, 'interactive')
     })
 
     test('carries the workload tag the job derives from its request, when it derives one', async () => {
         const context = await contextOf({sepalUser: {username: 'bob'}, requestArgs: {workloadTag: 'sepal-task-mosaic'}})
 
-        expect(context.workloadTag).toBe('sepal-task-mosaic')
+        assert.equal(context.workloadTag, 'sepal-task-mosaic')
     })
 })
 
 describe('the account tag a request is logged with', () => {
     test('names the Google account\'s project for a user with a Google account', () => {
-        expect(eeAccountTag({username: 'alice', googleTokens: tokens({projectId: 'alice-project'})}, SEPAL_PROJECT))
-            .toBe('<GA:alice-project>')
+        assert.equal(
+            eeAccountTag({username: 'alice', googleTokens: tokens({projectId: 'alice-project'})}, SEPAL_PROJECT),
+            '<GA:alice-project>'
+        )
     })
 
     test('names the SEPAL project for a Google account without a project of its own', () => {
-        expect(eeAccountTag({username: 'alice', googleTokens: tokens()}, SEPAL_PROJECT)).toBe(`<GA:${SEPAL_PROJECT}>`)
+        assert.equal(
+            eeAccountTag({username: 'alice', googleTokens: tokens()}, SEPAL_PROJECT),
+            `<GA:${SEPAL_PROJECT}>`
+        )
     })
 
     test('names the service account for a user without a Google account, or no user at all', () => {
-        expect(eeAccountTag({username: 'bob'}, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
-        expect(eeAccountTag(null, SEPAL_PROJECT)).toBe(`<SA:${SEPAL_PROJECT}>`)
+        assert.equal(eeAccountTag({username: 'bob'}, SEPAL_PROJECT), `<SA:${SEPAL_PROJECT}>`)
+        assert.equal(eeAccountTag(null, SEPAL_PROJECT), `<SA:${SEPAL_PROJECT}>`)
     })
 })
 

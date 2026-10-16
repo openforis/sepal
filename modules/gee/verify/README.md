@@ -3,10 +3,10 @@
 Runnable checks against live Earth Engine. They build real Earth Engine graphs, so they need Earth Engine
 credentials and are **not** part of `npm test`.
 
-## Why these are not Jest tests
+## Why these are not part of the suite
 
-Jest cannot construct `ee.Projection` in this module's environment, so anything building a real Earth Engine
-graph cannot run under it. These scripts are evidence, not CI protection: nothing runs them automatically.
+They need live Earth Engine and its credentials, which the suite does not have. These scripts are evidence, not
+CI protection: nothing runs them automatically.
 
 ## The scripts
 

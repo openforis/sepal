@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {of} from 'rxjs'
 
 import {EASE_GRID_2_GLOBAL_WKT, resolveStratificationCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
@@ -7,11 +9,11 @@ import {EASE_GRID_2_GLOBAL_WKT, resolveStratificationCrs} from '#sepal/recipe/sa
 // must accept any projected CRS - not just the curated equal-area Arrangement catalog.
 describe('area and proportions resolve the Stratification CRS', () => {
     it('translates EPSG:6933 to the WKT Earth Engine can parse', () => {
-        expect(resolveStratificationCrs('EPSG:6933')).toBe(EASE_GRID_2_GLOBAL_WKT)
+        assert.equal(resolveStratificationCrs('EPSG:6933'), EASE_GRID_2_GLOBAL_WKT)
     })
 
     it('accepts a non-curated projected CRS that the Arrangement resolver would reject', () => {
-        expect(resolveStratificationCrs('EPSG:32636')).toBe('EPSG:32636')
+        assert.equal(resolveStratificationCrs('EPSG:32636'), 'EPSG:32636')
     })
 })
 
@@ -73,14 +75,36 @@ const ee = {
 }
 ee.Image.pixelArea = () => image({pixelArea: true})
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
-jest.unstable_mockModule('#gee/jobs/job', () => ({job: config => config}))
-jest.unstable_mockModule('#sepal/ee/aoi', () => ({toGeometry$: () => of({geometry: true})}))
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: () => ({getImage$: () => of(image({source: 'asset'}))})
-}))
-jest.unstable_mockModule('#gee/jobs/ee/batch/exportToCSV', () => ({exportToCSV$: () => of({})}))
-jest.unstable_mockModule('#gee/jobs/ee/batch/parse', () => ({parseGroups: value => value}))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: ee
+    }
+})
+mock.module('#gee/jobs/job', {
+    exports: {
+        job: config => config
+    }
+})
+mock.module('#sepal/ee/aoi', {
+    exports: {
+        toGeometry$: () => of({geometry: true})
+    }
+})
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: () => ({getImage$: () => of(image({source: 'asset'}))})
+    }
+})
+mock.module('#gee/jobs/ee/batch/exportToCSV', {
+    exports: {
+        exportToCSV$: () => of({})
+    }
+})
+mock.module('#gee/jobs/ee/batch/parse', {
+    exports: {
+        parseGroups: value => value
+    }
+})
 
 const {stratificationImage$, stratificationProjection} = await import('#sepal/ee/samplingDesign/stratificationImage')
 const {weightedAreaSums} = await import('#gee/jobs/ee/samplingDesign/weightedAreaSums')
@@ -100,28 +124,32 @@ describe('the Stratification projection', () => {
     const conditionOf = options => decision(options)[0]?.and || []
 
     it('chooses between the candidate and the configured projection server-side', () => {
-        expect(decision()).toHaveLength(3)
-        expect(decision()[1]).toEqual(bandProjection.spec)
+        assert.equal(decision().length, 3)
+        assert.deepEqual(decision()[1], bandProjection.spec)
     })
 
     it('builds the configured projection from the CRS at the configured Scale', () => {
-        expect(configuredOf({crs: 'EPSG:4326', scale: 30}))
-            .toEqual({atScale: [{Projection: 'EPSG:4326'}, 30]})
+        assert.deepEqual(
+            configuredOf({crs: 'EPSG:4326', scale: 30}),
+            {atScale: [{Projection: 'EPSG:4326'}, 30]}
+        )
     })
 
     it('resolves the configured CRS at the Earth Engine boundary', () => {
-        expect(configuredOf({crs: 'EPSG:6933', scale: 30}))
-            .toEqual({atScale: [{Projection: EASE_GRID_2_GLOBAL_WKT}, 30]})
+        assert.deepEqual(
+            configuredOf({crs: 'EPSG:6933', scale: 30}),
+            {atScale: [{Projection: EASE_GRID_2_GLOBAL_WKT}, 30]}
+        )
     })
 
     it('accepts a Scale that arrives as a string, as recipe values do', () => {
-        expect(configuredOf({scale: '30'})).toEqual({atScale: [{Projection: 'EPSG:4326'}, 30]})
+        assert.deepEqual(configuredOf({scale: '30'}), {atScale: [{Projection: 'EPSG:4326'}, 30]})
     })
 
     // Canonical WKT on both sides: it is the only equivalence Earth Engine can be asked for here.
     it('compares the two projections by canonical WKT', () => {
         const [wktMatch] = conditionOf()
-        expect(wktMatch).toEqual({
+        assert.deepEqual(wktMatch, {
             eq: [{compareTo: [{wkt: bandProjection.spec}, {wkt: {atScale: [{Projection: 'EPSG:4326'}, 10]}}]}, 0]
         })
     })
@@ -130,7 +158,7 @@ describe('the Stratification projection', () => {
     // differ by a rounding error rather than by a resolution.
     it('additionally requires the nominal Scale to agree within 0.0001 m', () => {
         const [, scaleMatch] = conditionOf({scale: 10})
-        expect(scaleMatch).toEqual({
+        assert.deepEqual(scaleMatch, {
             lte: [{abs: {subtract: [{nominalScale: bandProjection.spec}, 10]}}, 0.0001]
         })
     })
@@ -148,27 +176,33 @@ describe('ordered candidates', () => {
 
     it('offers the stratification band before the property band', () => {
         const [, first, rest] = decision([strata, property])
-        expect(first).toEqual(strata.spec)
-        expect(rest.If[1]).toEqual(property.spec)
+        assert.deepEqual(first, strata.spec)
+        assert.deepEqual(rest.If[1], property.spec)
     })
 
     it('falls through to the configured projection when neither candidate matches', () => {
         const [, , rest] = decision([strata, property])
-        expect(rest.If[2]).toEqual({atScale: [{Projection: 'EPSG:4326'}, 30]})
+        assert.deepEqual(rest.If[2], {atScale: [{Projection: 'EPSG:4326'}, 30]})
     })
 
     it('tests every candidate by the same canonical-WKT and scale-tolerance rule', () => {
         const [strataCondition, , rest] = decision([strata, property])
         const [wkt, scale] = strataCondition.and
-        expect(wkt).toEqual({eq: [{compareTo: [{wkt: strata.spec}, {wkt: {atScale: [{Projection: 'EPSG:4326'}, 30]}}]}, 0]})
-        expect(scale).toEqual({lte: [{abs: {subtract: [{nominalScale: strata.spec}, 30]}}, 0.0001]})
-        expect(rest.If[0].and[0].eq[0].compareTo[0]).toEqual({wkt: property.spec})
+        assert.deepEqual(
+            wkt,
+            {eq: [{compareTo: [{wkt: strata.spec}, {wkt: {atScale: [{Projection: 'EPSG:4326'}, 30]}}]}, 0]}
+        )
+        assert.deepEqual(
+            scale,
+            {lte: [{abs: {subtract: [{nominalScale: strata.spec}, 30]}}, 0.0001]}
+        )
+        assert.deepEqual(rest.If[0].and[0].eq[0].compareTo[0], {wkt: property.spec})
     })
 
     it('offers only the candidate it is given', () => {
         const [, first, rest] = decision([property])
-        expect(first).toEqual(property.spec)
-        expect(rest).toEqual({atScale: [{Projection: 'EPSG:4326'}, 30]})
+        assert.deepEqual(first, property.spec)
+        assert.deepEqual(rest, {atScale: [{Projection: 'EPSG:4326'}, 30]})
     })
 })
 
@@ -178,13 +212,16 @@ describe('the consumers of the Stratification projection', () => {
     // The projection carries its own scale, so passing one alongside would describe a second grid.
     it('area per stratum reduces on the selected projection and adds no scale', () => {
         const {reduceRegion} = emit(areaPerStratum.worker$({requestArgs: gridArgs, credentials: {}}))
-        expect(reduceRegion.crs?.spec?.Projection?.If || []).toHaveLength(3)
-        expect('scale' in reduceRegion).toBe(false)
+        assert.equal((reduceRegion.crs?.spec?.Projection?.If || []).length, 3)
+        assert.equal('scale' in reduceRegion, false)
     })
 
     it('area per stratum reads the projection of the SELECTED band', () => {
         const {reduceRegion} = emit(areaPerStratum.worker$({requestArgs: gridArgs, credentials: {}}))
-        expect(reduceRegion.crs?.spec?.Projection?.If?.[1]).toEqual({of: {select: [{source: 'asset'}, 'label']}})
+        assert.deepEqual(
+            reduceRegion.crs?.spec?.Projection?.If?.[1],
+            {of: {select: [{source: 'asset'}, 'label']}}
+        )
     })
 
     const proportions = ({stratified}) => weightedAreaSums({
@@ -195,17 +232,17 @@ describe('the consumers of the Stratification projection', () => {
     it('stratified proportions offer the strata lattice before the property band, with no scale', () => {
         const {reduceRegion} = proportions({stratified: true})
         const decision = reduceRegion.crs?.spec?.Projection?.If
-        expect(decision?.[1]).toEqual({of: {select: [{source: 'strata'}, 'class']}})
-        expect(decision?.[2]?.If?.[1]).toEqual({of: {select: [{source: 'probability'}, 'p']}})
-        expect('scale' in reduceRegion).toBe(false)
+        assert.deepEqual(decision?.[1], {of: {select: [{source: 'strata'}, 'class']}})
+        assert.deepEqual(decision?.[2]?.If?.[1], {of: {select: [{source: 'probability'}, 'p']}})
+        assert.equal('scale' in reduceRegion, false)
     })
 
     // With no strata there is no lattice to preserve: the synthetic constant image has Earth Engine's
     // degree-scale default projection, which must never be offered as a grid to snap to.
     it('unstratified proportions offer the property band only', () => {
         const decision = proportions({stratified: false}).reduceRegion.crs?.spec?.Projection?.If
-        expect(decision?.[1]).toEqual({of: {select: [{source: 'probability'}, 'p']}})
-        expect(decision?.[2]).toEqual({atScale: [{Projection: 'EPSG:4326'}, 30]})
+        assert.deepEqual(decision?.[1], {of: {select: [{source: 'probability'}, 'p']}})
+        assert.deepEqual(decision?.[2], {atScale: [{Projection: 'EPSG:4326'}, 30]})
     })
 
     it('the final sampling image reprojects exactly once, onto the same selected projection', () => {
@@ -214,7 +251,10 @@ describe('the consumers of the Stratification projection', () => {
             {crs: 'EPSG:4326', scale: 10}
         ))
         const [renamed, reprojection] = result.spec.reproject
-        expect(renamed).toEqual({rename: [{select: [{source: 'asset'}, 'label']}, 'stratum']})
-        expect(reprojection?.spec?.Projection?.If?.[1]).toEqual({of: {select: [{source: 'asset'}, 'label']}})
+        assert.deepEqual(renamed, {rename: [{select: [{source: 'asset'}, 'label']}, 'stratum']})
+        assert.deepEqual(
+            reprojection?.spec?.Projection?.If?.[1],
+            {of: {select: [{source: 'asset'}, 'label']}}
+        )
     })
 })
