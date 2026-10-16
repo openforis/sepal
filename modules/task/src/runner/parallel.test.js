@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {forEachInParallel} from './parallel.js'
 
 test('runs at most the given number at once', async () => {
@@ -8,7 +11,7 @@ test('runs at most the given number at once', async () => {
         await new Promise(resolve => setImmediate(resolve))
         running--
     })
-    expect(maxRunning).toBe(2)
+    assert.equal(maxRunning, 2)
 })
 
 test('one failure stops the others and is what it rejects with', async () => {
@@ -17,8 +20,11 @@ test('one failure stops the others and is what it rejects with', async () => {
         ? Promise.reject(new Error('boom'))
         : new Promise(resolve => signal.addEventListener('abort', () => (aborted.push(item), resolve())))
 
-    await expect(forEachInParallel([1, 2, 3], 3, new AbortController().signal, work)).rejects.toThrow('boom')
-    expect(aborted.sort()).toEqual([2, 3])
+    await assert.rejects(
+        forEachInParallel([1, 2, 3], 3, new AbortController().signal, work),
+        /boom/
+    )
+    assert.deepEqual(aborted.sort(), [2, 3])
 })
 
 test('the failure is rejected only once the others have settled', async () => {
@@ -32,8 +38,8 @@ test('the failure is rejected only once the others have settled', async () => {
         settled = true
     }
 
-    await expect(forEachInParallel([1, 2], 2, new AbortController().signal, work)).rejects.toThrow('boom')
-    expect(settled).toBe(true)
+    await assert.rejects(forEachInParallel([1, 2], 2, new AbortController().signal, work), /boom/)
+    assert.equal(settled, true)
 })
 
 test('an aborted task starts nothing more', async () => {
@@ -43,7 +49,7 @@ test('an aborted task starts nothing more', async () => {
         started.push(item)
         abort.abort()
     })
-    expect(started).toEqual([1])
+    assert.deepEqual(started, [1])
 })
 
 test('a task aborted before it starts starts nothing', async () => {
@@ -51,5 +57,5 @@ test('a task aborted before it starts starts nothing', async () => {
     abort.abort()
     const started = []
     await forEachInParallel([1, 2], 2, abort.signal, async item => started.push(item))
-    expect(started).toEqual([])
+    assert.deepEqual(started, [])
 })

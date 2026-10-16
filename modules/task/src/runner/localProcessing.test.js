@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {LocalProcessing} from './localProcessing.js'
 import {ProgressReporter} from './progressReporter.js'
 
@@ -11,11 +14,11 @@ test('steps running at once share one slot, given back after the last', async ()
     await settle()
 
     await localProcessing.run(async () => {}, aSignal())
-    expect(sepal.calls).toEqual([['request']])
+    assert.deepEqual(sepal.calls, [['request']])
     finishFirst()
     await first
 
-    expect(sepal.calls).toEqual([['request'], ['release', 'slot-1']])
+    assert.deepEqual(sepal.calls, [['request'], ['release', 'slot-1']])
 })
 
 test('a refused step waits, says so, then shows again what it showed before', async () => {
@@ -25,10 +28,10 @@ test('a refused step waits, says so, then shows again what it showed before', as
 
     await localProcessing.run(async () => ran = true, aSignal())
 
-    expect(ran).toBe(true)
-    expect(sleeps).toEqual([10_000])
-    expect(sent).toEqual([EXPORTING, WAITING, EXPORTING])
-    expect(sepal.calls).toEqual([['request'], ['request'], ['release', 'slot-1']])
+    assert.equal(ran, true)
+    assert.deepEqual(sleeps, [10_000])
+    assert.deepEqual(sent, [EXPORTING, WAITING, EXPORTING])
+    assert.deepEqual(sepal.calls, [['request'], ['request'], ['release', 'slot-1']])
 })
 
 test('a step cancelled while waiting does not run and asks no more', async () => {
@@ -38,8 +41,8 @@ test('a step cancelled while waiting does not run and asks no more', async () =>
 
     await localProcessing.run(async () => ran = true, abort.signal)
 
-    expect(ran).toBe(false)
-    expect(sepal.calls).toEqual([['request']])
+    assert.equal(ran, false)
+    assert.deepEqual(sepal.calls, [['request']])
 })
 
 test('a request that fails counts as a refusal', async () => {
@@ -48,17 +51,17 @@ test('a request that fails counts as a refusal', async () => {
 
     await localProcessing.run(async () => ran = true, aSignal())
 
-    expect(ran).toBe(true)
+    assert.equal(ran, true)
 })
 
 test('a failing step still gives the slot back', async () => {
     const {localProcessing, sepal} = setup()
 
-    await expect(localProcessing.run(async () => {
+    await assert.rejects(localProcessing.run(async () => {
         throw new Error('disk full')
-    }, aSignal())).rejects.toThrow('disk full')
+    }, aSignal()), /disk full/)
 
-    expect(sepal.calls.at(-1)).toEqual(['release', 'slot-1'])
+    assert.deepEqual(sepal.calls.at(-1), ['release', 'slot-1'])
 })
 
 test('the slot last given back is kept for the progress reports, even when its release fails', async () => {
@@ -66,12 +69,12 @@ test('the slot last given back is kept for the progress reports, even when its r
     sepal.releaseLocalProcessing = async () => {
         throw new Error('connect ECONNREFUSED')
     }
-    expect(localProcessing.releasedSlot).toBeNull()
+    assert.equal(localProcessing.releasedSlot, null)
 
     await localProcessing.run(async () => {}, aSignal())
     await settle()
 
-    expect(localProcessing.releasedSlot).toBe('slot-1')
+    assert.equal(localProcessing.releasedSlot, 'slot-1')
 })
 
 test('a step starting while the last release is on its way asks at once, for a new grant', async () => {
@@ -84,7 +87,10 @@ test('a step starting while the last release is on its way asks at once, for a n
 
     await localProcessing.run(async () => {}, aSignal())
 
-    expect(sepal.calls).toEqual([['request'], ['release', 'slot-1'], ['request'], ['release', 'slot-2']])
+    assert.deepEqual(
+        sepal.calls,
+        [['request'], ['release', 'slot-1'], ['request'], ['release', 'slot-2']]
+    )
 })
 
 const setup = ({answers = [], sleep} = {}) => {

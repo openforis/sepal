@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import http from 'node:http'
+import {afterEach, test} from 'node:test'
 
 import {SepalClient} from './sepalClient.js'
 
@@ -14,13 +16,13 @@ test('a failed request keeps its status and body but not the task key', async ()
 
     const error = await client.startExport('export', {a: 1}).catch(e => e)
 
-    expect(error.statusCode).toBe(500)
-    expect(error.body).toBe('{"error":"boom"}')
-    expect(error.request).toBeUndefined()
+    assert.equal(error.statusCode, 500)
+    assert.equal(error.body, '{"error":"boom"}')
+    assert.equal(error.request, undefined)
     const logged = JSON.stringify(error, Object.getOwnPropertyNames(error))
     const basic = Buffer.from(`:${API_KEY}`).toString('base64')
-    expect(logged).not.toContain(API_KEY)
-    expect(logged).not.toContain(basic)
+    assert.ok(!logged.includes(API_KEY))
+    assert.ok(!logged.includes(basic))
 })
 
 test('asks for its task\'s local processing slot and gives back the grant it names, through the gateway', async () => {
@@ -32,7 +34,7 @@ test('asks for its task\'s local processing slot and gives back the grant it nam
     const {slot} = await client.requestLocalProcessing('t-1')
     await client.releaseLocalProcessing('t-1', slot)
 
-    expect(requests).toEqual([
+    assert.deepEqual(requests, [
         {url: '/api/tasks/task/t-1/local-processing', body: {}},
         {url: '/api/tasks/task/t-1/local-processing/release', body: {slot: '2026-10-15T08:00:00.000Z'}}
     ])
@@ -44,7 +46,7 @@ test('reports progress with the slot it last gave back', async () => {
 
     await client.reportProgress('t-1', {messageKey: 'k'}, '2026-10-15T08:00:00.000Z')
 
-    expect(requests).toEqual([
+    assert.deepEqual(requests, [
         {url: '/api/tasks/task/t-1/progress', body: {statusDescription: {messageKey: 'k'}, releasedSlot: '2026-10-15T08:00:00.000Z'}}
     ])
 })

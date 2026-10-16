@@ -1,8 +1,9 @@
+import assert from 'node:assert/strict'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {afterEach, beforeEach, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
 import {of} from 'rxjs'
 
 const exportCalls = []
@@ -10,27 +11,32 @@ const gdalCalls = []
 let downloaded = true
 let downloadedFiles = []
 
-jest.unstable_mockModule('../workspaceExport.js', () => ({
-    exportToWorkspace: async args => {
-        exportCalls.push(args)
-        await args.start()
-        for (const name of downloadedFiles) {
-            await writeFile(join(args.downloadDir, name), '')
+mock.module('../workspaceExport.js', {
+    exports: {
+        exportToWorkspace: async args => {
+            exportCalls.push(args)
+            await args.start()
+            for (const name of downloadedFiles) {
+                await writeFile(join(args.downloadDir, name), '')
+            }
+            return {downloaded}
         }
-        return {downloaded}
     }
-}))
+})
 
-jest.unstable_mockModule('#sepal/gdal', () => ({
-    createVrt$: options => {
-        gdalCalls.push({createVrt: options})
-        return of(null)
-    },
-    setBandNames$: (path, names) => {
-        gdalCalls.push({setBandNames: [path, names]})
-        return of(null)
+mock.module('#sepal/gdal', {
+    exports: {
+        createVrt$: options => {
+            gdalCalls.push({createVrt: options})
+            return of(null)
+        },
+
+        setBandNames$: (path, names) => {
+            gdalCalls.push({setBandNames: [path, names]})
+            return of(null)
+        }
     }
-}))
+})
 
 const {imageSepalExport} = await import('./imageSepalExport.js')
 
@@ -57,10 +63,10 @@ test('exports into the workspace path, then builds a VRT named for the prefix wi
 
     await imageSepalExport(params, context(sepal))
 
-    expect(exportCalls[0].downloadDir).toBe(`${home}/out`)
-    expect(exportCalls[0].localProcessing).toBe(LOCAL_PROCESSING)
-    expect(sepal.started).toEqual([{path: 'task/export/image/sepal', body: params}])
-    expect(gdalCalls).toEqual([
+    assert.equal(exportCalls[0].downloadDir, `${home}/out`)
+    assert.equal(exportCalls[0].localProcessing, LOCAL_PROCESSING)
+    assert.deepEqual(sepal.started, [{path: 'task/export/image/sepal', body: params}])
+    assert.deepEqual(gdalCalls, [
         {createVrt: {inputPaths: [`${home}/out/p-1.tif`, `${home}/out/p-2.tif`], outputPath: `${home}/out/p.vrt`}},
         {setBandNames: [`${home}/out/p.vrt`, ['red', 'nir']]}
     ])
@@ -71,8 +77,8 @@ test('without a workspace path, exports into downloads/<recipe title>', async ()
 
     await imageSepalExport(params, context(fakeSepal()))
 
-    expect(exportCalls[0].downloadDir).toBe(`${home}/downloads/Mosaic`)
-    expect(gdalCalls[0].createVrt.outputPath).toBe(`${home}/downloads/Mosaic/Mosaic.vrt`)
+    assert.equal(exportCalls[0].downloadDir, `${home}/downloads/Mosaic`)
+    assert.equal(gdalCalls[0].createVrt.outputPath, `${home}/downloads/Mosaic/Mosaic.vrt`)
 })
 
 test('builds the VRT from exactly the downloaded GeoTIFFs, whatever the path and title contain', async () => {
@@ -82,7 +88,10 @@ test('builds the VRT from exactly the downloaded GeoTIFFs, whatever the path and
     await imageSepalExport(params, context(fakeSepal()))
 
     const dir = `${home}/my exports`
-    expect(gdalCalls[0].createVrt).toEqual({inputPaths: [`${dir}/a b-1.tif`, `${dir}/a b-2.tif`], outputPath: `${dir}/a b.vrt`})
+    assert.deepEqual(
+        gdalCalls[0].createVrt,
+        {inputPaths: [`${dir}/a b-1.tif`, `${dir}/a b-2.tif`], outputPath: `${dir}/a b.vrt`}
+    )
 })
 
 test('an image export cancelled before its download runs no post-processing', async () => {
@@ -91,7 +100,7 @@ test('an image export cancelled before its download runs no post-processing', as
 
     await imageSepalExport(params, context(fakeSepal()))
 
-    expect(gdalCalls).toEqual([])
+    assert.deepEqual(gdalCalls, [])
 })
 
 const fakeSepal = () => {

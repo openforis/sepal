@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {followEEExport} from './eeExport.js'
 
 const states = (...answers) => {
@@ -21,19 +24,22 @@ test('reports each Earth Engine state once, and resolves when the export complet
 
     const reported = await follow({sepal})
 
-    expect(reported.map(({messageKey}) => messageKey)).toEqual(['tasks.ee.export.ready', 'tasks.ee.export.running'])
+    assert.deepEqual(
+        reported.map(({messageKey}) => messageKey),
+        ['tasks.ee.export.ready', 'tasks.ee.export.running']
+    )
 })
 
 test('an export that fails fails the task with Earth Engine\'s reason', async () => {
     const {sepal} = states({state: 'FAILED', errorMessage: 'Quota exceeded'})
 
-    await expect(follow({sepal})).rejects.toMatchObject({earthEngineMessage: 'Quota exceeded'})
+    await assert.rejects(follow({sepal}), {earthEngineMessage: 'Quota exceeded'})
 })
 
 test('an export cancelled on Google\'s side fails the task', async () => {
     const {sepal} = states({state: 'CANCELLED', errorMessage: null})
 
-    await expect(follow({sepal})).rejects.toMatchObject({earthEngineMessage: expect.stringMatching(/cancel/i)})
+    await assert.rejects(follow({sepal}), {earthEngineMessage: /cancel/i})
 })
 
 test('stopping the task cancels the export it follows', async () => {
@@ -42,7 +48,7 @@ test('stopping the task cancels the export it follows', async () => {
 
     await follow({sepal, signal: abort.signal, sleep: async () => abort.abort()})
 
-    expect(calls.at(-1)).toEqual({path: 'task/operation/cancel', body: {eeTaskId: 'T1'}})
+    assert.deepEqual(calls.at(-1), {path: 'task/operation/cancel', body: {eeTaskId: 'T1'}})
 })
 
 const failingPolls = (...answers) => {
@@ -66,21 +72,21 @@ const failingPolls = (...answers) => {
 test('an export is still followed after a status poll fails once', async () => {
     const {sepal} = failingPolls(new Error('gee restarting'), {state: 'COMPLETED'})
 
-    await expect(follow({sepal})).resolves.toEqual([])
+    assert.deepEqual(await follow({sepal}), [])
 })
 
 test('60 consecutive failed polls fail the task with the last error', async () => {
     const {sepal, calls} = failingPolls()
 
-    await expect(follow({sepal})).rejects.toThrow('gee unavailable')
-    expect(calls).toHaveLength(60)
+    await assert.rejects(follow({sepal}), /gee unavailable/)
+    assert.equal(calls.length, 60)
 })
 
 test('a successful poll resets the count of failed polls', async () => {
     const failures = Array.from({length: 59}, () => new Error('gee unavailable'))
     const {sepal} = failingPolls(...failures, {state: 'RUNNING'}, ...failures, {state: 'COMPLETED'})
 
-    await expect(follow({sepal})).resolves.toHaveLength(1)
+    assert.equal((await follow({sepal})).length, 1)
 })
 
 test('stopping the task during a failing poll still cancels the export', async () => {
@@ -96,11 +102,11 @@ test('stopping the task during a failing poll still cancels the export', async (
 
     await follow({sepal, signal: abort.signal})
 
-    expect(calls.at(-1)).toEqual({path: 'task/operation/cancel', body: {eeTaskId: 'T1'}})
+    assert.deepEqual(calls.at(-1), {path: 'task/operation/cancel', body: {eeTaskId: 'T1'}})
 })
 
 test('an export Earth Engine no longer knows fails the task', async () => {
     const {sepal} = states({state: 'UNKNOWN', errorMessage: null})
 
-    await expect(follow({sepal})).rejects.toMatchObject({earthEngineMessage: expect.stringMatching(/UNKNOWN/)})
+    await assert.rejects(follow({sepal}), {earthEngineMessage: /UNKNOWN/})
 })
