@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {different, identical, pixelComparison} from '../../verify/pixelComparison.mjs'
 
 // What a pixel-by-pixel comparison read from Earth Engine establishes. Earth Engine reads a band without pixels
@@ -7,29 +10,29 @@ describe('a comparison with a number for every band', () => {
     it('is identical, not different, when no mask or value differs', () => {
         const comparison = pixelComparison(differences())
 
-        expect(identical(comparison)).toBe(true)
-        expect(different(comparison)).toBe(false)
+        assert.equal(identical(comparison), true)
+        assert.equal(different(comparison), false)
     })
 
     it('is different, not identical, when a mask differs', () => {
         const comparison = pixelComparison(differences({maskDifferences: {flag: 3}}))
 
-        expect(different(comparison)).toBe(true)
-        expect(identical(comparison)).toBe(false)
+        assert.equal(different(comparison), true)
+        assert.equal(identical(comparison), false)
     })
 
     it('is different, not identical, when a value differs where both are valid', () => {
         const comparison = pixelComparison(differences({maxAbsoluteDifference: {flag: 0.5}}))
 
-        expect(different(comparison)).toBe(true)
-        expect(identical(comparison)).toBe(false)
+        assert.equal(different(comparison), true)
+        assert.equal(identical(comparison), false)
     })
 })
 
 describe('a comparison without a usable number for a band', () => {
     // Each case spoils `flag` in a comparison that would otherwise be identical, and in one that would otherwise be
     // different through `non_forest_probability`.
-    it.each([
+    for (const [label, spoiled] of [
         ['no mask difference entry', {maskDifferences: {flag: undefined}}],
         ['a null mask difference', {maskDifferences: {flag: null}}],
         ['a nonfinite mask difference', {maskDifferences: {flag: Infinity}}],
@@ -40,21 +43,25 @@ describe('a comparison without a usable number for a band', () => {
         ['no jointly valid count', {jointlyValid: {flag: undefined}}],
         ['a null jointly valid count', {jointlyValid: {flag: null}}],
         ['no pixel valid in both', {jointlyValid: {flag: 0}}]
-    ])('is neither identical nor different, with %s', (_label, spoiled) => {
-        expect(identical(pixelComparison(differences(spoiled)))).toBe(false)
-        expect(different(pixelComparison(differences(DIFFERING, spoiled)))).toBe(false)
-    })
+    ]) {
+        it(`is neither identical nor different, with ${label}`, () => {
+            assert.equal(identical(pixelComparison(differences(spoiled))), false)
+            assert.equal(different(pixelComparison(differences(DIFFERING, spoiled))), false)
+        })
+    }
 })
 
 describe('a comparison of images with other bands', () => {
-    it.each([
+    for (const [scenario, bands] of [
         ['no bands', {bands: [], referenceBands: []}],
         ['bands the reference lacks', {referenceBands: ['non_forest_probability']}],
         ['the same bands in another order', {referenceBands: ['flag', 'non_forest_probability']}]
-    ])('is neither identical nor different, with %s', (_label, bands) => {
-        expect(identical(pixelComparison({...differences(), ...bands}))).toBe(false)
-        expect(different(pixelComparison({...differences(DIFFERING), ...bands}))).toBe(false)
-    })
+    ]) {
+        it(`is neither identical nor different, with ${scenario}`, () => {
+            assert.equal(identical(pixelComparison({...differences(), ...bands})), false)
+            assert.equal(different(pixelComparison({...differences(DIFFERING), ...bands})), false)
+        })
+    }
 })
 
 const DIFFERING = {maxAbsoluteDifference: {non_forest_probability: 0.25}}

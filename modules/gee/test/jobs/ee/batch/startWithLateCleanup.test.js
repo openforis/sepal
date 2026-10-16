@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {Subject, throwError} from 'rxjs'
 
 import {startWithLateCleanup$} from '#gee/jobs/ee/batch/startWithLateCleanup'
@@ -42,9 +45,9 @@ describe('startWithLateCleanup$', () => {
         start$.next('t1')
         start$.complete()
 
-        expect(onStartedAfterCancellation.calls).toEqual([['t1']])
-        expect(values).toEqual([])
-        expect(errors).toEqual([])
+        assert.deepEqual(onStartedAfterCancellation.calls, [['t1']])
+        assert.deepEqual(values, [])
+        assert.deepEqual(errors, [])
     })
 
     it('forwards a task id that arrives normally and claims no cleanup', () => {
@@ -56,9 +59,9 @@ describe('startWithLateCleanup$', () => {
         start$.next('t1')
         start$.complete()
 
-        expect(values).toEqual(['t1'])
-        expect(isCompleted()).toBe(true)
-        expect(onStartedAfterCancellation.calls).toEqual([])
+        assert.deepEqual(values, ['t1'])
+        assert.equal(isCompleted(), true)
+        assert.deepEqual(onStartedAfterCancellation.calls, [])
     })
 
     // Once the id has been delivered, polling owns the task and runs cleanup from its own finalize. Claiming
@@ -72,7 +75,7 @@ describe('startWithLateCleanup$', () => {
         start$.next('t1')
         subscription.unsubscribe()
 
-        expect(onStartedAfterCancellation.calls).toEqual([])
+        assert.deepEqual(onStartedAfterCancellation.calls, [])
     })
 
     // There is no task to clean up, and the caller is gone - reporting it would surface an unhandled error
@@ -86,10 +89,10 @@ describe('startWithLateCleanup$', () => {
         subscription.unsubscribe()
         start$.error(new Error('submission rejected'))
 
-        expect(onStartedAfterCancellation.calls).toEqual([])
-        expect(errors).toEqual([])
-        expect(values).toEqual([])
-        expect(isCompleted()).toBe(false)
+        assert.deepEqual(onStartedAfterCancellation.calls, [])
+        assert.deepEqual(errors, [])
+        assert.deepEqual(values, [])
+        assert.equal(isCompleted(), false)
     })
 
     // A submission Earth Engine refuses while the caller is still there must still reach it as an error.
@@ -99,6 +102,6 @@ describe('startWithLateCleanup$', () => {
             start$: throwError(() => new Error('submission rejected')),
             onStartedAfterCancellation: spy()
         }).subscribe(observer)
-        expect(errors.map(({message}) => message)).toEqual(['submission rejected'])
+        assert.deepEqual(errors.map(({message}) => message), ['submission rejected'])
     })
 })

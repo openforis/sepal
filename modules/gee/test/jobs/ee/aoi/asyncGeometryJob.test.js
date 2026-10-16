@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // A GEE job receiving an aoi straight from the request. The descriptor reaches Earth Engine unless the
@@ -8,21 +10,29 @@ const resolved = id => resolvedById[id] || (resolvedById[id] = {resolvedFrom: id
 
 const captured = {}
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: ({id}) => ({getGeometry$: () => of(resolved(id))})
-}))
-jest.unstable_mockModule('#gee/jobs/job', () => ({job: ({worker$}) => worker$}))
-jest.unstable_mockModule('#sepal/ee/ee', () => ({
-    default: {
-        FeatureCollection: () => ({
-            filterBounds: geometry => (captured.filterBounds = geometry, {
-                reduceColumns: () => ({get: () => 'list'})
-            })
-        }),
-        Reducer: {toList: () => ({})},
-        getInfo$: () => of([])
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: ({id}) => ({getGeometry$: () => of(resolved(id))})
     }
-}))
+})
+mock.module('#gee/jobs/job', {
+    exports: {
+        job: ({worker$}) => worker$
+    }
+})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            FeatureCollection: () => ({
+                filterBounds: geometry => (captured.filterBounds = geometry, {
+                    reduceColumns: () => ({get: () => 'list'})
+                })
+            }),
+            Reducer: {toList: () => ({})},
+            getInfo$: () => of([])
+        }
+    }
+})
 
 const {default: sceneAreas$} = await import('#gee/jobs/ee/image/sceneAreas')
 
@@ -32,7 +42,7 @@ describe('scene areas job', () => {
 
         await firstValueFrom(sceneAreas$({requestArgs: {aoi, source: 'LANDSAT'}}))
 
-        expect(captured.filterBounds).toBe(resolved(aoi.id))
+        assert.equal(captured.filterBounds, resolved(aoi.id))
     })
 
     it('filters by the resolved geometry of a recipe aoi', async () => {
@@ -40,6 +50,6 @@ describe('scene areas job', () => {
 
         await firstValueFrom(sceneAreas$({requestArgs: {aoi, source: 'SENTINEL_2'}}))
 
-        expect(captured.filterBounds).toBe(resolved(aoi.id))
+        assert.equal(captured.filterBounds, resolved(aoi.id))
     })
 })

@@ -1,5 +1,9 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {lastValueFrom, of} from 'rxjs'
+
+import {assertMatches} from '#sepal/testSupport/assert'
 
 // The Earth Engine half of a time-series export, as the task container drives it: tile ids, the date ranges of a
 // tile that have imagery, and the start of one chunk's export. Earth Engine and the exporter are substituted.
@@ -34,32 +38,56 @@ const ee = {
     }
 }
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
-jest.unstable_mockModule('#sepal/ee/aoi', () => ({
-    toFeatureCollection$: aoi => (state.aois.push(aoi), of(featureCollection))
-}))
-jest.unstable_mockModule('#sepal/ee/tile', () => ({
-    default: (collection, sizeInDegrees) => {
-        state.tile = {collection, sizeInDegrees}
-        return {
-            aggregate_array: () => 'tileIds',
-            filterMetadata: (_property, _operator, tileId) => {
-                state.tilesLookedUp.push(tileId)
-                return {first: () => ({geometry: () => 'tileGeometry'})}
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: ee
+    }
+})
+mock.module('#sepal/ee/aoi', {
+    exports: {
+        toFeatureCollection$: aoi => (state.aois.push(aoi), of(featureCollection))
+    }
+})
+mock.module('#sepal/ee/tile', {
+    exports: {
+        default: (collection, sizeInDegrees) => {
+            state.tile = {collection, sizeInDegrees}
+            return {
+                aggregate_array: () => 'tileIds',
+                filterMetadata: (_property, _operator, tileId) => {
+                    state.tilesLookedUp.push(tileId)
+                    return {first: () => ({geometry: () => 'tileGeometry'})}
+                }
             }
         }
     }
-}))
-jest.unstable_mockModule('#sepal/ee/timeSeries/collection', () => ({
-    getCollection$: args => (state.getCollection = args, of(images))
-}))
+})
+mock.module('#sepal/ee/timeSeries/collection', {
+    exports: {
+        getCollection$: args => (state.getCollection = args, of(images))
+    }
+})
 const imagery = ({startDate}) => rangesWithImagery.includes(startDate)
-jest.unstable_mockModule('#sepal/ee/optical/collection', () => ({hasImagery: imagery}))
-jest.unstable_mockModule('#sepal/ee/planet/collection', () => ({hasImagery: imagery}))
-jest.unstable_mockModule('#sepal/ee/radar/collection', () => ({hasImagery: imagery}))
-jest.unstable_mockModule('#gee/jobs/task/export/toWorkspace', () => ({
-    startImageToWorkspaceExport$: (args, context) => (state.export = {args, context}, of({eeTaskId: 'T1', destination: {type: 'drive', folder: 'f'}}))
-}))
+mock.module('#sepal/ee/optical/collection', {
+    exports: {
+        hasImagery: imagery
+    }
+})
+mock.module('#sepal/ee/planet/collection', {
+    exports: {
+        hasImagery: imagery
+    }
+})
+mock.module('#sepal/ee/radar/collection', {
+    exports: {
+        hasImagery: imagery
+    }
+})
+mock.module('#gee/jobs/task/export/toWorkspace', {
+    exports: {
+        startImageToWorkspaceExport$: (args, context) => (state.export = {args, context}, of({eeTaskId: 'T1', destination: {type: 'drive', folder: 'f'}}))
+    }
+})
 
 const {timeSeriesTiles$, timeSeriesChunks$, startTimeSeriesChunkExport$} = await import('#gee/jobs/task/export/timeSeries')
 
@@ -84,9 +112,9 @@ describe('timeSeriesTiles$', () => {
     it('tiles the once-resolved aoi and answers the tile ids', async () => {
         const result = await lastValueFrom(timeSeriesTiles$({description: 'ts', image}))
 
-        expect(result).toEqual({tileIds: ['tile-0', 'tile-1']})
-        expect(state.aois).toEqual([aoi])
-        expect(state.tile).toEqual({collection: featureCollection, sizeInDegrees: 2})
+        assert.deepEqual(result, {tileIds: ['tile-0', 'tile-1']})
+        assert.deepEqual(state.aois, [aoi])
+        assert.deepEqual(state.tile, {collection: featureCollection, sizeInDegrees: 2})
     })
 })
 
@@ -102,9 +130,9 @@ describe('timeSeriesChunks$', () => {
 
         const result = await lastValueFrom(timeSeriesChunks$({description: 'ts', image, tileId: 'tile-1', dateRanges}))
 
-        expect(result).toEqual({dateRanges: [dateRanges[0], dateRanges[2]]})
-        expect(state.getInfoCalls).toHaveLength(1)
-        expect(state.tilesLookedUp).toEqual(['tile-1'])
+        assert.deepEqual(result, {dateRanges: [dateRanges[0], dateRanges[2]]})
+        assert.equal(state.getInfoCalls.length, 1)
+        assert.deepEqual(state.tilesLookedUp, ['tile-1'])
     })
 })
 
@@ -115,26 +143,29 @@ describe('startTimeSeriesChunkExport$', () => {
     it('builds the chunk of its tile from the whole aoi and exports it to the workspace under the chunk name', async () => {
         const result = await lastValueFrom(startTimeSeriesChunkExport$(request, {sepalUser}))
 
-        expect(result).toEqual({eeTaskId: 'T1', destination: {type: 'drive', folder: 'f'}})
-        expect(state.tilesLookedUp).toEqual(['tile-1'])
-        expect(state.getCollection).toEqual(expect.objectContaining({
+        assert.deepEqual(result, {eeTaskId: 'T1', destination: {type: 'drive', folder: 'f'}})
+        assert.deepEqual(state.tilesLookedUp, ['tile-1'])
+        assertMatches(state.getCollection, {
             recipe, geometry: aoiGeometry, bands: ['ndvi'], startDate: '2020-01-01', endDate: '2020-04-01'
-        }))
-        expect(state.export.args).toEqual(expect.objectContaining({description: 'ts_3_2020-01-01_2020-04-01', scale: 30}))
-        expect(state.export.args.image).toBe('time-series image')
-        expect(state.export.args.region).toBeUndefined()
-        expect(state.export.context).toEqual({sepalUser})
+        })
+        assert.partialDeepStrictEqual(state.export.args, {description: 'ts_3_2020-01-01_2020-04-01', scale: 30})
+        assert.equal(state.export.args.image, 'time-series image')
+        assert.equal(state.export.args.region, undefined)
+        assert.deepEqual(state.export.context, {sepalUser})
     })
 
     it('exports each run of a chunk into a folder named for the time it started', async () => {
         await lastValueFrom(startTimeSeriesChunkExport$(request, {sepalUser}))
 
-        expect(state.export.args.folder).toMatch(/^ts_3_2020-01-01_2020-04-01_\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}\.\d{3}$/)
+        assert.match(
+            state.export.args.folder,
+            /^ts_3_2020-01-01_2020-04-01_\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}\.\d{3}$/
+        )
     })
 
     it('prefers the filename prefix over the description', async () => {
         await lastValueFrom(startTimeSeriesChunkExport$({...request, image: {...image, filenamePrefix: 'prefix'}}, {sepalUser}))
 
-        expect(state.export.args.description).toBe('prefix_3_2020-01-01_2020-04-01')
+        assert.equal(state.export.args.description, 'prefix_3_2020-01-01_2020-04-01')
     })
 })

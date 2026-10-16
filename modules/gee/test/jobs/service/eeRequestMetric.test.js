@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {createRequire} from 'node:module'
+import {test} from 'node:test'
 
 import {recordEERequest} from '#gee/jobs/service/eeRequestMetric'
 
@@ -11,7 +13,7 @@ test('an Earth Engine request is counted in the registry /metrics serves', async
 
     recordEERequest({auth: 'user', status: '429'})
 
-    expect(await count({auth: 'user', status: '429'})).toBe(before + 1)
+    assert.equal(await count({auth: 'user', status: '429'}), before + 1)
 })
 
 const count = async labels => {

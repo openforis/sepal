@@ -1,6 +1,8 @@
+import assert from 'node:assert/strict'
 import {execFile} from 'node:child_process'
 import os from 'node:os'
 import {dirname} from 'node:path'
+import {describe, test} from 'node:test'
 import {fileURLToPath} from 'node:url'
 import {promisify} from 'node:util'
 
@@ -9,8 +11,8 @@ describe('Earth Engine limits', () => {
     test('take their default when their variable is empty', async () => {
         const {eeLimits} = await loadConfig({EE_LIMIT_USER_RATE: '', EE_LIMIT_USER_PROJECT_CONCURRENCY: ''})
 
-        expect(eeLimits.user.maxRate).toBe(25)
-        expect(eeLimits.userProject.maxConcurrency).toBe(40)
+        assert.equal(eeLimits.user.maxRate, 25)
+        assert.equal(eeLimits.userProject.maxConcurrency, 40)
     })
 
     test('for task traffic take their defaults when their variables are empty', async () => {
@@ -19,15 +21,15 @@ describe('Earth Engine limits', () => {
             EE_LIMIT_TASK_GLOBAL_RATE: '', EE_LIMIT_TASK_GLOBAL_CONCURRENCY: ''
         })
 
-        expect(eeLimits.taskUser).toEqual({maxRate: 10, maxConcurrency: 5})
-        expect(eeLimits.taskGlobal).toEqual({maxRate: 50, maxConcurrency: 20})
+        assert.deepEqual(eeLimits.taskUser, {maxRate: 10, maxConcurrency: 5})
+        assert.deepEqual(eeLimits.taskGlobal, {maxRate: 50, maxConcurrency: 20})
     })
 
     test('for task traffic are read from their variables', async () => {
         const {eeLimits} = await loadConfig({EE_LIMIT_TASK_USER_CONCURRENCY: '2', EE_LIMIT_TASK_GLOBAL_RATE: '30'})
 
-        expect(eeLimits.taskUser.maxConcurrency).toBe(2)
-        expect(eeLimits.taskGlobal.maxRate).toBe(30)
+        assert.equal(eeLimits.taskUser.maxConcurrency, 2)
+        assert.equal(eeLimits.taskGlobal.maxRate, 30)
     })
 
     test('of the SEPAL project are those of user projects when their variables are empty', async () => {
@@ -37,50 +39,57 @@ describe('Earth Engine limits', () => {
             EE_LIMIT_SEPAL_PROJECT_CONCURRENCY: ''
         })
 
-        expect(eeLimits.sepalProject).toEqual({maxRate: 80, maxConcurrency: 40})
+        assert.deepEqual(eeLimits.sepalProject, {maxRate: 80, maxConcurrency: 40})
     })
 
     test('are read from variables that have a value', async () => {
         const {eeLimits} = await loadConfig({EE_LIMIT_SEPAL_PROJECT_RATE: '50', EE_LIMIT_GLOBAL_CONCURRENCY: '120'})
 
-        expect(eeLimits.sepalProject.maxRate).toBe(50)
-        expect(eeLimits.global.maxConcurrency).toBe(120)
+        assert.equal(eeLimits.sepalProject.maxRate, 50)
+        assert.equal(eeLimits.global.maxConcurrency, 120)
     })
 
-    test.each(['0', '-5', '2.5', '10abc', 'unlimited'])('refuse to start with %s', async value => {
-        await expect(loadConfig({EE_LIMIT_USER_CONCURRENCY: value})).rejects.toMatchObject({
-            code: 1,
-            stdout: expect.stringContaining(`EE_LIMIT_USER_CONCURRENCY must be a positive integer, got: ${value}`)
+    for (const value of ['0', '-5', '2.5', '10abc', 'unlimited']) {
+        test(`refuse to start with ${value}`, async () => {
+            await assert.rejects(loadConfig({EE_LIMIT_USER_CONCURRENCY: value}), error => {
+                assert.equal(error.code, 1)
+                assert.ok(error.stdout.includes(`EE_LIMIT_USER_CONCURRENCY must be a positive integer, got: ${value}`))
+                return true
+            })
         })
-    })
+    }
 })
 
 describe('worker threads', () => {
     test('are half the cores, at least two, when their variable is empty', async () => {
         const {instances} = await loadConfig({INSTANCES: ''})
 
-        expect(instances).toBe(Math.max(2, Math.floor(os.availableParallelism() / 2)))
+        assert.equal(instances, Math.max(2, Math.floor(os.availableParallelism() / 2)))
     })
 
     test('are read from their variable when it has a value', async () => {
         const {instances} = await loadConfig({INSTANCES: '5'})
 
-        expect(instances).toBe(5)
+        assert.equal(instances, 5)
     })
 
-    test.each(['0', '-1', '1.5', 'many'])('refuse to start with %s', async value => {
-        await expect(loadConfig({INSTANCES: value})).rejects.toMatchObject({
-            code: 1,
-            stdout: expect.stringContaining(`INSTANCES must be a positive integer, got: ${value}`)
+    for (const value of ['0', '-1', '1.5', 'many']) {
+        test(`refuse to start with ${value}`, async () => {
+            await assert.rejects(loadConfig({INSTANCES: value}), error => {
+                assert.equal(error.code, 1)
+                assert.ok(error.stdout.includes(`INSTANCES must be a positive integer, got: ${value}`))
+                return true
+            })
         })
-    })
+    }
 })
 
 describe('the SEPAL host', () => {
     test('is required, since it names every user\'s export bucket', async () => {
-        await expect(loadConfig({SEPAL_HOST: ''})).rejects.toMatchObject({
-            code: 1,
-            stdout: expect.stringContaining('--sepal-host')
+        await assert.rejects(loadConfig({SEPAL_HOST: ''}), error => {
+            assert.equal(error.code, 1)
+            assert.ok(error.stdout.includes('--sepal-host'))
+            return true
         })
     })
 })

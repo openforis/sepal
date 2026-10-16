@@ -1,25 +1,43 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {firstValueFrom} from 'rxjs'
 
 // What a Band Math recipe's catalogue answers: its configured output names, in configured order, however it was
 // asked and without building anything. Which bands execution builds is the live verifier's
 // (verify/bandMathOutputBands.mjs).
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: {}}))
-const imageFactory = jest.fn()
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {}
+    }
+})
+const imageFactory = mock.fn()
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: imageFactory
+    }
+})
 
 const {default: bandMath} = await import('#sepal/ee/bandMath/bandMath')
 
 describe('the bands a Band Math recipe reports', () => {
-    it.each([
+    for (const [scenario, args] of [
         ['nothing', undefined],
         ['an empty selection', {selection: []}],
         ['some of its bands', {selection: ['mean']}]
-    ])('are its configured output names, whatever it is asked for: %s', async (_case, args) => {
-        expect(await firstValueFrom(bandMath(BAND_MATH, args).getBands$())).toEqual(['dem2', 'elevation', 'mean'])
-        expect(imageFactory).not.toHaveBeenCalled()
-    })
+    ]) {
+        it(
+            `are its configured output names, whatever it is asked for: ${scenario}`,
+            async () => {
+                assert.deepEqual(
+                    await firstValueFrom(bandMath(BAND_MATH, args).getBands$()),
+                    ['dem2', 'elevation', 'mean']
+                )
+                assert.equal(imageFactory.mock.callCount(), 0)
+            }
+        )
+    }
 })
 
 const BAND_MATH = {

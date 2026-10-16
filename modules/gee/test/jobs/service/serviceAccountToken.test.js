@@ -1,9 +1,13 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
 import {firstValueFrom} from 'rxjs'
 
-jest.unstable_mockModule('#gee/config', () => ({
-    serviceAccountCredentials: {client_email: 'sepal@sepal-test-project.iam.gserviceaccount.com', private_key: 'test-key'}
-}))
+mock.module('#gee/config', {
+    exports: {
+        serviceAccountCredentials: {client_email: 'sepal@sepal-test-project.iam.gserviceaccount.com', private_key: 'test-key'}
+    }
+})
 
 const {ServiceAccountToken} = await import('#gee/jobs/service/serviceAccountToken')
 
@@ -19,8 +23,8 @@ describe('the service-account token', () => {
         clock.now = 4 * MINUTE
         const reused = await firstValueFrom(token.token$())
 
-        expect(client.authorizations).toBe(1)
-        expect(reused).toEqual({accessToken: 'token-1', expiresAt: 10 * MINUTE})
+        assert.equal(client.authorizations, 1)
+        assert.deepEqual(reused, {accessToken: 'token-1', expiresAt: 10 * MINUTE})
     })
 
     test('is fetched again within five minutes of expiring', async () => {
@@ -32,8 +36,8 @@ describe('the service-account token', () => {
         clock.now = 6 * MINUTE
         const renewed = await firstValueFrom(token.token$())
 
-        expect(client.authorizations).toBe(2)
-        expect(renewed.accessToken).toBe('token-2')
+        assert.equal(client.authorizations, 2)
+        assert.equal(renewed.accessToken, 'token-2')
     })
 
     test('is fetched once for callers arriving while it is being fetched', async () => {
@@ -42,17 +46,17 @@ describe('the service-account token', () => {
 
         await Promise.all([firstValueFrom(token.token$()), firstValueFrom(token.token$())])
 
-        expect(client.authorizations).toBe(1)
+        assert.equal(client.authorizations, 1)
     })
 
     test('is fetched again by the next caller after a failed fetch', async () => {
         const client = fakeClient({failFirst: true})
         const token = new ServiceAccountToken({client, now: () => 0})
 
-        await expect(firstValueFrom(token.token$())).rejects.toThrow('unavailable')
+        await assert.rejects(firstValueFrom(token.token$()), /unavailable/)
         const fetched = await firstValueFrom(token.token$())
 
-        expect(fetched.accessToken).toBe('token-2')
+        assert.equal(fetched.accessToken, 'token-2')
     })
 })
 

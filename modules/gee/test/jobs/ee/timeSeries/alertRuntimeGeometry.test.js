@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 const resolvedGeometry = {
@@ -26,7 +28,7 @@ const source = {
     withRecord$: derive => of(derive(segmentsRecord, () => source))
 }
 
-const imageFactory = jest.fn(recipe => {
+const imageFactory = mock.fn(recipe => {
     if (syntheticTypes.has(recipe.type)) {
         syntheticRecipes.push(recipe)
         return delegate
@@ -34,7 +36,11 @@ const imageFactory = jest.fn(recipe => {
     return source
 })
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: imageFactory
+    }
+})
 
 // Registers the CCDC definition the resolver asks for.
 await import('#sepal/recipe/type/ccdc')
@@ -82,50 +88,54 @@ const baytsRecipe = {
 }
 
 const expectRuntimeGeometryAoi = expectedType => {
-    expect(syntheticRecipes).toHaveLength(1)
+    assert.equal(syntheticRecipes.length, 1)
     const syntheticRecipe = syntheticRecipes[0]
-    expect(syntheticRecipe.type).toBe(expectedType)
-    expect(syntheticRecipe.model.aoi).toEqual({
+    assert.equal(syntheticRecipe.type, expectedType)
+    assert.deepEqual(syntheticRecipe.model.aoi, {
         type: 'GEOMETRY',
         geometry: resolvedGeometry
     })
-    expect(syntheticRecipe.model.aoi.geometry).toBe(resolvedGeometry)
+    assert.equal(syntheticRecipe.model.aoi.geometry, resolvedGeometry)
 }
 
 beforeEach(() => {
-    imageFactory.mockClear()
+    imageFactory.mock.resetCalls()
     syntheticRecipes.length = 0
 })
 
-describe.each([
+for (const [label, dataSetType, expectedType, visualizationType] of [
     ['optical monitoring', 'OPTICAL', 'MOSAIC', 'monitoring'],
     ['radar calibration', 'RADAR', 'RADAR_MOSAIC', 'calibration'],
     ['Planet monitoring', 'PLANET', 'PLANET_MOSAIC', 'monitoring']
-])('Change Alerts %s mosaic', (_label, dataSetType, expectedType, visualizationType) => {
-    it('wraps the resolved geometry in the synthetic recipe model', async () => {
-        const alerts = changeAlerts(changeRecipe(dataSetType), {
-            visualizationType,
-            mosaicType: 'latest'
+]) {
+    describe(`Change Alerts ${label} mosaic`, () => {
+        it('wraps the resolved geometry in the synthetic recipe model', async () => {
+            const alerts = changeAlerts(changeRecipe(dataSetType), {
+                visualizationType,
+                mosaicType: 'latest'
+            })
+
+            await firstValueFrom(alerts.getBands$())
+
+            expectRuntimeGeometryAoi(expectedType)
         })
-
-        await firstValueFrom(alerts.getBands$())
-
-        expectRuntimeGeometryAoi(expectedType)
     })
-})
+}
 
-describe.each([
+for (const [scenario, visualizationType] of [
     ['First', 'first'],
     ['Last', 'last']
-])('BAYTS Alerts %s mosaic', (_label, visualizationType) => {
-    it('wraps the resolved geometry in the synthetic radar recipe model', async () => {
-        const alerts = baytsAlerts(baytsRecipe, {visualizationType})
+]) {
+    describe(`BAYTS Alerts ${scenario} mosaic`, () => {
+        it('wraps the resolved geometry in the synthetic radar recipe model', async () => {
+            const alerts = baytsAlerts(baytsRecipe, {visualizationType})
 
-        await firstValueFrom(alerts.getGeometry$())
+            await firstValueFrom(alerts.getGeometry$())
 
-        expectRuntimeGeometryAoi('RADAR_MOSAIC')
+            expectRuntimeGeometryAoi('RADAR_MOSAIC')
+        })
     })
-})
+}
 
 describe('Change Alerts Changes visualization', () => {
     it('does not construct a synthetic mosaic', async () => {
@@ -137,6 +147,6 @@ describe('Change Alerts Changes visualization', () => {
 
         await firstValueFrom(alerts.getBands$())
 
-        expect(syntheticRecipes).toEqual([])
+        assert.deepEqual(syntheticRecipes, [])
     })
 })

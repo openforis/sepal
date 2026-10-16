@@ -1,33 +1,116 @@
-import {spawnSync} from 'node:child_process'
-import {dirname, join} from 'node:path'
-import {fileURLToPath} from 'node:url'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
 
-// A bridge, not a test of its own. The behavioral witness lives in the sibling .mjs and runs under Node's own
-// test runner, because imageFactory loads its implementations through createRequire: real Node supports
-// require(esm), Jest's CJS resolver answers ERR_REQUIRE_ESM and the factory throws before a reference can
-// resolve. Launching it from here keeps the witness inside the ordinary `sepal npm-test gee` gate.
-const WITNESS = join(dirname(fileURLToPath(import.meta.url)), 'alertMapProducts.node.test.mjs')
+import {firstValueFrom, of} from 'rxjs'
 
-const CASE_TIMEOUT_MS = 15000
-const CHILD_TIMEOUT_MS = 60000
+// What a BAYTS Alerts radar map mode shows: the Radar Mosaic it builds, and how it is masked. The mosaic is
+// substituted: it answers with bands nothing else could produce and records the recipe it was built from, and an image
+// here is its source and the masks applied to it. Which pixels real imagery holds is the live verifier's
+// (verify/baytsAlertsRadarObservation.mjs).
 
-it('shows the radar mosaic BAYTS radar map modes build, masked as execution masks it', () => {
-    const {status, signal, error, stdout, stderr} = spawnSync(
-        process.execPath,
-        [
-            '--experimental-test-module-mocks',
-            '--test-isolation=none',
-            `--test-timeout=${CASE_TIMEOUT_MS}`,
-            '--test',
-            WITNESS
-        ],
-        {encoding: 'utf8', timeout: CHILD_TIMEOUT_MS, killSignal: 'SIGKILL'}
-    )
-    if (status !== 0) {
-        throw new Error(
-            `${WITNESS} failed - status ${status}, signal ${signal}${error ? `, ${error.message}` : ''}`
-            + `\n\n${stdout}\n${stderr}`
-        )
+let assets = {}
+let mosaics = []
+
+const eeImage = (source, masks = []) => ({
+    source,
+    masks,
+    geometry: () => ({footprint: source}),
+    select: () => eeImage(source, masks),
+    clip: () => eeImage(source, masks),
+    mask: () => ({reduce: () => `valid pixels of ${source}`}),
+    updateMask: mask => eeImage(source, [...masks, mask])
+})
+
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            getAsset$: id => of({type: 'Image', ...assets[id]}),
+            getInfo$: value => of(value),
+            Image: value => (value && typeof value === 'object' ? value : eeImage(value)),
+            ImageCollection: id => eeImage(id),
+            Reducer: {max: () => 'max'}
+        }
     }
-    expect(status).toBe(0)
-}, 120000)
+})
+
+const DELEGATE_BANDS = ['a-band-only-the-delegate-reports']
+
+mock.module('#sepal/ee/radar/mosaic', {
+    exports: {
+        default: recipe => {
+            mosaics.push(recipe)
+            return {
+                getImage$: () => of(eeImage('radar-mosaic')),
+                getBands$: () => of(DELEGATE_BANDS),
+                getGeometry$: () => of({source: 'radar-mosaic'})
+            }
+        }
+    }
+})
+
+const {default: imageFactory} = await import('#sepal/ee/imageFactory')
+
+const HISTORICAL_STATS = 'users/x/historical'
+const OPTIONS = {orbits: ['ASCENDING'], minObservations: 20, spatialSpeckleFilter: 'LEE'}
+
+// A historical recipe held in memory, over an area already resolved.
+const HISTORICAL_RECIPE = {
+    type: 'BAYTS_HISTORICAL',
+    model: {aoi: {type: 'GEOMETRY', geometry: {footprint: 'historical area'}}, dates: {}, options: {orbits: ['ASCENDING']}}
+}
+
+const alertsRecipe = (reference = {type: 'ASSET', id: HISTORICAL_STATS}) => ({
+    id: 'bayts-1',
+    type: 'BAYTS_ALERTS',
+    model: {
+        reference,
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months'},
+        options: OPTIONS,
+        baytsAlertsOptions: {}
+    }
+})
+
+const shown = (recipe, visualizationType) => firstValueFrom(imageFactory(recipe, {visualizationType}).getImage$())
+
+beforeEach(() => {
+    assets = {[HISTORICAL_STATS]: {type: 'Image'}}
+    mosaics = []
+})
+
+describe('the bands a BAYTS Alerts radar map mode reports', () => {
+    it('are the mosaic delegate\'s own', async () => {
+        const reported = await firstValueFrom(imageFactory(alertsRecipe(), {visualizationType: 'first'}).getBands$())
+
+        assert.deepEqual(reported, DELEGATE_BANDS)
+    })
+})
+
+describe('the radar mosaic a BAYTS Alerts radar map mode shows', () => {
+    for (const [mode, targetDate] of [['first', '2023-12-01'], ['last', '2024-01-01'], ['an unknown mode', '2023-12-01']]) {
+        it(`is built for ${mode} around ${targetDate}, over the reference's area, with its radar options and any observation`, async () => {
+            await shown(alertsRecipe(), mode === 'an unknown mode' ? 'sideways' : mode)
+
+            assert.deepEqual(mosaics, [{
+                type: 'RADAR_MOSAIC',
+                model: {
+                    aoi: {type: 'GEOMETRY', geometry: {footprint: HISTORICAL_STATS}},
+                    dates: {targetDate},
+                    options: {...OPTIONS, minObservations: 1}
+                }
+            }])
+        })
+    }
+
+    it('is masked to the pixels a historical asset holds', async () => {
+        const image = await shown(alertsRecipe(), 'first')
+
+        assert.deepEqual(image.masks, [`valid pixels of ${HISTORICAL_STATS}`])
+    })
+
+    it('is not masked over a historical recipe, only built over its area', async () => {
+        const image = await shown(alertsRecipe(HISTORICAL_RECIPE), 'last')
+
+        assert.deepEqual(image.masks, [])
+        assert.deepEqual(mosaics[0].model.aoi, {type: 'GEOMETRY', geometry: {footprint: 'historical area'}})
+    })
+})

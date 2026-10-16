@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {lastValueFrom, of, throwError} from 'rxjs'
 
 // Recipe reads, image construction, Earth Engine evaluation and the exporter are substituted. Resolution,
@@ -14,7 +16,7 @@ describe('exporting an optical mosaic', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['red', 'thermal', 'nbr']})
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE, thermal: THERMAL, nbr: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE, thermal: THERMAL, nbr: REFLECTANCE})
     })
 
     it('describes exactly the bands the export names, as its pyramiding policy does', async () => {
@@ -23,8 +25,8 @@ describe('exporting an optical mosaic', () => {
 
         const exported = await submit({recipe, bands: ['greenness', 'nbr', 'red'], pyramidingPolicy})
 
-        expect(exported.pyramidingPolicy).toEqual(pyramidingPolicy)
-        expect(Object.keys(exported.bandEncoding).sort()).toEqual(Object.keys(pyramidingPolicy))
+        assert.deepEqual(exported.pyramidingPolicy, pyramidingPolicy)
+        assert.deepEqual(Object.keys(exported.bandEncoding).sort(), Object.keys(pyramidingPolicy))
     })
 
     it('establishes the encoding from the recipe, whatever the submitted properties claim', async () => {
@@ -36,7 +38,7 @@ describe('exporting an optical mosaic', () => {
             properties: {sepal_band_encoding: JSON.stringify({version: 1, bands: {red: THERMAL}})}
         })
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE})
     })
 
     it('leaves a band it does not declare an encoding for unknown', async () => {
@@ -44,7 +46,7 @@ describe('exporting an optical mosaic', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['red', 'dayOfYear']})
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE})
     })
 
     it('reads no other recipe to describe its own output', async () => {
@@ -52,7 +54,7 @@ describe('exporting an optical mosaic', () => {
 
         await submit({recipe, bands: ['red']})
 
-        expect(state.recipeReads).toEqual([])
+        assert.deepEqual(state.recipeReads, [])
     })
 })
 
@@ -64,8 +66,8 @@ describe('exporting a recipe that preserves its input', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['nir', 'ndvi']})
 
-        expect(bandEncoding).toEqual({nir: REFLECTANCE, ndvi: REFLECTANCE})
-        expect(state.recipeReads).toEqual([mosaic.id])
+        assert.deepEqual(bandEncoding, {nir: REFLECTANCE, ndvi: REFLECTANCE})
+        assert.deepEqual(state.recipeReads, [mosaic.id])
     })
 
     // Naming no bands runs the producer's default image, which the available bands do not describe.
@@ -78,7 +80,7 @@ describe('exporting a recipe that preserves its input', () => {
 
         const {bandEncoding} = await submit({recipe, bands: []})
 
-        expect(bandEncoding).toEqual({})
+        assert.deepEqual(bandEncoding, {})
     })
 
     it('records the encoding its input asset states', async () => {
@@ -90,7 +92,7 @@ describe('exporting a recipe that preserves its input', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['red']})
 
-        expect(bandEncoding).toEqual({red: THERMAL})
+        assert.deepEqual(bandEncoding, {red: THERMAL})
     })
 })
 
@@ -129,7 +131,7 @@ describe('encoding recorded for a recipe over a filtered collection asset', () =
 
         const {bandEncoding} = await submit({recipe: source, bands: ['red', 'nir']})
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE})
     })
 
     it('describes it the same way through a Masking over it', async () => {
@@ -138,14 +140,14 @@ describe('encoding recorded for a recipe over a filtered collection asset', () =
 
         const {bandEncoding} = await submit({recipe, bands: ['red', 'nir']})
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE})
     })
 
     it('fails the export when the recipe\'s own image cannot be read', async () => {
         const source = filteredCollection()
         delete state.recipeImages[source.id]
 
-        await expect(submit({recipe: source, bands: ['red']})).rejects.toThrow(/unavailable output/)
+        await assert.rejects(submit({recipe: source, bands: ['red']}), /unavailable output/)
     })
 })
 
@@ -168,7 +170,7 @@ describe('exporting a masked CCDC', () => {
 
         const {image} = await submit({recipe, bands: ['red_coefs', 'tStart']})
 
-        expect(image).toEqual({builtFrom: 'masking-1'})
+        assert.deepEqual(image, {builtFrom: 'masking-1'})
     })
 
     it('records no encoding, because CCDC states none', async () => {
@@ -176,14 +178,14 @@ describe('exporting a masked CCDC', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['red_coefs', 'tStart']})
 
-        expect(bandEncoding).toEqual({})
+        assert.deepEqual(bandEncoding, {})
     })
 
     it('fails the export when the catalogue it declares cannot be read', async () => {
         const recipe = maskedCcdc()
         delete state.recipeBands['ccdc-1']
 
-        await expect(submit({recipe, bands: ['tStart']})).rejects.toThrow(/unavailable output/)
+        await assert.rejects(submit({recipe, bands: ['tStart']}), /unavailable output/)
     })
 })
 
@@ -207,32 +209,35 @@ describe('exporting a Band Math recipe', () => {
 
         const {bandEncoding, image} = await submit({recipe, bands: ['dem2', 'coefs']})
 
-        expect(image).toMatchObject({builtFrom: recipe.id})
-        expect(bandEncoding).toEqual({})
-        expect(state.recipeReads).toEqual([])
+        assert.partialDeepStrictEqual(image, {builtFrom: recipe.id})
+        assert.deepEqual(bandEncoding, {})
+        assert.deepEqual(state.recipeReads, [])
     })
 
     it('fails the export when its running image cannot be observed', async () => {
         const recipe = bandMath()
 
-        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/unavailable output/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['dem2']}), /unavailable output/)
+        assert.deepEqual(state.exported, [])
     })
 
     it('fails the export when its running image contradicts its configured output', async () => {
         const recipe = bandMath()
         state.recipeImages[recipe.id] = [{name: 'dem2', arrayDimensions: 0}, {name: 'coefs_1', arrayDimensions: 1}]
 
-        await expect(submit({recipe, bands: ['dem2']})).rejects.toThrow(/invalid output \(CONFLICTING_OBSERVATION\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(
+            submit({recipe, bands: ['dem2']}),
+            /invalid output \(CONFLICTING_OBSERVATION\)/
+        )
+        assert.deepEqual(state.exported, [])
     })
 
     it('fails the export for two output bands named alike, whatever its running image holds', async () => {
         const recipe = bandMath({outputNames: ['x', 'x']})
         state.recipeImages[recipe.id] = [{name: 'x', arrayDimensions: 0}, {name: 'x_1', arrayDimensions: 0}]
 
-        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['x']}), /invalid output \(DUPLICATE_BAND_NAME\)/)
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -251,14 +256,14 @@ describe('exporting a Planet Mosaic', () => {
     it('records its indexes stored per ten thousand, and leaves its spectral bands\' scaling unknown', async () => {
         const {bandEncoding} = await submit({recipe: planet(), bands: ['red', 'kndvi']})
 
-        expect(bandEncoding).toEqual({kndvi: REFLECTANCE})
-        expect(state.recipeReads).toEqual([])
+        assert.deepEqual(bandEncoding, {kndvi: REFLECTANCE})
+        assert.deepEqual(state.recipeReads, [])
     })
 
     it('records histogram-matched Daily spectral bands stored per ten thousand too', async () => {
         const {bandEncoding} = await submit({recipe: planet({source: 'DAILY', histogramMatching: 'ENABLED'}), bands: ['red', 'ndvi']})
 
-        expect(bandEncoding).toEqual({red: REFLECTANCE, ndvi: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {red: REFLECTANCE, ndvi: REFLECTANCE})
     })
 
     it('records the same through a Masking over it', async () => {
@@ -267,7 +272,7 @@ describe('exporting a Planet Mosaic', () => {
 
         const {bandEncoding} = await submit({recipe: masking({primary: {type: 'RECIPE_REF', id: matched.id}}), bands: ['nir', 'evi']})
 
-        expect(bandEncoding).toEqual({nir: REFLECTANCE, evi: REFLECTANCE})
+        assert.deepEqual(bandEncoding, {nir: REFLECTANCE, evi: REFLECTANCE})
     })
 })
 
@@ -281,15 +286,17 @@ describe('exporting a BAYTS Historical', () => {
     it('records that nothing is known about its values, reading no other recipe', async () => {
         const {bandEncoding, image} = await submit({recipe: historical(['ASCENDING']), bands: ['VV_mean_asc', 'orbit_asc']})
 
-        expect(image).toEqual({builtFrom: 'historical-1'})
-        expect(bandEncoding).toEqual({})
-        expect(state.recipeReads).toEqual([])
+        assert.deepEqual(image, {builtFrom: 'historical-1'})
+        assert.deepEqual(bandEncoding, {})
+        assert.deepEqual(state.recipeReads, [])
     })
 
     it('fails the export for orbits that name no bands, before anything is exported', async () => {
-        await expect(submit({recipe: historical(['ASCENDING', 'ASCENDING']), bands: ['VV_mean_asc']}))
-            .rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(
+            submit({recipe: historical(['ASCENDING', 'ASCENDING']), bands: ['VV_mean_asc']}),
+            /invalid output \(DUPLICATE_BAND_NAME\)/
+        )
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -307,16 +314,16 @@ describe('exporting a Time Series', () => {
 
         const {bandEncoding, image} = await submit({recipe, bands: ['count']})
 
-        expect(image).toEqual({builtFrom: recipe.id})
-        expect(bandEncoding).toEqual({})
-        expect(state.recipeReads).toEqual([])
+        assert.deepEqual(image, {builtFrom: recipe.id})
+        assert.deepEqual(bandEncoding, {})
+        assert.deepEqual(state.recipeReads, [])
     })
 
     it('fails the export when the recipe its area of interest comes from cannot be read', async () => {
         const recipe = timeSeries({...configured, aoi: {type: 'RECIPE', id: 'unreadable'}})
 
-        await expect(submit({recipe, bands: ['count']})).rejects.toThrow()
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['count']}))
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -340,7 +347,7 @@ describe('exporting a Stack', () => {
 
         const {bandEncoding} = await submit({recipe, bands: ['r', 'heat']})
 
-        expect(bandEncoding).toEqual({r: REFLECTANCE, heat: THERMAL})
+        assert.deepEqual(bandEncoding, {r: REFLECTANCE, heat: THERMAL})
     })
 
     it('fails the export for two output bands named alike, before reading an input with no image output', async () => {
@@ -350,8 +357,8 @@ describe('exporting a Stack', () => {
             [mapping('i-1', [['class', 'x']]), mapping('i-2', [['class', 'x']])]
         )
 
-        await expect(submit({recipe, bands: ['x']})).rejects.toThrow(/invalid output \(DUPLICATE_BAND_NAME\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['x']}), /invalid output \(DUPLICATE_BAND_NAME\)/)
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -365,16 +372,19 @@ describe('exporting a recipe that produces no image', () => {
     }
 
     it('fails the export, naming the design as having no image output', async () => {
-        await expect(submit({recipe: DESIGN, bands: ['class']})).rejects.toThrow(/recipe design-1: invalid output \(NON_IMAGE_OUTPUT\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(
+            submit({recipe: DESIGN, bands: ['class']}),
+            /recipe design-1: invalid output \(NON_IMAGE_OUTPUT\)/
+        )
+        assert.deepEqual(state.exported, [])
     })
 
     it('fails the export of a Masking over one', async () => {
         state.catalogue = {[DESIGN.id]: DESIGN}
         const recipe = masking({primary: {type: 'RECIPE_REF', id: DESIGN.id}})
 
-        await expect(submit({recipe, bands: ['class']})).rejects.toThrow(/invalid output \(NON_IMAGE_OUTPUT\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['class']}), /invalid output \(NON_IMAGE_OUTPUT\)/)
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -382,8 +392,8 @@ describe('an output that cannot be described', () => {
     it('fails the export when a recipe it depends on cannot be read', async () => {
         const recipe = masking({primary: {type: 'RECIPE_REF', id: 'unreadable'}})
 
-        await expect(submit({recipe, bands: ['red']})).rejects.toThrow()
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['red']}))
+        assert.deepEqual(state.exported, [])
     })
 
     // Missing evidence is never taken for a scalar: an asset reported without a band's dimensionality is not described.
@@ -391,15 +401,18 @@ describe('an output that cannot be described', () => {
         state.assets['users/x/unreported'] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir'}], properties: {}}
         const recipe = masking({primary: {type: 'ASSET', id: 'users/x/unreported'}})
 
-        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/invalid output \(INCOMPLETE_IMAGE_OUTPUT\)/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(
+            submit({recipe, bands: ['red']}),
+            /invalid output \(INCOMPLETE_IMAGE_OUTPUT\)/
+        )
+        assert.deepEqual(state.exported, [])
     })
 
     it('fails the export when the evidence it depends on cannot be read', async () => {
         const recipe = masking({primary: {type: 'ASSET', id: 'users/x/unreachable'}})
 
-        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/unavailable output/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['red']}), /unavailable output/)
+        assert.deepEqual(state.exported, [])
     })
 
     // A record its own type cannot read is a fault rather than a missing read, and it carries no diagnostic
@@ -411,9 +424,9 @@ describe('an output that cannot be described', () => {
 
         const error = await submit({recipe, bands: ['red']}).then(() => null, error => error)
 
-        expect(error.message).toMatch(new RegExp(`recipe ${recipe.id}: invalid output`))
-        expect(error.message).toContain(error.cause.message)
-        expect(state.exported).toEqual([])
+        assert.match(error.message, new RegExp(`recipe ${recipe.id}: invalid output`))
+        assert.ok(error.message.includes(error.cause.message))
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -426,8 +439,8 @@ describe('a recipe whose dependencies are not structurally sound', () => {
         state.catalogue = {'mosaic-1': landsatMosaic()}
         const recipe = masking({primary: {type: 'RECIPE_REF', id: 'mosaic-1'}, mask: selfMask})
 
-        await expect(submit({recipe, bands: ['red']})).rejects.toThrow(/cannot run.*CYCLIC_DEPENDENCY/)
-        expect(state.exported).toEqual([])
+        await assert.rejects(submit({recipe, bands: ['red']}), /cannot run.*CYCLIC_DEPENDENCY/)
+        assert.deepEqual(state.exported, [])
     })
 
     it('fails with the unreadable dependency as the cause, naming the cycle already found', async () => {
@@ -435,9 +448,9 @@ describe('a recipe whose dependencies are not structurally sound', () => {
 
         const error = await submit({recipe, bands: ['red']}).then(() => null, error => error)
 
-        expect(error.message).toMatch(/CYCLIC_DEPENDENCY/)
-        expect(error.cause.message).toBe('Recipe could not be read: unreadable')
-        expect(state.exported).toEqual([])
+        assert.match(error.message, /CYCLIC_DEPENDENCY/)
+        assert.equal(error.cause.message, 'Recipe could not be read: unreadable')
+        assert.deepEqual(state.exported, [])
     })
 })
 
@@ -470,7 +483,7 @@ const submit = async ({recipe, bands, pyramidingPolicy, properties = {}}) => {
             ...(pyramidingPolicy && {pyramidingPolicy})
         }
     }))
-    expect(state.exported).toHaveLength(1)
+    assert.equal(state.exported.length, 1)
     return state.exported[0]
 }
 
@@ -497,45 +510,53 @@ const collection = ({bands, properties}) => ({
     }
 })
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({
-    default: {
-        getAsset$: id => state.assets[id]
-            ? of({type: state.assets[id].type || 'Image'})
-            : throwError(() => new Error(`Asset could not be read: ${id}`)),
-        Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
-        ImageCollection: id => collection(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
-        Dictionary: values => values,
-        PixelType: band => ({dimensions: () => band.arrayDimensions}),
-        getInfo$: value => of(value)
-    }
-}))
-jest.unstable_mockModule('#sepal/ee/recipe', () => ({
-    loadRecipe$: id => {
-        state.recipeReads.push(id)
-        return state.catalogue[id]
-            ? of(state.catalogue[id])
-            : throwError(() => new Error(`Recipe could not be read: ${id}`))
-    }
-}))
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: source => source.type === 'ASSET'
-        ? {
-            getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            getAsset$: id => state.assets[id]
+                ? of({type: state.assets[id].type || 'Image'})
+                : throwError(() => new Error(`Asset could not be read: ${id}`)),
+            Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
+            ImageCollection: id => collection(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
+            Dictionary: values => values,
+            PixelType: band => ({dimensions: () => band.arrayDimensions}),
+            getInfo$: value => of(value)
         }
-        : {
-            getImage$: () => of(recipeImage(source.id)),
-            getBands$: () => state.recipeBands[source.id]
-                ? of(state.recipeBands[source.id])
-                : throwError(() => new Error(`Recipe bands could not be read: ${source.id}`)),
-            getGeometry$: () => of({bounds: () => 'region'})
-        }
-}))
-jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
-    startImageToAssetExport$: args => {
-        state.exported.push(args)
-        return of({eeTaskId: 'T1', assetId: args.assetId})
     }
-}))
+})
+mock.module('#sepal/ee/recipe', {
+    exports: {
+        loadRecipe$: id => {
+            state.recipeReads.push(id)
+            return state.catalogue[id]
+                ? of(state.catalogue[id])
+                : throwError(() => new Error(`Recipe could not be read: ${id}`))
+        }
+    }
+})
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: source => source.type === 'ASSET'
+            ? {
+                getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
+            }
+            : {
+                getImage$: () => of(recipeImage(source.id)),
+                getBands$: () => state.recipeBands[source.id]
+                    ? of(state.recipeBands[source.id])
+                    : throwError(() => new Error(`Recipe bands could not be read: ${source.id}`)),
+                getGeometry$: () => of({bounds: () => 'region'})
+            }
+    }
+})
+mock.module('#gee/jobs/task/export/toAsset', {
+    exports: {
+        startImageToAssetExport$: args => {
+            state.exported.push(args)
+            return of({eeTaskId: 'T1', assetId: args.assetId})
+        }
+    }
+})
 
 beforeEach(() => {
     state.catalogue = {}

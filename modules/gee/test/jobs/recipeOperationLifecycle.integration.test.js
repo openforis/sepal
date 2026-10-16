@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
 import {dirname, join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 import {fileURLToPath} from 'node:url'
 
 import {filter, firstValueFrom, ReplaySubject, Subscription} from 'rxjs'
@@ -30,54 +32,26 @@ const WORKER_ENV = {
 const held = new Map()
 const waitingFor = new Map()
 
-let recipeServer
-let worker
-let submit$
-
-beforeAll(async () => {
-    recipeServer = await startRecipeEndpoint()
-    const recipeEndpoint = `http://127.0.0.1:${recipeServer.address().port}`
-
-    const {configureNoLogging} = await import('#sepal/log')
-    configureNoLogging()
-
-    // The worker's own half of the context service is real; this is the main thread's answer to it,
-    // which cannot be the module's own - that parses process arguments, which under a test runner
-    // are the runner's.
-    const {of} = await import('rxjs')
-    const {addServices} = await import('#sepal/service/registry')
-    addServices([{
-        serviceName: 'ContextService',
-        serviceHandler$: () => of({recipeEndpoint})
-    }])
-
-    const {initWorker$} = await import('#sepal/worker/factory')
-    worker = new Subscription()
-    submit$ = await new Promise(resolve =>
-        worker.add(initWorker$({workerId: 'lifecycle', env: WORKER_ENV}).subscribe(resolve)))
-}, 60000)
-
-afterAll(() => {
-    worker?.unsubscribe()
-    return new Promise(resolve => recipeServer.close(resolve))
-})
-
 beforeEach(() => {
     held.clear()
     waitingFor.clear()
 })
 
 describe('the operation of a request', () => {
-    test.each([
+    for (const [scenario, ending] of [
         ['completes', 'complete'],
         ['fails', 'fail'],
         ['is cancelled', 'cancel'],
-    ])('releases the read it still had in flight when the request %s', async (_case, ending) => {
-        const pending = await runJob(ending)
+    ]) {
+        test(`releases the read it still had in flight when the request ${scenario}`, {
+            timeout: 20000
+        }, async () => {
+            const pending = await runJob(ending)
 
-        await untilAborted(pending)
-        expect(pending.aborted).toBe(true)
-    }, 20000)
+            await untilAborted(pending)
+            assert.equal(pending.aborted, true)
+        })
+    }
 })
 
 // The request as the scheduler submits it: one args entry per task of the list, configure first.
@@ -132,4 +106,38 @@ const startRecipeEndpoint = () => new Promise(resolve => {
         waitingFor.delete(id)
     })
     server.listen(0, '127.0.0.1', () => resolve(server))
+})
+
+// node:test may run a root-level before hook while this file is still being evaluated, so the hooks
+// are registered after the helpers they call.
+let recipeServer
+let worker
+let submit$
+
+before(async () => {
+    recipeServer = await startRecipeEndpoint()
+    const recipeEndpoint = `http://127.0.0.1:${recipeServer.address().port}`
+
+    const {configureNoLogging} = await import('#sepal/log')
+    configureNoLogging()
+
+    // The worker's own half of the context service is real; this is the main thread's answer to it,
+    // which cannot be the module's own - that parses process arguments, which under a test runner
+    // are the runner's.
+    const {of} = await import('rxjs')
+    const {addServices} = await import('#sepal/service/registry')
+    addServices([{
+        serviceName: 'ContextService',
+        serviceHandler$: () => of({recipeEndpoint})
+    }])
+
+    const {initWorker$} = await import('#sepal/worker/factory')
+    worker = new Subscription()
+    submit$ = await new Promise(resolve =>
+        worker.add(initWorker$({workerId: 'lifecycle', env: WORKER_ENV}).subscribe(resolve)))
+}, {timeout: 60000})
+
+after(() => {
+    worker?.unsubscribe()
+    return new Promise(resolve => recipeServer.close(resolve))
 })

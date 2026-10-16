@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {firstValueFrom, of, throwError} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
@@ -20,9 +23,15 @@ test('initializes Earth Engine once, as the service account, and then sends thro
 
     await Promise.all([firstValueFrom(runtime.ready$()), firstValueFrom(runtime.ready$())])
 
-    expect(token.fetches).toBe(1)
-    expect(requests.map(({headers}) => headers.Authorization)).toEqual(['Bearer service-account-token'])
-    expect(await firstValueFrom(ee.getInfo$(ee.Image('image'), 'probe'))).toBe('sent by the installed transport')
+    assert.equal(token.fetches, 1)
+    assert.deepEqual(
+        requests.map(({headers}) => headers.Authorization),
+        ['Bearer service-account-token']
+    )
+    assert.equal(
+        await firstValueFrom(ee.getInfo$(ee.Image('image'), 'probe')),
+        'sent by the installed transport'
+    )
 })
 
 test('after initialization the library itself sends nothing with credentials', async () => {
@@ -38,7 +47,7 @@ test('after initialization the library itself sends nothing with credentials', a
     const requests = answerLibrary({[`${API}/v1/projects/${TEST_PROJECT}/value:compute`]: {result: 1}})
     await new Promise(resolve => ee.data.computeValue(ee.Image('image'), resolve))
 
-    expect(requests[0].headers.Authorization).toBeUndefined()
+    assert.equal(requests[0].headers.Authorization, undefined)
 })
 
 test('a failed initialization is attempted again by the next request', async () => {
@@ -53,10 +62,10 @@ test('a failed initialization is attempted again by the next request', async () 
     })
     answerLibrary(algorithmsAnswer())
 
-    await expect(firstValueFrom(runtime.ready$())).rejects.toThrow('token service unavailable')
+    await assert.rejects(firstValueFrom(runtime.ready$()), /token service unavailable/)
     await firstValueFrom(runtime.ready$(), {defaultValue: null})
 
-    expect(attempts).toBe(2)
+    assert.equal(attempts, 2)
 })
 
 test('an initialization that never completes is abandoned after its timeout, and the next request initializes again', async () => {
@@ -69,10 +78,13 @@ test('an initialization that never completes is abandoned after its timeout, and
         initializationTimeoutMs: 10
     })
 
-    await expect(firstValueFrom(runtime.ready$())).rejects.toThrow('Earth Engine initialization did not complete within 10 ms')
+    await assert.rejects(
+        firstValueFrom(runtime.ready$()),
+        /Earth Engine initialization did not complete within 10 ms/
+    )
     await firstValueFrom(runtime.ready$(), {defaultValue: null})
 
-    expect(library.transport).toBe('installed transport')
+    assert.equal(library.transport, 'installed transport')
 })
 
 // Like the client library, an initialization requested while one is in progress waits for that one, until reset.

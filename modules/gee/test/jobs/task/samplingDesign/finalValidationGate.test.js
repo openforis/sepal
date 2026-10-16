@@ -1,6 +1,10 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {defer, lastValueFrom, of} from 'rxjs'
 
 import {gateFinalExport$} from '#gee/jobs/task/samplingDesign/finalValidationGate'
+import {assertMatches} from '#sepal/testSupport/assert'
 
 const allocation = [
     {stratum: 1, label: 'a', sampleSize: 5},
@@ -34,30 +38,37 @@ const gate = ({counts, config}) => {
 describe('gateFinalExport$', () => {
     it('blocks the export when a stratum is below the statistical floor', async () => {
         const {promise, wasSubscribed} = gate({counts: {1: 5, 2: 1}, config: systematic()})
-        await expect(promise).rejects.toMatchObject({
-            userMessage: {key: 'tasks.samplingDesign.underproduction.message'}
+        await assert.rejects(promise, error => {
+            assertMatches(error, {
+                userMessage: {key: 'tasks.samplingDesign.underproduction.message'}
+            })
+
+            return true
         })
-        expect(wasSubscribed()).toBe(false)
+        assert.equal(wasSubscribed(), false)
     })
 
     it('blocks the export when a stratum misses the configured minimum', async () => {
         const {promise, wasSubscribed} = gate({counts: {1: 5, 2: 3}, config: systematic({effectiveMinimum: 4, sampleSizeStrategy: 'CLOSEST'})})
         const error = await promise.catch(e => e)
-        expect(error.userMessage.args.advice.map(({kind}) => kind)).toEqual(['configuredMinimum'])
-        expect(wasSubscribed()).toBe(false)
+        assert.deepEqual(error.userMessage.args.advice.map(({kind}) => kind), ['configuredMinimum'])
+        assert.equal(wasSubscribed(), false)
     })
 
     it('blocks the export under OVER when a stratum misses the requested allocation', async () => {
         const {promise, wasSubscribed} = gate({counts: {1: 5, 2: 2}, config: systematic()})
         const error = await promise.catch(e => e)
-        expect(error.userMessage.args.advice.map(({kind}) => kind)).toEqual(['requestedAllocation'])
-        expect(wasSubscribed()).toBe(false)
+        assert.deepEqual(
+            error.userMessage.args.advice.map(({kind}) => kind),
+            ['requestedAllocation']
+        )
+        assert.equal(wasSubscribed(), false)
     })
 
     it('lets CLOSEST undershoot the request once the minimum is met, and subscribes the export', async () => {
         const {promise, wasSubscribed} = gate({counts: {1: 5, 2: 2}, config: systematic({sampleSizeStrategy: 'CLOSEST'})})
-        await expect(promise).resolves.toBe('EXPORTED')
-        expect(wasSubscribed()).toBe(true)
+        assert.equal(await promise, 'EXPORTED')
+        assert.equal(wasSubscribed(), true)
     })
 
     it('requires the requested count for random sampling', async () => {
@@ -66,24 +77,31 @@ describe('gateFinalExport$', () => {
             config: {arrangementStrategy: 'RANDOM', effectiveMinimum: 2, minDistance: 0, pixelSize: 10}
         })
         const error = await promise.catch(e => e)
-        expect(error.userMessage.args.advice.map(({kind}) => kind)).toEqual(['requestedAllocation'])
-        expect(wasSubscribed()).toBe(false)
+        assert.deepEqual(
+            error.userMessage.args.advice.map(({kind}) => kind),
+            ['requestedAllocation']
+        )
+        assert.equal(wasSubscribed(), false)
     })
 
     it('carries configuration-aware advice, keyed and with computed arguments', async () => {
         const {promise} = gate({counts: {1: 5, 2: 1}, config: systematic()})
         const error = await promise.catch(e => e)
         const [{kind, actions}] = error.userMessage.args.advice
-        expect(kind).toBe('statisticalMinimum')
-        expect(actions.map(({key}) => key)).toContain('tasks.samplingDesign.underproduction.reduceSystematicMinDistance')
+        assert.equal(kind, 'statisticalMinimum')
+        assert.ok(
+            actions.map(({key}) => key).includes('tasks.samplingDesign.underproduction.reduceSystematicMinDistance')
+        )
         // The threshold is derived from the submitted 60 m / 10 m grid, not hard-coded copy.
-        expect(actions.find(({key}) => key.endsWith('reduceSystematicMinDistance')).args)
-            .toEqual({minDistance: 60, threshold: 55.4})
+        assert.deepEqual(
+            actions.find(({key}) => key.endsWith('reduceSystematicMinDistance')).args,
+            {minDistance: 60, threshold: 55.4}
+        )
     })
 
     it('subscribes the export when every stratum satisfies its contract', async () => {
         const {promise, wasSubscribed} = gate({counts: {1: 5, 2: 3}, config: systematic()})
-        await expect(promise).resolves.toBe('EXPORTED')
-        expect(wasSubscribed()).toBe(true)
+        assert.equal(await promise, 'EXPORTED')
+        assert.equal(wasSubscribed(), true)
     })
 })
