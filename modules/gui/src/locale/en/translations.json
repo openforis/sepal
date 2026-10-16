@@ -3457,7 +3457,11 @@
       "removeRecipe.tooltip": "Remove recipe",
       "selectRecipe.tooltip": "Select recipe",
       "saveRecipe": "Save recipe...",
-      "searchRecipes": "Search recipes"
+      "searchRecipes": "Search recipes",
+      "moveRecipe": {
+        "label": "Move to folder...",
+        "title": "Move recipe"
+      }
     },
     "mosaic": {
       "bands": {
@@ -4971,7 +4975,8 @@
         "title": "Move recipes",
         "tooltip": "Move selected recipes to a folder",
         "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?",
-        "done": "Moved {count} {count, plural, one {recipe} other {recipes}} to {folder}."
+        "done": "Moved {count} {count, plural, one {recipe} other {recipes}} to {folder}.",
+        "error": "Failed to move the recipe."
       },
       "export": {
         "success": "Recipe has been exported.",
