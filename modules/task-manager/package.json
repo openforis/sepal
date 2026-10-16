@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "commander": "^15.0.0",
+        "date-fns": "^4.4.0",
         "dockerode": "^5.0.1",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",

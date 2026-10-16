@@ -163,8 +163,8 @@ describe('TaskRepository', () => {
         const renewed = await repository.renewSlot(task)
 
         expect(renewed).toEqual(now)
-        expect(await repository.releaseSlot(task, earlier)).toBe(false)
-        expect(await repository.releaseSlot(task, renewed)).toBe(true)
+        expect(await repository.releaseSlot(task, earlier)).toBeNull()
+        expect(await repository.releaseSlot(task, renewed)).toEqual(renewed)
         expect(await repository.slotHolders()).toEqual([])
     })
 
@@ -176,26 +176,26 @@ describe('TaskRepository', () => {
         expect(await repository.renewSlot(task)).toBeNull()
     })
 
-    test('a release reports whether the task held a slot', async () => {
+    test('a release answers the grant it ended, if the task held one', async () => {
         const task = aTask()
         await repository.insert(task)
         await repository.activate(task, 'a'.repeat(64))
-        await repository.grantSlot(task)
+        const grant = await repository.grantSlot(task)
 
-        expect(await repository.releaseSlot(task)).toBe(true)
-        expect(await repository.releaseSlot(task)).toBe(false)
+        expect(await repository.releaseSlot(task)).toEqual(grant)
+        expect(await repository.releaseSlot(task)).toBeNull()
     })
 
     test('a finished task\'s slot no longer counts, and is freed by the release that follows', async () => {
         const task = aTask()
         await repository.insert(task)
         await repository.activate(task, 'a'.repeat(64))
-        await repository.grantSlot(task)
+        const grant = await repository.grantSlot(task)
 
         await repository.transition(task, {from: [State.ACTIVE], to: State.FAILED})
 
         expect(await repository.slotHolders()).toEqual([])
-        expect(await repository.releaseSlot(task)).toBe(true)
+        expect(await repository.releaseSlot(task)).toEqual(grant)
     })
 
     test('a slot is held through a cancel until released or the task ends', async () => {

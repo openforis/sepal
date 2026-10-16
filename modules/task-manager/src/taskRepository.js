@@ -114,13 +114,22 @@ export class TaskRepository {
         return affectedRows ? slot : null
     }
 
-    // Without a slot, releases whatever grant the task holds.
+    // Answers the grant it ended, or null. Without a slot, releases whatever grant the task holds.
     async releaseSlot(task, slot) {
+        const grant = slot ?? await this.#slotTime(task)
+        if (!grant) {
+            return null
+        }
         const [{affectedRows}] = await this.#query(
-            `UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time ${slot ? '= ?' : 'IS NOT NULL'}`,
-            slot ? [task.id, slot] : [task.id]
+            'UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time = ?',
+            [task.id, grant]
         )
-        return affectedRows > 0
+        return affectedRows ? grant : null
+    }
+
+    async #slotTime(task) {
+        const [row] = await this.#select('SELECT slot_time FROM task WHERE id = ?', [task.id])
+        return row?.slot_time ? new Date(row.slot_time) : null
     }
 
     async slotHolders() {

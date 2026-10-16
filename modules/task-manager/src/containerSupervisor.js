@@ -1,3 +1,5 @@
+import {formatDuration, intervalToDuration} from 'date-fns'
+
 import {getLogger} from '#sepal/log'
 import {tag} from '#sepal/tag'
 
@@ -174,9 +176,11 @@ export class ContainerSupervisor {
     // A release names its grant, so a late one cannot clear a newer grant; a container's own releases may arrive
     // while it waits for its next slot, so they leave its place in line.
     async #releaseSlot(task, slot) {
-        if (await this.#repository.releaseSlot(task, slot)) {
+        const grant = await this.#repository.releaseSlot(task, slot)
+        if (grant) {
             const inUse = (await this.#repository.slotHolders()).length
-            log.info(`${taskTag(task)} local processing slot released, ${inUse}/${this.#config.maxConcurrentLocalProcessing} in use`)
+            const used = humanDuration(grant, this.#config.clock())
+            log.info(`${taskTag(task)} local processing slot released after ${used}, ${inUse}/${this.#config.maxConcurrentLocalProcessing} in use`)
         }
     }
 
@@ -189,12 +193,12 @@ export class ContainerSupervisor {
             await this.#workspace.prepare(task)
             await this.#docker.run(this.#spec({task, apiKey}))
         } catch (error) {
-            log.error(`${taskTag(task)} could not be launched`, error)
+            log.error(`${taskTag(task)} could not be started`, error)
             await this.#repository.transition(task, {from: RUNNING_STATES, to: State.FAILED, statusDescription: LAUNCH_FAILED})
             await this.#discard(task)
             return false
         }
-        log.info(`${taskTag(task)} launched`)
+        log.info(`${taskTag(task)} started`)
         this.#watch(task)
         return true
     }
@@ -216,7 +220,7 @@ export class ContainerSupervisor {
         if (current && RUNNING_STATES.includes(current.state)) {
             const {state, statusDescription} = this.#outcome(current, await this.#workspace.readResult(task.id))
             await this.#repository.transition(current, {from: RUNNING_STATES, to: state, statusDescription})
-            log.info(`${taskTag(current)} ${state}`)
+            log.info(`${taskTag(current)} ${state.toLowerCase()}`)
         }
         await this.#discard(task)
         await this.#dispatchPending()
@@ -312,6 +316,9 @@ export class ContainerSupervisor {
 }
 
 const taskTag = task => tag('Task', task.id, task.username)
+
+const humanDuration = (start, end) =>
+    formatDuration(intervalToDuration({start, end})) || 'less than a second'
 
 const countByUser = holders => {
     const counts = new Map()

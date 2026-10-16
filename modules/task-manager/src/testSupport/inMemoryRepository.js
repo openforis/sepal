@@ -89,11 +89,12 @@ export class InMemoryRepository {
 
     async releaseSlot(task, slot) {
         const stored = this.#tasks.get(task.id)
-        if (!stored?.slotTime || (slot && stored.slotTime.getTime() !== new Date(slot).getTime())) {
-            return false
+        const grant = stored?.slotTime
+        if (!grant || (slot && grant.getTime() !== new Date(slot).getTime())) {
+            return null
         }
         this.#setSlot(stored, null)
-        return true
+        return grant
     }
 
     async slotHolders() {
