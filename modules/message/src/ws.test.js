@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {Subject} from 'rxjs'
 
 import {createMessageWsProtocol} from './ws.js'
@@ -31,7 +34,7 @@ describe('message ws protocol', () => {
         const {sent, handler} = setup()
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: {notifications: notificationsFor('alice')}}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: {notifications: notificationsFor('alice')}}])
     })
 
     it('multicasts to all tabs of the user on a user-scoped change', async () => {
@@ -41,7 +44,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([{username: 'alice', data: {notifications: notificationsFor('alice')}}])
+        assert.deepEqual(sent, [{username: 'alice', data: {notifications: notificationsFor('alice')}}])
     })
 
     it('ignores user-scoped changes for users without a subscription', async () => {
@@ -51,7 +54,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({username: 'bob'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('multicasts to every subscribed user on a message-scoped change', async () => {
@@ -62,11 +65,10 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({})
         await flush()
-        expect(sent).toEqual(expect.arrayContaining([
+        assert.deepEqual(new Set(sent), new Set([
             {username: 'alice', data: {notifications: notificationsFor('alice')}},
             {username: 'bob', data: {notifications: notificationsFor('bob')}}
         ]))
-        expect(sent.length).toBe(2)
     })
 
     it('multicasts once per user on a message-scoped change even with multiple tabs', async () => {
@@ -77,7 +79,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({})
         await flush()
-        expect(sent).toEqual([{username: 'alice', data: {notifications: notificationsFor('alice')}}])
+        assert.deepEqual(sent, [{username: 'alice', data: {notifications: notificationsFor('alice')}}])
     })
 
     it('stops forwarding after subscriptionDown', async () => {
@@ -88,7 +90,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('drops all of a client\'s subscriptions on clientDown', async () => {
@@ -100,7 +102,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('drops all of a user\'s subscriptions on userDown', async () => {
@@ -112,7 +114,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         messageChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('unicasts a fresh snapshot on a {refresh: true} data message', async () => {
@@ -122,7 +124,7 @@ describe('message ws protocol', () => {
         sent.length = 0
         handler({user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1', data: {refresh: true}})
         await flush()
-        expect(sent).toEqual([{clientId: 'c1', subscriptionId: 's1', data: {notifications: notificationsFor('alice')}}])
+        assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: {notifications: notificationsFor('alice')}}])
     })
 
     it('queries notifications with the admin flag of the subscribed user', async () => {
@@ -136,12 +138,11 @@ describe('message ws protocol', () => {
         subscriptionUp(handler, {username: 'admin', roles: ['application_admin'], clientId: 'c1', subscriptionId: 's1'})
         subscriptionUp(handler, {username: 'alice', clientId: 'c2', subscriptionId: 's2'})
         await flush()
-        expect(queried).toEqual(expect.arrayContaining([['admin', true], ['alice', false]]))
+        assert.deepEqual(new Set(queried), new Set([['admin', true], ['alice', false]]))
         queried.length = 0
         messageChanged$.next({})
         await flush()
-        expect(queried).toEqual(expect.arrayContaining([['admin', true], ['alice', false]]))
-        expect(queried.length).toBe(2)
+        assert.deepEqual(new Set(queried), new Set([['admin', true], ['alice', false]]))
     })
 
     it('swallows snapshot failures without sending or crashing', async () => {
@@ -152,7 +153,7 @@ describe('message ws protocol', () => {
         })
         subscriptionUp(handler)
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 
     it('unsubscribes from messageChanged$ on stop$', async () => {
@@ -163,6 +164,6 @@ describe('message ws protocol', () => {
         stop$.next()
         messageChanged$.next({username: 'alice'})
         await flush()
-        expect(sent).toEqual([])
+        assert.deepEqual(sent, [])
     })
 })

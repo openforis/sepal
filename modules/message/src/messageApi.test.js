@@ -1,15 +1,11 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, mock, test} from 'node:test'
 
 import {messageChanged$} from './changed.js'
 import {MessageApi} from './messageApi.js'
 
-const repo = {
-    saveMessage: jest.fn(),
-    removeMessage: jest.fn(),
-    listNotifications: jest.fn(),
-    updateNotification: jest.fn()
-}
-const api = new MessageApi(repo)
+let repo
+let api
 
 const ctx = (overrides = {}) => ({
     params: {}, query: {}, request: {body: {}},
@@ -21,76 +17,80 @@ const changes = []
 messageChanged$.subscribe(change => changes.push(change))
 
 beforeEach(() => {
-    Object.values(repo).forEach(fn => fn.mockReset())
+    repo = {
+        saveMessage: mock.fn(),
+        removeMessage: mock.fn(),
+        listNotifications: mock.fn(),
+        updateNotification: mock.fn()
+    }
+    api = new MessageApi(repo)
     changes.length = 0
 })
 
 test('saveMessage returns 200 with mapped message', async () => {
-    repo.saveMessage.mockResolvedValue({
+    repo.saveMessage.mock.mockImplementation(async () => ({
         id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM',
         creationTime: '2025-05-28T21:38:19.000Z', updateTime: '2025-05-28T21:38:19.000Z', removed: false
-    })
+    }))
     const c = ctx({params: {id: 'm1'}, request: {body: {subject: 's', contents: 'c', type: 'SYSTEM'}}})
     await api.saveMessage(c)
-    expect(repo.saveMessage).toHaveBeenCalledWith(
-        {id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 0}
-    )
-    expect(c.status).toBe(200)
-    expect(c.body).toMatchObject({id: 'm1', type: 'SYSTEM', creationTime: '2025-05-28T21:38:19.000Z'})
+    assert.deepEqual(callsOf(repo.saveMessage), [
+        [{id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 0}]
+    ])
+    assert.equal(c.status, 200)
+    assert.partialDeepStrictEqual(c.body, {id: 'm1', type: 'SYSTEM', creationTime: '2025-05-28T21:38:19.000Z'})
 })
 
 test('saveMessage marks the message read for its author', async () => {
-    repo.saveMessage.mockResolvedValue({
+    repo.saveMessage.mock.mockImplementation(async () => ({
         id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 0,
         creationTime: '2025-05-28T21:38:19.000Z', updateTime: '2025-05-28T21:38:19.000Z', removed: false
-    })
+    }))
     await api.saveMessage(ctx({params: {id: 'm1'}, request: {body: {subject: 's', contents: 'c', type: 'SYSTEM'}}}))
-    expect(repo.updateNotification).toHaveBeenCalledWith({username: 'admin', messageId: 'm1', state: 'READ'})
+    assert.deepEqual(callsOf(repo.updateNotification), [[{username: 'admin', messageId: 'm1', state: 'READ'}]])
 })
 
 test('saveMessage passes the priority through', async () => {
-    repo.saveMessage.mockResolvedValue({
+    repo.saveMessage.mock.mockImplementation(async () => ({
         id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 1,
         creationTime: '2025-05-28T21:38:19.000Z', updateTime: '2025-05-28T21:38:19.000Z', removed: false
-    })
+    }))
     const c = ctx({params: {id: 'm1'}, request: {body: {subject: 's', contents: 'c', type: 'SYSTEM', priority: 1}}})
     await api.saveMessage(c)
-    expect(repo.saveMessage).toHaveBeenCalledWith(
-        {id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 1}
-    )
-    expect(c.body).toMatchObject({id: 'm1', priority: 1})
+    assert.deepEqual(callsOf(repo.saveMessage), [
+        [{id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 1}]
+    ])
+    assert.partialDeepStrictEqual(c.body, {id: 'm1', priority: 1})
 })
 
 test('saveMessage defaults priority to 0', async () => {
-    repo.saveMessage.mockResolvedValue({
+    repo.saveMessage.mock.mockImplementation(async () => ({
         id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM', priority: 0,
         creationTime: '2025-05-28T21:38:19.000Z', updateTime: '2025-05-28T21:38:19.000Z', removed: false
-    })
+    }))
     await api.saveMessage(ctx({params: {id: 'm1'}, request: {body: {subject: 's', contents: 'c', type: 'SYSTEM'}}}))
-    expect(repo.saveMessage).toHaveBeenCalledWith(
-        expect.objectContaining({priority: 0})
-    )
+    assert.partialDeepStrictEqual(callsOf(repo.saveMessage), [[{priority: 0}]])
 })
 
 test('saveMessage publishes a message-scoped change', async () => {
-    repo.saveMessage.mockResolvedValue({
+    repo.saveMessage.mock.mockImplementation(async () => ({
         id: 'm1', username: 'admin', subject: 's', contents: 'c', type: 'SYSTEM',
         creationTime: '2025-05-28T21:38:19.000Z', updateTime: '2025-05-28T21:38:19.000Z', removed: false
-    })
+    }))
     await api.saveMessage(ctx({params: {id: 'm1'}, request: {body: {subject: 's', contents: 'c', type: 'SYSTEM'}}}))
-    expect(changes).toEqual([{}])
+    assert.deepEqual(changes, [{}])
 })
 
 test('removeMessage returns 204', async () => {
     const c = ctx({params: {id: 'm1'}})
     await api.removeMessage(c)
-    expect(repo.removeMessage).toHaveBeenCalledWith('m1')
-    expect(c.status).toBe(204)
+    assert.deepEqual(callsOf(repo.removeMessage), [['m1']])
+    assert.equal(c.status, 204)
 })
 
 test('removeMessage publishes a message-scoped change', async () => {
     await api.removeMessage(ctx({params: {id: 'm1'}}))
-    expect(changes).toEqual([{}])
+    assert.deepEqual(changes, [{}])
 })
 
 test('listNotifications returns mapped notifications for current user', async () => {
@@ -99,44 +99,44 @@ test('listNotifications returns mapped notifications for current user', async ()
         creation_time: '2025-05-28T21:38:19.000Z', update_time: '2025-05-28T21:38:19.000Z',
         username: 'admin', state: 'UNREAD'
     }
-    repo.listNotifications.mockResolvedValue([row])
+    repo.listNotifications.mock.mockImplementation(async () => [row])
     const c = ctx()
     await api.listNotifications(c)
-    expect(repo.listNotifications).toHaveBeenCalledWith('admin', false)
-    expect(c.body[0].message.id).toBe('m1')
-    expect(c.body[0].message.subject).toBe('s')
-    expect(c.body[0].state).toBe('UNREAD')
+    assert.deepEqual(callsOf(repo.listNotifications), [['admin', false]])
+    assert.equal(c.body[0].message.id, 'm1')
+    assert.equal(c.body[0].message.subject, 's')
+    assert.equal(c.body[0].state, 'UNREAD')
 })
 
 test('listNotifications includes unpublished messages for an admin user', async () => {
-    repo.listNotifications.mockResolvedValue([])
+    repo.listNotifications.mock.mockImplementation(async () => [])
     const c = ctx({state: {currentUser: {username: 'admin', roles: ['application_admin']}}})
     await api.listNotifications(c)
-    expect(repo.listNotifications).toHaveBeenCalledWith('admin', true)
+    assert.deepEqual(callsOf(repo.listNotifications), [['admin', true]])
 })
 
 test('userNotifications passes the admin flag through', async () => {
-    repo.listNotifications.mockResolvedValue([])
+    repo.listNotifications.mock.mockImplementation(async () => [])
     await api.userNotifications('admin', true)
-    expect(repo.listNotifications).toHaveBeenCalledWith('admin', true)
+    assert.deepEqual(callsOf(repo.listNotifications), [['admin', true]])
 })
 
 test('updateNotification returns 204', async () => {
     const c = ctx({params: {id: 'm1'}, request: {body: {state: 'READ'}}})
     await api.updateNotification(c)
-    expect(repo.updateNotification).toHaveBeenCalledWith({username: 'admin', messageId: 'm1', state: 'READ'})
-    expect(c.status).toBe(204)
+    assert.deepEqual(callsOf(repo.updateNotification), [[{username: 'admin', messageId: 'm1', state: 'READ'}]])
+    assert.equal(c.status, 204)
 })
 
 test('updateNotification publishes a message-scoped change, so acknowledged counts refresh for everyone', async () => {
     await api.updateNotification(ctx({params: {id: 'm1'}, request: {body: {state: 'READ'}}}))
-    expect(changes).toEqual([{}])
+    assert.deepEqual(changes, [{}])
 })
 
 test('listNotifications publishes no change', async () => {
-    repo.listNotifications.mockResolvedValue([])
+    repo.listNotifications.mock.mockImplementation(async () => [])
     await api.listNotifications(ctx())
-    expect(changes).toEqual([])
+    assert.deepEqual(changes, [])
 })
 
 test('userNotifications returns mapped notifications', async () => {
@@ -145,12 +145,15 @@ test('userNotifications returns mapped notifications', async () => {
         creation_time: '2025-05-28T21:38:19.000Z', update_time: '2025-05-28T21:38:19.000Z',
         username: 'alice', state: 'READ'
     }
-    repo.listNotifications.mockResolvedValue([row])
+    repo.listNotifications.mock.mockImplementation(async () => [row])
     const notifications = await api.userNotifications('alice')
-    expect(repo.listNotifications).toHaveBeenCalledWith('alice', false)
-    expect(notifications).toEqual([expect.objectContaining({
-        message: expect.objectContaining({id: 'm1', username: 'admin'}),
+    assert.deepEqual(callsOf(repo.listNotifications), [['alice', false]])
+    assert.equal(notifications.length, 1)
+    assert.partialDeepStrictEqual(notifications[0], {
+        message: {id: 'm1', username: 'admin'},
         username: 'alice',
         state: 'READ'
-    })])
+    })
 })
+
+const callsOf = fn => fn.mock.calls.map(({arguments: args}) => args)
