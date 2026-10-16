@@ -1,13 +1,17 @@
+/* The row and everything in it may shrink; only then can a title too long for the space end in an
+   ellipsis rather than deciding how wide the row is. */
 .container {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
     align-items: center;
+    min-width: 0;
 }
 
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
 }
 
 .inline {
@@ -17,30 +21,43 @@
 
 .item {
     --item-spacing: .75rem;
+    --line-height: 1.5rem;
     position: relative;
     align-items: center;
     display: flex;
     flex-grow: 1;
     pointer-events: none;
+    min-width: 0;
 }
 
 .item> :not(:first-child) {
     margin-left: var(--item-spacing);
 }
 
+/* Room for as many lines as the item asks, so an item without a title can stand as tall as one with it. */
 .info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
+    min-height: calc(var(--lines, 0) * var(--line-height));
     overflow: hidden;
     flex-grow: 1;
     flex-shrink: 1;
 }
 
+/* The lines are laid out from the start of the column, which leaves them at their own width: the
+   max-width is what holds them to the column instead. */
 .info>* {
     white-space: normal;
     word-break: break-word;
     overflow: hidden;
+    max-width: 100%;
+}
+
+.info.nowrap>* {
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .inline {
@@ -50,15 +67,17 @@
 .title {
     font-size: .8rem;
     font-weight: 800;
-    line-height: 1.5rem;
+    line-height: var(--line-height);
     text-transform: uppercase;
     color: var(--text-muted-color);
     white-space: nowrap;
+    /* The line is already clipped by .info above; the ellipsis says so, rather than cutting a word in half. */
+    text-overflow: ellipsis;
 }
 
 .description {
     font-size: .9rem;
-    line-height: 1.5rem;
+    line-height: var(--line-height);
     white-space: normal;
     word-wrap: break-word;
     text-align: left;

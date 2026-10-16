@@ -35,7 +35,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     recipeFormPanel: () => Component => Component
 }))
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: () => {}}))
+vi.mock('~/app/home/body/process/recipeList/folderActions', () => ({updateFolder: () => {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({getPreSetVisualizations: () => []})}))
 
 const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
@@ -135,7 +135,7 @@ describe('an open panel whose source became unreachable', () => {
 const SLICE = {
     id: 'slice-1',
     type: 'CCDC_SLICE',
-    projectId: null,
+    folderId: null,
     model: {
         source: {type: 'RECIPE_REF', id: 'ccdc-1'},
         date: {dateType: 'SINGLE', date: '2020-06-01'},
@@ -200,11 +200,11 @@ const panel = (read, {baseBands = [], bandTypes = [], segmentBands = []} = {}) =
         scale: {value: 30, set: () => {}}, destination: {value: 'GEE'}, assetType: {value: 'Image'}
     }
     const instance = new Retrieve({
-        projectId: null,
+        folderId: null,
         retrieveOutput: read,
         readRetrieveOutput: () => read,
         inputs,
-        projects: [],
+        folders: [],
         form: {isInvalid: () => false}
     })
     instance.setState = state => Object.assign(instance.state, state)

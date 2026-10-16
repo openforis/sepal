@@ -169,7 +169,7 @@ const open = ({classification, advanced}, {load$: reads} = {}) => {
         process: {
             loadedRecipes: {[RECIPE]: {id: RECIPE, type: 'CCDC', model: {}}},
             recipes: [{id: CLASSIFICATION, name: 'A classification', type: 'CLASSIFICATION'}],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

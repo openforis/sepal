@@ -14,6 +14,10 @@ import {Scrollable, withScrollable} from './scrollable'
 
 const NOT_HOVERED = -1
 
+// Every row is placed by the height of one sampled row, so no row may grow: what a row draws keeps each
+// line to one. Context crosses portals, so the copy of a row being dragged keeps to it too.
+export const FastListContext = React.createContext(false)
+
 class _FastList extends React.Component {
     constructor(props) {
         super(props)
@@ -168,22 +172,27 @@ class _FastListContent extends React.PureComponent {
     renderItems(firstRenderedItem, lastRenderedItem) {
         const {items, spacing} = this.props
         return (
-            <Layout
-                type='vertical'
-                spacing={spacing}>
-                {items.slice(firstRenderedItem, lastRenderedItem).map((item, index) => this.renderItem(item, index, firstRenderedItem))}
-            </Layout>
+            <FastListContext.Provider value={true}>
+                <Layout
+                    type='vertical'
+                    spacing={spacing}>
+                    {items.slice(firstRenderedItem, lastRenderedItem).map((item, index) => this.renderItem(item, index, firstRenderedItem))}
+                </Layout>
+            </FastListContext.Provider>
         )
     }
 
     renderItem(item, index, firstRenderedItem) {
         const {itemKey, itemRenderer, children} = this.props
         const {keyboardHover, mouseHover} = this.state
+        // Undefined, never false, for a row the keyboard has not reached: false would hold it back
+        // from the hover the pointer gives it.
+        const hovered = (!mouseHover && (keyboardHover - firstRenderedItem) === index) || undefined
         return (
             <FastListItem
                 item={item}
                 key={itemKey(item)}
-                hovered={!mouseHover && (keyboardHover - firstRenderedItem) === index}>
+                hovered={hovered}>
                 {itemRenderer || children}
             </FastListItem>
         )
@@ -292,7 +301,7 @@ class FastListItem extends React.PureComponent {
     render() {
         const {item, hovered, children} = this.props
         return (
-            <div ref={hovered ? this.hovered : null}>
+            <div className={styles.item} ref={hovered ? this.hovered : null}>
                 {children(item, hovered)}
             </div>
         )

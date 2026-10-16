@@ -13,9 +13,12 @@ import {Tooltip} from '~/widget/tooltip'
 
 import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
+import {FastListContext} from './fastList'
 import {Icon} from './icon'
 
 class _CrudItem extends React.Component {
+    static contextType = FastListContext
+
     render() {
         return (
             <div className={styles.container}>
@@ -51,7 +54,7 @@ class _CrudItem extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconDimmed, iconTooltip, tooltipPlacement} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconClassName, iconDimmed, iconTooltip, tooltipPlacement} = this.props
         return icon
             ? (
                 <div className={styles.icon}>
@@ -60,6 +63,7 @@ class _CrudItem extends React.Component {
                         size={iconSize}
                         type={iconType}
                         variant={iconVariant}
+                        className={iconClassName}
                         attributes={iconAttributes}
                         dimmed={iconDimmed}
                         tooltip={iconTooltip}
@@ -102,21 +106,29 @@ class _CrudItem extends React.Component {
     }
 
     renderDescription() {
-        const {description, highlightDescription, descriptionClassName} = this.props
-        return description
+        const {description, highlightDescription, descriptionClassName, descriptionTooltip, tooltipPlacement} = this.props
+        if (!description) {
+            return null
+        }
+        const descriptionElement = (
+            <div className={[styles.description, descriptionClassName].join(' ')}>
+                {this.renderHighlight(description, highlightDescription)}
+            </div>
+        )
+        return descriptionTooltip
             ? (
-                <div className={[styles.description, descriptionClassName].join(' ')}>
-                    {this.renderHighlight(description, highlightDescription)}
-                </div>
+                <Tooltip msg={descriptionTooltip} placement={tooltipPlacement}>
+                    {descriptionElement}
+                </Tooltip>
             )
-            : null
+            : descriptionElement
     }
 
     renderInfo() {
-        const {title, description} = this.props
+        const {title, description, lines} = this.props
         return title || description
             ? (
-                <div className={styles.info}>
+                <div className={[styles.info, this.context ? styles.nowrap : null].join(' ')} style={{'--lines': lines}}>
                     {this.renderTitle()}
                     {this.renderDescription()}
                 </div>
@@ -318,6 +330,8 @@ CrudItem.propTypes = {
     copyValue: PropTypes.string,
     description: PropTypes.any,
     descriptionClassName: PropTypes.string,
+    // Opt-in, like titleTooltip: the full text of a description a list keeps to one line.
+    descriptionTooltip: PropTypes.any,
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
@@ -328,6 +342,7 @@ CrudItem.propTypes = {
     highlightTitle: PropTypes.any,
     icon: PropTypes.any,
     iconAttributes: PropTypes.any,
+    iconClassName: PropTypes.string,
     iconDimmed: PropTypes.any,
     iconSize: PropTypes.any,
     iconTooltip: PropTypes.any,
@@ -337,6 +352,7 @@ CrudItem.propTypes = {
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.any,
     inlineComponents: PropTypes.any,
+    lines: PropTypes.number,
     metadata: PropTypes.any,
     removeContent: PropTypes.any,
     removeConfirmationLabel: PropTypes.string,

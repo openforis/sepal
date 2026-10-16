@@ -1028,7 +1028,7 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retri
             process: {
                 loadedRecipes: Object.fromEntries(recipes.map(recipe => [recipe.id, recipe])),
                 recipes: sources.map(({id, type}) => ({id, name: id, type})),
-                projects: [],
+                folders: [],
                 tabs: []
             }
         }, action) => action.reduce ? action.reduce(state) : state

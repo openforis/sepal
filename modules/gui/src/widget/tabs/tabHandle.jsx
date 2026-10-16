@@ -11,6 +11,7 @@ import {Input} from '~/widget/input'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {withScrollable} from '~/widget/scrollable'
+import {Tooltip} from '~/widget/tooltip'
 
 import {renameTab, selectTab} from './tabActions'
 import styles from './tabHandle.module.css'
@@ -74,7 +75,7 @@ class _TabHandle extends React.Component {
                 ].join(' ')}
                 style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}>
                 {this.renderPrefix()}
-                {this.renderInput()}
+                {this.renderTitle()}
                 {this.renderCloseButton()}
             </Layout>
         )
@@ -87,6 +88,21 @@ class _TabHandle extends React.Component {
         return prefix
             ? <div className={styles.prefix}>{prefix}</div>
             : null
+    }
+
+    // On hover rather than on focus: focusing the title is what selects the tab, and the tooltip may hold
+    // controls of its own that the pointer has to reach.
+    renderTitle() {
+        const {tooltip} = this.props
+        return tooltip
+            ? (
+                <Tooltip msg={tooltip} placement='bottom'>
+                    <div className={styles.titleTooltip}>
+                        {this.renderInput()}
+                    </div>
+                </Tooltip>
+            )
+            : this.renderInput()
     }
 
     renderInput() {
@@ -243,5 +259,6 @@ TabHandle.propTypes = {
     statePath: PropTypes.string,
     tabBusy$: PropTypes.func,
     title: PropTypes.string,
+    tooltip: PropTypes.any,
     onTitleChanged: PropTypes.func
 }

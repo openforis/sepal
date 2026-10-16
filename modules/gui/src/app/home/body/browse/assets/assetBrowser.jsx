@@ -430,7 +430,7 @@ class _AssetBrowser extends React.Component {
                 <ButtonPopup
                     chromeless
                     shape='circle'
-                    icon='plus'
+                    icon='folder-plus'
                     noChevron
                     tooltip={msg('browse.controls.createFolder.tooltip')}
                     tooltipPlacement='top'
