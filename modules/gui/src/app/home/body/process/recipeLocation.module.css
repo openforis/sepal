@@ -1,0 +1,13 @@
+/* The copy button stays at the top right of a path that wraps; a path on one line is centred beside it. */
+.tooltip {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+}
+
+/* A long path wraps, even inside a name, rather than pushing the copy button out of the tooltip. */
+.tooltipPath {
+    align-self: center;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
