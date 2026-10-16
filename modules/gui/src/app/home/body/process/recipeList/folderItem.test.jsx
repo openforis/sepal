@@ -43,12 +43,19 @@ afterEach(() => {
 })
 
 describe('FolderItem', () => {
-    it('names the type, then the folder, with both counts when it has subfolders', () => {
+    it('names the folder, with both counts when it has subfolders', () => {
         mount({folder, counts: {folders: 2, recipes: 4}, onClick: () => {}})
 
-        expect(lastProps().title).toBe('process.folder.title')
+        expect(lastProps().title).toBeUndefined()
         expect(lastProps().description).toBe('Kenya')
         expect(lastProps().metadata).toBe('process.folder.folderCount · process.folder.description')
+    })
+
+    it('stands as tall as a recipe row, without a title', () => {
+        mount({folder, counts: {folders: 0, recipes: 0}, onClick: () => {}})
+
+        expect(lastProps().title).toBeUndefined()
+        expect(lastProps().lines).toBe(2)
     })
 
     it('omits the folder count on a leaf folder', () => {

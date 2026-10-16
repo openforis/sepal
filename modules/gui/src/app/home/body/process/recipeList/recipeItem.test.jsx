@@ -50,6 +50,13 @@ describe('RecipeItem', () => {
         expect(lastProps().description).toBe('nairobi_mosaic')
     })
 
+    it('stands two lines tall when its type is unknown', () => {
+        mount({recipe, path: '', onClick: () => {}})
+
+        expect(lastProps().title).toBeUndefined()
+        expect(lastProps().lines).toBe(2)
+    })
+
     it('shows no path while browsing a folder', () => {
         mount({recipe, typeName: 'Optical mosaic', path: '', onClick: () => {}})
 
