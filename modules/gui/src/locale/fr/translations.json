@@ -5470,10 +5470,7 @@
     },
     "recipeInput": {
       "label": "Formule",
-      "placeholder": "Selectionner une formule...",
-      "all": {
-        "tooltip": "Afficher toutes les formules ou seulement les formules dans le projet en cours"
-      }
+      "placeholder": "Selectionner une formule..."
     },
     "safetyButton": {
       "label": "Poursuivre"

@@ -5469,10 +5469,7 @@
     },
     "recipeInput": {
       "label": "",
-      "placeholder": "Selecciona un flujo de trabajo...",
-      "all": {
-        "tooltip": ""
-      }
+      "placeholder": "Selecciona un flujo de trabajo..."
     },
     "safetyButton": {
       "label": "Continuar"
