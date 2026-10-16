@@ -15,8 +15,8 @@ vi.mock('~/widget/userAgent', () => ({isMobile: () => false}))
 import {CopyButton} from './copyButton'
 import {CrudItem} from './crudItem'
 import styles from './crudItem.module.css'
-import {LegendItem} from './legend/legendItem'
 import {FastListContext} from './fastList'
+import {LegendItem} from './legend/legendItem'
 import {RemoveButton} from './removeButton'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true

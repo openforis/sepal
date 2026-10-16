@@ -6,14 +6,19 @@ import {map, Subject, switchMap, takeUntil} from 'rxjs'
 import api from '~/apiRegistry'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {BreadcrumbLabel} from '~/app/home/body/process/recipeList/breadcrumb'
+import {RecipeBrowser} from '~/app/home/body/process/recipeList/recipeBrowser'
+import {locationLabel} from '~/app/home/body/process/recipeList/recipeTree'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {Buttons} from '~/widget/buttons'
+import {Button} from '~/widget/button'
 
 import {Form} from './form'
+
+const RECENT_COUNT = 10
 
 const mapStateToProps = () => {
     return {
@@ -28,9 +33,12 @@ const mapRecipeToProps = recipe => {
     })
 }
 
+const asOption = recipe => ({value: recipe.id, label: recipe.name})
+
 class _RecipeInput extends React.Component {
     state = {
-        all: false
+        search: '',
+        browsing: false
     }
     cancel$ = new Subject()
 
@@ -41,50 +49,61 @@ class _RecipeInput extends React.Component {
     render() {
         const {
             stream, input, label, labelButtons, placeholder, tooltip, allowClear, autoFocus,
-            busyMessage, errorMessage, warningMessage, onChange
+            busyMessage, errorMessage, warningMessage
         } = this.props
-        const {all} = this.state
-        const options = this.getOptions()
-
-        const buttons = [
-            <Buttons
-                key={'inverted'}
-                selected={[all]}
-                look='transparent'
-                shape={'pill'}
-                air={'less'}
-                size={'x-small'}
-                options={[
-                    {value: true, label: 'ALL', tooltip: msg('widget.recipeInput.all.tooltip')}
-                ]}
-                multiple
-                tabIndex={-1}
-                onChange={() => {
-                    this.setState({all: !all})
-                }}
-            />
-        ]
-        
+        const {browsing} = this.state
         return (
-            <Form.Combo
-                windowed
-                input={input}
-                label={label || msg('widget.recipeInput.label')}
-                labelButtons={labelButtons}
-                placeholder={placeholder || msg('widget.recipeInput.placeholder')}
-                tooltip={tooltip}
-                options={options}
-                autoFocus={autoFocus}
-                allowClear={allowClear}
-                buttons={buttons}
-                busyMessage={stream('LOAD_RECIPE').active || busyMessage}
-                errorMessage={errorMessage}
-                warningMessage={warningMessage}
-                onChange={option => {
-                    const value = option?.value
-                    onChange && onChange(value)
-                    this.loadRecipe(value)
+            <React.Fragment>
+                <Form.Combo
+                    windowed
+                    input={input}
+                    label={label || msg('widget.recipeInput.label')}
+                    labelButtons={labelButtons}
+                    placeholder={placeholder || msg('widget.recipeInput.placeholder')}
+                    tooltip={tooltip}
+                    options={this.getOptions()}
+                    autoFocus={autoFocus}
+                    allowClear={allowClear}
+                    buttons={[this.renderBrowseButton()]}
+                    busyMessage={stream('LOAD_RECIPE').active || busyMessage}
+                    errorMessage={errorMessage}
+                    warningMessage={warningMessage}
+                    onFilterChange={search => this.setState({search})}
+                    onChange={option => this.select(option?.value)}
+                />
+                {browsing ? this.renderBrowser() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderBrowseButton() {
+        return (
+            <Button
+                key='browse'
+                chromeless
+                shape='none'
+                air='none'
+                icon='folder-open'
+                tooltip={msg('widget.recipeInput.browse.tooltip')}
+                tabIndex={-1}
+                onClick={() => this.setState({browsing: true})}
+            />
+        )
+    }
+
+    renderBrowser() {
+        const {folders, input} = this.props
+        return (
+            <RecipeBrowser
+                folders={folders}
+                recipes={this.acceptedRecipes()}
+                folderId={this.browseFolderId()}
+                onSelect={recipeId => {
+                    this.setState({browsing: false})
+                    input.set(recipeId)
+                    this.select(recipeId)
                 }}
+                onCancel={() => this.setState({browsing: false})}
             />
         )
     }
@@ -96,6 +115,12 @@ class _RecipeInput extends React.Component {
         }
     }
 
+    select(recipeId) {
+        const {onChange} = this.props
+        onChange && onChange(recipeId)
+        this.loadRecipe(recipeId)
+    }
+
     // A recipe cannot be an input to itself: the reference closes a cycle the moment it is made, and the
     // resolver rejects one. Identity is the recipe's id - a title is neither stable nor unique, and the
     // catalogue summary is a different object from the recipe being edited. What opts out is any selection
@@ -105,19 +130,36 @@ class _RecipeInput extends React.Component {
         return !allowOwnRecipe && !!ownRecipeId && recipeId === ownRecipeId
     }
 
+    // Every recipe the field accepts, wherever it is. Before anything is typed, what changed last comes first,
+    // and the folders hold the rest, so no recipe is offered twice.
     getOptions() {
-        const offered = this.offeredRecipes()
-        const groups = _.groupBy(offered, 'folderId')
-        return [...this.unofferedSelection(offered), ...this.orderedFolders(Object.keys(groups))
-            .map(({id, folder}) => ({
+        const {search} = this.state
+        const recipes = this.acceptedRecipes()
+        const recent = search ? [] : _.orderBy(recipes, 'updateTime', 'desc').slice(0, RECENT_COUNT)
+        return [
+            ...this.unofferedSelection(recipes),
+            ...(recent.length ? [{key: 'recent', label: msg('widget.recipeInput.recent'), options: recent.map(asOption)}] : []),
+            ...this.folderGroups(recipes.filter(recipe => !recent.includes(recipe)))
+        ]
+    }
+
+    // Each under the path of the folder holding it. The path is drawn by the breadcrumb's rule; its text is
+    // what a search matches.
+    folderGroups(recipes) {
+        const {folders} = this.props
+        const groups = _.groupBy(recipes, recipe => recipe.folderId || '')
+        const headings = Object.keys(groups).map(id => ({id, label: locationLabel(folders, id)}))
+        return _.sortBy(headings, [({label}) => label.toLowerCase(), 'id'])
+            .map(({id, label}) => ({
                 // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
                 // rather than by name: groups sharing a heading would otherwise be one group, and leaving
                 // the view one belongs to would leave its heading behind.
                 key: `folder:${id}`,
-                label: folder ? folder.name : msg('process.recipeList.root'),
+                label,
+                render: () => <BreadcrumbLabel folders={folders} folderId={id}/>,
                 filterOptions: isMatchingGroup => !isMatchingGroup,
-                options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
-            }))]
+                options: groups[id].map(asOption)
+            }))
     }
 
     // The selection made, offered or not, for a caller that keeps showing it - one no longer listed, or no longer
@@ -136,26 +178,22 @@ class _RecipeInput extends React.Component {
         }]
     }
 
-    // ALL widens which folders are offered, never what the caller can use.
-    offeredRecipes() {
-        const {folderId, recipes, filter} = this.props
-        const {all} = this.state
+    // What the options and the browser offer alike: what the caller's filter accepts, and never the recipe itself.
+    acceptedRecipes() {
+        const {recipes, filter} = this.props
         return recipes
-            .map(recipe => ({...recipe, folderId: recipe.folderId || ''}))
             .filter(recipe => !this.isOwnRecipe(recipe.id))
             .filter(recipe => {
                 const recipeType = getRecipeType(recipe.type)
                 return filter && recipeType ? filter(recipeType, recipe) : true
             })
-            .filter(({folderId: p}) => all || p === folderId || (!p && !folderId))
     }
 
-    orderedFolders(ids) {
-        const {folders} = this.props
-        return _.sortBy(
-            ids.map(id => ({id, folder: folders.find(folder => folder.id === id)})),
-            [({folder}) => folder ? 1 : 0, ({folder}) => folder?.name?.toLowerCase(), 'id']
-        )
+    // Where the selected recipe is, or else where the recipe being edited is.
+    browseFolderId() {
+        const {folderId, input, recipes} = this.props
+        const selected = recipes.find(({id}) => id === input.value)
+        return selected ? selected.folderId : folderId
     }
 
     // A recipe saved before this rule can still name itself. The value is left exactly as it was saved -
