@@ -9,8 +9,8 @@ Monitors user storage quota and usage. Tracks inactivity, sends notifications, m
 ## Commands
 
 ```bash
-npm test              # Jest; the *.integration.test.js suites need a reachable MySQL
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner; the *.integration.test.js suites need a reachable MySQL
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

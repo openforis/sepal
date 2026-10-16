@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -9,14 +11,14 @@ describe('storage database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -26,8 +28,8 @@ describe('storage database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.history WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             history: 'ascii_general_ci'
         })
     })
@@ -39,7 +41,7 @@ describe('storage database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['history']))
+            assert.ok(tables.includes('history'))
         })
 
         test('create an empty history table', async () => {
@@ -48,7 +50,7 @@ describe('storage database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const ids = await storedIds(dbName)
-            expect(ids).toEqual([])
+            assert.deepEqual(ids, [])
         })
     })
 
@@ -58,7 +60,7 @@ describe('storage database migrations', () => {
         await initDb(dbName, SCHEMA_PATH)
 
         const parameters = await procedureParameters(dbName, 'DropIndexIfExists')
-        expect(parameters).toEqual(['dbName', 'tableName', 'indexName'])
+        assert.deepEqual(parameters, ['dbName', 'tableName', 'indexName'])
     })
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
