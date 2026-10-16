@@ -112,7 +112,7 @@ describe('what a call answers', () => {
         expect(await call(alice(), client.startTableExport$(task, 'start export'))).toEqual(['T9'])
     })
 
-    test('the id of an image export it starts, without retrying a failed start', async () => {
+    test('the id of an image export it starts', async () => {
         const image = ee.Image('image')
         const task = ee.batch.Export.image.toAsset(image, 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
         const {client, http} = setup({answers: [ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
@@ -121,12 +121,13 @@ describe('what a call answers', () => {
         expect(http.calls[0].url).toBe(`${DEFAULT_EE_ENDPOINT}/v1/projects/alice-project/image:export`)
     })
 
-    test('an image export start answered with a server error fails after one request', async () => {
+    test('an export start Earth Engine fails to answer is retried as the same request, which Earth Engine deduplicates', async () => {
         const task = ee.batch.Export.image.toAsset(ee.Image('image'), 'd', 'projects/alice-project/assets/out', undefined, undefined, ee.Geometry.Rectangle([0, 0, 1, 1]), 30)
-        const {client, http} = setup({answers: [failure(503, {}), ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
+        const {client, http} = setup({answers: [failure(502, {}), ok({name: 'projects/alice-project/operations/T7', metadata: {}})]})
 
-        await expect(call(alice(), client.startImageExport$(task, 'start export'))).rejects.toBeDefined()
-        expect(http.calls).toHaveLength(1)
+        expect(await call(alice(), client.startImageExport$(task, 'start export'))).toEqual(['T7'])
+        expect(http.calls[1].body).toEqual(http.calls[0].body)
+        expect(http.calls[0].body.requestId).toEqual(expect.any(String))
     })
 
     test('nothing, for a folder that exists already', async () => {
@@ -186,6 +187,17 @@ describe('failures', () => {
         await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe')))
             .rejects.toThrow('Failed to probe: Image.load: Image asset \'image\' not found.')
         expect(http.calls).toHaveLength(1)
+    })
+
+    test('a failure Earth Engine gives no reason for is reported without its HTTP status', async () => {
+        const {client} = setup({answers: [unexplainedFailure(502)]})
+
+        await expect(call(alice(), client.getInfo$(ee.Image('image'), 'probe', 0))).rejects.toMatchObject({
+            userMessage: {
+                key: 'gee.error.earthEngineException',
+                args: {earthEngineMessage: 'Google Earth Engine failed to handle the request. Try again later.'}
+            }
+        })
     })
 
     test('a call is given up after its retries', async () => {
@@ -327,6 +339,9 @@ const ok = body => () => of({statusCode: 200, body})
 
 const failure = (statusCode, error) => () =>
     throwError(() => Object.assign(new Error(`HTTP ${statusCode}`), {statusCode, body: JSON.stringify({error})}))
+
+const unexplainedFailure = statusCode => () =>
+    throwError(() => Object.assign(new Error(`HTTP ${statusCode}`), {statusCode, body: '<html>Bad Gateway</html>'}))
 
 const unanswered = () => () => new Observable(() => {})
 
