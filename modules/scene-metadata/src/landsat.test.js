@@ -1,21 +1,26 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {scene} from './landsat.js'
 
 describe('scene', () => {
     test('keeps a cloud-free scene reported with numeric values', () => {
         const result = scene(stacScene({cloudCover: 0}))
 
-        expect(result).toMatchObject({id: stacScene().id, cloudCover: 0})
+        assert.partialDeepStrictEqual(result, {id: stacScene().id, cloudCover: 0})
     })
 
     test('keeps a cloud-free scene reported with string values', () => {
         const result = scene(csvScene({cloudCover: '0.00'}))
 
-        expect(result).toMatchObject({id: csvScene().id, cloudCover: 0})
+        assert.partialDeepStrictEqual(result, {id: csvScene().id, cloudCover: 0})
     })
 
-    test.each([undefined, null, ''])('rejects a scene with cloud cover %p', cloudCover => {
-        expect(scene(stacScene({cloudCover}))).toBeNull()
-    })
+    for (const cloudCover of [undefined, null, '']) {
+        test(`rejects a scene with cloud cover ${cloudCover}`, () => {
+            assert.equal(scene(stacScene({cloudCover})), null)
+        })
+    }
 })
 
 const stacScene = (overrides = {}) => ({

@@ -1,7 +1,9 @@
+import assert from 'node:assert/strict'
 import {mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {createServer} from 'node:http'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {after, afterEach, before, beforeEach, describe, test} from 'node:test'
 import {gzipSync} from 'node:zlib'
 
 import {configureNoLogging} from '#sepal/log'
@@ -15,7 +17,7 @@ describe('CSV downloads', () => {
     let url
     const filesDirectory = process.env.MYSQL_FILES_DIR
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         server = createServer((_request, response) => respond(response))
         await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -32,7 +34,7 @@ describe('CSV downloads', () => {
         await rm(directory, {recursive: true, force: true})
     })
 
-    afterAll(() => new Promise(resolve => server.close(resolve)))
+    after(() => new Promise(resolve => server.close(resolve)))
 
     test('makes the complete downloaded archive available for parsing', async () => {
         const archive = gzipSync('id\nscene\n')
@@ -42,8 +44,8 @@ describe('CSV downloads', () => {
 
         const stored = await readFile(join(directory, 'tiny.csv.gz'))
         const files = await readdir(directory)
-        expect(stored).toEqual(archive)
-        expect(files).toEqual(['tiny.csv.gz'])
+        assert.deepEqual(stored, archive)
+        assert.deepEqual(files, ['tiny.csv.gz'])
     })
 
     test('rejects a broken response body and preserves the previous complete archive', async () => {
@@ -54,9 +56,9 @@ describe('CSV downloads', () => {
             response.end('partial')
         }
 
-        await expect(download({url, collection: 'tiny'})).rejects.toThrow()
+        await assert.rejects(download({url, collection: 'tiny'}))
 
         const stored = await readFile(join(directory, 'tiny.csv.gz'))
-        expect(stored).toEqual(previous)
+        assert.deepEqual(stored, previous)
     })
 })
