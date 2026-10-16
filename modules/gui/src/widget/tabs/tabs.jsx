@@ -109,7 +109,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, tabPrefix, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabPrefix, tabTooltip, onTitleChanged} = this.props
         const {dragging} = this.state
         return (
             <TabHandle
@@ -119,6 +119,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 prefix={tabPrefix ? tabPrefix(tab) : undefined}
+                tooltip={tabTooltip ? tabTooltip(tab) : undefined}
                 selected={tab.id === selectedTabId}
                 tabBusy$={this.tabBusy$}
                 closing={tab.ui && tab.ui.closing}
@@ -345,10 +346,10 @@ class _Tabs extends React.Component {
     }
 
     render() {
-        const {label, tabs} = this.props
+        const {tabs} = this.props
         return (
             <SectionLayout className={styles.container}>
-                <TopBar label={label}>
+                <TopBar label={this.getLabel()}>
                     {this.renderTabHandles()}
                 </TopBar>
                 <Content className={styles.tabContents}>
@@ -361,6 +362,12 @@ class _Tabs extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    getLabel() {
+        const {label, selectedLabel, selectedTabId, tabs} = this.props
+        const selectedTab = tabs.find(({id}) => id === selectedTabId)
+        return (selectedLabel && selectedTab && selectedLabel(selectedTab)) || label
     }
 
     initialize() {
@@ -407,9 +414,11 @@ Tabs.propTypes = {
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,
+    selectedLabel: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabPrefix: PropTypes.func,
+    tabTooltip: PropTypes.func,
     tabs: PropTypes.array,
     onAdd: PropTypes.func,
     onClose: PropTypes.func,

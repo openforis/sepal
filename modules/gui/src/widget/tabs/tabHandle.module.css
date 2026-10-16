@@ -134,6 +134,12 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
     flex-grow: 1;
 }
 
+.tab .titleTooltip {
+    display: flex;
+    flex-grow: 1;
+    min-width: 0;
+}
+
 .tab .title input {
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
