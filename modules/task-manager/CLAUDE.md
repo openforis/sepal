@@ -50,7 +50,7 @@ table), tracked in `legacy_import_version`. PENDING and ACTIVE tasks become FAIL
 and tasks the user had removed are skipped. The worker's `task` table is only the import's source.
 
 ## Commands
-- `npm test` - Jest (ESM); `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
+- `npm test` - Node test runner; `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`
 
 ## Routes (served without the `/api/tasks` gateway prefix)

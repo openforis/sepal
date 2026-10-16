@@ -1,7 +1,9 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {after, afterEach, before, beforeEach, describe, test} from 'node:test'
 
 import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -14,7 +16,7 @@ describe('importing the worker\'s task history', () => {
 
         await runImport()
 
-        expect(await importedTasks()).toEqual([{
+        assert.deepEqual(await importedTasks(), [{
             id: task.id, state: 'COMPLETED', username: 'alice', operation: 'image.GEE', params: task.params,
             status_description: COMPLETED_DESCRIPTION, recipe_id: task.recipe_id,
             creation_time: task.creation_time, update_time: task.update_time, removed: 0,
@@ -28,9 +30,14 @@ describe('importing the worker\'s task history', () => {
         await runImport()
 
         const tasks = await importedTasks()
-        expect(tasks.map(({id, state}) => ({id, state}))).toEqual([{id: 'active', state: 'FAILED'}, {id: 'pending', state: 'FAILED'}])
-        expect(tasks.map(({status_description}) => JSON.parse(status_description).messageKey))
-            .toEqual(['tasks.status.interrupted', 'tasks.status.interrupted'])
+        assert.deepEqual(
+            tasks.map(({id, state}) => ({id, state})),
+            [{id: 'active', state: 'FAILED'}, {id: 'pending', state: 'FAILED'}]
+        )
+        assert.deepEqual(
+            tasks.map(({status_description}) => JSON.parse(status_description).messageKey),
+            ['tasks.status.interrupted', 'tasks.status.interrupted']
+        )
     })
 
     test('completes a cancel that was in progress', async () => {
@@ -39,8 +46,8 @@ describe('importing the worker\'s task history', () => {
         await runImport()
 
         const [task] = await importedTasks()
-        expect(task.state).toBe('CANCELED')
-        expect(JSON.parse(task.status_description).messageKey).toBe('tasks.status.canceled')
+        assert.equal(task.state, 'CANCELED')
+        assert.equal(JSON.parse(task.status_description).messageKey, 'tasks.status.canceled')
     })
 
     test('leaves out tasks the user removed', async () => {
@@ -48,7 +55,7 @@ describe('importing the worker\'s task history', () => {
 
         await runImport()
 
-        expect((await importedTasks()).map(({id}) => id)).toEqual(['kept'])
+        assert.deepEqual((await importedTasks()).map(({id}) => id), ['kept'])
     })
 
     test('copies nothing once task-manager has tasks of its own', async () => {
@@ -60,7 +67,7 @@ describe('importing the worker\'s task history', () => {
 
         await runImport()
 
-        expect((await importedTasks()).map(({id}) => id)).toEqual(['own'])
+        assert.deepEqual((await importedTasks()).map(({id}) => id), ['own'])
     })
 
     test('does nothing where the worker never had a task table', async () => {
@@ -68,7 +75,7 @@ describe('importing the worker\'s task history', () => {
 
         await runImport()
 
-        expect(await importedTasks()).toEqual([])
+        assert.deepEqual(await importedTasks(), [])
     })
 
     // --- harness ---
@@ -79,7 +86,7 @@ describe('importing the worker\'s task history', () => {
 
     let admin, source, target, importDir
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
@@ -101,7 +108,7 @@ describe('importing the worker\'s task history', () => {
         await rm(importDir, {recursive: true, force: true})
     })
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     const runImport = () => migrateDb(target, importDir, {schemaTable: 'legacy_import_version'})
 
