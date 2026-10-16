@@ -1,7 +1,10 @@
+import assert from 'node:assert/strict'
 import http from 'node:http'
+import {afterEach, describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
 import {WebSocket, WebSocketServer} from 'ws'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createSandboxProxy, parseSandboxPath} from './sandboxProxy.js'
 
@@ -104,57 +107,61 @@ const get = (port, path, username, extraHeaders = {}) => new Promise((resolve, r
 
 describe('parseSandboxPath', () => {
     test('rstudio strips the WHOLE /api/sandbox/rstudio prefix (root-served)', () => {
-        expect(parseSandboxPath('/api/sandbox/rstudio/foo')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/rstudio/foo'), {
             endpoint: 'rstudio',
             upstreamPath: '/foo'
         })
     })
     test('rstudio session strips to /session', () => {
-        expect(parseSandboxPath('/api/sandbox/rstudio/session')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/rstudio/session'), {
             endpoint: 'rstudio',
             upstreamPath: '/session'
         })
     })
     test('bare /api/sandbox/rstudio → upstream root /', () => {
-        expect(parseSandboxPath('/api/sandbox/rstudio')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/rstudio'), {
             endpoint: 'rstudio',
             upstreamPath: '/'
         })
     })
     test('shiny strips the WHOLE /api/sandbox/shiny prefix', () => {
-        expect(parseSandboxPath('/api/sandbox/shiny/foo')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/shiny/foo'), {
             endpoint: 'shiny',
             upstreamPath: '/foo'
         })
     })
     test('bare /api/sandbox/shiny → upstream root /', () => {
-        expect(parseSandboxPath('/api/sandbox/shiny')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/shiny'), {
             endpoint: 'shiny',
             upstreamPath: '/'
         })
     })
     test('jupyter keeps the full path', () => {
-        expect(parseSandboxPath('/api/sandbox/jupyter/api/kernels/x')).toEqual({
+        assert.deepEqual(parseSandboxPath('/api/sandbox/jupyter/api/kernels/x'), {
             endpoint: 'jupyter',
             upstreamPath: '/api/sandbox/jupyter/api/kernels/x'
         })
     })
     test('no endpoint segment → null', () => {
-        expect(parseSandboxPath('/api/sandbox')).toEqual({endpoint: null})
+        assert.deepEqual(parseSandboxPath('/api/sandbox'), {endpoint: null})
     })
 })
 
 describe('sandbox HTTP proxy', () => {
     let upstream, proxyServer
 
-    const resolveTarget = jest.fn()
-    const ensureServerStarted = jest.fn(async () => {})
-    const forgetServerStarted = jest.fn()
+    const resolveTarget = mock.fn()
+    const ensureServerStarted = mock.fn(async () => {})
+    const forgetServerStarted = mock.fn()
 
     const setup = async ({resolvesToUpstream = true, expectedPaths} = {}) => {
         upstream = await startUpstream({expectedPaths})
         if (resolvesToUpstream) {
-            resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port, sessionId: 's-1'})
+            resolveTarget.mock.mockImplementation(async () => ({
+                host: upstream.host,
+                port: upstream.port,
+                sessionId: 's-1'
+            }))
         }
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
@@ -162,10 +169,12 @@ describe('sandbox HTTP proxy', () => {
     }
 
     afterEach(async () => {
-        resolveTarget.mockReset()
-        ensureServerStarted.mockReset()
-        ensureServerStarted.mockResolvedValue(undefined)
-        forgetServerStarted.mockReset()
+        resolveTarget.mock.resetCalls()
+        resolveTarget.mock.mockImplementation(() => undefined)
+        ensureServerStarted.mock.resetCalls()
+        ensureServerStarted.mock.mockImplementation(async () => undefined)
+        forgetServerStarted.mock.resetCalls()
+        forgetServerStarted.mock.mockImplementation(() => undefined)
         if (proxyServer) await proxyServer.close()
         if (upstream) await upstream.close()
     })
@@ -173,90 +182,101 @@ describe('sandbox HTTP proxy', () => {
     test('rstudio → upstream sees /session (whole /api/sandbox/rstudio stripped, root-served), query preserved', async () => {
         await setup({expectedPaths: ['/session?x=1']})
         const res = await get(proxyServer.port, '/api/sandbox/rstudio/session?x=1', 'alice')
-        expect(res.status).toBe(200)
-        expect(upstream.state.lastPath).toBe('/session?x=1')
-        expect(resolveTarget).toHaveBeenCalledWith('alice', 'rstudio', '/api/sandbox/rstudio/session', undefined)
+        assert.equal(res.status, 200)
+        assert.equal(upstream.state.lastPath, '/session?x=1')
+        assert.deepEqual(
+            callsOf(resolveTarget),
+            [['alice', 'rstudio', '/api/sandbox/rstudio/session', undefined]]
+        )
     })
 
     test('bare /api/sandbox/rstudio → upstream root /', async () => {
         await setup({expectedPaths: ['/']})
         const res = await get(proxyServer.port, '/api/sandbox/rstudio', 'alice')
-        expect(res.status).toBe(200)
-        expect(upstream.state.lastPath).toBe('/')
+        assert.equal(res.status, 200)
+        assert.equal(upstream.state.lastPath, '/')
     })
 
     test('shiny → upstream sees /foo (whole /api/sandbox/shiny stripped)', async () => {
         await setup({expectedPaths: ['/foo']})
         const res = await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
-        expect(res.status).toBe(200)
-        expect(upstream.state.lastPath).toBe('/foo')
-        expect(resolveTarget).toHaveBeenCalledWith('alice', 'shiny', '/api/sandbox/shiny/foo', undefined)
+        assert.equal(res.status, 200)
+        assert.equal(upstream.state.lastPath, '/foo')
+        assert.deepEqual(
+            callsOf(resolveTarget),
+            [['alice', 'shiny', '/api/sandbox/shiny/foo', undefined]]
+        )
     })
 
     test('jupyter → upstream keeps /api/sandbox/jupyter/... path', async () => {
         await setup({expectedPaths: ['/api/sandbox/jupyter/api/kernels/k1']})
         const res = await get(proxyServer.port, '/api/sandbox/jupyter/api/kernels/k1', 'bob')
-        expect(res.status).toBe(200)
-        expect(upstream.state.lastPath).toBe('/api/sandbox/jupyter/api/kernels/k1')
-        expect(resolveTarget).toHaveBeenCalledWith('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1', undefined)
+        assert.equal(res.status, 200)
+        assert.equal(upstream.state.lastPath, '/api/sandbox/jupyter/api/kernels/k1')
+        assert.deepEqual(
+            callsOf(resolveTarget),
+            [['bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1', undefined]]
+        )
     })
 
     test('ensures the endpoint server before the request reaches the upstream', async () => {
         await setup({expectedPaths: ['/foo']})
         const res = await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
-        expect(res.status).toBe(200)
-        expect(ensureServerStarted).toHaveBeenCalledWith({
-            username: 'alice', sessionId: 's-1', endpoint: 'shiny'})
+        assert.equal(res.status, 200)
+        assert.deepEqual(callsOf(ensureServerStarted), [[{
+            username: 'alice', sessionId: 's-1', endpoint: 'shiny'}]])
     })
 
     test('a failing ensure yields 502 and never reaches the upstream', async () => {
         await setup()
-        ensureServerStarted.mockRejectedValue(new Error('start failed'))
+        ensureServerStarted.mock.mockImplementation(async () => {
+            throw new Error('start failed')
+        })
         const res = await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
-        expect(res.status).toBe(502)
-        expect(upstream.state.lastPath).toBeNull()
+        assert.equal(res.status, 502)
+        assert.equal(upstream.state.lastPath, null)
     })
 
     test('a refused upstream connection yields 502 and forgets the started server', async () => {
         await setup()
         await upstream.close()
         const res = await get(proxyServer.port, '/api/sandbox/jupyter/lab', 'alice')
-        expect(res.status).toBe(502)
-        expect(forgetServerStarted).toHaveBeenCalledWith({sessionId: 's-1', endpoint: 'jupyter'})
+        assert.equal(res.status, 502)
+        assert.deepEqual(callsOf(forgetServerStarted), [[{sessionId: 's-1', endpoint: 'jupyter'}]])
     })
 
     test('a reachable upstream keeps the started server', async () => {
         await setup({expectedPaths: ['/foo']})
         await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
-        expect(forgetServerStarted).not.toHaveBeenCalled()
+        assert.equal(forgetServerStarted.mock.callCount(), 0)
     })
 
     test('resolveTarget null → 400 (endpoint not started)', async () => {
         await setup({resolvesToUpstream: false})
-        resolveTarget.mockResolvedValue(null)
+        resolveTarget.mock.mockImplementation(async () => null)
         const res = await get(proxyServer.port, '/api/sandbox/rstudio/', 'alice')
-        expect(res.status).toBe(400)
+        assert.equal(res.status, 400)
     })
 
     test('unknown endpoint → 404 (resolveTarget not called)', async () => {
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/bogus/', 'alice')
-        expect(res.status).toBe(404)
-        expect(resolveTarget).not.toHaveBeenCalled()
+        assert.equal(res.status, 404)
+        assert.equal(resolveTarget.mock.callCount(), 0)
     })
 
     test('rstudio Location header rewritten under /api/sandbox/rstudio', async () => {
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/rstudio/?redirect=/auth-sign-in', 'alice')
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('/api/sandbox/rstudio/auth-sign-in')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], '/api/sandbox/rstudio/auth-sign-in')
     })
 
     test('rstudio Location header query string preserved on rewrite', async () => {
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/rstudio/?redirect=' + encodeURIComponent('/auth-sign-in?appUri=%2Ffoo'), 'alice')
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('/api/sandbox/rstudio/auth-sign-in?appUri=%2Ffoo')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], '/api/sandbox/rstudio/auth-sign-in?appUri=%2Ffoo')
     })
 
     test('rstudio ROOT Location keeps the trailing slash (post-sign-in redirect)', async () => {
@@ -267,8 +287,8 @@ describe('sandbox HTTP proxy', () => {
         await setup()
         const redirect = encodeURIComponent('http://sepal.public/')
         const res = await get(proxyServer.port, `/api/sandbox/rstudio/?redirect=${redirect}`, 'alice', {host: 'sepal.public'})
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('/api/sandbox/rstudio/')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], '/api/sandbox/rstudio/')
     })
 
     test('rstudio ABSOLUTE Location on the PUBLIC host rewritten under /api/sandbox/rstudio (Java RedirectRewriteHandler parity)', async () => {
@@ -278,23 +298,23 @@ describe('sandbox HTTP proxy', () => {
         await setup()
         const redirect = encodeURIComponent('http://sepal.public/auth-sign-in?appUri=%2F')
         const res = await get(proxyServer.port, `/api/sandbox/rstudio/?redirect=${redirect}`, 'alice', {host: 'sepal.public'})
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('/api/sandbox/rstudio/auth-sign-in?appUri=%2F')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], '/api/sandbox/rstudio/auth-sign-in?appUri=%2F')
     })
 
     test('rstudio Location on a FOREIGN host passes through unchanged', async () => {
         await setup()
         const redirect = encodeURIComponent('http://other.example/somewhere')
         const res = await get(proxyServer.port, `/api/sandbox/rstudio/?redirect=${redirect}`, 'alice', {host: 'sepal.public'})
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('http://other.example/somewhere')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], 'http://other.example/somewhere')
     })
 
     test('jupyter Location header NOT rewritten', async () => {
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/jupyter/x?redirect=/api/sandbox/jupyter/tree', 'bob')
-        expect(res.status).toBe(302)
-        expect(res.headers['location']).toBe('/api/sandbox/jupyter/tree')
+        assert.equal(res.status, 302)
+        assert.equal(res.headers['location'], '/api/sandbox/jupyter/tree')
     })
 
     test('upstream sees the ORIGINAL Host header, not the container\'s (Undertow rewriteHostHeader=false parity)', async () => {
@@ -303,17 +323,17 @@ describe('sandbox HTTP proxy', () => {
         // client's own Host header.
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/jupyter/api/sessions', 'bob', {host: 'sepal.test'})
-        expect(res.status).toBe(200)
-        expect(upstream.state.lastHeaders.host).toBe('sepal.test')
+        assert.equal(res.status, 200)
+        assert.equal(upstream.state.lastHeaders.host, 'sepal.test')
     })
 
     test('X-Frame-Options stripped and CSP frame-ancestors set', async () => {
         await setup()
         const res = await get(proxyServer.port, '/api/sandbox/rstudio/', 'alice')
-        expect(res.headers['x-frame-options']).toBeUndefined()
-        expect(res.headers['content-security-policy']).toContain('frame-ancestors')
-        expect(res.headers['content-security-policy']).toContain('sepal.test')
-        expect(res.headers['cache-control']).toBe('no-cache, max-age=0')
+        assert.equal(res.headers['x-frame-options'], undefined)
+        assert.ok(res.headers['content-security-policy'].includes('frame-ancestors'))
+        assert.ok(res.headers['content-security-policy'].includes('sepal.test'))
+        assert.equal(res.headers['cache-control'], 'no-cache, max-age=0')
     })
 
     test('keep-alive socket does not accumulate per-request timeout listeners', async () => {
@@ -341,13 +361,13 @@ describe('sandbox HTTP proxy', () => {
                     req.on('error', reject)
                     req.end()
                 })
-                expect(status).toBe(200)
+                assert.equal(status, 200)
             }
             // All requests must have reused a single connection for the leak to be observable.
-            expect(sockets).toHaveLength(1)
+            assert.equal(sockets.length, 1)
             // Let the server-side response 'close' events run before counting.
             await new Promise(resolve => setImmediate(resolve))
-            expect(sockets[0].listenerCount('timeout')).toBeLessThanOrEqual(1)
+            assert.ok(sockets[0].listenerCount('timeout') <= 1)
         } finally {
             agent.destroy()
         }
@@ -356,15 +376,17 @@ describe('sandbox HTTP proxy', () => {
 
 describe('sandbox WebSocket proxy', () => {
     let upstream, proxyServer
-    const resolveTarget = jest.fn()
-    const ensureServerStarted = jest.fn(async () => {})
-    const forgetServerStarted = jest.fn()
+    const resolveTarget = mock.fn()
+    const ensureServerStarted = mock.fn(async () => {})
+    const forgetServerStarted = mock.fn()
 
     afterEach(async () => {
-        resolveTarget.mockReset()
-        ensureServerStarted.mockReset()
-        ensureServerStarted.mockResolvedValue(undefined)
-        forgetServerStarted.mockReset()
+        resolveTarget.mock.resetCalls()
+        resolveTarget.mock.mockImplementation(() => undefined)
+        ensureServerStarted.mock.resetCalls()
+        ensureServerStarted.mock.mockImplementation(async () => undefined)
+        forgetServerStarted.mock.resetCalls()
+        forgetServerStarted.mock.mockImplementation(() => undefined)
         if (proxyServer) await proxyServer.close()
         if (upstream) await upstream.close()
     })
@@ -373,7 +395,10 @@ describe('sandbox WebSocket proxy', () => {
         // Fail loud: only /ws is allowed upstream — a wrong strip (e.g. /rstudio/ws) is refused and the
         // echo never round-trips, failing the test instead of silently passing.
         upstream = await startUpstream({expectedPaths: ['/ws']})
-        resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
+        resolveTarget.mock.mockImplementation(async () => ({
+            host: upstream.host,
+            port: upstream.port
+        }))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
@@ -389,14 +414,20 @@ describe('sandbox WebSocket proxy', () => {
             ws.on('error', reject)
         })
 
-        expect(echoed).toBe('echo:ping')
-        expect(resolveTarget).toHaveBeenCalledWith('alice', 'rstudio', '/api/sandbox/rstudio/ws', undefined)
-        expect(upstream.state.lastPath).toBe('/ws')
+        assert.equal(echoed, 'echo:ping')
+        assert.deepEqual(
+            callsOf(resolveTarget),
+            [['alice', 'rstudio', '/api/sandbox/rstudio/ws', undefined]]
+        )
+        assert.equal(upstream.state.lastPath, '/ws')
     })
 
     test('jupyter kernel-channels ws keeps the /api/sandbox/jupyter path', async () => {
         upstream = await startUpstream({expectedPaths: ['/api/sandbox/jupyter/api/kernels/k1/channels']})
-        resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
+        resolveTarget.mock.mockImplementation(async () => ({
+            host: upstream.host,
+            port: upstream.port
+        }))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
@@ -412,13 +443,16 @@ describe('sandbox WebSocket proxy', () => {
             ws.on('error', reject)
         })
 
-        expect(echoed).toBe('echo:kernel')
-        expect(upstream.state.lastPath).toBe('/api/sandbox/jupyter/api/kernels/k1/channels')
+        assert.equal(echoed, 'echo:kernel')
+        assert.equal(upstream.state.lastPath, '/api/sandbox/jupyter/api/kernels/k1/channels')
     })
 
     test('ws upgrade preserves the ORIGINAL Host header (Jupyter kernel channels run the same origin check)', async () => {
         upstream = await startUpstream({expectedPaths: ['/api/sandbox/jupyter/api/kernels/k1/channels']})
-        resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
+        resolveTarget.mock.mockImplementation(async () => ({
+            host: upstream.host,
+            port: upstream.port
+        }))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
@@ -434,64 +468,72 @@ describe('sandbox WebSocket proxy', () => {
             ws.on('error', reject)
         })
 
-        expect(upstream.state.lastHeaders.host).toBe('sepal.test')
+        assert.equal(upstream.state.lastHeaders.host, 'sepal.test')
     })
 
     test('ws upgrade with no session → socket closed with 400 (not started)', async () => {
         upstream = await startUpstream()
-        resolveTarget.mockResolvedValue(null)
+        resolveTarget.mock.mockImplementation(async () => null)
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
-        await expect(new Promise((resolve, reject) => {
+        await assert.rejects(new Promise((resolve, reject) => {
             const ws = new WebSocket(`ws://127.0.0.1:${proxyServer.port}/api/sandbox/rstudio/ws`, {
                 headers: {'x-test-user': 'alice'}
             })
             ws.on('open', () => resolve('opened'))
             ws.on('error', reject)
-        })).rejects.toThrow()
+        }))
     })
 
     test('ws upgrade calls proxy.ws with the resolved dynamic target + rewritten path', async () => {
-        resolveTarget.mockResolvedValue({host: 'sandbox-host', port: 8787})
+        resolveTarget.mock.mockImplementation(async () => ({
+            host: 'sandbox-host',
+            port: 8787
+        }))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
-        const wsSpy = jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
+        const wsSpy = mock.method(sandboxProxy._proxy, 'ws', async () => undefined)
 
         const req = {url: '/api/sandbox/rstudio/ws?token=abc', headers: {}}
-        const socket = {write: jest.fn(), destroy: jest.fn()}
+        const socket = {write: mock.fn(), destroy: mock.fn()}
         await sandboxProxy.upgrade(req, socket, Buffer.alloc(0), 'alice')
 
-        expect(wsSpy).toHaveBeenCalledTimes(1)
+        assert.equal(wsSpy.mock.callCount(), 1)
         // httpxy signature: ws(req, socket, opts, head) — opts is the 3rd argument.
-        const [, , opts] = wsSpy.mock.calls[0]
-        expect(opts.target).toBe('http://sandbox-host:8787')
-        expect(req.url).toBe('/ws?token=abc') // whole /api/sandbox/rstudio stripped, query preserved
+        const [, , opts] = wsSpy.mock.calls[0].arguments
+        assert.equal(opts.target, 'http://sandbox-host:8787')
+        assert.equal(req.url, '/ws?token=abc') // whole /api/sandbox/rstudio stripped, query preserved
     })
 
     test('ws upgrade: a THROW from resolveTarget is caught (no unhandled rejection) → 502 + socket destroyed', async () => {
         // A rejected resolveTarget (not just null) must be handled, not escape as an unhandled rejection.
-        resolveTarget.mockRejectedValue(new Error('resolve boom'))
+        resolveTarget.mock.mockImplementation(async () => {
+            throw new Error('resolve boom')
+        })
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
-        const wsSpy = jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
+        const wsSpy = mock.method(sandboxProxy._proxy, 'ws', async () => undefined)
 
         const req = {url: '/api/sandbox/rstudio/ws', headers: {}}
-        const socket = {write: jest.fn(), destroy: jest.fn()}
-        await expect(sandboxProxy.upgrade(req, socket, Buffer.alloc(0), 'alice')).resolves.toBeUndefined()
+        const socket = {write: mock.fn(), destroy: mock.fn()}
+        assert.equal(
+            await sandboxProxy.upgrade(req, socket, Buffer.alloc(0), 'alice'),
+            undefined
+        )
 
-        expect(wsSpy).not.toHaveBeenCalled()
-        expect(socket.write).toHaveBeenCalledWith(expect.stringContaining('502'))
-        expect(socket.destroy).toHaveBeenCalled()
+        assert.equal(wsSpy.mock.callCount(), 0)
+        assert.ok(callsOf(socket.write).some(([data]) => `${data}`.includes('502')))
+        assert.ok(socket.destroy.mock.callCount() > 0)
     })
 })
 
 describe('resolveTarget argument threading', () => {
-    const ensureServerStarted = jest.fn(async () => {})
-    const forgetServerStarted = jest.fn()
+    const ensureServerStarted = mock.fn(async () => {})
+    const forgetServerStarted = mock.fn()
 
     test('HTTP middleware passes the request pathname and referer to resolveTarget', async () => {
-        const resolveTarget = jest.fn(async () => ({host: 'h1', port: 3838}))
+        const resolveTarget = mock.fn(async () => ({host: 'h1', port: 3838}))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.io'})
-        jest.spyOn(sandboxProxy._proxy, 'web').mockResolvedValue()
+        mock.method(sandboxProxy._proxy, 'web', async () => undefined)
 
         const req = {
             originalUrl: '/api/sandbox/shiny/foo/bar',
@@ -506,29 +548,35 @@ describe('resolveTarget argument threading', () => {
                 res.statusCode = code
                 return {send: body => { res.body = body }}
             },
-            on: jest.fn() // middleware registers a 'close' cleanup on the real ServerResponse
+            on: mock.fn() // middleware registers a 'close' cleanup on the real ServerResponse
         }
         await sandboxProxy.middleware(req, res)
 
-        expect(resolveTarget).toHaveBeenCalledWith(
-            'bob', 'shiny', '/api/sandbox/shiny/foo/bar', 'https://sepal.io/api/sandbox/shiny/foo/'
-        )
+        assert.deepEqual(callsOf(resolveTarget), [[
+            'bob',
+            'shiny',
+            '/api/sandbox/shiny/foo/bar',
+            'https://sepal.io/api/sandbox/shiny/foo/'
+        ]])
     })
 
     test('ws upgrade passes the request pathname and referer to resolveTarget', async () => {
-        const resolveTarget = jest.fn(async () => ({host: 'sandbox-host', port: 8787}))
+        const resolveTarget = mock.fn(async () => ({host: 'sandbox-host', port: 8787}))
         const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.io'})
-        jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
+        mock.method(sandboxProxy._proxy, 'ws', async () => undefined)
 
         const req = {
             url: '/api/sandbox/rstudio/ws',
             headers: {referer: 'https://sepal.io/api/sandbox/rstudio/'}
         }
-        const socket = {write: jest.fn(), destroy: jest.fn()}
+        const socket = {write: mock.fn(), destroy: mock.fn()}
         await sandboxProxy.upgrade(req, socket, Buffer.alloc(0), 'alice')
 
-        expect(resolveTarget).toHaveBeenCalledWith(
-            'alice', 'rstudio', '/api/sandbox/rstudio/ws', 'https://sepal.io/api/sandbox/rstudio/'
-        )
+        assert.deepEqual(callsOf(resolveTarget), [[
+            'alice',
+            'rstudio',
+            '/api/sandbox/rstudio/ws',
+            'https://sepal.io/api/sandbox/rstudio/'
+        ]])
     })
 })

@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {rewriteLocation} from './rewrite.js'
 
 test('root of target', () => {
@@ -6,7 +9,7 @@ test('root of target', () => {
         target: 'http://domain:1234',
         location: '/c/d'
     })
-    expect(rewritten).toBe('/a/b/c/d')
+    assert.equal(rewritten, '/a/b/c/d')
 })
 
 test('same target and location path', () => {
@@ -15,7 +18,7 @@ test('same target and location path', () => {
         target: 'http://domain:1234/c/d',
         location: '/c/d'
     })
-    expect(rewritten).toBe('/a/b')
+    assert.equal(rewritten, '/a/b')
 })
 
 test('deep location path', () => {
@@ -24,7 +27,7 @@ test('deep location path', () => {
         target: 'http://domain:1234/c/d',
         location: '/c/d/e/f'
     })
-    expect(rewritten).toBe('/a/b/e/f')
+    assert.equal(rewritten, '/a/b/e/f')
 })
 
 test('location path outside of target', () => {
@@ -33,7 +36,7 @@ test('location path outside of target', () => {
         target: 'http://domain:1234/c/d',
         location: '/e/f'
     })
-    expect(rewritten).toBe('/a/b/e/f')
+    assert.equal(rewritten, '/a/b/e/f')
 })
 
 test('location at root keeps the trailing slash', () => {
@@ -44,7 +47,7 @@ test('location at root keeps the trailing slash', () => {
         target: 'http://domain:1234',
         location: '/'
     })
-    expect(rewritten).toBe('/a/b/')
+    assert.equal(rewritten, '/a/b/')
 })
 
 test('location matching target path with trailing slash keeps it', () => {
@@ -53,7 +56,7 @@ test('location matching target path with trailing slash keeps it', () => {
         target: 'http://domain:1234/c/d',
         location: '/c/d/'
     })
-    expect(rewritten).toBe('/a/b/')
+    assert.equal(rewritten, '/a/b/')
 })
 
 test('different host', () => {
@@ -62,6 +65,6 @@ test('different host', () => {
         target: 'http://domain:1234',
         location: 'http://another:1234/c/d'
     })
-    expect(rewritten).toBe('http://another:1234/c/d')
+    assert.equal(rewritten, 'http://another:1234/c/d')
 })
 

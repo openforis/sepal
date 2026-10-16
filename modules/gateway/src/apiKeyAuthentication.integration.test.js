@@ -1,6 +1,7 @@
+import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
+import {after, before, describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
 import express from 'express'
 import {Subject} from 'rxjs'
 
@@ -28,64 +29,58 @@ const listen = app => new Promise(resolve => {
 
 const upstream = await startUpstream()
 
-jest.unstable_mockModule('../config/modules.json', () => ({
-    default: {worker: upstream.address, user: upstream.address, taskManager: upstream.address}
-}))
+mock.module('../config/modules.json', {
+    exports: {
+        default: {worker: upstream.address, user: upstream.address, taskManager: upstream.address}
+    }
+})
 
 // The real configuration parses process arguments at import and exits the process when a mandatory
 // one is missing, which under a test runner they all are.
-jest.unstable_mockModule('./config.js', () => ({
-    sepalHost: 'sepal.test',
-    sepalAppsHost: 'apps.test'
-}))
+mock.module('./config.js', {
+    exports: {
+        sepalHost: 'sepal.test',
+        sepalAppsHost: 'apps.test'
+    }
+})
 
 const {AuthMiddleware} = await import('./authMiddleware.js')
 const {GoogleAccessTokenMiddleware} = await import('./googleAccessTokenMiddleware.js')
 const {Proxy} = await import('./proxy.js')
 const {UserStore} = await import('./userStore.js')
 
-let gateway
-
-beforeAll(async () => {
-    gateway = await startGateway()
-})
-
-afterAll(async () => {
-    await Promise.all([gateway.close(), upstream.close()])
-})
-
 describe('a request authenticated with a worker session api key', () => {
     test('names the session\'s owner and the session it was authenticated as', async () => {
         const {status, body} = await probe({apiKey: EXECUTOR_KEY})
 
-        expect(status).toBe(200)
-        expect(body.user).toMatchObject({username: 'alice'})
-        expect(body.session).toEqual({sessionId: 's-executor', workerType: 'sandbox'})
+        assert.equal(status, 200)
+        assert.partialDeepStrictEqual(body.user, {username: 'alice'})
+        assert.deepEqual(body.session, {sessionId: 's-executor', workerType: 'sandbox'})
     })
 
     test('passes on neither the key nor a role for it', async () => {
         const {body} = await probe({apiKey: EXECUTOR_KEY})
 
-        expect(JSON.stringify(body)).not.toContain(EXECUTOR_KEY)
-        expect(body.user.roles).toEqual([])
+        assert.ok(!JSON.stringify(body).includes(EXECUTOR_KEY))
+        assert.deepEqual(body.user.roles, [])
     })
 
     test('names an interactive sandbox as the sandbox session it is', async () => {
         const {body} = await probe({apiKey: SANDBOX_KEY})
 
-        expect(body.user).toMatchObject({username: 'bob'})
-        expect(body.session).toEqual({sessionId: 's-sandbox', workerType: 'sandbox'})
+        assert.partialDeepStrictEqual(body.user, {username: 'bob'})
+        assert.deepEqual(body.session, {sessionId: 's-sandbox', workerType: 'sandbox'})
     })
 
     test('replaces a session the caller claimed with the one its key resolves to', async () => {
         const {body} = await probe({apiKey: SANDBOX_KEY, claimedSession: FORGED})
 
-        expect(body.session).toEqual({sessionId: 's-sandbox', workerType: 'sandbox'})
+        assert.deepEqual(body.session, {sessionId: 's-sandbox', workerType: 'sandbox'})
     })
 
     test('is refused when the key is unknown or empty', async () => {
-        expect((await probe({apiKey: 'no-such-key'})).status).toBe(401)
-        expect((await probe({apiKey: ''})).status).toBe(401)
+        assert.equal((await probe({apiKey: 'no-such-key'})).status, 401)
+        assert.equal((await probe({apiKey: ''})).status, 401)
     })
 })
 
@@ -93,13 +88,13 @@ describe('a request authenticated with a task container\'s key', () => {
     test('names the task\'s owner and the task it was authenticated as', async () => {
         const {status, body} = await probe({apiKey: TASK_KEY})
 
-        expect(status).toBe(200)
-        expect(body.user).toMatchObject({username: 'alice'})
-        expect(body.session).toEqual({workerType: 'task', taskId: 't-1'})
+        assert.equal(status, 200)
+        assert.partialDeepStrictEqual(body.user, {username: 'alice'})
+        assert.deepEqual(body.session, {workerType: 'task', taskId: 't-1'})
     })
 
     test('is refused when task-manager does not know the key', async () => {
-        expect((await probe({apiKey: 'task_unknown'})).status).toBe(401)
+        assert.equal((await probe({apiKey: 'task_unknown'})).status, 401)
     })
 })
 
@@ -107,8 +102,8 @@ describe('a request to an unauthenticated endpoint', () => {
     test('reaches the module with no session, whatever the caller claimed', async () => {
         const {status, body} = await probeUnauthenticated(FORGED)
 
-        expect(status).toBe(200)
-        expect(body.session).toBeNull()
+        assert.equal(status, 200)
+        assert.equal(body.session, null)
     })
 })
 
@@ -118,9 +113,9 @@ describe('a request authenticated the ordinary way', () => {
             username: 'alice', password: 'alices-password', claimedSession: FORGED
         })
 
-        expect(status).toBe(200)
-        expect(body.user).toMatchObject({username: 'alice'})
-        expect(body.session).toBeNull()
+        assert.equal(status, 200)
+        assert.partialDeepStrictEqual(body.user, {username: 'alice'})
+        assert.equal(body.session, null)
     })
 })
 
@@ -217,3 +212,15 @@ const fakeRedis = () => {
         }
     }
 }
+
+// node:test may run a root-level before hook while this file is still being evaluated, so the hooks
+// are registered after the helpers they call.
+let gateway
+
+before(async () => {
+    gateway = await startGateway()
+})
+
+after(async () => {
+    await Promise.all([gateway.close(), upstream.close()])
+})

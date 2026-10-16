@@ -1,22 +1,29 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
 import {Subject} from 'rxjs'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {QUEUE, SESSION_APP_DISSOCIATED_TOPIC, sessionAppDissociatedSubscriber} from './sessionAppDissociatedSubscriber.js'
 
 describe('sessionAppDissociatedSubscriber', () => {
-    const manager = () => ({onAppDissociated: jest.fn()})
+    const manager = () => ({onAppDissociated: mock.fn()})
 
     test('exposes the queue and topic for initMessageQueue', () => {
         const {queue, topic} = sessionAppDissociatedSubscriber(manager())
-        expect(queue).toBe(QUEUE)
-        expect(topic).toBe(SESSION_APP_DISSOCIATED_TOPIC)
+        assert.equal(queue, QUEUE)
+        assert.equal(topic, SESSION_APP_DISSOCIATED_TOPIC)
     })
 
     test('drops the cached app entry on every dissociation', () => {
         const mgr = manager()
         const {handler} = sessionAppDissociatedSubscriber(mgr)
         handler(SESSION_APP_DISSOCIATED_TOPIC, {username: 'bob', sessionId: 's-1', path: '/sandbox/shiny/foo'})
-        expect(mgr.onAppDissociated).toHaveBeenCalledWith({username: 'bob', appPath: '/sandbox/shiny/foo'})
+        assert.deepEqual(
+            callsOf(mgr.onAppDissociated),
+            [[{username: 'bob', appPath: '/sandbox/shiny/foo'}]]
+        )
     })
 
     test('notifies the OWNER client when someone else dissociated its app (takeover)', () => {
@@ -28,7 +35,7 @@ describe('sessionAppDissociatedSubscriber', () => {
             username: 'bob', sessionId: 's-1', path: '/sandbox/shiny/foo',
             clientId: 'c-owner', requestingClientId: 'c-other'
         })
-        expect(events).toEqual([{
+        assert.deepEqual(events, [{
             type: 'workerSessionAppDissociated',
             data: {username: 'bob', clientId: 'c-owner', appPath: '/sandbox/shiny/foo', sessionId: 's-1'}
         }])
@@ -43,7 +50,7 @@ describe('sessionAppDissociatedSubscriber', () => {
             username: 'bob', sessionId: 's-1', path: '/sandbox/shiny/foo',
             clientId: 'c-1', requestingClientId: 'c-1'
         })
-        expect(events).toEqual([])
+        assert.deepEqual(events, [])
     })
 
     test('suppresses the notification for ownerless associations', () => {
@@ -55,13 +62,16 @@ describe('sessionAppDissociatedSubscriber', () => {
             username: 'bob', sessionId: 's-1', path: '/sandbox/shiny/foo',
             clientId: null, requestingClientId: 'c-other'
         })
-        expect(events).toEqual([])
+        assert.deepEqual(events, [])
     })
 
     test('tolerates a malformed payload', () => {
         const mgr = manager()
         const {handler} = sessionAppDissociatedSubscriber(mgr, new Subject())
-        expect(() => handler(SESSION_APP_DISSOCIATED_TOPIC, null)).not.toThrow()
-        expect(mgr.onAppDissociated).toHaveBeenCalledWith({username: undefined, appPath: undefined})
+        assert.doesNotThrow(() => handler(SESSION_APP_DISSOCIATED_TOPIC, null))
+        assert.deepEqual(
+            callsOf(mgr.onAppDissociated),
+            [[{username: undefined, appPath: undefined}]]
+        )
     })
 })
