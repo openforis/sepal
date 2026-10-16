@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import {beforeEach, mock, test} from 'node:test'
 
+import {callsOf} from '#sepal/testSupport/mock'
+
 import {messageChanged$} from './changed.js'
 import {MessageApi} from './messageApi.js'
 
@@ -155,5 +157,3 @@ test('userNotifications returns mapped notifications', async () => {
         state: 'READ'
     })
 })
-
-const callsOf = fn => fn.mock.calls.map(({arguments: args}) => args)
