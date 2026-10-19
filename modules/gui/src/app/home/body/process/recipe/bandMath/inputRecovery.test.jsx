@@ -345,7 +345,10 @@ function expectAvailable(available) {
         expect(retrieveAvailability(context).available).toBe(available)
         expect(Boolean(requestGate({...context, operation: 'IMAGE_OUTPUT'}))).toBe(!available)
         const marks = sourceProblemsOfState(context.state, target.id, undefined, Date.now(), context.heldFor)
-        expect(Object.keys(marks)).toEqual(target.id === ID && !available ? ['calculations'] : [])
+        // The diagnosis stays with Band Math; the dependent only marks its input on it.
+        expect(marks).toEqual(available ? {} : target.id === ID
+            ? {calculations: expect.anything()}
+            : {inputImagery: expect.stringContaining('process.source.status.recipeNeedsAttention')})
     }
 }
 async function open(saved) {

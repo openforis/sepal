@@ -114,7 +114,7 @@ describe('retrieving a Masking recipe over Band Math', () => {
 })
 
 describe('a Remapping over Band Math with broken calculation references', () => {
-    it.each(['expression', 'reducer', 'calculation band'])('holds Retrieve and preview for %s, without marking the dependent, and recovers', kind => {
+    it.each(['expression', 'reducer', 'calculation band'])('holds Retrieve and preview for %s, marking only the dependent\'s input, and recovers', kind => {
         const broken = withExpression(kind === 'expression' ? 'gone.elevation * 2' : 'i1.elevation * 2')
         if (kind === 'reducer') broken.model.calculations.calculations = broken.model.calculations.calculations.map(calc =>
             calc.imageId === 'c-2' ? {...calc, usedBands: [{imageId: 'gone', imageName: 'gone', name: 'elevation'}]} : calc)
@@ -126,7 +126,7 @@ describe('a Remapping over Band Math with broken calculation references', () => 
         }}
         const state = stateOf(over, broken)
         const held = heldFor(over, OBSERVED, broken)
-        expect(sourceProblemsOfState(state, over.id, undefined, Date.now(), held)).toEqual({})
+        expect(sourceProblemsOfState(state, over.id, undefined, Date.now(), held)).toEqual({inputImagery: 'process.source.status.recipeNeedsAttention'})
         expect(requestGate({state, recipe: over, operation: 'IMAGE_OUTPUT', heldFor: held})).toMatchObject({withdraw: true})
         expect(retrieveAvailability({state, recipe: over, heldFor: held}).available).toBe(false)
         const {output, pending} = readRetrieveOutput({state, recipeId: over.id, heldFor: held})
@@ -135,6 +135,7 @@ describe('a Remapping over Band Math with broken calculation references', () => 
 
         const repairedState = stateOf(over, BAND_MATH)
         const repairedHeld = heldFor(over, OBSERVED, BAND_MATH)
+        expect(sourceProblemsOfState(repairedState, over.id, undefined, Date.now(), repairedHeld)).toEqual({})
         expect(requestGate({state: repairedState, recipe: over, operation: 'IMAGE_OUTPUT', heldFor: repairedHeld})).toBeNull()
         expect(retrieveAvailability({state: repairedState, recipe: over, heldFor: repairedHeld}).available).toBe(true)
         const repaired = readRetrieveOutput({state: repairedState, recipeId: over.id, heldFor: repairedHeld})
