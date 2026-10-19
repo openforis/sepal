@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {asapScheduler, NEVER, observeOn, of} from 'rxjs'
+import {asapScheduler, NEVER, observeOn, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
@@ -25,12 +25,15 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset, recipe, includeDataTypes}) => {
+            if (bandResponses[asset || recipe?.id]) {
+                return bandResponses[asset || recipe.id]
+            }
             const names = recipe
                 ? recipe.type === 'BAND_MATH'
                     ? recipe.model.outputBands.outputImages.flatMap(({outputBands}) => outputBands.map(({outputName, defaultOutputName}) => outputName || defaultOutputName))
                     : ['class']
                 : assetBands(asset)
-            return of(includeDataTypes || asset ? names.map(name => ({name, arrayDimensions: 0})) : names)
+            return of(includeDataTypes || asset ? names.map(name => ({name, arrayDimensions: 0})) : names).pipe(observeOn(asapScheduler))
         },
         // The input editor's picker reads an asset's bands after the asynchronous metadata request answers.
         assetMetadata$: ({asset}) => of({
@@ -40,7 +43,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: id => of(sourceRecipe(id)), loadAll$: () => of([])}
+    recipe: {save$: () => NEVER, load$: id => of(sourceRecipes[id] || sourceRecipe(id)), loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
@@ -56,6 +59,16 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: remapping} = await import('./remapping')
 const {default: bandMath} = await import('../bandMath/bandMath')
 const {RemappingToolbar} = await import('./panels/remappingToolbar')
+const {default: stack} = await import('../stack/stack')
+const {default: classification} = await import('../classification/classification')
+const {default: regression} = await import('../regression/regression')
+const {default: unsupervised} = await import('../unsupervisedClassification/unsupervisedClassification')
+const {InputImagery: SharedInputs} = await import('../../panels/inputImagery/inputImagery')
+const {InputImagery: BandMathInputs} = await import('../bandMath/panels/inputImagery/inputImagery')
+const {InputImagery: DerivedInputs} = await import('../../panels/inputImageryWithDerived/inputImagery')
+const {SectionButton} = await import('../sectionButton')
+const {Toolbar} = await import('~/widget/toolbar/toolbar')
+const {PanelWizard} = await import('~/widget/panelWizard')
 const {default: indexChange} = await import('../indexChange/indexChange')
 const {defaultModel: indexChangeModel} = await import('../indexChange/indexChangeRecipe')
 const {IndexChangeToolbar} = await import('../indexChange/panels/indexChangeToolbar')
@@ -71,13 +84,20 @@ const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 addRecipeType(remapping())
 addRecipeType(bandMath())
 addRecipeType(indexChange())
+;[stack, classification, regression, unsupervised].forEach(type => addRecipeType(type()))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
 let sourceBands = {}
+let sourceRecipes = {}
+let bandResponses = {}
 
-beforeEach(() => sourceBands = {})
+beforeEach(() => {
+    sourceBands = {}
+    sourceRecipes = {}
+    bandResponses = {}
+})
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -86,30 +106,61 @@ afterEach(async () => {
 })
 
 describe('a reference to a recipe that cannot run', () => {
-    it('marks only the reference to Remapping A in B, then clears it when Band Math restores the band', async () => {
+    it('does not turn pending or temporarily failed upstream evidence into an editor reference error', async () => {
+        const bands$ = new Subject()
+        bandResponses[OPTICAL] = bands$
+        const upstream = {...sourceRecipe('upstream'), title: 'Upstream'}
+        upstream.model.legend.entries[0].constraints = [constraintOf('used', 'source-optical', 'nbr', '>', 0)]
+        const saved = remappingRecipe([constraintOf('uses-upstream', 'input', 'class', '>', 0)])
+        saved.model.inputImagery.images = [inputOf('input', 'upstream', 'class', 'RECIPE_REF')]
+        saved.model.legend.entries = saved.model.legend.entries.slice(0, 1)
+        await open(saved, <RemappingToolbar/>, [upstream])
+        expect(inError(IMAGERY)).toBe(false)
+        await press(IMAGERY)
+        await click(innermost('Upstream'))
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(applyEnabled()).toBe(false)
+        await act(async () => bands$.error(new Error('Temporary service failure')))
+        await settled()
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(inError(IMAGERY)).toBe(false)
+        expect(model()).toEqual(saved.model)
+    })
+
+    it.each(['a', 'math', 'both'])('marks only the reference to A, names the origin %s, and clears after repair', async origin => {
+        const band = origin === 'math' ? 'class' : 'removed'
         const math = {
-            id: 'math', type: 'BAND_MATH', title: 'Band Math', revision: 1,
+            id: 'math', type: 'BAND_MATH', title: 'Band Math', revision: 1, ui: {initialized: true},
             model: {
                 inputImagery: {images: [{imageId: 'asset', name: 'i1', type: 'ASSET', id: ASSET,
                     includedBands: [{id: 'class', name: 'class'}]}]},
-                calculations: {calculations: []},
+                calculations: {calculations: origin !== 'a' ? [{
+                    imageId: 'calculation', name: 'c1', type: 'EXPRESSION', expression: 'gone.class',
+                    usedBands: [], includedBands: [{id: 'calculated', name: 'class'}]
+                }] : []},
                 outputBands: {outputImages: [{imageId: 'asset', name: 'i1',
                     outputBands: [{id: 'class', name: 'class', defaultOutputName: 'class'}]}]}
             }
         }
-        const a = {...remappingRecipe([constraintOf('used', 'math-input', 'removed', '>', 5)]),
+        const a = {...remappingRecipe([constraintOf('used', 'math-input', band, '>', 5)]),
             id: 'a', title: 'Remapping A', revision: 1}
         a.model.legend.entries = a.model.legend.entries.slice(0, 1)
-        a.model.inputImagery.images = [inputOf('math-input', 'math', 'removed', 'RECIPE_REF')]
+        a.model.inputImagery.images = [inputOf('math-input', 'math', band, 'RECIPE_REF')]
         const b = remappingRecipe([constraintOf('uses-a', 'a-input', 'class', '>', 0)])
         b.model.legend.entries = b.model.legend.entries.slice(0, 1)
         // Put the healthy reference first: no attribution by list position or first diagnostic.
         b.model.inputImagery.images = [inputOf('healthy', RADAR, 'class', 'RECIPE_REF'), inputOf('a-input', 'a', 'class', 'RECIPE_REF')]
-        await open(b, <><RemappingToolbar/><ProblemProbe recipeId='a'/></>, [math, a])
+        const replacement = {...sourceRecipe('replacement'), title: 'Healthy replacement'}
+        await open(b, <><RemappingToolbar/><ProblemProbe recipeId='a'/></>, [math, a, replacement])
         expect(retrieveOffered()).toBe(false)
-        expect(previewGate()).toMatchObject({withdraw: true, read: {refusedBy: 'a'}})
+        expect(previewGate()).toMatchObject({withdraw: true})
+        if (origin !== 'both') {
+            expect(previewGate()).toMatchObject({read: {refusedBy: origin}})
+        }
         expect(JSON.parse(document.querySelector('[data-upstream-problems]').dataset.upstreamProblems))
-            .toEqual({inputImagery: 'process.panels.inputImagery.unavailableBands.inputs'})
+            .toEqual({inputImagery: origin !== 'a'
+                ? 'process.source.status.recipeNeedsAttention {"recipe":"Band Math"}'
+                : 'process.panels.inputImagery.unavailableBands.inputs'})
         expect(inError(IMAGERY)).toBe(true)
         expect(inError(MAPPING)).toBe(false)
         await press(IMAGERY)
@@ -117,22 +168,112 @@ describe('a reference to a recipe that cannot run', () => {
             .filter(row => row.querySelector(`.${classOf(errorIndicatorStyles, 'indicator')}`))
         expect(markedRows()).toHaveLength(1)
         expect(markedRows()[0].textContent).toContain('Remapping A')
+        const warning = origin === 'both'
+            ? 'process.source.status.recipeAlsoDependsOn {"recipe":"Remapping A","origins":"Band Math"}'
+            : origin === 'math'
+                ? 'process.source.status.recipeBlockedBy {"recipe":"Remapping A","origins":"Band Math"}'
+                : 'process.source.status.recipeNeedsAttention {"recipe":"Remapping A"}'
         expect([...markedRows()[0].querySelectorAll('[data-tooltip]')].some(element =>
-            element.dataset.tooltip.includes('recipeNeedsAttention') && element.dataset.tooltip.includes('Remapping A'))).toBe(true)
+            JSON.parse(element.dataset.tooltip).includes(warning))).toBe(true)
 
-        // A configured output returns, with its successful observation, without editing either constraint.
+        await click(innermost('Remapping A'))
+        expect(errorsOf('widget.recipeInput.label')).toEqual([warning])
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(b.model)
+        await choose('widget.recipeInput.label', 'Healthy replacement')
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(applyEnabled()).toBe(true)
+        expect(inError(IMAGERY)).toBe(true)
+        expect(retrieveOffered()).toBe(false)
+        expect(model()).toEqual(b.model)
+        await press('button.cancel')
+        expect(inError(IMAGERY)).toBe(true)
+        expect(model()).toEqual(b.model)
+        await click(innermost('Remapping A'))
+        expect(errorsOf('widget.recipeInput.label')).toEqual([warning])
+        expect(applyEnabled()).toBe(false)
+
+        if (origin === 'both') {
+            // Fixing the calculation alone does not restore the output A reads: its own finding must remain.
+            await act(async () => store.dispatch({type: 'REPAIR_CALCULATION_ONLY', reduce: state => ({...state, process: {
+                ...state.process, loadedRecipes: {...state.process.loadedRecipes, math: {...math, model: {
+                    ...math.model,
+                    calculations: {calculations: math.model.calculations.calculations.map(calculation => ({...calculation, expression: 'i1.class'}))}
+                }}}
+            }})}))
+            await settled()
+            expect(errorsOf('widget.recipeInput.label')).toEqual(['process.source.status.recipeNeedsAttention {"recipe":"Remapping A"}'])
+            expect(inError(IMAGERY)).toBe(true)
+            expect(retrieveOffered()).toBe(false)
+            expect(previewGate()).toMatchObject({withdraw: true, read: {refusedBy: 'a'}})
+            expect(model()).toEqual(b.model)
+        }
+
+        // Repair the originating calculation or restore the output name, without editing either constraint.
         await act(async () => store.dispatch({type: 'RESTORE_OUTPUT', reduce: state => ({...state, process: {
             ...state.process, loadedRecipes: {...state.process.loadedRecipes, math: {...math, model: {
-                ...math.model, outputBands: {outputImages: [{imageId: 'asset', name: 'i1',
-                    outputBands: [{id: 'class', name: 'class', outputName: 'removed', defaultOutputName: 'class'}]}]}
+                ...math.model,
+                calculations: {calculations: math.model.calculations.calculations.map(calculation => ({...calculation, expression: 'i1.class'}))},
+                outputBands: {outputImages: [{imageId: 'asset', name: 'i1',
+                    outputBands: [{id: 'class', name: 'class', outputName: band, defaultOutputName: 'class'}]}]}
             }}}
         }})}))
         await settled()
         expect(inError(IMAGERY)).toBe(false)
         expect(markedRows()).toEqual([])
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(b.model)
         expect(JSON.parse(document.querySelector('[data-upstream-problems]').dataset.upstreamProblems)).toEqual({})
-        expect(retrieveOffered()).toBe(true)
+        // Closing the selector releases loaded records; reopening reads the repaired saved version.
+        sourceRecipes.math = store.getState().process.loadedRecipes.math
         expect(previewGate()).toBeNull()
+        await click([...document.querySelectorAll('button')].filter(button => button.textContent === 'button.close').pop())
+        expect(retrieveOffered()).toBe(true)
+    })
+})
+
+// The same declaration binds the other shared input editors, including the derived editor's existing band checks.
+describe('upstream feedback across shared input editors', () => {
+    it.each([
+        ['STACK', SharedInputs],
+        ['BAND_MATH', BandMathInputs],
+        ['CLASSIFICATION', DerivedInputs],
+        ['REGRESSION', DerivedInputs],
+        ['UNSUPERVISED_CLASSIFICATION', DerivedInputs]
+    ])('%s explains the draft selection without changing Apply policy or the applied model', async (type, Inputs) => {
+        const upstream = {...sourceRecipe('upstream'), title: 'Broken source'}
+        upstream.model.legend.entries[0].constraints = [constraintOf('broken', 'removed', 'class', '>', 0)]
+        const replacement = {...sourceRecipe('replacement'), title: 'Healthy replacement'}
+        const image = {
+            ...inputOf('input', 'upstream', 'class', 'RECIPE_REF'), name: 'i1', bands: Inputs === DerivedInputs ? ['class'] : {class: {}},
+            includedBands: [{id: 'class', name: 'class', band: 'class', type: 'continuous', legendEntries: []}],
+            bandSetSpecs: [{id: 'bands', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['class']}]
+        }
+        const saved = {
+            id: 'remapping-1', type,
+            model: {
+                inputImagery: {images: [image]},
+                calculations: {calculations: []},
+                outputBands: {outputImages: [{imageId: 'input', name: 'i1', outputBands: [{id: 'class', name: 'class', defaultOutputName: 'class'}]}]},
+                trainingData: {dataSets: []}, legend: {entries: []}, classifier: {type: 'RANDOM_FOREST'},
+                clusterer: {type: 'KMEANS', numberOfClusters: 5}
+            }
+        }
+        await open(saved, <PanelWizard panels={['inputImagery']} initialized><Inputs/><Toolbar><SectionButton id='inputImagery' label={IMAGERY} panel/></Toolbar></PanelWizard>, [upstream, replacement])
+        expect(inError(IMAGERY)).toBe(true)
+        await press(IMAGERY)
+        await click(innermost('Broken source'))
+        expect(errorsOf('widget.recipeInput.label')).toEqual(['process.source.status.recipeNeedsAttention {"recipe":"Broken source"}'])
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(saved.model)
+        await choose('widget.recipeInput.label', 'Healthy replacement')
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(applyEnabled()).toBe(true)
+        expect(inError(IMAGERY)).toBe(true)
+        await press('button.cancel')
+        expect(model()).toEqual(saved.model)
+        expect(inError(IMAGERY)).toBe(true)
     })
 })
 
@@ -693,15 +834,16 @@ async function openForest(saved = remappingRecipe()) {
 }
 
 async function open(recipe, toolbar, sources = []) {
+    sourceRecipes = Object.fromEntries(sources.map(source => [source.id, source]))
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {...Object.fromEntries(sources.map(source => [source.id, source])), [RADAR]: sourceRecipe(RADAR), [recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
+            loadedRecipes: {...Object.fromEntries(sources.map(source => [source.id, {...source, ui: {initialized: true}}])), [RADAR]: sourceRecipe(RADAR), [recipe.id]: {...recipe, revision: 1, ui: {initialized: true}}},
             recipes: [...sources.map(({id, type, title}) => ({id, type, name: title, revision: 1})), {id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}, {id: RADAR, name: 'Radar recipe', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
-            tabs: [{id: recipe.id}]
+            tabs: [...sources.map(({id}) => ({id})), {id: recipe.id}]
         },
         assets: {user: [ASSET, OPTICAL, RADAR, OTHER_RADAR].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}

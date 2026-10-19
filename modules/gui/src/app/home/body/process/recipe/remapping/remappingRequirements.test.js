@@ -142,7 +142,7 @@ describe('reference feedback from shared readiness', () => {
     }
     const output = (status, findings = []) => ({status: 'READY', readiness: {status, findings}, diagnostics: []})
     const finding = (via, origin = via) => ({code: 'INVALID_CALCULATION', recipePath: ['remapping-2', ...new Set([via, origin])], path: ['model', 'calculations', 'calculations', 0]})
-    const reads = (recipe, result) => readOutputRequirements({recipe, output: result, recipeNames: {a: 'Remapping A', healthy: 'Other recipe'}})
+    const reads = (recipe, result) => readOutputRequirements({recipe, output: result, recipeNames: {a: 'Remapping A', healthy: 'Other recipe', math: 'Band Math', second: 'Second origin'}})
 
     it.each(['NEEDS_EVIDENCE', 'UNAVAILABLE'])('does not mark %s evidence, and leaves the gate unchanged', status => {
         const result = reads(over(), output(status))
@@ -151,15 +151,19 @@ describe('reference feedback from shared readiness', () => {
         expect(requestGateOf(result, IMAGE_OUTPUT)).toMatchObject({code: status === 'NEEDS_EVIDENCE' ? 'SOURCE_PENDING' : 'SOURCE_UNAVAILABLE'})
     })
 
-    it('uses every reported route, naming the direct reference rather than its deeper origin', () => {
+    it('names each direct reference and its confirmed origin, leaving gate attribution unchanged', () => {
         const recipe = over()
         const result = reads(recipe, output('NOT_READY', [finding('a', 'math'), finding('healthy')]))
         expect(itemStatusesOf(result, 'inputImagery')).toMatchObject({
-            'r-1': {message: attention('Remapping A')}, healthy: {message: attention('Other recipe')}
+            'r-1': {message: blocked('Remapping A', ['Band Math']), referenceFeedback: {
+                reference: {id: 'a', name: 'Remapping A'}, origins: [{id: 'math', name: 'Band Math'}]
+            }}, healthy: {message: attention('Other recipe'), referenceFeedback: {
+                reference: {id: 'healthy', name: 'Other recipe'}, origins: [{id: 'healthy', name: 'Other recipe'}]
+            }}
         })
         expect(Object.keys(itemStatusesOf(result, 'inputImagery'))).toEqual(['healthy', 'r-1'])
         expect(sectionStatusOf({}, result, 'inputImagery')).toMatchObject({
-            message: 'process.source.status.recipesNeedAttention {"recipe":"Other recipe, Remapping A"}'
+            message: `${attention('Other recipe')} ${blocked('Remapping A', ['Band Math'])}`
         })
         // The original execution gate, including its attribution, is unchanged.
         expect(requestGateOf(result, IMAGE_OUTPUT)).toMatchObject({
@@ -168,13 +172,76 @@ describe('reference feedback from shared readiness', () => {
         expect(itemStatusesOf(reads(recipe, output('READY')), 'inputImagery')).toEqual({})
     })
 
+    it('omits intermediate recipes and deduplicates repeated findings from the same origin', () => {
+        const route = {...finding('a'), recipePath: ['remapping-2', 'a', 'intermediate', 'math']}
+        const result = reads(over(), output('NOT_READY', [route, {...route, code: 'MISSING_INPUT_BAND'}]))
+        expect(itemStatusesOf(result, 'inputImagery')).toMatchObject({
+            'r-1': {message: blocked('Remapping A', ['Band Math']), referenceFeedback: {
+                reference: {id: 'a', name: 'Remapping A'}, origins: [{id: 'math', name: 'Band Math'}]
+            }}
+        })
+    })
+
+    it('retains every confirmed origin, including a problem owned by the direct reference', () => {
+        const result = reads(over(), output('NOT_READY', [finding('a', 'math'), finding('a'), finding('a', 'second'), finding('a', 'math')]))
+        expect(itemStatusesOf(result, 'inputImagery')['r-1']).toMatchObject({
+            message: alsoDependsOn('Remapping A', ['Band Math', 'Second origin']),
+            referenceFeedback: {reference: {id: 'a', name: 'Remapping A'}, origins: [
+                {id: 'math', name: 'Band Math'}, {id: 'a', name: 'Remapping A'}, {id: 'second', name: 'Second origin'}
+            ]}
+        })
+    })
+
+    it.each([
+        [['a', 'a'], attention('Remapping A')],
+        [['math', 'math'], blocked('Remapping A', ['Band Math'])],
+        [['math', 'second', 'math'], blocked('Remapping A', ['Band Math', 'Second origin'])],
+        [['a', 'math', 'a', 'math'], alsoDependsOn('Remapping A', ['Band Math'])]
+    ])('uses consistent section, row and editor wording for origins %j', (origins, message) => {
+        const result = reads(over(), output('NOT_READY', origins.map(origin => finding('a', origin))))
+        expect(sectionStatusOf({}, result, 'inputImagery').message).toBe(message)
+        expect(itemStatusesOf(result, 'inputImagery')['r-1'].message).toBe(message)
+        const read = result.find(read => read.ownVerdict?.diagnostic?.item?.referenceFeedback)
+        // OutputCandidate uses this same description for the editor field.
+        expect(read.declaration.requirement.describe(read.ownVerdict.diagnostic).message).toBe(message)
+        expect(requestGateOf(result, IMAGE_OUTPUT)).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+    })
+
+    it('falls back to the direct reference when the reported route establishes no origin', () => {
+        const result = reads(over(), output('NOT_READY', [{...finding('a'), recipePath: ['remapping-2', 'a', null]}]))
+        expect(itemStatusesOf(result, 'inputImagery')['r-1']).toMatchObject({
+            message: attention('Remapping A'),
+            referenceFeedback: {reference: {id: 'a', name: 'Remapping A'}, origins: []}
+        })
+    })
+
+    it('keeps distinct origin IDs even when their display names are the same', () => {
+        const recipe = over()
+        const answer = output('NOT_READY', [finding('a', 'math'), finding('a', 'second')])
+        const result = readOutputRequirements({recipe, output: answer, recipeNames: {a: 'Same name', math: 'Same name', second: 'Same name'}})
+        expect(itemStatusesOf(result, 'inputImagery')['r-1'].message).toBe(blocked('Same name', ['Same name', 'Same name']))
+        expect(itemStatusesOf(result, 'inputImagery')['r-1'].referenceFeedback.origins).toEqual([
+            {id: 'math', name: 'Same name'}, {id: 'second', name: 'Same name'}
+        ])
+    })
+
     it.each([{recipePath: ['remapping-2']}, {recipePath: ['another-root', 'a']}])('does not guess a reference from a local or unrelated path $recipePath', ({recipePath}) => {
         const result = reads(over(), output('NOT_READY', [{...finding('a'), recipePath}]))
         expect(itemStatusesOf(result, 'inputImagery')).toEqual({})
     })
 })
 
-const attention = recipe => `process.source.status.recipeNeedsAttention ${JSON.stringify({recipe})}`
+function blocked(recipe, origins) {
+    return `process.source.status.${origins.length === 1 ? 'recipeBlockedBy' : 'recipeBlockedByOrigins'} ${JSON.stringify({recipe, origins: origins.join(', ')})}`
+}
+
+function alsoDependsOn(recipe, origins) {
+    return `process.source.status.${origins.length === 1 ? 'recipeAlsoDependsOn' : 'recipeAlsoDependsOnOrigins'} ${JSON.stringify({recipe, origins: origins.join(', ')})}`
+}
+
+function attention(recipe) {
+    return `process.source.status.recipeNeedsAttention ${JSON.stringify({recipe})}`
+}
 
 const MAPPING = 'process.remapping.panel.mapping.button.label'
 const MISSING_INPUT = 'process.remapping.requirement.missingInput'

@@ -114,11 +114,20 @@ unused-selection policy across recipe types.
 
 A confirmed upstream readiness finding marks IMG and the input row declaring that recipe reference. For
 Band Math → Remapping A → Remapping B, a missing source band used by A remains A's detailed input diagnosis;
-B says “Referenced recipe needs attention: Remapping A. Open it to review the problem.” With another healthy input,
+B says “Remapping A needs attention.” If a Band Math calculation instead owns the problem, B says
+“Remapping A cannot run because Band Math needs attention.” If both own findings, B says “Remapping A needs
+attention. It also depends on Band Math, which needs attention.” The direct recipe is excluded from the upstream
+list by ID; this wording does not imply that repairing the upstream problem repairs A. Multiple confirmed origins
+are named once each, with plural wording where needed, without
+intermediate recipes or detailed diagnoses. The direct and origin IDs and names remain structured feedback data.
+With another healthy input,
 only A's row is marked. The shared input presentation also applies to Band Math, Stack and the classification
-family; it adds no validation rule, execution gate, evidence acquisition or styling. Pending or temporarily failed
+family; it adds no validation rule, execution gate or styling. Pending or temporarily failed
 evidence adds no reference validation mark. Repair and current evidence clear both marks without editing B.
-Drafts and Cancel retain the applied state; dependent sections within the same recipe still do not repeat errors.
+The input editor shows the same explanation beside its recipe selector, following the current draft. Selecting a
+healthy replacement clears that field feedback; Cancel keeps the applied warning. Opening alone remains unedited,
+and upstream repair while the editor is open clears the explanation. This display does not change Apply policy.
+Dependent sections within the same recipe still do not repeat errors. Navigation links remain deferred.
 
 Only routes present in readiness findings can be marked. A shared dependency visited once in a diamond graph may
 leave another affected route without a mark; execution remains blocked. See the design's
@@ -200,3 +209,15 @@ and mocked asset-export refusal/recovery. `remappingSourceBands.mjs` is the sepa
    blocks should clear. A should retain its optical reference and expression.
 4. Repeat with only `VH_med` included: B should report that `VV_med` is not included. Include it and Apply to recover.
    Re-adding a different radar asset or cancelling the new input must leave B blocked.
+
+### Reference feedback manual check
+
+1. Use Band Math → Remapping A → Remapping B, with another healthy input in B. Break a calculation in Band Math.
+   B's IMG and only A's row should say that A cannot run because Band Math needs attention. A's own source-band
+   problem instead should give B the direct “A needs attention” message.
+2. Open A's input row in B. The recipe selector should show the same explanation; opening alone must not enable Apply.
+   Select a healthy replacement: the field explanation clears, while B's applied warning and execution blocking remain.
+   Cancel and reopen: the original explanation returns.
+3. Keep that editor open and repair the originating recipe. Once current evidence settles, the explanation clears
+   without editing B. Close the editor and verify previews and Retrieve recover. Pending/retryable failures must not
+   be described as a confirmed recipe problem. No navigation links are implemented yet.

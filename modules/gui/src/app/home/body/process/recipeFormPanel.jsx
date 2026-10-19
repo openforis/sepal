@@ -79,10 +79,10 @@ export const recipeFormPanel = (
     // values by that requirement, over the recipe built from that item alone (outputCandidate.js): what it finds is told
     // to `editor.input` and holds Apply back - or, where `editor.input` is a function of a finding and the values, to the
     // input it names for each, as `editor.describe(findings, values)` says them. Pending or failed, it holds nothing
-    // back.
-    const outputEditorOf = props => {
+    // back. Multiple declarations may explain different fields; presentation-only declarations opt out of holding Apply.
+    const outputEditorsOf = props => {
         const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
-        return declarations.find(({outputDiagnostics, editor}) => outputDiagnostics && editor?.panel === id) || null
+        return declarations.filter(({outputDiagnostics, editor}) => outputDiagnostics && editor?.panel === id)
     }
 
     const outputCandidateOf = (declaration, props, onChange) => {
@@ -116,10 +116,12 @@ export const recipeFormPanel = (
                     this.sourceCandidate = sourceCandidateOf(this.sourceSection, props, () => this.mounted && this.setState(
                         ({sourceCandidateChanges = 0}) => ({sourceCandidateChanges: sourceCandidateChanges + 1})
                     ))
-                    this.outputEditor = outputEditorOf(props)
-                    this.outputCandidate = outputCandidateOf(this.outputEditor, props, () => this.mounted && this.setState(
-                        ({outputCandidateChanges = 0}) => ({outputCandidateChanges: outputCandidateChanges + 1})
-                    ))
+                    this.outputEditors = outputEditorsOf(props).map(declaration => ({
+                        declaration,
+                        candidate: outputCandidateOf(declaration, props, () => this.mounted && this.setState(
+                            ({outputCandidateChanges = 0}) => ({outputCandidateChanges: outputCandidateChanges + 1})
+                        ))
+                    }))
     
                     form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
                 }
@@ -147,34 +149,40 @@ export const recipeFormPanel = (
                 componentDidMount() {
                     this.mounted = true
                     this.sourceCandidate?.update(this.props.form.values())
-                    this.outputCandidate?.update(this.props.form.values())
+                    this.outputEditors.forEach(({candidate}) => candidate?.update(this.props.form.values()))
                 }
 
                 componentDidUpdate() {
                     this.sourceCandidate?.update(this.props.form.values())
-                    this.outputCandidate?.update(this.props.form.values())
+                    this.outputEditors.forEach(({candidate}) => candidate?.update(this.props.form.values()))
                 }
 
                 componentWillUnmount() {
                     this.mounted = false
                     this.sourceCandidate?.stop()
-                    this.outputCandidate?.stop()
+                    this.outputEditors.forEach(({candidate}) => candidate?.stop())
                 }
 
                 form() {
                     const {form} = this.props
                     const sourceCandidate = this.sourceCandidate
-                    const outputCandidate = this.outputCandidate
-                    if (!sourceCandidate && !outputCandidate) {
+                    const outputEditors = this.outputEditors
+                    if (!sourceCandidate && !outputEditors.length) {
                         return form
                     }
                     const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values())
                     const sourceFeedback = sourceCandidate && sourceInputFeedback(sourceCandidate.status(), () => sourceCandidate.refresh())
-                    const findings = outputCandidate?.findings()
-                    const outputFeedback = findings ? outputFeedbackOf(this.outputEditor.editor, findings, form.values()) : {}
+                    const outputFeedback = outputEditors.reduce((feedback, {declaration, candidate}) => {
+                        const findings = candidate?.findings()
+                        return findings
+                            ? _.mergeWith(feedback, outputFeedbackOf(declaration.editor, findings, form.values()), combineFeedback)
+                            : feedback
+                    }, {})
                     return withInputFeedback(form, {
                         feedbackOf: name => name === sourceInput ? sourceFeedback : outputFeedback[name] || null,
-                        blocked: () => Boolean(sourceCandidate?.refused() || outputCandidate?.refused())
+                        blocked: () => Boolean(sourceCandidate?.refused() || outputEditors.some(({declaration, candidate}) =>
+                            declaration.editor.blocksApply !== false && candidate?.refused()
+                        ))
                     })
                 }
             },
@@ -278,8 +286,22 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
 // the editor names for it.
 const outputFeedbackOf = (editor, findings, values) => {
     if (typeof editor.input !== 'function') {
-        return {[editor.input]: {error: findings.message, diagnostics: findings.diagnostics}}
+        return {[editor.input]: {
+            error: findings.message,
+            diagnostics: findings.diagnostics,
+            ...(findings.referenceFeedback && {referenceFeedback: findings.referenceFeedback})
+        }}
     }
     const byInput = _.groupBy(findings.diagnostics, diagnostic => editor.input(diagnostic, values))
     return _.mapValues(byInput, diagnostics => ({error: editor.describe(diagnostics, values), diagnostics}))
+}
+
+// Preserve all explanations when declarations address the same field.
+const combineFeedback = (previous, next, key) => {
+    if (key === 'error' && previous && next) {
+        return [previous, next].join(' ')
+    }
+    if (Array.isArray(previous) && Array.isArray(next)) {
+        return [...previous, ...next]
+    }
 }

@@ -554,7 +554,7 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
     })
 }
 
-// A confirmed finding's first hop identifies the directly referenced recipe that needs attention. The finding's
+// A confirmed finding's first hop identifies the direct reference; its last identifies the origin. The finding's
 // field path belongs to its origin, not this input: use the declared edge's location instead. Read every reported
 // route, never an arbitrary first diagnostic. Readiness may visit a shared dependency only once; routes it did not
 // report cannot be inferred here. Pending and failed evidence are needs, not readiness findings.
@@ -562,15 +562,25 @@ const refusedReferences = (output, recipe, roles) => {
     if (!roles.length) {
         return []
     }
-    const refused = new Set((output.readiness?.findings || [])
-        .filter(({recipePath = []}) => recipePath[0] === recipe.id && recipePath.length > 1)
-        .map(({recipePath}) => recipePath[1]))
+    const refused = new Map()
+    ;(output.readiness?.findings || []).forEach(({recipePath = []}) => {
+        if (!Array.isArray(recipePath) || recipePath[0] !== recipe.id || recipePath.length < 2) {
+            return
+        }
+        const reference = recipePath[1]
+        const origins = refused.get(reference) || new Set()
+        const origin = recipePath.at(-1)
+        if (typeof origin === 'string' && origin.trim()) {
+            origins.add(origin)
+        }
+        refused.set(reference, origins)
+    })
     if (!refused.size) {
         return []
     }
     return directSourceEdges(recipe).edges
         .filter(({role, reference}) => roles.includes(role) && reference.type === 'RECIPE_REF' && refused.has(reference.id))
-        .map(({role, path, reference}) => ({role, path, reference, recipePath: [recipe.id]}))
+        .map(({role, path, reference}) => ({role, path, reference, origins: [...refused.get(reference.id)], recipePath: [recipe.id]}))
 }
 
 // The sources the recipe's own edges in the `references` roles name that are found gone, each located at its edge.

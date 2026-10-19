@@ -7,7 +7,7 @@ import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT, readRecipeOutput} from './recipeOutput'
-import {readOutputRequirements} from './sourceRequirements'
+import {readOutputRequirements, recipeNamesOf} from './sourceRequirements'
 
 // What a requirement its output read judges (sourceRequirements.js) says of a panel's values before they are applied:
 // the recipe its declaration's editor builds from the one item the panel edits (`editor.candidate`), read as its output
@@ -37,7 +37,7 @@ export class OutputCandidate {
         const candidate = model ? this.#declaration.editor.candidate(recipe, model) : null
         if (!_.isEqual(candidate, this.#candidate)) {
             this.#candidate = candidate
-            this.#watch.update(candidate && {recipeId: this.#recipeId, product: {name: IMAGE_OUTPUT}, candidate})
+            this.#watch.update(candidate && {recipeId: this.#recipeId, product: {name: IMAGE_OUTPUT}, candidate, explain: this.#declaration.editor.explain})
         }
     }
 
@@ -83,9 +83,10 @@ export class OutputCandidate {
             graph: buildMapDependencyGraph({recipe: candidate, loadedRecipes: state.process?.loadedRecipes || {}}),
             heldFor: key => this.#sourceRuntime.heldFor(key),
             currency: recordStalenessOfState(state),
-            assetEvidence: assetEvidenceOfState(state)
+            assetEvidence: assetEvidenceOfState(state),
+            explain: this.#declaration.editor.explain
         })
-        return readOutputRequirements({recipe: candidate, output})
+        return readOutputRequirements({recipe: candidate, output, recipeNames: recipeNamesOf(state)})
             .filter(read => read.declaration === this.#declaration && read.item)
     }
 }

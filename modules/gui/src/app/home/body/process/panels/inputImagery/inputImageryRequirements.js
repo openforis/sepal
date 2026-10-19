@@ -58,10 +58,22 @@ export const inputImageryRequirements = imageIndexOf => [
     }
 ]
 
-export const inputRecipeFeedback = section => referenceFeedback({
-    section,
-    roles: [INPUT_IMAGE],
-    itemOf: ({path}, recipe, {recipeNames}) => itemOf(path[3], recipe, recipeNames)
+export const inputRecipeFeedback = section => ({
+    ...referenceFeedback({
+        section,
+        roles: [INPUT_IMAGE],
+        itemOf: ({path}, recipe, {recipeNames}) => itemOf(path[3], recipe, recipeNames)
+    }),
+    editor: {
+        panel: 'inputImage',
+        input: 'recipe',
+        blocksApply: false,
+        explain: true,
+        candidate: (recipe, image) => ({
+            ...recipe,
+            model: {...recipe.model, inputImagery: {images: [image]}}
+        })
+    }
 })
 
 const isImageryPath = (path = []) =>

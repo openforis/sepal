@@ -330,7 +330,10 @@ for the audit evidence, completed packets and remaining boundaries.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
   marked for a missing band, Retrieve withheld and refused naming Input imagery until the band is back, and nothing
   marked for pending, failed or superseded reads, the output read shared. Confirmed upstream failures
-  additionally mark their declaring recipe input through shared reference feedback.
+  additionally mark their declaring recipe input through shared reference feedback. It names the selected recipe and
+  any confirmed originating recipes, deduplicated by ID. The input editor shows the same message beside the recipe
+  selector; a healthy draft replacement clears it without repairing the applied model. Cancel keeps the applied warning,
+  and upstream repair clears it while the editor is open. The explanation adds no Apply rule; navigation is deferred.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/panels/inputImagery/inputImageBands.test.jsx` - an input opened
   unchanged, a band its source no longer has kept, marked and refused until removed, another band taken by removing and
   adding, never judged from saved bands, pending or failed reads, edits kept while reading, source switches reconciled,

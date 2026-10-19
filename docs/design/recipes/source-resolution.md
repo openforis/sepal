@@ -934,8 +934,12 @@ One read answers every consumer, so they cannot disagree:
 - **Marks.** Output declarations (`sourceRequirements.js`) read the findings this recipe owns, from description and
   readiness alike, and mark its item and section. Within one recipe, dependent sections do not repeat an originating
   error (for example, CALC does not mark OUT). Across recipes, input-list declarations additionally mark IMG and each
-  affected recipe-reference row with a short translated message naming the directly referenced recipe and asking
-  the user to open it. The detailed diagnosis stays in its originating recipe. The dependent's held status still names
+  affected recipe-reference row with a short translated message naming the directly referenced recipe and the
+  confirmed originating recipe(s). For B reading A: “A needs attention” when A owns the problem, or “A cannot run
+  because Band Math needs attention” when Band Math owns it. Intermediate recipes are omitted; repeated findings
+  from the same origin are deduplicated by ID, and multiple origins are all named. If both A and upstream recipes
+  own findings, say “A needs attention. It also depends on Band Math, which needs attention.” Exclude A from that
+  upstream list by ID, use plural wording for multiple upstream origins, and retain all attribution metadata. The detailed diagnosis stays in its originating recipe. The dependent's held status still names
   the owning recipe (`refusedBy`). Readiness's `UNAVAILABLE` and `NEEDS_EVIDENCE` add no
   mark, and leave definitive missing-source marks as they are. A declaration may leave its section's toolbar button
   unmarked (`toolbarMark: false`), a presentation choice: its finding still holds the operations, which still name the
@@ -943,12 +947,21 @@ One read answers every consumer, so they cannot disagree:
   (`unmarkedTrainingDataRequirements`); Regression's is not. `wizardStepMark: false` waits only while a set-up wizard has
   the section open as its step (`missingInputImageryRequirement`).
   Reference feedback (`referenceFeedback.js`) is a presentation-only output declaration: `upstreamReferences`
-  names declared source roles, and `itemOf` maps their actual edge locations to rows. It has no operations or editor
-  binding. The bridge matches every confirmed finding's first recipe hop to the declared recipe edges; it never
+  names declared source roles, and `itemOf` maps their actual edge locations to rows. It has no operations.
+  The feedback retains `referenceFeedback: {reference: {id, name}, origins: [{id, name}]}` in its diagnostic and
+  item status, independent of translated text. The last hop of each confirmed `recipePath` establishes its origin;
+  absent an established origin, the direct-reference message is used. The bridge matches every confirmed finding's
+  first recipe hop to the declared recipe edges; it never
   guesses from the first diagnostic, uses an origin's field path as a local input path, or marks an asset with the
   same bare ID. Reads reuse the existing output-requirement memoization. The shared input helpers register this for
   Stack, Band Math, Remapping, Classification, Regression and Unsupervised Classification. Other source-section
   editors have not been opted into this feedback.
+  The shared input-image editor binds the same declaration to its recipe selector through `OutputCandidate` and
+  standard field feedback. It reads the draft input alone, using the existing explain query where other local
+  configuration is already invalid. `blocksApply: false` makes this binding explanatory only; it adds no Apply rule.
+  Panels combine output declarations so Classification's existing band-set validation remains active alongside it.
+  Opening remains unedited; changing the draft selection or repairing an upstream recipe updates the explanation.
+  Cancel preserves applied configuration, marks and gates. Pending or failed reads add no confirmed-reference error.
 
   Attribution limit: readiness visits each shared recipe once. In a diamond graph, a finding may contain only one
   route to the origin. Only the reported route is marked; other routes are not guessed. Complete feedback for all
@@ -1163,6 +1176,28 @@ separately:
    asset exports, evidence currency and repair. A live read-only EE probe confirms used-band failure downstream and
    the differing unused-selection cases below.
 
+#### Source-reference editor audit (2026-10-16)
+
+Mounted GUI tests use mocked source responses, not live Earth Engine or browser appearance checks. The shared input
+fix is implemented; the other presentation gaps below are reported for a separate decision, not changed here.
+
+| Callers | Editor behaviour and evidence | Smallest next action |
+| --- | --- | --- |
+| Stack, Band Math, Remapping | Shared reference explanation now appears beside the recipe selector. Mounted tests cover opening unchanged, a healthy draft replacement, Cancel, and Remapping upstream repair while open. Existing input-band tests cover selected unavailable bands. | Implemented through the existing output-candidate binding; no new validation. |
+| Classification, Regression, Unsupervised Classification | Same selector binding, mounted for each caller. Existing Classification band-set tests retain the separate field/chip validation and repair flow. | Implemented; retain both declarations in the editor. |
+| Class Change / Index Change FROM and TO | `changeImageRequirements` already binds source disappearance to the source field and missing bands to their band fields. Mounted cases cover repair/Apply, Cancel, pending and transient errors. | No presentation fix identified for these existing marks. General upstream-reference messages are not registered here. |
+| Masking | Mounted temporary probe: an absent mask marks its section, but opening shows an empty selector without the shared missing-mask explanation. Selection is possible; opening and closing leave the model untouched. Its primary image uses a plain activation button, not reference-feedback marks. | Bind the existing `MISSING_ROLE` finding to the active mask selector, including an empty draft candidate. Do not add suitability validation. |
+| Change Alerts REF | Existing `SourceCandidate` and `sourceInputFeedback` put confirmed capability problems on the recipe/asset field; mounted tests cover replacement, Refresh, Cancel and pending versus unavailable responses. | No gap identified in REF. |
+| Change Alerts Sources | Mounted temporary probe confirms `MONITORED_MEASURE` marks Sources while type/data-set/band fields give no explanation. Selecting compatible radar data and VV repairs the draft; Cancel preserves the applied mismatch. | Present the existing candidate status on the relevant type, data-set or band field. Extend field attribution in the existing binding if needed; retain its current Apply policy. |
+| BAYTS Alerts REF (and dependent PRC) | REF already uses standard source-field feedback, with mounted replacement, pending, Refresh and Cancel tests. PRC deliberately reconciles unsupported orbit selections to supported ones in the draft, offers Apply and preserves applied passes on Cancel; its toolbar diagnosis is not repeated on the orbit field. | No missing corrective action in PRC; any added explanation should describe the existing draft reconciliation, not duplicate validation. |
+| CCDC Slice Source | Existing source-field binding explains capability problems and separate chart advisories; mounted tests cover repair, pending/unavailable, Refresh and Cancel. | No gap identified. |
+
+Transient failures in capability editors have explicit unavailable/retry feedback, distinct from a confirmed
+unsuitable source; pending checks show busy feedback. This audit does not equate every red field-feedback icon with
+configuration invalidity. It does not opt additional recipe types into upstream-reference presentation, change their
+validation coverage, or change existing seeding/reconciliation of drafts. Temporary probes were removed after recording
+these results; permanent tests retain the implemented shared editor cases.
+
 Keep these additional items visible, outside the completed packets:
 
 - **Remapping unused selections: source-type policy.** The new check covers bands constraints read. Live sampling in
@@ -1170,6 +1205,12 @@ Keep these additional items visible, outside the completed packets:
   names filter its mappings). An Asset recipe explicitly selects all requested names and fails for the same unused
   selection. Decide that compatibility policy before adding broader validation or changing execution. Do not revive
   the rejected editor-assessment framework merely to mark unused selections.
+- **Reference-feedback navigation.** Both the directly selected recipe name and each originating recipe name should
+  eventually be links, each with a small open icon as part of the link. Put those actions in persistent error details
+  or a suitable interactive popover, not an ordinary tooltip. IDs and display names are already retained separately.
+  Links, popovers and modal changes are deferred; do not infer additional routes through diamond graphs.
+- **Source-editor presentation.** Address the Masking missing-mask field and Change Alerts Sources field attribution
+  reported in the audit above as narrow follow-ups, using existing findings and candidate bindings.
 - **Refresh scope.** An explicit source-asset refresh restores all dependent questions even when the asset token is
   unchanged. Refreshing only a downstream output refreshes its question, not independently held upstream output
   questions. That existing refresh policy was observed during this packet and was not broadened.

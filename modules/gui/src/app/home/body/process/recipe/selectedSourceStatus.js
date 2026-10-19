@@ -249,6 +249,7 @@ const localStatusOf = read => {
         state: UNMET_CONFIGURATION,
         message: own ? own.message : prerequisites,
         details: own ? [...own.details, ...(prerequisites ? [prerequisites] : [])] : [],
+        ...(own?.referenceFeedback && {referenceFeedback: own.referenceFeedback}),
         refresh: false,
         advisories: []
     }

@@ -5791,8 +5791,11 @@
     "source": {
       "status": {
         "checking": "Checking the selected source…",
-        "recipeNeedsAttention": "Referenced recipe needs attention: {recipe}. Open it to review the problem.",
-        "recipesNeedAttention": "Referenced recipes need attention: {recipe}. Open them to review the problems.",
+        "recipeNeedsAttention": "{recipe} needs attention.",
+        "recipeBlockedBy": "{recipe} cannot run because {origins} needs attention.",
+        "recipeBlockedByOrigins": "{recipe} cannot run because {origins} need attention.",
+        "recipeAlsoDependsOn": "{recipe} needs attention. It also depends on {origins}, which needs attention.",
+        "recipeAlsoDependsOnOrigins": "{recipe} needs attention. It also depends on {origins}, which need attention.",
         "unavailable": "The selected source is missing or unavailable. Refresh, or choose another source.",
         "assetUnavailable": "Asset {asset} could not be checked. Refresh, or choose another source.",
         "assetMissing": "Asset {asset} is missing or unavailable. Refresh, or choose another source.",

@@ -63,8 +63,10 @@ do not refuse it. Each is repaired in Band names, whose fields check the names a
 among the names the mapping gives, not blank, that rule - without waiting for an edit; Cancel keeps the names saved. The panel finds each input's entry by `imageId`, as the
 declaration does; an input without one is offered its bands to name, blank, and gets its entry only once the user
 names them and applies. A refusal of an input recipe stays with that recipe: its detailed diagnosis does not mark this Stack's Band names.
-Shared reference feedback instead marks IMG and the declaring input row, naming the referenced recipe that needs
-attention. It uses confirmed readiness findings, never pending or transiently failed evidence, and changes no gates
+Shared reference feedback instead marks IMG and the declaring input row, naming the direct reference and any
+confirmed originating recipes: “A needs attention” or “A cannot run because Band Math needs attention.” The same
+explanation appears beside the input editor's recipe selector, follows its draft selection, and clears after upstream
+repair. Opening stays unedited and Cancel keeps the applied warning; this feedback does not change Apply policy. It uses confirmed readiness findings, never pending or transiently failed evidence, and changes no gates
 or drafts. As with other input-list recipes, only reported dependency routes can be marked; a second route through
 a shared node in a diamond graph may be absent. Opening the panel changes nothing.
 
