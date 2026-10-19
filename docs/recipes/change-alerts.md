@@ -16,6 +16,14 @@ and options, following a wrapper to the CCDC under it or reading a segments asse
 `recipe_options`, and a saved value is kept until the producer's settings change
 ([source evidence](../design/recipes/gui-source-runtime.md)). `changeAlertsOptions` configure the algorithm.
 
+REF says one thing at a time on the selected asset or recipe: a refusal is its error, in one sentence - an asset
+without CCDC segment time bands "can't be used as a CCDC segment reference", one with a malformed layout named by a
+few of its problems - and only once the reference is usable does a warning say what the segment chart cannot plot.
+A usable reference that the monitoring settings do not fit is applied without a warning in REF: SRC is marked, says on
+the setting to change why - the type of data, the data sets or the band monitored - and holds the alerts back until it
+is repaired. The full findings stay in the requirement read; the field shows its summary
+([source resolution](../design/recipes/source-resolution.md#change-alerts-ref)).
+
 The dates of the period are computed once, by `monitoringDates` (`lib/js/shared/src/recipe/changeAlerts/`), for both
 execution and the GUI: the monitoring start is the end less its duration, and the calibration start the monitoring
 start less its own. A month back keeps the day, or the last day of a shorter month; a year is twelve months. Dates

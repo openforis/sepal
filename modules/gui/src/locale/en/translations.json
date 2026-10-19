@@ -5834,6 +5834,8 @@
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
         "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",
+        "notSegments": "This asset can't be used as a CCDC segment reference. Choose an asset or recipe that provides CCDC segments.",
+        "notSliceSegments": "This asset can't be sliced as CCDC segments. Choose an asset or recipe that provides CCDC segments.",
         "missingBand": "{band} is missing",
         "scalarBand": "{band} is not an array, where {expected}-dimensional arrays are needed",
         "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",

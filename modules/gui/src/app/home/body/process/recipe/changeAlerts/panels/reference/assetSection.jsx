@@ -62,16 +62,16 @@ class _AssetSection extends React.Component {
         this.chosen = assetId
     }
 
-    // Only the date representation is kept: it is configuration the user may correct, prefilled from an asset chosen here.
-    // An asset merely read again - the one REF opened with, or one switched back to - keeps the representation set for it,
-    // and is prefilled only where none is, as where the form started unless the asset was edited. Whether the asset suits
-    // the reference is the requirements' to judge, from the evidence the candidate's observation reads
-    // (sourceCandidate.js).
+    // Only the date representation is kept: it is configuration the user may correct, prefilled from an asset chosen here
+    // where it declares one; one declaring none keeps what is configured, which is no claim that it matches. An asset
+    // merely read again - the one REF opened with, or one switched back to - keeps the representation set for it, and is
+    // prefilled only where none is, as where the form started unless the asset was edited. Whether the asset suits the
+    // reference is the requirements' to judge, from the evidence the candidate's observation reads (sourceCandidate.js).
     onLoaded({asset: assetId, metadata}) {
         const {inputs: {asset, dateFormat}} = this.props
         const prefill = metadata.properties?.dateFormat
         if (assetId === this.chosen) {
-            dateFormat.set(prefill)
+            ![undefined, null].includes(prefill) && dateFormat.set(prefill)
         } else if ([undefined, null, ''].includes(dateFormat.value)) {
             asset.isDirty() ? dateFormat.set(prefill) : dateFormat.setInitialValue(prefill)
         }

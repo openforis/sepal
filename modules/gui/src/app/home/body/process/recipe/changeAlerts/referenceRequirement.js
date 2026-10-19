@@ -23,7 +23,8 @@ import {availableMeasures, monitorableMeasures, observedMeasures} from './monito
 
 // REF says what it finds on the input the reference is selected in. Sources says it on the setting it asks to change -
 // the type of data, its data sets, or the band monitored - and on its toolbar button. What concerns none of them, such
-// as a reference that supplies no segments, is REF's to repair: Sources says it on its button alone.
+// as a reference that supplies no segments, is REF's to repair: Sources says it on its button alone. A reference Sources
+// no longer suits is not warned of in REF: a reference deliberately replaced is followed by Sources' own validation.
 const REFERENCE = {
     id: 'reference',
     label: 'process.changeAlerts.panel.reference.button',
@@ -66,8 +67,7 @@ export const referenceRequirements = [
             available: availableMeasures(model.sources?.dataSetType),
             observed: observedMeasures(model)
         }),
-        operations: [IMAGE_OUTPUT],
-        advise: [REFERENCE.id]
+        operations: [IMAGE_OUTPUT]
     },
     {
         role: PRIMARY_IMAGE,

@@ -450,8 +450,9 @@ not source resolution. Source-backed validation adds provider discovery and curr
 
 For Change Alerts, REF is refused when established facts show no supported monitoring source can use its segments.
 When REF permits a valid configuration but the current monitoring settings do not, the reference replacement is
-applied, the actionable Sources field is invalid, and REF shows one aggregate advisory naming the affected sections and
-both remedies: choose another reference or update those sections. The advisory goes as incompatibilities are resolved.
+applied, Sources is marked and the actionable Sources field is invalid, saying what to change - the type of data, the
+data sets or the band monitored. REF says nothing of it: a reference deliberately replaced is followed by Sources' own
+validation, not warned of in advance, and Sources declares no advisory to REF.
 Optional chart requirements gate the chart independently. [Change Alerts REF](#change-alerts-ref) describes how.
 
 Date compatibility needs a separate execution-derived rule and adequate evidence. Preserve configured dates;
@@ -467,9 +468,9 @@ decides when the answer can be trusted and what it does to the UI.
   the selection by the role its source edge already has (`PRIMARY_IMAGE`), each with the section it belongs to and the
   requests that need it met. A section may name the form input that shows what its requirements find (`input`, a
   function of the panel's form values naming a form input, not a model location): REF names its asset or recipe input,
-  and Sources names none, so its findings show on its toolbar button only. A requirement names the other sections
-  whose status advises that it is not met (`advise`): the Sources requirement names REF. No other section advises of
-  it, and a recipe declaring no `advise` gets no cross-section advisory.
+  and Sources names none, so its findings show on its toolbar button only. A requirement may name other sections whose
+  status advises that it is not met (`advise`); none of Change Alerts' does, so REF gets no cross-section advisory:
+  what Sources needs after a reference is replaced is said in Sources alone.
 
   | Requirement | Section | Gates | Required to apply |
   |---|---|---|---|
@@ -496,7 +497,8 @@ decides when the answer can be trusted and what it does to the UI.
   anything of an image collection beyond its first member. The monitored measure is judged against narrowing scopes,
   the widest that observes none of the segments' measures refusing them - any monitoring data, the selected type, the
   selected data sets - so the diagnosis names the setting to change. Diagnoses read as a summary naming a few
-  representative problems, with every problem in their details.
+  representative problems, with every problem in their details; an asset without the time bands every requirement
+  over segments needs is said, in one sentence naming the remedy, to provide no CCDC segments at all.
 - **Facts.** The observation reads the asset's metadata (`/assetMetadata`), which states each band's array rank: for an
   image asset, the gee adapter restores the rank the Cloud record states (`dimensionsCount`) that the Earth Engine
   client's legacy conversion drops; a band whose rank was not established stays unknown. The segment description
@@ -520,18 +522,22 @@ decides when the answer can be trusted and what it does to the UI.
   selecting section's to say. Every other established problem over the same source is an advisory, said apart and
   never in place of what holds the section back: a requirement of one operation only (the chart, in REF), by what it
   says; and, while nothing holds the section back, one advisory naming each other section whose settings no longer
-  suit the source and whose requirements name this section to advise (Sources, in REF), whose own status says why. A diagnosis is said once per section. Toolbar marks
+  suit the source and whose requirements name this section to advise (PRC, in BAYTS Alerts' REF), whose own status
+  says why. A diagnosis is said once per section. Toolbar marks
   count only what holds a section back (REF and Sources alike). While a recipe's wizard sets it up, a section it has
   not reached is not marked yet (`SectionButton`, `PanelWizard`'s `reached`): a section is reached once its panel has
   been open, and every section is once the wizard is done. Only the toolbar mark waits; what holds the section back
   holds the recipe all along, and a panel says what it says once open.
 - **Input feedback** (`sourceInputFeedback.jsx`, `inputFeedback.js`). Inside REF, the section's status is said on the
   input its source is selected in, which the section's declaration names (`input`: the asset or recipe input), as that input's
-  field validation rather than messages of its own. What holds the section back is the input's error, with every
-  problem in its tooltip, after the input's own required-field or loading error and never in its place, and it holds
-  Apply back as an invalid field does. A check still running is the input's busy indicator, explained in its label's
+  field validation rather than messages of its own. What holds the section back is the input's error, in its short
+  message alone - the problems behind it stay in the status, not in the tooltip - after the input's own required-field
+  or loading error and never in its place, and it holds Apply back as an invalid field does.
+  A check still running is the input's busy indicator, explained in its label's
   tooltip beside the tooltip it already has, and holds Apply back too; the label's content is left as it is.
-  Advisories are its warning and hold nothing back. Refresh, where reading the source again may help, is a button
+  Advisories are its warning, hold nothing back, and show only while nothing holds the section back, so the input shows
+  one indicator: a chart's problem waits until the reference itself is usable. Refresh, where reading the source again
+  may help, is a button
   beside the label. The combos read this from the form they are in (`feedbackOf`), so a panel adds no code for it.
   Sources declares no input: its button choices cannot show feedback (`Form.Buttons` does not read it), keep their existing presentation, and a candidate it refuses holds its Apply
   back. What is wrong with its committed settings is said by its toolbar button's mark and tooltip, naming the
@@ -552,8 +558,8 @@ decides when the answer can be trusted and what it does to the UI.
   reads again what the candidate's own observation read - its assets, explicitly refreshed, or failing that the
   candidate observed anew - and never the source the recipe holds, unless that is the candidate's. A saved unsuitable
   reference stays visible with its diagnosis and never blocks applying a suitable replacement. Applying commits what
-  the panel owns: a replacement fitting other measures is applied, with REF's advisory naming Sources, Sources marked
-  invalid, and the alerts waiting for it to be repaired. After Apply the recipe's evidence is read again through the normal lifecycle.
+  the panel owns: a replacement fitting other measures is applied, Sources marked invalid, and the alerts waiting for it
+  to be repaired. After Apply the recipe's evidence is read again through the normal lifecycle.
 - **Authority.** A layer whose product a requirement holds says so on its area menu's visualization selector, as that
   selector's own feedback, without changing the menu's layout: a check in progress is its busy indicator, explained by
   its label. Why the requirement is not met is said in the recipe, on the section's fields and toolbar, so a layer of
@@ -1238,6 +1244,23 @@ Keep these additional items visible, outside the completed packets:
   reference removable input UUIDs. Missing-band/property compatibility is a separate question; no mounted audit
   was performed for these callers.
 
+- **Source-editor consistency audit (2026-10-19): no confirmed defect; the date-format policy is aligned.** The
+  shared input editors (`panels/inputImagery` for Stack and Remapping, its Band Math copy,
+  `panels/inputImageryWithDerived` for Classification, Regression and Unsupervised Classification), Change Alerts REF,
+  BAYTS REF and CCDC Slice Source open
+  an unchanged source unedited, keep a saved band its source lost, marked, keep saved configuration through pending
+  and failed reads, and keep separate Asset/Recipe drafts or start the other kind over as each documents. Their kind
+  switches show no premature required error: cleared fields are either not shown or skipped for the kind now shown.
+  - *Date representation of a newly chosen asset.* Decided: an asset chosen that declares one, `0` included, sets it;
+    one declaring none keeps what is configured, which is no claim that it matches; with neither, it stays unset and
+    Apply held. Change Alerts REF (`changeAlerts/panels/reference/assetSection.jsx`, `referenceRequirement.test.jsx`)
+    now does as CCDC Slice's source already did (`ccdcSlice/panels/source/assetSection.test.jsx`).
+  Open items:
+  - *Duplication to fold into the form consistency work below:* Band Math's input editor copies
+    `panels/inputImagery` with `name` for `band`; Class and Index Change each keep their own cleared-selection flags;
+    `panels/inputImageryWithDerived/imageForm.jsx` relies on picker cancellation for late answers rather than the
+    explicit selected-source check the other editors make (covered by `inputImageLifecycle.test.jsx`).
+
 Remapping's source-identity recovery and shared constraint-reference validation are complete, including manual
 verification of blocking and recovery through a second Remapping. Already-broken constraints with no retained
 identity still need one explicit repair; this is an accepted limitation, not a request for historical reconstruction.
@@ -1257,6 +1280,8 @@ refocus and clear them promptly when corrected. Distinguish user edits from init
 verify autofocus and treat interaction with a picker's options as staying within that field. Preserve immediate
 explanations for broken saved configurations and keep invalid actions blocked independently of visible errors.
 Simplify the shared defaults so callers inherit consistent behaviour, with explicit exceptions only where needed.
+Inputs to that work: the per-editor cleared-selection flags (Class and Index Change), candidate feedback's
+`quietWhileEdited` opt-in (`recipeFormPanel.jsx`), and the duplicated input editors listed above.
 
 ## Source description
 

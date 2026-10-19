@@ -558,6 +558,38 @@ describe('a reference edited in REF', () => {
         expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 1})
     })
 
+    // As CCDC Slice's source does: what the user configured is kept, not claimed to match the asset.
+    it('keeps the date representation configured when the asset chosen declares none', async () => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {})
+        await editor({selection: {...ASSET, dateFormat: 2}, panels: ['reference']})
+
+        await selectAsset(RADAR_ASSET)
+        await apply()
+
+        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 2})
+    })
+
+    it('takes a zero the asset chosen declares over the one configured', async () => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 0})
+        await editor({selection: {...ASSET, dateFormat: 2}, panels: ['reference']})
+
+        await selectAsset(RADAR_ASSET)
+        await apply()
+
+        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 0})
+    })
+
+    it('leaves the date representation unset, held back, where neither the asset chosen nor the panel has one', async () => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {})
+        await editor({selection: ref('masking-ccdc'), panels: ['reference']})
+
+        await chooseReferenceType('asset')
+        await selectAsset(RADAR_ASSET)
+
+        expect(applyEnabled()).toBe(false)
+        expect(committedReference()).toEqual(ref('masking-ccdc'))
+    })
+
     it('counts only the reference last chosen, whatever answers late', async () => {
         const LAST = 'users/x/other-segments'
         fake.assets['users/x/scalars'] = segmentsAsset(VALID_BANDS.map(([name]) => [name, 0]))
@@ -740,7 +772,7 @@ describe('the kind of a reference chosen in REF', () => {
 
 // The reference supplies segments; which of their measures the alerts monitor, and in what data, are settings of Sources,
 // judged there and said on the setting to change. A reference no monitoring data Sources offers observes is refused in
-// REF; one only other monitoring settings observe is applied, and REF says, once, which sections then need attention.
+// REF; one only other monitoring settings observe is applied, and Sources, marked, says what needs changing.
 describe('a reference replaced by one that fits other measures', () => {
     beforeEach(() => {
         fake.assets[RADAR_ASSET] = segmentsAsset(RADAR_BANDS)
@@ -757,14 +789,13 @@ describe('a reference replaced by one that fits other measures', () => {
         expect(applyEnabled()).toBe(false)
     })
 
-    it('is applied in REF while Sources monitors other data, advising once that Sources needs attention', async () => {
+    // A reference deliberately replaced is not warned of in REF for what Sources will need: Sources says it.
+    it('is applied in REF while Sources monitors other data, saying nothing of Sources there', async () => {
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
 
         await selectAsset(RADAR_ASSET)
         expect(errorsOf(ASSET_INPUT)).toEqual([])
-        expect(warningsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.source.status.sectionsIncompatible')])
-        expect(warningsOf(ASSET_INPUT)[0]).toContain(SOURCES_SECTION)
-        expect(warningsOf(ASSET_INPUT)[0]).not.toContain('process.source.segments')
+        expect(warningsOf(ASSET_INPUT)).toEqual([])
         await apply()
 
         expect(committedReference()).toMatchObject({type: 'ASSET', id: RADAR_ASSET})
@@ -813,7 +844,9 @@ describe('a reference replaced by one that fits other measures', () => {
     it('is repaired in Sources by a type and band that observe it, judged from its evidence, and then needs no attention', async () => {
         await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
         const reads = metadataReads()
-        expect(referenceStatus().advisories).toHaveLength(1)
+        expect(Object.keys(sourceProblems())).toEqual(['sources'])
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_SECTION})
+        expect(referenceStatus()).toBe(null)
 
         await chooseButton(RADAR_TYPE)
         await chooseButton('VV')
@@ -952,16 +985,27 @@ describe('a reference the alerts can use but a segment chart cannot plot', () =>
         expect(applyEnabled()).toBe(true)
     })
 
-    it('says the chart\'s problem apart from a refusal of the reference itself, which alone holds REF back', async () => {
+    // One indicator: the refusal, said in one sentence; what the chart lacks waits until the reference is usable.
+    it('says only the refusal of a reference with one malformed segment band, in one sentence naming the layout', async () => {
         fake.assets['users/x/scalar-beside'] = segmentsAsset([...SLICEABLE_ONLY_BANDS, ['ndvi_intercept', 0]])
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
 
         await selectAsset('users/x/scalar-beside')
         await apply()
 
-        expect(errorsOf(ASSET_INPUT)[0]).toContain('process.source.segments.incompatible')
-        expect(warningsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.source.operation.PIXEL_SEGMENTS')])
+        expect(errorsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.source.segments.incompatible')])
+        expect(warningsOf(ASSET_INPUT)).toEqual([])
         expect(committedReference()).toMatchObject({type: 'ASSET', id: SEGMENTS_ASSET})
+    })
+
+    it('says in one sentence that an asset holding no CCDC segment band cannot be the reference', async () => {
+        fake.assets['users/x/classes'] = segmentsAsset([['class', 0], ['class_probability', 0]])
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
+
+        await selectAsset('users/x/classes')
+
+        expect(errorsOf(ASSET_INPUT)).toEqual(['process.source.segments.notSegments'])
+        expect(warningsOf(ASSET_INPUT)).toEqual([])
     })
 })
 

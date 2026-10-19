@@ -11,7 +11,8 @@ import {
     NO_OBSERVED_MEASURE,
     NO_SEGMENT_MEASURE,
     SLICE_SOURCE_SEGMENTS as SLICE_SOURCE,
-    SLICEABLE_SEGMENTS as SLICEABLE
+    SLICEABLE_SEGMENTS as SLICEABLE,
+    TIME_BANDS
 } from '#sepal/recipe/requirement/ccdcSegments'
 import {msg} from '~/translate'
 
@@ -20,7 +21,9 @@ import {SEGMENTS} from './segmentCapability'
 // The shared requirements over CCDC segments (lib/js/shared/src/recipe/requirement/ccdcSegments.js) as the GUI reads
 // them: the facts each judges come from the segments capability (`SEGMENTS.factsOf`, segmentCapability.js), and what
 // a diagnosis means is said here (`describe`), as {message, details}: a summary naming a few representative problems,
-// and every one, in the words of what reads the segments.
+// and every one, in the words of what reads the segments. An asset without the time bands every segment requirement
+// needs holds no CCDC segments at all, said as one sentence naming the remedy; one with them is CCDC segments, its
+// layout problems named.
 
 export const SLICEABLE_SEGMENTS = {...SLICEABLE, capability: SEGMENTS, describe: diagnostic => describeDiagnostic(diagnostic)}
 export const MONITORED_MEASURE = {...MONITORED, capability: SEGMENTS, describe: diagnostic => describeDiagnostic(diagnostic)}
@@ -28,17 +31,19 @@ export const CHARTABLE_SEGMENTS = {...CHARTABLE, capability: SEGMENTS, describe:
 export const SLICE_SOURCE_SEGMENTS = {
     ...SLICE_SOURCE,
     capability: SEGMENTS,
-    describe: diagnostic => describeDiagnostic(diagnostic, {incompatible: 'incompatibleSlice', noMeasure: 'noSliceMeasure'})
+    describe: diagnostic => describeDiagnostic(diagnostic, {incompatible: 'incompatibleSlice', notSegments: 'notSliceSegments', noMeasure: 'noSliceMeasure'})
 }
 
 const REPRESENTATIVE = 3
 
-const describeDiagnostic = (diagnostic, {incompatible = 'incompatible', noMeasure = 'noMeasure'} = {}) => {
+const describeDiagnostic = (diagnostic, {incompatible = 'incompatible', notSegments = 'notSegments', noMeasure = 'noMeasure'} = {}) => {
     switch (diagnostic.code) {
         case INCOMPATIBLE_SEGMENT_STRUCTURE: {
             const problems = structureProblems(diagnostic)
             return {
-                message: msg(`process.source.segments.${incompatible}`, {asset: diagnostic.assetId, problems: representative(problems, '; ')}),
+                message: TIME_BANDS.every(band => diagnostic.missing.includes(band))
+                    ? msg(`process.source.segments.${notSegments}`)
+                    : msg(`process.source.segments.${incompatible}`, {asset: diagnostic.assetId, problems: representative(problems, '; ')}),
                 details: problems
             }
         }
