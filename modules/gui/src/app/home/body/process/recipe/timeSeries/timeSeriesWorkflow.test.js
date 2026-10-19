@@ -38,13 +38,13 @@ describe('a time series', () => {
         expect(maskImage(registration)).toBe(false)
     })
 
-    it('downloads the indicator its Retrieve names to SEPAL, from its collection', () => {
+    it('downloads the indicators its Retrieve names to SEPAL, in the format it names, from its collection', () => {
         const recipe = {
             id: 'time-series-1',
             type: 'TIME_SERIES',
             title: 'Observations',
             model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}},
-            ui: {retrieveOptions: {bands: 'ndvi', scale: 30, tileSize: 2}}
+            ui: {retrieveOptions: {bands: ['ndvi', 'evi'], format: 'SITS', scale: 30, tileSize: 2}}
         }
 
         submitRetrieveRecipeTask(recipe)
@@ -53,7 +53,7 @@ describe('a time series', () => {
             operation: 'timeseries.download',
             params: expect.objectContaining({
                 title: 'process.retrieve.form.task.SEPAL',
-                image: {bands: 'ndvi', scale: 30, tileSize: 2, recipe, indicator: 'ndvi'}
+                image: {bands: ['ndvi', 'evi'], format: 'SITS', scale: 30, tileSize: 2, recipe, indicators: ['ndvi', 'evi']}
             })
         })])
     })

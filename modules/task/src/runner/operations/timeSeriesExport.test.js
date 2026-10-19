@@ -50,7 +50,7 @@ afterEach(async () => {
 
 const params = {
     description: 'series',
-    image: {recipe: {model: {dates: {startDate: '2020-01-01', endDate: '2020-02-01'}}}}
+    image: {recipe: {model: {dates: {startDate: '2020-01-01', endDate: '2020-02-01'}}}, indicators: ['ndvi']}
 }
 const RANGE = {startDate: '2020-01-01', endDate: '2020-02-01'}
 const RANGE_2 = {startDate: '2020-02-01', endDate: '2020-03-01'}
@@ -64,22 +64,51 @@ test('exports each tile\'s ranges with imagery into its own directory, then stac
     assert.deepEqual(
         events.filter(({download}) => download).map(({download}) => download).sort(),
         [
-            `${dir}/0/chunk-2020-01-01_2020-02-01`,
-            `${dir}/1/chunk-2020-01-01_2020-02-01`,
-            `${dir}/1/chunk-2020-02-01_2020-03-01`
+            `${dir}/0/ndvi/chunk-2020-01-01_2020-02-01`,
+            `${dir}/1/ndvi/chunk-2020-01-01_2020-02-01`,
+            `${dir}/1/ndvi/chunk-2020-02-01_2020-03-01`
         ]
     )
     const stacks = events.filter(({stack}) => stack)
     assert.deepEqual(stacks.map(({stack}) => stack), [
-        ['sepal-stack-time-series', [`${dir}/0`]],
-        ['sepal-stack-time-series', [`${dir}/1`]]
+        ['sepal-stack-time-series', [`${dir}/0/ndvi`]],
+        ['sepal-stack-time-series', [`${dir}/1/ndvi`]]
     ])
-    const stackZero = events.findIndex(({stack}) => stack?.[1][0].endsWith('/0'))
+    const stackZero = events.findIndex(({stack}) => stack?.[1][0].endsWith('/0/ndvi'))
     const firstOfTileOne = events.findIndex(({download}) => download?.includes('/1/'))
     assert.ok(stackZero < firstOfTileOne)
     assert.deepEqual(sepal.exported.map(({body}) => body.tileId), ['a', 'b', 'b'])
     assert.equal(sepal.exported[0].path, 'task/export/timeseries/chunk')
     assert.partialDeepStrictEqual(sepal.exported[0].body, {tileIndex: 0, ...RANGE})
+})
+
+test('exports and stacks each indicator of a tile in its own directory, asking for that indicator', async () => {
+    const dir = `${home}/downloads/series`
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await timeSeriesExport({...params, image: {...params.image, indicators: ['ndvi', 'evi']}}, context(sepal))
+
+    assert.deepEqual(
+        events.filter(({download}) => download).map(({download}) => download),
+        [`${dir}/0/ndvi/chunk-2020-01-01_2020-02-01`, `${dir}/0/evi/chunk-2020-01-01_2020-02-01`]
+    )
+    assert.deepEqual(sepal.exported.map(({body}) => body.image.indicator), ['ndvi', 'evi'])
+    assert.deepEqual(events.filter(({stack}) => stack).map(({stack}) => stack), [
+        ['sepal-stack-time-series', [`${dir}/0/ndvi`]],
+        ['sepal-stack-time-series', [`${dir}/0/evi`]]
+    ])
+})
+
+test('the SITS format has every indicator of a tile also written to one shared sits directory', async () => {
+    const dir = `${home}/downloads/series`
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await timeSeriesExport({...params, image: {...params.image, indicators: ['ndvi', 'evi'], format: 'SITS'}}, context(sepal))
+
+    assert.deepEqual(events.filter(({stack}) => stack).map(({stack}) => stack), [
+        ['sepal-stack-time-series', [`${dir}/0/ndvi`, '--band', 'ndvi', '--sits-dir', `${dir}/0/sits`]],
+        ['sepal-stack-time-series', [`${dir}/0/evi`, '--band', 'evi', '--sits-dir', `${dir}/0/sits`]]
+    ])
 })
 
 test('reports progress per tile and chunk with the existing messages', async () => {
@@ -105,7 +134,7 @@ test('a tile without imagery is skipped, and nothing is stacked for it', async (
     assert.deepEqual(sepal.exported.map(({body}) => body.tileId), ['b'])
     assert.deepEqual(
         events.filter(({stack}) => stack).map(({stack}) => stack[1]),
-        [[`${home}/downloads/series/1`]]
+        [[`${home}/downloads/series/1/ndvi`]]
     )
 })
 
@@ -122,7 +151,7 @@ test('stacks each tile as a local processing step, and hands the chunks the same
         events.filter(event => event.stack || typeof event.localProcessing === 'string'),
         [
             {localProcessing: 'begins'},
-            {stack: ['sepal-stack-time-series', [`${home}/downloads/series/0`]]},
+            {stack: ['sepal-stack-time-series', [`${home}/downloads/series/0/ndvi`]]},
             {localProcessing: 'ends'}
         ]
     )
@@ -136,7 +165,7 @@ test('the tile directory reaches the stacker as one argument, not through a shel
     const [stackEvent] = events.filter(({stack}) => stack)
     assert.deepEqual(
         stackEvent.stack,
-        ['sepal-stack-time-series', [`${home}/downloads/my series; touch x/0`]]
+        ['sepal-stack-time-series', [`${home}/downloads/my series; touch x/0/ndvi`]]
     )
     assert.deepEqual(stackEvent.options, {shell: false})
 })

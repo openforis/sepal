@@ -74,6 +74,7 @@ const fields = {
         .notBlank(),
     filenamePrefix: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL'),
+    format: new Form.Field(),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
@@ -181,7 +182,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderContent() {
-        const {allBands, allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {allBands, allowTiling, toSepal, toEE, sitsFormat, inputs: {destination, assetType}} = this.props
         const {more} = this.state
         if (this.isInitialLoading()) {
             return this.renderLoading()
@@ -191,6 +192,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {allBands ? null : this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
+                {sitsFormat ? this.renderFormat() : null}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'SEPAL' ? this.renderFilenamePrefix() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
@@ -323,6 +325,22 @@ class _MosaicRetrievePanel extends React.Component {
                 options={destinationOptions}
                 disabled={this.isDestinationControlDisabled()}
                 onChange={this.onDestinationChange}/>
+        )
+    }
+
+    renderFormat() {
+        const {inputs: {format}} = this.props
+        const formatOptions = ['CLASSIC', 'SITS'].map(value => ({
+            value,
+            label: msg(`process.retrieve.form.format.${value}.label`),
+            tooltip: msg(`process.retrieve.form.format.${value}.tooltip`)
+        }))
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.format.label')}
+                input={format}
+                multiple={false}
+                options={formatOptions}/>
         )
     }
 
@@ -525,8 +543,8 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         this.mounted = true
-        const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
-            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix}
+        const {allBands, sitsFormat, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix, format}
         } = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
@@ -554,6 +572,9 @@ class _MosaicRetrievePanel extends React.Component {
         }
         if (!sharing.value) {
             sharing.set('PRIVATE')
+        }
+        if (sitsFormat && !format.value) {
+            format.set('CLASSIC')
         }
         if (allBands) {
             useAllBands.set(true)
@@ -848,6 +869,7 @@ MosaicRetrievePanel.propTypes = {
         unavailable: PropTypes.func.isRequired
     }),
     single: PropTypes.any,
+    sitsFormat: PropTypes.any,
     submitTask: PropTypes.func,
     task: PropTypes.object,
     toDrive: PropTypes.any,
