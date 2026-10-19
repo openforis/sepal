@@ -24,9 +24,30 @@ The panel editing an image keeps what was saved through any read of its source -
 whether the read is pending, fails or answers without the band. A band no longer provided stays selected, offered
 beside the bands the source provides and refused beside its field; a recipe gone stays selected as an unavailable
 recipe, refused beside its field, as is an asset found missing; another failure to load a recipe says so there. Only a source the user selects is
-taken up: its bands become the snapshot, and a band is chosen only where none is. The panel judges its values by the
-same rules before they are applied (`outputCandidate.js`); the applied recipe's marks and gates follow what was
-applied, and Cancel writes nothing.
+taken up: its bands become the snapshot; the selected band stays where the new source provides it, and a band is chosen
+only where none was. A band the new source lacks is cleared with its legend, quietly - no missing-band error and no
+substitute - for the user to choose; no later source fills it until a band is chosen or the source kind starts over. A legend kept with its band still describes the previous source's classes; it is
+not regenerated. Switching between Asset and Recipe clears the source and everything read of it quietly and focuses
+the selector now shown. A field the draft leaves empty stays neutral until left or interacted with, and Apply stays
+held meanwhile; a legend the draft empties says it lacks entries only once the legend says its own error
+(`quietWhileEdited`, `recipeFormPanel.jsx`), while a legend saved without entries says so at once. The panel judges
+its values by the same rules before they are applied (`outputCandidate.js`); the applied recipe's marks and gates
+follow what was applied, and Cancel writes nothing.
+
+Index Change's editor follows the same policy for its change band and optional error band: either is kept where the
+new source provides it and otherwise cleared quietly. Its defaults are unchanged where no band was chosen: the FROM
+image's band where the source provides it, else the first band, with `<band>_rmse` as the error band where provided. A
+band cleared as one the new source lacks is not refilled by a default, not even the FROM image's band; the user chooses
+it, and switching source kind starts over. An error band cleared that way is treated as one the user cleared: no
+`<band>_rmse` fills it until a change band is chosen.
+
+Execution codes transitions from both legends, so each image needs one with entries (`MISSING_LEGEND`,
+`lib/js/shared/src/recipe/type/classChange.js`). An image without one marks its toolbar button ("This image has no
+legend"), disables Retrieve and refuses it at submission and in asset exports, withdraws previews, and holds back every
+recipe that builds this one's image; the description stays as it is. Its editor says so beside the legend, and the
+legend's own required rule holds Apply. A read of the source never replaces a saved legend; choosing another band
+starts its legend from that band's categorical style, as before. While the set-up wizard has the image open as its
+step, neither its button nor an untouched legend says it yet. The legend's ten-entry limit is an editor rule only.
 
 ## Output
 
@@ -56,11 +77,17 @@ rewritten; recompute or re-export to get codes that match their labels.
 
 - `lib/js/shared/test/recipe/output/type/changeSelectedBands.test.js` - Class Change and Index Change refused at a
   band, or error band, the source lacks, described once both images are, and from a recipe image's configuration.
+- `lib/js/shared/test/recipe/output/readiness.test.js` - a Class Change without either legend, or both, described and
+  refused at each legend, and a Masking of it held until the legend is configured.
 - `modules/gui/src/app/home/body/process/recipe/changeImageRequirements.test.jsx` - both recipes' marks, Retrieve and
   preview gates for a band gone, repair, Cancel, pending and failed reads, the saved band kept in the editor; Index
   Change's error band; a recipe gone or failing to load; one image's recipe gone beside the other's still being read
   or failing otherwise, before or after it; an asset found missing, alone and beside a recipe gone, whichever is
-  found last; and a missing recipe attributed to the edge that names it.
+  found last; a missing recipe attributed to the edge that names it; a Class Change image without a legend:
+  marked, gated, said beside its legend in the editor, repaired by applying a draft with classes, quiet when the
+  set-up wizard arrives at it and beside a legend the draft leaves empty; and, for both recipes, a replaced source
+  keeping a band it provides and clearing one it lacks quietly (Index Change's error band too), and a kind switch
+  starting the new selector focused and neutral, the saved recipe unchanged until applied.
 - `lib/js/shared/test/recipe/source/recipeClosureLoader.test.js` - a failed read naming its record and ending the
   others at once.
 

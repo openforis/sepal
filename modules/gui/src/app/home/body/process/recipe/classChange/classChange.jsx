@@ -13,6 +13,7 @@ import {Aoi} from '../aoi'
 import {changeImageRequirements} from '../changeImageRequirements'
 import {bandPresentation} from './bands'
 import {defaultModel} from './classChangeRecipe'
+import {legendRequirements} from './legendRequirements'
 import {ClassChangeToolbar} from './panels/classChangeToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -45,6 +46,11 @@ const ClassChange = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const IMAGES = [
+    {section: {id: 'fromImage', label: 'process.classChange.panel.inputImage.from.button.label'}, role: FROM_IMAGE, key: 'fromImage'},
+    {section: {id: 'toImage', label: 'process.classChange.panel.inputImage.to.button.label'}, role: TO_IMAGE, key: 'toImage'}
+]
+
 const getDateRange = recipe => {
     const {fromDate, toDate, targetDate} = recipe.model.dates
     const startDate = fromDate || targetDate
@@ -65,10 +71,7 @@ export default () => ({
     components: {
         recipe: ClassChange
     },
-    sourceRequirements: changeImageRequirements([
-        {section: {id: 'fromImage', label: 'process.classChange.panel.inputImage.from.button.label'}, role: FROM_IMAGE, key: 'fromImage'},
-        {section: {id: 'toImage', label: 'process.classChange.panel.inputImage.to.button.label'}, role: TO_IMAGE, key: 'toImage'}
-    ]),
+    sourceRequirements: [...changeImageRequirements(IMAGES), ...legendRequirements(IMAGES)],
     imageSource: true,
     getDateRange,
     bandPresentation,

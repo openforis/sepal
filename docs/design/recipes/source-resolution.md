@@ -814,7 +814,7 @@ rule today:
 | GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements`, `remappingRequirements`, Band Math's calculation declaration | Stays. It supplies messages, items, sections and editors, and no predicate. |
 | GUI-only execution rule | PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
-| Earth Engine-only failure | Masking's unselected mask; Class Change images without `legendEntries`; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
+| Earth Engine-only failure | Masking's unselected mask; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
 | Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
 | Presentation policy, not validity | the collecting UI's two-class safeguard on the Classification layer | Stays a GUI rule over the editor's state. It is not readiness. |
 
@@ -843,6 +843,10 @@ The declarations include:
   configured, and uses no supplied tree as given. The Regression stays described.
 - Masking's `MISSING_ROLE` at `['model', 'imageMask']` when no mask is selected. The Masking is refused as incomplete,
   not turned into a pass-through recipe. Its MSK section says "Select a mask" (`maskRequirements.js`).
+- Class Change's `MISSING_LEGEND` at `['model', 'fromImage' | 'toImage', 'legendEntries']` for each image whose legend
+  is not a non-empty list: execution codes transitions from both legends' entries. The rule is the editor's existing
+  `notEmpty`; its ten-entry limit stays an editor rule, since execution does not need it. The Class Change stays
+  described. Its FRM or TO section and its editor's legend say so (`classChange/legendRequirements.js`).
 - `MISSING_ROLE` at `['model', 'inputImagery', 'images']` when the input list holds no image, for Classification,
   Regression, Unsupervised Classification, Stack, Band Math and Remapping (`inputImageryRequirement`,
   `source/inputImagery.js`): execution zips the images and builds nothing from none. Their descriptions stay as they
@@ -1223,8 +1227,6 @@ Keep these additional items visible, outside the completed packets:
 - **Refresh scope.** An explicit source-asset refresh restores all dependent questions even when the asset token is
   unchanged. Refreshing only a downstream output refreshes its question, not independently held upstream output
   questions. That existing refresh policy was observed during this packet and was not broadened.
-- **Class Change legends.** Migrate the required FROM/TO legend configuration into shared readiness; this remains
-  separate from source-reference recovery.
 - **Stack aliases and Band Math deleted outputs: policy decision, not reference repair.** The audit found Stack
   excludes removed inputs from output immediately and discards their unreachable mappings on the next input Apply;
   re-adding a source can replace `custom_red` with `red`, leaving downstream consumers of the alias blocked.

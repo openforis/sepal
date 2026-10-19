@@ -3151,7 +3151,9 @@
           },
           "legend": {
             "label": "Legend",
-            "tooLong": "The legend is too long. It cannot contain more than {max} entries."
+            "tooLong": "The legend is too long. It cannot contain more than {max} entries.",
+            "missing": "This image has no legend. Open it to add the classes to compare.",
+            "required": "Add the classes of the change band to compare."
           },
           "to": {
             "button": {

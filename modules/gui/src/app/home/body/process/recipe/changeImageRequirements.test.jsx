@@ -300,6 +300,212 @@ describe('a CLASS_CHANGE image whose recipe is gone, beside one selecting an ass
     })
 })
 
+// A source the user selects in place of the saved one: what was chosen of the saved source is kept where the new one
+// provides it, and otherwise cleared without saying so, as a field never filled is. A broken saved selection still says
+// what it lacks at once (above).
+describe.each(RECIPES)('a %s image whose source is replaced', (type, name, toolbar) => {
+    it('keeps its band where the new source provides it, the saved recipe as it was until applied', async () => {
+        const recipe = recipeOf(type)
+        await open(toolbar(), recipe, ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+
+        await chooseAsset(NEW, name)
+        await answer({[`metadata:${NEW}`]: metadata(['band', 'other']), [`bands:${NEW}`]: ['band', 'other']})
+
+        expect(fieldValue(BAND_FIELD[name])).toBe('band')
+        expect(errorsOf(BAND_FIELD[name])).toEqual([])
+        expect(model()).toEqual(recipe.model)
+        await apply()
+        expect(model().fromImage).toMatchObject({id: NEW, band: 'band'})
+    })
+
+    it('clears its band, without saying so, where the new source lacks it; Apply stays held', async () => {
+        const recipe = recipeOf(type)
+        await open(toolbar(), recipe, ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+
+        await chooseAsset(NEW, name)
+        await answer({[`metadata:${NEW}`]: metadata(['other']), [`bands:${NEW}`]: ['other']})
+
+        expect(fieldValue(BAND_FIELD[name])).toBe('')
+        expect(errorsOf(BAND_FIELD[name])).toEqual([])
+        if (type === 'CLASS_CHANGE') {
+            expect(legendErrors()).toEqual([])
+        }
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(recipe.model)
+    })
+
+    it('starts the selector of the other kind focused and neutral, with nothing of the saved source', async () => {
+        await open(toolbar(), recipeOf(type), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+
+        await switchKind('RECIPE')
+
+        expect(field(IMAGE_FIELD[name]).contains(document.activeElement)).toBe(true)
+        expect(errorsOf(IMAGE_FIELD[name])).toEqual([])
+        expect(fieldValue(BAND_FIELD[name])).toBe('')
+        expect(errorsOf(BAND_FIELD[name])).toEqual([])
+        if (type === 'CLASS_CHANGE') {
+            expect(legendErrors()).toEqual([])
+        }
+        expect(applyEnabled()).toBe(false)
+    })
+})
+
+describe('an INDEX_CHANGE to image whose band the new source lacks', () => {
+    // The from image's band is the default only for a band not yet chosen, not a substitute for one cleared.
+    it('is cleared, not replaced by the from image\'s band the new source provides', async () => {
+        await open(IndexChangeToolbar, recipeOf('INDEX_CHANGE', {toImage: {...IMAGE(TO, 'INDEX_CHANGE'), band: 'old', bands: ['old']}}), ['toImage'])
+        await answer({[`metadata:${TO}`]: metadata(['old']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['old']})
+
+        await chooseAsset(NEW, 'indexChange')
+        await answer({[`metadata:${NEW}`]: metadata(['band']), [`bands:${NEW}`]: ['band']})
+
+        expect(fieldValue(BAND_FIELD.indexChange)).toBe('')
+        expect(errorsOf(BAND_FIELD.indexChange)).toEqual([])
+        expect(applyEnabled()).toBe(false)
+    })
+
+    it('takes the from image\'s band where a new to image\'s source provides it', async () => {
+        const {toImage: _toImage, ...model} = recipeOf('INDEX_CHANGE').model
+        await open(IndexChangeToolbar, {...recipeOf('INDEX_CHANGE'), model}, ['toImage'])
+        await answer({[`bands:${FROM}`]: ['band']})
+
+        await chooseAsset(NEW, 'indexChange')
+        await answer({[`metadata:${NEW}`]: metadata(['other', 'band']), [`bands:${NEW}`]: ['other', 'band']})
+
+        expect(fieldValue(BAND_FIELD.indexChange)).toBe('band')
+    })
+})
+
+// A band cleared as one a new source lacks is the user's to choose again: no later source fills it, until the source
+// kind starts over.
+describe('a CLASS_CHANGE image whose band a new source cleared', () => {
+    it('stays without a band when yet another source is selected', async () => {
+        await open(ClassChangeToolbar, recipeOf('CLASS_CHANGE'), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+        await chooseAsset(NEW)
+        await answer({[`metadata:${NEW}`]: metadata(['other']), [`bands:${NEW}`]: ['other']})
+
+        await chooseAsset(ANOTHER)
+        await answer({[`metadata:${ANOTHER}`]: metadata(['classes']), [`bands:${ANOTHER}`]: ['classes']})
+
+        expect(fieldValue(BAND_FIELD.classChange)).toBe('')
+        expect(errorsOf(BAND_FIELD.classChange)).toEqual([])
+        expect(applyEnabled()).toBe(false)
+    })
+
+    it('takes the initial default again once the source kind starts over', async () => {
+        await open(ClassChangeToolbar, recipeOf('CLASS_CHANGE'), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+        await chooseAsset(NEW)
+        await answer({[`metadata:${NEW}`]: metadata(['other']), [`bands:${NEW}`]: ['other']})
+
+        await switchKind('RECIPE')
+        await switchKind('ASSET')
+        await chooseAsset(ANOTHER)
+        await answer({[`metadata:${ANOTHER}`]: metadata(['classes']), [`bands:${ANOTHER}`]: ['classes']})
+
+        expect(fieldValue(BAND_FIELD.classChange)).toBe('classes')
+    })
+})
+
+describe('an INDEX_CHANGE image whose error band a new source lacks, after its band was chosen', () => {
+    it('is cleared, not replaced by the chosen band\'s default error band', async () => {
+        await open(IndexChangeToolbar, recipeOf('INDEX_CHANGE', {
+            fromImage: {...IMAGE(FROM, 'INDEX_CHANGE'), bands: ['band', 'chosen', 'err'], errorBand: 'err'}
+        }), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band', 'chosen', 'err']), [`bands:${FROM}`]: ['band', 'chosen', 'err'], [`bands:${TO}`]: ['band']})
+        await choose(BAND_FIELD.indexChange, 'chosen')
+        expect(fieldValue(ERROR_BAND_FIELD)).toBe('err')
+
+        await chooseAsset(NEW, 'indexChange')
+        await answer({[`metadata:${NEW}`]: metadata(['chosen', 'chosen_rmse']), [`bands:${NEW}`]: ['chosen', 'chosen_rmse']})
+
+        expect(fieldValue(BAND_FIELD.indexChange)).toBe('chosen')
+        expect(fieldValue(ERROR_BAND_FIELD)).toBe('')
+        expect(errorsOf(ERROR_BAND_FIELD)).toEqual([])
+    })
+})
+
+describe('an INDEX_CHANGE image whose source is replaced by one without its error band', () => {
+    it('clears the error band without saying so, keeping its band', async () => {
+        await open(IndexChangeToolbar, recipeOf('INDEX_CHANGE', {fromImage: {...IMAGE(FROM, 'INDEX_CHANGE'), errorBand: 'rmse'}}), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band', 'rmse']), [`bands:${FROM}`]: ['band', 'rmse'], [`bands:${TO}`]: ['band']})
+
+        await chooseAsset(NEW, 'indexChange')
+        await answer({[`metadata:${NEW}`]: metadata(['band']), [`bands:${NEW}`]: ['band']})
+
+        expect(fieldValue(BAND_FIELD.indexChange)).toBe('band')
+        expect(fieldValue(ERROR_BAND_FIELD)).toBe('')
+        expect(errorsOf(ERROR_BAND_FIELD)).toEqual([])
+        await apply()
+        expect(model().fromImage).toMatchObject({id: NEW, band: 'band'})
+        expect(model().fromImage.errorBand).toBeFalsy()
+    })
+})
+
+// Execution codes transitions from each image's legend (lib/js/shared/src/recipe/type/classChange.js).
+describe('a CLASS_CHANGE image without a legend', () => {
+    const TO_SECTION = 'process.classChange.panel.inputImage.to.button.label'
+    const withoutToLegend = () => recipeOf('CLASS_CHANGE', {toImage: {...IMAGE(TO), legendEntries: []}})
+
+    it('marks its section, refuses Retrieve and withdraws previews, naming that section; the other image is not marked', async () => {
+        await open(ClassChangeToolbar, withoutToLegend())
+
+        await answer({[`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+
+        expect(sectionMark('toImage')).toBe(LEGEND_MISSING)
+        expect(sectionMark('fromImage')).toBeNull()
+        expect(retrieveAvailable()).toBe(false)
+        expect(retrieveRead().output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: TO_SECTION}])
+        expect(previewGate()).toMatchObject({withdraw: true, section: TO_SECTION})
+    })
+
+    it('says so beside the legend in its editor, and is unmarked once a draft with classes is applied', async () => {
+        const saved = withoutToLegend()
+        await open(ClassChangeToolbar, saved, ['toImage'])
+        await answer({[`metadata:${TO}`]: metadata(['band', 'other']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band', 'other']})
+        expect(legendErrors()).toEqual([LEGEND_REQUIRED])
+        expect(model()).toEqual(saved.model)
+
+        await choose(BAND_FIELD.classChange, 'other')
+        expect(legendErrors()).toEqual([])
+        expect(sectionMark('toImage')).toBe(LEGEND_MISSING)
+        expect(retrieveAvailable()).toBe(false)
+        await apply()
+
+        expect(model().toImage.legendEntries.map(({value}) => value)).toEqual([1, 2])
+        expect(sectionMark('toImage')).toBeNull()
+        expect(retrieveAvailable()).toBe(true)
+    })
+
+    // A legend the draft leaves empty is work not yet done, said by the legend's own rule once it is interacted with.
+    it('is not said beside a legend a draft leaves empty by choosing a band without classes; Apply stays held', async () => {
+        await open(ClassChangeToolbar, recipeOf('CLASS_CHANGE'), ['fromImage'])
+        await answer({[`metadata:${FROM}`]: metadata(['band']), [`bands:${FROM}`]: ['band'], [`bands:${TO}`]: ['band']})
+
+        await chooseAsset(NEW)
+        await answer({[`metadata:${NEW}`]: {...metadata(['other']), properties: {}}, [`bands:${NEW}`]: ['other']})
+        await choose(BAND_FIELD.classChange, 'other')
+
+        expect(fieldValue(BAND_FIELD.classChange)).toBe('other')
+        expect(legendErrors()).toEqual([])
+        expect(applyEnabled()).toBe(false)
+        expect(model()).toEqual(recipeOf('CLASS_CHANGE').model)
+    })
+
+    it('is neither marked nor said beside its legend when a set-up wizard arrives at it', async () => {
+        const {fromImage: _fromImage, toImage: _toImage, ...model} = recipeOf('CLASS_CHANGE').model
+        await open(ClassChangeToolbar, {...recipeOf('CLASS_CHANGE'), ui: {initialized: false}, model}, ['fromImage'])
+
+        expect(sectionMark('fromImage')).toBeNull()
+        expect(legendErrors()).toEqual([])
+        expect(panelButton('button.done').disabled).toBe(true)
+    })
+})
+
 describe('a missing recipe found in a CLASS_CHANGE recipe\'s closure', () => {
     it('is that recipe\'s own where its own edge names it, and the recipe it lies under\'s otherwise', () => {
         const recipe = recipeOf('CLASS_CHANGE', {fromImage: {...IMAGE(FROM), type: 'RECIPE_REF', id: 'upstream-1'}})
@@ -309,10 +515,11 @@ describe('a missing recipe found in a CLASS_CHANGE recipe\'s closure', () => {
         const elsewhere = reads(recipe, missing([ID, 'upstream-1'], ['model', 'toImage'], 'FROM_IMAGE', 'upstream-1'))
         const otherFailed = reads(recipe, missing([ID, 'upstream-1'], ['model', 'fromImage'], 'FROM_IMAGE', 'another-1'))
 
-        expect(own.map(({item, outputState}) => item?.id || outputState)).toEqual(['fromImage', true])
-        expect(upstream.map(({item, outputState}) => item?.id || outputState)).toEqual([true, true])
-        expect(elsewhere.map(({item, outputState}) => item?.id || outputState)).toEqual([true, true])
-        expect(otherFailed.map(({item, outputState}) => item?.id || outputState)).toEqual([true, true])
+        expect(attributed(own)).toEqual(['fromImage'])
+        expect(attributed(upstream)).toEqual([])
+        expect(attributed(elsewhere)).toEqual([])
+        expect(attributed(otherFailed)).toEqual([])
+        expect([own, upstream, elsewhere, otherFailed].flat().every(({item, outputState}) => item || outputState)).toBe(true)
     })
 })
 
@@ -320,9 +527,19 @@ const BAND_FIELD = {
     classChange: 'process.classChange.panel.inputImage.changeBand.label',
     indexChange: 'process.indexChange.panel.inputImage.changeBand.label'
 }
+const LEGEND_FIELD = 'process.classChange.panel.inputImage.legend.label'
+const LEGEND_MISSING = 'process.classChange.panel.inputImage.legend.missing'
+const LEGEND_REQUIRED = 'process.classChange.panel.inputImage.legend.required'
+const IMAGE_FIELD = {
+    classChange: 'process.classChange.panel.inputImage.image.label',
+    indexChange: 'process.indexChange.panel.inputImage.image.label'
+}
 const ERROR_BAND_FIELD = 'process.indexChange.panel.inputImage.errorBand.label'
 const RECIPE_FIELD = 'process.classChange.panel.inputImage.image.label'
 const ASSET_FIELD = RECIPE_FIELD
+
+const NEW = 'users/x/new'
+const ANOTHER = 'users/x/another'
 
 const LEGEND = [{id: 'a', value: 1, label: 'A', color: '#000000'}, {id: 'b', value: 2, label: 'B', color: '#ffffff'}]
 
@@ -372,6 +589,9 @@ const missing = (recipePath, path, role, failedRecipe) => ({
 
 const reads = (recipe, output) => readOutputRequirements({recipe, output})
 
+// The items the reads claim the finding for; every other read is held by the output's own state.
+const attributed = reads => reads.filter(({item}) => item).map(({item}) => item.id)
+
 const Runtime = withSourceRuntime()(({sourceRuntime}) => {
     runtime = sourceRuntime
     return null
@@ -389,7 +609,7 @@ async function open(Toolbar, recipe, openPanels = []) {
             projects: [],
             tabs: [{id: ID}]
         },
-        assets: {user: [], other: []},
+        assets: {user: [NEW, ANOTHER].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
@@ -478,6 +698,33 @@ const fieldValue = label => {
 const fieldErrors = label => [...field(label).querySelectorAll('[data-tooltip]')]
     .flatMap(element => JSON.parse(element.dataset.tooltip))
     .filter(line => line.startsWith('process.requirement') || line.endsWith('.loadError'))
+
+// What the legend's label says of it as errors: the tooltip of the icon marking them.
+const legendErrors = () => errorsOf(LEGEND_FIELD)
+
+// What a field's label says of it as errors, its own and its requirements' alike.
+const errorsOf = label => {
+    const tooltip = field(label).querySelector('[data-feedback="error"]')?.closest('[data-tooltip]')
+    return tooltip ? JSON.parse(tooltip.dataset.tooltip) : []
+}
+
+// Another asset chosen in the image's picker, by typing its id and picking it.
+const chooseAsset = async (asset, name = 'classChange') => {
+    const input = field(IMAGE_FIELD[name]).querySelector('input')
+    await act(async () => input.click())
+    await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, asset)
+        input.dispatchEvent(new Event('input', {bubbles: true}))
+    })
+    await settled()
+    await act(async () => options().find(option => option.textContent.includes(asset)).click())
+    await settled()
+}
+
+const switchKind = async kind => {
+    await act(async () => panelButton(`process.sourceType.${kind}`).click())
+    await settled()
+}
 
 const options = () => [...document.querySelectorAll('[data-hook="option"]')]
 

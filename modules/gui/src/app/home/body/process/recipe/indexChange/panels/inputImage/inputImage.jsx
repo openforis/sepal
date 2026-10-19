@@ -73,15 +73,18 @@ export class InputImage extends React.Component {
         )
     }
 
-    // A source of the other type starts over: nothing selected or read for the previous one carries across.
+    // A source of the other type starts over: nothing selected or read for the previous one carries across, and the
+    // selector now shown starts neutral, as a new one does.
     clearSource() {
         const {inputs} = this.props
-        inputs.bands.set(undefined)
-        inputs.band.set(undefined)
-        inputs.recipe.set(undefined)
-        inputs.asset.set(undefined)
-        inputs.metadata.set(undefined)
-        inputs.visualizations.set(undefined)
+        const reset = {validate: false}
+        inputs.bands.set(undefined, reset)
+        inputs.band.set(undefined, reset)
+        inputs.errorBand.set(undefined, reset)
+        inputs.recipe.set(undefined, reset)
+        inputs.asset.set(undefined, reset)
+        inputs.metadata.set(undefined, reset)
+        inputs.visualizations.set(undefined, reset)
     }
 
 }
