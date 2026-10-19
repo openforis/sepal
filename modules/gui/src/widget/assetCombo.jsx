@@ -70,6 +70,7 @@ class _AssetCombo extends React.Component {
         return options ? (
             <Combo
                 options={options}
+                windowed
                 busyMessage={busyMessage || (this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading'))}
                 buttons={[
                     this.renderCopyIdButton(),

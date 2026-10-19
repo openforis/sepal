@@ -35,7 +35,7 @@ class _FormCombo extends React.Component {
         const {
             form, input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
             inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, hPlacement, vPlacement,
-            readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, onCancel, onFilterChange
+            readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, windowed, onCancel, onFilterChange
         } = this.props
         const feedback = inputFeedback(form, input)
         return (
@@ -52,6 +52,7 @@ class _FormCombo extends React.Component {
                 className={className}
                 disabled={disabled}
                 warningMessage={warningMessage || feedback.warning}
+                windowed={windowed}
                 errorMessage={this.getErrorMessage()}
                 inputClassName={inputClassName}
                 keyboard={keyboard}
@@ -109,6 +110,7 @@ FormCombo.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     warningMessage: PropTypes.any,
+    windowed: PropTypes.bool,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onFilterChange: PropTypes.func

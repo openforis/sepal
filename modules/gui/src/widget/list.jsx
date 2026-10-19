@@ -89,7 +89,8 @@ ScrollableList.propTypes = {
     onCancel: PropTypes.func
 }
 
-class _List extends React.Component {
+// What a list of options renders and how it is navigated: extended by the windowed list (windowedList.jsx).
+export class ListContent extends React.Component {
     autoCenter$ = new Subject()
     mouseOption$ = new Subject()
 
@@ -445,6 +446,6 @@ class _List extends React.Component {
 }
 
 const List = compose(
-    _List,
+    ListContent,
     withSubscriptions()
 )

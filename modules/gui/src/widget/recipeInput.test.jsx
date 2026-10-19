@@ -340,6 +340,46 @@ describe('the headings of the projects on offer', () => {
     })
 })
 
+describe('a large recipe listing', () => {
+    const recipes = Array.from({length: 2000}, (_, index) => ({
+        id: `recipe-${index}`,
+        name: `Recipe ${String(index).padStart(4, '0')}`,
+        type: 'MOSAIC',
+        projectId: index < 1000 ? 'p1' : 'p2'
+    }))
+
+    it('renders a window and reaches a recipe in the last project with End and Enter', async () => {
+        show({recipes, requests: {}})
+        await showAll()
+        await open()
+
+        expect(optionElements().length).toBeGreaterThan(0)
+        expect(optionElements().length).toBeLessThan(50)
+
+        await act(async () => combo().dispatchEvent(new KeyboardEvent('keydown', {key: 'End', bubbles: true})))
+
+        expect(headings()).toContain('Project two')
+        expect(optionElements().map(option => option.textContent)).toContain('Recipe 1999')
+        expect(optionElements().length).toBeLessThan(50)
+
+        await act(async () => combo().dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+
+        expect(selectedValue()).toBe('recipe-1999')
+        expect(selected).toEqual(['recipe-1999'])
+        expect(load$).not.toHaveBeenCalled()
+    })
+
+    it('opens on a saved recipe far down the current project without rendering the whole listing', async () => {
+        show({recipes, value: 'recipe-999', requests: {}})
+        await open()
+
+        expect(optionElements().map(option => option.textContent)).toContain('Recipe 0999')
+        expect(optionElements().length).toBeLessThan(50)
+        expect(selectedValue()).toBe('recipe-999')
+        expect(form.isDirty()).toBe(false)
+    })
+})
+
 const OWNER = 'owner'
 const OTHER = 'other'
 const NO_PROJECT = 'process.project.noProjectOption'
@@ -434,7 +474,7 @@ const headings = () => [...document.querySelectorAll('li')]
     .map(option => option.textContent)
 
 const optionElements = () => [...document.querySelectorAll('li')]
-    .filter(option => !option.className.includes('sticky'))
+    .filter(option => !option.className.includes('sticky') && !option.hasAttribute('aria-hidden'))
     .map(option => option.firstElementChild)
 
 // The control the user clicks to clear a selection, found by the icon that names it.

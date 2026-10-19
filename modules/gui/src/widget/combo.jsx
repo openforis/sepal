@@ -14,6 +14,7 @@ import {Input} from '~/widget/input'
 import {Keybinding} from '~/widget/keybinding'
 import {ScrollableList} from '~/widget/list'
 import {isMobile} from '~/widget/userAgent'
+import {ScrollableWindowedList} from '~/widget/windowedList'
 
 import styles from './combo.module.css'
 import {Widget} from './widget'
@@ -265,15 +266,16 @@ class _Combo extends React.Component {
     }
 
     renderOptions() {
-        const {hPlacement, vPlacement, optionsClassName, optionTooltipPlacement, alignment} = this.props
+        const {hPlacement, vPlacement, optionsClassName, optionTooltipPlacement, alignment, windowed} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
+        const OptionsList = windowed ? ScrollableWindowedList : ScrollableList
         return (
             <FloatingBox
                 element={this.inputContainer.current}
                 hPlacement={hPlacement}
                 vPlacement={vPlacement}
                 onBlur={this.onOptionsBlur}>
-                <ScrollableList
+                <OptionsList
                     ref={this.list}
                     air='more'
                     className={optionsClassName || styles.options}
@@ -521,6 +523,8 @@ Combo.propTypes = {
     value: PropTypes.any,
     vPlacement: PropTypes.oneOf(['above', 'below', 'above-or-below', 'below-or-above']),
     warningMessage: PropTypes.any,
+    // Renders only the options in view (windowedList.jsx), for lists of many.
+    windowed: PropTypes.any,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,

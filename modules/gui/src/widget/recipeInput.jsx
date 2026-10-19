@@ -67,6 +67,7 @@ class _RecipeInput extends React.Component {
         
         return (
             <Form.Combo
+                windowed
                 input={input}
                 label={label || msg('widget.recipeInput.label')}
                 labelButtons={labelButtons}
