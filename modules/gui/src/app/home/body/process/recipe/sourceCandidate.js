@@ -5,7 +5,7 @@ import {select, subscribe} from '~/store'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {IMAGE_OUTPUT} from './recipeOutput'
-import {sectionStatusOf} from './selectedSourceStatus'
+import {sectionRefusalOf, sectionStatusOf} from './selectedSourceStatus'
 import {sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 import {readSourceRequirements} from './sourceRequirements'
@@ -60,6 +60,11 @@ export class SourceCandidate {
     // The section's status for the edit (selectedSourceStatus.js), from the session as it stands.
     status() {
         return sectionStatusOf(select(), this.#reads(), this.#section)
+    }
+
+    // What the section refuses the edit for, where it does (selectedSourceStatus.js).
+    refusal() {
+        return sectionRefusalOf(select(), this.#reads(), this.#section)
     }
 
     // Whether the section holds the edit back, read at the moment of asking.

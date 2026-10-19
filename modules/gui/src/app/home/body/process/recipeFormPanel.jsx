@@ -67,8 +67,8 @@ export const recipeFormPanel = (
     // A panel whose id names a section the recipe's type declares source requirements for judges its values by them
     // before they are applied (sourceCandidate.js). What it finds holds Apply back as an invalid field does, and is told
     // to the form input the section declares (`section.input`, sourceRequirements.js) as that input's feedback
-    // (inputFeedback.js). A section declaring none - one only configuring something depending on the source, say -
-    // says what is wrong with its settings on its toolbar button alone. Requirements over the recipe's own configuration
+    // (inputFeedback.js) - for a section configuring something depending on the source, the input of the setting its
+    // refusal asks to change. A section declaring none says what is wrong with its settings on its toolbar button alone. Requirements over the recipe's own configuration
     // (`localFacts`) judge what was applied, not what is being edited: they bind no panel.
     const sourceSectionOf = props => {
         const declarations = getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || []
@@ -146,6 +146,16 @@ export const recipeFormPanel = (
                     )
                 }
 
+                // A declaration waiting while a set-up wizard has its section open as its step (`wizardStepMark: false`,
+                // sourceRequirements.js) says what it finds there only beside an input already saying its own error: as
+                // the input's own validation does, once it has been interacted with.
+                presented(declaration, feedback) {
+                    const {form, panelWizard} = this.props
+                    return declaration.wizardStepMark === false && panelWizard?.wizard && panelWizard.step === declaration.section.id
+                        ? _.pickBy(feedback, (_feedback, name) => form.getErrorMessage(name))
+                        : feedback
+                }
+
                 componentDidMount() {
                     this.mounted = true
                     this.sourceCandidate?.update(this.props.form.values())
@@ -170,12 +180,12 @@ export const recipeFormPanel = (
                     if (!sourceCandidate && !outputEditors.length) {
                         return form
                     }
-                    const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values())
+                    const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values(), sourceCandidate.refusal())
                     const sourceFeedback = sourceCandidate && sourceInputFeedback(sourceCandidate.status(), () => sourceCandidate.refresh())
                     const outputFeedback = outputEditors.reduce((feedback, {declaration, candidate}) => {
                         const findings = candidate?.findings()
                         return findings
-                            ? _.mergeWith(feedback, outputFeedbackOf(declaration.editor, findings, form.values()), combineFeedback)
+                            ? _.mergeWith(feedback, this.presented(declaration, outputFeedbackOf(declaration.editor, findings, form.values())), combineFeedback)
                             : feedback
                     }, {})
                     return withInputFeedback(form, {

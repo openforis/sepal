@@ -3,21 +3,23 @@ import React from 'react'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
-import {withActivators} from '~/widget/activation/activator'
+import {withActivationContext} from '~/widget/activation/activationContext'
+import {activateIn} from '~/widget/activation/activator'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './closeRecipe.module.css'
 import {closeRecipe} from './recipe'
+import {recipeActivationPath} from './recipeContext'
 
 class _CloseRecipe extends React.Component {
     render() {
-        const {activator: {activatables: {saveRecipeDialog}}, activatable} = this.props
+        const {activationContext: {pathList}, activatable} = this.props
         const recipe = activatable.recipe
         const title = recipe.title || recipe.placeholder
         const cancel = () => activatable.deactivate()
         const save = () => {
             activatable.deactivate()
-            saveRecipeDialog.activate({recipe, closeTabOnSave: true})
+            activateIn(recipeActivationPath(pathList, recipe.id), 'saveRecipeDialog', {recipe, closeTabOnSave: true})
         }
         const discard = () => {
             activatable.deactivate()
@@ -63,7 +65,7 @@ const policy = () => ({
 
 export const CloseRecipe = compose(
     _CloseRecipe,
-    withActivators('saveRecipeDialog'),
+    withActivationContext(),
     withActivatable({id: 'closeRecipeDialog', policy})
 )
 

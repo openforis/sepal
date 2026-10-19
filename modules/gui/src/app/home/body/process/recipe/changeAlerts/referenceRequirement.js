@@ -1,3 +1,9 @@
+import {
+    MONITORED_MEASURE_ABSENT,
+    MONITORED_MEASURE_UNOBSERVED,
+    NO_AVAILABLE_MEASURE,
+    NO_OBSERVED_MEASURE
+} from '#sepal/recipe/requirement/ccdcSegments'
 import {COLLECTION_MOSAIC, PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
@@ -15,14 +21,26 @@ import {availableMeasures, monitorableMeasures, observedMeasures} from './monito
 // A reference with no measure any monitoring data Sources offers observes is refused in REF; one whose measures only
 // other monitoring settings observe is accepted, and Sources is what then needs changing.
 
-// REF says what it finds on the input the reference is selected in. Sources' choices cannot show it, so its toolbar
-// button does.
+// REF says what it finds on the input the reference is selected in. Sources says it on the setting it asks to change -
+// the type of data, its data sets, or the band monitored - and on its toolbar button. What concerns none of them, such
+// as a reference that supplies no segments, is REF's to repair: Sources says it on its button alone.
 const REFERENCE = {
     id: 'reference',
     label: 'process.changeAlerts.panel.reference.button',
     input: ({section}) => section === 'RECIPE_REF' ? 'recipe' : 'asset'
 }
-const SOURCES = {id: 'sources', label: 'process.changeAlerts.panel.sources.button'}
+const SOURCES = {
+    id: 'sources',
+    label: 'process.changeAlerts.panel.sources.button',
+    input: (_values, refusal) => SOURCES_INPUTS[refusal?.code] || null
+}
+
+const SOURCES_INPUTS = {
+    [NO_AVAILABLE_MEASURE]: 'dataSetType',
+    [NO_OBSERVED_MEASURE]: 'dataSets',
+    [MONITORED_MEASURE_ABSENT]: 'band',
+    [MONITORED_MEASURE_UNOBSERVED]: 'band'
+}
 
 export const referenceRequirements = [
     {

@@ -772,7 +772,7 @@ describe('a reference replaced by one that fits other measures', () => {
         expect(Object.keys(sourceProblems())).toEqual(['sources'])
     })
 
-    // Sources' fields say nothing of it; its toolbar button is marked, saying which setting to change.
+    // Its toolbar button is marked, saying which setting to change - as is that setting in Sources (below).
     it('leaves Sources marked, saying to choose a monitoring type that observes one of its measures', async () => {
         await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
 
@@ -824,6 +824,113 @@ describe('a reference replaced by one that fits other measures', () => {
         expect(sourceProblems()).toEqual({})
         expect(referenceStatus()).toBe(null)
         expect(gate('IMAGE_OUTPUT')).toBe(null)
+    })
+})
+
+// What Sources' draft monitors, judged against the reference's segments as Apply is: said beside the setting each finding
+// asks to change - the type of data, or its data sets - following the draft and clearing once it is repaired. Pending
+// or unreadable evidence about the reference is REF's to say.
+describe('Sources\' settings, judged against the reference\'s segments', () => {
+    beforeEach(() => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(RADAR_BANDS)
+        fake.assets[RED_EDGE_ASSET] = segmentsAsset([...SEGMENT_BANDS, ...measureBands('redEdge1')])
+    })
+
+    it('say on the type of data, opening unedited, that it observes none of the reference\'s measures', async () => {
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
+
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([expect.stringContaining('process.source.segments.noAvailableMeasure')])
+        expect(errorsOf(DATA_SETS)).toEqual([])
+        expect(errorsOf(BAND)).toEqual([])
+        expect(alertsRecipe().model.sources).toEqual(alertsModel().sources)
+    })
+
+    it('say on the data sets where others of the type observe one of its measures', async () => {
+        await editor({selection: {type: 'ASSET', id: RED_EDGE_ASSET}, panels: ['sources']})
+
+        expect(errorsOf(DATA_SETS)).toEqual([expect.stringContaining('process.source.segments.noObservedMeasure')])
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([])
+        expect(errorsOf(BAND)).toEqual([])
+    })
+
+    it('say nothing once the draft takes a type that observes them, leaving what is applied marked and held', async () => {
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
+
+        await chooseButton(RADAR_TYPE)
+        await chooseButton('VV')
+
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([])
+        expect(errorsOf(BAND)).toEqual([])
+        expect(applyEnabled()).toBe(true)
+        expect(sourceProblems().sources).toContain('process.source.segments.noAvailableMeasure')
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_SECTION})
+    })
+
+    it('are left as applied when the repair is cancelled: marked, held, and said again on reopening', async () => {
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
+        await chooseButton(RADAR_TYPE)
+        await chooseButton('VV')
+
+        await cancel()
+
+        expect(alertsRecipe().model.sources).toEqual(alertsModel().sources)
+        expect(sourceProblems().sources).toContain('process.source.segments.noAvailableMeasure')
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_SECTION})
+        await reopen('sources')
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([expect.stringContaining('process.source.segments.noAvailableMeasure')])
+    })
+
+    it('say nothing, and hold nothing, once the repair is applied', async () => {
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
+        await chooseButton(RADAR_TYPE)
+        await chooseButton('VV')
+
+        await apply()
+
+        expect(alertsRecipe().model.sources).toMatchObject({dataSetType: 'RADAR', band: 'VV'})
+        expect(sourceProblems()).toEqual({})
+        expect(gate('IMAGE_OUTPUT')).toBe(null)
+        await reopen('sources')
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([])
+    })
+
+    it('say on the band, opening unedited, that the reference has no segments for it, until the draft takes one it has', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([...SEGMENT_BANDS, ...measureBands('nbr')])
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['sources']})
+
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('process.source.segments.measureAbsent')])
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([])
+        expect(errorsOf(DATA_SETS)).toEqual([])
+        expect(alertsRecipe().model.sources).toEqual(alertsModel().sources)
+
+        await chooseButton('nbr')
+        expect(errorsOf(BAND)).toEqual([])
+    })
+
+    it.each([
+        ['while the reference is being checked', () => fake.heldMetadata = []],
+        ['when the reference could not be read', () => fake.failing.add(RADAR_ASSET)]
+    ])('say nothing on any setting %s, nor mark Sources', async (_case, evidence) => {
+        evidence()
+
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['sources']})
+
+        expect([DATA_SET_TYPE, DATA_SETS, BAND].map(errorsOf)).toEqual([[], [], []])
+        expect(sourceProblems().sources).toBeUndefined()
+    })
+
+    // Landsat observes cirrus top of atmosphere only.
+    it('say on the band that the data, as processed, does not observe it', async () => {
+        fake.assets[CIRRUS_ASSET] = segmentsAsset([...SEGMENT_BANDS, ...measureBands('cirrus'), ...measureBands('ndvi')])
+        await editor({selection: {type: 'ASSET', id: CIRRUS_ASSET}, panels: ['sources']})
+        await act(async () => panelButton('button.close').click())
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'cirrus')))
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'options', 'corrections'], ['SR'])))
+
+        await reopen('sources')
+
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('process.source.segments.measureUnobserved')])
+        expect(errorsOf(DATA_SETS)).toEqual([])
     })
 })
 
@@ -1649,6 +1756,9 @@ const ASSET_INPUT = 'process.changeAlerts.panel.reference.form.asset.label'
 const RECIPE_INPUT = 'widget.recipeInput.label'
 const RADAR_TYPE = 'process.changeAlerts.panel.sources.form.dataSetTypes.RADAR'
 const SOURCES_SECTION = 'process.changeAlerts.panel.sources.button'
+const DATA_SET_TYPE = 'process.changeAlerts.panel.sources.form.dataSetType.label'
+const DATA_SETS = 'process.changeAlerts.panel.sources.form.dataSets.label'
+const BAND = 'process.changeAlerts.panel.sources.form.band.label'
 
 // Selects an asset in REF as a user does: the kind of reference in its header, unless already chosen, then the asset,
 // typed into the picker and chosen from what it offers.

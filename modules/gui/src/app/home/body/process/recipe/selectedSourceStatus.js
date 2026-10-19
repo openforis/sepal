@@ -61,6 +61,14 @@ export const sectionStatusOf = (state, reads, sectionId) => {
         : configurationStatusOf(reads, sectionId) || sourceStatus
 }
 
+// What a section refuses a selection for, where its status is that refusal (UNSUITABLE_SOURCE): the diagnosis behind it,
+// for an editor to say it beside the setting it concerns.
+export const sectionRefusalOf = (state, reads, sectionId) =>
+    sectionStatusOf(state, reads, sectionId)?.state === UNSUITABLE_SOURCE
+        ? reads.find(read => !read.local && read.declaration.section.id === sectionId && isRequired(read)
+            && read.verdict.status === UNSUPPORTED)?.verdict.diagnostic || null
+        : null
+
 // What each item of a section its local requirements enumerate, or its output read refuses, says, where anything does:
 // {[itemId]: status}.
 export const itemStatusesOf = (reads, sectionId) => Object.fromEntries(reads

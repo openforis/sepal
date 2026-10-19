@@ -80,8 +80,18 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 return this
             }
 
-            set(name, value) {
+            // A value the user gives is validated at once. One set programmatically - a reset, say - with
+            // `validate: false` leaves the field neutral, its error cleared, until it is edited or validated: what is
+            // invalid still holds the form back (isInvalid), shown or not.
+            set(name, value, {validate = true} = {}) {
                 const prevValue = this.state.values[name]
+                if (!validate) {
+                    this.setState(prevState => {
+                        const errors = {...prevState.errors}
+                        this.clearErrorsForField(name, errors)
+                        return {errors}
+                    })
+                }
                 if (value !== prevValue && !_.isEqual(value, prevValue)) {
                     this.setState(prevState => {
                         const state = _.cloneDeep(prevState)
@@ -96,7 +106,7 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         state.gotClean[name] = state.gotClean[name] || (!state.dirty && prevState.dirty)
                         return state
                     }, () => {
-                        this.validateField(name)
+                        validate && this.validateField(name)
                         this.notifyOnChange(name, value)
                     })
                 }
@@ -287,7 +297,7 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         })),
                         validate: () => this.validateField(name),
                         isDirty: () => this.isValueDirty(name),
-                        set: value => this.set(name, value),
+                        set: (value, options) => this.set(name, value, options),
                         setInitialValue: value => this.setInitialValue(name, value),
                         resetValue: () => this.resetValue(name),
                         handleChange: e => this.handleChange(e),

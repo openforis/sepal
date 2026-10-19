@@ -41,8 +41,9 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // source where its edge lies there, otherwise one configuring something that depends on it - one section object,
 // shared by every requirement in it. The section's `input`,
 // where it has one, is a function of the panel's form values naming the form input - not a model location - that
-// shows what the section's requirements find (recipeFormPanel.jsx); a section without one shows it only on its
-// toolbar button. `advise` names the other sections whose status says, in one aggregate advisory, that this
+// shows what the section's requirements find (recipeFormPanel.jsx), given the diagnosis of the edit's refusal, where
+// there is one, for a section whose input depends on which setting it concerns - null for one it names none; a section
+// without one shows it only on its toolbar button. `advise` names the other sections whose status says, in one aggregate advisory, that this
 // requirement is not met (selectedSourceStatus.js); none acquire one otherwise. `requirement` is a shared
 // pure requirement (lib/js/shared/src/recipe/requirement) as the GUI reads it: {id, capability, evaluate(facts,
 // parameters), describe(diagnostic)}, `capability` being the GUI side of the capability it is over - {capability,
@@ -117,7 +118,8 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // asks what these say. `toolbarMark: false` is presentation alone: what the declaration finds holds its operations and
 // is said wherever they are held, but its section's toolbar button does not say it (selectedSourceStatus.js), while
 // what other declarations of the section find still does. `wizardStepMark: false` is the same while a set-up wizard
-// has the section open as its step - where the panel's own form says what is missing - and no longer once it is not.
+// has the section open as its step - where the panel's own form says what is missing - and no longer once it is not;
+// meanwhile its `editor` says it only beside an input already saying its own error (recipeFormPanel.jsx).
 //
 // A presentation-only declaration may name `outputDiagnostics.upstreamReferences`: the roles whose directly
 // referenced recipes need attention according to confirmed readiness findings. Each reported recipe path's first

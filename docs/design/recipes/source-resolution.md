@@ -945,7 +945,10 @@ One read answers every consumer, so they cannot disagree:
   unmarked (`toolbarMark: false`), a presentation choice: its finding still holds the operations, which still name the
   section, and the section's other declarations still mark it. Classification's `NO_TRAINING_DATA` is declared so
   (`unmarkedTrainingDataRequirements`); Regression's is not. `wizardStepMark: false` waits only while a set-up wizard has
-  the section open as its step (`missingInputImageryRequirement`).
+  the section open as its step (`missingInputImageryRequirement`, Masking's missing mask). Meanwhile the declaration's
+  editor, where it has one, says its finding only beside an input already showing its own validation error - as a field
+  does once interacted with - so arriving at the step shows no error, while what holds Next or Done still holds it. A
+  section not yet reached is not marked either. Outside set-up, toolbar and editor say it at once.
   Reference feedback (`referenceFeedback.js`) is a presentation-only output declaration: `upstreamReferences`
   names declared source roles, and `itemOf` maps their actual edge locations to rows. It has no operations.
   The feedback retains `referenceFeedback: {reference: {id, name}, origins: [{id, name}]}` in its diagnostic and
@@ -1179,16 +1182,17 @@ separately:
 #### Source-reference editor audit (2026-10-16)
 
 Mounted GUI tests use mocked source responses, not live Earth Engine or browser appearance checks. The shared input
-fix is implemented; the other presentation gaps below are reported for a separate decision, not changed here.
+fix and the Masking and Change Alerts Sources field explanations are implemented; the remaining notes below are
+reported for a separate decision, not changed here.
 
 | Callers | Editor behaviour and evidence | Smallest next action |
 | --- | --- | --- |
 | Stack, Band Math, Remapping | Shared reference explanation now appears beside the recipe selector. Mounted tests cover opening unchanged, a healthy draft replacement, Cancel, and Remapping upstream repair while open. Existing input-band tests cover selected unavailable bands. | Implemented through the existing output-candidate binding; no new validation. |
 | Classification, Regression, Unsupervised Classification | Same selector binding, mounted for each caller. Existing Classification band-set tests retain the separate field/chip validation and repair flow. | Implemented; retain both declarations in the editor. |
 | Class Change / Index Change FROM and TO | `changeImageRequirements` already binds source disappearance to the source field and missing bands to their band fields. Mounted cases cover repair/Apply, Cancel, pending and transient errors. | No presentation fix identified for these existing marks. General upstream-reference messages are not registered here. |
-| Masking | Mounted temporary probe: an absent mask marks its section, but opening shows an empty selector without the shared missing-mask explanation. Selection is possible; opening and closing leave the model untouched. Its primary image uses a plain activation button, not reference-feedback marks. | Bind the existing `MISSING_ROLE` finding to the active mask selector, including an empty draft candidate. Do not add suitability validation. |
+| Masking | The mask editor binds the existing `MISSING_ROLE` declaration (`maskRequirements.js`) to the selector of the kind its draft shows, asset or recipe. A draft choosing no source of that kind is judged as selecting no mask, so an empty selector of a set-up Masking says "Select a mask"; it clears once a mask is chosen and returns when the draft switches to a kind with nothing chosen. At the wizard's mask step it is `wizardStepMark: false`: arriving shows no error and leaves MSK unmarked, and the explanation follows the selector's own error after interaction. Presentation only: the selector's own required rule still holds Apply and the wizard's Done. Both selectors, IMG's and MSK's, time that rule as agreed for new required fields: the panel opens with the selector focused and neutral; leaving it empty says it is required, and focusing it again keeps that; choosing a source clears it at once; using the picker's options counts as staying in the field; switching Asset/Recipe focuses the selector now shown, neutral (a programmatic reset, `set(value, {validate: false})`, `form.jsx`). Next, Done and Apply stay held while a source is missing, shown or not. Verified in Chromium against a fixture page and in `maskEditor.test.jsx`; other forms keep their timing (shared form validation consistency, below). `maskEditor.test.jsx` covers opening, the recipe kind, draft repair, Cancel, Apply, a set-up Masking with a mask and the wizard. The primary image still uses a plain activation button. Reopening the mask editor on a saved mask offers Apply although nothing changed, because `ImageForm` clears `bands` while the picker reloads; not changed here. | Implemented. |
 | Change Alerts REF | Existing `SourceCandidate` and `sourceInputFeedback` put confirmed capability problems on the recipe/asset field; mounted tests cover replacement, Refresh, Cancel and pending versus unavailable responses. | No gap identified in REF. |
-| Change Alerts Sources | Mounted temporary probe confirms `MONITORED_MEASURE` marks Sources while type/data-set/band fields give no explanation. Selecting compatible radar data and VV repairs the draft; Cancel preserves the applied mismatch. | Present the existing candidate status on the relevant type, data-set or band field. Extend field attribution in the existing binding if needed; retain its current Apply policy. |
+| Change Alerts Sources | The Sources section names the field from the draft's refusal (`SourceCandidate.refusal()`, passed to `section.input`): `NO_AVAILABLE_MEASURE` on the type of data, `NO_OBSERVED_MEASURE` on the data sets, `MONITORED_MEASURE_ABSENT` and `MONITORED_MEASURE_UNOBSERVED` on the band, each as its message asks. A refusal naming none of these settings stays on the toolbar button. Pending or unreadable reference evidence is REF's to say: Sources says nothing of it. `referenceRequirement.test.jsx` covers each field, opening unedited, draft repair, Cancel, Apply and pending versus unavailable; Apply policy unchanged. | Implemented. |
 | BAYTS Alerts REF (and dependent PRC) | REF already uses standard source-field feedback, with mounted replacement, pending, Refresh and Cancel tests. PRC deliberately reconciles unsupported orbit selections to supported ones in the draft, offers Apply and preserves applied passes on Cancel; its toolbar diagnosis is not repeated on the orbit field. | No missing corrective action in PRC; any added explanation should describe the existing draft reconciliation, not duplicate validation. |
 | CCDC Slice Source | Existing source-field binding explains capability problems and separate chart advisories; mounted tests cover repair, pending/unavailable, Refresh and Cancel. | No gap identified. |
 
@@ -1209,8 +1213,17 @@ Keep these additional items visible, outside the completed packets:
   eventually be links, each with a small open icon as part of the link. Put those actions in persistent error details
   or a suitable interactive popover, not an ordinary tooltip. IDs and display names are already retained separately.
   Links, popovers and modal changes are deferred; do not infer additional routes through diamond graphs.
-- **Source-editor presentation.** Address the Masking missing-mask field and Change Alerts Sources field attribution
-  reported in the audit above as narrow follow-ups, using existing findings and candidate bindings.
+- **Masking editor reopening.** Reopening Masking's mask editor on a saved mask offers Apply although nothing
+  changed: `ImageForm` clears `bands` when the picker starts reloading the saved source, which marks the form edited.
+  The image-to-mask editor shares `ImageForm` and was not checked. The model is not written unless applied. Fixing
+  it changes when bands are cleared during source changes, so it is left for a decision.
+- **Recipe-tab readiness indicator experiment (2026-10-19).** Try a small standard indicator on open recipe tabs for
+  confirmed execution problems, including upstream blockers, and evaluate how it feels with several recipes open
+  before deciding to keep it. Reuse current readiness answers; tab decoration must not start extra acquisitions.
+  Pending or temporarily unavailable evidence is not an invalid-recipe mark. Suppress error marks during initial
+  setup, and distinguish normal unfinished work such as Classification awaiting collected training data from errors,
+  preserving the existing presentation policy. Describe readiness as the result of implemented checks, not a complete
+  validity or Earth Engine success guarantee. Keep this as a deferred UI experiment; no implementation is scheduled.
 - **Refresh scope.** An explicit source-asset refresh restores all dependent questions even when the asset token is
   unchanged. Refreshing only a downstream output refreshes its question, not independently held upstream output
   questions. That existing refresh policy was observed during this packet and was not broadened.
@@ -1237,6 +1250,15 @@ identity still need one explicit repair; this is an accepted limitation, not a r
 - the remaining GUI-only and Earth Engine-only rules, one type per packet;
 - Drive and workspace exports;
 - whether Preview and the chart routes adopt the check.
+
+**Later: shared form validation consistency.** Defer the broader review and refactoring until after the current
+validation/readiness work and nearer-term UI fixes. The immediate Masking correction can establish the intended
+behaviour without migrating other forms. Review shared controls and panel workarounds to separate validity from error
+visibility: new required fields remain neutral through first focus, show errors after leaving them, retain errors on
+refocus and clear them promptly when corrected. Distinguish user edits from initialization and programmatic resets;
+verify autofocus and treat interaction with a picker's options as staying within that field. Preserve immediate
+explanations for broken saved configurations and keep invalid actions blocked independently of visible errors.
+Simplify the shared defaults so callers inherit consistent behaviour, with explicit exceptions only where needed.
 
 ## Source description
 

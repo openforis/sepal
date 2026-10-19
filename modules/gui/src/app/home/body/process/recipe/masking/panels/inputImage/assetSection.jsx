@@ -19,6 +19,7 @@ export class AssetSection extends React.Component {
                 placeholder={msg('process.masking.panel.inputImage.asset.placeholder')}
                 autoFocus
                 allowedTypes={['Image', 'ImageCollection']}
+                onBlur={() => input.validate()}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
                     this.onLoaded({asset, metadata, visualizations})

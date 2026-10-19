@@ -14,6 +14,7 @@ import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
@@ -83,7 +84,7 @@ class _Sources extends React.Component {
     }
 
     renderDataSetTypes() {
-        const {inputs: {dataSetType}} = this.props
+        const {form, inputs: {dataSetType}} = this.props
         const options = MONITORING_TYPES.map(type => ({
             value: type,
             label: msg(`process.changeAlerts.panel.sources.form.dataSetTypes.${type}`)
@@ -93,12 +94,13 @@ class _Sources extends React.Component {
                 label={msg('process.changeAlerts.panel.sources.form.dataSetType.label')}
                 input={dataSetType}
                 options={options}
+                errorMessage={inputFeedback(form, dataSetType).error}
             />
         )
     }
 
     renderDataSets() {
-        const {inputs: {dataSetType, dataSets}} = this.props
+        const {form, inputs: {dataSetType, dataSets}} = this.props
         if (!dataSetType.value) {
             return null
         }
@@ -108,6 +110,7 @@ class _Sources extends React.Component {
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+                errorMessage={inputFeedback(form, dataSets).error}
             />
         )
     }
@@ -131,7 +134,7 @@ class _Sources extends React.Component {
     }
 
     renderBand() {
-        const {bands, baseBands, corrections, inputs: {dataSets, band}} = this.props
+        const {form, bands, baseBands, corrections, inputs: {dataSets, band}} = this.props
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
             : [dataSets.value]
@@ -158,6 +161,7 @@ class _Sources extends React.Component {
                 input={band}
                 options={options}
                 disabled={!options.length}
+                errorMessage={inputFeedback(form, band).error}
                 framed
             />
         )
