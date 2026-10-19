@@ -120,8 +120,9 @@ describe('a Masking without a mask, set up', () => {
     })
 })
 
+// Opening an editor reloads its saved source. An unchanged answer is no edit, so Apply is not offered.
 describe('a Masking with a mask', () => {
-    it('opens its mask editor saying nothing, writing nothing', async () => {
+    it('opens its mask editor saying nothing, writing nothing, unedited', async () => {
         await open(withoutMask())
         await press(MASK)
         await chooseAsset(MASK_ASSET)
@@ -131,6 +132,17 @@ describe('a Masking with a mask', () => {
         await press(MASK)
 
         expect(errorsOf(ASSET_FIELD)).toEqual([])
+        expect(applyOffered()).toBe(false)
+        expect(model()).toEqual(applied)
+    })
+
+    it('opens its image editor unedited', async () => {
+        await open(withMask())
+        const applied = model()
+
+        await press(IMAGE)
+
+        expect(applyOffered()).toBe(false)
         expect(model()).toEqual(applied)
     })
 })
@@ -230,6 +242,7 @@ const PRIMARY_ASSET = 'users/x/landsat'
 const MASK_ASSET = 'users/x/forest'
 const BANDS = {[PRIMARY_ASSET]: ['red', 'nir'], [MASK_ASSET]: ['forest']}
 const MASK = 'process.masking.panel.inputImage.imageMask.button.label'
+const IMAGE = 'process.masking.panel.inputImage.imageToMask.button.label'
 const ASSET_FIELD = 'process.masking.panel.inputImage.image.label'
 const RECIPE_FIELD = ASSET_FIELD
 const MISSING_MASK = 'process.masking.panel.inputImage.imageMask.missing'
@@ -244,6 +257,8 @@ const withoutMask = () => ({
     ui: {initialized: true},
     model: {imageToMask: image(PRIMARY_ASSET)}
 })
+
+const withMask = () => ({...withoutMask(), model: {imageToMask: image(PRIMARY_ASSET), imageMask: image(MASK_ASSET)}})
 
 // A new Masking, at its wizard's first step.
 async function openNew() {
