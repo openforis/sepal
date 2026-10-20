@@ -143,8 +143,8 @@ descriptions are implemented.
   to preserve those selection semantics and add type-specific requirements, or change execution to select only used
   bands, before broadening validation. Unused missing asset selections remain distinct and do not block readiness.
   The previously rejected editor-assessment framework has not been revived to mark them.
-- **Routes that build the image unchecked.** The asset export refuses a broken constraint, but Preview, the Drive and
-  workspace exports and the other image routes build it as before
+- **Routes that build the image unchecked.** The asset, Drive and workspace exports refuse a broken constraint, but
+  Preview and the other image routes build it as before
   ([Execution readiness](../design/recipes/source-resolution.md#consumers)): a constraint naming a removed input fails
   in Earth Engine, and one reading a band its recipe input does not include executes or fails as that recipe type
   applies `selection` - only asset inputs are verified live.

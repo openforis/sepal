@@ -1,18 +1,34 @@
 import assert from 'node:assert/strict'
-import {beforeEach, mock, test} from 'node:test'
+import {beforeEach, describe, it, mock, test} from 'node:test'
 
 import {lastValueFrom, of, throwError} from 'rxjs'
 
-// What an image export to the SEPAL workspace starts, per kind of user. Image construction, the destination and
-// Earth Engine are substituted.
+// What an image export to the SEPAL workspace starts, per kind of user, and for which recipes. Recipe reads, image
+// construction, the destination and Earth Engine are substituted; the closure, the declarations and the readiness the
+// export is held to are the real ones.
 
 const state = {}
 
+mock.module('#sepal/ee/recipe', {
+    exports: {
+        loadRecipe$: id => state.catalogue[id]
+            ? of(state.catalogue[id])
+            : throwError(() => new Error(`Recipe could not be read: ${id}`))
+    }
+})
+// CCDC is described by what it can be asked for, without building it.
 mock.module('#sepal/ee/imageFactory', {
     exports: {
-        default: () => ({
-            getImage$: () => of({geometry: () => ({bounds: () => 'bounds'})}),
-            getGeometry$: () => of({bounds: () => ({bounds: () => 'bounds'})})
+        default: recipe => ({
+            getBands$: () => of(['ndvi', 'swir1']),
+            getImage$: () => {
+                state.built.push(recipe.id)
+                return of({geometry: () => ({bounds: () => 'bounds'})})
+            },
+            getGeometry$: () => {
+                state.built.push(recipe.id)
+                return of({bounds: () => ({bounds: () => 'bounds'})})
+            }
         })
     }
 })
@@ -56,13 +72,92 @@ const {inEEContext} = await import('#sepal/ee/eeContext')
 const {startImageWorkspaceExport$} = await import('#gee/jobs/task/export/imageWorkspaceExport')
 
 const ALICE = {username: 'alice'}
-const PARAMS = {image: {recipe: {type: 'MOSAIC', title: 'My mosaic'}, bands: {selection: ['red']}, filenamePrefix: 'prefix', scale: 30, workspacePath: 'x'}}
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    title: 'My mosaic',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+const PARAMS = {image: {recipe: MOSAIC, bands: {selection: ['red']}, filenamePrefix: 'prefix', scale: 30, workspacePath: 'x'}}
 const context = type => ({requestId: 'r-1', username: 'alice', origin: 'task', auth: {type}, projectId: 'p', workloadTag: 't', endpoint: 'https://ee'})
 
 beforeEach(() => {
+    state.catalogue = {}
+    state.built = []
     state.prepared = []
     state.started = []
     state.regionError = null
+})
+
+// Held to what the recipe's image output requires (imageOutput.js): one that cannot run, or that runs one that cannot,
+// is refused before its image is built, a destination is prepared or an export is started.
+describe('an image export to the workspace of a recipe that cannot run', () => {
+    const CLASSIFICATION = 'classification-1'
+    const ccdc = {
+        id: 'ccdc-1',
+        type: 'CCDC',
+        title: 'My CCDC',
+        model: {
+            dates: {startDate: '2015-01-01', endDate: '2020-01-01'},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: CLASSIFICATION},
+            options: {corrections: ['SR']}
+        }
+    }
+    const maskingOverCcdc = {
+        id: 'masking-1',
+        type: 'MASKING',
+        title: 'My masking',
+        model: {imageToMask: {type: 'RECIPE_REF', id: ccdc.id}, imageMask: {type: 'RECIPE_REF', id: MOSAIC.id}}
+    }
+    const classification = included => ({
+        id: CLASSIFICATION,
+        type: 'CLASSIFICATION',
+        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+    })
+    const exportOf = recipe => startImageWorkspaceExport$({image: {...PARAMS.image, recipe, bands: {selection: ['ndvi']}}}, {sepalUser: ALICE})
+
+    beforeEach(() => {
+        state.catalogue = {[ccdc.id]: ccdc, [MOSAIC.id]: MOSAIC}
+    })
+
+    it('refuses one whose classification\'s classifier the Landsat scenes cannot feed, and a Masking over it', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
+
+        for (const recipe of [ccdc, maskingOverCcdc]) {
+            await assert.rejects(
+                lastValueFrom(inEEContext(context('user'), exportOf(recipe))),
+                /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/
+            )
+        }
+        assert.deepEqual(state.built, [])
+        assert.deepEqual(state.prepared, [])
+        assert.deepEqual(state.started, [])
+    })
+
+    it('exports both once the classification is one the scenes can feed, to Drive or the user\'s bucket', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+
+        const toDrive = await lastValueFrom(inEEContext(context('user'), exportOf(ccdc)))
+        const toBucket = await lastValueFrom(inEEContext(context('serviceAccount'), exportOf(maskingOverCcdc)))
+
+        assert.match(toDrive.destination.folder, /^My CCDC_\d{4}-\d{2}-\d{2}_/)
+        assert.match(toBucket.destination.prefix, /^My masking_\d{4}-\d{2}-\d{2}_.*\/$/)
+        assert.deepEqual(state.prepared, [toDrive.destination.folder, toBucket.destination.prefix.slice(0, -1)])
+        assert.partialDeepStrictEqual(state.started, [
+            {destination: 'DRIVE', config: {fileNamePrefix: 'prefix', folder: toDrive.destination.folder, region: 'bounds', scale: 30}},
+            {destination: 'GCS', config: {bucket: 'alice-bucket', fileNamePrefix: `${toBucket.destination.prefix}prefix`, region: 'bounds', scale: 30}}
+        ])
+    })
+
+    it('fails as a read failure, not a finding, where the classification it requires cannot be read', async () => {
+        await assert.rejects(
+            lastValueFrom(inEEContext(context('user'), exportOf(maskingOverCcdc))),
+            error => error.message === `Recipe could not be read: ${CLASSIFICATION}`
+        )
+        assert.deepEqual(state.built, [])
+        assert.deepEqual(state.prepared, [])
+        assert.deepEqual(state.started, [])
+    })
 })
 
 test('a user with a Google account exports to a Drive folder named for the export', async () => {

@@ -15,7 +15,7 @@ radar or Planet image where it is classified, or computed by the classifier from
 `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it at the data sets where an optical data set or the radar collection would,
 or at the classification; SRC says why beside that field, the classification showing outside More while it cannot be
 used, and a refused draft cannot be applied. Selecting none requires nothing. Map previews, the Retrieve button and
-image-to-asset exports follow the finding; Drive and SEPAL exports do not consult readiness on the server.
+image-to-asset, Drive and SEPAL exports follow the finding.
 
 ## Output
 

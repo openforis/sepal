@@ -996,19 +996,23 @@ One read answers every consumer, so they cannot disagree:
   collections) resolves the closure itself and already requires `VALID` and `READY`. It requires readiness through the
   same shared function, from the same closure, and refuses the export otherwise. It builds the image beside that check
   (`forkJoin`), so a refused export may already have started Earth Engine work. What is promised is that the export is
-  refused. CCDC's Segments asset export (`ccdcAssetExport.js`) passes the same check at `ccdcAssetSource$`, the source
-  both its task and the asset-export sources (`assetSources.js`) build from, and builds the segments only once the
-  recipe is ready. Establishing readiness may still read Earth Engine for the closure and its evidence.
+  refused. The other recipe image exports pass the same check before they build anything, and build the image and
+  its geometry only once the recipe is ready: CCDC's Segments asset export at `ccdcAssetSource$` (`ccdcAssetExport.js`,
+  the source both its task and the asset-export sources in `assetSources.js` build from), and the Drive and SEPAL
+  workspace image exports at their recipe-aware entry points (`imageDriveExport.js`, `imageWorkspaceExport.js`), before
+  a Drive folder or workspace destination is prepared. Establishing readiness may still read Earth Engine for the
+  closure and its evidence. The exporters these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`)
+  know nothing of recipes and add no check; whatever calls them directly is held to nothing here.
 
 **Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
 Engine:
 - Preview (`/preview`), guarded only by the client's `canPreview`.
 - Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
 - The CCDC, LandTrendr and time-series chart loaders, and `nextReferenceDataPoints`.
-- The Drive and SEPAL workspace image exports.
-- Time-series downloads, and Sampling Design steps and stratum areas.
+- Time-series downloads, which hand each chunk to `toWorkspace.js` directly, and Sampling Design steps and stratum
+  areas.
 
-Drive and workspace exports follow separately. Preview and the chart routes stay as they are for now.
+Preview and the chart routes stay as they are for now.
 
 #### Performance
 
@@ -1248,11 +1252,12 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    reuses the rule, keeping its optical-only monitoring and its separate drop-index requirement. In the GUI
    (`recipe/collectionClassifierRequirements.js`) SRC is marked, the field says why, the classification shows outside
    More while it carries the problem, and a refused draft cannot be applied. Enforced by map previews and the Retrieve
-   button (GUI readiness gates), by the server's generic image-to-asset export (`imageAssetExport.js`) and by CCDC's
-   Segments asset export (`ccdcAssetSource$` in `ccdcAssetExport.js`, shared by its task and `assetSources.js`), which
-   builds the segments only for a ready recipe. Not enforced, and not migrated here: the CCDC and Time Series pixel
-   charts (`/timeSeries/loadObservations`, `/ccdc/loadSegments`), Drive and SEPAL image exports, and Time Series
-   download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
+   button (GUI readiness gates) and by the server's recipe image exports: the generic image-to-asset export
+   (`imageAssetExport.js`), CCDC's Segments asset export (`ccdcAssetSource$` in `ccdcAssetExport.js`, shared by its
+   task and `assetSources.js`) and the Drive and SEPAL image exports (`imageDriveExport.js`,
+   `imageWorkspaceExport.js`), the last three building the image only for a ready recipe. Not enforced, and not
+   migrated here: the CCDC and Time Series pixel charts (`/timeSeries/loadObservations`, `/ccdc/loadSegments`) and
+   Time Series download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
    resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
@@ -1331,7 +1336,6 @@ identity still need one explicit repair; this is an accepted limitation, not a r
 - the `TRAINING_DATA` and geometry operations;
 - readiness for named map products;
 - the remaining GUI-only and Earth Engine-only rules, one type per packet;
-- Drive and workspace exports;
 - whether Preview and the chart routes adopt the check.
 
 **Later: shared form validation consistency.** Defer the broader review and refactoring until after the current

@@ -207,9 +207,9 @@ Descriptions still need their normal observations; a known calculation failure c
 observations succeed. The editor and synchronization reuse the same analyzer and scope rules, with the existing
 JavaScript grammar and `jsep` versions pinned in the shared package. No new parser or validity flag is introduced.
 
-Compatibility: asset exports and dependent recipes with broken calculation references are now refused
+Compatibility: asset, Drive and SEPAL image exports and dependent recipes with broken calculation references are now refused
 deterministically with `INVALID_CALCULATION`, even if source observations succeed. Output-selection rules beyond the shared checks already in
-place remain GUI-local. Drive/workspace exports and other backend routes have not gained new checks in this packet.
+place remain GUI-local. Other backend routes have no such check.
 
 The editor marks an input found to lack a band it includes: its row in Input imagery says some of its bands are
 unavailable, to be reviewed in it, and the Input imagery toolbar button that some inputs' are; the input's editor names
@@ -274,10 +274,8 @@ where Earth Engine would build what it selects. That refuses what used to export
 - an input refused for its own configuration, such as a Band Math naming two output bands alike, which Earth Engine
   would build with the second renamed (`DUPLICATE_BAND_NAME`), or a Stack or BAYTS recipe its declaration refuses.
 
-The refusal reaches every route that reads the description: Retrieve, whatever the destination, Task's asset export,
-previews on every map, and recipes reading Band Math as a source. Task's Drive and SEPAL exports describe nothing, so a
-model submitted to them directly is not checked: Earth Engine still refuses a missing band there, and still builds what
-the description refuses.
+The refusal reaches every route that reads the description: Retrieve, whatever the destination, Task's asset, Drive
+and SEPAL exports, previews on every map, and recipes reading Band Math as a source.
 
 Each input is asked for the bands it includes as the physical bands it should return (`withOutputBands`), so an
 input whose own selection means something else - CCDC's names the measures to fit - still returns those bands. Asked
