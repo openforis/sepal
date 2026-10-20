@@ -3,7 +3,9 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -15,8 +17,10 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
+import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {pixelObservationsAvailability} from '../../operationAvailability'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
@@ -137,6 +141,8 @@ class _ChartPixel extends React.Component {
     }
 
     componentDidMount() {
+        const {recipeId, sourceRuntime} = this.props
+        this.observationsWatch = sourceRuntime?.watchOutput$({recipeId, operation: PIXEL_OBSERVATIONS}).subscribe()
         this.updateChart()
     }
 
@@ -145,12 +151,16 @@ class _ChartPixel extends React.Component {
     }
 
     componentWillUnmount() {
+        this.observationsWatch?.unsubscribe()
         this.cancel$.next(true)
         this.cancel$.complete()
     }
 
+    // The segments and observations are requested only while the recipe's own requirements of its observations are
+    // known to be met (pixelObservationsAvailability): once they are not known to be, what is being read is let go, and
+    // read again once they are; a chart they are found not to meet is closed.
     updateChart(prevProps) {
-        const {recipe, latLng, inputs: {selectedBand}} = this.props
+        const {recipe, latLng, observationsGate, inputs: {selectedBand}} = this.props
         const availableBands = getAvailableBands(this.bandSetting())
         const band = resolveChartBand(selectedBand.value, availableBands)
         if (!latLng || !band || band !== selectedBand.value) {
@@ -160,10 +170,22 @@ class _ChartPixel extends React.Component {
             // Form props still contain the old selection until the next update.
             return
         }
+        if (observationsGate?.withdraw) {
+            return this.close()
+        }
         if (!prevProps || !_.isEqual(
             [recipe.model, latLng, band],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
+            this.clearData()
+            this.held = Boolean(observationsGate)
+            if (!this.held) {
+                this.loadData(band)
+            }
+        } else if (observationsGate && !prevProps.observationsGate) {
+            this.clearData()
+            this.held = true
+        } else if (this.held && !observationsGate) {
             this.loadData(band)
         }
     }
@@ -205,6 +227,7 @@ class _ChartPixel extends React.Component {
 
     clearData() {
         this.cancel$.next(true)
+        this.held = false
         if (this.state.segments !== undefined || this.state.observations !== undefined)
             this.setState({segments: undefined, observations: undefined})
     }
@@ -215,8 +238,14 @@ class _ChartPixel extends React.Component {
     }
 }
 
+const mapStateToProps = (state, {recipe, sourceRuntime}) => ({
+    observationsGate: pixelObservationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)}).gate
+})
+
 export const ChartPixel = compose(
     _ChartPixel,
+    connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

@@ -635,6 +635,71 @@ describe('completing dependencies without describing', () => {
     })
 })
 
+describe('settling whether an operation can run, without describing', () => {
+    // A Time Series over Landsat whose Sources select a Classification the session does not hold, its classifier
+    // reading the features given.
+    const timeSeries = {
+        id: 'time-series-1',
+        type: 'TIME_SERIES',
+        model: {
+            aoi: {type: 'RECIPE', id: 'aoi-1'},
+            dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, classification: 'classification-1'},
+            options: {corrections: ['SR']}
+        }
+    }
+    const atAnyPixel = {...timeSeries, model: {...timeSeries.model, aoi: undefined}}
+    const classification = included => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+    })
+    const assessing = ({environment$, recipe}) => {
+        const states = []
+        createSourceRuntime({environment$}).assessReadiness$({recipe, operation: 'PIXEL_OBSERVATIONS'})
+            .subscribe(published => states.push(published))
+        return {latest: () => states[states.length - 1]}
+    }
+
+    it('reads the records the operation needs and settles its readiness, asking Earth Engine for nothing', () => {
+        const env = environmentOf()
+        env.set(environment({catalogue: catalogue([atAnyPixel])}))
+        const assessed = assessing({environment$: env.environment$, recipe: atAnyPixel})
+
+        emitRecipe('classification-1', classification(['VV_mean', 'VH_med']))
+
+        expect(assessed.latest()).toMatchObject({
+            status: 'COMPLETE',
+            dependencyValidity: SOUND,
+            readiness: {status: 'NOT_READY', findings: [expect.objectContaining({code: 'UNSUPPLIED_CLASSIFIER_INPUTS'})]}
+        })
+        expect(state.recipeCalls).toEqual(['classification-1'])
+        expect(state.bandsCalls).toEqual([])
+    })
+
+    it('is ready once the classification is one the scenes can feed', () => {
+        const env = environmentOf()
+        env.set(environment({catalogue: catalogue([atAnyPixel])}))
+        const assessed = assessing({environment$: env.environment$, recipe: atAnyPixel})
+
+        emitRecipe('classification-1', classification(['red', 'nir', 'ndvi']))
+
+        expect(assessed.latest()).toMatchObject({status: 'COMPLETE', readiness: RUNNABLE})
+    })
+
+    it('is unavailable, finding nothing, where a record it needs cannot be read', () => {
+        const env = environmentOf()
+        env.set(environment({catalogue: catalogue([atAnyPixel])}))
+        const assessed = assessing({environment$: env.environment$, recipe: atAnyPixel})
+
+        failRecipe('classification-1', Object.assign(new Error('recipe not found'), {status: 404}))
+
+        expect(assessed.latest()).toMatchObject({status: 'UNAVAILABLE'})
+        expect(assessed.latest().readiness).toBeUndefined()
+        expect(state.bandsCalls).toEqual([])
+    })
+})
+
 describe('what an operation read', () => {
     it('is the content of every record its description was resolved over, without session state', () => {
         const env = environmentOf()

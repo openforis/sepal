@@ -23,7 +23,10 @@ classification; the output description stays. SRC is marked and its editor says 
 classification shows outside More while it cannot be used - and a draft refused for it cannot be applied. Selecting
 no classification requires nothing; a Classification record not held, or one with several inputs, is judged for
 nothing, and a Planet Daily band only eight-band imagery carries is not refused. Map previews, the Retrieve
-button, the download task Retrieve submits and the pixel chart's observation request follow the finding.
+button, the download task Retrieve submits and the pixel chart's observation request follow the finding. The chart
+action and an open chart follow the chart's own readiness (`PIXEL_OBSERVATIONS`), not the image's: an AOI the chart
+does not read never holds it back. A Classification still to be read holds the chart without a finding. Once found
+unsuitable, a pixel being chosen is let go and an open chart closes, cancelling its request.
 
 ## Output
 
@@ -103,6 +106,13 @@ Earth Engine is asked.
   a read, and no count image built; charted over an AOI that cannot be read, refers back or is incomplete, reading
   none of it, and without changing the submitted recipe; CCDC's observations refused and answered the same way,
   describing nothing of its segments; Change Alerts' collection settings answered as before.
+- `modules/gui/src/app/home/body/process/recipe/pixelObservationsAvailability.test.js`,
+  `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx` - the chart's availability, said in Sources,
+  over an unresolvable AOI, while the Classification is read and as the runtime settles it; the action withdrawn
+  mid-selection; an open chart waiting, letting go of its request once the Classification is no longer held and
+  reading again once it is, and closing and cancelling on a finding (Time Series and CCDC alike).
+- `modules/gui/src/app/home/body/process/sourceRuntime/assetFreshness.test.js` - watching a pixel's observations
+  reads none of the AOI they ignore.
 - `lib/js/shared/test/recipe/output/operationReadiness.test.js` - the readiness-only read: nothing of the root
   described, an undeclared operation refused, and a requirement's observed bands pending, judged and failing as
   unavailable.

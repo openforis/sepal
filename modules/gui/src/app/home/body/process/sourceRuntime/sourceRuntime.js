@@ -5,12 +5,13 @@ import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
-import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
+import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
 import api from '~/apiRegistry'
 
 import {AGREED} from '../draftAgreement'
-import {createRecipeImageOutputObserver, explainRecipeImageOutput$, observeImageBands$} from '../recipe/imageOutputObserver'
+import {createRecipeImageOutputObserver, explainRecipeImageOutput$, observeImageBands$, settledRecipeReadiness$} from '../recipe/imageOutputObserver'
 import {buildMapDependencyGraph} from '../recipe/mapDependencyGraph'
+import {operationLoading, READINESS, recipeForOperation} from '../recipe/operationReadiness'
 import {recipeContent} from '../recipe/recipeContent'
 import {compatibleBasis, DEPENDENCIES, DESCRIBE, EXPLAIN, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
 import {initializeRecipe} from '../recipeCache'
@@ -49,6 +50,11 @@ import {SOURCE_IDENTITY_CHANGED, SOURCE_RUNTIME_UNAVAILABLE, sourceRuntimeError}
 //
 // `completeDependencies$` is the same operation stopped after its closure: validity without describing, for a
 // caller whose bands are already known and must not be failed by a description it never needed.
+//
+// `assessReadiness$` is the same operation settling, once its closure is complete and sound, whether `operation` over
+// the recipe can run (operationReadiness.js) instead of describing it: COMPLETE with that `readiness`, or UNAVAILABLE
+// where what it needed could not be had, so it is retried rather than retained. Only what a requirement of the operation
+// asks is observed.
 //
 // `explainOutput$` is the same operation explaining a refusal instead of describing: once its closure is complete it
 // observes, once, what the refusal still names, each observation failing on its own, and settles COMPLETE with the
@@ -165,7 +171,7 @@ export const createSourceRuntime = ({
         }
     }
 
-    const operation$ = ({recipe, describes, explains = false, reads = NO_READS}) => new Observable(subscriber => {
+    const operation$ = ({recipe, describes, explains = false, assesses = null, reads = NO_READS}) => new Observable(subscriber => {
         // Ownership is established before anything can publish. A synchronous LOADING, or an invalidation raised
         // from inside a subscriber reacting to it, both re-enter here while setup is still running; without this
         // the operation would be publishing before it owned the work it was publishing about.
@@ -250,6 +256,21 @@ export const createSourceRuntime = ({
             }).subscribe(explanation)
         }
 
+        const assess = graph => {
+            const assessment = new Subscriber({
+                next: readiness => terminate(readiness.status === 'UNAVAILABLE'
+                    ? {status: 'UNAVAILABLE', readiness, error: readiness.failures?.[0] || null}
+                    : {status: 'COMPLETE', readiness, error: null}),
+                error: unavailable
+            })
+            work.add(assessment)
+            settledRecipeReadiness$({
+                graph,
+                operation: assesses,
+                observeBands$: request => observations.observe$(request, observationOf(request, graph, recipe.id))
+            }).subscribe(assessment)
+        }
+
         const completeClosure = ({catalogue}) => {
             const closure = completeClosure$({
                 rootRecipe: recipe,
@@ -267,7 +288,12 @@ export const createSourceRuntime = ({
                             publishLoading()
                         } else if (state.status === 'COMPLETE') {
                             closureOutcome = state
-                            if (describes) {
+                            if (assesses) {
+                                reads.assets(graphAssets(state.graph))
+                                dependencyValidity(state).status === VALID
+                                    ? assess(state.graph)
+                                    : terminate({status: 'COMPLETE', readiness: null, error: null})
+                            } else if (describes) {
                                 observedAt = now()
                                 reads.assets(graphAssets(state.graph))
                                 explains ? explain(state.graph) : observe(state.graph)
@@ -328,6 +354,7 @@ export const createSourceRuntime = ({
     const resolveImageOutput$ = ({recipe, reads}) => operation$({recipe, describes: true, reads})
     const completeDependencies$ = ({recipe, reads}) => operation$({recipe, describes: false, reads})
     const explainOutput$ = ({recipe, reads}) => operation$({recipe, describes: true, explains: true, reads})
+    const assessReadiness$ = ({recipe, operation, reads}) => operation$({recipe, describes: false, assesses: operation, reads})
 
     // Reads the records again, as storage holds them now. What a recipe withdrawn from the listing needed was to be
     // read, so reading it is enough; a copy the session caches is replaced where it is present, closed and older.
@@ -402,7 +429,7 @@ export const createSourceRuntime = ({
     const outputs = new OutputRegistry({
         session,
         sessionChanges$,
-        acquisitionOf: outputLoading,
+        acquisitionOf: question => question.operation ? operationLoading(question) : outputLoading(question),
         operationOf: ({kind, recipe, key, reads}) => ({
             [DESCRIBE]: () => resolveImageOutput$({recipe, reads}).pipe(
                 tap(terminal => reportAssetFailure(_.uniq(failuresOf(terminal).flatMap(error => assetsFailedBy(error, terminal.assets)))))
@@ -411,6 +438,7 @@ export const createSourceRuntime = ({
                 tap(terminal => reportAssetFailure(_.uniq(failuresOf(terminal).flatMap(error => assetsFailedBy(error, terminal.assets)))))
             ),
             [DEPENDENCIES]: () => completeDependencies$({recipe, reads}),
+            [READINESS]: () => assessReadiness$({recipe, operation: key.operation, reads}),
             [REFRESH]: () => refreshRecords$(key)
         })[kind](),
         isCompatible: compatibleBasis,
@@ -424,6 +452,7 @@ export const createSourceRuntime = ({
     return {
         resolveImageOutput$,
         completeDependencies$,
+        assessReadiness$,
         // A candidate's question watches no source evidence: that is the recipe's, kept current for what it has applied.
         watchOutput$: question => defer(() => {
             refreshRecipeListing()
@@ -558,24 +587,27 @@ const reported = (loadRecipesById$, reads) => request => loadRecipesById$(reques
 )
 
 // The assets the session graph of a question's recipe reaches, computed once per catalogue - a candidate's each time.
+// A question about an operation reads the recipe that operation runs: an AOI a pixel's observations ignore is not theirs.
 const SESSION_ASSETS = new WeakMap()
 
-const sessionAssetsOf = (catalogue, {recipeId, candidate}) => {
+const sessionAssetsOf = (catalogue, {recipeId, operation, candidate}) => {
     if (candidate) {
         return graphAssets(buildMapDependencyGraph({recipe: candidate, loadedRecipes: catalogue || {}}))
     }
-    const recipe = catalogue?.[recipeId]
-    if (!recipe) {
+    const submitted = catalogue?.[recipeId]
+    if (!submitted) {
         return NONE
     }
     if (!SESSION_ASSETS.has(catalogue)) {
         SESSION_ASSETS.set(catalogue, new Map())
     }
     const known = SESSION_ASSETS.get(catalogue)
-    if (!known.has(recipeId)) {
-        known.set(recipeId, graphAssets(buildMapDependencyGraph({recipe, loadedRecipes: catalogue})))
+    const key = operation ? `${recipeId}:${operation}` : recipeId
+    if (!known.has(key)) {
+        const recipe = operation ? recipeForOperation(submitted, operation) : submitted
+        known.set(key, graphAssets(buildMapDependencyGraph({recipe, loadedRecipes: catalogue})))
     }
-    return known.get(recipeId)
+    return known.get(key)
 }
 
 const NONE = Object.freeze([])

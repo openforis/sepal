@@ -70,6 +70,7 @@ class _CcdcToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
+                        observes
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

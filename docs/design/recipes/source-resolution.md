@@ -1294,7 +1294,7 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    `type/classChange.js`; `NO_CHANGE_CLASSES` and `UNAVAILABLE_GATE_INDEX` in `type/pyeoAlerts.js`; and
    `UNSUPPLIED_CLASSIFIER_INPUTS` in `classifierInputs.js`. Strings and behaviour are unchanged; importers name the
    owning module, with no registry, barrel or re-export.
-4. **Chart readiness: audited (2026-10-20); first slice implemented (pixel observations).**
+4. **Chart readiness: audited (2026-10-20); pixel observations implemented on the backend and in the GUI.**
 
    Confirmed findings:
    - **The readiness pass is bound to describing `IMAGE_OUTPUT`.** In `resolveImageOutput.js` the root is described
@@ -1331,6 +1331,33 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
      contract and messages.
    - **The point stands in for the AOI.** `/timeSeries/loadObservations` judges a typed recipe at the clicked point,
      with its AOI replaced immutably. This fixes the over-requirement above, and CCDC's observations are now guarded.
+
+   GUI (Time Series and CCDC charts):
+   - **Availability.** The chart action (`ChartPixelButton` with `observes`) and the open chart are judged by
+     `pixelObservationsAvailability` (`operationAvailability.js`) over `readOperationReadiness`
+     (`recipe/operationReadiness.js`), which wraps `readReadiness`. They are never judged by the image output's answer.
+   - **Gate outcomes:**
+     - a finding, or dependencies known unsound, withdraws, naming the section that the type's declarations say it in
+       (Sources, for the classifier inputs);
+     - a record still to be read waits;
+     - a read that failed is unavailable.
+   - **The AOI is left out.** The recipe is judged without its AOI, since any clicked point stands in for it; no point
+     is assumed.
+   - **Acquisition.** Records the session does not hold are read by the source runtime under a `READINESS` key naming
+     the operation. `assessReadiness$` completes the closure and then settles `settledReadiness$`, asking Earth
+     Engine only for what a requirement observes, so the classifier check asks for nothing. The question is a watch
+     naming its `operation`, so an image-output answer never answers it. The assets it keeps current are those of the
+     recipe the operation runs, so the ignored AOI is not read.
+   - **Lifecycle.**
+     - A pixel being chosen is no longer chosen once the action is withdrawn.
+     - An open chart requests nothing while waiting. Once readiness stops being known - a Classification no longer
+       held, the chart's recipe unchanged - it lets go of what it was reading, ignoring a late answer, and reads again
+       once the gate clears.
+     - Once withdrawn, the chart closes, cancelling its requests, so a late answer draws nothing.
+   - **Unchanged:** CCDC Slice, Change Alerts and LandTrendr charts, `/ccdc/loadSegments`, Retrieve, previews and
+     section marks.
+   - **Limitation.** The runtime's `READINESS` work does not refresh records the listing has moved past (the image
+     output's `REFRESH`); the backend check stays authoritative.
 
    Proposed next:
    - **Segments.** `/ccdc/loadSegments`: `PIXEL_SEGMENTS` for a direct CCDC; the referenced recipe's `IMAGE_OUTPUT`

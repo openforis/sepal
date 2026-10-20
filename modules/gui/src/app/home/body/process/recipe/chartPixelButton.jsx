@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {withMap} from '~/app/home/map/mapContext'
@@ -18,7 +19,7 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './chartPixelButton.module.css'
 import {rankCoordinateCandidates} from './coordinateCandidates'
-import {pixelChartAvailability} from './operationAvailability'
+import {pixelChartAvailability, pixelObservationsAvailability} from './operationAvailability'
 
 const LONG_PRESS_DURATION_MS = 600
 const LONG_PRESS_MOVE_TOLERANCE_PX = 8
@@ -115,6 +116,14 @@ class _ChartPixelButton extends React.Component {
                 </div>
             </FloatingBox>
         ) : null
+    }
+
+    // What a chart reading observations needs is read for as long as the chart can be opened from here.
+    componentDidMount() {
+        const {observes, recipe, sourceRuntime} = this.props
+        this.observationsWatch = observes
+            ? sourceRuntime?.watchOutput$({recipeId: recipe.id, operation: PIXEL_OBSERVATIONS}).subscribe()
+            : null
     }
 
     // A pixel being chosen, or a long press about to offer coordinates, when the chart can no longer be opened would
@@ -287,18 +296,25 @@ class _ChartPixelButton extends React.Component {
     }
 
     componentWillUnmount() {
+        this.observationsWatch?.unsubscribe()
         this.cancelLongPress()
         this.state.clickListener?.remove()
         this.stopInteractionMode()
     }
 }
 
-// Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js).
-const mapStateToProps = (state, {recipe, sourceRuntime, disabled}) => ({
-    disabled: disabled || !pixelChartAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
-    }).available
-})
+// Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js): those of the
+// segments it reads, and of the observations, for a chart reading those (`observes`).
+const mapStateToProps = (state, {recipe, sourceRuntime, disabled, observes}) => {
+    const heldFor = key => sourceRuntime?.heldFor(key)
+    return {
+        disabled: disabled
+            || !pixelChartAvailability({
+                state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
+            }).available
+            || (observes && !pixelObservationsAvailability({state, recipe, heldFor}).available)
+    }
+}
 
 export const ChartPixelButton = compose(
     _ChartPixelButton,
@@ -311,6 +327,7 @@ export const ChartPixelButton = compose(
 ChartPixelButton.propTypes = {
     onPixelSelected: PropTypes.func.isRequired,
     disabled: PropTypes.any,
+    observes: PropTypes.bool,
     tooltipKey: PropTypes.string
 }
 

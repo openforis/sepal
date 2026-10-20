@@ -137,6 +137,28 @@ describe('Remapping constraints and current source-band evidence', () => {
 })
 
 describe('the assets an output reads', () => {
+    // A pixel's observations are read at the clicked point, whatever AOI the recipe configures.
+    it('are not, for a pixel\'s observations, the AOI those ignore, though the image output reads it', () => {
+        const timeSeries = {
+            id: 'time-series-1',
+            type: 'TIME_SERIES',
+            model: {
+                aoi: {type: 'ASSET', id: 'users/x/aoi'},
+                dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+                options: {corrections: ['SR']}
+            }
+        }
+        const session = sessionHolding([timeSeries])
+
+        session.runtime.watchOutput$({recipeId: timeSeries.id, operation: 'PIXEL_OBSERVATIONS'}).subscribe()
+        expect(versionReads()).toEqual([])
+
+        session.watch(timeSeries.id)
+        expect(versionReads()).toEqual([['users/x/aoi']])
+        expect(fake.bands).toHaveLength(0)
+    })
+
     it('are read when it is watched, though it is described from its configuration alone and runs observing nothing', () => {
         const session = sessionHolding([aoiMosaic('users/x/landcover')])
 
