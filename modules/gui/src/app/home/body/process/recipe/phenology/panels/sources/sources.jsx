@@ -71,7 +71,7 @@ class _Sources extends React.Component {
                         {this.renderDataSets()}
                         {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
-                        {advanced ? this.renderClassification() : null}
+                        {advanced || this.classificationProblem() ? this.renderClassification() : null}
                         {this.renderBand()}
                     </Layout>
                 </Panel.Content>
@@ -82,6 +82,12 @@ class _Sources extends React.Component {
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
+    }
+
+    // The classification is chosen under More; while what is selected there cannot be used, it shows anyway, saying why.
+    classificationProblem() {
+        const {form, inputs: {classification}} = this.props
+        return !!form.getErrorMessage(classification)
     }
 
     renderDataSetTypes() {
@@ -101,7 +107,7 @@ class _Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {inputs: {dataSetType, dataSets}} = this.props
+        const {form, inputs: {dataSetType, dataSets}} = this.props
         if (!dataSetType.value) {
             return null
         }
@@ -111,6 +117,7 @@ class _Sources extends React.Component {
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+                errorMessage={form.getErrorMessage(dataSets)}
             />
         )
     }

@@ -10,6 +10,22 @@ Retrieve downloads one to SEPAL, and its map shows how many observations each pi
 its data sets and an optional Classification (`sources.classification`). `options` configure how each image is
 processed. The AOI, when taken from a recipe or an asset, and the Classification are its dependencies.
 
+A selected Classification must be one the collection's images can feed. Its classifier reads the features its input's
+band sets include, and readiness requires each image to carry them where `lib/js/ee/src/timeSeries/collection.js`
+classifies it (`collectionClassifierRequirement` in `lib/js/shared/src/recipe/source/collectionSources.js`, the rule in
+`classifierInputs.js`): an optical scene's common bands, tasseled cap and indexes; a radar scene's `VV`, `VH` and
+`orbit`, the ratio derived only afterwards; a Planet image's renamed bands, with the `brightness`, `dayOfYear`,
+`daysFromTarget`, `targetDayCloseness` and `unixTimeDays` its collection adds to every image (`PLANET_GENERATED_BANDS`)
+- and any index the classifier computes from them.
+Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it at the
+data sets where an optical data set alone or the radar collection would carry the features, otherwise at the
+classification; the output description stays. SRC is marked and its editor says why beside that field - the
+classification shows outside More while it cannot be used - and a draft refused for it cannot be applied. Selecting
+no classification requires nothing; a Classification record not held, or one with several inputs, is judged for
+nothing, and a Planet Daily band only eight-band imagery carries is not refused. Map previews and the Retrieve
+button follow the finding; the pixel chart's observation request and the download task Retrieve submits do not
+consult readiness.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the

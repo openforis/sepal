@@ -14,6 +14,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {setInitialized} from '../../../recipe'
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {Dates} from './dates/dates'
 import styles from './phenologyToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
@@ -76,7 +77,7 @@ class _PhenologyToolbar extends React.Component {
                         tooltip={msg('process.phenology.panel.dates.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.changeAlerts.panel.sources.button')}
                         tooltip={msg('process.changeAlerts.panel.sources.tooltip')}

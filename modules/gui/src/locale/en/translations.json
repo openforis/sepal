@@ -5838,6 +5838,10 @@
         "malformedPasses": "The orbit passes to monitor are not valid. Choose them again.",
         "passAbsentNoAlternative": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored."
       },
+      "classifierInputs": {
+        "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
+        "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
+      },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
         "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",

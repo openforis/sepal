@@ -18,6 +18,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../ccdcRecipe'
 import styles from './ccdcToolbar.module.css'
 import {ChartPixel} from './chartPixel'
@@ -88,7 +89,7 @@ class _CcdcToolbar extends React.Component {
                         tooltip={msg('process.ccdc.panel.dates.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.ccdc.panel.sources.button')}
                         tooltip={msg('process.ccdc.panel.sources.tooltip')}

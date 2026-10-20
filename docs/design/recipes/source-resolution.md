@@ -1236,15 +1236,24 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    as a repair. Cover incompatible Sources drafts and the baseline evidence acquisition path with focused integration
    tests. The supplied radar-classifier/Landsat combination must be refused before execution; that refusal is not a
    claim of a successful live Earth Engine preview.
-2. **Reuse classifier compatibility for the GUI-supported consumers.** After the PyEO packet is verified and
-   committed, extract the common classifier-feature requirement while adding it to CCDC, Time Series and Phenology.
-   Classification is optional for these consumers: no selection requires no classifier check. Derive supplied
-   features from each consumer's actual optical, radar or Planet processing; do not copy PyEO's optical-only policy
-   or its optional drop-index requirement. Reuse the readiness traversal, evidence acquisition and GUI candidate
-   bindings rather than adding loaders, caches or duplicate panel predicates. Keep the Classification selector behind
-   More in all three (CCDC and Time Series already do; Phenology's presentation change is in the working tree).
-   Verify what the relevant image, chart and download paths enforce; image-output readiness alone does not establish
-   that every route is guarded. Preserve draft isolation, Cancel and recovery.
+2. **Classifier compatibility for the GUI-supported consumers: implemented.** The common rule is
+   `lib/js/shared/src/recipe/classifierInputs.js`: the features the selected Classification's single input's band sets
+   include, against what each image carries where `lib/js/ee/src/timeSeries/collection.js` classifies it - an optical
+   scene's common bands, tasseled cap and indexes (`sceneBands`), a radar scene's `VV`, `VH` and `orbit` (the ratio is
+   derived afterwards), a Planet image's renamed bands with the brightness and date bands
+   `lib/js/ee/src/planet/collection.js` adds to every image (`PLANET_GENERATED_BANDS`; indexes are added afterwards; a
+   band only eight-band Daily imagery carries is not refused) - plus the indexes the classifier computes itself. It reads the Classification record
+   (`recordsOf`), not its image output. CCDC, Time Series and Phenology declare `collectionClassifierRequirement`
+   (`source/collectionSources.js`): `UNSUPPLIED_CLASSIFIER_INPUTS` at the data sets where an optical data set or the
+   radar collection would carry the features, otherwise at the classification; no selection requires nothing. PyEO
+   reuses the rule, keeping its optical-only monitoring and its separate drop-index requirement. In the GUI
+   (`recipe/collectionClassifierRequirements.js`) SRC is marked, the field says why, the classification shows outside
+   More while it carries the problem, and a refused draft cannot be applied. Enforced by map previews and the Retrieve
+   button (GUI readiness gates) and by the server's generic image-to-asset export (`imageAssetExport.js`). Not
+   enforced, and not migrated here: the CCDC and Time Series pixel charts (`/timeSeries/loadObservations`,
+   `/ccdc/loadSegments`), CCDC's asset export (`ccdcAssetExport.js`), Drive and SEPAL image exports, and Time Series
+   download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
+   not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership.** Separately move recipe-specific codes beside the shared rules that own them;
    generic output-contract diagnostics stay in `output/diagnostic.js`. Training-data codes belong with their common
    rule, while calculation, constraint, legend and PyEO codes belong with their respective rules. Preserve code

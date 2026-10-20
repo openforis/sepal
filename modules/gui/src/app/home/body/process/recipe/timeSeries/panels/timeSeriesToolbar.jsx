@@ -18,6 +18,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../timeSeriesRecipe'
 import {ChartPixel} from './chartPixel'
 import styles from './timeSeriesToolbar.module.css'
@@ -87,7 +88,7 @@ class _TimeSeriesToolbar extends React.Component {
                         tooltip={msg('process.timeSeries.panel.dates.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.timeSeries.panel.sources.button')}
                         tooltip={msg('process.timeSeries.panel.sources.tooltip')}
