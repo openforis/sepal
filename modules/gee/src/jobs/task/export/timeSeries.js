@@ -11,17 +11,24 @@ import tile from '#sepal/ee/tile'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
 import {planetSource} from '#sepal/recipe/collectionType'
 
+import {resolveImageOutput$} from './imageOutput.js'
 import {startImageToWorkspaceExport$} from './toWorkspace.js'
 
+// Each request - the tile ids, a tile's date ranges, a chunk's export - is held to what the recipe's image output
+// requires (imageOutput.js) before it tiles or reads anything else, whatever a previous request established. The
+// download reads an indicator of the collection rather than the image, but every requirement on that image concerns
+// the collection both build. Establishing readiness may itself read Earth Engine.
 export const timeSeriesTiles$ = ({image: {recipe, tileSize}}) =>
-    tiling$(recipe, tileSize).pipe(
+    resolveImageOutput$(recipe).pipe(
+        switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({tiles}) => ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series tile ids')),
         map(tileIds => ({tileIds}))
     )
 
 // One computation for the whole tile, not one per date range.
 export const timeSeriesChunks$ = ({image: {recipe, tileSize}, tileId, dateRanges}) =>
-    tiling$(recipe, tileSize).pipe(
+    resolveImageOutput$(recipe).pipe(
+        switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({tiles}) => {
             const geometry = tileFeature(tiles, tileId).geometry()
             return ee.getInfo$(
@@ -33,7 +40,8 @@ export const timeSeriesChunks$ = ({image: {recipe, tileSize}, tileId, dateRanges
     )
 
 export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indicator, tileSize, filenamePrefix, scale, crs, crsTransform, shardSize, fileDimensions}, tileId, tileIndex, startDate, endDate}, {sepalUser}) =>
-    tiling$(recipe, tileSize).pipe(
+    resolveImageOutput$(recipe).pipe(
+        switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({aoiGeometry, tiles}) => timeSeries$({recipe, indicator, aoiGeometry, feature: tileFeature(tiles, tileId), startDate, endDate})),
         switchMap(timeSeries => {
             const chunkDescription = `${filenamePrefix || description}_${tileIndex}_${startDate}_${endDate}`

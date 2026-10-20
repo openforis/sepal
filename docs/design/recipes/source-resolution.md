@@ -1001,16 +1001,22 @@ One read answers every consumer, so they cannot disagree:
   the source both its task and the asset-export sources in `assetSources.js` build from), and the Drive and SEPAL
   workspace image exports at their recipe-aware entry points (`imageDriveExport.js`, `imageWorkspaceExport.js`), before
   a Drive folder or workspace destination is prepared. Establishing readiness may still read Earth Engine for the
-  closure and its evidence. The exporters these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`)
-  know nothing of recipes and add no check; whatever calls them directly is held to nothing here.
+  closure and its evidence. Time Series downloads (`export/timeSeries.js`) are held to the same `IMAGE_OUTPUT`
+  readiness, though they export an indicator of the collection rather than the `count` image: every requirement that
+  operation declares (the classifier inputs) concerns the collection both build, and the indicator is not required to
+  be an image band. Each of the three requests checks on its own - the tile ids (`timeSeriesTiles$`) before the AOI
+  is resolved or tiled, a tile's date ranges (`timeSeriesChunks$`) before any imagery check, and a chunk's export
+  (`startTimeSeriesChunkExport$`) before tiling, building the collection, preparing a destination or submitting -
+  so calling the export without planning bypasses nothing. This does not validate the indicator itself. The exporters
+  these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`) know nothing of recipes and add no
+  check; whatever calls them directly is held to nothing here.
 
 **Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
 Engine:
 - Preview (`/preview`), guarded only by the client's `canPreview`.
 - Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
 - The CCDC, LandTrendr and time-series chart loaders, and `nextReferenceDataPoints`.
-- Time-series downloads, which hand each chunk to `toWorkspace.js` directly, and Sampling Design steps and stratum
-  areas.
+- Sampling Design steps and stratum areas.
 
 Preview and the chart routes stay as they are for now.
 
@@ -1252,12 +1258,13 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    reuses the rule, keeping its optical-only monitoring and its separate drop-index requirement. In the GUI
    (`recipe/collectionClassifierRequirements.js`) SRC is marked, the field says why, the classification shows outside
    More while it carries the problem, and a refused draft cannot be applied. Enforced by map previews and the Retrieve
-   button (GUI readiness gates) and by the server's recipe image exports: the generic image-to-asset export
+   button (GUI readiness gates), by the server's recipe image exports - the generic image-to-asset export
    (`imageAssetExport.js`), CCDC's Segments asset export (`ccdcAssetSource$` in `ccdcAssetExport.js`, shared by its
    task and `assetSources.js`) and the Drive and SEPAL image exports (`imageDriveExport.js`,
-   `imageWorkspaceExport.js`), the last three building the image only for a ready recipe. Not enforced, and not
-   migrated here: the CCDC and Time Series pixel charts (`/timeSeries/loadObservations`, `/ccdc/loadSegments`) and
-   Time Series download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
+   `imageWorkspaceExport.js`), the last three building the image only for a ready recipe - and by Time Series
+   downloads (`export/timeSeries.js`: tile ids, a tile's date ranges and each chunk's export, each checked before its
+   own work). Not enforced, and not migrated here: the CCDC and Time Series pixel charts
+   (`/timeSeries/loadObservations`, `/ccdc/loadSegments`), which reach Earth Engine without consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
    resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
