@@ -996,14 +996,16 @@ One read answers every consumer, so they cannot disagree:
   collections) resolves the closure itself and already requires `VALID` and `READY`. It requires readiness through the
   same shared function, from the same closure, and refuses the export otherwise. It builds the image beside that check
   (`forkJoin`), so a refused export may already have started Earth Engine work. What is promised is that the export is
-  refused.
+  refused. CCDC's Segments asset export (`ccdcAssetExport.js`) passes the same check at `ccdcAssetSource$`, the source
+  both its task and the asset-export sources (`assetSources.js`) build from, and builds the segments only once the
+  recipe is ready. Establishing readiness may still read Earth Engine for the closure and its evidence.
 
 **Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
 Engine:
 - Preview (`/preview`), guarded only by the client's `canPreview`.
 - Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
 - The CCDC, LandTrendr and time-series chart loaders, and `nextReferenceDataPoints`.
-- The Drive and SEPAL workspace image exports, and the CCDC asset export.
+- The Drive and SEPAL workspace image exports.
 - Time-series downloads, and Sampling Design steps and stratum areas.
 
 Drive and workspace exports follow separately. Preview and the chart routes stay as they are for now.
@@ -1226,16 +1228,13 @@ these results; permanent tests retain the implemented shared editor cases.
 The order below separates finishing the current PyEO work from extending its rules to other consumers. A shared
 backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
 
-1. **Finish PyEO compatibility (in progress, not accepted as complete).** Shared classifier-feature and conditional
-   index-gate requirements are implemented in the working tree. Before wrapping up, align OPT's index choices,
-   explanation and draft Apply validation with the execution-based shared rules. A direct asset baseline calculates
-   the index from spectral bands; a recipe baseline supplies the index by name. Pending evidence must not be judged
-   against bands cached for a previous Classification. Preserve explicitly saved indexes and unchanged reopening;
-   for a new configuration prefer NDVI, then a supported alternative. With no supported gate index, explain why On
-   is unavailable and leave the rest of OPT usable; an incompatible saved gate must remain visible with Off available
-   as a repair. Cover incompatible Sources drafts and the baseline evidence acquisition path with focused integration
-   tests. The supplied radar-classifier/Landsat combination must be refused before execution; that refusal is not a
-   claim of a successful live Earth Engine preview.
+1. **PyEO compatibility: done.** Shared classifier-feature and conditional index-gate requirements decide
+   readiness, and OPT's index choices, explanation and draft Apply validation follow the same execution-based rules. A
+   direct asset baseline calculates the index from spectral bands; a recipe baseline supplies the index by name.
+   Pending evidence is not judged against bands cached for a previous Classification. Explicitly saved indexes and
+   unchanged reopening are preserved; a new configuration prefers NDVI, then a supported alternative. With no
+   supported gate index, OPT explains why On is unavailable and stays usable; an incompatible saved gate stays visible
+   with Off available as a repair. A radar classifier over Landsat is refused before execution.
 2. **Classifier compatibility for the GUI-supported consumers: implemented.** The common rule is
    `lib/js/shared/src/recipe/classifierInputs.js`: the features the selected Classification's single input's band sets
    include, against what each image carries where `lib/js/ee/src/timeSeries/collection.js` classifies it - an optical
@@ -1249,9 +1248,10 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    reuses the rule, keeping its optical-only monitoring and its separate drop-index requirement. In the GUI
    (`recipe/collectionClassifierRequirements.js`) SRC is marked, the field says why, the classification shows outside
    More while it carries the problem, and a refused draft cannot be applied. Enforced by map previews and the Retrieve
-   button (GUI readiness gates) and by the server's generic image-to-asset export (`imageAssetExport.js`). Not
-   enforced, and not migrated here: the CCDC and Time Series pixel charts (`/timeSeries/loadObservations`,
-   `/ccdc/loadSegments`), CCDC's asset export (`ccdcAssetExport.js`), Drive and SEPAL image exports, and Time Series
+   button (GUI readiness gates), by the server's generic image-to-asset export (`imageAssetExport.js`) and by CCDC's
+   Segments asset export (`ccdcAssetSource$` in `ccdcAssetExport.js`, shared by its task and `assetSources.js`), which
+   builds the segments only for a ready recipe. Not enforced, and not migrated here: the CCDC and Time Series pixel
+   charts (`/timeSeries/loadObservations`, `/ccdc/loadSegments`), Drive and SEPAL image exports, and Time Series
    download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and

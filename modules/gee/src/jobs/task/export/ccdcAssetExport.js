@@ -3,6 +3,7 @@ import {forkJoin, map, switchMap} from 'rxjs'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
 import {formatProperties} from '#sepal/formatProperties'
 
+import {resolveImageOutput$} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 
@@ -11,13 +12,19 @@ export const startCcdcAssetExport$ = params =>
         switchMap(startImageToAssetExport$)
     )
 
+// Every CCDC Segments export passes here, so here it is held to what the recipe's image output requires
+// (imageOutput.js): only a recipe that can run has its segments built. Establishing that may itself read Earth Engine -
+// the closure, and the evidence its requirements need - and its failures are passed on as they are.
 export const ccdcAssetSource$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
-    const segments = ccdc(recipe, {selection: bands})
-    return forkJoin({
-        segments: segments.getImage$(),
-        geometry: segments.getGeometry$()
-    }).pipe(
+    return resolveImageOutput$(recipe).pipe(
+        switchMap(() => {
+            const segments = ccdc(recipe, {selection: bands})
+            return forkJoin({
+                segments: segments.getImage$(),
+                geometry: segments.getGeometry$()
+            })
+        }),
         map(({segments, geometry}) => {
             const formattedProperties = formatProperties({...properties, scale})
             const allBands = getAllBands(bands)

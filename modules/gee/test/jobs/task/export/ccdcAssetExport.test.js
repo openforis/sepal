@@ -1,15 +1,24 @@
 import assert from 'node:assert/strict'
-import {describe, it, mock} from 'node:test'
+import {beforeEach, describe, it, mock} from 'node:test'
 
-import {lastValueFrom, of} from 'rxjs'
+import {lastValueFrom, of, throwError} from 'rxjs'
 
 // What an existing CCDC Segments asset contains. These are characterization tests: they pin the format already
 // written into every asset users hold, so that anything reading one later can be held to the same shape.
 //
-// Only the Earth Engine boundary and the export job are mocked. `formatProperties` and `toVisualizationProperties`
-// run for real, because the serialized property strings ARE the contract - a reader parses those exact bytes.
+// Only the Earth Engine boundary, recipe reads and the export job are mocked. `formatProperties` and
+// `toVisualizationProperties` run for real, because the serialized property strings ARE the contract - a reader parses
+// those exact bytes - and so do the closure, the declarations and the readiness the export is held to.
 
 const captured = {}
+const state = {catalogue: {}, catalogueUnreadable: false}
+
+beforeEach(() => {
+    delete captured.ccdc
+    delete captured.export
+    state.catalogue = {}
+    state.catalogueUnreadable = false
+})
 
 const geometry = {bounds: () => 'region-bounds'}
 
@@ -24,6 +33,23 @@ mock.module('#sepal/ee/timeSeries/ccdc', {
         }
     }
 })
+mock.module('#sepal/ee/recipe', {
+    exports: {
+        loadRecipe$: id => state.catalogue[id]
+            ? of(state.catalogue[id])
+            : throwError(() => new Error(`Recipe could not be read: ${id}`))
+    }
+})
+// What CCDC is asked for, without building it: the measures its collection can supply.
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: () => ({
+            getBands$: () => state.catalogueUnreadable
+                ? throwError(() => new Error('Recipe bands could not be read'))
+                : of(['ndvi', 'swir1'])
+        })
+    }
+})
 mock.module('#gee/jobs/task/export/toAsset', {
     exports: {
         startImageToAssetExport$: args => {
@@ -34,6 +60,8 @@ mock.module('#gee/jobs/task/export/toAsset', {
 })
 
 const {startCcdcAssetExport$} = await import('#gee/jobs/task/export/ccdcAssetExport')
+
+const CLASSIFICATION = 'classification-1'
 
 const recipe = ({corrections = ['SR']} = {}) => ({
     id: 'ccdc-1',
@@ -85,6 +113,57 @@ const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], 
 
 const visualizationProperties = properties =>
     Object.fromEntries(Object.entries(properties).filter(([key]) => key.startsWith('visualization_')))
+
+// Every CCDC Segments export is held to what the recipe's image output requires (imageOutput.js), by the real
+// resolution and readiness: a recipe that cannot run is refused before its segments are built or submitted.
+describe('a CCDC Segments export held to what its recipe requires', () => {
+    const classified = () => {
+        const model = recipe()
+        model.model.sources = {dataSets: {LANDSAT: ['LANDSAT_8']}, classification: CLASSIFICATION}
+        return model
+    }
+    const classification = included => ({
+        id: CLASSIFICATION,
+        type: 'CLASSIFICATION',
+        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+    })
+
+    it('is refused where its classification\'s classifier the Landsat scenes cannot feed, building and submitting nothing', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
+
+        await assert.rejects(submit({model: classified()}), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+    })
+
+    it('exports as before once its classification is one the scenes can feed', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+
+        const {pyramidingPolicy, maxPixels, region, scale, image, properties} = await submit({model: classified(), bands: ['ndvi', 'swir1']})
+
+        assert.deepEqual(captured.ccdc.options, {selection: ['ndvi', 'swir1']})
+        assert.deepEqual(pyramidingPolicy, {'.default': 'sample'})
+        assert.equal(maxPixels, 1e13)
+        assert.equal(region, 'region-bounds')
+        assert.equal(scale, 30)
+        assert.equal(image, 'segments-image')
+        assert.equal(properties.dateFormat, 1)
+    })
+
+    it('fails, building and submitting nothing, where its classification cannot be read', async () => {
+        await assert.rejects(submit({model: classified()}), /Recipe could not be read: classification-1/)
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+    })
+
+    it('fails as unavailable, not as a finding, where what it can be asked for cannot be read', async () => {
+        state.catalogueUnreadable = true
+
+        await assert.rejects(submit(), /unavailable output/)
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+    })
+})
 
 describe('the CCDC Segments asset export', () => {
     it('writes an array-band asset with sample pyramiding', async () => {
