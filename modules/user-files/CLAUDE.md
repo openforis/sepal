@@ -5,8 +5,8 @@ File management service for user workspaces. REST API for file operations and We
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner (no test files currently exist)
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

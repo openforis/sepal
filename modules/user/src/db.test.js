@@ -1,8 +1,10 @@
 // Contract test for the legacy import (migrations/legacy-import/001.do.import.sql). Its conditions and
 // transformations are asserted against the SQL because running it needs the legacy `sepal_user` schema;
 // what the schema stream produces is covered by databaseMigrations.integration.test.js against MySQL.
+import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {join} from 'node:path'
+import {test} from 'node:test'
 
 import {dirName} from '#sepal/path'
 
@@ -15,16 +17,19 @@ const sql = raw
     .join('\n')
 
 test('copies only when the source exists and the target is still empty', () => {
-    expect(sql).toMatch(/EXISTS\(SELECT 1 FROM information_schema\.TABLES WHERE TABLE_SCHEMA='sepal_user'/)
-    expect(sql).toMatch(/\(SELECT COUNT\(\*\) FROM `sepal_user`\)=0/)
+    assert.match(
+        sql,
+        /EXISTS\(SELECT 1 FROM information_schema\.TABLES WHERE TABLE_SCHEMA='sepal_user'/
+    )
+    assert.match(sql, /\(SELECT COUNT\(\*\) FROM `sepal_user`\)=0/)
 })
 
 test('lowercases usernames on the way in', () => {
-    expect(sql).toMatch(/SELECT id, LOWER\(username\)/)
+    assert.match(sql, /SELECT id, LOWER\(username\)/)
 })
 
 test('reads the legacy schema by name, and writes only to the selected database', () => {
-    expect(sql).toMatch(/FROM sepal_user\.`sepal_user`/)
+    assert.match(sql, /FROM sepal_user\.`sepal_user`/)
     const writes = sql.match(/(INSERT INTO|UPDATE|DELETE FROM|ALTER TABLE|DROP TABLE)\s+sepal_user\./g)
-    expect(writes).toBeNull()
+    assert.equal(writes, null)
 })

@@ -14,7 +14,7 @@ const log = getLogger('timeSeriesExport')
 
 const CONCURRENT_CHUNKS = 3
 
-export const timeSeriesExport = async (params, {sepal, report, signal, sleep}) => {
+export const timeSeriesExport = async (params, {sepal, report, signal, sleep, localProcessing}) => {
     const {description, image: {workspacePath, recipe}} = params
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
@@ -32,13 +32,13 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep}) =
             await exportToWorkspace({
                 start: () => sepal.startExport('task/export/timeseries/chunk', {...params, tileId, tileIndex, startDate, endDate}),
                 downloadDir: join(downloadDir, `${tileIndex}`, `chunk-${startDate}_${endDate}`),
-                sepal, report: () => {}, signal: chunkSignal, sleep
+                sepal, report: () => {}, signal: chunkSignal, sleep, localProcessing
             })
             chunks++
             tileProgress()
         })
         if (dateRanges.length && !signal.aborted) {
-            await stack(join(downloadDir, `${tileIndex}`))
+            await localProcessing.run(() => stack(join(downloadDir, `${tileIndex}`)), signal)
         }
     }
 }

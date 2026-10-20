@@ -1,5 +1,3 @@
-import {isLocalWork} from './operations.js'
-
 export const LABELS = Object.freeze({
     MANAGED: 'org.openforis.sepal.task-manager',
     TASK_ID: 'org.openforis.sepal.task-id',
@@ -28,7 +26,7 @@ export const taskDirectory = (sepalHostDataDir, taskId) =>
 // sepal-user header. Its own network holds only the gateway, which authenticates the task's key.
 export const containerSpec = ({task, apiKey, config}) => {
     const dev = config.deployEnvironment === 'DEV'
-    const memoryMb = isLocalWork(task.operation) ? config.taskLocalMemoryMb : config.taskMemoryMb
+    const memoryMb = config.taskMemoryMb
     return {
         name: containerName(task),
         Image: `${config.dockerRegistryHost}/openforis/task:${config.sepalVersion}`,

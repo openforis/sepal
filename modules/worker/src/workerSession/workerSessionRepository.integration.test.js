@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -22,7 +24,7 @@ describe('WorkerSessionRepository', () => {
     let sessionAppRepository
     let now
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'worker_session', migrations: MIGRATIONS_PATH})
     })
@@ -34,28 +36,28 @@ describe('WorkerSessionRepository', () => {
         repository = new WorkerSessionRepository(testDb.db, () => now, sessionAppRepository)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('insert', () => {
         test('stores a session with the instance it runs on', async () => {
             await repository.insert(aSession({apiKey: 'the-key'}))
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.id).toBe(SESSION_ID)
-            expect(stored.state).toBe(State.PENDING)
-            expect(stored.username).toBe(USERNAME)
-            expect(stored.workerType).toBe('SANDBOX')
-            expect(stored.instanceType).toBe(INSTANCE_TYPE)
-            expect(stored.instance).toEqual({id: INSTANCE_ID, host: HOST})
-            expect(stored.host).toBe(HOST)
-            expect(stored.apiKey).toBe('the-key')
+            assert.equal(stored.id, SESSION_ID)
+            assert.equal(stored.state, State.PENDING)
+            assert.equal(stored.username, USERNAME)
+            assert.equal(stored.workerType, 'SANDBOX')
+            assert.equal(stored.instanceType, INSTANCE_TYPE)
+            assert.deepEqual(stored.instance, {id: INSTANCE_ID, host: HOST})
+            assert.equal(stored.host, HOST)
+            assert.equal(stored.apiKey, 'the-key')
         })
 
         test('stores the username in lowercase', async () => {
             await repository.insert(aSession({username: 'Alice'}))
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.username).toBe(USERNAME)
+            assert.equal(stored.username, USERNAME)
         })
 
         test('carries the startup lease the session was requested with', async () => {
@@ -64,13 +66,13 @@ describe('WorkerSessionRepository', () => {
             await repository.insert(aSession({timeoutTime: lease}))
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.timeoutTime).toEqual(lease)
+            assert.deepEqual(stored.timeoutTime, lease)
         })
     })
 
     describe('getSession', () => {
         test('refuses to answer for a session that does not exist', async () => {
-            await expect(repository.getSession('nope')).rejects.toThrow('Non-existing worker session: nope')
+            await assert.rejects(repository.getSession('nope'), /Non-existing worker session: nope/)
         })
     })
 
@@ -82,9 +84,9 @@ describe('WorkerSessionRepository', () => {
             await repository.update(activate(await repository.getSession(SESSION_ID)))
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.state).toBe(State.ACTIVE)
-            expect(stored.apiKey).toBe('keep-me')
-            expect(stored.updateTime.getTime()).toBe(now.getTime())
+            assert.equal(stored.state, State.ACTIVE)
+            assert.equal(stored.apiKey, 'keep-me')
+            assert.equal(stored.updateTime.getTime(), now.getTime())
         })
 
         test('withdraws the api key of a session it closes', async () => {
@@ -93,8 +95,8 @@ describe('WorkerSessionRepository', () => {
             await repository.update(close(await repository.getSession(SESSION_ID)))
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.state).toBe(State.CLOSED)
-            expect(stored.apiKey).toBeNull()
+            assert.equal(stored.state, State.CLOSED)
+            assert.equal(stored.apiKey, null)
         })
 
         // The deadline moves through extendSession and nowhere else, so a stale in-memory session
@@ -107,7 +109,7 @@ describe('WorkerSessionRepository', () => {
             await repository.update({...ratcheted, timeoutTime: new Date('2026-06-01T12:01:00Z')})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(stored.timeoutTime).toEqual(ratcheted.timeoutTime)
+            assert.deepEqual(stored.timeoutTime, ratcheted.timeoutTime)
         })
 
         test('gives up the app associations of the session it closes, keeping every other session\'s', async () => {
@@ -122,8 +124,8 @@ describe('WorkerSessionRepository', () => {
             await repository.update(close(await repository.getSession(SESSION_ID)))
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID, ANOTHER_SESSION_ID])
-            expect(apps.get(SESSION_ID)).toBeUndefined()
-            expect(apps.get(ANOTHER_SESSION_ID)).toHaveLength(1)
+            assert.equal(apps.get(SESSION_ID), undefined)
+            assert.equal(apps.get(ANOTHER_SESSION_ID).length, 1)
         })
 
         test('leaves the app associations of a session it only activates', async () => {
@@ -133,7 +135,7 @@ describe('WorkerSessionRepository', () => {
             await repository.update(activate(await repository.getSession(SESSION_ID)))
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
-            expect(apps.get(SESSION_ID)).toHaveLength(1)
+            assert.equal(apps.get(SESSION_ID).length, 1)
         })
     })
 
@@ -144,9 +146,9 @@ describe('WorkerSessionRepository', () => {
             const activated = await repository.activateSession(SESSION_ID, 30)
 
             const deadline = await secondsFromNow(29 * 60)
-            expect(activated.state).toBe(State.ACTIVE)
-            expect(activated.activeTime).not.toBeNull()
-            expect(activated.timeoutTime.getTime()).toBeGreaterThan(deadline.getTime())
+            assert.equal(activated.state, State.ACTIVE)
+            assert.notEqual(activated.activeTime, null)
+            assert.ok(activated.timeoutTime.getTime() > deadline.getTime())
         })
 
         test('activates a pending session once, and reports nothing to the caller that lost', async () => {
@@ -155,8 +157,8 @@ describe('WorkerSessionRepository', () => {
             const first = await repository.activateSession(SESSION_ID, 30)
             const second = await repository.activateSession(SESSION_ID, 30)
 
-            expect(first.state).toBe(State.ACTIVE)
-            expect(second).toBeNull()
+            assert.equal(first.state, State.ACTIVE)
+            assert.equal(second, null)
         })
     })
 
@@ -168,8 +170,8 @@ describe('WorkerSessionRepository', () => {
 
             const floor = await secondsFromNow(14 * 60)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(extended).toBe(true)
-            expect(timeoutTime.getTime()).toBeGreaterThan(floor.getTime())
+            assert.equal(extended, true)
+            assert.ok(timeoutTime.getTime() > floor.getTime())
         })
 
         // Events arriving out of order, or a small extension landing after a large one, can never
@@ -182,7 +184,7 @@ describe('WorkerSessionRepository', () => {
             await repository.extendSession({sessionId: SESSION_ID, minutes: 1})
 
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime).toEqual(far)
+            assert.deepEqual(timeoutTime, far)
         })
 
         test('leaves a session that is not active alone', async () => {
@@ -191,8 +193,8 @@ describe('WorkerSessionRepository', () => {
             const extended = await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
 
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(extended).toBe(false)
-            expect(timeoutTime).toBeNull()
+            assert.equal(extended, false)
+            assert.equal(timeoutTime, null)
         })
 
         // That a busy verdict does NOT stamp the interaction is the whole mechanism of the cap.
@@ -204,8 +206,8 @@ describe('WorkerSessionRepository', () => {
             await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: true})
             const afterInteraction = await repository.getSession(SESSION_ID)
 
-            expect(afterVerdict.lastInteractionTime).toBeNull()
-            expect(afterInteraction.lastInteractionTime).not.toBeNull()
+            assert.equal(afterVerdict.lastInteractionTime, null)
+            assert.notEqual(afterInteraction.lastInteractionTime, null)
         })
 
         // "Any extension cancels the expiry cycle" is a claim about interleaving, and it holds only
@@ -218,9 +220,9 @@ describe('WorkerSessionRepository', () => {
             await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
 
             const rescued = await repository.getSession(SESSION_ID)
-            expect(notified.notificationState).toBe(NotificationState.NOTIFIED)
-            expect(rescued.notificationState).toBe(NotificationState.NONE)
-            expect(rescued.notifiedTime).toBeNull()
+            assert.equal(notified.notificationState, NotificationState.NOTIFIED)
+            assert.equal(rescued.notificationState, NotificationState.NONE)
+            assert.equal(rescued.notifiedTime, null)
         })
 
         // A ratchet the cap clamped into the past moves nothing, and cancelling the cycle on the
@@ -237,9 +239,9 @@ describe('WorkerSessionRepository', () => {
             await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
 
             const after = await repository.getSession(SESSION_ID)
-            expect(after.notificationState).toBe(NotificationState.NOTIFIED)
-            expect(after.notifiedTime).toEqual(notified.notifiedTime)
-            expect(after.timeoutTime).toEqual(notified.timeoutTime)
+            assert.equal(after.notificationState, NotificationState.NOTIFIED)
+            assert.deepEqual(after.notifiedTime, notified.notifiedTime)
+            assert.deepEqual(after.timeoutTime, notified.timeoutTime)
         })
     })
 
@@ -252,7 +254,7 @@ describe('WorkerSessionRepository', () => {
             await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
 
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime).toEqual(before)
+            assert.deepEqual(timeoutTime, before)
         })
 
         // Refusing once now is past the boundary would let a verdict landing a second before it push
@@ -265,7 +267,7 @@ describe('WorkerSessionRepository', () => {
 
             const ceiling = await secondsFromNow(2)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime.getTime()).toBeLessThanOrEqual(ceiling.getTime())
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
         })
 
         test('never caps a human extension', async () => {
@@ -276,7 +278,7 @@ describe('WorkerSessionRepository', () => {
 
             const floor = await secondsFromNow(59 * 60)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime.getTime()).toBeGreaterThan(floor.getTime())
+            assert.ok(timeoutTime.getTime() > floor.getTime())
         })
 
         // now − NULL is NULL in SQL, which would make the comparison false and the busy ratchet
@@ -289,8 +291,8 @@ describe('WorkerSessionRepository', () => {
 
             const ceiling = await secondsFromNow(2)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime).not.toBeNull()
-            expect(timeoutTime.getTime()).toBeLessThanOrEqual(ceiling.getTime())
+            assert.notEqual(timeoutTime, null)
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
         })
 
         // MySQL takes only a whole number of units in INTERVAL n HOUR and quietly rounds anything
@@ -303,7 +305,7 @@ describe('WorkerSessionRepository', () => {
 
             const ceiling = await secondsFromNow(29 * 60 + 2)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime.getTime()).toBeLessThanOrEqual(ceiling.getTime())
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
         })
     })
 
@@ -318,9 +320,9 @@ describe('WorkerSessionRepository', () => {
 
             const ceiling = await secondsFromNow(31 * 60)
             const short = (await repository.getSession(SESSION_ID)).timeoutTime
-            expect(applied).toBe(true)
-            expect(short.getTime()).toBeLessThan(long.getTime())
-            expect(short.getTime()).toBeLessThanOrEqual(ceiling.getTime())
+            assert.equal(applied, true)
+            assert.ok(short.getTime() < long.getTime())
+            assert.ok(short.getTime() <= ceiling.getTime())
         })
 
         test('lengthens just as readily', async () => {
@@ -330,7 +332,7 @@ describe('WorkerSessionRepository', () => {
 
             const floor = await secondsFromNow(119 * 60)
             const {timeoutTime} = await repository.getSession(SESSION_ID)
-            expect(timeoutTime.getTime()).toBeGreaterThan(floor.getTime())
+            assert.ok(timeoutTime.getTime() > floor.getTime())
         })
 
         // A person restating what they want earns the reset in either direction.
@@ -341,9 +343,9 @@ describe('WorkerSessionRepository', () => {
             await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 1})
 
             const after = await repository.getSession(SESSION_ID)
-            expect(after.notificationState).toBe(NotificationState.NONE)
-            expect(after.notifiedTime).toBeNull()
-            expect(after.lastInteractionTime).not.toBeNull()
+            assert.equal(after.notificationState, NotificationState.NONE)
+            assert.equal(after.notifiedTime, null)
+            assert.notEqual(after.lastInteractionTime, null)
         })
 
         test('leaves a session that is not active alone', async () => {
@@ -351,7 +353,7 @@ describe('WorkerSessionRepository', () => {
 
             const applied = await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 60})
 
-            expect(applied).toBe(false)
+            assert.equal(applied, false)
         })
     })
 
@@ -361,7 +363,7 @@ describe('WorkerSessionRepository', () => {
 
             const expired = await repository.expiredSessions()
 
-            expect(expired.map(({id}) => id)).toEqual([SESSION_ID])
+            assert.deepEqual(expired.map(({id}) => id), [SESSION_ID])
         })
 
         test('reports an expired session even when the legacy task table still lists an unfinished task for it', async () => {
@@ -370,7 +372,7 @@ describe('WorkerSessionRepository', () => {
 
             const expired = await repository.expiredSessions()
 
-            expect(expired.map(({id}) => id)).toEqual([SESSION_ID])
+            assert.deepEqual(expired.map(({id}) => id), [SESSION_ID])
         })
 
         test('never reports a session with no deadline at all', async () => {
@@ -378,7 +380,7 @@ describe('WorkerSessionRepository', () => {
 
             const expired = await repository.expiredSessions()
 
-            expect(expired).toEqual([])
+            assert.deepEqual(expired, [])
         })
     })
 
@@ -391,8 +393,8 @@ describe('WorkerSessionRepository', () => {
             const first = await repository.notifyExpiry(SESSION_ID)
             const second = await repository.notifyExpiry(SESSION_ID)
 
-            expect(first).toBe(true)
-            expect(second).toBe(false)
+            assert.equal(first, true)
+            assert.equal(second, false)
         })
 
         test('sends the email exactly once for the notification it was raised against', async () => {
@@ -404,9 +406,9 @@ describe('WorkerSessionRepository', () => {
             const second = await repository.markEmailed(SESSION_ID, notifiedTime)
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(first).toBe(true)
-            expect(second).toBe(false)
-            expect(stored.notificationState).toBe(NotificationState.EMAILED)
+            assert.equal(first, true)
+            assert.equal(second, false)
+            assert.equal(stored.notificationState, NotificationState.EMAILED)
         })
 
         // "I saw it, don't email me": an easy misclick must not read as consent to close early.
@@ -418,9 +420,9 @@ describe('WorkerSessionRepository', () => {
             const dismissed = await repository.dismissNotification(SESSION_ID, USERNAME)
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(dismissed).toBe(true)
-            expect(stored.notificationState).toBe(NotificationState.DISMISSED)
-            expect(stored.timeoutTime).toEqual(notified.timeoutTime)
+            assert.equal(dismissed, true)
+            assert.equal(stored.notificationState, NotificationState.DISMISSED)
+            assert.deepEqual(stored.timeoutTime, notified.timeoutTime)
         })
 
         test('refuses to silence another user\'s notification', async () => {
@@ -430,8 +432,8 @@ describe('WorkerSessionRepository', () => {
             const dismissed = await repository.dismissNotification(SESSION_ID, ANOTHER_USERNAME)
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(dismissed).toBe(false)
-            expect(stored.notificationState).toBe(NotificationState.NOTIFIED)
+            assert.equal(dismissed, false)
+            assert.equal(stored.notificationState, NotificationState.NOTIFIED)
         })
 
         // Notify mode must not accumulate warned sessions: resetting alone would re-notify on the
@@ -444,10 +446,10 @@ describe('WorkerSessionRepository', () => {
             const restarted = await repository.restartExpiryCycle(SESSION_ID, notifiedTime, 60)
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(restarted).toBe(true)
-            expect(stored.notificationState).toBe(NotificationState.NONE)
-            expect(stored.notifiedTime).toBeNull()
-            expect(stored.timeoutTime.getTime()).toBeGreaterThan(timeoutTime.getTime())
+            assert.equal(restarted, true)
+            assert.equal(stored.notificationState, NotificationState.NONE)
+            assert.equal(stored.notifiedTime, null)
+            assert.ok(stored.timeoutTime.getTime() > timeoutTime.getTime())
         })
     })
 
@@ -459,9 +461,9 @@ describe('WorkerSessionRepository', () => {
             const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(closed).toBe(true)
-            expect(stored.state).toBe(State.CLOSED)
-            expect(stored.apiKey).toBeNull()
+            assert.equal(closed, true)
+            assert.equal(stored.state, State.CLOSED)
+            assert.equal(stored.apiKey, null)
         })
 
         // Selecting candidates and then closing them is a lost update waiting to happen: an
@@ -474,8 +476,8 @@ describe('WorkerSessionRepository', () => {
             const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(closed).toBe(false)
-            expect(stored.state).toBe(State.ACTIVE)
+            assert.equal(closed, false)
+            assert.equal(stored.state, State.ACTIVE)
         })
 
         test('closes an expired session even when the legacy task table still lists an unfinished task for it', async () => {
@@ -486,8 +488,8 @@ describe('WorkerSessionRepository', () => {
             const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(closed).toBe(true)
-            expect(stored.state).toBe(State.CLOSED)
+            assert.equal(closed, true)
+            assert.equal(stored.state, State.CLOSED)
         })
 
         test('leaves a session whose grace has not elapsed', async () => {
@@ -498,8 +500,8 @@ describe('WorkerSessionRepository', () => {
             const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(closed).toBe(false)
-            expect(stored.state).toBe(State.ACTIVE)
+            assert.equal(closed, false)
+            assert.equal(stored.state, State.ACTIVE)
         })
 
         test('gives up the app associations of the session it closes', async () => {
@@ -510,7 +512,7 @@ describe('WorkerSessionRepository', () => {
             await repository.closeExpiredSession({...observed, graceMinutes: 60})
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
-            expect(apps.get(SESSION_ID)).toBeUndefined()
+            assert.equal(apps.get(SESSION_ID), undefined)
         })
     })
 
@@ -523,8 +525,8 @@ describe('WorkerSessionRepository', () => {
             const first = await repository.redeemExtension({sessionId: SESSION_ID, notifiedTime, minutes: 15})
             const second = await repository.redeemExtension({sessionId: SESSION_ID, notifiedTime, minutes: 15})
 
-            expect(first).toBe(true)
-            expect(second).toBe(false)
+            assert.equal(first, true)
+            assert.equal(second, false)
         })
 
         test('terminates the session once', async () => {
@@ -536,9 +538,9 @@ describe('WorkerSessionRepository', () => {
             const second = await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(first).toBe(true)
-            expect(second).toBe(false)
-            expect(stored.state).toBe(State.CLOSED)
+            assert.equal(first, true)
+            assert.equal(second, false)
+            assert.equal(stored.state, State.CLOSED)
         })
 
         // The rescue must win: the user went back to typing, and a terminate link left sitting in an
@@ -552,8 +554,8 @@ describe('WorkerSessionRepository', () => {
             const terminated = await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
 
             const stored = await repository.getSession(SESSION_ID)
-            expect(terminated).toBe(false)
-            expect(stored.state).toBe(State.ACTIVE)
+            assert.equal(terminated, false)
+            assert.equal(stored.state, State.ACTIVE)
         })
 
         test('gives up the app associations of a session it terminates', async () => {
@@ -565,7 +567,7 @@ describe('WorkerSessionRepository', () => {
             await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
-            expect(apps.get(SESSION_ID)).toBeUndefined()
+            assert.equal(apps.get(SESSION_ID), undefined)
         })
 
         test('leaves the app associations of a session it fails to terminate', async () => {
@@ -578,7 +580,7 @@ describe('WorkerSessionRepository', () => {
             await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
-            expect(apps.get(SESSION_ID)).toHaveLength(1)
+            assert.equal(apps.get(SESSION_ID).length, 1)
         })
     })
 
@@ -591,7 +593,7 @@ describe('WorkerSessionRepository', () => {
 
             const timedOut = await repository.timedOutSessions()
 
-            expect(timedOut.map(({id}) => id)).toEqual(['stale'])
+            assert.deepEqual(timedOut.map(({id}) => id), ['stale'])
         })
 
         test('never reports a session that is no longer pending, whatever its age', async () => {
@@ -602,7 +604,7 @@ describe('WorkerSessionRepository', () => {
 
             const timedOut = await repository.timedOutSessions()
 
-            expect(timedOut).toEqual([])
+            assert.deepEqual(timedOut, [])
         })
     })
 
@@ -614,7 +616,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.findSessionByApiKey('live-key')
 
-            expect(found).toEqual({
+            assert.deepEqual(found, {
                 sessionId: 'executor-1', username: USERNAME, workerType: 'SANDBOX'
             })
         })
@@ -628,14 +630,14 @@ describe('WorkerSessionRepository', () => {
             const first = await repository.findSessionByApiKey('key-1')
             const second = await repository.findSessionByApiKey('key-2')
 
-            expect(first.sessionId).toBe('executor-1')
-            expect(second.sessionId).toBe('executor-2')
+            assert.equal(first.sessionId, 'executor-1')
+            assert.equal(second.sessionId, 'executor-2')
         })
 
         test('finds nothing for a session that has closed', async () => {
             await repository.insert(aSession({state: State.CLOSED, apiKey: 'dead-key'}))
 
-            expect(await repository.findSessionByApiKey('dead-key')).toBeNull()
+            assert.equal(await repository.findSessionByApiKey('dead-key'), null)
         })
 
         test('finds nothing once an open session is closed', async () => {
@@ -644,7 +646,7 @@ describe('WorkerSessionRepository', () => {
 
             await repository.update({...session, state: State.CLOSED})
 
-            expect(await repository.findSessionByApiKey('live-key')).toBeNull()
+            assert.equal(await repository.findSessionByApiKey('live-key'), null)
         })
 
         // Answered while the suite's only connection is held: with no key there is nothing to look up,
@@ -652,7 +654,7 @@ describe('WorkerSessionRepository', () => {
         test('finds nothing when there is no key, without reaching the database', async () => {
             const found = await testDb.db.withConnection(() => repository.findSessionByApiKey(null))
 
-            expect(found).toBeNull()
+            assert.equal(found, null)
         })
     })
 
@@ -663,7 +665,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.sessionOnInstance('i-a', [State.PENDING, State.ACTIVE])
 
-            expect(found.id).toBe('a')
+            assert.equal(found.id, 'a')
         })
 
         test('finds nothing when no session in those states is on it', async () => {
@@ -671,7 +673,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.sessionOnInstance('i-a', [State.CLOSED])
 
-            expect(found).toBeNull()
+            assert.equal(found, null)
         })
     })
 
@@ -683,7 +685,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.sessions([State.PENDING, State.ACTIVE])
 
-            expect(found.map(({id}) => id).sort()).toEqual(['a', 'p'])
+            assert.deepEqual(found.map(({id}) => id).sort(), ['a', 'p'])
         })
     })
 
@@ -697,8 +699,8 @@ describe('WorkerSessionRepository', () => {
 
             const open = await repository.allOpenSessions()
 
-            expect(open.map(({sessionId}) => sessionId).sort()).toEqual(['a', 'p'])
-            expect(open.find(({sessionId}) => sessionId === 'p')).toEqual({
+            assert.deepEqual(open.map(({sessionId}) => sessionId).sort(), ['a', 'p'])
+            assert.deepEqual(open.find(({sessionId}) => sessionId === 'p'), {
                 sessionId: 'p', username: USERNAME, instanceType: INSTANCE_TYPE, creationTime: minutesAgo(5),
             })
         })
@@ -708,7 +710,7 @@ describe('WorkerSessionRepository', () => {
 
             const open = await repository.allOpenSessions()
 
-            expect(open).toEqual([])
+            assert.deepEqual(open, [])
         })
     })
 
@@ -724,7 +726,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.userSessions(USERNAME)
 
-            expect(found.map(({id}) => id)).toEqual(['earlier', 'later'])
+            assert.deepEqual(found.map(({id}) => id), ['earlier', 'later'])
         })
 
         test('narrows to the state, worker type and instance type it is given', async () => {
@@ -741,7 +743,7 @@ describe('WorkerSessionRepository', () => {
 
             const found = await repository.userSessions(USERNAME, [State.ACTIVE], 'SANDBOX', INSTANCE_TYPE)
 
-            expect(found.map(({id}) => id)).toEqual(['match'])
+            assert.deepEqual(found.map(({id}) => id), ['match'])
         })
     })
 
@@ -758,9 +760,9 @@ describe('WorkerSessionRepository', () => {
             const byUser = await repository.mostRecentlyClosedSessionByUser()
             const single = await repository.mostRecentlyClosedSession(USERNAME)
 
-            expect(Object.keys(byUser)).toEqual([USERNAME])
-            expect(byUser[USERNAME]).toEqual(new Date('2026-06-01T11:00:00Z'))
-            expect(single.timestamp).toEqual(new Date('2026-06-01T11:00:00Z'))
+            assert.deepEqual(Object.keys(byUser), [USERNAME])
+            assert.deepEqual(byUser[USERNAME], new Date('2026-06-01T11:00:00Z'))
+            assert.deepEqual(single.timestamp, new Date('2026-06-01T11:00:00Z'))
         })
 
         test('reports nothing for a user who has closed none', async () => {
@@ -768,7 +770,7 @@ describe('WorkerSessionRepository', () => {
 
             const single = await repository.mostRecentlyClosedSession(USERNAME)
 
-            expect(single).toEqual({})
+            assert.deepEqual(single, {})
         })
     })
 

@@ -4,8 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "TZ=UTC node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "TZ=UTC node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
@@ -15,7 +15,7 @@
         "csv-stringify": "^6.9.0",
         "date-fns": "^4.4.0",
         "log4js": "^6.9.1",
-        "mysql2": "^3.24.5",
+        "mysql2": "^3.24.6",
         "redis": "^6.3.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared"
@@ -25,8 +25,5 @@
         "#sepal/*.json": "sepal/src/*.json",
         "#config/*.json": "./config/*.json"
     },
-    "type": "module",
-    "devDependencies": {
-        "jest": "^30.5.2"
-    }
+    "type": "module"
 }

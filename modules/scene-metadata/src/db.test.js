@@ -1,62 +1,84 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
 
-const createPool = jest.fn(async () => ({}))
-const createDb = jest.fn(() => ({}))
-const initDb = jest.fn(async () => ({created: false, migrated: false, version: 1}))
+import {callsOf} from '#sepal/testSupport/mock'
 
-jest.unstable_mockModule('#sepal/db/mysql', () => ({createDb, createPool, initDb}))
+const createPool = mock.fn(async () => ({}))
+const createDb = mock.fn(() => ({}))
+const initDb = mock.fn(async () => ({created: false, migrated: false, version: 1}))
+
+mock.module('#sepal/db/mysql', {
+    exports: {
+        createDb,
+        createPool,
+        initDb
+    }
+})
 
 const {initializeDb} = await import('./db.js')
 
 beforeEach(() => {
-    createPool.mockClear()
-    createDb.mockClear()
-    initDb.mockClear()
+    createPool.mock.resetCalls()
+    createDb.mock.resetCalls()
+    initDb.mock.resetCalls()
 })
 
 describe('initializeDb', () => {
     it('migrates the scene_metadata schema', async () => {
         await initializeDb()
 
-        expect(initDb).toHaveBeenCalledWith('scene_metadata', expect.stringContaining('/migrations'), {label: 'schema migrations'})
+        const [[dbName, migrations, options]] = callsOf(initDb)
+        assert.equal(dbName, 'scene_metadata')
+        assert.ok(migrations.includes('/migrations'))
+        assert.deepEqual(options, {label: 'schema migrations'})
     })
 
     it('is not created when an existing schema is migrated', async () => {
-        initDb.mockResolvedValueOnce({created: false, migrated: true, version: 1})
+        initDb.mock.mockImplementationOnce(async () => ({
+            created: false,
+            migrated: true,
+            version: 1
+        }))
 
         const {created} = await initializeDb()
 
-        expect(created).toBe(false)
+        assert.equal(created, false)
     })
 
     it('is created when the schema was missing', async () => {
-        initDb.mockResolvedValueOnce({created: true, migrated: true, version: 1})
+        initDb.mock.mockImplementationOnce(async () => ({
+            created: true,
+            migrated: true,
+            version: 1
+        }))
 
         const {created} = await initializeDb()
 
-        expect(created).toBe(true)
+        assert.equal(created, true)
     })
 
     it('waits for migrations before creating the adapter resources', async () => {
         const migrations = Promise.withResolvers()
-        initDb.mockReturnValueOnce(migrations.promise)
+        initDb.mock.mockImplementationOnce(() => migrations.promise)
 
         const initialization = initializeDb()
 
-        expect(createPool).not.toHaveBeenCalled()
-        expect(createDb).not.toHaveBeenCalled()
+        assert.equal(createPool.mock.callCount(), 0)
+        assert.equal(createDb.mock.callCount(), 0)
         migrations.resolve({created: false})
         await initialization
-        expect(createPool).toHaveBeenCalledTimes(1)
+        assert.equal(createPool.mock.callCount(), 1)
     })
 
     it('propagates migration failure without constructing database resources', async () => {
         const error = new Error('Migration failed')
-        initDb.mockRejectedValueOnce(error)
+        initDb.mock.mockImplementationOnce(async () => {
+            throw error
+        })
 
-        await expect(initializeDb()).rejects.toBe(error)
+        await assert.rejects(initializeDb(), thrown => thrown === error)
 
-        expect(createPool).not.toHaveBeenCalled()
-        expect(createDb).not.toHaveBeenCalled()
+        assert.equal(createPool.mock.callCount(), 0)
+        assert.equal(createDb.mock.callCount(), 0)
     })
 })

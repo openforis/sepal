@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {lastValueFrom, of} from 'rxjs'
 
 // What an existing CCDC Segments asset contains. These are characterization tests: they pin the format already
@@ -11,21 +13,25 @@ const captured = {}
 
 const geometry = {bounds: () => 'region-bounds'}
 
-jest.unstable_mockModule('#sepal/ee/timeSeries/ccdc', () => ({
-    default: (recipe, options) => {
-        captured.ccdc = {recipe, options}
-        return {
-            getImage$: () => of('segments-image'),
-            getGeometry$: () => of(geometry)
+mock.module('#sepal/ee/timeSeries/ccdc', {
+    exports: {
+        default: (recipe, options) => {
+            captured.ccdc = {recipe, options}
+            return {
+                getImage$: () => of('segments-image'),
+                getGeometry$: () => of(geometry)
+            }
         }
     }
-}))
-jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
-    startImageToAssetExport$: args => {
-        captured.export = {args}
-        return of({eeTaskId: 'T1', assetId: args.assetId})
+})
+mock.module('#gee/jobs/task/export/toAsset', {
+    exports: {
+        startImageToAssetExport$: args => {
+            captured.export = {args}
+            return of({eeTaskId: 'T1', assetId: args.assetId})
+        }
     }
-}))
+})
 
 const {startCcdcAssetExport$} = await import('#gee/jobs/task/export/ccdcAssetExport')
 
@@ -84,17 +90,17 @@ describe('the CCDC Segments asset export', () => {
     it('writes an array-band asset with sample pyramiding', async () => {
         const {pyramidingPolicy, maxPixels, region, scale, image} = await submit()
 
-        expect(pyramidingPolicy).toEqual({'.default': 'sample'})
-        expect(maxPixels).toBe(1e13)
-        expect(region).toBe('region-bounds')
-        expect(scale).toBe(30)
-        expect(image).toBe('segments-image')
+        assert.deepEqual(pyramidingPolicy, {'.default': 'sample'})
+        assert.equal(maxPixels, 1e13)
+        assert.equal(region, 'region-bounds')
+        assert.equal(scale, 30)
+        assert.equal(image, 'segments-image')
     })
 
     it('passes the retrieve band selection to the segment builder', async () => {
         await submit({bands: ['ndvi', 'swir1']})
 
-        expect(captured.ccdc.options).toEqual({selection: ['ndvi', 'swir1']})
+        assert.deepEqual(captured.ccdc.options, {selection: ['ndvi', 'swir1']})
     })
 })
 
@@ -104,9 +110,9 @@ describe('the date metadata CCDC Slice reads back', () => {
     it('records the segment date range and date format', async () => {
         const {properties} = await submit()
 
-        expect(properties.startDate).toBe('2015-01-01')
-        expect(properties.endDate).toBe('2020-01-01')
-        expect(properties.dateFormat).toBe(1)
+        assert.equal(properties.startDate, '2015-01-01')
+        assert.equal(properties.endDate, '2020-01-01')
+        assert.equal(properties.dateFormat, 1)
     })
 
 })
@@ -117,14 +123,14 @@ describe('the surface reflectance flag, which Slice does not read', () => {
     it('records surface reflectance as 1 when the correction was applied', async () => {
         const {properties} = await submit({model: recipe({corrections: ['SR']})})
 
-        expect(properties.surfaceReflectance).toBe(1)
+        assert.equal(properties.surfaceReflectance, 1)
     })
 
     // Not 0 and not absent - `corrections.includes('SR') && 1` yields the boolean.
     it('records surface reflectance as false when it was not', async () => {
         const {properties} = await submit({model: recipe({corrections: []})})
 
-        expect(properties.surfaceReflectance).toBe(false)
+        assert.equal(properties.surfaceReflectance, false)
     })
 
     it('records it as undefined when the recipe carries no corrections at all', async () => {
@@ -132,7 +138,7 @@ describe('the surface reflectance flag, which Slice does not read', () => {
         delete model.model.options.corrections
         const {properties} = await submit({model})
 
-        expect(properties.surfaceReflectance).toBeUndefined()
+        assert.equal(properties.surfaceReflectance, undefined)
     })
 })
 
@@ -149,7 +155,7 @@ describe('the formatted recipe properties', () => {
             }
         })
 
-        expect(properties.formattedProperties).toEqual({
+        assert.deepEqual(properties.formattedProperties, {
             recipe_id: 'ccdc-1',
             recipe_title: 'My CCDC',
             recipe_dates: '{"startDate":"2015-01-01"}',
@@ -163,8 +169,8 @@ describe('the formatted recipe properties', () => {
     it('nests them under a single property rather than at the top level', async () => {
         const {properties} = await submit({properties: {recipe_id: 'ccdc-1'}})
 
-        expect(properties.recipe_id).toBeUndefined()
-        expect(properties.formattedProperties.recipe_id).toBe('ccdc-1')
+        assert.equal(properties.recipe_id, undefined)
+        assert.equal(properties.formattedProperties.recipe_id, 'ccdc-1')
     })
 })
 
@@ -172,7 +178,7 @@ describe('the serialized visualizations', () => {
     it('writes every field of a visualization, one property per key', async () => {
         const {properties} = await submit({visualizations: [NDVI]})
 
-        expect(visualizationProperties(properties)).toEqual({
+        assert.deepEqual(visualizationProperties(properties), {
             visualization_0_type: 'continuous',
             visualization_0_bands: 'ndvi',
             visualization_0_baseBands: 'ndvi',
@@ -189,8 +195,8 @@ describe('the serialized visualizations', () => {
     it('writes numbers and booleans as strings once they are in an array', async () => {
         const {properties} = await submit({visualizations: [NDVI]})
 
-        expect(typeof properties.visualization_0_min).toBe('string')
-        expect(typeof properties.visualization_0_inverted).toBe('string')
+        assert.equal(typeof properties.visualization_0_min, 'string')
+        assert.equal(typeof properties.visualization_0_inverted, 'string')
     })
 
     // baseBands is not a rendering parameter. It says which logical CCDC band the template belongs to, and it is
@@ -198,8 +204,11 @@ describe('the serialized visualizations', () => {
     it('carries baseBands through as an ordinary field', async () => {
         const {properties} = await submit({visualizations: [HARMONIC]})
 
-        expect(properties.visualization_0_baseBands).toBe('ndvi')
-        expect(properties.visualization_0_bands).toBe('ndvi_phase_1,ndvi_amplitude_1,ndvi_rmse')
+        assert.equal(properties.visualization_0_baseBands, 'ndvi')
+        assert.equal(
+            properties.visualization_0_bands,
+            'ndvi_phase_1,ndvi_amplitude_1,ndvi_rmse'
+        )
     })
 
     // The generated name joins the bands with ', ' and is then escaped like any other string, so every asset
@@ -208,13 +217,16 @@ describe('the serialized visualizations', () => {
     it('names a visualization by its bands, with the separators escaped', async () => {
         const {properties} = await submit({visualizations: [HARMONIC]})
 
-        expect(properties.visualization_0_name).toBe('ndvi_phase_1\\, ndvi_amplitude_1\\, ndvi_rmse')
+        assert.equal(
+            properties.visualization_0_name,
+            'ndvi_phase_1\\, ndvi_amplitude_1\\, ndvi_rmse'
+        )
     })
 
     it('keeps an explicit name', async () => {
         const {properties} = await submit({visualizations: [{...NDVI, name: 'Greenness'}]})
 
-        expect(properties.visualization_0_name).toBe('Greenness')
+        assert.equal(properties.visualization_0_name, 'Greenness')
     })
 
     it('escapes commas inside a value so the list separator stays unambiguous', async () => {
@@ -229,15 +241,18 @@ describe('the serialized visualizations', () => {
             }]
         })
 
-        expect(properties.visualization_0_labels).toBe('Forest\\, dense,Water')
-        expect(properties.visualization_0_values).toBe('1,2')
+        assert.equal(properties.visualization_0_labels, 'Forest\\, dense,Water')
+        assert.equal(properties.visualization_0_values, '1,2')
     })
 
     it('numbers each visualization in order', async () => {
         const {properties} = await submit({visualizations: [NDVI, HARMONIC]})
 
-        expect(properties.visualization_0_bands).toBe('ndvi')
-        expect(properties.visualization_1_bands).toBe('ndvi_phase_1,ndvi_amplitude_1,ndvi_rmse')
+        assert.equal(properties.visualization_0_bands, 'ndvi')
+        assert.equal(
+            properties.visualization_1_bands,
+            'ndvi_phase_1,ndvi_amplitude_1,ndvi_rmse'
+        )
     })
 
     it('keeps only the first of two visualizations sharing a name', async () => {
@@ -245,8 +260,8 @@ describe('the serialized visualizations', () => {
             visualizations: [NDVI, {...NDVI, palette: ['#000000', '#FFFFFF']}]
         })
 
-        expect(properties.visualization_0_palette).toBe('#FF0000,#00FF00')
-        expect(properties.visualization_1_palette).toBeUndefined()
+        assert.equal(properties.visualization_0_palette, '#FF0000,#00FF00')
+        assert.equal(properties.visualization_1_palette, undefined)
     })
 })
 
@@ -258,29 +273,32 @@ describe('the band vocabulary a visualization is admitted against', () => {
         Object.keys(visualizationProperties((await submit({visualizations: [visualization]})).properties)).length > 0
 
     it('admits a template on derived coefficient bands the asset never physically carries', async () => {
-        expect(await admitted(HARMONIC)).toBe(true)
+        assert.equal(await admitted(HARMONIC), true)
     })
 
     it('admits templates on rmse and magnitude, which the asset does carry', async () => {
-        expect(await admitted({...NDVI, bands: ['ndvi_rmse'], name: 'rmse'})).toBe(true)
-        expect(await admitted({...NDVI, bands: ['ndvi_magnitude'], name: 'magnitude'})).toBe(true)
+        assert.equal(await admitted({...NDVI, bands: ['ndvi_rmse'], name: 'rmse'}), true)
+        assert.equal(
+            await admitted({...NDVI, bands: ['ndvi_magnitude'], name: 'magnitude'}),
+            true
+        )
     })
 
     it('admits templates on the segment bands', async () => {
-        expect(await admitted({...NDVI, bands: ['tStart'], name: 'tStart'})).toBe(true)
-        expect(await admitted({...NDVI, bands: ['changeProb'], name: 'changeProb'})).toBe(true)
+        assert.equal(await admitted({...NDVI, bands: ['tStart'], name: 'tStart'}), true)
+        assert.equal(await admitted({...NDVI, bands: ['changeProb'], name: 'changeProb'}), true)
     })
 
     // The physical array band itself. A visualization naming it is dropped, so no asset carries one.
     it('rejects a template on the physical coefficient array band', async () => {
-        expect(await admitted({...NDVI, bands: ['ndvi_coefs'], name: 'coefs'})).toBe(false)
+        assert.equal(await admitted({...NDVI, bands: ['ndvi_coefs'], name: 'coefs'}), false)
     })
 
     it('rejects a template naming a band outside the retrieve selection', async () => {
-        expect(await admitted({...NDVI, bands: ['swir1'], name: 'swir1'})).toBe(false)
+        assert.equal(await admitted({...NDVI, bands: ['swir1'], name: 'swir1'}), false)
     })
 
     it('rejects a multi-band template when only some of its bands are selected', async () => {
-        expect(await admitted({...NDVI, bands: ['ndvi', 'swir1'], name: 'mixed'})).toBe(false)
+        assert.equal(await admitted({...NDVI, bands: ['ndvi', 'swir1'], name: 'mixed'}), false)
     })
 })

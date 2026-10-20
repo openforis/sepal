@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {after, before, beforeEach, describe, test} from 'node:test'
+
 import {firstValueFrom} from 'rxjs'
 
 import {configureNoLogging, getLogger} from '#sepal/log'
@@ -21,7 +24,7 @@ describe('reading a recipe as a named user', () => {
     let recipeEndpoint
     let rows
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         running = await startRecipe()
         recipeEndpoint = `http://127.0.0.1:${running.address().port}`
@@ -31,12 +34,12 @@ describe('reading a recipe as a named user', () => {
         rows = {'alices-recipe': {owner: 'alice', recipe: {id: 'alices-recipe', type: 'MOSAIC'}}}
     })
 
-    afterAll(() => running && new Promise(resolve => running.close(resolve)))
+    after(() => running && new Promise(resolve => running.close(resolve)))
 
     test('the owner reads their own recipe', async () => {
         const recipe = await read('alices-recipe', OWNER)
 
-        expect(recipe).toEqual({id: 'alices-recipe', type: 'MOSAIC'})
+        assert.deepEqual(recipe, {id: 'alices-recipe', type: 'MOSAIC'})
     })
 
     // A recipe someone else owns is answered the same way one that does not exist is, which is what
@@ -45,14 +48,14 @@ describe('reading a recipe as a named user', () => {
         const foreign = await failureFor('alices-recipe', OTHER)
         const absent = await failureFor('no-such-recipe', OTHER)
 
-        expect(foreign.statusCode).toBe(404)
-        expect(absent.statusCode).toBe(foreign.statusCode)
+        assert.equal(foreign.statusCode, 404)
+        assert.equal(absent.statusCode, foreign.statusCode)
     })
 
     test('an administrator still reads another user\'s recipe', async () => {
         const recipe = await read('alices-recipe', ADMIN)
 
-        expect(recipe.id).toBe('alices-recipe')
+        assert.equal(recipe.id, 'alices-recipe')
     })
 
     // The acting user is the one the reader was composed with. A recipe whose own content names another
@@ -65,19 +68,24 @@ describe('reading a recipe as a named user', () => {
 
         const failure = await failureFor('claims-bob', OTHER)
 
-        expect(failure.statusCode).toBe(404)
+        assert.equal(failure.statusCode, 404)
     })
 
     describe('without an authenticated user', () => {
-        test.each([
+        for (const [description, principal] of [
             ['no principal', undefined],
             ['an empty principal', {}],
             ['a principal with no username', {roles: ['application_admin']}]
-        ])('%s reads nothing, and reaches no endpoint at all', async (_description, principal) => {
-            const reader = createRecipeReader({recipeEndpoint: UNREACHABLE, principal})
+        ]) {
+            test(
+                `${description} reads nothing, and reaches no endpoint at all`,
+                async () => {
+                    const reader = createRecipeReader({recipeEndpoint: UNREACHABLE, principal})
 
-            await expect(firstValueFrom(reader('alices-recipe'))).rejects.toThrow(/authenticated user/)
-        })
+                    await assert.rejects(firstValueFrom(reader('alices-recipe')), /authenticated user/)
+                }
+            )
+        }
     })
 
     const read = (recipeId, principal) =>

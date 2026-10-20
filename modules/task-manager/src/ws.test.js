@@ -1,6 +1,9 @@
 // Unit tests for the task websocket protocol — fake tasks, real moduleWs$ scaffolding,
 // driven through the shared taskChanged$ subject. No database, no gateway.
 
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, describe, it} from 'node:test'
+
 import {Subject} from 'rxjs'
 
 import {emitTaskChanged} from './events.js'
@@ -69,21 +72,21 @@ describe('createTaskWs', () => {
     })
 
     it('emits ready on connect', async () => {
-        expect(messages.values).toEqual([{ready: true}])
+        assert.deepEqual(messages.values, [{ready: true}])
     })
 
     it('sends the full task listing on subscriptionUp', async () => {
         subscriptionUp('alice', 's-1')
         await untilListings(1)
         const dataMessages = listings()
-        expect(dataMessages).toHaveLength(1)
+        assert.equal(dataMessages.length, 1)
         const {clientId, subscriptionId, data} = dataMessages[0]
-        expect(clientId).toBe('c-1')
-        expect(subscriptionId).toBe('s-1')
-        expect(data.path).toBe('')
-        expect(Object.keys(data.items)).toEqual(['t-1'])
-        expect(data.items['t-1'].status).toBe('PENDING')
-        expect(data.items['t-1'].id).toBe('t-1')
+        assert.equal(clientId, 'c-1')
+        assert.equal(subscriptionId, 's-1')
+        assert.equal(data.path, '')
+        assert.deepEqual(Object.keys(data.items), ['t-1'])
+        assert.equal(data.items['t-1'].status, 'PENDING')
+        assert.equal(data.items['t-1'].id, 't-1')
     })
 
     it('pushes an updated listing when the user tasks change', async () => {
@@ -93,8 +96,8 @@ describe('createTaskWs', () => {
         emitTaskChanged('alice')
         await untilListings(2)
         const dataMessages = listings()
-        expect(dataMessages).toHaveLength(2)
-        expect(dataMessages[1].data.items['t-1'].status).toBe('ACTIVE')
+        assert.equal(dataMessages.length, 2)
+        assert.equal(dataMessages[1].data.items['t-1'].status, 'ACTIVE')
     })
 
     // Nothing arriving cannot be awaited, so this waits for the re-query it provoked, then for a later
@@ -109,8 +112,8 @@ describe('createTaskWs', () => {
         emitTaskChanged('alice')
         await untilListings(2)
 
-        expect(listings()).toHaveLength(2)
-        expect(listings()[1].data.items['t-1'].status).toBe('ACTIVE')
+        assert.equal(listings().length, 2)
+        assert.equal(listings()[1].data.items['t-1'].status, 'ACTIVE')
     })
 
     // Each user has their own listing pipeline with its own debounce window, so bob's push is the barrier
@@ -126,8 +129,8 @@ describe('createTaskWs', () => {
         emitTaskChanged('bob')
         await untilListingsFor('s-2', 2)
 
-        expect(queriesFor('alice')).toHaveLength(aliceQueries)
-        expect(listingsFor('s-1')).toHaveLength(1)
+        assert.equal(queriesFor('alice').length, aliceQueries)
+        assert.equal(listingsFor('s-1').length, 1)
     })
 
     // A second subscription of the same user shares one listing, so its push is the proof that the
@@ -141,7 +144,7 @@ describe('createTaskWs', () => {
         emitTaskChanged('alice')
         await untilListingsFor('s-2', 2)
 
-        expect(listingsFor('s-1')).toHaveLength(1)
+        assert.equal(listingsFor('s-1').length, 1)
     })
 
     it('re-sends the full listing when the same subscription re-subscribes', async () => {
@@ -149,7 +152,7 @@ describe('createTaskWs', () => {
         await untilListings(1)
         subscriptionUp('alice', 's-1')
         await untilListings(2)
-        expect(listings()).toHaveLength(2)
+        assert.equal(listings().length, 2)
     })
 })
 
@@ -201,9 +204,9 @@ describe('createTaskWs retry', () => {
         await messages.until('the listing delivered after the retry', () => listings().length >= 1)
 
         const dataMessages = listings()
-        expect(dataMessages).toHaveLength(1)
-        expect(Object.keys(dataMessages[0].data.items)).toEqual(['t-1'])
-        expect(calls).toBe(2)
+        assert.equal(dataMessages.length, 1)
+        assert.deepEqual(Object.keys(dataMessages[0].data.items), ['t-1'])
+        assert.equal(calls, 2)
     })
 })
 
@@ -269,20 +272,20 @@ describe('createTaskWs shared listing pipeline', () => {
         await untilListings(2)
 
         const dataMessages = listings()
-        expect(dataMessages).toHaveLength(2)
+        assert.equal(dataMessages.length, 2)
         const bySubscription = id => dataMessages.find(({subscriptionId}) => subscriptionId === id)
-        expect(bySubscription('s-1').clientId).toBe('c-1')
-        expect(bySubscription('s-2').clientId).toBe('c-2')
-        expect(Object.keys(bySubscription('s-1').data.items)).toEqual(['t-1'])
-        expect(bySubscription('s-1').data.items).toEqual(bySubscription('s-2').data.items)
-        expect(tasks.calls.count).toBe(1)
+        assert.equal(bySubscription('s-1').clientId, 'c-1')
+        assert.equal(bySubscription('s-2').clientId, 'c-2')
+        assert.deepEqual(Object.keys(bySubscription('s-1').data.items), ['t-1'])
+        assert.deepEqual(bySubscription('s-1').data.items, bySubscription('s-2').data.items)
+        assert.equal(tasks.calls.count, 1)
 
         tasksByUser.alice = [{...aliceTask, state: 'ACTIVE'}]
         emitTaskChanged('alice')
         await untilListings(4)
 
-        expect(listings()).toHaveLength(4)
-        expect(tasks.calls.count).toBe(2)
+        assert.equal(listings().length, 4)
+        assert.equal(tasks.calls.count, 2)
     })
 
     // Nothing is emitted while no subscription is up, so the re-subscribe that follows is what proves it:
@@ -293,7 +296,7 @@ describe('createTaskWs shared listing pipeline', () => {
 
         subscriptionUp('c-1', 's-1', 'alice')
         await untilListings(1)
-        expect(tasks.calls.count).toBe(1)
+        assert.equal(tasks.calls.count, 1)
 
         subscriptionDown('c-1', 's-1')
         tasksByUser.alice = [{...aliceTask, state: 'ACTIVE'}]
@@ -303,9 +306,9 @@ describe('createTaskWs shared listing pipeline', () => {
         await untilListings(2)
 
         const dataMessages = listings()
-        expect(dataMessages).toHaveLength(2)
-        expect(dataMessages[1].data.items['t-1'].status).toBe('ACTIVE')
-        expect(tasks.calls.count).toBe(2)
+        assert.equal(dataMessages.length, 2)
+        assert.equal(dataMessages[1].data.items['t-1'].status, 'ACTIVE')
+        assert.equal(tasks.calls.count, 2)
     })
 })
 

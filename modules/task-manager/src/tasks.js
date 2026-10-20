@@ -72,8 +72,11 @@ export class Tasks {
         await this.#repository.remove(task)
     }
 
-    removeFinished(username) {
-        return this.#repository.removeFinishedUserTasks(username)
+    async removeFinished({taskIds, username}) {
+        if (!Array.isArray(taskIds)) {
+            throw new InvalidCommand('taskIds required')
+        }
+        await this.#repository.removeFinishedUserTasks(username, taskIds)
     }
 
     async resubmit({taskId, username}) {
@@ -82,15 +85,24 @@ export class Tasks {
         return this.submit({username, operation: task.operation, params: task.params, recipeId: task.recipeId})
     }
 
-    async reportProgress({taskId, callerTaskId, statusDescription}) {
-        if (callerTaskId !== taskId) {
-            throw new Unauthorized(`Progress for task ${taskId} sent with the key of task ${callerTaskId}`)
-        }
-        const task = await this.#repository.getTask(taskId)
-        if (!task) {
-            throw new NotFound(`No such task: ${taskId}`)
-        }
+    // Every report repeats the slot the container last released, so a release that never arrived is made up for.
+    async reportProgress({taskId, callerTaskId, statusDescription, releasedSlot}) {
+        const task = await this.#callerTask({taskId, callerTaskId})
         await this.#repository.recordProgress(task, statusDescriptionOf(statusDescription))
+        if (releasedSlot) {
+            await this.#supervisor.releaseSlot(task, slotOf(releasedSlot))
+        }
+    }
+
+    async requestLocalProcessing({taskId, callerTaskId}) {
+        const task = await this.#callerTask({taskId, callerTaskId})
+        const slot = await this.#supervisor.requestSlot(task)
+        return slot instanceof Date ? slot : null
+    }
+
+    async releaseLocalProcessing({taskId, callerTaskId, slot}) {
+        const task = await this.#callerTask({taskId, callerTaskId})
+        await this.#supervisor.releaseSlot(task, slotOf(slot))
     }
 
     async authenticateApiKey(apiKey) {
@@ -105,4 +117,23 @@ export class Tasks {
         }
         return task
     }
+
+    async #callerTask({taskId, callerTaskId}) {
+        if (callerTaskId !== taskId) {
+            throw new Unauthorized(`Task ${taskId} called with the key of task ${callerTaskId}`)
+        }
+        const task = await this.#repository.getTask(taskId)
+        if (!task) {
+            throw new NotFound(`No such task: ${taskId}`)
+        }
+        return task
+    }
+}
+
+const slotOf = value => {
+    const slot = new Date(value ?? NaN)
+    if (Number.isNaN(slot.getTime())) {
+        throw new InvalidCommand(`Not a local processing slot: ${value}`)
+    }
+    return slot
 }

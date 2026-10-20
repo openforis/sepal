@@ -21,6 +21,8 @@ venv/
 
 #JavaScript
 node_modules/
+# Each module locks the libraries it installs: modules/<module>/lib/<library>/package-lock.json
+lib/js/*/package-lock.json
 
 #Visual Studio
 .vscode

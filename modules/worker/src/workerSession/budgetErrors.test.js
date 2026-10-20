@@ -1,6 +1,9 @@
 // Unit tests for the typed budget errors requestSession throws, and for the reason → error
 // mapping that turns the budget module's wire verdict back into one of them.
 
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {
     budgetErrorFor,
     InstanceBudgetExceeded,
@@ -10,51 +13,54 @@ import {
 
 test('InstanceBudgetExceeded is an Error subclass carrying name + username', () => {
     const err = new InstanceBudgetExceeded('bob')
-    expect(err).toBeInstanceOf(Error)
-    expect(err).toBeInstanceOf(InstanceBudgetExceeded)
-    expect(err.name).toBe('InstanceBudgetExceeded')
-    expect(err.username).toBe('bob')
+    assert.ok(err instanceof Error)
+    assert.ok(err instanceof InstanceBudgetExceeded)
+    assert.equal(err.name, 'InstanceBudgetExceeded')
+    assert.equal(err.username, 'bob')
 })
 
 test('StorageBudgetExceeded is an Error subclass carrying name + username', () => {
     const err = new StorageBudgetExceeded('bob')
-    expect(err).toBeInstanceOf(Error)
-    expect(err).toBeInstanceOf(StorageBudgetExceeded)
-    expect(err.name).toBe('StorageBudgetExceeded')
-    expect(err.username).toBe('bob')
+    assert.ok(err instanceof Error)
+    assert.ok(err instanceof StorageBudgetExceeded)
+    assert.equal(err.name, 'StorageBudgetExceeded')
+    assert.equal(err.username, 'bob')
 })
 
 test('StorageQuotaExceeded is an Error subclass carrying name + username', () => {
     const err = new StorageQuotaExceeded('bob')
-    expect(err).toBeInstanceOf(Error)
-    expect(err).toBeInstanceOf(StorageQuotaExceeded)
-    expect(err.name).toBe('StorageQuotaExceeded')
-    expect(err.username).toBe('bob')
+    assert.ok(err instanceof Error)
+    assert.ok(err instanceof StorageQuotaExceeded)
+    assert.equal(err.name, 'StorageQuotaExceeded')
+    assert.equal(err.username, 'bob')
 })
 
 // The status code is the whole point of the typed errors on the /sessions surface: without it the
 // shared httpServer defaults to 500 and an over-budget user looks like a server fault.
-test.each([InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded])(
-    '%p carries statusCode 403 and a user message', Err => {
+for (const Err of [InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded]) {
+    test(`${Err} carries statusCode 403 and a user message`, () => {
         const err = new Err('bob')
-        expect(err.statusCode).toBe(403)
-        expect(err.userMessage.key).toMatch(/^error\.budget\./)
+        assert.equal(err.statusCode, 403)
+        assert.match(err.userMessage.key, /^error\.budget\./)
     })
+}
 
 describe('budgetErrorFor', () => {
-    test.each([
+    for (const [reason, Expected] of [
         ['INSTANCE_BUDGET', InstanceBudgetExceeded],
         ['STORAGE_BUDGET', StorageBudgetExceeded],
         ['STORAGE_QUOTA', StorageQuotaExceeded],
-    ])('%s → %p', (reason, Expected) => {
-        const err = budgetErrorFor(reason, 'bob')
-        expect(err).toBeInstanceOf(Expected)
-        expect(err.username).toBe('bob')
-    })
+    ]) {
+        test(`${reason} → ${Expected}`, () => {
+            const err = budgetErrorFor(reason, 'bob')
+            assert.ok(err instanceof Expected)
+            assert.equal(err.username, 'bob')
+        })
+    }
 
     test('an unknown or absent reason falls back to InstanceBudgetExceeded — a refusal must never be silently dropped', () => {
-        expect(budgetErrorFor('SOMETHING_NEW', 'bob')).toBeInstanceOf(InstanceBudgetExceeded)
-        expect(budgetErrorFor(null, 'bob')).toBeInstanceOf(InstanceBudgetExceeded)
-        expect(budgetErrorFor(undefined, 'bob')).toBeInstanceOf(InstanceBudgetExceeded)
+        assert.ok(budgetErrorFor('SOMETHING_NEW', 'bob') instanceof InstanceBudgetExceeded)
+        assert.ok(budgetErrorFor(null, 'bob') instanceof InstanceBudgetExceeded)
+        assert.ok(budgetErrorFor(undefined, 'bob') instanceof InstanceBudgetExceeded)
     })
 })

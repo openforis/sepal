@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -17,7 +19,7 @@ describe('BudgetRepository', () => {
     let sessionUse
     let now
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'budget_repository', migrations: MIGRATIONS_PATH})
     })
@@ -29,7 +31,7 @@ describe('BudgetRepository', () => {
         sessionUse = new OpenSessionUseRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('userBudget', () => {
         test('falls back to the default budget when the user has none', async () => {
@@ -37,7 +39,7 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget(OWNER)
 
-            expect(found).toEqual({instanceSpending: 1, storageSpending: 20, storageQuota: 30})
+            assert.deepEqual(found, {instanceSpending: 1, storageSpending: 20, storageQuota: 30})
         })
 
         test('prefers the user\'s own budget over the default', async () => {
@@ -46,7 +48,7 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget(OWNER)
 
-            expect(found).toEqual({instanceSpending: 5, storageSpending: 50, storageQuota: 500})
+            assert.deepEqual(found, {instanceSpending: 5, storageSpending: 50, storageQuota: 500})
         })
     })
 
@@ -59,8 +61,8 @@ describe('BudgetRepository', () => {
 
             const closed = uses.find(use => use.from.getTime() === at('06-02').getTime())
             const open = uses.find(use => use.from.getTime() === at('06-04').getTime())
-            expect(closed.to.getTime()).toBe(at('06-03').getTime())
-            expect(open.to.getTime()).toBe(now.getTime())
+            assert.equal(closed.to.getTime(), at('06-03').getTime())
+            assert.equal(open.to.getTime(), now.getTime())
         })
 
         test('returns only the uses overlapping the requested month', async () => {
@@ -73,10 +75,10 @@ describe('BudgetRepository', () => {
             const june = await fromTimes(2026, 6)
             const december = await fromTimes(2026, 12)
 
-            expect(april).toEqual([])
-            expect(may).toEqual(isoTimes(at('05-10'), at('05-28')))
-            expect(june).toEqual(isoTimes(at('05-28'), at('06-10')))
-            expect(december).toEqual([])
+            assert.deepEqual(april, [])
+            assert.deepEqual(may, isoTimes(at('05-10'), at('05-28')))
+            assert.deepEqual(june, isoTimes(at('05-28'), at('06-10')))
+            assert.deepEqual(december, [])
         })
 
         test('counts a use that is still open from its first month onwards', async () => {
@@ -86,9 +88,9 @@ describe('BudgetRepository', () => {
             const may = await repository.userInstanceUses(OWNER, 2026, 5)
             const june = await repository.userInstanceUses(OWNER, 2026, 6)
 
-            expect(april).toHaveLength(0)
-            expect(may).toHaveLength(1)
-            expect(june).toHaveLength(1)
+            assert.equal(april.length, 0)
+            assert.equal(may.length, 1)
+            assert.equal(june.length, 1)
         })
 
         test('returns only the given user\'s uses', async () => {
@@ -97,8 +99,8 @@ describe('BudgetRepository', () => {
 
             const uses = await repository.userInstanceUses(OWNER, 2026, 6)
 
-            expect(uses).toHaveLength(1)
-            expect(uses[0].instanceType).toBe(INSTANCE_TYPE)
+            assert.equal(uses.length, 1)
+            assert.equal(uses[0].instanceType, INSTANCE_TYPE)
         })
     })
 
@@ -106,9 +108,9 @@ describe('BudgetRepository', () => {
         test('reports nothing used, as of now, for a month with nothing recorded', async () => {
             const use = await repository.userStorageUse(OWNER, 2026, 6)
 
-            expect(use.gbHours).toBe(0)
-            expect(use.gb).toBe(0)
-            expect(use.updateTime.getTime()).toBe(now.getTime())
+            assert.equal(use.gbHours, 0)
+            assert.equal(use.gb, 0)
+            assert.equal(use.updateTime.getTime(), now.getTime())
         })
 
         test('records the figure under the month its update time falls in', async () => {
@@ -116,9 +118,9 @@ describe('BudgetRepository', () => {
 
             const use = await repository.userStorageUse(OWNER, 2026, 6)
 
-            expect(use.gbHours).toBe(12)
-            expect(use.gb).toBe(3)
-            expect(use.updateTime.getTime()).toBe(at('06-10').getTime())
+            assert.equal(use.gbHours, 12)
+            assert.equal(use.gb, 3)
+            assert.equal(use.updateTime.getTime(), at('06-10').getTime())
         })
 
         test('replaces the figure already recorded for that month', async () => {
@@ -128,10 +130,10 @@ describe('BudgetRepository', () => {
 
             const use = await repository.userStorageUse(OWNER, 2026, 6)
             const [rows] = await testDb.query('SELECT COUNT(*) c FROM user_monthly_storage')
-            expect(use.gbHours).toBe(30)
-            expect(use.gb).toBe(5)
-            expect(use.updateTime.getTime()).toBe(at('06-20').getTime())
-            expect(rows[0].c).toBe(1)
+            assert.equal(use.gbHours, 30)
+            assert.equal(use.gb, 5)
+            assert.equal(use.updateTime.getTime(), at('06-20').getTime())
+            assert.equal(rows[0].c, 1)
         })
 
         test('reports the most recent month recorded', async () => {
@@ -140,7 +142,7 @@ describe('BudgetRepository', () => {
 
             const use = await repository.lastUserStorageUse(OWNER)
 
-            expect(use.gbHours).toBe(2)
+            assert.equal(use.gbHours, 2)
         })
     })
 
@@ -157,9 +159,9 @@ describe('BudgetRepository', () => {
             })
 
             const report = await repository.spendingReport()
-            expect(Object.keys(report).sort()).toEqual([OWNER, ANOTHER_OWNER])
-            expect(report[OWNER].instanceSpending).toBe(1)
-            expect(report[ANOTHER_OWNER].storageUsage).toBe(6)
+            assert.deepEqual(Object.keys(report).sort(), [OWNER, ANOTHER_OWNER])
+            assert.equal(report[OWNER].instanceSpending, 1)
+            assert.equal(report[ANOTHER_OWNER].storageUsage, 6)
         })
 
         test('updates a user already in the report and adds nobody', async () => {
@@ -172,9 +174,9 @@ describe('BudgetRepository', () => {
             await repository.updateSpendingReport('ghost', spending({username: 'ghost', instanceSpending: 1, storageSpending: 1, storageUsage: 1}))
 
             const report = await repository.spendingReport()
-            expect(Object.keys(report)).toEqual([OWNER])
-            expect(report[OWNER].instanceSpending).toBe(9)
-            expect(report[OWNER].storageUsage).toBe(7)
+            assert.deepEqual(Object.keys(report), [OWNER])
+            assert.equal(report[OWNER].instanceSpending, 9)
+            assert.equal(report[OWNER].storageUsage, 7)
         })
 
         test('reports everyone known to spending, budgets or requests, with their effective budget and pending request', async () => {
@@ -187,17 +189,17 @@ describe('BudgetRepository', () => {
 
             const report = await repository.spendingReport()
 
-            expect(Object.keys(report).sort()).toEqual([OWNER, ANOTHER_OWNER])
-            expect(report[OWNER].instanceSpending).toBe(3)
-            expect(report[OWNER].instanceBudget).toBe(7)
-            expect(report[OWNER].storageQuota).toBe(700)
-            expect(report[OWNER].budgetUpdateRequest).toBeUndefined()
-            expect(report[OWNER].costPerGbMonth).toBe(0)
-            expect(report[ANOTHER_OWNER].costPerGbMonth).toBe(0)
-            expect(report[ANOTHER_OWNER].instanceSpending).toBe(0)
-            expect(report[ANOTHER_OWNER].instanceBudget).toBe(1)
-            expect(report[ANOTHER_OWNER].storageQuota).toBe(100)
-            expect(report[ANOTHER_OWNER].budgetUpdateRequest.message).toBe('more')
+            assert.deepEqual(Object.keys(report).sort(), [OWNER, ANOTHER_OWNER])
+            assert.equal(report[OWNER].instanceSpending, 3)
+            assert.equal(report[OWNER].instanceBudget, 7)
+            assert.equal(report[OWNER].storageQuota, 700)
+            assert.equal(report[OWNER].budgetUpdateRequest, undefined)
+            assert.equal(report[OWNER].costPerGbMonth, 0)
+            assert.equal(report[ANOTHER_OWNER].costPerGbMonth, 0)
+            assert.equal(report[ANOTHER_OWNER].instanceSpending, 0)
+            assert.equal(report[ANOTHER_OWNER].instanceBudget, 1)
+            assert.equal(report[ANOTHER_OWNER].storageQuota, 100)
+            assert.equal(report[ANOTHER_OWNER].budgetUpdateRequest.message, 'more')
         })
     })
 
@@ -212,12 +214,12 @@ describe('BudgetRepository', () => {
                 budget({instanceSpending: 10, storageSpending: 100, storageQuota: 1000}))
 
             const rows = await storedRequests(OWNER)
-            expect(rows).toHaveLength(1)
-            expect(rows[0].state).toBe('PENDING')
-            expect(rows[0].initial_monthly_instance).toBe(5)
-            expect(rows[0].initial_storage_quota).toBe(500)
-            expect(rows[0].requested_monthly_instance).toBe(10)
-            expect(rows[0].message).toBe('please more')
+            assert.equal(rows.length, 1)
+            assert.equal(rows[0].state, 'PENDING')
+            assert.equal(rows[0].initial_monthly_instance, 5)
+            assert.equal(rows[0].initial_storage_quota, 500)
+            assert.equal(rows[0].requested_monthly_instance, 10)
+            assert.equal(rows[0].message, 'please more')
         })
 
         test('replaces a pending request rather than adding a second', async () => {
@@ -227,9 +229,9 @@ describe('BudgetRepository', () => {
             await repository.requestBudgetUpdate(OWNER, 'second', budget({instanceSpending: 9, storageSpending: 9, storageQuota: 9}))
 
             const rows = await storedRequests(OWNER)
-            expect(rows).toHaveLength(1)
-            expect(rows[0].message).toBe('second')
-            expect(rows[0].requested_monthly_instance).toBe(9)
+            assert.equal(rows.length, 1)
+            assert.equal(rows[0].message, 'second')
+            assert.equal(rows[0].requested_monthly_instance, 9)
         })
 
         test('reports the pending request', async () => {
@@ -238,15 +240,15 @@ describe('BudgetRepository', () => {
 
             const request = await repository.budgetUpdateRequest(OWNER)
 
-            expect(request.message).toBe('give me')
-            expect(request.instanceSpending).toBe(7)
-            expect(request.storageQuota).toBe(9)
+            assert.equal(request.message, 'give me')
+            assert.equal(request.instanceSpending, 7)
+            assert.equal(request.storageQuota, 9)
         })
 
         test('reports no pending request when there is none', async () => {
             const request = await repository.budgetUpdateRequest('nobody')
 
-            expect(request).toBeNull()
+            assert.equal(request, null)
         })
 
         test('applies the new budget and closes the pending request with the granted figures', async () => {
@@ -258,11 +260,11 @@ describe('BudgetRepository', () => {
             const applied = await repository.userBudget(OWNER)
             const rows = await storedRequests(OWNER)
             const pending = await repository.budgetUpdateRequest(OWNER)
-            expect(applied).toEqual({instanceSpending: 6, storageSpending: 60, storageQuota: 600})
-            expect(rows[0].state).toBe('CLOSED')
-            expect(rows[0].final_monthly_instance).toBe(6)
-            expect(rows[0].final_storage_quota).toBe(600)
-            expect(pending).toBeNull()
+            assert.deepEqual(applied, {instanceSpending: 6, storageSpending: 60, storageQuota: 600})
+            assert.equal(rows[0].state, 'CLOSED')
+            assert.equal(rows[0].final_monthly_instance, 6)
+            assert.equal(rows[0].final_storage_quota, 600)
+            assert.equal(pending, null)
         })
     })
 
@@ -274,8 +276,8 @@ describe('BudgetRepository', () => {
 
             const found = await repository.userBudget('nobody')
             const [rows] = await testDb.query('SELECT COUNT(*) c FROM default_user_budget')
-            expect(found).toEqual({instanceSpending: 10, storageSpending: 20, storageQuota: 30})
-            expect(rows[0].c).toBe(1)
+            assert.deepEqual(found, {instanceSpending: 10, storageSpending: 20, storageQuota: 30})
+            assert.equal(rows[0].c, 1)
         })
     })
 

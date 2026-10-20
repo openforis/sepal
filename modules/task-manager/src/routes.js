@@ -14,3 +14,5 @@ export const createRoutes = api => router => router
     .post('/tasks/task/:id/remove', requireAuth, api.remove)
     .post('/tasks/task/:id/execute', requireAuth, api.resubmit)
     .post('/tasks/task/:id/progress', requireTaskSession, api.progress)
+    .post('/tasks/task/:id/local-processing', requireTaskSession, api.requestLocalProcessing)
+    .post('/tasks/task/:id/local-processing/release', requireTaskSession, api.releaseLocalProcessing)

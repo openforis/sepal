@@ -5,8 +5,8 @@ Processes email sending requests via RabbitMQ. Uses BullMQ (Redis) for job queue
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

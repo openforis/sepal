@@ -6,11 +6,11 @@
     "author": "",
     "license": "ISC",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "dependencies": {
-        "@google/earthengine": "^1.7.47",
+        "@google/earthengine": "^1.7.48",
         "@koa/router": "^15.7.0",
         "@lezer/javascript": "1.5.4",
         "amqplib": "^2.2.0",
@@ -21,7 +21,7 @@
         "koa-easy-ws": "^2.1.0",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
-        "mysql2": "^3.24.5",
+        "mysql2": "^3.24.6",
         "postgrator": "^8.0.0",
         "prom-client": "^15.1.3",
         "prometheus-api-metrics": "^4.0.0",
@@ -31,14 +31,6 @@
         "uuid": "^14.0.3",
         "ws": "^8.22.0",
         "xmlhttprequest": "npm:@lpaolini/xmlhttprequest@^1.8.1"
-    },
-    "devDependencies": {
-        "jest-expect-message": "^1.1.3"
-    },
-    "jest": {
-        "setupFilesAfterEnv": [
-            "jest-expect-message"
-        ]
     },
     "imports": {
         "#sepal/*": "./src/*.js",

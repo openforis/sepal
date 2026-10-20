@@ -10,7 +10,7 @@ Owns the `message` MySQL schema (`message.message`, `message.notification`).
 [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
-- `npm test` — Jest (ESM)
+- `npm test` — Node test runner (`node --test`)
 - `sepal build message` / `sepal start message` / `sepal logs message -r`
 
 ## Routes (served without the `/api/message` gateway prefix)

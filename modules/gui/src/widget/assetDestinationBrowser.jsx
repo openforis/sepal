@@ -56,6 +56,7 @@ class _AssetDestinationBrowser extends React.Component {
 
     render() {
         const {form, activatable: {deactivate}} = this.props
+        const {filter} = this.state
         return (
             <Form.Panel
                 className={styles.panel}
@@ -77,7 +78,7 @@ class _AssetDestinationBrowser extends React.Component {
                         {this.renderFilter()}
                     </Widget>
                 </Panel.Content>
-                <Form.PanelButtons>
+                <Form.PanelButtons disabledEscape={!!filter}>
                     {this.renderCreateFolderButton()}
                 </Form.PanelButtons>
             </Form.Panel>

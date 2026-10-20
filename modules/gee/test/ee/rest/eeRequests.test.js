@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {before, describe, test} from 'node:test'
+
 import ee from '#sepal/ee/ee'
 import * as requests from '#sepal/ee/rest/eeRequests'
 
@@ -10,7 +13,7 @@ const CONTEXT = {projectId: TEST_PROJECT, workloadTag: 'sepal-work-test'}
 const FOLDER = `projects/${TEST_PROJECT}/assets/folder`
 const IMAGE_ASSET = `${FOLDER}/image`
 
-beforeAll(() => initializeOfflineEE())
+before(() => initializeOfflineEE())
 
 describe('a request built for the REST API is the one the client library sends', () => {
     test('computing a value', async () => {
@@ -21,7 +24,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => image.getInfo(callback)
         ))
 
-        expect(sent(requests.computeValue(ee, image, CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.computeValue(ee, image, CONTEXT)), library)
     })
 
     test('creating a map with visualization parameters', async () => {
@@ -33,7 +36,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => image.getMapId({...visParams, format: 'png'}, callback)
         ))
 
-        expect(sent(requests.createMap(ee, image, visParams, CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.createMap(ee, image, visParams, CONTEXT)), library)
     })
 
     test('creating a map of an image styled already', async () => {
@@ -44,7 +47,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => image.getMapId({format: 'png'}, callback)
         ))
 
-        expect(sent(requests.createMap(ee, image, null, CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.createMap(ee, image, null, CONTEXT)), library)
     })
 
     test('reading an asset', async () => {
@@ -53,7 +56,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.getAsset(IMAGE_ASSET, callback)
         )
 
-        expect(sent(requests.getAsset(ee, IMAGE_ASSET))).toEqual(library)
+        assert.deepEqual(sent(requests.getAsset(ee, IMAGE_ASSET)), library)
     })
 
     test('listing a folder', async () => {
@@ -62,7 +65,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.listAssets(FOLDER, {view: 'BASIC'}, callback)
         )
 
-        expect(sent(requests.listAssets(ee, FOLDER))).toEqual(library)
+        assert.deepEqual(sent(requests.listAssets(ee, FOLDER)), library)
     })
 
     test('continuing the listing of a folder', async () => {
@@ -71,7 +74,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.listAssets(FOLDER, {view: 'BASIC', pageToken: 'next-page'}, callback)
         )
 
-        expect(sent(requests.listAssets(ee, FOLDER, 'next-page'))).toEqual(library)
+        assert.deepEqual(sent(requests.listAssets(ee, FOLDER, 'next-page')), library)
     })
 
     test('listing the root of a Cloud project', async () => {
@@ -82,7 +85,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.listAssets(root, {view: 'BASIC'}, callback)
         )
 
-        expect(sent(requests.listAssets(ee, root))).toEqual(library)
+        assert.deepEqual(sent(requests.listAssets(ee, root)), library)
     })
 
     test('listing the legacy roots', async () => {
@@ -91,7 +94,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.listBuckets('projects/earthengine-legacy', callback)
         )
 
-        expect(sent(requests.listBuckets('projects/earthengine-legacy'))).toEqual(library)
+        assert.deepEqual(sent(requests.listBuckets('projects/earthengine-legacy')), library)
     })
 
     test('deleting an asset', async () => {
@@ -100,7 +103,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.deleteAsset(IMAGE_ASSET, callback)
         )
 
-        expect(sent(requests.deleteAsset(ee, IMAGE_ASSET))).toEqual(library)
+        assert.deepEqual(sent(requests.deleteAsset(ee, IMAGE_ASSET)), library)
     })
 
     test('moving an asset', async () => {
@@ -111,7 +114,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.renameAsset(IMAGE_ASSET, destination, callback)
         )
 
-        expect(sent(requests.moveAsset(ee, IMAGE_ASSET, destination))).toEqual(library)
+        assert.deepEqual(sent(requests.moveAsset(ee, IMAGE_ASSET, destination)), library)
     })
 
     test('creating an image collection', async () => {
@@ -121,7 +124,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.createAsset({type: 'ImageCollection'}, assetId, false, {}, callback)
         )
 
-        expect(sent(requests.createImageCollection(ee, assetId))).toEqual(library)
+        assert.deepEqual(sent(requests.createImageCollection(ee, assetId)), library)
     })
 
     test('creating an image collection with properties', async () => {
@@ -132,7 +135,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.createAsset({type: 'ImageCollection'}, assetId, false, properties, callback)
         )
 
-        expect(sent(requests.createImageCollection(ee, assetId, properties))).toEqual(library)
+        assert.deepEqual(sent(requests.createImageCollection(ee, assetId, properties)), library)
     })
 
     test('setting and removing asset properties', async () => {
@@ -142,7 +145,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.setAssetProperties(IMAGE_ASSET, properties, callback)
         )
 
-        expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
+        assert.deepEqual(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties)), library)
     })
 
     test('setting system time properties converts them to the asset fields the library sets', async () => {
@@ -152,7 +155,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.setAssetProperties(IMAGE_ASSET, properties, callback)
         )
 
-        expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
+        assert.deepEqual(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties)), library)
     })
 
     test('removing a property together with a system property', async () => {
@@ -162,7 +165,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.setAssetProperties(IMAGE_ASSET, properties, callback)
         )
 
-        expect(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties))).toEqual(library)
+        assert.deepEqual(sent(requests.setAssetProperties(ee, IMAGE_ASSET, properties)), library)
     })
 
     test('creating a folder', async () => {
@@ -173,7 +176,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.createFolder(`${parent}/new-folder`, false, callback)
         )
 
-        expect(sent(requests.createFolder(parent, 'new-folder'))).toEqual(library)
+        assert.deepEqual(sent(requests.createFolder(parent, 'new-folder')), library)
     })
 
     test('listing operations', async () => {
@@ -182,7 +185,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.listOperations(undefined, callback)
         )
 
-        expect(sent(requests.listOperations(CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.listOperations(CONTEXT)), library)
     })
 
     test('reading an export task\'s status', async () => {
@@ -191,7 +194,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.getTaskStatus('T1', callback)
         )
 
-        expect(sent(requests.getOperation(ee, 'T1'))).toEqual(library)
+        assert.deepEqual(sent(requests.getOperation(ee, 'T1')), library)
     })
 
     test('cancelling an export task', async () => {
@@ -200,7 +203,7 @@ describe('a request built for the REST API is the one the client library sends',
             callback => ee.data.cancelTask('T1', callback)
         )
 
-        expect(sent(requests.cancelOperation(ee, 'T1'))).toEqual(library)
+        assert.deepEqual(sent(requests.cancelOperation(ee, 'T1')), library)
     })
 
     test('starting a table export', async () => {
@@ -214,7 +217,7 @@ describe('a request built for the REST API is the one the client library sends',
         ))
 
         const task = ee.batch.Export.table.toDrive(collection, 'description', 'folder', 'prefix', 'CSV', ['a', 'b'])
-        expect(sent(requests.exportTable(ee, task, 'T1', CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.exportTable(ee, task, 'T1', CONTEXT)), library)
     })
 
     test('starting an image export', async () => {
@@ -229,14 +232,14 @@ describe('a request built for the REST API is the one the client library sends',
             callback => libraryTask.start(() => callback(libraryTask.id), error => callback(null, error))
         ))
 
-        expect(sent(requests.exportImage(ee, exportTask(), 'T1', CONTEXT))).toEqual(library)
+        assert.deepEqual(sent(requests.exportImage(ee, exportTask(), 'T1', CONTEXT)), library)
     })
 })
 
 test('making an asset public sets a policy granting everyone read access', () => {
     const policy = {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}
 
-    expect(requests.setAssetIamPolicy(IMAGE_ASSET, policy)).toEqual({
+    assert.deepEqual(requests.setAssetIamPolicy(IMAGE_ASSET, policy), {
         method: 'POST',
         path: `v1/${IMAGE_ASSET}:setIamPolicy`,
         body: {policy}
@@ -246,7 +249,10 @@ test('making an asset public sets a policy granting everyone read access', () =>
 test('a map is built only from an image', () => {
     const collection = ee.FeatureCollection(`projects/${TEST_PROJECT}/assets/table`)
 
-    expect(() => requests.createMap(ee, collection, null, CONTEXT)).toThrow('A map can only be created from an ee.Image')
+    assert.throws(
+        () => requests.createMap(ee, collection, null, CONTEXT),
+        /A map can only be created from an ee\.Image/
+    )
 })
 
 const runningOperation = taskId => ({

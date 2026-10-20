@@ -5,8 +5,8 @@ Monitors and serves Jupyter/Shiny applications. Polls a config file for app defi
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

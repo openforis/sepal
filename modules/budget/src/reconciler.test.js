@@ -1,4 +1,7 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {mock, test} from 'node:test'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createReconciler} from './reconciler.js'
 
@@ -13,11 +16,11 @@ test('worker-open session missing from the table gets opened (missed Activated)'
     const reconciler = createReconciler({workerClient, openSessionUse, clock: () => new Date('2026-07-03T00:00:00Z')})
     await reconciler.reconcile()
 
-    expect(openSessionUse.openSession).toHaveBeenCalledTimes(1)
-    expect(openSessionUse.openSession).toHaveBeenCalledWith({
+    assert.equal(openSessionUse.openSession.mock.callCount(), 1)
+    assert.deepEqual(callsOf(openSessionUse.openSession), [[{
         sessionId: 's3', username: 'bob', instanceType: 'm5.large', from: new Date('2026-07-02T00:00:00Z'),
-    })
-    expect(openSessionUse.closeSession).not.toHaveBeenCalled()
+    }]])
+    assert.equal(openSessionUse.closeSession.mock.callCount(), 0)
 })
 
 test('table row not reported open by the worker gets closed (missed Closed); still-open rows are left alone', async () => {
@@ -32,11 +35,11 @@ test('table row not reported open by the worker gets closed (missed Closed); sti
     const reconciler = createReconciler({workerClient, openSessionUse, clock: () => now})
     await reconciler.reconcile()
 
-    expect(openSessionUse.openSession).toHaveBeenCalledWith({
+    assert.deepEqual(callsOf(openSessionUse.openSession), [[{
         sessionId: 's1', username: 'alice', instanceType: 'm5.large', from: new Date('2026-07-01T00:00:00Z'),
-    })
-    expect(openSessionUse.closeSession).toHaveBeenCalledTimes(1)
-    expect(openSessionUse.closeSession).toHaveBeenCalledWith({sessionId: 's2', to: now})
+    }]])
+    assert.equal(openSessionUse.closeSession.mock.callCount(), 1)
+    assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 's2', to: now}]])
 })
 
 test('combined: opens the missing session, keeps the still-open one, closes the stale one', async () => {
@@ -51,13 +54,13 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
     const reconciler = createReconciler({workerClient, openSessionUse, clock: () => now})
     await reconciler.reconcile()
 
-    expect(openSessionUse.openSession).toHaveBeenCalledTimes(1)
-    expect(openSessionUse.closeSession).toHaveBeenCalledTimes(1)
-    expect(openSessionUse.closeSession).toHaveBeenCalledWith({sessionId: 's2', to: now})
+    assert.equal(openSessionUse.openSession.mock.callCount(), 1)
+    assert.equal(openSessionUse.closeSession.mock.callCount(), 1)
+    assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 's2', to: now}]])
 })
 
 const createMockOpenSessionUse = (openSessionIds = []) => ({
-    openSession: jest.fn(),
-    closeSession: jest.fn(),
-    openSessionIds: jest.fn(async () => openSessionIds),
+    openSession: mock.fn(),
+    closeSession: mock.fn(),
+    openSessionIds: mock.fn(async () => openSessionIds),
 })

@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {operations} from '../operations.js'
 
 const client = ({start, status = [{state: 'COMPLETED'}]}) => {
@@ -26,9 +29,12 @@ test('an image export to asset starts in gee, is followed, then shared when aske
 
     await run('image.GEE', params, sepal)
 
-    expect(calls.map(({path}) => path)).toEqual(['task/export/image/asset', 'task/operation/status', 'task/asset/share'])
-    expect(calls[0].body).toBe(params)
-    expect(calls[2].body).toEqual({assetId: 'projects/p/assets/out'})
+    assert.deepEqual(
+        calls.map(({path}) => path),
+        ['task/export/image/asset', 'task/operation/status', 'task/asset/share']
+    )
+    assert.equal(calls[0].body, params)
+    assert.deepEqual(calls[2].body, {assetId: 'projects/p/assets/out'})
 })
 
 test('a CCDC export to asset starts in gee and is followed', async () => {
@@ -36,7 +42,10 @@ test('a CCDC export to asset starts in gee and is followed', async () => {
 
     await run('ccdc.GEE', {image: {recipe: {type: 'CCDC'}}, description: 'd'}, sepal)
 
-    expect(calls.map(({path}) => path)).toEqual(['task/export/ccdc/asset', 'task/operation/status'])
+    assert.deepEqual(
+        calls.map(({path}) => path),
+        ['task/export/ccdc/asset', 'task/operation/status']
+    )
 })
 
 test('a Drive export a user without a Google account cannot make completes without following anything', async () => {
@@ -44,7 +53,7 @@ test('a Drive export a user without a Google account cannot make completes witho
 
     await run('image.DRIVE', {image: {recipe: {type: 'MOSAIC'}}}, sepal)
 
-    expect(calls.map(({path}) => path)).toEqual(['task/export/image/drive'])
+    assert.deepEqual(calls.map(({path}) => path), ['task/export/image/drive'])
 })
 
 test('an image export stopped before it completes is not shared', async () => {
@@ -56,5 +65,5 @@ test('an image export stopped before it completes is not shared', async () => {
         {sepal, report: () => {}, signal: abort.signal, sleep: async () => abort.abort()}
     )
 
-    expect(calls.map(({path}) => path)).not.toContain('task/asset/share')
+    assert.ok(!calls.map(({path}) => path).includes('task/asset/share'))
 })

@@ -1,30 +1,48 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
+
 import {firstValueFrom} from 'rxjs'
 
 // What a Stack's catalogue answers: the output names its mapping gives, in model order, however it was asked and
 // without building anything. Which bands execution builds is the live verifier's (verify/stackOutputBands.mjs).
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: {}}))
-const imageFactory = jest.fn()
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {}
+    }
+})
+const imageFactory = mock.fn()
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: imageFactory
+    }
+})
 
 const {default: stack} = await import('#sepal/ee/stack/stack')
 
 describe('the bands a Stack reports', () => {
-    it.each([
+    for (const [scenario, args] of [
         ['nothing', undefined],
         ['an empty selection', {selection: []}],
         ['some of its bands', {selection: ['water']}]
-    ])('are its mapped output names in model order, whatever it is asked for: %s', async (_case, args) => {
-        expect(await firstValueFrom(stack(STACK, args).getBands$())).toEqual(['dem', 'water', 'extent'])
-        expect(imageFactory).not.toHaveBeenCalled()
-    })
+    ]) {
+        it(
+            `are its mapped output names in model order, whatever it is asked for: ${scenario}`,
+            async () => {
+                assert.deepEqual(
+                    await firstValueFrom(stack(STACK, args).getBands$()),
+                    ['dem', 'water', 'extent']
+                )
+                assert.equal(imageFactory.mock.callCount(), 0)
+            }
+        )
+    }
 })
 
 it('names the input that maps no bands when built', () => {
     const unmapped = {model: {...STACK.model, bandNames: {bandNames: [STACK.model.bandNames.bandNames[0]]}}}
 
-    expect(() => stack(unmapped).getImage$()).toThrow('Stack input i-1 maps no bands')
+    assert.throws(() => stack(unmapped).getImage$(), /Stack input i-1 maps no bands/)
 })
 
 // The mapping lists the second image first; the output follows the images.

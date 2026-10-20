@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -15,7 +17,7 @@ describe('ClaimRepository', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
     })
@@ -25,13 +27,13 @@ describe('ClaimRepository', () => {
         repository = new ClaimRepository(testDb.db)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('claim', () => {
         test('claims an instance that is free', async () => {
             const won = await repository.claim(INSTANCE_ID, SESSION_ID)
 
-            expect(won).toBe(true)
+            assert.equal(won, true)
         })
 
         test('refuses an instance another session has claimed', async () => {
@@ -40,8 +42,8 @@ describe('ClaimRepository', () => {
             const won = await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID)
 
             const claims = await repository.all()
-            expect(won).toBe(false)
-            expect(claims.map(({sessionId}) => sessionId)).toEqual([SESSION_ID])
+            assert.equal(won, false)
+            assert.deepEqual(claims.map(({sessionId}) => sessionId), [SESSION_ID])
         })
 
         // The multi-process-safety requirement: two writers, genuinely at once, one winner.
@@ -52,8 +54,8 @@ describe('ClaimRepository', () => {
             ])
 
             const claims = await repository.all()
-            expect(outcomes.filter(Boolean)).toHaveLength(1)
-            expect(claims).toHaveLength(1)
+            assert.equal(outcomes.filter(Boolean).length, 1)
+            assert.equal(claims.length, 1)
         })
 
         // Only a collision means "already claimed"; anything else is an outage the caller must see,
@@ -64,7 +66,7 @@ describe('ClaimRepository', () => {
                 error: new Error('db down')
             }))
 
-            await expect(failing.claim(INSTANCE_ID, SESSION_ID)).rejects.toThrow('db down')
+            await assert.rejects(failing.claim(INSTANCE_ID, SESSION_ID), /db down/)
         })
     })
 
@@ -75,14 +77,14 @@ describe('ClaimRepository', () => {
             const released = await repository.release(INSTANCE_ID)
 
             const reclaimed = await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID)
-            expect(released).toBe(true)
-            expect(reclaimed).toBe(true)
+            assert.equal(released, true)
+            assert.equal(reclaimed, true)
         })
 
         test('reports that an unclaimed instance released nothing', async () => {
             const released = await repository.release(INSTANCE_ID)
 
-            expect(released).toBe(false)
+            assert.equal(released, false)
         })
     })
 
@@ -93,17 +95,20 @@ describe('ClaimRepository', () => {
 
             const claims = await repository.all()
 
-            expect(claims.map(({instanceId, sessionId}) => ({instanceId, sessionId})).sort(byInstanceId)).toEqual([
-                {instanceId: INSTANCE_ID, sessionId: SESSION_ID},
-                {instanceId: ANOTHER_INSTANCE_ID, sessionId: ANOTHER_SESSION_ID},
-            ].sort(byInstanceId))
-            expect(claims.every(({claimedAt}) => claimedAt instanceof Date)).toBe(true)
+            assert.deepEqual(
+                claims.map(({instanceId, sessionId}) => ({instanceId, sessionId})).sort(byInstanceId),
+                [
+                    {instanceId: INSTANCE_ID, sessionId: SESSION_ID},
+                    {instanceId: ANOTHER_INSTANCE_ID, sessionId: ANOTHER_SESSION_ID},
+                ].sort(byInstanceId)
+            )
+            assert.equal(claims.every(({claimedAt}) => claimedAt instanceof Date), true)
         })
 
         test('reports nothing when no instance is claimed', async () => {
             const claims = await repository.all()
 
-            expect(claims).toEqual([])
+            assert.deepEqual(claims, [])
         })
     })
 

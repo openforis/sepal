@@ -4907,7 +4907,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas"
+      "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas",
+      "filteredTooltip": {
+        "search": "Eliminar las tareas que coinciden con el filtro actual",
+        "completed": "Eliminar las tareas completadas",
+        "completedSearch": "Eliminar las tareas completadas que coinciden con el filtro actual",
+        "failed": "Eliminar las tareas fallidas o canceladas",
+        "failedSearch": "Eliminar las tareas fallidas o canceladas que coinciden con el filtro actual"
+      }
     },
     "stop": {
       "tooltip": "Detener tarea"

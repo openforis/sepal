@@ -1,16 +1,27 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {before, beforeEach, describe, mock, test} from 'node:test'
 
 import {CLIENT_UP, USER_DOWN} from '#sepal/event/definitions'
 import {configureNoLogging} from '#sepal/log'
+import {callsOf} from '#sepal/testSupport/mock'
 
 // Redis session state and the storage scanner are this handler's other two boundaries; both are stubbed
 // at the module edge so the test can watch what reaches the inactivity check.
-const setSessionActive = jest.fn(async () => undefined)
-const setSessionInactive = jest.fn(async () => undefined)
-const scheduleStorageCheck = jest.fn(async () => undefined)
+const setSessionActive = mock.fn(async () => undefined)
+const setSessionInactive = mock.fn(async () => undefined)
+const scheduleStorageCheck = mock.fn(async () => undefined)
 
-jest.unstable_mockModule('./kvstore.js', () => ({setSessionActive, setSessionInactive}))
-jest.unstable_mockModule('./storageCheck.js', () => ({scheduleStorageCheck}))
+mock.module('./kvstore.js', {
+    exports: {
+        setSessionActive,
+        setSessionInactive
+    }
+})
+mock.module('./storageCheck.js', {
+    exports: {
+        scheduleStorageCheck
+    }
+})
 
 const {createMessageHandler} = await import('./messageHandler.js')
 
@@ -19,13 +30,13 @@ describe('the message handler', () => {
     let scheduled
     let cancelled
 
-    beforeAll(() => configureNoLogging())
+    before(() => configureNoLogging())
 
     beforeEach(() => {
         scheduled = []
         cancelled = []
-        setSessionActive.mockClear()
-        setSessionInactive.mockClear()
+        setSessionActive.mock.resetCalls()
+        setSessionInactive.mock.resetCalls()
         inactivityCheck = {
             scheduleInactivityCheck: async ({username}) => {
                 scheduled.push(username)
@@ -39,50 +50,50 @@ describe('the message handler', () => {
     test('cancels the check for a user whose session became active', async () => {
         await deliver('workerSession.WorkerSessionActivated', {username: USERNAME})
 
-        expect(setSessionActive).toHaveBeenCalledWith(USERNAME)
-        expect(cancelled).toEqual([USERNAME])
-        expect(scheduled).toEqual([])
+        assert.deepEqual(callsOf(setSessionActive), [[USERNAME]])
+        assert.deepEqual(cancelled, [USERNAME])
+        assert.deepEqual(scheduled, [])
     })
 
     test('schedules a check for a user whose session closed', async () => {
         await deliver('workerSession.WorkerSessionClosed', {username: USERNAME})
 
-        expect(setSessionInactive).toHaveBeenCalledWith(USERNAME)
-        expect(scheduled).toEqual([USERNAME])
-        expect(cancelled).toEqual([])
+        assert.deepEqual(callsOf(setSessionInactive), [[USERNAME]])
+        assert.deepEqual(scheduled, [USERNAME])
+        assert.deepEqual(cancelled, [])
     })
 
     test('cancels the check for a user whose client came up', async () => {
         await deliver('systemEvent', {type: CLIENT_UP, data: {username: USERNAME}})
 
-        expect(cancelled).toEqual([USERNAME])
+        assert.deepEqual(cancelled, [USERNAME])
     })
 
     test('schedules a check for a user who went away', async () => {
         await deliver('systemEvent', {type: USER_DOWN, data: {user: {username: USERNAME}}})
 
-        expect(scheduled).toEqual([USERNAME])
+        assert.deepEqual(scheduled, [USERNAME])
     })
 
     test('leaves the check alone when a user deletes files', async () => {
         await deliver('files.FilesDeleted', {username: USERNAME})
 
-        expect(scheduled).toEqual([])
-        expect(cancelled).toEqual([])
+        assert.deepEqual(scheduled, [])
+        assert.deepEqual(cancelled, [])
     })
 
     test('ignores a message that names no user', async () => {
-        await expect(deliver('workerSession.WorkerSessionClosed', {})).resolves.toBeUndefined()
+        assert.equal(await deliver('workerSession.WorkerSessionClosed', {}), undefined)
 
-        expect(setSessionInactive).not.toHaveBeenCalled()
-        expect(scheduled).toEqual([])
+        assert.equal(setSessionInactive.mock.callCount(), 0)
+        assert.deepEqual(scheduled, [])
     })
 
     test('ignores a message it has no handler for', async () => {
-        await expect(deliver('something.Unknown', {username: USERNAME})).resolves.toBeUndefined()
+        assert.equal(await deliver('something.Unknown', {username: USERNAME}), undefined)
 
-        expect(scheduled).toEqual([])
-        expect(cancelled).toEqual([])
+        assert.deepEqual(scheduled, [])
+        assert.deepEqual(cancelled, [])
     })
 
     // The subscription is long-lived: one user's failure must not stop the next user's event.
@@ -100,7 +111,7 @@ describe('the message handler', () => {
         await handler('workerSession.WorkerSessionClosed', {username: ANOTHER_USERNAME})
         await drain()
 
-        expect(scheduled).toEqual([ANOTHER_USERNAME])
+        assert.deepEqual(scheduled, [ANOTHER_USERNAME])
     })
 
     const deliver = async (key, message) => {

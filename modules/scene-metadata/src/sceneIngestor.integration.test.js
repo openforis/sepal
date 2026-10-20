@@ -1,6 +1,7 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
 import {defer, EMPTY, of, Subject} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'
@@ -17,9 +18,17 @@ const DATASET = 'LANDSAT_8'
 const SCENE_AREA_ID = 'SA_042'
 const INITIAL_CHECKPOINT = '2021-07-01T00:00:00Z'
 
-const getUpdates$ = jest.fn()
-jest.unstable_mockModule('./earthSearch.js', () => ({getUpdates$}))
-jest.unstable_mockModule('./config.js', () => ({minHoursPublished: 24}))
+const getUpdates$ = mock.fn()
+mock.module('./earthSearch.js', {
+    exports: {
+        getUpdates$
+    }
+})
+mock.module('./config.js', {
+    exports: {
+        minHoursPublished: 24
+    }
+})
 const {updateFromStac, updateFromStac$} = await import('./stac.js')
 
 describe('scene ingestion', () => {
@@ -27,19 +36,20 @@ describe('scene ingestion', () => {
     let ingestor
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'scene_ingestor', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
         await testDb.reset()
-        getUpdates$.mockReset()
+        getUpdates$.mock.resetCalls()
+        getUpdates$.mock.mockImplementation(() => undefined)
         ingestor = new SceneIngestor(testDb.db)
         repository = new SceneRepository(testDb.db, () => TIMESTAMP)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     describe('insert', () => {
         test('makes the scene readable through SceneRepository', async () => {
@@ -48,7 +58,7 @@ describe('scene ingestion', () => {
             await ingestor.insert({scenes: [scene], timestamp: TIMESTAMP})
 
             const found = await repository.findScenesInSceneArea(aQuery())
-            expect(found).toEqual([{
+            assert.deepEqual(found, [{
                 id: scene.id,
                 source: scene.source,
                 dataSet: scene.dataset,
@@ -69,9 +79,11 @@ describe('scene ingestion', () => {
             await ingestor.insert({scenes: [{...scene, cloudCover: 90}], timestamp: new Date('2021-10-02T00:00:00Z')})
 
             const found = await repository.findScenesInSceneArea(aQuery())
-            expect(found).toEqual([expect.objectContaining({
+            assert.equal(found.length, 1)
+
+            assert.partialDeepStrictEqual(found, [{
                 id: scene.id, cloudCover: scene.cloudCover, updateTime: TIMESTAMP
-            })])
+            }])
         })
 
         test('releases the connection after a failed insert so another operation can succeed', async () => {
@@ -79,11 +91,14 @@ describe('scene ingestion', () => {
             const error = new Error('Insert failed')
             const failingIngestor = new SceneIngestor(failingDb(testDb.db, {when: () => true, error}))
 
-            await expect(failingIngestor.insert({scenes: [scene], timestamp: TIMESTAMP})).rejects.toBe(error)
+            await assert.rejects(
+                failingIngestor.insert({scenes: [scene], timestamp: TIMESTAMP}),
+                thrown => thrown === error
+            )
             await ingestor.insert({scenes: [scene], timestamp: TIMESTAMP})
 
             const found = await repository.findScenesInSceneArea(aQuery())
-            expect(found.map(({id}) => id)).toEqual([scene.id])
+            assert.deepEqual(found.map(({id}) => id), [scene.id])
         })
     })
 
@@ -91,23 +106,25 @@ describe('scene ingestion', () => {
         test('keeps inserted rows after a checkpoint-write failure and retries without duplicates', async () => {
             const scene = aScene()
             const redis = checkpointStore()
-            redis.setLastUpdate.mockRejectedValueOnce(new Error('Checkpoint write failed'))
-            getUpdates$.mockReturnValue(of(aPage([scene])))
+            redis.setLastUpdate.mock.mockImplementationOnce(async () => {
+                throw new Error('Checkpoint write failed')
+            })
+            getUpdates$.mock.mockImplementation(() => of(aPage([scene])))
             const update = anUpdate({redis, database: ingestor})
 
             await updateFromStac(update)
 
             const afterFailure = await repository.findScenesInSceneArea(aQuery())
             const failedCheckpoint = await redis.getLastUpdate(DATASET)
-            expect(afterFailure.map(({id}) => id)).toEqual([scene.id])
-            expect(failedCheckpoint).toBe(INITIAL_CHECKPOINT)
+            assert.deepEqual(afterFailure.map(({id}) => id), [scene.id])
+            assert.equal(failedCheckpoint, INITIAL_CHECKPOINT)
 
             await updateFromStac(update)
 
             const afterRetry = await repository.findScenesInSceneArea(aQuery())
             const checkpoint = await redis.getLastUpdate(DATASET)
-            expect(afterRetry.map(({id}) => id)).toEqual([scene.id])
-            expect(checkpoint).toBe(scene.acquiredTimestamp)
+            assert.deepEqual(afterRetry.map(({id}) => id), [scene.id])
+            assert.equal(checkpoint, scene.acquiredTimestamp)
         })
 
         test('fetches ahead of a pending insert, preserves insert order and waits to advance the checkpoint', async () => {
@@ -118,7 +135,7 @@ describe('scene ingestion', () => {
             const pending = holdFirstConnection(testDb.db)
             const database = new SceneIngestor(pending.db)
             const fetchingNextPage = Promise.withResolvers()
-            getUpdates$.mockImplementation(({token}) => token
+            getUpdates$.mock.mockImplementation(({token}) => token
                 ? defer(() => {
                     fetchingNextPage.resolve()
                     return of(aPage([{...first, cloudCover: 90}, last]))
@@ -129,7 +146,7 @@ describe('scene ingestion', () => {
             try {
                 await Promise.all([pending.started, fetchingNextPage.promise])
                 const checkpoint = await redis.getLastUpdate(DATASET)
-                expect(checkpoint).toBe(INITIAL_CHECKPOINT)
+                assert.equal(checkpoint, INITIAL_CHECKPOINT)
             } finally {
                 pending.release()
                 await pending.finished
@@ -138,64 +155,69 @@ describe('scene ingestion', () => {
 
             const stored = await repository.findScenesInSceneArea(aQuery())
             const checkpoint = await redis.getLastUpdate(DATASET)
-            expect(stored.map(({id}) => id).sort()).toEqual([first.id, another.id, last.id].sort())
-            expect(stored.find(({id}) => id === first.id).cloudCover).toBe(first.cloudCover)
-            expect(checkpoint).toBe(last.acquiredTimestamp)
+            assert.deepEqual(stored.map(({id}) => id).sort(), [first.id, another.id, last.id].sort())
+            assert.equal(stored.find(({id}) => id === first.id).cloudCover, first.cloudCover)
+            assert.equal(checkpoint, last.acquiredTimestamp)
         })
 
-        test.each(['fetch', 'insert'])('a later-page %s failure preserves earlier rows and the checkpoint, and retry completes without duplicates', async failure => {
-            const first = aScene()
-            const last = aScene({id: 'last', acquiredTimestamp: '2021-07-16T00:00:00Z', dayOfYear: 197})
-            const redis = checkpointStore()
-            const error = new Error('Later page failed')
-            const firstPageInserted = Promise.withResolvers()
-            let fail = true
-            getUpdates$.mockImplementation(({token}) => {
-                if (!token) return of(aPage([first], 'next'))
-                if (fail && failure === 'fetch') return defer(async () => {
-                    await firstPageInserted.promise
-                    throw error
-                })
-                return of(aPage([last]))
-            })
-            const faultedIngestor = new SceneIngestor(failingDb(testDb.db, {
-                when: (_sql, [rows]) => fail && failure === 'insert' && rows.some(([id]) => id === last.id),
-                error
-            }))
-            const database = {
-                insert: async args => {
-                    await faultedIngestor.insert(args)
-                    firstPageInserted.resolve()
+        for (const failure of ['fetch', 'insert']) {
+            test(
+                `a later-page ${failure} failure preserves earlier rows and the checkpoint, and retry completes without duplicates`,
+                async () => {
+                    const first = aScene()
+                    const last = aScene({id: 'last', acquiredTimestamp: '2021-07-16T00:00:00Z', dayOfYear: 197})
+                    const redis = checkpointStore()
+                    const error = new Error('Later page failed')
+                    const firstPageInserted = Promise.withResolvers()
+                    let fail = true
+                    getUpdates$.mock.mockImplementation(({token}) => {
+                        if (!token) return of(aPage([first], 'next'))
+                        if (fail && failure === 'fetch') return defer(async () => {
+                            await firstPageInserted.promise
+                            throw error
+                        })
+                        return of(aPage([last]))
+                    })
+                    const faultedIngestor = new SceneIngestor(failingDb(testDb.db, {
+                        when: (_sql, [rows]) => fail && failure === 'insert' && rows.some(([id]) => id === last.id),
+                        error
+                    }))
+                    const database = {
+                        insert: async args => {
+                            await faultedIngestor.insert(args)
+                            firstPageInserted.resolve()
+                        }
+                    }
+                    const update = anUpdate({redis, database})
+
+                    await updateFromStac(update)
+
+                    const afterFailure = await repository.findScenesInSceneArea(aQuery())
+                    const checkpointAfterFailure = await redis.getLastUpdate(DATASET)
+                    assert.deepEqual(afterFailure.map(({id}) => id), [first.id])
+                    assert.equal(checkpointAfterFailure, INITIAL_CHECKPOINT)
+
+                    fail = false
+                    await updateFromStac(update)
+
+                    const afterRetry = await repository.findScenesInSceneArea(aQuery())
+                    const checkpointAfterRetry = await redis.getLastUpdate(DATASET)
+                    assert.deepEqual(afterRetry.map(({id}) => id).sort(), [first.id, last.id].sort())
+                    assert.equal(checkpointAfterRetry, last.acquiredTimestamp)
                 }
-            }
-            const update = anUpdate({redis, database})
-
-            await updateFromStac(update)
-
-            const afterFailure = await repository.findScenesInSceneArea(aQuery())
-            const checkpointAfterFailure = await redis.getLastUpdate(DATASET)
-            expect(afterFailure.map(({id}) => id)).toEqual([first.id])
-            expect(checkpointAfterFailure).toBe(INITIAL_CHECKPOINT)
-
-            fail = false
-            await updateFromStac(update)
-
-            const afterRetry = await repository.findScenesInSceneArea(aQuery())
-            const checkpointAfterRetry = await redis.getLastUpdate(DATASET)
-            expect(afterRetry.map(({id}) => id).sort()).toEqual([first.id, last.id].sort())
-            expect(checkpointAfterRetry).toBe(last.acquiredTimestamp)
-        })
+            )
+        }
 
         test('settles normally when there are no pages to retrieve', async () => {
             const redis = checkpointStore()
-            getUpdates$.mockReturnValue(EMPTY)
+            getUpdates$.mock.mockImplementation(() => EMPTY)
 
             await updateFromStac(anUpdate({redis, database: ingestor}))
 
             const stored = await repository.findScenesInSceneArea(aQuery())
             const checkpoint = await redis.getLastUpdate(DATASET)
-            expect(stored).toEqual([])
-            expect(checkpoint).toBe(INITIAL_CHECKPOINT)
+            assert.deepEqual(stored, [])
+            assert.equal(checkpoint, INITIAL_CHECKPOINT)
         })
 
         test('propagates failure to read the initial checkpoint without fetching pages', async () => {
@@ -205,11 +227,14 @@ describe('scene ingestion', () => {
                 getLastUpdate: async () => { throw error }
             }
 
-            await expect(updateFromStac(anUpdate({redis, database: ingestor}))).rejects.toBe(error)
+            await assert.rejects(
+                updateFromStac(anUpdate({redis, database: ingestor})),
+                thrown => thrown === error
+            )
 
             const stored = await repository.findScenesInSceneArea(aQuery())
-            expect(stored).toEqual([])
-            expect(getUpdates$).not.toHaveBeenCalled()
+            assert.deepEqual(stored, [])
+            assert.equal(getUpdates$.mock.callCount(), 0)
         })
     })
 
@@ -218,7 +243,7 @@ describe('scene ingestion', () => {
             const redis = checkpointStore()
             const pendingPage$ = new Subject()
             const fetching = Promise.withResolvers()
-            getUpdates$.mockImplementation(() => {
+            getUpdates$.mock.mockImplementation(() => {
                 fetching.resolve()
                 return pendingPage$
             })
@@ -232,10 +257,10 @@ describe('scene ingestion', () => {
 
                 const stored = await repository.findScenesInSceneArea(aQuery())
                 const checkpoint = await redis.getLastUpdate(DATASET)
-                expect(stored).toEqual([])
-                expect(checkpoint).toBe(INITIAL_CHECKPOINT)
-                expect(redis.setLastUpdate).not.toHaveBeenCalled()
-                expect(getUpdates$).toHaveBeenCalledTimes(1)
+                assert.deepEqual(stored, [])
+                assert.equal(checkpoint, INITIAL_CHECKPOINT)
+                assert.equal(redis.setLastUpdate.mock.callCount(), 0)
+                assert.equal(getUpdates$.mock.callCount(), 1)
             } finally {
                 subscription.unsubscribe()
                 pendingPage$.complete()
@@ -251,7 +276,7 @@ describe('scene ingestion', () => {
             const database = new SceneIngestor(pending.db)
             const pendingPage$ = new Subject()
             const fetchingPendingPage = Promise.withResolvers()
-            getUpdates$.mockImplementation(({token}) => {
+            getUpdates$.mock.mockImplementation(({token}) => {
                 if (!token) return of(aPage([first], 'queued'))
                 if (token === 'queued') return of(aPage([queued], 'pending'))
                 fetchingPendingPage.resolve()
@@ -272,10 +297,10 @@ describe('scene ingestion', () => {
 
             const stored = await repository.findScenesInSceneArea(aQuery())
             const checkpoint = await redis.getLastUpdate(DATASET)
-            expect(stored.map(({id}) => id)).toEqual([first.id])
-            expect(checkpoint).toBe(INITIAL_CHECKPOINT)
-            expect(redis.setLastUpdate).not.toHaveBeenCalled()
-            expect(getUpdates$).toHaveBeenCalledTimes(3)
+            assert.deepEqual(stored.map(({id}) => id), [first.id])
+            assert.equal(checkpoint, INITIAL_CHECKPOINT)
+            assert.equal(redis.setLastUpdate.mock.callCount(), 0)
+            assert.equal(getUpdates$.mock.callCount(), 3)
         })
     })
 })
@@ -306,7 +331,7 @@ const checkpointStore = () => {
     const checkpoints = {[DATASET]: INITIAL_CHECKPOINT}
     return {
         getLastUpdate: async dataset => checkpoints[dataset],
-        setLastUpdate: jest.fn(async updates => { Object.assign(checkpoints, updates) })
+        setLastUpdate: mock.fn(async updates => { Object.assign(checkpoints, updates) })
     }
 }
 

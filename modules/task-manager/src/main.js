@@ -33,8 +33,8 @@ const main = async () => {
         spec: ({task, apiKey}) => containerSpec({task, apiKey, config}),
         config: {
             maxConcurrent: config.taskMaxConcurrent,
-            maxConcurrentLocal: config.taskMaxConcurrentLocal,
             maxConcurrentPerUser: config.taskMaxConcurrentPerUser,
+            maxConcurrentLocalProcessing: config.taskMaxConcurrentLocalProcessing,
             stallTimeoutMs: 15 * 60 * 1000,
             cancelTimeoutMs: 5 * 60 * 1000,
             stopGraceSeconds: 120,

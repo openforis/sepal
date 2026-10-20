@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {createBootstrap, SYSTEM_USERS} from './bootstrap.js'
 import {hashPassword, verifyPassword} from './crypto.js'
 
@@ -20,7 +23,7 @@ describe('bootstrap', () => {
     })
 
     test('targets the lowercased seeded administrators with their secret env vars', () => {
-        expect(SYSTEM_USERS).toEqual([
+        assert.deepEqual(SYSTEM_USERS, [
             {username: 'sepaladmin', secretEnv: 'SEPAL_ADMIN_PASSWORD'},
             {username: 'admin', secretEnv: 'SEPAL_ADMIN_WEB_PASSWORD'}
         ])
@@ -31,11 +34,11 @@ describe('bootstrap', () => {
 
         const first = await repository.findByUsername('sepaladmin')
         const second = await repository.findByUsername('admin')
-        expect(provisioned).toEqual([['sepaladmin', 10000, 10000], ['admin', 10001, 10001]])
-        expect(first.uid).toBe(10000)
-        expect(first.sshPublicKey).toBe('ssh-rsa AAAAKEY')
-        expect(verifyPassword('first-secret', first.passwordHash)).toBe(true)
-        expect(verifyPassword('second-secret', second.passwordHash)).toBe(true)
+        assert.deepEqual(provisioned, [['sepaladmin', 10000, 10000], ['admin', 10001, 10001]])
+        assert.equal(first.uid, 10000)
+        assert.equal(first.sshPublicKey, 'ssh-rsa AAAAKEY')
+        assert.equal(verifyPassword('first-secret', first.passwordHash), true)
+        assert.equal(verifyPassword('second-secret', second.passwordHash), true)
     })
 
     test('leaves an administrator who already has credentials alone', async () => {
@@ -47,8 +50,8 @@ describe('bootstrap', () => {
         await bootstrap()()
 
         const user = await repository.findByUsername('sepaladmin')
-        expect(provisioned).toEqual([])
-        expect(user.passwordHash).toBe('{SCRYPT}existing')
+        assert.deepEqual(provisioned, [])
+        assert.equal(user.passwordHash, '{SCRYPT}existing')
     })
 
     test('does nothing for an administrator whose secret is unset', async () => {
@@ -57,8 +60,8 @@ describe('bootstrap', () => {
         await bootstrap()()
 
         const user = await repository.findByUsername('sepaladmin')
-        expect(provisioned).toEqual([])
-        expect(user.passwordHash).toBeNull()
+        assert.deepEqual(provisioned, [])
+        assert.equal(user.passwordHash, null)
     })
 
     test('does nothing for an administrator who was never seeded', async () => {
@@ -66,7 +69,7 @@ describe('bootstrap', () => {
 
         await bootstrap()()
 
-        expect(provisioned).toEqual([])
+        assert.deepEqual(provisioned, [])
     })
 
     // The password is the idempotency sentinel: leaving it unset is what makes the next start try again.
@@ -81,8 +84,8 @@ describe('bootstrap', () => {
         })())
 
         const failed = await repository.findByUsername('sepaladmin')
-        expect(failed.passwordHash).toBeNull()
-        expect(failed.sshPublicKey).toBeUndefined()
+        assert.equal(failed.passwordHash, null)
+        assert.equal(failed.sshPublicKey, undefined)
     })
 
     test('carries on to the other administrator after one fails', async () => {
@@ -94,7 +97,7 @@ describe('bootstrap', () => {
         await bootstrap()()
 
         const second = await repository.findByUsername('admin')
-        expect(verifyPassword('second-secret', second.passwordHash)).toBe(true)
+        assert.equal(verifyPassword('second-secret', second.passwordHash), true)
     })
 
     const bootstrap = (over = {}) => createBootstrap({
@@ -109,7 +112,7 @@ describe('bootstrap', () => {
     })
 
     const expectBootstrapToSurvive = async run => {
-        await expect(run()).resolves.toBeUndefined()
+        assert.equal(await run(), undefined)
     }
 
     // Keeps what it is given, so a read after a write shows the write.

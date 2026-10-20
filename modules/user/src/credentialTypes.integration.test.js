@@ -1,17 +1,27 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
-
-import {jest} from '@jest/globals'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 // routes -> userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before the chain.
-jest.unstable_mockModule('./config.js', () => ({
-    amqpUri: 'amqp://localhost', googleOauthCallbackBaseUrl: '', googleOauthClientId: '',
-    googleOauthClientSecret: '', googleProjectId: '', port: 80, recaptchaApiKey: '',
-    recaptchaMinScore: 0.7, recaptchaOptional: true, recaptchaSiteKey: '', sepalHost: 'sepal.example.org'
-}))
+mock.module('./config.js', {
+    exports: {
+        amqpUri: 'amqp://localhost',
+        googleOauthCallbackBaseUrl: '',
+        googleOauthClientId: '',
+        googleOauthClientSecret: '',
+        googleProjectId: '',
+        port: 80,
+        recaptchaApiKey: '',
+        recaptchaMinScore: 0.7,
+        recaptchaOptional: true,
+        recaptchaSiteKey: '',
+        sepalHost: 'sepal.example.org'
+    }
+})
 
 const server = await import('#sepal/httpServer')
 const {hashPassword, verifyPassword} = await import('./crypto.js')
@@ -37,7 +47,7 @@ describe('a credential that is not a string', () => {
     const provisioned = []
     const subscriptions = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'user_credential_types', migrations: MIGRATIONS_PATH})
         repository = new UserRepository(testDb.db)
@@ -56,7 +66,7 @@ describe('a credential that is not a string', () => {
         provisioned.length = 0
     })
 
-    afterAll(async () => {
+    after(async () => {
         subscriptions.forEach(subscription => subscription.unsubscribe())
         if (running) {
             await new Promise(resolve => running.close(resolve))
@@ -65,24 +75,26 @@ describe('a credential that is not a string', () => {
     })
 
     describe('activating an account', () => {
-        test.each([
+        for (const [description, token] of [
             ['a number', 0],
             ['a boolean', true],
             ['an object', {}],
             ['an array', [0]]
-        ])('%s as a token activates nothing', async (_description, token) => {
-            const pending = await givenPendingUser()
+        ]) {
+            test(`${description} as a token activates nothing`, async () => {
+                const pending = await givenPendingUser()
 
-            const response = await request('POST', '/activate', {body: {token, password: NEW_PASSWORD}})
+                const response = await request('POST', '/activate', {body: {token, password: NEW_PASSWORD}})
 
-            const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(400)
-            expect(stored.status).toBe('PENDING')
-            expect(stored.passwordHash).toBe(pending.passwordHash)
-            expect(stored.token).toBe(TOKEN)
-            expect(provisioned).toEqual([])
-            expect(publishedUsers).toEqual([])
-        })
+                const stored = await repository.findByUsername(USERNAME)
+                assert.equal(response.status, 400)
+                assert.equal(stored.status, 'PENDING')
+                assert.equal(stored.passwordHash, pending.passwordHash)
+                assert.equal(stored.token, TOKEN)
+                assert.deepEqual(provisioned, [])
+                assert.deepEqual(publishedUsers, [])
+            })
+        }
 
         test('a password that is not a string activates nothing, even with the right token', async () => {
             const pending = await givenPendingUser()
@@ -90,11 +102,11 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/activate', {body: {token: TOKEN, password: NOT_A_PASSWORD}})
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(400)
-            expect(stored.status).toBe('PENDING')
-            expect(stored.passwordHash).toBe(pending.passwordHash)
-            expect(stored.token).toBe(TOKEN)
-            expect(provisioned).toEqual([])
+            assert.equal(response.status, 400)
+            assert.equal(stored.status, 'PENDING')
+            assert.equal(stored.passwordHash, pending.passwordHash)
+            assert.equal(stored.token, TOKEN)
+            assert.deepEqual(provisioned, [])
         })
 
         test('the account is still activated by its own token', async () => {
@@ -103,11 +115,11 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/activate', {body: {token: TOKEN, password: NEW_PASSWORD}})
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(200)
-            expect(stored.status).toBe('ACTIVE')
-            expect(verifyPassword(NEW_PASSWORD, stored.passwordHash)).toBe(true)
-            expect(stored.token).toBeNull()
-            expect(provisioned).toEqual([USERNAME])
+            assert.equal(response.status, 200)
+            assert.equal(stored.status, 'ACTIVE')
+            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
+            assert.equal(stored.token, null)
+            assert.deepEqual(provisioned, [USERNAME])
         })
     })
 
@@ -117,7 +129,7 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/validate/token', {body: {token: [0]}})
 
-            expect(response.body).toEqual({
+            assert.deepEqual(response.body, {
                 status: 'failure', token: null, reason: 'invalid', message: 'Token is invalid'
             })
         })
@@ -127,8 +139,8 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/validate/token', {body: {token: TOKEN}})
 
-            expect(response.body.status).toBe('success')
-            expect(response.body.user.username).toBe(USERNAME)
+            assert.equal(response.body.status, 'success')
+            assert.equal(response.body.user.username, USERNAME)
         })
     })
 
@@ -139,9 +151,9 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/password/reset', {body: {token: [0], password: NEW_PASSWORD}})
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(400)
-            expect(stored.passwordHash).toBe(active.passwordHash)
-            expect(stored.token).toBe(TOKEN)
+            assert.equal(response.status, 400)
+            assert.equal(stored.passwordHash, active.passwordHash)
+            assert.equal(stored.token, TOKEN)
         })
 
         test('a password that is not a string resets nothing, even with the right token', async () => {
@@ -150,9 +162,9 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/password/reset', {body: {token: TOKEN, password: NOT_A_PASSWORD}})
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(400)
-            expect(stored.passwordHash).toBe(active.passwordHash)
-            expect(stored.token).toBe(TOKEN)
+            assert.equal(response.status, 400)
+            assert.equal(stored.passwordHash, active.passwordHash)
+            assert.equal(stored.token, TOKEN)
         })
 
         test('the password is still reset by the token the account holds', async () => {
@@ -161,9 +173,9 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/password/reset', {body: {token: TOKEN, password: NEW_PASSWORD}})
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.status).toBe(200)
-            expect(verifyPassword(NEW_PASSWORD, stored.passwordHash)).toBe(true)
-            expect(stored.token).toBeNull()
+            assert.equal(response.status, 200)
+            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
+            assert.equal(stored.token, null)
         })
 
         test('an email that is not a string answers the same and mails nobody', async () => {
@@ -171,8 +183,8 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/password/reset-request', {body: {email: [0]}})
 
-            expect(response.body).toEqual(GENERIC_RESET_ANSWER)
-            expect(sentEmails).toEqual([])
+            assert.deepEqual(response.body, GENERIC_RESET_ANSWER)
+            assert.deepEqual(sentEmails, [])
         })
 
         test('the account is still mailed a reset link for its own address', async () => {
@@ -180,8 +192,8 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/password/reset-request', {body: {email: EMAIL}})
 
-            expect(response.body).toEqual(GENERIC_RESET_ANSWER)
-            expect(sentEmails.map(({to}) => to)).toEqual([EMAIL])
+            assert.deepEqual(response.body, GENERIC_RESET_ANSWER)
+            assert.deepEqual(sentEmails.map(({to}) => to), [EMAIL])
         })
     })
 
@@ -194,8 +206,8 @@ describe('a credential that is not a string', () => {
             })
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.body.status).toBe('failure')
-            expect(stored.passwordHash).toBe(active.passwordHash)
+            assert.equal(response.body.status, 'failure')
+            assert.equal(stored.passwordHash, active.passwordHash)
         })
 
         test('the password still changes for the right old one', async () => {
@@ -206,8 +218,8 @@ describe('a credential that is not a string', () => {
             })
 
             const stored = await repository.findByUsername(USERNAME)
-            expect(response.body.status).toBe('success')
-            expect(verifyPassword(NEW_PASSWORD, stored.passwordHash)).toBe(true)
+            assert.equal(response.body.status, 'success')
+            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
         })
     })
 
@@ -218,8 +230,8 @@ describe('a credential that is not a string', () => {
             const response = await request('POST', '/authenticate', {body: {username: [0], password: PASSWORD}})
 
             const stored = await repository.mostRecentLogin(USERNAME)
-            expect(response.status).toBe(401)
-            expect(stored).toEqual({})
+            assert.equal(response.status, 401)
+            assert.deepEqual(stored, {})
         })
 
         test('a password that is not a string authenticates nobody', async () => {
@@ -227,7 +239,7 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/authenticate', {body: {username: USERNAME, password: [0]}})
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
 
         test('the account still authenticates with its own password', async () => {
@@ -235,8 +247,8 @@ describe('a credential that is not a string', () => {
 
             const response = await request('POST', '/authenticate', {body: {username: USERNAME, password: PASSWORD}})
 
-            expect(response.status).toBe(200)
-            expect(response.body.username).toBe(USERNAME)
+            assert.equal(response.status, 200)
+            assert.equal(response.body.username, USERNAME)
         })
     })
 

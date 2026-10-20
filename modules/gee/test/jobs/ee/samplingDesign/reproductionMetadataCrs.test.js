@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {effectiveArrangement, resolveArrangementGrids} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {randomReproductionMetadata, systematicReproductionMetadata} from '#sepal/ee/samplingDesign/samples'
 
@@ -20,26 +23,26 @@ const noWkt = metadata =>
 describe('randomReproductionMetadata CRS', () => {
     it('records the configured EPSG:6933 id, never the resolved WKT', () => {
         const metadata = randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6933'}))
-        expect(metadata.crs).toBe('EPSG:6933')
-        expect(metadata.gridCrs).toBe('EPSG:6933')
-        expect(noWkt(metadata)).toBe(true)
+        assert.equal(metadata.crs, 'EPSG:6933')
+        assert.equal(metadata.gridCrs, 'EPSG:6933')
+        assert.equal(noWkt(metadata), true)
     })
 
     it('records the Stratification CRS as its configured id, never the resolved WKT', () => {
         const metadata = randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6931', stratificationCrs: 'EPSG:6933'}))
-        expect(metadata.stratificationCrs).toBe('EPSG:6933')
-        expect(noWkt(metadata)).toBe(true)
+        assert.equal(metadata.stratificationCrs, 'EPSG:6933')
+        assert.equal(noWkt(metadata), true)
     })
 
     it('records a non-curated Stratification CRS unchanged', () => {
         const metadata = randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6933', stratificationCrs: 'EPSG:32636'}))
-        expect(metadata.stratificationCrs).toBe('EPSG:32636')
-        expect(metadata.crs).toBe('EPSG:6933')
+        assert.equal(metadata.stratificationCrs, 'EPSG:32636')
+        assert.equal(metadata.crs, 'EPSG:6933')
     })
 
     it('keeps the other reproduction fields intact alongside the ids, with no transform', () => {
         const metadata = randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6933'}))
-        expect(metadata).toMatchObject({
+        assert.partialDeepStrictEqual(metadata, {
             arrangementStrategy: 'RANDOM',
             sampleSizeStrategy: null,
             gridOrigin: null,
@@ -48,33 +51,36 @@ describe('randomReproductionMetadata CRS', () => {
             selectedDensityOffset: null
         })
         // minDistance is Systematic-only; there is no user-facing transform.
-        expect('minDistance' in metadata).toBe(false)
+        assert.equal('minDistance' in metadata, false)
         // Scale mode: no transform is configured, so none is recorded.
-        expect('gridCrsTransform' in metadata).toBe(false)
+        assert.equal('gridCrsTransform' in metadata, false)
     })
 
     it('records a polar option as its configured id', () => {
-        expect(randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6932'})).crs).toBe('EPSG:6932')
+        assert.equal(
+            randomReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6932'})).crs,
+            'EPSG:6932'
+        )
     })
 })
 
 describe('systematicReproductionMetadata CRS', () => {
     it('records the configured EPSG:6933 id, never the resolved WKT', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6933'}), 2)
-        expect(metadata.crs).toBe('EPSG:6933')
-        expect(metadata.gridCrs).toBe('EPSG:6933')
-        expect(noWkt(metadata)).toBe(true)
+        assert.equal(metadata.crs, 'EPSG:6933')
+        assert.equal(metadata.gridCrs, 'EPSG:6933')
+        assert.equal(noWkt(metadata), true)
     })
 
     it('records the Stratification CRS separately from the placement CRS', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'}), 2)
-        expect(metadata.crs).toBe('EPSG:6931')
-        expect(metadata.stratificationCrs).toBe('EPSG:32636')
+        assert.equal(metadata.crs, 'EPSG:6931')
+        assert.equal(metadata.stratificationCrs, 'EPSG:32636')
     })
 
     it('keeps the other reproduction fields intact alongside the ids, with no transform', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6933'}), 2)
-        expect(metadata).toMatchObject({
+        assert.partialDeepStrictEqual(metadata, {
             arrangementStrategy: 'SYSTEMATIC',
             sampleSizeStrategy: 'OVER',
             gridOrigin: 'SEEDED',
@@ -84,13 +90,13 @@ describe('systematicReproductionMetadata CRS', () => {
             selectedDensityOffset: 2
         })
         // Scale mode: no transform is configured, so none is recorded.
-        expect('gridCrsTransform' in metadata).toBe(false)
+        assert.equal('gridCrsTransform' in metadata, false)
     })
 
     it('records a polar option as its configured id', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({arrangementCrs: 'EPSG:6931'}), 0)
-        expect(metadata.crs).toBe('EPSG:6931')
-        expect(metadata.gridCrs).toBe('EPSG:6931')
+        assert.equal(metadata.crs, 'EPSG:6931')
+        assert.equal(metadata.gridCrs, 'EPSG:6931')
     })
 })
 
@@ -103,12 +109,24 @@ describe('systematicReproductionMetadata records the resolved minimum distance',
     })
 
     it('records the grid floor when the recipe leaves the distance blank', () => {
-        expect(systematicReproductionMetadata(arrangementFor({scale: 10}), 0).minDistance).toBe(20)
-        expect(systematicReproductionMetadata(arrangementFor({scale: 30}), 0).minDistance).toBe(60)
+        assert.equal(
+            systematicReproductionMetadata(arrangementFor({scale: 10}), 0).minDistance,
+            20
+        )
+        assert.equal(
+            systematicReproductionMetadata(arrangementFor({scale: 30}), 0).minDistance,
+            60
+        )
     })
 
     it('records an explicit distance unchanged, including one below the floor', () => {
-        expect(systematicReproductionMetadata(arrangementFor({minDistance: 60, scale: 10}), 0).minDistance).toBe(60)
-        expect(systematicReproductionMetadata(arrangementFor({minDistance: 1, scale: 10}), 0).minDistance).toBe(1)
+        assert.equal(
+            systematicReproductionMetadata(arrangementFor({minDistance: 60, scale: 10}), 0).minDistance,
+            60
+        )
+        assert.equal(
+            systematicReproductionMetadata(arrangementFor({minDistance: 1, scale: 10}), 0).minDistance,
+            1
+        )
     })
 })

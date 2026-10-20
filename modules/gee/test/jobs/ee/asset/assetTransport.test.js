@@ -1,21 +1,23 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, mock, test} from 'node:test'
+
 import {firstValueFrom, of, throwError} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {DEFAULT_EE_ENDPOINT, inEEContext} from '#sepal/ee/eeContext'
 import {EERestClient} from '#sepal/ee/rest/eeRestClient'
 
-jest.unstable_mockModule('#gee/jobs/job', () => ({job: config => config}))
+mock.module('#gee/jobs/job', {exports: {job: config => config}})
 
 const {default: metadata} = await import('#gee/jobs/ee/asset/metadata')
 const {default: versions} = await import('#gee/jobs/ee/asset/versions')
 
 beforeEach(() => {
     // The GEE runtime no longer registers the legacy limiter or permits library credentials.
-    jest.spyOn(ee, '$').mockImplementation(() => throwError(() => new Error('Legacy transport unavailable')))
+    mock.method(ee, '$').mock.mockImplementation(() => throwError(() => new Error('Legacy transport unavailable')))
 })
 
-afterEach(() => jest.restoreAllMocks())
+afterEach(() => mock.restoreAll())
 
 test('metadata and version reads use the requesting users and preserve ranks and version tokens', async () => {
     const asset = 'users/test/segments'
@@ -47,14 +49,14 @@ test('metadata and version reads use the requesting users and preserve ranks and
         firstValueFrom(inEEContext(context('bob'), versions.worker$({requestArgs: {ids: [asset]}})))
     ])
 
-    expect(description.bandNames).toEqual(['VV_coefs'])
-    expect(description.bands[0].data_type.dimensions).toBe(2)
-    expect(tokens.assets).toEqual([{id: asset, type: 'IMAGE', version: record.updateTime}])
-    expect(requests).toEqual(['alice', 'bob'].map(username => ({
+    assert.deepEqual(description.bandNames, ['VV_coefs'])
+    assert.equal(description.bands[0].data_type.dimensions, 2)
+    assert.deepEqual(tokens.assets, [{id: asset, type: 'IMAGE', version: record.updateTime}])
+    assert.deepEqual(requests, ['alice', 'bob'].map(username => ({
         url: `${DEFAULT_EE_ENDPOINT}/v1/${record.name}`,
         headers: {'Authorization': `Bearer ${username}-token`, 'x-goog-user-project': `${username}-project`}
     })))
-    expect(limited).toEqual(['alice', 'bob'].map(username => ({username, projectId: `${username}-project`})))
+    assert.deepEqual(limited, ['alice', 'bob'].map(username => ({username, projectId: `${username}-project`, origin: undefined})))
 })
 
 const context = username => ({

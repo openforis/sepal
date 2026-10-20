@@ -18,10 +18,9 @@ export class InMemoryRepository {
         return this.#tasks.get(id) ?? null
     }
 
-    async pendingTasks(limit, {excludeOperations = [], excludeUsernames = []} = {}) {
+    async pendingTasks(limit, {excludeUsernames = []} = {}) {
         return [...this.#tasks.values()]
-            .filter(({state, operation, username}) =>
-                state === State.PENDING && !excludeOperations.includes(operation) && !excludeUsernames.includes(username))
+            .filter(({state, username}) => state === State.PENDING && !excludeUsernames.includes(username))
             .sort((a, b) => a.creationTime - b.creationTime)
             .slice(0, limit)
     }
@@ -30,8 +29,8 @@ export class InMemoryRepository {
         return [...this.#tasks.values()].filter(({state}) => RUNNING_STATES.includes(state))
     }
 
-    async countRunning({operations = []} = {}) {
-        return (await this.runningTasks()).filter(task => !operations.length || operations.includes(task.operation)).length
+    async countRunning() {
+        return (await this.runningTasks()).length
     }
 
     async countRunningByUser() {
@@ -72,6 +71,38 @@ export class InMemoryRepository {
         return this.#update(task.id, [State.ACTIVE], {statusDescription, progressTime: this.#clock.now()})
     }
 
+    async grantSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (stored?.state !== State.ACTIVE || stored.slotTime) {
+            return null
+        }
+        return this.#setSlot(stored, this.#clock.now())
+    }
+
+    async renewSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (!RUNNING_STATES.includes(stored?.state) || !stored.slotTime) {
+            return null
+        }
+        return this.#setSlot(stored, this.#clock.now())
+    }
+
+    async releaseSlot(task, slot) {
+        const stored = this.#tasks.get(task.id)
+        const grant = stored?.slotTime
+        if (!grant || (slot && grant.getTime() !== new Date(slot).getTime())) {
+            return null
+        }
+        this.#setSlot(stored, null)
+        return grant
+    }
+
+    async slotHolders() {
+        return (await this.runningTasks())
+            .filter(({slotTime}) => slotTime)
+            .map(({id, username}) => ({id, username}))
+    }
+
     async resetProgressClock() {
         for (const task of this.#tasks.values()) {
             if (task.state === State.ACTIVE) {
@@ -91,12 +122,18 @@ export class InMemoryRepository {
         return true
     }
 
-    async removeFinishedUserTasks(username) {
+    async removeFinishedUserTasks(username, taskIds) {
         for (const task of this.#tasks.values()) {
-            if (task.username === username && [State.COMPLETED, State.CANCELED, State.FAILED].includes(task.state)) {
+            if (task.username === username && taskIds.includes(task.id)
+                && [State.COMPLETED, State.CANCELED, State.FAILED].includes(task.state)) {
                 this.#tasks.set(task.id, {...task, removed: true})
             }
         }
+    }
+
+    #setSlot(task, slotTime) {
+        this.#tasks.set(task.id, {...task, slotTime})
+        return slotTime
     }
 
     #update(id, from, changes) {

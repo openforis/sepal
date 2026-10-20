@@ -5,8 +5,8 @@ HTTP gateway/reverse proxy. Entry point for all API traffic. Uses **Express** (n
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture

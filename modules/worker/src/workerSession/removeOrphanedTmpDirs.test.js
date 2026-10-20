@@ -1,11 +1,13 @@
 // Tests for RemoveOrphanedTmpDirs — runs against a scratch temp dir (NOT the real /data/home).
 // Deletes only per-instance tmp dirs with no matching PENDING/ACTIVE session; keeps the rest.
 
+import assert from 'node:assert/strict'
 import {promises as fs} from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import {afterEach, beforeEach, describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {removeOrphanedTmpDirs} from './command/removeOrphanedTmpDirs.js'
 import {State} from './workerSession.js'
@@ -45,35 +47,35 @@ describe('removeOrphanedTmpDirs', () => {
         const wrongUserDir = await makeInstanceDir(home, 'bob', 'i-live')
 
         const repo = {
-            sessions: jest.fn().mockResolvedValue([
+            sessions: mock.fn(async () => [
                 {username: 'alice', instance: {id: 'i-live'}},
             ]),
         }
 
         await removeOrphanedTmpDirs({repo, homeDir: home})
 
-        expect(repo.sessions).toHaveBeenCalledWith([State.PENDING, State.ACTIVE])
-        expect(await exists(liveDir)).toBe(true)
-        expect(await exists(orphanDir)).toBe(false)
-        expect(await exists(wrongUserDir)).toBe(false)
+        assert.deepEqual(callsOf(repo.sessions), [[[State.PENDING, State.ACTIVE]]])
+        assert.equal(await exists(liveDir), true)
+        assert.equal(await exists(orphanDir), false)
+        assert.equal(await exists(wrongUserDir), false)
     })
 
     test('no sessions → all instance dirs are orphans and removed', async () => {
         const a = await makeInstanceDir(home, 'alice', 'i-1')
         const b = await makeInstanceDir(home, 'bob', 'i-2')
-        const repo = {sessions: jest.fn().mockResolvedValue([])}
+        const repo = {sessions: mock.fn(async () => [])}
 
         await removeOrphanedTmpDirs({repo, homeDir: home})
 
-        expect(await exists(a)).toBe(false)
-        expect(await exists(b)).toBe(false)
+        assert.equal(await exists(a), false)
+        assert.equal(await exists(b), false)
         // The user/tmp parent dirs are left in place (only the per-instance dirs are removed).
-        expect(await exists(path.join(home, 'alice', 'tmp'))).toBe(true)
+        assert.equal(await exists(path.join(home, 'alice', 'tmp')), true)
     })
 
     test('tolerates a user dir with no tmp subdir', async () => {
         await fs.mkdir(path.join(home, 'alice'), {recursive: true})
-        const repo = {sessions: jest.fn().mockResolvedValue([])}
-        await expect(removeOrphanedTmpDirs({repo, homeDir: home})).resolves.toBeNull()
+        const repo = {sessions: mock.fn(async () => [])}
+        assert.equal(await removeOrphanedTmpDirs({repo, homeDir: home}), null)
     })
 })

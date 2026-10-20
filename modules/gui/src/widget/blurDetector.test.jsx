@@ -1,4 +1,5 @@
-import {act} from 'react'
+import {act, useState} from 'react'
+import {createPortal} from 'react-dom'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -81,6 +82,7 @@ describe('BlurDetector', () => {
         mount({onBlur, children: <div/>})
         await skipInitialEvents()
         focus(outside, null)
+        await sleep(0)
         expect(onBlur).not.toHaveBeenCalled()
     })
 
@@ -89,6 +91,7 @@ describe('BlurDetector', () => {
         const {container} = mount({onBlur, children: <div id='inside'/>})
         await skipInitialEvents()
         focus(outside, container.querySelector('#inside'))
+        await sleep(0)
         expect(onBlur).toHaveBeenCalledTimes(1)
     })
 
@@ -117,6 +120,22 @@ describe('BlurDetector', () => {
         expect(topOnBlur).toHaveBeenCalledTimes(1)
     })
 
+    // A popup (a FloatingBox, say) renders its own detector into a portal, outside this element. An input
+    // autofocused on mount takes focus before that detector has registered.
+    it('does not call onBlur when a nested detector mounts with an autofocused element', async () => {
+        const onBlur = vi.fn()
+        const {container} = mount({onBlur, children: <PopupOpener/>})
+        await skipInitialEvents()
+        const opener = container.querySelector('#opener')
+        opener.focus()
+
+        await act(async () => opener.click())
+        await sleep(0)
+
+        expect(document.activeElement.id).toEqual('popupInput')
+        expect(onBlur).not.toHaveBeenCalled()
+    })
+
     it('reactivates a covered detector when the top one unmounts', async () => {
         const bottomOnBlur = vi.fn()
         mount({onBlur: bottomOnBlur, children: <div/>})
@@ -128,3 +147,18 @@ describe('BlurDetector', () => {
         expect(bottomOnBlur).toHaveBeenCalledTimes(1)
     })
 })
+
+const PopupOpener = () => {
+    const [open, setOpen] = useState(false)
+    return (
+        <>
+            <button id='opener' onClick={() => setOpen(true)}/>
+            {open && createPortal(
+                <BlurDetector onBlur={() => setOpen(false)}>
+                    <input id='popupInput' autoFocus/>
+                </BlurDetector>,
+                document.body
+            )}
+        </>
+    )
+}

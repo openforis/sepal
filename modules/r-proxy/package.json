@@ -4,13 +4,13 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --test \"**/*.test.js\"",
+        "testWatch": "node --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^6.3.12",
+        "bullmq": "^6.3.17",
         "commander": "^15.0.0",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
@@ -20,7 +20,6 @@
         "minimatch": "^10.2.6",
         "sepal": "../../lib/js/shared"
     },
-    "devDependencies": {},
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",

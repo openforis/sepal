@@ -1,71 +1,98 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {defer, lastValueFrom, of} from 'rxjs'
+
+import {assertMatches} from '#sepal/testSupport/assert'
 
 // Systematic sampling design driven step by step, as the task container drives it. Earth Engine is substituted:
 // exports, candidate counts and the final selection are recorded markers, so each step's decision is visible.
 
 const earthEngine = {}
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({
-    default: {
-        FeatureCollection: source => eeCollection(source),
-        Filter: {eq: () => ({}), gte: () => ({})},
-        Number: value => value,
-        getInfo$: ({summaryOf: {samples, strata}}) => {
-            const assetId = samples.source.materialized ?? samples.source
-            earthEngine.counts.push({assetId, strata})
-            return of(earthEngine.summaries[assetId.endsWith('_additional_candidates') ? 'repair' : 'base'])
-        },
-        listBuckets$: () => of({assets: [{id: 'projects/alice/assets'}]})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            FeatureCollection: source => eeCollection(source),
+            Filter: {eq: () => ({}), gte: () => ({})},
+            Number: value => value,
+            getInfo$: ({summaryOf: {samples, strata}}) => {
+                const assetId = samples.source.materialized ?? samples.source
+                earthEngine.counts.push({assetId, strata})
+                return of(earthEngine.summaries[assetId.endsWith('_additional_candidates') ? 'repair' : 'base'])
+            },
+            listBuckets$: () => of({assets: [{id: 'projects/alice/assets'}]})
+        }
     }
-}))
-jest.unstable_mockModule('#sepal/ee/aoi', () => ({
-    toGeometry$: () => of('aoi geometry')
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/stratificationImage', () => ({
-    stratificationImage$: () => of('stratification image')
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/unstratifiedArea', () => ({
-    unstratifiedAllocation$: ({allocation, stratification}) =>
-        of(stratification.skip ? allocation.map(row => ({...row, area: AOI_AREA})) : allocation)
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/systematicSampling', () => ({
-    stratifiedSystematicExactCandidates: ({allocation, densityOffset}) => ({candidates: strataOf(allocation), densityOffset}),
-    selectSystematicLevels: ({samples, allocation}) => ({samples, strata: strataOf(allocation)}),
-    systematicSelectionSummary: selected => ({summaryOf: selected}),
-    stratifiedSystematicFinalSamples: ({candidates, levelsByStratum}) => ({selectedFrom: candidates.source, levelsByStratum})
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/unstratifiedSystematicSampling', () => ({
-    unstratifiedSystematicIndexCandidates: ({allocation, densityOffset}) => ({candidates: strataOf(allocation), densityOffset}),
-    materializeSystematicIndexGeometry: ({candidates, densityOffset}) => {
-        earthEngine.materialized.push({source: candidates.source, densityOffset})
-        return eeCollection({materialized: candidates.source})
+})
+mock.module('#sepal/ee/aoi', {
+    exports: {
+        toGeometry$: () => of('aoi geometry')
     }
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/samples', () => ({
-    toDensitySummary: summary => summary,
-    systematicStratumMaxOffset: stratum => earthEngine.maxOffsetOf(stratum),
-    mergeRepairedCandidates: ({baseSamples, repairSamples, repairedStrata}) =>
-        eeCollection({base: baseSamples.source, repair: repairSamples.source, repaired: strataOf(repairedStrata)}),
-    finalizeSystematicSamples: ({filteredSamples, densityOffset, rowMetadata}) => ({
-        set: properties => ({samples: filteredSamples, densityOffset, rowMetadata, properties})
-    })
-}))
-jest.unstable_mockModule('#sepal/ee/samplingDesign/validateSampleCounts', () => ({
-    getSampleCounts$: () => of(earthEngine.finalCounts)
-}))
-jest.unstable_mockModule('#gee/jobs/task/export/toAsset', () => ({
-    startTableToAssetExport$: params => defer(() => {
-        earthEngine.assetExports.push(params)
-        return of({eeTaskId: `asset-export-${earthEngine.assetExports.length}`})
-    })
-}))
-jest.unstable_mockModule('#gee/jobs/task/export/toWorkspace', () => ({
-    startTableToWorkspaceExport$: (params, {sepalUser}) => defer(() => {
-        earthEngine.workspaceExports.push({params, sepalUser})
-        return of({eeTaskId: 'workspace-export', destination: WORKSPACE_DESTINATION})
-    })
-}))
+})
+mock.module('#sepal/ee/samplingDesign/stratificationImage', {
+    exports: {
+        stratificationImage$: () => of('stratification image')
+    }
+})
+mock.module('#sepal/ee/samplingDesign/unstratifiedArea', {
+    exports: {
+        unstratifiedAllocation$: ({allocation, stratification}) =>
+            of(stratification.skip ? allocation.map(row => ({...row, area: AOI_AREA})) : allocation)
+    }
+})
+mock.module('#sepal/ee/samplingDesign/systematicSampling', {
+    exports: {
+        stratifiedSystematicExactCandidates: ({allocation, densityOffset}) => ({candidates: strataOf(allocation), densityOffset}),
+        selectSystematicLevels: ({samples, allocation}) => ({samples, strata: strataOf(allocation)}),
+        systematicSelectionSummary: selected => ({summaryOf: selected}),
+        stratifiedSystematicFinalSamples: ({candidates, levelsByStratum}) => ({selectedFrom: candidates.source, levelsByStratum})
+    }
+})
+mock.module('#sepal/ee/samplingDesign/unstratifiedSystematicSampling', {
+    exports: {
+        unstratifiedSystematicIndexCandidates: ({allocation, densityOffset}) => ({candidates: strataOf(allocation), densityOffset}),
+
+        materializeSystematicIndexGeometry: ({candidates, densityOffset}) => {
+            earthEngine.materialized.push({source: candidates.source, densityOffset})
+            return eeCollection({materialized: candidates.source})
+        }
+    }
+})
+mock.module('#sepal/ee/samplingDesign/samples', {
+    exports: {
+        toDensitySummary: summary => summary,
+        systematicStratumMaxOffset: stratum => earthEngine.maxOffsetOf(stratum),
+
+        mergeRepairedCandidates: ({baseSamples, repairSamples, repairedStrata}) =>
+            eeCollection({base: baseSamples.source, repair: repairSamples.source, repaired: strataOf(repairedStrata)}),
+
+        finalizeSystematicSamples: ({filteredSamples, densityOffset, rowMetadata}) => ({
+            set: properties => ({samples: filteredSamples, densityOffset, rowMetadata, properties})
+        })
+    }
+})
+mock.module('#sepal/ee/samplingDesign/validateSampleCounts', {
+    exports: {
+        getSampleCounts$: () => of(earthEngine.finalCounts)
+    }
+})
+mock.module('#gee/jobs/task/export/toAsset', {
+    exports: {
+        startTableToAssetExport$: params => defer(() => {
+            earthEngine.assetExports.push(params)
+            return of({eeTaskId: `asset-export-${earthEngine.assetExports.length}`})
+        })
+    }
+})
+mock.module('#gee/jobs/task/export/toWorkspace', {
+    exports: {
+        startTableToWorkspaceExport$: (params, {sepalUser}) => defer(() => {
+            earthEngine.workspaceExports.push({params, sepalUser})
+            return of({eeTaskId: 'workspace-export', destination: WORKSPACE_DESTINATION})
+        })
+    }
+})
 
 const {SYSTEMATIC_EXPORT_PROPERTY_NAMES} = await import('#sepal/ee/samplingDesign/sampleProperties')
 const {SYSTEMATIC_PROGRESS} = await import('#gee/jobs/task/samplingDesign/progress')
@@ -99,15 +126,15 @@ describe('starting a systematic design', () => {
         const first = await step(request, null)
 
         const baseAssetId = candidateAssetId(first.state.prefix, 'base')
-        expect(first).toEqual({
+        assert.deepEqual(first, {
             state: {kind: 'systematic', stage: 'base', prefix: first.state.prefix, allocation: ALLOCATION, tempAssetIds: [baseAssetId]},
             progress: [SYSTEMATIC_PROGRESS.prepareBase],
             next: SYSTEMATIC_PROGRESS.checkBase,
             action: 'export',
             eeTaskId: 'asset-export-1'
         })
-        expect(first.state.prefix).toMatch(new RegExp(`^${ASSET_ID}_tmp_\\d{17}$`))
-        expect(earthEngine.assetExports).toEqual([{
+        assert.match(first.state.prefix, new RegExp(`^${ASSET_ID}_tmp_\\d{17}$`))
+        assert.deepEqual(earthEngine.assetExports, [{
             collection: {candidates: [1, 2], densityOffset: 0},
             description: candidateDescription('design', 'base'),
             assetId: baseAssetId,
@@ -120,9 +147,13 @@ describe('starting a systematic design', () => {
 
         const first = await step(request, null)
 
-        expect(first.action).toBe('export')
-        expect(first.state.allocation).toEqual([expect.objectContaining({stratum: 1, area: AOI_AREA})])
-        expect(earthEngine.assetExports[0].collection).toEqual({candidates: [1], densityOffset: 0})
+        assert.equal(first.action, 'export')
+        assert.equal(first.state.allocation.length, 1)
+        assert.partialDeepStrictEqual(first.state.allocation, [{stratum: 1, area: AOI_AREA}])
+        assert.deepEqual(
+            earthEngine.assetExports[0].collection,
+            {candidates: [1], densityOffset: 0}
+        )
     })
 })
 
@@ -132,9 +163,14 @@ describe('a gated design starts nothing', () => {
 
         const error = await step(request, null).catch(error => error)
 
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.grid.unsupportedArrangementCrs')
-        expect(error.userMessage.args.supported).toContain('EPSG:6933 - EASE-Grid 2.0 Global')
-        expect(earthEngine.assetExports).toEqual([])
+        assert.equal(
+            error.userMessage.key,
+            'tasks.samplingDesign.grid.unsupportedArrangementCrs'
+        )
+        assert.ok(
+            error.userMessage.args.supported.includes('EPSG:6933 - EASE-Grid 2.0 Global')
+        )
+        assert.deepEqual(earthEngine.assetExports, [])
     })
 
     it('rejects a stratified minimum distance below two Stratification pixels', async () => {
@@ -142,11 +178,11 @@ describe('a gated design starts nothing', () => {
 
         const error = await step(request, null).catch(error => error)
 
-        expect(error.userMessage).toMatchObject({
+        assertMatches(error.userMessage, {
             key: 'tasks.samplingDesign.systematic.grid.minDistanceBelowGrid',
             args: {value: 5, pixelSize: 10, minimum: 20}
         })
-        expect(earthEngine.assetExports).toEqual([])
+        assert.deepEqual(earthEngine.assetExports, [])
     })
 
     it('holds the raster floor to the Stratification pixel size, not the Arrangement grid', async () => {
@@ -154,8 +190,8 @@ describe('a gated design starts nothing', () => {
 
         const error = await step(request, null).catch(error => error)
 
-        expect(error.userMessage.args).toEqual({value: 5, pixelSize: 30, minimum: 60})
-        expect(earthEngine.assetExports).toEqual([])
+        assert.deepEqual(error.userMessage.args, {value: 5, pixelSize: 30, minimum: 60})
+        assert.deepEqual(earthEngine.assetExports, [])
     })
 
     it('rejects a blank Stratification CRS', async () => {
@@ -163,8 +199,11 @@ describe('a gated design starts nothing', () => {
 
         const error = await step(request, null).catch(error => error)
 
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.grid.invalidStratificationCrs')
-        expect(earthEngine.assetExports).toEqual([])
+        assert.equal(
+            error.userMessage.key,
+            'tasks.samplingDesign.grid.invalidStratificationCrs'
+        )
+        assert.deepEqual(earthEngine.assetExports, [])
     })
 
     it('accepts a non-curated Stratification CRS alongside a curated Arrangement CRS', async () => {
@@ -172,7 +211,7 @@ describe('a gated design starts nothing', () => {
 
         const first = await step(request, null)
 
-        expect(first.action).toBe('export')
+        assert.equal(first.action, 'export')
     })
 
     it('rejects a design below the minimum-sample contract', async () => {
@@ -180,8 +219,11 @@ describe('a gated design starts nothing', () => {
 
         const error = await step(request, null).catch(error => error)
 
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.preflight.belowStatisticalMinimum.samples')
-        expect(earthEngine.assetExports).toEqual([])
+        assert.equal(
+            error.userMessage.key,
+            'tasks.samplingDesign.preflight.belowStatisticalMinimum.samples'
+        )
+        assert.deepEqual(earthEngine.assetExports, [])
     })
 })
 
@@ -193,14 +235,14 @@ describe('after counting the base candidates', () => {
 
         const second = await step(request, first.state)
 
-        expect(second).toMatchObject({
+        assertMatches(second, {
             state: {stage: 'final', tempAssetIds: [baseAssetId]},
             progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
-        expect(earthEngine.counts).toEqual([{assetId: baseAssetId, strata: [1, 2]}])
-        expect(earthEngine.assetExports[1].collection).toMatchObject({
+        assert.deepEqual(earthEngine.counts, [{assetId: baseAssetId, strata: [1, 2]}])
+        assert.partialDeepStrictEqual(earthEngine.assetExports[1].collection, {
             samples: {selectedFrom: baseAssetId, levelsByStratum: {1: 1, 2: 2}},
             densityOffset: 0
         })
@@ -214,20 +256,22 @@ describe('after counting the base candidates', () => {
         const second = await step(request, first.state)
 
         const repairAssetId = candidateAssetId(first.state.prefix, 'repair')
-        expect(second).toMatchObject({
+        assertMatches(second, {
             state: {stage: 'repair', tempAssetIds: [first.state.tempAssetIds[0], repairAssetId]},
             progress: [SYSTEMATIC_PROGRESS.prepareRepair],
             next: SYSTEMATIC_PROGRESS.checkRepair,
             action: 'export',
             eeTaskId: 'asset-export-2'
         })
-        expect(earthEngine.assetExports[1]).toEqual({
-            collection: {candidates: [1], densityOffset: expect.any(Number)},
+        const {densityOffset} = earthEngine.assetExports[1].collection
+        assert.equal(typeof densityOffset, 'number')
+        assert.deepEqual(earthEngine.assetExports[1], {
+            collection: {candidates: [1], densityOffset},
             description: candidateDescription('design', 'repair'),
             assetId: repairAssetId,
             strategy: 'create'
         })
-        expect(earthEngine.assetExports[1].collection.densityOffset).toBeGreaterThan(0)
+        assert.ok(earthEngine.assetExports[1].collection.densityOffset > 0)
     })
 
     it('fails EXACT/OVER without a repair when even the densest allowed grid underproduces', async () => {
@@ -238,10 +282,12 @@ describe('after counting the base candidates', () => {
 
         const error = await step(request, first.state).catch(error => error)
 
-        expect(error.userMessage.key).toBe(UNDERPRODUCTION)
-        expect(error.userMessage.args.advice.flatMap(({strata}) => strata))
-            .toEqual([{stratum: 1, label: 'a', actual: 40, requested: 100, kind: 'requestedAllocation'}])
-        expect(earthEngine.assetExports).toHaveLength(1)
+        assert.equal(error.userMessage.key, UNDERPRODUCTION)
+        assert.deepEqual(
+            error.userMessage.args.advice.flatMap(({strata}) => strata),
+            [{stratum: 1, label: 'a', actual: 40, requested: 100, kind: 'requestedAllocation'}]
+        )
+        assert.equal(earthEngine.assetExports.length, 1)
     })
 
     it('fails EXACT/OVER without a repair when any short stratum is at its minimum-distance limit', async () => {
@@ -252,9 +298,12 @@ describe('after counting the base candidates', () => {
 
         const error = await step(request, first.state).catch(error => error)
 
-        expect(error.userMessage.key).toBe(UNDERPRODUCTION)
-        expect(error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum}) => stratum))).toEqual([1])
-        expect(earthEngine.assetExports).toHaveLength(1)
+        assert.equal(error.userMessage.key, UNDERPRODUCTION)
+        assert.deepEqual(
+            error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum}) => stratum)),
+            [1]
+        )
+        assert.equal(earthEngine.assetExports.length, 1)
     })
 
     it('lets CLOSEST export the base candidates when densifying is not possible', async () => {
@@ -267,12 +316,15 @@ describe('after counting the base candidates', () => {
 
         const second = await step(request, first.state)
 
-        expect(second).toMatchObject({
+        assertMatches(second, {
             state: {stage: 'final'},
             progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export'
         })
-        expect(earthEngine.assetExports[1].collection).toMatchObject({samples: {selectedFrom: baseAssetId}, densityOffset: 0})
+        assert.partialDeepStrictEqual(
+            earthEngine.assetExports[1].collection,
+            {samples: {selectedFrom: baseAssetId}, densityOffset: 0}
+        )
     })
 })
 
@@ -286,17 +338,17 @@ describe('after counting the repair candidates', () => {
 
         const third = await step(request, second.state)
 
-        expect(third).toMatchObject({
+        assertMatches(third, {
             state: {stage: 'final', tempAssetIds: [baseAssetId, repairAssetId]},
             progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'export',
             eeTaskId: 'asset-export-3'
         })
-        expect(earthEngine.counts).toEqual([
+        assert.deepEqual(earthEngine.counts, [
             {assetId: baseAssetId, strata: [1, 2]},
             {assetId: repairAssetId, strata: [1]}
         ])
-        expect(earthEngine.assetExports[2].collection).toMatchObject({
+        assertMatches(earthEngine.assetExports[2].collection, {
             samples: {selectedFrom: {base: baseAssetId, repair: repairAssetId, repaired: [1]}},
             densityOffset: 0
         })
@@ -313,7 +365,10 @@ describe('after counting the repair candidates', () => {
 
         await step(request, second.state)
 
-        expect(earthEngine.assetExports[2].collection.samples.levelsByStratum).toEqual({1: 3, 2: 2})
+        assert.deepEqual(
+            earthEngine.assetExports[2].collection.samples.levelsByStratum,
+            {1: 3, 2: 2}
+        )
     })
 
     it('counts and selects unstratified candidates at the density they were generated with', async () => {
@@ -327,13 +382,13 @@ describe('after counting the repair candidates', () => {
 
         const [baseAssetId, repairAssetId] = second.state.tempAssetIds
         const repairOffset = earthEngine.assetExports[1].collection.densityOffset
-        expect(repairOffset).toBeGreaterThan(0)
-        expect(earthEngine.materialized.slice(0, 2)).toEqual([
+        assert.ok(repairOffset > 0)
+        assert.deepEqual(earthEngine.materialized.slice(0, 2), [
             {source: baseAssetId, densityOffset: 0},
             {source: repairAssetId, densityOffset: repairOffset}
         ])
-        expect(earthEngine.materialized[2].densityOffset).toBe(repairOffset)
-        expect(earthEngine.assetExports[2].collection.densityOffset).toBe(0)
+        assert.equal(earthEngine.materialized[2].densityOffset, repairOffset)
+        assert.equal(earthEngine.assetExports[2].collection.densityOffset, 0)
     })
 
     it('fails EXACT/OVER when a repaired stratum is still short', async () => {
@@ -344,10 +399,12 @@ describe('after counting the repair candidates', () => {
 
         const error = await step(request, second.state).catch(error => error)
 
-        expect(error.userMessage.key).toBe(UNDERPRODUCTION)
-        expect(error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum, actual}) => [stratum, actual])))
-            .toEqual([[1, 40]])
-        expect(earthEngine.assetExports).toHaveLength(2)
+        assert.equal(error.userMessage.key, UNDERPRODUCTION)
+        assert.deepEqual(
+            error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum, actual}) => [stratum, actual])),
+            [[1, 40]]
+        )
+        assert.equal(earthEngine.assetExports.length, 2)
     })
 })
 
@@ -358,8 +415,13 @@ describe('the final export', () => {
 
         await step(request, first.state)
 
-        expect(earthEngine.assetExports[1]).toEqual({
-            collection: expect.objectContaining({rowMetadata: false, properties: {source: 'test', tags: '["a"]'}}),
+        const {collection} = earthEngine.assetExports[1]
+        assert.deepEqual(
+            {rowMetadata: collection.rowMetadata, properties: collection.properties},
+            {rowMetadata: false, properties: {source: 'test', tags: '["a"]'}}
+        )
+        assert.deepEqual(earthEngine.assetExports[1], {
+            collection,
             description: 'design',
             assetId: ASSET_ID,
             strategy: 'replace'
@@ -372,17 +434,24 @@ describe('the final export', () => {
 
         const second = await step(request, first.state)
 
-        expect(first.state.prefix).toMatch(/^projects\/alice\/assets\/sampling_design_tmp_\d{17}_[0-9a-f]{6}$/)
-        expect(second).toEqual({
-            state: expect.objectContaining({stage: 'final', tempAssetIds: first.state.tempAssetIds}),
+        assert.match(
+            first.state.prefix,
+            /^projects\/alice\/assets\/sampling_design_tmp_\d{17}_[0-9a-f]{6}$/
+        )
+        const {state} = second
+        assert.deepEqual({stage: state.stage, tempAssetIds: state.tempAssetIds}, {stage: 'final', tempAssetIds: first.state.tempAssetIds})
+        assert.deepEqual(second, {
+            state,
             progress: [SYSTEMATIC_PROGRESS.exportFinal],
             action: 'workspace',
             eeTaskId: 'workspace-export',
             destination: WORKSPACE_DESTINATION
         })
-        expect(earthEngine.workspaceExports).toEqual([{
+        const [{params: {collection}}] = earthEngine.workspaceExports
+        assert.equal(collection.rowMetadata, true)
+        assert.deepEqual(earthEngine.workspaceExports, [{
             params: {
-                collection: expect.objectContaining({rowMetadata: true}),
+                collection,
                 description: 'design',
                 filenamePrefix: 'samples',
                 fileFormat: 'GeoJSON',
@@ -390,7 +459,7 @@ describe('the final export', () => {
             },
             sepalUser: ALICE
         }])
-        expect(earthEngine.assetExports).toHaveLength(1)
+        assert.equal(earthEngine.assetExports.length, 1)
     })
 
     it('is not started when the final selection is short of the contract', async () => {
@@ -400,8 +469,8 @@ describe('the final export', () => {
 
         const error = await step(request, first.state).catch(error => error)
 
-        expect(error.userMessage.key).toBe(UNDERPRODUCTION)
-        expect(earthEngine.assetExports).toHaveLength(1)
+        assert.equal(error.userMessage.key, UNDERPRODUCTION)
+        assert.equal(earthEngine.assetExports.length, 1)
     })
 
     it('leaves nothing to do once it has been started', async () => {
@@ -411,8 +480,8 @@ describe('the final export', () => {
 
         const third = await step(request, second.state)
 
-        expect(third).toEqual({state: second.state, progress: [], action: 'done'})
-        expect(earthEngine.assetExports).toHaveLength(2)
+        assert.deepEqual(third, {state: second.state, progress: [], action: 'done'})
+        assert.equal(earthEngine.assetExports.length, 2)
     })
 })
 

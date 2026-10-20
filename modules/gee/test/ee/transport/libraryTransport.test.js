@@ -1,21 +1,25 @@
+import assert from 'node:assert/strict'
+import {before, test} from 'node:test'
+
 import {firstValueFrom} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {LibraryTransport} from '#sepal/ee/transport/libraryTransport'
+import {assertMatches} from '#sepal/testSupport/assert'
 
 import {answerLibrary, API, initializeOfflineEE, TEST_PROJECT} from '../../support/eeOffline.js'
 
 // The transport `task` keeps: requests sent by the client library, as whoever the library is authenticated as.
 
-beforeAll(() => initializeOfflineEE())
+before(() => initializeOfflineEE())
 
 test('computes a value through the client library, as the library is authenticated', async () => {
     const requests = answerLibrary({[`${API}/v1/projects/${TEST_PROJECT}/value:compute`]: {result: 42}})
 
     const result = await firstValueFrom(new LibraryTransport(ee).getInfo$(ee.Image('USGS/SRTMGL1_003'), 'probe'))
 
-    expect(result).toBe(42)
-    expect(requests[0].headers.Authorization).toBe('Bearer offline-token')
+    assert.equal(result, 42)
+    assert.equal(requests[0].headers.Authorization, 'Bearer offline-token')
 })
 
 test('reads an export task\'s status as one status', async () => {
@@ -27,7 +31,7 @@ test('reads an export task\'s status as one status', async () => {
 
     const status = await firstValueFrom(new LibraryTransport(ee).getTaskStatus$('T1', 'poll probe export task status'))
 
-    expect(status).toMatchObject({id: 'T1', state: 'RUNNING'})
+    assert.partialDeepStrictEqual(status, {id: 'T1', state: 'RUNNING'})
 })
 
 test('reads a Cloud asset record without dropping its version or band ranks', async () => {
@@ -42,5 +46,5 @@ test('reads a Cloud asset record without dropping its version or band ranks', as
 
     const result = await firstValueFrom(new LibraryTransport(ee).getAssetRecord$('users/test/segments'))
 
-    expect(result).toMatchObject(record)
+    assertMatches(result, record)
 })

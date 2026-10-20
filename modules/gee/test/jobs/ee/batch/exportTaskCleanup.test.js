@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {lastValueFrom, of, throwError, toArray} from 'rxjs'
 
 import {cleanupExportTask$, completionError, isRunning} from '#gee/jobs/ee/batch/exportTaskCleanup'
@@ -16,15 +19,15 @@ const spy = impl => {
 
 describe('isRunning', () => {
     it('treats UNSUBMITTED/READY/RUNNING as running', () => {
-        expect(isRunning('UNSUBMITTED')).toBe(true)
-        expect(isRunning('READY')).toBe(true)
-        expect(isRunning('RUNNING')).toBe(true)
+        assert.equal(isRunning('UNSUBMITTED'), true)
+        assert.equal(isRunning('READY'), true)
+        assert.equal(isRunning('RUNNING'), true)
     })
 
     it('treats terminal states as not running', () => {
-        expect(isRunning('COMPLETED')).toBe(false)
-        expect(isRunning('FAILED')).toBe(false)
-        expect(isRunning('CANCELLED')).toBe(false)
+        assert.equal(isRunning('COMPLETED'), false)
+        assert.equal(isRunning('FAILED'), false)
+        assert.equal(isRunning('CANCELLED'), false)
     })
 })
 
@@ -33,26 +36,29 @@ describe('completionError', () => {
         completionError({status: {state, error_message}, description: 'probability-per-stratum'})
 
     it('accepts a COMPLETED task', () => {
-        expect(error({state: 'COMPLETED'})).toBeNull()
+        assert.equal(error({state: 'COMPLETED'}), null)
     })
 
     it('surfaces the Earth Engine message of a FAILED task', () => {
         const failure = error({state: 'FAILED', error_message: 'Reducer.setOutputs: Need 1 output names'})
-        expect(failure.message).toContain('probability-per-stratum')
-        expect(failure.message).toContain('FAILED')
-        expect(failure.message).toContain('Reducer.setOutputs: Need 1 output names')
-        expect(failure.userMessage.args.earthEngineMessage).toBe('Reducer.setOutputs: Need 1 output names')
+        assert.ok(failure.message.includes('probability-per-stratum'))
+        assert.ok(failure.message.includes('FAILED'))
+        assert.ok(failure.message.includes('Reducer.setOutputs: Need 1 output names'))
+        assert.equal(
+            failure.userMessage.args.earthEngineMessage,
+            'Reducer.setOutputs: Need 1 output names'
+        )
     })
 
     it('reports a CANCELLED task that carries no Earth Engine message', () => {
         const failure = error({state: 'CANCELLED'})
-        expect(failure.message).toContain('probability-per-stratum')
-        expect(failure.message).toContain('CANCELLED')
-        expect(failure.userMessage.args.earthEngineMessage).toContain('CANCELLED')
+        assert.ok(failure.message.includes('probability-per-stratum'))
+        assert.ok(failure.message.includes('CANCELLED'))
+        assert.ok(failure.userMessage.args.earthEngineMessage.includes('CANCELLED'))
     })
 
     it('reports an UNKNOWN state as a failure rather than a success', () => {
-        expect(error({state: 'UNKNOWN'}).message).toContain('UNKNOWN')
+        assert.ok(error({state: 'UNKNOWN'}).message.includes('UNKNOWN'))
     })
 })
 
@@ -61,24 +67,24 @@ describe('cleanupExportTask$', () => {
         const cancel$ = spy(() => of('cancelled'))
         const status$ = () => of({state: 'RUNNING'})
         const result = await collect(cleanupExportTask$({eeTaskId: 't1', description: 'd', status$, cancel$}))
-        expect(cancel$.calls.length).toBe(1)
-        expect(cancel$.calls[0][0]).toMatchObject({eeTaskId: 't1', maxRetries: 3})
-        expect(result).toEqual([true])
+        assert.equal(cancel$.calls.length, 1)
+        assert.partialDeepStrictEqual(cancel$.calls[0][0], {eeTaskId: 't1', maxRetries: 3})
+        assert.deepEqual(result, [true])
     })
 
     it('does not cancel a task that is already terminal', async () => {
         const cancel$ = spy(() => of('cancelled'))
         const status$ = () => of({state: 'COMPLETED'})
         const result = await collect(cleanupExportTask$({eeTaskId: 't1', description: 'd', status$, cancel$}))
-        expect(cancel$.calls.length).toBe(0)
-        expect(result).toEqual([false])
+        assert.equal(cancel$.calls.length, 0)
+        assert.deepEqual(result, [false])
     })
 
     it('falls back to a direct cancel when the status check fails', async () => {
         const cancel$ = spy(() => of('cancelled'))
         const status$ = () => throwError(() => new Error('status failed'))
         await collect(cleanupExportTask$({eeTaskId: 't1', description: 'd', status$, cancel$}))
-        expect(cancel$.calls.length).toBe(1)
-        expect(cancel$.calls[0][0]).toMatchObject({eeTaskId: 't1', maxRetries: 0})
+        assert.equal(cancel$.calls.length, 1)
+        assert.partialDeepStrictEqual(cancel$.calls[0][0], {eeTaskId: 't1', maxRetries: 0})
     })
 })

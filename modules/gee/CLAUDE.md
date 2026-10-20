@@ -5,25 +5,20 @@ Google Earth Engine API service. Exposes GEE operations as REST endpoints for th
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
-Target one suite while working:
+Target one suite while working, from `modules/gee` in the dev-env container:
 
 ```bash
-sepal npm-test gee -- --testPathPatterns recipeIdentity
+node --experimental-test-module-mocks --test test/jobs/recipeIdentity.test.js
 ```
 
 ## Tests
 
-Automated tests live in `test/`, mirroring the `src/` tree they exercise (`test/jobs/ee/image/...`). Jest
-discovers `test/**/*.test.js` only.
-
-Suites named `*.node.test.mjs` run under Node's own test runner, launched by a sibling `*.test.js` bridge
-that raises the child's report on failure. They exist because `imageFactory` loads every recipe
-implementation through `createRequire`, which Jest's CJS resolver answers with `ERR_REQUIRE_ESM`. Jest does
-not discover them directly; `sepal npm-test gee` reaches them through their bridges.
+Automated tests live in `test/`, mirroring the `src/` tree they exercise (`test/jobs/ee/image/...`), as
+`*.test.js` files.
 
 `verify/` is separate: hand-run gates against live Earth Engine, outside any suite. The helpers those scripts
 share are ordinary modules, and `test/verify/` covers them over fakes.

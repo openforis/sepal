@@ -1,8 +1,9 @@
+import assert from 'node:assert/strict'
 import {chmod, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
+import {after, afterEach, before, beforeEach, describe, mock, test} from 'node:test'
 import {gzipSync} from 'node:zlib'
 
-import {jest} from '@jest/globals'
 import {concatMap, defer, EMPTY, firstValueFrom, lastValueFrom, throwError, toArray} from 'rxjs'
 
 import {configureNoLogging} from '#sepal/log'
@@ -28,7 +29,7 @@ describe('catalogue rebuild recovery', () => {
     let sentinel2
     const filesDirectory = process.env.MYSQL_FILES_DIR
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createRebuildDb(join(dirName(import.meta.url), '../migrations'))
     })
@@ -62,60 +63,65 @@ describe('catalogue rebuild recovery', () => {
         await rm(directory, {recursive: true, force: true})
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     test('publishes parsed Landsat and Sentinel files before persisting checkpoints and initialization', async () => {
-        const coordinator = aCoordinator()
-        const saveCheckpoints = redis.setLastUpdate.getMockImplementation()
+        const {setLastUpdate} = redis
         let publishedAtCheckpoint
-        redis.setLastUpdate.mockImplementationOnce(async checkpoints => {
+        redis.setLastUpdate = async checkpoints => {
             publishedAtCheckpoint = await storedIds()
-            await saveCheckpoints(checkpoints)
-        })
+            await setLastUpdate(checkpoints)
+        }
+        const coordinator = aCoordinator()
 
         await firstValueFrom(coordinator.start$(false))
 
         const initialized = await redis.getInitialized()
         const landsatCheckpoint = await redis.getLastUpdate('LANDSAT_8')
         const sentinelCheckpoint = await redis.getLastUpdate('SENTINEL_2')
-        expect(publishedAtCheckpoint).toHaveLength(4)
-        expect(publishedAtCheckpoint).not.toContain('live-before-rebuild')
-        expect(initialized).toBe(TIMESTAMP.toISOString())
-        expect(landsatCheckpoint).toBe('2021-07-15T00:00:00.000Z')
-        expect(sentinelCheckpoint).toBe('2021-07-15T10:00:00.000Z')
+        assert.equal(publishedAtCheckpoint.length, 4)
+        assert.ok(!publishedAtCheckpoint.includes('live-before-rebuild'))
+        assert.equal(initialized, TIMESTAMP.toISOString())
+        assert.equal(landsatCheckpoint, '2021-07-15T00:00:00.000Z')
+        assert.equal(sentinelCheckpoint, '2021-07-15T10:00:00.000Z')
     })
 
-    test.each([
+    for (const [name, load$] of [
         ['Landsat', loadLandsat$],
         ['Sentinel-2', loadSentinel2$]
-    ])('%s defers loading and emits one empty checkpoint map when no scenes qualify', async (_name, load$) => {
-        const source$ = load$({database: ingestor, maxTimestamp: INITIAL_CHECKPOINT, timestamp: TIMESTAMP})
-        await firstValueFrom(landsat.download$())
-        await firstValueFrom(sentinel2.download$())
-        await ingestor.prepare()
+    ]) {
+        test(
+            `${name} defers loading and emits one empty checkpoint map when no scenes qualify`,
+            async () => {
+                const source$ = load$({database: ingestor, maxTimestamp: INITIAL_CHECKPOINT, timestamp: TIMESTAMP})
+                await firstValueFrom(landsat.download$())
+                await firstValueFrom(sentinel2.download$())
+                await ingestor.prepare()
 
-        const emissions = await lastValueFrom(source$.pipe(toArray()))
+                const emissions = await lastValueFrom(source$.pipe(toArray()))
 
-        const staged = await storedIds(`${testDb.dbName}_new`)
-        const live = await storedIds()
-        expect(emissions).toEqual([{}])
-        expect(staged).toEqual([])
-        expect(live).toEqual(['live-before-rebuild'])
-    })
+                const staged = await storedIds(`${testDb.dbName}_new`)
+                const live = await storedIds()
+                assert.deepEqual(emissions, [{}])
+                assert.deepEqual(staged, [])
+                assert.deepEqual(live, ['live-before-rebuild'])
+            }
+        )
+    }
 
     test('a required download failure preserves the live catalogue and initialization state', async () => {
         const error = new Error('Download failed')
         landsat.download$ = () => throwError(() => error)
         const coordinator = aCoordinator()
 
-        await expect(firstValueFrom(coordinator.start$(false))).rejects.toBe(error)
+        await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
 
         const stored = await storedIds()
         const checkpoint = await redis.getLastUpdate('LANDSAT_8')
         const initialized = await redis.getInitialized()
-        expect(stored).toEqual(['live-before-rebuild'])
-        expect(checkpoint).toBe(INITIAL_CHECKPOINT)
-        expect(initialized).toBeNull()
+        assert.deepEqual(stored, ['live-before-rebuild'])
+        assert.equal(checkpoint, INITIAL_CHECKPOINT)
+        assert.equal(initialized, null)
     })
 
     test('a parsing failure after partial progress preserves live data, and a restart discards staging', async () => {
@@ -128,26 +134,26 @@ describe('catalogue rebuild recovery', () => {
         )
         const coordinator = aCoordinator()
 
-        await expect(firstValueFrom(coordinator.start$(false))).rejects.toThrow()
+        await assert.rejects(firstValueFrom(coordinator.start$(false)))
 
         const liveBeforeRetry = await storedIds()
         const staged = await storedIds(`${testDb.dbName}_new`)
         const checkpointBeforeRetry = await redis.getLastUpdate('LANDSAT_8')
         const initializedBeforeRetry = await redis.getInitialized()
-        expect(liveBeforeRetry).toEqual(['live-before-rebuild'])
-        expect(staged).toHaveLength(1)
-        expect(checkpointBeforeRetry).toBe(INITIAL_CHECKPOINT)
-        expect(initializedBeforeRetry).toBeNull()
+        assert.deepEqual(liveBeforeRetry, ['live-before-rebuild'])
+        assert.equal(staged.length, 1)
+        assert.equal(checkpointBeforeRetry, INITIAL_CHECKPOINT)
+        assert.equal(initializedBeforeRetry, null)
 
         landsat.download$ = download$
         await firstValueFrom(coordinator.start$(false))
 
         const liveAfterRetry = await storedIds()
         const initialized = await redis.getInitialized()
-        expect(liveAfterRetry).toHaveLength(4)
-        expect(liveAfterRetry).not.toContain('live-before-rebuild')
-        expect(liveAfterRetry).not.toContain(staged[0])
-        expect(initialized).toBe(TIMESTAMP.toISOString())
+        assert.equal(liveAfterRetry.length, 4)
+        assert.ok(!liveAfterRetry.includes('live-before-rebuild'))
+        assert.ok(!liveAfterRetry.includes(staged[0]))
+        assert.equal(initialized, TIMESTAMP.toISOString())
     })
 
     test('a failed bulk load retains its chunk and prevents publication until a fresh successful rebuild', async () => {
@@ -158,55 +164,64 @@ describe('catalogue rebuild recovery', () => {
         }))
         const coordinator = aCoordinator()
 
-        await expect(firstValueFrom(coordinator.start$(false))).rejects.toBe(error)
+        await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
 
         const live = await storedIds()
         const failedChunk = await readFile(join(directory, 'landsat-tm.1.csv'), 'utf8')
         const initialized = await redis.getInitialized()
-        expect(live).toEqual(['live-before-rebuild'])
-        expect(failedChunk).toContain('LT05')
-        expect(failedChunk.endsWith('\n')).toBe(true)
-        expect(initialized).toBeNull()
+        assert.deepEqual(live, ['live-before-rebuild'])
+        assert.ok(failedChunk.includes('LT05'))
+        assert.equal(failedChunk.endsWith('\n'), true)
+        assert.equal(initialized, null)
 
         fail = false
         await firstValueFrom(coordinator.start$(false))
 
         const published = await storedIds()
-        expect(published).toHaveLength(4)
-        expect(published).not.toContain('live-before-rebuild')
+        assert.equal(published.length, 4)
+        assert.ok(!published.includes('live-before-rebuild'))
     })
 
-    test.each(['setLastUpdate', 'setInitialized'])('failure of %s after publication restarts with a full rebuild, not another swap', async operation => {
-        const error = new Error('Redis write failed')
-        redis[operation].mockRejectedValueOnce(error)
-        const coordinator = aCoordinator()
+    for (const operation of ['setLastUpdate', 'setInitialized']) {
+        test(
+            `failure of ${operation} after publication restarts with a full rebuild, not another swap`,
+            async () => {
+                const error = new Error('Redis write failed')
+                redis[operation].mock.mockImplementationOnce(async () => {
+                    throw error
+                })
+                const coordinator = aCoordinator()
 
-        await expect(firstValueFrom(coordinator.start$(false))).rejects.toBe(error)
+                await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
 
-        const published = await storedIds()
-        const initializedBeforeRetry = await redis.getInitialized()
-        expect(published).toHaveLength(4)
-        expect(published).not.toContain('live-before-rebuild')
-        expect(initializedBeforeRetry).toBeNull()
+                const published = await storedIds()
+                const initializedBeforeRetry = await redis.getInitialized()
+                assert.equal(published.length, 4)
+                assert.ok(!published.includes('live-before-rebuild'))
+                assert.equal(initializedBeforeRetry, null)
 
-        await firstValueFrom(coordinator.start$(false))
+                await firstValueFrom(coordinator.start$(false))
 
-        const afterRetry = await storedIds()
-        const initialized = await redis.getInitialized()
-        expect(afterRetry).toEqual(published)
-        expect(initialized).toBe(TIMESTAMP.toISOString())
-    })
+                const afterRetry = await storedIds()
+                const initialized = await redis.getInitialized()
+                assert.deepEqual(afterRetry, published)
+                assert.equal(initialized, TIMESTAMP.toISOString())
+            }
+        )
+    }
 
     test('cleanup failure does not undo successful initialization, and startup retries cleanup without rebuilding', async () => {
-        jest.spyOn(ingestor, 'cleanup').mockRejectedValueOnce(new Error('Cleanup unavailable'))
+        mock.method(ingestor, 'cleanup', async () => {
+            throw new Error('Cleanup unavailable')
+        }, {times: 1})
         const coordinator = aCoordinator()
 
         await firstValueFrom(coordinator.start$(false))
 
         const published = await storedIds()
         const initialized = await redis.getInitialized()
-        expect(published).toHaveLength(4)
-        expect(initialized).toBe(TIMESTAMP.toISOString())
+        assert.equal(published.length, 4)
+        assert.equal(initialized, TIMESTAMP.toISOString())
 
         landsat.download$ = () => throwError(() => new Error('Must not rebuild'))
         await firstValueFrom(coordinator.start$(false))
@@ -215,13 +230,13 @@ describe('catalogue rebuild recovery', () => {
         const [disposable] = await testDb.query('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME IN (?, ?)', [
             `${testDb.dbName}_new`, `${testDb.dbName}_old`
         ])
-        expect(afterCleanup).toEqual(published)
-        expect(disposable).toEqual([])
+        assert.deepEqual(afterCleanup, published)
+        assert.deepEqual(disposable, [])
 
         await ingestor.cleanup()
 
         const afterRepeatedCleanup = await storedIds()
-        expect(afterRepeatedCleanup).toEqual(published)
+        assert.deepEqual(afterRepeatedCleanup, published)
     })
 
     test('complete CSV chunks load all rows, including the final partial chunk, before publication', async () => {
@@ -237,18 +252,18 @@ describe('catalogue rebuild recovery', () => {
         await ingestor.publish()
 
         const published = await storedIds()
-        expect(beforePublication).toEqual(['live-before-rebuild'])
-        expect(published).toEqual(scenes.map(({id}) => id).sort())
-        expect(checkpoints).toEqual({LANDSAT_8: scenes[0].acquiredTimestamp})
+        assert.deepEqual(beforePublication, ['live-before-rebuild'])
+        assert.deepEqual(published, scenes.map(({id}) => id).sort())
+        assert.deepEqual(checkpoints, {LANDSAT_8: scenes[0].acquiredTimestamp})
     })
 
     test('MySQL bulk-load errors reject and leave the live catalogue intact', async () => {
         await ingestor.prepare()
 
-        await expect(ingestor.ingest(join(directory, 'missing.csv'), TIMESTAMP)).rejects.toThrow()
+        await assert.rejects(ingestor.ingest(join(directory, 'missing.csv'), TIMESTAMP))
 
         const live = await storedIds()
-        expect(live).toEqual(['live-before-rebuild'])
+        assert.deepEqual(live, ['live-before-rebuild'])
     })
 
     const aCoordinator = () => new IngestionCoordinator({
@@ -286,7 +301,7 @@ const checkpointStore = () => {
     return {
         getInitialized: async () => initialized,
         getLastUpdate: async dataset => checkpoints[dataset],
-        setLastUpdate: jest.fn(async updates => { Object.assign(checkpoints, updates) }),
-        setInitialized: jest.fn(async value => { initialized = value })
+        setLastUpdate: mock.fn(async updates => { Object.assign(checkpoints, updates) }),
+        setInitialized: mock.fn(async value => { initialized = value })
     }
 }

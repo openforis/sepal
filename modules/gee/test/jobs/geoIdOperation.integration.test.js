@@ -1,7 +1,11 @@
+import assert from 'node:assert/strict'
 import http from 'node:http'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
+import {format} from 'node:util'
 
-import {jest} from '@jest/globals'
 import {defaultIfEmpty, EMPTY, firstValueFrom, forkJoin, of} from 'rxjs'
+
+import {assertMatches} from '#sepal/testSupport/assert'
 
 // How a request's operation looks up GeoIDs: the real configure task builds the reader from the configured
 // endpoint, the real job wrapper runs later tasks inside the operation, and the real finalize task ends it.
@@ -17,19 +21,19 @@ const POLYGON = {
 
 let geoIdEndpoint, server, requests, respond
 
-jest.unstable_mockModule('#gee/config', () => ({
+mock.module('#gee/config', {exports: {
     googleProjectId: 'test-project',
     instances: 1,
     port: 80,
     recipeEndpoint: 'http://recipe',
     sepalEndpoint: 'http://test',
     serviceAccountCredentials: {}
-}))
+}})
 
-jest.unstable_mockModule('#gee/jobs/service/context', () => ({
+mock.module('#gee/jobs/service/context', {exports: {
     contextService: {serviceName: 'ContextService', serviceHandler$: () => of({})},
     getContext$: () => of({recipeEndpoint: 'http://recipe', geoIdEndpoint})
-}))
+}})
 
 const {WORKER} = await import('#sepal/worker/factory')
 const {loadGeoIdFeature$} = await import('#sepal/ee/geoIdFeature')
@@ -50,7 +54,7 @@ const aoiJob = job({
     worker$: ({requestArgs: {aoi}}) => toGeometry$(aoi)
 })
 
-beforeAll(async () => {
+before(async () => {
     server = http.createServer((request, response) => {
         const entry = {geoId: request.url.split('/').pop(), abandoned: false}
         requests.push(entry)
@@ -61,7 +65,7 @@ beforeAll(async () => {
     geoIdEndpoint = `http://127.0.0.1:${server.address().port}/geoid`
 })
 
-afterAll(() => new Promise(resolve => server.close(resolve)))
+after(() => new Promise(resolve => server.close(resolve)))
 
 beforeEach(() => {
     requests = []
@@ -74,9 +78,9 @@ describe('within one operation', () => {
 
         const [first, second] = await operation.lookUp([GEOID, GEOID])
 
-        expect(first).toEqual({id: GEOID, geometry: POLYGON})
-        expect(second).toBe(first)
-        expect(requestedIds()).toEqual([GEOID])
+        assert.deepEqual(first, {id: GEOID, geometry: POLYGON})
+        assert.equal(second, first)
+        assert.deepEqual(requestedIds(), [GEOID])
     })
 
     test('different GeoIDs are requested separately', async () => {
@@ -84,43 +88,47 @@ describe('within one operation', () => {
 
         await operation.lookUp([GEOID, OTHER_GEOID])
 
-        expect(requestedIds().sort()).toEqual([GEOID, OTHER_GEOID].sort())
+        assert.deepEqual(requestedIds().sort(), [GEOID, OTHER_GEOID].sort())
     })
 
     test('a failed lookup is not retained, so a later one asks again', async () => {
         respond = (_geoId, response) => notFound(response)
         const operation = await start()
-        await expect(operation.lookUp([GEOID])).rejects.toMatchObject({errorCode: 'GEOID_NOT_FOUND'})
+        await assert.rejects(operation.lookUp([GEOID]), error => { assertMatches(error, {errorCode: 'GEOID_NOT_FOUND'}); return true })
 
         respond = (geoId, response) => feature(response, geoId, POLYGON)
         const [found] = await operation.lookUp([GEOID])
 
-        expect(found.geometry).toEqual(POLYGON)
-        expect(requestedIds()).toEqual([GEOID, GEOID])
+        assert.deepEqual(found.geometry, POLYGON)
+        assert.deepEqual(requestedIds(), [GEOID, GEOID])
     })
 
-    test.each([
+    for (const [_case, aoi, message] of [
         ['a GeoID that is not canonical', {type: 'GEOID', id: GEOID.toUpperCase()}, /canonical GeoID/],
         ['a negative buffer', {type: 'GEOID', id: GEOID, bufferMeters: -1}, /whole number of metres/],
         ['a fractional buffer', {type: 'GEOID', id: GEOID, bufferMeters: 250.5}, /whole number of metres/],
         ['a buffer beyond the safe integers', {type: 'GEOID', id: GEOID, bufferMeters: Number.MAX_SAFE_INTEGER + 1}, /whole number of metres/]
-    ])('%s is refused without a lookup', async (_case, aoi, message) => {
-        const operation = await start()
+    ]) {
+        test(format('%s is refused without a lookup', _case), async () => {
+            const operation = await start()
 
-        await expect(operation.resolve(aoi)).rejects.toThrow(message)
-        expect(requests).toEqual([])
-    })
+            await assert.rejects(operation.resolve(aoi), message)
+            assert.deepEqual(requests, [])
+        })
+    }
 
     // Only the service knows whether the GeoID is a point, and a point needs a buffer of at least 10 m.
     test('a buffer the GeoID\'s geometry does not accept is refused once the geometry is known', async () => {
         respond = (geoId, response) => feature(response, geoId, POINT)
         const operation = await start()
 
-        await expect(operation.resolve({type: 'GEOID', id: GEOID, bufferMeters: 0})).rejects.toMatchObject({
-            errorCode: 'GEOID_INVALID_BUFFER',
-            userMessage: {key: 'gee.geoId.error.invalidBuffer', args: {geoId: GEOID, geometryType: 'Point', min: 10}}
+        await assert.rejects(operation.resolve({type: 'GEOID', id: GEOID, bufferMeters: 0}), error => {
+            assertMatches(error, {
+                errorCode: 'GEOID_INVALID_BUFFER',
+                userMessage: {key: 'gee.geoId.error.invalidBuffer', args: {geoId: GEOID, geometryType: 'Point', min: 10}}
+            }); return true
         })
-        expect(requestedIds()).toEqual([GEOID])
+        assert.deepEqual(requestedIds(), [GEOID])
     })
 })
 
@@ -133,7 +141,7 @@ describe('across operations', () => {
         const second = await start()
         await second.lookUp([GEOID])
 
-        expect(requestedIds()).toEqual([GEOID, GEOID])
+        assert.deepEqual(requestedIds(), [GEOID, GEOID])
     })
 })
 
@@ -153,17 +161,16 @@ describe('ending an operation', () => {
         const operation = await start()
         await operation.end()
 
-        await expect(operation.lookUp([GEOID])).rejects.toThrow(/Operation ended/)
-        expect(requests).toEqual([])
+        await assert.rejects(operation.lookUp([GEOID]), /Operation ended/)
+        assert.deepEqual(requests, [])
     })
 })
 
 test('a lookup outside any operation is refused', async () => {
     const [{worker$}] = lookupJob(WORKER)
 
-    await expect(firstValueFrom(worker$({requestArgs: {geoIds: [GEOID]}, state: {}})))
-        .rejects.toThrow(/No execution operation in progress/)
-    expect(requests).toEqual([])
+    await assert.rejects(firstValueFrom(worker$({requestArgs: {geoIds: [GEOID]}, state: {}})), /No execution operation in progress/)
+    assert.deepEqual(requests, [])
 })
 
 const requestedIds = () => requests.map(({geoId}) => geoId)

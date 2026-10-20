@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {GoogleOAuth, InvalidTokenError} from './googleOAuth.js'
 
 // The protocol boundary: what goes to Google, and how its answer becomes stored tokens. Exercised
@@ -15,19 +18,17 @@ describe('GoogleOAuth', () => {
             const url = new URL(oauth().redirectUrl(DESTINATION))
 
             const params = url.searchParams
-            expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth')
-            expect(params.get('client_id')).toBe(CLIENT_ID)
-            expect(params.get('response_type')).toBe('code')
-            expect(params.get('access_type')).toBe('offline')
-            expect(params.get('prompt')).toBe('consent')
-            expect(params.get('include_granted_scopes')).toBe('true')
-            expect(params.get('state')).toBe(DESTINATION)
-            expect(params.get('redirect_uri')).toBe(REDIRECT_URI)
-            expect(params.get('scope')).toBe(
-                'https://www.googleapis.com/auth/earthengine'
-                + ' https://www.googleapis.com/auth/drive'
-                + ' https://www.googleapis.com/auth/cloudplatformprojects.readonly'
-            )
+            assert.equal(url.origin + url.pathname, 'https://accounts.google.com/o/oauth2/v2/auth')
+            assert.equal(params.get('client_id'), CLIENT_ID)
+            assert.equal(params.get('response_type'), 'code')
+            assert.equal(params.get('access_type'), 'offline')
+            assert.equal(params.get('prompt'), 'consent')
+            assert.equal(params.get('include_granted_scopes'), 'true')
+            assert.equal(params.get('state'), DESTINATION)
+            assert.equal(params.get('redirect_uri'), REDIRECT_URI)
+            assert.equal(params.get('scope'), 'https://www.googleapis.com/auth/earthengine'
+            + ' https://www.googleapis.com/auth/drive'
+            + ' https://www.googleapis.com/auth/cloudplatformprojects.readonly')
         })
     })
 
@@ -39,13 +40,13 @@ describe('GoogleOAuth', () => {
 
             const [request] = requests
             const body = new URLSearchParams(request.options.body)
-            expect(request.url).toBe('https://www.googleapis.com/oauth2/v4/token')
-            expect(body.get('grant_type')).toBe('authorization_code')
-            expect(body.get('code')).toBe('the-code')
-            expect(body.get('client_id')).toBe(CLIENT_ID)
-            expect(body.get('client_secret')).toBe(CLIENT_SECRET)
-            expect(body.get('redirect_uri')).toBe(REDIRECT_URI)
-            expect(tokens).toEqual({
+            assert.equal(request.url, 'https://www.googleapis.com/oauth2/v4/token')
+            assert.equal(body.get('grant_type'), 'authorization_code')
+            assert.equal(body.get('code'), 'the-code')
+            assert.equal(body.get('client_id'), CLIENT_ID)
+            assert.equal(body.get('client_secret'), CLIENT_SECRET)
+            assert.equal(body.get('redirect_uri'), REDIRECT_URI)
+            assert.deepEqual(tokens, {
                 refreshToken: 'RT', accessToken: 'AT',
                 accessTokenExpiryDate: NOW.getTime() + 3600_000,
                 projectId: null, legacyProject: false
@@ -66,7 +67,7 @@ describe('GoogleOAuth', () => {
 
             const tokens = await client.requestTokens('the-code')
 
-            expect(tokens.accessTokenExpiryDate).toBe(NOW.getTime() + 3600_000)
+            assert.equal(tokens.accessTokenExpiryDate, NOW.getTime() + 3600_000)
         })
     })
 
@@ -81,7 +82,7 @@ describe('GoogleOAuth', () => {
                 answers: answering({access_token: 'AT2', expires_in: 3600})
             }).refreshAccessToken(previous)
 
-            expect(tokens).toEqual({
+            assert.deepEqual(tokens, {
                 refreshToken: 'RT', accessToken: 'AT2',
                 accessTokenExpiryDate: NOW.getTime() + 3600_000,
                 projectId: 'a-project', legacyProject: true
@@ -91,14 +92,17 @@ describe('GoogleOAuth', () => {
         test('reports a refresh token Google has rejected as invalid, so the caller can clear it', async () => {
             const client = oauth({answers: answering({error: 'invalid_grant'}, {ok: false, status: 400})})
 
-            await expect(client.refreshAccessToken({refreshToken: 'RT'})).rejects.toBeInstanceOf(InvalidTokenError)
+            await assert.rejects(client.refreshAccessToken({refreshToken: 'RT'}), InvalidTokenError)
         })
 
         test('reports any other refusal as a plain failure', async () => {
             const client = oauth({answers: answering({})})
 
-            await expect(client.refreshAccessToken({refreshToken: 'RT'})).rejects.not.toBeInstanceOf(InvalidTokenError)
-            await expect(client.refreshAccessToken({refreshToken: 'RT'})).rejects.toThrow(/Google OAuth token request failed/)
+            await assert.rejects(client.refreshAccessToken({refreshToken: 'RT'}), error => !(error instanceof InvalidTokenError))
+            await assert.rejects(
+                client.refreshAccessToken({refreshToken: 'RT'}),
+                /Google OAuth token request failed/
+            )
         })
     })
 
@@ -107,8 +111,8 @@ describe('GoogleOAuth', () => {
             await oauth().revokeTokens({refreshToken: 'RT'})
 
             const [request] = requests
-            expect(request.url).toBe('https://accounts.google.com/o/oauth2/revoke')
-            expect(new URLSearchParams(request.options.body).get('token')).toBe('RT')
+            assert.equal(request.url, 'https://accounts.google.com/o/oauth2/revoke')
+            assert.equal(new URLSearchParams(request.options.body).get('token'), 'RT')
         })
     })
 

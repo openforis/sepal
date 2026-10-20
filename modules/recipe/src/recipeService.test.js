@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, test} from 'node:test'
+
 import {FakeRecipeRepository} from '../test/fakeRecipeRepository.js'
 import {currentVersionForType} from './migration/registry.js'
 import {RecipeService} from './recipeService.js'
@@ -17,7 +20,7 @@ describe('loadRecipe', () => {
 
         const recipe = await service.loadRecipe({principal: {...owner, username: 'BOB'}, recipeId: stored.id})
 
-        expect(recipe).toEqual({...stored.content, projectId: stored.projectId, revision})
+        assert.deepEqual(recipe, {...stored.content, projectId: stored.projectId, revision})
     })
 
     test('returns a recipe to its owner, with placement and revision', async () => {
@@ -26,7 +29,7 @@ describe('loadRecipe', () => {
 
         const recipe = await service.loadRecipe({principal: owner, recipeId: stored.id})
 
-        expect(recipe).toEqual({...stored.content, projectId: stored.projectId, revision})
+        assert.deepEqual(recipe, {...stored.content, projectId: stored.projectId, revision})
     })
 
     test('hides a recipe owned by another user', async () => {
@@ -35,7 +38,7 @@ describe('loadRecipe', () => {
 
         const recipe = await service.loadRecipe({principal: anotherUser, recipeId: stored.id})
 
-        expect(recipe).toBeNull()
+        assert.equal(recipe, null)
     })
 
     test('returns a recipe owned by another user to an administrator', async () => {
@@ -44,13 +47,13 @@ describe('loadRecipe', () => {
 
         const recipe = await service.loadRecipe({principal: administrator, recipeId: stored.id})
 
-        expect(recipe).not.toBeNull()
+        assert.notEqual(recipe, null)
     })
 
     test('returns nothing for an unknown recipe', async () => {
         const recipe = await service.loadRecipe({principal: owner, recipeId: 'never-saved'})
 
-        expect(recipe).toBeNull()
+        assert.equal(recipe, null)
     })
 })
 
@@ -60,7 +63,7 @@ describe('saveRecipe', () => {
 
         await service.saveRecipe({principal: owner, recipe})
 
-        expect((await repository.findRecipe(recipe.id)).owner).toBe(owner.username)
+        assert.equal((await repository.findRecipe(recipe.id)).owner, owner.username)
     })
 
     test('stamps the current schema version for the recipe type', async () => {
@@ -68,9 +71,10 @@ describe('saveRecipe', () => {
 
         await service.saveRecipe({principal: owner, recipe})
 
-        expect(await repository.findRecipesToMigrate(recipe.type, MOSAIC_VERSION)).toEqual([])
-        expect(await repository.findRecipesToMigrate(recipe.type, MOSAIC_VERSION + 1))
-            .toEqual([expect.objectContaining({id: recipe.id, typeVersion: MOSAIC_VERSION})])
+        assert.deepEqual(await repository.findRecipesToMigrate(recipe.type, MOSAIC_VERSION), [])
+        const toMigrate = await repository.findRecipesToMigrate(recipe.type, MOSAIC_VERSION + 1)
+        assert.equal(toMigrate.length, 1)
+        assert.partialDeepStrictEqual(toMigrate, [{id: recipe.id, typeVersion: MOSAIC_VERSION}])
     })
 })
 
@@ -83,7 +87,7 @@ describe('removeRecipes', () => {
 
         const remaining = await service.removeRecipes({principal: owner, recipeIds: [removed.id]})
 
-        expect(remaining.map(({id}) => id)).toEqual([kept.id])
+        assert.deepEqual(remaining.map(({id}) => id), [kept.id])
     })
 })
 
@@ -97,9 +101,11 @@ describe('moveRecipes', () => {
             principal: owner, projectId: destinationProjectId, recipeIds: [stored.id]
         })
 
-        expect(recipes).toEqual([expect.objectContaining({
+        assert.equal(recipes.length, 1)
+
+        assert.partialDeepStrictEqual(recipes, [{
             id: stored.id, projectId: destinationProjectId
-        })])
+        }])
     })
 })
 
@@ -109,7 +115,8 @@ describe('saveProject', () => {
 
         const projects = await service.saveProject({principal: owner, project})
 
-        expect(projects).toEqual([expect.objectContaining({...project, username: owner.username})])
+        assert.equal(projects.length, 1)
+        assert.partialDeepStrictEqual(projects, [{...project, username: owner.username}])
     })
 })
 
@@ -122,7 +129,7 @@ describe('removeProject', () => {
 
         const remaining = await service.removeProject({principal: owner, projectId: removed.id})
 
-        expect(remaining.map(({id}) => id)).toEqual([kept.id])
+        assert.deepEqual(remaining.map(({id}) => id), [kept.id])
     })
 })
 

@@ -16,7 +16,7 @@ const DEFAULT_INSTANCES = Math.max(MIN_INSTANCES, Math.floor(os.availableParalle
 const DEFAULT_RECIPE_ENDPOINT = 'http://recipe'
 const DEFAULT_EE_LIMITS = {
     user: {maxRate: 25, maxConcurrency: 10},
-    project: {maxRate: 100, maxConcurrency: 40},
+    userProject: {maxRate: 100, maxConcurrency: 40},
     global: {maxRate: 200, maxConcurrency: 100},
     taskUser: {maxRate: 10, maxConcurrency: 5},
     taskGlobal: {maxRate: 50, maxConcurrency: 20}
@@ -116,8 +116,8 @@ try {
         )
         .addOption(limitOption('--ee-limit-user-rate', 'EE_LIMIT_USER_RATE', DEFAULT_EE_LIMITS.user.maxRate))
         .addOption(limitOption('--ee-limit-user-concurrency', 'EE_LIMIT_USER_CONCURRENCY', DEFAULT_EE_LIMITS.user.maxConcurrency))
-        .addOption(limitOption('--ee-limit-project-rate', 'EE_LIMIT_PROJECT_RATE', DEFAULT_EE_LIMITS.project.maxRate))
-        .addOption(limitOption('--ee-limit-project-concurrency', 'EE_LIMIT_PROJECT_CONCURRENCY', DEFAULT_EE_LIMITS.project.maxConcurrency))
+        .addOption(limitOption('--ee-limit-user-project-rate', 'EE_LIMIT_USER_PROJECT_RATE', DEFAULT_EE_LIMITS.userProject.maxRate))
+        .addOption(limitOption('--ee-limit-user-project-concurrency', 'EE_LIMIT_USER_PROJECT_CONCURRENCY', DEFAULT_EE_LIMITS.userProject.maxConcurrency))
         .addOption(limitOption('--ee-limit-sepal-project-rate', 'EE_LIMIT_SEPAL_PROJECT_RATE'))
         .addOption(limitOption('--ee-limit-sepal-project-concurrency', 'EE_LIMIT_SEPAL_PROJECT_CONCURRENCY'))
         .addOption(limitOption('--ee-limit-global-rate', 'EE_LIMIT_GLOBAL_RATE', DEFAULT_EE_LIMITS.global.maxRate))
@@ -143,8 +143,8 @@ const {geeEmail,
     instances,
     eeLimitUserRate,
     eeLimitUserConcurrency,
-    eeLimitProjectRate,
-    eeLimitProjectConcurrency,
+    eeLimitUserProjectRate,
+    eeLimitUserProjectConcurrency,
     eeLimitSepalProjectRate,
     eeLimitSepalProjectConcurrency,
     eeLimitGlobalRate,
@@ -161,13 +161,13 @@ const serviceAccountCredentials = {
 }
 
 // The SEPAL project carries every service-account call and every user without a project of their own; it takes
-// the common project limits unless told otherwise.
+// the user-project limits unless told otherwise.
 const eeLimits = {
     user: {maxRate: eeLimitUserRate, maxConcurrency: eeLimitUserConcurrency},
-    project: {maxRate: eeLimitProjectRate, maxConcurrency: eeLimitProjectConcurrency},
+    userProject: {maxRate: eeLimitUserProjectRate, maxConcurrency: eeLimitUserProjectConcurrency},
     sepalProject: {
-        maxRate: eeLimitSepalProjectRate ?? eeLimitProjectRate,
-        maxConcurrency: eeLimitSepalProjectConcurrency ?? eeLimitProjectConcurrency
+        maxRate: eeLimitSepalProjectRate ?? eeLimitUserProjectRate,
+        maxConcurrency: eeLimitSepalProjectConcurrency ?? eeLimitUserProjectConcurrency
     },
     global: {maxRate: eeLimitGlobalRate, maxConcurrency: eeLimitGlobalConcurrency},
     taskUser: {maxRate: eeLimitTaskUserRate, maxConcurrency: eeLimitTaskUserConcurrency},

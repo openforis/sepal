@@ -1,4 +1,7 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {before, beforeEach, describe, mock, test} from 'node:test'
+
+import {callsOf, inSequence} from '#sepal/testSupport/mock'
 
 const makeInstance = (overrides = {}) => ({
     id: 'i-001',
@@ -17,7 +20,7 @@ describe('events — routing keys and payload shapes', () => {
     let events
     const collected = {}
 
-    beforeAll(async () => {
+    before(async () => {
         events = await import('./events.js')
         const keys = [
             'instanceLaunched$',
@@ -40,21 +43,21 @@ describe('events — routing keys and payload shapes', () => {
 
     test('WORKER_INSTANCE_PUBLISHERS has all 7 routing keys', () => {
         const keys = events.WORKER_INSTANCE_PUBLISHERS.map(p => p.key)
-        expect(keys).toContain('workerInstance.InstanceLaunched')
-        expect(keys).toContain('workerInstance.InstancePendingProvisioning')
-        expect(keys).toContain('workerInstance.InstanceProvisioned')
-        expect(keys).toContain('workerInstance.InstanceReleased')
-        expect(keys).toContain('workerInstance.FailedToProvisionInstance')
-        expect(keys).toContain('workerInstance.FailedToReleaseInstance')
-        expect(keys).toContain('workerInstance.FailedToRequestInstance')
-        expect(keys).toHaveLength(7)
+        assert.ok(keys.includes('workerInstance.InstanceLaunched'))
+        assert.ok(keys.includes('workerInstance.InstancePendingProvisioning'))
+        assert.ok(keys.includes('workerInstance.InstanceProvisioned'))
+        assert.ok(keys.includes('workerInstance.InstanceReleased'))
+        assert.ok(keys.includes('workerInstance.FailedToProvisionInstance'))
+        assert.ok(keys.includes('workerInstance.FailedToReleaseInstance'))
+        assert.ok(keys.includes('workerInstance.FailedToRequestInstance'))
+        assert.equal(keys.length, 7)
     })
 
     test('emitInstanceLaunched publishes {instance} to instanceLaunched$', () => {
         const inst = makeInstance()
         events.emitInstanceLaunched(inst)
-        expect(collected['instanceLaunched$']).toHaveLength(1)
-        expect(collected['instanceLaunched$'][0]).toEqual({instance: inst})
+        assert.equal(collected['instanceLaunched$'].length, 1)
+        assert.deepEqual(collected['instanceLaunched$'][0], {instance: inst})
     })
 
     test('emitInstancePendingProvisioning publishes {instance} + fires in-proc event', () => {
@@ -62,10 +65,10 @@ describe('events — routing keys and payload shapes', () => {
         const inProcPayloads = []
         events.instanceEvents.once('InstancePendingProvisioning', i => inProcPayloads.push(i))
         events.emitInstancePendingProvisioning(inst)
-        expect(collected['instancePendingProvisioning$']).toHaveLength(1)
-        expect(collected['instancePendingProvisioning$'][0]).toEqual({instance: inst})
-        expect(inProcPayloads).toHaveLength(1)
-        expect(inProcPayloads[0]).toBe(inst)
+        assert.equal(collected['instancePendingProvisioning$'].length, 1)
+        assert.deepEqual(collected['instancePendingProvisioning$'][0], {instance: inst})
+        assert.equal(inProcPayloads.length, 1)
+        assert.equal(inProcPayloads[0], inst)
     })
 
     test('emitInstanceProvisioned publishes {instance} + fires in-proc InstanceProvisioned', () => {
@@ -73,15 +76,15 @@ describe('events — routing keys and payload shapes', () => {
         const inProcPayloads = []
         events.instanceEvents.once('InstanceProvisioned', i => inProcPayloads.push(i))
         events.emitInstanceProvisioned(inst)
-        expect(collected['instanceProvisioned$']).toHaveLength(1)
-        expect(collected['instanceProvisioned$'][0]).toEqual({instance: inst})
-        expect(inProcPayloads).toHaveLength(1)
+        assert.equal(collected['instanceProvisioned$'].length, 1)
+        assert.deepEqual(collected['instanceProvisioned$'][0], {instance: inst})
+        assert.equal(inProcPayloads.length, 1)
     })
 
     test('emitInstanceReleased publishes {instance}', () => {
         const inst = makeInstance()
         events.emitInstanceReleased(inst)
-        expect(collected['instanceReleased$'][0]).toEqual({instance: inst})
+        assert.deepEqual(collected['instanceReleased$'][0], {instance: inst})
     })
 
     test('emitFailedToProvisionInstance publishes {instance, error} (string)', () => {
@@ -89,50 +92,50 @@ describe('events — routing keys and payload shapes', () => {
         const err = new Error('docker timeout')
         events.emitFailedToProvisionInstance(inst, err)
         const payload = collected['failedToProvisionInstance$'][0]
-        expect(payload.instance).toBe(inst)
-        expect(typeof payload.error).toBe('string')
-        expect(payload.error).toBe('docker timeout')
+        assert.equal(payload.instance, inst)
+        assert.equal(typeof payload.error, 'string')
+        assert.equal(payload.error, 'docker timeout')
     })
 
     test('emitFailedToReleaseInstance publishes {instanceId, error} — NOT instance object', () => {
         events.emitFailedToReleaseInstance('i-999', new Error('ssh fail'))
         const payload = collected['failedToReleaseInstance$'][0]
-        expect(payload.instanceId).toBe('i-999')
-        expect(payload.error).toBe('ssh fail')
-        expect(payload).not.toHaveProperty('instance')
+        assert.equal(payload.instanceId, 'i-999')
+        assert.equal(payload.error, 'ssh fail')
+        assert.ok(!('instance' in Object(payload)))
     })
 
     test('emitFailedToRequestInstance publishes {workerType, instanceType, exception}', () => {
         events.emitFailedToRequestInstance('SANDBOX', 'T3aSmall', new Error('quota'))
         const payload = collected['failedToRequestInstance$'][0]
-        expect(payload.workerType).toBe('SANDBOX')
-        expect(payload.instanceType).toBe('T3aSmall')
-        expect(payload.exception).toBe('quota')
+        assert.equal(payload.workerType, 'SANDBOX')
+        assert.equal(payload.instanceType, 'T3aSmall')
+        assert.equal(payload.exception, 'quota')
     })
 })
 
 describe('requestInstance', () => {
     let requestInstance, events
 
-    beforeAll(async () => {
+    before(async () => {
         ;({requestInstance} = await import('./command/requestInstance.js'))
         events = await import('./events.js')
     })
 
     const makeClaims = (overrides = {}) => ({
-        claim: jest.fn().mockResolvedValue(true),
-        release: jest.fn().mockResolvedValue(true),
+        claim: mock.fn(async () => true),
+        release: mock.fn(async () => true),
         ...overrides,
     })
 
     const makeProvider = (overrides = {}) => ({
-        idleInstances: jest.fn().mockResolvedValue([]),
-        pooledInstances: jest.fn().mockResolvedValue([]),
-        startPooled: jest.fn(async (instance, instanceType, reservation) =>
+        idleInstances: mock.fn(async () => []),
+        pooledInstances: mock.fn(async () => []),
+        startPooled: mock.fn(async (instance, instanceType, reservation) =>
             ({...instance, type: instanceType, host: null, reservation})),
-        launchReserved: jest.fn().mockResolvedValue(makeReservedInstance({id: 'i-new'})),
-        reserve: jest.fn().mockResolvedValue(undefined),
-        awaitHost: jest.fn(async instance => instance),
+        launchReserved: mock.fn(async () => makeReservedInstance({id: 'i-new'})),
+        reserve: mock.fn(async () => undefined),
+        awaitHost: mock.fn(async instance => instance),
         ...overrides,
     })
 
@@ -146,11 +149,12 @@ describe('requestInstance', () => {
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(provider.launchReserved).toHaveBeenCalledWith(
-            'T3aSmall', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
-        expect(claims.claim).toHaveBeenCalledWith('i-new', 's-42')
-        expect(result.id).toBe('i-new')
-        expect(launched.length).toBeGreaterThanOrEqual(1)
+        assert.deepEqual(callsOf(provider.launchReserved), [
+            ['T3aSmall', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}]
+        ])
+        assert.deepEqual(callsOf(claims.claim), [['i-new', 's-42']])
+        assert.equal(result.id, 'i-new')
+        assert.ok(launched.length >= 1)
     })
 
     test('idle instance: claims it, tags the reservation, emits InstancePendingProvisioning', async () => {
@@ -158,16 +162,18 @@ describe('requestInstance', () => {
         events.instancePendingProvisioning$.subscribe(v => pending.push(v))
         const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
         const claims = makeClaims()
-        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
+        const provider = makeProvider({idleInstances: mock.fn(async () => [idle])})
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(claims.claim).toHaveBeenCalledWith('i-idle', 's-42')
-        expect(provider.launchReserved).not.toHaveBeenCalled()
-        expect(provider.reserve.mock.calls[0][0].reservation)
-            .toEqual({username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'})
-        expect(result.id).toBe('i-idle')
-        expect(pending.length).toBeGreaterThanOrEqual(1)
+        assert.deepEqual(callsOf(claims.claim), [['i-idle', 's-42']])
+        assert.equal(provider.launchReserved.mock.callCount(), 0)
+        assert.deepEqual(
+            provider.reserve.mock.calls[0].arguments[0].reservation,
+            {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
+        )
+        assert.equal(result.id, 'i-idle')
+        assert.ok(pending.length >= 1)
     })
 
     // The behaviour this redesign exists for: a lost race must not launch while idle instances remain.
@@ -175,30 +181,26 @@ describe('requestInstance', () => {
         const idle1 = makeInstance({id: 'i-1', host: '1.1.1.1', running: true})
         const idle2 = makeInstance({id: 'i-2', host: '2.2.2.2', running: true})
         const claims = makeClaims({
-            claim: jest.fn()
-                .mockResolvedValueOnce(false)
-                .mockResolvedValueOnce(true),
+            claim: mock.fn(inSequence([async () => false, async () => true])),
         })
-        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle1, idle2])})
+        const provider = makeProvider({idleInstances: mock.fn(async () => [idle1, idle2])})
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(claims.claim.mock.calls.map(([id]) => id)).toEqual(['i-1', 'i-2'])
-        expect(provider.launchReserved).not.toHaveBeenCalled()
-        expect(result.id).toBe('i-2')
+        assert.deepEqual(callsOf(claims.claim).map(([id]) => id), ['i-1', 'i-2'])
+        assert.equal(provider.launchReserved.mock.callCount(), 0)
+        assert.equal(result.id, 'i-2')
     })
 
     test('every candidate taken: falls back to launching', async () => {
         const idle = makeInstance({id: 'i-1', host: '1.1.1.1', running: true})
-        const claims = makeClaims({claim: jest.fn()
-            .mockResolvedValueOnce(false)
-            .mockResolvedValueOnce(true)})
-        const provider = makeProvider({idleInstances: jest.fn().mockResolvedValue([idle])})
+        const claims = makeClaims({claim: mock.fn(inSequence([async () => false, async () => true]))})
+        const provider = makeProvider({idleInstances: mock.fn(async () => [idle])})
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(provider.launchReserved).toHaveBeenCalledTimes(1)
-        expect(result.id).toBe('i-new')
+        assert.equal(provider.launchReserved.mock.callCount(), 1)
+        assert.equal(result.id, 'i-new')
     })
 
     // Booted before booting; oldest first within each group.
@@ -208,26 +210,26 @@ describe('requestInstance', () => {
         const oldBooted = makeInstance({id: 'i-old-booted', host: '1.1.1.1', running: true, launchTime: new Date(2000)})
         const claims = makeClaims()
         const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([booting, newBooted, oldBooted]),
+            idleInstances: mock.fn(async () => [booting, newBooted, oldBooted]),
         })
 
         await requestInstance(REQUEST, {claims, provider})
 
-        expect(claims.claim.mock.calls[0][0]).toBe('i-old-booted')
+        assert.equal(claims.claim.mock.calls[0].arguments[0], 'i-old-booted')
     })
 
     test('claims a booting instance and waits for its address', async () => {
         const booting = makeInstance({id: 'i-booting', host: null, running: false})
         const claims = makeClaims()
         const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([booting]),
-            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9'})),
+            idleInstances: mock.fn(async () => [booting]),
+            awaitHost: mock.fn(async instance => ({...instance, host: '9.9.9.9'})),
         })
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(provider.awaitHost).toHaveBeenCalledTimes(1)
-        expect(result.host).toBe('9.9.9.9')
+        assert.equal(provider.awaitHost.mock.callCount(), 1)
+        assert.equal(result.host, '9.9.9.9')
     })
 
     // awaitHost re-reads the instance from the hosting service, which derives the reservation from
@@ -241,8 +243,8 @@ describe('requestInstance', () => {
         const idle = makeInstance({id: 'i-booting', host: null, running: false})
         const claims = makeClaims()
         const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([idle]),
-            awaitHost: jest.fn(async instance => ({
+            idleInstances: mock.fn(async () => [idle]),
+            awaitHost: mock.fn(async instance => ({
                 ...instance,
                 host: '9.9.9.9',
                 reservation: {username: '', workerType: '', sessionId: null},
@@ -251,8 +253,8 @@ describe('requestInstance', () => {
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(result.reservation).toEqual(RESERVATION)
-        expect(pending[pending.length - 1].instance.reservation).toEqual(RESERVATION)
+        assert.deepEqual(result.reservation, RESERVATION)
+        assert.deepEqual(pending[pending.length - 1].instance.reservation, RESERVATION)
     })
 
     test('the launch path re-pins the reservation the read-back dropped', async () => {
@@ -260,15 +262,16 @@ describe('requestInstance', () => {
         events.instanceLaunched$.subscribe(v => launched.push(v))
         const claims = makeClaims()
         const provider = makeProvider({
-            launchReserved: jest.fn().mockResolvedValue(
-                makeReservedInstance({id: 'i-new', host: null, running: false})),
-            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9', reservation: null})),
+            launchReserved: mock.fn(
+                async () => makeReservedInstance({id: 'i-new', host: null, running: false})
+            ),
+            awaitHost: mock.fn(async instance => ({...instance, host: '9.9.9.9', reservation: null})),
         })
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(result.reservation).toEqual(RESERVATION)
-        expect(launched[launched.length - 1].instance.reservation).toEqual(RESERVATION)
+        assert.deepEqual(result.reservation, RESERVATION)
+        assert.deepEqual(launched[launched.length - 1].instance.reservation, RESERVATION)
     })
 
     // Without this the instance is claimed forever with no session behind it — the exact
@@ -277,23 +280,27 @@ describe('requestInstance', () => {
         const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
         const claims = makeClaims()
         const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([idle]),
-            reserve: jest.fn().mockRejectedValue(new Error('tagging failed')),
+            idleInstances: mock.fn(async () => [idle]),
+            reserve: mock.fn(async () => {
+                throw new Error('tagging failed')
+            }),
         })
 
-        await expect(requestInstance(REQUEST, {claims, provider})).rejects.toThrow('tagging failed')
-        expect(claims.release).toHaveBeenCalledWith('i-idle')
+        await assert.rejects(requestInstance(REQUEST, {claims, provider}), /tagging failed/)
+        assert.deepEqual(callsOf(claims.release), [['i-idle']])
     })
 
     // A failed launch-path claim costs the instance its protection from ReleaseUnusedInstances,
     // but failing the request would strand a running machine — the worse of the two.
     test('a failed claim on the launch path does not fail the request', async () => {
-        const claims = makeClaims({claim: jest.fn().mockRejectedValue(new Error('db down'))})
+        const claims = makeClaims({claim: mock.fn(async () => {
+            throw new Error('db down')
+        })})
         const provider = makeProvider()
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(result.id).toBe('i-new')
+        assert.equal(result.id, 'i-new')
     })
 
     // launchReserved returns as soon as the instance is tagged State=reserved; waiting for its
@@ -303,18 +310,19 @@ describe('requestInstance', () => {
         const claims = makeClaims()
         let claimedBeforeWait = null
         const provider = makeProvider({
-            launchReserved: jest.fn().mockResolvedValue(
-                makeReservedInstance({id: 'i-new', host: null, running: false})),
-            awaitHost: jest.fn(async instance => {
-                claimedBeforeWait = claims.claim.mock.calls.length > 0
+            launchReserved: mock.fn(
+                async () => makeReservedInstance({id: 'i-new', host: null, running: false})
+            ),
+            awaitHost: mock.fn(async instance => {
+                claimedBeforeWait = claims.claim.mock.callCount() > 0
                 return {...instance, host: '9.9.9.9'}
             }),
         })
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(claimedBeforeWait).toBe(true)
-        expect(result.host).toBe('9.9.9.9')
+        assert.equal(claimedBeforeWait, true)
+        assert.equal(result.host, '9.9.9.9')
     })
 
     // Provisioning starts from the request, as for an idle instance, rather than waiting for the
@@ -326,32 +334,38 @@ describe('requestInstance', () => {
         const newer = makeInstance({id: 'i-pooled-new', type: 'T3aSmall', host: null, running: false, launchTime: new Date(2000)})
         const claims = makeClaims()
         const provider = makeProvider({
-            pooledInstances: jest.fn().mockResolvedValue([newer, older]),
-            awaitHost: jest.fn(async instance => ({...instance, host: '9.9.9.9'})),
+            pooledInstances: mock.fn(async () => [newer, older]),
+            awaitHost: mock.fn(async instance => ({...instance, host: '9.9.9.9'})),
         })
 
         const result = await requestInstance({...REQUEST, instanceType: 'M6aXlarge'}, {claims, provider})
 
-        expect(provider.pooledInstances).toHaveBeenCalledWith({ready: true})
-        expect(claims.claim).toHaveBeenCalledWith('i-pooled-old', 's-42')
-        expect(provider.startPooled).toHaveBeenCalledWith(older, 'M6aXlarge', RESERVATION)
-        expect(provider.launchReserved).not.toHaveBeenCalled()
-        expect(result).toMatchObject({id: 'i-pooled-old', type: 'M6aXlarge', host: '9.9.9.9', reservation: RESERVATION})
-        expect(pending[pending.length - 1].instance).toMatchObject({id: 'i-pooled-old', type: 'M6aXlarge', reservation: RESERVATION})
+        assert.deepEqual(callsOf(provider.pooledInstances), [[{ready: true}]])
+        assert.deepEqual(callsOf(claims.claim), [['i-pooled-old', 's-42']])
+        assert.deepEqual(callsOf(provider.startPooled), [[older, 'M6aXlarge', RESERVATION]])
+        assert.equal(provider.launchReserved.mock.callCount(), 0)
+        assert.partialDeepStrictEqual(
+            result,
+            {id: 'i-pooled-old', type: 'M6aXlarge', host: '9.9.9.9', reservation: RESERVATION}
+        )
+        assert.partialDeepStrictEqual(
+            pending[pending.length - 1].instance,
+            {id: 'i-pooled-old', type: 'M6aXlarge', reservation: RESERVATION}
+        )
     })
 
     test('an idle instance of the requested type is used before a pooled one', async () => {
         const idle = makeInstance({id: 'i-idle', host: '1.2.3.4', running: true})
         const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
         const provider = makeProvider({
-            idleInstances: jest.fn().mockResolvedValue([idle]),
-            pooledInstances: jest.fn().mockResolvedValue([pooled]),
+            idleInstances: mock.fn(async () => [idle]),
+            pooledInstances: mock.fn(async () => [pooled]),
         })
 
         const result = await requestInstance(REQUEST, {claims: makeClaims(), provider})
 
-        expect(result.id).toBe('i-idle')
-        expect(provider.startPooled).not.toHaveBeenCalled()
+        assert.equal(result.id, 'i-idle')
+        assert.equal(provider.startPooled.mock.callCount(), 0)
     })
 
     // Capacity and type-compatibility failures belong to the requested type, not to the pooled
@@ -360,27 +374,27 @@ describe('requestInstance', () => {
         const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
         const claims = makeClaims()
         const provider = makeProvider({
-            pooledInstances: jest.fn().mockResolvedValue([pooled]),
-            startPooled: jest.fn().mockRejectedValue(new Error('InsufficientInstanceCapacity')),
+            pooledInstances: mock.fn(async () => [pooled]),
+            startPooled: mock.fn(async () => {
+                throw new Error('InsufficientInstanceCapacity')
+            }),
         })
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(claims.release).toHaveBeenCalledWith('i-pooled')
-        expect(result.id).toBe('i-new')
+        assert.deepEqual(callsOf(claims.release), [['i-pooled']])
+        assert.equal(result.id, 'i-new')
     })
 
     test('a lost claim on the pooled instance launches', async () => {
         const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
-        const claims = makeClaims({claim: jest.fn()
-            .mockResolvedValueOnce(false)
-            .mockResolvedValueOnce(true)})
-        const provider = makeProvider({pooledInstances: jest.fn().mockResolvedValue([pooled])})
+        const claims = makeClaims({claim: mock.fn(inSequence([async () => false, async () => true]))})
+        const provider = makeProvider({pooledInstances: mock.fn(async () => [pooled])})
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        expect(provider.startPooled).not.toHaveBeenCalled()
-        expect(result.id).toBe('i-new')
+        assert.equal(provider.startPooled.mock.callCount(), 0)
+        assert.equal(result.id, 'i-new')
     })
 
     test('on exception: emits FailedToRequestInstance and rethrows', async () => {
@@ -388,21 +402,23 @@ describe('requestInstance', () => {
         events.failedToRequestInstance$.subscribe(v => failed.push(v))
         const claims = makeClaims()
         const provider = makeProvider({
-            idleInstances: jest.fn().mockRejectedValue(new Error('ec2 down')),
+            idleInstances: mock.fn(async () => {
+                throw new Error('ec2 down')
+            }),
         })
 
-        await expect(requestInstance(REQUEST, {claims, provider})).rejects.toThrow('ec2 down')
+        await assert.rejects(requestInstance(REQUEST, {claims, provider}), /ec2 down/)
 
         const payload = failed[failed.length - 1]
-        expect(payload.workerType).toBe('SANDBOX')
-        expect(payload.instanceType).toBe('T3aSmall')
+        assert.equal(payload.workerType, 'SANDBOX')
+        assert.equal(payload.instanceType, 'T3aSmall')
     })
 })
 
 describe('provisionInstance', () => {
     let provisionInstance, events
 
-    beforeAll(async () => {
+    before(async () => {
         ;({provisionInstance} = await import('./command/provisionInstance.js'))
         events = await import('./events.js')
     })
@@ -411,38 +427,38 @@ describe('provisionInstance', () => {
     const noScratchVolume = {attachScratchVolume: async () => null}
 
     test('provisions on the scratch volume the provider attached', async () => {
-        const provider = {attachScratchVolume: jest.fn().mockResolvedValue('/dev/xvdg')}
-        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+        const provider = {attachScratchVolume: mock.fn(async () => '/dev/xvdg')}
+        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
         const inst = makeReservedInstance()
 
         await provisionInstance(inst, {provider, provisioner, _delayFn: noDelay})
 
-        expect(provider.attachScratchVolume).toHaveBeenCalledWith(inst)
-        expect(provisioner.provisionInstance).toHaveBeenCalledWith(inst, {tmpDevice: '/dev/xvdg'})
+        assert.deepEqual(callsOf(provider.attachScratchVolume), [[inst]])
+        assert.deepEqual(callsOf(provisioner.provisionInstance), [[inst, {tmpDevice: '/dev/xvdg'}]])
     })
 
     test('retries a failed scratch volume attachment', async () => {
-        const provider = {attachScratchVolume: jest.fn()
-            .mockRejectedValueOnce(new Error('IncorrectState'))
-            .mockResolvedValue('/dev/xvdg')}
-        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+        const provider = {attachScratchVolume: mock.fn(async () => '/dev/xvdg', async () => {
+            throw new Error('IncorrectState')
+        }, {times: 1})}
+        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
 
         await provisionInstance(makeReservedInstance(), {provider, provisioner, _delayFn: noDelay})
 
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
     })
 
     test('success on first try: emits InstanceProvisioned', async () => {
         const provisioned = []
         events.instanceProvisioned$.subscribe(v => provisioned.push(v))
 
-        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
         const inst = makeReservedInstance()
         await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
 
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(1)
-        expect(provisioned.length).toBeGreaterThanOrEqual(1)
-        expect(provisioned[provisioned.length - 1].instance).toBe(inst)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
+        assert.ok(provisioned.length >= 1)
+        assert.equal(provisioned[provisioned.length - 1].instance, inst)
     })
 
     test('all 10 retries fail: emits FailedToProvisionInstance, attempt count = 10', async () => {
@@ -450,31 +466,35 @@ describe('provisionInstance', () => {
         events.failedToProvisionInstance$.subscribe(v => failed.push(v))
 
         const provisioner = {
-            provisionInstance: jest.fn().mockRejectedValue(new Error('docker unreachable'))
+            provisionInstance: mock.fn(async () => {
+                throw new Error('docker unreachable')
+            })
         }
         const inst = makeReservedInstance({id: 'i-fail'})
 
-        await expect(
-            provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
-        ).rejects.toThrow('docker unreachable')
+        await assert.rejects(
+            provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay}),
+            /docker unreachable/
+        )
 
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(10)
-        expect(failed.length).toBeGreaterThanOrEqual(1)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 10)
+        assert.ok(failed.length >= 1)
         const payload = failed[failed.length - 1]
-        expect(payload.instance).toBe(inst)
-        expect(typeof payload.error).toBe('string')
+        assert.equal(payload.instance, inst)
+        assert.equal(typeof payload.error, 'string')
     })
 
     test('succeeds on attempt 3: exact call count = 3', async () => {
         const provisioner = {
-            provisionInstance: jest.fn()
-                .mockRejectedValueOnce(new Error('fail1'))
-                .mockRejectedValueOnce(new Error('fail2'))
-                .mockResolvedValue(undefined),
+            provisionInstance: mock.fn(inSequence([async () => {
+                throw new Error('fail1')
+            }, async () => {
+                throw new Error('fail2')
+            }], async () => undefined)),
         }
         const inst = makeReservedInstance()
         await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
-        expect(provisioner.provisionInstance).toHaveBeenCalledTimes(3)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 3)
     })
 
     test('in-proc InstanceProvisioned fires on success', async () => {
@@ -482,12 +502,12 @@ describe('provisionInstance', () => {
         const {instanceEvents: ev} = await import('./events.js')
         ev.once('InstanceProvisioned', i => inProcPayloads.push(i))
 
-        const provisioner = {provisionInstance: jest.fn().mockResolvedValue(undefined)}
+        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
         const inst = makeReservedInstance({id: 'i-inproc'})
         await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay})
 
-        expect(inProcPayloads).toHaveLength(1)
-        expect(inProcPayloads[0]).toBe(inst)
+        assert.equal(inProcPayloads.length, 1)
+        assert.equal(inProcPayloads[0], inst)
     })
 
     test('in-proc FailedToProvisionInstance fires on total failure', async () => {
@@ -496,39 +516,41 @@ describe('provisionInstance', () => {
         ev.once('FailedToProvisionInstance', (i, e) => inProcPayloads.push({i, e}))
 
         const provisioner = {
-            provisionInstance: jest.fn().mockRejectedValue(new Error('fail'))
+            provisionInstance: mock.fn(async () => {
+                throw new Error('fail')
+            })
         }
         const inst = makeReservedInstance({id: 'i-inproc-fail'})
         await provisionInstance(inst, {provider: noScratchVolume, provisioner, _delayFn: noDelay}).catch(() => {})
 
-        expect(inProcPayloads).toHaveLength(1)
-        expect(inProcPayloads[0].i).toBe(inst)
+        assert.equal(inProcPayloads.length, 1)
+        assert.equal(inProcPayloads[0].i, inst)
     })
 })
 
 describe('releaseInstance', () => {
     let releaseInstance, events
 
-    beforeAll(async () => {
+    before(async () => {
         ;({releaseInstance} = await import('./command/releaseInstance.js'))
         events = await import('./events.js')
     })
 
     const makeClaims = (overrides = {}) => ({
-        release: jest.fn().mockResolvedValue(true),
+        release: mock.fn(async () => true),
         ...overrides,
     })
 
     const makeDeps = (overrides = {}) => ({
         claims: makeClaims(),
         provider: {
-            getInstance: jest.fn().mockResolvedValue(makeReservedInstance()),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn().mockResolvedValue(undefined),
-            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
+            getInstance: mock.fn(async () => makeReservedInstance()),
+            release: mock.fn(async () => undefined),
+            terminate: mock.fn(async () => undefined),
+            deleteScratchVolume: mock.fn(async () => undefined),
         },
         provisioner: {
-            undeploy: jest.fn().mockResolvedValue(undefined),
+            undeploy: mock.fn(async () => undefined),
         },
         ...overrides,
     })
@@ -540,12 +562,12 @@ describe('releaseInstance', () => {
         const deps = makeDeps()
         await releaseInstance('i-001', deps)
 
-        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(deps.provider.release).toHaveBeenCalledWith('i-001')
-        expect(released.length).toBeGreaterThanOrEqual(1)
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
+        assert.deepEqual(callsOf(deps.provider.release), [['i-001']])
+        assert.ok(released.length >= 1)
         const payload = released[released.length - 1]
-        expect(payload.instance).toBeDefined()
-        expect(payload.instance.reservation).toBeNull()  // release() clears reservation
+        assert.notEqual(payload.instance, undefined)
+        assert.equal(payload.instance.reservation, null)  // release() clears reservation
     })
 
     test('instance not found in provider: returns without action', async () => {
@@ -553,13 +575,13 @@ describe('releaseInstance', () => {
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        deps.provider.getInstance = jest.fn().mockResolvedValue(null)
+        deps.provider.getInstance = mock.fn(async () => null)
 
         await releaseInstance('i-missing', deps)
 
-        expect(deps.claims.release).toHaveBeenCalledWith('i-missing')
-        expect(deps.provisioner.undeploy).not.toHaveBeenCalled()
-        expect(released).toHaveLength(0)
+        assert.deepEqual(callsOf(deps.claims.release), [['i-missing']])
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
+        assert.equal(released.length, 0)
     })
 
     // The claim is the only durable record that this instance may still be carrying a container.
@@ -568,17 +590,17 @@ describe('releaseInstance', () => {
     test('undeploys before dropping the claim, so an interrupted release can be retried', async () => {
         const order = []
         const deps = makeDeps()
-        deps.provisioner.undeploy = jest.fn(async () => {
+        deps.provisioner.undeploy = mock.fn(async () => {
             order.push('undeploy')
         })
-        deps.claims.release = jest.fn(async () => {
+        deps.claims.release = mock.fn(async () => {
             order.push('claim')
             return true
         })
 
         await releaseInstance('i-001', deps)
 
-        expect(order).toEqual(['undeploy', 'claim'])
+        assert.deepEqual(order, ['undeploy', 'claim'])
     })
 
     // The scratch volume is mounted until the containers are gone, and the claim keeps a failed
@@ -586,17 +608,17 @@ describe('releaseInstance', () => {
     test('deletes the scratch volume after the undeploy and before dropping the claim', async () => {
         const order = []
         const deps = makeDeps()
-        deps.provisioner.undeploy = jest.fn(async () => { order.push('undeploy') })
-        deps.provider.deleteScratchVolume = jest.fn(async () => { order.push('scratch') })
-        deps.claims.release = jest.fn(async () => {
+        deps.provisioner.undeploy = mock.fn(async () => { order.push('undeploy') })
+        deps.provider.deleteScratchVolume = mock.fn(async () => { order.push('scratch') })
+        deps.claims.release = mock.fn(async () => {
             order.push('claim')
             return true
         })
 
         await releaseInstance('i-001', deps)
 
-        expect(deps.provider.deleteScratchVolume).toHaveBeenCalledWith('i-001')
-        expect(order).toEqual(['undeploy', 'scratch', 'claim'])
+        assert.deepEqual(callsOf(deps.provider.deleteScratchVolume), [['i-001']])
+        assert.deepEqual(order, ['undeploy', 'scratch', 'claim'])
     })
 
     test('a claim already gone still undeploys, and still releases and emits', async () => {
@@ -607,16 +629,16 @@ describe('releaseInstance', () => {
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        deps.claims.release = jest.fn().mockResolvedValue(false)
+        deps.claims.release = mock.fn(async () => false)
 
         await releaseInstance('i-raced', deps)
 
-        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(deps.claims.release).toHaveBeenCalledWith('i-raced')
-        expect(deps.provider.release).toHaveBeenCalledWith('i-raced')
-        expect(released.length).toBeGreaterThanOrEqual(1)
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
+        assert.deepEqual(callsOf(deps.claims.release), [['i-raced']])
+        assert.deepEqual(callsOf(deps.provider.release), [['i-raced']])
+        assert.ok(released.length >= 1)
         const payload = released[released.length - 1]
-        expect(payload.instance).toBeDefined()
+        assert.notEqual(payload.instance, undefined)
     })
 
     test('failure path: emits FailedToReleaseInstance, calls terminate + claims.release', async () => {
@@ -624,24 +646,30 @@ describe('releaseInstance', () => {
         events.failedToReleaseInstance$.subscribe(v => failed.push(v))
 
         const deps = makeDeps()
-        deps.provisioner.undeploy = jest.fn().mockRejectedValue(new Error('ssh error'))
+        deps.provisioner.undeploy = mock.fn(async () => {
+            throw new Error('ssh error')
+        })
 
         await releaseInstance('i-fail', deps)
 
-        expect(failed.length).toBeGreaterThanOrEqual(1)
+        assert.ok(failed.length >= 1)
         const payload = failed[failed.length - 1]
-        expect(payload.instanceId).toBe('i-fail')
-        expect(typeof payload.error).toBe('string')
-        expect(deps.provider.terminate).toHaveBeenCalledWith('i-fail')
-        expect(deps.claims.release).toHaveBeenCalledWith('i-fail')
+        assert.equal(payload.instanceId, 'i-fail')
+        assert.equal(typeof payload.error, 'string')
+        assert.deepEqual(callsOf(deps.provider.terminate), [['i-fail']])
+        assert.deepEqual(callsOf(deps.claims.release), [['i-fail']])
     })
 
     test('failure path: terminate failure is swallowed (does not throw)', async () => {
         const deps = makeDeps()
-        deps.provisioner.undeploy = jest.fn().mockRejectedValue(new Error('undeploy fail'))
-        deps.provider.terminate = jest.fn().mockRejectedValue(new Error('terminate fail'))
+        deps.provisioner.undeploy = mock.fn(async () => {
+            throw new Error('undeploy fail')
+        })
+        deps.provider.terminate = mock.fn(async () => {
+            throw new Error('terminate fail')
+        })
 
-        await expect(releaseInstance('i-cascade', deps)).resolves.toBeUndefined()
+        assert.equal(await releaseInstance('i-cascade', deps), undefined)
     })
 
     test('instance with no host: skips undeploy but still releases', async () => {
@@ -649,37 +677,37 @@ describe('releaseInstance', () => {
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        deps.provider.getInstance = jest.fn().mockResolvedValue(makeReservedInstance({host: null}))
+        deps.provider.getInstance = mock.fn(async () => makeReservedInstance({host: null}))
 
         await releaseInstance('i-nohost', deps)
 
-        expect(deps.provisioner.undeploy).not.toHaveBeenCalled()
-        expect(deps.provider.release).toHaveBeenCalledTimes(1)
-        expect(released.length).toBeGreaterThanOrEqual(1)
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
+        assert.equal(deps.provider.release.mock.callCount(), 1)
+        assert.ok(released.length >= 1)
     })
 })
 
 describe('sizeIdlePool', () => {
     let sizeIdlePool
 
-    beforeAll(async () => {
+    before(async () => {
         ;({sizeIdlePool} = await import('./command/sizeIdlePool.js'))
     })
 
     const makeProvider = ({idleInstances = [], pooledInstances = [], launchResult = [makeInstance({id: 'i-new'})]} = {}) => ({
-        idleInstances: jest.fn().mockResolvedValue(idleInstances),
-        pooledInstances: jest.fn().mockResolvedValue(pooledInstances),
-        launchIdle: jest.fn().mockResolvedValue(launchResult),
-        launchPooled: jest.fn().mockResolvedValue([]),
-        pool: jest.fn().mockResolvedValue(undefined),
-        terminate: jest.fn().mockResolvedValue(undefined),
+        idleInstances: mock.fn(async () => idleInstances),
+        pooledInstances: mock.fn(async () => pooledInstances),
+        launchIdle: mock.fn(async () => launchResult),
+        launchPooled: mock.fn(async () => []),
+        pool: mock.fn(async () => undefined),
+        terminate: mock.fn(async () => undefined),
     })
 
     const minutesAgo = m => new Date(Date.now() - m * 60_000)
 
     const makeClaims = (claimed = []) => ({
-        claim: jest.fn(async instanceId => !claimed.includes(instanceId)),
-        release: jest.fn().mockResolvedValue(true),
+        claim: mock.fn(async instanceId => !claimed.includes(instanceId)),
+        release: mock.fn(async () => true),
     })
 
     // A request claims an idle instance before tagging it reserved; stopping or terminating it in
@@ -692,8 +720,8 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances})
         await sizeIdlePool({}, 1, {provider, claims: makeClaims(['i-requested'])})
 
-        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-free'])
-        expect(provider.terminate).not.toHaveBeenCalled()
+        assert.deepEqual(callsOf(provider.pool).map(([id]) => id), ['i-free'])
+        assert.equal(provider.terminate.mock.callCount(), 0)
     })
 
     test('holds the claim on a surplus instance only while pooling or terminating it', async () => {
@@ -705,8 +733,8 @@ describe('sizeIdlePool', () => {
         const claims = makeClaims()
         await sizeIdlePool({}, 1, {provider, claims})
 
-        expect(claims.claim.mock.calls.map(([id]) => id)).toEqual(['i-pooled', 'i-terminated'])
-        expect(claims.release.mock.calls.map(([id]) => id)).toEqual(['i-pooled', 'i-terminated'])
+        assert.deepEqual(callsOf(claims.claim).map(([id]) => id), ['i-pooled', 'i-terminated'])
+        assert.deepEqual(callsOf(claims.release).map(([id]) => id), ['i-pooled', 'i-terminated'])
     })
 
     test('the pool slot of an instance a request took is warm-up launched', async () => {
@@ -714,17 +742,17 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances})
         await sizeIdlePool({}, 1, {provider, claims: makeClaims(['i-requested'])})
 
-        expect(provider.pool).not.toHaveBeenCalled()
-        expect(provider.launchPooled).toHaveBeenCalledWith(1)
+        assert.equal(provider.pool.mock.callCount(), 0)
+        assert.deepEqual(callsOf(provider.launchPooled), [[1]])
     })
 
     test('a stopped pool of size 0 is never queried, filled or launched', async () => {
         const provider = makeProvider({idleInstances: [makeInstance({id: 'i-a'}), makeInstance({id: 'i-b'})]})
         await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.pooledInstances).not.toHaveBeenCalled()
-        expect(provider.pool).not.toHaveBeenCalled()
-        expect(provider.launchPooled).not.toHaveBeenCalled()
+        assert.equal(provider.pooledInstances.mock.callCount(), 0)
+        assert.equal(provider.pool.mock.callCount(), 0)
+        assert.equal(provider.launchPooled.mock.callCount(), 0)
     })
 
     // The oldest surplus instances have read the most of their disk, so they are the warmest to keep.
@@ -738,9 +766,9 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances, pooledInstances: [makeInstance({id: 'i-pooled'})]})
         await sizeIdlePool({'T3aSmall': 1}, 3, {provider, claims: makeClaims()})
 
-        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-old', 'i-mid'])
-        expect(provider.terminate.mock.calls.map(([id]) => id)).toEqual(['i-new'])
-        expect(provider.launchPooled).not.toHaveBeenCalled()
+        assert.deepEqual(callsOf(provider.pool).map(([id]) => id), ['i-old', 'i-mid'])
+        assert.deepEqual(callsOf(provider.terminate).map(([id]) => id), ['i-new'])
+        assert.equal(provider.launchPooled.mock.callCount(), 0)
     })
 
     test('the deficit surplus cannot fill is warm-up launched', async () => {
@@ -748,8 +776,8 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances, pooledInstances: [makeInstance({id: 'i-pooled'})]})
         await sizeIdlePool({}, 4, {provider, claims: makeClaims()})
 
-        expect(provider.pool).toHaveBeenCalledWith('i-surplus')
-        expect(provider.launchPooled).toHaveBeenCalledWith(2)
+        assert.deepEqual(callsOf(provider.pool), [['i-surplus']])
+        assert.deepEqual(callsOf(provider.launchPooled), [[2]])
     })
 
     test('a full stopped pool takes no surplus and launches no warm-up', async () => {
@@ -758,9 +786,9 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances, pooledInstances})
         await sizeIdlePool({}, 2, {provider, claims: makeClaims()})
 
-        expect(provider.pool).not.toHaveBeenCalled()
-        expect(provider.launchPooled).not.toHaveBeenCalled()
-        expect(provider.terminate).toHaveBeenCalledWith('i-surplus')
+        assert.equal(provider.pool.mock.callCount(), 0)
+        assert.equal(provider.launchPooled.mock.callCount(), 0)
+        assert.deepEqual(callsOf(provider.terminate), [['i-surplus']])
     })
 
     // The deficit is recomputed every cycle, so a failed pooling or warm-up is retried next minute
@@ -771,19 +799,23 @@ describe('sizeIdlePool', () => {
             makeInstance({id: 'i-pools', type: 'T3aSmall', launchTime: minutesAgo(5)}),
         ]
         const provider = makeProvider({idleInstances})
-        provider.pool.mockRejectedValueOnce(new Error('stop failed'))
-        provider.launchPooled.mockRejectedValue(new Error('launch failed'))
+        provider.pool.mock.mockImplementationOnce(async () => {
+            throw new Error('stop failed')
+        })
+        provider.launchPooled.mock.mockImplementation(async () => {
+            throw new Error('launch failed')
+        })
 
-        await expect(sizeIdlePool({}, 3, {provider, claims: makeClaims()})).resolves.toBeUndefined()
-        expect(provider.pool.mock.calls.map(([id]) => id)).toEqual(['i-fails', 'i-pools'])
+        assert.equal(await sizeIdlePool({}, 3, {provider, claims: makeClaims()}), undefined)
+        assert.deepEqual(callsOf(provider.pool).map(([id]) => id), ['i-fails', 'i-pools'])
     })
 
     test('current < target: calls launchIdle with deficit count', async () => {
         const provider = makeProvider({idleInstances: []})
         await sizeIdlePool({'T3aSmall': 2}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 2)
-        expect(provider.terminate).not.toHaveBeenCalled()
+        assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 2]])
+        assert.equal(provider.terminate.mock.callCount(), 0)
     })
 
     test('current > target: terminates the surplus', async () => {
@@ -795,8 +827,8 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances: surplus})
         await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.terminate).toHaveBeenCalledTimes(2)
-        expect(provider.launchIdle).not.toHaveBeenCalled()
+        assert.equal(provider.terminate.mock.callCount(), 2)
+        assert.equal(provider.launchIdle.mock.callCount(), 0)
     })
 
     // The surplus is almost always the replacement launched the moment the previous idle instance
@@ -811,8 +843,8 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances})
         await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.terminate).toHaveBeenCalledTimes(1)
-        expect(provider.terminate).toHaveBeenCalledWith('i-cold')
+        assert.equal(provider.terminate.mock.callCount(), 1)
+        assert.deepEqual(callsOf(provider.terminate), [['i-cold']])
     })
 
     test('current == target: no-op', async () => {
@@ -820,8 +852,8 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances: idle})
         await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.launchIdle).not.toHaveBeenCalled()
-        expect(provider.terminate).not.toHaveBeenCalled()
+        assert.equal(provider.launchIdle.mock.callCount(), 0)
+        assert.equal(provider.terminate.mock.callCount(), 0)
     })
 
     test('multiple types: launches for under-target, terminates for over-target', async () => {
@@ -833,14 +865,14 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances})
         await sizeIdlePool({'T3aSmall': 1, 'C5aXlarge': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
-        expect(provider.terminate).toHaveBeenCalledTimes(2)
+        assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 1]])
+        assert.equal(provider.terminate.mock.callCount(), 2)
     })
 
     test('accepts Map instead of plain object', async () => {
         const provider = makeProvider({idleInstances: []})
         await sizeIdlePool(new Map([['T3aSmall', 1]]), 0, {provider, claims: makeClaims()})
-        expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
+        assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 1]])
     })
 
     test('terminates all idle instances of types NOT in the target map (non-target type → target=0)', async () => {
@@ -853,18 +885,18 @@ describe('sizeIdlePool', () => {
         const provider = makeProvider({idleInstances: nonTargetInstances})
         await sizeIdlePool({'T3aSmall': 1}, 0, {provider, claims: makeClaims()})
 
-        expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
-        expect(provider.terminate).toHaveBeenCalledTimes(2)
-        const terminatedIds = provider.terminate.mock.calls.map(c => c[0])
-        expect(terminatedIds).toContain('i-extra-1')
-        expect(terminatedIds).toContain('i-extra-2')
+        assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 1]])
+        assert.equal(provider.terminate.mock.callCount(), 2)
+        const terminatedIds = callsOf(provider.terminate).map(c => c[0])
+        assert.ok(terminatedIds.includes('i-extra-1'))
+        assert.ok(terminatedIds.includes('i-extra-2'))
     })
 })
 
 describe('reclaimStaleClaims', () => {
     let reclaimStaleClaims, releaseUnusedInstances
 
-    beforeAll(async () => {
+    before(async () => {
         ;({reclaimStaleClaims} = await import('./command/reclaimStaleClaims.js'))
         ;({releaseUnusedInstances} = await import('./command/releaseUnusedInstances.js'))
     })
@@ -875,40 +907,40 @@ describe('reclaimStaleClaims', () => {
     })
 
     const makeProvider = (idle = [], reserved = []) => ({
-        idleInstances: jest.fn().mockResolvedValue(idle),
-        reservedInstances: jest.fn().mockResolvedValue(reserved),
+        idleInstances: mock.fn(async () => idle),
+        reservedInstances: mock.fn(async () => reserved),
     })
 
     test('deletes a claim whose instance the hosting service no longer reports', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-gone', 's-1', GRACE_MS + 1000)]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => [claimOn('i-gone', 's-1', GRACE_MS + 1000)]),
+            release: mock.fn(async () => true),
         }
         const reclaimed = await reclaimStaleClaims(['s-1'], GRACE_MS, {claims, provider: makeProvider()})
 
-        expect(claims.release).toHaveBeenCalledWith('i-gone')
-        expect(reclaimed).toBe(1)
+        assert.deepEqual(callsOf(claims.release), [['i-gone']])
+        assert.equal(reclaimed, 1)
     })
 
     test('deletes a claim past grace whose session never appeared', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-missing', GRACE_MS + 1000)]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => [claimOn('i-1', 's-missing', GRACE_MS + 1000)]),
+            release: mock.fn(async () => true),
         }
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
             ...makeProvider([instance]),
-            getInstance: jest.fn().mockResolvedValue(instance),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn().mockResolvedValue(undefined),
-            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
+            getInstance: mock.fn(async () => instance),
+            release: mock.fn(async () => undefined),
+            terminate: mock.fn(async () => undefined),
+            deleteScratchVolume: mock.fn(async () => undefined),
         }
-        const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
+        const provisioner = {undeploy: mock.fn(async () => undefined)}
 
-        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner})).toBe(1)
-        expect(claims.release).toHaveBeenCalledWith('i-1')
-        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(provider.release).toHaveBeenCalledWith('i-1')
+        assert.equal(await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner}), 1)
+        assert.deepEqual(callsOf(claims.release), [['i-1']])
+        assert.equal(provisioner.undeploy.mock.callCount(), 1)
+        assert.deepEqual(callsOf(provider.release), [['i-1']])
     })
 
     // Tag reads are eventually consistent: between claiming an idle candidate and its State tag
@@ -916,24 +948,27 @@ describe('reclaimStaleClaims', () => {
     // claim away from a request still in flight.
     test('keeps a fresh claim whose instance neither filter reports yet', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-retagging', 's-pending', 1000)]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => [claimOn('i-retagging', 's-pending', 1000)]),
+            release: mock.fn(async () => true),
         }
 
-        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})).toBe(0)
-        expect(claims.release).not.toHaveBeenCalled()
+        assert.equal(
+            await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()}),
+            0
+        )
+        assert.equal(claims.release.mock.callCount(), 0)
     })
 
     // The grace must outlast the address wait, or an allocation in flight is reclaimed.
     test('keeps a claim within grace whose session has not appeared yet', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-pending', 1000)]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => [claimOn('i-1', 's-pending', 1000)]),
+            release: mock.fn(async () => true),
         }
         const provider = makeProvider([{id: 'i-1'}])
 
-        expect(await reclaimStaleClaims([], GRACE_MS, {claims, provider})).toBe(0)
-        expect(claims.release).not.toHaveBeenCalled()
+        assert.equal(await reclaimStaleClaims([], GRACE_MS, {claims, provider}), 0)
+        assert.equal(claims.release.mock.callCount(), 0)
     })
 
     // Dropping the row on an instance that still exists hands the undeploy to nobody: nothing
@@ -942,9 +977,9 @@ describe('reclaimStaleClaims', () => {
     test('an abandoned claim on a live instance is torn down, not just dropped', async () => {
         const rows = new Map([['i-1', 's-dead']])
         const claims = {
-            all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
+            all: mock.fn(async () => [...rows].map(([instanceId, sessionId]) =>
                 ({instanceId, sessionId, claimedAt: new Date(Date.now() - GRACE_MS - 1000)}))),
-            release: jest.fn(async instanceId => rows.delete(instanceId)),
+            release: mock.fn(async instanceId => rows.delete(instanceId)),
         }
         const instance = makeReservedInstance({id: 'i-1', host: '1.2.3.4'})
         const provider = {
@@ -952,59 +987,57 @@ describe('reclaimStaleClaims', () => {
             // Both real providers drop the reservation on release — AWS re-tags State=idle, the
             // local provider clears instance.reservation — so a released instance is no longer
             // reserved to the next sweep.
-            reservedInstances: jest.fn(async () => instance.reservation ? [instance] : []),
-            getInstance: jest.fn(async () => instance),
-            release: jest.fn(async () => {
+            reservedInstances: mock.fn(async () => instance.reservation ? [instance] : []),
+            getInstance: mock.fn(async () => instance),
+            release: mock.fn(async () => {
                 instance.reservation = null
             }),
-            terminate: jest.fn(async () => undefined),
-            deleteScratchVolume: jest.fn(async () => undefined),
+            terminate: mock.fn(async () => undefined),
+            deleteScratchVolume: mock.fn(async () => undefined),
         }
-        const provisioner = {undeploy: jest.fn(async () => undefined)}
+        const provisioner = {undeploy: mock.fn(async () => undefined)}
 
         await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner})
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
-        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(rows.has('i-1')).toBe(false)
+        assert.equal(provisioner.undeploy.mock.callCount(), 1)
+        assert.equal(rows.has('i-1'), false)
     })
 
     test('keeps a claim backed by an open session however old', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([claimOn('i-1', 's-open', 99 * GRACE_MS)]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => [claimOn('i-1', 's-open', 99 * GRACE_MS)]),
+            release: mock.fn(async () => true),
         }
         const provider = makeProvider([], [{id: 'i-1'}])
 
-        expect(await reclaimStaleClaims(['s-open'], GRACE_MS, {claims, provider})).toBe(0)
+        assert.equal(await reclaimStaleClaims(['s-open'], GRACE_MS, {claims, provider}), 0)
     })
 
     // One claim's release rejecting must not abort the batch: the per-claim try/catch is what
     // lets the sweep move on to the remaining claims instead of dying on the first bad row.
     test('a claim that fails to release does not stop the rest of the sweep', async () => {
         const claims = {
-            all: jest.fn().mockResolvedValue([
+            all: mock.fn(async () => [
                 claimOn('i-1', 's-1', GRACE_MS + 1000),
                 claimOn('i-2', 's-2', GRACE_MS + 1000),
                 claimOn('i-3', 's-3', GRACE_MS + 1000),
             ]),
-            release: jest.fn(async instanceId =>
+            release: mock.fn(async instanceId =>
                 instanceId === 'i-2' ? Promise.reject(new Error('db down')) : true),
         }
 
         const reclaimed = await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})
 
-        expect(claims.release).toHaveBeenCalledWith('i-1')
-        expect(claims.release).toHaveBeenCalledWith('i-2')
-        expect(claims.release).toHaveBeenCalledWith('i-3')
-        expect(reclaimed).toBe(2)
+        assert.deepEqual(callsOf(claims.release), [['i-1'], ['i-2'], ['i-3']])
+        assert.equal(reclaimed, 2)
     })
 })
 
 describe('releaseUnusedInstances', () => {
     let releaseUnusedInstances
 
-    beforeAll(async () => {
+    before(async () => {
         ;({releaseUnusedInstances} = await import('./command/releaseUnusedInstances.js'))
     })
 
@@ -1014,18 +1047,18 @@ describe('releaseUnusedInstances', () => {
 
     const makeFullDeps = reservedInstances => ({
         claims: {
-            all: jest.fn().mockResolvedValue([]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => []),
+            release: mock.fn(async () => true),
         },
         provider: {
-            reservedInstances: jest.fn().mockResolvedValue(reservedInstances),
-            getInstance: jest.fn(id => Promise.resolve(reservedInstances.find(i => i.id === id) ?? null)),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn().mockResolvedValue(undefined),
-            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
+            reservedInstances: mock.fn(async () => reservedInstances),
+            getInstance: mock.fn(id => Promise.resolve(reservedInstances.find(i => i.id === id) ?? null)),
+            release: mock.fn(async () => undefined),
+            terminate: mock.fn(async () => undefined),
+            deleteScratchVolume: mock.fn(async () => undefined),
         },
         provisioner: {
-            undeploy: jest.fn().mockResolvedValue(undefined),
+            undeploy: mock.fn(async () => undefined),
         },
     })
 
@@ -1038,9 +1071,9 @@ describe('releaseUnusedInstances', () => {
 
         await releaseUnusedInstances(['i-used'], 5, 'MINUTES', deps)
 
-        expect(deps.provider.release).toHaveBeenCalledTimes(1)
-        const call = deps.provider.release.mock.calls[0]
-        expect(call[0]).toBe('i-old')
+        assert.equal(deps.provider.release.mock.callCount(), 1)
+        const call = deps.provider.release.mock.calls[0].arguments
+        assert.equal(call[0], 'i-old')
     })
 
     test('one failure does not abort release of others', async () => {
@@ -1049,16 +1082,16 @@ describe('releaseUnusedInstances', () => {
         const inst3 = makeReservedInstance({id: 'i-c', launchTime: OLD_TIME})
 
         const deps = makeFullDeps([inst1, inst2, inst3])
-        deps.provisioner.undeploy = jest.fn(instance => {
+        deps.provisioner.undeploy = mock.fn(instance => {
             if (instance.id === 'i-b') return Promise.reject(new Error('undeploy fail'))
             return Promise.resolve()
         })
 
         await releaseUnusedInstances([], 5, 'MINUTES', deps)
 
-        const releasedIds = deps.provider.release.mock.calls.map(c => c[0])
-        expect(releasedIds).toContain('i-a')
-        expect(releasedIds).toContain('i-c')
+        const releasedIds = callsOf(deps.provider.release).map(c => c[0])
+        assert.ok(releasedIds.includes('i-a'))
+        assert.ok(releasedIds.includes('i-c'))
     })
 
     test('skips instances within minAge', async () => {
@@ -1068,7 +1101,7 @@ describe('releaseUnusedInstances', () => {
 
         await releaseUnusedInstances([], 5, 'MINUTES', deps)
 
-        expect(deps.provider.release).not.toHaveBeenCalled()
+        assert.equal(deps.provider.release.mock.callCount(), 0)
     })
 
     test('age boundary: instance exactly at minAge is NOT released (strict > parity with Java)', async () => {
@@ -1082,7 +1115,7 @@ describe('releaseUnusedInstances', () => {
         // Without this, wall-clock drift between setup and the age check makes an instance built at
         // "exactly minAge" read as strictly-older by a few ms → released → flaky failure.
         const FIXED_NOW = 1_800_000_000_000
-        const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(FIXED_NOW)
+        const nowSpy = mock.method(Date, 'now', () => FIXED_NOW)
         try {
             const exactTime = new Date(FIXED_NOW - minAgeMs)
             const exactInst = makeReservedInstance({id: 'i-exact', launchTime: exactTime})
@@ -1094,58 +1127,60 @@ describe('releaseUnusedInstances', () => {
 
             await releaseUnusedInstances([], minAge, timeUnit, deps)
 
-            const releasedIds = deps.provider.release.mock.calls.map(c => c[0])
-            expect(releasedIds).not.toContain('i-exact')
-            expect(releasedIds).toContain('i-older')
+            const releasedIds = callsOf(deps.provider.release).map(c => c[0])
+            assert.ok(!releasedIds.includes('i-exact'))
+            assert.ok(releasedIds.includes('i-older'))
         } finally {
-            nowSpy.mockRestore()
+            nowSpy.mock.restore()
         }
     })
 
     test('skips an instance holding a claim even when it is old and unused', async () => {
         const old = makeReservedInstance({id: 'i-claimed', launchTime: new Date(Date.now() - HOUR_MS)})
         const claims = {
-            all: jest.fn().mockResolvedValue([{instanceId: 'i-claimed', sessionId: 's-1', claimedAt: new Date()}]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(
+                async () => [{instanceId: 'i-claimed', sessionId: 's-1', claimedAt: new Date()}]
+            ),
+            release: mock.fn(async () => true),
         }
         const provider = {
-            reservedInstances: jest.fn().mockResolvedValue([old]),
-            getInstance: jest.fn().mockResolvedValue(old),
-            release: jest.fn(),
-            terminate: jest.fn(),
+            reservedInstances: mock.fn(async () => [old]),
+            getInstance: mock.fn(async () => old),
+            release: mock.fn(),
+            terminate: mock.fn(),
         }
-        const provisioner = {undeploy: jest.fn()}
+        const provisioner = {undeploy: mock.fn()}
 
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
-        expect(provider.release).not.toHaveBeenCalled()
+        assert.equal(provider.release.mock.callCount(), 0)
     })
 
     test('still releases an old unused instance with no claim', async () => {
         const old = makeReservedInstance({id: 'i-orphan', host: '1.2.3.4', launchTime: new Date(Date.now() - HOUR_MS)})
         const claims = {
-            all: jest.fn().mockResolvedValue([]),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => []),
+            release: mock.fn(async () => true),
         }
         const provider = {
-            reservedInstances: jest.fn().mockResolvedValue([old]),
-            getInstance: jest.fn().mockResolvedValue(old),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn(),
-            deleteScratchVolume: jest.fn().mockResolvedValue(undefined),
+            reservedInstances: mock.fn(async () => [old]),
+            getInstance: mock.fn(async () => old),
+            release: mock.fn(async () => undefined),
+            terminate: mock.fn(),
+            deleteScratchVolume: mock.fn(async () => undefined),
         }
-        const provisioner = {undeploy: jest.fn().mockResolvedValue(undefined)}
+        const provisioner = {undeploy: mock.fn(async () => undefined)}
 
         await releaseUnusedInstances([], 5, 'MINUTES', {claims, provider, provisioner})
 
-        expect(provider.release).toHaveBeenCalledWith('i-orphan')
+        assert.deepEqual(callsOf(provider.release), [['i-orphan']])
     })
 })
 
 describe('findMissingInstances', () => {
     let findMissingInstances
 
-    beforeAll(async () => {
+    before(async () => {
         ;({findMissingInstances} = await import('./query/findMissingInstances.js'))
     })
 
@@ -1157,65 +1192,68 @@ describe('findMissingInstances', () => {
         const inst3 = makeReservedInstance({id: 'i-unreachable'})
 
         const status = {'i-ok': 'PROVISIONED', 'i-missing': 'MISSING', 'i-unreachable': 'UNKNOWN'}
-        const provisioner = {instanceStatus: jest.fn(inst => Promise.resolve(status[inst.id]))}
+        const provisioner = {instanceStatus: mock.fn(inst => Promise.resolve(status[inst.id]))}
 
         const result = await findMissingInstances([inst1, inst2, inst3], {provisioner})
 
-        expect(result).toHaveLength(2)
-        expect(result.find(({instance}) => instance.id === 'i-missing').status).toBe('MISSING')
-        expect(result.find(({instance}) => instance.id === 'i-unreachable').status).toBe('UNKNOWN')
-        expect(result.some(({instance}) => instance.id === 'i-ok')).toBe(false)
+        assert.equal(result.length, 2)
+        assert.equal(result.find(({instance}) => instance.id === 'i-missing').status, 'MISSING')
+        assert.equal(
+            result.find(({instance}) => instance.id === 'i-unreachable').status,
+            'UNKNOWN'
+        )
+        assert.equal(result.some(({instance}) => instance.id === 'i-ok'), false)
     })
 
     test('returns empty array when all provisioned', async () => {
-        const provisioner = {instanceStatus: jest.fn().mockResolvedValue('PROVISIONED')}
+        const provisioner = {instanceStatus: mock.fn(async () => 'PROVISIONED')}
         const result = await findMissingInstances([makeInstance(), makeInstance({id: 'i-002'})], {provisioner})
-        expect(result).toEqual([])
+        assert.deepEqual(result, [])
     })
 
     test('returns all instances when none provisioned', async () => {
-        const provisioner = {instanceStatus: jest.fn().mockResolvedValue('MISSING')}
+        const provisioner = {instanceStatus: mock.fn(async () => 'MISSING')}
         const instances = [makeInstance({id: 'i-1'}), makeInstance({id: 'i-2'})]
         const result = await findMissingInstances(instances, {provisioner})
-        expect(result).toHaveLength(2)
+        assert.equal(result.length, 2)
     })
 
     test('empty input returns empty array', async () => {
-        const provisioner = {instanceStatus: jest.fn()}
+        const provisioner = {instanceStatus: mock.fn()}
         const result = await findMissingInstances([], {provisioner})
-        expect(result).toEqual([])
-        expect(provisioner.instanceStatus).not.toHaveBeenCalled()
+        assert.deepEqual(result, [])
+        assert.equal(provisioner.instanceStatus.mock.callCount(), 0)
     })
 })
 
 describe('instanceManager', () => {
     let createInstanceManager, events
 
-    beforeAll(async () => {
+    before(async () => {
         ;({createInstanceManager} = await import('./instanceManager.js'))
         events = await import('./events.js')
     })
 
     const makeManagerDeps = (overrides = {}) => ({
         claims: {
-            all: jest.fn().mockResolvedValue([]),
-            claim: jest.fn().mockResolvedValue(true),
-            release: jest.fn().mockResolvedValue(true),
+            all: mock.fn(async () => []),
+            claim: mock.fn(async () => true),
+            release: mock.fn(async () => true),
         },
         provider: {
-            idleInstances: jest.fn().mockResolvedValue([]),
-            pooledInstances: jest.fn().mockResolvedValue([]),
-            launchReserved: jest.fn().mockResolvedValue(makeReservedInstance({id: 'i-mgr'})),
-            reserve: jest.fn().mockResolvedValue(undefined),
-            getInstance: jest.fn().mockResolvedValue(makeReservedInstance()),
-            release: jest.fn().mockResolvedValue(undefined),
-            terminate: jest.fn().mockResolvedValue(undefined),
-            reservedInstances: jest.fn().mockResolvedValue([]),
-            awaitHost: jest.fn(async instance => instance),
+            idleInstances: mock.fn(async () => []),
+            pooledInstances: mock.fn(async () => []),
+            launchReserved: mock.fn(async () => makeReservedInstance({id: 'i-mgr'})),
+            reserve: mock.fn(async () => undefined),
+            getInstance: mock.fn(async () => makeReservedInstance()),
+            release: mock.fn(async () => undefined),
+            terminate: mock.fn(async () => undefined),
+            reservedInstances: mock.fn(async () => []),
+            awaitHost: mock.fn(async instance => instance),
         },
         provisioner: {
-            undeploy: jest.fn().mockResolvedValue(undefined),
-            instanceStatus: jest.fn().mockResolvedValue('PROVISIONED'),
+            undeploy: mock.fn(async () => undefined),
+            instanceStatus: mock.fn(async () => 'PROVISIONED'),
         },
         instanceTypes: [
             {id: 'T3aSmall', idleCount: 0},
@@ -1231,12 +1269,12 @@ describe('instanceManager', () => {
             instanceType: 'T3aSmall',
             username: 'alice',
         })
-        expect(result).toHaveProperty('id', 'i-mgr')
-        expect(result).toHaveProperty('host')
-        expect(result).not.toHaveProperty('reservation')
-        expect(result).not.toHaveProperty('launchTime')
-        expect(result).not.toHaveProperty('running')
-        expect(result).not.toHaveProperty('type')
+        assert.deepEqual(result['id'], 'i-mgr')
+        assert.ok('host' in Object(result))
+        assert.ok(!('reservation' in Object(result)))
+        assert.ok(!('launchTime' in Object(result)))
+        assert.ok(!('running' in Object(result)))
+        assert.ok(!('type' in Object(result)))
     })
 
     // requestInstance is handed the whole session; the id must survive into the reservation, since
@@ -1252,10 +1290,9 @@ describe('instanceManager', () => {
             username: 'alice',
         })
 
-        expect(deps.provider.launchReserved).toHaveBeenCalledWith(
-            'T3aSmall',
-            {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}
-        )
+        assert.deepEqual(callsOf(deps.provider.launchReserved), [
+            ['T3aSmall', {username: 'alice', workerType: 'SANDBOX', sessionId: 's-42'}]
+        ])
     })
 
     test('onInstanceActivated fires with {id, host} only (Java InstanceComponentAdapter parity)', async () => {
@@ -1269,10 +1306,10 @@ describe('instanceManager', () => {
         events.emitInstanceProvisioned(inst)
 
         // EventEmitter fires synchronously
-        expect(activated).toHaveLength(1)
-        expect(activated[0]).toEqual({id: 'i-activated', host: 'host-act'})
-        expect(activated[0]).not.toHaveProperty('reservation')
-        expect(activated[0]).not.toHaveProperty('launchTime')
+        assert.equal(activated.length, 1)
+        assert.deepEqual(activated[0], {id: 'i-activated', host: 'host-act'})
+        assert.ok(!('reservation' in Object(activated[0])))
+        assert.ok(!('launchTime' in Object(activated[0])))
     })
 
     test('onFailedToProvisionInstance fires with {id, host} and NO error arg (Java InstanceComponentAdapter parity)', async () => {
@@ -1286,36 +1323,36 @@ describe('instanceManager', () => {
         const err = new Error('provision failed')
         events.emitFailedToProvisionInstance(inst, err)
 
-        expect(failures).toHaveLength(1)
-        expect(failures[0]).toEqual({id: 'i-fail-mgr', host: 'host-fail'})
-        expect(failures[0]).not.toHaveProperty('reservation')
+        assert.equal(failures.length, 1)
+        assert.deepEqual(failures[0], {id: 'i-fail-mgr', host: 'host-fail'})
+        assert.ok(!('reservation' in Object(failures[0])))
     })
 
     test('reclaimStaleClaims can undeploy — the manager passes the provisioner down', async () => {
         const instance = makeReservedInstance({id: 'i-abandoned', host: '1.2.3.4'})
         const deps = makeManagerDeps()
-        deps.claims.all = jest.fn().mockResolvedValue([
+        deps.claims.all = mock.fn(async () => [
             {instanceId: 'i-abandoned', sessionId: 's-dead', claimedAt: new Date(0)},
         ])
-        deps.provider.idleInstances = jest.fn().mockResolvedValue([instance])
-        deps.provider.getInstance = jest.fn().mockResolvedValue(instance)
+        deps.provider.idleInstances = mock.fn(async () => [instance])
+        deps.provider.getInstance = mock.fn(async () => instance)
         const mgr = createInstanceManager(deps)
 
         await mgr.reclaimStaleClaims([], 10 * 60 * 1000)
 
-        expect(deps.provisioner.undeploy).toHaveBeenCalledTimes(1)
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
     })
 
     test('getInstanceTypes returns instanceTypes array', () => {
         const types = [{id: 'T3aSmall', idleCount: 1}]
         const manager = createInstanceManager(makeManagerDeps({instanceTypes: types}))
-        expect(manager.getInstanceTypes()).toBe(types)
+        assert.equal(manager.getInstanceTypes(), types)
     })
 
     test('sessionsWithoutInstance returns the unconfirmed sessions with their status', async () => {
         const deps = makeManagerDeps()
         const status = {'i-ok': 'PROVISIONED', 'i-miss': 'MISSING', 'i-unreachable': 'UNKNOWN'}
-        deps.provisioner.instanceStatus = jest.fn(inst => Promise.resolve(status[inst.id]))
+        deps.provisioner.instanceStatus = mock.fn(inst => Promise.resolve(status[inst.id]))
         const manager = createInstanceManager(deps)
 
         const sessions = [
@@ -1324,9 +1361,12 @@ describe('instanceManager', () => {
             {id: 's-unreachable', workerType: 'SANDBOX', instance: {id: 'i-unreachable', host: 'h'}},
         ]
         const result = await manager.sessionsWithoutInstance(sessions)
-        expect(result).toHaveLength(2)
-        expect(result.find(({session}) => session.id === 's-miss').status).toBe('MISSING')
-        expect(result.find(({session}) => session.id === 's-unreachable').status).toBe('UNKNOWN')
+        assert.equal(result.length, 2)
+        assert.equal(result.find(({session}) => session.id === 's-miss').status, 'MISSING')
+        assert.equal(
+            result.find(({session}) => session.id === 's-unreachable').status,
+            'UNKNOWN'
+        )
     })
 
     test('releaseUnusedInstances passes usedInstanceIds from session.instance.id', async () => {
@@ -1337,7 +1377,7 @@ describe('instanceManager', () => {
             5,
             'MINUTES'
         )
-        expect(deps.provider.reservedInstances).toHaveBeenCalledTimes(1)
+        assert.equal(deps.provider.reservedInstances.mock.callCount(), 1)
     })
 })
 
@@ -1347,7 +1387,7 @@ describe('instanceManager', () => {
 describe('surviving a worker restart', () => {
     let createWorkerInstanceComponent, createLocalInstanceProvider, instanceFromSession
 
-    beforeAll(async () => {
+    before(async () => {
         ;({createWorkerInstanceComponent} = await import('./index.js'))
         ;({createLocalInstanceProvider} = await import('../hostingService/local/localInstanceProvider.js'))
         ;({instanceFromSession} = await import('./instanceFromSession.js'))
@@ -1363,14 +1403,14 @@ describe('surviving a worker restart', () => {
     }
 
     const claimTable = rows => ({
-        all: jest.fn(async () => [...rows].map(([instanceId, sessionId]) =>
+        all: mock.fn(async () => [...rows].map(([instanceId, sessionId]) =>
             ({instanceId, sessionId, claimedAt: new Date('2026-01-01T00:00:00Z')}))),
-        claim: jest.fn(async (instanceId, sessionId) => {
+        claim: mock.fn(async (instanceId, sessionId) => {
             if (rows.has(instanceId)) return false
             rows.set(instanceId, sessionId)
             return true
         }),
-        release: jest.fn(async instanceId => rows.delete(instanceId)),
+        release: mock.fn(async instanceId => rows.delete(instanceId)),
     })
 
     test('a restored instance is undeployed when its session finally closes', async () => {
@@ -1378,7 +1418,7 @@ describe('surviving a worker restart', () => {
         // them — with the claim table and the session row carried over.
         const provider = createLocalInstanceProvider({tag: 'local'})
         const claims = claimTable(new Map([['i-1', 's-1']]))
-        const provisioner = {undeploy: jest.fn(async () => {})}
+        const provisioner = {undeploy: mock.fn(async () => {})}
 
         const component = createWorkerInstanceComponent({
             claims,
@@ -1392,7 +1432,7 @@ describe('surviving a worker restart', () => {
         await component.instanceManager.releaseInstance('i-1')
         component.stop()
 
-        expect(provisioner.undeploy).toHaveBeenCalledTimes(1)
-        expect(provisioner.undeploy.mock.calls[0][0].id).toBe('i-1')
+        assert.equal(provisioner.undeploy.mock.callCount(), 1)
+        assert.equal(provisioner.undeploy.mock.calls[0].arguments[0].id, 'i-1')
     })
 })

@@ -1,11 +1,16 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 
 // routes -> dataApi -> config.js (commander). Mock config before the chain.
-jest.unstable_mockModule('./config.js', () => ({
-    googleMapsApiKey: 'test-google-key', nicfiPlanetApiKey: 'test-planet-key', port: 80
-}))
+mock.module('./config.js', {
+    exports: {
+        googleMapsApiKey: 'test-google-key',
+        nicfiPlanetApiKey: 'test-planet-key',
+        port: 80
+    }
+})
 
 const server = await import('#sepal/httpServer')
 const {DataApi} = await import('./dataApi.js')
@@ -19,7 +24,7 @@ describe('the scene metadata routes', () => {
     let url
     let asked
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         running = await startServer()
         url = path => `http://127.0.0.1:${running.address().port}${path}`
@@ -29,27 +34,27 @@ describe('the scene metadata routes', () => {
         asked = []
     })
 
-    afterAll(() => running && new Promise(resolve => running.close(resolve)))
+    after(() => running && new Promise(resolve => running.close(resolve)))
 
     test('answer a healthcheck', async () => {
         const response = await request('GET', '/healthcheck')
 
-        expect(response.status).toBe(200)
-        expect(response.body).toEqual({status: 'ok'})
+        assert.equal(response.status, 200)
+        assert.deepEqual(response.body, {status: 'ok'})
     })
 
     describe('map api keys', () => {
         test('report the keys the map needs', async () => {
             const response = await request('GET', '/map-api-keys', {user: SOMEONE})
 
-            expect(response.status).toBe(200)
-            expect(response.body).toEqual({google: 'test-google-key', nicfiPlanet: 'test-planet-key'})
+            assert.equal(response.status, 200)
+            assert.deepEqual(response.body, {google: 'test-google-key', nicfiPlanet: 'test-planet-key'})
         })
 
         test('refuse a request carrying no user', async () => {
             const response = await request('GET', '/map-api-keys')
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
     })
 
@@ -59,8 +64,8 @@ describe('the scene metadata routes', () => {
                 user: SOMEONE, body: {query: JSON.stringify(aClientQuery({sceneAreaIds: [SCENE_AREA_ID]}))}
             })
 
-            expect(response.status).toBe(200)
-            expect(response.body).toEqual({
+            assert.equal(response.status, 200)
+            assert.deepEqual(response.body, {
                 [SCENE_AREA_ID]: [{
                     id: 'SC001', dataSet: 'LANDSAT_8', date: '2021-07-15', cloudCover: 15, daysFromTarget: 0
                 }]
@@ -70,7 +75,7 @@ describe('the scene metadata routes', () => {
         test('refuse a request carrying no user', async () => {
             const response = await request('POST', '/best-scenes', {body: {query: JSON.stringify(aClientQuery())}})
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
     })
 
@@ -81,9 +86,9 @@ describe('the scene metadata routes', () => {
                 {user: SOMEONE}
             )
 
-            expect(response.status).toBe(200)
-            expect(asked).toEqual([SCENE_AREA_ID])
-            expect(response.body).toEqual([{
+            assert.equal(response.status, 200)
+            assert.deepEqual(asked, [SCENE_AREA_ID])
+            assert.deepEqual(response.body, [{
                 id: 'SC001', dataSet: 'LANDSAT_8', date: '2021-07-15', cloudCover: 15, daysFromTarget: 0
             }])
         })
@@ -93,7 +98,7 @@ describe('the scene metadata routes', () => {
                 'GET', `/sceneareas/${SCENE_AREA_ID}?query=${encodeURIComponent(JSON.stringify(aClientQuery()))}`
             )
 
-            expect(response.status).toBe(401)
+            assert.equal(response.status, 401)
         })
     })
 

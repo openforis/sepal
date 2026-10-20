@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // The time-series collection is the shape where a caller may already hold a geometry. When it does not,
@@ -8,18 +10,47 @@ const resolved = id => resolvedById[id] || (resolvedById[id] = {resolvedFrom: id
 
 const captured = {}
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: ({id}) => ({getGeometry$: () => (captured.resolutions = (captured.resolutions || 0) + 1, of(resolved(id)))})
-}))
-jest.unstable_mockModule('#sepal/ee/optical/collection', () => ({
-    allScenes: args => (captured.geometry = args.geometry, {map: () => ({limit: () => ({size: () => 1})})})
-}))
-jest.unstable_mockModule('#sepal/ee/recipeRef', () => ({default: () => ({getRecipe$: () => of(null)})}))
-jest.unstable_mockModule('#sepal/ee/validate', () => ({validateEEImageCollection: ({imageCollection}) => imageCollection}))
-jest.unstable_mockModule('#sepal/ee/optical/addTasseledCap', () => ({default: image => image}))
-jest.unstable_mockModule('#sepal/ee/optical/indexes', () => ({calculateIndex: () => ({}), supportedIndexes: () => []}))
-jest.unstable_mockModule('#sepal/ee/planet/collection', () => ({createCollection: () => ({})}))
-jest.unstable_mockModule('#sepal/ee/radar/collection', () => ({createCollection: () => ({})}))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: ({id}) => ({getGeometry$: () => (captured.resolutions = (captured.resolutions || 0) + 1, of(resolved(id)))})
+    }
+})
+mock.module('#sepal/ee/optical/collection', {
+    exports: {
+        allScenes: args => (captured.geometry = args.geometry, {map: () => ({limit: () => ({size: () => 1})})})
+    }
+})
+mock.module('#sepal/ee/recipeRef', {
+    exports: {
+        default: () => ({getRecipe$: () => of(null)})
+    }
+})
+mock.module('#sepal/ee/validate', {
+    exports: {
+        validateEEImageCollection: ({imageCollection}) => imageCollection
+    }
+})
+mock.module('#sepal/ee/optical/addTasseledCap', {
+    exports: {
+        default: image => image
+    }
+})
+mock.module('#sepal/ee/optical/indexes', {
+    exports: {
+        calculateIndex: () => ({}),
+        supportedIndexes: () => []
+    }
+})
+mock.module('#sepal/ee/planet/collection', {
+    exports: {
+        createCollection: () => ({})
+    }
+})
+mock.module('#sepal/ee/radar/collection', {
+    exports: {
+        createCollection: () => ({})
+    }
+})
 
 const {getCollection$} = await import('#sepal/ee/timeSeries/collection')
 
@@ -43,7 +74,7 @@ describe('time-series collection', () => {
     it('constructs the collection from the resolved geometry of an asset aoi', async () => {
         await firstValueFrom(getCollection$({recipe: recipe(asset), bands: ['red']}))
 
-        expect(captured.geometry).toBe(resolved(asset.id))
+        assert.equal(captured.geometry, resolved(asset.id))
     })
 
     it('uses a geometry the caller already holds without resolving the aoi again', async () => {
@@ -51,13 +82,13 @@ describe('time-series collection', () => {
 
         await firstValueFrom(getCollection$({recipe: recipe(asset), bands: ['red'], geometry: explicit}))
 
-        expect(captured.geometry).toBe(explicit)
-        expect(captured.resolutions).toBe(0)
+        assert.equal(captured.geometry, explicit)
+        assert.equal(captured.resolutions, 0)
     })
 
     it('resolves lazily - nothing happens until the collection is subscribed to', () => {
         getCollection$({recipe: recipe(asset), bands: ['red']})
 
-        expect(captured.resolutions).toBe(0)
+        assert.equal(captured.resolutions, 0)
     })
 })

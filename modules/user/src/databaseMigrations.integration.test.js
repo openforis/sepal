@@ -1,7 +1,9 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {cp, mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -11,14 +13,14 @@ describe('user database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -28,8 +30,8 @@ describe('user database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.sepal_user WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             sepal_user: 'ascii_general_ci',
             ssh_key: 'ascii_general_ci'
         })
@@ -42,7 +44,7 @@ describe('user database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['sepal_user']))
+            assert.ok(new Set(['sepal_user']).isSubsetOf(new Set(tables)))
         })
 
         test('create them empty, importing nothing', async () => {
@@ -51,7 +53,7 @@ describe('user database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const usernames = await storedUsernames(dbName)
-            expect(usernames).toEqual([])
+            assert.deepEqual(usernames, [])
         })
     })
 
@@ -63,7 +65,9 @@ describe('user database migrations', () => {
         await initDb(dbName, SCHEMA_PATH)
 
         const columns = await columnNames(dbName, 'sepal_user')
-        expect(columns).toEqual(expect.arrayContaining(['password_hash', 'ssh_public_key', 'uid', 'gid']))
+        assert.ok(
+            new Set(['password_hash', 'ssh_public_key', 'uid', 'gid']).isSubsetOf(new Set(columns))
+        )
     })
 
     describe('002.do.revision.sql', () => {
@@ -75,7 +79,7 @@ describe('user database migrations', () => {
             await migrateDb(dbName, SCHEMA_PATH)
 
             const [rows] = await admin.query('SELECT username, revision FROM ??.sepal_user ORDER BY username', [dbName])
-            expect(rows).toEqual([{username: 'alice', revision: 1}, {username: 'bob', revision: 1}])
+            assert.deepEqual(rows, [{username: 'alice', revision: 1}, {username: 'bob', revision: 1}])
         })
     })
 
@@ -87,8 +91,8 @@ describe('user database migrations', () => {
         const stored = await insertUser(dbName, aUser())
         const [rows] = await admin.query('SELECT id FROM ??.sepal_user WHERE username = ?', [dbName, stored.username])
         const tables = await tableNames(dbName)
-        expect(rows[0].id).toBe(1)
-        expect(tables).toEqual(['schema_version', 'sepal_user', 'ssh_key'])
+        assert.equal(rows[0].id, 1)
+        assert.deepEqual(tables, ['schema_version', 'sepal_user', 'ssh_key'])
     })
 
     // Copy the real first migration unchanged so the full stream validates it before applying 002.

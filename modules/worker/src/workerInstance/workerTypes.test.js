@@ -1,10 +1,13 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, it, mock} from 'node:test'
 
-jest.unstable_mockModule('node:fs', () => ({
-    default: {
-        readFileSync: jest.fn(() => 'ssh-rsa PUBLIC-KEY\n'),
-    },
-}))
+mock.module('node:fs', {
+    exports: {
+        default: {
+            readFileSync: mock.fn(() => 'ssh-rsa PUBLIC-KEY\n'),
+        }
+    }
+})
 
 const {createWorkerType, SANDBOX} = await import('./workerTypes.js')
 const {instanceName} = await import('../instanceName.js')
@@ -24,13 +27,17 @@ const config = () => ({
 describe('image containerName', () => {
     it('is "{image}.{username}.{instance name}.{instance id}"', () => {
         const workerType = createWorkerType(SANDBOX, instance, config())
-        expect(workerType.images[0].containerName(instance))
-            .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`)
+        assert.equal(
+            workerType.images[0].containerName(instance),
+            `sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`
+        )
 
         const localInstance = {...instance, host: instance.id, daemonHost: 'host.docker.internal'}
         const localWorkerType = createWorkerType(SANDBOX, localInstance, config())
-        expect(localWorkerType.images[0].containerName(localInstance))
-            .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`)
+        assert.equal(
+            localWorkerType.images[0].containerName(localInstance),
+            `sandbox.admin.${instanceName(SESSION_ID)}.${instance.id}`
+        )
     })
 
     // The two-word name identifies the session; the trailing instance id is what the shared-daemon
@@ -38,8 +45,10 @@ describe('image containerName', () => {
     it('ends with the instance id', () => {
         const awsInstance = {...instance, id: 'i-0abc123'}
         const workerType = createWorkerType(SANDBOX, awsInstance, config())
-        expect(workerType.images[0].containerName(awsInstance))
-            .toBe(`sandbox.admin.${instanceName(SESSION_ID)}.i-0abc123`)
+        assert.equal(
+            workerType.images[0].containerName(awsInstance),
+            `sandbox.admin.${instanceName(SESSION_ID)}.i-0abc123`
+        )
     })
 
     // A reservation rebuilt from EC2 tags without a SessionId would otherwise name the container
@@ -47,7 +56,7 @@ describe('image containerName', () => {
     it('throws when the reservation carries no session id', () => {
         const orphaned = {...instance, reservation: {username: 'admin', workerType: SANDBOX}}
         const workerType = createWorkerType(SANDBOX, orphaned, config())
-        expect(() => workerType.images[0].containerName(orphaned)).toThrow(/session/i)
+        assert.throws(() => workerType.images[0].containerName(orphaned), /session/i)
     })
 })
 
@@ -60,9 +69,9 @@ describe('createWorkerType SANDBOX readiness', () => {
             'api-key'
         )
         const [image] = workerType.images
-        expect(image.waitCommand).toEqual(['/script/wait_until_initialized.sh', '22'])
+        assert.deepEqual(image.waitCommand, ['/script/wait_until_initialized.sh', '22'])
         // Routing is unchanged — only readiness narrows.
-        expect(image.exposedPorts).toEqual([22, 8787, 3838, 8888])
-        expect(image.publishedPorts).toEqual({222: 22, 8787: 8787, 3838: 3838, 8888: 8888})
+        assert.deepEqual(image.exposedPorts, [22, 8787, 3838, 8888])
+        assert.deepEqual(image.publishedPorts, {222: 22, 8787: 8787, 3838: 3838, 8888: 8888})
     })
 })

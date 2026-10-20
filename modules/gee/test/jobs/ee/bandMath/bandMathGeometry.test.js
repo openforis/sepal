@@ -1,16 +1,21 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, it, mock} from 'node:test'
+import {format, isDeepStrictEqual} from 'node:util'
+
 import {firstValueFrom, of, throwError} from 'rxjs'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 // Wiring only: the live verifier checks real Earth Engine values, masks, projections and outside pixels.
 const geometry = label => ({label, isUnbounded: () => false, union: other => geometry(`${label}+${other.label}`)})
 const FIRST = geometry('reported-first-input')
 const SECOND = geometry('second-footprint')
-const getGeometry$ = jest.fn()
-const imageFactory = jest.fn(({imageId}) => ({
+const getGeometry$ = mock.fn()
+const imageFactory = mock.fn(({imageId}) => ({
     getImage$: () => of(image([imageId === 'first' ? 'red' : 'nir'])),
     getGeometry$
 }))
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
+mock.module('#sepal/ee/imageFactory', {exports: {default: imageFactory}})
 
 const image = (bands = [], clippedTo) => ({
     bands, clippedTo,
@@ -29,59 +34,62 @@ const list = values => ({
     get: index => values[index],
     iterate: (fn, initial) => values.reduce((acc, value) => fn(value, acc), initial)
 })
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: {
+mock.module('#sepal/ee/ee', {exports: {default: {
     Image: value => Array.isArray(value) ? image(value.flat(Infinity).flatMap(({bands}) => bands)) : value || image(),
     List: list,
     Geometry: value => value,
     Algorithms: {If: (condition, yes, no) => condition ? yes : no},
     Dictionary: {fromLists: () => ({})},
     Reducer: {mean: () => ({})}
-}}))
+}}})
 const {default: bandMath} = await import('#sepal/ee/bandMath/bandMath')
 
 beforeEach(() => {
-    jest.clearAllMocks()
-    getGeometry$.mockImplementation(() => of(FIRST))
+    getGeometry$.mock.resetCalls()
+    imageFactory.mock.resetCalls()
+    getGeometry$.mock.mockImplementation(() => of(FIRST))
 })
 
-it.each([undefined, [], ['direct'], ['expression'], ['reducer']])('clips the built output to the reported geometry, selection=%s', async selection => {
-    const factory = bandMath(RECIPE, {selection})
-    const reported = await firstValueFrom(factory.getGeometry$())
-    const built = await firstValueFrom(factory.getImage$())
-    expect(reported).toBe(FIRST)
-    expect(built.clippedTo).toBe(reported)
-    expect(built.bands).toEqual(selection?.length ? selection : ['direct', 'expression', 'reducer'])
-    expect(imageFactory).toHaveBeenCalledWith(RECIPE.model.inputImagery.images[0])
-})
+for (const selection of [undefined, [], ['direct'], ['expression'], ['reducer']]) {
+    it(format('clips the built output to the reported geometry, selection=%s', selection), async () => {
+        const factory = bandMath(RECIPE, {selection})
+        const reported = await firstValueFrom(factory.getGeometry$())
+        const built = await firstValueFrom(factory.getImage$())
+        assert.equal(reported, FIRST)
+        assert.equal(built.clippedTo, reported)
+        assert.deepEqual(built.bands, selection?.length ? selection : ['direct', 'expression', 'reducer'])
+        assert.ok(callsOf(imageFactory).some(actual => actual.length === 1 && isDeepStrictEqual(actual[0], RECIPE.model.inputImagery.images[0])))
+    })
+}
 
 it('propagates a geometry resolution failure instead of falling back to other input footprints', async () => {
     const failure = new Error('first input geometry unavailable')
-    getGeometry$.mockImplementation(() => throwError(() => failure))
-    await expect(firstValueFrom(bandMath(RECIPE).getImage$())).rejects.toBe(failure)
+    getGeometry$.mock.mockImplementation(() => throwError(() => failure))
+    await assert.rejects(firstValueFrom(bandMath(RECIPE).getImage$()), error => error === failure)
 })
 
 it('does not substitute other finite footprints for an unbounded reported boundary', async () => {
-    getGeometry$.mockImplementation(() => of({...FIRST, isUnbounded: () => true}))
+    getGeometry$.mock.mockImplementation(() => of({...FIRST, isUnbounded: () => true}))
     const built = await firstValueFrom(bandMath(RECIPE).getImage$())
-    expect(built.clippedTo).toBeUndefined()
+    assert.equal(built.clippedTo, undefined)
 })
 
 it('refuses an unavailable boundary instead of constructing a fallback region', async () => {
-    getGeometry$.mockImplementation(() => of(null))
-    await expect(firstValueFrom(bandMath(RECIPE).getImage$())).rejects.toThrow('first input geometry is unavailable')
+    getGeometry$.mock.mockImplementation(() => of(null))
+    await assert.rejects(firstValueFrom(bandMath(RECIPE).getImage$()), error => error.message.includes('first input geometry is unavailable'))
 })
 
 it('passes an empty resolved geometry to clipping without replacing it', async () => {
     const empty = geometry('empty')
-    getGeometry$.mockImplementation(() => of(empty))
-    expect((await firstValueFrom(bandMath(RECIPE).getImage$())).clippedTo).toBe(empty)
+    getGeometry$.mock.mockImplementation(() => of(empty))
+    assert.equal((await firstValueFrom(bandMath(RECIPE).getImage$())).clippedTo, empty)
 })
 
 it('keeps the existing empty-input completion without trying to resolve a boundary', async () => {
     const empty = {...RECIPE, model: {...RECIPE.model, inputImagery: {images: []}}}
-    await expect(firstValueFrom(bandMath(empty).getImage$(), {defaultValue: 'empty'})).resolves.toBe('empty')
-    expect(imageFactory).not.toHaveBeenCalled()
-    expect(() => bandMath(empty).getGeometry$()).toThrow(TypeError)
+    await assert.equal(await (firstValueFrom(bandMath(empty).getImage$(), {defaultValue: 'empty'})), 'empty')
+    assert.equal(imageFactory.mock.callCount(), 0)
+    assert.throws(() => bandMath(empty).getGeometry$(), TypeError)
 })
 
 const RECIPE = {model: {

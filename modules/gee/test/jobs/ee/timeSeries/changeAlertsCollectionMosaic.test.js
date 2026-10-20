@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // What a Change Alerts mosaic mode executes: the mosaic its product is described as, over the geometry of the reference
@@ -31,7 +33,7 @@ const RECORDS = {
     }
 }
 
-const imageFactory = jest.fn(recipe => {
+const imageFactory = mock.fn(recipe => {
     if (MOSAIC_TYPES.has(recipe.type)) {
         mosaics.push(recipe)
         return mosaic
@@ -43,34 +45,48 @@ const imageFactory = jest.fn(recipe => {
     return imageOf(recipe.id)
 })
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: imageFactory}))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: imageFactory
+    }
+})
 
 const {default: changeAlerts} = await import('#sepal/ee/timeSeries/changeAlerts')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 
 beforeEach(() => {
-    imageFactory.mockClear()
+    imageFactory.mock.resetCalls()
     mosaics.length = 0
 })
 
-describe.each([
+for (const [scenario, sources] of [
     ['optical', {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 75}],
     ['radar', {band: 'VV', dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}],
     ['Planet', {band: 'ndvi', dataSetType: 'PLANET', dataSets: {PLANET: ['DAILY']}, assets: ['users/x/daily']}]
-])('a Change Alerts %s mosaic mode', (_case, sources) => {
-    it.each([
-        ['monitoring', 'latest'],
-        ['monitoring', 'median'],
-        ['calibration', 'latest'],
-        ['calibration', 'median']
-    ])('builds the %s %s mosaic it is described as, over the geometry of the CCDC it monitors', async (period, mosaicType) => {
-        const recipe = changeAlertsRecipe({sources})
+]) {
+    describe(`a Change Alerts ${scenario} mosaic mode`, () => {
+        for (const [period, mosaicType] of [
+            ['monitoring', 'latest'],
+            ['monitoring', 'median'],
+            ['calibration', 'latest'],
+            ['calibration', 'median']
+        ]) {
+            it(
+                `builds the ${period} ${mosaicType} mosaic it is described as, over the geometry of the CCDC it monitors`,
+                async () => {
+                    const recipe = changeAlertsRecipe({sources})
 
-        await firstValueFrom(changeAlerts(recipe, {visualizationType: period, mosaicType}).getImage$())
+                    await firstValueFrom(changeAlerts(recipe, {visualizationType: period, mosaicType}).getImage$())
 
-        expect(mosaics).toEqual([withArea(describedMosaic(recipe, {period, mosaicType}), {geometryOf: 'ccdc-1'})])
+                    assert.deepEqual(
+                        mosaics,
+                        [withArea(describedMosaic(recipe, {period, mosaicType}), {geometryOf: 'ccdc-1'})]
+                    )
+                }
+            )
+        }
     })
-})
+}
 
 describe('the area a Change Alerts mosaic is built over', () => {
     it('is the geometry of the wrapper it selected, not of the CCDC under it', async () => {
@@ -78,7 +94,10 @@ describe('the area a Change Alerts mosaic is built over', () => {
 
         await firstValueFrom(changeAlerts(recipe, {visualizationType: 'calibration', mosaicType: 'median'}).getImage$())
 
-        expect(mosaics.map(({model: {aoi}}) => aoi)).toEqual([{type: 'GEOMETRY', geometry: {geometryOf: 'masked-ccdc'}}])
+        assert.deepEqual(
+            mosaics.map(({model: {aoi}}) => aoi),
+            [{type: 'GEOMETRY', geometry: {geometryOf: 'masked-ccdc'}}]
+        )
     })
 
     it('is the geometry of a segments asset it selected', async () => {
@@ -86,7 +105,10 @@ describe('the area a Change Alerts mosaic is built over', () => {
 
         await firstValueFrom(changeAlerts(recipe, {visualizationType: 'monitoring', mosaicType: 'latest'}).getImage$())
 
-        expect(mosaics.map(({model: {aoi}}) => aoi)).toEqual([{type: 'GEOMETRY', geometry: {geometryOf: 'users/x/segments'}}])
+        assert.deepEqual(
+            mosaics.map(({model: {aoi}}) => aoi),
+            [{type: 'GEOMETRY', geometry: {geometryOf: 'users/x/segments'}}]
+        )
     })
 
     it('scans the calibration period it is described over', async () => {
@@ -94,8 +116,10 @@ describe('the area a Change Alerts mosaic is built over', () => {
 
         await firstValueFrom(changeAlerts(recipe, {visualizationType: 'calibration', mosaicType: 'median'}).getImage$())
 
-        expect(mosaics.map(({model: {dates: {fromDate, toDate}}}) => ({fromDate, toDate})))
-            .toEqual([{fromDate: '2023-08-01', toDate: '2023-11-01'}])
+        assert.deepEqual(
+            mosaics.map(({model: {dates: {fromDate, toDate}}}) => ({fromDate, toDate})),
+            [{fromDate: '2023-08-01', toDate: '2023-11-01'}]
+        )
     })
 })
 

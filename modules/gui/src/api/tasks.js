@@ -22,6 +22,8 @@ export default {
     remove$: taskId =>
         post$(`/api/tasks/task/${taskId}/remove`),
 
-    removeAll$: () =>
-        post$('/api/tasks/remove')
+    removeFinished$: taskIds =>
+        postJson$('/api/tasks/remove', {
+            body: {taskIds}
+        })
 }

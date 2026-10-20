@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {beforeEach, test} from 'node:test'
+
 import {createRequireAuth} from './currentUser.js'
 
 let received
@@ -12,7 +15,7 @@ test('an authenticated request reaches the next middleware as its user', async (
 
     await requireAuth(ctx, observeDownstream(ctx))
 
-    expect(received).toEqual([authenticatedUser])
+    assert.deepEqual(received, [authenticatedUser])
 })
 
 test('a request without the header is unauthorized, and goes no further', async () => {
@@ -20,8 +23,8 @@ test('a request without the header is unauthorized, and goes no further', async 
 
     await requireAuth(ctx, observeDownstream(ctx))
 
-    expect(received).toEqual([])
-    expect(ctx.status).toBe(401)
+    assert.deepEqual(received, [])
+    assert.equal(ctx.status, 401)
 })
 
 // The 401 body cannot tell a missing header from an unparseable one, so the warning is the only signal
@@ -31,9 +34,9 @@ test('a header that will not parse is unauthorized, and reported', async () => {
 
     await requireAuth(ctx, observeDownstream(ctx))
 
-    expect(received).toEqual([])
-    expect(ctx.status).toBe(401)
-    expect(warnings).toHaveLength(1)
+    assert.deepEqual(received, [])
+    assert.equal(ctx.status, 401)
+    assert.equal(warnings.length, 1)
 })
 
 const observeDownstream = ctx => async () => received.push(ctx.state.currentUser)

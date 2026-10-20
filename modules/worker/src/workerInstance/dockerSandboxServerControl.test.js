@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {instanceName} from '../instanceName.js'
 import {createDockerSandboxServerControl} from './dockerSandboxServerControl.js'
 
@@ -23,24 +26,27 @@ describe('startServer', () => {
         const calls = []
         const control = createDockerSandboxServerControl({config, fetcher: fetcherReturning(calls, 0)})
         await control.startServer(session, 'jupyter')
-        expect(calls[0][0]).toBe('http://1.2.3.4:2375/v1.44')
-        expect(calls[0][1]).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/exec`)
-        expect(calls[0][2].body.Cmd).toEqual(['/script/sandbox-server.sh', 'start', 'jupyter'])
-        expect(calls[0][2].body.Tty).toBe(false)
-        expect(calls[1][1]).toBe('exec/exec-1/start')
-        expect(calls[2][1]).toBe('exec/exec-1/json')
+        assert.equal(calls[0][0], 'http://1.2.3.4:2375/v1.44')
+        assert.equal(
+            calls[0][1],
+            `containers/sandbox.alice.${instanceName('sess-1')}.i-0abc/exec`
+        )
+        assert.deepEqual(calls[0][2].body.Cmd, ['/script/sandbox-server.sh', 'start', 'jupyter'])
+        assert.equal(calls[0][2].body.Tty, false)
+        assert.equal(calls[1][1], 'exec/exec-1/start')
+        assert.equal(calls[2][1], 'exec/exec-1/json')
     })
 
     it('rejects when the start script exits non-zero', async () => {
         const calls = []
         const control = createDockerSandboxServerControl({config, fetcher: fetcherReturning(calls, 1)})
-        await expect(control.startServer(session, 'jupyter')).rejects.toThrow(/jupyter/)
+        await assert.rejects(control.startServer(session, 'jupyter'), /jupyter/)
     })
 
     it('rejects when the exec inspect yields no exit code', async () => {
         const fetcher = async (_baseUrl, path) => path.endsWith('/exec') ? {Id: 'exec-1'} : null
         const control = createDockerSandboxServerControl({config, fetcher})
-        await expect(control.startServer(session, 'shiny')).rejects.toThrow(/shiny/)
+        await assert.rejects(control.startServer(session, 'shiny'), /shiny/)
     })
 
     it('uses defaultDaemonHost when set (local hosting)', async () => {
@@ -48,13 +54,18 @@ describe('startServer', () => {
         const control = createDockerSandboxServerControl({
             config, defaultDaemonHost: 'host.docker.internal', fetcher: fetcherReturning(calls, 0)})
         await control.startServer({...session, instance: {id: 'abc-123', host: 'alias-42'}}, 'rstudio')
-        expect(calls[0][0]).toBe('http://host.docker.internal:2375/v1.44')
-        expect(calls[0][1]).toBe(`containers/sandbox.alice.${instanceName('sess-1')}.abc-123/exec`)
+        assert.equal(calls[0][0], 'http://host.docker.internal:2375/v1.44')
+        assert.equal(
+            calls[0][1],
+            `containers/sandbox.alice.${instanceName('sess-1')}.abc-123/exec`
+        )
     })
 
     it('rejects for a non-sandbox session', async () => {
         const control = createDockerSandboxServerControl({config, fetcher: async () => ({Id: 'x'})})
-        await expect(control.startServer({...session, workerType: 'other'}, 'shiny'))
-            .rejects.toThrow(/Not a sandbox session/)
+        await assert.rejects(
+            control.startServer({...session, workerType: 'other'}, 'shiny'),
+            /Not a sandbox session/
+        )
     })
 })

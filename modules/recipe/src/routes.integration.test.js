@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+import {after, before, beforeEach, describe, test} from 'node:test'
 import {gzipSync} from 'node:zlib'
 
 import * as httpServer from '#sepal/httpServer'
@@ -10,7 +12,7 @@ let baseUrl
 
 const service = recipeServiceSpy()
 
-beforeAll(async () => {
+before(async () => {
     server = await httpServer.start({
         port: 0,
         routes: createRoutes({
@@ -22,7 +24,7 @@ beforeAll(async () => {
     baseUrl = `http://127.0.0.1:${server.address().port}`
 })
 
-afterAll(() => new Promise(resolve => server.close(resolve)))
+after(() => new Promise(resolve => server.close(resolve)))
 
 beforeEach(() => service.reset())
 
@@ -30,14 +32,14 @@ describe('authentication', () => {
     test('refuses a request without the sepal-user header', async () => {
         const response = await GET('/', {headers: {}})
 
-        expect(response.status).toBe(401)
-        expect(service.reached).toBe(false)
+        assert.equal(response.status, 401)
+        assert.equal(service.reached, false)
     })
 
     test('passes the authenticated user to the service as the principal', async () => {
         await GET('/')
 
-        expect(service.listRecipesCommand).toEqual({principal: authenticatedUser})
+        assert.deepEqual(service.listRecipesCommand, {principal: authenticatedUser})
     })
 })
 
@@ -50,9 +52,9 @@ describe('route precedence', () => {
 
         const response = await GET('/project')
 
-        expect(service.listProjectsCommand).toEqual({principal: authenticatedUser})
-        expect(service.loadRecipeCommand).toBeNull()
-        expect(response.body).toEqual([project])
+        assert.deepEqual(service.listProjectsCommand, {principal: authenticatedUser})
+        assert.equal(service.loadRecipeCommand, null)
+        assert.deepEqual(response.body, [project])
     })
 })
 
@@ -62,8 +64,8 @@ describe('POST /:id', () => {
 
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: aRecipeContent()})
 
-        expect(response.status).toBe(200)
-        expect(response.body).toEqual({revision: service.saveOutcome.revision})
+        assert.equal(response.status, 200)
+        assert.deepEqual(response.body, {revision: service.saveOutcome.revision})
     })
 
     test('gunzips the request body into the full save command', async () => {
@@ -71,7 +73,7 @@ describe('POST /:id', () => {
 
         await POST(`/${A_RECIPE_ID}?type=MOSAIC&name=A%20recipe`, {gzip: content})
 
-        expect(service.saveRecipeCommand).toEqual({
+        assert.deepEqual(service.saveRecipeCommand, {
             principal: authenticatedUser,
             recipe: {id: A_RECIPE_ID, projectId: null, name: 'A recipe', type: 'MOSAIC', content},
             expectedRevision: undefined
@@ -81,32 +83,34 @@ describe('POST /:id', () => {
     test('reads the expected revision from the query as a number', async () => {
         await POST(`/${A_RECIPE_ID}?type=MOSAIC&expectedRevision=4`, {gzip: aRecipeContent()})
 
-        expect(service.saveRecipeCommand.expectedRevision).toBe(4)
+        assert.equal(service.saveRecipeCommand.expectedRevision, 4)
     })
 
     // Query strings cannot carry null, and an empty value must not become the literal empty string.
     test('turns an empty project id into no project at all', async () => {
         await POST(`/${A_RECIPE_ID}?type=MOSAIC&projectId=`, {gzip: aRecipeContent()})
 
-        expect(service.saveRecipeCommand.recipe.projectId).toBeNull()
+        assert.equal(service.saveRecipeCommand.recipe.projectId, null)
     })
 
-    test.each(['abc', '0', '1.5', '-1', ''])('refuses %p as an expected revision', async expectedRevision => {
-        const response = await POST(
-            `/${A_RECIPE_ID}?type=MOSAIC&expectedRevision=${expectedRevision}`, {gzip: aRecipeContent()}
-        )
+    for (const expectedRevision of ['abc', '0', '1.5', '-1', '']) {
+        test(`refuses ${expectedRevision} as an expected revision`, async () => {
+            const response = await POST(
+                `/${A_RECIPE_ID}?type=MOSAIC&expectedRevision=${expectedRevision}`, {gzip: aRecipeContent()}
+            )
 
-        expect(response.status).toBe(400)
-        expect(response.body).toEqual({code: 'INVALID_EXPECTED_REVISION'})
-        expect(service.reached).toBe(false)
-    })
+            assert.equal(response.status, 400)
+            assert.deepEqual(response.body, {code: 'INVALID_EXPECTED_REVISION'})
+            assert.equal(service.reached, false)
+        })
+    }
 
     test('refuses an invalid expected revision before reading a body it could not decode', async () => {
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC&expectedRevision=abc`,
             {gzip: undefined, raw: Buffer.from('not gzip')})
 
-        expect(response.status).toBe(400)
-        expect(service.reached).toBe(false)
+        assert.equal(response.status, 400)
+        assert.equal(service.reached, false)
     })
 
     test('reports a conflict as 412, carrying the revision the client should reload', async () => {
@@ -114,8 +118,8 @@ describe('POST /:id', () => {
 
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: aRecipeContent()})
 
-        expect(response.status).toBe(412)
-        expect(response.body).toEqual({
+        assert.equal(response.status, 412)
+        assert.deepEqual(response.body, {
             code: 'RECIPE_REVISION_CONFLICT', currentRevision: service.saveOutcome.currentRevision
         })
     })
@@ -125,8 +129,8 @@ describe('POST /:id', () => {
 
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: aRecipeContent()})
 
-        expect(response.status).toBe(409)
-        expect(response.body).toEqual({code: 'RECIPE_TYPE_MISMATCH'})
+        assert.equal(response.status, 409)
+        assert.deepEqual(response.body, {code: 'RECIPE_TYPE_MISMATCH'})
     })
 
     test('reports a missing recipe as 404', async () => {
@@ -134,7 +138,7 @@ describe('POST /:id', () => {
 
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: aRecipeContent()})
 
-        expect(response.status).toBe(404)
+        assert.equal(response.status, 404)
     })
 
     // A duck-typed port has no compiler to catch a renamed outcome, so an unknown one must surface as a
@@ -144,7 +148,7 @@ describe('POST /:id', () => {
 
         const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: aRecipeContent()})
 
-        expect(response.status).toBe(500)
+        assert.equal(response.status, 500)
     })
 })
 
@@ -154,8 +158,11 @@ describe('GET /:id', () => {
 
         const response = await GET(`/${A_RECIPE_ID}`)
 
-        expect(service.loadRecipeCommand).toEqual({principal: authenticatedUser, recipeId: A_RECIPE_ID})
-        expect(response.body).toEqual(service.recipe)
+        assert.deepEqual(
+            service.loadRecipeCommand,
+            {principal: authenticatedUser, recipeId: A_RECIPE_ID}
+        )
+        assert.deepEqual(response.body, service.recipe)
     })
 
     test('forbids caching the revision it carries', async () => {
@@ -163,7 +170,7 @@ describe('GET /:id', () => {
 
         const response = await GET(`/${A_RECIPE_ID}`)
 
-        expect(response.headers.get('cache-control')).toBe('no-store')
+        assert.equal(response.headers.get('cache-control'), 'no-store')
     })
 
     test('reports an unknown recipe as 404', async () => {
@@ -171,7 +178,7 @@ describe('GET /:id', () => {
 
         const response = await GET(`/${A_RECIPE_ID}`)
 
-        expect(response.status).toBe(404)
+        assert.equal(response.status, 404)
     })
 })
 
@@ -181,7 +188,7 @@ describe('GET /', () => {
 
         const response = await GET('/')
 
-        expect(response.body).toEqual(service.recipes)
+        assert.deepEqual(response.body, service.recipes)
     })
 
     test('forbids caching the revisions it carries', async () => {
@@ -189,7 +196,7 @@ describe('GET /', () => {
 
         const response = await GET('/')
 
-        expect(response.headers.get('cache-control')).toBe('no-store')
+        assert.equal(response.headers.get('cache-control'), 'no-store')
     })
 })
 
@@ -199,10 +206,10 @@ describe('DELETE /:id', () => {
 
         const response = await DELETE(`/${A_RECIPE_ID}`)
 
-        expect(service.removeRecipesCommand).toEqual({
+        assert.deepEqual(service.removeRecipesCommand, {
             principal: authenticatedUser, recipeIds: [A_RECIPE_ID]
         })
-        expect(response.body).toEqual(service.recipes)
+        assert.deepEqual(response.body, service.recipes)
     })
 })
 
@@ -213,10 +220,10 @@ describe('DELETE /', () => {
 
         const response = await DELETE('/', {json: removed})
 
-        expect(service.removeRecipesCommand).toEqual({
+        assert.deepEqual(service.removeRecipesCommand, {
             principal: authenticatedUser, recipeIds: removed
         })
-        expect(response.body).toEqual(service.recipes)
+        assert.deepEqual(response.body, service.recipes)
     })
 })
 
@@ -227,10 +234,10 @@ describe('POST /project/:id', () => {
 
         const response = await POST(`/project/${DESTINATION_PROJECT_ID}`, {json: moved})
 
-        expect(service.moveRecipesCommand).toEqual({
+        assert.deepEqual(service.moveRecipesCommand, {
             principal: authenticatedUser, projectId: DESTINATION_PROJECT_ID, recipeIds: moved
         })
-        expect(response.body).toEqual(service.recipes)
+        assert.deepEqual(response.body, service.recipes)
     })
 })
 
@@ -241,8 +248,8 @@ describe('POST /project', () => {
 
         const response = await POST('/project', {json: project})
 
-        expect(service.saveProjectCommand).toEqual({principal: authenticatedUser, project})
-        expect(response.body).toEqual(service.projects)
+        assert.deepEqual(service.saveProjectCommand, {principal: authenticatedUser, project})
+        assert.deepEqual(response.body, service.projects)
     })
 })
 
@@ -252,10 +259,10 @@ describe('DELETE /project/:id', () => {
 
         const response = await DELETE(`/project/${A_PROJECT_ID}`)
 
-        expect(service.removeProjectCommand).toEqual({
+        assert.deepEqual(service.removeProjectCommand, {
             principal: authenticatedUser, projectId: A_PROJECT_ID
         })
-        expect(response.body).toEqual(service.projects)
+        assert.deepEqual(response.body, service.projects)
     })
 })
 

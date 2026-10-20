@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {gridPixelSize} from '#sepal/recipe/samplingDesign/samplingGrid'
 
@@ -13,7 +16,7 @@ describe('effectiveArrangement four-mode matrix', () => {
     describe('stratified Systematic', () => {
         it('returns both grids, each owning its own CRS', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: arrangement})
-            expect(result).toEqual({
+            assert.deepEqual(result, {
                 arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
                 seed: 42, minDistance: 1000,
                 stratificationGrid: {crs: 'EPSG:32636', scale: 300},
@@ -23,12 +26,12 @@ describe('effectiveArrangement four-mode matrix', () => {
 
         it('resolves a blank minDistance to twice the Stratification pixel size', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: {...arrangement, minDistance: null}})
-            expect(result.minDistance).toBe(600)
+            assert.equal(result.minDistance, 600)
         })
 
         it('defaults the Arrangement CRS when none is configured', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: {...arrangement, crs: undefined}})
-            expect(result.arrangementGrid).toEqual({crs: 'EPSG:6933'})
+            assert.deepEqual(result.arrangementGrid, {crs: 'EPSG:6933'})
         })
     })
 
@@ -37,20 +40,20 @@ describe('effectiveArrangement four-mode matrix', () => {
 
         it('returns both grids and drops Systematic-only settings', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: random})
-            expect(result).toEqual({
+            assert.deepEqual(result, {
                 arrangementStrategy: 'RANDOM', seed: 42,
                 stratificationGrid: {crs: 'EPSG:32636', scale: 300},
                 arrangementGrid: {crs: 'EPSG:6931'}
             })
             for (const field of ['minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
-                expect(field in result).toBe(false)
+                assert.equal(field in result, false)
             }
         })
 
         it('never collapses the two grids into one crs/scale pair', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: random})
-            expect('crs' in result).toBe(false)
-            expect('scale' in result).toBe(false)
+            assert.equal('crs' in result, false)
+            assert.equal('scale' in result, false)
         })
     })
 
@@ -59,30 +62,30 @@ describe('effectiveArrangement four-mode matrix', () => {
 
         it('carries the Arrangement grid only', () => {
             const result = effectiveArrangement({stratification: strat, sampleArrangement: arrangement})
-            expect(result).toEqual({
+            assert.deepEqual(result, {
                 arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
                 seed: 42, minDistance: 1000, arrangementGrid: {crs: 'EPSG:6931'}
             })
-            expect('stratificationGrid' in result).toBe(false)
+            assert.equal('stratificationGrid' in result, false)
         })
 
         it('defaults the Arrangement CRS to EPSG:6933 when none is configured', () => {
             const result = effectiveArrangement({stratification: strat, sampleArrangement: {...arrangement, crs: undefined}})
-            expect(result.arrangementGrid).toEqual({crs: 'EPSG:6933'})
+            assert.deepEqual(result.arrangementGrid, {crs: 'EPSG:6933'})
         })
 
         it('keeps a blank minDistance blank (no additional spacing constraint)', () => {
             const result = effectiveArrangement({stratification: strat, sampleArrangement: {...arrangement, minDistance: null}})
-            expect(result.minDistance).toBeNull()
+            assert.equal(result.minDistance, null)
         })
     })
 
     describe('unstratified Random', () => {
         it('carries neither grid', () => {
             const result = effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: {...arrangement, arrangementStrategy: 'RANDOM'}})
-            expect(result).toEqual({arrangementStrategy: 'RANDOM', seed: 42})
+            assert.deepEqual(result, {arrangementStrategy: 'RANDOM', seed: 42})
             for (const field of ['stratificationGrid', 'arrangementGrid', 'crs', 'scale', 'minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
-                expect(field in result).toBe(false)
+                assert.equal(field in result, false)
             }
         })
     })
@@ -100,24 +103,33 @@ describe('the effective Stratification grid is crs and metre scale only', () => 
         effectiveArrangement({stratification, sampleArrangement}).stratificationGrid
 
     it('emits the CRS and metre Scale for Systematic and Random alike', () => {
-        expect(gridOf(geographic)).toEqual({crs: 'EPSG:4326', scale: 10})
-        expect(gridOf(geographic, {...arrangement, arrangementStrategy: 'RANDOM'})).toEqual({crs: 'EPSG:4326', scale: 10})
+        assert.deepEqual(gridOf(geographic), {crs: 'EPSG:4326', scale: 10})
+        assert.deepEqual(
+            gridOf(geographic, {...arrangement, arrangementStrategy: 'RANDOM'}),
+            {crs: 'EPSG:4326', scale: 10}
+        )
     })
 
     it('yields a 10 m pixel size, never the degree coefficient', () => {
-        expect(gridPixelSize(gridOf(geographic))).toBe(10)
-        expect(gridPixelSize(gridOf(geographic))).not.toBe(0.0000898315)
+        assert.equal(gridPixelSize(gridOf(geographic)), 10)
+        assert.notEqual(gridPixelSize(gridOf(geographic)), 0.0000898315)
     })
 
     it('floors the systematic minimum distance at two 10 m pixels', () => {
-        expect(effectiveArrangement({stratification: geographic, sampleArrangement: {...arrangement, minDistance: null}}).minDistance).toBe(20)
+        assert.equal(
+            effectiveArrangement({stratification: geographic, sampleArrangement: {...arrangement, minDistance: null}}).minDistance,
+            20
+        )
     })
 
     it('emits the grid as those two fields and no others', () => {
-        expect(Object.keys(gridOf(geographic)).sort()).toEqual(['crs', 'scale'])
+        assert.deepEqual(Object.keys(gridOf(geographic)).sort(), ['crs', 'scale'])
     })
 
     it('keeps a coarser configured Scale when the user asks for one', () => {
-        expect(gridOf({...geographic, crs: 'EPSG:6933', scale: 30})).toEqual({crs: 'EPSG:6933', scale: 30})
+        assert.deepEqual(
+            gridOf({...geographic, crs: 'EPSG:6933', scale: 30}),
+            {crs: 'EPSG:6933', scale: 30}
+        )
     })
 })

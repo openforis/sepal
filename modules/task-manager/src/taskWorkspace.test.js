@@ -1,6 +1,8 @@
+import assert from 'node:assert/strict'
 import {mkdtemp, readFile, rm, stat, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {afterEach, beforeEach, test} from 'node:test'
 
 import {createTask, State} from './task.js'
 import {TaskWorkspace} from './taskWorkspace.js'
@@ -19,7 +21,10 @@ afterEach(() => rm(dir, {recursive: true, force: true}))
 test('hands the container the task it runs', async () => {
     await workspace.prepare(TASK)
 
-    expect(JSON.parse(await readFile(join(dir, 't-1', 'task.json'), 'utf8'))).toEqual({id: 't-1', operation: 'image.GEE', params: {image: {scale: 30}}})
+    assert.deepEqual(
+        JSON.parse(await readFile(join(dir, 't-1', 'task.json'), 'utf8')),
+        {id: 't-1', operation: 'image.GEE', params: {image: {scale: 30}}}
+    )
 })
 
 test('reads the outcome the container left', async () => {
@@ -27,18 +32,18 @@ test('reads the outcome the container left', async () => {
     const result = {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}}
     await writeFile(join(dir, 't-1', 'result.json'), JSON.stringify(result))
 
-    expect(await workspace.readResult('t-1')).toEqual(result)
+    assert.deepEqual(await workspace.readResult('t-1'), result)
 })
 
 test('reads no outcome when the container left none, or an unreadable one', async () => {
     await workspace.prepare(TASK)
-    expect(await workspace.readResult('t-1')).toBeNull()
+    assert.equal(await workspace.readResult('t-1'), null)
 
     await writeFile(join(dir, 't-1', 'result.json'), '{"state":')
-    expect(await workspace.readResult('t-1')).toBeNull()
+    assert.equal(await workspace.readResult('t-1'), null)
 
     await writeFile(join(dir, 't-1', 'result.json'), JSON.stringify({state: 'BOGUS'}))
-    expect(await workspace.readResult('t-1')).toBeNull()
+    assert.equal(await workspace.readResult('t-1'), null)
 })
 
 test('removes the task directory, also when it is already gone', async () => {
@@ -47,5 +52,5 @@ test('removes the task directory, also when it is already gone', async () => {
     await workspace.remove('t-1')
     await workspace.remove('t-1')
 
-    await expect(stat(join(dir, 't-1'))).rejects.toThrow()
+    await assert.rejects(stat(join(dir, 't-1')))
 })

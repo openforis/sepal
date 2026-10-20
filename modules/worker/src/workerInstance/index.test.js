@@ -1,8 +1,7 @@
-// Tests for the workerInstance component's scheduling and startup backfill. Only the immediate
-// (initial-delay-0) run of SizeIdlePool is exercised — the 1-minute interval never fires within a
-// test, and stop() clears it.
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createWorkerInstanceComponent} from './index.js'
 
@@ -14,21 +13,21 @@ const flush = async () => {
 }
 
 const build = ({instanceTypes, idle = [], reserved = [], stoppedPoolSize, claims = {
-    claim: jest.fn(async () => true),
-    release: jest.fn(async () => true),
-    all: jest.fn(async () => []),
+    claim: mock.fn(async () => true),
+    release: mock.fn(async () => true),
+    all: mock.fn(async () => []),
 }}) => {
     const provider = {
-        start: jest.fn(async () => {}),
-        stop: jest.fn(async () => {}),
-        onInstanceLaunched: jest.fn(),
-        idleInstances: jest.fn(async () => idle),
-        reservedInstances: jest.fn(async () => reserved),
-        launchIdle: jest.fn(async () => []),
-        pooledInstances: jest.fn(async () => []),
-        launchPooled: jest.fn(async () => []),
-        terminate: jest.fn(async () => {}),
-        sweep: jest.fn(async () => {}),
+        start: mock.fn(async () => {}),
+        stop: mock.fn(async () => {}),
+        onInstanceLaunched: mock.fn(),
+        idleInstances: mock.fn(async () => idle),
+        reservedInstances: mock.fn(async () => reserved),
+        launchIdle: mock.fn(async () => []),
+        pooledInstances: mock.fn(async () => []),
+        launchPooled: mock.fn(async () => []),
+        terminate: mock.fn(async () => {}),
+        sweep: mock.fn(async () => {}),
     }
     const component = createWorkerInstanceComponent({
         claims, provider, provisioner: {}, instanceTypes, stoppedPoolSize,
@@ -49,7 +48,7 @@ test('terminates surplus idle instances even when no type declares an idle pool'
     await flush()
     component.stop()
 
-    expect(provider.terminate).toHaveBeenCalledWith('i-orphan')
+    assert.deepEqual(callsOf(provider.terminate), [['i-orphan']])
 })
 
 test('still tops the pool up to target when a type declares one', async () => {
@@ -62,7 +61,7 @@ test('still tops the pool up to target when a type declares one', async () => {
     await flush()
     component.stop()
 
-    expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
+    assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 1]])
 })
 
 test('fills the configured stopped pool on the pool cycle', async () => {
@@ -72,7 +71,7 @@ test('fills the configured stopped pool on the pool cycle', async () => {
     await flush()
     component.stop()
 
-    expect(provider.launchPooled).toHaveBeenCalledWith(2)
+    assert.deepEqual(callsOf(provider.launchPooled), [[2]])
 })
 
 test('leaves the stopped pool alone by default', async () => {
@@ -82,7 +81,7 @@ test('leaves the stopped pool alone by default', async () => {
     await flush()
     component.stop()
 
-    expect(provider.pooledInstances).not.toHaveBeenCalled()
+    assert.equal(provider.pooledInstances.mock.callCount(), 0)
 })
 
 // The provider sweep collects what no allocation path can see (older-version and untagged
@@ -94,20 +93,22 @@ test('runs the provider sweep on every pool cycle', async () => {
     await flush()
     component.stop()
 
-    expect(provider.sweep).toHaveBeenCalled()
+    assert.ok(provider.sweep.mock.callCount() > 0)
 })
 
 // The sizing is what stops released instances billing forever; a sweep failure (an AWS API blip)
 // must not take it down with it.
 test('sizes the pool even when the provider sweep fails', async () => {
     const {component, provider} = build({instanceTypes: [{id: 'T3aSmall', idleCount: 1}]})
-    provider.sweep.mockRejectedValue(new Error('ec2 down'))
+    provider.sweep.mock.mockImplementation(async () => {
+        throw new Error('ec2 down')
+    })
 
     await component.start()
     await flush()
     component.stop()
 
-    expect(provider.launchIdle).toHaveBeenCalledWith('T3aSmall', 1)
+    assert.deepEqual(callsOf(provider.launchIdle), [['T3aSmall', 1]])
 })
 
 test('stop() halts the provider and the sweep', async () => {
@@ -117,7 +118,7 @@ test('stop() halts the provider and the sweep', async () => {
     await flush()
     await component.stop()
 
-    expect(provider.stop).toHaveBeenCalled()
+    assert.ok(provider.stop.mock.callCount() > 0)
 })
 
 describe('start — upgrade backfill', () => {
@@ -134,7 +135,7 @@ describe('start — upgrade backfill', () => {
         await flush()
         component.stop()
 
-        expect(claims.claim.mock.calls).toEqual([['i-1', 's-1']])
+        assert.deepEqual(callsOf(claims.claim), [['i-1', 's-1']])
     })
 
     test('a backfill failure does not stop startup', async () => {
@@ -142,13 +143,13 @@ describe('start — upgrade backfill', () => {
             instanceTypes: [],
             reserved: [{id: 'i-1', reservation: {sessionId: 's-1'}}],
             claims: {
-                claim: jest.fn(async () => { throw new Error('db down') }),
-                release: jest.fn(async () => true),
-                all: jest.fn(async () => []),
+                claim: mock.fn(async () => { throw new Error('db down') }),
+                release: mock.fn(async () => true),
+                all: mock.fn(async () => []),
             },
         })
 
-        await expect(component.start()).resolves.toBeUndefined()
+        assert.equal(await component.start(), undefined)
         await flush()
         component.stop()
     })
@@ -160,16 +161,16 @@ describe('start — upgrade backfill', () => {
 test('restores the open sessions instances before backfilling claims', async () => {
     const order = []
     const {provider} = build({instanceTypes: []})
-    provider.restore = jest.fn(async () => {
+    provider.restore = mock.fn(async () => {
         order.push('restore')
     })
-    provider.reservedInstances = jest.fn(async () => {
+    provider.reservedInstances = mock.fn(async () => {
         order.push('backfill')
         return []
     })
 
     const component = createWorkerInstanceComponent({
-        claims: {claim: jest.fn(async () => true), release: jest.fn(async () => true), all: jest.fn(async () => [])},
+        claims: {claim: mock.fn(async () => true), release: mock.fn(async () => true), all: mock.fn(async () => [])},
         provider,
         provisioner: {},
         instanceTypes: [],
@@ -179,27 +180,27 @@ test('restores the open sessions instances before backfilling claims', async () 
     await flush()
     component.stop()
 
-    expect(provider.restore).toHaveBeenCalledWith([{id: 'i-1'}])
-    expect(order.slice(0, 2)).toEqual(['restore', 'backfill'])
+    assert.deepEqual(callsOf(provider.restore), [[[{id: 'i-1'}]]])
+    assert.deepEqual(order.slice(0, 2), ['restore', 'backfill'])
 })
 
 // A restore that throws must not take the module down with it: everything downstream degrades to
 // the behaviour that shipped before restore existed.
 test('a failing restore does not stop the component from starting', async () => {
     const {provider} = build({instanceTypes: []})
-    provider.restore = jest.fn(async () => {
+    provider.restore = mock.fn(async () => {
         throw new Error('boom')
     })
 
     const component = createWorkerInstanceComponent({
-        claims: {claim: jest.fn(async () => true), release: jest.fn(async () => true), all: jest.fn(async () => [])},
+        claims: {claim: mock.fn(async () => true), release: mock.fn(async () => true), all: mock.fn(async () => [])},
         provider,
         provisioner: {},
         instanceTypes: [],
         openSessionInstances: async () => [{id: 'i-1'}],
     })
 
-    await expect(component.start()).resolves.toBeUndefined()
+    assert.equal(await component.start(), undefined)
     await flush()
     component.stop()
 })

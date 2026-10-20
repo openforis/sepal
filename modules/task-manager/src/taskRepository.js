@@ -40,16 +40,11 @@ export class TaskRepository {
         return rows.map(toTask)
     }
 
-    async pendingTasks(limit, {excludeOperations = [], excludeUsernames = []} = {}) {
+    async pendingTasks(limit, {excludeUsernames = []} = {}) {
         const rows = await this.#select(
-            `SELECT ${COLUMNS} FROM task WHERE state = ?${excludeOperations.length ? ' AND operation NOT IN (?)' : ''}${excludeUsernames.length ? ' AND username NOT IN (?)' : ''}
+            `SELECT ${COLUMNS} FROM task WHERE state = ?${excludeUsernames.length ? ' AND username NOT IN (?)' : ''}
                 ORDER BY creation_time LIMIT ?`,
-            [
-                State.PENDING,
-                ...(excludeOperations.length ? [excludeOperations] : []),
-                ...(excludeUsernames.length ? [excludeUsernames] : []),
-                limit
-            ]
+            [State.PENDING, ...(excludeUsernames.length ? [excludeUsernames] : []), limit]
         )
         return rows.map(toTask)
     }
@@ -59,11 +54,8 @@ export class TaskRepository {
         return rows.map(toTask)
     }
 
-    async countRunning({operations = []} = {}) {
-        const [{count}] = await this.#select(
-            `SELECT COUNT(*) AS count FROM task WHERE state IN (?)${operations.length ? ' AND operation IN (?)' : ''}`,
-            [RUNNING_STATES, ...(operations.length ? [operations] : [])]
-        )
+    async countRunning() {
+        const [{count}] = await this.#select('SELECT COUNT(*) AS count FROM task WHERE state IN (?)', [RUNNING_STATES])
         return Number(count)
     }
 
@@ -103,6 +95,51 @@ export class TaskRepository {
         )
     }
 
+    // A slot's grant time identifies the grant: a release naming an earlier grant leaves a later one alone.
+    async grantSlot(task) {
+        const slot = this.#clock()
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET slot_time = ? WHERE id = ? AND state = ? AND slot_time IS NULL',
+            [slot, task.id, State.ACTIVE]
+        )
+        return affectedRows ? slot : null
+    }
+
+    async renewSlot(task) {
+        const slot = this.#clock()
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET slot_time = ? WHERE id = ? AND state IN (?) AND slot_time IS NOT NULL',
+            [slot, task.id, RUNNING_STATES]
+        )
+        return affectedRows ? slot : null
+    }
+
+    // Answers the grant it ended, or null. Without a slot, releases whatever grant the task holds.
+    async releaseSlot(task, slot) {
+        const grant = slot ?? await this.#slotTime(task)
+        if (!grant) {
+            return null
+        }
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET slot_time = NULL WHERE id = ? AND slot_time = ?',
+            [task.id, grant]
+        )
+        return affectedRows ? grant : null
+    }
+
+    async #slotTime(task) {
+        const [row] = await this.#select('SELECT slot_time FROM task WHERE id = ?', [task.id])
+        return row?.slot_time ? new Date(row.slot_time) : null
+    }
+
+    async slotHolders() {
+        const rows = await this.#select(
+            'SELECT id, username FROM task WHERE slot_time IS NOT NULL AND state IN (?)',
+            [RUNNING_STATES]
+        )
+        return rows.map(({id, username}) => ({id, username}))
+    }
+
     // task-manager's own downtime must not count as a container falling silent, nor against a cancellation,
     // which is timed from update_time.
     async resetProgressClock() {
@@ -139,12 +176,17 @@ export class TaskRepository {
         return this.#change(task, 'UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
     }
 
-    async removeFinishedUserTasks(username) {
-        await this.#query(
-            'UPDATE task SET removed = TRUE WHERE username = ? AND state IN (?)',
-            [username, [State.COMPLETED, State.CANCELED, State.FAILED]]
+    async removeFinishedUserTasks(username, taskIds) {
+        if (!taskIds.length) {
+            return
+        }
+        const [{affectedRows}] = await this.#query(
+            'UPDATE task SET removed = TRUE WHERE username = ? AND id IN (?) AND state IN (?)',
+            [username, taskIds, [State.COMPLETED, State.CANCELED, State.FAILED]]
         )
-        this.#onChange(username)
+        if (affectedRows) {
+            this.#onChange(username)
+        }
     }
 
     async #change(task, sql, values) {

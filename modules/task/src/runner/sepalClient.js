@@ -24,8 +24,16 @@ export class SepalClient {
         return this.#post(`api/gee/${path}`, body, NO_RETRY)
     }
 
-    reportProgress(taskId, statusDescription) {
-        return this.#post(`api/tasks/task/${taskId}/progress`, {statusDescription}, NO_RETRY)
+    reportProgress(taskId, statusDescription, releasedSlot) {
+        return this.#post(`api/tasks/task/${taskId}/progress`, {statusDescription, releasedSlot}, NO_RETRY)
+    }
+
+    requestLocalProcessing(taskId) {
+        return this.#post(`api/tasks/task/${taskId}/local-processing`, {})
+    }
+
+    releaseLocalProcessing(taskId, slot) {
+        return this.#post(`api/tasks/task/${taskId}/local-processing/release`, {slot})
     }
 
     async #post(path, body, retry) {

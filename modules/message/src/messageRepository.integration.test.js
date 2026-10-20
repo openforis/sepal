@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -12,7 +14,7 @@ describe('MessageRepository', () => {
     let clock
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'message_repository', migrations: MIGRATIONS_PATH})
     })
@@ -23,7 +25,7 @@ describe('MessageRepository', () => {
         repository = new MessageRepository(testDb.db, clock)
     })
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     test('writes to the database it was constructed with', async () => {
         const message = aMessage()
@@ -31,7 +33,7 @@ describe('MessageRepository', () => {
         await repository.saveMessage(message)
 
         const ids = await savedMessageIds()
-        expect(ids).toEqual([message.id])
+        assert.deepEqual(ids, [message.id])
     })
 
     test('loads a saved message back', async () => {
@@ -40,14 +42,14 @@ describe('MessageRepository', () => {
         const saved = await repository.saveMessage(message)
 
         const loaded = await repository.loadMessage(message.id)
-        expect(saved).toMatchObject({id: message.id, subject: message.subject, type: message.type})
-        expect(loaded).toEqual(saved)
+        assert.partialDeepStrictEqual(saved, {id: message.id, subject: message.subject, type: message.type})
+        assert.deepEqual(loaded, saved)
     })
 
     test('stores the author in lowercase', async () => {
         const saved = await repository.saveMessage(aMessage({username: 'Admin'}))
 
-        expect(saved.username).toBe('admin')
+        assert.equal(saved.username, 'admin')
     })
 
     test('treats differently cased reader names as the same notification', async () => {
@@ -56,12 +58,12 @@ describe('MessageRepository', () => {
         await repository.updateNotification({username: 'Reader', messageId: message.id, state: 'READ'})
 
         const [notification] = await repository.listNotifications('READER')
-        expect(notification).toMatchObject({state: 'READ', acknowledged: 1})
+        assert.partialDeepStrictEqual(notification, {state: 'READ', acknowledged: 1})
 
         await repository.updateNotification({username: 'reader', messageId: message.id, state: 'UNREAD'})
 
         const [updated] = await repository.listNotifications('Reader')
-        expect(updated).toMatchObject({state: 'UNREAD', acknowledged: 0})
+        assert.partialDeepStrictEqual(updated, {state: 'UNREAD', acknowledged: 0})
     })
 
     test('keeps the priority a message was saved with, in the message and in its notification', async () => {
@@ -70,14 +72,14 @@ describe('MessageRepository', () => {
         const saved = await repository.saveMessage(urgent)
 
         const [notification] = await repository.listNotifications('reader')
-        expect(saved.priority).toBe(URGENT)
-        expect(notification).toMatchObject({messageId: urgent.id, priority: URGENT})
+        assert.equal(saved.priority, URGENT)
+        assert.partialDeepStrictEqual(notification, {messageId: urgent.id, priority: URGENT})
     })
 
     test('gives a message saved without a priority the normal priority', async () => {
         const saved = await repository.saveMessage(aMessage())
 
-        expect(saved.priority).toBe(NORMAL)
+        assert.equal(saved.priority, NORMAL)
     })
 
     test('makes a message unread again for a reader who had already read it when it is edited', async () => {
@@ -88,7 +90,7 @@ describe('MessageRepository', () => {
         await repository.saveMessage({...message, subject: 'Edited subject'})
 
         const [notification] = await repository.listNotifications('reader')
-        expect(notification).toMatchObject({subject: 'Edited subject', state: 'UNREAD', acknowledged: 0})
+        assert.partialDeepStrictEqual(notification, {subject: 'Edited subject', state: 'UNREAD', acknowledged: 0})
     })
 
     test('reports a message read only to the user who read it, and counts it for everyone', async () => {
@@ -99,8 +101,8 @@ describe('MessageRepository', () => {
 
         const [forReader] = await repository.listNotifications('reader')
         const [forAnother] = await repository.listNotifications('another')
-        expect(forReader).toMatchObject({messageId: message.id, state: 'READ', acknowledged: 1})
-        expect(forAnother).toMatchObject({messageId: message.id, state: 'UNREAD', acknowledged: 1})
+        assert.partialDeepStrictEqual(forReader, {messageId: message.id, state: 'READ', acknowledged: 1})
+        assert.partialDeepStrictEqual(forAnother, {messageId: message.id, state: 'UNREAD', acknowledged: 1})
     })
 
     test('replaces an earlier read state, so unreading a message takes it out of the count', async () => {
@@ -111,7 +113,7 @@ describe('MessageRepository', () => {
         await repository.updateNotification({username: 'reader', messageId: message.id, state: 'UNREAD'})
 
         const [notification] = await repository.listNotifications('reader')
-        expect(notification).toMatchObject({messageId: message.id, state: 'UNREAD', acknowledged: 0})
+        assert.partialDeepStrictEqual(notification, {messageId: message.id, state: 'UNREAD', acknowledged: 0})
     })
 
     test('hides a removed message from the message list and from notifications', async () => {
@@ -124,8 +126,8 @@ describe('MessageRepository', () => {
 
         const messages = await repository.listMessages()
         const notifications = await repository.listNotifications('reader')
-        expect(messages.map(({id}) => id)).toEqual([kept.id])
-        expect(notifications.map(({messageId}) => messageId)).toEqual([kept.id])
+        assert.deepEqual(messages.map(({id}) => id), [kept.id])
+        assert.deepEqual(notifications.map(({messageId}) => messageId), [kept.id])
     })
 
     test('shows an unpublished message to admins only', async () => {
@@ -137,9 +139,8 @@ describe('MessageRepository', () => {
         const forReader = await repository.listNotifications('reader', false)
         const forAdmin = await repository.listNotifications('admin', true)
 
-        expect(forReader.map(({messageId}) => messageId)).toEqual([published.id])
-        expect(forAdmin.map(({messageId}) => messageId))
-            .toEqual(expect.arrayContaining([published.id, unpublished.id]))
+        assert.deepEqual(forReader.map(({messageId}) => messageId), [published.id])
+        assert.deepEqual(new Set(forAdmin.map(({messageId}) => messageId)), new Set([published.id, unpublished.id]))
     })
 
     test('never reports an unpublished message as unread, so it notifies nobody', async () => {
@@ -148,7 +149,7 @@ describe('MessageRepository', () => {
 
         const [notification] = await repository.listNotifications('admin', true)
 
-        expect(notification).toMatchObject({messageId: unpublished.id, state: 'READ'})
+        assert.partialDeepStrictEqual(notification, {messageId: unpublished.id, state: 'READ'})
     })
 
     test('lists messages and notifications with the most recently updated first', async () => {
@@ -162,8 +163,8 @@ describe('MessageRepository', () => {
         const messages = await repository.listMessages()
         const notifications = await repository.listNotifications('reader')
 
-        expect(messages.map(({id}) => id)).toEqual([newer.id, older.id])
-        expect(notifications.map(({messageId}) => messageId)).toEqual([newer.id, older.id])
+        assert.deepEqual(messages.map(({id}) => id), [newer.id, older.id])
+        assert.deepEqual(notifications.map(({messageId}) => messageId), [newer.id, older.id])
     })
 
     // Both lists could be ordered by creation time and still pass the test above, so this one edits the
@@ -181,8 +182,8 @@ describe('MessageRepository', () => {
 
         const messages = await repository.listMessages()
         const notifications = await repository.listNotifications('reader')
-        expect(messages.map(({id}) => id)).toEqual([edited.id, untouched.id])
-        expect(notifications.map(({messageId}) => messageId)).toEqual([edited.id, untouched.id])
+        assert.deepEqual(messages.map(({id}) => id), [edited.id, untouched.id])
+        assert.deepEqual(notifications.map(({messageId}) => messageId), [edited.id, untouched.id])
     })
 
     test('rolls back the message edit when resetting read states fails', async () => {
@@ -195,11 +196,11 @@ describe('MessageRepository', () => {
 
         const save = refusingTheReset.saveMessage({...message, subject: 'Edited subject'})
 
-        await expect(save).rejects.toThrow('notification reset refused')
+        await assert.rejects(save, /notification reset refused/)
         const loaded = await repository.loadMessage(message.id)
         const [forReader] = await repository.listNotifications('reader')
-        expect(loaded).toMatchObject({subject: message.subject})
-        expect(forReader).toMatchObject({state: 'READ'})
+        assert.partialDeepStrictEqual(loaded, {subject: message.subject})
+        assert.partialDeepStrictEqual(forReader, {state: 'READ'})
     })
 
     const savedMessageIds = async () => {

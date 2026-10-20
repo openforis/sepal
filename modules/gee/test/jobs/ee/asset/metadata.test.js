@@ -1,6 +1,8 @@
+import assert from 'node:assert/strict'
 import {createRequire} from 'node:module'
+import {beforeEach, describe, it, mock} from 'node:test'
+import {format} from 'node:util'
 
-import {jest} from '@jest/globals'
 import {of, throwError} from 'rxjs'
 
 // The /assetMetadata boundary, exercised through recording Earth Engine stubs (the house pattern from
@@ -58,8 +60,8 @@ const ee = {
     }
 }
 
-jest.unstable_mockModule('#sepal/ee/ee', () => ({default: ee}))
-jest.unstable_mockModule('#gee/jobs/job', () => ({job: config => config}))
+mock.module('#sepal/ee/ee', {exports: {default: ee}})
+mock.module('#gee/jobs/job', {exports: {job: config => config}})
 
 const {default: metadata} = await import('#gee/jobs/ee/asset/metadata')
 const {worker$} = metadata
@@ -109,15 +111,15 @@ describe('an ordinary metadata request', () => {
         const record = imageRecord([band('label')])
         responses.record = record
         const {value} = run({asset: 'users/test/strata', allowedTypes: ['Image']})
-        expect(value).toEqual({...legacy(record), bandNames: ['label']})
-        expect(recordRequests).toEqual(['projects/earthengine-legacy/assets/users/test/strata'])
-        expect(getInfoCalls).toEqual([])
+        assert.deepEqual(value, {...legacy(record), bandNames: ['label']})
+        assert.deepEqual(recordRequests, ['projects/earthengine-legacy/assets/users/test/strata'])
+        assert.deepEqual(getInfoCalls, [])
     })
 
     it('costs no Earth Engine evaluation for an explicit false', () => {
         responses.record = imageRecord([band('label')])
         run({asset: 'users/test/strata', includeNominalScale: false})
-        expect(getInfoCalls).toEqual([])
+        assert.deepEqual(getInfoCalls, [])
     })
 })
 
@@ -137,7 +139,7 @@ describe('an image asset\'s band types', () => {
 
         const {value} = run({asset: 'users/test/strata'})
 
-        expect(value.bands.map(({id, data_type, dimensions}) => [id, data_type.dimensions, dimensions])).toEqual([
+        assert.deepEqual(value.bands.map(({id, data_type, dimensions}) => [id, data_type.dimensions, dimensions]), [
             ['elevation', undefined, [5015, 3093]],
             ['zero', undefined, [5015, 3093]],
             ['tStart', 1, [5015, 3093]],
@@ -152,7 +154,7 @@ describe('an image asset\'s band types', () => {
         const {value} = run({asset: 'users/test/strata'})
 
         const withoutRank = ({data_type: {dimensions: _dimensions, ...dataType}, ...band}) => ({...band, data_type: dataType})
-        expect({...value, bands: value.bands.map(withoutRank)}).toEqual({...legacy(record), bandNames: ['label', 'tStart']})
+        assert.deepEqual({...value, bands: value.bands.map(withoutRank)}, {...legacy(record), bandNames: ['label', 'tStart']})
     })
 
     it('leave a type that is missing or states no rank as a count unknown, never a scalar', () => {
@@ -160,8 +162,8 @@ describe('an image asset\'s band types', () => {
 
         const {value} = run({asset: 'users/test/strata'})
 
-        expect(value.bands[0]).not.toHaveProperty('data_type')
-        expect(value.bands[1].data_type.dimensions).toBe('two')
+        assert.ok(!Object.hasOwn(value.bands[0], 'data_type'))
+        assert.equal(value.bands[1].data_type.dimensions, 'two')
     })
 })
 
@@ -173,8 +175,8 @@ describe('a Cloud GeoTIFF', () => {
 
         const {value} = run({asset: 'gs://bucket/segments.tif'})
 
-        expect(value).toEqual({...evaluated, bandNames: ['b1']})
-        expect(recordRequests).toEqual([])
+        assert.deepEqual(value, {...evaluated, bandNames: ['b1']})
+        assert.deepEqual(recordRequests, [])
     })
 })
 
@@ -187,28 +189,28 @@ describe('a rich metadata request', () => {
 
     it('adds each selected band nominal scale', () => {
         const {value} = runRich([band('label'), band('confidence')])
-        expect(value.bands.map(({id, nominalScale}) => ({id, nominalScale})))
-            .toEqual([{id: 'label', nominalScale: 10}, {id: 'confidence', nominalScale: 11}])
+        assert.deepEqual(value.bands.map(({id, nominalScale}) => ({id, nominalScale})), [{id: 'label', nominalScale: 10}, {id: 'confidence', nominalScale: 11}])
     })
 
     it('preserves every existing band field, including the generic crs_transform', () => {
         const bands = [band('label')]
         const {value} = runRich(bands)
-        expect(value.bands[0]).toEqual({...legacy(imageRecord(bands)).bands[0], nominalScale: 10})
+        assert.deepEqual(value.bands[0], {...legacy(imageRecord(bands)).bands[0], nominalScale: 10})
     })
 
     // One evaluation for the whole asset, never one per band: an eight-band source must cost exactly what a
     // one-band source costs.
-    it.each([1, 2, 8])('uses exactly one evaluation for %i bands', count => {
-        runRich(Array.from({length: count}, (_v, index) => band(`b${index}`)))
-        expect(getInfoCalls).toHaveLength(1)
-        expect(getInfoCalls[0].value.fromLists.keys).toHaveLength(count)
-    })
+    for (const count of [1, 2, 8]) {
+        it(format('uses exactly one evaluation for %i bands', count), () => {
+            runRich(Array.from({length: count}, (_v, index) => band(`b${index}`)))
+            assert.equal((getInfoCalls).length, 1)
+            assert.equal((getInfoCalls[0].value.fromLists.keys).length, count)
+        })
+    }
 
     it('reads the scale of each band in its own right, not of the asset', () => {
         runRich([band('label'), band('confidence')])
-        expect(getInfoCalls[0].value.fromLists.values.map(({nominalScaleOf: {band}}) => band))
-            .toEqual(['label', 'confidence'])
+        assert.deepEqual(getInfoCalls[0].value.fromLists.values.map(({nominalScaleOf: {band}}) => band), ['label', 'confidence'])
     })
 
     // Enrichment is optional. Failing it must leave the caller with ordinary, usable metadata rather than
@@ -218,16 +220,16 @@ describe('a rich metadata request', () => {
         responses.record = record
         responses.getInfo = {'Get band nominal scales': () => throwError(() => new Error('EE is unwell'))}
         const {value, error} = run({asset: 'users/test/strata', includeNominalScale: true})
-        expect(error).toBeUndefined()
-        expect(value).toEqual({...legacy(record), bandNames: ['label']})
+        assert.equal(error, undefined)
+        assert.deepEqual(value, {...legacy(record), bandNames: ['label']})
     })
 
     it('skips the evaluation entirely for an asset with no bands', () => {
         const record = {type: 'TABLE', name: 'projects/earthengine-legacy/assets/users/test/table'}
         responses.record = record
         const {value} = run({asset: 'users/test/table', includeNominalScale: true})
-        expect(getInfoCalls).toEqual([])
-        expect(value).toEqual(legacy(record))
+        assert.deepEqual(getInfoCalls, [])
+        assert.deepEqual(value, legacy(record))
     })
 })
 
@@ -242,13 +244,13 @@ describe('a rich ImageCollection request', () => {
             ...scales
         }
         const {value} = run({asset: 'users/test/collection', includeNominalScale: true})
-        expect(value.bands[0].nominalScale).toBe(10)
+        assert.equal(value.bands[0].nominalScale, 10)
         // Its band types are the first member's as evaluated, which state an array's rank themselves.
-        expect(value.bands[0].data_type).toEqual(bands[0].data_type)
+        assert.deepEqual(value.bands[0].data_type, bands[0].data_type)
         const scaleCall = getInfoCalls.find(({description}) => description === 'Get band nominal scales')
         const bandsCall = getInfoCalls.find(({description}) => description === 'Get first image in collection')
         // The same first member, not a mosaic: a mosaic reports the identity grid instead of a real one.
-        expect(scaleCall.value.fromLists.values[0].nominalScaleOf.source).toBe(bandsCall.value.source)
-        expect(bandsCall.value.source).toContain('.first')
+        assert.equal(scaleCall.value.fromLists.values[0].nominalScaleOf.source, bandsCall.value.source)
+        assert.ok((bandsCall.value.source).includes('.first'))
     })
 })

@@ -17,6 +17,13 @@ API-key check, and the task-list websocket.
 - It reports progress with `POST /tasks/task/:id/progress` and writes its outcome to `/task/result.json`
   before exiting; the supervisor settles the task state from that file. A container that exits without one
   has failed, and a CANCELED result counts only for a task being cancelled (any other stop interrupted it).
+- Before each local processing step (a download into the workspace, stacking a time-series tile) it polls
+  `POST /tasks/task/:id/local-processing` every 10 seconds until `{granted: true, slot}`, and after the last step
+  in progress calls `POST /tasks/task/:id/local-processing/release {slot}`. At most
+  `TASK_MAX_CONCURRENT_LOCAL_PROCESSING` slots are held at once. A grant is named by its `task.slot_time`, renewed
+  when a holder asks again, and a release (or a progress report's `releasedSlot`) frees only the grant it names,
+  so late or repeated releases are harmless. The waiting line is in memory, and a waiter not heard from for
+  30 seconds loses its place. Removing a container frees its slot.
 
 ## Supervisor
 
@@ -43,12 +50,13 @@ table), tracked in `legacy_import_version`. PENDING and ACTIVE tasks become FAIL
 and tasks the user had removed are skipped. The worker's `task` table is only the import's source.
 
 ## Commands
-- `npm test` - Jest (ESM); `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
+- `npm test` - Node test runner; `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`
 
 ## Routes (served without the `/api/tasks` gateway prefix)
 - `POST /tasks`, `GET /tasks/task/:id`, `GET /tasks/task/:id/details` (auth)
 - `POST /tasks/task/:id/{cancel,remove,execute}`, `POST /tasks/remove` (auth)
 - `POST /tasks/task/:id/progress` (task key)
+- `POST /tasks/task/:id/local-processing`, `POST /tasks/task/:id/local-processing/release` (task key)
 - `POST /tasks/api-key-authenticate` (admin)
 - `/ws` - gateway virtual-websocket endpoint (module `task-manager/task`)

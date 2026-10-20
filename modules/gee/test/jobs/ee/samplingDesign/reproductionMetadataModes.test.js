@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {effectiveArrangement, resolveArrangementGrids} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {collectionMetadata, REPRODUCTION_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {randomReproductionMetadata, systematicReproductionMetadata} from '#sepal/ee/samplingDesign/samples'
@@ -27,49 +30,58 @@ const assetKeys = reproduction => Object.keys(collectionMetadata({allocation, re
 describe('reproduction metadata by mode', () => {
     it('stratified Random records the Arrangement CRS as placement and the Stratification CRS separately', () => {
         const meta = build({skip: false, arrangementStrategy: 'RANDOM'})
-        expect(meta).toMatchObject({
+        assert.partialDeepStrictEqual(meta, {
             arrangementStrategy: 'RANDOM', seed: 7, scale: 300,
             crs: 'EPSG:6931', gridCrs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'
         })
-        GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
+        GRID_FIELDS.forEach(field => assert.equal(field in meta, true))
     })
 
     it('unstratified Random omits all grid fields', () => {
         const meta = build({skip: true, arrangementStrategy: 'RANDOM'})
-        expect(meta).toMatchObject({arrangementStrategy: 'RANDOM', sampleSizeStrategy: null, gridOrigin: null, seed: 7, selectedDensityOffset: null})
-        GRID_FIELDS.forEach(field => expect(field in meta).toBe(false))
+        assert.partialDeepStrictEqual(
+            meta,
+            {arrangementStrategy: 'RANDOM', sampleSizeStrategy: null, gridOrigin: null, seed: 7, selectedDensityOffset: null}
+        )
+        GRID_FIELDS.forEach(field => assert.equal(field in meta, false))
         // Asset (collection) metadata drops the grid keys entirely rather than carrying stale values.
-        GRID_FIELDS.forEach(field => expect(assetKeys(meta)).not.toContain(field))
+        GRID_FIELDS.forEach(field => assert.ok(!assetKeys(meta).includes(field)))
     })
 
     it('stratified Systematic records both grids, with no transform', () => {
         const meta = build({skip: false, arrangementStrategy: 'SYSTEMATIC'})
-        expect(meta).toMatchObject({
+        assert.partialDeepStrictEqual(meta, {
             arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, scale: 300,
             crs: 'EPSG:6931', gridCrs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'
         })
-        GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
+        GRID_FIELDS.forEach(field => assert.equal(field in meta, true))
     })
 
     it('unstratified Systematic retains the Arrangement CRS but omits scale and stratificationCrs', () => {
         const meta = build({skip: true, arrangementStrategy: 'SYSTEMATIC'})
-        expect(meta).toMatchObject({arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, crs: 'EPSG:6931', gridCrs: 'EPSG:6931'})
-        expect('scale' in meta).toBe(false)
-        expect('stratificationCrs' in meta).toBe(false)
+        assert.partialDeepStrictEqual(
+            meta,
+            {arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, crs: 'EPSG:6931', gridCrs: 'EPSG:6931'}
+        )
+        assert.equal('scale' in meta, false)
+        assert.equal('stratificationCrs' in meta, false)
         const keys = assetKeys(meta)
-        expect(keys).toContain('crs')
-        expect(keys).toContain('gridCrs')
-        expect(keys).not.toContain('scale')
-        expect(keys).not.toContain('stratificationCrs')
+        assert.ok(keys.includes('crs'))
+        assert.ok(keys.includes('gridCrs'))
+        assert.ok(!keys.includes('scale'))
+        assert.ok(!keys.includes('stratificationCrs'))
     })
 
     // The SEPAL/CSV export uses a fixed reproduction column schema, so non-applicable columns stay present and
     // are blanked (never stale). The schema therefore still lists every grid field.
     it('keeps the grid fields in the fixed SEPAL reproduction schema', () => {
-        GRID_FIELDS.forEach(field => expect(REPRODUCTION_PROPERTY_NAMES).toContain(field))
+        GRID_FIELDS.forEach(field => assert.ok(REPRODUCTION_PROPERTY_NAMES.includes(field)))
     })
 
     it('places stratificationCrs directly after gridCrs in the schema', () => {
-        expect(REPRODUCTION_PROPERTY_NAMES[REPRODUCTION_PROPERTY_NAMES.indexOf('gridCrs') + 1]).toBe('stratificationCrs')
+        assert.equal(
+            REPRODUCTION_PROPERTY_NAMES[REPRODUCTION_PROPERTY_NAMES.indexOf('gridCrs') + 1],
+            'stratificationCrs'
+        )
     })
 })

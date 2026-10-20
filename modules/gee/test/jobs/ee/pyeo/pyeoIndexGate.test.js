@@ -1,5 +1,10 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+import {isDeepStrictEqual} from 'node:util'
+
 import {NEVER, of} from 'rxjs'
+
+import {callsOf} from '#sepal/testSupport/mock'
 
 // What PyEO Alerts asks of its imagery for the index-drop gate: with the gate on, the baseline index from the
 // classification's input and the index in each monitoring scene; with it off, neither - only what the classifier itself
@@ -7,29 +12,29 @@ import {NEVER, of} from 'rxjs'
 
 const geometry = {type: () => 'Polygon'}
 const imageRequests = []
-const getCollection$ = jest.fn(() => NEVER)
-const calculateIndex = jest.fn(() => ({multiply: () => ({int16: () => ({rename: () => 'baseline-index'})})}))
+const getCollection$ = mock.fn(() => NEVER)
+const calculateIndex = mock.fn(() => ({multiply: () => ({int16: () => ({rename: () => 'baseline-index'})})}))
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: (reference, options) => {
+mock.module('#sepal/ee/imageFactory', {exports: {default: (reference, options) => {
     imageRequests.push({reference, options})
     return {getImage$: () => of({select: () => 'selected'}), getGeometry$: () => of(geometry)}
-}}))
-jest.unstable_mockModule('#sepal/ee/aoi', () => ({toGeometry$: () => of(geometry)}))
-jest.unstable_mockModule('#sepal/ee/optical/indexes', () => ({calculateIndex}))
-jest.unstable_mockModule('#sepal/ee/recipeRef', () => ({default: () => ({
+}}})
+mock.module('#sepal/ee/aoi', {exports: {toGeometry$: () => of(geometry)}})
+mock.module('#sepal/ee/optical/indexes', {exports: {calculateIndex}})
+mock.module('#sepal/ee/recipeRef', {exports: {default: () => ({
     getRecipe$: () => of({getTrainingData$: () => of([]), getImage$: () => of({}), classifyImage: () => ({})})
-})}))
+})}})
 const classification = vi => ({model: {inputImagery: {images: [vi]}}})
 let classificationInput
-jest.unstable_mockModule('#sepal/ee/recipe', () => ({loadRecipe$: () => of(classification(classificationInput))}))
-jest.unstable_mockModule('#sepal/ee/timeSeries/collection', () => ({getCollection$}))
+mock.module('#sepal/ee/recipe', {exports: {loadRecipe$: () => of(classification(classificationInput))}})
+mock.module('#sepal/ee/timeSeries/collection', {exports: {getCollection$}})
 
 const {default: pyeoAlerts} = await import('#sepal/ee/pyeo/pyeoAlerts')
 
 beforeEach(() => {
     imageRequests.length = 0
-    getCollection$.mockClear()
-    calculateIndex.mockClear()
+    getCollection$.mock.resetCalls()
+    calculateIndex.mock.resetCalls()
 })
 
 describe('a PyEO Alerts with its index-drop gate off', () => {
@@ -38,9 +43,9 @@ describe('a PyEO Alerts with its index-drop gate off', () => {
 
         await request(pyeo({indexGate: undefined}))
 
-        expect(calculateIndex).not.toHaveBeenCalled()
-        expect(imageRequests.map(({reference}) => reference)).not.toContainEqual(classificationInput)
-        expect(bandsRequested()).toEqual(RADAR_BANDS)
+        assert.equal(calculateIndex.mock.callCount(), 0)
+        assert.ok(!(imageRequests.map(({reference}) => reference)).some(actual => isDeepStrictEqual(actual, classificationInput)))
+        assert.deepEqual(bandsRequested(), RADAR_BANDS)
     })
 
     it('still asks monitoring for an index the classifier itself reads', async () => {
@@ -48,8 +53,8 @@ describe('a PyEO Alerts with its index-drop gate off', () => {
 
         await request(pyeo({indexGate: undefined}))
 
-        expect(calculateIndex).not.toHaveBeenCalled()
-        expect(bandsRequested()).toEqual(['red', 'nir', 'ndvi'])
+        assert.equal(calculateIndex.mock.callCount(), 0)
+        assert.deepEqual(bandsRequested(), ['red', 'nir', 'ndvi'])
     })
 })
 
@@ -59,8 +64,8 @@ describe('a PyEO Alerts with its index-drop gate on', () => {
 
         await request(pyeo({indexGate: {index: 'ndvi', threshold: 0.2}}))
 
-        expect(calculateIndex).toHaveBeenCalledWith(expect.anything(), 'ndvi')
-        expect(bandsRequested()).toEqual(['red', 'nir', 'ndvi'])
+        assert.ok(callsOf(calculateIndex).some(actual => actual.length === 2 && actual[0] != null && isDeepStrictEqual(actual[1], 'ndvi')))
+        assert.deepEqual(bandsRequested(), ['red', 'nir', 'ndvi'])
     })
 
     it('asks a recipe input for the index rather than calculating it', async () => {
@@ -68,9 +73,9 @@ describe('a PyEO Alerts with its index-drop gate on', () => {
 
         await request(pyeo({indexGate: {index: 'nbr', threshold: 0.2}}))
 
-        expect(calculateIndex).not.toHaveBeenCalled()
-        expect(imageRequests).toContainEqual({reference: classificationInput, options: {selection: ['nbr']}})
-        expect(bandsRequested()).toEqual(['red', 'nir', 'nbr'])
+        assert.equal(calculateIndex.mock.callCount(), 0)
+        assert.ok((imageRequests).some(actual => isDeepStrictEqual(actual, {reference: classificationInput, options: {selection: ['nbr']}})))
+        assert.deepEqual(bandsRequested(), ['red', 'nir', 'nbr'])
     })
 })
 
@@ -93,6 +98,6 @@ const request = async recipe => {
 }
 
 const bandsRequested = () => {
-    expect(getCollection$).toHaveBeenCalledTimes(1)
-    return getCollection$.mock.calls[0][0].bands
+    assert.equal(getCollection$.mock.callCount(), 1)
+    return callsOf(getCollection$)[0][0].bands
 }

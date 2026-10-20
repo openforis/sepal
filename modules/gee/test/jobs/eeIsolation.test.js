@@ -1,21 +1,24 @@
+import assert from 'node:assert/strict'
 import {AsyncLocalStorage} from 'node:async_hooks'
+import {after, mock, test} from 'node:test'
 import {MessageChannel} from 'node:worker_threads'
 
-import {jest} from '@jest/globals'
 import {firstValueFrom, Observable, of, switchMap} from 'rxjs'
 
 // Who each Earth Engine request is sent as when jobs of different users share one worker thread and their calls
 // queue behind one another. The real job boundary, REST client and limiter - reached over a real MessagePort, as
 // a worker thread reaches it - with only Earth Engine's answers substituted.
 
-jest.unstable_mockModule('#gee/config', () => ({
-    googleProjectId: 'sepal-test-project',
-    instances: 1,
-    port: 80,
-    recipeEndpoint: 'http://recipe',
-    sepalEndpoint: 'http://test',
-    serviceAccountCredentials: {}
-}))
+mock.module('#gee/config', {
+    exports: {
+        googleProjectId: 'sepal-test-project',
+        instances: 1,
+        port: 80,
+        recipeEndpoint: 'http://recipe',
+        sepalEndpoint: 'http://test',
+        serviceAccountCredentials: {}
+    }
+})
 
 const {WORKER} = await import('#sepal/worker/factory')
 const {PortTransport} = await import('#sepal/rxjs/transport/port')
@@ -50,7 +53,7 @@ PortTransport({
 })
 service.initialize(PortTransport({transportId: TRANSPORT, port: ports.port2, onChannel: () => {}}))
 
-afterAll(() => {
+after(() => {
     ports.port1.close()
     ports.port2.close()
 })
@@ -96,12 +99,12 @@ test('each request is sent as the user whose job made it, however their calls in
     const bobs = run(BOB, {first: 'bob-1', second: 'bob-2'})
     const carols = run(CAROL_WITHOUT_GOOGLE_ACCOUNT, {first: 'carol-1', second: 'carol-2'})
     await until(() => sent.length === 2)
-    expect(sent.map(({imageId}) => imageId)).toEqual(['alice-1', 'carol-1'])
+    assert.deepEqual(sent.map(({imageId}) => imageId), ['alice-1', 'carol-1'])
 
     await answerUntilAllSent(6)
     await Promise.all([alices, bobs, carols])
 
-    expect(sentAs()).toEqual({
+    assert.deepEqual(sentAs(), {
         'alice-1': {authorization: 'Bearer alice-token', project: SHARED_PROJECT},
         'alice-2': {authorization: 'Bearer alice-token', project: SHARED_PROJECT},
         'bob-1': {authorization: 'Bearer bob-token', project: SHARED_PROJECT},
@@ -146,7 +149,7 @@ const until = async condition => {
     for (let attempt = 0; attempt < 100 && !condition(); attempt++) {
         await settle()
     }
-    expect(condition()).toBe(true)
+    assert.equal(condition(), true)
 }
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 5))

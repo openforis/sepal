@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, describe, it} from 'node:test'
+
 import {
     emitSessionAppAssociated,
     emitSessionExpiryClosed,
@@ -27,29 +30,29 @@ describe('sessionChanged$', () => {
 
     it('fires when a session is activated', () => {
         emitWorkerSessionActivated({username: 'alice', session: {id: 's-1'}})
-        expect(collected.seen).toEqual([{username: 'alice'}])
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
     })
 
     it('fires when a session is closed', () => {
         emitWorkerSessionClosed({username: 'alice', sessionId: 's-1'})
-        expect(collected.seen).toEqual([{username: 'alice'}])
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
     })
 
     it('fires when an app is associated with a session', () => {
         emitSessionAppAssociated({username: 'alice', sessionId: 's-1', path: '/sandbox/shiny/foo', label: 'Foo'})
-        expect(collected.seen).toEqual([{username: 'alice'}])
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
     })
 
     // A malformed event with no username would otherwise push a report for "everyone" — the ws
     // registry treats the username as the multicast selector.
     it('does not fire without a username', () => {
         emitWorkerSessionClosed({sessionId: 's-1'})
-        expect(collected.seen).toEqual([])
+        assert.deepEqual(collected.seen, [])
     })
 
     it('fires when a session expiry is notified', () => {
         emitSessionExpiryNotified({username: 'alice', session: {id: 's-1', apiKey: null}})
-        expect(collected.seen).toEqual([{username: 'alice'}])
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
     })
 })
 
@@ -62,13 +65,13 @@ describe('SessionExpiryClosed', () => {
         emitSessionExpiryClosed({
             username: 'alice', sessionId: 's-1', name: 'crazy-banana', typeName: 't3a.small'})
         subscription.unsubscribe()
-        expect(published[0]).toMatchObject({name: 'crazy-banana', typeName: 't3a.small'})
+        assert.partialDeepStrictEqual(published[0], {name: 'crazy-banana', typeName: 't3a.small'})
     })
 
     it('publishes {username, sessionId, apps, terminals, ordinal, instanceName}', () => {
         const publisher = WORKER_SESSION_PUBLISHERS
             .find(({key}) => key === 'workerSession.SessionExpiryClosed')
-        expect(publisher).toBeDefined()
+        assert.notEqual(publisher, undefined)
         const published = []
         const subscription = publisher.publish$.subscribe(value => published.push(value))
         emitSessionExpiryClosed({username: 'alice', sessionId: 's-1'})
@@ -79,7 +82,7 @@ describe('SessionExpiryClosed', () => {
             username: 'alice', sessionId: 's-1',
             apps: [], terminals: 0, ordinal: null, name: null, typeName: null,
         }
-        expect(published).toEqual([expected])
+        assert.deepEqual(published, [expected])
     })
 })
 
@@ -99,13 +102,13 @@ describe('SessionExpiryNotified', () => {
             typeName: 't3a.small',
         })
         subscription.unsubscribe()
-        expect(published[0]).toMatchObject({name: 'crazy-banana', typeName: 't3a.small'})
+        assert.partialDeepStrictEqual(published[0], {name: 'crazy-banana', typeName: 't3a.small'})
     })
 
     it('publishes {username, sessionId, session} on the bus subject', () => {
         const publisher = WORKER_SESSION_PUBLISHERS
             .find(({key}) => key === 'workerSession.SessionExpiryNotified')
-        expect(publisher).toBeDefined()
+        assert.notEqual(publisher, undefined)
         const published = []
         const subscription = publisher.publish$.subscribe(value => published.push(value))
         const session = {id: 's-1', username: 'alice', apiKey: null}
@@ -115,6 +118,6 @@ describe('SessionExpiryNotified', () => {
             username: 'alice', sessionId: 's-1', session,
             apps: [], terminals: 0, ordinal: null, name: null, typeName: null, extensionMinutes: null,
         }
-        expect(published).toEqual([expected])
+        assert.deepEqual(published, [expected])
     })
 })

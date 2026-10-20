@@ -13,6 +13,10 @@ export class ProgressReporter {
         this.#send = send
     }
 
+    get current() {
+        return this.#last
+    }
+
     report(statusDescription) {
         if (!_.isEqual(statusDescription, this.#last)) {
             this.#last = statusDescription

@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
@@ -13,7 +15,7 @@ describe('migrateRecipes', () => {
     let testDb
     let repository
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         testDb = await createTestDb({name: 'recipemigraterecipes', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
@@ -21,7 +23,7 @@ describe('migrateRecipes', () => {
 
     beforeEach(() => testDb.reset())
 
-    afterAll(() => testDb?.remove())
+    after(() => testDb?.remove())
 
     test('brings recipes below the current version up to it', async () => {
         const stale = await givenRecipe({id: 'stale', typeVersion: OUTDATED_TYPE_VERSION})
@@ -31,8 +33,8 @@ describe('migrateRecipes', () => {
 
         const remaining = await staleRecipeIds()
         const migrated = await repository.findRecipe(stale.id)
-        expect(remaining).toEqual([])
-        expect(migrated.recipe.revision).toBe(MIGRATED_REVISION)
+        assert.deepEqual(remaining, [])
+        assert.equal(migrated.recipe.revision, MIGRATED_REVISION)
     })
 
     // The injected failure precedes this operation's only write, so this shows isolation between
@@ -50,9 +52,9 @@ describe('migrateRecipes', () => {
         const untouched = await repository.findRecipe(refused.id)
         const remaining = await staleRecipeIds()
         const migrated = await repository.findRecipe(other.id)
-        expect(untouched).toEqual(before)
-        expect(remaining).toEqual([refused.id])
-        expect(migrated.recipe.revision).toBe(MIGRATED_REVISION)
+        assert.deepEqual(untouched, before)
+        assert.deepEqual(remaining, [refused.id])
+        assert.equal(migrated.recipe.revision, MIGRATED_REVISION)
     })
 
     test('logs and skips a recipe it cannot read, and migrates the others', async () => {
@@ -67,10 +69,11 @@ describe('migrateRecipes', () => {
         const untouched = await repository.findRecipe(unreadable.id)
         const remaining = await staleRecipeIds()
         const migrated = await repository.findRecipe(other.id)
-        expect(untouched).toEqual(before)
-        expect(remaining).toEqual([unreadable.id])
-        expect(migrated.recipe.revision).toBe(MIGRATED_REVISION)
-        expect(log.warnings).toEqual([expect.stringContaining(unreadable.id)])
+        assert.deepEqual(untouched, before)
+        assert.deepEqual(remaining, [unreadable.id])
+        assert.equal(migrated.recipe.revision, MIGRATED_REVISION)
+        assert.equal(log.warnings.length, 1)
+        assert.ok(log.warnings[0].includes(unreadable.id))
     })
 
     const givenRecipe = async recipe => {

@@ -11,13 +11,13 @@ RUN npm install -g nodemon
 WORKDIR ${SHARED}
 ADD lib/js/shared .
 ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
-RUN npm install
+RUN npm install --omit=dev
 
 # install module packages
 WORKDIR ${MODULE}
 ADD modules/${MODULE_NAME}/package.json .
 ADD modules/${MODULE_NAME}/package-lock.json .
-RUN npm install
+RUN npm install --omit=dev
 
 # add module source
 ADD modules/${MODULE_NAME}/src ${MODULE}/src

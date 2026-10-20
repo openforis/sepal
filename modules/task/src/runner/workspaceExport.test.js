@@ -1,6 +1,8 @@
+import assert from 'node:assert/strict'
 import {mkdtemp, readdir, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {afterEach, beforeEach, test} from 'node:test'
 
 import {FileServer, holdingOpen, noticingChunks, serving} from '../testSupport/fileServer.js'
 import {exportToWorkspace} from './workspaceExport.js'
@@ -27,18 +29,42 @@ test('starts the export, follows it, downloads it and cleans up', async () => {
 
     const result = await exportTo({sepal})
 
-    expect(result).toEqual({downloaded: true})
-    expect(sepal.calls.map(({path}) => path)).toEqual(['start', 'task/operation/status', 'task/download/files', 'task/download/cleanup'])
-    expect(sepal.calls.at(-1).body).toEqual({destination})
-    expect(await readFile(join(downloadDir, 'a.tif'), 'utf8')).toBe('aaa')
+    assert.deepEqual(result, {downloaded: true})
+    assert.deepEqual(
+        sepal.calls.map(({path}) => path),
+        ['start', 'task/operation/status', 'task/download/files', 'task/download/cleanup']
+    )
+    assert.deepEqual(sepal.calls.at(-1).body, {destination})
+    assert.equal(await readFile(join(downloadDir, 'a.tif'), 'utf8'), 'aaa')
+})
+
+test('downloads as a local processing step once the export has completed', async () => {
+    server = await FileServer.start(serving({'a.tif': 'aaa'}))
+    const sepal = fakeSepal({states: [{state: 'COMPLETED'}], contents: {'a.tif': 'aaa'}})
+    const localProcessing = {
+        run: async work => {
+            sepal.calls.push({path: 'local processing begins'})
+            await work()
+            sepal.calls.push({path: 'local processing ends'})
+        }
+    }
+
+    await exportTo({sepal, localProcessing})
+
+    assert.deepEqual(sepal.calls.map(({path}) => path), [
+        'start', 'task/operation/status', 'local processing begins', 'task/download/files', 'local processing ends', 'task/download/cleanup'
+    ])
 })
 
 test('an export that fails still cleans up and fails', async () => {
     const sepal = fakeSepal({states: [{state: 'FAILED', errorMessage: 'Quota exceeded'}]})
 
-    await expect(exportTo({sepal})).rejects.toMatchObject({earthEngineMessage: 'Quota exceeded'})
+    await assert.rejects(exportTo({sepal}), {earthEngineMessage: 'Quota exceeded'})
 
-    expect(sepal.calls.map(({path}) => path)).toEqual(['start', 'task/operation/status', 'task/download/cleanup'])
+    assert.deepEqual(
+        sepal.calls.map(({path}) => path),
+        ['start', 'task/operation/status', 'task/download/cleanup']
+    )
 })
 
 test('a cancelled export downloads nothing, cleans up and resolves', async () => {
@@ -47,9 +73,9 @@ test('a cancelled export downloads nothing, cleans up and resolves', async () =>
 
     const result = await exportTo({sepal, signal: abort.signal, sleep: async () => abort.abort()})
 
-    expect(result).toEqual({downloaded: false})
-    expect(sepal.calls.map(({path}) => path)).not.toContain('task/download/files')
-    expect(sepal.calls.at(-1).path).toBe('task/download/cleanup')
+    assert.deepEqual(result, {downloaded: false})
+    assert.ok(!sepal.calls.map(({path}) => path).includes('task/download/files'))
+    assert.equal(sepal.calls.at(-1).path, 'task/download/cleanup')
 })
 
 test('a cancelled download leaves no complete-looking file and cleans up', async () => {
@@ -59,20 +85,22 @@ test('a cancelled download leaves no complete-looking file and cleans up', async
 
     const result = await exportTo({sepal, signal: abort.signal, fetchFn: noticingChunks(() => abort.abort())})
 
-    expect(result).toEqual({downloaded: false})
-    expect(await readdir(downloadDir)).toEqual([])
-    expect(sepal.calls.at(-1).path).toBe('task/download/cleanup')
+    assert.deepEqual(result, {downloaded: false})
+    assert.deepEqual(await readdir(downloadDir), [])
+    assert.equal(sepal.calls.at(-1).path, 'task/download/cleanup')
 })
 
 test('a cleanup that fails does not fail the export', async () => {
     server = await FileServer.start(serving({'a.tif': 'aaa'}))
     const sepal = fakeSepal({states: [{state: 'COMPLETED'}], contents: {'a.tif': 'aaa'}, cleanupFails: true})
 
-    await expect(exportTo({sepal})).resolves.toEqual({downloaded: true})
+    assert.deepEqual(await exportTo({sepal}), {downloaded: true})
 })
 
-const exportTo = ({sepal, signal = new AbortController().signal, sleep = async () => {}, fetchFn}) =>
-    exportToWorkspace({start: sepal.start, downloadDir, sepal, report: () => {}, signal, sleep, fetchFn})
+const PASS_THROUGH = {run: work => work()}
+
+const exportTo = ({sepal, signal = new AbortController().signal, sleep = async () => {}, fetchFn, localProcessing = PASS_THROUGH}) =>
+    exportToWorkspace({start: sepal.start, downloadDir, sepal, report: () => {}, signal, sleep, fetchFn, localProcessing})
 
 const fakeSepal = ({states, contents = {}, cleanupFails = false}) => {
     const calls = []

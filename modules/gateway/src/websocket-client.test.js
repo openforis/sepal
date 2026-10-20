@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, test} from 'node:test'
+
 import {WebSocket} from 'ws'
 
 import {Clients} from './websocket-client.js'
@@ -15,9 +18,15 @@ describe('sendEventToSession', () => {
 
         clients.sendEventToSession('s1', 'loginSessionInvalidated', {sessionId: 's1'})
 
-        expect(a1.sent).toEqual([{event: {type: 'loginSessionInvalidated', data: {sessionId: 's1'}}}])
-        expect(a2.sent).toEqual([{event: {type: 'loginSessionInvalidated', data: {sessionId: 's1'}}}])
-        expect(b.sent).toEqual([])
+        assert.deepEqual(
+            a1.sent,
+            [{event: {type: 'loginSessionInvalidated', data: {sessionId: 's1'}}}]
+        )
+        assert.deepEqual(
+            a2.sent,
+            [{event: {type: 'loginSessionInvalidated', data: {sessionId: 's1'}}}]
+        )
+        assert.deepEqual(b.sent, [])
     })
 
     test('closes the socket after the event has been sent', () => {
@@ -27,9 +36,9 @@ describe('sendEventToSession', () => {
 
         clients.sendEventToSession('s1', 'loginSessionInvalidated', {sessionId: 's1'})
 
-        expect(socket.closed).toBe(false)
+        assert.equal(socket.closed, false)
         socket.flush()
-        expect(socket.closed).toBe(true)
+        assert.equal(socket.closed, true)
     })
 })
 

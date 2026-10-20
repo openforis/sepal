@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {InstanceStatus} from '../workerInstance/instanceStatus.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 
@@ -18,32 +21,32 @@ const build = () => {
 
 test('a single MISSING does not close — one blip is not proof of death', () => {
     const {tracker} = build()
-    expect(tracker.record('s-1', MISSING)).toBe(false)
+    assert.equal(tracker.record('s-1', MISSING), false)
 })
 
 test('MISSING confirmed on the next sweep closes', () => {
     const {tracker} = build()
     tracker.record('s-1', MISSING)
-    expect(tracker.record('s-1', MISSING)).toBe(true)
+    assert.equal(tracker.record('s-1', MISSING), true)
 })
 
 test('PROVISIONED between two MISSING resets the count', () => {
     const {tracker} = build()
     tracker.record('s-1', MISSING)
     tracker.record('s-1', PROVISIONED)
-    expect(tracker.record('s-1', MISSING)).toBe(false)
+    assert.equal(tracker.record('s-1', MISSING), false)
 })
 
 test('counts are per session', () => {
     const {tracker} = build()
     tracker.record('s-1', MISSING)
-    expect(tracker.record('s-2', MISSING)).toBe(false)
+    assert.equal(tracker.record('s-2', MISSING), false)
 })
 
 test('UNKNOWN never closes on its own, however often it repeats', () => {
     const {tracker} = build()
     for (let i = 0; i < 20; i++) {
-        expect(tracker.record('s-1', UNKNOWN)).toBe(false)
+        assert.equal(tracker.record('s-1', UNKNOWN), false)
     }
 })
 
@@ -51,7 +54,7 @@ test('UNKNOWN sustained past the backstop closes, so an unreachable host cannot 
     const {tracker, advance} = build()
     tracker.record('s-1', UNKNOWN)
     advance(BACKSTOP_MS)
-    expect(tracker.record('s-1', UNKNOWN)).toBe(true)
+    assert.equal(tracker.record('s-1', UNKNOWN), true)
 })
 
 test('the backstop clock restarts when the instance is seen again', () => {
@@ -61,7 +64,7 @@ test('the backstop clock restarts when the instance is seen again', () => {
     tracker.record('s-1', PROVISIONED)
     tracker.record('s-1', UNKNOWN)
     advance(BACKSTOP_MS - 1000)
-    expect(tracker.record('s-1', UNKNOWN)).toBe(false)
+    assert.equal(tracker.record('s-1', UNKNOWN), false)
 })
 
 // An inconclusive probe is not evidence of life, so it must not undo a confirmed denial.
@@ -69,12 +72,12 @@ test('UNKNOWN between two MISSING does not reset the count', () => {
     const {tracker} = build()
     tracker.record('s-1', MISSING)
     tracker.record('s-1', UNKNOWN)
-    expect(tracker.record('s-1', MISSING)).toBe(true)
+    assert.equal(tracker.record('s-1', MISSING), true)
 })
 
 test('retain drops sessions that are no longer swept', () => {
     const {tracker} = build()
     tracker.record('s-1', MISSING)
     tracker.retain(['s-2'])
-    expect(tracker.record('s-1', MISSING)).toBe(false)
+    assert.equal(tracker.record('s-1', MISSING), false)
 })

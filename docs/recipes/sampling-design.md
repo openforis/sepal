@@ -12,8 +12,7 @@ The recipe spans the GUI, the task module, the gee module and both shared librar
 `samplingDesign` directories in each. Nothing owns it end to end.
 
 The Earth Engine library has no test runner of its own; its tests live in the modules that consume it. Run
-tests through the `sepal` CLI from the dev-env container: a raw `jest` invocation falsely fails every suite
-that imports the Earth Engine wrapper.
+tests through the `sepal` CLI from the dev-env container.
 
 ## Output
 
@@ -316,7 +315,7 @@ in-flight sharing and rejection of late results from superseded inputs.
 ## Verification
 
 A directory of verification scripts sits alongside the gee module's source, outside the test suites, because
-Earth Engine projections cannot be constructed in Jest and the scripts need live credentials. Its own README
+the scripts need live Earth Engine and its credentials. Its own README
 describes what each covers and how to run them.
 
 They are **evidence, not regression protection** — nothing runs them automatically. Any change to grid

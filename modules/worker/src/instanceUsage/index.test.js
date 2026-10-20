@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {createInstanceUsageComponent} from './index.js'
 
 const flush = () => new Promise(resolve => setImmediate(resolve))
@@ -20,11 +23,11 @@ describe('instanceUsage component', () => {
         })
         component.start()
         await flush()
-        expect(calls).toContain('sessions')  // sampler ran immediately
-        expect(calls).toContain('metrics')
-        expect(calls).toContain('rollup')    // rollup job ran immediately
-        expect(calls).toContain('pruneSamples')
-        expect(calls).toContain('pruneHourly')
+        assert.ok(calls.includes('sessions'))  // sampler ran immediately
+        assert.ok(calls.includes('metrics'))
+        assert.ok(calls.includes('rollup'))    // rollup job ran immediately
+        assert.ok(calls.includes('pruneSamples'))
+        assert.ok(calls.includes('pruneHourly'))
         component.stop()
     })
 })

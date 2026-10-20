@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
+
 import {Subject} from 'rxjs'
 
 import {UserStore} from './userStore.js'
@@ -11,7 +13,10 @@ describe('userMiddleware', () => {
 
         await run(userMiddleware, req)
 
-        expect(JSON.parse(req.headers['sepal-user'])).toMatchObject({username: user.username, status: 'ACTIVE'})
+        assert.partialDeepStrictEqual(
+            JSON.parse(req.headers['sepal-user']),
+            {username: user.username, status: 'ACTIVE'}
+        )
     })
 
     test('a LOCKED session user is treated as unauthenticated', async () => {
@@ -21,7 +26,7 @@ describe('userMiddleware', () => {
 
         await run(userMiddleware, req)
 
-        expect(req.headers['sepal-user']).toBeUndefined()
+        assert.equal(req.headers['sepal-user'], undefined)
     })
 })
 
@@ -35,8 +40,8 @@ const run = (middleware, req) =>
 const redisHolding = user => {
     const store = new Map([[`user:${user.username}`, JSON.stringify(user)]])
     return {
-        get: jest.fn(async key => store.get(key) ?? null),
-        set: jest.fn(async (key, value) => {
+        get: mock.fn(async key => store.get(key) ?? null),
+        set: mock.fn(async (key, value) => {
             const prev = store.get(key) ?? null
             store.set(key, value)
             return prev

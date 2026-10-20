@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import {EventEmitter} from 'node:events'
+import {describe, test} from 'node:test'
 
 import {Subject} from 'rxjs'
 
@@ -15,8 +17,8 @@ describe('logout', () => {
 
         await manager.logout(requestFor(store, 's1', 'alice'), aResponse())
 
-        expect(store.ids()).toEqual([])
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1', reason: 'logout'}])
+        assert.deepEqual(store.ids(), [])
+        assert.deepEqual(invalidated, [{username: 'alice', sessionId: 's1', reason: 'logout'}])
     })
 })
 
@@ -27,8 +29,8 @@ describe('invalidateOtherSessions', () => {
 
         await manager.invalidateOtherSessions(requestFor(store, 's1', 'alice'), aResponse())
 
-        expect(store.ids()).toEqual(['s1', 's3'])
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's2', reason: 'invalidated'}])
+        assert.deepEqual(store.ids(), ['s1', 's3'])
+        assert.deepEqual(invalidated, [{username: 'alice', sessionId: 's2', reason: 'invalidated'}])
     })
 })
 
@@ -39,8 +41,8 @@ describe('user.UserLocked', () => {
 
         await manager.messageHandler('user.UserLocked', {username: 'alice'})
 
-        expect(store.ids()).toEqual(['s3'])
-        expect(invalidated).toEqual([
+        assert.deepEqual(store.ids(), ['s3'])
+        assert.deepEqual(invalidated, [
             {username: 'alice', sessionId: 's1', reason: 'locked'},
             {username: 'alice', sessionId: 's2', reason: 'locked'}
         ])
@@ -56,11 +58,11 @@ describe('ensureSessionFor', () => {
 
         await manager.ensureSessionFor(req, res, 'bob')
 
-        expect(store.ids()).not.toContain('s1')
-        expect(req.sessionID).not.toBe('s1')
-        expect(invalidated).toEqual([])
+        assert.ok(!store.ids().includes('s1'))
+        assert.notEqual(req.sessionID, 's1')
+        assert.deepEqual(invalidated, [])
         res.emit('finish')
-        expect(invalidated).toEqual([{username: 'alice', sessionId: 's1', reason: 'replaced'}])
+        assert.deepEqual(invalidated, [{username: 'alice', sessionId: 's1', reason: 'replaced'}])
     })
 
     test('keeps the session of the same user', async () => {
@@ -72,9 +74,9 @@ describe('ensureSessionFor', () => {
         await manager.ensureSessionFor(req, res, 'Alice')
 
         res.emit('finish')
-        expect(store.ids()).toEqual(['s1'])
-        expect(req.sessionID).toBe('s1')
-        expect(invalidated).toEqual([])
+        assert.deepEqual(store.ids(), ['s1'])
+        assert.equal(req.sessionID, 's1')
+        assert.deepEqual(invalidated, [])
     })
 
     test('keeps a session nobody is logged in to', async () => {
@@ -86,8 +88,8 @@ describe('ensureSessionFor', () => {
         await manager.ensureSessionFor(req, res, 'bob')
 
         res.emit('finish')
-        expect(req.sessionID).toBe('s1')
-        expect(invalidated).toEqual([])
+        assert.equal(req.sessionID, 's1')
+        assert.deepEqual(invalidated, [])
     })
 })
 

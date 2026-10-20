@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {describe, it} from 'node:test'
+
 import {candidateAssetId, candidateDescription} from '#gee/jobs/task/samplingDesign/systematicExportNames'
 
 const JARGON = ['unfiltered', 'densityOffset', '_base', '_repair']
@@ -8,18 +11,18 @@ describe('candidateAssetId', () => {
     it('derives distinct temporary base and repair asset ids from the temp prefix', () => {
         const base = candidateAssetId(tempAssetId, 'base')
         const repair = candidateAssetId(tempAssetId, 'repair')
-        expect(base).toBe(`${tempAssetId}_candidates`)
-        expect(repair).toBe(`${tempAssetId}_additional_candidates`)
-        expect(base).not.toBe(repair)
+        assert.equal(base, `${tempAssetId}_candidates`)
+        assert.equal(repair, `${tempAssetId}_additional_candidates`)
+        assert.notEqual(base, repair)
     })
 
     it('keeps the temporary prefix so ids stay unique and clearly temporary', () => {
-        expect(candidateAssetId(tempAssetId, 'base')).toContain('_tmp_')
+        assert.ok(candidateAssetId(tempAssetId, 'base').includes('_tmp_'))
     })
 
     it('does not expose implementation jargon in the asset id', () => {
         const ids = [candidateAssetId(tempAssetId, 'base'), candidateAssetId(tempAssetId, 'repair')]
-        ids.forEach(id => JARGON.forEach(term => expect(id).not.toContain(term)))
+        ids.forEach(id => JARGON.forEach(term => assert.ok(!id.includes(term))))
     })
 })
 
@@ -27,16 +30,25 @@ describe('candidateDescription', () => {
     const description = 'My sample design'
 
     it('produces valid Earth Engine task names for both candidate exports', () => {
-        expect(candidateDescription(description, 'base')).toBe('Prepare_sample_candidates_My_sample_design')
-        expect(candidateDescription(description, 'repair')).toBe('Prepare_additional_sample_candidates_My_sample_design')
+        assert.equal(
+            candidateDescription(description, 'base'),
+            'Prepare_sample_candidates_My_sample_design'
+        )
+        assert.equal(
+            candidateDescription(description, 'repair'),
+            'Prepare_additional_sample_candidates_My_sample_design'
+        )
     })
 
     it('produces distinct base and repair descriptions', () => {
-        expect(candidateDescription(description, 'base')).not.toBe(candidateDescription(description, 'repair'))
+        assert.notEqual(
+            candidateDescription(description, 'base'),
+            candidateDescription(description, 'repair')
+        )
     })
 
     it('does not expose implementation jargon in the description', () => {
         const descriptions = [candidateDescription('out', 'base'), candidateDescription('out', 'repair')]
-        descriptions.forEach(text => JARGON.forEach(term => expect(text).not.toContain(term)))
+        descriptions.forEach(text => JARGON.forEach(term => assert.ok(!text.includes(term))))
     })
 })

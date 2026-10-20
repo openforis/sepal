@@ -1,8 +1,7 @@
-// Unit tests for the expiry sweep: the notify → email → close cycle, its compare-and-set guards,
-// the notify-mode reset, and the interleavings the "any extension cancels the expiry" claim
-// depends on. Mocked repo, no database.
+import assert from 'node:assert/strict'
+import {describe, mock, test} from 'node:test'
 
-import {jest} from '@jest/globals'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {instanceName} from '../../instanceName.js'
 import {expireSessions} from './expireSessions.js'
@@ -29,19 +28,19 @@ const session = (overrides = {}) => ({
 })
 
 const makeRepo = (sessions = [], overrides = {}) => ({
-    expiredSessions: jest.fn(async () => sessions),
+    expiredSessions: mock.fn(async () => sessions),
     // describeSessions asks for the owner's open sessions to work out the ordinal the SSH menu
     // prints; by default this session is the only one, so it is instance 1.
-    userSessions: jest.fn(async () => sessions.map(({id, username}) => ({id, username}))),
-    notifyExpiry: jest.fn(async () => true),
-    markEmailed: jest.fn(async () => true),
-    restartExpiryCycle: jest.fn(async () => true),
-    closeExpiredSession: jest.fn(async () => true),
+    userSessions: mock.fn(async () => sessions.map(({id, username}) => ({id, username}))),
+    notifyExpiry: mock.fn(async () => true),
+    markEmailed: mock.fn(async () => true),
+    restartExpiryCycle: mock.fn(async () => true),
+    closeExpiredSession: mock.fn(async () => true),
     ...overrides,
 })
 
 const makeAppRepo = (apps = []) => ({
-    appsForSessions: jest.fn(async ids => new Map(ids.map(id => [id, apps]))),
+    appsForSessions: mock.fn(async ids => new Map(ids.map(id => [id, apps]))),
 })
 
 const run = (repo, overrides = {}) => expireSessions({
@@ -51,13 +50,13 @@ const run = (repo, overrides = {}) => expireSessions({
     mode: 'enforce',
     policy,
     instanceTypeById: {T3aSmall: {name: 't3a.small', tag: 't1', hourlyCost: 0.02}},
-    sendEmail: jest.fn(),
+    sendEmail: mock.fn(),
     manageUrl: () => 'https://sepal.io/api/sessions/expiry/tok',
-    releaseInstance: jest.fn(async () => {}),
-    emitSessionExpiryNotified: jest.fn(),
-    emitSessionExpiryClosed: jest.fn(),
-    emitWorkerSessionClosed: jest.fn(),
-    emitSessionChanged: jest.fn(),
+    releaseInstance: mock.fn(async () => {}),
+    emitSessionExpiryNotified: mock.fn(),
+    emitSessionExpiryClosed: mock.fn(),
+    emitWorkerSessionClosed: mock.fn(),
+    emitSessionChanged: mock.fn(),
     clock,
     ...overrides,
 })
@@ -65,26 +64,26 @@ const run = (repo, overrides = {}) => expireSessions({
 describe('T+0 — notification', () => {
     test('a NONE session past its deadline is notified, once', async () => {
         const repo = makeRepo([session()])
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {emitSessionExpiryNotified})
-        expect(repo.notifyExpiry).toHaveBeenCalledWith('s-1')
-        expect(emitSessionExpiryNotified).toHaveBeenCalledTimes(1)
+        assert.deepEqual(callsOf(repo.notifyExpiry), [['s-1']])
+        assert.equal(emitSessionExpiryNotified.mock.callCount(), 1)
     })
 
     // The state advance is a guarded UPDATE, so exactly one sweep observes the transition even if
     // a sweep overruns its minute.
     test('losing the guarded transition emits nothing', async () => {
-        const repo = makeRepo([session()], {notifyExpiry: jest.fn(async () => false)})
-        const emitSessionExpiryNotified = jest.fn()
+        const repo = makeRepo([session()], {notifyExpiry: mock.fn(async () => false)})
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {emitSessionExpiryNotified})
-        expect(emitSessionExpiryNotified).not.toHaveBeenCalled()
+        assert.equal(emitSessionExpiryNotified.mock.callCount(), 0)
     })
 
     test('the api key never leaves the worker', async () => {
         const repo = makeRepo([session()])
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {emitSessionExpiryNotified})
-        expect(emitSessionExpiryNotified.mock.calls[0][0].session.apiKey).toBeNull()
+        assert.equal(emitSessionExpiryNotified.mock.calls[0].arguments[0].session.apiKey, null)
     })
 })
 
@@ -93,23 +92,23 @@ describe('T+notificationVisibleMinutes — email', () => {
     // action a single tap away.
     test('a still-NOTIFIED session gets the email with ONE management link', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        expect(repo.markEmailed).toHaveBeenCalledWith('s-1', minutesAgo(6))
-        expect(sendEmail).toHaveBeenCalledTimes(1)
-        const {content} = sendEmail.mock.calls[0][0]
-        expect(content.match(/<a href=/g)).toHaveLength(1)
-        expect(content).toContain('https://sepal.io/api/sessions/expiry/tok')
+        assert.deepEqual(callsOf(repo.markEmailed), [['s-1', minutesAgo(6)]])
+        assert.equal(sendEmail.mock.callCount(), 1)
+        const {content} = sendEmail.mock.calls[0].arguments[0]
+        assert.equal(content.match(/<a href=/g).length, 1)
+        assert.ok(content.includes('https://sepal.io/api/sessions/expiry/tok'))
     })
 
     // Whether to keep or stop is decided on the page, so the mail must not preempt it by naming
     // only one of the two.
     test('the mail says the link leads to both choices', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain('Manage your instance')
+        const {content} = sendEmail.mock.calls[0].arguments[0]
+        assert.ok(content.includes('Manage your instance'))
     })
 
     // Without SEPAL_ENDPOINT there is no absolute URL worth putting in a mail. The mail still goes
@@ -117,43 +116,43 @@ describe('T+notificationVisibleMinutes — email', () => {
     // a dead href.
     test('no endpoint configured → the mail carries no link at all', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail, manageUrl: () => null})
-        expect(sendEmail).toHaveBeenCalledTimes(1)
-        expect(sendEmail.mock.calls[0][0].content).not.toContain('<a href')
+        assert.equal(sendEmail.mock.callCount(), 1)
+        assert.ok(!sendEmail.mock.calls[0].arguments[0].content.includes('<a href'))
     })
 
     test('before the visible window, nothing is sent', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(2)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        expect(sendEmail).not.toHaveBeenCalled()
+        assert.equal(sendEmail.mock.callCount(), 0)
     })
 
     // Dismiss means "I saw it, don't email me".
     test('a DISMISSED session is never emailed', async () => {
         const repo = makeRepo([session({notificationState: 'DISMISSED', notifiedTime: minutesAgo(30)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        expect(repo.markEmailed).not.toHaveBeenCalled()
-        expect(sendEmail).not.toHaveBeenCalled()
+        assert.equal(repo.markEmailed.mock.callCount(), 0)
+        assert.equal(sendEmail.mock.callCount(), 0)
     })
 
     test('losing the guarded transition sends no duplicate mail', async () => {
         const repo = makeRepo(
             [session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})],
-            {markEmailed: jest.fn(async () => false)})
-        const sendEmail = jest.fn()
+            {markEmailed: mock.fn(async () => false)})
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        expect(sendEmail).not.toHaveBeenCalled()
+        assert.equal(sendEmail.mock.callCount(), 0)
     })
 
     // A permanently failing address must not turn the sweep into a per-minute retry loop.
     test('a failing send does not block the sweep or retry next minute', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn(() => { throw new Error('smtp down') })
-        await expect(run(repo, {sendEmail})).resolves.toBeNull()
-        expect(repo.markEmailed).toHaveBeenCalled() // state advanced regardless
+        const sendEmail = mock.fn(() => { throw new Error('smtp down') })
+        assert.equal(await run(repo, {sendEmail}), null)
+        assert.ok(repo.markEmailed.mock.callCount() > 0) // state advanced regardless
     })
 })
 
@@ -161,40 +160,42 @@ describe('T+graceMinutes — close', () => {
     const expiredPastGrace = (state = 'NOTIFIED') =>
         session({notificationState: state, notifiedTime: minutesAgo(61)})
 
-    test.each(['NOTIFIED', 'DISMISSED', 'EMAILED'])('%s closes past grace', async state => {
-        const repo = makeRepo([expiredPastGrace(state)])
-        const releaseInstance = jest.fn(async () => {})
-        const emitWorkerSessionClosed = jest.fn()
-        const emitSessionExpiryClosed = jest.fn()
-        await run(repo, {releaseInstance, emitWorkerSessionClosed, emitSessionExpiryClosed})
-        expect(repo.closeExpiredSession).toHaveBeenCalledWith({
-            sessionId: 's-1', notificationState: state, notifiedTime: minutesAgo(61), graceMinutes: 60,
+    for (const state of ['NOTIFIED', 'DISMISSED', 'EMAILED']) {
+        test(`${state} closes past grace`, async () => {
+            const repo = makeRepo([expiredPastGrace(state)])
+            const releaseInstance = mock.fn(async () => {})
+            const emitWorkerSessionClosed = mock.fn()
+            const emitSessionExpiryClosed = mock.fn()
+            await run(repo, {releaseInstance, emitWorkerSessionClosed, emitSessionExpiryClosed})
+            assert.deepEqual(callsOf(repo.closeExpiredSession), [[{
+                sessionId: 's-1', notificationState: state, notifiedTime: minutesAgo(61), graceMinutes: 60,
+            }]])
+            assert.deepEqual(callsOf(releaseInstance), [['i-1']])
+            assert.equal(emitWorkerSessionClosed.mock.callCount(), 1)
+            assert.equal(emitSessionExpiryClosed.mock.callCount(), 1)
         })
-        expect(releaseInstance).toHaveBeenCalledWith('i-1')
-        expect(emitWorkerSessionClosed).toHaveBeenCalledTimes(1)
-        expect(emitSessionExpiryClosed).toHaveBeenCalledTimes(1)
-    })
+    }
 
     // Selecting candidates and then closing them is a lost update waiting to happen: an
     // interaction landing in between must win, and the guarded close is what makes it win.
     test('a rescued session is not torn down', async () => {
-        const repo = makeRepo([expiredPastGrace()], {closeExpiredSession: jest.fn(async () => false)})
-        const releaseInstance = jest.fn(async () => {})
-        const emitWorkerSessionClosed = jest.fn()
-        const sendEmail = jest.fn()
+        const repo = makeRepo([expiredPastGrace()], {closeExpiredSession: mock.fn(async () => false)})
+        const releaseInstance = mock.fn(async () => {})
+        const emitWorkerSessionClosed = mock.fn()
+        const sendEmail = mock.fn()
         await run(repo, {releaseInstance, emitWorkerSessionClosed, sendEmail})
-        expect(releaseInstance).not.toHaveBeenCalled()
-        expect(emitWorkerSessionClosed).not.toHaveBeenCalled()
-        expect(sendEmail).not.toHaveBeenCalled()
+        assert.equal(releaseInstance.mock.callCount(), 0)
+        assert.equal(emitWorkerSessionClosed.mock.callCount(), 0)
+        assert.equal(sendEmail.mock.callCount(), 0)
     })
 
     test('the row close commits before the instance is released', async () => {
         const order = []
         const repo = makeRepo([expiredPastGrace()], {
-            closeExpiredSession: jest.fn(async () => { order.push('close'); return true }),
+            closeExpiredSession: mock.fn(async () => { order.push('close'); return true }),
         })
-        await run(repo, {releaseInstance: jest.fn(async () => { order.push('release') })})
-        expect(order).toEqual(['close', 'release'])
+        await run(repo, {releaseInstance: mock.fn(async () => { order.push('release') })})
+        assert.deepEqual(order, ['close', 'release'])
     })
 })
 
@@ -203,12 +204,12 @@ describe('notify mode', () => {
 
     test('counts what it would have done and closes nothing', async () => {
         const repo = makeRepo([expiredPastGrace])
-        const metrics = {wouldHaveClosed: jest.fn()}
-        const releaseInstance = jest.fn(async () => {})
+        const metrics = {wouldHaveClosed: mock.fn()}
+        const releaseInstance = mock.fn(async () => {})
         await run(repo, {mode: 'notify', metrics, releaseInstance})
-        expect(metrics.wouldHaveClosed).toHaveBeenCalledTimes(1)
-        expect(repo.closeExpiredSession).not.toHaveBeenCalled()
-        expect(releaseInstance).not.toHaveBeenCalled()
+        assert.equal(metrics.wouldHaveClosed.mock.callCount(), 1)
+        assert.equal(repo.closeExpiredSession.mock.callCount(), 0)
+        assert.equal(releaseInstance.mock.callCount(), 0)
     })
 
     // Sessions must not sit in EMAILED for as long as they are expired: switching production from
@@ -216,15 +217,15 @@ describe('notify mode', () => {
     // worst possible first impression, delivered to the users who already ignored a warning.
     test('restarts the cycle rather than accumulating state', async () => {
         const repo = makeRepo([expiredPastGrace])
-        await run(repo, {mode: 'notify', metrics: {wouldHaveClosed: jest.fn()}})
-        expect(repo.restartExpiryCycle).toHaveBeenCalledWith('s-1', minutesAgo(61), 60)
+        await run(repo, {mode: 'notify', metrics: {wouldHaveClosed: mock.fn()}})
+        assert.deepEqual(callsOf(repo.restartExpiryCycle), [['s-1', minutesAgo(61), 60]])
     })
 
     test('still notifies and still emails', async () => {
         const repo = makeRepo([session()])
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {mode: 'notify', emitSessionExpiryNotified})
-        expect(emitSessionExpiryNotified).toHaveBeenCalledTimes(1)
+        assert.equal(emitSessionExpiryNotified.mock.callCount(), 1)
     })
 })
 
@@ -232,31 +233,31 @@ describe('off mode', () => {
     test('off does not even look at the sessions', async () => {
         const repo = makeRepo([session()])
         await run(repo, {mode: 'off'})
-        expect(repo.expiredSessions).not.toHaveBeenCalled()
+        assert.equal(repo.expiredSessions.mock.callCount(), 0)
     })
 })
 
 describe('isolation', () => {
     test('a failing session does not stop the next one', async () => {
         const repo = makeRepo([session({id: 's-1'}), session({id: 's-2'})], {
-            notifyExpiry: jest.fn(async id => {
+            notifyExpiry: mock.fn(async id => {
                 if (id === 's-1') {
                     throw new Error('boom')
                 }
                 return true
             }),
         })
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {emitSessionExpiryNotified})
-        expect(emitSessionExpiryNotified).toHaveBeenCalledTimes(1)
-        expect(emitSessionExpiryNotified.mock.calls[0][0].session.id).toBe('s-2')
+        assert.equal(emitSessionExpiryNotified.mock.callCount(), 1)
+        assert.equal(emitSessionExpiryNotified.mock.calls[0].arguments[0].session.id, 's-2')
     })
 
     test('each session advances at most one state per tick', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(61)})])
         await run(repo)
-        expect(repo.markEmailed).not.toHaveBeenCalled()
-        expect(repo.closeExpiredSession).toHaveBeenCalledTimes(1)
+        assert.equal(repo.markEmailed.mock.callCount(), 0)
+        assert.equal(repo.closeExpiredSession.mock.callCount(), 1)
     })
 })
 
@@ -265,23 +266,24 @@ describe('isolation', () => {
 // says what is on it, so a user who has three instances open knows which one is about to go.
 describe('describing the instance', () => {
     const withApps = apps => ({
-        appRepo: {appsForSessions: jest.fn(async ids => new Map(ids.map(id => [id, apps])))},
+        appRepo: {appsForSessions: mock.fn(async ids => new Map(ids.map(id => [id, apps])))},
     })
 
     test('the notify event carries the apps, the terminal count and the ordinal', async () => {
         const repo = makeRepo([session()])
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {
             ...withApps([{path: '/sandbox/rstudio', label: 'RStudio'}]),
             terminals: {get: () => 2},
             emitSessionExpiryNotified,
         })
-        expect(emitSessionExpiryNotified).toHaveBeenCalledWith(expect.objectContaining({
+        const [[{apps, terminals, ordinal, typeName}]] = callsOf(emitSessionExpiryNotified)
+        assert.deepEqual({apps, terminals, ordinal, typeName}, {
             apps: [{path: '/sandbox/rstudio', label: 'RStudio'}],
             terminals: 2,
             ordinal: 1,
             typeName: 't1',
-        }))
+        })
     })
 
     // The ordinal is the 1-based position in the owner's open sandbox sessions, the same list and
@@ -289,75 +291,79 @@ describe('describing the instance', () => {
     test('the ordinal is the position among the owner\'s open sessions', async () => {
         const target = session({id: 's-2'})
         const repo = makeRepo([target], {
-            userSessions: jest.fn(async () => [{id: 's-1'}, {id: 's-2'}, {id: 's-3'}]),
+            userSessions: mock.fn(async () => [{id: 's-1'}, {id: 's-2'}, {id: 's-3'}]),
         })
-        const emitSessionExpiryNotified = jest.fn()
+        const emitSessionExpiryNotified = mock.fn()
         await run(repo, {emitSessionExpiryNotified})
-        expect(emitSessionExpiryNotified.mock.calls[0][0].ordinal).toBe(2)
+        assert.equal(emitSessionExpiryNotified.mock.calls[0].arguments[0].ordinal, 2)
         // The name rides along with the ordinal: the browser shows the name, the SSH menu the
         // number, and both come from the one place that decides them.
-        expect(emitSessionExpiryNotified.mock.calls[0][0].name).toBe(instanceName('s-2'))
+        assert.equal(
+            emitSessionExpiryNotified.mock.calls[0].arguments[0].name,
+            instanceName('s-2')
+        )
     })
 
     test('the warning email says what is running', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {
             ...withApps([{path: '/sandbox/rstudio', label: 'RStudio'}]),
             terminals: {get: () => 1},
             sendEmail,
         })
-        const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain(`Instance <b>${instanceName('s-1')}</b> (t1, $0.02/h)`)
-        expect(content).not.toContain('Your <b>')
-        expect(content).toContain('RStudio')
+        const {content} = sendEmail.mock.calls[0].arguments[0]
+        assert.ok(content.includes(`Instance <b>${instanceName('s-1')}</b> (t1, $0.02/h)`))
+        assert.ok(!content.includes('Your <b>'))
+        assert.ok(content.includes('RStudio'))
     })
 
     // The close cascade deletes the app associations, so a description read after the close would
     // always say "nothing" — it has to be captured before.
     test('the close event still knows what it closed', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(61)})])
-        const emitSessionExpiryClosed = jest.fn()
+        const emitSessionExpiryClosed = mock.fn()
         await run(repo, {
             ...withApps([{path: '/sandbox/jupyter', label: 'Jupyter'}]),
             terminals: {get: () => 1},
             emitSessionExpiryClosed,
         })
-        expect(emitSessionExpiryClosed).toHaveBeenCalledWith(expect.objectContaining({
+        const [[{apps, terminals}]] = callsOf(emitSessionExpiryClosed)
+        assert.deepEqual({apps, terminals}, {
             apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}],
             terminals: 1,
-        }))
+        })
     })
 
     // Terminal sessions are not listed, in the mail or anywhere else: a count of open ptys names
     // nothing a user can act on. The sampler still tracks them for the busy verdict.
     test('the mail never mentions terminal sessions', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {
             ...withApps([{path: '/sandbox/rstudio', label: 'RStudio'}]),
             terminals: {get: () => 2},
             sendEmail,
         })
-        const {content} = sendEmail.mock.calls[0][0]
-        expect(content).toContain('RStudio')
+        const {content} = sendEmail.mock.calls[0].arguments[0]
+        assert.ok(content.includes('RStudio'))
         // Narrowly "terminal session": the standing advice sentence mentions a terminal as a way
         // to KEEP the instance alive, which is not a listing and must survive.
-        expect(content).not.toContain('terminal session')
+        assert.ok(!content.includes('terminal session'))
     })
 
     test('an instance running only terminals reads as running nothing', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {terminals: {get: () => 3}, sendEmail})
-        expect(sendEmail.mock.calls[0][0].content).not.toContain('running on it')
+        assert.ok(!sendEmail.mock.calls[0].arguments[0].content.includes('running on it'))
     })
 
     test('an instance with nothing on it says so by saying nothing', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const sendEmail = jest.fn()
+        const sendEmail = mock.fn()
         await run(repo, {sendEmail})
-        expect(sendEmail.mock.calls[0][0].content).not.toContain('terminal session')
-        expect(sendEmail.mock.calls[0][0].content).not.toContain('running on it')
+        assert.ok(!sendEmail.mock.calls[0].arguments[0].content.includes('terminal session'))
+        assert.ok(!sendEmail.mock.calls[0].arguments[0].content.includes('running on it'))
     })
 })

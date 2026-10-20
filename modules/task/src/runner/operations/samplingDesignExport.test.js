@@ -1,17 +1,20 @@
+import assert from 'node:assert/strict'
 import {mkdtemp, rm, stat} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-
-import {jest} from '@jest/globals'
+import {afterEach, beforeEach, mock, test} from 'node:test'
+import {isDeepStrictEqual} from 'node:util'
 
 const workspaceCalls = []
 
-jest.unstable_mockModule('../workspaceExport.js', () => ({
-    exportToWorkspace: async args => {
-        workspaceCalls.push({downloadDir: args.downloadDir, started: await args.start()})
-        return {downloaded: true}
+mock.module('../workspaceExport.js', {
+    exports: {
+        exportToWorkspace: async args => {
+            workspaceCalls.push({downloadDir: args.downloadDir, started: await args.start(), localProcessing: args.localProcessing})
+            return {downloaded: true}
+        }
     }
-}))
+})
 
 const {samplingDesignExport} = await import('./samplingDesignExport.js')
 
@@ -45,13 +48,13 @@ test('drives the steps until done, following each export, then cleans up the tem
 
     await samplingDesignExport('ASSET')(params, context(sepal, {report: r => reports.push(r)}))
 
-    expect(sepal.started.map(({body}) => body)).toEqual([
+    assert.deepEqual(sepal.started.map(({body}) => body), [
         {...params, destination: 'ASSET', state: null},
         {...params, destination: 'ASSET', state: state1},
         {...params, destination: 'ASSET', state: state2}
     ])
-    expect(sepal.statusPolls).toEqual(['T1', 'T2'])
-    expect(sepal.cleanups).toEqual([{state: state3}])
+    assert.deepEqual(sepal.statusPolls, ['T1', 'T2'])
+    assert.deepEqual(sepal.cleanups, [{state: state3}])
 })
 
 test('reports the preparing message, then each step\'s progress, the export progress and the next stage message in order', async () => {
@@ -65,7 +68,7 @@ test('reports the preparing message, then each step\'s progress, the export prog
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {report: r => events.push(r)}))
 
-    expect(events).toEqual([PREPARE, progress, EXPORTING, next])
+    assert.deepEqual(events, [PREPARE, progress, EXPORTING, next])
 })
 
 test('does not report the next stage message when the export was cancelled', async () => {
@@ -78,22 +81,28 @@ test('does not report the next stage message when the export was cancelled', asy
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {signal: controller.signal, report: r => reports.push(r)}))
 
-    expect(reports).not.toContainEqual(next)
+    assert.ok(!reports.some(item => isDeepStrictEqual(item, next)))
 })
 
 test('an unknown step action fails the export and still cleans up', async () => {
     const state = {tempAssetIds: ['a_tmp_1']}
     const sepal = fakeSepal([{state, action: 'bogus'}])
 
-    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toThrow('Unknown sampling design step action: bogus')
+    await assert.rejects(
+        samplingDesignExport('ASSET')({description: 'd'}, context(sepal)),
+        /Unknown sampling design step action: bogus/
+    )
 
-    expect(sepal.cleanups).toEqual([{state}])
+    assert.deepEqual(sepal.cleanups, [{state}])
 })
 
 test('a step without an action fails the export', async () => {
     const sepal = fakeSepal([{state: {}}])
 
-    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toThrow('Unknown sampling design step action: undefined')
+    await assert.rejects(
+        samplingDesignExport('ASSET')({description: 'd'}, context(sepal)),
+        /Unknown sampling design step action: undefined/
+    )
 })
 
 test('starts no step when already cancelled, but still cleans up', async () => {
@@ -103,7 +112,7 @@ test('starts no step when already cancelled, but still cleans up', async () => {
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {signal: controller.signal}))
 
-    expect(sepal.started).toEqual([])
+    assert.deepEqual(sepal.started, [])
 })
 
 test('a workspace step downloads into the workspace path', async () => {
@@ -115,8 +124,11 @@ test('a workspace step downloads into the workspace path', async () => {
 
     await samplingDesignExport('SEPAL')({description: 'Design', workspacePath: 'out'}, context(sepal))
 
-    expect(workspaceCalls).toEqual([{downloadDir: `${home}/out`, started: {eeTaskId: 'T', destination}}])
-    expect((await stat(`${home}/out`)).isDirectory()).toBe(true)
+    assert.deepEqual(
+        workspaceCalls,
+        [{downloadDir: `${home}/out`, started: {eeTaskId: 'T', destination}, localProcessing: LOCAL_PROCESSING}]
+    )
+    assert.equal((await stat(`${home}/out`)).isDirectory(), true)
 })
 
 test('a workspace step without a workspace path downloads into downloads/<description>', async () => {
@@ -127,7 +139,7 @@ test('a workspace step without a workspace path downloads into downloads/<descri
 
     await samplingDesignExport('SEPAL')({description: 'My design'}, context(sepal))
 
-    expect(workspaceCalls[0].downloadDir).toBe(`${home}/downloads/My_design`)
+    assert.equal(workspaceCalls[0].downloadDir, `${home}/downloads/My_design`)
 })
 
 test('a cancel during a step cancels the export it started, cleans up and runs no further step', async () => {
@@ -140,9 +152,9 @@ test('a cancel during a step cancels the export it started, cleans up and runs n
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal, {signal: controller.signal}))
 
-    expect(sepal.cancelled).toEqual(['T'])
-    expect(sepal.started).toHaveLength(1)
-    expect(sepal.cleanups).toEqual([{state}])
+    assert.deepEqual(sepal.cancelled, ['T'])
+    assert.equal(sepal.started.length, 1)
+    assert.deepEqual(sepal.cleanups, [{state}])
 })
 
 test('a cancel while following a temp export cleans up the temp assets', async () => {
@@ -158,9 +170,9 @@ test('a cancel while following a temp export cleans up the temp assets', async (
         sleep: async () => controller.abort()
     }))
 
-    expect(sepal.cancelled).toEqual(['T'])
-    expect(sepal.started).toHaveLength(1)
-    expect(sepal.cleanups).toEqual([{state}])
+    assert.deepEqual(sepal.cancelled, ['T'])
+    assert.equal(sepal.started.length, 1)
+    assert.deepEqual(sepal.cleanups, [{state}])
 })
 
 test('a failing step fails the export and still cleans up with the last known state', async () => {
@@ -171,9 +183,12 @@ test('a failing step fails the export and still cleans up with the last known st
         failure
     ])
 
-    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toBe(failure)
+    await assert.rejects(
+        samplingDesignExport('ASSET')({description: 'd'}, context(sepal)),
+        error => error === failure
+    )
 
-    expect(sepal.cleanups).toEqual([{state}])
+    assert.deepEqual(sepal.cleanups, [{state}])
 })
 
 test('a cleanup failure does not replace the step error', async () => {
@@ -184,7 +199,10 @@ test('a cleanup failure does not replace the step error', async () => {
         failure
     ], {cleanupError: new Error('cleanup failed')})
 
-    await expect(samplingDesignExport('ASSET')({description: 'd'}, context(sepal))).rejects.toBe(failure)
+    await assert.rejects(
+        samplingDesignExport('ASSET')({description: 'd'}, context(sepal)),
+        error => error === failure
+    )
 })
 
 test('makes no cleanup call when no temp asset was created', async () => {
@@ -195,7 +213,7 @@ test('makes no cleanup call when no temp asset was created', async () => {
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal))
 
-    expect(sepal.cleanups).toEqual([])
+    assert.deepEqual(sepal.cleanups, [])
 })
 
 test('steps go through the no-retry path', async () => {
@@ -203,8 +221,8 @@ test('steps go through the no-retry path', async () => {
 
     await samplingDesignExport('ASSET')({description: 'd'}, context(sepal))
 
-    expect(sepal.started.map(({path}) => path)).toEqual(['task/samplingDesign/step'])
-    expect(sepal.geeCalls.map(({path}) => path)).not.toContain('task/samplingDesign/step')
+    assert.deepEqual(sepal.started.map(({path}) => path), ['task/samplingDesign/step'])
+    assert.ok(!sepal.geeCalls.map(({path}) => path).includes('task/samplingDesign/step'))
 })
 
 const EXPORTING = {messageKey: 'tasks.ee.export.running', defaultMessage: 'Google Earth Engine is exporting'}
@@ -243,10 +261,13 @@ const fakeSepal = (answers, {onStep, cleanupError, exportState = 'COMPLETED', ex
     return sepal
 }
 
+const LOCAL_PROCESSING = {run: work => work()}
+
 const context = (sepal, overrides = {}) => ({
     sepal,
     report: () => {},
     signal: new AbortController().signal,
     sleep: async () => {},
+    localProcessing: LOCAL_PROCESSING,
     ...overrides
 })

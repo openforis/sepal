@@ -1,4 +1,6 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {firstValueFrom, of} from 'rxjs'
 
 // Asset factories keep ASSET_BOUNDS source-owned, resolve valid descriptors, and leave missing AOIs
@@ -38,18 +40,34 @@ const collection = () => ({
     geometry: () => ({bounds: () => sourceBounds})
 })
 
-jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({
-    default: ({id}) => ({
-        getGeometry$: () => (captured.aoiResolutions = (captured.aoiResolutions || 0) + 1, of(resolved(id))),
-        getImage$: () => of(image())
-    })
-}))
-jest.unstable_mockModule('#sepal/ee/ee', () => ({
-    default: {ImageCollection: () => collection(), Image: () => image(), Reducer: {median: () => ({})}}
-}))
-jest.unstable_mockModule('#sepal/ee/validate', () => ({validateEEImage: ({image}) => image}))
-jest.unstable_mockModule('#sepal/ee/asset/mask', () => ({maskImage: img => img}))
-jest.unstable_mockModule('#sepal/ee/asset/filter', () => ({createFilter: () => null}))
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: ({id}) => ({
+            getGeometry$: () => (captured.aoiResolutions = (captured.aoiResolutions || 0) + 1, of(resolved(id))),
+            getImage$: () => of(image())
+        })
+    }
+})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {ImageCollection: () => collection(), Image: () => image(), Reducer: {median: () => ({})}}
+    }
+})
+mock.module('#sepal/ee/validate', {
+    exports: {
+        validateEEImage: ({image}) => image
+    }
+})
+mock.module('#sepal/ee/asset/mask', {
+    exports: {
+        maskImage: img => img
+    }
+})
+mock.module('#sepal/ee/asset/filter', {
+    exports: {
+        createFilter: () => null
+    }
+})
 
 const {default: imageAsset} = await import('#sepal/ee/asset/imageAsset')
 const {default: imageCollectionAsset} = await import('#sepal/ee/asset/imageCollectionAsset')
@@ -66,53 +84,58 @@ describe('image asset', () => {
         captured.aoiResolutions = 0
     })
 
-    describe.each([
+    for (const [typeName, aoi] of [
         ['ASSET', asset],
         ['RECIPE', {type: 'RECIPE', id: 'some-recipe'}]
-    ])('with a %s aoi', (_type, aoi) => {
-        it('clips with the asynchronously resolved geometry', async () => {
-            await firstValueFrom(imageAsset(recipe(aoi)).getImage$())
+    ]) {
+        describe(`with a ${typeName} aoi`, () => {
+            it('clips with the asynchronously resolved geometry', async () => {
+                await firstValueFrom(imageAsset(recipe(aoi)).getImage$())
 
-            expect(captured.clip).toBe(resolved(aoi.id))
-            expect(captured.aoiResolutions).toBe(1)
+                assert.equal(captured.clip, resolved(aoi.id))
+                assert.equal(captured.aoiResolutions, 1)
+            })
         })
-    })
+    }
 
-    describe.each([
+    for (const [scenario, toRecipe] of [
         ['an absent', recipeWithoutAoi],
         ['an explicit null', () => recipe(null)]
-    ])('with %s aoi', (_case, toRecipe) => {
-        it('emits the source geometry without clipping or resolving an aoi', async () => {
-            const geometry = await firstValueFrom(imageAsset(toRecipe()).getGeometry$())
+    ]) {
+        describe(`with ${scenario} aoi`, () => {
+            it('emits the source geometry without clipping or resolving an aoi', async () => {
+                const geometry = await firstValueFrom(imageAsset(toRecipe()).getGeometry$())
 
-            expect(geometry).toBe(sourceBounds)
-            expect(captured.clip).toBeUndefined()
-            expect(captured.aoiResolutions).toBe(0)
+                assert.equal(geometry, sourceBounds)
+                assert.equal(captured.clip, undefined)
+                assert.equal(captured.aoiResolutions, 0)
+            })
         })
-    })
+    }
 
     it('leaves an ASSET_BOUNDS aoi unclipped, keeping the source bounds', async () => {
         const geometry = await firstValueFrom(imageAsset(recipe({type: 'ASSET_BOUNDS'})).getGeometry$())
 
-        expect(geometry).toBe(sourceBounds)
-        expect(captured.clip).toBeUndefined()
-        expect(captured.aoiResolutions).toBe(0)
+        assert.equal(geometry, sourceBounds)
+        assert.equal(captured.clip, undefined)
+        assert.equal(captured.aoiResolutions, 0)
     })
 
     it('clips with a runtime GEOMETRY payload by identity without resolving another aoi', async () => {
         await firstValueFrom(imageAsset(recipe({type: 'GEOMETRY', geometry: runtimeGeometry})).getImage$())
 
-        expect(captured.clip).toBe(runtimeGeometry)
-        expect(captured.aoiResolutions).toBe(0)
+        assert.equal(captured.clip, runtimeGeometry)
+        assert.equal(captured.aoiResolutions, 0)
     })
 
     it('rejects a malformed non-null aoi with the controlled unsupported-type message', async () => {
-        await expect(
-            firstValueFrom(imageAsset(recipe({})).getImage$())
-        ).rejects.toThrow('Unsupported aoi type: undefined')
+        await assert.rejects(
+            firstValueFrom(imageAsset(recipe({})).getImage$()),
+            /Unsupported aoi type: undefined/
+        )
 
-        expect(captured.clip).toBeUndefined()
-        expect(captured.aoiResolutions).toBe(0)
+        assert.equal(captured.clip, undefined)
+        assert.equal(captured.aoiResolutions, 0)
     })
 })
 
@@ -122,77 +145,85 @@ describe('image collection asset', () => {
         captured.aoiResolutions = 0
     })
 
-    describe.each([
+    for (const [typeName, aoi] of [
         ['ASSET', {type: 'ASSET', id: 'some/asset'}],
         ['RECIPE', {type: 'RECIPE', id: 'some-recipe'}]
-    ])('with a %s aoi', (_type, aoi) => {
-        it('emits the resolved geometry, never the descriptor', async () => {
-            const geometry = await firstValueFrom(imageCollectionAsset(recipe(aoi)).getGeometry$())
+    ]) {
+        describe(`with a ${typeName} aoi`, () => {
+            it('emits the resolved geometry, never the descriptor', async () => {
+                const geometry = await firstValueFrom(imageCollectionAsset(recipe(aoi)).getGeometry$())
 
-            expect(geometry).toBe(resolved(aoi.id))
-            expect(geometry).not.toBe(aoi)
-            expect(captured.aoiResolutions).toBe(1)
+                assert.equal(geometry, resolved(aoi.id))
+                assert.notEqual(geometry, aoi)
+                assert.equal(captured.aoiResolutions, 1)
+            })
+
+            it('filters and clips with that same resolved geometry', async () => {
+                await firstValueFrom(imageCollectionAsset(recipe(aoi)).getImage$())
+
+                assert.equal(captured.filterBounds, resolved(aoi.id))
+                assert.equal(captured.clip, resolved(aoi.id))
+                assert.equal(captured.aoiResolutions, 1)
+            })
         })
+    }
 
-        it('filters and clips with that same resolved geometry', async () => {
-            await firstValueFrom(imageCollectionAsset(recipe(aoi)).getImage$())
-
-            expect(captured.filterBounds).toBe(resolved(aoi.id))
-            expect(captured.clip).toBe(resolved(aoi.id))
-            expect(captured.aoiResolutions).toBe(1)
-        })
-    })
-
-    describe.each([
+    for (const [scenario, toRecipe] of [
         ['an absent', recipeWithoutAoi],
         ['an explicit null', () => recipe(null)]
-    ])('with %s aoi', (_case, toRecipe) => {
-        it('emits null and composes without filtering, clipping, or resolving an aoi', async () => {
-            const assetFactory = imageCollectionAsset(toRecipe())
+    ]) {
+        describe(`with ${scenario} aoi`, () => {
+            it('emits null and composes without filtering, clipping, or resolving an aoi', async () => {
+                const assetFactory = imageCollectionAsset(toRecipe())
 
-            await expect(firstValueFrom(assetFactory.getGeometry$())).resolves.toBeNull()
-            await firstValueFrom(assetFactory.getImage$())
+                assert.equal(await firstValueFrom(assetFactory.getGeometry$()), null)
+                await firstValueFrom(assetFactory.getImage$())
 
-            expect(captured.filterBounds).toBeUndefined()
-            expect(captured.clip).toBeUndefined()
-            expect(captured.aoiResolutions).toBe(0)
+                assert.equal(captured.filterBounds, undefined)
+                assert.equal(captured.clip, undefined)
+                assert.equal(captured.aoiResolutions, 0)
+            })
         })
-    })
+    }
 
     describe('with an ASSET_BOUNDS aoi', () => {
         const assetBounds = recipe({type: 'ASSET_BOUNDS'})
 
         it('takes its geometry from the source collection', async () => {
-            expect(await firstValueFrom(imageCollectionAsset(assetBounds).getGeometry$())).toBe(sourceBounds)
+            assert.equal(
+                await firstValueFrom(imageCollectionAsset(assetBounds).getGeometry$()),
+                sourceBounds
+            )
         })
 
         it('clips with the source bounds, without filtering or resolving an aoi', async () => {
             await firstValueFrom(imageCollectionAsset(assetBounds).getImage$())
 
-            expect(captured.clip).toBe(sourceBounds)
-            expect(captured.filterBounds).toBeUndefined()
-            expect(captured.aoiResolutions).toBe(0)
+            assert.equal(captured.clip, sourceBounds)
+            assert.equal(captured.filterBounds, undefined)
+            assert.equal(captured.aoiResolutions, 0)
         })
     })
 
     it('uses a runtime GEOMETRY payload by identity without resolving another aoi', async () => {
         const assetFactory = imageCollectionAsset(recipe({type: 'GEOMETRY', geometry: runtimeGeometry}))
 
-        await expect(firstValueFrom(assetFactory.getGeometry$())).resolves.toBe(runtimeGeometry)
+        assert.equal(await firstValueFrom(assetFactory.getGeometry$()), runtimeGeometry)
         await firstValueFrom(assetFactory.getImage$())
 
-        expect(captured.filterBounds).toBe(runtimeGeometry)
-        expect(captured.clip).toBe(runtimeGeometry)
-        expect(captured.aoiResolutions).toBe(0)
+        assert.equal(captured.filterBounds, runtimeGeometry)
+        assert.equal(captured.clip, runtimeGeometry)
+        assert.equal(captured.aoiResolutions, 0)
     })
 
     it('rejects a malformed non-null aoi with the controlled unsupported-type message', async () => {
-        await expect(
-            firstValueFrom(imageCollectionAsset(recipe({})).getImage$())
-        ).rejects.toThrow('Unsupported aoi type: undefined')
+        await assert.rejects(
+            firstValueFrom(imageCollectionAsset(recipe({})).getImage$()),
+            /Unsupported aoi type: undefined/
+        )
 
-        expect(captured.filterBounds).toBeUndefined()
-        expect(captured.clip).toBeUndefined()
-        expect(captured.aoiResolutions).toBe(0)
+        assert.equal(captured.filterBounds, undefined)
+        assert.equal(captured.clip, undefined)
+        assert.equal(captured.aoiResolutions, 0)
     })
 })

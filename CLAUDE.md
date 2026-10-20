@@ -41,6 +41,9 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` only)
 - `lib/python/shared` - Shared Python utilities
 
+The Node.js libraries carry no lockfile of their own: each module locks the dependencies of the libraries it installs in
+`modules/<module>/lib/<library>/package-lock.json`, which its image, its dev container and CI install from.
+
 **Import mechanism:** The shared library is accessed via Node.js import maps (`#sepal/*`). In the shared lib's own `package.json`: `"#sepal/*": "./src/*.js"`. In consuming modules, it's linked as a dependency (`"sepal": "../../lib/js/shared"`) and mapped as `"#sepal/*": "sepal/src/*.js"`. Code imports look like `import {something} from '#sepal/httpServer'`.
 
 ### Inter-Service Communication
@@ -105,7 +108,7 @@ Module dependencies are defined in `dev-env/config/deps.json`. Each module speci
 ```bash
 # From within a module directory:
 npm install
-npm test                             # Run tests (Jest or Vitest)
+npm test                             # Run tests (Node test runner; Vitest in the GUI)
 npm run testWatch                    # Watch mode (shared lib)
 
 # GUI-specific:
@@ -120,8 +123,8 @@ npm test                             # Vitest
 
 ```bash
 cd lib/js/shared
-npm test                             # Jest
-npm run testWatch                    # Jest watch mode
+npm test                             # Node test runner
+npm run testWatch                    # Node test runner watch mode
 ```
 
 ## Testing
@@ -137,7 +140,7 @@ Test boundaries and collaborator choices: [Code design](docs/code-design.md#test
 - Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
 - Run the affected test files and relevant boundary tests while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed.
 - Reserve the full GUI suite for the final readiness check before commit, after implementation and review corrections are complete and targeted checks pass. During iteration, use a targeted subset even for shared-component changes; broaden that subset when the affected behavior warrants it. Do not run the full suite after each correction round. Report which targeted tests ran and that the final full run is still pending.
-- Validate through `sepal npm-test <module>`. Raw `npx jest` in dev-env fails every `#sepal/ee/ee`-importing suite with a post-teardown import error — stable, and indistinguishable from a real failure.
+- Validate through `sepal npm-test <module>`. A backend module's `test` script already names every `*.test.js` file, so arguments add to that set rather than narrow it: to run one file, run `node --test <file>` from the module directory in dev-env, with the flags of the module's `test` script.
 
 ## Code Style
 

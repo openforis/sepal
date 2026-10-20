@@ -4907,7 +4907,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec"
+      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec",
+      "filteredTooltip": {
+        "search": "Supprimer les tâches correspondant au filtre actuel",
+        "completed": "Supprimer les tâches finalisées",
+        "completedSearch": "Supprimer les tâches finalisées correspondant au filtre actuel",
+        "failed": "Supprimer les tâches en échec ou annulées",
+        "failedSearch": "Supprimer les tâches en échec ou annulées correspondant au filtre actuel"
+      }
     },
     "stop": {
       "tooltip": "Arrêter la tâche"

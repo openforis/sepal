@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -9,14 +11,14 @@ describe('worker database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
@@ -26,8 +28,8 @@ describe('worker database migrations', () => {
         const [found] = await admin.query('SELECT username FROM ??.worker_session WHERE username = ?', [dbName, stored.username.toUpperCase()])
 
         const collations = await usernameCollations(dbName)
-        expect(found).toEqual([{username: stored.username}])
-        expect(collations).toEqual({
+        assert.deepEqual(found, [{username: stored.username}])
+        assert.deepEqual(collations, {
             worker_session: 'ascii_general_ci',
             task: 'ascii_general_ci',
             session_app: 'ascii_general_ci',
@@ -43,11 +45,11 @@ describe('worker database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining([
+            assert.ok(new Set([
                 'instance_claim', 'instance_usage_hourly', 'instance_usage_sample',
                 'session_app', 'task', 'worker_session'
-            ]))
-            expect(tables).not.toContain('instance')
+            ]).isSubsetOf(new Set(tables)))
+            assert.ok(!tables.includes('instance'))
         })
 
         test('create them empty, importing nothing', async () => {
@@ -56,7 +58,7 @@ describe('worker database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const sessions = await sessionIds(dbName)
-            expect(sessions).toEqual([])
+            assert.deepEqual(sessions, [])
         })
     })
 

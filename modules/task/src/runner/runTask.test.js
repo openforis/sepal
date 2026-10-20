@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+
 import {runTask} from './runTask.js'
 
 const EXECUTING = {messageKey: 'tasks.status.executing', defaultMessage: 'Executing...'}
@@ -5,8 +8,11 @@ const EXECUTING = {messageKey: 'tasks.status.executing', defaultMessage: 'Execut
 test('an operation that finishes completes the task, having first said it executes', async () => {
     const {result, reported} = await run({operation: async () => {}})
 
-    expect(result).toEqual({state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}})
-    expect(reported[0]).toEqual(EXECUTING)
+    assert.deepEqual(
+        result,
+        {state: 'COMPLETED', statusDescription: {messageKey: 'tasks.status.completed', defaultMessage: 'Completed!'}}
+    )
+    assert.deepEqual(reported[0], EXECUTING)
 })
 
 test('an operation that throws fails the task with what the error says to the user', async () => {
@@ -16,7 +22,10 @@ test('an operation that throws fails the task with what the error says to the us
         throw error
     }})
 
-    expect(result).toEqual({state: 'FAILED', statusDescription: {messageKey: 'tasks.ee.export.asset.encodingTooLarge', defaultMessage: 'Too large', messageArgs: {assetId: 'a'}}})
+    assert.deepEqual(
+        result,
+        {state: 'FAILED', statusDescription: {messageKey: 'tasks.ee.export.asset.encodingTooLarge', defaultMessage: 'Too large', messageArgs: {assetId: 'a'}}}
+    )
 })
 
 test('a task stopped while it runs is canceled, whatever the operation then throws', async () => {
@@ -27,22 +36,32 @@ test('a task stopped while it runs is canceled, whatever the operation then thro
         throw new Error('interrupted')
     }})
 
-    expect(result.state).toBe('CANCELED')
+    assert.equal(result.state, 'CANCELED')
+})
+
+test('an operation gets the task\'s local processing', async () => {
+    const localProcessing = {run: async work => work()}
+    let received
+
+    await run({localProcessing, operation: async (_params, context) => received = context.localProcessing})
+
+    assert.equal(received, localProcessing)
 })
 
 test('an operation this release does not know fails the task', async () => {
     const {result} = await run({name: 'image.UNKNOWN', operation: async () => {}})
 
-    expect(result.state).toBe('FAILED')
+    assert.equal(result.state, 'FAILED')
 })
 
-const run = ({operation, signal = new AbortController().signal, name = 'image.GEE'}) => {
+const run = ({operation, signal = new AbortController().signal, name = 'image.GEE', localProcessing = {}}) => {
     const reported = []
     return runTask({
         task: {id: 't-1', operation: name, params: {a: 1}},
         operations: {'image.GEE': operation},
         sepal: {},
         report: description => reported.push(description),
-        signal
+        signal,
+        localProcessing
     }).then(result => ({result, reported}))
 }

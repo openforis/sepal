@@ -7,7 +7,7 @@ import {createVrt$, setBandNames$} from '#sepal/gdal'
 
 import {exportToWorkspace} from '../workspaceExport.js'
 
-export const imageSepalExport = async (params, {sepal, report, signal, sleep}) => {
+export const imageSepalExport = async (params, {sepal, report, signal, sleep, localProcessing}) => {
     const {recipe, workspacePath, filenamePrefix, bands} = params.image
     const description = recipe.title || recipe.placeholder
     const downloadDir = workspacePath
@@ -16,7 +16,7 @@ export const imageSepalExport = async (params, {sepal, report, signal, sleep}) =
     await mkdir(downloadDir, {recursive: true})
     const {downloaded} = await exportToWorkspace({
         start: () => sepal.startExport('task/export/image/sepal', params),
-        downloadDir, sepal, report, signal, sleep
+        downloadDir, sepal, report, signal, sleep, localProcessing
     })
     if (downloaded) {
         const vrtPath = join(downloadDir, `${filenamePrefix || description}.vrt`)

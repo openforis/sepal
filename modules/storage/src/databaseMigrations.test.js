@@ -3,25 +3,30 @@
 // schema, and a test that created or dropped that database would destroy the very data the import
 // exists to carry over; what the schema stream produces is covered by
 // databaseMigrations.integration.test.js against MySQL.
+import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {join} from 'node:path'
+import {test} from 'node:test'
 
 import {dirName} from '#sepal/path'
 
 test('copies only when the source exists and the target is still empty', () => {
-    expect(sql).toMatch(/EXISTS\(SELECT 1 FROM information_schema\.TABLES WHERE TABLE_SCHEMA='user_storage' AND TABLE_NAME='history'\)/)
-    expect(sql).toMatch(/\(SELECT COUNT\(\*\) FROM `history`\)=0/)
+    assert.match(
+        sql,
+        /EXISTS\(SELECT 1 FROM information_schema\.TABLES WHERE TABLE_SCHEMA='user_storage' AND TABLE_NAME='history'\)/
+    )
+    assert.match(sql, /\(SELECT COUNT\(\*\) FROM `history`\)=0/)
 })
 
 test('preserves the identities the event ordering is read by', () => {
-    expect(sql).toMatch(/INSERT INTO `history` \(id, username, event, timestamp\)/)
-    expect(sql).toMatch(/SELECT id, LOWER\(username\), event, timestamp/)
+    assert.match(sql, /INSERT INTO `history` \(id, username, event, timestamp\)/)
+    assert.match(sql, /SELECT id, LOWER\(username\), event, timestamp/)
 })
 
 test('reads the legacy schema by name, and writes only to the selected database', () => {
-    expect(sql).toMatch(/FROM user_storage\.`history`/)
+    assert.match(sql, /FROM user_storage\.`history`/)
     const writes = sql.match(/(INSERT INTO|UPDATE|DELETE FROM|ALTER TABLE|DROP TABLE|CREATE TABLE)\s+user_storage\./g)
-    expect(writes).toBeNull()
+    assert.equal(writes, null)
 })
 
 const raw = readFileSync(join(dirName(import.meta.url), '../migrations/legacy-import/001.do.import.sql'), 'utf8')

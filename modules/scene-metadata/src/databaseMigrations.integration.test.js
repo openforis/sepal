@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
+import {after, afterEach, before, describe, test} from 'node:test'
 
 import {createConnection, initDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
@@ -9,14 +11,14 @@ describe('scene metadata database migrations', () => {
     let admin
     const reserved = []
 
-    beforeAll(async () => {
+    before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
     afterEach(() => dropReservedDatabases())
 
-    afterAll(() => admin?.end())
+    after(() => admin?.end())
 
     describe('schema migrations', () => {
         test('create the scene_meta_data table in the selected database', async () => {
@@ -25,7 +27,7 @@ describe('scene metadata database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const tables = await tableNames(dbName)
-            expect(tables).toEqual(expect.arrayContaining(['scene_meta_data']))
+            assert.ok(new Set(['scene_meta_data']).isSubsetOf(new Set(tables)))
         })
 
         test('create an empty scene_meta_data table', async () => {
@@ -34,7 +36,7 @@ describe('scene metadata database migrations', () => {
             await initDb(dbName, SCHEMA_PATH)
 
             const ids = await storedIds(dbName)
-            expect(ids).toEqual([])
+            assert.deepEqual(ids, [])
         })
     })
 

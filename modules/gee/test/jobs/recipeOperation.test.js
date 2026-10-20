@@ -1,6 +1,7 @@
+import assert from 'node:assert/strict'
+import {after, beforeEach, describe, mock, test} from 'node:test'
 import {MessageChannel} from 'node:worker_threads'
 
-import {jest} from '@jest/globals'
 import {defaultIfEmpty, EMPTY, firstValueFrom, forkJoin, Observable, of, Subject, switchMap, take} from 'rxjs'
 
 // What one execution operation reads, and for how long: the real configure task opens it on the
@@ -18,37 +19,43 @@ const waitingForHeld = []
 let catalogue
 let held
 
-jest.unstable_mockModule('#sepal/httpClient', () => ({
-    get$: (url, options) => {
-        const id = url.split('/').pop()
-        const read = {id, sepalUser: JSON.parse(options.headers['sepal-user'])}
-        reads.push(read)
-        return new Observable(subscriber => {
-            const answer = () => {
-                const recipe = catalogue[id]
-                recipe
-                    ? (subscriber.next({body: recipe}), subscriber.complete())
-                    : subscriber.error(Object.assign(new Error(`No such recipe: ${id}`), {statusCode: 404}))
-            }
-            held ? hold({read, answer}) : answer()
-            return () => read.tornDown = true
-        })
+mock.module('#sepal/httpClient', {
+    exports: {
+        get$: (url, options) => {
+            const id = url.split('/').pop()
+            const read = {id, sepalUser: JSON.parse(options.headers['sepal-user'])}
+            reads.push(read)
+            return new Observable(subscriber => {
+                const answer = () => {
+                    const recipe = catalogue[id]
+                    recipe
+                        ? (subscriber.next({body: recipe}), subscriber.complete())
+                        : subscriber.error(Object.assign(new Error(`No such recipe: ${id}`), {statusCode: 404}))
+                }
+                held ? hold({read, answer}) : answer()
+                return () => read.tornDown = true
+            })
+        }
     }
-}))
+})
 
-jest.unstable_mockModule('#gee/config', () => ({
-    googleProjectId: 'test-project',
-    instances: 1,
-    port: 80,
-    recipeEndpoint: RECIPE_ENDPOINT,
-    sepalEndpoint: 'http://test',
-    serviceAccountCredentials: {}
-}))
+mock.module('#gee/config', {
+    exports: {
+        googleProjectId: 'test-project',
+        instances: 1,
+        port: 80,
+        recipeEndpoint: RECIPE_ENDPOINT,
+        sepalEndpoint: 'http://test',
+        serviceAccountCredentials: {}
+    }
+})
 
-jest.unstable_mockModule('#gee/jobs/service/context', () => ({
-    contextService: {serviceName: 'ContextService', serviceHandler$: () => of({})},
-    getContext$: () => of({recipeEndpoint: RECIPE_ENDPOINT})
-}))
+mock.module('#gee/jobs/service/context', {
+    exports: {
+        contextService: {serviceName: 'ContextService', serviceHandler$: () => of({})},
+        getContext$: () => of({recipeEndpoint: RECIPE_ENDPOINT})
+    }
+})
 
 const {WORKER} = await import('#sepal/worker/factory')
 const {loadRecipe$} = await import('#sepal/ee/recipe')
@@ -84,7 +91,7 @@ PortTransport({
 })
 service.initialize(PortTransport({transportId: TRANSPORT, port: ports.port2, onChannel: () => {}}))
 
-afterAll(() => {
+after(() => {
     ports.port1.close()
     ports.port2.close()
 })
@@ -122,8 +129,8 @@ describe('within one operation', () => {
 
         const [first, second] = await operation.read(['recipe-1', 'recipe-1'])
 
-        expect(first).toBe(second)
-        expect(readIds()).toEqual(['recipe-1'])
+        assert.equal(first, second)
+        assert.deepEqual(readIds(), ['recipe-1'])
     })
 
     test('a recipe referenced again later still gets the record already read', async () => {
@@ -133,8 +140,8 @@ describe('within one operation', () => {
         catalogue['recipe-1'] = {id: 'recipe-1', revision: 2}
         const [again] = await operation.read(['recipe-1'])
 
-        expect(again).toBe(first)
-        expect(readIds()).toEqual(['recipe-1'])
+        assert.equal(again, first)
+        assert.deepEqual(readIds(), ['recipe-1'])
     })
 
     test('different recipes are read separately', async () => {
@@ -142,25 +149,25 @@ describe('within one operation', () => {
 
         await operation.read(['recipe-1', 'recipe-2'])
 
-        expect(readIds()).toEqual(['recipe-1', 'recipe-2'])
+        assert.deepEqual(readIds(), ['recipe-1', 'recipe-2'])
     })
 
     test('a refusal reaches the caller with the cause the reader gave', async () => {
         const operation = await start()
 
-        await expect(operation.read(['no-such-recipe'])).rejects.toMatchObject({statusCode: 404})
+        await assert.rejects(operation.read(['no-such-recipe']), {statusCode: 404})
     })
 
     // A failure is an outcome of one attempt, not a record of the operation.
     test('a failed read is not retained, so a later attempt reads again', async () => {
         const operation = await start()
-        await expect(operation.read(['gone'])).rejects.toThrow()
+        await assert.rejects(operation.read(['gone']))
 
         catalogue['gone'] = {id: 'gone', revision: 1}
         const [recipe] = await operation.read(['gone'])
 
-        expect(recipe).toEqual({id: 'gone', revision: 1})
-        expect(readIds()).toEqual(['gone', 'gone'])
+        assert.deepEqual(recipe, {id: 'gone', revision: 1})
+        assert.deepEqual(readIds(), ['gone', 'gone'])
     })
 })
 
@@ -174,8 +181,8 @@ describe('across operations', () => {
         const second = await start()
         const [recipe] = await second.read(['recipe-1'])
 
-        expect(recipe).toEqual({id: 'recipe-1', revision: 2})
-        expect(readIds()).toEqual(['recipe-1', 'recipe-1'])
+        assert.deepEqual(recipe, {id: 'recipe-1', revision: 2})
+        assert.deepEqual(readIds(), ['recipe-1', 'recipe-1'])
     })
 
     test('overlapping operations keep their own records and their own reader', async () => {
@@ -186,9 +193,9 @@ describe('across operations', () => {
         catalogue['recipe-1'] = {id: 'recipe-1', revision: 2}
         const [bobsRecipe] = await bobs.read(['recipe-1'])
 
-        expect(alicesRecipe.revision).toBe(1)
-        expect(bobsRecipe.revision).toBe(2)
-        expect(readers()).toEqual([ALICE, BOB])
+        assert.equal(alicesRecipe.revision, 1)
+        assert.equal(bobsRecipe.revision, 2)
+        assert.deepEqual(readers(), [ALICE, BOB])
     })
 
 })
@@ -203,8 +210,8 @@ describe('across a service round trip', () => {
 
         answerRoundTrip()
 
-        await expect(reading).resolves.toEqual({id: 'recipe-2', revision: 1})
-        expect(readIds()).toEqual(['recipe-1', 'recipe-2'])
+        assert.deepEqual(await reading, {id: 'recipe-2', revision: 1})
+        assert.deepEqual(readIds(), ['recipe-1', 'recipe-2'])
     })
 
     // The read is ISSUED after the later operation started, so which reader it uses is decided then.
@@ -217,7 +224,7 @@ describe('across a service round trip', () => {
         answerRoundTrip()
 
         await reading
-        expect(readers()).toEqual([ALICE, ALICE])
+        assert.deepEqual(readers(), [ALICE, ALICE])
     })
 })
 
@@ -226,8 +233,8 @@ describe('ending an operation', () => {
         const operation = await start()
         await operation.end()
 
-        await expect(operation.read(['recipe-1'])).rejects.toThrow(/Operation ended/)
-        expect(reads).toEqual([])
+        await assert.rejects(operation.read(['recipe-1']), /Operation ended/)
+        assert.deepEqual(reads, [])
     })
 
     test('tears down a read still in flight', async () => {
@@ -239,16 +246,18 @@ describe('ending an operation', () => {
 
         await operation.end()
 
-        expect(held[0].read.tornDown).toBe(true)
+        assert.equal(held[0].read.tornDown, true)
     })
 })
 
 test('a job running outside any operation reads nothing and says so', async () => {
     const [{worker$}] = readingJob(WORKER)
 
-    await expect(firstValueFrom(worker$({requestArgs: {ids: ['recipe-1']}, state: {}})))
-        .rejects.toThrow(/No execution operation in progress/)
-    expect(reads).toEqual([])
+    await assert.rejects(
+        firstValueFrom(worker$({requestArgs: {ids: ['recipe-1']}, state: {}})),
+        /No execution operation in progress/
+    )
+    assert.deepEqual(reads, [])
 })
 
 const readIds = () => reads.map(({id}) => id)

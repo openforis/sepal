@@ -1,33 +1,41 @@
-import {jest} from '@jest/globals'
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
 import {NEVER, of, Subject} from 'rxjs'
 
-const sandboxInfo$ = jest.fn()
-const terminateSession$ = jest.fn()
-const createSession$ = jest.fn()
-const joinSession$ = jest.fn()
+import {callsOf} from '#sepal/testSupport/mock'
 
-jest.unstable_mockModule('./endpoint.js', () => ({
-    sandboxInfo$,
-    createSession$,
-    joinSession$,
-    terminateSession$
-}))
+const sandboxInfo$ = mock.fn()
+const terminateSession$ = mock.fn()
+const createSession$ = mock.fn()
+const joinSession$ = mock.fn()
+
+mock.module('./endpoint.js', {
+    exports: {
+        sandboxInfo$,
+        createSession$,
+        joinSession$,
+        terminateSession$
+    }
+})
 
 const readLineQueue = []
-const readLine$ = jest.fn(() => readLineQueue.length ? of(readLineQueue.shift()) : NEVER)
-const print = jest.fn()
-const println = jest.fn()
+const readLine$ = mock.fn(() => readLineQueue.length ? of(readLineQueue.shift()) : NEVER)
+const print = mock.fn()
+const println = mock.fn()
 
-const prompt = jest.fn()
+const prompt = mock.fn()
 
-jest.unstable_mockModule('./console.js', () => ({
-    print,
-    println,
-    prompt,
-    format: text => `${text}`,
-    highlight: text => `${text}`,
-    readLine$
-}))
+mock.module('./console.js', {
+    exports: {
+        print,
+        println,
+        prompt,
+        format: text => `${text}`,
+        highlight: text => `${text}`,
+        readLine$
+    }
+})
 
 const {interactive$} = await import('./interactive.js')
 
@@ -55,56 +63,58 @@ const info = {
 }
 
 beforeEach(() => {
-    sandboxInfo$.mockReset()
-    sandboxInfo$.mockImplementation(() => of(info))
-    terminateSession$.mockReset()
-    terminateSession$.mockImplementation(() => of({}))
+    sandboxInfo$.mock.resetCalls()
+    sandboxInfo$.mock.mockImplementation(() => of(info))
+    terminateSession$.mock.resetCalls()
+    terminateSession$.mock.mockImplementation(() => of({}))
     readLineQueue.length = 0
-    readLine$.mockClear()
-    print.mockClear()
-    println.mockClear()
-    prompt.mockClear()
-    createSession$.mockReset()
-    joinSession$.mockReset()
+    readLine$.mock.resetCalls()
+    print.mock.resetCalls()
+    println.mock.resetCalls()
+    prompt.mock.resetCalls()
+    createSession$.mock.resetCalls()
+    createSession$.mock.mockImplementation(() => undefined)
+    joinSession$.mock.resetCalls()
+    joinSession$.mock.mockImplementation(() => undefined)
     info.sessions[0].apps = []
 })
 
 describe('interactive$', () => {
     it('renders the menu once and waits for input when no event arrives', () => {
         const subscription = interactive$(new Subject()).subscribe()
-        expect(sandboxInfo$).toHaveBeenCalledTimes(1)
+        assert.equal(sandboxInfo$.mock.callCount(), 1)
         subscription.unsubscribe()
     })
 
     it('re-fetches and re-renders the menu when a session event arrives at the prompt', () => {
         const sessionEvent$ = new Subject()
         const subscription = interactive$(sessionEvent$).subscribe()
-        expect(sandboxInfo$).toHaveBeenCalledTimes(1)
+        assert.equal(sandboxInfo$.mock.callCount(), 1)
         sessionEvent$.next({username: 'admin'})
-        expect(sandboxInfo$).toHaveBeenCalledTimes(2)
+        assert.equal(sandboxInfo$.mock.callCount(), 2)
         subscription.unsubscribe()
     })
 
     it('clears the screen before redrawing when a session event arrives', () => {
         const sessionEvent$ = new Subject()
         const subscription = interactive$(sessionEvent$).subscribe()
-        print.mockClear()
-        sandboxInfo$.mockClear()
+        print.mock.resetCalls()
+        sandboxInfo$.mock.resetCalls()
         sessionEvent$.next({username: 'admin'})
-        expect(print.mock.calls[0][0]).toBe('\u001B[2J\u001B[3J\u001B[H')
-        expect(sandboxInfo$).toHaveBeenCalledTimes(1) // re-fetch happens after the clear
+        assert.equal(print.mock.calls[0].arguments[0], '\u001B[2J\u001B[3J\u001B[H')
+        assert.equal(sandboxInfo$.mock.callCount(), 1) // re-fetch happens after the clear
         subscription.unsubscribe()
     })
 
     it('renders the selection prompt through prompt() so a redraw re-echoes pending input', () => {
         const sessionEvent$ = new Subject()
         const subscription = interactive$(sessionEvent$).subscribe()
-        expect(prompt).toHaveBeenCalledTimes(1)
-        expect(prompt.mock.calls[0][0]).toContain('Select')
+        assert.equal(prompt.mock.callCount(), 1)
+        assert.ok(prompt.mock.calls[0].arguments[0].includes('Select'))
         sessionEvent$.next({username: 'admin'})
         // the refresh re-issues the prompt via readline (prompt(true) semantics preserve
         // and re-display whatever the user had typed before the screen was cleared)
-        expect(prompt).toHaveBeenCalledTimes(2)
+        assert.equal(prompt.mock.callCount(), 2)
         subscription.unsubscribe()
     })
 
@@ -113,7 +123,7 @@ describe('interactive$', () => {
         const subscription = interactive$(sessionEvent$).subscribe()
         sessionEvent$.next({username: 'admin'})
         sessionEvent$.next({username: 'admin'})
-        expect(sandboxInfo$).toHaveBeenCalledTimes(3)
+        assert.equal(sandboxInfo$.mock.callCount(), 3)
         subscription.unsubscribe()
     })
 
@@ -123,8 +133,8 @@ describe('interactive$', () => {
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(terminateSession$).not.toHaveBeenCalled()
-        expect(sandboxInfo$).toHaveBeenCalledTimes(2) // initial render + re-render after refusal
+        assert.equal(terminateSession$.mock.callCount(), 0)
+        assert.equal(sandboxInfo$.mock.callCount(), 2) // initial render + re-render after refusal
         subscription.unsubscribe()
     })
 
@@ -134,84 +144,97 @@ describe('interactive$', () => {
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(terminateSession$).toHaveBeenCalledTimes(1)
-        expect(readLine$).toHaveBeenCalledTimes(2) // menu prompt + re-rendered menu prompt — NO y/N prompt in between
+        assert.equal(terminateSession$.mock.callCount(), 1)
+        assert.equal(readLine$.mock.callCount(), 2) // menu prompt + re-rendered menu prompt — NO y/N prompt in between
         subscription.unsubscribe()
     })
 
     it('clears the screen after stopping a session, before redrawing the menu', async () => {
         readLineQueue.push('1s')
+        const printsBeforeFetch = []
+        sandboxInfo$.mock.mockImplementation(() => {
+            printsBeforeFetch.push(print.mock.callCount())
+            return of(info)
+        })
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(terminateSession$).toHaveBeenCalledTimes(1)
-        const clearIndex = print.mock.calls.findIndex(([text]) => text === '\u001B[2J\u001B[3J\u001B[H')
-        expect(clearIndex).not.toBe(-1)
-        expect(print.mock.invocationCallOrder[clearIndex])
-            .toBeLessThan(sandboxInfo$.mock.invocationCallOrder[1]) // clear first, then re-fetch and redraw
+        assert.equal(terminateSession$.mock.callCount(), 1)
+        const clearIndex = callsOf(print).findIndex(([text]) => text === '\u001B[2J\u001B[3J\u001B[H')
+        assert.notEqual(clearIndex, -1)
+        assert.ok(clearIndex < printsBeforeFetch[1]) // clear first, then re-fetch and redraw
         subscription.unsubscribe()
     })
 
     it('shows the unavailable notice, defaults the prompt to the failed type, and retries on Enter', async () => {
         const {of} = await import('rxjs')
-        createSession$.mockReturnValue(of({unavailable: true, reason: 'INSTANCE_UNAVAILABLE'}))
+        createSession$.mock.mockImplementation(() => of({unavailable: true, reason: 'INSTANCE_UNAVAILABLE'}))
         readLineQueue.push('t1', '') // select t1 → unavailable → Enter retries t1
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        const notices = println.mock.calls.filter(([text]) => `${text}`.includes('currently unavailable'))
-        expect(notices.length).toBeGreaterThanOrEqual(1)
-        expect(notices[0][0]).toContain('(t1)')
-        const prompts = prompt.mock.calls.map(([text]) => text)
-        expect(prompts.some(text => text.includes('Select (t1)'))).toBe(true) // retry default
-        expect(createSession$).toHaveBeenCalledTimes(2) // Enter retried the same type
+        const notices = callsOf(println).filter(([text]) => `${text}`.includes('currently unavailable'))
+        assert.ok(notices.length >= 1)
+        assert.ok(notices[0][0].includes('(t1)'))
+        const prompts = callsOf(prompt).map(([text]) => text)
+        assert.equal(prompts.some(text => text.includes('Select (t1)')), true) // retry default
+        assert.equal(createSession$.mock.callCount(), 2) // Enter retried the same type
         subscription.unsubscribe()
     })
 
     it('shows the trouble-starting message for any other launch failure (quota, unclassified)', async () => {
         const {of} = await import('rxjs')
         for (const reason of ['QUOTA_EXCEEDED', 'FAILED']) {
-            println.mockClear()
-            createSession$.mockReturnValue(of({unavailable: true, reason}))
+            println.mock.resetCalls()
+            createSession$.mock.mockImplementation(() => of({unavailable: true, reason}))
             readLineQueue.push('t1')
             const subscription = interactive$(NEVER).subscribe()
             await flushPromises()
             await flushPromises()
-            expect(println.mock.calls.some(([text]) => `${text}`.includes('having trouble starting'))).toBe(true)
-            expect(println.mock.calls.some(([text]) => `${text}`.includes('unavailable from the cloud provider'))).toBe(false)
+            assert.equal(
+                callsOf(println).some(([text]) => `${text}`.includes('having trouble starting')),
+                true
+            )
+            assert.equal(
+                callsOf(println).some(([text]) => `${text}`.includes('unavailable from the cloud provider')),
+                false
+            )
             subscription.unsubscribe()
         }
     })
 
     it('shows the trouble-starting message when joining a session that dies mid-start', async () => {
         const {of} = await import('rxjs')
-        joinSession$.mockReturnValue(of({unavailable: true, reason: 'FAILED'}))
+        joinSession$.mock.mockImplementation(() => of({unavailable: true, reason: 'FAILED'}))
         readLineQueue.push('1')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(println.mock.calls.some(([text]) => `${text}`.includes('having trouble starting'))).toBe(true)
-        expect(sandboxInfo$).toHaveBeenCalledTimes(2) // menu re-rendered after the notice
+        assert.equal(
+            callsOf(println).some(([text]) => `${text}`.includes('having trouble starting')),
+            true
+        )
+        assert.equal(sandboxInfo$.mock.callCount(), 2) // menu re-rendered after the notice
         subscription.unsubscribe()
     })
 
     it('clears the screen when a session is selected, before anything else is printed', async () => {
-        joinSession$.mockReturnValue(NEVER)
+        joinSession$.mock.mockImplementation(() => NEVER)
         readLineQueue.push('1')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        const texts = print.mock.calls.map(([text]) => text)
-        expect(texts[0]).toBe('\u001B[2J\u001B[3J\u001B[H')
-        expect(texts[1]).toContain('Joining running session')
+        const texts = callsOf(print).map(([text]) => text)
+        assert.equal(texts[0], '\u001B[2J\u001B[3J\u001B[H')
+        assert.ok(texts[1].includes('Joining running session'))
         subscription.unsubscribe()
     })
 
     it('clears the screen when an instance type is selected', async () => {
-        createSession$.mockReturnValue(NEVER)
+        createSession$.mock.mockImplementation(() => NEVER)
         readLineQueue.push('t1')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(print.mock.calls[0][0]).toBe('\u001B[2J\u001B[3J\u001B[H')
+        assert.equal(print.mock.calls[0].arguments[0], '\u001B[2J\u001B[3J\u001B[H')
         subscription.unsubscribe()
     })
 
@@ -219,14 +242,19 @@ describe('interactive$', () => {
         readLineQueue.push('nope')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(print.mock.calls.map(([text]) => text)).not.toContain('\u001B[2J\u001B[3J\u001B[H')
-        expect(println.mock.calls.some(([text]) => `${text}`.includes('Invalid option'))).toBe(true)
-        expect(sandboxInfo$).toHaveBeenCalledTimes(1) // re-prompt only — the menu is still there
+        assert.ok(
+            !callsOf(print).map(([text]) => text).includes('\u001B[2J\u001B[3J\u001B[H')
+        )
+        assert.equal(
+            callsOf(println).some(([text]) => `${text}`.includes('Invalid option')),
+            true
+        )
+        assert.equal(sandboxInfo$.mock.callCount(), 1) // re-prompt only — the menu is still there
         subscription.unsubscribe()
     })
 
     it('redraws the menu with a notice when the budget is too low for the selected type', async () => {
-        sandboxInfo$.mockImplementation(() => of({
+        sandboxInfo$.mock.mockImplementation(() => of({
             ...info,
             spending: {...info.spending, monthlyInstanceSpending: info.spending.monthlyInstanceBudget}
         }))
@@ -234,9 +262,12 @@ describe('interactive$', () => {
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(createSession$).not.toHaveBeenCalled()
-        expect(println.mock.calls.some(([text]) => `${text}`.includes('enough resources'))).toBe(true)
-        expect(sandboxInfo$).toHaveBeenCalledTimes(2) // the cleared menu is drawn again, not just re-prompted
+        assert.equal(createSession$.mock.callCount(), 0)
+        assert.equal(
+            callsOf(println).some(([text]) => `${text}`.includes('enough resources')),
+            true
+        )
+        assert.equal(sandboxInfo$.mock.callCount(), 2) // the cleared menu is drawn again, not just re-prompted
         subscription.unsubscribe()
     })
 
@@ -246,20 +277,20 @@ describe('interactive$', () => {
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(println).toHaveBeenCalledWith(expect.stringContaining('Foo'))
-        expect(terminateSession$).toHaveBeenCalledTimes(1)
+        assert.ok(callsOf(println).some(([text]) => `${text}`.includes('Foo')))
+        assert.equal(terminateSession$.mock.callCount(), 1)
         subscription.unsubscribe()
     })
 })
 
 describe('instance names', () => {
-    const printed = () => println.mock.calls.flat().map(t => `${t}`).join('\n')
+    const printed = () => callsOf(println).flat().map(t => `${t}`).join('\n')
 
     it('shows the instance name alongside the number', async () => {
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(printed()).toContain('crazy-banana')
-        expect(printed()).toContain('Name')
+        assert.ok(printed().includes('crazy-banana'))
+        assert.ok(printed().includes('Name'))
         subscription.unsubscribe()
     })
 
@@ -267,8 +298,8 @@ describe('instance names', () => {
         info.sessions[0].name = undefined
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(printed()).toContain('Name')
-        expect(printed()).not.toContain('undefined')
+        assert.ok(printed().includes('Name'))
+        assert.ok(!printed().includes('undefined'))
         subscription.unsubscribe()
     })
 
@@ -276,46 +307,46 @@ describe('instance names', () => {
     // the name column must not disturb the selection grammar.
     it('still joins by number', async () => {
         const {of} = await import('rxjs')
-        joinSession$.mockReturnValue(of({}))
+        joinSession$.mock.mockImplementation(() => of({}))
         readLineQueue.push('1')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(joinSession$).toHaveBeenCalled()
+        assert.ok(joinSession$.mock.callCount() > 0)
         subscription.unsubscribe()
     })
 
     it('still stops by number with the s suffix', async () => {
         const {of} = await import('rxjs')
-        joinSession$.mockReturnValue(of({}))
+        joinSession$.mock.mockImplementation(() => of({}))
         readLineQueue.push('1s', 'y')
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
         await flushPromises()
-        expect(terminateSession$).toHaveBeenCalledTimes(1)
+        assert.equal(terminateSession$.mock.callCount(), 1)
         subscription.unsubscribe()
     })
 })
 
 describe('instance types table', () => {
-    const printed = () => println.mock.calls.flat().map(t => `${t}`).join('\n')
+    const printed = () => callsOf(println).flat().map(t => `${t}`).join('\n')
     const rowOf = tag => printed().split('\n').find(line => line.includes(` ${tag} `))
 
     it('shows local SSD capacity and performance relative to t1', async () => {
-        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+        sandboxInfo$.mock.mockImplementation(() => of({...info, instanceTypes: [
             {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204},
             {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
         ]}))
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(printed()).toContain('GB SSD')
-        expect(rowOf('r4d')).toMatch(/237.*4\.3x.*0\.37/)
-        expect(rowOf('t1')).toMatch(/-.*1\.0x.*0\.02/)
+        assert.ok(printed().includes('GB SSD'))
+        assert.match(rowOf('r4d'), /237.*4\.3x.*0\.37/)
+        assert.match(rowOf('t1'), /-.*1\.0x.*0\.02/)
         subscription.unsubscribe()
     })
 
     it('lists instance types with SSD in a table of their own', async () => {
-        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+        sandboxInfo$.mock.mockImplementation(() => of({...info, instanceTypes: [
             {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204},
             {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
         ]}))
@@ -323,33 +354,35 @@ describe('instance types table', () => {
         await flushPromises()
         const lines = printed().split('\n')
         const index = text => lines.findIndex(line => line.includes(text))
-        expect(index('without SSD')).toBeLessThan(index(' t1 '))
-        expect(index(' t1 ')).toBeLessThan(index('with SSD'))
-        expect(index('with SSD')).toBeLessThan(index(' r4d '))
-        expect(index('with SSD')).toBeLessThan(index('SSD storage is available under /tmp'))
-        expect(index('SSD storage is available under /tmp')).toBeLessThan(lines.findLastIndex(line => line.includes(' Type ')))
+        assert.ok(index('without SSD') < index(' t1 '))
+        assert.ok(index(' t1 ') < index('with SSD'))
+        assert.ok(index('with SSD') < index(' r4d '))
+        assert.ok(index('with SSD') < index('SSD storage is available under /tmp'))
+        assert.ok(
+            index('SSD storage is available under /tmp') < lines.findLastIndex(line => line.includes(' Type '))
+        )
         subscription.unsubscribe()
     })
 
     it('fits the SSD explanation within the width of the table', async () => {
-        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+        sandboxInfo$.mock.mockImplementation(() => of({...info, instanceTypes: [
             {tag: 'r4d', cpuCount: 4, ramGiB: 32, ssdGB: 237, performance: 4.3, hourlyCost: 0.3696}
         ]}))
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        const ssdTable = println.mock.calls.flat().map(t => `${t}`).find(text => text.includes('with SSD'))
+        const ssdTable = callsOf(println).flat().map(t => `${t}`).find(text => text.includes('with SSD'))
         const widths = ssdTable.trim().split('\n').map(line => line.length)
-        expect(new Set(widths).size).toBe(1)
+        assert.equal(new Set(widths).size, 1)
         subscription.unsubscribe()
     })
 
     it('explains the SSD storage only when there are instance types with SSD', async () => {
-        sandboxInfo$.mockImplementation(() => of({...info, instanceTypes: [
+        sandboxInfo$.mock.mockImplementation(() => of({...info, instanceTypes: [
             {tag: 't1', cpuCount: 2, ramGiB: 2, ssdGB: 0, performance: 1, hourlyCost: 0.0204}
         ]}))
         const subscription = interactive$(NEVER).subscribe()
         await flushPromises()
-        expect(printed()).not.toContain('SSD storage')
+        assert.ok(!printed().includes('SSD storage'))
         subscription.unsubscribe()
     })
 })

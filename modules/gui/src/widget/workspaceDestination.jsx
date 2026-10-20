@@ -13,6 +13,10 @@ import {msg} from '~/translate'
 import {currentUser} from '~/user'
 import {Form} from '~/widget/form'
 
+import {withActivators} from './activation/activator'
+import {Button} from './button'
+import {WorkspaceDestinationBrowser} from './workspaceDestinationBrowser'
+
 const DEBOUNCE_TIME_MS = 750
 
 const mapStateToProps = state => ({
@@ -39,9 +43,20 @@ class _WorkspaceDestination extends React.Component {
         super(props)
         this.onError = this.onError.bind(this)
         this.onWorkspaceChecked = this.onWorkspaceChecked.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.openWorkspaceBrowser = this.openWorkspaceBrowser.bind(this)
     }
 
     render() {
+        return (
+            <React.Fragment>
+                {this.renderWorkspaceInput()}
+                {this.renderWorkspaceBrowser()}
+            </React.Fragment>
+        )
+    }
+
+    renderWorkspaceInput() {
         const {workspacePathInput, label, placeholder, autoFocus} = this.props
         const {loading} = this.state
         return (
@@ -51,8 +66,42 @@ class _WorkspaceDestination extends React.Component {
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={loading && msg('widget.loading')}
+                buttons={[this.renderWorkspaceBrowserButton()]}
             />
         )
+    }
+
+    renderWorkspaceBrowser() {
+        return (
+            <WorkspaceDestinationBrowser
+                onChange={this.onChange}
+            />
+        )
+    }
+
+    renderWorkspaceBrowserButton() {
+        return (
+            <Button
+                key='browse'
+                chromeless
+                shape='none'
+                air='none'
+                icon='folder-open'
+                tooltip={msg('widget.workspaceDestination.browser.tooltip')}
+                tabIndex={-1}
+                onClick={this.openWorkspaceBrowser}
+            />
+        )
+    }
+
+    openWorkspaceBrowser() {
+        const {workspacePathInput, activator: {activatables: {workspaceBrowser}}} = this.props
+        workspaceBrowser.activate({path: workspacePathInput.value})
+    }
+
+    onChange(path) {
+        const {workspacePathInput} = this.props
+        workspacePathInput.set(path)
     }
 
     componentDidMount() {
@@ -201,7 +250,8 @@ export const WorkspaceDestination = compose(
     _WorkspaceDestination,
     withSubscriptions(),
     connect(mapStateToProps),
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withActivators('workspaceBrowser')
 )
 
 WorkspaceDestination.propTypes = {

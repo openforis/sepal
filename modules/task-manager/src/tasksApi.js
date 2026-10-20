@@ -45,12 +45,22 @@ export const createTasksApi = tasks => {
             noContent(ctx)
         }),
         removeFinished: ctx => run(ctx, async () => {
-            await tasks.removeFinished(username(ctx))
+            const {taskIds} = ctx.request.body ?? {}
+            await tasks.removeFinished({taskIds, username: username(ctx)})
             noContent(ctx)
         }),
         progress: ctx => run(ctx, async () => {
-            const {statusDescription} = ctx.request.body ?? {}
-            await tasks.reportProgress({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId, statusDescription})
+            const {statusDescription, releasedSlot} = ctx.request.body ?? {}
+            await tasks.reportProgress({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId, statusDescription, releasedSlot})
+            noContent(ctx)
+        }),
+        requestLocalProcessing: ctx => run(ctx, async () => {
+            const slot = await tasks.requestLocalProcessing({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId})
+            ctx.body = slot ? {granted: true, slot: slot.toISOString()} : {granted: false}
+        }),
+        releaseLocalProcessing: ctx => run(ctx, async () => {
+            const {slot} = ctx.request.body ?? {}
+            await tasks.releaseLocalProcessing({taskId: taskId(ctx), callerTaskId: ctx.state.taskSession.taskId, slot})
             noContent(ctx)
         }),
         authenticateApiKey: ctx => run(ctx, async () => {

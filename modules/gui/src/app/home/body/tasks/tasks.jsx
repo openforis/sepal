@@ -276,12 +276,24 @@ class _Tasks extends React.Component {
                 chromeless
                 shape='circle'
                 icon='trash'
-                disabled={!this.inactiveTasks().length}
-                tooltip={msg('tasks.removeAll.tooltip')}
+                disabled={!this.visibleInactiveTasks().length}
+                tooltip={this.getRemoveAllTooltip()}
                 tooltipPlacement='bottom'
-                onConfirm={() => this.removeAllTasks()}
+                onConfirm={() => this.removeVisibleInactiveTasks()}
             />
         )
+    }
+
+    getRemoveAllTooltip() {
+        const {filterValues, statusFilter} = this.state
+        const searching = filterValues.length > 0
+        const status = {COMPLETED: 'completed', FAILED: 'failed'}[statusFilter]
+        if (status) {
+            return msg(`tasks.removeAll.filteredTooltip.${status}${searching ? 'Search' : ''}`)
+        }
+        return searching || statusFilter !== 'ALL'
+            ? msg('tasks.removeAll.filteredTooltip.search')
+            : msg('tasks.removeAll.tooltip')
     }
 
     renderTaskDetails() {
@@ -395,22 +407,18 @@ class _Tasks extends React.Component {
         )
     }
 
-    removeAllTasks() {
+    removeVisibleInactiveTasks() {
         const {stream} = this.props
-        this.setState({tasks: this.activeTasks()})
-        stream('REMOVE_ALL_TASK',
-            api.tasks.removeAll$()
+        const {tasks} = this.state
+        const taskIds = this.visibleInactiveTasks().map(({id}) => id)
+        this.setState({tasks: tasks.filter(({id}) => !taskIds.includes(id))})
+        stream('REMOVE_ALL_TASKS',
+            api.tasks.removeFinished$(taskIds)
         )
     }
 
-    activeTasks() {
-        const {tasks} = this.state
-        return tasks.filter(({status}) => ['PENDING', 'ACTIVE'].includes(status))
-    }
-
-    inactiveTasks() {
-        const {tasks} = this.state
-        return tasks.filter(({status}) => !['PENDING', 'ACTIVE'].includes(status))
+    visibleInactiveTasks() {
+        return this.getFilteredTasks().filter(task => this.isStopped(task))
     }
 
     stopTask(task, e) {

@@ -4,12 +4,12 @@
     "description": "SEPAL worker service",
     "main": "main.js",
     "scripts": {
-        "test": "TZ=UTC NODE_OPTIONS=--experimental-vm-modules jest"
+        "test": "TZ=UTC node --experimental-test-module-mocks --test \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@aws-sdk/client-ec2": "^3.1149.0",
+        "@aws-sdk/client-ec2": "^3.1152.0",
         "commander": "^15.0.0",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
@@ -23,7 +23,6 @@
     "type": "module",
     "devDependencies": {
         "aws-sdk-client-mock": "^4.1.0",
-        "jest": "^30.5.2",
-        "mysql2": "^3.24.5"
+        "mysql2": "^3.24.6"
     }
 }

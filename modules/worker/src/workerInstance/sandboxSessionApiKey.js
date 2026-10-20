@@ -12,9 +12,6 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 //
 // _sleep is an injectable seam (same `_` convention as dockerInstanceProvisioner's
 // _dockerRetries/_dockerRetryDelayMs) so tests can observe the backoff without waiting on it.
-// Do NOT reach for jest fake timers instead: under Jest's ESM mode useRealTimers() DELETES
-// globalThis.setTimeout rather than restoring it, breaking every later test in the file that
-// sleeps.
 const createApiKeyRetryWrapper = (impl, {retries = 5, delayMs = 50, _sleep = sleep} = {}) => ({
     apiKeyForInstance: async instanceId => {
         for (let attempt = 0; attempt < retries; attempt++) {

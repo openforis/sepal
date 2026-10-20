@@ -1,3 +1,7 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+import {isDeepStrictEqual} from 'node:util'
+
 import {operations} from '../operations.js'
 import {collectionExport} from './collectionExport.js'
 
@@ -10,10 +14,13 @@ test('prepares the collection, exports the tiles a resume does not keep, then sh
     await collectionExport('image', params, context(sepal))
 
     const starts = sepal.calls.filter(({kind, path}) => kind === 'start' && path === 'task/export/collection/tile')
-    expect(starts.map(({path, body}) => ({path, body}))).toEqual([
+    assert.deepEqual(starts.map(({path, body}) => ({path, body})), [
         {path: 'task/export/collection/tile', body: {kind: 'image', ...params, tileIndex: 1, tileId: 'b'}}
     ])
-    expect(sepal.calls.at(-1)).toMatchObject({path: 'task/asset/share', body: {assetId: 'projects/p/assets/c'}})
+    assert.partialDeepStrictEqual(
+        sepal.calls.at(-1),
+        {path: 'task/asset/share', body: {assetId: 'projects/p/assets/c'}}
+    )
 })
 
 test('prepares the collection once, never retrying a request that may have changed assets', async () => {
@@ -22,9 +29,12 @@ test('prepares the collection once, never retrying a request that may have chang
 
     await collectionExport('image', params, context(sepal))
 
-    expect(sepal.calls.filter(({path}) => path === 'task/export/collection/prepare')).toEqual([
-        {kind: 'start', path: 'task/export/collection/prepare', body: {kind: 'image', ...params}}
-    ])
+    assert.deepEqual(
+        sepal.calls.filter(({path}) => path === 'task/export/collection/prepare'),
+        [
+            {kind: 'start', path: 'task/export/collection/prepare', body: {kind: 'image', ...params}}
+        ]
+    )
 })
 
 test('the prepare message names no asset when the export gave none', async () => {
@@ -34,7 +44,10 @@ test('the prepare message names no asset when the export gave none', async () =>
     await collectionExport('image', {image: {}}, {...context(sepal), report: message => reports.push(message)})
 
     const prepare = reports.find(({messageKey}) => messageKey === 'tasks.ee.export.asset.prepareImageCollection')
-    expect(prepare).toMatchObject({defaultMessage: 'Prepare image collection', messageArgs: {assetId: ''}})
+    assert.partialDeepStrictEqual(
+        prepare,
+        {defaultMessage: 'Prepare image collection', messageArgs: {assetId: ''}}
+    )
 })
 
 test('reports collection progress with the existing messages', async () => {
@@ -46,12 +59,13 @@ test('reports collection progress with the existing messages', async () => {
     await collectionExport('image', {image: {assetId: 'a'}}, {...context(sepal), report: message => reports.push(message)})
 
     const keyed = reports.map(({messageKey, messageArgs}) => ({messageKey, messageArgs}))
-    expect(keyed).toEqual(expect.arrayContaining([
+    const missing = [
         {messageKey: 'tasks.ee.export.asset.prepareImageCollection', messageArgs: {assetId: 'a'}},
         {messageKey: 'tasks.ee.export.asset.tilingImage', messageArgs: undefined},
         {messageKey: 'tasks.ee.export.asset.startExport', messageArgs: {tileCount: 2}},
         {messageKey: 'tasks.retrieve.collection_to_asset.progress', messageArgs: {completedTiles: 2, totalTiles: 2}}
-    ]))
+    ].filter(expected => !keyed.some(report => isDeepStrictEqual(report, expected)))
+    assert.deepEqual(missing, [])
 })
 
 test('one failed tile cancels the tiles still running', async () => {
@@ -61,11 +75,14 @@ test('one failed tile cancels the tiles still running', async () => {
     })
     const sleep = (_ms, signal) => new Promise(resolve => signal.aborted ? resolve() : signal.addEventListener('abort', resolve))
 
-    await expect(collectionExport('image', {image: {assetId: 'a'}}, {...context(sepal), sleep})).rejects.toThrow('FAILED')
+    await assert.rejects(
+        collectionExport('image', {image: {assetId: 'a'}}, {...context(sepal), sleep}),
+        /FAILED/
+    )
 
     const cancelled = sepal.calls.filter(({path}) => path === 'task/operation/cancel').map(({body}) => body.eeTaskId)
-    expect(cancelled.sort()).toEqual(['T1', 'T2'])
-    expect(sepal.calls.map(({path}) => path)).not.toContain('task/asset/share')
+    assert.deepEqual(cancelled.sort(), ['T1', 'T2'])
+    assert.ok(!sepal.calls.map(({path}) => path).includes('task/asset/share'))
 })
 
 test('an image export to an ImageCollection asset goes through the collection', async () => {
@@ -73,7 +90,10 @@ test('an image export to an ImageCollection asset goes through the collection', 
 
     await operations['image.GEE']({image: {assetType: 'ImageCollection', assetId: 'a'}}, context(sepal))
 
-    expect(sepal.calls[0]).toMatchObject({path: 'task/export/collection/prepare', body: {kind: 'image'}})
+    assert.partialDeepStrictEqual(
+        sepal.calls[0],
+        {path: 'task/export/collection/prepare', body: {kind: 'image'}}
+    )
 })
 
 test('a CCDC export to an ImageCollection asset goes through the collection', async () => {
@@ -81,7 +101,10 @@ test('a CCDC export to an ImageCollection asset goes through the collection', as
 
     await operations['ccdc.GEE']({image: {assetType: 'ImageCollection', assetId: 'a'}}, context(sepal))
 
-    expect(sepal.calls[0]).toMatchObject({path: 'task/export/collection/prepare', body: {kind: 'ccdc'}})
+    assert.partialDeepStrictEqual(
+        sepal.calls[0],
+        {path: 'task/export/collection/prepare', body: {kind: 'ccdc'}}
+    )
 })
 
 const fakeSepal = ({prepared, states = {}}) => {
