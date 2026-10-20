@@ -29,6 +29,7 @@ import {CreateRecipe} from '../createRecipe'
 import {loadFolders$, loadRecipes$} from '../recipe'
 import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
 import {Breadcrumb} from './breadcrumb'
+import {DragPreview} from './dragPreview'
 import {DropTargetContext} from './dropTargetContext'
 import {updateFolder} from './folderActions'
 import {FolderForm} from './folderForm'
@@ -92,6 +93,7 @@ class _RecipeList extends React.Component {
         confirmedIds: null,
         navigationCount: 0,
         dragging: false,
+        dragCoords: null,
         dropTarget: null
     }
 
@@ -124,20 +126,20 @@ class _RecipeList extends React.Component {
         addSubscription(
             this.drag$.pipe(
                 filter(({dragging}) => dragging === true),
-                switchMap(({value}) => {
+                switchMap(({value, coords}) => {
                     this.dragged = value
-                    this.setState({dragging: true})
+                    this.setState({dragging: true, dragCoords: coords, dropTarget: coords ? this.validTargetAt(coords) : null})
                     return this.drag$.pipe(
                         takeUntil(release$),
-                        map(({coords}) => coords ? this.validTargetAt(coords) : null)
+                        map(({coords}) => ({dragCoords: coords, dropTarget: coords ? this.validTargetAt(coords) : null}))
                     )
                 })
-            ).subscribe(dropTarget => this.setState({dropTarget})),
+            ).subscribe(state => this.setState(state)),
             release$.subscribe(() => this.drop())
         )
     }
 
-    // The dragged copy of the row ignores the pointer, so what lies under it is the row itself.
+    // The preview ignores the pointer, so hit testing reaches the destination beneath it.
     validTargetAt({x, y}) {
         const {folders} = this.props
         const element = document.elementFromPoint(x, y)?.closest('[data-drop-folder-id], [data-drop-home]')
@@ -157,7 +159,7 @@ class _RecipeList extends React.Component {
         const items = this.draggedItems()
         const fromSelection = !!this.dragged && this.isSelected(this.dragged.id)
         this.dragged = null
-        this.setState({dragging: false, dropTarget: null})
+        this.setState({dragging: false, dragCoords: null, dropTarget: null})
         if (items.length && dropTarget) {
             this.moveItems(items, dropTarget.folderId)
             if (fromSelection) {
@@ -229,6 +231,29 @@ class _RecipeList extends React.Component {
         return locationLabel(folders, folderId)
     }
 
+    renderDragPreview() {
+        const {folders, recipes} = this.props
+        const {dragCoords, dropTarget} = this.state
+        if (!dragCoords || !this.dragged) {
+            return null
+        }
+        const {kind, id, folder} = this.dragged
+        const destination = dropTarget
+            ? dropTarget.folderId === ROOT
+                ? msg('process.recipeList.root')
+                : folders.find(({id}) => id === dropTarget.folderId)?.name
+            : undefined
+        return (
+            <DragPreview
+                coords={dragCoords}
+                name={kind === 'folder' ? folder.name : recipes.find(recipe => recipe.id === id)?.name}
+                icon={kind === 'folder' ? 'folder-open' : 'globe'}
+                count={this.draggedItems().length}
+                destination={destination}
+            />
+        )
+    }
+
     renderList() {
         const {edit, move, remove, editFolder, dragging, dropTarget} = this.state
         const items = this.getItems()
@@ -262,6 +287,7 @@ class _RecipeList extends React.Component {
                     {remove && this.renderRemoveConfirmation()}
                     {editFolder && this.renderFolderForm()}
                 </Layout>
+                {dragging && this.renderDragPreview()}
             </DropTargetContext.Provider>
         )
     }

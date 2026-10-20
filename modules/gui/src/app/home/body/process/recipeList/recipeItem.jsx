@@ -5,6 +5,7 @@ import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
+import dragStyles from './dragPreview.module.css'
 import {DropTargetContext} from './dropTargetContext'
 import {PATH_SEPARATOR} from './recipeListConstants'
 
@@ -20,6 +21,7 @@ export const RecipeItem = ({
             dragValue={{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}}
             dragPointer='mouse'
             showDragHandle={false}
+            dragCloneClassName={dragStyles.hiddenClone}
             onClick={() => edit ? onSelect(recipe.id) : onClick(recipe)}>
             <CrudItem
                 icon='globe'

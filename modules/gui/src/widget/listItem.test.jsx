@@ -63,9 +63,20 @@ afterEach(async () => {
     root = null
     container?.remove()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
 })
 
 describe('a dragged item', () => {
+    it('reports viewport coordinates when a drag starts on a scrolled page', async () => {
+        vi.stubGlobal('scrollX', 100)
+        vi.stubGlobal('scrollY', 200)
+        await mount()
+
+        await pan('panstart', {x: 10, y: 10})
+
+        expect(told[0]).toEqual(expect.objectContaining({coords: {x: 10, y: 10}}))
+    })
+
     it('keeps the drag cursor when another item unmounts', async () => {
         await mount()
         const otherContainer = document.createElement('div')
